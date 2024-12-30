@@ -1,0 +1,15 @@
+{
+  "name": "@eridu/eslint-config",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./eslint.config.js",
+    "./create-config": "./create-config.js"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^3.12.1",
+    "eslint": "^9.17.0",
+    "eslint-plugin-format": "^0.1.3"
+  }
+}
