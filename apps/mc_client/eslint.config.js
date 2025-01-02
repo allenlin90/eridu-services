@@ -3,6 +3,7 @@ import createConfig from "@eridu/eslint-config/create-config";
 export default createConfig(
   {
     react: true,
+    ignores: ["test"],
   },
   {
     plugins: {},
