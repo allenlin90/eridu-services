@@ -17,7 +17,7 @@
   - [ ] `commitlint` before commit
   - [ ] `sherif` before commit
 - setup `vitest` for unit tests
-  - [ ] `mc_client` app
+  - [x] `mc_client` app
 - setup CI
   - [ ] Github actions
 
