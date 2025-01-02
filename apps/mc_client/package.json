@@ -8,7 +8,8 @@
     "check-types": "tsc --noEmit",
     "build": "vite build",
     "lint": "eslint --fix '**/*.{js,jsx,ts,tsx}'",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "dependencies": {
     "@eridu/ui": "workspace:*",
@@ -21,16 +22,23 @@
     "@eridu/typescript-config": "workspace:*",
     "@eslint-react/eslint-plugin": "^1.22.1",
     "@eslint/js": "^9.17.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "2.1.8",
+    "add": "^2.0.6",
     "eslint": "^9.17.0",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
+    "jsdom": "^25.0.1",
     "tailwindcss": "^3.4.14",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.18.2",
-    "vite": "^6.0.5"
+    "vite": "^6.0.5",
+    "vitest": "^2.1.8"
   }
 }

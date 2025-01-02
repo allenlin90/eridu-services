@@ -3,7 +3,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
+      "@/*": ["./src/*"],
+      "@test/*": ["./test/*"],
       "@eridu/ui/*": ["../../packages/ui/src/*"]
     },
 
@@ -27,7 +28,9 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    "types": ["vitest/globals"]
   },
-  "include": ["src"]
+  "include": ["src", "test"]
 }
