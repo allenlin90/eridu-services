@@ -51,3 +51,11 @@ To develop all apps and packages, run the following command:
 ```bash
 pnpm dev
 ```
+
+### Test
+
+To test all apps and packages, run the following command:
+
+```bash
+pnpm test
+```
