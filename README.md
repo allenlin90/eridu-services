@@ -1,3 +1,8 @@
+### MC Client
+- [x] Authentication with `email` by Clerk.io
+
+---
+
 ### Apps and Packages
 
 - [x] `/apps/storybook` for components testing.
@@ -10,7 +15,6 @@
 - [ ] Manage environment variables (ENVs)
 - [ ] setup semantic versioning
 - [ ] setup `docker-compose` for related services
-- [ ] setup `tRPC` for backend and frontend communication
 - [ ] Optimize `eslint` and `prettier` settings for editor
 - setup `husky` commit hooks
   - [ ] `eslint` before commit
@@ -20,6 +24,11 @@
   - [x] `mc_client` app
 - setup CI
   - [ ] Github actions
+
+### Engineering
+
+- [ ] Update `tailwind@4`
+- [ ] Update `storybook`
 
 ### Utilities
 
