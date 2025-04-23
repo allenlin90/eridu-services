@@ -1,21 +1,21 @@
-import { useSession } from '@/auth/hooks/use-session';
-import { LoaderCircle } from 'lucide-react';
-import { Outlet } from 'react-router';
+import { useSession } from "@/auth/hooks/use-session";
+import { LoaderCircle } from "lucide-react";
+import { Outlet } from "react-router";
 
-import { NavLayout } from './nav-layout';
+import { NavLayout } from "./nav-layout";
 
 export const Layout: React.FC<React.PropsWithChildren> = () => {
-  const { isLoaded, isSignedIn } = useSession();
+  const { isPending, data } = useSession();
 
-  if (!isLoaded) {
+  if (isPending) {
     return (
-      <div className='h-screen w-screen flex justify-center items-center'>
-        <LoaderCircle className='animate-spin' />
+      <div className="h-screen w-screen flex justify-center items-center">
+        <LoaderCircle className="animate-spin" />
       </div>
     );
   }
 
-  if (isSignedIn) {
+  if (data) {
     return (
       <NavLayout>
         <Outlet />
