@@ -2,7 +2,7 @@ import { useContext } from "react";
 
 import { AuthContext } from "../contexts/auth-context";
 
-export const useSession = () => {
+export function useSession() {
   const ctx = useContext(AuthContext);
 
   if (!ctx) {
@@ -10,6 +10,6 @@ export const useSession = () => {
   }
 
   return ctx;
-};
+}
 
 export default useSession;

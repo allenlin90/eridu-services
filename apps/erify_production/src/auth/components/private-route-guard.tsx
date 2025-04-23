@@ -1,4 +1,4 @@
-import { useSession } from "@/auth/hooks/use-session";
+import { useSession } from "@eridu/auth-service/hooks/use-session";
 import React from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
 

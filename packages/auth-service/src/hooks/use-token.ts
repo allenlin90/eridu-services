@@ -5,7 +5,7 @@ import type { Session } from "../types";
 
 import { fetchToken } from "../services/fetch-token.service";
 
-export const useToken = () => {
+export function useToken(tokenUrl: URL) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -16,7 +16,7 @@ export const useToken = () => {
     setError(null);
 
     try {
-      const { token } = await fetchToken() ?? {};
+      const { token } = await fetchToken(tokenUrl) ?? {};
 
       if (token) {
         const decodedPayload = decodeJwt(token) as Session;
@@ -44,4 +44,4 @@ export const useToken = () => {
     token,
     refetch,
   };
-};
+}

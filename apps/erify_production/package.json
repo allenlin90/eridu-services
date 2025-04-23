@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@eridu/auth-service": "workspace:*",
     "@eridu/ui": "workspace:*",
     "better-auth": "^1.2.7",
     "jose": "^6.0.10",

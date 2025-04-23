@@ -20,6 +20,9 @@ importers:
 
   apps/erify_production:
     dependencies:
+      '@eridu/auth-service':
+        specifier: workspace:*
+        version: link:../../packages/auth-service
       '@eridu/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -193,6 +196,37 @@ importers:
       vite:
         specifier: ^6.0.5
         version: 6.0.6(@types/node@22.10.2)(jiti@1.21.7)(yaml@2.6.1)
+
+  packages/auth-service:
+    dependencies:
+      better-auth:
+        specifier: ^1.2.7
+        version: 1.2.7
+      jose:
+        specifier: ^6.0.10
+        version: 6.0.10
+      react:
+        specifier: ^19.1.0
+        version: 19.1.0
+    devDependencies:
+      '@eridu/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@eridu/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/react':
+        specifier: ^19.1.2
+        version: 19.1.2
+      '@types/react-dom':
+        specifier: ^19.1.2
+        version: 19.1.2(@types/react@19.1.2)
+      typescript:
+        specifier: ~5.6.2
+        version: 5.6.3
+      zod:
+        specifier: ^3.23.8
+        version: 3.24.3
 
   packages/eslint-config:
     devDependencies:
