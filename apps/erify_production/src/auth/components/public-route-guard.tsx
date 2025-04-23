@@ -3,11 +3,11 @@ import React from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
 
 export const PublicRouteGuard: React.FC<React.PropsWithChildren> = () => {
-  const { data } = useSession();
+  const { session } = useSession();
   const { state } = useLocation();
   const from = state?.from?.pathname || "/";
 
-  if (data)
+  if (session)
     return <Navigate to={from} />;
 
   return <Outlet />;

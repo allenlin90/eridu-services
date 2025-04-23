@@ -3,10 +3,10 @@ import React from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
 
 export const PrivateRouteGuard: React.FC<React.PropsWithChildren> = () => {
-  const { data } = useSession();
+  const { session } = useSession();
   const { pathname } = useLocation();
 
-  if (!data)
+  if (!session)
     return <Navigate to="/login" state={{ from: { pathname } }} />;
 
   return <Outlet />;
