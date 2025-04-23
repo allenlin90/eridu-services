@@ -1,8 +1,11 @@
+import type { createAuthClient } from "better-auth/react";
+
 import { createContext } from "react";
 
-import type { Session } from "../types";
+import type { Session } from "../types.ts";
 
 export const AuthContext = createContext<null | {
+  authClient: ReturnType<typeof createAuthClient>;
   token: string | null;
   session: Session | null;
   error: Error | null;
