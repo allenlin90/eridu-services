@@ -17,8 +17,8 @@ export const AuthProvider: React.FC<React.PropsWithChildren<AuthProviderProps>> 
   const tokenUrl = new URL(`${baseURL}/api/auth/token`);
   const [authClient] = useState(() => createAuthClient({ baseURL }));
 
-  const { error, loading, session, token, refetch } = useToken(tokenUrl);
-  const value = useMemo(() => ({ authClient, token, session, loading, error, refetch }), [authClient, loading, error, token, session, refetch]);
+  const { error, loading, session, token, abortFetching, refetch } = useToken(tokenUrl);
+  const value = useMemo(() => ({ authClient, token, session, loading, error, abortFetching, refetch }), [authClient, loading, error, token, session, refetch]);
 
   useEffect(() => {
     if (error) {
