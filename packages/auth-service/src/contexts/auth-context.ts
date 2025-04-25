@@ -11,6 +11,7 @@ export const AuthContext = createContext<null | {
   error: Error | null;
   loading: boolean;
   refetch: () => Promise<void> | void;
+  abortFetching: () => void;
 }>(null);
 
 export default AuthContext;
