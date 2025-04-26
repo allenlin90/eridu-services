@@ -8,7 +8,7 @@
   "license": "ISC",
   "keywords": [],
   "exports": {
-    "./hooks/*": "./src/hooks/use-session.ts",
+    "./hooks/*": "./src/hooks/*.ts",
     "./lib/*": "./src/lib/*.ts",
     "./providers/*": "./src/providers/*.tsx",
     "./services/*": "./src/services/*.ts",

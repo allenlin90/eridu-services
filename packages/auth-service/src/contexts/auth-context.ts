@@ -5,6 +5,7 @@ import { createContext } from "react";
 import type { Session } from "../types.ts";
 
 export const AuthContext = createContext<null | {
+  baseURL: string;
   authClient: ReturnType<typeof createAuthClient>;
   token: string | null;
   session: Session | null;
