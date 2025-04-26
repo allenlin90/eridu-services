@@ -7,6 +7,7 @@
     "paths": {
       "@eridu/auth-service/*": ["./src/*"]
     },
+    "strict": true,
     "outDir": "dist"
   },
   "include": ["."],

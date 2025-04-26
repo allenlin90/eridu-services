@@ -55,6 +55,7 @@ export function useToken(baseURL: string) {
     loading,
     error,
     session,
+    setSession,
     token,
     abortFetching,
     refetch,

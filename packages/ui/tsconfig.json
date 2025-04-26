@@ -1,11 +1,16 @@
 {
   "extends": "@eridu/typescript-config/react-library.json",
   "compilerOptions": {
-    // "outDir": "dist"
     "baseUrl": ".",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "paths": {
       "@eridu/ui/*": ["./src/*"]
-    }
+    },
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": false,
+    "outDir": "dist"
   },
   "include": ["."],
   "exclude": ["node_modules", "dist"]

@@ -1,8 +1,10 @@
 import { useContext } from "react";
 
+import type { AuthContextType } from "../contexts/auth-context";
+
 import { AuthContext } from "../contexts/auth-context";
 
-export function useSession() {
+export function useSession(): AuthContextType {
   const ctx = useContext(AuthContext);
 
   if (!ctx) {
