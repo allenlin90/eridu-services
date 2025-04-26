@@ -14,6 +14,7 @@
   "dependencies": {
     "@eridu/auth-service": "workspace:*",
     "@eridu/ui": "workspace:*",
+    "@tanstack/react-query": "^5.74.4",
     "better-auth": "^1.2.7",
     "jose": "^6.0.10",
     "lucide-react": "0.456.0",
@@ -28,6 +29,7 @@
     "@eridu/typescript-config": "workspace:*",
     "@eslint-react/eslint-plugin": "^1.48.4",
     "@eslint/js": "^9.25.1",
+    "@tanstack/eslint-plugin-query": "^5.73.3",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
