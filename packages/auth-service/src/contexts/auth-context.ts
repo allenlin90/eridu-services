@@ -4,15 +4,18 @@ import { createContext } from "react";
 
 import type { Session } from "../types.ts";
 
-export const AuthContext = createContext<null | {
+export type AuthContextType = {
   baseURL: string;
   authClient: ReturnType<typeof createAuthClient>;
   token: string | null;
   session: Session | null;
   error: Error | null;
   loading: boolean;
-  refetch: () => Promise<void> | void;
   abortFetching: () => void;
-}>(null);
+  refetch: () => Promise<void> | void;
+  signout: () => Promise<void> | void;
+};
+
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export default AuthContext;
