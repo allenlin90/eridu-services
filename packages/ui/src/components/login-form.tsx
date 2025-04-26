@@ -52,8 +52,10 @@ export function LoginForm({
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
-                  placeholder="your@email.com"
+                  placeholder="email"
+                  disabled={disabled}
                   required
                 />
               </div>
@@ -62,7 +64,7 @@ export function LoginForm({
                   <Label htmlFor="password">Password</Label>
                   {forgetPassword}
                 </div>
-                <Input id="password" type="password" required />
+                <Input id="password" name="password" type="password" disabled={disabled} required />
               </div>
               <Button type="submit" disabled={disabled} className="w-full">
                 Login

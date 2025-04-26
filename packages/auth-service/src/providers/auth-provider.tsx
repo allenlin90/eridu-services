@@ -14,11 +14,10 @@ export const AuthProvider: React.FC<React.PropsWithChildren<AuthProviderProps>> 
   children,
   errorhandler,
 }) => {
-  const tokenUrl = new URL(`${baseURL}/api/auth/token`);
   const [authClient] = useState(() => createAuthClient({ baseURL }));
 
-  const { error, loading, session, token, abortFetching, refetch } = useToken(tokenUrl);
-  const value = useMemo(() => ({ authClient, token, session, loading, error, abortFetching, refetch }), [authClient, loading, error, token, session, refetch]);
+  const { error, loading, session, token, abortFetching, refetch } = useToken(baseURL);
+  const value = useMemo(() => ({ authClient, baseURL, token, session, loading, error, abortFetching, refetch }), [authClient, baseURL, loading, error, token, session, refetch]);
 
   useEffect(() => {
     if (error) {

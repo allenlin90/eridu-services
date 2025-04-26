@@ -3,9 +3,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { Session } from "../types";
 
-import { fetchToken } from "../services/fetch-token.service";
+import { fetchClient } from "../lib/http-client";
 
-export function useToken(tokenUrl: URL) {
+export function useToken(baseURL: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -23,9 +23,10 @@ export function useToken(tokenUrl: URL) {
     signalRef.current?.abort();
 
     try {
-      const { token } = await fetchToken(tokenUrl, {
+      const tokenURL = new URL("/api/auth/token", baseURL);
+      const { token } = await fetchClient(tokenURL, {
         signal: (signalRef.current = new AbortController()).signal,
-      }) ?? {};
+      }).then<{ token: string }>(res => res.json()) ?? {};
 
       if (token) {
         const decodedPayload = decodeJwt(token) as Session;
@@ -41,7 +42,7 @@ export function useToken(tokenUrl: URL) {
       setLoading(false);
       signalRef.current = null;
     }
-  }, []);
+  }, [baseURL]);
 
   useEffect(() => {
     if (!initRef.current) {
