@@ -12,7 +12,7 @@ export type AuthContextType = {
   error: Error | null;
   loading: boolean;
   abortFetching: () => void;
-  refetch: () => Promise<void> | void;
+  refetch: () => Promise<string | null> | string;
   signout: () => Promise<void> | void;
 };
 

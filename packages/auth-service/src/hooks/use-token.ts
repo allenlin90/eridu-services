@@ -33,10 +33,14 @@ export function useToken(baseURL: string) {
 
         setToken(token);
         setSession(decodedPayload);
+
+        return token;
       }
+      return null;
     }
     catch (error) {
       setError(error as Error);
+      return null;
     }
     finally {
       setLoading(false);
