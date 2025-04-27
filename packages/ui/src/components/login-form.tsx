@@ -15,6 +15,7 @@ type LoginFormProps = {
   allowSocialLogin?: boolean;
   description?: React.ReactNode;
   disabled?: boolean;
+  error?: string | null;
   forgetPassword?: React.ReactNode;
   formProps?: React.ComponentPropsWithoutRef<"form">;
   header?: React.ReactNode;
@@ -34,6 +35,8 @@ export function LoginForm({
   ...props
 
 }: Omit<React.ComponentPropsWithoutRef<"div">, "onSubmit"> & LoginFormProps) {
+  // TODO: handle error
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
