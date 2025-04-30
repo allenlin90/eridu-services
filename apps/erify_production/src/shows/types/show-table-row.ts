@@ -1,3 +1,4 @@
+import { paginatedData } from "@/api/types";
 import { z } from "zod";
 
 export const ShowTableRowSchema = z.object({
@@ -11,4 +12,9 @@ export const ShowTableRowSchema = z.object({
   end_time: z.string().datetime(),
 });
 
+export const paginatedShowTableRows = paginatedData.extend({
+  data: z.array(ShowTableRowSchema),
+});
+
 export type ShowTableRow = z.infer<typeof ShowTableRowSchema>;
+export type PaginatedShowTableRow = z.infer<typeof paginatedShowTableRows>;

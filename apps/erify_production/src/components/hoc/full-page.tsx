@@ -2,10 +2,10 @@ import { cn } from "@eridu/ui/lib/utils";
 
 export const FullPage = (
   Component: React.FC,
-  props?: React.ComponentProps<"div">,
+  { className, ...props }: React.ComponentProps<"div"> = {},
 ) => {
   const Wrapped: React.FC = (componentProps: React.ComponentProps<typeof Component>) => (
-    <div className={cn("flex-1 flex justify-center items-center", props?.className)} {...props}>
+    <div className={cn("flex flex-1 flex-col", className ?? "")} {...props}>
       <Component {...componentProps} />
     </div>
   );
