@@ -5,7 +5,7 @@ export default merge(twConfig, {
   theme: {
     extend: {
       maxHeight: {
-        "show-content-area": "calc(100vh - 8.25rem)", // Add custom max-height
+        "show-content-area": "calc(100vh - 11.5rem)", // Add custom max-height
       },
     },
   },

@@ -1,3 +1,4 @@
+import { DateRangePicker } from "@/components/date-range-picker";
 import { FullPage } from "@/components/hoc/full-page";
 import { Pagination } from "@/components/pagination";
 import { useColumns } from "@/shows/hooks/use-columns";
@@ -30,6 +31,12 @@ const ShowsPage: React.FC = () => {
 
   return (
     <>
+      <div className="p-4 pb-0">
+        <label className="inline-flex items-center gap-2">
+          <span>Range</span>
+          <DateRangePicker />
+        </label>
+      </div>
       <div className="max-w-full p-4 overflow-auto h-full max-h-show-content-area">
         <DataTable columns={columns} data={data.data} />
       </div>
