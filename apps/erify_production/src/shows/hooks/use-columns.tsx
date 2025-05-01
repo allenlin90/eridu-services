@@ -2,26 +2,34 @@ import type { ShowTableRow } from "@/shows/types/show-table-row";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { toLocaleDateString, toLocaleTimeString } from "@/utils";
-import { Button } from "@eridu/ui/components/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@eridu/ui/components/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";
 
+import { RowActions } from "../components/show-table/row-actions";
+
 export const useColumns = (): ColumnDef<ShowTableRow>[] => {
   const navigate = useNavigate();
-  const copyId = useCallback((show_uid: string) => (_e: React.MouseEvent<HTMLDivElement>) => {
-    navigator.clipboard.writeText(show_uid);
-  }, []);
-  const toShowDetails = useCallback((show_uid: string) => (_e: React.MouseEvent<HTMLDivElement>) => {
-    navigate(`/shows/${show_uid}`);
-  }, [navigate]);
+  const copyId = useCallback(
+    (show_uid: string) =>
+      (_e: React.MouseEvent<HTMLDivElement>) => {
+        navigator.clipboard.writeText(show_uid);
+      },
+    [],
+  );
+  const toShowDetails = useCallback(
+    (show_uid: string) =>
+      (_e: React.MouseEvent<HTMLDivElement>) => {
+        navigate(`/shows/${show_uid}`);
+      },
+    [navigate],
+  );
 
   return useMemo(() => {
     return [
       {
-        accessorFn: row => toLocaleDateString(row.start_time),
+        accessorFn: row => row.start_time,
         header: "Date",
+        cell: ({ cell }) => toLocaleDateString(cell.getValue<string>()),
       },
       {
         accessorKey: "start_time",
@@ -55,24 +63,10 @@ export const useColumns = (): ColumnDef<ShowTableRow>[] => {
         cell: ({ row }) => {
           const show = row.original;
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem
-                  onClick={copyId(show.uid)}
-                >
-                  Copy ID
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={toShowDetails(show.uid)}>View details</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <RowActions
+              onCopyShowId={copyId(show.uid)}
+              onShowDetails={toShowDetails(show.uid)}
+            />
           );
         },
       },
