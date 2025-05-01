@@ -15,10 +15,10 @@ export const useDateRangeParams = () => {
 
     if ((from && !isValid(parsedFrom)) || (to && !isValid(parsedTo))) {
       setError(new Error("Invalid date format. Expected yyyy-MM-dd."));
-      return { start_time: null, end_time: null };
+      return { from_date: null, to_date: null };
     }
 
-    return { from, to };
+    return { from_date: from, to_date: to };
   }, [searchParams]);
 
   return { params: dateRange, error };
