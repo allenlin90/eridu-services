@@ -1,5 +1,7 @@
+import { Navigate } from "react-router";
+
 export const Dashboard: React.FC = () => {
-  return null;
+  return <Navigate to="/livestream" />;
 };
 
 export default Dashboard;
