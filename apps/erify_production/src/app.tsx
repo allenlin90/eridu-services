@@ -8,7 +8,10 @@ import ErrorFallback from "./components/error-fallback";
 import Dashboard from "./pages/dashboard";
 import ErifyAdminBrands from "./pages/erify/admin/brands";
 import { ErifyAdmindGuard } from "./pages/erify/admin/components/admin-guard";
+import ErifyAdminMaterials from "./pages/erify/admin/materials";
 import ErifyAdminPlatforms from "./pages/erify/admin/platforms";
+import ErifyAdminShows from "./pages/erify/admin/shows";
+import ErifyAdminStudios from "./pages/erify/admin/studios";
 import ErifyAdminTeams from "./pages/erify/admin/teams";
 import ErifyAdminUsers from "./pages/erify/admin/users";
 import LoginPage from "./pages/login";
@@ -32,7 +35,10 @@ function App() {
               <Route path="admin" element={<ErifyAdmindGuard />}>
                 <Route index element={<Navigate to="brands" />} />
                 <Route path="brands" element={<ErifyAdminBrands />} />
+                <Route path="materials" element={<ErifyAdminMaterials />} />
                 <Route path="platforms" element={<ErifyAdminPlatforms />} />
+                <Route path="shows" element={<ErifyAdminShows />} />
+                <Route path="studios" element={<ErifyAdminStudios />} />
                 <Route path="teams" element={<ErifyAdminTeams />} />
                 <Route path="users" element={<ErifyAdminUsers />} />
               </Route>
