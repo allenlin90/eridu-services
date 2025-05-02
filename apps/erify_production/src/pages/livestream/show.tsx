@@ -1,4 +1,4 @@
-import { useShowDetails } from "@/shows/hooks/use-show-details";
+import { useShowDetails } from "@/livestream/shows/hooks/use-show-details";
 import { LoaderCircle } from "lucide-react";
 import { useParams } from "react-router";
 
