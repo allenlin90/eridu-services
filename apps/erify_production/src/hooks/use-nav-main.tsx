@@ -34,7 +34,7 @@ export const useNavMain = (): NavMains => {
     const adminList: NavMains[0] = {
       title: "Erify Admin",
       icon: ShieldUser,
-      isActive: false,
+      isActive: true,
       items: [
         {
           title: "Brands",
@@ -42,8 +42,23 @@ export const useNavMain = (): NavMains => {
           props: { className: "w-full" },
         },
         {
+          title: "Materials",
+          onClick: () => navigate("/erify/admin/materials"),
+          props: { className: "w-full" },
+        },
+        {
           title: "Platforms",
           onClick: () => navigate("/erify/admin/platforms"),
+          props: { className: "w-full" },
+        },
+        {
+          title: "Shows",
+          onClick: () => navigate("/erify/admin/shows"),
+          props: { className: "w-full" },
+        },
+        {
+          title: "Studios",
+          onClick: () => navigate("/erify/admin/studios"),
           props: { className: "w-full" },
         },
         {
