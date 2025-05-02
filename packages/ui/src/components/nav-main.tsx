@@ -23,12 +23,12 @@ export function NavMain({
 }: {
   items: {
     title: string;
-    url: string;
     icon?: LucideIcon;
     isActive?: boolean;
     items?: {
       title: string;
-      url: string;
+      onClick?: React.MouseEventHandler<HTMLButtonElement>;
+      props?: React.ComponentProps<"button">;
     }[];
   }[];
 }) {
@@ -59,10 +59,8 @@ export function NavMain({
                 <SidebarMenuSub>
                   {item.items?.map(subItem => (
                     <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton asChild>
-                        <a href={subItem.url}>
-                          <span>{subItem.title}</span>
-                        </a>
+                      <SidebarMenuSubButton {...subItem.props} onClick={subItem?.onClick} disabled={!subItem?.onClick}>
+                        <span>{subItem.title}</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   ))}

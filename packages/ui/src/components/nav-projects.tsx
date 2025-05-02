@@ -30,8 +30,8 @@ export function NavProjects({
 }: {
   projects: {
     name: string;
-    url: string;
     icon?: LucideIcon;
+    onClick?: React.MouseEventHandler<HTMLButtonElement>;
   }[];
 }) {
   const { isMobile } = useSidebar();
@@ -46,11 +46,9 @@ export function NavProjects({
       <SidebarMenu>
         {projects.map(item => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
-              <a href={item.url}>
-                {item.icon && <item.icon />}
-                <span>{item.name}</span>
-              </a>
+            <SidebarMenuButton asChild onClick={item?.onClick} disabled={!item?.onClick}>
+              {item.icon && <item.icon />}
+              <span>{item.name}</span>
             </SidebarMenuButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
