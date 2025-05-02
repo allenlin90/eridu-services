@@ -11,6 +11,8 @@ import {
 import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";
 
+import { BreadcrumbHeader } from "./breadcrumb-header";
+
 type Team = React.ComponentProps<typeof AppSidebar>["teams"][0];
 
 export const NavLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
@@ -75,6 +77,7 @@ export const NavLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
+          <BreadcrumbHeader />
         </header>
         {children}
       </SidebarInset>
