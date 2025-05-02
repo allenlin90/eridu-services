@@ -28,7 +28,9 @@ function App() {
             <Route path="shows" element={<ShowsPage />} />
             <Route path="shows/:show_uid" element={<ShowPage />} />
             <Route path="erify">
+              <Route index element={<Navigate to="admin" />} />
               <Route path="admin" element={<ErifyAdmindGuard />}>
+                <Route index element={<Navigate to="brands" />} />
                 <Route path="brands" element={<ErifyAdminBrands />} />
                 <Route path="platforms" element={<ErifyAdminPlatforms />} />
                 <Route path="teams" element={<ErifyAdminTeams />} />
