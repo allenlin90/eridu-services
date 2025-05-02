@@ -16,6 +16,7 @@ export const Show: React.FC = () => {
     );
   }
 
+  // TODO: useMaterials hook to query show-platform-materials and details
   return null;
 };
 
