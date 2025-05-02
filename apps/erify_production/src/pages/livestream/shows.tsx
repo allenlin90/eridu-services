@@ -1,8 +1,8 @@
 import { DateRangePicker } from "@/components/date-range-picker";
 import { FullPage } from "@/components/hoc/full-page";
 import { Pagination } from "@/components/pagination";
-import { useColumns } from "@/shows/hooks/use-columns";
-import { useShows } from "@/shows/hooks/use-shows";
+import { useColumns } from "@/livestream/shows/hooks/use-columns";
+import { useShows } from "@/livestream/shows/hooks/use-shows";
 import { DataTable } from "@eridu/ui/components/data-table";
 import { LoaderCircle } from "lucide-react";
 

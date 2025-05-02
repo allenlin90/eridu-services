@@ -20,8 +20,8 @@ export const useNavMain = (): NavMains => {
       isActive: true,
       items: [
         {
-          title: "List of shows",
-          onClick: () => navigate("/shows"),
+          title: "Shows",
+          onClick: () => navigate("/livestream/shows"),
           props: { className: "w-full" },
         },
       ],
