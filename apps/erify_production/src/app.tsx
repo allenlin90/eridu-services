@@ -7,6 +7,7 @@ import { Navigate, Route, Routes } from "react-router";
 import ErrorFallback from "./components/error-fallback";
 import Dashboard from "./pages/dashboard";
 import ErifyAdminBrands from "./pages/erify/admin/brands";
+import { ErifyAdmindGuard } from "./pages/erify/admin/components/admin-guard";
 import ErifyAdminPlatforms from "./pages/erify/admin/platforms";
 import ErifyAdminTeams from "./pages/erify/admin/teams";
 import ErifyAdminUsers from "./pages/erify/admin/users";
@@ -27,7 +28,7 @@ function App() {
             <Route path="shows" element={<ShowsPage />} />
             <Route path="shows/:show_uid" element={<ShowPage />} />
             <Route path="erify">
-              <Route path="admin">
+              <Route path="admin" element={<ErifyAdmindGuard />}>
                 <Route path="brands" element={<ErifyAdminBrands />} />
                 <Route path="platforms" element={<ErifyAdminPlatforms />} />
                 <Route path="teams" element={<ErifyAdminTeams />} />
