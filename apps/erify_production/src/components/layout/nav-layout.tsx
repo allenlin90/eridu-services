@@ -1,3 +1,5 @@
+import { useNavMain } from "@/hooks/use-nav-main";
+import { useProjects } from "@/hooks/use-projects";
 import { useSession } from "@eridu/auth-service/hooks/use-session";
 import { AppSidebar } from "@eridu/ui/components/app-sidebar";
 import { Separator } from "@eridu/ui/components/separator";
@@ -10,12 +12,12 @@ import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";
 
 type Team = React.ComponentProps<typeof AppSidebar>["teams"][0];
-type Projects = React.ComponentProps<typeof AppSidebar>["projects"];
-type NavMains = React.ComponentProps<typeof AppSidebar>["navMain"];
 
 export const NavLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { session, signout } = useSession();
   const navigate = useNavigate();
+  const navMain = useNavMain();
+  const projects = useProjects();
 
   const onSignout = useCallback(async () => {
     await signout();
@@ -34,10 +36,6 @@ export const NavLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
       />
     );
   }, []);
-
-  // TODO: render correct nav items
-  const navMain: NavMains = [];
-  const projects: Projects = [];
 
   const user = useMemo(() => {
     if (!session) {
