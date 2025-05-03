@@ -16,6 +16,11 @@ export const isMembershipAuthorized = (membership: Membership | undefined, { org
 
   const isOrgAuthorized = !organizations || organizations.includes(organization.slug as Organization);
 
+  // TODO: verify if the logic is still valid when team in organization is ready
+  if (isOrgAuthorized && membership.role === "admin") {
+    return true;
+  }
+
   const isTeamAuthorized = !teams || (team && teams.includes(team.name as Team));
 
   const isRoleAuthorized = !roles || roles.includes(role as Role);
