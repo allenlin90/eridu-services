@@ -1,15 +1,15 @@
-import { ErifyAdmindGuard } from "@/admin/components/admin-guard";
+import { MembershipGuard } from "@/auth/components/membership-guard";
 import { PrivateRouteGuard } from "@/auth/components/private-route-guard";
 import { PublicRouteGuard } from "@/auth/components/public-route-guard";
 import { ErrorFallback } from "@/components/error-fallback";
 import { Layout } from "@/components/layout";
 import { SuspenseFallback } from "@/components/suspense-fallback";
 import { ROUTES } from "@/constants/routes";
-import { ErifyGuard } from "@/livestream/components/erify-guard";
 import { lazy, Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Navigate, Route, Routes } from "react-router";
 
+import { Organization } from "./auth/types";
 import Dashboard from "./pages/dashboard";
 import LoginPage from "./pages/login";
 
@@ -42,7 +42,7 @@ function App() {
               path={ROUTES.LIVESTREAM.BASE}
               element={(
                 <Suspense fallback={<SuspenseFallback />}>
-                  <ErifyGuard />
+                  <MembershipGuard organizations={[Organization.Erify]} />
                 </Suspense>
               )}
             >
@@ -59,7 +59,7 @@ function App() {
                 path={ROUTES.ERIFY.ADMIN.BASE}
                 element={(
                   <Suspense fallback={<SuspenseFallback />}>
-                    <ErifyAdmindGuard />
+                    <MembershipGuard organizations={[Organization.Erify]} roles={["admin"]} />
                   </Suspense>
                 )}
               >
