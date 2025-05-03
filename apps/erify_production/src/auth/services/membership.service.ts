@@ -8,7 +8,7 @@ type IsMembershipAuthorizedArgs = {
   roles?: Role[];
 };
 
-export const isMembershipAuthorized = (membership: Membership, { organizations, teams, roles }: IsMembershipAuthorizedArgs) => {
+export const isMembershipAuthorized = (membership: Membership | undefined, { organizations, teams, roles }: IsMembershipAuthorizedArgs) => {
   if (!membership)
     return false;
 

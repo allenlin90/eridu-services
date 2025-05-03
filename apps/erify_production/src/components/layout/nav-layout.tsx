@@ -1,3 +1,6 @@
+import type { Membership } from "@eridu/auth-service/types";
+
+import { useActiveMembership } from "@/hooks/use-active-membership";
 import { useNavMain } from "@/hooks/use-nav-main";
 import { useProjects } from "@/hooks/use-projects";
 import { useSession } from "@eridu/auth-service/hooks/use-session";
@@ -13,10 +16,11 @@ import { useNavigate } from "react-router";
 
 import { BreadcrumbHeader } from "./breadcrumb-header";
 
-type Team = React.ComponentProps<typeof AppSidebar>["teams"][0];
+type TeamMembership = React.ComponentProps<typeof AppSidebar>["teams"][0];
 
 export const NavLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { session, signout } = useSession();
+  const { setActiveMembership } = useActiveMembership();
   const navigate = useNavigate();
   const navMain = useNavMain();
   const projects = useProjects();
@@ -51,18 +55,20 @@ export const NavLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
     };
   }, [session]);
 
-  const teams = useMemo<Team[]>(() => {
-    // @ts-expect-error // TODO: fix ts type error
-    return session?.memberships.map<Teams>(membership => ({
+  const teams = useMemo<TeamMembership[]>(() => {
+    return (session?.memberships as Membership[]).map((membership, _i, memberships) => ({
       id: membership.id,
       name: membership.organization?.name,
       logo: renderLogo(membership.organization?.logo),
       plan: membership.role,
-      onSwitchTeam: (_team => (_e) => {
-        // TODO: manage switch team state
-      }) as Team["onSwitchTeam"],
+      onSwitchTeam: teamMembership => (_e) => {
+        const membership = memberships.find(membership =>
+          membership.id === teamMembership.id,
+        );
+        setActiveMembership(membership);
+      },
     }));
-  }, [renderLogo, session?.memberships]);
+  }, [renderLogo, session?.memberships, setActiveMembership]);
 
   return (
     <SidebarProvider>

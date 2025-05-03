@@ -10,6 +10,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 
 import App from "./app";
+import { MembershipProvider } from "./providers/membership-provider";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,7 +30,9 @@ createRoot(document.getElementById("root")!).render(
         persistOptions={{ persister: idbPersister }}
       >
         <AuthProvider baseURL={baseURL}>
-          <App />
+          <MembershipProvider>
+            <App />
+          </MembershipProvider>
         </AuthProvider>
         <ReactQueryDevtools initialIsOpen={false} />
       </PersistQueryClientProvider>
