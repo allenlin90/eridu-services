@@ -3,8 +3,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { Session } from "../types";
 
+import { API_ENDPOINTS } from "../constants/api-endpoints";
 import { fetchClient } from "../lib/http-client";
 
+// TODO: implement silent refresh
 export function useToken(baseURL: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -23,7 +25,7 @@ export function useToken(baseURL: string) {
     signalRef.current?.abort();
 
     try {
-      const tokenURL = new URL("/api/auth/token", baseURL);
+      const tokenURL = new URL(API_ENDPOINTS.AUTH.TOKEN, baseURL);
       const { token } = await fetchClient(tokenURL, {
         signal: (signalRef.current = new AbortController()).signal,
       }).then<{ token: string }>(res => res.json()) ?? {};
