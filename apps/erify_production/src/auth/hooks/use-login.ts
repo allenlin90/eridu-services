@@ -1,3 +1,4 @@
+import { ROUTES } from "@/constants/routes";
 import { useLogin as useAuthServiceLogin } from "@eridu/auth-service/hooks/use-login";
 import { useCallback } from "react";
 import { useNavigate } from "react-router";
@@ -19,7 +20,7 @@ export const useLogin = () => {
     // TODO: check if user is created in api services
 
     if (res) {
-      navigate("/");
+      navigate(ROUTES.DASHBOARD);
     }
   }, [authLogin, navigate]);
 

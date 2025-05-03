@@ -1,6 +1,7 @@
-import type { ShowTableRow } from "@/shows/types/show-table-row";
+import type { ShowTableRow } from "@/livestream/shows/types/show-table-row";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { ROUTES } from "@/constants/routes";
 import { toLocaleDateString, toLocaleTimeString } from "@/utils";
 import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";
@@ -19,7 +20,7 @@ export const useColumns = (): ColumnDef<ShowTableRow>[] => {
   const toShowDetails = useCallback(
     (show_uid: string) =>
       (_e: React.MouseEvent<HTMLDivElement>) => {
-        navigate(`/shows/${show_uid}`);
+        navigate(ROUTES.LIVESTREAM.SHOW_DETAILS(show_uid));
       },
     [navigate],
   );

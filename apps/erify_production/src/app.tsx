@@ -4,6 +4,7 @@ import { PublicRouteGuard } from "@/auth/components/public-route-guard";
 import { ErrorFallback } from "@/components/error-fallback";
 import { Layout } from "@/components/layout";
 import { SuspenseFallback } from "@/components/suspense-fallback";
+import { ROUTES } from "@/constants/routes";
 import { ErifyGuard } from "@/livestream/components/erify-guard";
 import { lazy, Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -32,13 +33,13 @@ function App() {
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       <Routes>
         <Route element={<Layout />}>
-          <Route path="login" element={<PublicRouteGuard />}>
+          <Route path={ROUTES.LOGIN} element={<PublicRouteGuard />}>
             <Route index element={<LoginPage />} />
           </Route>
-          <Route path="/" element={<PrivateRouteGuard />}>
+          <Route path={ROUTES.DASHBOARD} element={<PrivateRouteGuard />}>
             <Route index element={<Dashboard />} />
             <Route
-              path="livestream"
+              path={ROUTES.LIVESTREAM.BASE}
               element={(
                 <Suspense fallback={<SuspenseFallback />}>
                   <ErifyGuard />
@@ -46,12 +47,16 @@ function App() {
               )}
             >
               <Route index element={<LivestreamDashboard />} />
-              <Route path="shows" element={<ShowsPage />} />
-              <Route path="shows/:show_uid" element={<ShowPage />} />
-            </Route>
-            <Route path="erify" element={<Navigate to="admin" />}>
+              <Route path={ROUTES.LIVESTREAM.SHOWS} element={<ShowsPage />} />
               <Route
-                path="admin"
+                path={ROUTES.LIVESTREAM.SHOW_DETAILS(":show_uid")}
+                element={<ShowPage />}
+              />
+            </Route>
+            <Route path={ROUTES.ERIFY.BASE}>
+              <Route index element={<Navigate to={ROUTES.ERIFY.ADMIN.BASE} />} />
+              <Route
+                path={ROUTES.ERIFY.ADMIN.BASE}
                 element={(
                   <Suspense fallback={<SuspenseFallback />}>
                     <ErifyAdmindGuard />
@@ -59,17 +64,17 @@ function App() {
                 )}
               >
                 <Route index element={<ErifyAdminDashboard />} />
-                <Route path="brands" element={<ErifyAdminBrands />} />
-                <Route path="materials" element={<ErifyAdminMaterials />} />
-                <Route path="platforms" element={<ErifyAdminPlatforms />} />
-                <Route path="shows" element={<ErifyAdminShows />} />
-                <Route path="studios" element={<ErifyAdminStudios />} />
-                <Route path="teams" element={<ErifyAdminTeams />} />
-                <Route path="users" element={<ErifyAdminUsers />} />
+                <Route path={ROUTES.ERIFY.ADMIN.BRANDS} element={<ErifyAdminBrands />} />
+                <Route path={ROUTES.ERIFY.ADMIN.MATERIALS} element={<ErifyAdminMaterials />} />
+                <Route path={ROUTES.ERIFY.ADMIN.PLATFORMS} element={<ErifyAdminPlatforms />} />
+                <Route path={ROUTES.ERIFY.ADMIN.SHOWS} element={<ErifyAdminShows />} />
+                <Route path={ROUTES.ERIFY.ADMIN.STUDIOS} element={<ErifyAdminStudios />} />
+                <Route path={ROUTES.ERIFY.ADMIN.TEAMS} element={<ErifyAdminTeams />} />
+                <Route path={ROUTES.ERIFY.ADMIN.USERS} element={<ErifyAdminUsers />} />
               </Route>
             </Route>
           </Route>
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} />} />
         </Route>
       </Routes>
     </ErrorBoundary>

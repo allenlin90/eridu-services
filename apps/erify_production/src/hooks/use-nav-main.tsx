@@ -1,6 +1,7 @@
 import type { AppSidebar } from "@eridu/ui/components/app-sidebar";
 
 import { useSessionMemberships } from "@/auth/hooks/use-session-memberships";
+import { ROUTES } from "@/constants/routes";
 import { ShieldUser, TvMinimalPlay } from "lucide-react";
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
@@ -21,7 +22,7 @@ export const useNavMain = (): NavMains => {
       items: [
         {
           title: "Shows",
-          onClick: () => navigate("/livestream/shows"),
+          onClick: () => navigate(ROUTES.LIVESTREAM.SHOWS),
           props: { className: "w-full" },
         },
       ],
@@ -38,37 +39,37 @@ export const useNavMain = (): NavMains => {
       items: [
         {
           title: "Brands",
-          onClick: () => navigate("/erify/admin/brands"),
+          onClick: () => navigate(ROUTES.ERIFY.ADMIN.BRANDS),
           props: { className: "w-full" },
         },
         {
           title: "Materials",
-          onClick: () => navigate("/erify/admin/materials"),
+          onClick: () => navigate(ROUTES.ERIFY.ADMIN.MATERIALS),
           props: { className: "w-full" },
         },
         {
           title: "Platforms",
-          onClick: () => navigate("/erify/admin/platforms"),
+          onClick: () => navigate(ROUTES.ERIFY.ADMIN.PLATFORMS),
           props: { className: "w-full" },
         },
         {
           title: "Shows",
-          onClick: () => navigate("/erify/admin/shows"),
+          onClick: () => navigate(ROUTES.ERIFY.ADMIN.SHOWS),
           props: { className: "w-full" },
         },
         {
           title: "Studios",
-          onClick: () => navigate("/erify/admin/studios"),
+          onClick: () => navigate(ROUTES.ERIFY.ADMIN.STUDIOS),
           props: { className: "w-full" },
         },
         {
           title: "Teams",
-          onClick: () => navigate("/erify/admin/teams"),
+          onClick: () => navigate(ROUTES.ERIFY.ADMIN.TEAMS),
           props: { className: "w-full" },
         },
         {
           title: "Users",
-          onClick: () => navigate("/erify/admin/users"),
+          onClick: () => navigate(ROUTES.ERIFY.ADMIN.USERS),
           props: { className: "w-full" },
         },
       ],
