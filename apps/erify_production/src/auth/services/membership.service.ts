@@ -3,13 +3,12 @@ import type { Membership } from "@eridu/auth-service/types";
 import type { Organization, Role, Team } from "../types";
 
 type IsMembershipAuthorizedArgs = {
-  membership: Membership;
   organizations?: Organization[];
   teams?: Team[];
   roles?: Role[];
 };
 
-export const isMembershipAuthorized = ({ membership, organizations, teams, roles }: IsMembershipAuthorizedArgs) => {
+export const isMembershipAuthorized = (membership: Membership, { organizations, teams, roles }: IsMembershipAuthorizedArgs) => {
   if (!membership)
     return false;
 

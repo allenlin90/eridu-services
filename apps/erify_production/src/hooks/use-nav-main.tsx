@@ -30,10 +30,10 @@ export const useNavMain = (): NavMains => {
       ],
     };
 
-    if (isMembershipAuthorized({
+    if (isMembershipAuthorized(
       membership,
-      organizations: [Organization.Erify],
-    })) {
+      { organizations: [Organization.Erify] },
+    )) {
       navList.push(showList);
     }
 
@@ -80,11 +80,13 @@ export const useNavMain = (): NavMains => {
       ],
     };
 
-    if (isMembershipAuthorized({
+    if (isMembershipAuthorized(
       membership,
-      organizations: [Organization.Erify],
-      roles: ["admin"],
-    })) {
+      {
+        organizations: [Organization.Erify],
+        roles: ["admin"],
+      },
+    )) {
       navList.push(adminList);
     }
 
