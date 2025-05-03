@@ -1,10 +1,10 @@
 import type { AppSidebar } from "@eridu/ui/components/app-sidebar";
 
 import { isMembershipAuthorized } from "@/auth/services/membership.service";
-import { Organization } from "@/auth/types";
+import { Organization, Team } from "@/auth/types";
 import { ROUTES } from "@/constants/routes";
 import { useActiveMembership } from "@/hooks/use-active-membership";
-import { ShieldUser, TvMinimalPlay } from "lucide-react";
+import { NotepadText, ShieldUser, TvMinimalPlay } from "lucide-react";
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
 
@@ -37,11 +37,49 @@ export const useNavMain = (): NavMains => {
       navList.push(showList);
     }
 
+    const erifyOffsetList: NavMains[0] = {
+      title: "Erify Offset",
+      icon: NotepadText,
+      isActive: true,
+      items: [
+        {
+          title: "MC Admin",
+          onClick: () => navigate(ROUTES.ERIFY.OFFSET.MC_ADMIN),
+          props: { className: "w-full" },
+        },
+        {
+          title: "Scene",
+          onClick: () => navigate(ROUTES.ERIFY.OFFSET.SCENE),
+          props: { className: "w-full" },
+        },
+        {
+          title: "Script",
+          onClick: () => navigate(ROUTES.ERIFY.OFFSET.SCRIPT),
+          props: { className: "w-full" },
+        },
+      ],
+    };
+
+    if (isMembershipAuthorized(
+      activeMembership,
+      {
+        organizations: [Organization.Erify],
+        teams: [Team.Offset],
+      },
+    )) {
+      navList.push(erifyOffsetList);
+    }
+
     const adminList: NavMains[0] = {
       title: "Erify Admin",
       icon: ShieldUser,
       isActive: true,
       items: [
+        {
+          title: "Dashboard",
+          onClick: () => navigate(ROUTES.ERIFY.ADMIN.BASE),
+          props: { className: "w-full" },
+        },
         {
           title: "Brands",
           onClick: () => navigate(ROUTES.ERIFY.ADMIN.BRANDS),

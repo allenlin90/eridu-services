@@ -1,6 +1,7 @@
 import { MembershipGuard } from "@/auth/components/membership-guard";
 import { PrivateRouteGuard } from "@/auth/components/private-route-guard";
 import { PublicRouteGuard } from "@/auth/components/public-route-guard";
+import { Organization, Team } from "@/auth/types";
 import { ErrorFallback } from "@/components/error-fallback";
 import { Layout } from "@/components/layout";
 import { SuspenseFallback } from "@/components/suspense-fallback";
@@ -9,7 +10,6 @@ import { lazy, Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Navigate, Route, Routes } from "react-router";
 
-import { Organization } from "./auth/types";
 import Dashboard from "./pages/dashboard";
 import LoginPage from "./pages/login";
 
@@ -17,6 +17,11 @@ import LoginPage from "./pages/login";
 const LivestreamDashboard = lazy(() => import("./pages/livestream/dashboard"));
 const ShowPage = lazy(() => import("./pages/livestream/show"));
 const ShowsPage = lazy(() => import("./pages/livestream/shows"));
+
+// erify offset pages
+const ErifyMcAdmin = lazy(() => import("./pages/erify/offset/mc-admin"));
+const ErifyScene = lazy(() => import("./pages/erify/offset/scene"));
+const ErifyScript = lazy(() => import("./pages/erify/offset/script"));
 
 // erify admin pages
 const ErifyAdminDashboard = lazy(() => import("./pages/erify/admin/dashboard"));
@@ -54,7 +59,18 @@ function App() {
               />
             </Route>
             <Route path={ROUTES.ERIFY.BASE}>
-              <Route index element={<Navigate to={ROUTES.ERIFY.ADMIN.BASE} />} />
+              <Route
+                path={ROUTES.ERIFY.OFFSET.BASE}
+                element={(
+                  <Suspense>
+                    <MembershipGuard organizations={[Organization.Erify]} teams={[Team.Offset]} />
+                  </Suspense>
+                )}
+              >
+                <Route path={ROUTES.ERIFY.OFFSET.MC_ADMIN} element={<ErifyMcAdmin />} />
+                <Route path={ROUTES.ERIFY.OFFSET.SCENE} element={<ErifyScene />} />
+                <Route path={ROUTES.ERIFY.OFFSET.SCRIPT} element={<ErifyScript />} />
+              </Route>
               <Route
                 path={ROUTES.ERIFY.ADMIN.BASE}
                 element={(

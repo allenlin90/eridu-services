@@ -8,6 +8,12 @@ export const ROUTES = {
   },
   ERIFY: {
     BASE: "/erify",
+    OFFSET: {
+      BASE: "/erify/offset",
+      MC_ADMIN: "/erify/offset/mc-admin",
+      SCRIPT: "/erify/offset/script",
+      SCENE: "/erify/offset/scene",
+    },
     ADMIN: {
       BASE: "/erify/admin",
       BRANDS: "/erify/admin/brands",
