@@ -31,7 +31,6 @@ export function TeamSwitcher({
   teams,
 }: {
   onAddTeam?: (e: React.MouseEvent<HTMLDivElement>) => void | Promise<void>;
-
   teams: Team[];
 }) {
   const { isMobile } = useSidebar();
