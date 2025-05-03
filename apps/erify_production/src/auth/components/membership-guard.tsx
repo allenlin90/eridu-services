@@ -1,10 +1,9 @@
 import type { Organization, Role, Team } from "@/auth/types";
 
 import { Unauthorize } from "@/auth/components/unauthorize";
+import { useActiveMembership } from "@/hooks/use-active-membership";
 import { useMemo } from "react";
 import { Outlet } from "react-router";
-
-import { useActiveMembership } from "../hooks/use-active-membership";
 
 type MembershipGuardProps = {
   organizations?: Organization[];
@@ -13,22 +12,22 @@ type MembershipGuardProps = {
 };
 
 export const MembershipGuard: React.FC<MembershipGuardProps> = ({ organizations, teams, roles }) => {
-  const membership = useActiveMembership();
+  const { activeMembership } = useActiveMembership();
 
   const isAuthorized = useMemo(() => {
-    if (!membership)
+    if (!activeMembership)
       return false;
 
-    const { organization, team, role } = membership;
+    const { organization, team, role } = activeMembership ?? {};
 
-    const isOrgAuthorized = !organizations || organizations.includes(organization.slug);
+    const isOrgAuthorized = !organizations || organizations.includes(organization.slug as Organization);
 
-    const isTeamAuthorized = !teams || (team && teams.includes(team.name));
+    const isTeamAuthorized = !teams || (team && teams.includes(team.name as Team));
 
-    const isRoleAuthorized = !roles || roles.includes(role);
+    const isRoleAuthorized = !roles || roles.includes(role as Role);
 
     return isOrgAuthorized && isTeamAuthorized && isRoleAuthorized;
-  }, [membership, organizations, teams, roles]);
+  }, [activeMembership, organizations, teams, roles]);
 
   if (!isAuthorized) {
     return <Unauthorize />;

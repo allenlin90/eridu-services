@@ -1,9 +1,9 @@
 import type { AppSidebar } from "@eridu/ui/components/app-sidebar";
 
-import { useActiveMembership } from "@/auth/hooks/use-active-membership";
 import { isMembershipAuthorized } from "@/auth/services/membership.service";
 import { Organization } from "@/auth/types";
 import { ROUTES } from "@/constants/routes";
+import { useActiveMembership } from "@/hooks/use-active-membership";
 import { ShieldUser, TvMinimalPlay } from "lucide-react";
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
@@ -11,7 +11,7 @@ import { useNavigate } from "react-router";
 type NavMains = React.ComponentProps<typeof AppSidebar>["navMain"];
 
 export const useNavMain = (): NavMains => {
-  const membership = useActiveMembership();
+  const { activeMembership } = useActiveMembership();
   const navigate = useNavigate();
 
   return useMemo(() => {
@@ -31,7 +31,7 @@ export const useNavMain = (): NavMains => {
     };
 
     if (isMembershipAuthorized(
-      membership,
+      activeMembership,
       { organizations: [Organization.Erify] },
     )) {
       navList.push(showList);
@@ -81,7 +81,7 @@ export const useNavMain = (): NavMains => {
     };
 
     if (isMembershipAuthorized(
-      membership,
+      activeMembership,
       {
         organizations: [Organization.Erify],
         roles: ["admin"],
@@ -91,5 +91,5 @@ export const useNavMain = (): NavMains => {
     }
 
     return navList;
-  }, [membership, navigate]);
+  }, [activeMembership, navigate]);
 };
