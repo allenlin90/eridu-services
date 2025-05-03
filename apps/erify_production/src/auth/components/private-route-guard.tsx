@@ -6,8 +6,9 @@ export const PrivateRouteGuard: React.FC<React.PropsWithChildren> = () => {
   const { session } = useSession();
   const { pathname } = useLocation();
 
-  if (!session)
+  if (!session) {
     return <Navigate to="/login" state={{ from: { pathname } }} />;
+  }
 
   return <Outlet />;
 };
