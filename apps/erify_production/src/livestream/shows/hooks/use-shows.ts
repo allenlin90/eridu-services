@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/constants/api-endpoints";
 import { usePaginationParams } from "@/hooks/use-pagination-params";
 import usePrivateAxios from "@/hooks/use-private-axios";
 import { useQuery } from "@tanstack/react-query";
@@ -15,7 +16,7 @@ export const useShows = () => {
     queryKey: ["shows", paginationParams, dateRangeParams],
     queryFn: async () => {
       const { data } = await axios
-        .get<PaginatedShowTableRow>("/shows", {
+        .get<PaginatedShowTableRow>(API_ENDPOINTS.SHOWS.BASE, {
           params: {
             ...paginationParams,
             ...dateRangeParams,

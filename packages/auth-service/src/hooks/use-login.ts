@@ -2,6 +2,7 @@ import type { User } from "better-auth";
 
 import { useCallback, useRef, useState } from "react";
 
+import { API_ENDPOINTS } from "../constants/api-endpoints";
 import { fetchClient } from "../lib/http-client";
 import useSession from "./use-session";
 
@@ -38,7 +39,7 @@ export function useLogin() {
     signalRef.current?.abort();
 
     try {
-      const fetchURL = new URL("/api/auth/sign-in/email", baseURL);
+      const fetchURL = new URL(API_ENDPOINTS.AUTH.SIGNIN.EMAIL, baseURL);
       const response = await fetchClient(fetchURL, {
         method: "POST",
         headers: {
