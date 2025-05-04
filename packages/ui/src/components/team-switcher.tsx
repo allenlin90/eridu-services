@@ -18,7 +18,7 @@ import {
   useSidebar,
 } from "@eridu/ui/components/sidebar";
 
-type Team = {
+export type Team = {
   id: string;
   name: string;
   logo: React.ElementType;
