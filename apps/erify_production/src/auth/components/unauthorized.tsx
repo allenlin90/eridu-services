@@ -2,7 +2,7 @@ import { Button } from "@eridu/ui/components/button";
 import { Ban } from "lucide-react";
 import { Link } from "react-router";
 
-export const Unauthorize: React.FC = () => {
+export const Unauthorized: React.FC = () => {
   return (
     <div className="flex-1 flex justify-center items-center">
       <div className="text-center">
@@ -23,4 +23,4 @@ export const Unauthorize: React.FC = () => {
   );
 };
 
-export default Unauthorize;
+export default Unauthorized;

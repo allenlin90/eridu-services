@@ -1,6 +1,6 @@
 import type { Organization, Role, Team } from "@/auth/types";
 
-import { Unauthorize } from "@/auth/components/unauthorize";
+import { Unauthorized } from "@/auth/components/unauthorized";
 import { useActiveMembership } from "@/hooks/use-active-membership";
 import { useMemo } from "react";
 import { Outlet } from "react-router";
@@ -28,7 +28,7 @@ export const MembershipGuard: React.FC<MembershipGuardProps> = ({ organizations,
   }, [activeMembership, organizations, teams, roles]);
 
   if (!isAuthorized) {
-    return <Unauthorize />;
+    return <Unauthorized />;
   }
 
   return <Outlet />;
