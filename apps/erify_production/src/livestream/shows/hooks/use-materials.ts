@@ -2,15 +2,17 @@ import { API_ENDPOINTS } from "@/constants/api-endpoints";
 import usePrivateAxios from "@/hooks/use-private-axios";
 import { useQuery } from "@tanstack/react-query";
 
+import type { ShowMaterial } from "../types/show-materials";
+
 export const useMaterials = (showId?: string) => {
   const axios = usePrivateAxios();
 
   return useQuery({
     queryKey: ["materials", showId],
     queryFn: async () => {
-      const { data } = await axios.get(API_ENDPOINTS.SHOWS.MATERIALS(showId!));
+      const { data } = await axios.get<{ materials: ShowMaterial[] }>(API_ENDPOINTS.SHOWS.MATERIALS(showId!));
 
-      return data;
+      return data.materials;
     },
     enabled: !!showId,
   });
