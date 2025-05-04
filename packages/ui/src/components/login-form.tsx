@@ -22,6 +22,7 @@ type LoginFormProps = {
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
 };
 
+// TODO: migrate this for auth service
 export function LoginForm({
   allowSignup = false,
   allowSocialLogin = false,
