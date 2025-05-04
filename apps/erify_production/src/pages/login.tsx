@@ -5,6 +5,7 @@ import { LoginForm } from "@eridu/ui/components/login-form";
 export const LoginPage: React.FC = () => {
   const { error, loading, login } = useLogin();
 
+  // TODO: redirect to auth service for authentication
   return (
     <div className="h-screen w-full flex justify-center items-center">
       <LoginForm
