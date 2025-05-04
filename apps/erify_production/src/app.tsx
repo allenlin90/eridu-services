@@ -8,10 +8,11 @@ import { SuspenseFallback } from "@/components/suspense-fallback";
 import { ROUTES } from "@/constants/routes";
 import { lazy, Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { Navigate, Route, Routes } from "react-router";
+import { Route, Routes } from "react-router";
 
 import Dashboard from "./pages/dashboard";
 import LoginPage from "./pages/login";
+import NotFound from "./pages/not-found";
 
 // livestream pages
 const LivestreamDashboard = lazy(() => import("./pages/livestream/dashboard"));
@@ -90,7 +91,7 @@ function App() {
               </Route>
             </Route>
           </Route>
-          <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </ErrorBoundary>
