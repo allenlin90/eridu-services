@@ -17,7 +17,6 @@ export const useLogin = () => {
     };
 
     const res = await authLogin(credentials);
-    // TODO: check if user is created in api services
 
     if (res) {
       navigate(ROUTES.DASHBOARD);
