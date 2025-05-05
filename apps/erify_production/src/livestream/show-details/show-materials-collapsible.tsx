@@ -47,7 +47,7 @@ export const ShowMaterialsCollapsible: React.FC<ShowMaterialsCollapsibleProps> =
         {showMaterials.map((material) => {
           return (
             <Card key={material.uid}>
-              <CardHeader>
+              <CardHeader className="p-4">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     {getIcon(material.type)}
@@ -66,7 +66,7 @@ export const ShowMaterialsCollapsible: React.FC<ShowMaterialsCollapsibleProps> =
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="text-sm">
+              <CardContent className="text-sm p-4 pt-0">
                 <p>{material.name}</p>
                 <p>{material.description}</p>
               </CardContent>
