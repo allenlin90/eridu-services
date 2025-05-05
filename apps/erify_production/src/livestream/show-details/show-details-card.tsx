@@ -51,7 +51,7 @@ export const ShowDetailsCard: React.FC<ShowDetailsCardProps> = (
           </div>
         </div>
       </CardHeader>
-      <CardContent className="pb-2">
+      <CardContent>
         <div className="grid gap-3">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -104,6 +104,8 @@ export const ShowDetailsCard: React.FC<ShowDetailsCardProps> = (
             </div>
           )}
         </div>
+
+        <hr className="my-2" />
 
         <ShowMaterialsCollapsible showMaterials={showMaterials} />
 
