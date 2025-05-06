@@ -1,3 +1,5 @@
+import { MoreHorizontal } from "lucide-react";
+
 import { Button } from "@eridu/ui/components/button";
 import {
   DropdownMenu,
@@ -7,7 +9,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@eridu/ui/components/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
 
 type Action = {
   name: string;
