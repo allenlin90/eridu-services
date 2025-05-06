@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { RowActions } from "@/components/row-actions";
 import { ROUTES } from "@/constants/routes";
+import { RowActions } from "@eridu/ui/components/table/row-actions";
 import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";
 
