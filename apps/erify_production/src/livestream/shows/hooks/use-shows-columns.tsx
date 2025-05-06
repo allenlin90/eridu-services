@@ -1,14 +1,14 @@
 import type { ShowTableRow } from "@/livestream/shows/types/show-table-row";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { RowActions } from "@/components/row-actions";
 import { ROUTES } from "@/constants/routes";
 import { toLocaleDateString, toLocaleTimeString } from "@/utils";
+import { DropdownMenuItem } from "@eridu/ui/components/dropdown-menu";
 import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";
 
-import { RowActions } from "../components/show-table/row-actions";
-
-export const useColumns = (): ColumnDef<ShowTableRow>[] => {
+export const useShowsColumns = (): ColumnDef<ShowTableRow>[] => {
   const navigate = useNavigate();
   const copyId = useCallback(
     (show_uid: string) =>
@@ -63,14 +63,21 @@ export const useColumns = (): ColumnDef<ShowTableRow>[] => {
         id: "actions",
         cell: ({ row }) => {
           const show = row.original;
+          const actions = [
+            { name: "Copy ID", onClick: copyId(show.uid) },
+          ];
+
           return (
-            <RowActions
-              onCopyShowId={copyId(show.uid)}
-              onShowDetails={toShowDetails(show.uid)}
-            />
+            <RowActions actions={actions}>
+              <DropdownMenuItem onClick={toShowDetails(show.uid)}>
+                View details
+              </DropdownMenuItem>
+            </RowActions>
           );
         },
       },
     ];
   }, [copyId, toShowDetails]);
 };
+
+export default useShowsColumns;
