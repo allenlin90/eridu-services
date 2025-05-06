@@ -1,8 +1,8 @@
 import { DateRangePicker } from "@/components/date-range-picker";
 import { FullPage } from "@/components/hoc/full-page";
 import { Pagination } from "@/components/pagination";
-import { useColumns } from "@/livestream/shows/hooks/use-columns";
 import { useShows } from "@/livestream/shows/hooks/use-shows";
+import { useShowsColumns } from "@/livestream/shows/hooks/use-shows-columns";
 import { DataTable } from "@eridu/ui/components/data-table";
 import { LoaderCircle } from "lucide-react";
 
@@ -11,7 +11,7 @@ const LIMIT = 10;
 
 const ShowsPage: React.FC = () => {
   const { data, isPending, isError, error } = useShows();
-  const columns = useColumns();
+  const columns = useShowsColumns();
 
   if (isPending) {
     return (
