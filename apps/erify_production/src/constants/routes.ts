@@ -23,6 +23,7 @@ export const ROUTES = {
       STUDIOS: "/erify/admin/studios",
       TEAMS: "/erify/admin/teams",
       USERS: "/erify/admin/users",
+      USER_DETAILS: (userUid: string) => `/erify/admin/users/${userUid}`,
     },
   },
 };

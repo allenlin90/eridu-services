@@ -4,4 +4,7 @@ export const API_ENDPOINTS = {
     DETAILS: (showId: string) => `/shows/${showId}`,
     MATERIALS: (showId: string) => `/shows/${showId}/materials`,
   },
+  ADMIN: {
+    USERS: "/admin/users",
+  },
 };
