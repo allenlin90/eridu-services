@@ -9,11 +9,11 @@ import { LoaderCircle } from "lucide-react";
 // TODO: allow users to change the limit
 const LIMIT = 10;
 
-const Users: React.FC = () => {
-  const { isPending, data, isError, error } = useUsers();
+const UsersPageContent: React.FC = () => {
+  const { isLoading, data, isError, error } = useUsers();
   const columns = useAdminUserColumns();
 
-  if (isPending) {
+  if (isLoading) {
     return (
       <div className="flex-1 flex justify-center items-center">
         <div>
@@ -24,23 +24,33 @@ const Users: React.FC = () => {
   }
 
   if (isError) {
-    return <p>{error.message}</p>;
+    return <p>{error?.message || "something went wrong"}</p>;
   }
 
-  const page = Math.ceil(data.offset / data.limit) + 1;
+  const page = data ? Math.ceil(data.offset / data.limit) + 1 : 1;
 
   return (
     <>
-      <div className="p-4 min-w-xs">
-        <UserSearchFilters />
+      <div className="max-w-full overflow-auto h-full max-h-user-content-area">
+        {
+          data
+            ? <DataTable columns={columns} data={data.data} />
+            : <p className="text-center">No data</p>
+        }
       </div>
-      <div className="max-w-full p-4 overflow-auto h-full max-h-user-content-area">
-        <DataTable columns={columns} data={data.data} />
-      </div>
-      <div className="min-w-full max-w-full p-4">
-        <Pagination pageSize={LIMIT} page={page} total={data.total} />
+      <div className="p-4">
+        <Pagination pageSize={LIMIT} page={page} total={data?.total ?? 1} />
       </div>
     </>
+  );
+};
+
+const Users: React.FC = () => {
+  return (
+    <div className="h-full p-4 pb-0 flex flex-col">
+      <UserSearchFilters />
+      <UsersPageContent />
+    </div>
   );
 };
 
