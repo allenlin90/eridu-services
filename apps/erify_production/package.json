@@ -14,6 +14,7 @@
   "dependencies": {
     "@eridu/auth-service": "workspace:*",
     "@eridu/ui": "workspace:*",
+    "@hookform/resolvers": "^5.0.1",
     "@tanstack/react-query": "^5.74.4",
     "@tanstack/react-query-devtools": "^5.74.7",
     "@tanstack/react-query-persist-client": "^5.74.7",
@@ -29,6 +30,7 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-error-boundary": "^5.0.0",
+    "react-hook-form": "^7.56.2",
     "react-router": "^7.5.1",
     "zod": "^3.23.8"
   },

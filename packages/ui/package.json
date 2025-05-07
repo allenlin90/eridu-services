@@ -17,6 +17,7 @@
     "build": "tsc"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-avatar": "^1.1.7",
     "@radix-ui/react-collapsible": "^1.1.8",
     "@radix-ui/react-dialog": "^1.1.11",
@@ -36,9 +37,10 @@
     "react": "^19.1.0",
     "react-day-picker": "8.10.1",
     "react-dom": "^19.1.0",
+    "react-hook-form": "^7.56.2",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^3.23.8"
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@eridu/eslint-config": "workspace:*",
