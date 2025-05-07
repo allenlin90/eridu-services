@@ -1,3 +1,4 @@
+import { AddUserModal } from "@/admin/users/components/add-user-modal";
 import { UserSearchFilters } from "@/admin/users/components/user-search-filters";
 import { useAdminUserColumns } from "@/admin/users/hooks/use-admin-user-columns";
 import { useQueryUsers } from "@/admin/users/hooks/use-query-users";
@@ -35,7 +36,7 @@ const UsersPageContent: React.FC = () => {
 
   return (
     <>
-      <div className="max-w-full overflow-auto h-full max-h-user-content-area">
+      <div className="max-w-full overflow-auto h-full max-h-sm-user-content-area sm:max-h-user-content-area">
         <DataTable columns={columns} data={data.data} />
       </div>
       <div className="p-4">
@@ -45,15 +46,18 @@ const UsersPageContent: React.FC = () => {
   );
 };
 
-const Users: React.FC = () => {
+const UsersPage: React.FC = () => {
   return (
     <div className="h-full p-4 pb-0 flex flex-col">
-      <UserSearchFilters />
+      <div className="max-w-full flex flex-col sm:flex-row gap-4 mb-4 sm:mb-0">
+        <UserSearchFilters className="w-full order-2 sm:order-1" />
+        <AddUserModal className="order-1 sm:order-2" />
+      </div>
       <UsersPageContent />
     </div>
   );
 };
 
-export const UsersFullPage = FullPage(Users);
+export const UsersFullPage = FullPage(UsersPage);
 
 export default UsersFullPage;

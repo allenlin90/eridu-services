@@ -71,9 +71,8 @@ export const UserSearchFilters: React.FC<UserSearchFiltersProps> = (
   return (
     <div className={cn("flex flex-start gap-4", className)} {...props}>
       <div className="flex flex-col w-full">
-        <div className="mb-2">
+        <div className="flex-1 mb-2">
           <Input
-            className="w-full min-w-64"
             type={filter === "email" ? "email" : "text"}
             placeholder={inputPlaceholder}
             defaultValue={defaultInputValue}
