@@ -7,7 +7,7 @@ import { type AxiosError, HttpStatusCode } from "axios";
 
 import type { PaginatedUsers } from "../types";
 
-export const useUsers = () => {
+export const useQueryUsers = () => {
   const axios = usePrivateAxios();
   const { params: paginationParams } = usePaginationParams();
   const { params: userSearchParams } = useUserSearchParams();

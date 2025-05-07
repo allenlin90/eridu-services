@@ -24,6 +24,14 @@ export const UserSearchFilters: React.FC<UserSearchFiltersProps> = (
   const [searchParams, setSearchParams] = useSearchParams();
   const [error, setError] = useState<string>("");
 
+  const defaultInputValue = useMemo(() => {
+    return searchParams.get("email") || searchParams.get("name") || "";
+  }, [searchParams]);
+
+  const inputPlaceholder = useMemo(() => {
+    return `search by ${filter}`;
+  }, [filter]);
+
   const updateSearchParams = useMemo(() =>
     debounce((value: string) => {
       setSearchParams((_prev) => {
@@ -66,7 +74,9 @@ export const UserSearchFilters: React.FC<UserSearchFiltersProps> = (
         <div className="mb-2">
           <Input
             className="w-full min-w-64"
-            defaultValue={(searchParams.get("email") || searchParams.get("name")) ?? ""}
+            type={filter === "email" ? "email" : "text"}
+            placeholder={inputPlaceholder}
+            defaultValue={defaultInputValue}
             onChange={onChange}
           />
         </div>
