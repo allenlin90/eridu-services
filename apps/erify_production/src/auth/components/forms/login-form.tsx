@@ -8,6 +8,7 @@ import {
 } from "@eridu/ui/components/card";
 import { Input } from "@eridu/ui/components/input";
 import { Label } from "@eridu/ui/components/label";
+import { PasswordInput } from "@eridu/ui/components/password-input";
 import { cn } from "@eridu/ui/lib/utils";
 
 type LoginFormProps = {
@@ -68,7 +69,7 @@ export function LoginForm({
                   <Label htmlFor="password">Password</Label>
                   {forgetPassword}
                 </div>
-                <Input id="password" name="password" type="password" disabled={disabled} required />
+                <PasswordInput id="password" name="password" disabled={disabled} required />
               </div>
               <Button type="submit" disabled={disabled} className="w-full">
                 Login
