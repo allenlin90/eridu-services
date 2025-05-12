@@ -1,4 +1,5 @@
 import { useSession } from "@eridu/auth-service/hooks/use-session";
+import { Toaster } from "@eridu/ui/components/toaster";
 import { LoaderCircle } from "lucide-react";
 import { Outlet } from "react-router";
 
@@ -19,9 +20,15 @@ export const Layout: React.FC<React.PropsWithChildren> = () => {
     return (
       <NavLayout>
         <Outlet />
+        <Toaster />
       </NavLayout>
     );
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      <Toaster />
+    </>
+  );
 };

@@ -13,7 +13,7 @@ import { Route, Routes } from "react-router";
 import Dashboard from "./pages/dashboard";
 import LoginPage from "./pages/login";
 import NotFound from "./pages/not-found";
-
+import ResetPasswordPage from "./pages/reset-password";
 // livestream pages
 const LivestreamDashboard = lazy(() => import("./pages/livestream/dashboard"));
 const ShowPage = lazy(() => import("./pages/livestream/show"));
@@ -39,11 +39,12 @@ function App() {
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       <Routes>
         <Route element={<Layout />}>
-          <Route path={ROUTES.LOGIN} element={<PublicRouteGuard />}>
-            <Route index element={<LoginPage />} />
+          <Route element={<PublicRouteGuard />}>
+            <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+            <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
           </Route>
-          <Route path={ROUTES.DASHBOARD} element={<PrivateRouteGuard />}>
-            <Route index element={<Dashboard />} />
+          <Route element={<PrivateRouteGuard />}>
+            <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
             <Route
               path={ROUTES.LIVESTREAM.BASE}
               element={(
