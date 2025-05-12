@@ -26,6 +26,7 @@ type ForgetPasswordFormProps = Omit<React.ComponentProps<"form">, "onSubmit"> & 
   onSubmit: SubmitHandler<FormSchema>;
 };
 
+// TODO: migrate this for auth service
 export const ForgetPasswordForm: React.FC<ForgetPasswordFormProps>
 = ({
   onSubmit,
