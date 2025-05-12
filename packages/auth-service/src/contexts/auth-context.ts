@@ -1,12 +1,19 @@
-import type { createAuthClient } from "better-auth/react";
-
+import { adminClient } from "better-auth/client/plugins";
+import { createAuthClient } from "better-auth/react";
 import { createContext } from "react";
 
 import type { Session } from "../types.ts";
 
+const _authClient = createAuthClient({
+  plugins: [adminClient()],
+});
+
+// TODO: fix typing admin is any issue
+type AuthClient = typeof _authClient;
+
 export type AuthContextType = {
   baseURL: string;
-  authClient: ReturnType<typeof createAuthClient>;
+  authClient: AuthClient;
   token: string | null;
   session: Session | null;
   error: Error | null;

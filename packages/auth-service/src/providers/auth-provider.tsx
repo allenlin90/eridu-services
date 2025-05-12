@@ -1,3 +1,4 @@
+import { adminClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -16,7 +17,12 @@ export const AuthProvider: React.FC<React.PropsWithChildren<AuthProviderProps>> 
   children,
   errorhandler,
 }) => {
-  const [authClient] = useState(() => createAuthClient({ baseURL }));
+  const [authClient] = useState(() =>
+    createAuthClient({
+      baseURL,
+      plugins: [adminClient()],
+    }),
+  );
 
   const { error, loading, session, setSession, token, abortFetching, refetch } = useToken(baseURL);
 
