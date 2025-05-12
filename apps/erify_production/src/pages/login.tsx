@@ -1,6 +1,8 @@
 import { useLogin } from "@/auth/hooks/use-login";
+import { ROUTES } from "@/constants/routes";
 import { Button } from "@eridu/ui/components/button";
 import { LoginForm } from "@eridu/ui/components/login-form";
+import { Link } from "react-router";
 
 export const LoginPage: React.FC = () => {
   const { error, loading, login } = useLogin();
@@ -14,8 +16,10 @@ export const LoginPage: React.FC = () => {
         error={error}
         onSubmit={login}
         forgetPassword={(
-          <Button variant="link" type="button" className="ml-auto pr-0">
-            Forget your password?
+          <Button variant="link" type="button" className="ml-auto pr-0" asChild>
+            <Link to={ROUTES.FORGET_PASSWORD}>
+              Forget your password?
+            </Link>
           </Button>
         )}
       />

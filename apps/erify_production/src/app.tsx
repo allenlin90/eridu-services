@@ -11,9 +11,11 @@ import { ErrorBoundary } from "react-error-boundary";
 import { Route, Routes } from "react-router";
 
 import Dashboard from "./pages/dashboard";
+import ForgetPasswordPage from "./pages/forget-password";
 import LoginPage from "./pages/login";
 import NotFound from "./pages/not-found";
 import ResetPasswordPage from "./pages/reset-password";
+
 // livestream pages
 const LivestreamDashboard = lazy(() => import("./pages/livestream/dashboard"));
 const ShowPage = lazy(() => import("./pages/livestream/show"));
@@ -41,6 +43,7 @@ function App() {
         <Route element={<Layout />}>
           <Route element={<PublicRouteGuard />}>
             <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+            <Route path={ROUTES.FORGET_PASSWORD} element={<ForgetPasswordPage />} />
             <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
           </Route>
           <Route element={<PrivateRouteGuard />}>
