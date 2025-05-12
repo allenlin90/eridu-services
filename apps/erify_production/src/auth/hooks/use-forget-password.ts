@@ -5,7 +5,7 @@ export const useForgetPassword = () => {
   const { authClient } = useSession();
 
   return useMutation({
-    mutationKey: ["forget-password"],
+    mutationKey: ["forget_password"],
     mutationFn: async ({ email }: { email: string }) => {
       const res = await authClient.forgetPassword({ email });
 

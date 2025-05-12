@@ -24,6 +24,7 @@ const formSchema = z
 type FormSchema = z.infer<typeof formSchema>;
 
 type ResetPasswordFormProps = Omit<React.ComponentProps<"form">, "onSubmit"> & {
+  disabled?: boolean;
   onSubmit: SubmitHandler<FormSchema>;
 };
 
@@ -32,6 +33,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps>
 = ({
   onSubmit,
   className,
+  disabled = false,
   ...props
 }) => {
   const form = useForm<FormSchema>({
@@ -78,6 +80,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps>
               <FormControl>
                 <PasswordInput
                   {...field}
+                  disabled={disabled}
                   name="password"
                   placeholder="password"
                 />
@@ -99,6 +102,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps>
               <FormControl>
                 <PasswordInput
                   {...field}
+                  disabled={disabled}
                   name="confirm_password"
                   placeholder="confirm password"
                 />
@@ -109,7 +113,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps>
           )}
         />
         <div className="w-full flex justify-end">
-          <Button type="submit">Confirm</Button>
+          <Button type="submit" disabled={disabled}>Confirm</Button>
         </div>
       </form>
     </Form>

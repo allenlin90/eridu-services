@@ -26,6 +26,7 @@ export function PasswordInput({ className, ...props }: PasswordInputProps) {
         type="button"
         variant="ghost"
         size="icon"
+        disabled={props.disabled}
         onClick={onClick}
       >
         {showText ? <EyeClosed /> : <Eye />}
