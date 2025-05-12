@@ -27,6 +27,7 @@ type ResetPasswordFormProps = Omit<React.ComponentProps<"form">, "onSubmit"> & {
   onSubmit: SubmitHandler<FormSchema>;
 };
 
+// TODO: migrate this for auth service
 export const ResetPasswordForm: React.FC<ResetPasswordFormProps>
 = ({
   onSubmit,

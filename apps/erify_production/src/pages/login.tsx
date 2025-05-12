@@ -1,7 +1,7 @@
+import { LoginForm } from "@/auth/components/forms/login-form";
 import { useLogin } from "@/auth/hooks/use-login";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@eridu/ui/components/button";
-import { LoginForm } from "@eridu/ui/components/login-form";
 import { Link } from "react-router";
 
 export const LoginPage: React.FC = () => {
