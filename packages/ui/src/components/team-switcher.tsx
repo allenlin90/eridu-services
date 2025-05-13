@@ -20,6 +20,8 @@ import {
 
 export type Team = {
   id: string;
+  disabled?: boolean;
+  isActive: boolean;
   name: string;
   logo: React.ElementType;
   plan: string;
@@ -34,7 +36,7 @@ export function TeamSwitcher({
   teams: Team[];
 }) {
   const { isMobile } = useSidebar();
-  const [activeTeam, setActiveTeam] = useState(teams[0]);
+  const [activeTeam, setActiveTeam] = useState(() => teams.find(team => team.isActive));
 
   const switchTeam = useCallback(
     (team: Team, cb?: (e: React.MouseEvent<HTMLDivElement>)
@@ -82,6 +84,7 @@ export function TeamSwitcher({
             </DropdownMenuLabel>
             {teams.map(team => (
               <DropdownMenuItem
+                disabled={team.disabled}
                 key={team.name}
                 onClick={switchTeam(team, team.onSwitchTeam?.(team))}
                 className="gap-2 p-2"
