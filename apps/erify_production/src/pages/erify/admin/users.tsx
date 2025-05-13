@@ -1,9 +1,9 @@
-import { AddUserModal } from "@/admin/users/components/add-user-modal";
-import { UserSearchFilters } from "@/admin/users/components/user-search-filters";
-import { useAdminUserColumns } from "@/admin/users/hooks/use-admin-user-columns";
-import { useQueryUsers } from "@/admin/users/hooks/use-query-users";
-import FullPage from "@/components/hoc/full-page";
+import { FullPage } from "@/components/hoc/full-page";
 import { Pagination } from "@/components/pagination";
+import { AddUserModal } from "@/erify/admin/users/components/add-user-modal";
+import { UserSearchFilters } from "@/erify/admin/users/components/user-search-filters";
+import { useAdminUserColumns } from "@/erify/admin/users/hooks/use-admin-user-columns";
+import { useQueryUsers } from "@/erify/admin/users/hooks/use-query-users";
 import DataTable from "@eridu/ui/components/data-table";
 import { LoaderCircle } from "lucide-react";
 

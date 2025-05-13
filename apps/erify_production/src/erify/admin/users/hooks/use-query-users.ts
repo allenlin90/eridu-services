@@ -1,5 +1,5 @@
-import { useUserSearchParams } from "@/admin/users/hooks/use-user-search-params";
 import { API_ENDPOINTS } from "@/constants/api-endpoints";
+import { useUserSearchParams } from "@/erify/admin/users/hooks/use-user-search-params";
 import usePaginationParams from "@/hooks/use-pagination-params";
 import usePrivateAxios from "@/hooks/use-private-axios";
 import { useQuery } from "@tanstack/react-query";
