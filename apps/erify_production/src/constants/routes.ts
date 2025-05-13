@@ -8,6 +8,10 @@ export const ROUTES = {
     SHOWS: "/livestream/shows",
     SHOW_DETAILS: (showUid: string) => `/livestream/shows/${showUid}`,
   },
+  ADMIN: {
+    BASE: "/admin",
+    USERS: "/admin/users",
+  },
   ERIFY: {
     BASE: "/erify",
     OFFSET: {

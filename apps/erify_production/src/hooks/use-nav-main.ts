@@ -4,20 +4,39 @@ import { isMembershipAuthorized } from "@/auth/services/membership.service";
 import { Organization, Team } from "@/auth/types";
 import { ROUTES } from "@/constants/routes";
 import { useActiveMembership } from "@/hooks/use-active-membership";
-import { NotepadText, ShieldUser, TvMinimalPlay } from "lucide-react";
+import { useSession } from "@eridu/auth-service/hooks/use-session";
+import { NotepadText, ShieldUser, TvMinimalPlay, UserCog } from "lucide-react";
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
 
-type NavMains = React.ComponentProps<typeof AppSidebar>["navMain"];
+type NavMain = React.ComponentProps<typeof AppSidebar>["navMain"][0];
 
-export const useNavMain = (): NavMains => {
+export const useNavMain = (): NavMain[] => {
+  const { session } = useSession();
   const { activeMembership } = useActiveMembership();
   const navigate = useNavigate();
 
   return useMemo(() => {
-    const navList: NavMains = [];
+    const navList: NavMain[] = [];
 
-    const showList: NavMains[0] = {
+    const eriduAdminList: NavMain = {
+      title: "Eridu Admin",
+      icon: UserCog,
+      isActive: true,
+      items: [
+        {
+          title: "Users",
+          onClick: () => navigate(ROUTES.ADMIN.USERS),
+          props: { className: "w-full" },
+        },
+      ],
+    };
+
+    if (session?.role === "admin") {
+      navList.push(eriduAdminList);
+    }
+
+    const showList: NavMain = {
       title: "Livestream",
       icon: TvMinimalPlay,
       isActive: true,
@@ -37,7 +56,7 @@ export const useNavMain = (): NavMains => {
       navList.push(showList);
     }
 
-    const erifyOffsetList: NavMains[0] = {
+    const erifyOffsetList: NavMain = {
       title: "Erify Offset",
       icon: NotepadText,
       isActive: true,
@@ -70,7 +89,7 @@ export const useNavMain = (): NavMains => {
       navList.push(erifyOffsetList);
     }
 
-    const adminList: NavMains[0] = {
+    const adminList: NavMain = {
       title: "Erify Admin",
       icon: ShieldUser,
       isActive: true,
@@ -129,5 +148,5 @@ export const useNavMain = (): NavMains => {
     }
 
     return navList;
-  }, [activeMembership, navigate]);
+  }, [activeMembership, navigate, session]);
 };
