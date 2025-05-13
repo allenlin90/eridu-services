@@ -1,3 +1,4 @@
+import { AdminGuard } from "@/auth/components/admin-guard";
 import { MembershipGuard } from "@/auth/components/membership-guard";
 import { PrivateRouteGuard } from "@/auth/components/private-route-guard";
 import { PublicRouteGuard } from "@/auth/components/public-route-guard";
@@ -15,6 +16,9 @@ import ForgetPasswordPage from "./pages/forget-password";
 import LoginPage from "./pages/login";
 import NotFound from "./pages/not-found";
 import ResetPasswordPage from "./pages/reset-password";
+
+// admin pages
+const AdminUsers = lazy(() => import("./pages/admin/users"));
 
 // livestream pages
 const LivestreamDashboard = lazy(() => import("./pages/livestream/dashboard"));
@@ -48,6 +52,16 @@ function App() {
           </Route>
           <Route element={<PrivateRouteGuard />}>
             <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
+            <Route
+              path={ROUTES.ADMIN.BASE}
+              element={(
+                <Suspense fallback={<SuspenseFallback />}>
+                  <AdminGuard />
+                </Suspense>
+              )}
+            >
+              <Route path={ROUTES.ADMIN.USERS} element={<AdminUsers />} />
+            </Route>
             <Route
               path={ROUTES.LIVESTREAM.BASE}
               element={(

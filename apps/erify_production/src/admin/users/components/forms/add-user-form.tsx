@@ -1,3 +1,4 @@
+import { useAddUser } from "@/admin/users/hooks/use-add-user";
 import { Button } from "@eridu/ui/components/button";
 import {
   Form,
@@ -15,8 +16,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
-import { useAddUser } from "../hooks/use-add-user";
 
 const formSchema = z.object({
   name: z.string().min(1),

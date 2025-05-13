@@ -1,9 +1,10 @@
+import { AddUserForm } from "@/admin/users/components/forms/add-user-form";
+import { UserSearchFilters } from "@/admin/users/components/user-search-filters";
+import { useAdminUserColumns } from "@/admin/users/hooks/use-admin-user-columns";
+import { useQueryUsers } from "@/admin/users/hooks/use-query-users";
 import { FullPage } from "@/components/hoc/full-page";
 import { Modal } from "@/components/modal";
 import { Pagination } from "@/components/pagination";
-import { UserSearchFilters } from "@/erify/admin/users/components/user-search-filters";
-import { useAdminUserColumns } from "@/erify/admin/users/hooks/use-admin-user-columns";
-import { useQueryUsers } from "@/erify/admin/users/hooks/use-query-users";
 import { Button } from "@eridu/ui/components/button";
 import DataTable from "@eridu/ui/components/data-table";
 import { LoaderCircle, Plus } from "lucide-react";
@@ -12,7 +13,7 @@ import { LoaderCircle, Plus } from "lucide-react";
 const LIMIT = 10;
 
 const UsersPageContent: React.FC = () => {
-  const { isLoading, data, isError, error } = useQueryUsers();
+  const { data, isLoading, isError, error } = useQueryUsers();
   const columns = useAdminUserColumns();
 
   if (isLoading) {
@@ -33,12 +34,14 @@ const UsersPageContent: React.FC = () => {
     return <p className="text-center">No data</p>;
   }
 
-  const page = data ? Math.ceil(data.offset / data.limit) + 1 : 1;
+  const page = "offset" in data && data.offset !== undefined && data.limit !== undefined
+    ? Math.ceil(data.offset / data.limit) + 1
+    : 1;
 
   return (
     <>
       <div className="max-w-full overflow-auto h-full max-h-sm-user-content-area sm:max-h-user-content-area">
-        <DataTable columns={columns} data={data.data} />
+        <DataTable columns={columns} data={data.users} />
       </div>
       <div className="p-4">
         <Pagination pageSize={LIMIT} page={page} total={data?.total ?? 1} />
@@ -65,7 +68,9 @@ const UsersPage: React.FC = () => {
               <span>Add User</span>
             </Button>
           )}
-        />
+        >
+          <AddUserForm />
+        </Modal>
       </div>
       <UsersPageContent />
     </div>
