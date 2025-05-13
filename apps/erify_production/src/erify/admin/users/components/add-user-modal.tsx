@@ -1,4 +1,4 @@
-import { AddUserForm } from "@/admin/users/components/add-user-form";
+import { AddUserForm } from "@/erify/admin/users/components/add-user-form";
 import { Button } from "@eridu/ui/components/button";
 import {
   Dialog,
