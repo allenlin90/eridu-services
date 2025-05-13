@@ -9,8 +9,12 @@ export const MembershipProvider: React.FC<React.PropsWithChildren> = ({ children
   const [activeMembership, setActiveMembership] = useState<Membership>();
 
   const value = useMemo(() => {
+    const { activeOrganizationId } = session ?? {};
+    const membership = (session?.memberships ?? [])
+      .find(membership => membership.organization.id === activeOrganizationId);
+
     return {
-      activeMembership: activeMembership || session?.memberships[0],
+      activeMembership: activeMembership || membership || session?.memberships[0],
       setActiveMembership,
     };
   }, [session, activeMembership, setActiveMembership]);

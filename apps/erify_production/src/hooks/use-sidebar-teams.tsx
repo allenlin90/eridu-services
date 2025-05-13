@@ -5,6 +5,8 @@ import { useActiveMembership } from "@/hooks/use-active-membership";
 import useSession from "@eridu/auth-service/hooks/use-session";
 import { useMemo } from "react";
 
+import { useSetActiveTeam } from "./use-set-active-team";
+
 type TeamMembership = React.ComponentProps<typeof AppSidebar>["teams"][0];
 
 const renderLogo = (imgUrl?: string | null) => () => {
@@ -22,20 +24,28 @@ const renderLogo = (imgUrl?: string | null) => () => {
 
 export const useSidebarTeams = () => {
   const { session } = useSession();
-  const { setActiveMembership } = useActiveMembership();
+  const { activeMembership, setActiveMembership } = useActiveMembership();
+  const { mutate, isPending } = useSetActiveTeam();
 
   return useMemo<TeamMembership[]>(() => {
     return (session?.memberships as Membership[]).map((membership, _i, memberships) => ({
       id: membership.id,
+      disabled: isPending,
+      isActive: membership.id === activeMembership?.id,
       name: membership.organization?.name,
       logo: renderLogo(membership.organization?.logo),
       plan: membership.role,
-      onSwitchTeam: teamMembership => (_e) => {
+      onSwitchTeam: teamMembership => async (_e) => {
         const membership = memberships.find(membership =>
           membership.id === teamMembership.id,
         );
+
         setActiveMembership(membership);
+
+        if (membership) {
+          mutate(membership.organization.id);
+        }
       },
     }));
-  }, [session?.memberships, setActiveMembership]);
+  }, [activeMembership, isPending, mutate, session?.memberships, setActiveMembership]);
 };
