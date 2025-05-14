@@ -12,10 +12,14 @@ export const useAddUser = () => {
     mutationFn: async (...args: Parameters<AuthClient["admin"]["createUser"]>) => {
       const user = await authClient.admin.createUser(...args);
 
+      authClient.sendVerificationEmail({
+        email: args[0].email,
+      });
+
       return user;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["eridu-users"] });
     },
   });
 };
