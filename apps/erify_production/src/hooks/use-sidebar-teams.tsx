@@ -23,7 +23,7 @@ const renderLogo = (imgUrl?: string | null) => () => {
 };
 
 export const useSidebarTeams = () => {
-  const { session } = useSession();
+  const { session, refetch } = useSession();
   const { activeMembership, setActiveMembership } = useActiveMembership();
   const { mutate, isPending } = useSetActiveTeam();
 
@@ -44,8 +44,9 @@ export const useSidebarTeams = () => {
 
         if (membership) {
           mutate(membership.organization.id);
+          refetch();
         }
       },
     }));
-  }, [activeMembership, isPending, mutate, session?.memberships, setActiveMembership]);
+  }, [activeMembership, isPending, mutate, refetch, session?.memberships, setActiveMembership]);
 };
