@@ -12,7 +12,7 @@ const _authClient = createAuthClient({
 });
 
 // TODO: fix typing admin is any issue
-type AuthClient = typeof _authClient;
+export type AuthClient = typeof _authClient;
 
 export type AuthContextType = {
   baseURL: string;

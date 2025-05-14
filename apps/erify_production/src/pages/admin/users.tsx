@@ -13,10 +13,10 @@ import { LoaderCircle, Plus } from "lucide-react";
 const LIMIT = 10;
 
 const UsersPageContent: React.FC = () => {
-  const { data, isLoading, isError, error } = useQueryUsers();
+  const { data, isPending, isError, error } = useQueryUsers();
   const columns = useAdminUserColumns();
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="flex-1 flex justify-center items-center">
         <div>
