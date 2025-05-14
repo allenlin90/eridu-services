@@ -1,3 +1,5 @@
+import type { AuthClient } from "@eridu/auth-service/types";
+
 import { Button } from "@eridu/ui/components/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@eridu/ui/components/dropdown-menu";
 import { Input } from "@eridu/ui/components/input";
@@ -9,7 +11,7 @@ import { z } from "zod";
 
 const DEBOUNCE_TIME = 300;
 
-type Filter = "email" | "name";
+type Filter = Parameters<AuthClient["admin"]["listUsers"]>[0]["query"]["searchField"];
 
 const emailSchema = z.string().email("Invalid email address");
 
@@ -20,33 +22,46 @@ type UserSearchFiltersProps = {
 export const UserSearchFilters: React.FC<UserSearchFiltersProps> = (
   { className, ...props },
 ) => {
-  const [filter, setFilter] = useState<Filter>("email");
   const [searchParams, setSearchParams] = useSearchParams();
+  const [filter, setFilter] = useState<Filter>((searchParams.get("searchField") || "email") as Filter);
   const [error, setError] = useState<string>("");
 
   const defaultInputValue = useMemo(() => {
-    return searchParams.get("email") || searchParams.get("name") || "";
+    return searchParams.get("searchValue") || "";
   }, [searchParams]);
 
   const inputPlaceholder = useMemo(() => {
     return `search by ${filter}`;
   }, [filter]);
 
+  const updateSearchFilter = useCallback((filter: string) => {
+    setFilter(filter as Filter);
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+
+      if (filter) {
+        newParams.set("searchField", filter);
+      }
+
+      return newParams;
+    });
+  }, [setSearchParams]);
+
   const updateSearchParams = useMemo(() =>
     debounce((value: string) => {
-      setSearchParams((_prev) => {
-        const newParams = new URLSearchParams();
+      setSearchParams((prev) => {
+        const newParams = new URLSearchParams(prev);
 
         if (value) {
-          newParams.set(filter, value);
+          newParams.set("searchValue", value);
         }
         else {
-          newParams.delete(filter);
+          newParams.delete("searchValue");
         }
 
         return newParams;
       });
-    }, DEBOUNCE_TIME), [filter, setSearchParams]);
+    }, DEBOUNCE_TIME), [setSearchParams]);
 
   const onChange: React.ChangeEventHandler<HTMLInputElement>
   = useCallback((e) => {
@@ -87,7 +102,7 @@ export const UserSearchFilters: React.FC<UserSearchFiltersProps> = (
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuSeparator />
-          <DropdownMenuRadioGroup value={filter} onValueChange={val => setFilter(val as Filter)}>
+          <DropdownMenuRadioGroup value={filter} onValueChange={updateSearchFilter}>
             <DropdownMenuRadioItem value="email">Email</DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="name">Name</DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
