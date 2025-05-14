@@ -10,7 +10,8 @@ import {
   FormMessage,
 } from "@eridu/ui/components/form";
 import { Input } from "@eridu/ui/components/input";
-import PasswordInput from "@eridu/ui/components/password-input";
+import { PasswordInput } from "@eridu/ui/components/password-input";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@eridu/ui/components/select";
 import { cn } from "@eridu/ui/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback } from "react";
@@ -97,6 +98,31 @@ export const AddUserForm: React.FC<AddUserFormProps> = ({ className, ...props })
               <FormLabel>Password</FormLabel>
               <FormControl>
                 <PasswordInput {...field} />
+              </FormControl>
+              <FormDescription />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          {...form.register("role")}
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Role</FormLabel>
+              <FormControl>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Roles</SelectLabel>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="user">User</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </FormControl>
               <FormDescription />
               <FormMessage />
