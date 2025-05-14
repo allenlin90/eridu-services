@@ -3,9 +3,12 @@ import type { memberSchema, organizationSchema, teamSchema } from "better-auth/p
 import type { JWTPayload } from "jose";
 import type { z } from "zod";
 
+import type { AuthClient } from "@eridu/auth-service/contexts/auth-context";
+
 export type { AuthClient } from "@eridu/auth-service/contexts/auth-context";
 
-export type User = z.infer<typeof userSchema>;
+export type { UserWithRole } from "better-auth/plugins";
+export type User = AuthClient["$Infer"]["Session"]["user"];
 export type Member = z.infer<typeof memberSchema>;
 export type Organization = z.infer<typeof organizationSchema>;
 export type Team = z.infer<typeof teamSchema>;

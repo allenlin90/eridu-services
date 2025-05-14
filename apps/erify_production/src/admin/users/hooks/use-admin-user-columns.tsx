@@ -1,19 +1,11 @@
-import type { User } from "@eridu/auth-service/types";
+import type { UserWithRole } from "@eridu/auth-service/types";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { RowActions } from "@eridu/ui/components/table/row-actions";
+import { UsersTableRowActions } from "@/admin/users/components/users-table-row-actions";
 import { Square, SquareCheck } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 
-export const useAdminUserColumns = (): ColumnDef<User>[] => {
-  const copyUserId = useCallback(
-    (user_uid: string) =>
-      (_e: React.MouseEvent<HTMLDivElement>) => {
-        navigator.clipboard.writeText(user_uid);
-      },
-    [],
-  );
-
+export const useAdminUserColumns = (): ColumnDef<UserWithRole>[] => {
   return useMemo(() => {
     return [
       {
@@ -37,29 +29,26 @@ export const useAdminUserColumns = (): ColumnDef<User>[] => {
         },
       },
       {
+        accessorKey: "role",
+        header: "Role",
+      },
+      {
+        accessorKey: "banned",
+        header: "Banned",
+        cell: ({ row }) => {
+          const banned = row.original.banned;
+          return banned ? <SquareCheck /> : <span>-</span>;
+        },
+      },
+      {
         id: "actions",
         cell: ({ row }) => {
           const user = row.original;
-          const actions = [
-            { name: "Copy ID", onClick: copyUserId(user.id) },
-            // TODO: ban user
-            // TODO: unban user
-            // TODO: remove user
-            // TODO: revoke sessions of a user
-            // TODO: reset user password
-            // TODO: set user role
-            // TODO: send verification email
-            // TODO: impersonate user
-            // TODO: stop impersonating user
-          ];
-
-          return (
-            <RowActions actions={actions} />
-          );
+          return <UsersTableRowActions user={user} />;
         },
       },
     ];
-  }, [copyUserId]);
+  }, []);
 };
 
 export default useAdminUserColumns;
