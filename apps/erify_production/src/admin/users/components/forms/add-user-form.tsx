@@ -1,4 +1,5 @@
 import { useAddUser } from "@/admin/users/hooks/use-add-user";
+import { generateRandomString } from "@/utils";
 import { Button } from "@eridu/ui/components/button";
 import {
   Form,
@@ -42,6 +43,12 @@ export const AddUserForm: React.FC<AddUserFormProps> = ({ className, ...props })
   });
 
   const disabled = isPending;
+
+  const onGeneratePassword = useCallback(() => {
+    const password = generateRandomString();
+    form.setValue("password", password);
+    form.clearErrors("password");
+  }, [form]);
 
   const onSubmit = useCallback(
     ({ name, email, password, role }: FormSchema) => {
@@ -97,7 +104,16 @@ export const AddUserForm: React.FC<AddUserFormProps> = ({ className, ...props })
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <PasswordInput {...field} />
+                <div className="flex gap-2 flex-col sm:flex-row">
+                  <PasswordInput {...field} />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onGeneratePassword}
+                  >
+                    Generate
+                  </Button>
+                </div>
               </FormControl>
               <FormDescription />
               <FormMessage />
