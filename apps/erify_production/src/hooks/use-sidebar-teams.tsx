@@ -25,7 +25,7 @@ const renderLogo = (imgUrl?: string | null) => () => {
 export const useSidebarTeams = () => {
   const { session, refetch } = useSession();
   const { activeMembership, setActiveMembership } = useActiveMembership();
-  const { mutate, isPending } = useSetActiveTeam();
+  const { mutateAsync, isPending } = useSetActiveTeam();
 
   return useMemo<TeamMembership[]>(() => {
     return (session?.memberships as Membership[]).map((membership, _i, memberships) => ({
@@ -43,10 +43,10 @@ export const useSidebarTeams = () => {
         setActiveMembership(membership);
 
         if (membership) {
-          mutate(membership.organization.id);
-          refetch();
+          await mutateAsync(membership.organization.id);
+          await refetch();
         }
       },
     }));
-  }, [activeMembership, isPending, mutate, refetch, session?.memberships, setActiveMembership]);
+  }, [activeMembership, isPending, mutateAsync, refetch, session?.memberships, setActiveMembership]);
 };
