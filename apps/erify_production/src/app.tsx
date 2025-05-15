@@ -19,6 +19,7 @@ import ResetPasswordPage from "./pages/reset-password";
 
 // admin pages
 const AdminUsers = lazy(() => import("./pages/admin/users"));
+const AdminFullOrganization = lazy(() => import("./pages/admin/full-organization"));
 
 // livestream pages
 const LivestreamDashboard = lazy(() => import("./pages/livestream/dashboard"));
@@ -61,6 +62,7 @@ function App() {
               )}
             >
               <Route path={ROUTES.ADMIN.USERS} element={<AdminUsers />} />
+              <Route path={ROUTES.ADMIN.ORGANIZATION_DETAILS(":organization_uid")} element={<AdminFullOrganization />} />
             </Route>
             <Route
               path={ROUTES.LIVESTREAM.BASE}

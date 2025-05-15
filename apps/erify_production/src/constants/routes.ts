@@ -11,6 +11,7 @@ export const ROUTES = {
   ADMIN: {
     BASE: "/admin",
     USERS: "/admin/users",
+    ORGANIZATION_DETAILS: (organizationUid: string) => `/admin/organizations/${organizationUid}`,
   },
   ERIFY: {
     BASE: "/erify",

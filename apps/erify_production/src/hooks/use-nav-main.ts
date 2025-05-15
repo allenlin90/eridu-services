@@ -18,6 +18,7 @@ export const useNavMain = (): NavMain[] => {
 
   return useMemo(() => {
     const navList: NavMain[] = [];
+    const organizationUid = session?.activeOrganizationId || session?.memberships[0]?.organization.id;
 
     const eriduAdminList: NavMain = {
       title: "Eridu Admin",
@@ -31,6 +32,16 @@ export const useNavMain = (): NavMain[] => {
         },
       ],
     };
+
+    if (organizationUid) {
+      const membership = session.memberships.find(m => m.organization.id === organizationUid);
+
+      membership && eriduAdminList.items?.push({
+        title: membership.organization.name,
+        onClick: () => navigate(ROUTES.ADMIN.ORGANIZATION_DETAILS(organizationUid)),
+        props: { className: "w-full" },
+      });
+    }
 
     if (session?.role === "admin") {
       navList.push(eriduAdminList);
