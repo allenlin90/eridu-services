@@ -7,7 +7,7 @@ import type { Session } from "../types.ts";
 const _authClient = createAuthClient({
   plugins: [
     adminClient(),
-    organizationClient(),
+    organizationClient({ teams: { enabled: true } }),
   ],
 });
 
