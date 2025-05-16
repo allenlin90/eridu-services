@@ -1,12 +1,24 @@
-import type { FullOrganization } from "@/admin/full-organization/components/content";
+import type { Organization } from "@/admin/full-organization/types";
 
 import { Button } from "@eridu/ui/components/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@eridu/ui/components/dropdown-menu";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@eridu/ui/components/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@eridu/ui/components/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@eridu/ui/components/table";
 import { format } from "date-fns";
 import { Building, MoreHorizontal, Users } from "lucide-react";
-
-type Organization = React.ComponentProps<typeof FullOrganization>["organization"];
 
 type TeamsTableProps = {
   teams: Organization["teams"];

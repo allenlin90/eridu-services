@@ -1,11 +1,12 @@
 import { Content } from "@/admin/full-organization/components/content";
 import { Header } from "@/admin/full-organization/components/header";
-import { useFullOrganization } from "@/admin/full-organization/hooks/use-full-organization";
+import { useQueryFullOrganization } from "@/admin/full-organization/hooks/use-query-full-organization";
+import { FullOrganizationProvider } from "@/admin/full-organization/providers/full-organization-provider";
 import FullPage from "@/components/hoc/full-page";
 import { LoaderCircle } from "lucide-react";
 
 const AdminFullOrganization: React.FC = () => {
-  const { isPending, isError, data, error } = useFullOrganization();
+  const { isPending, isError, data, error } = useQueryFullOrganization();
 
   if (isPending) {
     return (
@@ -26,10 +27,12 @@ const AdminFullOrganization: React.FC = () => {
   }
 
   return (
-    <div className="p-4 flex flex-col gap-4">
-      <Header organization={data} />
-      <Content organization={data} />
-    </div>
+    <FullOrganizationProvider organization={data}>
+      <div className="p-4 flex flex-col gap-4">
+        <Header />
+        <Content />
+      </div>
+    </FullOrganizationProvider>
   );
 };
 
