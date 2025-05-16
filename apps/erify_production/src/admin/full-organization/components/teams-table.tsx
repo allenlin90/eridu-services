@@ -1,4 +1,4 @@
-import type { FullOrganization } from "@/admin/full-organization/components/full-organization";
+import type { FullOrganization } from "@/admin/full-organization/components/content";
 
 import { Button } from "@eridu/ui/components/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@eridu/ui/components/dropdown-menu";

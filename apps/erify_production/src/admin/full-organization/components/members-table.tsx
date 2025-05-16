@@ -1,4 +1,4 @@
-import type { FullOrganization } from "@/admin/full-organization/components/full-organization";
+import type { Organization } from "@/admin/full-organization/types";
 
 import { RoleBadge } from "@/components/role-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@eridu/ui/components/avatar";
@@ -7,8 +7,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@eridu/ui/components/table";
 import { format } from "date-fns";
 import { MoreHorizontal } from "lucide-react";
-
-type Organization = React.ComponentProps<typeof FullOrganization>["organization"];
 
 type MembersTableProps = {
   members: Organization["members"];
