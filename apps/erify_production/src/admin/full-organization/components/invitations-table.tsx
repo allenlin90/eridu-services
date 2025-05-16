@@ -1,4 +1,4 @@
-import type { FullOrganization } from "@/admin/full-organization/components/full-organization";
+import type { Organization } from "@/admin/full-organization/types";
 
 import { RoleBadge } from "@/components/role-badge";
 import { StatusBadge } from "@/components/status-badge";
@@ -6,8 +6,6 @@ import { Button } from "@eridu/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@eridu/ui/components/table";
 import { format } from "date-fns";
 import { Mail } from "lucide-react";
-
-type Organization = React.ComponentProps<typeof FullOrganization>["organization"];
 
 type InvitationsTableProps = {
   invitations: Organization["invitations"];

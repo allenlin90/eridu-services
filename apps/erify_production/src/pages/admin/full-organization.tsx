@@ -1,4 +1,5 @@
-import { FullOrganization } from "@/admin/full-organization/components/full-organization";
+import { Content } from "@/admin/full-organization/components/content";
+import { Header } from "@/admin/full-organization/components/header";
 import { useFullOrganization } from "@/admin/full-organization/hooks/use-full-organization";
 import FullPage from "@/components/hoc/full-page";
 import { LoaderCircle } from "lucide-react";
@@ -25,8 +26,9 @@ const AdminFullOrganization: React.FC = () => {
   }
 
   return (
-    <div className="p-4">
-      <FullOrganization organization={data} />
+    <div className="p-4 flex flex-col gap-4">
+      <Header organization={data} />
+      <Content organization={data} />
     </div>
   );
 };
