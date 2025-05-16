@@ -1,3 +1,3 @@
-import type { useFullOrganization } from "@/admin/full-organization/hooks/use-full-organization";
+import type { useQueryFullOrganization } from "@/admin/full-organization/hooks/use-query-full-organization";
 
-export type Organization = NonNullable<ReturnType<typeof useFullOrganization>["data"]>;
+export type Organization = NonNullable<ReturnType<typeof useQueryFullOrganization>["data"]>;

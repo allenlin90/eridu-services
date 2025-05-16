@@ -1,18 +1,12 @@
-import { useSession } from "@eridu/auth-service/hooks/use-session";
-import { useQuery } from "@tanstack/react-query";
+import { FullOrganizationContext } from "@/admin/full-organization/contexts/full-organization-context";
+import { useContext } from "react";
 
 export const useFullOrganization = () => {
-  const { authClient, session } = useSession();
+  const ctx = useContext(FullOrganizationContext);
 
-  return useQuery({
-    queryKey: ["organization", session?.activeOrganizationId],
-    queryFn: async () => {
-      const res = await authClient.organization.getFullOrganization();
+  if (!ctx) {
+    throw new Error("useFullOrganization can only be used in FullOrganizationContext");
+  }
 
-      return res.data;
-    },
-    refetchOnWindowFocus: false,
-  });
+  return ctx;
 };
-
-export default useFullOrganization;

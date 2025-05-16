@@ -1,5 +1,4 @@
-import type { useFullOrganization } from "@/admin/full-organization/hooks/use-full-organization";
-
+import { useFullOrganization } from "@/admin/full-organization/hooks/use-full-organization";
 import { Avatar, AvatarFallback, AvatarImage } from "@eridu/ui/components/avatar";
 import { Badge } from "@eridu/ui/components/badge";
 import { Button } from "@eridu/ui/components/button";
@@ -7,17 +6,13 @@ import { format } from "date-fns";
 import { Calendar, Copy } from "lucide-react";
 import { useCallback } from "react";
 
-type Organization = NonNullable<ReturnType<typeof useFullOrganization>["data"]>;
-
-type HeaderProps = { organization: Pick<Organization, "id" | "name" | "logo" | "slug" | "createdAt"> };
-
-export const Header: React.FC<HeaderProps> = ({ organization }) => {
-  const { id, name, slug, logo, createdAt } = organization;
+export const Header: React.FC = () => {
+  const { organization: { id, name, slug, logo, createdAt } } = useFullOrganization();
 
   const onClick: React.MouseEventHandler<HTMLButtonElement>
    = useCallback(() => {
-     navigator.clipboard.writeText(organization.id);
-   }, [organization.id]);
+     navigator.clipboard.writeText(id);
+   }, [id]);
 
   return (
     <div className="flex items-center gap-4">
