@@ -1,7 +1,7 @@
 import type { FullOrganization } from "@/admin/full-organization/components/full-organization";
 
-import { RoleBadge } from "@/admin/full-organization/components/role-badge";
-import { StatusBadge } from "@/admin/full-organization/components/status-badge";
+import { RoleBadge } from "@/components/role-badge";
+import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@eridu/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@eridu/ui/components/table";
 import { format } from "date-fns";
