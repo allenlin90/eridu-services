@@ -1,6 +1,6 @@
 import type { FullOrganization } from "@/admin/full-organization/components/full-organization";
 
-import { RoleBadge } from "@/admin/full-organization/components/role-badge";
+import { RoleBadge } from "@/components/role-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@eridu/ui/components/avatar";
 import { Button } from "@eridu/ui/components/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@eridu/ui/components/dropdown-menu";
