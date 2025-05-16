@@ -88,6 +88,8 @@ export const UserSearchFilters: React.FC<UserSearchFiltersProps> = (
       <div className="flex flex-col w-full">
         <div className="flex-1 mb-2">
           <Input
+            id="search_users"
+            name="search_users"
             type={filter === "email" ? "email" : "text"}
             placeholder={inputPlaceholder}
             defaultValue={defaultInputValue}
