@@ -18,13 +18,13 @@ type Action = {
 type RowActionsProps = {
   actionHeader?: string;
   actions: Action[];
-};
+} & React.ComponentProps<typeof DropdownMenu>;
 
 export const RowActions: React.FC<React.PropsWithChildren<RowActionsProps>> = (
-  { actionHeader = "Actions", actions, children },
+  { actionHeader = "Actions", actions, children, ...props },
 ) => {
   return (
-    <DropdownMenu>
+    <DropdownMenu {...props}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-8 w-8 p-0">
           <span className="sr-only">Open menu</span>
