@@ -13,6 +13,7 @@ import { Route, Routes } from "react-router";
 
 import Dashboard from "./pages/dashboard";
 import ForgetPasswordPage from "./pages/forget-password";
+import InvitationPage from "./pages/invitation";
 import LoginPage from "./pages/login";
 import NotFound from "./pages/not-found";
 import ResetPasswordPage from "./pages/reset-password";
@@ -53,6 +54,7 @@ function App() {
           </Route>
           <Route element={<PrivateRouteGuard />}>
             <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
+            <Route path={ROUTES.INVITATIONS.INVITATION_DETAILS(":invitation_id")} element={<InvitationPage />} />
             <Route
               path={ROUTES.ADMIN.BASE}
               element={(
