@@ -1,6 +1,6 @@
 import { MembersHeader } from "@/admin/full-organization/components/members/members-header";
 import { MembersTable } from "@/admin/full-organization/components/members/members-table";
-import { Settings } from "@/admin/full-organization/components/settings";
+import { Settings } from "@/admin/full-organization/components/settings/settings";
 import { TeamsHeader } from "@/admin/full-organization/components/teams/teams-header";
 import { TeamsTable } from "@/admin/full-organization/components/teams/teams-table";
 import { useFullOrganization } from "@/admin/full-organization/hooks/use-full-organization";
