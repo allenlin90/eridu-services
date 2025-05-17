@@ -101,9 +101,7 @@ export const MembersTable: React.FC<MembersTableProps> = ({ organization, getTea
                             </DropdownMenuSubContent>
                           </DropdownMenuSub>
                           <DropdownMenuSeparator />
-                          <RemoveMemberDialog
-                            member={member}
-                          >
+                          <RemoveMemberDialog member={member}>
                             <DropdownMenuItem onSelect={(e) => { e.preventDefault(); }}>
                               <span className="text-destructive">
                                 Remove from Organization
