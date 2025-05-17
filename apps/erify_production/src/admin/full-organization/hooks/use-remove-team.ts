@@ -10,11 +10,10 @@ export const useRemoveTeam = () => {
     mutationFn: async (...args: Parameters<typeof authClient.organization.removeTeam>) => {
       const res = await authClient.organization.removeTeam(...args);
 
-      if (res.data) {
-        queryClient.invalidateQueries({ queryKey: ["organization"] });
-      }
-
       return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organization"] });
     },
   });
 };

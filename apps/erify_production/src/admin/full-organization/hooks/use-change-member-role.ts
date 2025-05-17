@@ -12,9 +12,10 @@ export const useChangeMemberRole = () => {
     mutationFn: async (...args: Parameters<AuthClient["organization"]["updateMemberRole"]>) => {
       const res = await authClient.organization.updateMemberRole(...args);
 
-      queryClient.invalidateQueries({ queryKey: ["organization"] });
-
       return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organization"] });
     },
   });
 };
