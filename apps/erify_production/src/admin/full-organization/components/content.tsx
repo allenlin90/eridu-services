@@ -29,7 +29,10 @@ export const Content: React.FC = () => {
       </TabsList>
       <TabsContent value="members" className="flex flex-col gap-4">
         <InviteMember />
-        <MembersTable members={organization.members} getTeamName={getTeamName} />
+        <MembersTable
+          organization={organization}
+          getTeamName={getTeamName}
+        />
       </TabsContent>
       <TabsContent value="teams">
         <TeamsTable teams={organization.teams} />
