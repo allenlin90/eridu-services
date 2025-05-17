@@ -1,4 +1,5 @@
 import { useFullOrganization } from "@/admin/full-organization/hooks/use-full-organization";
+import { useInviteMember } from "@/admin/full-organization/hooks/use-invite-member";
 import { Button } from "@eridu/ui/components/button";
 import {
   Form,
@@ -26,8 +27,6 @@ import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { useInviteMember } from "../../hooks/use-invite-member";
-
 const formSchema = z.object({
   email: z.string().email(),
   organizationId: z.string(),
@@ -37,9 +36,11 @@ const formSchema = z.object({
 
 export type FormSchema = z.infer<typeof formSchema>;
 
-type InviteMemberFormProps = {} & React.ComponentProps<"form">;
+type InviteMemberFormProps = {
+  submit?: () => void | Promise<void>;
+} & React.ComponentProps<"form">;
 
-export const InviteMemberForm: React.FC<InviteMemberFormProps> = ({ className, ...props }) => {
+export const InviteMemberForm: React.FC<InviteMemberFormProps> = ({ className, submit, ...props }) => {
   const { organization } = useFullOrganization();
   const { mutateAsync, isPending } = useInviteMember();
   const { toast } = useToast();
@@ -65,12 +66,14 @@ export const InviteMemberForm: React.FC<InviteMemberFormProps> = ({ className, .
     });
 
     if (data) {
+      await submit?.();
+
       toast({
         variant: "success",
         description: `invitation is sent to ${email}`,
       });
     }
-  }, [mutateAsync, toast]);
+  }, [mutateAsync, submit, toast]);
 
   return (
     <Form {...form}>

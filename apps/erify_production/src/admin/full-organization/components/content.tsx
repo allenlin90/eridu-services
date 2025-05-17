@@ -1,7 +1,8 @@
-import { InviteMember } from "@/admin/full-organization/components/members/invite-member";
+import { MembersHeader } from "@/admin/full-organization/components/members/members-header";
 import { MembersTable } from "@/admin/full-organization/components/members/members-table";
 import { Settings } from "@/admin/full-organization/components/settings";
-import { TeamsTable } from "@/admin/full-organization/components/teams-table";
+import { TeamsHeader } from "@/admin/full-organization/components/teams/teams-header";
+import { TeamsTable } from "@/admin/full-organization/components/teams/teams-table";
 import { useFullOrganization } from "@/admin/full-organization/hooks/use-full-organization";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@eridu/ui/components/tabs";
 import { useCallback, useMemo } from "react";
@@ -28,13 +29,14 @@ export const Content: React.FC = () => {
         <TabsTrigger value="settings">Settings</TabsTrigger>
       </TabsList>
       <TabsContent value="members" className="flex flex-col gap-4">
-        <InviteMember />
+        <MembersHeader />
         <MembersTable
           organization={organization}
           getTeamName={getTeamName}
         />
       </TabsContent>
-      <TabsContent value="teams">
+      <TabsContent value="teams" className="flex flex-col gap-4">
+        <TeamsHeader />
         <TeamsTable teams={organization.teams} />
       </TabsContent>
       <TabsContent value="settings">
