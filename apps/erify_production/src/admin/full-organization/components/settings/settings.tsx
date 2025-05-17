@@ -29,7 +29,7 @@ export const Settings: React.FC<SettingsProps> = ({ organization, getTeamName })
                   Permanently delete this organization and all associated data
                 </p>
               </div>
-              <Button variant="destructive">Delete Organization</Button>
+              <Button disabled variant="destructive">Delete Organization</Button>
             </div>
           </div>
         </div>
