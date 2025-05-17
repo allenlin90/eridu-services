@@ -18,7 +18,9 @@ import {
   TableRow,
 } from "@eridu/ui/components/table";
 import { format } from "date-fns";
-import { Building, MoreHorizontal, Users } from "lucide-react";
+import { Building, MoreHorizontal } from "lucide-react";
+
+import RemoveTeamDialog from "./remove-team-dialog";
 
 type TeamsTableProps = {
   teams: Organization["teams"];
@@ -59,7 +61,7 @@ export const TeamsTable: React.FC<TeamsTableProps> = ({ teams }) => {
                     <TableCell className="text-nowrap">{format(new Date(team.createdAt), "MMM d, yyyy")}</TableCell>
                     <TableCell className="text-nowrap">{team.updatedAt ? format(new Date(team.updatedAt), "MMM d, yyyy") : "Never"}</TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
+                      <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon">
                             <MoreHorizontal className="h-4 w-4" />
@@ -69,13 +71,15 @@ export const TeamsTable: React.FC<TeamsTableProps> = ({ teams }) => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>
-                            <Users className="h-4 w-4 mr-2" />
-                            View Members
-                          </DropdownMenuItem>
                           <DropdownMenuItem>Edit Team</DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive">Delete Team</DropdownMenuItem>
+                          <RemoveTeamDialog team={team}>
+                            <DropdownMenuItem onSelect={e => e.preventDefault()}>
+                              <span className="text-destructive">
+                                Delete Team
+                              </span>
+                            </DropdownMenuItem>
+                          </RemoveTeamDialog>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
