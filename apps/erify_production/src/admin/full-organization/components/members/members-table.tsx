@@ -1,19 +1,36 @@
 import type { Organization } from "@/admin/full-organization/types";
+import type { Role } from "@eridu/auth-service/types";
 
+import { useChangeMemberRole } from "@/admin/full-organization/hooks/use-change-member-role";
 import { RoleBadge } from "@/components/role-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@eridu/ui/components/avatar";
 import { Button } from "@eridu/ui/components/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@eridu/ui/components/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@eridu/ui/components/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@eridu/ui/components/table";
 import { format } from "date-fns";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Shield, User } from "lucide-react";
+import { useCallback } from "react";
+
+import RemoveMemberDialog from "./remove-member-dialog";
 
 type MembersTableProps = {
-  members: Organization["members"];
+  organization: Organization;
   getTeamName: (teamId?: string) => string;
 };
 
-export const MembersTable: React.FC<MembersTableProps> = ({ members, getTeamName }) => {
+export const MembersTable: React.FC<MembersTableProps> = ({ organization, getTeamName }) => {
+  const { members } = organization;
+  const { mutateAsync: changeMemberRole } = useChangeMemberRole();
+
+  const onRoleChange = useCallback((memberId: string, role: Exclude<Role, "user">) =>
+    async (_e: React.MouseEvent<HTMLDivElement>) => {
+      await changeMemberRole({
+        organizationId: organization.id,
+        memberId,
+        role,
+      });
+    }, [organization.id, changeMemberRole]);
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -54,7 +71,7 @@ export const MembersTable: React.FC<MembersTableProps> = ({ members, getTeamName
                     <TableCell className="text-nowrap">{getTeamName(member.teamId)}</TableCell>
                     <TableCell className="text-nowrap">{format(new Date(member.createdAt), "MMM d, yyyy")}</TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
+                      <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon">
                             <MoreHorizontal className="h-4 w-4" />
@@ -64,10 +81,35 @@ export const MembersTable: React.FC<MembersTableProps> = ({ members, getTeamName
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>Change Role</DropdownMenuItem>
-                          <DropdownMenuItem>Change Team</DropdownMenuItem>
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>Change Role</DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent>
+                              <DropdownMenuItem
+                                onClick={onRoleChange(member.id, "admin")}
+                                disabled={member.role === "admin"}
+                              >
+                                <Shield className="h-4 w-4 mr-2" />
+                                Admin
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={onRoleChange(member.id, "member")}
+                                disabled={member.role === "member"}
+                              >
+                                <User className="h-4 w-4 mr-2" />
+                                Member
+                              </DropdownMenuItem>
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive">Remove from Organization</DropdownMenuItem>
+                          <RemoveMemberDialog
+                            member={member}
+                          >
+                            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); }}>
+                              <span className="text-destructive">
+                                Remove from Organization
+                              </span>
+                            </DropdownMenuItem>
+                          </RemoveMemberDialog>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
