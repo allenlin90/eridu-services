@@ -3,6 +3,9 @@ export const ROUTES = {
   FORGET_PASSWORD: "/forget-password",
   RESET_PASSWORD: "/reset-password",
   DASHBOARD: "/",
+  INVITATIONS: {
+    INVITATION_DETAILS: (invitationId: string) => `/invitations/${invitationId}`,
+  },
   LIVESTREAM: {
     BASE: "/livestream",
     SHOWS: "/livestream/shows",

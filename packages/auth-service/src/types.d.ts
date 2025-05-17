@@ -14,6 +14,7 @@ export type Organization = z.infer<typeof organizationSchema>;
 export type Team = z.infer<typeof teamSchema>;
 export type Membership = (Member & { organization: Organization; team: Team });
 export type Invitation = z.infer<typeof invitationSchema>;
+export type InvitationWithOrganization = Invitation & { organizationName: string; inviterEmail: string };
 export type Role = "admin" | "user" | "owner" | "member";
 export type Session = JWTPayload & User & {
   role: Role;
