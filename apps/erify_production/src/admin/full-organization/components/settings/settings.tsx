@@ -1,6 +1,6 @@
 import type { Organization } from "@/admin/full-organization/types";
 
-import { InvitationsTable } from "@/admin/full-organization/components/invitations-table";
+import { InvitationsTable } from "@/admin/full-organization/components/settings/invitations-table";
 import { Button } from "@eridu/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@eridu/ui/components/card";
 
