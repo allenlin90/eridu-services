@@ -1,5 +1,7 @@
 import type { Organization } from "@/admin/full-organization/types";
 
+import { EditTeamDialog } from "@/admin/full-organization/components/teams/edit-team-dialog";
+import { RemoveTeamDialog } from "@/admin/full-organization/components/teams/remove-team-dialog";
 import { Button } from "@eridu/ui/components/button";
 import {
   DropdownMenu,
@@ -19,8 +21,6 @@ import {
 } from "@eridu/ui/components/table";
 import { format } from "date-fns";
 import { Building, MoreHorizontal } from "lucide-react";
-
-import RemoveTeamDialog from "./remove-team-dialog";
 
 type TeamsTableProps = {
   teams: Organization["teams"];
@@ -71,7 +71,13 @@ export const TeamsTable: React.FC<TeamsTableProps> = ({ teams }) => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>Edit Team</DropdownMenuItem>
+                          <EditTeamDialog team={team}>
+                            <DropdownMenuItem onSelect={e => e.preventDefault()}>
+                              <span>
+                                Edit Team
+                              </span>
+                            </DropdownMenuItem>
+                          </EditTeamDialog>
                           <DropdownMenuSeparator />
                           <RemoveTeamDialog team={team}>
                             <DropdownMenuItem onSelect={e => e.preventDefault()}>
