@@ -10,11 +10,10 @@ export const useCreateTeam = () => {
     mutationFn: async (...args: Parameters<typeof authClient.organization.createTeam>) => {
       const res = await authClient.organization.createTeam(...args);
 
-      if (res.data) {
-        queryClient.invalidateQueries({ queryKey: ["organization"] });
-      }
-
       return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organization"] });
     },
   });
 };

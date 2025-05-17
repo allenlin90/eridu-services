@@ -10,11 +10,10 @@ export const useInviteMember = () => {
     mutationFn: async (...args: Parameters<typeof authClient.organization.inviteMember>) => {
       const res = await authClient.organization.inviteMember(...args);
 
-      if (res.data) {
-        queryClient.invalidateQueries({ queryKey: ["organization"] });
-      }
-
       return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organization"] });
     },
   });
 };

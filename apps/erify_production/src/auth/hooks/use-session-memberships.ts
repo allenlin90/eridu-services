@@ -7,7 +7,7 @@ export const useSessionMemberships = () => {
   const { session } = useSession();
 
   return useMemo(() => {
-    return (session.memberships as Membership[]).reduce((store, membership) => {
+    return (session?.memberships as Membership[]).reduce((store, membership) => {
       store.isErifyTeam = store.isErifyTeam || membership.organization.slug === "erify";
       store.isErifyAdmin = store.isErifyAdmin
       || (membership.organization.slug === "erify" && membership.role === "admin");

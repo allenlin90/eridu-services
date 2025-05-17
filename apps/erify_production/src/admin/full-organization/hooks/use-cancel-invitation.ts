@@ -10,11 +10,10 @@ export const useCancelInvitation = () => {
     mutationFn: async (...args: Parameters<typeof authClient["organization"]["cancelInvitation"]>) => {
       const res = await authClient.organization.cancelInvitation(...args);
 
-      if (res.data) {
-        queryClient.invalidateQueries({ queryKey: ["organization"] });
-      }
-
       return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organization"] });
     },
   });
 };
