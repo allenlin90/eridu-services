@@ -1,6 +1,7 @@
 import { useRowActionStore } from "../stores/use-row-action-store";
 import { BanUserDialog } from "./dialogs/ban-user-dialog";
 import { ResetPasswordDialog } from "./dialogs/reset-password-dialog";
+import { RevokeUserSessionsDialog } from "./dialogs/revoke-user-sessions-dialog";
 import { SendVerificationEmailDialog } from "./dialogs/send-verification-email-dialog";
 import { UnbanUserDialog } from "./dialogs/unban-user-dialog";
 
@@ -26,6 +27,11 @@ export const Dialogs: React.FC = () => {
       />
       <SendVerificationEmailDialog
         open={action === "send_verification_email"}
+        onOpenChange={open => !open && closeDialog()}
+        user={user}
+      />
+      <RevokeUserSessionsDialog
+        open={action === "revoke_user_sessions"}
         onOpenChange={open => !open && closeDialog()}
         user={user}
       />
