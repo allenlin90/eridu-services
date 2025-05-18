@@ -16,7 +16,7 @@ import { useToast } from "@eridu/ui/hooks/use-toast";
 import { useCallback } from "react";
 
 type BanUserDialogProps = {
-  user: UserWithRole;
+  user?: UserWithRole | null;
 } & React.ComponentProps<typeof AlertDialog>;
 
 export const BanUserDialog: React.FC<BanUserDialogProps> = ({ user, ...props }) => {
@@ -36,9 +36,12 @@ export const BanUserDialog: React.FC<BanUserDialogProps> = ({ user, ...props }) 
 
       await mutateAsync({ userId });
       toast({
-        description: `${user.name} is banned`,
+        description: `${user?.name} is banned`,
       });
     }, [mutateAsync, user, session, toast]);
+
+  if (!user)
+    return null;
 
   return (
     <AlertDialog {...props}>
