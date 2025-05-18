@@ -30,10 +30,10 @@ export const UsersTableRowActions: React.FC<UsersTableRowActionsProps> = ({ user
     { name: "Ban user", onClick: () => { openDialog("ban_user", user); } },
     { name: "Unban user", onClick: () => { openDialog("unban_user", user); } },
     { name: "Reset Password", onClick: () => { openDialog("reset_user_password", user); } },
+    { name: "Send verification", onClick: () => { openDialog("send_verification_email", user); } },
     // TODO: remove user
     // TODO: revoke sessions of a user
     // TODO: set user role
-    // TODO: send verification email
     // TODO: impersonate user
     // TODO: stop impersonating user
   ];
