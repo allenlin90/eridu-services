@@ -1,5 +1,5 @@
+import { useAddMember } from "@/admin/full-organization/hooks/use-add-member";
 import { useFullOrganization } from "@/admin/full-organization/hooks/use-full-organization";
-import { useInviteMember } from "@/admin/full-organization/hooks/use-invite-member";
 import { Button } from "@eridu/ui/components/button";
 import {
   Form,
@@ -23,12 +23,13 @@ import {
 import { useToast } from "@eridu/ui/hooks/use-toast";
 import { cn } from "@eridu/ui/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 const formSchema = z.object({
-  email: z.string().email(),
+  userId: z.string(),
   organizationId: z.string(),
   teamId: z.string(),
   role: z.enum(["admin", "member"]),
@@ -36,19 +37,40 @@ const formSchema = z.object({
 
 export type FormSchema = z.infer<typeof formSchema>;
 
-type InviteMemberFormProps = {
+type AddMemberFormProps = {
   submit?: () => void | Promise<void>;
 } & React.ComponentProps<"form">;
 
-export const InviteMemberForm: React.FC<InviteMemberFormProps> = ({ className, submit, ...props }) => {
-  const { organization } = useFullOrganization();
-  const { mutateAsync, isPending } = useInviteMember();
+export const AddMemberForm: React.FC<AddMemberFormProps> = ({ className, submit, ...props }) => {
   const { toast } = useToast();
+  const { organization } = useFullOrganization();
+  const queryClient = useQueryClient();
+
+  const { mutateAsync, isPending } = useAddMember({
+    onSuccess: async ({ userId, teamId }) => {
+      queryClient.invalidateQueries({ queryKey: ["organization"] });
+
+      await submit?.();
+
+      const team = organization.teams.find(team => team.id === teamId);
+
+      toast({
+        variant: "success",
+        description: `User: ${userId} is added to team ${team?.name ?? teamId}`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        description: error.response?.data.error || "something went wrong",
+      });
+    },
+  });
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
+      userId: "",
       organizationId: organization.id,
       teamId: organization.teams[0]?.id ?? "",
       role: "member",
@@ -56,24 +78,14 @@ export const InviteMemberForm: React.FC<InviteMemberFormProps> = ({ className, s
     disabled: isPending,
   });
 
-  const onSubmit = useCallback(async ({ email, organizationId, teamId, role }: FormSchema) => {
-    const data = await mutateAsync({
-      email,
+  const onSubmit = useCallback(async ({ userId, organizationId, teamId, role }: FormSchema) => {
+    await mutateAsync({
+      userId,
       organizationId,
       teamId,
       role,
-      resend: true,
     });
-
-    if (data) {
-      await submit?.();
-
-      toast({
-        variant: "success",
-        description: `invitation is sent to ${email}`,
-      });
-    }
-  }, [mutateAsync, submit, toast]);
+  }, [mutateAsync]);
 
   return (
     <Form {...form}>
@@ -82,15 +94,15 @@ export const InviteMemberForm: React.FC<InviteMemberFormProps> = ({ className, s
         {...props}
         onSubmit={form.handleSubmit(onSubmit)}
       >
-        <p className="text-gray-500 text-sm mb-3">System will send invitation email to the user. The user will become a member after confirmation</p>
+        <p className="text-gray-500 text-sm mb-3">The user membership will be created after confirm</p>
         <FormField
-          {...form.register("email")}
+          {...form.register("userId")}
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="email">Email</FormLabel>
+              <FormLabel htmlFor="user_id">User ID</FormLabel>
               <FormControl>
-                <Input id="email" type="email" {...field} />
+                <Input id="user_id" type="text" {...field} />
               </FormControl>
               <FormDescription />
               <FormMessage />
@@ -99,13 +111,12 @@ export const InviteMemberForm: React.FC<InviteMemberFormProps> = ({ className, s
         />
         <FormField
           {...form.register("organizationId")}
-          disabled
           control={form.control}
           render={({ field }) => (
             <FormItem>
               <FormLabel htmlFor="organization_id">Organization ID</FormLabel>
               <FormControl>
-                <Input id="organization_id" type="text" disabled {...field} />
+                <Input id="organization_id" type="text" readOnly {...field} />
               </FormControl>
               <FormDescription />
               <FormMessage />
@@ -170,7 +181,7 @@ export const InviteMemberForm: React.FC<InviteMemberFormProps> = ({ className, s
           )}
         />
         <div className="w-full flex justify-end">
-          <Button disabled={isPending}>Invite</Button>
+          <Button disabled={isPending}>Confirm</Button>
         </div>
       </form>
     </Form>
