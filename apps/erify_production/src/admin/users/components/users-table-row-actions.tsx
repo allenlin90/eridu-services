@@ -29,9 +29,9 @@ export const UsersTableRowActions: React.FC<UsersTableRowActionsProps> = ({ user
     { name: "Copy ID", onClick: copyUserId(user.id) },
     { name: "Ban user", onClick: () => { openDialog("ban_user", user); } },
     { name: "Unban user", onClick: () => { openDialog("unban_user", user); } },
+    { name: "Reset Password", onClick: () => { openDialog("reset_user_password", user); } },
     // TODO: remove user
     // TODO: revoke sessions of a user
-    // TODO: reset user password
     // TODO: set user role
     // TODO: send verification email
     // TODO: impersonate user
