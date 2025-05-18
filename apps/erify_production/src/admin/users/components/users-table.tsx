@@ -4,6 +4,8 @@ import { Pagination } from "@/components/pagination";
 import DataTable from "@eridu/ui/components/data-table";
 import { LoaderCircle } from "lucide-react";
 
+import { Dialogs } from "./dialogs";
+
 // TODO: allow users to change the limit
 const LIMIT = 10;
 
@@ -41,6 +43,7 @@ export const UsersTable: React.FC = () => {
       <div className="p-4">
         <Pagination pageSize={LIMIT} page={page} total={data?.total ?? 1} />
       </div>
+      <Dialogs />
     </>
   );
 };
