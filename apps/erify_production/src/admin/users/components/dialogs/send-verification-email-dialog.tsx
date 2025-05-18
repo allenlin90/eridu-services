@@ -55,7 +55,7 @@ export const SendVerificationEmailDialog: React.FC<SendVerificationEmailDialogPr
     <AlertDialog {...props}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Send </AlertDialogTitle>
+          <AlertDialogTitle>Send verification email</AlertDialogTitle>
           <AlertDialogDescription>
             {`Are you sure you want to send verification email to ${user.name} at ${user.email}?`}
           </AlertDialogDescription>
