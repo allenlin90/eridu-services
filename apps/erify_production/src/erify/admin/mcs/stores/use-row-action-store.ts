@@ -1,4 +1,4 @@
-import type { Brand } from "@/erify/types";
+import type { MC } from "@/erify/types";
 
 import { create } from "zustand";
 
@@ -9,14 +9,14 @@ type Actions =
 
 type RowActionState = {
   action: Actions;
-  brand: Brand | null;
-  openDialog: (action: Actions, brand: Brand) => void;
+  mc: MC | null;
+  openDialog: (action: Actions, mc: MC) => void;
   closeDialog: () => void;
 };
 
 export const useRowActionStore = create<RowActionState>(set => ({
   action: null,
-  brand: null,
-  openDialog: (action, brand) => set({ action, brand }),
-  closeDialog: () => set({ action: null, brand: null }),
+  mc: null,
+  openDialog: (action, mc) => set({ action, mc }),
+  closeDialog: () => set({ action: null, mc: null }),
 }));

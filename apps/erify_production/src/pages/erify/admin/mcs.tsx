@@ -1,6 +1,7 @@
 import { FullPage } from "@/components/hoc/full-page";
 import { PaginatedDataTable } from "@/components/paginated-data-table";
 import { AddMcModal } from "@/erify/admin/mcs/components/add-mc-modal";
+import { Dialogs } from "@/erify/admin/mcs/components/dialogs";
 import { McSearchFilters } from "@/erify/admin/mcs/components/mc-search-filters";
 import { useAdminMcColumns } from "@/erify/admin/mcs/hooks/use-admin-mc-columns";
 import { useQueryMcs } from "@/erify/admin/mcs/hooks/use-query-mcs";
@@ -22,6 +23,7 @@ const MCs: React.FC = () => {
         isLoading={isPending}
         isError={isError}
       />
+      <Dialogs />
     </div>
   );
 };
