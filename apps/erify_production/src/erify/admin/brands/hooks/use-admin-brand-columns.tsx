@@ -4,7 +4,10 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { RowActions } from "@eridu/ui/components/table/row-actions";
 import { useCallback, useMemo } from "react";
 
+import { useRowActionStore } from "../stores/use-row-action-store";
+
 export const useAdminBrandColumns = (): ColumnDef<Brand>[] => {
+  const openDialog = useRowActionStore(state => state.openDialog);
   const copyId = useCallback(
     (user_id: string) =>
       (_e: React.MouseEvent<HTMLDivElement>) => {
@@ -26,16 +29,25 @@ export const useAdminBrandColumns = (): ColumnDef<Brand>[] => {
       {
         id: "actions",
         cell: ({ row }) => {
-          const user = row.original;
+          const brand = row.original;
           return (
-            <RowActions actions={[{
-              name: "Copy ID",
-              onClick: copyId(user.uid),
-            }]}
+            <RowActions
+              modal={false}
+              actions={[
+                {
+                  name: "Copy ID",
+                  onClick: copyId(brand.uid),
+                },
+                {
+                  name: "Remove brand",
+                  className: "text-destructive",
+                  onClick: () => openDialog("remove_brand", brand),
+                },
+              ]}
             />
           );
         },
       },
     ];
-  }, [copyId]);
+  }, [copyId, openDialog]);
 };
