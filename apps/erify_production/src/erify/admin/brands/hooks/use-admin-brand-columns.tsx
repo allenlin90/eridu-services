@@ -39,6 +39,10 @@ export const useAdminBrandColumns = (): ColumnDef<Brand>[] => {
                   onClick: copyId(brand.uid),
                 },
                 {
+                  name: "Update brand",
+                  onClick: () => openDialog("update_brand", brand),
+                },
+                {
                   name: "Remove brand",
                   className: "text-destructive",
                   onClick: () => openDialog("remove_brand", brand),
