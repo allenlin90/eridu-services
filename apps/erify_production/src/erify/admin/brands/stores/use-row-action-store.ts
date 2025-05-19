@@ -4,6 +4,7 @@ import { create } from "zustand";
 
 type Actions =
   | "remove_brand"
+  | "update_brand"
   | null;
 
 type RowActionState = {
