@@ -9,7 +9,7 @@ export const useRemoveBrand = (option?: UseMutationOptions<Brand, AxiosError<{ m
   const axios = usePrivateAxios();
 
   return useMutation<Brand, AxiosError<{ message?: string }>, Brand>({
-    mutationKey: [],
+    mutationKey: ["remove_brand"],
     mutationFn: async (brand) => {
       await axios.delete(`/admin/brands/${brand.uid}`);
 
