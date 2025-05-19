@@ -1,5 +1,7 @@
 import type { Membership } from "@eridu/auth-service/types";
 
+import kebabcase from "lodash.kebabcase";
+
 import type { Organization, Role, Team } from "../types";
 
 type IsMembershipAuthorizedArgs = {
@@ -21,7 +23,7 @@ export const isMembershipAuthorized = (membership: Membership | undefined, { org
     return true;
   }
 
-  const isTeamAuthorized = !teams || (team && teams.includes(team.name as Team));
+  const isTeamAuthorized = !teams || (team && teams.includes(kebabcase(team.name) as Team));
 
   const isRoleAuthorized = !roles || roles.includes(role as Role);
 
