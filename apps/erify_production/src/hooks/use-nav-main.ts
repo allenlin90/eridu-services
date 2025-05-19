@@ -5,7 +5,7 @@ import { Organization, Team } from "@/auth/types";
 import { ROUTES } from "@/constants/routes";
 import { useActiveMembership } from "@/hooks/use-active-membership";
 import { useSession } from "@eridu/auth-service/hooks/use-session";
-import { NotepadText, ShieldUser, TvMinimalPlay, UserCog } from "lucide-react";
+import { NotepadText, ShieldUser, TvMinimalPlay, UserCog, Video } from "lucide-react";
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
 
@@ -65,6 +65,36 @@ export const useNavMain = (): NavMain[] => {
       { organizations: [Organization.Erify] },
     )) {
       navList.push(showList);
+    }
+
+    const erifyOnsetList: NavMain = {
+      title: "Erify Onset",
+      icon: Video,
+      isActive: true,
+      items: [
+        {
+          title: "Inventory",
+          onClick: () => navigate(ROUTES.ERIFY.ONSET.INVENTORY),
+          props: { className: "w-full" },
+        },
+        {
+          title: "Pre-production",
+          onClick: () => navigate(ROUTES.ERIFY.ONSET.PRE_PRODUCTION),
+          props: { className: "w-full" },
+        },
+        {
+          title: "Post-production",
+          onClick: () => navigate(ROUTES.ERIFY.ONSET.POST_PRODUCTION),
+          props: { className: "w-full" },
+        },
+      ],
+    };
+
+    if (isMembershipAuthorized(activeMembership, {
+      organizations: [Organization.Erify],
+      teams: [Team.Onset],
+    })) {
+      navList.push(erifyOnsetList);
     }
 
     const erifyOffsetList: NavMain = {
