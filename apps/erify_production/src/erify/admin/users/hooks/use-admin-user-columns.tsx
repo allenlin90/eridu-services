@@ -33,7 +33,7 @@ export const useAdminUserColumns = (): ColumnDef<User>[] => {
         header: "Name",
       },
       {
-        accessorKey: "clerk_uid",
+        accessorKey: "ext_uid",
         header: "Alias ID",
       },
       {
