@@ -39,7 +39,8 @@ const ErifyAdminMaterials = lazy(() => import("./pages/erify/admin/materials"));
 const ErifyAdminPlatforms = lazy(() => import("./pages/erify/admin/platforms"));
 const ErifyAdminShows = lazy(() => import("./pages/erify/admin/shows"));
 const ErifyAdminStudios = lazy(() => import("./pages/erify/admin/studios"));
-const ErifyAdminTeams = lazy(() => import("./pages/erify/admin/teams"));
+const ErifyAdminMCs = lazy(() => import("./pages/erify/admin/mcs"));
+const ErifyAdminOperators = lazy(() => import("./pages/erify/admin/operators"));
 const ErifyAdminUsers = lazy(() => import("./pages/erify/admin/users"));
 
 function App() {
@@ -108,7 +109,8 @@ function App() {
                 <Route path={ROUTES.ERIFY.ADMIN.PLATFORMS} element={<ErifyAdminPlatforms />} />
                 <Route path={ROUTES.ERIFY.ADMIN.SHOWS} element={<ErifyAdminShows />} />
                 <Route path={ROUTES.ERIFY.ADMIN.STUDIOS} element={<ErifyAdminStudios />} />
-                <Route path={ROUTES.ERIFY.ADMIN.TEAMS} element={<ErifyAdminTeams />} />
+                <Route path={ROUTES.ERIFY.ADMIN.MCS} element={<ErifyAdminMCs />} />
+                <Route path={ROUTES.ERIFY.ADMIN.OPERATORS} element={<ErifyAdminOperators />} />
                 <Route path={ROUTES.ERIFY.ADMIN.USERS} element={<ErifyAdminUsers />} />
               </Route>
             </Route>
