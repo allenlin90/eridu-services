@@ -136,8 +136,13 @@ export const useNavMain = (): NavMain[] => {
           props: { className: "w-full" },
         },
         {
-          title: "Teams",
-          onClick: () => navigate(ROUTES.ERIFY.ADMIN.TEAMS),
+          title: "Mcs",
+          onClick: () => navigate(ROUTES.ERIFY.ADMIN.MCS),
+          props: { className: "w-full" },
+        },
+        {
+          title: "Operators",
+          onClick: () => navigate(ROUTES.ERIFY.ADMIN.OPERATORS),
           props: { className: "w-full" },
         },
         {
