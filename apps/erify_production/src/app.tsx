@@ -27,6 +27,11 @@ const LivestreamDashboard = lazy(() => import("./pages/livestream/dashboard"));
 const ShowPage = lazy(() => import("./pages/livestream/show"));
 const ShowsPage = lazy(() => import("./pages/livestream/shows"));
 
+// erify onset pages
+const ErifyInventory = lazy(() => import("./pages/erify/onset/inventory"));
+const ErifyPreProduction = lazy(() => import("./pages/erify/onset/pre-production"));
+const ErifyPostProduction = lazy(() => import("./pages/erify/onset/post-production"));
+
 // erify offset pages
 const ErifyMcAdmin = lazy(() => import("./pages/erify/offset/mc-admin"));
 const ErifyScene = lazy(() => import("./pages/erify/offset/scene"));
@@ -82,7 +87,19 @@ function App() {
                 element={<ShowPage />}
               />
             </Route>
-            <Route path={ROUTES.ERIFY.BASE}>
+            <Route
+              path={ROUTES.ERIFY.BASE}
+              element={(
+                <Suspense>
+                  <MembershipGuard organizations={[Organization.Erify]} teams={[Team.Onset]} />
+                </Suspense>
+              )}
+            >
+              <Route path={ROUTES.ERIFY.ONSET.BASE}>
+                <Route path={ROUTES.ERIFY.ONSET.INVENTORY} element={<ErifyInventory />} />
+                <Route path={ROUTES.ERIFY.ONSET.PRE_PRODUCTION} element={<ErifyPreProduction />} />
+                <Route path={ROUTES.ERIFY.ONSET.POST_PRODUCTION} element={<ErifyPostProduction />} />
+              </Route>
               <Route
                 path={ROUTES.ERIFY.OFFSET.BASE}
                 element={(
