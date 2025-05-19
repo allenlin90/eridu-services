@@ -2,6 +2,7 @@ import FullPage from "@/components/hoc/full-page";
 import { PaginatedDataTable } from "@/components/paginated-data-table";
 import { AddBrandModal } from "@/erify/admin/brands/components/add-brand-modal";
 import { BrandSearchFilters } from "@/erify/admin/brands/components/brand-search-filters";
+import { Dialogs } from "@/erify/admin/brands/components/dialogs";
 import { useAdminBrandColumns } from "@/erify/admin/brands/hooks/use-admin-brand-columns";
 import { useQueryBrands } from "@/erify/admin/brands/hooks/use-query-brands";
 
@@ -22,6 +23,7 @@ const Brands: React.FC = () => {
         isLoading={isPending}
         isError={isError}
       />
+      <Dialogs />
     </div>
   );
 };

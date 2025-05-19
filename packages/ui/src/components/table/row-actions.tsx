@@ -9,9 +9,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@eridu/ui/components/dropdown-menu";
+import { cn } from "@eridu/ui/lib/utils";
 
 type Action = {
   name: string;
+  className?: string;
   onClick: (e: React.MouseEvent<HTMLDivElement>) => void | Promise<void>;
 };
 
@@ -36,6 +38,7 @@ export const RowActions: React.FC<React.PropsWithChildren<RowActionsProps>> = (
         {actions.map(action => (
           <DropdownMenuItem
             key={action.name}
+            className={cn(action.className)}
             onClick={action.onClick}
           >
             {action.name}
