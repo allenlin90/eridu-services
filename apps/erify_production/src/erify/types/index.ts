@@ -5,6 +5,14 @@ export const BrandSchema = z.object({
   name: z.string(),
 });
 
+export const McSchema = z.object({
+  uid: z.string(),
+  name: z.string().min(1),
+  user_uid: z.string().optional(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
 export const PlatformSchema = z.object({
   uid: z.string(),
   name: z.string(),
@@ -30,6 +38,7 @@ export const StudioRoomSchema = z.object({
 });
 
 export type Brand = z.infer<typeof BrandSchema>;
+export type MC = z.infer<typeof McSchema>;
 export type Platform = z.infer<typeof PlatformSchema>;
 export type ShowPlatform = z.infer<typeof ShowPlatformSchema>;
 export type Show = z.infer<typeof ShowSchema>;
