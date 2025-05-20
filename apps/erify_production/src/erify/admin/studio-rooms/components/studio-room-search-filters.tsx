@@ -31,7 +31,7 @@ export const StudioRoomSearchFilters: React.FC<StudioRoomSearchFiltersProps> = (
 ) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<Filter>("name");
-  const [type, setType] = useState<StudioRoom["type"]>(searchParams.get("room_type") as StudioRoom["type"]);
+  const [type, setType] = useState<StudioRoom["type"] | null>(searchParams.get("room_type") as StudioRoom["type"] | null);
 
   const defaultInputValue = useMemo(() => {
     return searchParams.get("studio_uid") || searchParams.get("name") || "";
