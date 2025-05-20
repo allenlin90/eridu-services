@@ -3,6 +3,7 @@ import type { MC } from "@/erify/types";
 import type { UseQueryOptions } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 
+import { API_ENDPOINTS } from "@/constants/api-endpoints";
 import { useMemberSearchParams } from "@/erify/admin/mcs/hooks/use-member-search-params";
 import { usePaginationParams } from "@/hooks/use-pagination-params";
 import { usePrivateAxios } from "@/hooks/use-private-axios";
@@ -18,7 +19,7 @@ export const useQueryMcs = (option?: UseQueryOptions<PaginatedBrands, AxiosError
   return useQuery<PaginatedBrands, AxiosError<{ message?: string }>>({
     queryKey: ["mcs", paginationParams, memberSearchParams],
     queryFn: async () => {
-      const res = await axios.get("/admin/mcs", {
+      const res = await axios.get(API_ENDPOINTS.ERIFY.ADMIN.MCS, {
         params: {
           ...paginationParams,
           ...memberSearchParams,
