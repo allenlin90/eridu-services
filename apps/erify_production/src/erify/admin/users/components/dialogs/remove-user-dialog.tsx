@@ -1,5 +1,7 @@
 import type { User } from "@/erify/types";
 
+import { useRemoveUser } from "@/erify/admin/users/hooks/use-remove-user";
+import { useRowActionStore } from "@/erify/admin/users/stores/use-row-action-store";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +15,6 @@ import {
 import { useToast } from "@eridu/ui/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-// import { useRemoveUser } from "@/erify/admin/users/hooks/use-remove-user"; // Implement this hook if needed
 
 type RemoveUserDialogProps = {
   user: User | null;
@@ -22,19 +23,28 @@ type RemoveUserDialogProps = {
 export const RemoveUserDialog: React.FC<RemoveUserDialogProps> = ({ user, ...props }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  // const { isPending, mutateAsync } = useRemoveUser({ ... }); // Implement mutation logic
-
-  const isPending = false; // Placeholder
-
-  const onConfirm = useCallback((_user: User) =>
-    async (_e: React.MouseEvent<HTMLButtonElement>) => {
-      // await mutateAsync(_user);
+  const { closeDialog } = useRowActionStore();
+  const { isPending, mutateAsync } = useRemoveUser({
+    onSuccess: (_data, uid) => {
       toast({
         variant: "success",
-        description: `User ${_user?.name ?? _user?.uid} is removed (mock)`,
+        description: `User ${user?.name ?? user?.uid ?? uid} is removed`,
       });
       queryClient.invalidateQueries({ queryKey: ["users"] });
-    }, [toast, queryClient]);
+      closeDialog();
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        description: error.response?.data?.message || "something went wrong",
+      });
+    },
+  });
+
+  const onConfirm = useCallback((user: User) =>
+    async (_e: React.MouseEvent<HTMLButtonElement>) => {
+      await mutateAsync(user.uid);
+    }, [mutateAsync]);
 
   if (!user)
     return null;
