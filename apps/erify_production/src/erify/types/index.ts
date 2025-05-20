@@ -42,7 +42,8 @@ export const StudioSchema = z.object({
 export const StudioRoomSchema = z.object({
   uid: z.string(),
   name: z.string(),
-  type: z.enum(["s", "m", "l"]).nullable(),
+  type: z.enum(["s", "m", "l"]),
+  studio_uid: z.string(),
 });
 
 export const UserSchema = z.object({

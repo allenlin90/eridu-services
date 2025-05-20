@@ -17,7 +17,7 @@ export const useQueryStudioRooms = (options?: UseQueryOptions<PaginatedStudioRoo
   const { params: studioSearchParams } = useStudioRoomSearchParams();
 
   return useQuery({
-    queryKey: ["studio-rooms", paginationParams, studioSearchParams],
+    queryKey: ["studio_rooms", paginationParams, studioSearchParams],
     queryFn: async () => {
       const res = await axios.get<PaginatedStudioRooms>(API_ENDPOINTS.ERIFY.ADMIN.STUDIO_ROOMS, {
         params: {
