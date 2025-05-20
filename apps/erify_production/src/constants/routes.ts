@@ -37,6 +37,7 @@ export const ROUTES = {
       PLATFORMS: "/erify/admin/platforms",
       SHOWS: "/erify/admin/shows",
       STUDIOS: "/erify/admin/studios",
+      STUDIOS_DETAIL: (studioUid: string) => `/erify/admin/studios/${studioUid}`,
       MCS: "/erify/admin/mcs",
       OPERATORS: "/erify/admin/operators",
       USERS: "/erify/admin/users",
