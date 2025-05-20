@@ -1,4 +1,4 @@
-import type { FormSchema } from "@/erify/admin/brands/components/forms/add-new-brand";
+import type { FormSchema } from "@/erify/admin/brands/components/forms/add-brand-form";
 import type { Brand } from "@/erify/types";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import type { AxiosError } from "axios";

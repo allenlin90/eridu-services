@@ -1,5 +1,5 @@
-import Modal from "@/components/modal";
-import { AddNewBrandForm } from "@/erify/admin/brands/components/forms/add-new-brand";
+import { Modal } from "@/components/modal";
+import { AddBrandForm } from "@/erify/admin/brands/components/forms/add-brand-form";
 import { Button } from "@eridu/ui/components/button";
 import { Plus } from "lucide-react";
 import { useCallback, useState } from "react";
@@ -28,7 +28,7 @@ export const AddBrandModal = () => {
         </Button>
       )}
     >
-      <AddNewBrandForm cancel={closeModal} />
+      <AddBrandForm cancel={closeModal} />
     </Modal>
   );
 };
