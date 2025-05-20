@@ -1,3 +1,4 @@
+import { useAddBrand } from "@/erify/admin/brands/hooks/use-add-brand";
 import { Button } from "@eridu/ui/components/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@eridu/ui/components/form";
 import { Input } from "@eridu/ui/components/input";
@@ -9,19 +10,17 @@ import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { useAddBrand } from "../../hooks/use-add-brand";
-
 const formSchema = z.object({
   name: z.string().min(1),
 });
 
 export type FormSchema = z.infer<typeof formSchema>;
 
-type AddNewBrandFormProps = {
+type AddBrandFormProps = {
   cancel?: () => void | Promise<void>;
 } & React.ComponentProps<"form">;
 
-export const AddNewBrandForm: React.FC<AddNewBrandFormProps> = ({ className, cancel, ...props }) => {
+export const AddBrandForm: React.FC<AddBrandFormProps> = ({ className, cancel, ...props }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const form = useForm({
