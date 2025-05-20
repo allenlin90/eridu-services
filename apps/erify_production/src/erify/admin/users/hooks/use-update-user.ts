@@ -12,9 +12,10 @@ export const useUpdateUser = (options?: UseMutationOptions<User, AxiosError, Upd
   const axios = usePrivateAxios();
 
   return useMutation({
+    mutationKey: ["update_user"],
     mutationFn: async (input) => {
       const { uid, ...rest } = input;
-      const { data } = await axios.patch(`${API_ENDPOINTS.ADMIN.USERS}/${uid}`, {
+      const { data } = await axios.patch(API_ENDPOINTS.ERIFY.ADMIN.USER_DETAILS(uid), {
         ...rest,
         ext_uid: rest.ext_uid || null,
       });
