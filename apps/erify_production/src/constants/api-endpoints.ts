@@ -7,4 +7,18 @@ export const API_ENDPOINTS = {
   ADMIN: {
     USERS: "/admin/users",
   },
+  ERIFY: {
+    ADMIN: {
+      BASE: "/erify/admin",
+      BRANDS: "/erify/admin/brands",
+      BRAND_DETAILS: (brandUid: string) => `/erify/admin/brands/${brandUid}`,
+      MATERIALS: "/erify/admin/materials",
+      PLATFORMS: "/erify/admin/platforms",
+      SHOWS: "/erify/admin/shows",
+      STUDIOS: "/erify/admin/studios",
+      MCS: "/erify/admin/mcs",
+      OPERATORS: "/erify/admin/operators",
+      USERS: "/erify/admin/users",
+    },
+  },
 };
