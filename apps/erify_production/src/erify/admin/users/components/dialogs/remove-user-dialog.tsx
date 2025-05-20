@@ -30,7 +30,7 @@ export const RemoveUserDialog: React.FC<RemoveUserDialogProps> = ({ user, ...pro
         variant: "success",
         description: `User ${user?.name ?? user?.uid ?? uid} is removed`,
       });
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["erify_users"] });
       closeDialog();
     },
     onError: (error) => {
