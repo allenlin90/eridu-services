@@ -19,7 +19,7 @@ export const useQueryUsers = (options?: UseQueryOptions<PaginatedUsers, AxiosErr
   return useQuery({
     queryKey: ["users", paginationParams, userSearchParams],
     queryFn: async () => {
-      const { data } = await axios.get<PaginatedUsers>(API_ENDPOINTS.ADMIN.USERS, {
+      const { data } = await axios.get<PaginatedUsers>(API_ENDPOINTS.ERIFY.ADMIN.USERS, {
         params: {
           ...paginationParams,
           ...userSearchParams,
