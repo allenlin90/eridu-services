@@ -31,6 +31,14 @@ export const ShowSchema = z.object({
   end_time: z.string(),
 });
 
+export const StudioSchema = z.object({
+  uid: z.string(),
+  name: z.string(),
+  address_uid: z.string(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
 export const StudioRoomSchema = z.object({
   uid: z.string(),
   name: z.string(),
@@ -51,5 +59,6 @@ export type MC = z.infer<typeof McSchema>;
 export type Platform = z.infer<typeof PlatformSchema>;
 export type ShowPlatform = z.infer<typeof ShowPlatformSchema>;
 export type Show = z.infer<typeof ShowSchema>;
+export type Studio = z.infer<typeof StudioSchema>;
 export type StudioRoom = z.infer<typeof StudioRoomSchema>;
 export type User = z.infer<typeof UserSchema>;
