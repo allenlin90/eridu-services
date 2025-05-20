@@ -41,7 +41,7 @@ export const UserSchema = z.object({
   uid: z.string(),
   email: z.string(),
   name: z.string(),
-  ext_uid: z.string(),
+  ext_uid: z.string().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });
