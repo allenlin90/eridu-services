@@ -1,3 +1,5 @@
+import type { PaginatedData } from "@/api/types";
+import type { User } from "@/erify/types";
 import type { UseQueryOptions } from "@tanstack/react-query";
 
 import { API_ENDPOINTS } from "@/constants/api-endpoints";
@@ -7,7 +9,7 @@ import usePrivateAxios from "@/hooks/use-private-axios";
 import { useQuery } from "@tanstack/react-query";
 import { type AxiosError, HttpStatusCode } from "axios";
 
-import type { PaginatedUsers } from "../types";
+type PaginatedUsers = PaginatedData<User>;
 
 export const useQueryUsers = (options?: UseQueryOptions<PaginatedUsers, AxiosError<{ message?: string }>>) => {
   const axios = usePrivateAxios();
