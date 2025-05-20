@@ -36,6 +36,8 @@ export const ROUTES = {
       MATERIALS: "/erify/admin/materials",
       PLATFORMS: "/erify/admin/platforms",
       SHOWS: "/erify/admin/shows",
+      STUDIO_ROOMS: "/erify/admin/studio-rooms",
+      STUDIO_ROOM_DETAIL: (studioRoomUid: string) => `/erify/admin/studio-rooms/${studioRoomUid}`,
       STUDIOS: "/erify/admin/studios",
       STUDIOS_DETAIL: (studioUid: string) => `/erify/admin/studios/${studioUid}`,
       MCS: "/erify/admin/mcs",
