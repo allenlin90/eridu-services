@@ -1,6 +1,7 @@
 import type { Brand } from "@/erify/types";
 
-import { UpdateBrandForm } from "@/erify/admin/brands/components/forms/update-brand";
+import { UpdateBrandForm } from "@/erify/admin/brands/components/forms/update-brand-form";
+import { useRowActionStore } from "@/erify/admin/brands/stores/use-row-action-store";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -8,8 +9,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@eridu/ui/components/alert-dialog";
-
-import { useRowActionStore } from "../../stores/use-row-action-store";
 
 type UpdateBrandDialogProps = {
   brand: Brand | null;
