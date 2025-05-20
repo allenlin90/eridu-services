@@ -5,6 +5,7 @@ import { Input } from "@eridu/ui/components/input";
 import { useToast } from "@eridu/ui/hooks/use-toast";
 import { cn } from "@eridu/ui/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -21,6 +22,7 @@ type AddPlatformFormProps = {
 
 export const AddPlatformForm: React.FC<AddPlatformFormProps> = ({ className, cancel, ...props }) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { mutateAsync, isPending } = useAddPlatform({
     onSuccess: ({ name }) => {
       toast({
@@ -28,6 +30,7 @@ export const AddPlatformForm: React.FC<AddPlatformFormProps> = ({ className, can
         description: `Platform ${name} is created`,
       });
       cancel?.();
+      queryClient.invalidateQueries({ queryKey: ["platforms"] });
     },
   });
 
