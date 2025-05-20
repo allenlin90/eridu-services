@@ -15,6 +15,7 @@ export const useAddUser = (option?: UseMutationOptions<User, AxiosError<{ messag
     mutationFn: async (values) => {
       const { data } = await axios.post(API_ENDPOINTS.ERIFY.ADMIN.USERS, {
         ...values,
+        ext_uid: values.ext_uid || null,
       });
 
       return data;
