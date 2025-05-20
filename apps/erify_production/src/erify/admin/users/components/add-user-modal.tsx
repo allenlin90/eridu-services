@@ -15,7 +15,7 @@ export const AddUserModal = () => {
     <Modal
       open={open}
       onOpenChange={open => setOpen(open)}
-      title="Add new brand"
+      title="Add new user"
       description="Fill in the details to create a user"
       trigger={(
         <Button
