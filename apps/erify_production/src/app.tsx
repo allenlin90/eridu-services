@@ -43,8 +43,9 @@ const ErifyAdminBrands = lazy(() => import("./pages/erify/admin/brands"));
 const ErifyAdminMaterials = lazy(() => import("./pages/erify/admin/materials"));
 const ErifyAdminPlatforms = lazy(() => import("./pages/erify/admin/platforms"));
 const ErifyAdminShows = lazy(() => import("./pages/erify/admin/shows"));
-const ErifyAdminStudio = lazy(() => import("./pages/erify/admin/studio"));
+const ErifyAdminStudioRooms = lazy(() => import("./pages/erify/admin/studio-rooms"));
 const ErifyAdminStudios = lazy(() => import("./pages/erify/admin/studios"));
+const ErifyAdminStudio = lazy(() => import("./pages/erify/admin/studio"));
 const ErifyAdminMCs = lazy(() => import("./pages/erify/admin/mcs"));
 const ErifyAdminOperators = lazy(() => import("./pages/erify/admin/operators"));
 const ErifyAdminUsers = lazy(() => import("./pages/erify/admin/users"));
@@ -126,6 +127,9 @@ function App() {
                 <Route path={ROUTES.ERIFY.ADMIN.MATERIALS} element={<ErifyAdminMaterials />} />
                 <Route path={ROUTES.ERIFY.ADMIN.PLATFORMS} element={<ErifyAdminPlatforms />} />
                 <Route path={ROUTES.ERIFY.ADMIN.SHOWS} element={<ErifyAdminShows />} />
+                <Route path={ROUTES.ERIFY.ADMIN.STUDIO_ROOMS}>
+                  <Route index element={<ErifyAdminStudioRooms />} />
+                </Route>
                 <Route path={ROUTES.ERIFY.ADMIN.STUDIOS}>
                   <Route index element={<ErifyAdminStudios />} />
                   <Route path={ROUTES.ERIFY.ADMIN.STUDIOS_DETAIL("/:studio_uid")} element={<ErifyAdminStudio />} />
