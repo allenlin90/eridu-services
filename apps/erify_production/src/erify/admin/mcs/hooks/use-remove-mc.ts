@@ -2,7 +2,8 @@ import type { MC } from "@/erify/types";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 
-import usePrivateAxios from "@/hooks/use-private-axios";
+import { API_ENDPOINTS } from "@/constants/api-endpoints";
+import { usePrivateAxios } from "@/hooks/use-private-axios";
 import { useMutation } from "@tanstack/react-query";
 
 export const useRemoveMc = (option?: UseMutationOptions<MC, AxiosError<{ message?: string }>, MC>) => {
@@ -11,7 +12,7 @@ export const useRemoveMc = (option?: UseMutationOptions<MC, AxiosError<{ message
   return useMutation({
     mutationKey: ["remove_mc"],
     mutationFn: async (mc) => {
-      await axios.delete(`/admin/mcs/${mc.uid}`);
+      await axios.delete(API_ENDPOINTS.ERIFY.ADMIN.MC_DETAILS(mc.uid));
 
       return mc;
     },
