@@ -1,12 +1,22 @@
 import type { Studio } from "@/erify/types";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { ROUTES } from "@/constants/routes";
 import { useRowActionStore } from "@/erify/admin/studios/stores/use-row-action-store";
 import { RowActions } from "@eridu/ui/components/table/row-actions";
 import { useCallback, useMemo } from "react";
+import { useNavigate } from "react-router";
 
 export const useAdminStudioColumns = (): ColumnDef<Studio>[] => {
+  const navigate = useNavigate();
   const openDialog = useRowActionStore(state => state.openDialog);
+  const goStudioDetails = useCallback(
+    (studioId: string) =>
+      (_e: React.MouseEvent<HTMLDivElement>) => {
+        navigate(ROUTES.ERIFY.ADMIN.STUDIOS_DETAIL(studioId));
+      },
+    [navigate],
+  );
   const copyId = useCallback(
     (studioUid: string) =>
       (_e: React.MouseEvent<HTMLDivElement>) => {
@@ -38,6 +48,10 @@ export const useAdminStudioColumns = (): ColumnDef<Studio>[] => {
                   onClick: copyId(studio.uid),
                 },
                 {
+                  name: "Go to Details",
+                  onClick: goStudioDetails(studio.uid),
+                },
+                {
                   name: "Update studio",
                   onClick: () => openDialog("update_studio", studio),
                 },
@@ -52,5 +66,5 @@ export const useAdminStudioColumns = (): ColumnDef<Studio>[] => {
         },
       },
     ];
-  }, [copyId, openDialog]);
+  }, [copyId, goStudioDetails, openDialog]);
 };
