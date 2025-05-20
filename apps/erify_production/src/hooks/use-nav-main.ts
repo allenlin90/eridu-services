@@ -70,22 +70,22 @@ export const useNavMain = (): NavMain[] => {
     const erifyOnsetList: NavMain = {
       title: "Erify Onset",
       icon: Video,
-      isActive: true,
+      isActive: false,
       items: [
         {
           title: "Inventory",
           onClick: () => navigate(ROUTES.ERIFY.ONSET.INVENTORY),
-          props: { className: "w-full" },
+          props: { className: "w-full", disabled: true },
         },
         {
           title: "Pre-production",
           onClick: () => navigate(ROUTES.ERIFY.ONSET.PRE_PRODUCTION),
-          props: { className: "w-full" },
+          props: { className: "w-full", disabled: true },
         },
         {
           title: "Post-production",
           onClick: () => navigate(ROUTES.ERIFY.ONSET.POST_PRODUCTION),
-          props: { className: "w-full" },
+          props: { className: "w-full", disabled: true },
         },
       ],
     };
@@ -100,22 +100,22 @@ export const useNavMain = (): NavMain[] => {
     const erifyOffsetList: NavMain = {
       title: "Erify Offset",
       icon: NotepadText,
-      isActive: true,
+      isActive: false,
       items: [
         {
           title: "MC Admin",
           onClick: () => navigate(ROUTES.ERIFY.OFFSET.MC_ADMIN),
-          props: { className: "w-full" },
+          props: { className: "w-full", disabled: true },
         },
         {
           title: "Scene",
           onClick: () => navigate(ROUTES.ERIFY.OFFSET.SCENE),
-          props: { className: "w-full" },
+          props: { className: "w-full", disabled: true },
         },
         {
           title: "Script",
           onClick: () => navigate(ROUTES.ERIFY.OFFSET.SCRIPT),
-          props: { className: "w-full" },
+          props: { className: "w-full", disabled: true },
         },
       ],
     };
@@ -148,7 +148,7 @@ export const useNavMain = (): NavMain[] => {
         {
           title: "Materials",
           onClick: () => navigate(ROUTES.ERIFY.ADMIN.MATERIALS),
-          props: { className: "w-full" },
+          props: { className: "w-full", disabled: true },
         },
         {
           title: "Platforms",
@@ -158,6 +158,11 @@ export const useNavMain = (): NavMain[] => {
         {
           title: "Shows",
           onClick: () => navigate(ROUTES.ERIFY.ADMIN.SHOWS),
+          props: { className: "w-full" },
+        },
+        {
+          title: "Studio Rooms",
+          onClick: () => navigate(ROUTES.ERIFY.ADMIN.STUDIO_ROOMS),
           props: { className: "w-full" },
         },
         {
@@ -173,7 +178,7 @@ export const useNavMain = (): NavMain[] => {
         {
           title: "Operators",
           onClick: () => navigate(ROUTES.ERIFY.ADMIN.OPERATORS),
-          props: { className: "w-full" },
+          props: { className: "w-full", disabled: true },
         },
         {
           title: "Users",

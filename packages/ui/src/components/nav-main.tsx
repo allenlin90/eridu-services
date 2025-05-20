@@ -59,7 +59,11 @@ export function NavMain({
                 <SidebarMenuSub>
                   {item.items?.map(subItem => (
                     <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton {...subItem.props} onClick={subItem?.onClick} disabled={!subItem?.onClick}>
+                      <SidebarMenuSubButton
+                        {...subItem.props}
+                        onClick={subItem?.onClick}
+                        disabled={!subItem?.onClick || subItem.props?.disabled}
+                      >
                         <span>{subItem.title}</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
