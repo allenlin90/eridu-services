@@ -7,7 +7,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@eridu/ui/components/pagination";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
 const ELLIPSIS = -1;
@@ -21,10 +21,25 @@ type PaginationProps = {
 };
 
 export const Pagination: React.FC<PaginationProps> = ({ pageSize, page, total }) => {
-  const [_, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Calculate the total number of pages
   const totalPages = useMemo(() => Math.ceil(total / pageSize), [total, pageSize]);
+
+  const currentPageSize = Number(searchParams.get("size")) || pageSize;
+  const currentPage = Number(searchParams.get("page")) || page;
+
+  // Only redirect to last page if current page is out of bounds after initial render
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setSearchParams((params) => {
+        const newParams = new URLSearchParams(params);
+        newParams.set("page", String(totalPages));
+        newParams.set("size", String(currentPageSize));
+        return newParams;
+      });
+    }
+  }, [currentPage, totalPages, currentPageSize, setSearchParams]);
 
   const onPreviousPage = useCallback(() => {
     if (page > 1) {
