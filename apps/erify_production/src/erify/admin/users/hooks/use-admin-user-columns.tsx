@@ -1,21 +1,20 @@
+import type { User } from "@/erify/types";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { ROUTES } from "@/constants/routes";
 import { RowActions } from "@eridu/ui/components/table/row-actions";
 import { useCallback, useMemo } from "react";
-import { useNavigate } from "react-router";
 
-import type { User } from "../types";
+import { useRowActionStore } from "../stores/use-row-action-store";
 
 export const useAdminUserColumns = (): ColumnDef<User>[] => {
-  const navigate = useNavigate();
+  const { openDialog } = useRowActionStore();
 
-  const toUserDetails = useCallback(
-    (user_uid: string) =>
+  const copyId = useCallback(
+    (user_id: string) =>
       (_e: React.MouseEvent<HTMLDivElement>) => {
-        navigate(ROUTES.ERIFY.ADMIN.USER_DETAILS(user_uid));
+        navigator.clipboard.writeText(user_id);
       },
-    [navigate],
+    [],
   );
 
   return useMemo(() => {
@@ -41,16 +40,29 @@ export const useAdminUserColumns = (): ColumnDef<User>[] => {
         cell: ({ row }) => {
           const user = row.original;
           return (
-            <RowActions actions={[{
-              name: "Details",
-              onClick: toUserDetails(user.uid),
-            }]}
+            <RowActions
+              modal={false}
+              actions={[
+                {
+                  name: "Copy ID",
+                  onClick: copyId(user.uid),
+                },
+                {
+                  name: "Update",
+                  onClick: () => openDialog("update_user", user),
+                },
+                {
+                  name: "Remove",
+                  className: "text-destructive",
+                  onClick: () => openDialog("remove_user", user),
+                },
+              ]}
             />
           );
         },
       },
     ];
-  }, [toUserDetails]);
+  }, [copyId, openDialog]);
 };
 
 export default useAdminUserColumns;

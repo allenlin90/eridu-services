@@ -1,53 +1,17 @@
 import { FullPage } from "@/components/hoc/full-page";
 import { Modal } from "@/components/modal";
-import { Pagination } from "@/components/pagination";
+import { PaginatedDataTable } from "@/components/paginated-data-table";
+import { Dialogs } from "@/erify/admin/users/components/dialogs";
 import { UserSearchFilters } from "@/erify/admin/users/components/user-search-filters";
 import { useAdminUserColumns } from "@/erify/admin/users/hooks/use-admin-user-columns";
 import { useQueryUsers } from "@/erify/admin/users/hooks/use-query-users";
 import { Button } from "@eridu/ui/components/button";
-import DataTable from "@eridu/ui/components/data-table";
-import { LoaderCircle, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
-// TODO: allow users to change the limit
-const LIMIT = 10;
-
-const UsersPageContent: React.FC = () => {
-  const { isLoading, data, isError, error } = useQueryUsers();
+const Users: React.FC = () => {
+  const { data, error, isPending, isError } = useQueryUsers();
   const columns = useAdminUserColumns();
 
-  if (isLoading) {
-    return (
-      <div className="flex-1 flex justify-center items-center">
-        <div>
-          <LoaderCircle className="animate-spin" />
-        </div>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return <p className="text-center">{error?.message || "something went wrong"}</p>;
-  }
-
-  if (!data) {
-    return <p className="text-center">No data</p>;
-  }
-
-  const page = data ? Math.ceil(data.offset / data.limit) + 1 : 1;
-
-  return (
-    <>
-      <div className="max-w-full overflow-auto h-full max-h-sm-user-content-area sm:max-h-user-content-area">
-        <DataTable columns={columns} data={data.data} />
-      </div>
-      <div className="p-4">
-        <Pagination pageSize={LIMIT} page={page} total={data?.total ?? 1} />
-      </div>
-    </>
-  );
-};
-
-const UsersPage: React.FC = () => {
   return (
     <div className="h-full p-4 pb-0 flex flex-col">
       <div className="max-w-full flex flex-col sm:flex-row gap-4 mb-4 sm:mb-0">
@@ -67,11 +31,18 @@ const UsersPage: React.FC = () => {
           )}
         />
       </div>
-      <UsersPageContent />
+      <PaginatedDataTable
+        columns={columns}
+        data={data}
+        error={error}
+        isLoading={isPending}
+        isError={isError}
+      />
+      <Dialogs />
     </div>
   );
 };
 
-export const UsersFullPage = FullPage(UsersPage);
+export const UsersPage = FullPage(Users);
 
-export default UsersFullPage;
+export default UsersPage;

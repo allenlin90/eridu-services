@@ -1,3 +1,5 @@
+import type { UseQueryOptions } from "@tanstack/react-query";
+
 import { API_ENDPOINTS } from "@/constants/api-endpoints";
 import { useUserSearchParams } from "@/erify/admin/users/hooks/use-user-search-params";
 import usePaginationParams from "@/hooks/use-pagination-params";
@@ -7,12 +9,12 @@ import { type AxiosError, HttpStatusCode } from "axios";
 
 import type { PaginatedUsers } from "../types";
 
-export const useQueryUsers = () => {
+export const useQueryUsers = (options?: UseQueryOptions<PaginatedUsers, AxiosError<{ message?: string }>>) => {
   const axios = usePrivateAxios();
   const { params: paginationParams } = usePaginationParams();
   const { params: userSearchParams } = useUserSearchParams();
 
-  return useQuery<PaginatedUsers, AxiosError>({
+  return useQuery({
     queryKey: ["users", paginationParams, userSearchParams],
     queryFn: async () => {
       const { data } = await axios.get<PaginatedUsers>(API_ENDPOINTS.ADMIN.USERS, {
@@ -28,5 +30,6 @@ export const useQueryUsers = () => {
     retry: (_failureCount, error) => {
       return error.status !== HttpStatusCode.UnprocessableEntity;
     },
+    ...options,
   });
 };
