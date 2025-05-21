@@ -9,7 +9,7 @@ export const useStudioRoomSearchParams = () => {
       params: {
         name: searchParams.get("name"),
         room_type: searchParams.get("room_type"),
-        studio_uid: searchParams.get("studio_uid"),
+        studio_id: searchParams.get("studio_id"),
       },
       error: null,
     };
