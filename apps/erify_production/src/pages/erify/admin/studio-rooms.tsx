@@ -1,6 +1,7 @@
 import { FullPage } from "@/components/hoc/full-page";
 import { PaginatedDataTable } from "@/components/paginated-data-table";
 import { AddStudioRoomModal } from "@/erify/admin/studio-rooms/components/add-studio-room-modal";
+import { Dialogs } from "@/erify/admin/studio-rooms/components/dialogs";
 import { StudioRoomSearchFilters } from "@/erify/admin/studio-rooms/components/studio-room-search-filters";
 import { useAdminStudioRoomColumns } from "@/erify/admin/studio-rooms/hooks/use-admin-studio-room-columns";
 import { useQueryStudioRooms } from "@/erify/admin/studio-rooms/hooks/use-query-studio-rooms";
@@ -22,6 +23,7 @@ const StudioRooms: React.FC = () => {
         isLoading={isPending}
         isError={isError}
       />
+      <Dialogs />
     </div>
   );
 };

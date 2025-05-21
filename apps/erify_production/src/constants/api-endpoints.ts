@@ -16,6 +16,7 @@ export const API_ENDPOINTS = {
       SHOWS: "/admin/shows",
       SHOW_DETAILS: (showUid: string) => `/admin/shows/${showUid}`,
       STUDIO_ROOMS: "/admin/studio-rooms",
+      STUDIO_ROOM_DETAILS: (studioRoomUid: string) => `/admin/studio-rooms/${studioRoomUid}`,
       STUDIOS: "/admin/studios",
       STUDIO_DETAILS: (studioUid: string) => `/admin/studios/${studioUid}`,
       MCS: "/admin/mcs",
