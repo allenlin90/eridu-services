@@ -1,3 +1,5 @@
+import { format } from "date-fns";
+
 export const toLocaleTimeString = (datetime: string, locale?: Intl.LocalesArgument) => {
   return new Date(datetime).toLocaleTimeString(locale, {
     hour: "2-digit",
@@ -38,4 +40,8 @@ export const generateUUID = () => {
   }
 
   return crypto.randomUUID();
+};
+
+export const formatToDatetimeLocal = (dateString: string) => {
+  return format(new Date(dateString), "yyyy-MM-dd'T'HH:mm");
 };
