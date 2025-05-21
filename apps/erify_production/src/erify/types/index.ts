@@ -26,10 +26,16 @@ export const ShowPlatformSchema = z.object({
 
 export const ShowSchema = z.object({
   uid: z.string(),
-  name: z.string(),
-  brand_uid: z.string(),
-  start_time: z.string(),
-  end_time: z.string(),
+  name: z.string().min(1, { message: "Name is required" }),
+  brand_uid: z.string().min(1, { message: "Brand ID is required" }),
+  start_time: z.string().refine(
+    val => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(val),
+    { message: "start time is required" },
+  ),
+  end_time: z.string().refine(
+    val => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(val),
+    { message: "end time is required" },
+  ),
 });
 
 export const StudioSchema = z.object({
