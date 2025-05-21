@@ -31,3 +31,11 @@ export const generateRandomString = (length = 32) => {
 
   return result.join("");
 };
+
+export const generateUUID = () => {
+  if (typeof crypto === "undefined" || typeof crypto.randomUUID !== "function") {
+    throw new TypeError("crypto.randomUUID is not supported in this environment.");
+  }
+
+  return crypto.randomUUID();
+};

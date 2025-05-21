@@ -30,8 +30,8 @@ type ShowSearchFiltersProps = {
   error?: Error | null;
 } & React.ComponentProps<"div">;
 
-export const ShowSearchFilters: React.FC<ShowSearchFiltersProps> = (
-  { className, ...props },
+export const ShowSearchFilters: React.FC<React.PropsWithChildren<ShowSearchFiltersProps>> = (
+  { className, children, ...props },
 ) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<Filter>("name");
@@ -108,6 +108,7 @@ export const ShowSearchFilters: React.FC<ShowSearchFiltersProps> = (
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
+          {children}
         </div>
         <div className="flex gap-4">
           <div className="flex-1">
