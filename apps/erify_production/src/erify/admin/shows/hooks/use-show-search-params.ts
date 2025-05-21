@@ -8,6 +8,7 @@ export const useShowSearchParams = () => {
     return {
       params: {
         name: searchParams.get("name"),
+        show_id: searchParams.get("show_id"),
         brand_id: searchParams.get("brand_id"),
         start_time: searchParams.get("start_time"),
         end_time: searchParams.get("end_time"),
