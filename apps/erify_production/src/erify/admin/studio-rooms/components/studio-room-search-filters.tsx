@@ -20,7 +20,7 @@ import { useSearchParams } from "react-router";
 
 const DEBOUNCE_TIME = 300;
 
-type Filter = "name" | "room_type" | "studio_uid";
+type Filter = "name" | "room_type" | "studio_id";
 
 type StudioRoomSearchFiltersProps = {
   error?: Error | null;
@@ -34,7 +34,7 @@ export const StudioRoomSearchFilters: React.FC<StudioRoomSearchFiltersProps> = (
   const [type, setType] = useState<StudioRoom["type"] | null>(searchParams.get("room_type") as StudioRoom["type"] | null);
 
   const defaultInputValue = useMemo(() => {
-    return searchParams.get("studio_uid") || searchParams.get("name") || "";
+    return searchParams.get("studio_id") || searchParams.get("name") || "";
   }, [searchParams]);
 
   const inputPlaceholder = useMemo(() => {
@@ -107,7 +107,7 @@ export const StudioRoomSearchFilters: React.FC<StudioRoomSearchFiltersProps> = (
           <DropdownMenuSeparator />
           <DropdownMenuRadioGroup value={filter} onValueChange={val => setFilter(val as Filter)}>
             <DropdownMenuRadioItem value="name">Name</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="studio_uid">Studio UID</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="studio_id">Studio UID</DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>Studio Type</DropdownMenuSubTrigger>
