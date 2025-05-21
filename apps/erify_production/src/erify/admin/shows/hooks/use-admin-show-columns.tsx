@@ -21,21 +21,33 @@ export const useAdminShowColumns = (): ColumnDef<Show>[] => {
       {
         accessorKey: "uid",
         header: "ID",
+        cell: ({ row }) => {
+          const show = row.original;
+          return <span className="text-nowrap">{show.uid}</span>;
+        },
       },
       {
         accessorKey: "name",
         header: "Name",
+        cell: ({ row }) => {
+          const show = row.original;
+          return <span className="text-nowrap">{show.name}</span>;
+        },
       },
       {
         accessorKey: "brand_uid",
         header: "Brand ID",
+        cell: ({ row }) => {
+          const show = row.original;
+          return <span className="text-nowrap">{show.brand_uid}</span>;
+        },
       },
       {
         accessorKey: "start_time",
         header: "Start Time",
         cell: ({ row }) => {
           const show = row.original;
-          return format(show.start_time, "dd/MMM/yyyy HH:mm");
+          return <span className="text-nowrap">{format(show.start_time, "dd/MMM/yyyy HH:mm")}</span>;
         },
       },
       {
@@ -43,7 +55,7 @@ export const useAdminShowColumns = (): ColumnDef<Show>[] => {
         header: "End Time",
         cell: ({ row }) => {
           const show = row.original;
-          return format(show.end_time, "dd/MMM/yyyy HH:mm");
+          return <span className="text-nowrap">{format(show.end_time, "dd/MMM/yyyy HH:mm")}</span>;
         },
       },
       {
