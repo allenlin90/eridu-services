@@ -1,6 +1,7 @@
 import { FullPage } from "@/components/hoc/full-page";
 import { PaginatedDataTable } from "@/components/paginated-data-table";
 import { AddShowModal } from "@/erify/admin/shows/components/add-show-modal";
+import { Dialogs } from "@/erify/admin/shows/components/dialogs";
 import { ShowSearchFilters } from "@/erify/admin/shows/components/show-search-filters";
 import { useAdminShowColumns } from "@/erify/admin/shows/hooks/use-admin-show-columns";
 import { useQueryShows } from "@/erify/admin/shows/hooks/use-query-shows";
@@ -24,6 +25,7 @@ const Shows: React.FC = () => {
         isLoading={isPending}
         isError={isError}
       />
+      <Dialogs />
     </div>
   );
 };
