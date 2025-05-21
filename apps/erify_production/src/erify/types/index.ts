@@ -27,6 +27,7 @@ export const ShowPlatformSchema = z.object({
 export const ShowSchema = z.object({
   uid: z.string(),
   name: z.string(),
+  brand_uid: z.string(),
   start_time: z.string(),
   end_time: z.string(),
 });
