@@ -1,5 +1,6 @@
 import { FullPage } from "@/components/hoc/full-page";
 import { PaginatedDataTable } from "@/components/paginated-data-table";
+import { ShowSearchFilters } from "@/erify/admin/shows/components/show-search-filters";
 import { useAdminShowColumns } from "@/erify/admin/shows/hooks/use-admin-show-columns";
 import { useQueryShows } from "@/erify/admin/shows/hooks/use-query-shows";
 
@@ -9,6 +10,9 @@ const Shows: React.FC = () => {
 
   return (
     <div className="h-full p-4 pb-0 flex flex-col">
+      <div className="max-w-full flex flex-col sm:flex-row gap-4 mb-4 sm:mb-0">
+        <ShowSearchFilters className="w-full order-2 sm:order-1" />
+      </div>
       <PaginatedDataTable
         columns={columns}
         data={data}
