@@ -1,11 +1,13 @@
 import type { Show } from "@/erify/types";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { useRowActionStore } from "@/erify/admin/shows/stores/use-row-action-store";
 import { RowActions } from "@eridu/ui/components/table/row-actions";
 import { format } from "date-fns";
 import { useCallback, useMemo } from "react";
 
 export const useAdminShowColumns = (): ColumnDef<Show>[] => {
+  const { openDialog } = useRowActionStore();
   const copyId = useCallback(
     (show_id: string) =>
       (_e: React.MouseEvent<HTMLDivElement>) => {
@@ -56,11 +58,19 @@ export const useAdminShowColumns = (): ColumnDef<Show>[] => {
                   name: "Copy ID",
                   onClick: copyId(show.uid),
                 },
+                {
+                  name: "Update show",
+                  onClick: () => openDialog("update_show", show),
+                },
+                {
+                  name: "Remove show",
+                  onClick: () => openDialog("remove_show", show),
+                },
               ]}
             />
           );
         },
       },
     ];
-  }, [copyId]);
+  }, [copyId, openDialog]);
 };

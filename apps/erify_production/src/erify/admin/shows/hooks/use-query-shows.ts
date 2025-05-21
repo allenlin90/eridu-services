@@ -17,7 +17,7 @@ export const useQueryShows = (options?: UseQueryOptions<PaginatedShows, AxiosErr
   const { params: showSearchParams } = useShowSearchParams();
 
   return useQuery({
-    queryKey: ["shows", paginationParams, showSearchParams],
+    queryKey: ["erify_shows", paginationParams, showSearchParams],
     queryFn: async () => {
       const { data } = await axios.get<PaginatedShows>(API_ENDPOINTS.ERIFY.ADMIN.SHOWS, {
         params: {
