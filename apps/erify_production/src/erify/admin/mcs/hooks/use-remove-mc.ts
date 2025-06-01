@@ -12,7 +12,7 @@ export const useRemoveMc = (option?: UseMutationOptions<MC, AxiosError<{ message
   return useMutation({
     mutationKey: ["remove_mc"],
     mutationFn: async (mc) => {
-      await axios.delete(API_ENDPOINTS.ERIFY.ADMIN.MC_DETAILS(mc.uid));
+      await axios.delete(API_ENDPOINTS.ERIFY.ADMIN.MC_DETAILS(mc.id));
 
       return mc;
     },
