@@ -12,7 +12,13 @@ import {
   FormMessage,
 } from "@eridu/ui/components/form";
 import { Input } from "@eridu/ui/components/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@eridu/ui/components/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@eridu/ui/components/select";
 import { useToast } from "@eridu/ui/hooks/use-toast";
 import { cn } from "@eridu/ui/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +29,7 @@ import { useForm } from "react-hook-form";
 const formSchema = StudioRoomSchema.pick({
   name: true,
   type: true,
-  studio_uid: true,
+  studio_id: true,
 });
 
 export type FormSchema = z.infer<typeof formSchema>;
@@ -51,13 +57,13 @@ export const AddStudioRoomForm: React.FC<AddStudioRoomFormProps> = ({ className,
     defaultValues: {
       name: "",
       type: "m",
-      studio_uid: "",
+      studio_id: "",
     },
   });
 
   const onSubmit = useCallback(
-    async ({ name, type, studio_uid }: FormSchema) => {
-      await mutateAsync({ name, type, studio_uid });
+    async ({ name, type, studio_id }: FormSchema) => {
+      await mutateAsync({ name, type, studio_id });
     },
     [mutateAsync],
   );
@@ -109,11 +115,11 @@ export const AddStudioRoomForm: React.FC<AddStudioRoomFormProps> = ({ className,
           )}
         />
         <FormField
-          {...form.register("studio_uid")}
+          {...form.register("studio_id")}
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="studio_uid">Studio UID</FormLabel>
+              <FormLabel htmlFor="studio_id">Studio ID</FormLabel>
               <FormControl>
                 <Input type="text" disabled={isPending} {...field} />
               </FormControl>

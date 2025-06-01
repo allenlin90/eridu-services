@@ -12,7 +12,7 @@ export const useRemoveStudioRoom = (options?: UseMutationOptions<StudioRoom, Axi
   return useMutation<StudioRoom, AxiosError, StudioRoom>({
     mutationKey: ["remove_studio_room"],
     mutationFn: async (studioRoom) => {
-      await axios.delete(API_ENDPOINTS.ERIFY.ADMIN.STUDIO_ROOM_DETAILS(studioRoom.uid));
+      await axios.delete(API_ENDPOINTS.ERIFY.ADMIN.STUDIO_ROOM_DETAILS(studioRoom.id));
 
       return studioRoom;
     },

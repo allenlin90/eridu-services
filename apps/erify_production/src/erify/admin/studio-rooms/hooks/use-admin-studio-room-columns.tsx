@@ -19,7 +19,7 @@ export const useAdminStudioRoomColumns = (): ColumnDef<StudioRoom>[] => {
   return useMemo(() => {
     return [
       {
-        accessorKey: "uid",
+        accessorKey: "id",
         header: "ID",
       },
       {
@@ -44,7 +44,7 @@ export const useAdminStudioRoomColumns = (): ColumnDef<StudioRoom>[] => {
               actions={[
                 {
                   name: "Copy ID",
-                  onClick: copyId(studioRoom.uid),
+                  onClick: copyId(studioRoom.id),
                 },
                 {
                   name: "Update",

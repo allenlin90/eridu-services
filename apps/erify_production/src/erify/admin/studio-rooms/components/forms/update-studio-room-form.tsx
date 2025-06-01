@@ -26,13 +26,13 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 const formSchema = StudioRoomSchema.pick({
-  uid: true,
+  id: true,
   name: true,
   type: true,
-  studio_uid: true,
+  studio_id: true,
 }).extend({
-  name: z.string().min(1, "studio UID is required"),
-  studio_uid: z.string().min(1, "studio UID is required"),
+  name: z.string().min(1, "name is required"),
+  studio_id: z.string().min(1, "studio ID is required"),
 });
 
 export type FormSchema = z.infer<typeof formSchema>;
@@ -64,10 +64,10 @@ export const UpdateStudioRoomForm: React.FC<UpdateStudioRoomFormProps> = ({
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      uid: studioRoom.uid,
+      id: studioRoom.id,
       name: studioRoom.name,
       type: studioRoom.type,
-      studio_uid: studioRoom.studio_uid,
+      studio_id: studioRoom.studio_id,
     },
   });
 
@@ -86,11 +86,11 @@ export const UpdateStudioRoomForm: React.FC<UpdateStudioRoomFormProps> = ({
         onSubmit={form.handleSubmit(submit)}
       >
         <FormField
-          {...form.register("uid")}
+          {...form.register("id")}
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="uid">UID</FormLabel>
+              <FormLabel htmlFor="id">ID</FormLabel>
               <FormControl>
                 <Input type="text" disabled={isPending} readOnly {...field} />
               </FormControl>
@@ -138,11 +138,11 @@ export const UpdateStudioRoomForm: React.FC<UpdateStudioRoomFormProps> = ({
           )}
         />
         <FormField
-          {...form.register("studio_uid")}
+          {...form.register("studio_id")}
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="studio_uid">Studio UID</FormLabel>
+              <FormLabel htmlFor="studio_id">Studio ID</FormLabel>
               <FormControl>
                 <Input type="text" disabled={isPending} {...field} />
               </FormControl>

@@ -12,10 +12,10 @@ export const useAddStudioRoom = (options?: UseMutationOptions<StudioRoom, AxiosE
 
   return useMutation({
     mutationKey: ["add_studio_room"],
-    mutationFn: async ({ name, type, studio_uid }) => {
+    mutationFn: async ({ name, type, studio_id }) => {
       const res = await axios.post<StudioRoom>(
         API_ENDPOINTS.ERIFY.ADMIN.STUDIO_ROOMS,
-        { name, type, studio_uid },
+        { name, type, studio_id },
       );
 
       return res.data;
