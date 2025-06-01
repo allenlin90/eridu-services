@@ -1,10 +1,10 @@
 import type { UseQueryOptions } from "@tanstack/react-query";
-import type { AxiosError } from "axios";
 
 import { API_ENDPOINTS } from "@/constants/api-endpoints";
 import { usePaginationParams } from "@/hooks/use-pagination-params";
 import { usePrivateAxios } from "@/hooks/use-private-axios";
 import { useQuery } from "@tanstack/react-query";
+import { type AxiosError, HttpStatusCode } from "axios";
 
 import type { PaginatedShowTableRow } from "../types/show-table-row";
 
@@ -26,6 +26,13 @@ export const useShows = (options?: UseQueryOptions<PaginatedShowTableRow, AxiosE
           },
         });
       return data;
+    },
+    retry: (failureCount, error) => {
+      if (error.status === HttpStatusCode.NotFound) {
+        return false;
+      }
+
+      return failureCount < 3;
     },
     refetchOnWindowFocus: false,
     ...options,
