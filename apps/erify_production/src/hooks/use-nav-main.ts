@@ -180,11 +180,6 @@ export const useNavMain = (): NavMain[] => {
           onClick: () => navigate(ROUTES.ERIFY.ADMIN.OPERATORS),
           props: { className: "w-full", disabled: true },
         },
-        {
-          title: "Users",
-          onClick: () => navigate(ROUTES.ERIFY.ADMIN.USERS),
-          props: { className: "w-full" },
-        },
       ],
     };
 
