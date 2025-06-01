@@ -5,9 +5,9 @@ import { LoaderCircle } from "lucide-react";
 import { useParams } from "react-router";
 
 export const Show: React.FC = () => {
-  const { show_uid } = useParams();
-  const { isPending: isLoadingShowDetails, data: showDetails } = useShowDetails(show_uid);
-  const { isPending: isLoadingMaterials, data: showMaterials } = useMaterials(show_uid);
+  const { show_id } = useParams();
+  const { isPending: isLoadingShowDetails, data: showDetails } = useShowDetails(show_id ?? "");
+  const { isPending: isLoadingMaterials, data: showMaterials } = useMaterials(show_id ?? "");
 
   if (!showDetails) {
     // TODO: implement not found
@@ -26,7 +26,10 @@ export const Show: React.FC = () => {
 
   return (
     <div className="p-4">
-      <ShowDetailsCard showDetails={showDetails} showMaterials={showMaterials} />
+      <ShowDetailsCard
+        showDetails={showDetails}
+        showMaterials={showMaterials}
+      />
     </div>
   );
 };

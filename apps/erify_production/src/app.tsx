@@ -71,7 +71,7 @@ function App() {
               )}
             >
               <Route path={ROUTES.ADMIN.USERS} element={<AdminUsers />} />
-              <Route path={ROUTES.ADMIN.ORGANIZATION_DETAILS(":organization_uid")} element={<AdminFullOrganization />} />
+              <Route path={ROUTES.ADMIN.ORGANIZATION_DETAILS(":organization_id")} element={<AdminFullOrganization />} />
             </Route>
             <Route
               path={ROUTES.LIVESTREAM.BASE}
@@ -84,7 +84,7 @@ function App() {
               <Route index element={<LivestreamDashboard />} />
               <Route path={ROUTES.LIVESTREAM.SHOWS} element={<ShowsPage />} />
               <Route
-                path={ROUTES.LIVESTREAM.SHOW_DETAILS(":show_uid")}
+                path={ROUTES.LIVESTREAM.SHOW_DETAILS(":show_id")}
                 element={<ShowPage />}
               />
             </Route>
@@ -131,7 +131,7 @@ function App() {
                 </Route>
                 <Route path={ROUTES.ERIFY.ADMIN.STUDIOS}>
                   <Route index element={<ErifyAdminStudios />} />
-                  <Route path={ROUTES.ERIFY.ADMIN.STUDIOS_DETAIL("/:studio_uid")} element={<ErifyAdminStudio />} />
+                  <Route path={ROUTES.ERIFY.ADMIN.STUDIOS_DETAIL("/:studio_id")} element={<ErifyAdminStudio />} />
                 </Route>
                 <Route path={ROUTES.ERIFY.ADMIN.MCS} element={<ErifyAdminMCs />} />
                 <Route path={ROUTES.ERIFY.ADMIN.OPERATORS} element={<ErifyAdminOperators />} />
