@@ -11,16 +11,16 @@ import { useNavigate } from "react-router";
 export const useShowsColumns = (): ColumnDef<ShowTableRow>[] => {
   const navigate = useNavigate();
   const copyId = useCallback(
-    (show_uid: string) =>
+    (show_id: string) =>
       (_e: React.MouseEvent<HTMLDivElement>) => {
-        navigator.clipboard.writeText(show_uid);
+        navigator.clipboard.writeText(show_id);
       },
     [],
   );
   const toShowDetails = useCallback(
-    (show_uid: string) =>
+    (show_id: string) =>
       (_e: React.MouseEvent<HTMLDivElement>) => {
-        navigate(ROUTES.LIVESTREAM.SHOW_DETAILS(show_uid));
+        navigate(ROUTES.LIVESTREAM.SHOW_DETAILS(show_id));
       },
     [navigate],
   );
@@ -43,20 +43,17 @@ export const useShowsColumns = (): ColumnDef<ShowTableRow>[] => {
         cell: ({ cell }) => toLocaleTimeString(cell.getValue<string>()),
       },
       {
-        accessorKey: "brand",
-        header: "Brand",
-      },
-      {
         accessorKey: "name",
         header: "Name",
         cell: ({ cell }) => <div className="text-nowrap">{cell.getValue<string>()}</div>,
       },
       {
-        accessorKey: "studio_room",
+        accessorKey: "studio_room.name",
         header: () => <div className="text-nowrap">Studio Room</div>,
+        cell: ({ cell }) => <div className="text-nowrap">{cell.getValue<string>()}</div>,
       },
       {
-        accessorKey: "uid",
+        accessorKey: "id",
         header: "Show ID",
       },
       {
@@ -64,12 +61,12 @@ export const useShowsColumns = (): ColumnDef<ShowTableRow>[] => {
         cell: ({ row }) => {
           const show = row.original;
           const actions = [
-            { name: "Copy ID", onClick: copyId(show.uid) },
+            { name: "Copy ID", onClick: copyId(show.id) },
           ];
 
           return (
             <RowActions actions={actions}>
-              <DropdownMenuItem onClick={toShowDetails(show.uid)}>
+              <DropdownMenuItem onClick={toShowDetails(show.id)}>
                 View details
               </DropdownMenuItem>
             </RowActions>
