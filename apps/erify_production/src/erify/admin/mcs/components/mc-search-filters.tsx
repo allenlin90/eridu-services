@@ -8,7 +8,7 @@ import { useSearchParams } from "react-router";
 
 const DEBOUNCE_TIME = 300;
 
-type Filter = "name" | "user_id" | "mc_id";
+type Filter = "id" | "name" | "email" | "ext_id";
 
 type McSearchFiltersProps = {
   error?: Error | null;
@@ -22,18 +22,30 @@ export const McSearchFilters: React.FC<McSearchFiltersProps> = (
   const [error, setError] = useState<string>("");
 
   const defaultInputValue = useMemo(() => {
-    return searchParams.get("name") || searchParams.get("user_id") || searchParams.get("mc_id") || "";
+    return searchParams.get("name")
+      || searchParams.get("email")
+      || searchParams.get("id")
+      || searchParams.get("ext_id")
+      || "";
   }, [searchParams]);
 
   const inputPlaceholder = useMemo(() => {
     let placeholder = filter as string;
 
-    if (filter === "mc_id") {
+    if (filter === "id") {
       placeholder = "mc ID";
     }
 
-    if (filter === "user_id") {
-      placeholder = "user ID";
+    if (filter === "name") {
+      placeholder = "name";
+    }
+
+    if (filter === "email") {
+      placeholder = "email";
+    }
+
+    if (filter === "ext_id") {
+      placeholder = "external ID";
     }
 
     return `search by ${placeholder}`;
@@ -84,8 +96,9 @@ export const McSearchFilters: React.FC<McSearchFiltersProps> = (
           <DropdownMenuSeparator />
           <DropdownMenuRadioGroup value={filter} onValueChange={val => setFilter(val as Filter)}>
             <DropdownMenuRadioItem value="name">Name</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="mc_id">MC ID</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="user_id">User ID</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="id">ID</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="email">Email</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="ext_id">External ID</DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -3,6 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { useRowActionStore } from "@/erify/admin/mcs/stores/use-row-action-store";
 import { RowActions } from "@eridu/ui/components/table/row-actions";
+import { Square, SquareCheck } from "lucide-react";
 import { useCallback, useMemo } from "react";
 
 export const useAdminMcColumns = (): ColumnDef<MC>[] => {
@@ -18,7 +19,7 @@ export const useAdminMcColumns = (): ColumnDef<MC>[] => {
   return useMemo(() => {
     return [
       {
-        accessorKey: "uid",
+        accessorKey: "id",
         header: "ID",
       },
       {
@@ -26,8 +27,20 @@ export const useAdminMcColumns = (): ColumnDef<MC>[] => {
         header: "Name",
       },
       {
-        accessorKey: "user_uid",
-        header: "User ID",
+        accessorKey: "email",
+        header: "Email",
+      },
+      {
+        accessorKey: "ranking",
+        header: "Ranking",
+      },
+      {
+        accessorKey: "is_banned",
+        header: "Is Banned?",
+        cell: ({ row }) => {
+          const emailVerified = row.original.banned;
+          return emailVerified ? <SquareCheck /> : <Square />;
+        },
       },
       {
         id: "actions",
@@ -40,7 +53,7 @@ export const useAdminMcColumns = (): ColumnDef<MC>[] => {
               actions={[
                 {
                   name: "Copy ID",
-                  onClick: copyId(mc.uid),
+                  onClick: copyId(mc.id),
                 },
                 {
                   name: "Update mc",

@@ -8,8 +8,11 @@ export const useMemberSearchParams = () => {
     return {
       params: {
         name: searchParams.get("name"),
-        user_id: searchParams.get("user_id"),
-        mc_id: searchParams.get("mc_id"),
+        id: searchParams.get("id"),
+        email: searchParams.get("email"),
+        ext_id: searchParams.get("ext_id"),
+        banned: searchParams.get("banned") === "true" ? true : null,
+        ranking: searchParams.get("ranking"),
       },
       error: null,
     };
