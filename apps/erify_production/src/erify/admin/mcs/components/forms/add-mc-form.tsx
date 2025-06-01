@@ -13,6 +13,13 @@ import {
   FormMessage,
 } from "@eridu/ui/components/form";
 import { Input } from "@eridu/ui/components/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@eridu/ui/components/select";
 import { useToast } from "@eridu/ui/hooks/use-toast";
 import { cn } from "@eridu/ui/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,9 +27,15 @@ import { HttpStatusCode } from "axios";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 
-const formSchema = McSchema.pick({ name: true, user_uid: true });
+const formSchema = McSchema.pick({
+  email: true,
+  ext_id: true,
+  name: true,
+  ranking: true,
+});
 
 export type FormSchema = z.infer<typeof formSchema>;
+type McRankingTypes = z.infer<typeof McSchema>["ranking"];
 
 type AddMcFormProps = {
   cancel?: () => void | Promise<void>;
@@ -34,7 +47,9 @@ export const AddMcForm: React.FC<AddMcFormProps> = ({ cancel, className, ...prop
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      user_uid: "",
+      ext_id: "",
+      email: "",
+      ranking: "normal" as McRankingTypes,
     },
   });
   const { isPending, mutateAsync } = useAddMc({
@@ -60,14 +75,6 @@ export const AddMcForm: React.FC<AddMcFormProps> = ({ cancel, className, ...prop
         return;
       }
 
-      if (error.status === HttpStatusCode.Conflict) {
-        form.setError(
-          "user_uid",
-          { type: "pattern", message: error.response?.data.message },
-        );
-        return;
-      }
-
       toast({
         variant: "destructive",
         description: error.message || "something went wrong",
@@ -75,8 +82,8 @@ export const AddMcForm: React.FC<AddMcFormProps> = ({ cancel, className, ...prop
     },
   });
 
-  const submit = useCallback(async ({ name, user_uid }: FormSchema) => {
-    await mutateAsync({ name, user_uid });
+  const submit = useCallback(async ({ name, email, ext_id, ranking }: FormSchema) => {
+    await mutateAsync({ name, email, ext_id, ranking });
   }, [mutateAsync]);
 
   return (
@@ -101,13 +108,54 @@ export const AddMcForm: React.FC<AddMcFormProps> = ({ cancel, className, ...prop
           )}
         />
         <FormField
-          {...form.register("user_uid")}
+          {...form.register("email")}
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="name">User ID</FormLabel>
+              <FormLabel htmlFor="email">Email</FormLabel>
+              <FormControl>
+                <Input type="email" disabled={isPending} {...field} />
+              </FormControl>
+              <FormDescription />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          {...form.register("ext_id")}
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="name">External ID</FormLabel>
               <FormControl>
                 <Input type="text" disabled={isPending} {...field} />
+              </FormControl>
+              <FormDescription />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          {...form.register("ranking")}
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="name">Ranking</FormLabel>
+              <FormControl>
+                <Select
+                  disabled={isPending}
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="good">Good</SelectItem>
+                    <SelectItem value="superstar">Superstar</SelectItem>
+                  </SelectContent>
+                </Select>
               </FormControl>
               <FormDescription />
               <FormMessage />
