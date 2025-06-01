@@ -12,7 +12,7 @@ export const useRemovePlatform = (options?: UseMutationOptions<Platform, AxiosEr
   return useMutation<Platform, AxiosError, Platform>({
     mutationKey: ["remove_platform"],
     mutationFn: async (platform) => {
-      await axios.delete(API_ENDPOINTS.ERIFY.ADMIN.PLATFORM_DETAILS(platform.uid));
+      await axios.delete(API_ENDPOINTS.ERIFY.ADMIN.PLATFORM_DETAILS(platform.id));
 
       return platform;
     },

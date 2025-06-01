@@ -19,12 +19,16 @@ export const useAdminPlatformColumns = (): ColumnDef<Platform>[] => {
   return useMemo(() => {
     return [
       {
-        accessorKey: "uid",
+        accessorKey: "id",
         header: "ID",
       },
       {
         accessorKey: "name",
         header: "Name",
+      },
+      {
+        accessorKey: "address_id",
+        header: "Address ID",
       },
       {
         id: "actions",
@@ -36,7 +40,7 @@ export const useAdminPlatformColumns = (): ColumnDef<Platform>[] => {
               actions={[
                 {
                   name: "Copy ID",
-                  onClick: copyId(user.uid),
+                  onClick: copyId(user.id),
                 },
                 {
                   name: "Update",

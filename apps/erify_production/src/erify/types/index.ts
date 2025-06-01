@@ -20,20 +20,21 @@ export const McSchema = z.object({
 });
 
 export const PlatformSchema = z.object({
-  uid: z.string(),
+  id: z.string(),
+  address_id: z.string().nullish(),
   name: z.string(),
 });
 
 export const ShowPlatformSchema = z.object({
-  uid: z.string(), // show_platform_mc
+  id: z.string(), // show_platform_mc
   is_active: z.boolean(),
-  alias_id: z.string().nullable(),
+  ext_id: z.string().nullable(),
 });
 
 export const ShowSchema = z.object({
   uid: z.string(),
   name: z.string().min(1, { message: "Name is required" }),
-  brand_uid: z.string().min(1, { message: "Brand ID is required" }),
+  client_id: z.string().min(1).optional(),
   start_time: z.string().refine(
     val => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(val),
     { message: "start time is required" },
@@ -45,18 +46,18 @@ export const ShowSchema = z.object({
 });
 
 export const StudioSchema = z.object({
-  uid: z.string(),
+  id: z.string(),
   name: z.string(),
-  address_uid: z.string(),
+  address_id: z.string(),
   created_at: z.string(),
   updated_at: z.string(),
 });
 
 export const StudioRoomSchema = z.object({
-  uid: z.string(),
+  id: z.string(),
   name: z.string(),
   type: z.enum(["s", "m", "l"]),
-  studio_uid: z.string(),
+  studio_id: z.string(),
 });
 
 export type Brand = z.infer<typeof BrandSchema>;
