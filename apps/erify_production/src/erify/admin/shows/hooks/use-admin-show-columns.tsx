@@ -19,11 +19,11 @@ export const useAdminShowColumns = (): ColumnDef<Show>[] => {
   return useMemo(() => {
     return [
       {
-        accessorKey: "uid",
+        accessorKey: "id",
         header: "ID",
         cell: ({ row }) => {
           const show = row.original;
-          return <span className="text-nowrap">{show.uid}</span>;
+          return <span className="text-nowrap">{show.id}</span>;
         },
       },
       {
@@ -39,7 +39,7 @@ export const useAdminShowColumns = (): ColumnDef<Show>[] => {
         header: "Brand ID",
         cell: ({ row }) => {
           const show = row.original;
-          return <span className="text-nowrap">{show.brand_uid}</span>;
+          return <span className="text-nowrap">{show.client_id}</span>;
         },
       },
       {
@@ -68,7 +68,7 @@ export const useAdminShowColumns = (): ColumnDef<Show>[] => {
               actions={[
                 {
                   name: "Copy ID",
-                  onClick: copyId(show.uid),
+                  onClick: copyId(show.id),
                 },
                 {
                   name: "Update show",

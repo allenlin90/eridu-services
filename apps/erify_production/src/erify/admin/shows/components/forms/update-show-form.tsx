@@ -21,11 +21,12 @@ import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 
 const formSchema = ShowSchema.pick({
-  uid: true,
+  id: true,
   name: true,
-  brand_uid: true,
+  client_id: true,
   start_time: true,
   end_time: true,
+  studio_room_id: true,
 });
 
 export type FormSchema = z.infer<typeof formSchema>;
@@ -52,11 +53,12 @@ export const UpdateShowForm: React.FC<UpdateShowFormProps> = ({ show, cancel, cl
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      uid: show.uid,
+      id: show.id,
       name: show.name,
-      brand_uid: show.brand_uid,
+      client_id: show.client_id,
       start_time: formatToDatetimeLocal(show.start_time),
       end_time: formatToDatetimeLocal(show.end_time),
+      studio_room_id: show.studio_room_id,
     },
   });
 
@@ -72,7 +74,7 @@ export const UpdateShowForm: React.FC<UpdateShowFormProps> = ({ show, cancel, cl
         onSubmit={form.handleSubmit(onSubmit)}
       >
         <FormField
-          {...form.register("uid")}
+          {...form.register("id")}
           control={form.control}
           render={({ field }) => (
             <FormItem>
@@ -98,11 +100,11 @@ export const UpdateShowForm: React.FC<UpdateShowFormProps> = ({ show, cancel, cl
           )}
         />
         <FormField
-          {...form.register("brand_uid")}
+          {...form.register("client_id")}
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Brand ID</FormLabel>
+              <FormLabel>Client ID</FormLabel>
               <FormControl>
                 <Input {...field} disabled={isPending} />
               </FormControl>
@@ -131,6 +133,19 @@ export const UpdateShowForm: React.FC<UpdateShowFormProps> = ({ show, cancel, cl
               <FormLabel>End Time</FormLabel>
               <FormControl>
                 <Input type="datetime-local" {...field} disabled={isPending} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          {...form.register("studio_room_id")}
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Studio Room ID</FormLabel>
+              <FormControl>
+                <Input {...field} disabled={isPending} />
               </FormControl>
               <FormMessage />
             </FormItem>

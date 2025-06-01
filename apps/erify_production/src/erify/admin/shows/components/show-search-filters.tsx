@@ -105,7 +105,8 @@ export const ShowSearchFilters: React.FC<React.PropsWithChildren<ShowSearchFilte
               <DropdownMenuRadioGroup value={filter} onValueChange={onFilterChange}>
                 <DropdownMenuRadioItem value="show_id">Show ID</DropdownMenuRadioItem>
                 <DropdownMenuRadioItem value="name">Name</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="brand_id">Brand ID</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="client_id">Client ID</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="studio_id">Studio ID</DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
