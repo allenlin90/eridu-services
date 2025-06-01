@@ -9,9 +9,9 @@ import { useCallback, useMemo } from "react";
 export const useAdminMcColumns = (): ColumnDef<MC>[] => {
   const openDialog = useRowActionStore(state => state.openDialog);
   const copyId = useCallback(
-    (user_id: string) =>
+    (mc_id: string) =>
       (_e: React.MouseEvent<HTMLDivElement>) => {
-        navigator.clipboard.writeText(user_id);
+        navigator.clipboard.writeText(mc_id);
       },
     [],
   );
