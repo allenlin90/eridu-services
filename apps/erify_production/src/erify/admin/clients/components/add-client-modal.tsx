@@ -1,10 +1,10 @@
 import { Modal } from "@/components/modal";
-import { AddBrandForm } from "@/erify/admin/brands/components/forms/add-brand-form";
+import { AddClientForm } from "@/erify/admin/clients/components/forms/add-client-form";
 import { Button } from "@eridu/ui/components/button";
 import { Plus } from "lucide-react";
 import { useCallback, useState } from "react";
 
-export const AddBrandModal = () => {
+export const AddClientModal = () => {
   const [open, setOpen] = useState(false);
 
   const closeModal = useCallback(() => {
@@ -28,7 +28,7 @@ export const AddBrandModal = () => {
         </Button>
       )}
     >
-      <AddBrandForm cancel={closeModal} />
+      <AddClientForm cancel={closeModal} />
     </Modal>
   );
 };

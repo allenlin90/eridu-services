@@ -141,8 +141,8 @@ export const useNavMain = (): NavMain[] => {
           props: { className: "w-full" },
         },
         {
-          title: "Brands",
-          onClick: () => navigate(ROUTES.ERIFY.ADMIN.BRANDS),
+          title: "Clients",
+          onClick: () => navigate(ROUTES.ERIFY.ADMIN.CLIENTS),
           props: { className: "w-full" },
         },
         {

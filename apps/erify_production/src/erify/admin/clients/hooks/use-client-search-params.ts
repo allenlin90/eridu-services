@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useSearchParams } from "react-router";
 
-export const useBrandSearchParams = () => {
+export const useClientSearchParams = () => {
   const [searchParams] = useSearchParams();
 
   return useMemo(() => {
@@ -14,4 +14,4 @@ export const useBrandSearchParams = () => {
   }, [searchParams]);
 };
 
-export default useBrandSearchParams;
+export default useClientSearchParams;
