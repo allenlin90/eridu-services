@@ -14,7 +14,7 @@ export const useUpdateStudioRoom = (options?: UseMutationOptions<StudioRoom, Axi
     mutationKey: ["update_studio_room"],
     mutationFn: async (values) => {
       const res = await axios.patch<StudioRoom>(
-        API_ENDPOINTS.ERIFY.ADMIN.STUDIO_ROOM_DETAILS(values.uid),
+        API_ENDPOINTS.ERIFY.ADMIN.STUDIO_ROOM_DETAILS(values.id),
         { ...values },
       );
 
