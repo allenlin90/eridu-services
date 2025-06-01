@@ -1,15 +1,16 @@
 import { paginatedData } from "@/api/types";
+import { ClientSchema, StudioRoomSchema } from "@/erify/types";
 import { z } from "zod";
 
 export const ShowTableRowSchema = z.object({
-  uid: z.string(),
-  alias_id: z.string().nullable(),
-  brand: z.string(),
-  is_active: z.boolean(),
+  id: z.string(),
   name: z.string(),
-  studio_room: z.string(),
+  client: ClientSchema,
+  studio_room: StudioRoomSchema,
   start_time: z.string().datetime(),
   end_time: z.string().datetime(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
 });
 
 export const paginatedShowTableRows = paginatedData.extend({

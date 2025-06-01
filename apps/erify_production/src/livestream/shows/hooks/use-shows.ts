@@ -1,13 +1,16 @@
+import type { UseQueryOptions } from "@tanstack/react-query";
+import type { AxiosError } from "axios";
+
 import { API_ENDPOINTS } from "@/constants/api-endpoints";
 import { usePaginationParams } from "@/hooks/use-pagination-params";
-import usePrivateAxios from "@/hooks/use-private-axios";
+import { usePrivateAxios } from "@/hooks/use-private-axios";
 import { useQuery } from "@tanstack/react-query";
 
 import type { PaginatedShowTableRow } from "../types/show-table-row";
 
 import { useDateSearchParams } from "./use-date-search-params";
 
-export const useShows = () => {
+export const useShows = (options?: UseQueryOptions<PaginatedShowTableRow, AxiosError<{ message?: string }>>) => {
   const axios = usePrivateAxios();
   const { params: paginationParams } = usePaginationParams();
   const { params: dateRangeParams } = useDateSearchParams();
@@ -25,5 +28,6 @@ export const useShows = () => {
       return data;
     },
     refetchOnWindowFocus: false,
+    ...options,
   });
 };
