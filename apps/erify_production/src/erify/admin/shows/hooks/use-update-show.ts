@@ -13,7 +13,7 @@ export const useUpdateShow = (options?: UseMutationOptions<Show, AxiosError, Sho
     mutationKey: ["update_show"],
     mutationFn: async (show) => {
       const { data } = await axios.patch<Show>(
-        API_ENDPOINTS.ERIFY.ADMIN.SHOW_DETAILS(show.uid),
+        API_ENDPOINTS.ERIFY.ADMIN.SHOW_DETAILS(show.id),
         show,
       );
 

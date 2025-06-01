@@ -25,10 +25,10 @@ export const RemoveShowDialog: React.FC<RemoveShowDialogProps> = ({ show, ...pro
   const queryClient = useQueryClient();
   const { closeDialog } = useRowActionStore();
   const { isPending, mutateAsync } = useRemoveShow({
-    onSuccess: (_data, uid) => {
+    onSuccess: (_data, id) => {
       toast({
         variant: "success",
-        description: `Show ${show?.name ?? show?.uid ?? uid} is removed`,
+        description: `Show ${show?.name ?? show?.id ?? id} is removed`,
       });
       queryClient.invalidateQueries({ queryKey: ["erify_shows"] });
       closeDialog();
@@ -61,7 +61,7 @@ export const RemoveShowDialog: React.FC<RemoveShowDialogProps> = ({ show, ...pro
             {" "}
             of
             {" "}
-            {show.brand_uid}
+            {show.client_id}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

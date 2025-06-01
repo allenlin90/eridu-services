@@ -22,9 +22,10 @@ import { useForm } from "react-hook-form";
 
 const formSchema = ShowSchema.pick({
   name: true,
-  brand_uid: true,
+  client_id: true,
   start_time: true,
   end_time: true,
+  studio_room_id: true,
 });
 
 export type FormSchema = z.infer<typeof formSchema>;
@@ -51,9 +52,10 @@ export const AddShowForm: React.FC<AddShowFormProps> = ({ className, cancel, ...
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      brand_uid: "",
+      client_id: "",
       start_time: "",
       end_time: "",
+      studio_room_id: "",
     },
   });
 
@@ -83,11 +85,11 @@ export const AddShowForm: React.FC<AddShowFormProps> = ({ className, cancel, ...
           )}
         />
         <FormField
-          {...form.register("brand_uid")}
+          {...form.register("client_id")}
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Brand ID</FormLabel>
+              <FormLabel>Client ID</FormLabel>
               <FormControl>
                 <Input type="text" disabled={isPending} {...field} />
               </FormControl>
@@ -122,6 +124,20 @@ export const AddShowForm: React.FC<AddShowFormProps> = ({ className, cancel, ...
                   type="datetime-local"
                   disabled={isPending}
                 />
+              </FormControl>
+              <FormDescription />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          {...form.register("studio_room_id")}
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Studio Room ID</FormLabel>
+              <FormControl>
+                <Input type="text" disabled={isPending} {...field} />
               </FormControl>
               <FormDescription />
               <FormMessage />
