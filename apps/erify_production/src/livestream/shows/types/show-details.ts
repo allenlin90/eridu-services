@@ -1,12 +1,21 @@
-import { BrandSchema, PlatformSchema, ShowPlatformSchema, ShowSchema, StudioRoomSchema } from "@/erify/types";
+import {
+  ClientSchema,
+  StudioRoomSchema,
+} from "@/erify/types";
 import { z } from "zod";
 
 export const ShowDetailsSchema = z.object({
-  uid: z.string(),
-  brand: BrandSchema,
-  platform: PlatformSchema,
-  show_platform: ShowPlatformSchema,
-  show: ShowSchema,
+  id: z.string(),
+  name: z.string(),
+  start_time: z.string().refine(
+    val => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(val),
+    { message: "start time is required" },
+  ),
+  end_time: z.string().refine(
+    val => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(val),
+    { message: "end time is required" },
+  ),
+  client: ClientSchema,
   studio_room: StudioRoomSchema,
 });
 

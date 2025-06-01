@@ -1,4 +1,3 @@
-import { getPlatformIcon } from "@/components/platform-utils";
 import { Button } from "@eridu/ui/components/button";
 import { Card, CardContent, CardHeader } from "@eridu/ui/components/card";
 import { format } from "date-fns";
@@ -21,8 +20,7 @@ export const ShowDetailsCard: React.FC<ShowDetailsCardProps> = (
     showMaterials,
   },
 ) => {
-  const { brand, show, platform, show_platform, studio_room } = showDetails;
-  const PlatformIcon = getPlatformIcon(platform.name);
+  const { client, studio_room, ...show } = showDetails;
 
   const copyId = useCallback(
     (show_uid: string) =>
@@ -40,11 +38,11 @@ export const ShowDetailsCard: React.FC<ShowDetailsCardProps> = (
             <h3 className="text-lg font-semibold line-clamp-1 capitalize">{show.name}</h3>
             <div className="flex items-center">
               <p className="text-sm text-muted-foreground">
-                UID:
+                ID:
                 &nbsp;
-                {show.uid}
+                {show.id}
               </p>
-              <Button variant="ghost" className="p-2" onClick={copyId(show.uid)}>
+              <Button variant="ghost" className="p-2" onClick={copyId(show.id)}>
                 <Copy />
               </Button>
             </div>
@@ -66,28 +64,11 @@ export const ShowDetailsCard: React.FC<ShowDetailsCardProps> = (
               {format(show.end_time, "h:mm a")}
             </span>
           </div>
-
-          <div className="flex gap-2">
-            <PlatformIcon className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm capitalize">
-              {platform.name}
-              &nbsp;
-              (
-              {show_platform.alias_id && (
-                (
-                  <span className="text-muted-foreground">
-                    {show_platform.alias_id}
-                  </span>
-                )
-              )}
-              )
-            </span>
-          </div>
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div>
-              <span className="text-muted-foreground capitalize">Brand:</span>
+              <span className="text-muted-foreground capitalize">Client:</span>
               &nbsp;
-              {brand.name}
+              {client?.name}
             </div>
           </div>
           {studio_room && (
@@ -98,17 +79,14 @@ export const ShowDetailsCard: React.FC<ShowDetailsCardProps> = (
               &nbsp;
               (
               <span className="text-muted-foreground">
-                {studio_room.uid}
+                {studio_room.id}
               </span>
               )
             </div>
           )}
         </div>
-
         <hr className="my-2" />
-
         <ShowMaterialsCollapsible showMaterials={showMaterials} />
-
       </CardContent>
     </Card>
   );

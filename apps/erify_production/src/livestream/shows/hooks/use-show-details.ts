@@ -1,10 +1,12 @@
+import type { ShowDetails } from "@/livestream/shows/types/show-details";
+import type { UseQueryOptions } from "@tanstack/react-query";
+import type { AxiosError } from "axios";
+
 import { API_ENDPOINTS } from "@/constants/api-endpoints";
-import usePrivateAxios from "@/hooks/use-private-axios";
+import { usePrivateAxios } from "@/hooks/use-private-axios";
 import { useQuery } from "@tanstack/react-query";
 
-import type { ShowDetails } from "../types/show-details";
-
-export const useShowDetails = (showId?: string) => {
+export const useShowDetails = (showId: string, option?: UseQueryOptions<ShowDetails, AxiosError<{ message?: string }>>) => {
   const axios = usePrivateAxios();
 
   return useQuery({
@@ -15,5 +17,6 @@ export const useShowDetails = (showId?: string) => {
       return data;
     },
     enabled: !!showId,
+    ...option,
   });
 };

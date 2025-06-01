@@ -46,7 +46,7 @@ export const ShowMaterialsCollapsible: React.FC<ShowMaterialsCollapsibleProps> =
       <CollapsibleContent className="flex flex-col gap-4">
         {showMaterials.map((material) => {
           return (
-            <Card key={material.uid}>
+            <Card key={material.id}>
               <CardHeader className="p-4">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
