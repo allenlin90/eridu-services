@@ -35,8 +35,8 @@ export const useAdminShowColumns = (): ColumnDef<Show>[] => {
         },
       },
       {
-        accessorKey: "brand_uid",
-        header: "Brand ID",
+        accessorKey: "client_id",
+        header: "Client ID",
         cell: ({ row }) => {
           const show = row.original;
           return <span className="text-nowrap">{show.client_id}</span>;
