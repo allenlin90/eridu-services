@@ -1,7 +1,7 @@
-import type { Brand } from "@/erify/types";
+import type { Client } from "@/erify/types";
 
-import { UpdateBrandForm } from "@/erify/admin/brands/components/forms/update-brand-form";
-import { useRowActionStore } from "@/erify/admin/brands/stores/use-row-action-store";
+import { UpdateClientForm } from "@/erify/admin/clients/components/forms/update-client-form";
+import { useRowActionStore } from "@/erify/admin/clients/stores/use-row-action-store";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -10,14 +10,14 @@ import {
   AlertDialogTitle,
 } from "@eridu/ui/components/alert-dialog";
 
-type UpdateBrandDialogProps = {
-  brand: Brand | null;
+type UpdateClientDialogProps = {
+  client: Client | null;
 } & React.ComponentProps<typeof AlertDialog>;
 
-export const UpdateBrandDialog: React.FC<UpdateBrandDialogProps> = ({ brand, ...props }) => {
+export const UpdateClientDialog: React.FC<UpdateClientDialogProps> = ({ client, ...props }) => {
   const { closeDialog } = useRowActionStore();
 
-  if (!brand) {
+  if (!client) {
     return null;
   }
 
@@ -25,14 +25,14 @@ export const UpdateBrandDialog: React.FC<UpdateBrandDialogProps> = ({ brand, ...
     <AlertDialog {...props}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Update brand</AlertDialogTitle>
+          <AlertDialogTitle>Update client</AlertDialogTitle>
           <AlertDialogDescription>
             Update
             {" "}
-            {brand.name}
+            {client.name}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <UpdateBrandForm brand={brand} cancel={closeDialog} />
+        <UpdateClientForm client={client} cancel={closeDialog} />
       </AlertDialogContent>
     </AlertDialog>
   );

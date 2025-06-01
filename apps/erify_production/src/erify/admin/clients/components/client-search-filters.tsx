@@ -1,5 +1,12 @@
 import { Button } from "@eridu/ui/components/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@eridu/ui/components/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@eridu/ui/components/dropdown-menu";
 import { Input } from "@eridu/ui/components/input";
 import { cn } from "@eridu/ui/lib/utils";
 import debounce from "lodash.debounce";
@@ -10,11 +17,11 @@ const DEBOUNCE_TIME = 300;
 
 type Filter = "name";
 
-type BrandSearchFiltersProps = {
+type ClientSearchFiltersProps = {
   error?: Error | null;
 } & React.ComponentProps<"div">;
 
-export const BrandSearchFilters: React.FC<BrandSearchFiltersProps> = (
+export const ClientSearchFilters: React.FC<ClientSearchFiltersProps> = (
   { className, ...props },
 ) => {
   const [filter, setFilter] = useState<Filter>("name");

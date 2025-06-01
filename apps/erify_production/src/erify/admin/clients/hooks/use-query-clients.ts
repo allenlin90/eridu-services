@@ -1,28 +1,28 @@
 import type { PaginatedData } from "@/api/types";
-import type { Brand } from "@/erify/types";
+import type { Client } from "@/erify/types";
 import type { UseQueryOptions } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 
 import { API_ENDPOINTS } from "@/constants/api-endpoints";
-import { useBrandSearchParams } from "@/erify/admin/brands/hooks/use-brand-search-params";
+import { useClientSearchParams } from "@/erify/admin/clients/hooks/use-client-search-params";
 import { usePaginationParams } from "@/hooks/use-pagination-params";
 import { usePrivateAxios } from "@/hooks/use-private-axios";
 import { useQuery } from "@tanstack/react-query";
 
-type PaginatedBrands = PaginatedData<Brand>;
+type PaginatedClients = PaginatedData<Client>;
 
-export const useQueryBrands = (options?: UseQueryOptions<PaginatedBrands, AxiosError<{ message?: string }>>) => {
+export const useQueryClients = (options?: UseQueryOptions<PaginatedClients, AxiosError<{ message?: string }>>) => {
   const axios = usePrivateAxios();
   const { params: paginationParams } = usePaginationParams();
-  const { params: brandSearchParams } = useBrandSearchParams();
+  const { params: clientSearchParams } = useClientSearchParams();
 
   return useQuery({
-    queryKey: ["brands", paginationParams, brandSearchParams],
+    queryKey: ["clients", paginationParams, clientSearchParams],
     queryFn: async () => {
-      const res = await axios.get<PaginatedBrands>(API_ENDPOINTS.ERIFY.ADMIN.BRANDS, {
+      const res = await axios.get<PaginatedClients>(API_ENDPOINTS.ERIFY.ADMIN.CLIENTS, {
         params: {
           ...paginationParams,
-          ...brandSearchParams,
+          ...clientSearchParams,
         },
       });
 

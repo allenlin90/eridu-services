@@ -1,8 +1,16 @@
-import type { Brand } from "@/erify/types";
+import type { Client } from "@/erify/types";
 
-import { useUpdateBrand } from "@/erify/admin/brands/hooks/use-update-brand";
+import { useUpdateClient } from "@/erify/admin/clients/hooks/use-update-client";
 import { Button } from "@eridu/ui/components/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@eridu/ui/components/form";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@eridu/ui/components/form";
 import { Input } from "@eridu/ui/components/input";
 import { useToast } from "@eridu/ui/hooks/use-toast";
 import { cn } from "@eridu/ui/lib/utils";
@@ -13,40 +21,40 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 const formSchema = z.object({
-  uid: z.string().min(1),
+  id: z.string().min(1),
   name: z.string().min(1),
 });
 
 export type FormSchema = z.infer<typeof formSchema>;
 
-type UpdateBrandFormProps = {
-  brand: Brand;
+type UpdateClientFormProps = {
+  client: Client;
   cancel?: () => void | Promise<void>;
 } & React.ComponentProps<"form">;
 
-export const UpdateBrandForm: React.FC<UpdateBrandFormProps> = ({ brand, className, cancel, ...props }) => {
+export const UpdateClientForm: React.FC<UpdateClientFormProps> = ({ client, className, cancel, ...props }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      uid: brand.uid,
+      id: client.id,
       name: "",
     },
   });
-  const { isPending, mutateAsync } = useUpdateBrand({
+  const { isPending, mutateAsync } = useUpdateClient({
     onSuccess: ({ name }) => {
-      queryClient.invalidateQueries({ queryKey: ["brands"] });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
       toast({
         variant: "success",
-        description: `Brand ${name} is updated`,
+        description: `Client ${name} is updated`,
       });
       cancel?.();
     },
   });
 
-  const submit = useCallback(async ({ uid, name }: FormSchema) => {
-    await mutateAsync({ uid, name });
+  const submit = useCallback(async ({ id, name }: FormSchema) => {
+    await mutateAsync({ id, name });
   }, [mutateAsync]);
 
   return (
@@ -57,11 +65,11 @@ export const UpdateBrandForm: React.FC<UpdateBrandFormProps> = ({ brand, classNa
         onSubmit={form.handleSubmit(submit)}
       >
         <FormField
-          {...form.register("uid")}
+          {...form.register("id")}
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="uid">ID</FormLabel>
+              <FormLabel htmlFor="id">ID</FormLabel>
               <FormControl>
                 <Input type="text" readOnly {...field} />
               </FormControl>

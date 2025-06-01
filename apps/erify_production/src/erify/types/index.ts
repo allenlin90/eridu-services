@@ -2,8 +2,8 @@ import { z } from "zod";
 
 export const McRankingTypes = ["normal", "good", "superstar"] as const;
 
-export const BrandSchema = z.object({
-  uid: z.string(),
+export const ClientSchema = z.object({
+  id: z.string(),
   name: z.string(),
 });
 
@@ -60,7 +60,7 @@ export const StudioRoomSchema = z.object({
   studio_id: z.string(),
 });
 
-export type Brand = z.infer<typeof BrandSchema>;
+export type Client = z.infer<typeof ClientSchema>;
 export type MC = z.infer<typeof McSchema>;
 export type Platform = z.infer<typeof PlatformSchema>;
 export type ShowPlatform = z.infer<typeof ShowPlatformSchema>;

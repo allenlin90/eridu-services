@@ -1,6 +1,14 @@
-import { useAddBrand } from "@/erify/admin/brands/hooks/use-add-brand";
+import { useAddClient } from "@/erify/admin/clients/hooks/use-add-client";
 import { Button } from "@eridu/ui/components/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@eridu/ui/components/form";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@eridu/ui/components/form";
 import { Input } from "@eridu/ui/components/input";
 import { useToast } from "@eridu/ui/hooks/use-toast";
 import { cn } from "@eridu/ui/lib/utils";
@@ -16,11 +24,11 @@ const formSchema = z.object({
 
 export type FormSchema = z.infer<typeof formSchema>;
 
-type AddBrandFormProps = {
+type AddClientFormProps = {
   cancel?: () => void | Promise<void>;
 } & React.ComponentProps<"form">;
 
-export const AddBrandForm: React.FC<AddBrandFormProps> = ({ className, cancel, ...props }) => {
+export const AddClientForm: React.FC<AddClientFormProps> = ({ className, cancel, ...props }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const form = useForm({
@@ -29,7 +37,7 @@ export const AddBrandForm: React.FC<AddBrandFormProps> = ({ className, cancel, .
       name: "",
     },
   });
-  const { isPending, mutateAsync } = useAddBrand({
+  const { isPending, mutateAsync } = useAddClient({
     onSuccess: ({ name }) => {
       queryClient.invalidateQueries({ queryKey: ["brands"] });
       toast({

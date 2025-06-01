@@ -39,7 +39,7 @@ const ErifyScript = lazy(() => import("./pages/erify/offset/script"));
 
 // erify admin pages
 const ErifyAdminDashboard = lazy(() => import("./pages/erify/admin/dashboard"));
-const ErifyAdminBrands = lazy(() => import("./pages/erify/admin/brands"));
+const ErifyAdminClients = lazy(() => import("./pages/erify/admin/clients"));
 const ErifyAdminMaterials = lazy(() => import("./pages/erify/admin/materials"));
 const ErifyAdminPlatforms = lazy(() => import("./pages/erify/admin/platforms"));
 const ErifyAdminShows = lazy(() => import("./pages/erify/admin/shows"));
@@ -122,7 +122,7 @@ function App() {
                 )}
               >
                 <Route index element={<ErifyAdminDashboard />} />
-                <Route path={ROUTES.ERIFY.ADMIN.BRANDS} element={<ErifyAdminBrands />} />
+                <Route path={ROUTES.ERIFY.ADMIN.CLIENTS} element={<ErifyAdminClients />} />
                 <Route path={ROUTES.ERIFY.ADMIN.MATERIALS} element={<ErifyAdminMaterials />} />
                 <Route path={ROUTES.ERIFY.ADMIN.PLATFORMS} element={<ErifyAdminPlatforms />} />
                 <Route path={ROUTES.ERIFY.ADMIN.SHOWS} element={<ErifyAdminShows />} />

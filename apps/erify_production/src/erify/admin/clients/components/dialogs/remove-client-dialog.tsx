@@ -1,6 +1,6 @@
-import type { Brand } from "@/erify/types";
+import type { Client } from "@/erify/types";
 
-import { useRemoveBrand } from "@/erify/admin/brands/hooks/use-remove-brand";
+import { useRemoveClient } from "@/erify/admin/clients/hooks/use-remove-client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,20 +15,20 @@ import { useToast } from "@eridu/ui/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
-type RemoveBrandDialogProps = {
-  brand: Brand | null;
+type RemoveClientDialogProps = {
+  client: Client | null;
 } & React.ComponentProps<typeof AlertDialog>;
 
-export const RemoveBrandDialog: React.FC<RemoveBrandDialogProps> = ({ brand, ...props }) => {
+export const RemoveClientDialog: React.FC<RemoveClientDialogProps> = ({ client, ...props }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { isPending, mutateAsync } = useRemoveBrand({
-    onSuccess: (brand) => {
+  const { isPending, mutateAsync } = useRemoveClient({
+    onSuccess: (client) => {
       toast({
         variant: "success",
-        description: `Brand ${brand?.name ?? brand?.uid} is removed`,
+        description: `Client ${client?.name ?? client?.id} is removed`,
       });
-      queryClient.invalidateQueries({ queryKey: ["brands"] });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
     },
     onError: (error) => {
       toast({
@@ -38,12 +38,12 @@ export const RemoveBrandDialog: React.FC<RemoveBrandDialogProps> = ({ brand, ...
     },
   });
 
-  const onConfirm = useCallback((brand: Brand) =>
+  const onConfirm = useCallback((client: Client) =>
     async (_e: React.MouseEvent<HTMLButtonElement>) => {
-      await mutateAsync(brand);
+      await mutateAsync(client);
     }, [mutateAsync]);
 
-  if (!brand) {
+  if (!client) {
     return null;
   }
 
@@ -51,18 +51,18 @@ export const RemoveBrandDialog: React.FC<RemoveBrandDialogProps> = ({ brand, ...
     <AlertDialog {...props}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Remove brand</AlertDialogTitle>
+          <AlertDialogTitle>Remove client</AlertDialogTitle>
           <AlertDialogDescription>
             Are you sure you want to remove
             {" "}
-            {brand.name}
+            {client.name}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             disabled={isPending}
-            onClick={onConfirm(brand)}
+            onClick={onConfirm(client)}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             Confirm

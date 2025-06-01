@@ -32,7 +32,7 @@ export const ROUTES = {
     },
     ADMIN: {
       BASE: "/erify/admin",
-      BRANDS: "/erify/admin/brands",
+      CLIENTS: "/erify/admin/clients",
       MATERIALS: "/erify/admin/materials",
       PLATFORMS: "/erify/admin/platforms",
       SHOWS: "/erify/admin/shows",
