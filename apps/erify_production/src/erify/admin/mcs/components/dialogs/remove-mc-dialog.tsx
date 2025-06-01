@@ -26,7 +26,7 @@ export const RemoveMcDialog: React.FC<RemoveMcDialogProps> = ({ mc, ...props }) 
     onSuccess: (mc) => {
       toast({
         variant: "success",
-        description: `MC ${mc?.name ?? mc?.uid} is removed`,
+        description: `MC ${mc?.name ?? mc?.id} is removed`,
       });
       queryClient.invalidateQueries({ queryKey: ["mcs"] });
     },
