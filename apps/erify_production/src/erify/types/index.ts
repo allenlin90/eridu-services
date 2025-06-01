@@ -1,14 +1,20 @@
 import { z } from "zod";
 
+const McRankingTypes = ["normal", "good", "superstar"] as const;
+
 export const BrandSchema = z.object({
   uid: z.string(),
   name: z.string(),
 });
 
 export const McSchema = z.object({
-  uid: z.string(),
+  id: z.string(),
+  banned: z.boolean(),
+  email: z.string().email(),
+  ext_id: z.string().nullable(),
+  metadata: z.record(z.any()),
   name: z.string().min(1),
-  user_uid: z.string().optional(),
+  ranking: z.enum(McRankingTypes),
   created_at: z.string(),
   updated_at: z.string(),
 });
