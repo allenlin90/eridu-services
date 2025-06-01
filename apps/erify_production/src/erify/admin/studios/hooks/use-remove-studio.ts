@@ -12,7 +12,7 @@ export const useRemoveStudio = (option?: UseMutationOptions<Studio, AxiosError<{
   return useMutation({
     mutationKey: ["remove_studio"],
     mutationFn: async (studio) => {
-      await axios.delete<Studio>(API_ENDPOINTS.ERIFY.ADMIN.STUDIO_DETAILS(studio.uid));
+      await axios.delete<Studio>(API_ENDPOINTS.ERIFY.ADMIN.STUDIO_DETAILS(studio.id));
 
       return studio;
     },

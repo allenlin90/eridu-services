@@ -20,8 +20,9 @@ import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 
 const formSchema = StudioSchema.pick({
-  uid: true,
+  id: true,
   name: true,
+  address_id: true,
 });
 
 export type FormSchema = z.infer<typeof formSchema>;
@@ -48,8 +49,9 @@ export const UpdateStudioForm: React.FC<UpdateStudioFormProps> = ({ studio, canc
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      uid: studio.uid,
+      id: studio.id,
       name: studio.name,
+      address_id: studio.address_id,
     },
   });
 
@@ -68,11 +70,11 @@ export const UpdateStudioForm: React.FC<UpdateStudioFormProps> = ({ studio, canc
         onSubmit={form.handleSubmit(onSubmit)}
       >
         <FormField
-          {...form.register("uid")}
+          {...form.register("id")}
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="uid">UID</FormLabel>
+              <FormLabel htmlFor="id">ID</FormLabel>
               <FormControl>
                 <Input type="text" disabled={isPending} readOnly {...field} />
               </FormControl>
@@ -86,6 +88,19 @@ export const UpdateStudioForm: React.FC<UpdateStudioFormProps> = ({ studio, canc
           render={({ field }) => (
             <FormItem>
               <FormLabel htmlFor="name">Name</FormLabel>
+              <FormControl>
+                <Input type="text" disabled={isPending} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          {...form.register("address_id")}
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="address_id">Address ID</FormLabel>
               <FormControl>
                 <Input type="text" disabled={isPending} {...field} />
               </FormControl>

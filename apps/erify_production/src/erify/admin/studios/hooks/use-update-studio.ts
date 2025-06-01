@@ -13,7 +13,7 @@ export const useUpdateStudio = (option?: UseMutationOptions<Studio, AxiosError, 
   return useMutation({
     mutationKey: ["update_studio"],
     mutationFn: async (studio) => {
-      const res = await axios.patch<Studio>(API_ENDPOINTS.ERIFY.ADMIN.STUDIO_DETAILS(studio.uid), {
+      const res = await axios.patch<Studio>(API_ENDPOINTS.ERIFY.ADMIN.STUDIO_DETAILS(studio.id), {
         ...studio,
       });
 
