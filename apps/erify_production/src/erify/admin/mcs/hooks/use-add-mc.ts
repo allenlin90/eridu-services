@@ -12,10 +12,12 @@ export const useAddMc = (option?: UseMutationOptions<MC, AxiosError<any>, FormSc
 
   return useMutation({
     mutationKey: ["add_mc"],
-    mutationFn: async ({ name, user_uid }) => {
+    mutationFn: async ({ name, email, ext_id, ranking }) => {
       const res = await axios.post(API_ENDPOINTS.ERIFY.ADMIN.MCS, {
         name,
-        user_uid: user_uid || null,
+        email,
+        ext_id: ext_id || null,
+        ranking,
       });
 
       return res.data;
