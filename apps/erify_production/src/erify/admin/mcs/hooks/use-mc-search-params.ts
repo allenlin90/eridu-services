@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useSearchParams } from "react-router";
 
-export const useMemberSearchParams = () => {
+export const useMcSearchParams = () => {
   const [searchParams] = useSearchParams();
 
   return useMemo(() => {
@@ -19,4 +19,4 @@ export const useMemberSearchParams = () => {
   }, [searchParams]);
 };
 
-export default useMemberSearchParams;
+export default useMcSearchParams;
