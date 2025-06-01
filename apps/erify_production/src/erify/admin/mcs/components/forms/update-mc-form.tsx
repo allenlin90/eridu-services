@@ -1,5 +1,7 @@
 import type { MC } from "@/erify/types";
+import type { z } from "zod";
 
+import { McSchema } from "@/erify/types";
 import { Button } from "@eridu/ui/components/button";
 import {
   Form,
@@ -11,20 +13,28 @@ import {
   FormMessage,
 } from "@eridu/ui/components/form";
 import { Input } from "@eridu/ui/components/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@eridu/ui/components/select";
 import { useToast } from "@eridu/ui/hooks/use-toast";
 import { cn } from "@eridu/ui/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 
 import { useUpdateMc } from "../../hooks/use-update-mc";
 
-const formSchema = z.object({
-  uid: z.string().min(1),
-  name: z.string().min(1),
-  user_uid: z.string().optional(),
+const formSchema = McSchema.pick({
+  id: true,
+  name: true,
+  email: true,
+  ext_id: true,
+  ranking: true,
 });
 
 export type FormSchema = z.infer<typeof formSchema>;
@@ -40,14 +50,13 @@ export const UpdateMcForm: React.FC<UpdateMcFormProps> = ({ mc, className, cance
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      uid: mc.uid,
+      id: mc.id,
       name: mc.name,
-      user_uid: mc.user_uid ?? "",
+      email: mc.email,
+      ext_id: mc.ext_id ?? "",
+      ranking: mc.ranking,
     },
   });
-
-  const userUidValue = form.watch("user_uid");
-  const initialUserUid = useRef(mc.user_uid ?? "");
 
   const { isPending, mutateAsync } = useUpdateMc({
     onSuccess: ({ name }) => {
@@ -60,8 +69,8 @@ export const UpdateMcForm: React.FC<UpdateMcFormProps> = ({ mc, className, cance
     },
   });
 
-  const submit = useCallback(async ({ uid, name, user_uid }: FormSchema) => {
-    await mutateAsync({ uid, name, user_uid });
+  const submit = useCallback(async (data: FormSchema) => {
+    await mutateAsync(data);
   }, [mutateAsync]);
 
   return (
@@ -72,11 +81,11 @@ export const UpdateMcForm: React.FC<UpdateMcFormProps> = ({ mc, className, cance
         onSubmit={form.handleSubmit(submit)}
       >
         <FormField
-          {...form.register("uid")}
+          {...form.register("id")}
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="uid">ID</FormLabel>
+              <FormLabel htmlFor="id">ID</FormLabel>
               <FormControl>
                 <Input type="text" readOnly {...field} />
               </FormControl>
@@ -100,19 +109,55 @@ export const UpdateMcForm: React.FC<UpdateMcFormProps> = ({ mc, className, cance
           )}
         />
         <FormField
-          {...form.register("user_uid")}
+          {...form.register("email")}
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="user_uid">User ID</FormLabel>
+              <FormLabel htmlFor="email">Email</FormLabel>
+              <FormControl>
+                <Input type="email" disabled={isPending} {...field} />
+              </FormControl>
+              <FormDescription />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          {...form.register("ext_id")}
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="ext_id">External ID</FormLabel>
               <FormControl>
                 <Input type="text" disabled={isPending} {...field} />
               </FormControl>
-              {initialUserUid.current && !userUidValue && (
-                <div className="text-yellow-600 text-xs mt-1">
-                  Warning: Removing the User ID will set this property to empty
-                </div>
-              )}
+              <FormDescription />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          {...form.register("ranking")}
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="ranking">Ranking</FormLabel>
+              <FormControl>
+                <Select
+                  disabled={isPending}
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="good">Good</SelectItem>
+                    <SelectItem value="superstar">Superstar</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
               <FormDescription />
               <FormMessage />
             </FormItem>

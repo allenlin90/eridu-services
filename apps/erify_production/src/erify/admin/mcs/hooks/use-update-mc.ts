@@ -11,10 +11,12 @@ export const useUpdateMc = (option?: UseMutationOptions<MC, AxiosError, FormSche
 
   return useMutation({
     mutationKey: ["update_mc"],
-    mutationFn: async ({ uid, name, user_uid }) => {
-      const res = await axios.patch<MC>(API_ENDPOINTS.ERIFY.ADMIN.MC_DETAILS(uid), {
+    mutationFn: async ({ id, name, email, ext_id, ranking }) => {
+      const res = await axios.patch<MC>(API_ENDPOINTS.ERIFY.ADMIN.MC_DETAILS(id), {
         name,
-        user_uid: user_uid || null,
+        email,
+        ext_id: ext_id || null,
+        ranking,
       });
 
       return res.data;
