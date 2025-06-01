@@ -46,9 +46,9 @@ export const UpdatePlatformForm: React.FC<UpdatePlatformFormProps> = ({ platform
 
   const onSubmit = useCallback(
     async ({ name }: FormSchema) => {
-      await mutateAsync({ uid: platform.uid, name });
+      await mutateAsync({ id: platform.id, name });
     },
-    [mutateAsync, platform.uid],
+    [mutateAsync, platform.id],
   );
 
   return (
