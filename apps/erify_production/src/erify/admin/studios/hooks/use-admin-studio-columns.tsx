@@ -28,12 +28,16 @@ export const useAdminStudioColumns = (): ColumnDef<Studio>[] => {
   return useMemo(() => {
     return [
       {
-        accessorKey: "uid",
+        accessorKey: "id",
         header: "ID",
       },
       {
         accessorKey: "name",
         header: "Name",
+      },
+      {
+        accessorKey: "address_id",
+        header: "Address ID",
       },
       {
         id: "actions",
@@ -45,11 +49,11 @@ export const useAdminStudioColumns = (): ColumnDef<Studio>[] => {
               actions={[
                 {
                   name: "Copy ID",
-                  onClick: copyId(studio.uid),
+                  onClick: copyId(studio.id),
                 },
                 {
                   name: "Go to Details",
-                  onClick: goStudioDetails(studio.uid),
+                  onClick: goStudioDetails(studio.id),
                 },
                 {
                   name: "Update studio",

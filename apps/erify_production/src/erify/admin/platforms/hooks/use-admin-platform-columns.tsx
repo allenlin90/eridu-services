@@ -27,10 +27,6 @@ export const useAdminPlatformColumns = (): ColumnDef<Platform>[] => {
         header: "Name",
       },
       {
-        accessorKey: "address_id",
-        header: "Address ID",
-      },
-      {
         id: "actions",
         cell: ({ row }) => {
           const user = row.original;

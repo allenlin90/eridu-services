@@ -31,7 +31,7 @@ export const useAdminStudioRoomColumns = (): ColumnDef<StudioRoom>[] => {
         header: "Room Type",
       },
       {
-        accessorKey: "studio_uid",
+        accessorKey: "studio_id",
         header: "Studio ID",
       },
       {
