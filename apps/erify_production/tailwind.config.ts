@@ -7,7 +7,7 @@ export default merge(twConfig, {
       maxHeight: {
         "sm-user-content-area": "calc(100vh - 16.25rem)",
         "user-content-area": "calc(100vh - 12.5rem)",
-        "show-content-area": "calc(100vh - 11.5rem)", // Add custom max-height
+        "show-content-area": "calc(100vh - 11.5rem)",
       },
     },
   },

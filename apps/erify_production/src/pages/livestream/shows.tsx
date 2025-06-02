@@ -17,6 +17,7 @@ const ShowsPage: React.FC = () => {
         </label>
       </div>
       <PaginatedDataTable
+        className="max-h-show-content-area"
         columns={columns}
         data={data}
         error={error}
