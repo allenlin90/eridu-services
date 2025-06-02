@@ -28,6 +28,7 @@ export const MaterialSchema = z.object({
   description: z.string().optional(),
   resource_url: z.string().url(),
   client_id: z.string().optional(),
+  is_active: z.boolean().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });

@@ -2,8 +2,8 @@ import type { Material } from "@/erify/types";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { useRowActionStore } from "@/erify/admin/materials/stores/use-row-action-store";
-import { Button } from "@eridu/ui/components/button";
 import { RowActions } from "@eridu/ui/components/table/row-actions";
+import { Square, SquareCheck } from "lucide-react";
 import { useCallback } from "react";
 
 export const useAdminMaterialColumns = (): ColumnDef<Material>[] => {
@@ -30,21 +30,11 @@ export const useAdminMaterialColumns = (): ColumnDef<Material>[] => {
       header: "Type",
     },
     {
-      accessorKey: "resource_url",
-      header: "Resource URL",
-      cell: (info) => {
-        const url = info.getValue() as string | null;
-
-        if (!url)
-          return null;
-
-        return (
-          <Button type="button" variant="link" asChild>
-            <a href={url} target="_blank" rel="noopener noreferrer">
-              {url}
-            </a>
-          </Button>
-        );
+      accessorKey: "is_active",
+      header: "Is active?",
+      cell: ({ row }) => {
+        const emailVerified = row.original.is_active;
+        return emailVerified ? <SquareCheck /> : <Square />;
       },
     },
     {
