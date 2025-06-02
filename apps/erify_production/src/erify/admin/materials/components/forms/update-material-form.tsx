@@ -3,6 +3,7 @@ import type { z } from "zod";
 import { useUpdateMaterial } from "@/erify/admin/materials/hooks/use-update-material";
 import { type Material, MaterialSchema } from "@/erify/types";
 import { Button } from "@eridu/ui/components/button";
+import { Checkbox } from "@eridu/ui/components/checkbox";
 import {
   Form,
   FormControl,
@@ -34,6 +35,7 @@ const formSchema = MaterialSchema.pick({
   description: true,
   resource_url: true,
   client_id: true,
+  is_active: true,
 });
 
 export type FormSchema = z.infer<typeof formSchema>;
@@ -55,6 +57,7 @@ export const UpdateMaterialForm: React.FC<UpdateMaterialFormProps> = ({ material
       resource_url: material.resource_url,
       description: material.description ?? "",
       client_id: material.client_id ?? "",
+      is_active: material.is_active ?? false,
     },
   });
   const { isPending, mutateAsync } = useUpdateMaterial({
@@ -71,6 +74,11 @@ export const UpdateMaterialForm: React.FC<UpdateMaterialFormProps> = ({ material
   const submit = useCallback(async (data: FormSchema) => {
     await mutateAsync(data);
   }, [mutateAsync]);
+
+  const onCheckboxChange = useCallback((cb: (checked: boolean) => void) =>
+    (checked: boolean) => {
+      cb(checked);
+    }, []);
 
   return (
     <Form {...form}>
@@ -131,6 +139,28 @@ export const UpdateMaterialForm: React.FC<UpdateMaterialFormProps> = ({ material
                   </SelectContent>
                 </Select>
               </FormControl>
+              <FormDescription />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          {...form.register("is_active")}
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Is Active?</FormLabel>
+              <div className="flex items-center gap-2">
+                <FormControl>
+                  <Checkbox
+                    id="is_active"
+                    name="is_active"
+                    checked={field.value ?? false}
+                    onCheckedChange={onCheckboxChange(field.onChange)}
+                  />
+                </FormControl>
+                <FormLabel className="text-sm font-normal" htmlFor="is_active">Activate the material</FormLabel>
+              </div>
               <FormDescription />
               <FormMessage />
             </FormItem>
