@@ -4,9 +4,11 @@ import type { AxiosError } from "axios";
 
 import { Pagination } from "@/components/pagination";
 import { DataTable } from "@eridu/ui/components/data-table";
+import { cn } from "@eridu/ui/lib/utils";
 import { LoaderCircle } from "lucide-react";
 
 const LIMIT = 10;
+const maxHeightClass = "max-h-sm-user-content-area sm:max-h-user-content-area";
 
 type PaginatedDataForTable<Row> = Omit<PaginatedData<Row>, "data"> & { data: Row[] };
 
@@ -17,7 +19,7 @@ type PaginatedDataTableProps<Row, ErrorType = AxiosError> = {
   isLoading: boolean;
   isError: boolean;
   limit?: number;
-};
+} & React.ComponentProps<"div">;
 
 export function PaginatedDataTable<
   Row,
@@ -29,6 +31,8 @@ export function PaginatedDataTable<
   isLoading,
   isError,
   limit = LIMIT,
+  className,
+  ...props
 }: PaginatedDataTableProps<Row, ErrorType>) {
   if (isLoading) {
     return (
@@ -53,7 +57,10 @@ export function PaginatedDataTable<
 
   return (
     <>
-      <div className="max-w-full overflow-auto h-full max-h-sm-user-content-area sm:max-h-user-content-area">
+      <div
+        {...props}
+        className={cn("max-w-full overflow-auto h-full", (className || maxHeightClass))}
+      >
         <DataTable columns={columns} data={data.data} />
       </div>
       <div className="p-4">
