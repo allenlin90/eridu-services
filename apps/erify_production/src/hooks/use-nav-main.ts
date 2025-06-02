@@ -148,7 +148,7 @@ export const useNavMain = (): NavMain[] => {
         {
           title: "Materials",
           onClick: () => navigate(ROUTES.ERIFY.ADMIN.MATERIALS),
-          props: { className: "w-full", disabled: true },
+          props: { className: "w-full" },
         },
         {
           title: "Platforms",

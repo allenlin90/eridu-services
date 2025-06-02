@@ -7,6 +7,31 @@ export const ClientSchema = z.object({
   name: z.string(),
 });
 
+export const MaterialExpandedSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  type: z.enum(["script", "scene", "mechanic", "obs_layer", "other"]),
+  description: z.string().nullable(),
+  resource_url: z.string().url(),
+  client: z.object({
+    id: z.string(),
+    name: z.string(),
+  }).nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const MaterialSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.enum(["script", "scene", "mechanic", "obs_layer", "other"]),
+  description: z.string().optional(),
+  resource_url: z.string().url(),
+  client_id: z.string().optional(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
 export const McSchema = z.object({
   id: z.string(),
   banned: z.boolean(),
@@ -62,6 +87,7 @@ export const StudioRoomSchema = z.object({
 });
 
 export type Client = z.infer<typeof ClientSchema>;
+export type Material = z.infer<typeof MaterialSchema>;
 export type MC = z.infer<typeof McSchema>;
 export type Platform = z.infer<typeof PlatformSchema>;
 export type ShowPlatform = z.infer<typeof ShowPlatformSchema>;
