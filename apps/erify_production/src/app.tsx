@@ -83,10 +83,7 @@ function App() {
             >
               <Route index element={<LivestreamDashboard />} />
               <Route path={ROUTES.LIVESTREAM.SHOWS} element={<ShowsPage />} />
-              <Route
-                path={ROUTES.LIVESTREAM.SHOW_DETAILS(":show_id")}
-                element={<ShowPage />}
-              />
+              <Route path={ROUTES.LIVESTREAM.SHOW_DETAILS(":show_id")} element={<ShowPage />} />
             </Route>
             <Route
               path={ROUTES.ERIFY.BASE}
@@ -126,9 +123,7 @@ function App() {
                 <Route path={ROUTES.ERIFY.ADMIN.MATERIALS} element={<ErifyAdminMaterials />} />
                 <Route path={ROUTES.ERIFY.ADMIN.PLATFORMS} element={<ErifyAdminPlatforms />} />
                 <Route path={ROUTES.ERIFY.ADMIN.SHOWS} element={<ErifyAdminShows />} />
-                <Route path={ROUTES.ERIFY.ADMIN.STUDIO_ROOMS}>
-                  <Route index element={<ErifyAdminStudioRooms />} />
-                </Route>
+                <Route path={ROUTES.ERIFY.ADMIN.STUDIO_ROOMS} element={<ErifyAdminStudioRooms />} />
                 <Route path={ROUTES.ERIFY.ADMIN.STUDIOS}>
                   <Route index element={<ErifyAdminStudios />} />
                   <Route path={ROUTES.ERIFY.ADMIN.STUDIOS_DETAIL("/:studio_id")} element={<ErifyAdminStudio />} />
