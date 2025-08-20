@@ -5,6 +5,12 @@
 
 ---
 
+### Authentication service
+
+1. generate auth db schema for drizzle `pnpm auth:schema`
+2. generate sql migration for database `pnpm db:generate`
+3. migrate auth schema to db `pnpm db:migrate`
+
 ### Apps and Packages
 
 - [x] `/apps/storybook` for components testing.
