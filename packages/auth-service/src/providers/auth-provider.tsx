@@ -22,7 +22,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren<AuthProviderProps>> 
       baseURL,
       plugins: [
         adminClient(),
-        organizationClient(),
+        organizationClient({ teams: { enabled: true } }),
       ],
     }),
   );
