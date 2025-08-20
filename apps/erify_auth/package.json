@@ -1,0 +1,41 @@
+{
+  "name": "eridu-auth",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc && tsc-alias",
+    "type-check": "tsc --noEmit",
+    "start": "cross-env NODE_ENV=production node dist/src/index.js",
+    "auth:schema": "npx @better-auth/cli generate --output src/db/schema/auth-schema.ts",
+    "db:check": "npx drizzle-kit check",
+    "db:generate": "npx drizzle-kit generate",
+    "db:migrate": "cross-env DB_MIGRATING=true tsx src/db/migrate.ts",
+    "db:seed": "cross-env DB_SEEDING=true tsx src/db/seed.ts",
+    "studio": "npx drizzle-kit studio"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.1",
+    "better-auth": "^1.3.7",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.5.0",
+    "dotenv-expand": "^12.0.1",
+    "drizzle-orm": "^0.41.0",
+    "drizzle-zod": "^0.7.1",
+    "hono": "^4.7.6",
+    "jose": "^6.0.11",
+    "pg": "^8.14.1",
+    "zod": "^4.0.17"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/pg": "^8.11.12",
+    "drizzle-kit": "^0.30.6",
+    "tsc-alias": "^1.8.15",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20"
+  }
+}
