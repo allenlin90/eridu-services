@@ -27,7 +27,7 @@
     "zod": "^4.0.17"
   },
   "devDependencies": {
-    "@types/node": "^22.9.0",
+    "@types/node": "^22.10.7",
     "@types/pg": "^8.11.12",
     "drizzle-kit": "^0.30.6",
     "tsc-alias": "^1.8.15",
