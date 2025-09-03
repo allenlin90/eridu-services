@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// This is your Prisma schema file
 
 generator client {
   provider = "prisma-client-js"
@@ -12,4 +8,467 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int          @id @default(autoincrement())
+  uid       String       @unique
+  extId     String?     // For SSO integration
+  email     String       @unique
+  name      String
+  mc        MC?         // Optional MC profile linkage
+  comments  Comment[]
+  memberships Membership[]
+  tasks     Task[]
+  audits    Audit[]
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+  deletedAt DateTime?   @map("deleted_at")
+
+  @@map("users")
+}
+
+model MC {
+  id        Int         @id @default(autoincrement())
+  uid       String      @unique
+  userId    Int?        @unique @map("user_id")
+  name      String
+  aliasName String      @map("alias_name")
+  isBanned  Boolean     @default(false) @map("is_banned")
+  metadata  Json?
+  showMCs   ShowMC[]
+  user      User?       @relation(fields: [userId], references: [id])
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+  deletedAt DateTime?   @map("deleted_at")
+
+  @@map("mcs")
+}
+
+model Client {
+  id            Int         @id @default(autoincrement())
+  uid           String      @unique
+  name          String
+  contactPerson String      @map("contact_person")
+  contactEmail  String      @map("contact_email")
+  metadata      Json?
+  materials     Material[]
+  shows        Show[]
+  schedules    Schedule[]
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+  deletedAt    DateTime?   @map("deleted_at")
+
+  @@map("clients")
+}
+
+model Material {
+  id            Int           @id @default(autoincrement())
+  uid           String        @unique
+  clientId      Int?         @map("client_id")
+  platformId    Int?         @map("platform_id")
+  materialTypeId Int          @map("material_type_id")
+  name          String
+  description   String?
+  resourceUrl   String       @map("resource_url")
+  isActive      Boolean      @default(true) @map("is_active")
+  expiringAt    DateTime?    @map("expiring_at")
+  version       String
+  metadata      Json?
+  client        Client?      @relation(fields: [clientId], references: [id])
+  platform      Platform?    @relation(fields: [platformId], references: [id])
+  materialType  MaterialType @relation(fields: [materialTypeId], references: [id])
+  showMaterials ShowMaterial[]
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  deletedAt     DateTime?    @map("deleted_at")
+
+  @@map("materials")
+}
+
+model MaterialType {
+  id        Int         @id @default(autoincrement())
+  uid       String      @unique
+  name      String      // brief, mechanic, script, scene, other
+  metadata  Json?
+  materials Material[]
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+  deletedAt DateTime?   @map("deleted_at")
+
+  @@map("material_types")
+}
+
+model Platform {
+  id           Int            @id @default(autoincrement())
+  uid          String         @unique
+  name         String
+  apiConfig    Json          @map("api_config")
+  metadata     Json?
+  materials    Material[]
+  showPlatforms ShowPlatform[]
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  deletedAt    DateTime?     @map("deleted_at")
+
+  @@map("platforms")
+}
+
+model Show {
+  id            Int           @id @default(autoincrement())
+  uid           String        @unique
+  clientId      Int          @map("client_id")
+  studioRoomId  Int          @map("studio_room_id")
+  scheduleId    Int?         @map("schedule_id")
+  showTypeId    Int          @map("show_type_id")
+  showStatusId  Int          @map("show_status_id")
+  showStandardId Int          @map("show_standard_id")
+  startTime     DateTime     @map("start_time")
+  endTime       DateTime     @map("end_time")
+  metadata      Json?
+  client        Client       @relation(fields: [clientId], references: [id])
+  studioRoom    StudioRoom   @relation(fields: [studioRoomId], references: [id])
+  schedule      Schedule?    @relation(fields: [scheduleId], references: [id])
+  showType      ShowType     @relation(fields: [showTypeId], references: [id])
+  showStatus    ShowStatus   @relation(fields: [showStatusId], references: [id])
+  showStandard  ShowStandard @relation(fields: [showStandardId], references: [id])
+  showMCs       ShowMC[]
+  showMaterials ShowMaterial[]
+  showPlatforms ShowPlatform[]
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  deletedAt     DateTime?    @map("deleted_at")
+
+  @@map("shows")
+}
+
+model ShowMC {
+  id        Int       @id @default(autoincrement())
+  uid       String    @unique
+  showId    Int       @map("show_id")
+  mcId      Int       @map("mc_id")
+  rating    Int?
+  note      String?
+  metadata  Json?
+  show      Show      @relation(fields: [showId], references: [id])
+  mc        MC        @relation(fields: [mcId], references: [id])
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("show_mcs")
+}
+
+model ShowMaterial {
+  id         Int       @id @default(autoincrement())
+  uid        String    @unique
+  showId     Int       @map("show_id")
+  materialId Int       @map("material_id")
+  show       Show      @relation(fields: [showId], references: [id])
+  material   Material  @relation(fields: [materialId], references: [id])
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  @@map("show_materials")
+}
+
+model ShowPlatform {
+  id              Int       @id @default(autoincrement())
+  uid             String    @unique
+  showId          Int       @map("show_id")
+  platformId      Int       @map("platform_id")
+  liveStreamLink  String    @map("live_stream_link")
+  platformShowId  String    @map("platform_show_id")
+  viewerCount     Int       @default(0) @map("viewer_count")
+  metadata        Json?
+  show            Show      @relation(fields: [showId], references: [id])
+  platform        Platform  @relation(fields: [platformId], references: [id])
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  @@map("show_platforms")
+}
+
+model Studio {
+  id           Int          @id @default(autoincrement())
+  uid          String       @unique
+  name         String
+  location     String
+  metadata     Json?
+  studioRooms  StudioRoom[]
+  schedules    Schedule[]
+  tags         Tag[]
+  taskTemplates TaskTemplate[]
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  deletedAt    DateTime?    @map("deleted_at")
+
+  @@map("studios")
+}
+
+model StudioRoom {
+  id        Int       @id @default(autoincrement())
+  uid       String    @unique
+  studioId  Int       @map("studio_id")
+  name      String
+  capacity  Int
+  metadata  Json?
+  studio    Studio    @relation(fields: [studioId], references: [id])
+  shows     Show[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("studio_rooms")
+}
+
+model Schedule {
+  id              Int            @id @default(autoincrement())
+  uid             String         @unique
+  clientId        Int            @map("client_id")
+  studioId        Int            @map("studio_id")
+  scheduleStatusId Int            @map("schedule_status_id")
+  name            String
+  description     String?
+  startTime       DateTime       @map("start_time")
+  endTime         DateTime       @map("end_time")
+  metadata        Json?
+  client          Client         @relation(fields: [clientId], references: [id])
+  studio          Studio         @relation(fields: [studioId], references: [id])
+  scheduleStatus  ScheduleStatus @relation(fields: [scheduleStatusId], references: [id])
+  shows           Show[]
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  deletedAt       DateTime?      @map("deleted_at")
+
+  @@map("schedules")
+}
+
+model ScheduleStatus {
+  id        Int        @id @default(autoincrement())
+  uid       String     @unique
+  name      String     // draft, proposed, confirmed, archived, cancelled, other
+  metadata  Json?
+  schedules Schedule[]
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  deletedAt DateTime?  @map("deleted_at")
+
+  @@map("schedule_status")
+}
+
+model ShowType {
+  id        Int       @id @default(autoincrement())
+  uid       String    @unique
+  name      String
+  metadata  Json?
+  shows     Show[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("show_types")
+}
+
+model ShowStatus {
+  id        Int       @id @default(autoincrement())
+  uid       String    @unique
+  name      String    // draft, confirmed, live, completed, cancelled
+  metadata  Json?
+  shows     Show[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("show_status")
+}
+
+model ShowStandard {
+  id        Int       @id @default(autoincrement())
+  uid       String    @unique
+  name      String    // standard, premium
+  metadata  Json?
+  shows     Show[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("show_standards")
+}
+
+model Tag {
+  id        Int         @id @default(autoincrement())
+  uid       String      @unique
+  studioId  Int?        @map("studio_id")
+  name      String
+  metadata  Json?
+  studio    Studio?     @relation(fields: [studioId], references: [id])
+  taggables Taggable[]
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+  deletedAt DateTime?   @map("deleted_at")
+
+  @@map("tags")
+}
+
+model Taggable {
+  id            Int       @id @default(autoincrement())
+  uid           String    @unique
+  tagId         Int       @map("tag_id")
+  taggableId    Int       @map("taggable_id")
+  taggableType  String    @map("taggable_type")
+  tag           Tag       @relation(fields: [tagId], references: [id])
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  @@map("taggables")
+}
+
+model TaskTemplate {
+  id                Int                 @id @default(autoincrement())
+  uid               String              @unique
+  studioId          Int                 @map("studio_id")
+  name              String
+  description       String?
+  isActive         Boolean             @default(true) @map("is_active")
+  metadata          Json?
+  studio            Studio              @relation(fields: [studioId], references: [id])
+  taskTemplateItems TaskTemplateItem[]
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  deletedAt         DateTime?           @map("deleted_at")
+
+  @@map("task_templates")
+}
+
+model TaskTemplateItem {
+  id             Int            @id @default(autoincrement())
+  uid            String         @unique
+  taskTemplateId Int            @map("task_template_id")
+  taskTypeId     Int            @map("task_type_id")
+  inputTypeId    Int            @map("input_type_id")
+  name           String
+  description    String?
+  isRequired     Boolean        @default(false) @map("is_required")
+  metadata       Json?
+  taskTemplate   TaskTemplate   @relation(fields: [taskTemplateId], references: [id])
+  taskType       TaskType       @relation(fields: [taskTypeId], references: [id])
+  taskInputType  TaskInputType  @relation(fields: [inputTypeId], references: [id])
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  deletedAt      DateTime?      @map("deleted_at")
+
+  @@map("task_template_items")
+}
+
+model TaskType {
+  id                Int                @id @default(autoincrement())
+  uid               String             @unique
+  name              String             // pre_production, production, post_production, show_mc_review, show_platform_review, other
+  metadata          Json?
+  taskTemplateItems TaskTemplateItem[]
+  tasks             Task[]
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  deletedAt         DateTime?          @map("deleted_at")
+
+  @@map("task_types")
+}
+
+model TaskInputType {
+  id                Int                @id @default(autoincrement())
+  uid               String             @unique
+  name              String             // string, number, datetime, percentage
+  metadata          Json?
+  taskTemplateItems TaskTemplateItem[]
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  deletedAt         DateTime?          @map("deleted_at")
+
+  @@map("task_input_types")
+}
+
+model Task {
+  id           Int          @id @default(autoincrement())
+  uid          String       @unique
+  taskTypeId   Int          @map("task_type_id")
+  taskStatusId Int          @map("task_status_id")
+  assigneeId   Int          @map("assignee_id")
+  dueDate      DateTime     @map("due_date")
+  completedAt  DateTime?    @map("completed_at")
+  metadata     Json?
+  taskType     TaskType     @relation(fields: [taskTypeId], references: [id])
+  taskStatus   TaskStatus   @relation(fields: [taskStatusId], references: [id])
+  assignee     User         @relation(fields: [assigneeId], references: [id])
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  deletedAt    DateTime?    @map("deleted_at")
+
+  @@map("tasks")
+}
+
+model TaskStatus {
+  id        Int       @id @default(autoincrement())
+  uid       String    @unique
+  name      String    // pending, in_progress, completed, cancelled
+  metadata  Json?
+  tasks     Task[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("task_status")
+}
+
+model Membership {
+  id        Int       @id @default(autoincrement())
+  uid       String    @unique
+  userId    Int       @map("user_id")
+  groupId   Int       @map("group_id")
+  groupType String    @map("group_type") // client, platform, studio
+  role      String    // admin, manager, member
+  metadata  Json?
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("memberships")
+}
+
+model Comment {
+  id              Int       @id @default(autoincrement())
+  uid             String    @unique
+  commentableId   Int       @map("commentable_id")
+  commentableType String    @map("commentable_type")
+  ownerId         Int       @map("owner_id")
+  parentId        Int?      @map("parent_id")
+  content         String
+  parent          Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies         Comment[] @relation("CommentReplies")
+  owner           User      @relation(fields: [ownerId], references: [id])
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  @@map("comments")
+}
+
+model Audit {
+  id             Int       @id @default(autoincrement())
+  uid            String    @unique
+  userId         Int       @map("user_id")
+  action         String
+  recordableId   Int       @map("recordable_id")
+  recordableType String    @map("recordable_type")
+  oldValues      Json      @map("old_values")
+  newValues      Json      @map("new_values")
+  metadata       Json?
+  user           User      @relation(fields: [userId], references: [id])
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@map("audits")
 }
