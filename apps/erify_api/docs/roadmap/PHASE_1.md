@@ -1,6 +1,6 @@
 
 - App configuration
-  - [ ] Logger
+  - [x] Logger
   - [ ] Graceful shutdown
   - [ ] SSO integration
   - [ ] Global exception filter
