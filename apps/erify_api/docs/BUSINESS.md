@@ -456,8 +456,8 @@ erDiagram
       string uid
       int user_id FK
       string action "CRUD"
-      int recordable_id FK
-      string recordable_type "polymorphic"
+      int auditable_id FK
+      string auditable_type "polymorphic"
       jsonb old_values
       jsonb new_values
       jsonb metadata
@@ -585,6 +585,8 @@ erDiagram
       string uid
       int show_id FK
       int material_id FK
+      string note
+      jsonb metadata
       datetime created_at
       datetime updated_at
       datetime deleted_at
@@ -595,7 +597,6 @@ erDiagram
       string uid
       int show_id FK
       int mc_id FK
-      int rating
       string note
       jsonb metadata
       datetime created_at
