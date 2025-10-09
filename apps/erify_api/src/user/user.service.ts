@@ -91,6 +91,10 @@ export class UserService {
     });
   }
 
+  async countUsers(where?: Prisma.UserWhereInput): Promise<number> {
+    return this.userRepository.count(where ?? ({} as Prisma.UserWhereInput));
+  }
+
   /**
    * Soft deletes a user
    */

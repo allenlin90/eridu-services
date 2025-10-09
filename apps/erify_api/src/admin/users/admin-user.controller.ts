@@ -1,9 +1,12 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
 
-import { PaginationQueryDto } from '../../common/pagination/schema/pagination.schema';
+import {
+  createPaginatedResponseSchema,
+  PaginationQueryDto,
+} from '../../common/pagination/schema/pagination.schema';
 import { CreateUserDto } from '../../user/schemas/user.schema';
-import { UserDto } from '../../user/schemas/user.schema';
+import { UserDto, userDto } from '../../user/schemas/user.schema';
 import { AdminUserService } from './admin-user.service';
 
 @Controller('admin/users')
@@ -18,6 +21,7 @@ export class AdminUserController {
   }
 
   @Get()
+  @ZodSerializerDto(createPaginatedResponseSchema(userDto))
   getUsers(@Query() paginationQuery: PaginationQueryDto) {
     return this.adminUserService.getUsers(paginationQuery);
   }

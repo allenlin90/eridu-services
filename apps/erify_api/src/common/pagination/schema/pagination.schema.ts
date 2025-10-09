@@ -4,10 +4,12 @@ import { z } from 'zod';
 // Input schema for pagination parameters
 export const paginationQuerySchema = z
   .object({
-    page: z.coerce.number().int().min(1).default(1),
-    limit: z.coerce.number().int().min(1).default(10),
+    page: z.coerce.number().int().min(1).optional().default(1),
+    limit: z.coerce.number().int().min(1).optional().default(10),
   })
   .transform((data) => ({
+    page: data.page,
+    limit: data.limit,
     take: data.limit,
     skip: (data.page - 1) * data.limit,
   }));
@@ -17,7 +19,7 @@ export const paginationMetaSchema = z.object({
   page: z.number().int().min(1),
   limit: z.number().int().min(1),
   total: z.number().int().min(0),
-  totalPages: z.number().int().min(1),
+  totalPages: z.number().int().min(0),
   hasNextPage: z.boolean(),
   hasPreviousPage: z.boolean(),
 });
@@ -32,7 +34,17 @@ export const createPaginatedResponseSchema = <T extends z.ZodType>(
   });
 
 // DTOs and types
-export class PaginationQueryDto extends createZodDto(paginationQuerySchema) {}
+export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
+
+export class PaginationQueryDto
+  extends createZodDto(paginationQuerySchema)
+  implements PaginationQuery
+{
+  declare page: number;
+  declare limit: number;
+  declare take: number;
+  declare skip: number;
+}
 
 export type PaginationMeta = z.infer<typeof paginationMetaSchema>;
 export type PaginatedResponse<T> = {
