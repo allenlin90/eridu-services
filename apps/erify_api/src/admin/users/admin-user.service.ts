@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { PaginationQueryDto } from '../../common/pagination/schema/pagination.schema';
 import { CreateUserDto } from '../../user/schemas/user.schema';
 import { UserService } from '../../user/user.service';
 
@@ -11,11 +12,7 @@ export class AdminUserService {
     return this.userService.createUser(body);
   }
 
-  getUsers(page: number = 1, limit: number = 10) {
-    return {
-      data: [],
-      currentPage: page,
-      limit,
-    };
+  getUsers(params: PaginationQueryDto) {
+    return this.userService.getUsers(params);
   }
 }
