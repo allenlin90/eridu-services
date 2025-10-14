@@ -33,6 +33,15 @@ export class UserRepository extends BaseRepository<
     });
   }
 
+  async findByUid(uid: string): Promise<User | null> {
+    return this.model.findFirst({
+      where: {
+        uid,
+        deletedAt: null,
+      },
+    });
+  }
+
   async findActiveUsers(params: {
     skip?: number;
     take?: number;

@@ -1,10 +1,8 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 
+import { HttpError } from '../common/errors/http-error.util';
+import { PRISMA_ERROR } from '../common/errors/prisma-error-codes';
 import { UtilityService } from '../utility/utility.service';
 import { CreateUserDto } from './schemas/user.schema';
 import { UserRepository } from './user.repository';
@@ -19,14 +17,6 @@ export class UserService {
   ) {}
 
   async createUser(data: CreateUserDto): Promise<User> {
-    const existingUser = await this.userRepository.findOne({
-      OR: [{ email: data.email }, { extId: data.extId }],
-    });
-
-    if (existingUser) {
-      throw new BadRequestException('User already exists');
-    }
-
     const uid = this.utilityService.generateBrandedId(UserService.UID_PREFIX);
 
     const payload = {
@@ -34,17 +24,27 @@ export class UserService {
       uid,
     };
 
-    return this.userRepository.create(payload);
+    try {
+      return await this.userRepository.create(payload);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === PRISMA_ERROR.UniqueConstraint
+      ) {
+        throw HttpError.conflict('Email already exists');
+      }
+      throw error;
+    }
   }
 
   /**
    * Retrieves a user by ID
    */
-  async getUserById(id: number): Promise<User> {
-    const user = await this.userRepository.findById(id);
+  async getUserById(uid: string): Promise<User> {
+    const user = await this.userRepository.findByUid(uid);
 
     if (!user) {
-      throw new NotFoundException(`User not found with id ${id}`);
+      throw HttpError.notFound('User', uid);
     }
 
     return user;
@@ -53,26 +53,24 @@ export class UserService {
   /**
    * Updates a user's information
    */
-  async updateUser(id: number, data: Prisma.UserUpdateInput): Promise<User> {
-    const user = await this.userRepository.findById(id);
+  async updateUser(uid: string, data: Prisma.UserUpdateInput): Promise<User> {
+    const user = await this.userRepository.findByUid(uid);
 
     if (!user) {
-      throw new NotFoundException(`User not found with id ${id}`);
+      throw HttpError.notFound('User', uid);
     }
 
-    // Check for email uniqueness if email is being updated
-    if (data.email) {
-      const newEmail =
-        typeof data.email === 'string' ? data.email : data.email.set;
-      if (newEmail && newEmail !== user.email) {
-        const existingUser = await this.userRepository.findByEmail(newEmail);
-        if (existingUser) {
-          throw new BadRequestException('Email already exists');
-        }
+    try {
+      return await this.userRepository.update({ uid }, data);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === PRISMA_ERROR.UniqueConstraint
+      ) {
+        throw HttpError.conflict('Email already exists');
       }
+      throw error;
     }
-
-    return this.userRepository.update({ id }, data);
   }
 
   /**
@@ -98,14 +96,14 @@ export class UserService {
   /**
    * Soft deletes a user
    */
-  async deleteUser(id: number): Promise<User> {
-    const user = await this.userRepository.findById(id);
+  async deleteUser(uid: string): Promise<User> {
+    const user = await this.userRepository.findByUid(uid);
 
     if (!user) {
-      throw new NotFoundException(`User not found with id ${id}`);
+      throw HttpError.notFound('User', uid);
     }
 
-    return this.userRepository.softDelete({ id });
+    return this.userRepository.softDelete({ uid });
   }
 
   /**

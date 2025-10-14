@@ -2,15 +2,27 @@ import { Injectable } from '@nestjs/common';
 import type { User } from '@prisma/client';
 
 import { PaginatedResponse } from '../../common/pagination/schema/pagination.schema';
-import { CreateUserDto } from '../../user/schemas/user.schema';
+import { CreateUserDto, UpdateUserDto } from '../../user/schemas/user.schema';
 import { UserService } from '../../user/user.service';
 
 @Injectable()
 export class AdminUserService {
   constructor(private readonly userService: UserService) {}
 
-  createUser(body: CreateUserDto) {
-    return this.userService.createUser(body);
+  createUser(data: CreateUserDto) {
+    return this.userService.createUser(data);
+  }
+
+  getUserById(uid: string) {
+    return this.userService.getUserById(uid);
+  }
+
+  updateUser(uid: string, data: UpdateUserDto) {
+    return this.userService.updateUser(uid, data);
+  }
+
+  deleteUser(uid: string) {
+    return this.userService.deleteUser(uid);
   }
 
   async getUsers(params: {

@@ -56,3 +56,5 @@ export class CreateUserDto extends createZodDto(createUserSchema) {}
 export type UserSchema = z.infer<typeof userSchema>;
 
 export class UserDto extends createZodDto(userDto) {}
+
+export class UpdateUserDto extends createZodDto(updateUserSchema) {}
