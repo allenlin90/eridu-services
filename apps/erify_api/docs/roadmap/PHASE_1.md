@@ -13,13 +13,13 @@
     - [x] Global interceptor (serializer)
     - [x] http-exception filter (catching zod errors)
     - [x] base repository class
-    - [ ] Pagination params and response
+    - [x] Pagination params and response
 
 - Common utils
   - [x] Branded ID generator
 
 - CRUD entities by admin user
-  - [ ] User 
+  - [x] User 
   - [ ] Client 
   - [ ] MC 
   - [ ] Membership 
