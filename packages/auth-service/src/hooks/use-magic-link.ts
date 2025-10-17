@@ -1,14 +1,11 @@
-import type { User } from "better-auth";
-
 import { useCallback, useRef, useState } from "react";
 
 import { API_ENDPOINTS } from "../constants/api-endpoints";
 import { fetchClient } from "../lib/http-client";
 import useSession from "./use-session";
 
-type LoginCredentials = {
+type MagicLinkCredentials = {
   email: string;
-  password: string;
 };
 
 type ErrorResponse = {
@@ -16,14 +13,12 @@ type ErrorResponse = {
   message: string;
 };
 
-type LoginResponse = {
-  redirect: boolean;
-  token: string;
-  user: User;
+type MagicLinkResponse = {
+  message: string;
 };
 
-export function useLogin() {
-  const { baseURL, refetch } = useSession();
+export function useMagicLink() {
+  const { baseURL } = useSession();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,13 +28,13 @@ export function useLogin() {
     signalRef.current?.abort();
   }, []);
 
-  const login = useCallback(async (credentials: LoginCredentials): Promise<LoginResponse | null> => {
+  const sendMagicLink = useCallback(async (credentials: MagicLinkCredentials): Promise<MagicLinkResponse | null> => {
     setLoading(true);
     setError(null);
     signalRef.current?.abort();
 
     try {
-      const fetchURL = new URL(API_ENDPOINTS.AUTH.SIGNIN.EMAIL, baseURL);
+      const fetchURL = new URL(API_ENDPOINTS.AUTH.MAGIC_LINK, baseURL);
       const response = await fetchClient(fetchURL, {
         method: "POST",
         headers: {
@@ -52,12 +47,11 @@ export function useLogin() {
       // Check if the response is OK
       if (!response.ok) {
         const errorData: ErrorResponse = await response.json();
-        throw new Error(errorData.message || "Login failed");
+        throw new Error(errorData.message || "Magic link send failed");
       }
 
-      // Parse the response as LoginResponse
-      const data: LoginResponse = await response.json();
-      await refetch();
+      // Parse the response as MagicLinkResponse
+      const data: MagicLinkResponse = await response.json();
       return data;
     }
     catch (err) {
@@ -68,12 +62,12 @@ export function useLogin() {
       setLoading(false);
       signalRef.current = null;
     }
-  }, [baseURL, refetch]);
+  }, [baseURL]);
 
   return {
     loading,
     error,
-    login,
+    sendMagicLink,
     abortFetching,
   };
 }

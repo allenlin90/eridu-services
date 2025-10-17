@@ -1,4 +1,3 @@
-import type { userSchema } from "better-auth/db";
 import type { invitationSchema, memberSchema, organizationSchema, teamSchema } from "better-auth/plugins";
 import type { JWTPayload } from "jose";
 import type { z } from "zod";
@@ -19,5 +18,7 @@ export type Role = "admin" | "user" | "owner" | "member";
 export type Session = JWTPayload & User & {
   role: Role;
   activeOrganizationId: string | null;
+  activeTeamId: string | null;
+  impersonatedBy: string | null;
   memberships: Membership[];
 };
