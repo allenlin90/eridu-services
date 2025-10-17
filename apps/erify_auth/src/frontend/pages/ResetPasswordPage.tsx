@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Alert, AlertDescription } from '../components/ui/Alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@eridu/ui/components/card';
+import { Button } from '@eridu/ui/components/button';
+import { Input } from '@eridu/ui/components/input';
+import { Label } from '@eridu/ui/components/label';
+import { Alert, AlertDescription } from '@eridu/ui/components/alert';
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -151,27 +152,37 @@ export function ResetPasswordPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="New Password"
-            type="password"
-            placeholder="Enter your new password"
-            value={formData.password}
-            onChange={(e) => handleInputChange('password', e.target.value)}
-            disabled={loading}
-            error={validationErrors.password}
-            required
-          />
+          <div className="space-y-2">
+            <Label htmlFor="password">New Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter your new password"
+              value={formData.password}
+              onChange={(e) => handleInputChange('password', e.target.value)}
+              disabled={loading}
+              required
+            />
+            {validationErrors.password && (
+              <p className="text-sm text-red-600">{validationErrors.password}</p>
+            )}
+          </div>
 
-          <Input
-            label="Confirm New Password"
-            type="password"
-            placeholder="Confirm your new password"
-            value={formData.confirmPassword}
-            onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-            disabled={loading}
-            error={validationErrors.confirmPassword}
-            required
-          />
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm New Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="Confirm your new password"
+              value={formData.confirmPassword}
+              onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+              disabled={loading}
+              required
+            />
+            {validationErrors.confirmPassword && (
+              <p className="text-sm text-red-600">{validationErrors.confirmPassword}</p>
+            )}
+          </div>
 
           <Button
             type="submit"
