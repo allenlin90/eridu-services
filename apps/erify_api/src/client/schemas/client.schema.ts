@@ -4,7 +4,7 @@ import z from 'zod';
 import { ClientService } from '../client.service';
 
 export const clientSchema = z.object({
-  id: z.number(),
+  id: z.bigint(),
   uid: z.string().startsWith(ClientService.UID_PREFIX),
   name: z.string(),
   contactPerson: z.string(),
@@ -14,25 +14,35 @@ export const clientSchema = z.object({
   updatedAt: z.date(),
 });
 
-export const createClientSchema = clientSchema
-  .pick({
-    name: true,
-    contactPerson: true,
-    contactEmail: true,
-    metadata: true,
-  })
-  .extend({
+// API input schema (snake_case input, transforms to camelCase)
+export const createClientSchema = z
+  .object({
+    name: z.string(),
+    contact_person: z.string(),
+    contact_email: z.email(),
     metadata: z.record(z.string(), z.any()).optional(),
-  });
-
-export const updateClientSchema = clientSchema
-  .pick({
-    name: true,
-    contactPerson: true,
-    contactEmail: true,
-    metadata: true,
   })
-  .partial();
+  .transform((data) => ({
+    name: data.name,
+    contactPerson: data.contact_person,
+    contactEmail: data.contact_email,
+    metadata: data.metadata,
+  }));
+
+// API input schema (snake_case input, transforms to camelCase)
+export const updateClientSchema = z
+  .object({
+    name: z.string().optional(),
+    contact_person: z.string().optional(),
+    contact_email: z.email().optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
+  })
+  .transform((data) => ({
+    name: data.name,
+    contactPerson: data.contact_person,
+    contactEmail: data.contact_email,
+    metadata: data.metadata,
+  }));
 
 export const clientDto = clientSchema.transform((obj) => ({
   id: obj.uid,
@@ -43,6 +53,7 @@ export const clientDto = clientSchema.transform((obj) => ({
   updated_at: obj.updatedAt,
 }));
 
+// DTOs for input/output
 export class CreateClientDto extends createZodDto(createClientSchema) {}
 export class UpdateClientDto extends createZodDto(updateClientSchema) {}
 export class ClientDto extends createZodDto(clientDto) {}

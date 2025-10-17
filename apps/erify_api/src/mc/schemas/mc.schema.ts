@@ -4,9 +4,9 @@ import z from 'zod';
 import { McService } from '../mc.service';
 
 export const mcSchema = z.object({
-  id: z.number(),
+  id: z.bigint(),
   uid: z.string().startsWith(McService.UID_PREFIX),
-  userId: z.number().nullable(),
+  userId: z.bigint().nullable(),
   name: z.string(),
   aliasName: z.string(),
   isBanned: z.boolean(),
@@ -15,27 +15,37 @@ export const mcSchema = z.object({
   updatedAt: z.date(),
 });
 
-export const createMcSchema = mcSchema
-  .pick({
-    userId: true,
-    name: true,
-    aliasName: true,
-    metadata: true,
-  })
-  .extend({
-    userId: z.number().int().nullish(),
+// API input schema (snake_case input, transforms to camelCase)
+export const createMcSchema = z
+  .object({
+    user_id: z.bigint().nullish(),
+    name: z.string(),
+    alias_name: z.string(),
     metadata: z.record(z.string(), z.any()).optional(),
-  });
-
-export const updateMcSchema = mcSchema
-  .pick({
-    userId: true,
-    name: true,
-    aliasName: true,
-    isBanned: true,
-    metadata: true,
   })
-  .partial();
+  .transform((data) => ({
+    userId: data.user_id,
+    name: data.name,
+    aliasName: data.alias_name,
+    metadata: data.metadata,
+  }));
+
+// API input schema (snake_case input, transforms to camelCase)
+export const updateMcSchema = z
+  .object({
+    user_id: z.bigint().nullish(),
+    name: z.string().optional(),
+    alias_name: z.string().optional(),
+    is_banned: z.boolean().optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
+  })
+  .transform((data) => ({
+    userId: data.user_id,
+    name: data.name,
+    aliasName: data.alias_name,
+    isBanned: data.is_banned,
+    metadata: data.metadata,
+  }));
 
 export const mcDto = mcSchema.transform((obj) => ({
   id: obj.uid,
@@ -47,6 +57,7 @@ export const mcDto = mcSchema.transform((obj) => ({
   updated_at: obj.updatedAt,
 }));
 
+// DTOs for input/output
 export class CreateMcDto extends createZodDto(createMcSchema) {}
 export class UpdateMcDto extends createZodDto(updateMcSchema) {}
 export class McDto extends createZodDto(mcDto) {}

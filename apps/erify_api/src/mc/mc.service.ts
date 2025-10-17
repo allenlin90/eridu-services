@@ -5,7 +5,7 @@ import { HttpError } from '../common/errors/http-error.util';
 import { PRISMA_ERROR } from '../common/errors/prisma-error-codes';
 import { UtilityService } from '../utility/utility.service';
 import { McRepository } from './mc.repository';
-import { CreateMcDto } from './schemas/mc.schema';
+import { CreateMcDto, UpdateMcDto } from './schemas/mc.schema';
 
 @Injectable()
 export class McService {
@@ -41,7 +41,7 @@ export class McService {
     return mc;
   }
 
-  async updateMc(uid: string, data: Prisma.MCUpdateInput): Promise<MC> {
+  async updateMc(uid: string, data: UpdateMcDto): Promise<MC> {
     const mc = await this.mcRepository.findByUid(uid);
     if (!mc) {
       throw HttpError.notFound('MC', uid);

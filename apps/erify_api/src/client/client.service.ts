@@ -5,7 +5,7 @@ import { HttpError } from '../common/errors/http-error.util';
 import { PRISMA_ERROR } from '../common/errors/prisma-error-codes';
 import { UtilityService } from '../utility/utility.service';
 import { ClientRepository } from './client.repository';
-import { CreateClientDto } from './schemas/client.schema';
+import { CreateClientDto, UpdateClientDto } from './schemas/client.schema';
 
 @Injectable()
 export class ClientService {
@@ -43,10 +43,7 @@ export class ClientService {
     return client;
   }
 
-  async updateClient(
-    uid: string,
-    data: Prisma.ClientUpdateInput,
-  ): Promise<Client> {
+  async updateClient(uid: string, data: UpdateClientDto): Promise<Client> {
     const client = await this.clientRepository.findByUid(uid);
     if (!client) {
       throw HttpError.notFound('Client', uid);

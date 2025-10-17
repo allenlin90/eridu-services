@@ -4,7 +4,7 @@ import { Prisma, User } from '@prisma/client';
 import { HttpError } from '../common/errors/http-error.util';
 import { PRISMA_ERROR } from '../common/errors/prisma-error-codes';
 import { UtilityService } from '../utility/utility.service';
-import { CreateUserDto } from './schemas/user.schema';
+import { CreateUserDto, UpdateUserDto } from './schemas/user.schema';
 import { UserRepository } from './user.repository';
 
 @Injectable()
@@ -53,7 +53,7 @@ export class UserService {
   /**
    * Updates a user's information
    */
-  async updateUser(uid: string, data: Prisma.UserUpdateInput): Promise<User> {
+  async updateUser(uid: string, data: UpdateUserDto): Promise<User> {
     const user = await this.userRepository.findByUid(uid);
 
     if (!user) {
