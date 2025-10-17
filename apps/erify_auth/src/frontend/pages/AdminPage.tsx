@@ -6,8 +6,8 @@ export function AdminPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-foreground">Admin Panel</h1>
+        <p className="mt-2 text-muted-foreground">
           Manage users, organizations, and system settings
         </p>
       </div>
@@ -19,7 +19,7 @@ export function AdminPage() {
             <CardDescription>Manage user accounts and permissions</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               View, edit, and manage user accounts across the system.
             </p>
             <Button className="w-full">Manage Users</Button>
