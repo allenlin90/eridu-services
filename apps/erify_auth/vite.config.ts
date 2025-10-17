@@ -14,10 +14,12 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src/frontend'),
+      '@eridu/ui': resolve(__dirname, '../../packages/ui/src'),
     },
   },
   server: {
     port: 3002,
+    host: true, // Allow external connections
     proxy: {
       '/api': {
         target: 'http://localhost:3001',

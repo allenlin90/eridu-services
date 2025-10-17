@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Alert, AlertDescription } from '../components/ui/Alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@eridu/ui/components/card';
+import { Button } from '@eridu/ui/components/button';
+import { Input } from '@eridu/ui/components/input';
+import { Label } from '@eridu/ui/components/label';
+import { Alert, AlertDescription } from '@eridu/ui/components/alert';
 
 export function LoginPage() {
   const [formData, setFormData] = useState({
@@ -70,25 +71,31 @@ export function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Email"
-            type="email"
-            placeholder="Enter your email"
-            value={formData.email}
-            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-            disabled={loading}
-            required
-          />
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              disabled={loading}
+              required
+            />
+          </div>
 
-          <Input
-            label="Password"
-            type="password"
-            placeholder="Enter your password"
-            value={formData.password}
-            onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-            disabled={loading}
-            required
-          />
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              value={formData.password}
+              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+              disabled={loading}
+              required
+            />
+          </div>
 
           <div className="flex items-center justify-between">
             <Link

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Alert, AlertDescription } from '../components/ui/Alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@eridu/ui/components/card';
+import { Button } from '@eridu/ui/components/button';
+import { Alert, AlertDescription } from '@eridu/ui/components/alert';
 
 interface User {
   id: string;

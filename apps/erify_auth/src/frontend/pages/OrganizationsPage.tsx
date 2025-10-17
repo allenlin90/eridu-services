@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@eridu/ui/components/card';
+import { Button } from '@eridu/ui/components/button';
 
 export function OrganizationsPage() {
   return (
