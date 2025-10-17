@@ -33,6 +33,18 @@ const EnvSchema = z.object({
   DB_MIGRATING: stringBoolean,
   DB_SEEDING: stringBoolean,
   OPEN_API_DOC_TITLE: z.string().default('livestream studio'),
+  // SAML Configuration (optional - for future enterprise clients)
+  SAML_ENTRY_POINT: z.string().url().optional(),
+  SAML_ISSUER: z.string().optional(),
+  SAML_CERT: z.string().optional(),
+  // OIDC Configuration (optional - disabled for Phase 1)
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  LINE_CLIENT_ID: z.string().optional(),
+  LINE_CLIENT_SECRET: z.string().optional(),
+  OIDC_CLIENT_ID: z.string().optional(),
+  OIDC_CLIENT_SECRET: z.string().optional(),
+  OIDC_ISSUER: z.string().url().optional(),
 });
 
 export type env = z.infer<typeof EnvSchema>;
