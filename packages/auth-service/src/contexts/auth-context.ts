@@ -11,7 +11,6 @@ const _authClient = createAuthClient({
   ],
 });
 
-// TODO: fix typing admin is any issue
 export type AuthClient = typeof _authClient;
 
 export type AuthContextType = {

@@ -6,9 +6,10 @@ import { API_ENDPOINTS } from "../constants/api-endpoints";
 import { fetchClient } from "../lib/http-client";
 import useSession from "./use-session";
 
-type LoginCredentials = {
+type SignupCredentials = {
   email: string;
   password: string;
+  name: string;
 };
 
 type ErrorResponse = {
@@ -16,13 +17,13 @@ type ErrorResponse = {
   message: string;
 };
 
-type LoginResponse = {
+type SignupResponse = {
   redirect: boolean;
   token: string;
   user: User;
 };
 
-export function useLogin() {
+export function useSignup() {
   const { baseURL, refetch } = useSession();
 
   const [loading, setLoading] = useState(false);
@@ -33,13 +34,13 @@ export function useLogin() {
     signalRef.current?.abort();
   }, []);
 
-  const login = useCallback(async (credentials: LoginCredentials): Promise<LoginResponse | null> => {
+  const signup = useCallback(async (credentials: SignupCredentials): Promise<SignupResponse | null> => {
     setLoading(true);
     setError(null);
     signalRef.current?.abort();
 
     try {
-      const fetchURL = new URL(API_ENDPOINTS.AUTH.SIGNIN.EMAIL, baseURL);
+      const fetchURL = new URL(API_ENDPOINTS.AUTH.SIGNUP.EMAIL, baseURL);
       const response = await fetchClient(fetchURL, {
         method: "POST",
         headers: {
@@ -52,11 +53,11 @@ export function useLogin() {
       // Check if the response is OK
       if (!response.ok) {
         const errorData: ErrorResponse = await response.json();
-        throw new Error(errorData.message || "Login failed");
+        throw new Error(errorData.message || "Signup failed");
       }
 
-      // Parse the response as LoginResponse
-      const data: LoginResponse = await response.json();
+      // Parse the response as SignupResponse
+      const data: SignupResponse = await response.json();
       await refetch();
       return data;
     }
@@ -73,7 +74,7 @@ export function useLogin() {
   return {
     loading,
     error,
-    login,
+    signup,
     abortFetching,
   };
 }
