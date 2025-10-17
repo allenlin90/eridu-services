@@ -8,6 +8,13 @@
       "when": 1755700979649,
       "tag": "0000_loving_scarecrow",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1760672949980,
+      "tag": "0001_pink_black_bolt",
+      "breakpoints": true
     }
   ]
 }

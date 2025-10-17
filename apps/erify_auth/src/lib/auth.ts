@@ -12,6 +12,7 @@ import {
   openAPI,
   organization,
 } from 'better-auth/plugins';
+// import { sso } from '@better-auth/sso'; // Disabled for Phase 1
 
 import env from '@/env';
 import { db } from '@/db';
@@ -46,10 +47,11 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,
-    disableSignUp: env.DISABLE_SIGNUP,
-    // requireEmailVerification: true, // TODO: enable when send verification email is enabled
+    disableSignUp: false, // Allow email/password signup for Phase 1
+    requireEmailVerification: true, // Enable email verification for Phase 1
     sendResetPassword: async (data) => {
       // TODO: send reset password email
+      console.log('Password reset requested for:', data.user.email);
     },
   },
   emailVerification: {
@@ -60,6 +62,7 @@ export const auth = betterAuth({
         return; // does nothing if the user has verified email
       }
       // TODO: send verification email to user after signup
+      console.log('Email verification needed for:', data.user.email);
     },
   },
   user: {
@@ -123,5 +126,32 @@ export const auth = betterAuth({
         allowRemovingAllTeams: false,
       },
     }),
+    // SSO plugin disabled for Phase 1 - email/password only
+    // Uncomment and configure when ready for OIDC/SAML
+    // sso({
+    //   defaultSSO: [
+    //     // SAML provider example (ready for enterprise clients)
+    //     // {
+    //     //   domain: 'company.com',
+    //     //   providerId: 'saml-provider',
+    //     //   samlConfig: {
+    //     //     issuer: env.SAML_ISSUER!,
+    //     //     entryPoint: env.SAML_ENTRY_POINT!,
+    //     //     cert: env.SAML_CERT!,
+    //     //     callbackUrl: `${env.BETTER_AUTH_URL}/api/auth/sso/saml2/callback/saml-provider`,
+    //     //     spMetadata: {
+    //     //       entityID: `${env.BETTER_AUTH_URL}/api/auth/sso/saml2/sp/metadata/saml-provider`,
+    //     //     },
+    //     //   },
+    //     // },
+    //   ],
+    //   organizationProvisioning: {
+    //     disabled: false,
+    //     defaultRole: 'member',
+    //   },
+    //   trustEmailVerified: true,
+    //   providersLimit: 10,
+    //   disableImplicitSignUp: false,
+    // }),
   ],
 });
