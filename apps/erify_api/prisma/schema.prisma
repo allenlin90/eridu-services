@@ -329,38 +329,72 @@ model ScheduleStatus {
   @@map("schedule_status")
 }
 
+model ChangeCategory {
+  id               BigInt            @id @default(autoincrement())
+  uid              String            @unique
+  name             String            @unique // CLIENT_REQUESTED, OPERATIONAL, FORCE_MAJEURE
+  metadata         Json              @default("{}")
+  scheduleVersions ScheduleVersion[]
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  deletedAt        DateTime?         @map("deleted_at")
+
+  @@index([uid])
+  @@map("change_categories")
+}
+
+model ChangeType {
+  id               BigInt            @id @default(autoincrement())
+  uid              String            @unique
+  name             String            @unique // TIME_CHANGE, RESOURCE_CHANGE, SCOPE_CHANGE, etc.
+  metadata         Json              @default("{}")
+  scheduleVersions ScheduleVersion[]
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  deletedAt        DateTime?         @map("deleted_at")
+
+  @@index([uid])
+  @@map("change_types")
+}
+
 model ScheduleVersion {
-  id                     BigInt    @id @default(autoincrement())
-  uid                    String    @unique
-  scheduleId             BigInt    @map("schedule_id")
-  versionNumber          Int       @map("version_number")
-  effectiveFrom          DateTime  @map("effective_from")
-  effectiveTo            DateTime? @map("effective_to")
-  changeCategory         String    @map("change_category") // CLIENT_REQUESTED, OPERATIONAL, FORCE_MAJEURE
-  changeType             String    @map("change_type") // See classification below
-  changeReason           String    @map("change_reason")
-  requiresClientApproval Boolean   @default(false) @map("requires_client_approval")
-  creatorId              BigInt    @map("creator_id")
-  approverId             BigInt?   @map("approver_id")
-  approvedAt             DateTime? @map("approved_at")
-  metadata               Json      @default("{}")
-  creator                User      @relation("CreatedSchedules", fields: [creatorId], references: [id])
-  approver               User?     @relation(fields: [approverId], references: [id])
-  schedule               Schedule? @relation("ScheduleVersions", fields: [scheduleId], references: [id])
-  activeForSchedule      Schedule? @relation("ActiveVersion")
+  id                     BigInt         @id @default(autoincrement())
+  uid                    String         @unique
+  scheduleId             BigInt         @map("schedule_id")
+  versionNumber          Int            @map("version_number")
+  effectiveFrom          DateTime       @map("effective_from")
+  effectiveTo            DateTime?      @map("effective_to")
+  changeCategoryId       BigInt         @map("change_category_id")
+  changeTypeId           BigInt         @map("change_type_id")
+  changeReason           String         @map("change_reason")
+  requiresClientApproval Boolean        @default(false) @map("requires_client_approval")
+  creatorId              BigInt         @map("creator_id")
+  approverId             BigInt?        @map("approver_id")
+  approvedAt             DateTime?      @map("approved_at")
+  metadata               Json           @default("{}")
+  creator                User           @relation("CreatedSchedules", fields: [creatorId], references: [id])
+  approver               User?          @relation(fields: [approverId], references: [id])
+  schedule               Schedule?      @relation("ScheduleVersions", fields: [scheduleId], references: [id])
+  activeForSchedule      Schedule?      @relation("ActiveVersion")
+  changeCategory         ChangeCategory @relation(fields: [changeCategoryId], references: [id])
+  changeType             ChangeType     @relation(fields: [changeTypeId], references: [id])
   shows                  Show[]
-  createdAt              DateTime  @default(now()) @map("created_at")
-  updatedAt              DateTime  @updatedAt @map("updated_at")
-  deletedAt              DateTime? @map("deleted_at")
+  createdAt              DateTime       @default(now()) @map("created_at")
+  updatedAt              DateTime       @updatedAt @map("updated_at")
+  deletedAt              DateTime?      @map("deleted_at")
 
   @@unique([scheduleId, versionNumber])
-  @@index([approverId])
-  @@index([creatorId])
-  @@index([scheduleId])
-  @@index([effectiveFrom, effectiveTo])
-  @@index([scheduleId, effectiveFrom])
-  @@index([approvedAt])
-  @@index([requiresClientApproval])
+  @@index([changeCategoryId])
+  @@index([changeTypeId])
+  @@index([scheduleId, changeCategoryId])
+  @@index([scheduleId, changeTypeId])
+  @@index([changeCategoryId, requiresClientApproval])
+  @@index([changeTypeId, requiresClientApproval])
+  @@index([creatorId, changeTypeId])
+  @@index([approverId, changeTypeId])
+  @@index([effectiveFrom, effectiveTo, changeCategoryId])
+  @@index([scheduleId, approvedAt])
+  @@index([requiresClientApproval, approvedAt])
   @@map("schedule_versions")
 }
 
@@ -574,6 +608,7 @@ model Membership {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
+  @@unique([userId, groupId, groupType])
   @@index([uid])
   @@index([userId])
   @@index([groupId, groupType])

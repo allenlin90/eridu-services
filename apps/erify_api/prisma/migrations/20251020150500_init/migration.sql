@@ -225,6 +225,32 @@ CREATE TABLE "public"."schedule_status" (
 );
 
 -- CreateTable
+CREATE TABLE "public"."change_categories" (
+    "id" BIGSERIAL NOT NULL,
+    "uid" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "metadata" JSONB NOT NULL DEFAULT '{}',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "change_categories_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."change_types" (
+    "id" BIGSERIAL NOT NULL,
+    "uid" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "metadata" JSONB NOT NULL DEFAULT '{}',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "change_types_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "public"."schedule_versions" (
     "id" BIGSERIAL NOT NULL,
     "uid" TEXT NOT NULL,
@@ -232,8 +258,8 @@ CREATE TABLE "public"."schedule_versions" (
     "version_number" INTEGER NOT NULL,
     "effective_from" TIMESTAMP(3) NOT NULL,
     "effective_to" TIMESTAMP(3),
-    "change_category" TEXT NOT NULL,
-    "change_type" TEXT NOT NULL,
+    "change_category_id" BIGINT NOT NULL,
+    "change_type_id" BIGINT NOT NULL,
     "change_reason" TEXT NOT NULL,
     "requires_client_approval" BOOLEAN NOT NULL DEFAULT false,
     "creator_id" BIGINT NOT NULL,
@@ -707,28 +733,58 @@ CREATE UNIQUE INDEX "schedule_status_name_key" ON "public"."schedule_status"("na
 CREATE INDEX "schedule_status_uid_idx" ON "public"."schedule_status"("uid");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "change_categories_uid_key" ON "public"."change_categories"("uid");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "change_categories_name_key" ON "public"."change_categories"("name");
+
+-- CreateIndex
+CREATE INDEX "change_categories_uid_idx" ON "public"."change_categories"("uid");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "change_types_uid_key" ON "public"."change_types"("uid");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "change_types_name_key" ON "public"."change_types"("name");
+
+-- CreateIndex
+CREATE INDEX "change_types_uid_idx" ON "public"."change_types"("uid");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "schedule_versions_uid_key" ON "public"."schedule_versions"("uid");
 
 -- CreateIndex
-CREATE INDEX "schedule_versions_approver_id_idx" ON "public"."schedule_versions"("approver_id");
+CREATE INDEX "schedule_versions_change_category_id_idx" ON "public"."schedule_versions"("change_category_id");
 
 -- CreateIndex
-CREATE INDEX "schedule_versions_creator_id_idx" ON "public"."schedule_versions"("creator_id");
+CREATE INDEX "schedule_versions_change_type_id_idx" ON "public"."schedule_versions"("change_type_id");
 
 -- CreateIndex
-CREATE INDEX "schedule_versions_schedule_id_idx" ON "public"."schedule_versions"("schedule_id");
+CREATE INDEX "schedule_versions_schedule_id_change_category_id_idx" ON "public"."schedule_versions"("schedule_id", "change_category_id");
 
 -- CreateIndex
-CREATE INDEX "schedule_versions_effective_from_effective_to_idx" ON "public"."schedule_versions"("effective_from", "effective_to");
+CREATE INDEX "schedule_versions_schedule_id_change_type_id_idx" ON "public"."schedule_versions"("schedule_id", "change_type_id");
 
 -- CreateIndex
-CREATE INDEX "schedule_versions_schedule_id_effective_from_idx" ON "public"."schedule_versions"("schedule_id", "effective_from");
+CREATE INDEX "schedule_versions_change_category_id_requires_client_approv_idx" ON "public"."schedule_versions"("change_category_id", "requires_client_approval");
 
 -- CreateIndex
-CREATE INDEX "schedule_versions_approved_at_idx" ON "public"."schedule_versions"("approved_at");
+CREATE INDEX "schedule_versions_change_type_id_requires_client_approval_idx" ON "public"."schedule_versions"("change_type_id", "requires_client_approval");
 
 -- CreateIndex
-CREATE INDEX "schedule_versions_requires_client_approval_idx" ON "public"."schedule_versions"("requires_client_approval");
+CREATE INDEX "schedule_versions_creator_id_change_type_id_idx" ON "public"."schedule_versions"("creator_id", "change_type_id");
+
+-- CreateIndex
+CREATE INDEX "schedule_versions_approver_id_change_type_id_idx" ON "public"."schedule_versions"("approver_id", "change_type_id");
+
+-- CreateIndex
+CREATE INDEX "schedule_versions_effective_from_effective_to_change_catego_idx" ON "public"."schedule_versions"("effective_from", "effective_to", "change_category_id");
+
+-- CreateIndex
+CREATE INDEX "schedule_versions_schedule_id_approved_at_idx" ON "public"."schedule_versions"("schedule_id", "approved_at");
+
+-- CreateIndex
+CREATE INDEX "schedule_versions_requires_client_approval_approved_at_idx" ON "public"."schedule_versions"("requires_client_approval", "approved_at");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "schedule_versions_schedule_id_version_number_key" ON "public"."schedule_versions"("schedule_id", "version_number");
@@ -896,6 +952,9 @@ CREATE INDEX "memberships_group_type_group_id_idx" ON "public"."memberships"("gr
 CREATE INDEX "memberships_user_id_group_type_idx" ON "public"."memberships"("user_id", "group_type");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "memberships_user_id_group_id_group_type_key" ON "public"."memberships"("user_id", "group_id", "group_type");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "comments_uid_key" ON "public"."comments"("uid");
 
 -- CreateIndex
@@ -1011,6 +1070,12 @@ ALTER TABLE "public"."schedule_versions" ADD CONSTRAINT "schedule_versions_appro
 
 -- AddForeignKey
 ALTER TABLE "public"."schedule_versions" ADD CONSTRAINT "schedule_versions_schedule_id_fkey" FOREIGN KEY ("schedule_id") REFERENCES "public"."schedules"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."schedule_versions" ADD CONSTRAINT "schedule_versions_change_category_id_fkey" FOREIGN KEY ("change_category_id") REFERENCES "public"."change_categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."schedule_versions" ADD CONSTRAINT "schedule_versions_change_type_id_fkey" FOREIGN KEY ("change_type_id") REFERENCES "public"."change_types"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."tags" ADD CONSTRAINT "tags_studio_id_fkey" FOREIGN KEY ("studio_id") REFERENCES "public"."studios"("id") ON DELETE SET NULL ON UPDATE CASCADE;

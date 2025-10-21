@@ -33,6 +33,14 @@ export default function createConfig(options, ...userConfigs) {
             ignore: ["README.md"],
           },
         ],
+        "@typescript-eslint/no-unused-vars": [
+          "error",
+          {
+            "argsIgnorePattern": "^_",
+            "varsIgnorePattern": "^_",
+            "caughtErrorsIgnorePattern": "^_"
+          }
+        ],
       },
     },
     ...userConfigs

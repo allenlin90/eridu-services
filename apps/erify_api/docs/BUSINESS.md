@@ -1,59 +1,20 @@
-# Development roadmap 
+# Business Domain Documentation
 
-## Phase 0: Foundation & Core Setup (Estimate: 1-2 Weeks)
+This document provides comprehensive business domain information for the Eridu Services API. For development roadmap and implementation phases, see the [Core Production Management System](./roadmap/PHASE_1.md) documentation.
 
-Set up the foundational infrastructure including Turborepo monorepo, NestJS backend services, Prisma ORM, and PostgreSQL database with proper indexing and constraints.
+## Development Approach
 
-## Phase 1: Core Production MVP (Studio-Facing) (Estimate: 4-5 Weeks)
+The system is being developed in structured phases:
 
-Goal: A studio user can create and manage ad-hoc, individual Shows without needing a schedule.
+- **Phase 1**: Core Functions with Better Auth + Local Authorization - Essential CRUD operations, basic show management, Better Auth integration, and local authorization
+- **Phase 2**: Scheduling & Planning Workflow - Collaborative planning and multi-version scheduling
+- **Phase 3**: Advanced Authorization Control & Tracking Features - Role-based access control, audit trails, task management
 
-Key Features:
-- CRUD operations for core resources: Studios, StudioRooms, MCs, Platforms, Materials
-- Direct CRUD for Shows: Create Show records with CONFIRMED status (schedule_id will be NULL)
-- Relationship Management: Endpoints to link/unlink MCs, Platforms, and Materials to Shows
-- Tagging System: Implement tags and taggables models with full API support
-Basic user authentication and authorization
-
-## Phase 2: Scheduling & Planning Workflow (Estimate: 2-3 Weeks)
-
-Goal: Introduce collaborative planning layer using the "Promotable Draft" model.
-
-Key Features:
-
-- CRUD operations for Campaigns and Schedules
-- Enhanced Shows service: Create shows with DRAFT status linked to schedule_id
-- Show Confirmation Service: Bulk-update Show statuses from DRAFT to CONFIRMED
-- Schedule management endpoints for viewing and managing draft shows
-- Validation logic for schedule conflicts and studio room availability
-
-## Phase 3: User Collaboration & Access Control (Estimate: 4-6 Weeks)
-
-Goal: Onboard all user types (Clients, MCs, Operators) with secure permissions system.
-
-Key Features:
-
-- Complete User and Client management with SSO integration
-- Polymorphic Memberships system with role-based access control
-- Robust NestJS Guards protecting all API endpoints
-- Comments system for collaboration across all entities
-- Comprehensive audit trail for all operations
-- Real-time notifications for important events
-
-## Phase 4: Advanced Features & Reporting (Estimate: 6-10+ Weeks)
-Goal: Add business intelligence, automation, and optimization tools.
-
-Key Features:
-
-- Complete TaskTemplate and Task management with automated task generation
-- Read replica setup for performance optimization
-- Materialized views for aggregate reporting and analytics
-- Standalone Scheduling Optimization Service for resource allocation
-- Invoicing module for billing completed shows
-- Advanced analytics dashboard
-- API rate limiting and monitoring
-
----
+For detailed implementation plans, see:
+- [Phase 1 Roadmap](./roadmap/PHASE_1.md)
+- [Phase 2 Roadmap](./roadmap/PHASE_2.md)
+- [Phase 3 Roadmap](./roadmap/PHASE_3.md)
+- [Scheduling Architecture](./SCHEDULING_ARCHITECTURE.md)
 
 # Models
 
@@ -125,7 +86,7 @@ Features:
 
 Purpose: Manages content assets used in show production.
 
-Materials represent all content assets used in shows, including scripts, briefs, graphics, and platform-specific content. Each material is owned by a client and can be associated with multiple shows.
+**Phase 3 Feature** - Materials represent all content assets used in shows, including scripts, briefs, graphics, and platform-specific content. Each material is owned by a client and can be associated with multiple shows.
 
 Key Models: `materials`, `show_materials`
 
@@ -168,7 +129,9 @@ Business Rules:
 
 Purpose: Implements role-based access control across all system entities.
 
-The polymorphic `Memberships` system grants users specific roles within Studios, Clients, and Platforms. This enables fine-grained permission control where users can have different roles in different contexts.
+**Phase 1**: Basic admin verification - The polymorphic `Memberships` system grants users specific roles within Studios, Clients, and Platforms. This enables basic admin verification where users can have different roles in different contexts.
+
+**Phase 3 Enhancement**: Advanced authorization control - Polymorphic design supports any entity type, role hierarchy with increasing permissions, and metadata for custom permission attributes.
 
 Key Models: `memberships`, `users`
 

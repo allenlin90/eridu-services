@@ -6,6 +6,7 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
 import { AdminModule } from './admin/admin.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { ZodExceptionFilter } from './common/filters/zod-exception.filter';
 import { envSchema } from './config/env.schema';
 
 @Module({
@@ -54,6 +55,10 @@ import { envSchema } from './config/env.schema';
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: ZodExceptionFilter,
     },
   ],
 })
