@@ -4,7 +4,7 @@ import z from 'zod';
 import { UserService } from '../user.service';
 
 export const userSchema = z.object({
-  id: z.number(),
+  id: z.bigint(),
   uid: z.string().startsWith(UserService.UID_PREFIX),
   extId: z.string().nullable(),
   email: z.email(),
@@ -15,29 +15,39 @@ export const userSchema = z.object({
   updatedAt: z.date(),
 });
 
-export const createUserSchema = userSchema
-  .pick({
-    extId: true,
-    email: true,
-    name: true,
-    profileUrl: true,
-    metadata: true,
-  })
-  .extend({
-    extId: z.string().min(1).nullish(),
-    profileUrl: z.url().nullish(),
+// API input schema (snake_case input, transforms to camelCase)
+export const createUserSchema = z
+  .object({
+    ext_id: z.string().min(1).nullish(),
+    email: z.email(),
+    name: z.string(),
+    profile_url: z.url().nullish(),
     metadata: z.record(z.string(), z.any()).optional(),
-  });
-
-export const updateUserSchema = userSchema
-  .pick({
-    extId: true,
-    email: true,
-    name: true,
-    profileUrl: true,
-    metadata: true,
   })
-  .partial();
+  .transform((data) => ({
+    extId: data.ext_id,
+    email: data.email,
+    name: data.name,
+    profileUrl: data.profile_url,
+    metadata: data.metadata,
+  }));
+
+// API input schema (snake_case input, transforms to camelCase)
+export const updateUserSchema = z
+  .object({
+    ext_id: z.string().min(1).nullish(),
+    email: z.email().optional(),
+    name: z.string().optional(),
+    profile_url: z.url().nullish(),
+    metadata: z.record(z.string(), z.any()).optional(),
+  })
+  .transform((data) => ({
+    extId: data.ext_id,
+    email: data.email,
+    name: data.name,
+    profileUrl: data.profile_url,
+    metadata: data.metadata,
+  }));
 
 export const userDto = userSchema.transform((obj) => ({
   id: obj.uid,
@@ -51,8 +61,11 @@ export const userDto = userSchema.transform((obj) => ({
 
 export type CreateUserSchema = z.infer<typeof createUserSchema>;
 
+// DTOs for input/output
 export class CreateUserDto extends createZodDto(createUserSchema) {}
 
 export type UserSchema = z.infer<typeof userSchema>;
 
 export class UserDto extends createZodDto(userDto) {}
+
+export class UpdateUserDto extends createZodDto(updateUserSchema) {}
