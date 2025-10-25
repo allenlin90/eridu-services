@@ -70,7 +70,10 @@ describe('PlatformService', () => {
 
       const result = await service.createPlatform(platformData);
 
-      expect(utilityService.generateBrandedId).toHaveBeenCalledWith('plt_');
+      expect(utilityService.generateBrandedId).toHaveBeenCalledWith(
+        'plt',
+        undefined,
+      );
       expect(platformRepository.create).toHaveBeenCalledWith({
         ...platformData,
         uid: 'plt_test123',

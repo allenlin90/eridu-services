@@ -1,39 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, ShowStandard } from '@prisma/client';
 
-import { HttpError } from '../common/errors/http-error.util';
-import { PRISMA_ERROR } from '../common/errors/prisma-error-codes';
+import { BaseModelService } from '../common/services/base-model.service';
 import { UtilityService } from '../utility/utility.service';
 import { ShowStandardRepository } from './show-standard.repository';
 
 @Injectable()
-export class ShowStandardService {
-  static readonly UID_PREFIX = 'shs_';
+export class ShowStandardService extends BaseModelService {
+  static readonly UID_PREFIX = 'shsd';
+  protected readonly uidPrefix = ShowStandardService.UID_PREFIX;
 
   constructor(
     private readonly showStandardRepository: ShowStandardRepository,
-    private readonly utilityService: UtilityService,
-  ) {}
+    protected readonly utilityService: UtilityService,
+  ) {
+    super(utilityService);
+  }
 
   async createShowStandard(
     data: Omit<Prisma.ShowStandardCreateInput, 'uid'>,
   ): Promise<ShowStandard> {
-    const uid = this.utilityService.generateBrandedId(
-      ShowStandardService.UID_PREFIX,
-    );
-    const showStandardData = { ...data, uid };
-
-    try {
-      return await this.showStandardRepository.create(showStandardData);
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === PRISMA_ERROR.UniqueConstraint
-      ) {
-        throw HttpError.conflict('Show standard already exists');
-      }
-      throw error;
-    }
+    const uid = this.generateUid();
+    return this.showStandardRepository.create({ ...data, uid });
   }
 
   async getShowStandardById(uid: string): Promise<ShowStandard | null> {
@@ -45,35 +33,21 @@ export class ShowStandardService {
     take?: number;
     orderBy?: Record<string, 'asc' | 'desc'>;
   }): Promise<ShowStandard[]> {
-    return this.showStandardRepository.findMany({
-      skip: params.skip,
-      take: params.take,
-      orderBy: params.orderBy,
-    });
+    return this.showStandardRepository.findMany(params);
+  }
+
+  async countShowStandards(): Promise<number> {
+    return this.showStandardRepository.count({});
   }
 
   async updateShowStandard(
     uid: string,
     data: Prisma.ShowStandardUpdateInput,
   ): Promise<ShowStandard> {
-    try {
-      return await this.showStandardRepository.update({ uid }, data);
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === PRISMA_ERROR.UniqueConstraint
-      ) {
-        throw HttpError.conflict('Show standard already exists');
-      }
-      throw error;
-    }
+    return this.showStandardRepository.update({ uid }, data);
   }
 
   async deleteShowStandard(uid: string): Promise<ShowStandard> {
     return this.showStandardRepository.softDelete({ uid });
-  }
-
-  async countShowStandards(): Promise<number> {
-    return this.showStandardRepository.count({});
   }
 }

@@ -6,7 +6,7 @@ This document provides comprehensive business domain information for the Eridu S
 
 The system is being developed in structured phases:
 
-- **Phase 1**: Core Functions with Better Auth + Local Authorization - Essential CRUD operations, basic show management, Better Auth integration, and local authorization
+- **Phase 1**: Core Functions with Hybrid Authentication - Essential CRUD operations, basic show management, JWT validation from erify_auth service, and simple StudioMembership-based authorization
 - **Phase 2**: Scheduling & Planning Workflow - Collaborative planning and multi-version scheduling
 - **Phase 3**: Advanced Authorization Control & Tracking Features - Role-based access control, audit trails, task management
 
@@ -60,12 +60,14 @@ Business Rules:
 
 Each client company can have multiple user accounts for their team members. Users with 'Client' role are scoped to a single client, while studio users can interact with multiple clients.
 
-Key Models: `clients`, `users`, `memberships`
+Key Models: `clients`, `users`
 
 Business Rules:
 
 - Client users can only access their company's data
-- Membership roles determine permission levels within client organization
+- Permission levels determined by future ClientMembership model (Phase 3)
+
+**Note**: Client memberships will be implemented in Phase 3 as a separate ClientMembership model.
 
 ## Comment
 
@@ -125,50 +127,54 @@ Business Rules:
 - Performance tracking enables quality management
 - Ban status prevents problematic MCs from future bookings
 
-## Membership
+## Studio Membership
 
-Purpose: Implements role-based access control across all system entities.
+Purpose: Implements role-based access control for studio operations.
 
-**Phase 1**: Basic admin verification - The polymorphic `Memberships` system grants users specific roles within Studios, Clients, and Platforms. This enables basic admin verification where users can have different roles in different contexts.
+**Phase 1**: Basic admin verification - The `StudioMembership` model grants users specific roles within Studios. This enables basic admin verification where users can have different roles in different studios. Direct foreign key relationship to Studio simplifies Prisma implementation.
 
-**Phase 3 Enhancement**: Advanced authorization control - Polymorphic design supports any entity type, role hierarchy with increasing permissions, and metadata for custom permission attributes.
+**Phase 3 Enhancement**: Advanced authorization control - Separate ClientMembership and PlatformMembership models will be added, role hierarchy with increasing permissions, and metadata for custom permission attributes.
 
-Key Models: `memberships`, `users`
+Key Models: `studio_memberships`, `users`, `studios`
 
 Supported Roles: `admin`, `manager`, `member`
 
 Features:
 
-- Polymorphic design supports any entity type
-- Role hierarchy with increasing permissions
+- Direct relationship to Studio model (Prisma-friendly)
+- Role-based access control for studio operations
 - Metadata for custom permission attributes
+- Clean indexes for efficient queries
 
 Business Rules:
 
-- Users can have multiple memberships with different roles
+- Users can have memberships in multiple studios with different roles
 - Role hierarchy: admin > manager > member
-- Context-specific permissions (studio admin ≠ client admin)
+- One membership per user per studio (unique constraint)
+- Soft delete preserves historical membership data
 
 ## Platform
 
 Purpose: Manages streaming platforms and their configurations.
 
-Platforms represent external streaming services (Twitch, YouTube, etc.) where shows are broadcast. Each platform has specific API configurations and can have dedicated team members through memberships.
+Platforms represent external streaming services (Twitch, YouTube, etc.) where shows are broadcast. Each platform has specific API configurations and can have dedicated team members through platform memberships (Phase 3).
 
-Key Models: `platforms`, `show_platforms`, `memberships`
+Key Models: `platforms`, `show_platforms`
 
 Features:
 
 - API configuration storage for platform integration
 - Material support for platform-specific content
-- Team management through memberships
+- Team management through PlatformMembership (Phase 3)
 - Flexible metadata for platform-specific settings
 
 Business Rules:
 
 - Platform configurations are securely stored
 - Show broadcasts tracked per platform with unique identifiers
-- Platform teams can manage their specific integrations
+- Platform teams can manage their specific integrations (Phase 3)
+
+**Note**: Platform memberships will be implemented in Phase 3 as a separate PlatformMembership model.
 
 ## Schedule management
 
@@ -208,25 +214,29 @@ Key Models: `shows`, `show_mcs`, `show_platforms`, `show_materials`
 
 ### Show and MC
 
-Shows can have multiple MCs with individual performance tracking. The `ShowMCs` join table stores ratings and notes for each MC's performance on specific shows.
+**Phase 1 Implemented** - Shows can have multiple MCs with individual performance tracking. The `ShowMCs` join table stores ratings and notes for each MC's performance on specific shows.
+
+Key Models: `show_mcs`
 
 Features:
 
 - Multi-MC support for complex shows
-- Performance rating system (numerical scale)
 - Show-specific notes and feedback
 - Historical performance tracking
+- Admin API for managing MC assignments
 
 ### Show and Platform
 
-Shows can broadcast simultaneously across multiple platforms. Each `ShowPlatform` record represents a unique broadcast instance with platform-specific metadata.
+**Phase 1 Implemented** - Shows can broadcast simultaneously across multiple platforms. Each `ShowPlatform` record represents a unique broadcast instance with platform-specific metadata.
+
+Key Models: `show_platforms`
 
 Features:
 
 - Multi-platform broadcasting support
 - Platform-specific stream links and IDs
-- Real-time viewer count tracking
-- Platform-specific task generation
+- Viewer count tracking
+- Admin API for managing platform integrations
 
 ### Show and Material
 
@@ -249,14 +259,14 @@ Business Rules:
 
 Purpose: Manages physical production facilities and their resources.
 
-Studios represent physical locations with multiple rooms for show production. They maintain staff through memberships and can define custom operational procedures.
+Studios represent physical locations with multiple rooms for show production. They maintain staff through studio memberships and can define custom operational procedures.
 
-Key Models: `studios`, `studio_rooms`, `memberships`
+Key Models: `studios`, `studio_rooms`, `studio_memberships`
 
 Features:
 
 - Multi-room facility management
-- Staff organization through memberships
+- Staff organization through studio memberships
 - Location-based scheduling
 - Custom operational metadata
 
@@ -274,7 +284,7 @@ Features:
 Business Rules:
 
 - Rooms cannot be double-booked
-- Studio membership required for room access
+- Appropriate studio membership role required for room access and management
 - Equipment specifications stored in metadata
 
 ## Tag management
@@ -357,28 +367,29 @@ Input Types:
 
 Purpose: Manages system users and their contextual permissions.
 
-Users are granted specific roles through `Memberships`, enabling context-specific access control. A user might be an admin for one Studio but only a member of a Client workspace.
+Users are granted specific roles through `StudioMembership` (Phase 1) and will have `ClientMembership` and `PlatformMembership` in Phase 3, enabling context-specific access control. A user might be an admin for one Studio but only a member of another.
 
-Key Models: `users`, `memberships`, `mcs`
+Key Models: `users`, `studio_memberships`, `mcs`
 
 Features:
 
 - External identity integration (ext_id for SSO)
-- Multiple membership support
+- Multiple studio membership support
 - MC profile linkage for talent accounts
-- Comprehensive audit trail
+- Comprehensive audit trail (Phase 3)
 
-User Roles:
+User Roles (Studio Context):
 
-- admin: Full system access within context
+- admin: Full studio access and management
 - manager: Operational management permissions
 - member: Basic access and participation rights
 
 Business Rules:
 
-- Users can have different roles in different contexts
+- Users can have different roles in different studios
 - MC users can access both talent and platform features
-- All user actions are audited for security
+- Client and Platform memberships will be added in Phase 3
+- All user actions are audited for security (Phase 3)
 
 ```mermaid
 erDiagram
@@ -410,7 +421,8 @@ erDiagram
     task_template_items }o--|| task_input_type: is
     tasks }o--|| task_status: is
     users ||--o{ comments : has_many
-    users ||--o{ memberships : has_many
+    users ||--o{ studio_memberships : has_many
+    studios ||--o{ studio_memberships : has_many
     users ||--o{ tasks : has_many
     users ||--o{ audits : has_many
 
@@ -493,12 +505,11 @@ erDiagram
       datetime deleted_at
     }
 
-    memberships {
+    studio_memberships {
       int id PK
       string uid
       int user_id FK
-      int group_id FK "client_id, platform_id, studio_id"
-      string group_type "client, platform, studio"
+      int studio_id FK
       string role "admin, manager, member"
       jsonb metadata
       datetime created_at

@@ -16,55 +16,82 @@ import {
   createPaginatedResponseSchema,
   PaginationQueryDto,
 } from '../../common/pagination/schema/pagination.schema';
+import { UidValidationPipe } from '../../common/pipes/uid-validation.pipe';
 import {
   CreateShowStatusDto,
   ShowStatusDto,
   showStatusDto,
   UpdateShowStatusDto,
 } from '../../show-status/schemas/show-status.schema';
-import { AdminShowStatusService } from './admin-show-status.service';
+import { ShowStatusService } from '../../show-status/show-status.service';
+import { UtilityService } from '../../utility/utility.service';
+import { BaseAdminController } from '../base-admin.controller';
 
 @Controller('admin/show-statuses')
-export class AdminShowStatusController {
+export class AdminShowStatusController extends BaseAdminController {
   constructor(
-    private readonly adminShowStatusService: AdminShowStatusService,
-  ) {}
+    private readonly showStatusService: ShowStatusService,
+    utilityService: UtilityService,
+  ) {
+    super(utilityService);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ZodSerializerDto(ShowStatusDto)
-  async createShowStatus(@Body() body: CreateShowStatusDto) {
-    const showStatus = await this.adminShowStatusService.createShowStatus(body);
-    return showStatus;
+  createShowStatus(@Body() body: CreateShowStatusDto) {
+    return this.showStatusService.createShowStatus(body);
   }
 
   @Get()
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(createPaginatedResponseSchema(showStatusDto))
-  getShowStatuses(@Query() paginationQuery: PaginationQueryDto) {
-    return this.adminShowStatusService.getShowStatuses(paginationQuery);
+  async getShowStatuses(@Query() query: PaginationQueryDto) {
+    const data = await this.showStatusService.getShowStatuses({
+      skip: query.skip,
+      take: query.take,
+    });
+    const total = await this.showStatusService.countShowStatuses();
+
+    return this.createPaginatedResponse(data, total, query);
   }
 
-  @Get(':uid')
+  @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(ShowStatusDto)
-  getShowStatus(@Param('uid') uid: string) {
-    return this.adminShowStatusService.getShowStatusById(uid);
+  getShowStatus(
+    @Param(
+      'id',
+      new UidValidationPipe(ShowStatusService.UID_PREFIX, 'Show Status'),
+    )
+    id: string,
+  ) {
+    return this.showStatusService.getShowStatusById(id);
   }
 
-  @Patch(':uid')
+  @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(ShowStatusDto)
   updateShowStatus(
-    @Param('uid') uid: string,
+    @Param(
+      'id',
+      new UidValidationPipe(ShowStatusService.UID_PREFIX, 'Show Status'),
+    )
+    id: string,
     @Body() body: UpdateShowStatusDto,
   ) {
-    return this.adminShowStatusService.updateShowStatus(uid, body);
+    return this.showStatusService.updateShowStatus(id, body);
   }
 
-  @Delete(':uid')
+  @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteShowStatus(@Param('uid') uid: string) {
-    await this.adminShowStatusService.deleteShowStatus(uid);
+  async deleteShowStatus(
+    @Param(
+      'id',
+      new UidValidationPipe(ShowStatusService.UID_PREFIX, 'Show Status'),
+    )
+    id: string,
+  ) {
+    await this.showStatusService.deleteShowStatus(id);
   }
 }

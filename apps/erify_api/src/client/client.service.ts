@@ -2,70 +2,34 @@ import { Injectable } from '@nestjs/common';
 import { Client, Prisma } from '@prisma/client';
 
 import { HttpError } from '../common/errors/http-error.util';
-import { PRISMA_ERROR } from '../common/errors/prisma-error-codes';
+import { BaseModelService } from '../common/services/base-model.service';
 import { UtilityService } from '../utility/utility.service';
 import { ClientRepository } from './client.repository';
 import { CreateClientDto, UpdateClientDto } from './schemas/client.schema';
 
 @Injectable()
-export class ClientService {
+export class ClientService extends BaseModelService {
   static readonly UID_PREFIX = 'client';
+  protected readonly uidPrefix = ClientService.UID_PREFIX;
 
   constructor(
     private readonly clientRepository: ClientRepository,
-    private readonly utilityService: UtilityService,
-  ) {}
+    protected readonly utilityService: UtilityService,
+  ) {
+    super(utilityService);
+  }
 
   async createClient(data: CreateClientDto): Promise<Client> {
-    const uid = this.utilityService.generateBrandedId(ClientService.UID_PREFIX);
-
-    const payload = { ...data, uid };
-
-    try {
-      return await this.clientRepository.create(payload);
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === PRISMA_ERROR.UniqueConstraint
-      ) {
-        // name is unique; contactEmail might be unique at business level
-        throw HttpError.conflict('Client already exists');
-      }
-      throw error;
-    }
+    const uid = this.generateUid();
+    return this.clientRepository.create({ ...data, uid });
   }
 
   async getClientById(uid: string): Promise<Client> {
-    const client = await this.clientRepository.findByUid(uid);
-    if (!client) {
-      throw HttpError.notFound('Client', uid);
-    }
-    return client;
+    return this.findClientOrThrow(uid);
   }
 
   async findClientById(id: bigint): Promise<Client | null> {
-    const client = await this.clientRepository.findOne({ id });
-
-    return client;
-  }
-
-  async updateClient(uid: string, data: UpdateClientDto): Promise<Client> {
-    const client = await this.clientRepository.findByUid(uid);
-    if (!client) {
-      throw HttpError.notFound('Client', uid);
-    }
-
-    try {
-      return await this.clientRepository.update({ uid }, data);
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === PRISMA_ERROR.UniqueConstraint
-      ) {
-        throw HttpError.conflict('Client already exists');
-      }
-      throw error;
-    }
+    return this.clientRepository.findOne({ id });
   }
 
   async getClients(params: {
@@ -73,22 +37,7 @@ export class ClientService {
     take?: number;
     where?: Prisma.ClientWhereInput;
   }): Promise<Client[]> {
-    const { skip, take, where } = params;
-    return this.clientRepository.findMany({ skip, take, where });
-  }
-
-  async countClients(where?: Prisma.ClientWhereInput): Promise<number> {
-    return this.clientRepository.count(
-      where ?? ({} as Prisma.ClientWhereInput),
-    );
-  }
-
-  async deleteClient(uid: string): Promise<Client> {
-    const client = await this.clientRepository.findByUid(uid);
-    if (!client) {
-      throw HttpError.notFound('Client', uid);
-    }
-    return this.clientRepository.softDelete({ uid });
+    return this.clientRepository.findMany(params);
   }
 
   async getActiveClients(params: {
@@ -97,5 +46,27 @@ export class ClientService {
     orderBy?: Prisma.ClientOrderByWithRelationInput;
   }): Promise<Client[]> {
     return this.clientRepository.findActiveClients(params);
+  }
+
+  async countClients(where?: Prisma.ClientWhereInput): Promise<number> {
+    return this.clientRepository.count(where ?? {});
+  }
+
+  async updateClient(uid: string, data: UpdateClientDto): Promise<Client> {
+    await this.findClientOrThrow(uid);
+    return this.clientRepository.update({ uid }, data);
+  }
+
+  async deleteClient(uid: string): Promise<Client> {
+    await this.findClientOrThrow(uid);
+    return this.clientRepository.softDelete({ uid });
+  }
+
+  private async findClientOrThrow(uid: string): Promise<Client> {
+    const client = await this.clientRepository.findByUid(uid);
+    if (!client) {
+      throw HttpError.notFound('Client', uid);
+    }
+    return client;
   }
 }

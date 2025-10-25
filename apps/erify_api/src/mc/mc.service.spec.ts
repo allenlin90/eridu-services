@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Prisma } from '@prisma/client';
 
-import { PRISMA_ERROR } from '../common/errors/prisma-error-codes';
+import { createMockUniqueConstraintError } from '../common/test-helpers/prisma-error.helper';
 import { UtilityService } from '../utility/utility.service';
 import { McRepository } from './mc.repository';
 import { McService } from './mc.service';
@@ -52,6 +51,7 @@ describe('McService', () => {
 
     const result = await service.createMc(dto);
 
+    expect(utilityMock.generateBrandedId).toHaveBeenCalledWith('mc', undefined);
     expect(mcRepositoryMock.create).toHaveBeenCalled();
     expect(result).toEqual(created);
   });
@@ -63,13 +63,10 @@ describe('McService', () => {
       metadata: {},
       userId: null,
     };
-    const error = new Prisma.PrismaClientKnownRequestError('message', {
-      code: PRISMA_ERROR.UniqueConstraint,
-      clientVersion: '6.14.0',
-    });
+    const error = createMockUniqueConstraintError(['uid']);
     (mcRepositoryMock.create as jest.Mock).mockRejectedValue(error);
 
-    await expect(service.createMc(dto)).rejects.toMatchObject({ status: 409 });
+    await expect(service.createMc(dto)).rejects.toThrow(error);
   });
 
   it('getMcById throws not found', async () => {
@@ -85,10 +82,7 @@ describe('McService', () => {
       uid: 'mc_1',
       name: 'Old',
     });
-    const error = new Prisma.PrismaClientKnownRequestError('message', {
-      code: PRISMA_ERROR.UniqueConstraint,
-      clientVersion: '6.14.0',
-    });
+    const error = createMockUniqueConstraintError(['name']);
     (mcRepositoryMock.update as jest.Mock).mockRejectedValue(error);
 
     await expect(
@@ -99,6 +93,6 @@ describe('McService', () => {
         isBanned: false,
         metadata: {},
       }),
-    ).rejects.toMatchObject({ status: 409 });
+    ).rejects.toThrow(error);
   });
 });

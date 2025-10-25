@@ -2,14 +2,14 @@
 
 ## Overview
 
-This guide provides concrete implementation details for Phase 1's hybrid authentication approach. The system uses JWT validation for user identification and a simple Membership model for admin verification.
+This guide provides concrete implementation details for Phase 1's hybrid authentication approach. The system uses JWT validation for user identification and a simple StudioMembership model for admin verification.
 
 ### Hybrid Approach Rationale
 
 - **JWT Validation**: Extract user information from `erify_auth` service tokens
-- **Simple Authorization**: Use Membership model to distinguish admin vs non-admin users
+- **Simple Authorization**: Use StudioMembership model to distinguish admin vs non-admin users
 - **Admin Write, Non-Admin Read-Only**: Clear access pattern without complex role hierarchies
-- **Deferred Complexity**: Advanced authorization (roles, permissions, context-specific) moved to Phase 3
+- **Deferred Complexity**: Advanced authorization (Client/Platform memberships, complex roles, permissions) moved to Phase 3
 
 ## Architecture
 
@@ -18,16 +18,16 @@ sequenceDiagram
     participant Client
     participant API
     participant JWTGuard
-    participant MembershipService
+    participant StudioMembershipService
     participant Database
     
     Client->>API: Request with JWT token
     API->>JWTGuard: Validate token
     JWTGuard->>JWTGuard: Extract user info
-    JWTGuard->>MembershipService: Check admin status
-    MembershipService->>Database: Query membership
-    Database-->>MembershipService: Return membership data
-    MembershipService-->>JWTGuard: Admin status
+    JWTGuard->>StudioMembershipService: Check admin status
+    StudioMembershipService->>Database: Query studio membership
+    Database-->>StudioMembershipService: Return membership data
+    StudioMembershipService-->>JWTGuard: Admin status
     JWTGuard-->>API: User + Admin status
     API-->>Client: Response (write/read-only)
 ```
@@ -108,11 +108,11 @@ Create `src/common/guards/admin.guard.ts`:
 
 ```typescript
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { MembershipService } from '../../membership/membership.service';
+import { StudioMembershipService } from '../../studio-membership/studio-membership.service';
 
 @Injectable()
 export class AdminGuard implements CanActivate {
-  constructor(private readonly membershipService: MembershipService) {}
+  constructor(private readonly studioMembershipService: StudioMembershipService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -122,8 +122,8 @@ export class AdminGuard implements CanActivate {
       throw new ForbiddenException('User not authenticated');
     }
 
-    // Check if user has admin membership in ANY context
-    const isAdmin = await this.membershipService.isUserAdmin(user.id);
+    // Check if user has admin studio membership in ANY studio
+    const isAdmin = await this.studioMembershipService.isUserAdmin(user.id);
     
     if (!isAdmin) {
       throw new ForbiddenException('Admin access required');
@@ -134,26 +134,26 @@ export class AdminGuard implements CanActivate {
 }
 ```
 
-### 4. Membership Service Enhancement
+### 4. StudioMembership Service Enhancement
 
-Update `src/membership/membership.service.ts`:
+Update `src/studio-membership/studio-membership.service.ts`:
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { MembershipRepository } from './membership.repository';
+import { StudioMembershipRepository } from './studio-membership.repository';
 
 @Injectable()
-export class MembershipService {
-  constructor(private readonly membershipRepository: MembershipRepository) {}
+export class StudioMembershipService {
+  constructor(private readonly studioMembershipRepository: StudioMembershipRepository) {}
 
   // ... existing methods
 
   /**
-   * Check if user has admin role in ANY context
+   * Check if user has admin role in ANY studio
    * Phase 1: Simple admin check for write operations
    */
   async isUserAdmin(userId: string): Promise<boolean> {
-    const memberships = await this.membershipRepository.findMany({
+    const memberships = await this.studioMembershipRepository.findMany({
       where: {
         userId: userId,
         role: 'admin',
@@ -165,14 +165,17 @@ export class MembershipService {
   }
 
   /**
-   * Get user's memberships for context-specific checks
-   * Phase 3: Will be enhanced with polymorphic design
+   * Get user's studio memberships
+   * Phase 3: Client and Platform memberships will be separate models
    */
-  async getUserMemberships(userId: string) {
-    return this.membershipRepository.findMany({
+  async getUserStudioMemberships(userId: string) {
+    return this.studioMembershipRepository.findMany({
       where: {
         userId: userId,
         deletedAt: null,
+      },
+      include: {
+        studio: true,
       },
     });
   }
@@ -241,37 +244,40 @@ export class ApiKeyGuard implements CanActivate {
 
 ## Database Schema
 
-### Membership Model (Phase 1 Scope)
+### StudioMembership Model (Phase 1 Scope)
 
 ```prisma
-model Membership {
+model StudioMembership {
   id        BigInt    @id @default(autoincrement())
   uid       String    @unique
   userId    BigInt    @map("user_id")
-  groupId   BigInt    @map("group_id") // client_id, platform_id, studio_id
-  groupType String    @map("group_type") // "client", "platform", "studio"
-  role      String    // "admin", "member" (Phase 1: simplified roles)
+  studioId  BigInt    @map("studio_id")
+  role      String    // "admin", "manager", "member"
   metadata  Json      @default("{}")
   user      User      @relation(fields: [userId], references: [id])
+  studio    Studio    @relation(fields: [studioId], references: [id])
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
+  @@unique([userId, studioId])
+  @@index([uid])
   @@index([userId])
-  @@index([groupId, groupType])
+  @@index([studioId])
   @@index([role])
-  @@map("memberships")
+  @@index([userId, role])
+  @@map("studio_memberships")
 }
 ```
 
-**Phase 1 Limitations:**
-- Simple role system (admin/member only)
-- Basic group types (client, platform, studio)
-- No polymorphic relationships
-- No context-specific permissions
+**Phase 1 Implementation:**
+- Studio-specific memberships only
+- Direct foreign key relationship (easier for Prisma)
+- Simple role system (admin, manager, member)
+- Clean indexes for efficient queries
 
 **Phase 3 Enhancements:**
-- Polymorphic design for any entity type
+- Separate ClientMembership and PlatformMembership models
 - Role hierarchy (admin > manager > member)
 - Context-specific permissions
 - Permission metadata
@@ -283,14 +289,14 @@ model Membership {
 ```typescript
 describe('AdminGuard', () => {
   let guard: AdminGuard;
-  let membershipService: jest.Mocked<MembershipService>;
+  let studioMembershipService: jest.Mocked<StudioMembershipService>;
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
       providers: [
         AdminGuard,
         {
-          provide: MembershipService,
+          provide: StudioMembershipService,
           useValue: {
             isUserAdmin: jest.fn(),
           },
@@ -299,11 +305,11 @@ describe('AdminGuard', () => {
     }).compile();
 
     guard = module.get<AdminGuard>(AdminGuard);
-    membershipService = module.get(MembershipService);
+    studioMembershipService = module.get(StudioMembershipService);
   });
 
   it('should allow access for admin users', async () => {
-    membershipService.isUserAdmin.mockResolvedValue(true);
+    studioMembershipService.isUserAdmin.mockResolvedValue(true);
     
     const context = createMockExecutionContext({
       user: { id: 'usr_123' },
@@ -314,7 +320,7 @@ describe('AdminGuard', () => {
   });
 
   it('should deny access for non-admin users', async () => {
-    membershipService.isUserAdmin.mockResolvedValue(false);
+    studioMembershipService.isUserAdmin.mockResolvedValue(false);
     
     const context = createMockExecutionContext({
       user: { id: 'usr_123' },
@@ -397,7 +403,7 @@ throw new ForbiddenException('User not authenticated');
 
 ### Admin Verification
 - Admin status is checked on every write operation
-- Membership lookup is cached for performance
+- StudioMembership lookup is cached for performance
 - Admin status changes require re-authentication
 
 ### API Key Security
@@ -408,7 +414,7 @@ throw new ForbiddenException('User not authenticated');
 ## Future Enhancements (Phase 3)
 
 ### Advanced Authorization
-- Polymorphic memberships for any entity type
+- Separate ClientMembership and PlatformMembership models
 - Role hierarchy with permission inheritance
 - Context-specific permissions (studio admin ≠ client admin)
 - Permission metadata for custom access control
@@ -427,14 +433,14 @@ throw new ForbiddenException('User not authenticated');
 ## Migration Path
 
 ### Phase 1 → Phase 3 Migration
-1. **Database Migration**: Add polymorphic fields to Membership model
-2. **Service Enhancement**: Update MembershipService with polymorphic methods
+1. **Database Migration**: Create ClientMembership and PlatformMembership models
+2. **Service Enhancement**: Create ClientMembershipService and PlatformMembershipService
 3. **Guard Enhancement**: Add context-specific permission checks
 4. **API Enhancement**: Add permission-based endpoint access
 
 ### Backward Compatibility
-- Phase 1 admin check remains functional
-- New polymorphic features are additive
+- Phase 1 studio admin check remains functional
+- New membership models are additive (no breaking changes)
 - Existing API endpoints continue to work
 - Gradual migration of endpoints to new permission system
 
@@ -448,9 +454,9 @@ throw new ForbiddenException('User not authenticated');
    - Check token expiration
 
 2. **Admin Access Denied**
-   - Verify user has admin membership in database
-   - Check Membership.role = 'admin'
-   - Ensure Membership.deletedAt is null
+   - Verify user has admin studio membership in database
+   - Check StudioMembership.role = 'admin'
+   - Ensure StudioMembership.deletedAt is null
 
 3. **Service-to-Service Auth Failed**
    - Verify ERIFY_AUTH_API_KEY matches
@@ -463,7 +469,7 @@ throw new ForbiddenException('User not authenticated');
 // Add to development environment
 if (process.env.NODE_ENV === 'development') {
   console.log('User:', request.user);
-  console.log('Is Admin:', await membershipService.isUserAdmin(request.user.id));
+  console.log('Is Admin:', await studioMembershipService.isUserAdmin(request.user.id));
 }
 ```
 

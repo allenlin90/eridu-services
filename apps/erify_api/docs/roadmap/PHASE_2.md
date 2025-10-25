@@ -126,3 +126,138 @@ This phase delivers the complete scheduling and planning system. The implementat
 - **Flexible Rollout**: Features can be enabled/disabled per user type as needed
 
 This approach provides a complete scheduling and planning system while maintaining simplicity in the authentication layer and preparing for advanced authorization control in Phase 3.
+
+## Database Schema
+
+### Schedule
+```prisma
+model Schedule {
+  id               BigInt            @id @default(autoincrement())
+  uid              String            @unique
+  clientId         BigInt            @map("client_id")
+  studioId         BigInt            @map("studio_id")
+  scheduleStatusId BigInt            @map("schedule_status_id")
+  activeVersionId  BigInt?           @unique @map("active_version_id") // Points to active version
+  name             String
+  description      String?
+  startTime        DateTime          @map("start_time")
+  endTime          DateTime?         @map("end_time")
+  metadata         Json              @default("{}")
+  client           Client            @relation(fields: [clientId], references: [id])
+  studio           Studio            @relation(fields: [studioId], references: [id])
+  scheduleStatus   ScheduleStatus    @relation(fields: [scheduleStatusId], references: [id])
+  activeVersion    ScheduleVersion?  @relation("ActiveVersion", fields: [activeVersionId], references: [id])
+  versions         ScheduleVersion[] @relation("ScheduleVersions")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  deletedAt        DateTime?         @map("deleted_at")
+
+  @@index([uid])
+  @@index([clientId])
+  @@index([studioId])
+  @@index([scheduleStatusId])
+  @@index([activeVersionId])
+  @@map("schedules")
+}
+```
+
+### ScheduleStatus
+```prisma
+model ScheduleStatus {
+  id        BigInt     @id @default(autoincrement())
+  uid       String     @unique
+  name      String     @unique // draft, proposed, confirmed, archived, cancelled, other
+  metadata  Json       @default("{}")
+  schedules Schedule[]
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  deletedAt DateTime?  @map("deleted_at")
+
+  @@index([uid])
+  @@map("schedule_status")
+}
+```
+
+### ChangeCategory
+```prisma
+model ChangeCategory {
+  id               BigInt            @id @default(autoincrement())
+  uid              String            @unique
+  name             String            @unique // CLIENT_REQUESTED, OPERATIONAL, FORCE_MAJEURE
+  metadata         Json              @default("{}")
+  scheduleVersions ScheduleVersion[]
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  deletedAt        DateTime?         @map("deleted_at")
+
+  @@index([uid])
+  @@map("change_categories")
+}
+```
+
+### ChangeType
+```prisma
+model ChangeType {
+  id               BigInt            @id @default(autoincrement())
+  uid              String            @unique
+  name             String            @unique // TIME_CHANGE, RESOURCE_CHANGE, SCOPE_CHANGE, etc.
+  metadata         Json              @default("{}")
+  scheduleVersions ScheduleVersion[]
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  deletedAt        DateTime?         @map("deleted_at")
+
+  @@index([uid])
+  @@map("change_types")
+}
+```
+
+### ScheduleVersion
+```prisma
+model ScheduleVersion {
+  id                     BigInt         @id @default(autoincrement())
+  uid                    String         @unique
+  scheduleId             BigInt         @map("schedule_id")
+  versionNumber          Int            @map("version_number")
+  effectiveFrom          DateTime       @map("effective_from")
+  effectiveTo            DateTime?      @map("effective_to")
+  changeCategoryId       BigInt         @map("change_category_id")
+  changeTypeId           BigInt         @map("change_type_id")
+  changeReason           String         @map("change_reason")
+  requiresClientApproval Boolean        @default(false) @map("requires_client_approval")
+  creatorId              BigInt         @map("creator_id")
+  approverId             BigInt?        @map("approver_id")
+  approvedAt             DateTime?      @map("approved_at")
+  metadata               Json           @default("{}")
+  creator                User           @relation("CreatedSchedules", fields: [creatorId], references: [id])
+  approver               User?          @relation(fields: [approverId], references: [id])
+  schedule               Schedule?      @relation("ScheduleVersions", fields: [scheduleId], references: [id])
+  activeForSchedule      Schedule?      @relation("ActiveVersion")
+  changeCategory         ChangeCategory @relation(fields: [changeCategoryId], references: [id])
+  changeType             ChangeType     @relation(fields: [changeTypeId], references: [id])
+  shows                  Show[]
+  createdAt              DateTime       @default(now()) @map("created_at")
+  updatedAt              DateTime       @updatedAt @map("updated_at")
+  deletedAt              DateTime?      @map("deleted_at")
+
+  @@unique([scheduleId, versionNumber])
+  @@index([changeCategoryId])
+  @@index([changeTypeId])
+  @@index([scheduleId, changeCategoryId])
+  @@index([scheduleId, changeTypeId])
+  @@index([changeCategoryId, requiresClientApproval])
+  @@index([changeTypeId, requiresClientApproval])
+  @@index([creatorId, changeTypeId])
+  @@index([approverId, changeTypeId])
+  @@index([effectiveFrom, effectiveTo, changeCategoryId])
+  @@index([scheduleId, approvedAt])
+  @@index([requiresClientApproval, approvedAt])
+  @@map("schedule_versions")
+}
+```
+
+### Enhanced Show Model (Phase 2 Enhancement)
+The Show model from Phase 1 is enhanced in Phase 2 to include schedule integration:
+- Added `scheduleVersionId` field for linking shows to schedule versions
+- Shows can be created in DRAFT status as part of a schedule
+- Shows can be bulk-confirmed when schedule is approved

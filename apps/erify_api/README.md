@@ -2,7 +2,7 @@
 
 A modern, scalable REST API built with NestJS, providing administrative operations for managing users, clients, MCs (Master of Ceremonies), and platforms with comprehensive CRUD functionality.
 
-> **Current Status**: This is the foundation layer of the Eridu Services platform. The current implementation provides basic administrative CRUD operations for core entities. Advanced features like Shows, Studios, Materials, and Task Management are planned for future phases as outlined in the development roadmap.
+> **Current Status**: Phase 1 (~90% complete). The current implementation provides comprehensive CRUD operations for core entities (Users, Clients, MCs, Platforms, Studios, StudioRooms, Shows, ShowMCs, ShowPlatforms, and related lookup tables). **Remaining Phase 1 items:** Authentication/authorization system and seed data as outlined in the development roadmap. See [ASSESSMENT_SUMMARY.md](./ASSESSMENT_SUMMARY.md) for detailed status.
 
 ## 🚀 Quick Start
 
@@ -42,6 +42,14 @@ A modern, scalable REST API built with NestJS, providing administrative operatio
    ```
 
 The API will be available at `http://localhost:3000`
+
+### API Documentation
+- `GET /api-reference` - Interactive API documentation (Scalar UI)
+- `GET /swagger-json` - OpenAPI specification in JSON format
+
+### Health Check Endpoints
+- `GET /health` - Liveness probe (returns 200 if application is running)
+- `GET /health/ready` - Readiness probe (returns 200 if application is ready to accept traffic)
 
 ## 📋 Available Scripts
 
@@ -134,6 +142,9 @@ The API follows a modular architecture with clear separation of concerns:
 - **📝 Case Conversion**: Automatic snake_case ↔ camelCase conversion
 - **🏷️ Entity Resolution**: Automatic UID to ID resolution for relationships
 - **📋 Comprehensive CRUD**: Complete Create, Read, Update, Delete operations
+- **🏥 Health Checks**: Liveness and readiness probes for load balancers
+- **🛡️ Graceful Shutdown**: Production-ready shutdown with request draining
+- **📚 OpenAPI Documentation**: Interactive API documentation with Scalar UI
 
 ## 🌐 API Endpoints
 
@@ -202,6 +213,67 @@ Currently, the API is designed for administrative use. Authentication can be add
 - `GET /admin/studios/:uid` - Get studio by UID
 - `PATCH /admin/studios/:uid` - Update studio
 - `DELETE /admin/studios/:uid` - Soft delete studio
+
+#### 🚪 Studio Rooms (`/admin/studio-rooms`)
+- `GET /admin/studio-rooms` - List studio rooms with pagination
+- `POST /admin/studio-rooms` - Create a new studio room
+- `GET /admin/studio-rooms/:uid` - Get studio room by UID
+- `PATCH /admin/studio-rooms/:uid` - Update studio room
+- `DELETE /admin/studio-rooms/:uid` - Soft delete studio room
+
+#### 📺 Shows (`/admin/shows`)
+- `GET /admin/shows` - List shows with pagination and relations
+- `POST /admin/shows` - Create a new show
+- `GET /admin/shows/:uid` - Get show by UID
+- `PATCH /admin/shows/:uid` - Update show
+- `DELETE /admin/shows/:uid` - Soft delete show
+
+#### 🎬 Show MCs (`/admin/show-mcs`)
+- `GET /admin/show-mcs` - List show-MC relationships with pagination
+- `POST /admin/show-mcs` - Create show-MC assignment
+- `GET /admin/show-mcs/:uid` - Get show-MC by UID
+- `PATCH /admin/show-mcs/:uid` - Update show-MC assignment
+- `DELETE /admin/show-mcs/:uid` - Soft delete show-MC assignment
+
+#### 🌐 Show Platforms (`/admin/show-platforms`)
+- `GET /admin/show-platforms` - List show-platform integrations with pagination
+- `POST /admin/show-platforms` - Create show-platform integration
+- `GET /admin/show-platforms/:uid` - Get show-platform by UID
+- `PATCH /admin/show-platforms/:uid` - Update show-platform integration
+- `DELETE /admin/show-platforms/:uid` - Soft delete show-platform integration
+
+#### 👥 Studio Memberships (`/admin/studio-memberships`)
+- `GET /admin/studio-memberships` - List studio memberships with pagination
+- `POST /admin/studio-memberships` - Create studio membership
+- `GET /admin/studio-memberships/:uid` - Get studio membership by UID
+- `PATCH /admin/studio-memberships/:uid` - Update studio membership
+- `DELETE /admin/studio-memberships/:uid` - Soft delete studio membership
+
+## 📚 OpenAPI Documentation
+
+The API includes comprehensive OpenAPI documentation powered by Scalar UI, providing an interactive interface for exploring and testing all endpoints.
+
+### Accessing Documentation
+
+- **Interactive Documentation**: Visit `http://localhost:3000/api-reference` for the full Scalar UI interface
+- **OpenAPI JSON Spec**: Access the raw OpenAPI specification at `http://localhost:3000/swagger-json`
+
+### Features
+
+- **🔍 Interactive Testing**: Test API endpoints directly from the documentation interface
+- **📋 Schema Validation**: View detailed request/response schemas with Zod integration
+- **🏷️ Endpoint Grouping**: Organized by admin modules (users, clients, mcs, etc.)
+- **🔐 Authentication Support**: Bearer token authentication configuration
+- **📱 Responsive Design**: Mobile-friendly documentation interface
+
+### Implementation Details
+
+The OpenAPI implementation includes:
+
+- **Zod Integration**: Automatic schema generation from Zod validation schemas
+- **Custom Decorators**: `ApiZodResponse`, `ApiZodBody`, `ApiZodQuery`, `ApiZodParam` for type-safe documentation
+- **Comprehensive Coverage**: All CRUD operations documented with proper request/response schemas
+- **Modern UI**: Scalar UI provides a modern, intuitive interface for API exploration
 
 ### Request/Response Format
 
@@ -319,22 +391,44 @@ Currently, the API is designed for administrative use. Authentication can be add
 - `metadata` (JSON)
 - `created_at`, `updated_at`, `deleted_at`
 
+#### StudioRoom
+- `id` (Primary Key)
+- `uid` (Unique Identifier)
+- `studio_id` (Foreign Key to Studio)
+- `name`
+- `capacity`
+- `metadata` (JSON)
+- `created_at`, `updated_at`, `deleted_at`
+
+#### Membership
+- `id` (Primary Key)
+- `uid` (Unique Identifier)
+- `user_id` (Foreign Key to User)
+- `group_id` (Polymorphic reference)
+- `group_type` (client, platform, studio)
+- `role` (admin, member, etc.)
+- `metadata` (JSON)
+- `created_at`, `updated_at`, `deleted_at`
+
 ### Relationships
 - **User** ↔ **MC**: One-to-One (User can optionally have one MC profile)
-- **Client** ↔ **Material**: One-to-Many (Planned for future phases)
-- **Platform** ↔ **Material**: One-to-Many (Planned for future phases)
+- **User** ↔ **Membership**: One-to-Many (User can have multiple memberships)
+- **Studio** ↔ **StudioRoom**: One-to-Many (Studio has multiple rooms)
+- **Client** ↔ **Show**: One-to-Many (Planned for Phase 1)
+- **StudioRoom** ↔ **Show**: One-to-Many (Planned for Phase 1)
+- **Client** ↔ **Material**: One-to-Many (Planned for Phase 3)
+- **Platform** ↔ **Material**: One-to-Many (Planned for Phase 3)
 
 ### Future Entities (Planned)
 The database schema includes comprehensive models for the full livestream production system:
-- **Shows**: Core operational records for livestream productions
-- **Studios & StudioRooms**: Physical production facilities
-- **Materials & MaterialTypes**: Content assets management
-- **Schedules & ScheduleVersions**: Collaborative planning system
-- **Tasks & TaskTemplates**: Workflow automation
-- **Comments**: Collaboration system
-- **Tags & Taggables**: Flexible categorization
-- **Memberships**: Role-based access control
-- **Audits**: Complete audit trail
+- **Shows**: Core operational records for livestream productions (Phase 1)
+- **ShowMC & ShowPlatform**: Show relationship management (Phase 1)
+- **Schedules & ScheduleVersions**: Collaborative planning system (Phase 2)
+- **Materials & MaterialTypes**: Content assets management (Phase 3)
+- **Tasks & TaskTemplates**: Workflow automation (Phase 3)
+- **Comments**: Collaboration system (Phase 3)
+- **Tags & Taggables**: Flexible categorization (Phase 3)
+- **Audits**: Complete audit trail (Phase 3)
 
 See the [Business Documentation](docs/BUSINESS.md) for detailed information about the complete system architecture.
 
@@ -348,8 +442,9 @@ See the [Business Documentation](docs/BUSINESS.md) for detailed information abou
 - [x] Zod validation and serialization
 - [x] Comprehensive testing setup
 - [x] Code quality tools (ESLint, Prettier)
+- [x] OpenAPI documentation with Scalar UI
 
-### ✅ Phase 1: Basic Admin Operations (COMPLETED)
+### 🚧 Phase 1: Core Functions with Hybrid Auth (IN PROGRESS - ~90% Complete)
 - [x] User management (CRUD operations)
 - [x] Client management (CRUD operations)
 - [x] MC management (CRUD operations)
@@ -357,17 +452,17 @@ See the [Business Documentation](docs/BUSINESS.md) for detailed information abou
 - [x] ShowType management (CRUD operations)
 - [x] ShowStatus management (CRUD operations)
 - [x] ShowStandard management (CRUD operations)
+- [x] Show management (CRUD operations)
+- [x] ShowMC management (CRUD operations)
+- [x] ShowPlatform management (CRUD operations) ✅
 - [x] Studio management (CRUD operations)
+- [x] StudioRoom management (CRUD operations)
+- [x] StudioMembership management (CRUD operations)
 - [x] Pagination and filtering
 - [x] Soft delete functionality
 - [x] UID system for external references
-
-### 🚧 Phase 1: Core Production MVP (IN PROGRESS)
-- [ ] Studio and StudioRoom management
-- [ ] Material and MaterialType management
-- [ ] Show management (core livestream records)
-- [ ] Relationship management endpoints
-- [ ] Tagging system implementation
+- [ ] **Authentication & Authorization** (JWT validation + Admin guard) ⚠️
+- [ ] **Seed data** (ShowType, ShowStatus, ShowStandard, Membership roles) ⚠️
 
 ### ⏳ Phase 2: Scheduling & Planning Workflow (PLANNED)
 - [ ] Schedule and ScheduleVersion management
@@ -376,11 +471,11 @@ See the [Business Documentation](docs/BUSINESS.md) for detailed information abou
 - [ ] Collaborative planning features
 
 ### ⏳ Phase 3: User Collaboration & Access Control (PLANNED)
-- [ ] Membership system implementation
-- [ ] Role-based access control
+- [ ] Advanced role-based access control (polymorphic memberships)
+- [ ] Material and MaterialType management
 - [ ] Comments system
 - [ ] Audit trail implementation
-- [ ] Authentication and authorization
+- [ ] Tagging system
 
 ### ⏳ Phase 4: Advanced Features & Reporting (PLANNED)
 - [ ] Task management system
@@ -445,11 +540,14 @@ apps/erify_api/
 
 Comprehensive documentation is available in the `docs/` directory:
 
+- **[Documentation Index](docs/README.md)** - Complete documentation structure and index
 - **[Architecture Guide](docs/ARCHITECTURE.md)** - Complete system architecture
-- **[Module Diagrams](docs/MODULE_DIAGRAMS.md)** - Visual relationship diagrams
-- **[Quick Reference](docs/QUICK_REFERENCE.md)** - Developer quick reference
-- **[Maintenance Guide](docs/DOCUMENTATION_MAINTENANCE.md)** - Documentation upkeep
-- **[AI Assistant Guide](docs/AI_ASSISTANT_GUIDE.md)** - AI development guidelines
+- **[Business Domain](docs/BUSINESS.md)** - Business domain models and relationships
+- **[Authentication Guide](docs/AUTHENTICATION_GUIDE.md)** - Phase 1 hybrid authentication guide
+- **[Scheduling Architecture](docs/SCHEDULING_ARCHITECTURE.md)** - Scheduling system design
+- **[Phase 1 Roadmap](docs/roadmap/PHASE_1.md)** - Phase 1 implementation plan
+- **[Phase 2 Roadmap](docs/roadmap/PHASE_2.md)** - Phase 2 implementation plan
+- **[Phase 3 Roadmap](docs/roadmap/PHASE_3.md)** - Phase 3 implementation plan
 
 ## 🔧 Configuration
 
@@ -463,6 +561,9 @@ DATABASE_URL="postgresql://user:password@localhost:5432/eridu_db"
 NODE_ENV="development"
 PORT=3000
 
+# Graceful Shutdown
+SHUTDOWN_TIMEOUT=30000  # milliseconds (default: 30 seconds)
+
 # Logging
 LOG_LEVEL="info"
 ```
@@ -470,6 +571,19 @@ LOG_LEVEL="info"
 ### Prisma Configuration
 
 The project uses Prisma as the ORM with PostgreSQL. Configuration is in `prisma/schema.prisma`.
+
+### OpenAPI Configuration
+
+The API documentation is powered by:
+- **@nestjs/swagger**: NestJS Swagger integration
+- **@scalar/nestjs-api-reference**: Scalar UI for modern API documentation
+- **zod-openapi**: Zod to OpenAPI schema conversion
+- **swagger-ui-express**: Swagger UI Express integration
+
+The OpenAPI setup is configured in `src/common/openapi/openapi.config.ts` and provides:
+- Interactive documentation at `/api-reference`
+- OpenAPI JSON specification at `/swagger-json`
+- Custom Zod decorators for type-safe documentation
 
 ## 🚀 Deployment
 
@@ -481,6 +595,15 @@ pnpm run build
 # Start production server
 pnpm run start:prod
 ```
+
+### Graceful Shutdown
+The application supports production-ready graceful shutdown for zero-downtime deployments:
+
+- **Signal Handling**: Responds to SIGTERM and SIGINT signals
+- **Request Draining**: Stops accepting new connections during shutdown
+- **Database Cleanup**: Automatically disconnects from Prisma database
+- **Health Checks**: `/health` and `/health/ready` endpoints for load balancers
+- **Configurable Timeout**: `SHUTDOWN_TIMEOUT` environment variable (default: 30s)
 
 ### Docker (Optional)
 ```bash

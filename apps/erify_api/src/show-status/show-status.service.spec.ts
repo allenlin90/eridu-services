@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
-import { Prisma } from '@prisma/client';
 
-import { PRISMA_ERROR } from '../common/errors/prisma-error-codes';
+import { createMockUniqueConstraintError } from '../common/test-helpers/prisma-error.helper';
 import { UtilityService } from '../utility/utility.service';
 import { ShowStatusRepository } from './show-status.repository';
 import { ShowStatusService } from './show-status.service';
@@ -32,7 +31,7 @@ describe('ShowStatusService', () => {
         {
           provide: UtilityService,
           useValue: {
-            generateBrandedId: jest.fn().mockReturnValue('shs_test123'),
+            generateBrandedId: jest.fn().mockReturnValue('shst_test123'),
           },
         },
       ],
@@ -71,10 +70,13 @@ describe('ShowStatusService', () => {
 
       const result = await service.createShowStatus(showStatusData);
 
-      expect(utilityService.generateBrandedId).toHaveBeenCalledWith('shs_');
+      expect(utilityService.generateBrandedId).toHaveBeenCalledWith(
+        'shst',
+        undefined,
+      );
       expect(showStatusRepository.create).toHaveBeenCalledWith({
         ...showStatusData,
-        uid: 'shs_test123',
+        uid: 'shst_test123',
       });
       expect(result).toEqual(expectedResult);
     });
@@ -85,17 +87,12 @@ describe('ShowStatusService', () => {
         metadata: {},
       };
 
-      const error = new Prisma.PrismaClientKnownRequestError('message', {
-        code: PRISMA_ERROR.UniqueConstraint,
-        clientVersion: '6.14.0',
-      });
+      const error = createMockUniqueConstraintError(['name']);
       jest.spyOn(showStatusRepository, 'create').mockRejectedValue(error);
 
-      await expect(
-        service.createShowStatus(showStatusData),
-      ).rejects.toMatchObject({
-        status: 409,
-      });
+      await expect(service.createShowStatus(showStatusData)).rejects.toThrow(
+        error,
+      );
     });
   });
 
@@ -239,17 +236,12 @@ describe('ShowStatusService', () => {
         name: 'Duplicate Status',
       };
 
-      const error = new Prisma.PrismaClientKnownRequestError('message', {
-        code: PRISMA_ERROR.UniqueConstraint,
-        clientVersion: '6.14.0',
-      });
+      const error = createMockUniqueConstraintError(['name']);
       jest.spyOn(showStatusRepository, 'update').mockRejectedValue(error);
 
-      await expect(
-        service.updateShowStatus(uid, updateData),
-      ).rejects.toMatchObject({
-        status: 409,
-      });
+      await expect(service.updateShowStatus(uid, updateData)).rejects.toThrow(
+        error,
+      );
     });
   });
 

@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Prisma } from '@prisma/client';
 
-import { PRISMA_ERROR } from '../common/errors/prisma-error-codes';
+import { createMockUniqueConstraintError } from '../common/test-helpers/prisma-error.helper';
 import { UtilityService } from '../utility/utility.service';
 import { ClientRepository } from './client.repository';
 import { ClientService } from './client.service';
@@ -53,6 +52,10 @@ describe('ClientService', () => {
 
     const result = await service.createClient(dto);
 
+    expect(utilityMock.generateBrandedId).toHaveBeenCalledWith(
+      'client',
+      undefined,
+    );
     expect(clientRepositoryMock.create).toHaveBeenCalled();
     expect(result).toEqual(created);
   });
@@ -64,15 +67,10 @@ describe('ClientService', () => {
       contactEmail: 'jane@acme.com',
       metadata: {},
     } as CreateClientDto;
-    const error = new Prisma.PrismaClientKnownRequestError('message', {
-      code: PRISMA_ERROR.UniqueConstraint,
-      clientVersion: '6.14.0',
-    });
+    const error = createMockUniqueConstraintError(['email']);
     (clientRepositoryMock.create as jest.Mock).mockRejectedValue(error);
 
-    await expect(service.createClient(dto)).rejects.toMatchObject({
-      status: 409,
-    });
+    await expect(service.createClient(dto)).rejects.toThrow(error);
   });
 
   it('getClientById throws not found', async () => {
@@ -88,14 +86,11 @@ describe('ClientService', () => {
       uid: 'client_1',
       name: 'OldName',
     });
-    const error = new Prisma.PrismaClientKnownRequestError('message', {
-      code: PRISMA_ERROR.UniqueConstraint,
-      clientVersion: '6.14.0',
-    });
+    const error = createMockUniqueConstraintError(['name']);
     (clientRepositoryMock.update as jest.Mock).mockRejectedValue(error);
 
     await expect(
       service.updateClient('client_1', { name: { set: 'Acme' } }),
-    ).rejects.toMatchObject({ status: 409 });
+    ).rejects.toThrow(error);
   });
 });

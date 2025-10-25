@@ -16,49 +16,72 @@ import {
   createPaginatedResponseSchema,
   PaginationQueryDto,
 } from '../../common/pagination/schema/pagination.schema';
+import { UidValidationPipe } from '../../common/pipes/uid-validation.pipe';
+import { McService } from '../../mc/mc.service';
 import {
   CreateMcDto,
   mcWithUserDto,
   UpdateMcDto,
 } from '../../mc/schemas/mc.schema';
-import { AdminMcService } from './admin-mc.service';
+import { UtilityService } from '../../utility/utility.service';
+import { BaseAdminController } from '../base-admin.controller';
 
 @Controller('admin/mcs')
-export class AdminMcController {
-  constructor(private readonly adminMcService: AdminMcService) {}
+export class AdminMcController extends BaseAdminController {
+  constructor(
+    private readonly mcService: McService,
+    utilityService: UtilityService,
+  ) {
+    super(utilityService);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ZodSerializerDto(mcWithUserDto)
-  async createMc(@Body() body: CreateMcDto) {
-    const mc = await this.adminMcService.createMc(body);
-    return mc;
+  createMc(@Body() body: CreateMcDto) {
+    return this.mcService.createMcFromDto(body, { user: true });
   }
 
   @Get()
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(createPaginatedResponseSchema(mcWithUserDto))
-  getMcs(@Query() paginationQuery: PaginationQueryDto) {
-    return this.adminMcService.getMcs(paginationQuery);
+  async getMcs(@Query() query: PaginationQueryDto) {
+    const data = await this.mcService.getMcs(
+      { skip: query.skip, take: query.take },
+      { user: true },
+    );
+    const total = await this.mcService.countMcs();
+
+    return this.createPaginatedResponse(data, total, query);
   }
 
-  @Get(':uid')
+  @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(mcWithUserDto)
-  getMc(@Param('uid') uid: string) {
-    return this.adminMcService.getMcById(uid);
+  getMc(
+    @Param('id', new UidValidationPipe(McService.UID_PREFIX, 'MC'))
+    id: string,
+  ) {
+    return this.mcService.getMcById(id, { user: true });
   }
 
-  @Patch(':uid')
+  @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(mcWithUserDto)
-  updateMc(@Param('uid') uid: string, @Body() body: UpdateMcDto) {
-    return this.adminMcService.updateMc(uid, body);
+  updateMc(
+    @Param('id', new UidValidationPipe(McService.UID_PREFIX, 'MC'))
+    id: string,
+    @Body() body: UpdateMcDto,
+  ) {
+    return this.mcService.updateMcFromDto(id, body, { user: true });
   }
 
-  @Delete(':uid')
+  @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteMc(@Param('uid') uid: string) {
-    await this.adminMcService.deleteMc(uid);
+  async deleteMc(
+    @Param('id', new UidValidationPipe(McService.UID_PREFIX, 'MC'))
+    id: string,
+  ) {
+    await this.mcService.deleteMc(id);
   }
 }

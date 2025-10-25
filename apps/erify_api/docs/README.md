@@ -6,17 +6,20 @@ Welcome to the comprehensive documentation for the Eridu Services API. This docu
 
 ### Core Documentation
 
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Complete system architecture overview | Developers, Architects, New Team Members |
-| [`BUSINESS.md`](./BUSINESS.md) | Business domain models and relationships | Developers, Business Analysts |
-| [`AUTHENTICATION_GUIDE.md`](./AUTHENTICATION_GUIDE.md) | Phase 1 hybrid authentication implementation guide | Developers, Security Team |
-| [`SCHEDULING_ARCHITECTURE.md`](./SCHEDULING_ARCHITECTURE.md) | Scheduling system design and rationale | Developers, Architects |
+| Document                                                     | Purpose                                            | Audience                                       |
+| ------------------------------------------------------------ | -------------------------------------------------- | ---------------------------------------------- |
+| [`IMPLEMENTATION_STATUS.md`](./IMPLEMENTATION_STATUS.md) ⭐   | **Current implementation status and gaps**         | **Developers, Project Managers, Stakeholders** |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md)                       | Complete system architecture overview              | Developers, Architects, New Team Members       |
+| [`BUSINESS.md`](./BUSINESS.md)                               | Business domain models and relationships           | Developers, Business Analysts                  |
+| [`AUTHENTICATION_GUIDE.md`](./AUTHENTICATION_GUIDE.md)       | Phase 1 hybrid authentication implementation guide | Developers, Security Team                      |
+| [`SCHEDULING_ARCHITECTURE.md`](./SCHEDULING_ARCHITECTURE.md) | Scheduling system design and rationale             | Developers, Architects                         |
+
+> **Note:** Start with [`IMPLEMENTATION_STATUS.md`](./IMPLEMENTATION_STATUS.md) for the most current status and priority actions.
 
 ### Development Roadmap
 
-| Document | Purpose | Audience |
-|----------|---------|----------|
+| Document                                     | Purpose                               | Audience                     |
+| -------------------------------------------- | ------------------------------------- | ---------------------------- |
 | [`roadmap/PHASE_1.md`](./roadmap/PHASE_1.md) | Phase 1 implementation plan and scope | Developers, Project Managers |
 | [`roadmap/PHASE_2.md`](./roadmap/PHASE_2.md) | Phase 2 implementation plan and scope | Developers, Project Managers |
 | [`roadmap/PHASE_3.md`](./roadmap/PHASE_3.md) | Phase 3 implementation plan and scope | Developers, Project Managers |
@@ -24,21 +27,21 @@ Welcome to the comprehensive documentation for the Eridu Services API. This docu
 ## 🚀 Getting Started
 
 ### For New Developers
-1. **Start with** [`ARCHITECTURE.md`](./ARCHITECTURE.md) for complete system understanding
-2. **Review** [`BUSINESS.md`](./BUSINESS.md) for domain model understanding
-3. **Study** [`AUTHENTICATION_GUIDE.md`](./AUTHENTICATION_GUIDE.md) for Phase 1 authentication implementation
-4. **Check** [`roadmap/PHASE_1.md`](./roadmap/PHASE_1.md) for Phase 1 implementation scope
-5. **Reference** [`roadmap/PHASE_2.md`](./roadmap/PHASE_2.md) for Phase 2 scheduling features
-6. **Review** [`roadmap/PHASE_3.md`](./roadmap/PHASE_3.md) for Phase 3 advanced features
-7. **Study** [`SCHEDULING_ARCHITECTURE.md`](./SCHEDULING_ARCHITECTURE.md) for scheduling system details
+1. **Start with** [`IMPLEMENTATION_STATUS.md`](./IMPLEMENTATION_STATUS.md) ⭐ - See what's done and what's missing
+2. **Review** [`ARCHITECTURE.md`](./ARCHITECTURE.md) - Understand the system architecture
+3. **Study** [`BUSINESS.md`](./BUSINESS.md) - Learn the business domain
+4. **Read** [`AUTHENTICATION_GUIDE.md`](./AUTHENTICATION_GUIDE.md) - Authentication implementation (TO DO)
+5. **Check** [`roadmap/PHASE_1.md`](./roadmap/PHASE_1.md) - Phase 1 implementation details
+6. **Reference** [`roadmap/PHASE_2.md`](./roadmap/PHASE_2.md) - Future scheduling features
+7. **Review** [`roadmap/PHASE_3.md`](./roadmap/PHASE_3.md) - Advanced features roadmap
 
 ### For AI Assistants
-1. **Read** [`.cursorrules`](../.cursorrules) for development guidelines
-2. **Follow** established patterns in existing modules
-3. **Study** [`AUTHENTICATION_GUIDE.md`](./AUTHENTICATION_GUIDE.md) for authentication implementation
-4. **Reference** Phase 1/2/3 roadmaps for implementation scope
+1. **Check** [`IMPLEMENTATION_STATUS.md`](./IMPLEMENTATION_STATUS.md) ⭐ - See what's missing and critical priorities
+2. **Follow** established patterns in existing modules (`src/admin/*`, `src/*/`)
+3. **Study** [`AUTHENTICATION_GUIDE.md`](./AUTHENTICATION_GUIDE.md) - Complete auth implementation guide
+4. **Reference** roadmaps for implementation scope and phase boundaries
 5. **Maintain** consistency with existing architecture patterns
-6. **Focus** on Phase 1 core functions first, then Phase 2 scheduling, then Phase 3 advanced features
+6. **Focus** on critical path: Authentication → Seed Data → Infrastructure enhancements
 
 ## 🏗️ System Overview
 
@@ -51,22 +54,25 @@ AppModule (Root)
 │   ├── AdminClientModule
 │   ├── AdminMcModule
 │   ├── AdminPlatformModule
+│   ├── AdminShowModule ⭐
 │   ├── AdminShowTypeModule
 │   ├── AdminShowStatusModule
 │   ├── AdminShowStandardModule
 │   ├── AdminStudioModule
-│   └── AdminStudioRoomModule
+│   ├── AdminStudioRoomModule
+│   └── AdminStudioMembershipModule
 ├── Domain Modules (Business Logic)
 │   ├── UserModule
 │   ├── ClientModule
 │   ├── McModule
 │   ├── PlatformModule
+│   ├── ShowModule ⭐
 │   ├── ShowTypeModule
 │   ├── ShowStatusModule
 │   ├── ShowStandardModule
 │   ├── StudioModule
 │   ├── StudioRoomModule
-│   └── MembershipModule
+│   └── MembershipModule (StudioMembership)
 └── Infrastructure Modules (Supporting Services)
     ├── PrismaModule (Database)
     └── UtilityModule (Utilities)
@@ -85,6 +91,12 @@ AppModule (Root)
 - **camelCase Internal**: Internal code uses camelCase
 - **Automatic Conversion**: Generic utilities handle case conversion
 - **Type Safety**: Full TypeScript support with Zod validation
+
+### API Documentation
+- **OpenAPI Integration**: Comprehensive API documentation with Scalar UI
+- **Interactive Testing**: Test endpoints directly from documentation interface
+- **Zod Schema Generation**: Automatic OpenAPI schema generation from Zod validation
+- **Modern Interface**: Responsive, mobile-friendly documentation at `/api-reference`
 
 ### Entity Management
 - **CRUD Operations**: Complete Create, Read, Update, Delete
@@ -163,16 +175,22 @@ graph TB
 
 ## 🎯 API Endpoints
 
+### API Documentation
+- **Interactive Documentation**: `GET /api-reference` - Scalar UI interface for testing and exploring endpoints
+- **OpenAPI Specification**: `GET /swagger-json` - Raw OpenAPI JSON specification
+
 ### Admin Endpoints
 - **Users**: `/admin/users` - User management
 - **Clients**: `/admin/clients` - Client management  
 - **MCs**: `/admin/mcs` - MC (Master of Ceremonies) management
 - **Platforms**: `/admin/platforms` - Platform management
+- **Shows**: `/admin/shows` - Show management ⭐
 - **ShowTypes**: `/admin/show-types` - Show type management
 - **ShowStatuses**: `/admin/show-statuses` - Show status management
 - **ShowStandards**: `/admin/show-standards` - Show standard management
 - **Studios**: `/admin/studios` - Studio management
 - **StudioRooms**: `/admin/studio-rooms` - Studio room management
+- **StudioMemberships**: `/admin/studio-memberships` - Studio membership management
 
 ### Standard Operations
 Each entity supports:
@@ -243,14 +261,35 @@ Each entity supports:
 ## 📝 Change Log
 
 ### Recent Updates
-- **Hybrid Authentication Approach**: Adopted JWT validation for user identification + simple Membership model for admin verification
+- **OpenAPI Documentation Implementation (December 2024)**: ⭐ Added comprehensive OpenAPI documentation with Scalar UI
+  - Interactive documentation interface at `/api-reference` endpoint
+  - OpenAPI JSON specification at `/swagger-json` endpoint
+  - Custom Zod-to-OpenAPI converter for automatic schema generation
+  - Reusable decorators (`ApiZodResponse`, `ApiZodBody`, `ApiZodQuery`, `ApiZodParam`)
+  - Modern Scalar UI with responsive design and interactive testing capabilities
+- **Documentation Update (October 23, 2025)**: Updated implementation checklists to reflect current status (~90% complete)
+  - Marked ShowMC as complete (service + tests + admin controller implemented)
+  - Updated Show status to reflect full implementation
+  - Updated Success Criteria and Dependencies with accurate completion status
+- **Show Module Implementation (October 2025)**: ⭐ Completed full Show CRUD operations with advanced pattern
+  - Service layer with DTO-to-Prisma payload transformation pattern
+  - Separate methods for DTO input (`createShowFromDto`, `updateShowFromDto`) and direct Prisma operations
+  - Builder methods (`buildCreatePayload`, `buildUpdatePayload`) for clean transformation logic
+  - Type-safe generic includes for relation loading (`ShowWithIncludes<T>`)
+  - Time range validation (endTime must be after startTime)
+  - Comprehensive test coverage (15 test cases in `show.service.spec.ts`)
+  - Admin controller with full CRUD endpoints (`/admin/shows`)
+- **Admin Module Refactoring (October 2025)**: Removed all 10 admin service layers, simplified architecture to use Prisma's native features
+- **Prisma Native Features**: Controllers now use `connect: { uid }` for foreign key relationships instead of manual UID-to-ID resolution
+- **Performance Improvement**: Eliminated extra database queries for UID resolution (Prisma handles it automatically)
+- **Code Reduction**: Removed 600+ lines of redundant pass-through code
+- **Architecture Simplification**: Admin controllers → Domain services → Repositories (no admin service layer)
+- **StudioMembership Admin Module**: Added full CRUD operations for studio membership management
+- **Hybrid Authentication Approach**: Adopted JWT validation for user identification + simple StudioMembership model for admin verification
 - **3-Phase Structure**: Restored proper 3-phase development approach
 - **Phase 1 Focus**: Core Functions with Hybrid Authentication - Essential CRUD operations, JWT validation, and simple admin verification
 - **Phase 2 Focus**: Scheduling & Planning Workflow - Collaborative planning and multi-version scheduling
 - **Phase 3 Focus**: Advanced Authorization Control & Tracking Features - Role-based access control, audit trails, task management, material management
-- **Simplified Authentication**: Admin write access, others read-only approach maintained across all phases
-- **Gradual Rollout Strategy**: Features can be enabled per user type over time
-- **Documentation Alignment**: Updated all references to reflect proper 3-phase structure
 - **StudioRoom Admin Module**: Completed full CRUD operations for studio room management
 - **ESLint Configuration**: Updated to support underscore-prefixed variables for unused but required parameters
 - **Case Conversion Refactoring**: Implemented generic snake_case/camelCase conversion utilities
@@ -264,6 +303,7 @@ Each entity supports:
 - **v1.5**: Restored proper 2-phase structure with Phase 1 MVP and Phase 2 scheduling
 - **v1.6**: Implemented proper 3-phase structure with advanced authorization control
 - **v1.7**: Adopted hybrid authentication approach with JWT validation and simple admin verification
+- **v1.8**: Refactored admin modules to remove service layers and leverage Prisma's native features
 
 ---
 
