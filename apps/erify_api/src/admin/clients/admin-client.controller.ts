@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
 
+import { ClientService } from '../../client/client.service';
 import {
   ClientDto,
   clientDto,
@@ -22,44 +23,66 @@ import {
   createPaginatedResponseSchema,
   PaginationQueryDto,
 } from '../../common/pagination/schema/pagination.schema';
-import { AdminClientService } from './admin-client.service';
+import { UidValidationPipe } from '../../common/pipes/uid-validation.pipe';
+import { UtilityService } from '../../utility/utility.service';
+import { BaseAdminController } from '../base-admin.controller';
 
 @Controller('admin/clients')
-export class AdminClientController {
-  constructor(private readonly adminClientService: AdminClientService) {}
+export class AdminClientController extends BaseAdminController {
+  constructor(
+    private readonly clientService: ClientService,
+    utilityService: UtilityService,
+  ) {
+    super(utilityService);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ZodSerializerDto(ClientDto)
-  async createClient(@Body() body: CreateClientDto) {
-    const client = await this.adminClientService.createClient(body);
-    return client;
+  createClient(@Body() body: CreateClientDto) {
+    return this.clientService.createClient(body);
   }
 
   @Get()
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(createPaginatedResponseSchema(clientDto))
-  getClients(@Query() paginationQuery: PaginationQueryDto) {
-    return this.adminClientService.getClients(paginationQuery);
+  async getClients(@Query() query: PaginationQueryDto) {
+    const data = await this.clientService.getClients({
+      skip: query.skip,
+      take: query.take,
+    });
+    const total = await this.clientService.countClients();
+
+    return this.createPaginatedResponse(data, total, query);
   }
 
-  @Get(':uid')
+  @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(ClientDto)
-  getClient(@Param('uid') uid: string) {
-    return this.adminClientService.getClientById(uid);
+  getClient(
+    @Param('id', new UidValidationPipe(ClientService.UID_PREFIX, 'Client'))
+    id: string,
+  ) {
+    return this.clientService.getClientById(id);
   }
 
-  @Patch(':uid')
+  @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(ClientDto)
-  updateClient(@Param('uid') uid: string, @Body() body: UpdateClientDto) {
-    return this.adminClientService.updateClient(uid, body);
+  updateClient(
+    @Param('id', new UidValidationPipe(ClientService.UID_PREFIX, 'Client'))
+    id: string,
+    @Body() body: UpdateClientDto,
+  ) {
+    return this.clientService.updateClient(id, body);
   }
 
-  @Delete(':uid')
+  @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteClient(@Param('uid') uid: string) {
-    await this.adminClientService.deleteClient(uid);
+  async deleteClient(
+    @Param('id', new UidValidationPipe(ClientService.UID_PREFIX, 'Client'))
+    id: string,
+  ) {
+    await this.clientService.deleteClient(id);
   }
 }

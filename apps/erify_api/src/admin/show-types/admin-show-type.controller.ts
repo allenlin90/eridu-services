@@ -16,50 +16,73 @@ import {
   createPaginatedResponseSchema,
   PaginationQueryDto,
 } from '../../common/pagination/schema/pagination.schema';
+import { UidValidationPipe } from '../../common/pipes/uid-validation.pipe';
 import {
   CreateShowTypeDto,
   ShowTypeDto,
   showTypeDto,
   UpdateShowTypeDto,
 } from '../../show-type/schemas/show-type.schema';
-import { AdminShowTypeService } from './admin-show-type.service';
+import { ShowTypeService } from '../../show-type/show-type.service';
+import { UtilityService } from '../../utility/utility.service';
+import { BaseAdminController } from '../base-admin.controller';
 
 @Controller('admin/show-types')
-export class AdminShowTypeController {
-  constructor(private readonly adminShowTypeService: AdminShowTypeService) {}
+export class AdminShowTypeController extends BaseAdminController {
+  constructor(
+    private readonly showTypeService: ShowTypeService,
+    utilityService: UtilityService,
+  ) {
+    super(utilityService);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ZodSerializerDto(ShowTypeDto)
-  async createShowType(@Body() body: CreateShowTypeDto) {
-    const showType = await this.adminShowTypeService.createShowType(body);
-    return showType;
+  createShowType(@Body() body: CreateShowTypeDto) {
+    return this.showTypeService.createShowType(body);
   }
 
   @Get()
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(createPaginatedResponseSchema(showTypeDto))
-  getShowTypes(@Query() paginationQuery: PaginationQueryDto) {
-    return this.adminShowTypeService.getShowTypes(paginationQuery);
+  async getShowTypes(@Query() query: PaginationQueryDto) {
+    const data = await this.showTypeService.getShowTypes({
+      skip: query.skip,
+      take: query.take,
+    });
+    const total = await this.showTypeService.countShowTypes();
+
+    return this.createPaginatedResponse(data, total, query);
   }
 
-  @Get(':uid')
+  @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(ShowTypeDto)
-  getShowType(@Param('uid') uid: string) {
-    return this.adminShowTypeService.getShowTypeById(uid);
+  getShowType(
+    @Param('id', new UidValidationPipe(ShowTypeService.UID_PREFIX, 'Show Type'))
+    id: string,
+  ) {
+    return this.showTypeService.getShowTypeById(id);
   }
 
-  @Patch(':uid')
+  @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(ShowTypeDto)
-  updateShowType(@Param('uid') uid: string, @Body() body: UpdateShowTypeDto) {
-    return this.adminShowTypeService.updateShowType(uid, body);
+  updateShowType(
+    @Param('id', new UidValidationPipe(ShowTypeService.UID_PREFIX, 'Show Type'))
+    id: string,
+    @Body() body: UpdateShowTypeDto,
+  ) {
+    return this.showTypeService.updateShowType(id, body);
   }
 
-  @Delete(':uid')
+  @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteShowType(@Param('uid') uid: string) {
-    await this.adminShowTypeService.deleteShowType(uid);
+  async deleteShowType(
+    @Param('id', new UidValidationPipe(ShowTypeService.UID_PREFIX, 'Show Type'))
+    id: string,
+  ) {
+    await this.showTypeService.deleteShowType(id);
   }
 }

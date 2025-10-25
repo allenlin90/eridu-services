@@ -68,7 +68,10 @@ describe('StudioService', () => {
 
       const result = await service.createStudio(studioData);
 
-      expect(utilityService.generateBrandedId).toHaveBeenCalledWith('std_');
+      expect(utilityService.generateBrandedId).toHaveBeenCalledWith(
+        'std',
+        undefined,
+      );
       expect(studioRepository.create).toHaveBeenCalledWith({
         ...studioData,
         uid: 'std_test123',

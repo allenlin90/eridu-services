@@ -16,50 +16,73 @@ import {
   createPaginatedResponseSchema,
   PaginationQueryDto,
 } from '../../common/pagination/schema/pagination.schema';
+import { UidValidationPipe } from '../../common/pipes/uid-validation.pipe';
 import {
   CreateStudioDto,
   StudioDto,
   studioDto,
   UpdateStudioDto,
 } from '../../studio/schemas/studio.schema';
-import { AdminStudioService } from './admin-studio.service';
+import { StudioService } from '../../studio/studio.service';
+import { UtilityService } from '../../utility/utility.service';
+import { BaseAdminController } from '../base-admin.controller';
 
 @Controller('admin/studios')
-export class AdminStudioController {
-  constructor(private readonly adminStudioService: AdminStudioService) {}
+export class AdminStudioController extends BaseAdminController {
+  constructor(
+    private readonly studioService: StudioService,
+    utilityService: UtilityService,
+  ) {
+    super(utilityService);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ZodSerializerDto(StudioDto)
-  async createStudio(@Body() body: CreateStudioDto) {
-    const studio = await this.adminStudioService.createStudio(body);
-    return studio;
+  createStudio(@Body() body: CreateStudioDto) {
+    return this.studioService.createStudio(body);
   }
 
   @Get()
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(createPaginatedResponseSchema(studioDto))
-  getStudios(@Query() paginationQuery: PaginationQueryDto) {
-    return this.adminStudioService.getStudios(paginationQuery);
+  async getStudios(@Query() query: PaginationQueryDto) {
+    const data = await this.studioService.getStudios({
+      skip: query.skip,
+      take: query.take,
+    });
+    const total = await this.studioService.countStudios();
+
+    return this.createPaginatedResponse(data, total, query);
   }
 
-  @Get(':uid')
+  @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(StudioDto)
-  getStudio(@Param('uid') uid: string) {
-    return this.adminStudioService.getStudioById(uid);
+  getStudio(
+    @Param('id', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio'))
+    id: string,
+  ) {
+    return this.studioService.getStudioById(id);
   }
 
-  @Patch(':uid')
+  @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(StudioDto)
-  updateStudio(@Param('uid') uid: string, @Body() body: UpdateStudioDto) {
-    return this.adminStudioService.updateStudio(uid, body);
+  updateStudio(
+    @Param('id', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio'))
+    id: string,
+    @Body() body: UpdateStudioDto,
+  ) {
+    return this.studioService.updateStudio(id, body);
   }
 
-  @Delete(':uid')
+  @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteStudio(@Param('uid') uid: string) {
-    await this.adminStudioService.deleteStudio(uid);
+  async deleteStudio(
+    @Param('id', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio'))
+    id: string,
+  ) {
+    await this.studioService.deleteStudio(id);
   }
 }

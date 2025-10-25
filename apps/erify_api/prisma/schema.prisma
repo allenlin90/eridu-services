@@ -10,24 +10,19 @@ datasource db {
 }
 
 model User {
-  id                BigInt            @id @default(autoincrement())
-  uid               String            @unique
-  extId             String?           @unique @map("ext_id") // For SSO integration
-  email             String            @unique
-  name              String
-  isBanned          Boolean           @default(false) @map("is_banned")
-  profileUrl        String?           @map("profile_url")
-  metadata          Json              @default("{}")
-  mc                MC? // Optional MC profile linkage
-  comments          Comment[]
-  memberships       Membership[]
-  tasks             Task[]
-  audits            Audit[]
-  approvedSchedules ScheduleVersion[]
-  createdSchedules  ScheduleVersion[] @relation("CreatedSchedules")
-  createdAt         DateTime          @default(now()) @map("created_at")
-  updatedAt         DateTime          @updatedAt @map("updated_at")
-  deletedAt         DateTime?         @map("deleted_at")
+  id                 BigInt             @id @default(autoincrement())
+  uid                String             @unique
+  extId              String?            @unique @map("ext_id") // For SSO integration
+  email              String             @unique
+  name               String
+  isBanned           Boolean            @default(false) @map("is_banned")
+  profileUrl         String?            @map("profile_url")
+  metadata           Json               @default("{}")
+  mc                 MC? // Optional MC profile linkage
+  studioMemberships  StudioMembership[]
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  deletedAt          DateTime?          @map("deleted_at")
 
   @@index([uid])
   @@index([email])
@@ -60,18 +55,16 @@ model MC {
 }
 
 model Client {
-  id            BigInt     @id @default(autoincrement())
-  uid           String     @unique
-  name          String     @unique
-  contactPerson String     @map("contact_person")
-  contactEmail  String     @map("contact_email")
-  metadata      Json       @default("{}")
-  materials     Material[]
+  id            BigInt    @id @default(autoincrement())
+  uid           String    @unique
+  name          String    @unique
+  contactPerson String    @map("contact_person")
+  contactEmail  String    @map("contact_email")
+  metadata      Json      @default("{}")
   shows         Show[]
-  schedules     Schedule[]
-  createdAt     DateTime   @default(now()) @map("created_at")
-  updatedAt     DateTime   @updatedAt @map("updated_at")
-  deletedAt     DateTime?  @map("deleted_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
 
   @@index([uid])
   @@index([name])
@@ -80,60 +73,12 @@ model Client {
   @@map("clients")
 }
 
-model Material {
-  id             BigInt         @id @default(autoincrement())
-  uid            String         @unique
-  clientId       BigInt?        @map("client_id")
-  platformId     BigInt?        @map("platform_id")
-  materialTypeId BigInt         @map("material_type_id")
-  name           String
-  description    String?
-  resourceUrl    String?        @unique @map("resource_url")
-  isActive       Boolean        @default(true) @map("is_active")
-  expiringAt     DateTime?      @map("expiring_at")
-  version        String
-  metadata       Json           @default("{}")
-  client         Client?        @relation(fields: [clientId], references: [id])
-  platform       Platform?      @relation(fields: [platformId], references: [id])
-  materialType   MaterialType   @relation(fields: [materialTypeId], references: [id])
-  showMaterials  ShowMaterial[]
-  createdAt      DateTime       @default(now()) @map("created_at")
-  updatedAt      DateTime       @updatedAt @map("updated_at")
-  deletedAt      DateTime?      @map("deleted_at")
-
-  @@index([uid])
-  @@index([clientId])
-  @@index([platformId])
-  @@index([materialTypeId])
-  @@index([name])
-  @@index([isActive])
-  @@index([clientId, isActive])
-  @@index([expiringAt])
-  @@map("materials")
-}
-
-model MaterialType {
-  id        BigInt     @id @default(autoincrement())
-  uid       String     @unique
-  name      String     @unique // brief, mechanic, script, scene, other
-  metadata  Json       @default("{}")
-  materials Material[]
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
-  deletedAt DateTime?  @map("deleted_at")
-
-  @@index([uid])
-  @@index([name])
-  @@map("material_types")
-}
-
 model Platform {
   id            BigInt         @id @default(autoincrement())
   uid           String         @unique
   name          String
   apiConfig     Json           @map("api_config")
   metadata      Json           @default("{}")
-  materials     Material[]
   showPlatforms ShowPlatform[]
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
@@ -145,36 +90,32 @@ model Platform {
 }
 
 model Show {
-  id                BigInt           @id @default(autoincrement())
-  uid               String           @unique
-  clientId          BigInt           @map("client_id")
-  studioRoomId      BigInt           @map("studio_room_id")
-  scheduleVersionId BigInt?          @map("schedule_version_id")
-  showTypeId        BigInt           @map("show_type_id")
-  showStatusId      BigInt           @map("show_status_id")
-  showStandardId    BigInt           @map("show_standard_id")
-  name              String
-  startTime         DateTime         @map("start_time")
-  endTime           DateTime         @map("end_time")
-  metadata          Json             @default("{}")
-  client            Client           @relation(fields: [clientId], references: [id])
-  studioRoom        StudioRoom       @relation(fields: [studioRoomId], references: [id])
-  scheduleVersion   ScheduleVersion? @relation(fields: [scheduleVersionId], references: [id])
-  showType          ShowType         @relation(fields: [showTypeId], references: [id])
-  showStatus        ShowStatus       @relation(fields: [showStatusId], references: [id])
-  showStandard      ShowStandard     @relation(fields: [showStandardId], references: [id])
-  showMCs           ShowMC[]
-  showMaterials     ShowMaterial[]
-  showPlatforms     ShowPlatform[]
-  createdAt         DateTime         @default(now()) @map("created_at")
-  updatedAt         DateTime         @updatedAt @map("updated_at")
-  deletedAt         DateTime?        @map("deleted_at")
+  id             BigInt        @id @default(autoincrement())
+  uid            String        @unique
+  clientId       BigInt        @map("client_id")
+  studioRoomId   BigInt        @map("studio_room_id")
+  showTypeId     BigInt        @map("show_type_id")
+  showStatusId   BigInt        @map("show_status_id")
+  showStandardId BigInt        @map("show_standard_id")
+  name           String
+  startTime      DateTime      @map("start_time")
+  endTime        DateTime      @map("end_time")
+  metadata       Json          @default("{}")
+  client         Client        @relation(fields: [clientId], references: [id])
+  studioRoom     StudioRoom    @relation(fields: [studioRoomId], references: [id])
+  showType       ShowType      @relation(fields: [showTypeId], references: [id])
+  showStatus     ShowStatus    @relation(fields: [showStatusId], references: [id])
+  showStandard   ShowStandard  @relation(fields: [showStandardId], references: [id])
+  showMCs        ShowMC[]
+  showPlatforms  ShowPlatform[]
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  deletedAt      DateTime?     @map("deleted_at")
 
   @@index([uid])
   @@index([name])
   @@index([clientId])
   @@index([studioRoomId])
-  @@index([scheduleVersionId])
   @@index([showTypeId])
   @@index([showStatusId])
   @@index([showStandardId])
@@ -204,26 +145,6 @@ model ShowMC {
   @@map("show_mcs")
 }
 
-model ShowMaterial {
-  id         BigInt    @id @default(autoincrement())
-  uid        String    @unique
-  showId     BigInt    @map("show_id")
-  materialId BigInt    @map("material_id")
-  note       String?
-  metadata   Json      @default("{}")
-  show       Show      @relation(fields: [showId], references: [id])
-  material   Material  @relation(fields: [materialId], references: [id])
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
-  deletedAt  DateTime? @map("deleted_at")
-
-  @@unique([showId, materialId])
-  @@index([uid])
-  @@index([showId])
-  @@index([materialId])
-  @@map("show_materials")
-}
-
 model ShowPlatform {
   id             BigInt    @id @default(autoincrement())
   uid            String    @unique
@@ -248,18 +169,16 @@ model ShowPlatform {
 }
 
 model Studio {
-  id            BigInt         @id @default(autoincrement())
-  uid           String         @unique
-  name          String
-  address       String
-  metadata      Json           @default("{}")
-  studioRooms   StudioRoom[]
-  schedules     Schedule[]
-  tags          Tag[]
-  taskTemplates TaskTemplate[]
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
-  deletedAt     DateTime?      @map("deleted_at")
+  id                BigInt             @id @default(autoincrement())
+  uid               String             @unique
+  name              String
+  address           String
+  metadata          Json               @default("{}")
+  studioRooms       StudioRoom[]
+  studioMemberships StudioMembership[]
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  deletedAt         DateTime?          @map("deleted_at")
 
   @@index([uid])
   @@index([name])
@@ -284,118 +203,6 @@ model StudioRoom {
   @@index([name])
   @@index([studioId, name])
   @@map("studio_rooms")
-}
-
-model Schedule {
-  id               BigInt            @id @default(autoincrement())
-  uid              String            @unique
-  clientId         BigInt            @map("client_id")
-  studioId         BigInt            @map("studio_id")
-  scheduleStatusId BigInt            @map("schedule_status_id")
-  activeVersionId  BigInt?           @unique @map("active_version_id") // Points to active version
-  name             String
-  description      String?
-  startTime        DateTime          @map("start_time")
-  endTime          DateTime?         @map("end_time")
-  metadata         Json              @default("{}")
-  client           Client            @relation(fields: [clientId], references: [id])
-  studio           Studio            @relation(fields: [studioId], references: [id])
-  scheduleStatus   ScheduleStatus    @relation(fields: [scheduleStatusId], references: [id])
-  activeVersion    ScheduleVersion?  @relation("ActiveVersion", fields: [activeVersionId], references: [id])
-  versions         ScheduleVersion[] @relation("ScheduleVersions")
-  createdAt        DateTime          @default(now()) @map("created_at")
-  updatedAt        DateTime          @updatedAt @map("updated_at")
-  deletedAt        DateTime?         @map("deleted_at")
-
-  @@index([uid])
-  @@index([clientId])
-  @@index([studioId])
-  @@index([scheduleStatusId])
-  @@index([activeVersionId])
-  @@map("schedules")
-}
-
-model ScheduleStatus {
-  id        BigInt     @id @default(autoincrement())
-  uid       String     @unique
-  name      String     @unique // draft, proposed, confirmed, archived, cancelled, other
-  metadata  Json       @default("{}")
-  schedules Schedule[]
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
-  deletedAt DateTime?  @map("deleted_at")
-
-  @@index([uid])
-  @@map("schedule_status")
-}
-
-model ChangeCategory {
-  id               BigInt            @id @default(autoincrement())
-  uid              String            @unique
-  name             String            @unique // CLIENT_REQUESTED, OPERATIONAL, FORCE_MAJEURE
-  metadata         Json              @default("{}")
-  scheduleVersions ScheduleVersion[]
-  createdAt        DateTime          @default(now()) @map("created_at")
-  updatedAt        DateTime          @updatedAt @map("updated_at")
-  deletedAt        DateTime?         @map("deleted_at")
-
-  @@index([uid])
-  @@map("change_categories")
-}
-
-model ChangeType {
-  id               BigInt            @id @default(autoincrement())
-  uid              String            @unique
-  name             String            @unique // TIME_CHANGE, RESOURCE_CHANGE, SCOPE_CHANGE, etc.
-  metadata         Json              @default("{}")
-  scheduleVersions ScheduleVersion[]
-  createdAt        DateTime          @default(now()) @map("created_at")
-  updatedAt        DateTime          @updatedAt @map("updated_at")
-  deletedAt        DateTime?         @map("deleted_at")
-
-  @@index([uid])
-  @@map("change_types")
-}
-
-model ScheduleVersion {
-  id                     BigInt         @id @default(autoincrement())
-  uid                    String         @unique
-  scheduleId             BigInt         @map("schedule_id")
-  versionNumber          Int            @map("version_number")
-  effectiveFrom          DateTime       @map("effective_from")
-  effectiveTo            DateTime?      @map("effective_to")
-  changeCategoryId       BigInt         @map("change_category_id")
-  changeTypeId           BigInt         @map("change_type_id")
-  changeReason           String         @map("change_reason")
-  requiresClientApproval Boolean        @default(false) @map("requires_client_approval")
-  creatorId              BigInt         @map("creator_id")
-  approverId             BigInt?        @map("approver_id")
-  approvedAt             DateTime?      @map("approved_at")
-  metadata               Json           @default("{}")
-  creator                User           @relation("CreatedSchedules", fields: [creatorId], references: [id])
-  approver               User?          @relation(fields: [approverId], references: [id])
-  schedule               Schedule?      @relation("ScheduleVersions", fields: [scheduleId], references: [id])
-  activeForSchedule      Schedule?      @relation("ActiveVersion")
-  changeCategory         ChangeCategory @relation(fields: [changeCategoryId], references: [id])
-  changeType             ChangeType     @relation(fields: [changeTypeId], references: [id])
-  shows                  Show[]
-  createdAt              DateTime       @default(now()) @map("created_at")
-  updatedAt              DateTime       @updatedAt @map("updated_at")
-  deletedAt              DateTime?      @map("deleted_at")
-
-  @@unique([scheduleId, versionNumber])
-  @@index([changeCategoryId])
-  @@index([changeTypeId])
-  @@index([scheduleId, changeCategoryId])
-  @@index([scheduleId, changeTypeId])
-  @@index([changeCategoryId, requiresClientApproval])
-  @@index([changeTypeId, requiresClientApproval])
-  @@index([creatorId, changeTypeId])
-  @@index([approverId, changeTypeId])
-  @@index([effectiveFrom, effectiveTo, changeCategoryId])
-  @@index([scheduleId, approvedAt])
-  @@index([requiresClientApproval, approvedAt])
-  @@map("schedule_versions")
 }
 
 model ShowType {
@@ -440,227 +247,24 @@ model ShowStandard {
   @@map("show_standards")
 }
 
-model Tag {
-  id        BigInt     @id @default(autoincrement())
-  uid       String     @unique
-  studioId  BigInt?    @map("studio_id")
-  name      String
-  metadata  Json       @default("{}")
-  studio    Studio?    @relation(fields: [studioId], references: [id])
-  taggables Taggable[]
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
-  deletedAt DateTime?  @map("deleted_at")
-
-  @@unique([studioId, name])
-  @@index([uid])
-  @@index([studioId])
-  @@map("tags")
-}
-
-model Taggable {
-  id           BigInt    @id @default(autoincrement())
-  uid          String    @unique
-  tagId        BigInt    @map("tag_id")
-  taggableId   BigInt    @map("taggable_id")
-  taggableType String    @map("taggable_type")
-  tag          Tag       @relation(fields: [tagId], references: [id])
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  deletedAt    DateTime? @map("deleted_at")
-
-  @@unique([tagId, taggableId])
-  @@index([uid])
-  @@index([tagId])
-  @@index([taggableId, taggableType])
-  @@map("taggables")
-}
-
-model TaskTemplate {
-  id                BigInt             @id @default(autoincrement())
-  uid               String             @unique
-  studioId          BigInt             @map("studio_id")
-  name              String
-  description       String?
-  isActive          Boolean            @default(true) @map("is_active")
-  metadata          Json               @default("{}")
-  studio            Studio             @relation(fields: [studioId], references: [id])
-  taskTemplateItems TaskTemplateItem[]
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @updatedAt @map("updated_at")
-  deletedAt         DateTime?          @map("deleted_at")
-
-  @@unique([studioId, name])
-  @@index([uid])
-  @@index([studioId])
-  @@index([isActive])
-  @@index([studioId, isActive])
-  @@map("task_templates")
-}
-
-model TaskTemplateItem {
-  id             BigInt        @id @default(autoincrement())
-  uid            String        @unique
-  taskTemplateId BigInt        @map("task_template_id")
-  taskTypeId     BigInt        @map("task_type_id")
-  inputTypeId    BigInt        @map("input_type_id")
-  name           String
-  description    String?
-  isRequired     Boolean       @default(false) @map("is_required")
-  metadata       Json          @default("{}")
-  taskTemplate   TaskTemplate  @relation(fields: [taskTemplateId], references: [id])
-  taskType       TaskType      @relation(fields: [taskTypeId], references: [id])
-  taskInputType  TaskInputType @relation(fields: [inputTypeId], references: [id])
-  tasks          Task[]
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
-  deletedAt      DateTime?     @map("deleted_at")
-
-  @@index([uid])
-  @@index([taskTemplateId])
-  @@index([taskTypeId])
-  @@index([inputTypeId])
-  @@map("task_template_items")
-}
-
-model TaskType {
-  id                BigInt             @id @default(autoincrement())
-  uid               String             @unique
-  name              String             @unique // pre_production, production, post_production, show_mc_review, show_platform_review, other
-  metadata          Json               @default("{}")
-  taskTemplateItems TaskTemplateItem[]
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @updatedAt @map("updated_at")
-  deletedAt         DateTime?          @map("deleted_at")
-
-  @@index([uid])
-  @@map("task_types")
-}
-
-model TaskInputType {
-  id                BigInt             @id @default(autoincrement())
-  uid               String             @unique
-  name              String             @unique // text, number, date, percentage, file, url
-  metadata          Json               @default("{}")
-  taskTemplateItems TaskTemplateItem[]
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @updatedAt @map("updated_at")
-  deletedAt         DateTime?          @map("deleted_at")
-
-  @@index([uid])
-  @@map("task_input_types")
-}
-
-model Task {
-  id                 BigInt           @id @default(autoincrement())
-  uid                String           @unique
-  taskableId         BigInt           @map("taskable_id")
-  taskableType       String           @map("taskable_type")
-  taskTemplateItemId BigInt           @map("task_template_item_id")
-  taskStatusId       BigInt           @map("task_status_id")
-  assigneeId         BigInt           @map("assignee_id")
-  dueDate            DateTime         @map("due_date")
-  completedAt        DateTime?        @map("completed_at")
-  metadata           Json             @default("{}")
-  taskTemplateItem   TaskTemplateItem @relation(fields: [taskTemplateItemId], references: [id])
-  taskStatus         TaskStatus       @relation(fields: [taskStatusId], references: [id])
-  assignee           User             @relation(fields: [assigneeId], references: [id])
-  createdAt          DateTime         @default(now()) @map("created_at")
-  updatedAt          DateTime         @updatedAt @map("updated_at")
-  deletedAt          DateTime?        @map("deleted_at")
-
-  @@unique([taskableId, assigneeId])
-  @@index([uid])
-  @@index([taskableId, taskableType])
-  @@index([taskTemplateItemId])
-  @@index([taskStatusId])
-  @@index([assigneeId])
-  @@index([dueDate])
-  @@index([assigneeId, dueDate])
-  @@index([taskStatusId, dueDate])
-  @@map("tasks")
-}
-
-model TaskStatus {
-  id        BigInt    @id @default(autoincrement())
-  uid       String    @unique
-  name      String    @unique // pending, assigned, in_progress, review, completed, blocked
-  metadata  Json      @default("{}")
-  tasks     Task[]
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
-
-  @@index([uid])
-  @@map("task_status")
-}
-
-model Membership {
+model StudioMembership {
   id        BigInt    @id @default(autoincrement())
   uid       String    @unique
   userId    BigInt    @map("user_id")
-  groupId   BigInt    @map("group_id")
-  groupType String    @map("group_type") // client, platform, studio
-  role      String // owner, admin, manager, member, guest
+  studioId  BigInt    @map("studio_id")
+  role      String // admin, manager, member
   metadata  Json      @default("{}")
   user      User      @relation(fields: [userId], references: [id])
+  studio    Studio    @relation(fields: [studioId], references: [id])
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  @@unique([userId, groupId, groupType])
+  @@unique([userId, studioId])
   @@index([uid])
   @@index([userId])
-  @@index([groupId, groupType])
-  @@index([groupType, groupId])
-  @@index([userId, groupType])
-  @@map("memberships")
-}
-
-model Comment {
-  id              BigInt    @id @default(autoincrement())
-  uid             String    @unique
-  commentableId   BigInt    @map("commentable_id")
-  commentableType String    @map("commentable_type") // e.g., Show, Schedule, Material, User
-  ownerId         BigInt    @map("owner_id")
-  parentId        BigInt?   @map("parent_id")
-  content         String
-  parent          Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  replies         Comment[] @relation("CommentReplies")
-  owner           User      @relation(fields: [ownerId], references: [id])
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-  deletedAt       DateTime? @map("deleted_at")
-
-  @@index([uid])
-  @@index([commentableId, commentableType])
-  @@index([ownerId])
-  @@index([parentId])
-  @@index([commentableId, commentableType, createdAt])
-  @@index([ownerId, createdAt])
-  @@map("comments")
-}
-
-model Audit {
-  id            BigInt   @id @default(autoincrement())
-  uid           String   @unique
-  userId        BigInt   @map("user_id")
-  action        String // create, update, delete
-  auditableId   BigInt   @map("auditable_id")
-  auditableType String   @map("auditable_type") // e.g., Show, Schedule, Material, User
-  // changes
-  oldValues     Json     @map("old_values")
-  newValues     Json     @map("new_values")
-  metadata      Json     @default("{}")
-  user          User     @relation(fields: [userId], references: [id])
-  createdAt     DateTime @default(now()) @map("created_at")
-
-  @@index([uid])
-  @@index([userId])
-  @@index([auditableId, auditableType])
-  @@index([createdAt])
-  @@index([userId, createdAt])
-  @@index([auditableType, createdAt])
-  @@index([action, createdAt])
-  @@map("audits")
+  @@index([studioId])
+  @@index([role])
+  @@index([userId, role])
+  @@map("studio_memberships")
 }

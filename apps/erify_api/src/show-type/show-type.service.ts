@@ -1,27 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma, ShowType } from '@prisma/client';
+import { Prisma, ShowType } from '@prisma/client';
 
+import { BaseModelService } from '../common/services/base-model.service';
 import { UtilityService } from '../utility/utility.service';
 import { ShowTypeRepository } from './show-type.repository';
 
 @Injectable()
-export class ShowTypeService {
-  static readonly UID_PREFIX = 'sht_';
+export class ShowTypeService extends BaseModelService {
+  static readonly UID_PREFIX = 'sht';
+  protected readonly uidPrefix = ShowTypeService.UID_PREFIX;
 
   constructor(
     private readonly showTypeRepository: ShowTypeRepository,
-    private readonly utilityService: UtilityService,
-  ) {}
+    protected readonly utilityService: UtilityService,
+  ) {
+    super(utilityService);
+  }
 
   async createShowType(
     data: Omit<Prisma.ShowTypeCreateInput, 'uid'>,
   ): Promise<ShowType> {
-    const uid = this.utilityService.generateBrandedId(
-      ShowTypeService.UID_PREFIX,
-    );
-    const showTypeData = { ...data, uid };
-
-    return this.showTypeRepository.create(showTypeData);
+    const uid = this.generateUid();
+    return this.showTypeRepository.create({ ...data, uid });
   }
 
   async getShowTypeById(uid: string): Promise<ShowType | null> {
@@ -33,11 +33,11 @@ export class ShowTypeService {
     take?: number;
     orderBy?: Record<string, 'asc' | 'desc'>;
   }): Promise<ShowType[]> {
-    return this.showTypeRepository.findMany({
-      skip: params.skip,
-      take: params.take,
-      orderBy: params.orderBy,
-    });
+    return this.showTypeRepository.findMany(params);
+  }
+
+  async countShowTypes(): Promise<number> {
+    return this.showTypeRepository.count({});
   }
 
   async updateShowType(
@@ -49,9 +49,5 @@ export class ShowTypeService {
 
   async deleteShowType(uid: string): Promise<ShowType> {
     return this.showTypeRepository.softDelete({ uid });
-  }
-
-  async countShowTypes(): Promise<number> {
-    return this.showTypeRepository.count({});
   }
 }

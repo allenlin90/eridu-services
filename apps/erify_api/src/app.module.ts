@@ -6,7 +6,10 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
 import { AdminModule } from './admin/admin.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { ZodExceptionFilter } from './common/filters/zod-exception.filter';
+import { HealthModule } from './common/health.module';
+import { OpenAPIModule } from './common/openapi/openapi.module';
 import { envSchema } from './config/env.schema';
 
 @Module({
@@ -41,7 +44,9 @@ import { envSchema } from './config/env.schema';
         }),
       }),
     }),
+    HealthModule,
     AdminModule,
+    OpenAPIModule.forRoot(),
   ],
   providers: [
     {
@@ -51,6 +56,10 @@ import { envSchema } from './config/env.schema';
     {
       provide: APP_INTERCEPTOR,
       useClass: ZodSerializerInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: PrismaExceptionFilter,
     },
     {
       provide: APP_FILTER,

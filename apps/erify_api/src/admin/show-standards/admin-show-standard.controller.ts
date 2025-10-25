@@ -16,56 +16,82 @@ import {
   createPaginatedResponseSchema,
   PaginationQueryDto,
 } from '../../common/pagination/schema/pagination.schema';
+import { UidValidationPipe } from '../../common/pipes/uid-validation.pipe';
 import {
   CreateShowStandardDto,
   ShowStandardDto,
   showStandardDto,
   UpdateShowStandardDto,
 } from '../../show-standard/schemas/show-standard.schema';
-import { AdminShowStandardService } from './admin-show-standard.service';
+import { ShowStandardService } from '../../show-standard/show-standard.service';
+import { UtilityService } from '../../utility/utility.service';
+import { BaseAdminController } from '../base-admin.controller';
 
 @Controller('admin/show-standards')
-export class AdminShowStandardController {
+export class AdminShowStandardController extends BaseAdminController {
   constructor(
-    private readonly adminShowStandardService: AdminShowStandardService,
-  ) {}
+    private readonly showStandardService: ShowStandardService,
+    utilityService: UtilityService,
+  ) {
+    super(utilityService);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ZodSerializerDto(ShowStandardDto)
-  async createShowStandard(@Body() body: CreateShowStandardDto) {
-    const showStandard =
-      await this.adminShowStandardService.createShowStandard(body);
-    return showStandard;
+  createShowStandard(@Body() body: CreateShowStandardDto) {
+    return this.showStandardService.createShowStandard(body);
   }
 
   @Get()
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(createPaginatedResponseSchema(showStandardDto))
-  getShowStandards(@Query() paginationQuery: PaginationQueryDto) {
-    return this.adminShowStandardService.getShowStandards(paginationQuery);
+  async getShowStandards(@Query() query: PaginationQueryDto) {
+    const data = await this.showStandardService.getShowStandards({
+      skip: query.skip,
+      take: query.take,
+    });
+    const total = await this.showStandardService.countShowStandards();
+
+    return this.createPaginatedResponse(data, total, query);
   }
 
-  @Get(':uid')
+  @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(ShowStandardDto)
-  getShowStandard(@Param('uid') uid: string) {
-    return this.adminShowStandardService.getShowStandardById(uid);
+  getShowStandard(
+    @Param(
+      'id',
+      new UidValidationPipe(ShowStandardService.UID_PREFIX, 'Show Standard'),
+    )
+    id: string,
+  ) {
+    return this.showStandardService.getShowStandardById(id);
   }
 
-  @Patch(':uid')
+  @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(ShowStandardDto)
   updateShowStandard(
-    @Param('uid') uid: string,
+    @Param(
+      'id',
+      new UidValidationPipe(ShowStandardService.UID_PREFIX, 'Show Standard'),
+    )
+    id: string,
     @Body() body: UpdateShowStandardDto,
   ) {
-    return this.adminShowStandardService.updateShowStandard(uid, body);
+    return this.showStandardService.updateShowStandard(id, body);
   }
 
-  @Delete(':uid')
+  @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteShowStandard(@Param('uid') uid: string) {
-    await this.adminShowStandardService.deleteShowStandard(uid);
+  async deleteShowStandard(
+    @Param(
+      'id',
+      new UidValidationPipe(ShowStandardService.UID_PREFIX, 'Show Standard'),
+    )
+    id: string,
+  ) {
+    await this.showStandardService.deleteShowStandard(id);
   }
 }

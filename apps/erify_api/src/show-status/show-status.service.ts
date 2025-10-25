@@ -1,39 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, ShowStatus } from '@prisma/client';
 
-import { HttpError } from '../common/errors/http-error.util';
-import { PRISMA_ERROR } from '../common/errors/prisma-error-codes';
+import { BaseModelService } from '../common/services/base-model.service';
 import { UtilityService } from '../utility/utility.service';
 import { ShowStatusRepository } from './show-status.repository';
 
 @Injectable()
-export class ShowStatusService {
-  static readonly UID_PREFIX = 'shs_';
+export class ShowStatusService extends BaseModelService {
+  static readonly UID_PREFIX = 'shst';
+  protected readonly uidPrefix = ShowStatusService.UID_PREFIX;
 
   constructor(
     private readonly showStatusRepository: ShowStatusRepository,
-    private readonly utilityService: UtilityService,
-  ) {}
+    protected readonly utilityService: UtilityService,
+  ) {
+    super(utilityService);
+  }
 
   async createShowStatus(
     data: Omit<Prisma.ShowStatusCreateInput, 'uid'>,
   ): Promise<ShowStatus> {
-    const uid = this.utilityService.generateBrandedId(
-      ShowStatusService.UID_PREFIX,
-    );
-    const showStatusData = { ...data, uid };
-
-    try {
-      return await this.showStatusRepository.create(showStatusData);
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === PRISMA_ERROR.UniqueConstraint
-      ) {
-        throw HttpError.conflict('Show status already exists');
-      }
-      throw error;
-    }
+    const uid = this.generateUid();
+    return this.showStatusRepository.create({ ...data, uid });
   }
 
   async getShowStatusById(uid: string): Promise<ShowStatus | null> {
@@ -45,35 +33,21 @@ export class ShowStatusService {
     take?: number;
     orderBy?: Record<string, 'asc' | 'desc'>;
   }): Promise<ShowStatus[]> {
-    return this.showStatusRepository.findMany({
-      skip: params.skip,
-      take: params.take,
-      orderBy: params.orderBy,
-    });
+    return this.showStatusRepository.findMany(params);
+  }
+
+  async countShowStatuses(): Promise<number> {
+    return this.showStatusRepository.count({});
   }
 
   async updateShowStatus(
     uid: string,
     data: Prisma.ShowStatusUpdateInput,
   ): Promise<ShowStatus> {
-    try {
-      return await this.showStatusRepository.update({ uid }, data);
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === PRISMA_ERROR.UniqueConstraint
-      ) {
-        throw HttpError.conflict('Show status already exists');
-      }
-      throw error;
-    }
+    return this.showStatusRepository.update({ uid }, data);
   }
 
   async deleteShowStatus(uid: string): Promise<ShowStatus> {
     return this.showStatusRepository.softDelete({ uid });
-  }
-
-  async countShowStatuses(): Promise<number> {
-    return this.showStatusRepository.count({});
   }
 }

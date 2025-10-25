@@ -16,55 +16,86 @@ import {
   createPaginatedResponseSchema,
   PaginationQueryDto,
 } from '../../common/pagination/schema/pagination.schema';
+import { UidValidationPipe } from '../../common/pipes/uid-validation.pipe';
 import {
   CreateStudioRoomDto,
   StudioRoomWithStudioDto,
   studioRoomWithStudioDto,
   UpdateStudioRoomDto,
 } from '../../studio-room/schemas/studio-room.schema';
-import { AdminStudioRoomService } from './admin-studio-room.service';
+import { StudioRoomService } from '../../studio-room/studio-room.service';
+import { UtilityService } from '../../utility/utility.service';
+import { BaseAdminController } from '../base-admin.controller';
 
 @Controller('admin/studio-rooms')
-export class AdminStudioRoomController {
+export class AdminStudioRoomController extends BaseAdminController {
   constructor(
-    private readonly adminStudioRoomService: AdminStudioRoomService,
-  ) {}
+    private readonly studioRoomService: StudioRoomService,
+    utilityService: UtilityService,
+  ) {
+    super(utilityService);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ZodSerializerDto(StudioRoomWithStudioDto)
-  async createStudioRoom(@Body() body: CreateStudioRoomDto) {
-    const studioRoom = await this.adminStudioRoomService.createStudioRoom(body);
-    return studioRoom;
+  createStudioRoom(@Body() body: CreateStudioRoomDto) {
+    return this.studioRoomService.createStudioRoomFromDto(body, {
+      studio: true,
+    });
   }
 
   @Get()
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(createPaginatedResponseSchema(studioRoomWithStudioDto))
-  getStudioRooms(@Query() paginationQuery: PaginationQueryDto) {
-    return this.adminStudioRoomService.getStudioRooms(paginationQuery);
+  async getStudioRooms(@Query() query: PaginationQueryDto) {
+    const data = await this.studioRoomService.getStudioRooms(
+      { skip: query.skip, take: query.take },
+      { studio: true },
+    );
+    const total = await this.studioRoomService.countStudioRooms();
+
+    return this.createPaginatedResponse(data, total, query);
   }
 
-  @Get(':uid')
+  @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(StudioRoomWithStudioDto)
-  getStudioRoom(@Param('uid') uid: string) {
-    return this.adminStudioRoomService.getStudioRoomById(uid);
+  getStudioRoom(
+    @Param(
+      'id',
+      new UidValidationPipe(StudioRoomService.UID_PREFIX, 'Studio Room'),
+    )
+    id: string,
+  ) {
+    return this.studioRoomService.getStudioRoomById(id, { studio: true });
   }
 
-  @Patch(':uid')
+  @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(StudioRoomWithStudioDto)
   updateStudioRoom(
-    @Param('uid') uid: string,
+    @Param(
+      'id',
+      new UidValidationPipe(StudioRoomService.UID_PREFIX, 'Studio Room'),
+    )
+    id: string,
     @Body() body: UpdateStudioRoomDto,
   ) {
-    return this.adminStudioRoomService.updateStudioRoom(uid, body);
+    return this.studioRoomService.updateStudioRoomFromDto(id, body, {
+      studio: true,
+    });
   }
 
-  @Delete(':uid')
+  @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteStudioRoom(@Param('uid') uid: string) {
-    await this.adminStudioRoomService.deleteStudioRoom(uid);
+  async deleteStudioRoom(
+    @Param(
+      'id',
+      new UidValidationPipe(StudioRoomService.UID_PREFIX, 'Studio Room'),
+    )
+    id: string,
+  ) {
+    await this.studioRoomService.deleteStudioRoom(id);
   }
 }

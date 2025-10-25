@@ -1,27 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import type { Platform, Prisma } from '@prisma/client';
+import { Platform, Prisma } from '@prisma/client';
 
+import { BaseModelService } from '../common/services/base-model.service';
 import { UtilityService } from '../utility/utility.service';
 import { PlatformRepository } from './platform.repository';
 
 @Injectable()
-export class PlatformService {
-  static readonly UID_PREFIX = 'plt_';
+export class PlatformService extends BaseModelService {
+  static readonly UID_PREFIX = 'plt';
+  protected readonly uidPrefix = PlatformService.UID_PREFIX;
 
   constructor(
     private readonly platformRepository: PlatformRepository,
-    private readonly utilityService: UtilityService,
-  ) {}
+    protected readonly utilityService: UtilityService,
+  ) {
+    super(utilityService);
+  }
 
   async createPlatform(
     data: Omit<Prisma.PlatformCreateInput, 'uid'>,
   ): Promise<Platform> {
-    const uid = this.utilityService.generateBrandedId(
-      PlatformService.UID_PREFIX,
-    );
-    const platformData = { ...data, uid };
-
-    return this.platformRepository.create(platformData);
+    const uid = this.generateUid();
+    return this.platformRepository.create({ ...data, uid });
   }
 
   async getPlatformById(uid: string): Promise<Platform | null> {
@@ -37,11 +37,11 @@ export class PlatformService {
     take?: number;
     orderBy?: Record<string, 'asc' | 'desc'>;
   }): Promise<Platform[]> {
-    return this.platformRepository.findMany({
-      skip: params.skip,
-      take: params.take,
-      orderBy: params.orderBy,
-    });
+    return this.platformRepository.findMany(params);
+  }
+
+  async countPlatforms(): Promise<number> {
+    return this.platformRepository.count({});
   }
 
   async updatePlatform(
@@ -53,9 +53,5 @@ export class PlatformService {
 
   async deletePlatform(uid: string): Promise<Platform> {
     return this.platformRepository.softDelete({ uid });
-  }
-
-  async countPlatforms(): Promise<number> {
-    return this.platformRepository.count({});
   }
 }

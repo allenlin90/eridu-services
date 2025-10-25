@@ -1,0 +1,209 @@
+import { Injectable } from '@nestjs/common';
+import { Prisma, StudioMembership } from '@prisma/client';
+
+import { HttpError } from '../common/errors/http-error.util';
+import { BaseModelService } from '../common/services/base-model.service';
+import { UtilityService } from '../utility/utility.service';
+import {
+  CreateStudioMembershipDto,
+  UpdateStudioMembershipDto,
+} from './schemas/studio-membership.schema';
+import { StudioMembershipRepository } from './studio-membership.repository';
+
+// Type aliases for better readability and type safety
+type UserId = Prisma.UserWhereUniqueInput['id'];
+type StudioId = bigint;
+type StudioMembershipId = Prisma.StudioMembershipWhereUniqueInput['id'];
+
+type StudioMembershipWithIncludes<T extends Prisma.StudioMembershipInclude> =
+  Prisma.StudioMembershipGetPayload<{
+    include: T;
+  }>;
+
+@Injectable()
+export class StudioMembershipService extends BaseModelService {
+  static readonly UID_PREFIX = 'smb';
+  protected readonly uidPrefix = StudioMembershipService.UID_PREFIX;
+
+  constructor(
+    private readonly studioMembershipRepository: StudioMembershipRepository,
+    protected readonly utilityService: UtilityService,
+  ) {
+    super(utilityService);
+  }
+
+  async createStudioMembershipFromDto<
+    T extends Prisma.StudioMembershipInclude = Record<string, never>,
+  >(
+    dto: CreateStudioMembershipDto,
+    include?: T,
+  ): Promise<StudioMembership | StudioMembershipWithIncludes<T>> {
+    const data = this.buildCreatePayload(dto);
+    return this.createStudioMembership(data, include);
+  }
+
+  async createStudioMembership<
+    T extends Prisma.StudioMembershipInclude = Record<string, never>,
+  >(
+    data: Omit<Prisma.StudioMembershipCreateInput, 'uid'>,
+    include?: T,
+  ): Promise<StudioMembership | StudioMembershipWithIncludes<T>> {
+    const uid = this.generateUid();
+    return this.studioMembershipRepository.createStudioMembership(
+      { ...data, uid },
+      include,
+    );
+  }
+
+  async getStudioMembershipById<
+    T extends Prisma.StudioMembershipInclude = Record<string, never>,
+  >(
+    uid: string,
+    include?: T,
+  ): Promise<StudioMembership | StudioMembershipWithIncludes<T> | null> {
+    return this.studioMembershipRepository.findByUid(uid, include);
+  }
+
+  async getStudioMembershipsByStudio(
+    studioId: StudioId,
+  ): Promise<StudioMembership[]> {
+    return this.studioMembershipRepository.findStudioMembershipsByStudio({
+      studioId,
+    });
+  }
+
+  async getUserStudioMemberships(userId: UserId): Promise<StudioMembership[]> {
+    return this.studioMembershipRepository.findUserStudioMemberships(userId);
+  }
+
+  async getStudioMemberships<
+    T extends Prisma.StudioMembershipInclude = Record<string, never>,
+  >(
+    params: {
+      skip: number;
+      take: number;
+    },
+    include?: T,
+  ): Promise<StudioMembership[] | StudioMembershipWithIncludes<T>[]> {
+    return this.studioMembershipRepository.findMany({
+      skip: params.skip,
+      take: params.take,
+      include,
+    });
+  }
+
+  async countStudioMemberships(
+    where: Prisma.StudioMembershipWhereInput = {},
+  ): Promise<number> {
+    return this.studioMembershipRepository.count(where);
+  }
+
+  async isUserAdmin(userId: UserId): Promise<boolean> {
+    const memberships = await this.studioMembershipRepository.findMany({
+      where: {
+        userId: userId,
+        role: 'admin',
+        deletedAt: null,
+      },
+    });
+
+    return memberships.length > 0;
+  }
+
+  async isUserStudioAdmin(
+    userId: UserId,
+    studioId: StudioId,
+  ): Promise<boolean> {
+    const membership = await this.studioMembershipRepository.findOne({
+      userId: userId,
+      studioId: studioId,
+      role: 'admin',
+      deletedAt: null,
+    });
+
+    return membership !== null;
+  }
+
+  async updateStudioMembershipFromDto<
+    T extends Prisma.StudioMembershipInclude = Record<string, never>,
+  >(
+    uid: string,
+    dto: UpdateStudioMembershipDto,
+    include?: T,
+  ): Promise<StudioMembership | StudioMembershipWithIncludes<T>> {
+    const data = this.buildUpdatePayload(dto);
+    return this.updateStudioMembership(uid, data, include);
+  }
+
+  async updateStudioMembership<
+    T extends Prisma.StudioMembershipInclude = Record<string, never>,
+  >(
+    uid: string,
+    data: Prisma.StudioMembershipUpdateInput,
+    include?: T,
+  ): Promise<StudioMembership | StudioMembershipWithIncludes<T>> {
+    await this.findStudioMembershipOrThrow(uid);
+    return this.studioMembershipRepository.updateByUnique(
+      { uid },
+      data,
+      include,
+    );
+  }
+
+  async deleteStudioMembership(uid: string): Promise<StudioMembership> {
+    await this.findStudioMembershipOrThrow(uid);
+    return this.studioMembershipRepository.softDeleteByUnique({ uid });
+  }
+
+  async restoreStudioMembership(
+    id: StudioMembershipId,
+  ): Promise<StudioMembership> {
+    return this.studioMembershipRepository.restoreByUnique({ id });
+  }
+
+  private async findStudioMembershipOrThrow<
+    T extends Prisma.StudioMembershipInclude = Record<string, never>,
+  >(
+    uid: string,
+    include?: T,
+  ): Promise<StudioMembership | StudioMembershipWithIncludes<T>> {
+    const membership = await this.studioMembershipRepository.findByUid(
+      uid,
+      include,
+    );
+    if (!membership) {
+      throw HttpError.notFound('Studio membership', uid);
+    }
+    return membership;
+  }
+
+  private buildCreatePayload(
+    dto: CreateStudioMembershipDto,
+  ): Omit<Prisma.StudioMembershipCreateInput, 'uid'> {
+    return {
+      user: { connect: { uid: dto.userId } },
+      studio: { connect: { uid: dto.studioId } },
+      role: dto.role,
+      metadata: dto.metadata ?? {},
+    };
+  }
+
+  private buildUpdatePayload(
+    dto: UpdateStudioMembershipDto,
+  ): Prisma.StudioMembershipUpdateInput {
+    const payload: Prisma.StudioMembershipUpdateInput = {};
+
+    if (dto.role !== undefined) payload.role = dto.role;
+    if (dto.metadata !== undefined) payload.metadata = dto.metadata;
+
+    if (dto.userId !== undefined) {
+      payload.user = { connect: { uid: dto.userId } };
+    }
+
+    if (dto.studioId !== undefined) {
+      payload.studio = { connect: { uid: dto.studioId } };
+    }
+
+    return payload;
+  }
+}

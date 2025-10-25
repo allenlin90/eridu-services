@@ -157,3 +157,330 @@ This phase delivers advanced authorization control and comprehensive tracking fe
 - **Permission Inheritance**: Proper permission hierarchy and inheritance
 
 This approach provides a complete advanced authorization and tracking system while maintaining security and performance standards.
+
+## Database Schema
+
+### Material Management
+
+#### Material
+```prisma
+model Material {
+  id             BigInt         @id @default(autoincrement())
+  uid            String         @unique
+  clientId       BigInt?        @map("client_id")
+  platformId     BigInt?        @map("platform_id")
+  materialTypeId BigInt         @map("material_type_id")
+  name           String
+  description    String?
+  resourceUrl    String?        @unique @map("resource_url")
+  isActive       Boolean        @default(true) @map("is_active")
+  expiringAt     DateTime?      @map("expiring_at")
+  version        String
+  metadata       Json           @default("{}")
+  client         Client?        @relation(fields: [clientId], references: [id])
+  platform       Platform?      @relation(fields: [platformId], references: [id])
+  materialType   MaterialType   @relation(fields: [materialTypeId], references: [id])
+  showMaterials  ShowMaterial[]
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  deletedAt      DateTime?      @map("deleted_at")
+
+  @@index([uid])
+  @@index([clientId])
+  @@index([platformId])
+  @@index([materialTypeId])
+  @@index([name])
+  @@index([isActive])
+  @@index([clientId, isActive])
+  @@index([expiringAt])
+  @@map("materials")
+}
+```
+
+#### MaterialType
+```prisma
+model MaterialType {
+  id        BigInt     @id @default(autoincrement())
+  uid       String     @unique
+  name      String     @unique // brief, mechanic, script, scene, other
+  metadata  Json       @default("{}")
+  materials Material[]
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  deletedAt DateTime?  @map("deleted_at")
+
+  @@index([uid])
+  @@index([name])
+  @@map("material_types")
+}
+```
+
+#### ShowMaterial
+```prisma
+model ShowMaterial {
+  id         BigInt    @id @default(autoincrement())
+  uid        String    @unique
+  showId     BigInt    @map("show_id")
+  materialId BigInt    @map("material_id")
+  note       String?
+  metadata   Json      @default("{}")
+  show       Show      @relation(fields: [showId], references: [id])
+  material   Material  @relation(fields: [materialId], references: [id])
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  @@unique([showId, materialId])
+  @@index([uid])
+  @@index([showId])
+  @@index([materialId])
+  @@map("show_materials")
+}
+```
+
+### Tagging System
+
+#### Tag
+```prisma
+model Tag {
+  id        BigInt     @id @default(autoincrement())
+  uid       String     @unique
+  studioId  BigInt?    @map("studio_id")
+  name      String
+  metadata  Json       @default("{}")
+  studio    Studio?    @relation(fields: [studioId], references: [id])
+  taggables Taggable[]
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  deletedAt DateTime?  @map("deleted_at")
+
+  @@unique([studioId, name])
+  @@index([uid])
+  @@index([studioId])
+  @@map("tags")
+}
+```
+
+#### Taggable
+```prisma
+model Taggable {
+  id           BigInt    @id @default(autoincrement())
+  uid          String    @unique
+  tagId        BigInt    @map("tag_id")
+  taggableId   BigInt    @map("taggable_id")
+  taggableType String    @map("taggable_type")
+  tag          Tag       @relation(fields: [tagId], references: [id])
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  @@unique([tagId, taggableId])
+  @@index([uid])
+  @@index([tagId])
+  @@index([taggableId, taggableType])
+  @@map("taggables")
+}
+```
+
+### Task Management System
+
+#### TaskTemplate
+```prisma
+model TaskTemplate {
+  id                BigInt             @id @default(autoincrement())
+  uid               String             @unique
+  studioId          BigInt             @map("studio_id")
+  name              String
+  description       String?
+  isActive          Boolean            @default(true) @map("is_active")
+  metadata          Json               @default("{}")
+  studio            Studio             @relation(fields: [studioId], references: [id])
+  taskTemplateItems TaskTemplateItem[]
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  deletedAt         DateTime?          @map("deleted_at")
+
+  @@unique([studioId, name])
+  @@index([uid])
+  @@index([studioId])
+  @@index([isActive])
+  @@index([studioId, isActive])
+  @@map("task_templates")
+}
+```
+
+#### TaskTemplateItem
+```prisma
+model TaskTemplateItem {
+  id             BigInt        @id @default(autoincrement())
+  uid            String        @unique
+  taskTemplateId BigInt        @map("task_template_id")
+  taskTypeId     BigInt        @map("task_type_id")
+  inputTypeId    BigInt        @map("input_type_id")
+  name           String
+  description    String?
+  isRequired     Boolean       @default(false) @map("is_required")
+  metadata       Json          @default("{}")
+  taskTemplate   TaskTemplate  @relation(fields: [taskTemplateId], references: [id])
+  taskType       TaskType      @relation(fields: [taskTypeId], references: [id])
+  taskInputType  TaskInputType @relation(fields: [inputTypeId], references: [id])
+  tasks          Task[]
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  deletedAt      DateTime?     @map("deleted_at")
+
+  @@index([uid])
+  @@index([taskTemplateId])
+  @@index([taskTypeId])
+  @@index([inputTypeId])
+  @@map("task_template_items")
+}
+```
+
+#### TaskType
+```prisma
+model TaskType {
+  id                BigInt             @id @default(autoincrement())
+  uid               String             @unique
+  name              String             @unique // pre_production, production, post_production, show_mc_review, show_platform_review, other
+  metadata          Json               @default("{}")
+  taskTemplateItems TaskTemplateItem[]
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  deletedAt         DateTime?          @map("deleted_at")
+
+  @@index([uid])
+  @@map("task_types")
+}
+```
+
+#### TaskInputType
+```prisma
+model TaskInputType {
+  id                BigInt             @id @default(autoincrement())
+  uid               String             @unique
+  name              String             @unique // text, number, date, percentage, file, url
+  metadata          Json               @default("{}")
+  taskTemplateItems TaskTemplateItem[]
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  deletedAt         DateTime?          @map("deleted_at")
+
+  @@index([uid])
+  @@map("task_input_types")
+}
+```
+
+#### Task
+```prisma
+model Task {
+  id                 BigInt           @id @default(autoincrement())
+  uid                String           @unique
+  taskableId         BigInt           @map("taskable_id")
+  taskableType       String           @map("taskable_type")
+  taskTemplateItemId BigInt           @map("task_template_item_id")
+  taskStatusId       BigInt           @map("task_status_id")
+  assigneeId         BigInt           @map("assignee_id")
+  dueDate            DateTime         @map("due_date")
+  completedAt        DateTime?        @map("completed_at")
+  metadata           Json             @default("{}")
+  taskTemplateItem   TaskTemplateItem @relation(fields: [taskTemplateItemId], references: [id])
+  taskStatus         TaskStatus       @relation(fields: [taskStatusId], references: [id])
+  assignee           User             @relation(fields: [assigneeId], references: [id])
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+  deletedAt          DateTime?        @map("deleted_at")
+
+  @@unique([taskableId, assigneeId])
+  @@index([uid])
+  @@index([taskableId, taskableType])
+  @@index([taskTemplateItemId])
+  @@index([taskStatusId])
+  @@index([assigneeId])
+  @@index([dueDate])
+  @@index([assigneeId, dueDate])
+  @@index([taskStatusId, dueDate])
+  @@map("tasks")
+}
+```
+
+#### TaskStatus
+```prisma
+model TaskStatus {
+  id        BigInt    @id @default(autoincrement())
+  uid       String    @unique
+  name      String    @unique // pending, assigned, in_progress, review, completed, blocked
+  metadata  Json      @default("{}")
+  tasks     Task[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([uid])
+  @@map("task_status")
+}
+```
+
+### Collaboration Features
+
+#### Comment
+```prisma
+model Comment {
+  id              BigInt    @id @default(autoincrement())
+  uid             String    @unique
+  commentableId   BigInt    @map("commentable_id")
+  commentableType String    @map("commentable_type") // e.g., Show, Schedule, Material, User
+  ownerId         BigInt    @map("owner_id")
+  parentId        BigInt?   @map("parent_id")
+  content         String
+  parent          Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  replies         Comment[] @relation("CommentReplies")
+  owner           User      @relation(fields: [ownerId], references: [id])
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  @@index([uid])
+  @@index([commentableId, commentableType])
+  @@index([ownerId])
+  @@index([parentId])
+  @@index([commentableId, commentableType, createdAt])
+  @@index([ownerId, createdAt])
+  @@map("comments")
+}
+```
+
+### Audit System
+
+#### Audit
+```prisma
+model Audit {
+  id            BigInt   @id @default(autoincrement())
+  uid           String   @unique
+  userId        BigInt   @map("user_id")
+  action        String // create, update, delete
+  auditableId   BigInt   @map("auditable_id")
+  auditableType String   @map("auditable_type") // e.g., Show, Schedule, Material, User
+  // changes
+  oldValues     Json     @map("old_values")
+  newValues     Json     @map("new_values")
+  metadata      Json     @default("{}")
+  user          User     @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([uid])
+  @@index([userId])
+  @@index([auditableId, auditableType])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([auditableType, createdAt])
+  @@index([action, createdAt])
+  @@map("audits")
+}
+```
+
+### Enhanced Membership (Phase 3 Enhancement)
+The Membership model from Phase 1 is enhanced in Phase 3 to support polymorphic relationships:
+- Basic structure from Phase 1 already supports polymorphic `groupType` and `groupId`
+- Phase 3 adds advanced role-based permissions and context-specific access control
+- Enables granular permissions per entity type and studio/client context

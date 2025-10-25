@@ -26,6 +26,13 @@ export const envSchema = z.object({
     .string()
     .min(1, { message: 'CORS_ORIGIN cannot be empty' })
     .default('*'),
+
+  // Graceful Shutdown
+  SHUTDOWN_TIMEOUT: z.coerce
+    .number()
+    .int({ message: 'SHUTDOWN_TIMEOUT must be an integer' })
+    .min(1000, { message: 'SHUTDOWN_TIMEOUT must be at least 1000ms' })
+    .default(30000),
 });
 
 // Export type for use with ConfigService<Env>

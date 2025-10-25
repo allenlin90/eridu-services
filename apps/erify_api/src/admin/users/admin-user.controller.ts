@@ -16,50 +16,73 @@ import {
   createPaginatedResponseSchema,
   PaginationQueryDto,
 } from '../../common/pagination/schema/pagination.schema';
+import { UidValidationPipe } from '../../common/pipes/uid-validation.pipe';
 import {
   CreateUserDto,
   UpdateUserDto,
   UserDto,
   userDto,
 } from '../../user/schemas/user.schema';
-import { AdminUserService } from './admin-user.service';
+import { UserService } from '../../user/user.service';
+import { UtilityService } from '../../utility/utility.service';
+import { BaseAdminController } from '../base-admin.controller';
 
 @Controller('admin/users')
-export class AdminUserController {
-  constructor(private readonly adminUserService: AdminUserService) {}
+export class AdminUserController extends BaseAdminController {
+  constructor(
+    private readonly userService: UserService,
+    utilityService: UtilityService,
+  ) {
+    super(utilityService);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ZodSerializerDto(UserDto)
-  async createUser(@Body() body: CreateUserDto) {
-    const user = await this.adminUserService.createUser(body);
-    return user;
+  createUser(@Body() body: CreateUserDto) {
+    return this.userService.createUser(body);
   }
 
   @Get()
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(createPaginatedResponseSchema(userDto))
-  getUsers(@Query() paginationQuery: PaginationQueryDto) {
-    return this.adminUserService.getUsers(paginationQuery);
+  async getUsers(@Query() query: PaginationQueryDto) {
+    const data = await this.userService.getUsers({
+      skip: query.skip,
+      take: query.take,
+    });
+    const total = await this.userService.countUsers();
+
+    return this.createPaginatedResponse(data, total, query);
   }
 
-  @Get(':uid')
+  @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(UserDto)
-  getUser(@Param('uid') uid: string) {
-    return this.adminUserService.getUserById(uid);
+  getUser(
+    @Param('id', new UidValidationPipe(UserService.UID_PREFIX, 'User'))
+    id: string,
+  ) {
+    return this.userService.getUserById(id);
   }
 
-  @Patch(':uid')
+  @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(UserDto)
-  updateUser(@Param('uid') uid: string, @Body() body: UpdateUserDto) {
-    return this.adminUserService.updateUser(uid, body);
+  updateUser(
+    @Param('id', new UidValidationPipe(UserService.UID_PREFIX, 'User'))
+    id: string,
+    @Body() body: UpdateUserDto,
+  ) {
+    return this.userService.updateUser(id, body);
   }
 
-  @Delete(':uid')
+  @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteUser(@Param('uid') uid: string) {
-    await this.adminUserService.deleteUser(uid);
+  async deleteUser(
+    @Param('id', new UidValidationPipe(UserService.UID_PREFIX, 'User'))
+    id: string,
+  ) {
+    await this.userService.deleteUser(id);
   }
 }

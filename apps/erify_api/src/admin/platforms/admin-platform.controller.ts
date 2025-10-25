@@ -16,49 +16,72 @@ import {
   createPaginatedResponseSchema,
   PaginationQueryDto,
 } from '../../common/pagination/schema/pagination.schema';
+import { UidValidationPipe } from '../../common/pipes/uid-validation.pipe';
+import { PlatformService } from '../../platform/platform.service';
 import {
   CreatePlatformDto,
   platformDto,
   UpdatePlatformDto,
 } from '../../platform/schemas/platform.schema';
-import { AdminPlatformService } from './admin-platform.service';
+import { UtilityService } from '../../utility/utility.service';
+import { BaseAdminController } from '../base-admin.controller';
 
 @Controller('admin/platforms')
-export class AdminPlatformController {
-  constructor(private readonly adminPlatformService: AdminPlatformService) {}
+export class AdminPlatformController extends BaseAdminController {
+  constructor(
+    private readonly platformService: PlatformService,
+    utilityService: UtilityService,
+  ) {
+    super(utilityService);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ZodSerializerDto(platformDto)
-  async createPlatform(@Body() body: CreatePlatformDto) {
-    const platform = await this.adminPlatformService.createPlatform(body);
-    return platform;
+  createPlatform(@Body() body: CreatePlatformDto) {
+    return this.platformService.createPlatform(body);
   }
 
   @Get()
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(createPaginatedResponseSchema(platformDto))
-  getPlatforms(@Query() paginationQuery: PaginationQueryDto) {
-    return this.adminPlatformService.getPlatforms(paginationQuery);
+  async getPlatforms(@Query() query: PaginationQueryDto) {
+    const data = await this.platformService.getPlatforms({
+      skip: query.skip,
+      take: query.take,
+    });
+    const total = await this.platformService.countPlatforms();
+
+    return this.createPaginatedResponse(data, total, query);
   }
 
-  @Get(':uid')
+  @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(platformDto)
-  getPlatform(@Param('uid') uid: string) {
-    return this.adminPlatformService.getPlatformById(uid);
+  getPlatform(
+    @Param('id', new UidValidationPipe(PlatformService.UID_PREFIX, 'Platform'))
+    id: string,
+  ) {
+    return this.platformService.getPlatformById(id);
   }
 
-  @Patch(':uid')
+  @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(platformDto)
-  updatePlatform(@Param('uid') uid: string, @Body() body: UpdatePlatformDto) {
-    return this.adminPlatformService.updatePlatform(uid, body);
+  updatePlatform(
+    @Param('id', new UidValidationPipe(PlatformService.UID_PREFIX, 'Platform'))
+    id: string,
+    @Body() body: UpdatePlatformDto,
+  ) {
+    return this.platformService.updatePlatform(id, body);
   }
 
-  @Delete(':uid')
+  @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deletePlatform(@Param('uid') uid: string) {
-    await this.adminPlatformService.deletePlatform(uid);
+  async deletePlatform(
+    @Param('id', new UidValidationPipe(PlatformService.UID_PREFIX, 'Platform'))
+    id: string,
+  ) {
+    await this.platformService.deletePlatform(id);
   }
 }

@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Prisma } from '@prisma/client';
 
-import { PRISMA_ERROR } from '../common/errors/prisma-error-codes';
+import { createMockUniqueConstraintError } from '../common/test-helpers/prisma-error.helper';
 import { UtilityService } from '../utility/utility.service';
 import { CreateUserDto } from './schemas/user.schema';
 import { UserRepository } from './user.repository';
@@ -52,6 +51,10 @@ describe('UserService', () => {
 
     const result = await service.createUser(dto);
 
+    expect(utilityMock.generateBrandedId).toHaveBeenCalledWith(
+      'user',
+      undefined,
+    );
     expect(userRepositoryMock.create).toHaveBeenCalled();
     expect(result).toEqual(created);
   });
@@ -62,15 +65,10 @@ describe('UserService', () => {
       name: 'A',
       metadata: {},
     } as CreateUserDto;
-    const error = new Prisma.PrismaClientKnownRequestError('message', {
-      code: PRISMA_ERROR.UniqueConstraint,
-      clientVersion: '6.14.0',
-    });
+    const error = createMockUniqueConstraintError(['email']);
     (userRepositoryMock.create as jest.Mock).mockRejectedValue(error);
 
-    await expect(service.createUser(dto)).rejects.toMatchObject({
-      status: 409,
-    });
+    await expect(service.createUser(dto)).rejects.toThrow(error);
   });
 
   it('getUserById throws not found', async () => {
@@ -86,14 +84,11 @@ describe('UserService', () => {
       uid: 'user_1',
       email: 'x@y.com',
     });
-    const error = new Prisma.PrismaClientKnownRequestError('message', {
-      code: PRISMA_ERROR.UniqueConstraint,
-      clientVersion: '6.14.0',
-    });
+    const error = createMockUniqueConstraintError(['email']);
     (userRepositoryMock.update as jest.Mock).mockRejectedValue(error);
 
     await expect(
       service.updateUser('user_1', { email: { set: 'a@b.com' } }),
-    ).rejects.toMatchObject({ status: 409 });
+    ).rejects.toThrow(error);
   });
 });

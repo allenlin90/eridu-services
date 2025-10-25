@@ -66,7 +66,10 @@ describe('StudioRoomService', () => {
 
       const result = await service.createStudioRoom(data);
 
-      expect(utilityServiceMock.generateBrandedId).toHaveBeenCalledWith('srm_');
+      expect(utilityServiceMock.generateBrandedId).toHaveBeenCalledWith(
+        'srm',
+        undefined,
+      );
       expect(studioRoomRepositoryMock.create).toHaveBeenCalledWith(
         { ...data, uid: 'srm_test_id' },
         undefined,

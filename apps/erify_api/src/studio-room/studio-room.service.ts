@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma, StudioRoom } from '@prisma/client';
+import { Prisma, StudioRoom } from '@prisma/client';
 
+import { BaseModelService } from '../common/services/base-model.service';
 import { UtilityService } from '../utility/utility.service';
+import {
+  CreateStudioRoomDto,
+  UpdateStudioRoomDto,
+} from './schemas/studio-room.schema';
 import { StudioRoomRepository } from './studio-room.repository';
 
 type StudioRoomWithIncludes<T extends Prisma.StudioRoomInclude> =
@@ -10,13 +15,26 @@ type StudioRoomWithIncludes<T extends Prisma.StudioRoomInclude> =
   }>;
 
 @Injectable()
-export class StudioRoomService {
-  static readonly UID_PREFIX = 'srm_';
+export class StudioRoomService extends BaseModelService {
+  static readonly UID_PREFIX = 'srm';
+  protected readonly uidPrefix = StudioRoomService.UID_PREFIX;
 
   constructor(
     private readonly studioRoomRepository: StudioRoomRepository,
-    private readonly utilityService: UtilityService,
-  ) {}
+    protected readonly utilityService: UtilityService,
+  ) {
+    super(utilityService);
+  }
+
+  async createStudioRoomFromDto<
+    T extends Prisma.StudioRoomInclude = Record<string, never>,
+  >(
+    dto: CreateStudioRoomDto,
+    include?: T,
+  ): Promise<StudioRoom | StudioRoomWithIncludes<T>> {
+    const data = this.buildCreatePayload(dto);
+    return this.createStudioRoom(data, include);
+  }
 
   async createStudioRoom<
     T extends Prisma.StudioRoomInclude = Record<string, never>,
@@ -24,12 +42,8 @@ export class StudioRoomService {
     data: Omit<Prisma.StudioRoomCreateInput, 'uid'>,
     include?: T,
   ): Promise<StudioRoom | StudioRoomWithIncludes<T>> {
-    const uid = this.utilityService.generateBrandedId(
-      StudioRoomService.UID_PREFIX,
-    );
-    const studioRoomData = { ...data, uid };
-
-    return this.studioRoomRepository.create(studioRoomData, include);
+    const uid = this.generateUid();
+    return this.studioRoomRepository.create({ ...data, uid }, include);
   }
 
   async getStudioRoomById<
@@ -51,18 +65,30 @@ export class StudioRoomService {
     },
     include?: T,
   ): Promise<StudioRoom[] | StudioRoomWithIncludes<T>[]> {
-    return this.studioRoomRepository.findActiveStudioRooms(
-      {
-        skip: params.skip,
-        take: params.take,
-        orderBy: params.orderBy,
-      },
-      include,
-    );
+    return this.studioRoomRepository.findActiveStudioRooms(params, include);
   }
 
   async getStudioRoomsByStudioId(studioId: bigint): Promise<StudioRoom[]> {
     return this.studioRoomRepository.findByStudioId(studioId);
+  }
+
+  async countStudioRooms(): Promise<number> {
+    return this.studioRoomRepository.count({});
+  }
+
+  async countStudioRoomsByStudioId(studioId: bigint): Promise<number> {
+    return this.studioRoomRepository.count({ studioId });
+  }
+
+  async updateStudioRoomFromDto<
+    T extends Prisma.StudioRoomInclude = Record<string, never>,
+  >(
+    uid: string,
+    dto: UpdateStudioRoomDto,
+    include?: T,
+  ): Promise<StudioRoom | StudioRoomWithIncludes<T>> {
+    const data = this.buildUpdatePayload(dto);
+    return this.updateStudioRoom(uid, data, include);
   }
 
   async updateStudioRoom<
@@ -79,11 +105,30 @@ export class StudioRoomService {
     return this.studioRoomRepository.softDelete({ uid });
   }
 
-  async countStudioRooms(): Promise<number> {
-    return this.studioRoomRepository.count({});
+  private buildCreatePayload(
+    dto: CreateStudioRoomDto,
+  ): Omit<Prisma.StudioRoomCreateInput, 'uid'> {
+    return {
+      name: dto.name,
+      capacity: dto.capacity,
+      metadata: dto.metadata ?? {},
+      studio: { connect: { uid: dto.studioId } },
+    };
   }
 
-  async countStudioRoomsByStudioId(studioId: bigint): Promise<number> {
-    return this.studioRoomRepository.count({ studioId });
+  private buildUpdatePayload(
+    dto: UpdateStudioRoomDto,
+  ): Prisma.StudioRoomUpdateInput {
+    const payload: Prisma.StudioRoomUpdateInput = {};
+
+    if (dto.name !== undefined) payload.name = dto.name;
+    if (dto.capacity !== undefined) payload.capacity = dto.capacity;
+    if (dto.metadata !== undefined) payload.metadata = dto.metadata;
+
+    if (dto.studioId !== undefined) {
+      payload.studio = { connect: { uid: dto.studioId } };
+    }
+
+    return payload;
   }
 }
