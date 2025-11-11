@@ -1,5 +1,5 @@
-import { PaginationQueryDto } from '../common/pagination/schema/pagination.schema';
-import { UtilityService } from '../utility/utility.service';
+import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
+import { UtilityService } from '@/utility/utility.service';
 
 /**
  * Base controller for admin endpoints providing common functionality

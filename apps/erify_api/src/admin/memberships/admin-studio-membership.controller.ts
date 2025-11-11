@@ -12,20 +12,21 @@ import {
 } from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
 
+import { BaseAdminController } from '@/admin/base-admin.controller';
+import { ApiZodResponse } from '@/common/openapi/decorators';
 import {
   createPaginatedResponseSchema,
   PaginationQueryDto,
-} from '../../common/pagination/schema/pagination.schema';
-import { UidValidationPipe } from '../../common/pipes/uid-validation.pipe';
+} from '@/common/pagination/schema/pagination.schema';
+import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
 import {
   CreateStudioMembershipDto,
   StudioMembershipWithRelationsDto,
   studioMembershipWithRelationsDto,
   UpdateStudioMembershipDto,
-} from '../../membership/schemas/studio-membership.schema';
-import { StudioMembershipService } from '../../membership/studio-membership.service';
-import { UtilityService } from '../../utility/utility.service';
-import { BaseAdminController } from '../base-admin.controller';
+} from '@/models/membership/schemas/studio-membership.schema';
+import { StudioMembershipService } from '@/models/membership/studio-membership.service';
+import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/studio-memberships')
 export class AdminStudioMembershipController extends BaseAdminController {
@@ -38,6 +39,10 @@ export class AdminStudioMembershipController extends BaseAdminController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiZodResponse(
+    studioMembershipWithRelationsDto,
+    'Studio membership created successfully',
+  )
   @ZodSerializerDto(StudioMembershipWithRelationsDto)
   async createStudioMembership(@Body() body: CreateStudioMembershipDto) {
     return this.studioMembershipService.createStudioMembershipFromDto(body, {
@@ -48,6 +53,10 @@ export class AdminStudioMembershipController extends BaseAdminController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
+  @ApiZodResponse(
+    createPaginatedResponseSchema(studioMembershipWithRelationsDto),
+    'List of studio memberships with pagination',
+  )
   @ZodSerializerDto(
     createPaginatedResponseSchema(studioMembershipWithRelationsDto),
   )
@@ -63,6 +72,7 @@ export class AdminStudioMembershipController extends BaseAdminController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
+  @ApiZodResponse(studioMembershipWithRelationsDto, 'Studio membership details')
   @ZodSerializerDto(StudioMembershipWithRelationsDto)
   getStudioMembership(
     @Param(
@@ -82,6 +92,10 @@ export class AdminStudioMembershipController extends BaseAdminController {
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
+  @ApiZodResponse(
+    studioMembershipWithRelationsDto,
+    'Studio membership updated successfully',
+  )
   @ZodSerializerDto(StudioMembershipWithRelationsDto)
   updateStudioMembership(
     @Param(

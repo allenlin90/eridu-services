@@ -4,62 +4,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Eridu Services API - Scalar Documentation</title>
-  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@latest/dist/browser/standalone.js"></script>
   <style>
     body {
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
-    #scalar-api-reference {
-      height: 100vh;
-      width: 100vw;
-    }
   </style>
 </head>
 <body>
-  <div id="scalar-api-reference"></div>
-  <script>
-    // Wait for DOM to be ready
-    document.addEventListener('DOMContentLoaded', function() {
-      // Initialize Scalar with the correct API
-      function initScalar() {
-        const container = document.getElementById('scalar-api-reference');
-        if (window.Scalar && window.Scalar.createApiReference && container) {
-          console.log('Initializing Scalar...');
-          try {
-            // Use the correct Scalar API format
-            const scalarInstance = window.Scalar.createApiReference({
-              url: '/swagger-json',
-              theme: 'purple',
-              layout: 'modern',
-            });
-            
-            // Mount to container using the app's mount method
-            scalarInstance.app.mount('#scalar-api-reference');
-          } catch (error) {
-            console.error('Error initializing Scalar:', error);
-            container.innerHTML = `
-              <div style="padding: 20px; text-align: center; color: #dc2626;">
-                <h2>Error Loading Scalar</h2>
-                <p>Please check the console for details.</p>
-                <div style="margin-top: 20px;">
-                  <a href="/swagger-json" target="_blank" style="color: #6366f1; text-decoration: none;">
-                    View OpenAPI JSON Spec
-                  </a>
-                </div>
-              </div>
-            `;
-          }
-        } else {
-          console.log('Scalar not available yet, retrying...');
-          setTimeout(initScalar, 500);
-        }
+  <script
+    id="api-reference"
+    type="application/json"
+    data-configuration='{
+      "theme": "purple",
+      "layout": "modern",
+      "spec": {
+        "url": "/swagger-json"
       }
-      
-      // Start initialization
-      initScalar();
-    });
-  </script>
+    }'
+  ></script>
+  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@latest/dist/browser/standalone.js"></script>
 </body>
 </html>

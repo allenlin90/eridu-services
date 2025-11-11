@@ -12,25 +12,31 @@ import {
 } from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
 
+import { BaseAdminController } from '@/admin/base-admin.controller';
+import { ApiZodResponse } from '@/common/openapi/decorators';
 import {
   createPaginatedResponseSchema,
   PaginationQueryDto,
-} from '../../common/pagination/schema/pagination.schema';
-import { UidValidationPipe } from '../../common/pipes/uid-validation.pipe';
+} from '@/common/pagination/schema/pagination.schema';
+import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
+import { UpdateShowDto } from '@/models/show/schemas/show.schema';
+import { ShowService } from '@/models/show/show.service';
 import {
-  CreateShowDto,
-  ShowDto,
-  showDto,
-  UpdateShowDto,
-} from '../../show/schemas/show.schema';
-import { ShowService } from '../../show/show.service';
-import { UtilityService } from '../../utility/utility.service';
-import { BaseAdminController } from '../base-admin.controller';
+  CreateShowWithAssignmentsDto,
+  RemoveMcsFromShowDto,
+  RemovePlatformsFromShowDto,
+  ReplaceMcsOnShowDto,
+  ReplacePlatformsOnShowDto,
+  ShowWithAssignmentsDto,
+  showWithAssignmentsDto,
+} from '@/show-orchestration/schemas/show-orchestration.schema';
+import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
+import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/shows')
 export class AdminShowController extends BaseAdminController {
   constructor(
-    private readonly showService: ShowService,
+    private readonly showOrchestrationService: ShowOrchestrationService,
     utilityService: UtilityService,
   ) {
     super(utilityService);
@@ -38,73 +44,77 @@ export class AdminShowController extends BaseAdminController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ZodSerializerDto(ShowDto)
-  async createShow(@Body() body: CreateShowDto) {
-    const show = await this.showService.createShowFromDto(body);
+  @ApiZodResponse(
+    showWithAssignmentsDto,
+    'Show created successfully with assignments',
+  )
+  @ZodSerializerDto(ShowWithAssignmentsDto)
+  async createShow(@Body() body: CreateShowWithAssignmentsDto) {
+    const show =
+      await this.showOrchestrationService.createShowWithAssignments(body);
     // Fetch with relations for proper serialization
-    return this.showService.getShowById(show.uid, {
-      client: true,
-      studioRoom: true,
-      showType: true,
-      showStatus: true,
-      showStandard: true,
-    });
+    return this.showOrchestrationService.getShowWithRelations(show.uid);
   }
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ZodSerializerDto(createPaginatedResponseSchema(showDto))
+  @ApiZodResponse(
+    createPaginatedResponseSchema(showWithAssignmentsDto),
+    'List of shows with pagination',
+  )
+  @ZodSerializerDto(createPaginatedResponseSchema(showWithAssignmentsDto))
   async getShows(@Query() query: PaginationQueryDto) {
-    const data = await this.showService.getActiveShows({
+    const data = await this.showOrchestrationService.getShowsWithRelations({
       skip: query.skip,
       take: query.take,
       orderBy: { createdAt: 'desc' },
-      include: {
-        client: true,
-        studioRoom: true,
-        showType: true,
-        showStatus: true,
-        showStandard: true,
-      },
     });
-    const total = await this.showService.countShows();
+    const total = await this.showOrchestrationService
+      .getShowsWithRelations({
+        take: undefined,
+        skip: undefined,
+      })
+      .then((shows) => (Array.isArray(shows) ? shows.length : 0));
 
     return this.createPaginatedResponse(data, total, query);
   }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  @ZodSerializerDto(ShowDto)
+  @ApiZodResponse(showWithAssignmentsDto, 'Show details with assignments')
+  @ZodSerializerDto(ShowWithAssignmentsDto)
   getShow(
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show'))
     id: string,
   ) {
-    return this.showService.getShowById(id, {
-      client: true,
-      studioRoom: true,
-      showType: true,
-      showStatus: true,
-      showStandard: true,
-    });
+    return this.showOrchestrationService.getShowWithRelations(id);
   }
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
-  @ZodSerializerDto(ShowDto)
+  @ApiZodResponse(
+    showWithAssignmentsDto,
+    'Show updated successfully with assignments ',
+  )
+  @ZodSerializerDto(ShowWithAssignmentsDto)
   async updateShow(
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show'))
     id: string,
     @Body() body: UpdateShowDto,
   ) {
-    const show = await this.showService.updateShowFromDto(id, body);
-    // Fetch with relations for proper serialization
-    return this.showService.getShowById(show.uid, {
-      client: true,
-      studioRoom: true,
-      showType: true,
-      showStatus: true,
-      showStandard: true,
-    });
+    // Convert basic DTO to orchestration DTO with empty assignments
+    // This allows updating core show attributes without affecting MC/platform assignments
+    const orchestrationDto = {
+      ...body,
+      showMcs: undefined,
+      showPlatforms: undefined,
+    };
+    const show = await this.showOrchestrationService.updateShowWithAssignments(
+      id,
+      orchestrationDto,
+    );
+    // Service already returns show with relations
+    return show;
   }
 
   @Delete(':id')
@@ -113,6 +123,59 @@ export class AdminShowController extends BaseAdminController {
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show'))
     id: string,
   ) {
-    await this.showService.deleteShow(id);
+    await this.showOrchestrationService.deleteShow(id);
+  }
+
+  @Patch(':id/mcs/remove')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeMCsFromShow(
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show'))
+    id: string,
+    @Body() body: RemoveMcsFromShowDto,
+  ) {
+    await this.showOrchestrationService.removeMCsFromShow(id, body.mcIds);
+  }
+
+  @Patch(':id/platforms/remove')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removePlatformsFromShow(
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show'))
+    id: string,
+    @Body() body: RemovePlatformsFromShowDto,
+  ) {
+    await this.showOrchestrationService.removePlatformsFromShow(
+      id,
+      body.platformIds,
+    );
+  }
+
+  @Patch(':id/mcs/replace')
+  @HttpCode(HttpStatus.OK)
+  @ApiZodResponse(showWithAssignmentsDto, 'MCs replaced on show successfully')
+  @ZodSerializerDto(ShowWithAssignmentsDto)
+  async replaceMCsOnShow(
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show'))
+    id: string,
+    @Body() body: ReplaceMcsOnShowDto,
+  ) {
+    return await this.showOrchestrationService.replaceMCsForShow(id, body.mcs);
+  }
+
+  @Patch(':id/platforms/replace')
+  @HttpCode(HttpStatus.OK)
+  @ApiZodResponse(
+    showWithAssignmentsDto,
+    'Platforms replaced on show successfully',
+  )
+  @ZodSerializerDto(ShowWithAssignmentsDto)
+  async replacePlatformsOnShow(
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show'))
+    id: string,
+    @Body() body: ReplacePlatformsOnShowDto,
+  ) {
+    return await this.showOrchestrationService.replacePlatformsForShow(
+      id,
+      body.platforms,
+    );
   }
 }

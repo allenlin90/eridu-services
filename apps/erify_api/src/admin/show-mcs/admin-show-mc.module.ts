@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 
-import { ShowMcModule } from '../../show-mc/show-mc.module';
-import { UtilityModule } from '../../utility/utility.module';
+import { ShowMcModule } from '@/models/show-mc/show-mc.module';
+import { UtilityModule } from '@/utility/utility.module';
+
 import { AdminShowMcController } from './admin-show-mc.controller';
 
 @Module({

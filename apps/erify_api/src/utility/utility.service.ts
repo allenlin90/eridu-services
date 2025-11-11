@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { nanoid } from 'nanoid';
 
-import { PaginationMeta } from '../common/pagination/schema/pagination.schema';
+import { PaginationMeta } from '@/common/pagination/schema/pagination.schema';
 
 @Injectable()
 export class UtilityService {

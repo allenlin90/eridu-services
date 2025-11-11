@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 
-import { ClientModule } from '../../client/client.module';
-import { UtilityModule } from '../../utility/utility.module';
+import { ClientModule } from '@/models/client/client.module';
+import { UtilityModule } from '@/utility/utility.module';
+
 import { AdminClientController } from './admin-client.controller';
 
 @Module({

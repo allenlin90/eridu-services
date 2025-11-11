@@ -24,6 +24,7 @@ async function bootstrap() {
           scriptSrc: [
             "'self'",
             "'unsafe-inline'",
+            "'unsafe-eval'",
             'https://cdnjs.cloudflare.com',
             'https://unpkg.com',
             'https://cdn.jsdelivr.net',

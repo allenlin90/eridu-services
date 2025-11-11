@@ -20,7 +20,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "better-auth": "^1.3.27",
+    "better-auth": "^1.3.34",
     "jose": "^6.0.11",
     "react": "^19.1.0",
     "zod": "^4.1.12"

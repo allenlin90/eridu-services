@@ -6,15 +6,15 @@ This document provides comprehensive business domain information for the Eridu S
 
 The system is being developed in structured phases:
 
-- **Phase 1**: Core Functions with Hybrid Authentication - Essential CRUD operations, basic show management, JWT validation from erify_auth service, and simple StudioMembership-based authorization
-- **Phase 2**: Scheduling & Planning Workflow - Collaborative planning and multi-version scheduling
-- **Phase 3**: Advanced Authorization Control & Tracking Features - Role-based access control, audit trails, task management
+- **Phase 1**: Core Functions with Hybrid Authentication - Essential CRUD operations, basic show management, Schedule Planning Management System, JWT validation from erify_auth service, and simple StudioMembership-based authorization
+- **Phase 2**: Material Management System - Material versioning, platform targeting, and show-material associations
+- **Phase 3**: Advanced Authorization Control & Tracking Features - Role-based access control, audit trails, task management, tagging, and collaboration features
 
 For detailed implementation plans, see:
 - [Phase 1 Roadmap](./roadmap/PHASE_1.md)
 - [Phase 2 Roadmap](./roadmap/PHASE_2.md)
 - [Phase 3 Roadmap](./roadmap/PHASE_3.md)
-- [Scheduling Architecture](./SCHEDULING_ARCHITECTURE.md)
+- [Schedule Upload API Design](./SCHEDULE_UPLOAD_API_DESIGN.md)
 
 # Models
 
@@ -88,7 +88,7 @@ Features:
 
 Purpose: Manages content assets used in show production.
 
-**Phase 3 Feature** - Materials represent all content assets used in shows, including scripts, briefs, graphics, and platform-specific content. Each material is owned by a client and can be associated with multiple shows.
+**Phase 2 Feature** - Materials represent all content assets used in shows, including scripts, briefs, graphics, and platform-specific content. Each material is owned by a client and can be associated with multiple shows.
 
 Key Models: `materials`, `show_materials`
 
@@ -180,29 +180,35 @@ Business Rules:
 
 Purpose: Enables collaborative planning and resource allocation.
 
-The scheduling system allows Clients and studio managers to collaborate on planning before committing to actual show bookings. Schedules act as containers for related shows within a campaign or time period.
+**Phase 1 Feature** - The Schedule Planning Management System allows Clients and studio managers to collaboratively plan shows before publishing them to the normalized Show tables. Schedules use JSON-based plan documents for flexible editing during the draft phase, with snapshot-based versioning for complete audit trails.
 
-Key Models: `schedules`, `shows`
+Key Models: `schedules`, `schedule_snapshots`, `shows`
 
 Workflow:
 
-- Draft Phase: Initial planning with draft shows
-- Proposed Phase: Ready for client review
-- Confirmed Phase: Approved and ready for production
-- Archived/Cancelled: End-of-lifecycle states
+- Draft Phase: JSON-based planning with spreadsheet-like editing
+- Review Phase: Pre-publish validation and conflict detection
+- Published Phase: JSON synced to normalized Show tables (delete + insert strategy)
 
 Features:
 
-Status-driven workflow management
-Time-bound planning periods
-Resource conflict detection
-Bulk show confirmation
+- JSON-based plan documents for flexible planning
+- Snapshot-based version history for audit trails
+- Optimistic locking to prevent concurrent edit conflicts
+- Pre-publish validation (room conflicts, MC double-booking)
+- Version restore capabilities
+- CSV import/export for migration from Google Sheets
+- **Client-scoped query support**: Query schedules by client ID and date range for planning workflows
+- **Google Sheets integration**: Support for sorted monthly schedule listings
 
 Business Rules:
 
-Draft shows don't reserve studio resources
-Confirmed schedules prevent double-booking
-Status transitions are audited
+- Draft schedules don't reserve studio resources (only in JSON planning document)
+- Published schedules sync to normalized Show tables (delete + insert strategy)
+- Pre-publish validation prevents double-booking and conflicts
+- All changes create immutable snapshots for audit trail
+- **Schedule Naming & Duration**: Schedule names and date ranges can overlap for different packages, events, and campaigns - there are no unique constraints on (name, clientId, startDate, endDate) combinations. Idempotency handling (Phase 2) prevents duplicate schedule creation from retries or concurrent requests.
+- **Client Separation**: Schedules are client-scoped and can be queried by client ID and date range for planning workflows
 
 ## Show
 
@@ -254,6 +260,8 @@ Business Rules:
 - Shows require studio room and time slot reservations
 - Status progression: draft → confirmed → live → completed
 - Cancelled shows preserve data for analysis
+- **Show Naming & Duration**: Show names and durations can overlap for different packages, events, and campaigns - there are no unique constraints on (name, clientId, startTime) combinations. Idempotency handling (Phase 2) prevents duplicate show creation from retries or concurrent requests.
+- **Client-Scoped Queries**: Shows are primarily read-only (especially for MCs) and can be queried by client ID and date range for calendar views and Google Sheets integration
 
 ## Studio
 
@@ -399,10 +407,10 @@ erDiagram
     clients ||--o{ schedules : has_many
     comments |o--o{ comments: has_many_replies
     platforms |o--o{ materials : has_many
-    schedules }o--|| schedule_status: is
+    schedules ||--o{ schedule_snapshots : has_many
+    schedules ||--o{ shows : creates
     shows |o--o{ show_mcs : hosted_by
     studios ||--o{ studio_rooms : has_many
-    studios ||--o{ schedules : has_many
     studios |o--o{ tags : has_many
     studio_rooms ||--o{ shows : lives_many    
     show_mcs }o--o| mcs: hosts
@@ -528,30 +536,36 @@ erDiagram
       datetime deleted_at
     }
 
-    schedule_status {
-      int id PK
-      string uid 
-      string name "draft, proposed, confirmed, archived, cancelled, other"
-      jsonb metadata
-      datetime created_at
-      datetime updated_at
-      datetime deleted_at      
-    }
-
     schedules {
       int id PK
       string uid
-      int client_id FK
-      int studio_id FK
-      int schedule_status_id FK 
+      int client_id FK "nullable"
       string name
-      string description
-      datetime start_time
-      datetime end_time
+      datetime start_date
+      datetime end_date
+      string status "draft, review, published"
+      jsonb plan_document
+      int version
       jsonb metadata
+      int created_by FK "nullable"
+      datetime published_at "nullable"
+      int published_by FK "nullable"
       datetime created_at
       datetime updated_at
       datetime deleted_at
+    }
+
+    schedule_snapshots {
+      int id PK
+      string uid
+      int schedule_id FK
+      jsonb plan_document
+      int version
+      string status
+      string snapshot_reason "auto_save, before_publish, manual, before_restore"
+      jsonb metadata
+      int created_by FK "nullable"
+      datetime created_at
     }
 
     show_materials {
