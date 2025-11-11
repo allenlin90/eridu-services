@@ -12,19 +12,20 @@ import {
 } from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
 
+import { BaseAdminController } from '@/admin/base-admin.controller';
+import { ApiZodResponse } from '@/common/openapi/decorators';
 import {
   createPaginatedResponseSchema,
   PaginationQueryDto,
-} from '../../common/pagination/schema/pagination.schema';
-import { UidValidationPipe } from '../../common/pipes/uid-validation.pipe';
-import { McService } from '../../mc/mc.service';
+} from '@/common/pagination/schema/pagination.schema';
+import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
+import { McService } from '@/models/mc/mc.service';
 import {
   CreateMcDto,
   mcWithUserDto,
   UpdateMcDto,
-} from '../../mc/schemas/mc.schema';
-import { UtilityService } from '../../utility/utility.service';
-import { BaseAdminController } from '../base-admin.controller';
+} from '@/models/mc/schemas/mc.schema';
+import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/mcs')
 export class AdminMcController extends BaseAdminController {
@@ -37,6 +38,7 @@ export class AdminMcController extends BaseAdminController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiZodResponse(mcWithUserDto, 'MC created successfully')
   @ZodSerializerDto(mcWithUserDto)
   createMc(@Body() body: CreateMcDto) {
     return this.mcService.createMcFromDto(body, { user: true });
@@ -44,6 +46,10 @@ export class AdminMcController extends BaseAdminController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
+  @ApiZodResponse(
+    createPaginatedResponseSchema(mcWithUserDto),
+    'List of MCs with pagination',
+  )
   @ZodSerializerDto(createPaginatedResponseSchema(mcWithUserDto))
   async getMcs(@Query() query: PaginationQueryDto) {
     const data = await this.mcService.getMcs(
@@ -57,6 +63,7 @@ export class AdminMcController extends BaseAdminController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
+  @ApiZodResponse(mcWithUserDto, 'MC details')
   @ZodSerializerDto(mcWithUserDto)
   getMc(
     @Param('id', new UidValidationPipe(McService.UID_PREFIX, 'MC'))
@@ -67,6 +74,7 @@ export class AdminMcController extends BaseAdminController {
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
+  @ApiZodResponse(mcWithUserDto, 'MC updated successfully')
   @ZodSerializerDto(mcWithUserDto)
   updateMc(
     @Param('id', new UidValidationPipe(McService.UID_PREFIX, 'MC'))

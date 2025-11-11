@@ -12,20 +12,21 @@ import {
 } from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
 
+import { BaseAdminController } from '@/admin/base-admin.controller';
+import { ApiZodResponse } from '@/common/openapi/decorators';
 import {
   createPaginatedResponseSchema,
   PaginationQueryDto,
-} from '../../common/pagination/schema/pagination.schema';
-import { UidValidationPipe } from '../../common/pipes/uid-validation.pipe';
+} from '@/common/pagination/schema/pagination.schema';
+import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
 import {
   CreateUserDto,
   UpdateUserDto,
   UserDto,
   userDto,
-} from '../../user/schemas/user.schema';
-import { UserService } from '../../user/user.service';
-import { UtilityService } from '../../utility/utility.service';
-import { BaseAdminController } from '../base-admin.controller';
+} from '@/models/user/schemas/user.schema';
+import { UserService } from '@/models/user/user.service';
+import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/users')
 export class AdminUserController extends BaseAdminController {
@@ -38,6 +39,7 @@ export class AdminUserController extends BaseAdminController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiZodResponse(userDto, 'User created successfully')
   @ZodSerializerDto(UserDto)
   createUser(@Body() body: CreateUserDto) {
     return this.userService.createUser(body);
@@ -45,6 +47,10 @@ export class AdminUserController extends BaseAdminController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
+  @ApiZodResponse(
+    createPaginatedResponseSchema(userDto),
+    'List of users with pagination',
+  )
   @ZodSerializerDto(createPaginatedResponseSchema(userDto))
   async getUsers(@Query() query: PaginationQueryDto) {
     const data = await this.userService.getUsers({
@@ -58,6 +64,7 @@ export class AdminUserController extends BaseAdminController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
+  @ApiZodResponse(userDto, 'User details')
   @ZodSerializerDto(UserDto)
   getUser(
     @Param('id', new UidValidationPipe(UserService.UID_PREFIX, 'User'))
@@ -68,6 +75,7 @@ export class AdminUserController extends BaseAdminController {
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
+  @ApiZodResponse(userDto, 'User updated successfully')
   @ZodSerializerDto(UserDto)
   updateUser(
     @Param('id', new UidValidationPipe(UserService.UID_PREFIX, 'User'))

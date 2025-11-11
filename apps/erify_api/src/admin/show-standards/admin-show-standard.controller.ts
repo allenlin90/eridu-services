@@ -12,20 +12,21 @@ import {
 } from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
 
+import { BaseAdminController } from '@/admin/base-admin.controller';
+import { ApiZodResponse } from '@/common/openapi/decorators';
 import {
   createPaginatedResponseSchema,
   PaginationQueryDto,
-} from '../../common/pagination/schema/pagination.schema';
-import { UidValidationPipe } from '../../common/pipes/uid-validation.pipe';
+} from '@/common/pagination/schema/pagination.schema';
+import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
 import {
   CreateShowStandardDto,
   ShowStandardDto,
   showStandardDto,
   UpdateShowStandardDto,
-} from '../../show-standard/schemas/show-standard.schema';
-import { ShowStandardService } from '../../show-standard/show-standard.service';
-import { UtilityService } from '../../utility/utility.service';
-import { BaseAdminController } from '../base-admin.controller';
+} from '@/models/show-standard/schemas/show-standard.schema';
+import { ShowStandardService } from '@/models/show-standard/show-standard.service';
+import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/show-standards')
 export class AdminShowStandardController extends BaseAdminController {
@@ -38,6 +39,7 @@ export class AdminShowStandardController extends BaseAdminController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiZodResponse(showStandardDto, 'Show standard created successfully')
   @ZodSerializerDto(ShowStandardDto)
   createShowStandard(@Body() body: CreateShowStandardDto) {
     return this.showStandardService.createShowStandard(body);
@@ -45,6 +47,10 @@ export class AdminShowStandardController extends BaseAdminController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
+  @ApiZodResponse(
+    createPaginatedResponseSchema(showStandardDto),
+    'List of show standards with pagination',
+  )
   @ZodSerializerDto(createPaginatedResponseSchema(showStandardDto))
   async getShowStandards(@Query() query: PaginationQueryDto) {
     const data = await this.showStandardService.getShowStandards({
@@ -58,6 +64,7 @@ export class AdminShowStandardController extends BaseAdminController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
+  @ApiZodResponse(showStandardDto, 'Show standard details')
   @ZodSerializerDto(ShowStandardDto)
   getShowStandard(
     @Param(
@@ -71,6 +78,7 @@ export class AdminShowStandardController extends BaseAdminController {
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
+  @ApiZodResponse(showStandardDto, 'Show standard updated successfully')
   @ZodSerializerDto(ShowStandardDto)
   updateShowStandard(
     @Param(

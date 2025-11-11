@@ -20,6 +20,9 @@ model User {
   metadata           Json               @default("{}")
   mc                 MC? // Optional MC profile linkage
   studioMemberships  StudioMembership[]
+  schedules          Schedule[]         @relation("ScheduleCreator")
+  publishedSchedules Schedule[]         @relation("SchedulePublisher")
+  scheduleSnapshots  ScheduleSnapshot[]
   createdAt          DateTime           @default(now()) @map("created_at")
   updatedAt          DateTime           @updatedAt @map("updated_at")
   deletedAt          DateTime?          @map("deleted_at")
@@ -29,19 +32,20 @@ model User {
   @@index([name])
   @@index([extId])
   @@index([isBanned])
+  @@index([deletedAt])
   @@map("users")
 }
 
 model MC {
   id        BigInt    @id @default(autoincrement())
   uid       String    @unique
-  userId    BigInt?   @unique @map("user_id")
   name      String
   aliasName String    @map("alias_name")
   isBanned  Boolean   @default(false) @map("is_banned")
   metadata  Json      @default("{}")
   showMCs   ShowMC[]
-  user      User?     @relation(fields: [userId], references: [id])
+  userId    BigInt?   @unique @map("user_id")
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
@@ -51,25 +55,28 @@ model MC {
   @@index([name])
   @@index([aliasName])
   @@index([isBanned])
+  @@index([deletedAt])
   @@map("mcs")
 }
 
 model Client {
-  id            BigInt    @id @default(autoincrement())
-  uid           String    @unique
-  name          String    @unique
-  contactPerson String    @map("contact_person")
-  contactEmail  String    @map("contact_email")
-  metadata      Json      @default("{}")
+  id            BigInt     @id @default(autoincrement())
+  uid           String     @unique
+  name          String     @unique
+  contactPerson String     @map("contact_person")
+  contactEmail  String     @map("contact_email")
+  metadata      Json       @default("{}")
   shows         Show[]
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  deletedAt     DateTime? @map("deleted_at")
+  schedules     Schedule[]
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  deletedAt     DateTime?  @map("deleted_at")
 
   @@index([uid])
   @@index([name])
   @@index([contactPerson])
   @@index([contactEmail])
+  @@index([deletedAt])
   @@map("clients")
 }
 
@@ -86,31 +93,34 @@ model Platform {
 
   @@index([uid])
   @@index([name])
+  @@index([deletedAt])
   @@map("platforms")
 }
 
 model Show {
-  id             BigInt        @id @default(autoincrement())
-  uid            String        @unique
-  clientId       BigInt        @map("client_id")
-  studioRoomId   BigInt        @map("studio_room_id")
-  showTypeId     BigInt        @map("show_type_id")
-  showStatusId   BigInt        @map("show_status_id")
-  showStandardId BigInt        @map("show_standard_id")
+  id             BigInt         @id @default(autoincrement())
+  uid            String         @unique
   name           String
-  startTime      DateTime      @map("start_time")
-  endTime        DateTime      @map("end_time")
-  metadata       Json          @default("{}")
-  client         Client        @relation(fields: [clientId], references: [id])
-  studioRoom     StudioRoom    @relation(fields: [studioRoomId], references: [id])
-  showType       ShowType      @relation(fields: [showTypeId], references: [id])
-  showStatus     ShowStatus    @relation(fields: [showStatusId], references: [id])
-  showStandard   ShowStandard  @relation(fields: [showStandardId], references: [id])
+  startTime      DateTime       @map("start_time")
+  endTime        DateTime       @map("end_time")
+  metadata       Json           @default("{}")
+  clientId       BigInt         @map("client_id")
+  client         Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  studioRoomId   BigInt?        @map("studio_room_id")
+  studioRoom     StudioRoom?    @relation(fields: [studioRoomId], references: [id], onDelete: SetNull)
+  showTypeId     BigInt         @map("show_type_id")
+  showType       ShowType       @relation(fields: [showTypeId], references: [id])
+  showStatusId   BigInt         @map("show_status_id")
+  showStatus     ShowStatus     @relation(fields: [showStatusId], references: [id])
+  showStandardId BigInt         @map("show_standard_id")
+  showStandard   ShowStandard   @relation(fields: [showStandardId], references: [id])
+  scheduleId     BigInt?        @map("schedule_id")
+  Schedule       Schedule?      @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
   showMCs        ShowMC[]
   showPlatforms  ShowPlatform[]
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
-  deletedAt      DateTime?     @map("deleted_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  deletedAt      DateTime?      @map("deleted_at")
 
   @@index([uid])
   @@index([name])
@@ -119,21 +129,32 @@ model Show {
   @@index([showTypeId])
   @@index([showStatusId])
   @@index([showStandardId])
+  @@index([scheduleId])
   @@index([startTime, endTime])
   @@index([startTime])
   @@index([endTime])
+  @@index([deletedAt])
+  @@index([clientId, deletedAt])
+  @@index([studioRoomId, deletedAt])
+  @@index([scheduleId, deletedAt])
+  @@index([showStatusId, deletedAt])
+  @@index([startTime, deletedAt])
+  @@index([clientId, startTime])
+  @@index([clientId, startTime, deletedAt])
+  @@index([clientId, showStatusId, deletedAt])
+  @@index([clientId, showStatusId, startTime, deletedAt])
   @@map("shows")
 }
 
 model ShowMC {
   id        BigInt    @id @default(autoincrement())
   uid       String    @unique
-  showId    BigInt    @map("show_id")
-  mcId      BigInt    @map("mc_id")
   note      String?
   metadata  Json      @default("{}")
-  show      Show      @relation(fields: [showId], references: [id])
-  mc        MC        @relation(fields: [mcId], references: [id])
+  showId    BigInt    @map("show_id")
+  show      Show      @relation(fields: [showId], references: [id], onDelete: Cascade)
+  mcId      BigInt    @map("mc_id")
+  mc        MC        @relation(fields: [mcId], references: [id], onDelete: Cascade)
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
@@ -142,20 +163,23 @@ model ShowMC {
   @@index([uid])
   @@index([showId])
   @@index([mcId])
+  @@index([deletedAt])
+  @@index([showId, deletedAt])
+  @@index([mcId, deletedAt])
   @@map("show_mcs")
 }
 
 model ShowPlatform {
   id             BigInt    @id @default(autoincrement())
   uid            String    @unique
-  showId         BigInt    @map("show_id")
-  platformId     BigInt    @map("platform_id")
   liveStreamLink String    @map("live_stream_link")
   platformShowId String    @map("platform_show_id") // external id of the platform e.g., tiktok
   viewerCount    Int       @default(0) @map("viewer_count")
   metadata       Json      @default("{}")
-  show           Show      @relation(fields: [showId], references: [id])
-  platform       Platform  @relation(fields: [platformId], references: [id])
+  showId         BigInt    @map("show_id")
+  show           Show      @relation(fields: [showId], references: [id], onDelete: Cascade)
+  platformId     BigInt    @map("platform_id")
+  platform       Platform  @relation(fields: [platformId], references: [id], onDelete: Cascade)
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
   deletedAt      DateTime? @map("deleted_at")
@@ -165,13 +189,16 @@ model ShowPlatform {
   @@index([showId])
   @@index([platformId])
   @@index([platformShowId])
+  @@index([deletedAt])
+  @@index([showId, deletedAt])
+  @@index([platformId, deletedAt])
   @@map("show_platforms")
 }
 
 model Studio {
   id                BigInt             @id @default(autoincrement())
   uid               String             @unique
-  name              String
+  name              String             @unique
   address           String
   metadata          Json               @default("{}")
   studioRooms       StudioRoom[]
@@ -182,26 +209,30 @@ model Studio {
 
   @@index([uid])
   @@index([name])
+  @@index([deletedAt])
   @@map("studios")
 }
 
 model StudioRoom {
   id        BigInt    @id @default(autoincrement())
   uid       String    @unique
-  studioId  BigInt    @map("studio_id")
   name      String
-  capacity  Int
+  capacity  Int?
   metadata  Json      @default("{}")
-  studio    Studio    @relation(fields: [studioId], references: [id])
+  studioId  BigInt    @map("studio_id")
+  studio    Studio    @relation(fields: [studioId], references: [id], onDelete: Cascade)
   shows     Show[]
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
+  @@unique([studioId, name])
   @@index([uid])
   @@index([studioId])
   @@index([name])
   @@index([studioId, name])
+  @@index([deletedAt])
+  @@index([studioId, deletedAt])
   @@map("studio_rooms")
 }
 
@@ -216,6 +247,7 @@ model ShowType {
   deletedAt DateTime? @map("deleted_at")
 
   @@index([uid])
+  @@index([deletedAt])
   @@map("show_types")
 }
 
@@ -230,6 +262,7 @@ model ShowStatus {
   deletedAt DateTime? @map("deleted_at")
 
   @@index([uid])
+  @@index([deletedAt])
   @@map("show_status")
 }
 
@@ -244,18 +277,19 @@ model ShowStandard {
   deletedAt DateTime? @map("deleted_at")
 
   @@index([uid])
+  @@index([deletedAt])
   @@map("show_standards")
 }
 
 model StudioMembership {
   id        BigInt    @id @default(autoincrement())
   uid       String    @unique
-  userId    BigInt    @map("user_id")
-  studioId  BigInt    @map("studio_id")
   role      String // admin, manager, member
   metadata  Json      @default("{}")
-  user      User      @relation(fields: [userId], references: [id])
-  studio    Studio    @relation(fields: [studioId], references: [id])
+  userId    BigInt    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studioId  BigInt    @map("studio_id")
+  studio    Studio    @relation(fields: [studioId], references: [id], onDelete: Cascade)
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
@@ -266,5 +300,74 @@ model StudioMembership {
   @@index([studioId])
   @@index([role])
   @@index([userId, role])
+  @@index([deletedAt])
+  @@index([userId, deletedAt])
+  @@index([studioId, deletedAt])
   @@map("studio_memberships")
+}
+
+model Schedule {
+  id              BigInt             @id @default(autoincrement())
+  uid             String             @unique
+  name            String // e.g., "January 2025 Planning"
+  startDate       DateTime           @map("start_date")
+  endDate         DateTime           @map("end_date")
+  status          String             @default("draft") // draft, review, published
+  publishedAt     DateTime?          @map("published_at")
+  planDocument    Json               @map("plan_document")
+  version         Int                @default(1)
+  metadata        Json               @default("{}")
+  clientId        BigInt?            @map("client_id")
+  client          Client?            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdBy       BigInt?            @map("created_by")
+  createdByUser   User?              @relation("ScheduleCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  publishedBy     BigInt?            @map("published_by")
+  publishedByUser User?              @relation("SchedulePublisher", fields: [publishedBy], references: [id], onDelete: SetNull)
+  shows           Show[] // Shows created from this schedule
+  snapshots       ScheduleSnapshot[] // Version history
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  deletedAt       DateTime?          @map("deleted_at")
+
+  @@index([uid])
+  @@index([clientId])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([startDate, endDate])
+  @@index([clientId, startDate])
+  @@index([clientId, startDate, deletedAt])
+  @@index([clientId, startDate, endDate])
+  @@index([clientId, startDate, endDate, deletedAt])
+  @@index([createdBy])
+  @@index([deletedAt])
+  @@index([status, deletedAt])
+  @@index([clientId, deletedAt])
+  @@index([clientId, status, deletedAt])
+  @@index([clientId, status, startDate, deletedAt])
+  @@index([createdBy, deletedAt])
+  @@index([publishedBy, deletedAt])
+  @@map("schedules")
+}
+
+// Immutable snapshot for version history
+model ScheduleSnapshot {
+  id             BigInt   @id @default(autoincrement())
+  uid            String   @unique
+  planDocument   Json     @map("plan_document")
+  version        Int // Which version this snapshot represents
+  status         String // Status at time of snapshot
+  snapshotReason String   @map("snapshot_reason") // auto_save, before_publish, manual, before_restore
+  metadata       Json     @default("{}")
+  createdBy      BigInt?  @map("created_by")
+  user           User?    @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  scheduleId     BigInt   @map("schedule_id")
+  schedule       Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([uid])
+  @@index([scheduleId, version])
+  @@index([scheduleId, createdAt])
+  @@index([createdBy])
+  @@index([createdBy, createdAt])
+  @@map("schedule_snapshots")
 }

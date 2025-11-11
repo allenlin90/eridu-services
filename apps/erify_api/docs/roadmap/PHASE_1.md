@@ -2,14 +2,13 @@
 # Phase 1: Core Functions with Simplified Auth
 
 ## Overview
-Phase 1 establishes the core production functions with simplified authentication where admin users have full CRUD access and other users have read-only access. This phase focuses on essential entities and basic show management without complex scheduling or advanced features.
+Phase 1 establishes the core production functions with simplified authentication where admin users have full CRUD access and other users have read-only access. This phase includes essential entities, basic show management, and the Schedule Planning Management System using JSON-based planning documents with snapshot-based versioning.
 
 ## Related Documentation
 
-- **[Architecture Overview](../ARCHITECTURE.md)** - Complete module architecture, dependencies, and design patterns
-- **[Business Domain](../BUSINESS.md)** - Comprehensive business domain information and entity relationships  
-- **[Show Orchestration Architecture](../SHOW_ORCHESTRATION_ARCHITECTURE.md)** - Cross-module coordination for complex show operations
-- **[Scheduling Architecture](../SCHEDULING_ARCHITECTURE.md)** - Multi-version scheduling and collaborative planning (Phase 2)
+- **[Architecture Overview](../ARCHITECTURE.md)** - Complete module architecture, dependencies, and design patterns (including Show Orchestration)
+- **[Business Domain](../BUSINESS.md)** - Comprehensive business domain information and entity relationships
+- **[Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md)** - Complete schedule upload system design with JSON-based planning, snapshot versioning, and publishing workflow
 - **[Authentication Guide](../AUTHENTICATION_GUIDE.md)** - JWT validation and authorization patterns
 
 ## Core Features
@@ -30,13 +29,44 @@ Phase 1 establishes the core production functions with simplified authentication
 - **Studio Membership Management**: User-studio relationships for admin authentication (Client/Platform memberships deferred to Phase 3)
 
 ### 3. Basic Show Management
-- **Show Creation**: Direct show creation with CONFIRMED status
+- **Show Creation**: Direct show creation with CONFIRMED status, or via Schedule publishing
 - **Show Relationships**: Basic MC assignments and platform integrations
 - **Show Types**: Categorization (BAU, campaign, other)
 - **Show Status**: Lifecycle management (draft, confirmed, live, completed, cancelled)
 - **Show Standards**: Quality tiers (standard, premium) for production levels
-- **Show Orchestration**: Cross-module coordination for complex show operations (see [Show Orchestration Architecture](../SHOW_ORCHESTRATION_ARCHITECTURE.md))
-- **Note**: Material associations deferred to Phase 3 (requires Material management system)
+- **Show-Schedule Integration**: Shows can be linked to schedules for planning workflows
+- **Show Orchestration**: Simplified orchestration for atomic show creation with MC/platform assignments (see [Architecture Overview](../ARCHITECTURE.md#showorchestrationmodule-))
+  - Atomic show creation with assignments using Prisma nested creates
+  - Single show operations (add/remove/replace MCs and platforms)
+  - One operation per API call (no bulk operations for shows in Phase 1; schedule bulk operations are implemented)
+  - UI-driven sync loop for Google Sheets import
+- **Show Query Support**: Read-only queries optimized for MCs and Google Sheets integration
+  - Query shows by client ID and date range (sorted by start time)
+  - Monthly show listings for client calendars
+- **Note**: Material associations implemented in Phase 2
+
+### 4. Schedule Planning Management System
+- **JSON-Based Planning**: Flexible spreadsheet-like editing during draft phase
+- **Plan Documents**: Complete schedule data stored as JSON with metadata and show items
+- **Snapshot Versioning**: Automatic version history with immutable snapshots for audit trail
+- **Optimistic Locking**: Version column prevents concurrent update conflicts
+- **Status Workflow**: Draft → Review → Published status transitions
+- **Publishing**: Sync published schedules to normalized Show tables (delete + insert strategy)
+- **Validation**: Pre-publish validation for room conflicts, MC double-booking, and data integrity
+- **Version History**: Restore from any snapshot for rollback capabilities
+- **Bulk Operations**: Bulk create and update schedules with partial success handling
+- **Monthly Overview**: Get schedules grouped by client and status within a date range
+- **Client-by-Client Schedule Upload** ⭐ (Phase 1 Approach): Simple upload workflow for typical monthly planning
+  - **Strategy**: One schedule per client (~100 shows each)
+  - **No Chunking Needed**: Typical client schedules fit within payload limits
+  - **Async Publishing**: Queue-based publishing per client for scalability
+  - **Use Case**: Monthly planning with ~10 clients, ~100 shows per client
+  - **Design**: See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md#phase-1-client-by-client-upload--implemented) for workflow and rationale
+  - **Status**: Recommended approach for Phase 1 implementation
+- **Schedule Query Support**: Flexible queries for planning workflows
+  - Query schedules by client ID and date range (for planning stage)
+  - Support Google Sheets integration with sorted date-based listings
+- **Implementation Details**: See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md) for complete design
 
 ### 5. Authentication & Authorization (Hybrid Approach)
 - **JWT Token Validation**: Validate JWT tokens from `erify_auth` service for user identification only
@@ -71,7 +101,7 @@ Phase 1 establishes the core production functions with simplified authentication
 
 - Authentication & Authorization (Hybrid Approach)
   - [ ] JWT token validation from `erify_auth` service for user identification
-  - [ ] Simple StudioMembership model for admin verification (basic CRUD)
+  - [x] Simple StudioMembership model for admin verification (basic CRUD) 
   - [ ] Admin studio membership lookup (check if user is admin in ANY studio)
   - [ ] Admin guard implementation (JWT + StudioMembership verification)
   - [ ] Read-only access for non-admin users
@@ -92,18 +122,85 @@ Phase 1 establishes the core production functions with simplified authentication
   - [x] Studio 
   - [x] StudioRoom 
   - [x] StudioMembership (Essential for admin verification - studio-specific only)
-  - [ ] ShowOrchestrationModule (Cross-module coordination for complex show operations with MCs and platforms)
+  - [x] ShowOrchestrationModule (Simplified orchestration for atomic show creation with assignments) 
+  - [x] Atomic show creation with MC/platform assignments
+  - [x] Update show with assignments (updateShowWithAssignments)
+  - [x] Single show relationship operations (add/remove/replace MCs and platforms)
+  - [x] Relationship management endpoints (remove, replace operations)
+  - [x] Schedule bulk operations (bulk create and bulk update with partial success handling)
+  - [x] Schedule (Schedule Planning Management System with JSON documents)
+    - [x] Database schema complete
+    - [x] ScheduleService with basic CRUD operations including duplicate and optimistic locking
+    - [x] Bulk operations (bulk create and bulk update with partial success handling)
+    - [x] Monthly overview feature (schedules grouped by client and status)
+    - [x] AdminScheduleController with full REST API endpoints at `/admin/schedules`
+    - [x] ValidationService for pre-publish validation
+    - [x] PublishingService for syncing JSON to normalized Show tables
+  - [x] ScheduleSnapshot (Immutable version history snapshots)
+    - [x] Database schema complete
+    - [x] ScheduleSnapshotService with basic CRUD operations
+    - [x] AdminSnapshotController for version history operations at `/admin/snapshots`
+    - [x] Auto-snapshot on update functionality
 
 - Seed data (Required for Show management)
   - [x] ShowType (bau, campaign, other)
   - [x] ShowStatus (draft, confirmed, live, completed, cancelled)
   - [x] ShowStandard (standard, premium)
 
+- Schedule Planning Management System
+  - [x] Schedule entity with JSON plan document storage
+  - [x] ScheduleSnapshot entity for version history
+  - [x] ScheduleService (basic CRUD operations including duplicate, optimistic locking)
+  - [x] ScheduleService bulk operations (bulk create and bulk update)
+  - [x] ScheduleService monthly overview (schedules grouped by client and status)
+  - [x] ScheduleSnapshotService (basic CRUD operations with auto-snapshot on update)
+  - [x] ValidationService (pre-publish validation with conflict detection)
+  - [x] PublishingService (sync JSON documents to normalized Show tables)
+  - [x] AdminScheduleController with REST API endpoints at `/admin/schedules`
+    - [x] Bulk create endpoint (`POST /admin/schedules/bulk`)
+    - [x] Bulk update endpoint (`PATCH /admin/schedules/bulk`)
+    - [x] Monthly overview endpoint (`GET /admin/schedules/overview/monthly`)
+  - [x] AdminSnapshotController for version history operations at `/admin/snapshots`
+  - [x] Update Show model to include `scheduleId` field
+  - [ ] **Client-by-Client Schedule Upload** ⭐ (Phase 1 Primary Approach)
+    - [ ] **Google Sheets Integration**
+      - [ ] Group shows by client before uploading
+      - [ ] Create one schedule per client (~100 shows each)
+      - [ ] Simple AppsScript code (no chunking logic needed)
+    - [ ] **Async Publishing Workflow** (Optional for Phase 1)
+      - [ ] Implement queue-based publishing (BullMQ or similar)
+      - [ ] Publish schedules per client in background
+      - [ ] Independent error handling per client
+    - [x] **Monthly Overview** ✅ **IMPLEMENTED**
+      - [x] Use existing `GET /admin/schedules/overview/monthly` endpoint
+      - [x] Groups schedules by client and status
+      - [ ] Test with 10+ clients (documentation/testing pending)
+    - [ ] **Testing**
+      - [x] Unit tests: bulk create/update (✅ schedule.service.spec.ts)
+      - [ ] Integration tests: 10 clients, ~100 shows each
+      - [ ] Google Sheets simulation with AppsScript
+    - [x] **Documentation** ✅ **COMPLETE**
+      - [x] Updated test-payloads/README.md with client-by-client workflow
+      - [x] Google Sheets integration examples
+      - [x] API usage guide in SCHEDULE_UPLOAD_API_DESIGN.md
+      - [x] Google Sheets API calling workflow flowchart with complete lifecycle (create → update → validate → publish)
+    - [ ] See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md#phase-1-client-by-client-upload--implemented) for complete workflow
+  - ⚠️ **Note**: Chunked upload `appendShows` service method exists (service layer only, no controller endpoint) but is **deferred to Phase 2** as there's no current demand for large single-client schedules
+  - [ ] **Enhanced Query Support for Client-Scoped Data (Google Sheets Integration)**
+    - [ ] Add query parameters to `GET /admin/schedules` endpoint (client_id, start_date, end_date, order_by) for planning stage queries
+    - [ ] Add `include_plan_document` query parameter to `GET /admin/schedules` endpoint (default: `false`) to exclude large `plan_document` from list responses
+    - [ ] Add query parameters to `GET /admin/shows` endpoint (client_id, start_date, end_date, order_by)
+    - [x] Add database indexes for performance: `[clientId, startTime]` and `[clientId, startTime, deletedAt]` on Show model 
+    - [x] Add database index for performance: `[clientId, startDate, endDate, deletedAt]` on Schedule model 
+    - [x] Update ScheduleService to support flexible date range queries by client ID (getMonthlyOverview supports clientIds, but regular GET endpoint needs query params)
+    - [x] Update ShowService/ShowOrchestrationService to support flexible date range queries by client ID (getShowsByClient, getShowsByDateRange exist, but need to be exposed via query params)
+    - [x] Verify monthly overview endpoints support proper client filtering and sorting for Google Sheets use case  (Monthly overview supports clientIds filtering)
+
 - Documentation
   - [x] [Architecture Overview](../ARCHITECTURE.md) - Complete module architecture and design patterns
   - [x] [Business Domain](../BUSINESS.md) - Comprehensive business domain information
-  - [x] [Show Orchestration Architecture](../SHOW_ORCHESTRATION_ARCHITECTURE.md) - Cross-module coordination patterns
-  - [x] [Scheduling Architecture](../SCHEDULING_ARCHITECTURE.md) - Multi-version scheduling design (Phase 2)
+  - [x] [Architecture Overview](../ARCHITECTURE.md) - Cross-module coordination patterns including Show Orchestration
+  - [x] [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md) - Complete schedule upload system design with JSON-based planning and snapshot versioning
   - [x] [Authentication Guide](../AUTHENTICATION_GUIDE.md) - JWT validation and authorization patterns
 
 ## Technical Considerations
@@ -145,27 +242,49 @@ Phase 1 establishes the core production functions with simplified authentication
 - Soft delete filtering at repository level
 
 ## Success Criteria
+
+### Core Entity Management ✅ **COMPLETE**
 - [x] Complete CRUD operations for core entities (Users, Clients, MCs, Platforms, Studios, StudioRooms, ShowType, ShowStatus, ShowStandard)
 - [x] Functional direct show creation with full CRUD operations
-- [x] Working show-MC relationships
+- [x] Working show-MC relationships (ShowMC entity)
 - [x] Working show-platform relationships (ShowPlatform entity)
-- [ ] ShowOrchestrationModule implementation for atomic show creation with MC/platform assignments
+- [x] ShowOrchestrationModule implementation:
+  - [x] Atomic show creation with MC/platform assignments
+  - [x] Single show relationship operations (add/remove/replace MCs and platforms)
+  - [x] Relationship management endpoints
+- [x] Admin interface for managing all implemented entities
+
+### Schedule Planning Management System ✅ **COMPLETE**
+- [x] Schedule entity with JSON plan document storage
+- [x] ScheduleSnapshot for version history
+- [x] Schedule publishing workflow (JSON → normalized Show tables)
+- [x] Per-client validation with conflict detection (room conflicts, MC double-booking)
+- [x] Snapshot restore functionality (via SchedulePlanningService)
+- [x] Bulk operations:
+  - [x] Bulk create schedules with partial success handling
+  - [x] Bulk update schedules with partial success handling
+- [x] Monthly overview endpoint (schedules grouped by client and status within date range)
+- [x] Client-by-client upload strategy documented
+- ⚠️ Chunked upload service method implemented (Phase 2 feature, no controller endpoint)
+
+### Authentication & Authorization ⚠️ **PARTIAL**
 - [ ] JWT token validation from `erify_auth` service for user identification
 - [x] Simple StudioMembership model (database model complete, auth integration pending)
 - [ ] Admin guard implementation (JWT + StudioMembership verification)
 - [ ] Hybrid authentication with admin write, others read-only
-- [x] Admin interface for managing all implemented entities
-- [x] Comprehensive testing coverage for core services
+
+### Quality & Performance ✅ **COMPLETE**
+- [x] Comprehensive testing coverage for core services (unit tests)
 - [x] Security best practices implemented (input validation, SQL injection prevention, CORS, headers)
 - [x] Performance optimizations in place (indexed queries, pagination, efficient loading)
-- [x] Seed data for reference tables
+- [x] Seed data for reference tables (ShowType, ShowStatus, ShowStandard)
 
 ## Dependencies
 - [x] PostgreSQL database setup
 - [x] Prisma ORM configuration
 - [x] NestJS framework setup
 - [x] Environment configuration
-- [ ] `erify_auth` service running and accessible
+- [x] `erify_auth` service running and accessible
 - [ ] JWT token validation setup
 - [x] Simple StudioMembership model for admin verification (database model complete)
 - [ ] Admin guard implementation using JWT + StudioMembership
@@ -194,13 +313,67 @@ This phase delivers the core production functions with hybrid authentication app
 - **Future Enhancement**: Advanced authorization control with Client/Platform memberships in Phase 3
 - **Flexible Rollout**: Features can be enabled/disabled per user type as needed
 
+### Show Management Workflows (Phase 1)
+
+#### Direct Show Creation Workflow
+1. **Individual Creation**: Operators create shows one-by-one through admin UI
+2. **Atomic Creation**: Each show created with MC/platform assignments in single transaction
+3. **Relationship Management**: Add/remove/replace MCs and platforms for individual shows as needed
+
+#### Schedule Planning Workflow (Client-by-Client Approach)
+1. **Google Sheets Preparation**: Operators maintain monthly planning data in Google Sheets (sorted by client)
+2. **Group by Client**: AppsScript groups shows by client (one schedule per client)
+3. **Create Schedules**: For each client, create schedule with ~100 shows via `POST /admin/schedules`
+4. **Per-Client Validation**: Each schedule is validated independently (room conflicts, MC double-booking within client)
+5. **Async Publishing**: Queue publish jobs per client, process in background worker
+6. **Monthly Overview**: Use `GET /admin/schedules/overview/monthly` to view all client schedules together
+8. **Version History**: Every change creates immutable snapshot for audit trail and rollback capability
+
+#### Google Sheets Integration
+
+For complete Google Sheets integration workflow, API call sequence, error handling, and AppsScript integration details, see **[Google Sheets Workflow](../test-payloads/GOOGLE_SHEETS_WORKFLOW.md)**.
+
+#### Migration from Google Sheets (Deferred to Phase 2)
+1. **CSV Export**: Export historical data from Google Sheets (planned for Phase 2)
+2. **CSV Import**: Import CSV file into Schedule as JSON plan document (planned for Phase 2)
+3. **Review & Edit**: Operators review and edit schedule in planning UI
+4. **Publish**: Publish schedule to create normalized Show records
+
+**Phase 1 Capabilities:**
+- ✅ Direct show creation (one-by-one)
+- ✅ Schedule planning with JSON documents
+- ✅ Snapshot-based version history
+- ✅ Pre-publish validation with conflict detection (per-client)
+- ✅ Optimistic locking for concurrent edits
+- ✅ Schedule bulk operations (bulk create and bulk update)
+- ✅ Monthly overview (schedules grouped by client and status)
+- ✅ **Client-by-Client Schedule Upload** (Primary approach for Phase 1)
+  - ✅ One schedule per client (~100 shows each)
+  - ✅ No chunking needed for typical clients
+  - ⚠️ Async publishing per client (implementation pending)
+  - ⚠️ Google Sheets integration examples (documentation pending)
+
+**Phase 1 Limitations:**
+- One direct show operation per API call (no bulk operations for shows)
+- No material management capabilities
+- No CSV import/export for Google Sheets migration
+- **No chunked upload** (large clients with 200+ shows not supported)
+
+**Future Enhancements (Phase 2+):**
+- **Chunked Upload for Large Clients** (>200 shows per client)
+- Show bulk operations (bulk create and bulk update with partial success handling)
+- Material Management System (material versioning, platform targeting, show-material associations)
+- CSV import/export service for migration from Google Sheets
+- API query features (expand parameter, search and search_term parameters)
+- Idempotency handling for show and schedule creation requests
+
 This approach provides a solid foundation with core functions while maintaining simplicity in the authentication layer and preparing for advanced features in later phases.
 
 ## Implementation Details
 
 ### Show Service Pattern (✅ Implemented)
 
-The Show service follows a consistent pattern for DTO-to-Prisma payload transformation. For complex show operations involving multiple MCs and platforms, see the [Show Orchestration Architecture](../SHOW_ORCHESTRATION_ARCHITECTURE.md) for cross-module coordination patterns.
+The Show service follows a consistent pattern for DTO-to-Prisma payload transformation. For complex show operations involving multiple MCs and platforms, see the [Architecture Overview](../ARCHITECTURE.md#showorchestrationmodule-) for cross-module coordination patterns.
 
 #### Service Methods
 - **`createShowFromDto(dto, include?)`**: Accepts `CreateShowDto` and uses `buildCreatePayload()` to transform to Prisma input
@@ -326,30 +499,34 @@ This pattern provides the same benefits as other relationship modules:
 #### User
 ```prisma
 model User {
-  id          BigInt       @id @default(autoincrement())
-  uid         String       @unique
-  extId       String?      @unique @map("ext_id") // For SSO integration
-  email       String       @unique
-  name        String
+  id                 BigInt             @id @default(autoincrement())
+  uid                String             @unique
+  extId              String?            @unique @map("ext_id") // For SSO integration
+  email              String             @unique
+  name               String
   isBanned           Boolean            @default(false) @map("is_banned")
   profileUrl         String?            @map("profile_url")
   metadata           Json               @default("{}")
   mc                 MC? // Optional MC profile linkage
   studioMemberships  StudioMembership[]
+  schedules          Schedule[]         @relation("ScheduleCreator")
+  publishedSchedules Schedule[]         @relation("SchedulePublisher")
+  scheduleSnapshots  ScheduleSnapshot[]
   createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
-  deletedAt   DateTime?    @map("deleted_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  deletedAt          DateTime?          @map("deleted_at")
 
   @@index([uid])
   @@index([email])
   @@index([name])
   @@index([extId])
   @@index([isBanned])
+  @@index([deletedAt])
   @@map("users")
 }
 ```
 
-**Note**: Relations to `Comment`, `Task`, `Audit` (Phase 3) and `ScheduleVersion` (Phase 2) will be added in their respective phases.
+**Note**: Relations to `Comment`, `Task`, `Audit` (Phase 3) will be added in that phase. Relations to `Material` (Phase 2) will be added in that phase.
 
 #### MC
 ```prisma
@@ -362,7 +539,7 @@ model MC {
   isBanned  Boolean   @default(false) @map("is_banned")
   metadata  Json      @default("{}")
   showMCs   ShowMC[]
-  user      User?     @relation(fields: [userId], references: [id])
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
@@ -372,6 +549,7 @@ model MC {
   @@index([name])
   @@index([aliasName])
   @@index([isBanned])
+  @@index([deletedAt])
   @@map("mcs")
 }
 ```
@@ -381,26 +559,28 @@ model MC {
 #### Client
 ```prisma
 model Client {
-  id            BigInt    @id @default(autoincrement())
-  uid           String    @unique
-  name          String    @unique
-  contactPerson String    @map("contact_person")
-  contactEmail  String    @map("contact_email")
-  metadata      Json      @default("{}")
+  id            BigInt     @id @default(autoincrement())
+  uid           String     @unique
+  name          String     @unique
+  contactPerson String     @map("contact_person")
+  contactEmail  String     @map("contact_email")
+  metadata      Json       @default("{}")
   shows         Show[]
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  deletedAt     DateTime? @map("deleted_at")
+  schedules     Schedule[]
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  deletedAt     DateTime?  @map("deleted_at")
 
   @@index([uid])
   @@index([name])
   @@index([contactPerson])
   @@index([contactEmail])
+  @@index([deletedAt])
   @@map("clients")
 }
 ```
 
-**Note**: Relations to `Material` (Phase 3) and `Schedule` (Phase 2) will be added in their respective phases.
+**Note**: Relations to `Material` (Phase 2) will be added in that phase. The `schedules` relation links clients to their schedule planning documents.
 
 #### Platform
 ```prisma
@@ -417,38 +597,41 @@ model Platform {
 
   @@index([uid])
   @@index([name])
+  @@index([deletedAt])
   @@map("platforms")
 }
 ```
 
-**Note**: Relations to `Material` (Phase 3) will be added in that phase.
+**Note**: Relations to `Material` (Phase 2) will be added in that phase.
 
 ### Show Management
 
 #### Show
 ```prisma
 model Show {
-  id             BigInt        @id @default(autoincrement())
-  uid            String        @unique
-  clientId       BigInt        @map("client_id")
-  studioRoomId   BigInt        @map("studio_room_id")
-  showTypeId     BigInt        @map("show_type_id")
-  showStatusId   BigInt        @map("show_status_id")
-  showStandardId BigInt        @map("show_standard_id")
+  id             BigInt         @id @default(autoincrement())
+  uid            String         @unique
   name           String
-  startTime      DateTime      @map("start_time")
-  endTime        DateTime      @map("end_time")
-  metadata       Json          @default("{}")
-  client         Client        @relation(fields: [clientId], references: [id])
-  studioRoom     StudioRoom    @relation(fields: [studioRoomId], references: [id])
-  showType       ShowType      @relation(fields: [showTypeId], references: [id])
-  showStatus     ShowStatus    @relation(fields: [showStatusId], references: [id])
-  showStandard   ShowStandard  @relation(fields: [showStandardId], references: [id])
+  startTime      DateTime       @map("start_time")
+  endTime        DateTime       @map("end_time")
+  metadata       Json           @default("{}")
+  clientId       BigInt         @map("client_id")
+  client         Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  studioRoomId   BigInt?        @map("studio_room_id")
+  studioRoom     StudioRoom?    @relation(fields: [studioRoomId], references: [id], onDelete: SetNull)
+  showTypeId     BigInt         @map("show_type_id")
+  showType       ShowType       @relation(fields: [showTypeId], references: [id])
+  showStatusId   BigInt         @map("show_status_id")
+  showStatus     ShowStatus     @relation(fields: [showStatusId], references: [id])
+  showStandardId BigInt         @map("show_standard_id")
+  showStandard   ShowStandard   @relation(fields: [showStandardId], references: [id])
+  scheduleId     BigInt?        @map("schedule_id")
+  Schedule       Schedule?      @relation(fields: [scheduleId], references: [id])
   showMCs        ShowMC[]
   showPlatforms  ShowPlatform[]
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
-  deletedAt      DateTime?     @map("deleted_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  deletedAt      DateTime?      @map("deleted_at")
 
   @@index([uid])
   @@index([name])
@@ -457,14 +640,21 @@ model Show {
   @@index([showTypeId])
   @@index([showStatusId])
   @@index([showStandardId])
+  @@index([scheduleId])
   @@index([startTime, endTime])
   @@index([startTime])
   @@index([endTime])
+  @@index([deletedAt])
+  @@index([clientId, deletedAt])
+  @@index([studioRoomId, deletedAt])
+  @@index([scheduleId, deletedAt])
+  @@index([showStatusId, deletedAt])
+  @@index([startTime, deletedAt])
   @@map("shows")
 }
 ```
 
-**Note**: The `scheduleVersionId` field and `scheduleVersion` relation (Phase 2) and `showMaterials` relation (Phase 3) will be added in their respective phases.
+**Note**: The `scheduleId` field and `Schedule` relation link shows to schedules for planning workflows. The `showMaterials` relation (Phase 2) will be added in that phase.
 
 #### ShowMC
 ```prisma
@@ -475,8 +665,8 @@ model ShowMC {
   mcId      BigInt    @map("mc_id")
   note      String?
   metadata  Json      @default("{}")
-  show      Show      @relation(fields: [showId], references: [id])
-  mc        MC        @relation(fields: [mcId], references: [id])
+  show      Show      @relation(fields: [showId], references: [id], onDelete: Cascade)
+  mc        MC        @relation(fields: [mcId], references: [id], onDelete: Cascade)
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
@@ -485,6 +675,9 @@ model ShowMC {
   @@index([uid])
   @@index([showId])
   @@index([mcId])
+  @@index([deletedAt])
+  @@index([showId, deletedAt])
+  @@index([mcId, deletedAt])
   @@map("show_mcs")
 }
 ```
@@ -494,14 +687,14 @@ model ShowMC {
 model ShowPlatform {
   id             BigInt    @id @default(autoincrement())
   uid            String    @unique
-  showId         BigInt    @map("show_id")
-  platformId     BigInt    @map("platform_id")
   liveStreamLink String    @map("live_stream_link")
   platformShowId String    @map("platform_show_id") // external id of the platform e.g., tiktok
   viewerCount    Int       @default(0) @map("viewer_count")
   metadata       Json      @default("{}")
-  show           Show      @relation(fields: [showId], references: [id])
-  platform       Platform  @relation(fields: [platformId], references: [id])
+  showId         BigInt    @map("show_id")
+  show           Show      @relation(fields: [showId], references: [id], onDelete: Cascade)
+  platformId     BigInt    @map("platform_id")
+  platform       Platform  @relation(fields: [platformId], references: [id], onDelete: Cascade)
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
   deletedAt      DateTime? @map("deleted_at")
@@ -511,6 +704,9 @@ model ShowPlatform {
   @@index([showId])
   @@index([platformId])
   @@index([platformShowId])
+  @@index([deletedAt])
+  @@index([showId, deletedAt])
+  @@index([platformId, deletedAt])
   @@map("show_platforms")
 }
 ```
@@ -528,6 +724,7 @@ model ShowType {
   deletedAt DateTime? @map("deleted_at")
 
   @@index([uid])
+  @@index([deletedAt])
   @@map("show_types")
 }
 ```
@@ -545,6 +742,7 @@ model ShowStatus {
   deletedAt DateTime? @map("deleted_at")
 
   @@index([uid])
+  @@index([deletedAt])
   @@map("show_status")
 }
 ```
@@ -562,6 +760,7 @@ model ShowStandard {
   deletedAt DateTime? @map("deleted_at")
 
   @@index([uid])
+  @@index([deletedAt])
   @@map("show_standards")
 }
 ```
@@ -573,7 +772,7 @@ model ShowStandard {
 model Studio {
   id                BigInt             @id @default(autoincrement())
   uid               String             @unique
-  name              String
+  name              String             @unique
   address           String
   metadata          Json               @default("{}")
   studioRooms       StudioRoom[]
@@ -584,11 +783,12 @@ model Studio {
 
   @@index([uid])
   @@index([name])
+  @@index([deletedAt])
   @@map("studios")
 }
 ```
 
-**Note**: Relations to `Schedule` (Phase 2), `Tag` and `TaskTemplate` (Phase 3) will be added in their respective phases.
+**Note**: Relations to `Tag` and `TaskTemplate` (Phase 3) will be added in that phase. The `materials` relation (Phase 2) will be added in that phase.
 
 #### StudioRoom
 ```prisma
@@ -597,7 +797,7 @@ model StudioRoom {
   uid       String    @unique
   studioId  BigInt    @map("studio_id")
   name      String
-  capacity  Int
+  capacity  Int?
   metadata  Json      @default("{}")
   studio    Studio    @relation(fields: [studioId], references: [id])
   shows     Show[]
@@ -605,10 +805,13 @@ model StudioRoom {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
+  @@unique([studioId, name])
   @@index([uid])
   @@index([studioId])
   @@index([name])
   @@index([studioId, name])
+  @@index([deletedAt])
+  @@index([studioId, deletedAt])
   @@map("studio_rooms")
 }
 ```
@@ -620,12 +823,12 @@ model StudioRoom {
 model StudioMembership {
   id        BigInt    @id @default(autoincrement())
   uid       String    @unique
-  userId    BigInt    @map("user_id")
-  studioId  BigInt    @map("studio_id")
   role      String // admin, manager, member
   metadata  Json      @default("{}")
-  user      User      @relation(fields: [userId], references: [id])
-  studio    Studio    @relation(fields: [studioId], references: [id])
+  userId    BigInt    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studioId  BigInt    @map("studio_id")
+  studio    Studio    @relation(fields: [studioId], references: [id], onDelete: Cascade)
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
@@ -636,8 +839,81 @@ model StudioMembership {
   @@index([studioId])
   @@index([role])
   @@index([userId, role])
+  @@index([deletedAt])
+  @@index([userId, deletedAt])
+  @@index([studioId, deletedAt])
   @@map("studio_memberships")
 }
 ```
 
 **Note on Phase 1 StudioMembership**: This model implements studio-specific user relationships for simple admin verification (checking if user has admin role in ANY studio). The direct foreign key relationship to Studio simplifies Prisma implementation. Client and Platform membership models will be added separately in Phase 3 when advanced role-based access control is implemented.
+
+### Schedule Planning Management System
+
+#### Schedule
+```prisma
+model Schedule {
+  id              BigInt             @id @default(autoincrement())
+  uid             String             @unique
+  name            String // e.g., "January 2025 Planning"
+  startDate       DateTime           @map("start_date")
+  endDate         DateTime           @map("end_date")
+  status          String             @default("draft") // draft, review, published
+  publishedAt     DateTime?          @map("published_at")
+  planDocument    Json               @map("plan_document")
+  version         Int                @default(1)
+  metadata        Json               @default("{}")
+  clientId        BigInt?             @map("client_id")
+  client          Client?             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdBy       BigInt?             @map("created_by")
+  createdByUser   User?              @relation("ScheduleCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  publishedBy     BigInt?             @map("published_by")
+  publishedByUser User?              @relation("SchedulePublisher", fields: [publishedBy], references: [id], onDelete: SetNull)
+  shows           Show[] // Shows created from this schedule
+  snapshots       ScheduleSnapshot[] // Version history
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  deletedAt       DateTime?          @map("deleted_at")
+
+  @@index([uid])
+  @@index([clientId])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([startDate, endDate])
+  @@index([clientId, startDate, endDate])
+  @@index([createdBy])
+  @@index([deletedAt])
+  @@index([status, deletedAt])
+  @@index([clientId, deletedAt])
+  @@index([createdBy, deletedAt])
+  @@index([publishedBy, deletedAt])
+  @@map("schedules")
+}
+```
+
+#### ScheduleSnapshot
+```prisma
+model ScheduleSnapshot {
+  id             BigInt   @id @default(autoincrement())
+  uid            String   @unique
+  planDocument   Json     @map("plan_document")
+  version        Int // Which version this snapshot represents
+  status         String // Status at time of snapshot
+  snapshotReason String   @map("snapshot_reason") // auto_save, before_publish, manual, before_restore
+  metadata       Json     @default("{}")
+  createdBy      BigInt?  @map("created_by")
+  user           User?    @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  scheduleId     BigInt   @map("schedule_id")
+  schedule       Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([uid])
+  @@index([scheduleId, version])
+  @@index([scheduleId, createdAt])
+  @@index([createdBy])
+  @@index([createdBy, createdAt])
+  @@map("schedule_snapshots")
+}
+```
+
+**Note on Schedule Planning**: The Schedule Planning Management System uses JSON documents for flexible planning during draft phase, with automatic snapshots for version history. Only published schedules sync their JSON data to normalized Show tables. See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md) for complete design and implementation details.

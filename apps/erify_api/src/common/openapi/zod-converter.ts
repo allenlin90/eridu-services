@@ -22,6 +22,11 @@ export class ZodOpenAPIConverter {
    * Convert Zod schema to OpenAPI schema object
    */
   static zodToOpenAPI(schema: z.ZodTypeAny): OpenAPISchema {
+    // Handle ZodPipe - use the output schema (after transform/pipe)
+    if (schema instanceof z.ZodPipe) {
+      return this.zodToOpenAPI(schema._def.out as z.ZodTypeAny);
+    }
+
     // Handle different Zod types
     if (schema instanceof z.ZodObject) {
       return this.convertZodObject(schema);
@@ -35,6 +40,11 @@ export class ZodOpenAPIConverter {
     }
 
     if (schema instanceof z.ZodString) {
+      // Check if it's an ISO datetime string (z.iso.datetime())
+      const def = schema._def as { format?: string };
+      if (def?.format === 'datetime') {
+        return { type: 'string', format: 'date-time' };
+      }
       return { type: 'string' };
     }
 
@@ -56,20 +66,20 @@ export class ZodOpenAPIConverter {
 
     if (schema instanceof z.ZodNullable) {
       return {
-        ...this.zodToOpenAPI(schema.def.innerType as z.ZodTypeAny),
+        ...this.zodToOpenAPI(schema._def.innerType as z.ZodTypeAny),
         nullable: true,
       };
     }
 
     if (schema instanceof z.ZodOptional) {
-      return this.zodToOpenAPI(schema.def.innerType as z.ZodTypeAny);
+      return this.zodToOpenAPI(schema._def.innerType as z.ZodTypeAny);
     }
 
     if (schema instanceof z.ZodRecord) {
       return {
         type: 'object',
         additionalProperties: this.zodToOpenAPI(
-          schema.def.valueType as z.ZodTypeAny,
+          schema._def.valueType as z.ZodTypeAny,
         ),
       };
     }
@@ -86,15 +96,21 @@ export class ZodOpenAPIConverter {
     schema: z.ZodObject<z.ZodRawShape>,
   ): OpenAPISchema {
     const shape = schema.shape;
+    // JavaScript objects preserve insertion order (ES2015+)
+    // Object.entries() preserves the order properties were defined in the schema
     const properties: Record<string, OpenAPISchema> = {};
     const required: string[] = [];
 
+    // Iterate through shape entries in the order they were defined
+    // This preserves the original property order from the Zod schema
     for (const [key, value] of Object.entries(
       shape as Record<string, z.ZodTypeAny>,
     )) {
+      // Add property in insertion order (JavaScript preserves object property order)
       properties[key] = this.zodToOpenAPI(value);
 
       // Check if field is required
+      // A field is required if it's not optional and not nullable (unless explicitly nullable)
       if (
         !(value instanceof z.ZodOptional) &&
         !(value instanceof z.ZodNullable)
@@ -106,7 +122,7 @@ export class ZodOpenAPIConverter {
     return {
       type: 'object',
       properties,
-      required,
+      required: required.length > 0 ? required : undefined,
     };
   }
 }

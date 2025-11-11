@@ -249,6 +249,17 @@ Currently, the API is designed for administrative use. Authentication can be add
 - `PATCH /admin/studio-memberships/:uid` - Update studio membership
 - `DELETE /admin/studio-memberships/:uid` - Soft delete studio membership
 
+#### 📅 Schedules (`/admin/schedules`)
+- `GET /admin/schedules` - List schedules with pagination
+- `POST /admin/schedules` - Create a new schedule
+- `GET /admin/schedules/:id` - Get schedule by ID
+- `PATCH /admin/schedules/:id` - Update schedule
+- `DELETE /admin/schedules/:id` - Soft delete schedule
+- `POST /admin/schedules/:id/validate` - Validate schedule before publish
+- `POST /admin/schedules/:id/publish` - Publish schedule to shows
+- `POST /admin/schedules/:id/duplicate` - Duplicate schedule
+- `GET /admin/schedules/:id/snapshots` - List schedule snapshots
+
 ## 📚 OpenAPI Documentation
 
 The API includes comprehensive OpenAPI documentation powered by Scalar UI, providing an interactive interface for exploring and testing all endpoints.
@@ -421,10 +432,10 @@ The OpenAPI implementation includes:
 
 ### Future Entities (Planned)
 The database schema includes comprehensive models for the full livestream production system:
-- **Shows**: Core operational records for livestream productions (Phase 1)
-- **ShowMC & ShowPlatform**: Show relationship management (Phase 1)
-- **Schedules & ScheduleVersions**: Collaborative planning system (Phase 2)
-- **Materials & MaterialTypes**: Content assets management (Phase 3)
+- **Shows**: Core operational records for livestream productions (Phase 1) ✅
+- **ShowMC & ShowPlatform**: Show relationship management (Phase 1) ✅
+- **Schedules & ScheduleSnapshots**: Collaborative planning system (Phase 1) ✅
+- **Materials & MaterialTypes**: Content assets management (Phase 2)
 - **Tasks & TaskTemplates**: Workflow automation (Phase 3)
 - **Comments**: Collaboration system (Phase 3)
 - **Tags & Taggables**: Flexible categorization (Phase 3)
@@ -464,15 +475,26 @@ See the [Business Documentation](docs/BUSINESS.md) for detailed information abou
 - [ ] **Authentication & Authorization** (JWT validation + Admin guard) ⚠️
 - [ ] **Seed data** (ShowType, ShowStatus, ShowStandard, Membership roles) ⚠️
 
-### ⏳ Phase 2: Scheduling & Planning Workflow (PLANNED)
-- [ ] Schedule and ScheduleVersion management
-- [ ] Show confirmation workflow
-- [ ] Resource conflict detection
-- [ ] Collaborative planning features
+### ✅ Phase 1: Scheduling & Planning Workflow (COMPLETED)
+- [x] Schedule and ScheduleSnapshot management (JSON-based planning with snapshots)
+- [x] Per-client validation (room conflicts, MC double-booking within client)
+- [x] Bulk operations (bulk create and bulk update schedules)
+- [x] Monthly overview (schedules grouped by client and status)
+- [x] Client-by-client upload strategy documented
+- [x] Publishing workflow (JSON → normalized Show tables with delete + insert strategy)
+- ⚠️ Chunked upload service method implemented (Phase 2 feature, no controller endpoint)
+
+### ⏳ Phase 2: Material Management & Advanced Schedule Features (PLANNED)
+- [ ] Material and MaterialType management (versioning, platform targeting)
+- [ ] ShowMaterial associations
+- [ ] **Chunked Upload** for large single-client schedules (>200 shows)
+- [ ] **Cross-Client Validation Service** (conflict detection between clients)
+- [ ] **CSV Import/Export** service for Google Sheets migration
+- [ ] API expand parameter and search capabilities
+- [ ] Idempotency handling for show/schedule creation
 
 ### ⏳ Phase 3: User Collaboration & Access Control (PLANNED)
 - [ ] Advanced role-based access control (polymorphic memberships)
-- [ ] Material and MaterialType management
 - [ ] Comments system
 - [ ] Audit trail implementation
 - [ ] Tagging system
@@ -545,6 +567,8 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[Business Domain](docs/BUSINESS.md)** - Business domain models and relationships
 - **[Authentication Guide](docs/AUTHENTICATION_GUIDE.md)** - Phase 1 hybrid authentication guide
 - **[Scheduling Architecture](docs/SCHEDULING_ARCHITECTURE.md)** - Scheduling system design
+- **[Chunked Upload API](docs/SCHEDULE_UPLOAD_API_DESIGN.md)** ⭐ - API design for large schedule uploads
+- **[Testing Guide](test-payloads/README.md)** - Schedule planning test payloads and workflow
 - **[Phase 1 Roadmap](docs/roadmap/PHASE_1.md)** - Phase 1 implementation plan
 - **[Phase 2 Roadmap](docs/roadmap/PHASE_2.md)** - Phase 2 implementation plan
 - **[Phase 3 Roadmap](docs/roadmap/PHASE_3.md)** - Phase 3 implementation plan

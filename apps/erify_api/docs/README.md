@@ -6,13 +6,13 @@ Welcome to the comprehensive documentation for the Eridu Services API. This docu
 
 ### Core Documentation
 
-| Document                                                     | Purpose                                            | Audience                                       |
-| ------------------------------------------------------------ | -------------------------------------------------- | ---------------------------------------------- |
-| [`IMPLEMENTATION_STATUS.md`](./IMPLEMENTATION_STATUS.md) ⭐   | **Current implementation status and gaps**         | **Developers, Project Managers, Stakeholders** |
-| [`ARCHITECTURE.md`](./ARCHITECTURE.md)                       | Complete system architecture overview              | Developers, Architects, New Team Members       |
-| [`BUSINESS.md`](./BUSINESS.md)                               | Business domain models and relationships           | Developers, Business Analysts                  |
-| [`AUTHENTICATION_GUIDE.md`](./AUTHENTICATION_GUIDE.md)       | Phase 1 hybrid authentication implementation guide | Developers, Security Team                      |
-| [`SCHEDULING_ARCHITECTURE.md`](./SCHEDULING_ARCHITECTURE.md) | Scheduling system design and rationale             | Developers, Architects                         |
+| Document                                                           | Purpose                                                                                       | Audience                                       |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| [`IMPLEMENTATION_STATUS.md`](./IMPLEMENTATION_STATUS.md) ⭐         | **Current implementation status and gaps**                                                    | **Developers, Project Managers, Stakeholders** |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md)                             | Complete system architecture overview                                                         | Developers, Architects, New Team Members       |
+| [`BUSINESS.md`](./BUSINESS.md)                                     | Business domain models and relationships                                                      | Developers, Business Analysts                  |
+| [`AUTHENTICATION_GUIDE.md`](./AUTHENTICATION_GUIDE.md)             | Phase 1 hybrid authentication implementation guide                                            | Developers, Security Team                      |
+| [`SCHEDULE_UPLOAD_API_DESIGN.md`](./SCHEDULE_UPLOAD_API_DESIGN.md) | **Complete schedule upload system design** (Phase 1 client-by-client, Phase 2 chunked upload) | **Developers, Implementers**                   |
 
 > **Note:** Start with [`IMPLEMENTATION_STATUS.md`](./IMPLEMENTATION_STATUS.md) for the most current status and priority actions.
 
@@ -32,8 +32,12 @@ Welcome to the comprehensive documentation for the Eridu Services API. This docu
 3. **Study** [`BUSINESS.md`](./BUSINESS.md) - Learn the business domain
 4. **Read** [`AUTHENTICATION_GUIDE.md`](./AUTHENTICATION_GUIDE.md) - Authentication implementation (TO DO)
 5. **Check** [`roadmap/PHASE_1.md`](./roadmap/PHASE_1.md) - Phase 1 implementation details
-6. **Reference** [`roadmap/PHASE_2.md`](./roadmap/PHASE_2.md) - Future scheduling features
-7. **Review** [`roadmap/PHASE_3.md`](./roadmap/PHASE_3.md) - Advanced features roadmap
+6. **Schedule Planning** (Current Focus):
+   - [`SCHEDULE_UPLOAD_API_DESIGN.md`](./SCHEDULE_UPLOAD_API_DESIGN.md) ⭐ - Complete system design with **Phase 1 client-by-client workflow** and Phase 2 chunked upload
+   - [`roadmap/PHASE_1.md`](./roadmap/PHASE_1.md) - Phase 1 implementation details (client-by-client upload)
+   - [`test-payloads/README.md`](../test-payloads/README.md) - Testing guide and examples
+7. **Reference** [`roadmap/PHASE_2.md`](./roadmap/PHASE_2.md) - Material Management & Advanced Schedule Features
+8. **Review** [`roadmap/PHASE_3.md`](./roadmap/PHASE_3.md) - Advanced features roadmap
 
 ### For AI Assistants
 1. **Check** [`IMPLEMENTATION_STATUS.md`](./IMPLEMENTATION_STATUS.md) ⭐ - See what's missing and critical priorities
@@ -58,9 +62,13 @@ AppModule (Root)
 │   ├── AdminShowTypeModule
 │   ├── AdminShowStatusModule
 │   ├── AdminShowStandardModule
+│   ├── AdminShowMcModule
+│   ├── AdminShowPlatformModule
 │   ├── AdminStudioModule
 │   ├── AdminStudioRoomModule
-│   └── AdminStudioMembershipModule
+│   ├── AdminStudioMembershipModule
+│   ├── AdminScheduleModule ⭐
+│   └── AdminSnapshotModule ⭐
 ├── Domain Modules (Business Logic)
 │   ├── UserModule
 │   ├── ClientModule
@@ -70,9 +78,17 @@ AppModule (Root)
 │   ├── ShowTypeModule
 │   ├── ShowStatusModule
 │   ├── ShowStandardModule
+│   ├── ShowMcModule
+│   ├── ShowPlatformModule
 │   ├── StudioModule
 │   ├── StudioRoomModule
-│   └── MembershipModule (StudioMembership)
+│   ├── MembershipModule (StudioMembership)
+│   ├── ScheduleModule ⭐
+│   ├── ScheduleSnapshotModule ⭐
+│   └── SchedulePlanningModule ⭐
+├── Orchestration Modules
+│   ├── ShowOrchestrationModule ⭐
+│   └── SchedulePlanningModule ⭐
 └── Infrastructure Modules (Supporting Services)
     ├── PrismaModule (Database)
     └── UtilityModule (Utilities)
@@ -134,6 +150,8 @@ graph TB
     Admin --> AdminShowStandard[AdminShowStandardModule]
     Admin --> AdminStudio[AdminStudioModule]
     Admin --> AdminStudioRoom[AdminStudioRoomModule]
+    Admin --> AdminSchedule[AdminScheduleModule]
+    Admin --> AdminSnapshot[AdminSnapshotModule]
     
     AdminUser --> User[UserModule]
     AdminClient --> Client[ClientModule]
@@ -188,17 +206,31 @@ graph TB
 - **ShowTypes**: `/admin/show-types` - Show type management
 - **ShowStatuses**: `/admin/show-statuses` - Show status management
 - **ShowStandards**: `/admin/show-standards` - Show standard management
+- **ShowMCs**: `/admin/show-mcs` - Show-MC relationship management
+- **ShowPlatforms**: `/admin/show-platforms` - Show-platform relationship management
 - **Studios**: `/admin/studios` - Studio management
 - **StudioRooms**: `/admin/studio-rooms` - Studio room management
 - **StudioMemberships**: `/admin/studio-memberships` - Studio membership management
+- **Schedules**: `/admin/schedules` - Schedule planning management ⭐
+- **Snapshots**: `/admin/snapshots` - Schedule snapshot management ⭐
 
 ### Standard Operations
 Each entity supports:
-- `GET /admin/{entity}` - List with pagination
+- `GET /admin/{entity}` - List with pagination, expand, and search
 - `POST /admin/{entity}` - Create new entity
-- `GET /admin/{entity}/:uid` - Get by UID
+- `GET /admin/{entity}/:uid` - Get by UID with expand support
 - `PUT /admin/{entity}/:uid` - Update entity
 - `DELETE /admin/{entity}/:uid` - Soft delete entity
+
+### Query Parameters (Phase 2)
+- **Pagination**: `page`, `limit`, `offset`
+- **Expand**: `expand=relation1,relation2` - Include associated data (e.g., `?expand=client,platform`)
+- **Search**: `search=column1,column2&search_term=query` - Search on specific columns (e.g., `?search=name,description&search_term=script`)
+
+### Request Headers (Phase 2)
+- **Idempotency-Key**: Header for show and schedule creation endpoints to prevent duplicate creation from retries or concurrent requests. See [Architecture Documentation](./ARCHITECTURE.md#idempotency-headers-phase-2) for details.
+
+See [Architecture Documentation](./ARCHITECTURE.md#api-query-parameters) for detailed usage examples.
 
 ## 🛠️ Tools and Standards
 
@@ -250,7 +282,7 @@ Each entity supports:
 - **Architecture Questions**: Reference `ARCHITECTURE.md`
 - **Business Domain Questions**: Reference `BUSINESS.md`
 - **Implementation Questions**: Check Phase 1/2 roadmaps
-- **Scheduling Questions**: Reference `SCHEDULING_ARCHITECTURE.md`
+- **Scheduling Questions**: Reference `SCHEDULE_UPLOAD_API_DESIGN.md`
 
 ### Contributing
 - **Follow Guidelines**: Use `.cursorrules` for development patterns
@@ -287,9 +319,9 @@ Each entity supports:
 - **StudioMembership Admin Module**: Added full CRUD operations for studio membership management
 - **Hybrid Authentication Approach**: Adopted JWT validation for user identification + simple StudioMembership model for admin verification
 - **3-Phase Structure**: Restored proper 3-phase development approach
-- **Phase 1 Focus**: Core Functions with Hybrid Authentication - Essential CRUD operations, JWT validation, and simple admin verification
-- **Phase 2 Focus**: Scheduling & Planning Workflow - Collaborative planning and multi-version scheduling
-- **Phase 3 Focus**: Advanced Authorization Control & Tracking Features - Role-based access control, audit trails, task management, material management
+- **Phase 1 Focus**: Core Functions with Hybrid Authentication - Essential CRUD operations, JWT validation, Schedule Planning Management System
+- **Phase 2 Focus**: Material Management System - Material versioning, platform targeting, show-material associations
+- **Phase 3 Focus**: Advanced Authorization Control & Tracking Features - Role-based access control, audit trails, task management
 - **StudioRoom Admin Module**: Completed full CRUD operations for studio room management
 - **ESLint Configuration**: Updated to support underscore-prefixed variables for unused but required parameters
 - **Case Conversion Refactoring**: Implemented generic snake_case/camelCase conversion utilities
@@ -300,7 +332,7 @@ Each entity supports:
 - **v1.2**: Aligned all documentation with current implementation
 - **v1.3**: Removed duplicate content and outdated references
 - **v1.4**: Unified core system approach with simplified authentication
-- **v1.5**: Restored proper 2-phase structure with Phase 1 MVP and Phase 2 scheduling
+- **v1.5**: Restored proper 3-phase structure with Phase 1 (Schedule Planning), Phase 2 (Material Management), and Phase 3 (Advanced Features)
 - **v1.6**: Implemented proper 3-phase structure with advanced authorization control
 - **v1.7**: Adopted hybrid authentication approach with JWT validation and simple admin verification
 - **v1.8**: Refactored admin modules to remove service layers and leverage Prisma's native features

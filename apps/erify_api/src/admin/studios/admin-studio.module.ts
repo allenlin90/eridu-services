@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 
-import { StudioModule } from '../../studio/studio.module';
-import { UtilityModule } from '../../utility/utility.module';
+import { StudioModule } from '@/models/studio/studio.module';
+import { UtilityModule } from '@/utility/utility.module';
+
 import { AdminStudioController } from './admin-studio.controller';
 
 @Module({
