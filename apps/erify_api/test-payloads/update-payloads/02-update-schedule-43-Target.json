@@ -1,0 +1,1630 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-12T00:04:59.756Z",
+      "totalShows": 50,
+      "clientName": "Target",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1762905899756_37",
+        "name": "Target Show 38",
+        "startTime": "2025-11-02T06:30:41.453Z",
+        "endTime": "2025-11-02T08:20:33.171Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Target Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Target Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Target Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_44",
+        "name": "Target Show 45",
+        "startTime": "2025-11-02T07:52:41.995Z",
+        "endTime": "2025-11-02T11:35:23.371Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Target Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_18",
+        "name": "Target Show 19",
+        "startTime": "2025-11-03T15:24:15.914Z",
+        "endTime": "2025-11-03T18:16:20.063Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Target Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Target Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Target Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-19",
+            "platformShowId": "platform_show_19_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_14",
+        "name": "Target Show 15",
+        "startTime": "2025-11-03T21:57:55.956Z",
+        "endTime": "2025-11-04T00:13:34.110Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Target Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_23",
+        "name": "Target Show 24",
+        "startTime": "2025-11-05T00:46:21.804Z",
+        "endTime": "2025-11-05T02:45:52.192Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Target Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Target Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_8",
+        "name": "Target Show 9",
+        "startTime": "2025-11-06T07:56:40.100Z",
+        "endTime": "2025-11-06T10:46:12.349Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Target Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Target Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_17",
+        "name": "Target Show 18",
+        "startTime": "2025-11-06T10:12:50.787Z",
+        "endTime": "2025-11-06T13:31:11.551Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Target Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-18",
+            "platformShowId": "platform_show_18_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_12",
+        "name": "Target Show 13",
+        "startTime": "2025-11-07T07:33:09.788Z",
+        "endTime": "2025-11-07T11:32:45.468Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Target Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Target Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_41",
+        "name": "Target Show 42",
+        "startTime": "2025-11-07T17:25:58.837Z",
+        "endTime": "2025-11-07T19:57:05.326Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Target Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Target Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Target Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_39",
+        "name": "Target Show 40",
+        "startTime": "2025-11-08T04:23:28.550Z",
+        "endTime": "2025-11-08T05:55:10.489Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Target Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_10",
+        "name": "Target Show 11",
+        "startTime": "2025-11-08T18:20:04.622Z",
+        "endTime": "2025-11-08T19:57:47.583Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Target Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Target Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_16",
+        "name": "Target Show 17",
+        "startTime": "2025-11-08T20:46:02.205Z",
+        "endTime": "2025-11-09T00:17:53.313Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Target Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Target Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-17",
+            "platformShowId": "platform_show_17_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_4",
+        "name": "Target Show 5",
+        "startTime": "2025-11-09T01:58:46.006Z",
+        "endTime": "2025-11-09T05:41:10.100Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Target Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Target Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Target Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_30",
+        "name": "Target Show 31",
+        "startTime": "2025-11-09T08:14:26.222Z",
+        "endTime": "2025-11-09T12:10:19.848Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Target Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Target Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Target Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_5",
+        "name": "Target Show 6",
+        "startTime": "2025-11-09T16:03:51.217Z",
+        "endTime": "2025-11-09T17:27:27.527Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Target Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Target Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Target Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_15",
+        "name": "Target Show 16",
+        "startTime": "2025-11-09T18:45:50.920Z",
+        "endTime": "2025-11-09T19:52:01.761Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Target Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_7",
+        "name": "Target Show 8",
+        "startTime": "2025-11-10T17:43:32.330Z",
+        "endTime": "2025-11-10T19:14:44.173Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Target Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Target Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-8",
+            "platformShowId": "platform_show_8_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_21",
+        "name": "Target Show 22",
+        "startTime": "2025-11-11T14:13:30.914Z",
+        "endTime": "2025-11-11T15:26:00.729Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Target Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Target Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_49",
+        "name": "Target Show 50",
+        "startTime": "2025-11-13T20:29:11.285Z",
+        "endTime": "2025-11-13T22:04:04.165Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Target Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_48",
+        "name": "Target Show 49",
+        "startTime": "2025-11-14T00:54:56.684Z",
+        "endTime": "2025-11-14T02:41:52.959Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Target Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Target Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_33",
+        "name": "Target Show 34",
+        "startTime": "2025-11-14T12:27:43.204Z",
+        "endTime": "2025-11-14T14:20:38.944Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Target Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Target Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-34",
+            "platformShowId": "platform_show_34_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_2",
+        "name": "Target Show 3",
+        "startTime": "2025-11-15T18:38:29.689Z",
+        "endTime": "2025-11-15T21:31:46.110Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Target Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_19",
+        "name": "Target Show 20",
+        "startTime": "2025-11-16T05:40:55.342Z",
+        "endTime": "2025-11-16T08:09:45.344Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Target Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Target Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Target Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_38",
+        "name": "Target Show 39",
+        "startTime": "2025-11-16T10:49:05.855Z",
+        "endTime": "2025-11-16T14:31:53.502Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Target Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Target Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Target Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_11",
+        "name": "Target Show 12",
+        "startTime": "2025-11-17T09:14:29.380Z",
+        "endTime": "2025-11-17T10:42:49.279Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Target Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-12",
+            "platformShowId": "platform_show_12_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_42",
+        "name": "Target Show 43",
+        "startTime": "2025-11-17T09:41:04.520Z",
+        "endTime": "2025-11-17T10:47:40.293Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Target Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Target Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Target Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_46",
+        "name": "Target Show 47",
+        "startTime": "2025-11-17T14:33:21.434Z",
+        "endTime": "2025-11-17T15:49:48.287Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Target Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Target Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_47",
+        "name": "Target Show 48",
+        "startTime": "2025-11-18T08:04:01.005Z",
+        "endTime": "2025-11-18T11:22:25.297Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Target Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Target Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Target Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_28",
+        "name": "Target Show 29",
+        "startTime": "2025-11-18T08:24:50.267Z",
+        "endTime": "2025-11-18T09:52:35.268Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Target Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-29",
+            "platformShowId": "platform_show_29_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_13",
+        "name": "Target Show 14",
+        "startTime": "2025-11-18T09:17:03.812Z",
+        "endTime": "2025-11-18T13:03:17.823Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Target Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Target Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Target Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_20",
+        "name": "Target Show 21",
+        "startTime": "2025-11-18T23:49:04.750Z",
+        "endTime": "2025-11-19T02:08:56.875Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Target Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Target Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_27",
+        "name": "Target Show 28",
+        "startTime": "2025-11-19T14:18:28.626Z",
+        "endTime": "2025-11-19T18:14:52.962Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Target Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Target Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-28",
+            "platformShowId": "platform_show_28_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_25",
+        "name": "Target Show 26",
+        "startTime": "2025-11-19T15:21:36.301Z",
+        "endTime": "2025-11-19T19:14:44.797Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Target Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Target Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-26",
+            "platformShowId": "platform_show_26_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_1",
+        "name": "Target Show 2",
+        "startTime": "2025-11-21T06:54:37.775Z",
+        "endTime": "2025-11-21T10:01:28.066Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Target Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-2",
+            "platformShowId": "platform_show_2_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_31",
+        "name": "Target Show 32",
+        "startTime": "2025-11-21T15:50:01.485Z",
+        "endTime": "2025-11-21T18:04:46.482Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Target Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Target Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_34",
+        "name": "Target Show 35",
+        "startTime": "2025-11-22T22:27:40.249Z",
+        "endTime": "2025-11-23T02:20:28.448Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Target Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Target Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-35",
+            "platformShowId": "platform_show_35_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_24",
+        "name": "Target Show 25",
+        "startTime": "2025-11-23T03:04:54.609Z",
+        "endTime": "2025-11-23T05:30:59.612Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Target Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Target Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-25",
+            "platformShowId": "platform_show_25_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_36",
+        "name": "Target Show 37",
+        "startTime": "2025-11-23T09:02:46.462Z",
+        "endTime": "2025-11-23T12:38:57.208Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Target Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Target Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Target Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-37",
+            "platformShowId": "platform_show_37_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_9",
+        "name": "Target Show 10",
+        "startTime": "2025-11-24T03:16:28.616Z",
+        "endTime": "2025-11-24T05:57:45.462Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Target Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_43",
+        "name": "Target Show 44",
+        "startTime": "2025-11-24T11:06:11.765Z",
+        "endTime": "2025-11-24T13:16:54.841Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Target Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Target Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Target Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_29",
+        "name": "Target Show 30",
+        "startTime": "2025-11-24T11:33:45.435Z",
+        "endTime": "2025-11-24T13:07:09.197Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Target Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_32",
+        "name": "Target Show 33",
+        "startTime": "2025-11-25T09:51:05.011Z",
+        "endTime": "2025-11-25T11:14:02.043Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Target Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Target Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Target Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_35",
+        "name": "Target Show 36",
+        "startTime": "2025-11-25T11:33:12.213Z",
+        "endTime": "2025-11-25T13:13:55.858Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Target Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Target Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Target Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-36",
+            "platformShowId": "platform_show_36_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_22",
+        "name": "Target Show 23",
+        "startTime": "2025-11-26T03:46:13.339Z",
+        "endTime": "2025-11-26T07:41:30.495Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Target Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Target Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Target Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_6",
+        "name": "Target Show 7",
+        "startTime": "2025-11-27T09:16:45.383Z",
+        "endTime": "2025-11-27T12:33:29.839Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Target Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_40",
+        "name": "Target Show 41",
+        "startTime": "2025-11-27T10:54:59.704Z",
+        "endTime": "2025-11-27T14:53:47.407Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Target Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Target Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Target Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_45",
+        "name": "Target Show 46",
+        "startTime": "2025-11-28T00:26:45.081Z",
+        "endTime": "2025-11-28T03:34:35.579Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Target Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Target Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Target Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_0",
+        "name": "Target Show 1",
+        "startTime": "2025-11-28T04:59:51.922Z",
+        "endTime": "2025-11-28T06:25:00.225Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Target Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Target Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-1",
+            "platformShowId": "platform_show_1_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_26",
+        "name": "Target Show 27",
+        "startTime": "2025-11-29T11:59:50.087Z",
+        "endTime": "2025-11-29T14:42:11.745Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Target Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Target Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Target Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-27",
+            "platformShowId": "platform_show_27_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_3",
+        "name": "Target Show 4",
+        "startTime": "2025-11-29T21:13:01.299Z",
+        "endTime": "2025-11-29T22:15:52.125Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Target Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Target Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Target Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-4",
+            "platformShowId": "platform_show_4_2"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

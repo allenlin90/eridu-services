@@ -1,0 +1,1612 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-12T00:04:59.759Z",
+      "totalShows": 50,
+      "clientName": "Bed Bath Beyond",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1762905899759_44",
+        "name": "Bed Bath Beyond Show 45",
+        "startTime": "2025-11-01T18:46:36.414Z",
+        "endTime": "2025-11-01T21:40:40.449Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Bed Bath Beyond Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Bed Bath Beyond Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Bed Bath Beyond Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_16",
+        "name": "Bed Bath Beyond Show 17",
+        "startTime": "2025-11-01T21:56:12.358Z",
+        "endTime": "2025-11-01T23:09:55.088Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Bed Bath Beyond Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Bed Bath Beyond Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_43",
+        "name": "Bed Bath Beyond Show 44",
+        "startTime": "2025-11-02T14:53:08.194Z",
+        "endTime": "2025-11-02T16:09:21.031Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Bed Bath Beyond Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Bed Bath Beyond Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Bed Bath Beyond Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_26",
+        "name": "Bed Bath Beyond Show 27",
+        "startTime": "2025-11-02T22:16:32.421Z",
+        "endTime": "2025-11-03T00:12:03.841Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Bed Bath Beyond Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Bed Bath Beyond Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Bed Bath Beyond Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_39",
+        "name": "Bed Bath Beyond Show 40",
+        "startTime": "2025-11-03T10:39:42.504Z",
+        "endTime": "2025-11-03T13:28:00.983Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Bed Bath Beyond Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Bed Bath Beyond Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Bed Bath Beyond Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-40",
+            "platformShowId": "platform_show_40_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_49",
+        "name": "Bed Bath Beyond Show 50",
+        "startTime": "2025-11-04T19:42:49.748Z",
+        "endTime": "2025-11-04T22:28:36.193Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Bed Bath Beyond Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Bed Bath Beyond Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Bed Bath Beyond Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_15",
+        "name": "Bed Bath Beyond Show 16",
+        "startTime": "2025-11-05T04:06:20.916Z",
+        "endTime": "2025-11-05T07:56:41.888Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Bed Bath Beyond Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_7",
+        "name": "Bed Bath Beyond Show 8",
+        "startTime": "2025-11-05T18:33:48.742Z",
+        "endTime": "2025-11-05T20:13:23.439Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Bed Bath Beyond Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Bed Bath Beyond Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Bed Bath Beyond Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-8",
+            "platformShowId": "platform_show_8_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_32",
+        "name": "Bed Bath Beyond Show 33",
+        "startTime": "2025-11-05T21:46:14.171Z",
+        "endTime": "2025-11-06T01:35:53.688Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Bed Bath Beyond Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Bed Bath Beyond Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Bed Bath Beyond Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_33",
+        "name": "Bed Bath Beyond Show 34",
+        "startTime": "2025-11-07T02:20:23.597Z",
+        "endTime": "2025-11-07T05:33:05.180Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Bed Bath Beyond Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Bed Bath Beyond Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Bed Bath Beyond Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-34",
+            "platformShowId": "platform_show_34_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_0",
+        "name": "Bed Bath Beyond Show 1",
+        "startTime": "2025-11-07T10:18:38.310Z",
+        "endTime": "2025-11-07T12:14:50.114Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Bed Bath Beyond Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_47",
+        "name": "Bed Bath Beyond Show 48",
+        "startTime": "2025-11-08T00:17:26.021Z",
+        "endTime": "2025-11-08T01:25:58.525Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Bed Bath Beyond Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Bed Bath Beyond Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Bed Bath Beyond Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_25",
+        "name": "Bed Bath Beyond Show 26",
+        "startTime": "2025-11-08T09:38:43.455Z",
+        "endTime": "2025-11-08T11:07:28.923Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Bed Bath Beyond Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Bed Bath Beyond Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-26",
+            "platformShowId": "platform_show_26_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_36",
+        "name": "Bed Bath Beyond Show 37",
+        "startTime": "2025-11-08T21:15:50.526Z",
+        "endTime": "2025-11-08T23:13:02.656Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Bed Bath Beyond Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Bed Bath Beyond Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Bed Bath Beyond Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_45",
+        "name": "Bed Bath Beyond Show 46",
+        "startTime": "2025-11-08T23:04:38.809Z",
+        "endTime": "2025-11-09T01:37:25.092Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Bed Bath Beyond Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-46",
+            "platformShowId": "platform_show_46_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_48",
+        "name": "Bed Bath Beyond Show 49",
+        "startTime": "2025-11-09T06:51:48.768Z",
+        "endTime": "2025-11-09T09:40:19.790Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Bed Bath Beyond Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Bed Bath Beyond Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Bed Bath Beyond Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_5",
+        "name": "Bed Bath Beyond Show 6",
+        "startTime": "2025-11-09T19:33:14.188Z",
+        "endTime": "2025-11-09T21:36:18.323Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Bed Bath Beyond Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Bed Bath Beyond Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-6",
+            "platformShowId": "platform_show_6_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_3",
+        "name": "Bed Bath Beyond Show 4",
+        "startTime": "2025-11-09T21:21:41.562Z",
+        "endTime": "2025-11-10T00:19:01.115Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Bed Bath Beyond Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Bed Bath Beyond Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_12",
+        "name": "Bed Bath Beyond Show 13",
+        "startTime": "2025-11-10T10:27:57.494Z",
+        "endTime": "2025-11-10T12:48:23.231Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Bed Bath Beyond Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_30",
+        "name": "Bed Bath Beyond Show 31",
+        "startTime": "2025-11-10T19:22:32.295Z",
+        "endTime": "2025-11-10T21:35:59.024Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Bed Bath Beyond Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Bed Bath Beyond Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Bed Bath Beyond Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_37",
+        "name": "Bed Bath Beyond Show 38",
+        "startTime": "2025-11-12T14:44:34.009Z",
+        "endTime": "2025-11-12T16:31:40.931Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Bed Bath Beyond Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_34",
+        "name": "Bed Bath Beyond Show 35",
+        "startTime": "2025-11-12T16:03:09.451Z",
+        "endTime": "2025-11-12T19:11:33.786Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Bed Bath Beyond Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_27",
+        "name": "Bed Bath Beyond Show 28",
+        "startTime": "2025-11-12T17:00:39.063Z",
+        "endTime": "2025-11-12T19:26:10.786Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Bed Bath Beyond Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Bed Bath Beyond Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_11",
+        "name": "Bed Bath Beyond Show 12",
+        "startTime": "2025-11-13T15:39:22.102Z",
+        "endTime": "2025-11-13T18:01:43.071Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Bed Bath Beyond Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Bed Bath Beyond Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Bed Bath Beyond Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_20",
+        "name": "Bed Bath Beyond Show 21",
+        "startTime": "2025-11-13T21:04:48.531Z",
+        "endTime": "2025-11-13T23:53:44.792Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Bed Bath Beyond Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_40",
+        "name": "Bed Bath Beyond Show 41",
+        "startTime": "2025-11-14T05:13:03.981Z",
+        "endTime": "2025-11-14T07:23:04.028Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Bed Bath Beyond Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Bed Bath Beyond Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_14",
+        "name": "Bed Bath Beyond Show 15",
+        "startTime": "2025-11-14T07:15:35.471Z",
+        "endTime": "2025-11-14T09:39:00.020Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Bed Bath Beyond Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_13",
+        "name": "Bed Bath Beyond Show 14",
+        "startTime": "2025-11-14T12:36:36.631Z",
+        "endTime": "2025-11-14T16:02:08.856Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Bed Bath Beyond Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_21",
+        "name": "Bed Bath Beyond Show 22",
+        "startTime": "2025-11-16T00:58:06.834Z",
+        "endTime": "2025-11-16T02:31:17.485Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Bed Bath Beyond Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Bed Bath Beyond Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_41",
+        "name": "Bed Bath Beyond Show 42",
+        "startTime": "2025-11-16T23:15:37.964Z",
+        "endTime": "2025-11-17T01:27:20.086Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Bed Bath Beyond Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Bed Bath Beyond Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_19",
+        "name": "Bed Bath Beyond Show 20",
+        "startTime": "2025-11-17T09:12:41.088Z",
+        "endTime": "2025-11-17T13:00:34.364Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Bed Bath Beyond Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Bed Bath Beyond Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_42",
+        "name": "Bed Bath Beyond Show 43",
+        "startTime": "2025-11-18T06:32:47.229Z",
+        "endTime": "2025-11-18T09:49:27.509Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Bed Bath Beyond Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Bed Bath Beyond Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-43",
+            "platformShowId": "platform_show_43_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_8",
+        "name": "Bed Bath Beyond Show 9",
+        "startTime": "2025-11-18T13:16:06.732Z",
+        "endTime": "2025-11-18T16:39:23.677Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Bed Bath Beyond Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-9",
+            "platformShowId": "platform_show_9_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_31",
+        "name": "Bed Bath Beyond Show 32",
+        "startTime": "2025-11-19T06:41:04.230Z",
+        "endTime": "2025-11-19T08:21:04.428Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Bed Bath Beyond Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-32",
+            "platformShowId": "platform_show_32_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_10",
+        "name": "Bed Bath Beyond Show 11",
+        "startTime": "2025-11-19T10:33:59.499Z",
+        "endTime": "2025-11-19T13:40:03.257Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Bed Bath Beyond Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Bed Bath Beyond Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_6",
+        "name": "Bed Bath Beyond Show 7",
+        "startTime": "2025-11-20T18:07:17.418Z",
+        "endTime": "2025-11-20T20:08:55.532Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Bed Bath Beyond Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Bed Bath Beyond Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_4",
+        "name": "Bed Bath Beyond Show 5",
+        "startTime": "2025-11-21T04:02:38.074Z",
+        "endTime": "2025-11-21T07:56:26.018Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Bed Bath Beyond Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_17",
+        "name": "Bed Bath Beyond Show 18",
+        "startTime": "2025-11-21T18:12:06.856Z",
+        "endTime": "2025-11-21T20:46:21.637Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Bed Bath Beyond Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Bed Bath Beyond Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Bed Bath Beyond Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_46",
+        "name": "Bed Bath Beyond Show 47",
+        "startTime": "2025-11-23T07:00:15.586Z",
+        "endTime": "2025-11-23T10:56:49.473Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Bed Bath Beyond Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Bed Bath Beyond Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Bed Bath Beyond Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_9",
+        "name": "Bed Bath Beyond Show 10",
+        "startTime": "2025-11-23T11:22:32.222Z",
+        "endTime": "2025-11-23T15:02:27.200Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Bed Bath Beyond Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Bed Bath Beyond Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Bed Bath Beyond Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_29",
+        "name": "Bed Bath Beyond Show 30",
+        "startTime": "2025-11-23T21:09:25.133Z",
+        "endTime": "2025-11-24T00:47:19.386Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Bed Bath Beyond Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Bed Bath Beyond Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-30",
+            "platformShowId": "platform_show_30_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_2",
+        "name": "Bed Bath Beyond Show 3",
+        "startTime": "2025-11-24T15:18:26.143Z",
+        "endTime": "2025-11-24T18:59:16.594Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Bed Bath Beyond Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Bed Bath Beyond Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_18",
+        "name": "Bed Bath Beyond Show 19",
+        "startTime": "2025-11-26T01:27:29.354Z",
+        "endTime": "2025-11-26T02:37:07.897Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Bed Bath Beyond Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-19",
+            "platformShowId": "platform_show_19_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_22",
+        "name": "Bed Bath Beyond Show 23",
+        "startTime": "2025-11-27T11:24:37.209Z",
+        "endTime": "2025-11-27T13:19:01.892Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Bed Bath Beyond Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Bed Bath Beyond Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Bed Bath Beyond Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_23",
+        "name": "Bed Bath Beyond Show 24",
+        "startTime": "2025-11-28T04:56:02.070Z",
+        "endTime": "2025-11-28T08:52:05.571Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Bed Bath Beyond Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Bed Bath Beyond Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Bed Bath Beyond Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_1",
+        "name": "Bed Bath Beyond Show 2",
+        "startTime": "2025-11-28T20:00:08.172Z",
+        "endTime": "2025-11-28T22:10:14.324Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Bed Bath Beyond Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Bed Bath Beyond Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_38",
+        "name": "Bed Bath Beyond Show 39",
+        "startTime": "2025-11-28T21:21:00.929Z",
+        "endTime": "2025-11-29T01:03:34.928Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Bed Bath Beyond Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_35",
+        "name": "Bed Bath Beyond Show 36",
+        "startTime": "2025-11-29T00:53:50.735Z",
+        "endTime": "2025-11-29T02:28:07.426Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Bed Bath Beyond Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Bed Bath Beyond Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_28",
+        "name": "Bed Bath Beyond Show 29",
+        "startTime": "2025-11-29T15:36:57.817Z",
+        "endTime": "2025-11-29T18:37:38.163Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Bed Bath Beyond Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Bed Bath Beyond Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899759_24",
+        "name": "Bed Bath Beyond Show 25",
+        "startTime": "2025-11-29T20:27:43.548Z",
+        "endTime": "2025-11-29T22:37:14.668Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Bed Bath Beyond Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Bed Bath Beyond Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Bed Bath Beyond Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-25",
+            "platformShowId": "platform_show_25_2"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,1599 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-12T00:04:59.752Z",
+      "totalShows": 50,
+      "clientName": "Mac Cosmetics",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1762905899752_27",
+        "name": "Mac Cosmetics Show 28",
+        "startTime": "2025-10-31T21:58:52.279Z",
+        "endTime": "2025-11-01T01:52:53.677Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Mac Cosmetics Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_35",
+        "name": "Mac Cosmetics Show 36",
+        "startTime": "2025-11-01T12:12:23.224Z",
+        "endTime": "2025-11-01T14:16:37.033Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Mac Cosmetics Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-36",
+            "platformShowId": "platform_show_36_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_18",
+        "name": "Mac Cosmetics Show 19",
+        "startTime": "2025-11-01T18:41:14.010Z",
+        "endTime": "2025-11-01T22:18:29.692Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Mac Cosmetics Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Mac Cosmetics Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Mac Cosmetics Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_7",
+        "name": "Mac Cosmetics Show 8",
+        "startTime": "2025-11-01T19:41:48.855Z",
+        "endTime": "2025-11-01T23:23:57.753Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Mac Cosmetics Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Mac Cosmetics Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Mac Cosmetics Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-8",
+            "platformShowId": "platform_show_8_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_0",
+        "name": "Mac Cosmetics Show 1",
+        "startTime": "2025-11-02T00:18:54.848Z",
+        "endTime": "2025-11-02T02:13:57.405Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Mac Cosmetics Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Mac Cosmetics Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Mac Cosmetics Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_42",
+        "name": "Mac Cosmetics Show 43",
+        "startTime": "2025-11-02T18:37:21.633Z",
+        "endTime": "2025-11-02T22:12:31.124Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Mac Cosmetics Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-43",
+            "platformShowId": "platform_show_43_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_49",
+        "name": "Mac Cosmetics Show 50",
+        "startTime": "2025-11-02T23:19:35.926Z",
+        "endTime": "2025-11-03T02:52:59.822Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Mac Cosmetics Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Mac Cosmetics Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_17",
+        "name": "Mac Cosmetics Show 18",
+        "startTime": "2025-11-03T14:16:10.743Z",
+        "endTime": "2025-11-03T16:47:12.580Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Mac Cosmetics Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_21",
+        "name": "Mac Cosmetics Show 22",
+        "startTime": "2025-11-03T19:07:43.053Z",
+        "endTime": "2025-11-03T22:14:47.526Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Mac Cosmetics Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-22",
+            "platformShowId": "platform_show_22_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_30",
+        "name": "Mac Cosmetics Show 31",
+        "startTime": "2025-11-04T05:36:54.396Z",
+        "endTime": "2025-11-04T07:22:18.116Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Mac Cosmetics Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_40",
+        "name": "Mac Cosmetics Show 41",
+        "startTime": "2025-11-04T18:54:01.150Z",
+        "endTime": "2025-11-04T21:08:51.136Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Mac Cosmetics Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Mac Cosmetics Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_32",
+        "name": "Mac Cosmetics Show 33",
+        "startTime": "2025-11-05T07:15:38.706Z",
+        "endTime": "2025-11-05T10:49:48.658Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Mac Cosmetics Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-33",
+            "platformShowId": "platform_show_33_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_16",
+        "name": "Mac Cosmetics Show 17",
+        "startTime": "2025-11-05T11:44:36.933Z",
+        "endTime": "2025-11-05T14:18:57.641Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Mac Cosmetics Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Mac Cosmetics Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Mac Cosmetics Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-17",
+            "platformShowId": "platform_show_17_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_22",
+        "name": "Mac Cosmetics Show 23",
+        "startTime": "2025-11-06T02:08:57.096Z",
+        "endTime": "2025-11-06T04:03:33.497Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Mac Cosmetics Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Mac Cosmetics Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_37",
+        "name": "Mac Cosmetics Show 38",
+        "startTime": "2025-11-06T04:51:04.061Z",
+        "endTime": "2025-11-06T05:58:29.837Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Mac Cosmetics Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_34",
+        "name": "Mac Cosmetics Show 35",
+        "startTime": "2025-11-06T08:01:23.556Z",
+        "endTime": "2025-11-06T11:32:30.885Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Mac Cosmetics Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-35",
+            "platformShowId": "platform_show_35_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_31",
+        "name": "Mac Cosmetics Show 32",
+        "startTime": "2025-11-06T14:19:32.701Z",
+        "endTime": "2025-11-06T16:28:11.539Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Mac Cosmetics Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-32",
+            "platformShowId": "platform_show_32_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_45",
+        "name": "Mac Cosmetics Show 46",
+        "startTime": "2025-11-09T13:54:33.263Z",
+        "endTime": "2025-11-09T17:21:45.363Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Mac Cosmetics Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Mac Cosmetics Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Mac Cosmetics Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_5",
+        "name": "Mac Cosmetics Show 6",
+        "startTime": "2025-11-12T22:06:12.383Z",
+        "endTime": "2025-11-12T23:38:46.415Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Mac Cosmetics Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_4",
+        "name": "Mac Cosmetics Show 5",
+        "startTime": "2025-11-14T04:01:53.319Z",
+        "endTime": "2025-11-14T06:24:11.018Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Mac Cosmetics Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Mac Cosmetics Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Mac Cosmetics Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_9",
+        "name": "Mac Cosmetics Show 10",
+        "startTime": "2025-11-14T08:54:44.910Z",
+        "endTime": "2025-11-14T10:11:04.501Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Mac Cosmetics Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Mac Cosmetics Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Mac Cosmetics Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-10",
+            "platformShowId": "platform_show_10_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_2",
+        "name": "Mac Cosmetics Show 3",
+        "startTime": "2025-11-15T14:00:40.614Z",
+        "endTime": "2025-11-15T16:00:44.635Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Mac Cosmetics Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Mac Cosmetics Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_39",
+        "name": "Mac Cosmetics Show 40",
+        "startTime": "2025-11-16T12:28:44.717Z",
+        "endTime": "2025-11-16T15:14:52.706Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Mac Cosmetics Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Mac Cosmetics Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_46",
+        "name": "Mac Cosmetics Show 47",
+        "startTime": "2025-11-16T22:21:45.675Z",
+        "endTime": "2025-11-17T02:20:30.012Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Mac Cosmetics Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_38",
+        "name": "Mac Cosmetics Show 39",
+        "startTime": "2025-11-17T11:43:54.967Z",
+        "endTime": "2025-11-17T15:29:34.491Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Mac Cosmetics Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_41",
+        "name": "Mac Cosmetics Show 42",
+        "startTime": "2025-11-18T09:35:24.757Z",
+        "endTime": "2025-11-18T12:33:57.375Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Mac Cosmetics Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Mac Cosmetics Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_36",
+        "name": "Mac Cosmetics Show 37",
+        "startTime": "2025-11-18T09:55:14.129Z",
+        "endTime": "2025-11-18T13:46:45.633Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Mac Cosmetics Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Mac Cosmetics Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_12",
+        "name": "Mac Cosmetics Show 13",
+        "startTime": "2025-11-18T10:30:59.615Z",
+        "endTime": "2025-11-18T13:54:19.276Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Mac Cosmetics Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Mac Cosmetics Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_24",
+        "name": "Mac Cosmetics Show 25",
+        "startTime": "2025-11-19T02:29:42.980Z",
+        "endTime": "2025-11-19T05:03:24.972Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Mac Cosmetics Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Mac Cosmetics Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Mac Cosmetics Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-25",
+            "platformShowId": "platform_show_25_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_8",
+        "name": "Mac Cosmetics Show 9",
+        "startTime": "2025-11-19T08:14:52.611Z",
+        "endTime": "2025-11-19T10:47:43.380Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Mac Cosmetics Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-9",
+            "platformShowId": "platform_show_9_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_29",
+        "name": "Mac Cosmetics Show 30",
+        "startTime": "2025-11-19T08:44:56.135Z",
+        "endTime": "2025-11-19T09:51:19.530Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Mac Cosmetics Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Mac Cosmetics Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Mac Cosmetics Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_14",
+        "name": "Mac Cosmetics Show 15",
+        "startTime": "2025-11-19T11:22:20.972Z",
+        "endTime": "2025-11-19T13:51:37.148Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Mac Cosmetics Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_13",
+        "name": "Mac Cosmetics Show 14",
+        "startTime": "2025-11-19T19:23:46.434Z",
+        "endTime": "2025-11-19T20:48:38.696Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Mac Cosmetics Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Mac Cosmetics Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_26",
+        "name": "Mac Cosmetics Show 27",
+        "startTime": "2025-11-20T04:25:29.030Z",
+        "endTime": "2025-11-20T07:29:51.287Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Mac Cosmetics Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Mac Cosmetics Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Mac Cosmetics Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_19",
+        "name": "Mac Cosmetics Show 20",
+        "startTime": "2025-11-21T03:41:18.457Z",
+        "endTime": "2025-11-21T07:40:58.343Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Mac Cosmetics Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Mac Cosmetics Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_47",
+        "name": "Mac Cosmetics Show 48",
+        "startTime": "2025-11-21T19:24:19.852Z",
+        "endTime": "2025-11-21T22:36:38.281Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Mac Cosmetics Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-48",
+            "platformShowId": "platform_show_48_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_28",
+        "name": "Mac Cosmetics Show 29",
+        "startTime": "2025-11-21T22:16:51.370Z",
+        "endTime": "2025-11-21T23:43:04.745Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Mac Cosmetics Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Mac Cosmetics Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_6",
+        "name": "Mac Cosmetics Show 7",
+        "startTime": "2025-11-22T06:09:49.167Z",
+        "endTime": "2025-11-22T09:18:22.592Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Mac Cosmetics Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Mac Cosmetics Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-7",
+            "platformShowId": "platform_show_7_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_48",
+        "name": "Mac Cosmetics Show 49",
+        "startTime": "2025-11-22T10:40:41.970Z",
+        "endTime": "2025-11-22T11:43:00.741Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Mac Cosmetics Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Mac Cosmetics Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_20",
+        "name": "Mac Cosmetics Show 21",
+        "startTime": "2025-11-23T00:13:58.677Z",
+        "endTime": "2025-11-23T02:02:39.007Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Mac Cosmetics Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Mac Cosmetics Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_33",
+        "name": "Mac Cosmetics Show 34",
+        "startTime": "2025-11-23T06:27:21.900Z",
+        "endTime": "2025-11-23T10:09:42.391Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Mac Cosmetics Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Mac Cosmetics Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Mac Cosmetics Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-34",
+            "platformShowId": "platform_show_34_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_11",
+        "name": "Mac Cosmetics Show 12",
+        "startTime": "2025-11-24T13:45:01.524Z",
+        "endTime": "2025-11-24T15:22:40.033Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Mac Cosmetics Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Mac Cosmetics Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Mac Cosmetics Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-12",
+            "platformShowId": "platform_show_12_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_44",
+        "name": "Mac Cosmetics Show 45",
+        "startTime": "2025-11-25T01:52:05.139Z",
+        "endTime": "2025-11-25T04:14:03.144Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Mac Cosmetics Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_25",
+        "name": "Mac Cosmetics Show 26",
+        "startTime": "2025-11-25T09:09:45.248Z",
+        "endTime": "2025-11-25T11:10:13.695Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Mac Cosmetics Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_23",
+        "name": "Mac Cosmetics Show 24",
+        "startTime": "2025-11-26T10:31:51.113Z",
+        "endTime": "2025-11-26T12:06:34.171Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Mac Cosmetics Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-24",
+            "platformShowId": "platform_show_24_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_15",
+        "name": "Mac Cosmetics Show 16",
+        "startTime": "2025-11-27T01:14:05.446Z",
+        "endTime": "2025-11-27T02:31:12.399Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Mac Cosmetics Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Mac Cosmetics Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_1",
+        "name": "Mac Cosmetics Show 2",
+        "startTime": "2025-11-28T00:59:23.224Z",
+        "endTime": "2025-11-28T04:43:38.016Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Mac Cosmetics Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Mac Cosmetics Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Mac Cosmetics Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-2",
+            "platformShowId": "platform_show_2_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_3",
+        "name": "Mac Cosmetics Show 4",
+        "startTime": "2025-11-28T20:26:29.491Z",
+        "endTime": "2025-11-28T22:21:29.461Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Mac Cosmetics Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Mac Cosmetics Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_43",
+        "name": "Mac Cosmetics Show 44",
+        "startTime": "2025-11-29T09:47:27.912Z",
+        "endTime": "2025-11-29T12:22:37.515Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Mac Cosmetics Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_10",
+        "name": "Mac Cosmetics Show 11",
+        "startTime": "2025-11-30T07:53:39.548Z",
+        "endTime": "2025-11-30T09:31:05.218Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Mac Cosmetics Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Mac Cosmetics Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

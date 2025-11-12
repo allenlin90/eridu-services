@@ -2,6 +2,109 @@
 
 This document describes the complete API calling workflow for Google Sheets integration with the schedule planning lifecycle. This workflow implements the **client-by-client upload strategy** where one schedule is created per client (~100 shows each).
 
+## Simplified Workflow (Happy Path)
+
+This is a simplified version of the complete workflow, showing only the happy path without error handling or edge cases.
+
+### Workflow Flowchart (Simplified)
+
+```mermaid
+flowchart TD
+    Start([Start: Google Sheets<br/>Monthly Planning Data]) --> Group[Group Shows by Client<br/>AppsScript Processing]
+    Group --> InitLoop["Initialize: clientIndex = 1<br/>schedules = []"]
+    InitLoop --> CheckClients{More Clients?}
+    
+    CheckClients -->|No| AllCreated[All Schedules Created]
+    CheckClients -->|Yes| CreateSchedule["POST /admin/schedules<br/>Create Schedule for Client N<br/>Body: name, start_date, end_date,<br/>plan_document with ~100 shows,<br/>client_id, created_by"]
+    
+    CreateSchedule --> SaveSchedule["Save schedule_id and version<br/>schedules.push schedule_id"]
+    SaveSchedule --> IncrementClient["clientIndex++"]
+    IncrementClient --> CheckClients
+    
+    AllCreated --> ReviewLoop[For each schedule in schedules]
+    ReviewLoop --> UpdateSchedule["PATCH /admin/schedules/:id<br/>Update plan_document<br/>Body: plan_document, version<br/>Auto-creates snapshot"]
+    
+    UpdateSchedule --> ValidateSchedule["POST /admin/schedules/:id/validate<br/>Check room conflicts,<br/>MC double-booking"]
+    
+    ValidateSchedule --> PublishSchedule["POST /admin/schedules/:id/publish<br/>Body: version<br/>Deletes existing shows,<br/>Creates new shows from plan_document"]
+    
+    PublishSchedule --> NextSchedule{More Schedules?}
+    NextSchedule -->|Yes| ReviewLoop
+    NextSchedule -->|No| MonthlyOverview["GET /admin/schedules/overview/monthly<br/>Query: start_date, end_date<br/>View all schedules grouped by client"]
+    
+    MonthlyOverview --> Complete([Complete:<br/>All Schedules Published])
+    
+    style CreateSchedule fill:#e1f5ff
+    style UpdateSchedule fill:#fff4e1
+    style ValidateSchedule fill:#fff4e1
+    style PublishSchedule fill:#e8f5e9
+    style MonthlyOverview fill:#f3e5f5
+```
+
+### API Call Sequence (Simplified)
+
+#### 1. Initial Creation Phase
+
+**Purpose**: Create schedules for each client with initial plan documents
+
+- **`POST /admin/schedules`** - Create schedule for each client with initial plan_document
+  - Request body includes: `name`, `start_date`, `end_date`, `plan_document` with ~100 shows, `client_id`, `created_by`
+  - Response includes: `id` (schedule UID), `version` (starts at 1)
+
+**AppsScript Processing**:
+- Group shows by client from Google Sheets data
+- For each client, create a schedule with ~100 shows
+- Store schedule IDs and versions for subsequent operations
+
+#### 2. Update Phase (Client-by-Client)
+
+**Purpose**: Update plan documents after initial creation
+
+- **`PATCH /admin/schedules/:id`** - Update plan_document with current version
+  - Request body includes: `plan_document`, `version` (for optimistic locking)
+  - Auto-creates snapshot before update
+  - **Updates `planDocument` JSON column only** (does not create or delete shows)
+  - Increments version on success
+  - **Efficient operation**: Single JSON column update
+
+#### 3. Validation Phase
+
+**Purpose**: Validate schedule before publishing to catch errors early
+
+- **`POST /admin/schedules/:id/validate`** - Validate schedule before publish
+  - Checks room conflicts within schedule
+  - Checks MC double-booking within schedule
+  - Validates all UIDs exist (client, room, type, status, standard, MCs, platforms)
+  - Validates time range constraints
+
+#### 4. Publishing Phase
+
+**Purpose**: Sync JSON plan document to normalized Show tables
+
+**Important**: **This is the only operation that creates/deletes shows** from the normalized Show tables. All other operations (`PATCH /admin/schedules/:id`) only update the `planDocument` JSON column.
+
+- **`POST /admin/schedules/:id/publish`** - Publish schedule
+  - Request body includes: `version` (for optimistic locking)
+  - **Expensive operation**: Syncs JSON `planDocument` to normalized Show tables
+  - Backend in transaction:
+    - Creates snapshot before publish
+    - **Deletes all existing shows** associated with the schedule
+    - **Creates new shows** from `plan_document.shows[]`
+    - Creates ShowMC and ShowPlatform relationships
+    - Marks schedule as `published`
+    - Increments version
+
+#### 5. Overview Phase
+
+**Purpose**: View all schedules together for monthly overview
+
+- **`GET /admin/schedules/overview/monthly`** - View all schedules grouped by client and status
+  - Query parameters: `start_date`, `end_date`
+  - Returns schedules grouped by client and status within date range
+  - Useful for viewing complete monthly planning across all clients
+
+---
+
 ## Overview
 
 The Google Sheets integration workflow enables operators to:
@@ -240,12 +343,12 @@ flowchart TD
 - Captures current `planDocument` and version
 - Used for rollback capability
 
-### Snapshot before Publish
+### Snapshot before Restore
 
-- Created automatically before `POST /admin/schedules/:id/publish`
-- Snapshot reason: `before_publish`
-- Captures final `planDocument` before syncing to Show tables
-- Used for rollback capability
+- Created automatically before `POST /admin/snapshots/:id/restore`
+- Snapshot reason: `before_restore`
+- Captures current `planDocument` before restoring from a previous snapshot
+- Enables rollback if restore needs to be undone
 
 ## Version Management
 
@@ -261,6 +364,40 @@ flowchart TD
 - **Optimistic Locking**: Always include `version` in update/publish requests
 - **Conflict Detection**: Compare versions before making changes
 - **Version Tracking**: Each snapshot captures the version it represents
+
+## Restore from Snapshot
+
+### Restore Workflow
+
+**Purpose**: Revert a schedule to a previous version using snapshot history
+
+**Use Cases**:
+- Undo accidental changes or mistakes
+- Revert to a known good state after validation errors
+- Restore from a previous version before making new changes
+- Recover from corrupted or invalid plan documents
+
+**Workflow**:
+1. **List Snapshots**: `GET /admin/schedules/:id/snapshots` - View all available snapshots for a schedule
+2. **Get Snapshot Details**: `GET /admin/snapshots/:id` - View specific snapshot details (version, reason, timestamp)
+3. **Restore from Snapshot**: `POST /admin/snapshots/:id/restore` - Restore schedule to snapshot version
+   - Request body: `{ user_id: string }` - User performing the restore
+   - **Important**: Cannot restore published schedules (must unpublish first)
+   - Auto-creates `before_restore` snapshot before restoring (for rollback)
+   - Restores `planDocument` from snapshot
+   - Increments version after restore
+   - Returns restored schedule
+
+**Error Handling**:
+- **404 Not Found**: Snapshot or schedule not found
+- **400 Bad Request**: Cannot restore published schedules (must unpublish first)
+- **Recovery**: If restore fails, use the `before_restore` snapshot to rollback
+
+**Best Practices**:
+- Review snapshot details before restoring to ensure correct version
+- Test restore on draft schedules before using in production
+- Use restore for draft/review schedules only (published schedules require unpublish first)
+- Keep track of restore operations for audit purposes
 
 ## AppsScript Integration
 

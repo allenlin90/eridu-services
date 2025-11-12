@@ -1,0 +1,1615 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-12T00:04:59.756Z",
+      "totalShows": 50,
+      "clientName": "Tyson Foods",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1762905899756_28",
+        "name": "Tyson Foods Show 29",
+        "startTime": "2025-10-31T17:25:44.300Z",
+        "endTime": "2025-10-31T19:59:38.627Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Tyson Foods Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Tyson Foods Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-29",
+            "platformShowId": "platform_show_29_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_33",
+        "name": "Tyson Foods Show 34",
+        "startTime": "2025-10-31T21:52:19.525Z",
+        "endTime": "2025-11-01T00:21:55.626Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Tyson Foods Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Tyson Foods Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-34",
+            "platformShowId": "platform_show_34_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_27",
+        "name": "Tyson Foods Show 28",
+        "startTime": "2025-11-03T05:29:13.620Z",
+        "endTime": "2025-11-03T09:15:20.021Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Tyson Foods Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Tyson Foods Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-28",
+            "platformShowId": "platform_show_28_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_19",
+        "name": "Tyson Foods Show 20",
+        "startTime": "2025-11-03T08:24:32.107Z",
+        "endTime": "2025-11-03T09:58:46.811Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Tyson Foods Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Tyson Foods Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_29",
+        "name": "Tyson Foods Show 30",
+        "startTime": "2025-11-03T17:56:09.701Z",
+        "endTime": "2025-11-03T20:34:41.894Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Tyson Foods Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Tyson Foods Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Tyson Foods Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-30",
+            "platformShowId": "platform_show_30_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_45",
+        "name": "Tyson Foods Show 46",
+        "startTime": "2025-11-04T08:06:58.974Z",
+        "endTime": "2025-11-04T09:52:21.882Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Tyson Foods Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Tyson Foods Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Tyson Foods Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-46",
+            "platformShowId": "platform_show_46_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_15",
+        "name": "Tyson Foods Show 16",
+        "startTime": "2025-11-06T00:31:40.678Z",
+        "endTime": "2025-11-06T03:57:56.748Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Tyson Foods Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Tyson Foods Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-16",
+            "platformShowId": "platform_show_16_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_23",
+        "name": "Tyson Foods Show 24",
+        "startTime": "2025-11-06T02:18:27.574Z",
+        "endTime": "2025-11-06T06:08:32.724Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Tyson Foods Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Tyson Foods Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Tyson Foods Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_9",
+        "name": "Tyson Foods Show 10",
+        "startTime": "2025-11-06T16:52:53.723Z",
+        "endTime": "2025-11-06T19:34:37.215Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Tyson Foods Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Tyson Foods Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Tyson Foods Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-10",
+            "platformShowId": "platform_show_10_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_42",
+        "name": "Tyson Foods Show 43",
+        "startTime": "2025-11-06T17:05:26.773Z",
+        "endTime": "2025-11-06T21:01:10.115Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Tyson Foods Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Tyson Foods Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Tyson Foods Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_32",
+        "name": "Tyson Foods Show 33",
+        "startTime": "2025-11-06T17:10:55.208Z",
+        "endTime": "2025-11-06T19:14:26.453Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Tyson Foods Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_6",
+        "name": "Tyson Foods Show 7",
+        "startTime": "2025-11-07T05:58:49.971Z",
+        "endTime": "2025-11-07T07:52:40.716Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Tyson Foods Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_47",
+        "name": "Tyson Foods Show 48",
+        "startTime": "2025-11-07T15:12:15.117Z",
+        "endTime": "2025-11-07T17:07:02.375Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Tyson Foods Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-48",
+            "platformShowId": "platform_show_48_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_36",
+        "name": "Tyson Foods Show 37",
+        "startTime": "2025-11-08T08:54:24.127Z",
+        "endTime": "2025-11-08T12:23:19.122Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Tyson Foods Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Tyson Foods Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_7",
+        "name": "Tyson Foods Show 8",
+        "startTime": "2025-11-09T02:31:52.505Z",
+        "endTime": "2025-11-09T03:45:45.639Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Tyson Foods Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Tyson Foods Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Tyson Foods Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-8",
+            "platformShowId": "platform_show_8_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_43",
+        "name": "Tyson Foods Show 44",
+        "startTime": "2025-11-09T07:47:36.901Z",
+        "endTime": "2025-11-09T09:03:25.007Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Tyson Foods Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_24",
+        "name": "Tyson Foods Show 25",
+        "startTime": "2025-11-10T01:11:10.913Z",
+        "endTime": "2025-11-10T03:22:45.702Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Tyson Foods Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Tyson Foods Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-25",
+            "platformShowId": "platform_show_25_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_1",
+        "name": "Tyson Foods Show 2",
+        "startTime": "2025-11-11T14:12:31.458Z",
+        "endTime": "2025-11-11T17:09:55.732Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Tyson Foods Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Tyson Foods Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_39",
+        "name": "Tyson Foods Show 40",
+        "startTime": "2025-11-12T04:31:33.269Z",
+        "endTime": "2025-11-12T07:39:15.718Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Tyson Foods Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_48",
+        "name": "Tyson Foods Show 49",
+        "startTime": "2025-11-12T15:02:18.925Z",
+        "endTime": "2025-11-12T18:33:08.654Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Tyson Foods Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Tyson Foods Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Tyson Foods Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-49",
+            "platformShowId": "platform_show_49_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_25",
+        "name": "Tyson Foods Show 26",
+        "startTime": "2025-11-12T15:27:11.466Z",
+        "endTime": "2025-11-12T17:05:02.231Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Tyson Foods Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Tyson Foods Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_35",
+        "name": "Tyson Foods Show 36",
+        "startTime": "2025-11-13T04:27:00.465Z",
+        "endTime": "2025-11-13T07:39:55.139Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Tyson Foods Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_5",
+        "name": "Tyson Foods Show 6",
+        "startTime": "2025-11-13T07:04:13.623Z",
+        "endTime": "2025-11-13T10:42:10.631Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Tyson Foods Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Tyson Foods Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Tyson Foods Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_26",
+        "name": "Tyson Foods Show 27",
+        "startTime": "2025-11-13T23:06:07.472Z",
+        "endTime": "2025-11-14T00:57:19.748Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Tyson Foods Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Tyson Foods Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Tyson Foods Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_37",
+        "name": "Tyson Foods Show 38",
+        "startTime": "2025-11-14T23:29:55.326Z",
+        "endTime": "2025-11-15T01:49:39.379Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Tyson Foods Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Tyson Foods Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Tyson Foods Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_17",
+        "name": "Tyson Foods Show 18",
+        "startTime": "2025-11-17T08:42:42.642Z",
+        "endTime": "2025-11-17T11:09:58.994Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Tyson Foods Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-18",
+            "platformShowId": "platform_show_18_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_10",
+        "name": "Tyson Foods Show 11",
+        "startTime": "2025-11-17T09:55:47.004Z",
+        "endTime": "2025-11-17T13:25:55.076Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Tyson Foods Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Tyson Foods Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Tyson Foods Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_20",
+        "name": "Tyson Foods Show 21",
+        "startTime": "2025-11-17T11:38:15.699Z",
+        "endTime": "2025-11-17T14:17:17.851Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Tyson Foods Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-21",
+            "platformShowId": "platform_show_21_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_22",
+        "name": "Tyson Foods Show 23",
+        "startTime": "2025-11-18T00:08:35.643Z",
+        "endTime": "2025-11-18T01:39:22.342Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Tyson Foods Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_18",
+        "name": "Tyson Foods Show 19",
+        "startTime": "2025-11-18T16:47:16.225Z",
+        "endTime": "2025-11-18T18:59:03.264Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Tyson Foods Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Tyson Foods Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Tyson Foods Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_0",
+        "name": "Tyson Foods Show 1",
+        "startTime": "2025-11-19T04:47:01.900Z",
+        "endTime": "2025-11-19T06:37:29.466Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Tyson Foods Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Tyson Foods Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Tyson Foods Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_49",
+        "name": "Tyson Foods Show 50",
+        "startTime": "2025-11-19T10:29:10.872Z",
+        "endTime": "2025-11-19T13:39:50.523Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Tyson Foods Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_2",
+        "name": "Tyson Foods Show 3",
+        "startTime": "2025-11-20T00:21:00.993Z",
+        "endTime": "2025-11-20T03:17:17.938Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Tyson Foods Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Tyson Foods Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Tyson Foods Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_34",
+        "name": "Tyson Foods Show 35",
+        "startTime": "2025-11-20T00:39:00.139Z",
+        "endTime": "2025-11-20T03:43:35.726Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Tyson Foods Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Tyson Foods Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Tyson Foods Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-35",
+            "platformShowId": "platform_show_35_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_4",
+        "name": "Tyson Foods Show 5",
+        "startTime": "2025-11-22T00:23:55.987Z",
+        "endTime": "2025-11-22T02:40:56.036Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Tyson Foods Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Tyson Foods Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Tyson Foods Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_31",
+        "name": "Tyson Foods Show 32",
+        "startTime": "2025-11-22T07:41:24.910Z",
+        "endTime": "2025-11-22T10:29:29.694Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Tyson Foods Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_3",
+        "name": "Tyson Foods Show 4",
+        "startTime": "2025-11-22T23:18:18.883Z",
+        "endTime": "2025-11-23T01:23:13.527Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Tyson Foods Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Tyson Foods Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-4",
+            "platformShowId": "platform_show_4_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_44",
+        "name": "Tyson Foods Show 45",
+        "startTime": "2025-11-24T03:02:55.867Z",
+        "endTime": "2025-11-24T05:25:37.834Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Tyson Foods Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Tyson Foods Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_21",
+        "name": "Tyson Foods Show 22",
+        "startTime": "2025-11-25T17:04:38.291Z",
+        "endTime": "2025-11-25T18:39:28.111Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Tyson Foods Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_11",
+        "name": "Tyson Foods Show 12",
+        "startTime": "2025-11-25T19:50:47.002Z",
+        "endTime": "2025-11-25T21:53:01.726Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Tyson Foods Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_8",
+        "name": "Tyson Foods Show 9",
+        "startTime": "2025-11-26T13:56:56.831Z",
+        "endTime": "2025-11-26T16:46:52.745Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Tyson Foods Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Tyson Foods Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Tyson Foods Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_40",
+        "name": "Tyson Foods Show 41",
+        "startTime": "2025-11-26T22:29:56.469Z",
+        "endTime": "2025-11-27T00:01:41.602Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Tyson Foods Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_41",
+        "name": "Tyson Foods Show 42",
+        "startTime": "2025-11-27T04:15:28.546Z",
+        "endTime": "2025-11-27T07:08:28.962Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Tyson Foods Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-42",
+            "platformShowId": "platform_show_42_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_12",
+        "name": "Tyson Foods Show 13",
+        "startTime": "2025-11-27T23:45:29.323Z",
+        "endTime": "2025-11-28T01:29:13.293Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Tyson Foods Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Tyson Foods Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_16",
+        "name": "Tyson Foods Show 17",
+        "startTime": "2025-11-28T04:30:44.180Z",
+        "endTime": "2025-11-28T05:39:01.655Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Tyson Foods Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-17",
+            "platformShowId": "platform_show_17_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_30",
+        "name": "Tyson Foods Show 31",
+        "startTime": "2025-11-28T10:35:48.223Z",
+        "endTime": "2025-11-28T14:13:37.646Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Tyson Foods Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Tyson Foods Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Tyson Foods Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_13",
+        "name": "Tyson Foods Show 14",
+        "startTime": "2025-11-28T19:23:29.901Z",
+        "endTime": "2025-11-28T22:52:35.132Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Tyson Foods Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_46",
+        "name": "Tyson Foods Show 47",
+        "startTime": "2025-11-28T21:07:48.367Z",
+        "endTime": "2025-11-28T23:31:46.679Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Tyson Foods Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Tyson Foods Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_38",
+        "name": "Tyson Foods Show 39",
+        "startTime": "2025-11-30T11:32:56.664Z",
+        "endTime": "2025-11-30T13:15:51.401Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Tyson Foods Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Tyson Foods Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899756_14",
+        "name": "Tyson Foods Show 15",
+        "startTime": "2025-11-30T11:45:04.341Z",
+        "endTime": "2025-11-30T14:16:17.907Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Tyson Foods Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Tyson Foods Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Tyson Foods Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

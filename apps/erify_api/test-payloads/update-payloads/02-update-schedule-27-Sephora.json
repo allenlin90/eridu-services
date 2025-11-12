@@ -1,0 +1,1574 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-12T00:04:59.753Z",
+      "totalShows": 50,
+      "clientName": "Sephora",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1762905899752_7",
+        "name": "Sephora Show 8",
+        "startTime": "2025-11-01T02:41:12.959Z",
+        "endTime": "2025-11-01T05:08:57.942Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Sephora Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Sephora Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Sephora Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_20",
+        "name": "Sephora Show 21",
+        "startTime": "2025-11-01T03:54:43.324Z",
+        "endTime": "2025-11-01T06:05:39.053Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Sephora Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_24",
+        "name": "Sephora Show 25",
+        "startTime": "2025-11-01T07:03:16.125Z",
+        "endTime": "2025-11-01T08:33:19.528Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Sephora Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Sephora Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_29",
+        "name": "Sephora Show 30",
+        "startTime": "2025-11-01T10:57:18.757Z",
+        "endTime": "2025-11-01T12:45:25.212Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Sephora Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_1",
+        "name": "Sephora Show 2",
+        "startTime": "2025-11-01T13:02:18.169Z",
+        "endTime": "2025-11-01T15:19:16.553Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Sephora Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Sephora Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_47",
+        "name": "Sephora Show 48",
+        "startTime": "2025-11-04T00:17:23.900Z",
+        "endTime": "2025-11-04T03:13:07.387Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Sephora Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-48",
+            "platformShowId": "platform_show_48_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_28",
+        "name": "Sephora Show 29",
+        "startTime": "2025-11-04T23:02:03.801Z",
+        "endTime": "2025-11-05T02:42:57.680Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Sephora Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Sephora Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_3",
+        "name": "Sephora Show 4",
+        "startTime": "2025-11-05T11:50:10.846Z",
+        "endTime": "2025-11-05T14:37:14.474Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Sephora Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Sephora Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Sephora Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_37",
+        "name": "Sephora Show 38",
+        "startTime": "2025-11-05T16:13:17.794Z",
+        "endTime": "2025-11-05T20:07:55.371Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Sephora Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_12",
+        "name": "Sephora Show 13",
+        "startTime": "2025-11-05T22:22:58.649Z",
+        "endTime": "2025-11-06T00:57:48.160Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Sephora Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Sephora Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_21",
+        "name": "Sephora Show 22",
+        "startTime": "2025-11-06T16:51:44.168Z",
+        "endTime": "2025-11-06T19:35:44.320Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Sephora Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Sephora Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Sephora Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-22",
+            "platformShowId": "platform_show_22_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_0",
+        "name": "Sephora Show 1",
+        "startTime": "2025-11-06T20:39:45.154Z",
+        "endTime": "2025-11-06T23:47:54.552Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Sephora Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Sephora Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Sephora Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_4",
+        "name": "Sephora Show 5",
+        "startTime": "2025-11-07T23:54:24.606Z",
+        "endTime": "2025-11-08T02:32:59.633Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Sephora Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Sephora Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Sephora Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_34",
+        "name": "Sephora Show 35",
+        "startTime": "2025-11-08T02:49:12.890Z",
+        "endTime": "2025-11-08T06:45:15.147Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Sephora Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Sephora Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_39",
+        "name": "Sephora Show 40",
+        "startTime": "2025-11-08T11:48:54.629Z",
+        "endTime": "2025-11-08T13:30:15.346Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Sephora Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Sephora Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Sephora Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-40",
+            "platformShowId": "platform_show_40_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_46",
+        "name": "Sephora Show 47",
+        "startTime": "2025-11-10T06:44:13.056Z",
+        "endTime": "2025-11-10T09:18:20.113Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Sephora Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Sephora Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_32",
+        "name": "Sephora Show 33",
+        "startTime": "2025-11-11T00:26:23.512Z",
+        "endTime": "2025-11-11T02:43:46.661Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Sephora Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_45",
+        "name": "Sephora Show 46",
+        "startTime": "2025-11-11T20:59:07.586Z",
+        "endTime": "2025-11-11T22:28:29.378Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Sephora Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Sephora Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_14",
+        "name": "Sephora Show 15",
+        "startTime": "2025-11-12T00:22:29.958Z",
+        "endTime": "2025-11-12T04:04:19.317Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Sephora Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Sephora Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Sephora Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_13",
+        "name": "Sephora Show 14",
+        "startTime": "2025-11-13T02:12:07.664Z",
+        "endTime": "2025-11-13T06:03:10.826Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Sephora Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Sephora Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Sephora Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_31",
+        "name": "Sephora Show 32",
+        "startTime": "2025-11-13T18:53:37.198Z",
+        "endTime": "2025-11-13T21:17:13.375Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Sephora Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Sephora Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Sephora Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_18",
+        "name": "Sephora Show 19",
+        "startTime": "2025-11-14T04:10:26.904Z",
+        "endTime": "2025-11-14T05:11:04.875Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Sephora Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Sephora Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Sephora Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_9",
+        "name": "Sephora Show 10",
+        "startTime": "2025-11-15T17:54:15.963Z",
+        "endTime": "2025-11-15T20:18:58.648Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Sephora Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-10",
+            "platformShowId": "platform_show_10_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_22",
+        "name": "Sephora Show 23",
+        "startTime": "2025-11-16T04:54:22.333Z",
+        "endTime": "2025-11-16T08:16:41.044Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Sephora Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_25",
+        "name": "Sephora Show 26",
+        "startTime": "2025-11-17T03:11:36.222Z",
+        "endTime": "2025-11-17T05:06:21.264Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Sephora Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_2",
+        "name": "Sephora Show 3",
+        "startTime": "2025-11-17T17:52:59.044Z",
+        "endTime": "2025-11-17T21:45:11.669Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Sephora Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_5",
+        "name": "Sephora Show 6",
+        "startTime": "2025-11-18T19:24:44.285Z",
+        "endTime": "2025-11-18T21:15:31.483Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Sephora Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_48",
+        "name": "Sephora Show 49",
+        "startTime": "2025-11-19T14:44:57.912Z",
+        "endTime": "2025-11-19T17:22:34.914Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Sephora Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_16",
+        "name": "Sephora Show 17",
+        "startTime": "2025-11-20T04:56:16.173Z",
+        "endTime": "2025-11-20T08:02:25.263Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Sephora Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Sephora Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Sephora Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-17",
+            "platformShowId": "platform_show_17_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_30",
+        "name": "Sephora Show 31",
+        "startTime": "2025-11-20T11:28:10.917Z",
+        "endTime": "2025-11-20T15:13:13.559Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Sephora Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_26",
+        "name": "Sephora Show 27",
+        "startTime": "2025-11-20T15:16:36.146Z",
+        "endTime": "2025-11-20T18:09:10.845Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Sephora Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Sephora Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_23",
+        "name": "Sephora Show 24",
+        "startTime": "2025-11-21T18:58:10.007Z",
+        "endTime": "2025-11-21T20:49:18.184Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Sephora Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Sephora Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Sephora Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_11",
+        "name": "Sephora Show 12",
+        "startTime": "2025-11-22T04:58:22.605Z",
+        "endTime": "2025-11-22T08:26:41.138Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Sephora Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Sephora Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_36",
+        "name": "Sephora Show 37",
+        "startTime": "2025-11-22T12:31:15.325Z",
+        "endTime": "2025-11-22T16:15:31.794Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Sephora Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Sephora Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_6",
+        "name": "Sephora Show 7",
+        "startTime": "2025-11-22T13:39:23.384Z",
+        "endTime": "2025-11-22T16:11:33.442Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Sephora Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_41",
+        "name": "Sephora Show 42",
+        "startTime": "2025-11-23T23:32:10.576Z",
+        "endTime": "2025-11-24T02:26:05.967Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Sephora Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_27",
+        "name": "Sephora Show 28",
+        "startTime": "2025-11-24T13:08:16.437Z",
+        "endTime": "2025-11-24T15:23:55.087Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Sephora Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_15",
+        "name": "Sephora Show 16",
+        "startTime": "2025-11-25T00:06:46.017Z",
+        "endTime": "2025-11-25T03:48:23.862Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Sephora Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Sephora Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Sephora Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-16",
+            "platformShowId": "platform_show_16_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_17",
+        "name": "Sephora Show 18",
+        "startTime": "2025-11-26T02:04:00.420Z",
+        "endTime": "2025-11-26T03:20:43.048Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Sephora Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Sephora Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-18",
+            "platformShowId": "platform_show_18_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_10",
+        "name": "Sephora Show 11",
+        "startTime": "2025-11-26T11:15:06.057Z",
+        "endTime": "2025-11-26T13:13:46.029Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Sephora Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Sephora Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_44",
+        "name": "Sephora Show 45",
+        "startTime": "2025-11-26T15:29:44.702Z",
+        "endTime": "2025-11-26T17:34:03.682Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Sephora Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Sephora Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Sephora Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_43",
+        "name": "Sephora Show 44",
+        "startTime": "2025-11-27T03:29:52.086Z",
+        "endTime": "2025-11-27T07:19:15.329Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Sephora Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Sephora Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_49",
+        "name": "Sephora Show 50",
+        "startTime": "2025-11-28T04:43:31.655Z",
+        "endTime": "2025-11-28T07:23:59.439Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Sephora Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Sephora Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Sephora Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_35",
+        "name": "Sephora Show 36",
+        "startTime": "2025-11-28T14:13:30.639Z",
+        "endTime": "2025-11-28T17:22:47.071Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Sephora Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Sephora Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-36",
+            "platformShowId": "platform_show_36_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_19",
+        "name": "Sephora Show 20",
+        "startTime": "2025-11-28T15:15:11.948Z",
+        "endTime": "2025-11-28T17:22:38.441Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Sephora Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Sephora Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Sephora Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_38",
+        "name": "Sephora Show 39",
+        "startTime": "2025-11-28T22:16:10.981Z",
+        "endTime": "2025-11-29T00:39:40.965Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Sephora Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_40",
+        "name": "Sephora Show 41",
+        "startTime": "2025-11-29T07:07:10.864Z",
+        "endTime": "2025-11-29T10:52:22.219Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Sephora Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Sephora Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_42",
+        "name": "Sephora Show 43",
+        "startTime": "2025-11-29T08:09:36.892Z",
+        "endTime": "2025-11-29T09:21:06.267Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Sephora Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_8",
+        "name": "Sephora Show 9",
+        "startTime": "2025-11-29T11:36:25.386Z",
+        "endTime": "2025-11-29T13:51:36.838Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Sephora Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Sephora Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_33",
+        "name": "Sephora Show 34",
+        "startTime": "2025-11-30T10:10:18.712Z",
+        "endTime": "2025-11-30T11:25:46.282Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Sephora Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

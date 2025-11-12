@@ -1,6 +1,7 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import { paginationQuerySchema } from '@/common/pagination/schema/pagination.schema';
 import { ClientService } from '@/models/client/client.service';
 import { clientSchema } from '@/models/client/schemas/client.schema';
 import { ScheduleService } from '@/models/schedule/schedule.service';
@@ -218,6 +219,49 @@ export const bulkUpdateScheduleResultSchema = z.object({
   successful_schedules: z.array(scheduleDto).optional(),
 });
 
+// List schedules filter schema (filters only, pagination handled separately)
+export const listSchedulesFilterSchema = z.object({
+  client_id: z
+    .union([
+      z.string().startsWith(ClientService.UID_PREFIX),
+      z.array(z.string().startsWith(ClientService.UID_PREFIX)),
+    ])
+    .optional(),
+  status: z.union([z.string(), z.array(z.string())]).optional(),
+  created_by: z
+    .union([
+      z.string().startsWith(UserService.UID_PREFIX),
+      z.array(z.string().startsWith(UserService.UID_PREFIX)),
+    ])
+    .optional(),
+  published_by: z
+    .union([
+      z.string().startsWith(UserService.UID_PREFIX),
+      z.array(z.string().startsWith(UserService.UID_PREFIX)),
+    ])
+    .optional(),
+  start_date_from: z.iso.datetime().optional(),
+  start_date_to: z.iso.datetime().optional(),
+  end_date_from: z.iso.datetime().optional(),
+  end_date_to: z.iso.datetime().optional(),
+  name: z.string().optional(),
+  order_by: z
+    .enum(['created_at', 'updated_at', 'start_date', 'end_date'])
+    .default('created_at'),
+  order_direction: z.enum(['asc', 'desc']).default('desc'),
+  include_plan_document: z.coerce.boolean().default(false),
+  include_deleted: z.coerce.boolean().default(false),
+});
+
+// List schedules query schema (extends pagination with filters)
+// Use .and() to combine schemas while preserving type inference
+export const listSchedulesQuerySchema = paginationQuerySchema.and(
+  listSchedulesFilterSchema,
+);
+
+// Type inference for the query schema
+export type ListSchedulesQuery = z.infer<typeof listSchedulesQuerySchema>;
+
 // Monthly overview query schema
 export const monthlyOverviewQuerySchema = z.object({
   start_date: z.iso.datetime(),
@@ -269,6 +313,28 @@ export class BulkCreateScheduleResultDto extends createZodDto(
 export class BulkUpdateScheduleResultDto extends createZodDto(
   bulkUpdateScheduleResultSchema,
 ) {}
+// List schedules query DTO (extends pagination with filters)
+export class ListSchedulesQueryDto extends createZodDto(
+  listSchedulesQuerySchema,
+) {
+  declare page: number;
+  declare limit: number;
+  declare take: number;
+  declare skip: number;
+  declare client_id?: string | string[];
+  declare status?: string | string[];
+  declare created_by?: string | string[];
+  declare published_by?: string | string[];
+  declare start_date_from?: string;
+  declare start_date_to?: string;
+  declare end_date_from?: string;
+  declare end_date_to?: string;
+  declare name?: string;
+  declare order_by: 'created_at' | 'updated_at' | 'start_date' | 'end_date';
+  declare order_direction: 'asc' | 'desc';
+  declare include_plan_document: boolean;
+  declare include_deleted: boolean;
+}
 export class MonthlyOverviewQueryDto extends createZodDto(
   monthlyOverviewQuerySchema,
 ) {}

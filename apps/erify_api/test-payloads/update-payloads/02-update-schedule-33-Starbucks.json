@@ -1,0 +1,1615 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-12T00:04:59.754Z",
+      "totalShows": 50,
+      "clientName": "Starbucks",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1762905899754_17",
+        "name": "Starbucks Show 18",
+        "startTime": "2025-11-02T08:03:20.866Z",
+        "endTime": "2025-11-02T09:15:41.368Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Starbucks Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Starbucks Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Starbucks Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_48",
+        "name": "Starbucks Show 49",
+        "startTime": "2025-11-02T14:26:50.926Z",
+        "endTime": "2025-11-02T17:52:57.417Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Starbucks Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_37",
+        "name": "Starbucks Show 38",
+        "startTime": "2025-11-03T09:39:35.477Z",
+        "endTime": "2025-11-03T13:16:07.919Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Starbucks Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_4",
+        "name": "Starbucks Show 5",
+        "startTime": "2025-11-03T19:17:33.587Z",
+        "endTime": "2025-11-03T21:45:20.517Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Starbucks Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Starbucks Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_38",
+        "name": "Starbucks Show 39",
+        "startTime": "2025-11-03T20:51:32.492Z",
+        "endTime": "2025-11-03T23:13:31.188Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Starbucks Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Starbucks Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_25",
+        "name": "Starbucks Show 26",
+        "startTime": "2025-11-04T07:53:00.525Z",
+        "endTime": "2025-11-04T11:27:01.073Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Starbucks Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-26",
+            "platformShowId": "platform_show_26_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_30",
+        "name": "Starbucks Show 31",
+        "startTime": "2025-11-05T02:17:36.290Z",
+        "endTime": "2025-11-05T05:30:42.336Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Starbucks Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Starbucks Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Starbucks Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_28",
+        "name": "Starbucks Show 29",
+        "startTime": "2025-11-06T13:46:38.327Z",
+        "endTime": "2025-11-06T14:52:13.039Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Starbucks Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-29",
+            "platformShowId": "platform_show_29_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_26",
+        "name": "Starbucks Show 27",
+        "startTime": "2025-11-07T05:44:33.529Z",
+        "endTime": "2025-11-07T09:10:11.684Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Starbucks Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Starbucks Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Starbucks Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-27",
+            "platformShowId": "platform_show_27_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_3",
+        "name": "Starbucks Show 4",
+        "startTime": "2025-11-07T19:17:31.945Z",
+        "endTime": "2025-11-07T22:08:01.470Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Starbucks Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Starbucks Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Starbucks Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_35",
+        "name": "Starbucks Show 36",
+        "startTime": "2025-11-08T13:49:39.486Z",
+        "endTime": "2025-11-08T14:55:02.507Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Starbucks Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Starbucks Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_6",
+        "name": "Starbucks Show 7",
+        "startTime": "2025-11-08T14:20:11.379Z",
+        "endTime": "2025-11-08T15:30:57.414Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Starbucks Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Starbucks Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-7",
+            "platformShowId": "platform_show_7_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_43",
+        "name": "Starbucks Show 44",
+        "startTime": "2025-11-09T09:13:26.412Z",
+        "endTime": "2025-11-09T10:32:48.352Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Starbucks Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Starbucks Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-44",
+            "platformShowId": "platform_show_44_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_23",
+        "name": "Starbucks Show 24",
+        "startTime": "2025-11-10T04:26:14.108Z",
+        "endTime": "2025-11-10T07:41:15.817Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Starbucks Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_8",
+        "name": "Starbucks Show 9",
+        "startTime": "2025-11-10T22:35:07.532Z",
+        "endTime": "2025-11-11T01:45:11.645Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Starbucks Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Starbucks Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Starbucks Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_10",
+        "name": "Starbucks Show 11",
+        "startTime": "2025-11-11T10:23:58.453Z",
+        "endTime": "2025-11-11T12:15:24.371Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Starbucks Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_46",
+        "name": "Starbucks Show 47",
+        "startTime": "2025-11-11T22:14:37.883Z",
+        "endTime": "2025-11-12T00:20:27.871Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Starbucks Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Starbucks Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Starbucks Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_12",
+        "name": "Starbucks Show 13",
+        "startTime": "2025-11-14T03:43:14.989Z",
+        "endTime": "2025-11-14T05:19:36.502Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Starbucks Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Starbucks Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_44",
+        "name": "Starbucks Show 45",
+        "startTime": "2025-11-14T04:52:53.293Z",
+        "endTime": "2025-11-14T07:55:26.109Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Starbucks Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_24",
+        "name": "Starbucks Show 25",
+        "startTime": "2025-11-14T08:45:31.272Z",
+        "endTime": "2025-11-14T12:42:36.922Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Starbucks Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Starbucks Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Starbucks Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_11",
+        "name": "Starbucks Show 12",
+        "startTime": "2025-11-14T13:50:41.392Z",
+        "endTime": "2025-11-14T14:53:49.535Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Starbucks Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Starbucks Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_45",
+        "name": "Starbucks Show 46",
+        "startTime": "2025-11-14T15:19:48.108Z",
+        "endTime": "2025-11-14T16:32:05.163Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Starbucks Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-46",
+            "platformShowId": "platform_show_46_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_34",
+        "name": "Starbucks Show 35",
+        "startTime": "2025-11-15T03:26:26.854Z",
+        "endTime": "2025-11-15T06:04:43.130Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Starbucks Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-35",
+            "platformShowId": "platform_show_35_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_13",
+        "name": "Starbucks Show 14",
+        "startTime": "2025-11-15T06:42:39.505Z",
+        "endTime": "2025-11-15T09:35:16.444Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Starbucks Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Starbucks Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_22",
+        "name": "Starbucks Show 23",
+        "startTime": "2025-11-16T05:40:48.707Z",
+        "endTime": "2025-11-16T07:48:11.405Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Starbucks Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_36",
+        "name": "Starbucks Show 37",
+        "startTime": "2025-11-16T14:08:14.950Z",
+        "endTime": "2025-11-16T17:07:43.404Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Starbucks Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Starbucks Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Starbucks Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_40",
+        "name": "Starbucks Show 41",
+        "startTime": "2025-11-16T14:38:42.579Z",
+        "endTime": "2025-11-16T18:24:31.982Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Starbucks Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Starbucks Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Starbucks Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_31",
+        "name": "Starbucks Show 32",
+        "startTime": "2025-11-16T17:50:00.811Z",
+        "endTime": "2025-11-16T21:36:04.132Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Starbucks Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Starbucks Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Starbucks Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-32",
+            "platformShowId": "platform_show_32_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_33",
+        "name": "Starbucks Show 34",
+        "startTime": "2025-11-17T15:12:08.599Z",
+        "endTime": "2025-11-17T16:34:13.672Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Starbucks Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Starbucks Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Starbucks Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_16",
+        "name": "Starbucks Show 17",
+        "startTime": "2025-11-18T03:18:37.967Z",
+        "endTime": "2025-11-18T06:06:49.042Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Starbucks Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Starbucks Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Starbucks Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_39",
+        "name": "Starbucks Show 40",
+        "startTime": "2025-11-18T09:20:44.588Z",
+        "endTime": "2025-11-18T12:07:01.927Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Starbucks Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Starbucks Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Starbucks Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_7",
+        "name": "Starbucks Show 8",
+        "startTime": "2025-11-18T20:53:32.170Z",
+        "endTime": "2025-11-19T00:25:48.313Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Starbucks Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_5",
+        "name": "Starbucks Show 6",
+        "startTime": "2025-11-19T14:44:04.711Z",
+        "endTime": "2025-11-19T16:05:56.486Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Starbucks Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_1",
+        "name": "Starbucks Show 2",
+        "startTime": "2025-11-20T10:50:57.662Z",
+        "endTime": "2025-11-20T12:17:41.202Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Starbucks Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Starbucks Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_0",
+        "name": "Starbucks Show 1",
+        "startTime": "2025-11-20T12:27:17.377Z",
+        "endTime": "2025-11-20T16:25:49.407Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Starbucks Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Starbucks Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_29",
+        "name": "Starbucks Show 30",
+        "startTime": "2025-11-20T12:37:46.516Z",
+        "endTime": "2025-11-20T15:06:30.031Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Starbucks Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_47",
+        "name": "Starbucks Show 48",
+        "startTime": "2025-11-21T04:52:21.687Z",
+        "endTime": "2025-11-21T08:48:55.547Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Starbucks Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Starbucks Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-48",
+            "platformShowId": "platform_show_48_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_41",
+        "name": "Starbucks Show 42",
+        "startTime": "2025-11-21T19:10:47.431Z",
+        "endTime": "2025-11-21T21:17:10.732Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Starbucks Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-42",
+            "platformShowId": "platform_show_42_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_32",
+        "name": "Starbucks Show 33",
+        "startTime": "2025-11-22T11:12:47.900Z",
+        "endTime": "2025-11-22T13:30:43.735Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Starbucks Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Starbucks Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Starbucks Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_19",
+        "name": "Starbucks Show 20",
+        "startTime": "2025-11-22T21:30:55.040Z",
+        "endTime": "2025-11-22T23:53:18.471Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Starbucks Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_18",
+        "name": "Starbucks Show 19",
+        "startTime": "2025-11-24T05:50:47.642Z",
+        "endTime": "2025-11-24T08:16:37.469Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Starbucks Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Starbucks Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Starbucks Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_49",
+        "name": "Starbucks Show 50",
+        "startTime": "2025-11-24T12:39:26.136Z",
+        "endTime": "2025-11-24T14:45:34.861Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Starbucks Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Starbucks Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Starbucks Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_14",
+        "name": "Starbucks Show 15",
+        "startTime": "2025-11-24T15:08:27.149Z",
+        "endTime": "2025-11-24T16:22:39.832Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Starbucks Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_42",
+        "name": "Starbucks Show 43",
+        "startTime": "2025-11-24T19:54:08.383Z",
+        "endTime": "2025-11-24T23:36:11.229Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Starbucks Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Starbucks Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Starbucks Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-43",
+            "platformShowId": "platform_show_43_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_2",
+        "name": "Starbucks Show 3",
+        "startTime": "2025-11-25T04:46:04.083Z",
+        "endTime": "2025-11-25T06:34:53.643Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Starbucks Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Starbucks Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Starbucks Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_9",
+        "name": "Starbucks Show 10",
+        "startTime": "2025-11-28T09:23:07.957Z",
+        "endTime": "2025-11-28T12:37:52.389Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Starbucks Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Starbucks Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Starbucks Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-10",
+            "platformShowId": "platform_show_10_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_20",
+        "name": "Starbucks Show 21",
+        "startTime": "2025-11-28T14:54:21.441Z",
+        "endTime": "2025-11-28T18:28:53.080Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Starbucks Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Starbucks Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_21",
+        "name": "Starbucks Show 22",
+        "startTime": "2025-11-30T03:25:10.556Z",
+        "endTime": "2025-11-30T07:12:24.390Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Starbucks Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_15",
+        "name": "Starbucks Show 16",
+        "startTime": "2025-11-30T06:22:00.545Z",
+        "endTime": "2025-11-30T09:03:33.447Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Starbucks Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Starbucks Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-16",
+            "platformShowId": "platform_show_16_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_27",
+        "name": "Starbucks Show 28",
+        "startTime": "2025-11-30T08:52:18.301Z",
+        "endTime": "2025-11-30T10:32:57.611Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Starbucks Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Starbucks Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

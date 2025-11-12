@@ -56,11 +56,12 @@ Phase 1 establishes the core production functions with simplified authentication
 - **Version History**: Restore from any snapshot for rollback capabilities
 - **Bulk Operations**: Bulk create and update schedules with partial success handling
 - **Monthly Overview**: Get schedules grouped by client and status within a date range
-- **Client-by-Client Schedule Upload** ⭐ (Phase 1 Approach): Simple upload workflow for typical monthly planning
-  - **Strategy**: One schedule per client (~100 shows each)
-  - **No Chunking Needed**: Typical client schedules fit within payload limits
-  - **Async Publishing**: Queue-based publishing per client for scalability
-  - **Use Case**: Monthly planning with ~10 clients, ~100 shows per client
+- **Client-by-Client Schedule Upload**: Simple upload workflow for typical monthly planning
+  - **Strategy**: One schedule per client (~50 shows each), then publish schedules individually
+  - **No Chunking Needed**: Typical client schedules fit within payload limits (~1-2MB per schedule)
+  - **Individual Publishing**: Publish each schedule via `POST /admin/schedules/:id/publish` (one at a time)
+  - **Use Case**: Monthly planning with ~50 clients, ~50 shows per client
+  - **Note**: Bulk publish operations (publish multiple schedules in single API call) are deferred to Phase 2
   - **Design**: See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md#phase-1-client-by-client-upload--implemented) for workflow and rationale
   - **Status**: Recommended approach for Phase 1 implementation
 - **Schedule Query Support**: Flexible queries for planning workflows
@@ -140,7 +141,10 @@ Phase 1 establishes the core production functions with simplified authentication
     - [x] Database schema complete
     - [x] ScheduleSnapshotService with basic CRUD operations
     - [x] AdminSnapshotController for version history operations at `/admin/snapshots`
+      - [x] `GET /admin/snapshots/:id` - Get snapshot details
+      - [x] `POST /admin/snapshots/:id/restore` - Restore schedule from snapshot
     - [x] Auto-snapshot on update functionality
+    - [x] Restore from snapshot functionality (via SchedulePlanningService)
 
 - Seed data (Required for Show management)
   - [x] ShowType (bau, campaign, other)
@@ -160,36 +164,49 @@ Phase 1 establishes the core production functions with simplified authentication
     - [x] Bulk create endpoint (`POST /admin/schedules/bulk`)
     - [x] Bulk update endpoint (`PATCH /admin/schedules/bulk`)
     - [x] Monthly overview endpoint (`GET /admin/schedules/overview/monthly`)
+    - [x] Individual schedule publish endpoint (`POST /admin/schedules/:id/publish`)
+    - [x] Individual schedule validate endpoint (`POST /admin/schedules/:id/validate`)
   - [x] AdminSnapshotController for version history operations at `/admin/snapshots`
+    - [x] `GET /admin/snapshots/:id` - Get snapshot details
+    - [x] `POST /admin/snapshots/:id/restore` - Restore schedule from snapshot
+  - [x] Schedule restore from snapshot functionality (via SchedulePlanningService)
+    - [x] `GET /admin/schedules/:id/snapshots` - List snapshots for a schedule
+    - [x] Restore workflow with `before_restore` snapshot creation
   - [x] Update Show model to include `scheduleId` field
-  - [ ] **Client-by-Client Schedule Upload** ⭐ (Phase 1 Primary Approach)
-    - [ ] **Google Sheets Integration**
-      - [ ] Group shows by client before uploading
-      - [ ] Create one schedule per client (~100 shows each)
-      - [ ] Simple AppsScript code (no chunking logic needed)
-    - [ ] **Async Publishing Workflow** (Optional for Phase 1)
-      - [ ] Implement queue-based publishing (BullMQ or similar)
-      - [ ] Publish schedules per client in background
-      - [ ] Independent error handling per client
-    - [x] **Monthly Overview** ✅ **IMPLEMENTED**
+  - [x] **Client-by-Client Schedule Upload** ⭐ (Phase 1 Primary Approach)
+    - [x] **Bulk Create/Update Operations**
+      - [x] `POST /admin/schedules/bulk` - Bulk create schedules (one per client)
+      - [x] `PATCH /admin/schedules/bulk` - Bulk update schedules
+      - [x] Partial success handling (failures isolated per client)
+      - [x] Detailed per-schedule results with error reporting
+    - [x] **Individual Schedule Publishing**
+      - [x] `POST /admin/schedules/:id/publish` - Publish single schedule
+      - [x] `POST /admin/schedules/:id/validate` - Validate before publish
+      - [x] Per-client validation (room conflicts, MC double-booking)
+    - [x] **Monthly Overview**
       - [x] Use existing `GET /admin/schedules/overview/monthly` endpoint
       - [x] Groups schedules by client and status
-      - [ ] Test with 10+ clients (documentation/testing pending)
+      - [ ] Test with 50+ clients (documentation/testing pending)
+    - [ ] **Google Sheets Integration**
+      - [ ] Group shows by client before uploading
+      - [ ] Create one schedule per client (~50 shows each)
+      - [ ] Simple AppsScript code using bulk create + individual publish
     - [ ] **Testing**
-      - [x] Unit tests: bulk create/update (✅ schedule.service.spec.ts)
-      - [ ] Integration tests: 10 clients, ~100 shows each
+      - [x] Unit tests: bulk create/update
+      - [x] Integration tests: 50 clients, ~50 shows each
+      - [x] Individual publish integration tests
       - [ ] Google Sheets simulation with AppsScript
-    - [x] **Documentation** ✅ **COMPLETE**
+    - [x] **Documentation**
       - [x] Updated test-payloads/README.md with client-by-client workflow
       - [x] Google Sheets integration examples
       - [x] API usage guide in SCHEDULE_UPLOAD_API_DESIGN.md
-      - [x] Google Sheets API calling workflow flowchart with complete lifecycle (create → update → validate → publish)
-    - [ ] See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md#phase-1-client-by-client-upload--implemented) for complete workflow
+      - [x] Google Sheets API calling workflow flowchart with complete lifecycle (create → individual publish)
+    - [x] See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md#phase-1-client-by-client-upload--implemented) for complete workflow
   - ⚠️ **Note**: Chunked upload `appendShows` service method exists (service layer only, no controller endpoint) but is **deferred to Phase 2** as there's no current demand for large single-client schedules
-  - [ ] **Enhanced Query Support for Client-Scoped Data (Google Sheets Integration)**
-    - [ ] Add query parameters to `GET /admin/schedules` endpoint (client_id, start_date, end_date, order_by) for planning stage queries
-    - [ ] Add `include_plan_document` query parameter to `GET /admin/schedules` endpoint (default: `false`) to exclude large `plan_document` from list responses
-    - [ ] Add query parameters to `GET /admin/shows` endpoint (client_id, start_date, end_date, order_by)
+  - [x] **Enhanced Query Support for Client-Scoped Data (Google Sheets Integration)**
+    - [x] Add query parameters to `GET /admin/schedules` endpoint (client_id, start_date, end_date, order_by) for planning stage queries
+    - [x] Add `include_plan_document` query parameter to `GET /admin/schedules` endpoint (default: `false`) to exclude large `plan_document` from list responses
+    - [x] Add query parameters to `GET /admin/shows` endpoint (client_id, start_date, end_date, order_by)
     - [x] Add database indexes for performance: `[clientId, startTime]` and `[clientId, startTime, deletedAt]` on Show model 
     - [x] Add database index for performance: `[clientId, startDate, endDate, deletedAt]` on Schedule model 
     - [x] Update ScheduleService to support flexible date range queries by client ID (getMonthlyOverview supports clientIds, but regular GET endpoint needs query params)
@@ -243,7 +260,7 @@ Phase 1 establishes the core production functions with simplified authentication
 
 ## Success Criteria
 
-### Core Entity Management ✅ **COMPLETE**
+### Core Entity Management
 - [x] Complete CRUD operations for core entities (Users, Clients, MCs, Platforms, Studios, StudioRooms, ShowType, ShowStatus, ShowStandard)
 - [x] Functional direct show creation with full CRUD operations
 - [x] Working show-MC relationships (ShowMC entity)
@@ -254,7 +271,7 @@ Phase 1 establishes the core production functions with simplified authentication
   - [x] Relationship management endpoints
 - [x] Admin interface for managing all implemented entities
 
-### Schedule Planning Management System ✅ **COMPLETE**
+### Schedule Planning Management System (Individual Publishing)
 - [x] Schedule entity with JSON plan document storage
 - [x] ScheduleSnapshot for version history
 - [x] Schedule publishing workflow (JSON → normalized Show tables)
@@ -263,8 +280,10 @@ Phase 1 establishes the core production functions with simplified authentication
 - [x] Bulk operations:
   - [x] Bulk create schedules with partial success handling
   - [x] Bulk update schedules with partial success handling
+  - [x] Individual schedule publishing (one schedule at a time)
 - [x] Monthly overview endpoint (schedules grouped by client and status within date range)
-- [x] Client-by-client upload strategy documented
+- [x] Client-by-client upload strategy documented and implemented
+- [x] Individual schedule publishing (validate and publish one schedule at a time)
 - ⚠️ Chunked upload service method implemented (Phase 2 feature, no controller endpoint)
 
 ### Authentication & Authorization ⚠️ **PARTIAL**
@@ -273,7 +292,7 @@ Phase 1 establishes the core production functions with simplified authentication
 - [ ] Admin guard implementation (JWT + StudioMembership verification)
 - [ ] Hybrid authentication with admin write, others read-only
 
-### Quality & Performance ✅ **COMPLETE**
+### Quality & Performance
 - [x] Comprehensive testing coverage for core services (unit tests)
 - [x] Security best practices implemented (input validation, SQL injection prevention, CORS, headers)
 - [x] Performance optimizations in place (indexed queries, pagination, efficient loading)
@@ -323,11 +342,15 @@ This phase delivers the core production functions with hybrid authentication app
 #### Schedule Planning Workflow (Client-by-Client Approach)
 1. **Google Sheets Preparation**: Operators maintain monthly planning data in Google Sheets (sorted by client)
 2. **Group by Client**: AppsScript groups shows by client (one schedule per client)
-3. **Create Schedules**: For each client, create schedule with ~100 shows via `POST /admin/schedules`
-4. **Per-Client Validation**: Each schedule is validated independently (room conflicts, MC double-booking within client)
-5. **Async Publishing**: Queue publish jobs per client, process in background worker
+3. **Bulk Create Schedules**: Create all schedules at once via `POST /admin/schedules/bulk` (~50 schedules, ~50 shows each)
+4. **Individual Publishing**: Publish each schedule via `POST /admin/schedules/:id/publish` (one at a time)
+   - Validate before publish: `POST /admin/schedules/:id/validate`
+   - Publish schedule: `POST /admin/schedules/:id/publish`
+5. **Handle Errors**: Review failed schedules, fix in Google Sheets, retry
 6. **Monthly Overview**: Use `GET /admin/schedules/overview/monthly` to view all client schedules together
-8. **Version History**: Every change creates immutable snapshot for audit trail and rollback capability
+7. **Version History**: Every change creates immutable snapshot for audit trail and rollback capability
+
+**Note**: Bulk publish operations (publish multiple schedules in single API call with async job tracking) are deferred to Phase 2. See Phase 2 roadmap for bulk publish endpoint and job status tracking.
 
 #### Google Sheets Integration
 
@@ -346,11 +369,13 @@ For complete Google Sheets integration workflow, API call sequence, error handli
 - ✅ Pre-publish validation with conflict detection (per-client)
 - ✅ Optimistic locking for concurrent edits
 - ✅ Schedule bulk operations (bulk create and bulk update)
+- ✅ Individual schedule publishing (validate and publish one schedule at a time)
 - ✅ Monthly overview (schedules grouped by client and status)
 - ✅ **Client-by-Client Schedule Upload** (Primary approach for Phase 1)
-  - ✅ One schedule per client (~100 shows each)
+  - ✅ One schedule per client (~50 shows each)
   - ✅ No chunking needed for typical clients
-  - ⚠️ Async publishing per client (implementation pending)
+  - ✅ Bulk create/update operations implemented
+  - ✅ Individual schedule publishing (one at a time)
   - ⚠️ Google Sheets integration examples (documentation pending)
 
 **Phase 1 Limitations:**
@@ -360,12 +385,16 @@ For complete Google Sheets integration workflow, API call sequence, error handli
 - **No chunked upload** (large clients with 200+ shows not supported)
 
 **Future Enhancements (Phase 2+):**
-- **Chunked Upload for Large Clients** (>200 shows per client)
-- Show bulk operations (bulk create and bulk update with partial success handling)
-- Material Management System (material versioning, platform targeting, show-material associations)
-- CSV import/export service for migration from Google Sheets
-- API query features (expand parameter, search and search_term parameters)
-- Idempotency handling for show and schedule creation requests
+- **Bulk Publish Operations** ⭐ - Validate and publish multiple schedules in single API call with async job tracking (Phase 2)
+- **Chunked Upload for Large Clients** (>200 shows per client) - Edge cases only (Phase 2)
+- **Cross-client validation endpoint** - Validate conflicts across multiple schedules (Phase 2)
+- **Enhanced error reporting** - Row numbers and detailed validation errors (Phase 2)
+- **Email notifications** - Notify users when bulk publish jobs complete (Phase 2)
+- Show bulk operations (bulk create and bulk update with partial success handling) (Phase 2)
+- Material Management System (material versioning, platform targeting, show-material associations) (Phase 2)
+- CSV import/export service for migration from Google Sheets (Phase 2)
+- API query features (expand parameter, search and search_term parameters) (Phase 2)
+- Idempotency handling for show and schedule creation requests (Phase 2)
 
 This approach provides a solid foundation with core functions while maintaining simplicity in the authentication layer and preparing for advanced features in later phases.
 

@@ -14,12 +14,12 @@ import { ZodSerializerDto } from 'nestjs-zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
 import { ApiZodResponse } from '@/common/openapi/decorators';
-import {
-  createPaginatedResponseSchema,
-  PaginationQueryDto,
-} from '@/common/pagination/schema/pagination.schema';
+import { createPaginatedResponseSchema } from '@/common/pagination/schema/pagination.schema';
 import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
-import { UpdateShowDto } from '@/models/show/schemas/show.schema';
+import {
+  ListShowsQueryDto,
+  UpdateShowDto,
+} from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import {
   CreateShowWithAssignmentsDto,
@@ -60,23 +60,16 @@ export class AdminShowController extends BaseAdminController {
   @HttpCode(HttpStatus.OK)
   @ApiZodResponse(
     createPaginatedResponseSchema(showWithAssignmentsDto),
-    'List of shows with pagination',
+    'List of shows with pagination and filtering',
   )
   @ZodSerializerDto(createPaginatedResponseSchema(showWithAssignmentsDto))
-  async getShows(@Query() query: PaginationQueryDto) {
-    const data = await this.showOrchestrationService.getShowsWithRelations({
-      skip: query.skip,
-      take: query.take,
-      orderBy: { createdAt: 'desc' },
-    });
-    const total = await this.showOrchestrationService
-      .getShowsWithRelations({
-        take: undefined,
-        skip: undefined,
-      })
-      .then((shows) => (Array.isArray(shows) ? shows.length : 0));
+  async getShows(@Query() query: ListShowsQueryDto) {
+    // Zod validates and transforms at runtime, so all required properties exist
+    const result =
+      await this.showOrchestrationService.getPaginatedShowsWithRelations(query);
+    const { shows, total } = result;
 
-    return this.createPaginatedResponse(data, total, query);
+    return this.createPaginatedResponse(shows, total, query);
   }
 
   @Get(':id')

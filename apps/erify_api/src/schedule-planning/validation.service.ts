@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '@/prisma/prisma.service';
+import { UtilityService } from '@/utility/utility.service';
 
 import {
   PlanDocument,
@@ -12,7 +13,10 @@ import {
 
 @Injectable()
 export class ValidationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly utilityService: UtilityService,
+  ) {}
 
   /**
    * Validates an entire schedule including all shows in the plan document.
@@ -57,7 +61,7 @@ export class ValidationService {
     // Validate each show
     for (let i = 0; i < shows.length; i++) {
       const show = shows[i];
-      const showErrors = await this.validateShow(
+      const showErrors = this.validateShow(
         show,
         i,
         scheduleStart,
@@ -68,7 +72,19 @@ export class ValidationService {
       errors.push(...showErrors);
     }
 
+    // Validate all shows belong to the same client (Phase 1: one schedule per client)
+    if (schedule.clientId !== null) {
+      const clientValidationErrors = this.validateClientConsistency(
+        shows,
+        schedule.clientId,
+        uidMaps.clients,
+      );
+      errors.push(...clientValidationErrors);
+    }
+
     // Check for internal conflicts (room and MC double-booking within schedule)
+    // Phase 1: Only validates conflicts within the schedule itself (per-client).
+    // Cross-schedule validation (conflicts with other published schedules) is deferred to Phase 2.
     const conflictErrors = this.checkInternalConflicts(shows);
     errors.push(...conflictErrors);
 
@@ -81,14 +97,14 @@ export class ValidationService {
   /**
    * Validates an individual show plan item.
    */
-  private async validateShow(
+  private validateShow(
     show: ShowPlanItem,
     showIndex: number,
     scheduleStart: Date,
     scheduleEnd: Date,
     uidMaps: Awaited<ReturnType<typeof this.buildUidLookupMaps>>,
-    prismaClient: Prisma.TransactionClient | PrismaService,
-  ): Promise<ValidationError[]> {
+    _prismaClient: Prisma.TransactionClient | PrismaService,
+  ): ValidationError[] {
     const errors: ValidationError[] = [];
     const startTime = new Date(show.startTime);
     const endTime = new Date(show.endTime);
@@ -183,34 +199,41 @@ export class ValidationService {
       }
     }
 
-    // Check room availability (conflicts with existing shows)
-    const roomConflicts = await this.checkRoomAvailability(
-      show,
-      uidMaps.studioRooms.get(show.studioRoomUid)!,
-      prismaClient,
-    );
-    if (roomConflicts.length > 0) {
-      errors.push({
-        type: 'room_conflict',
-        message: `Room conflict: ${roomConflicts.join(', ')}`,
-        showIndex,
-        showTempId: show.tempId,
-      });
-    }
+    // Note: Room and MC availability checks against existing published shows are disabled
+    // for Phase 1 per design doc - we only validate conflicts within the schedule itself.
+    // Cross-schedule validation (conflicts with other published schedules) is deferred to Phase 2.
+    //
+    // Internal conflicts (within schedule) are checked separately in checkInternalConflicts()
 
-    // Check MC availability (double-booking)
-    for (const mc of show.mcs || []) {
-      const mcConflicts = await this.checkMcAvailability(
-        show,
-        mc.mcUid,
-        uidMaps.mcs.get(mc.mcUid)!,
-        prismaClient,
-      );
-      if (mcConflicts.length > 0) {
+    return errors;
+  }
+
+  /**
+   * Validates that all shows in a schedule belong to the same client.
+   * Phase 1 requirement: one schedule per client.
+   *
+   * @param shows - Array of show plan items
+   * @param scheduleClientId - The client ID of the schedule
+   * @param clientMap - Map of client UID to client ID
+   * @returns Array of validation errors if any shows belong to different clients
+   */
+  private validateClientConsistency(
+    shows: ShowPlanItem[],
+    scheduleClientId: bigint,
+    clientMap: Map<string, bigint>,
+  ): ValidationError[] {
+    const errors: ValidationError[] = [];
+
+    for (let i = 0; i < shows.length; i++) {
+      const show = shows[i];
+      const showClientId = clientMap.get(show.clientUid);
+
+      // If client UID doesn't exist, it will be caught by reference validation
+      if (showClientId !== undefined && showClientId !== scheduleClientId) {
         errors.push({
-          type: 'mc_double_booking',
-          message: `MC ${mc.mcUid} is double-booked: ${mcConflicts.join(', ')}`,
-          showIndex,
+          type: 'reference_not_found',
+          message: `Show "${show.name}" belongs to a different client than the schedule. All shows in a schedule must belong to the same client (Phase 1 requirement).`,
+          showIndex: i,
           showTempId: show.tempId,
         });
       }
@@ -221,6 +244,8 @@ export class ValidationService {
 
   /**
    * Checks for internal conflicts within the schedule (room and MC conflicts).
+   * Phase 1: Only validates conflicts within the schedule itself (per-client validation).
+   * Cross-schedule validation (conflicts with other published schedules) is deferred to Phase 2.
    */
   private checkInternalConflicts(shows: ShowPlanItem[]): ValidationError[] {
     const errors: ValidationError[] = [];
@@ -233,7 +258,7 @@ export class ValidationService {
 
         if (
           show1.studioRoomUid === show2.studioRoomUid &&
-          this.isTimeOverlapping(
+          this.utilityService.isTimeOverlapping(
             show1.startTime,
             show1.endTime,
             show2.startTime,
@@ -263,7 +288,7 @@ export class ValidationService {
 
         for (const mcUid of commonMcUids) {
           if (
-            this.isTimeOverlapping(
+            this.utilityService.isTimeOverlapping(
               show1.startTime,
               show1.endTime,
               show2.startTime,
@@ -286,10 +311,15 @@ export class ValidationService {
 
   /**
    * Checks room availability by querying existing shows.
+   * Excludes shows from the current schedule being validated (only checks conflicts with other schedules).
+   *
+   * @deprecated Phase 1: Cross-schedule validation is deferred to Phase 2.
+   * This method is kept for future Phase 2 implementation but is not currently used.
    */
   private async checkRoomAvailability(
     show: ShowPlanItem,
     roomId: bigint,
+    scheduleId: bigint,
     prismaClient: Prisma.TransactionClient | PrismaService,
   ): Promise<string[]> {
     const startTime = new Date(show.startTime);
@@ -299,6 +329,8 @@ export class ValidationService {
       where: {
         studioRoomId: roomId,
         deletedAt: null,
+        // Exclude shows from the current schedule being validated
+        scheduleId: { not: scheduleId },
         OR: [
           {
             AND: [
@@ -337,11 +369,16 @@ export class ValidationService {
 
   /**
    * Checks MC availability by querying existing show-MC assignments.
+   * Excludes shows from the current schedule being validated (only checks conflicts with other schedules).
+   *
+   * @deprecated Phase 1: Cross-schedule validation is deferred to Phase 2.
+   * This method is kept for future Phase 2 implementation but is not currently used.
    */
   private async checkMcAvailability(
     show: ShowPlanItem,
     mcUid: string,
     mcId: bigint,
+    scheduleId: bigint,
     prismaClient: Prisma.TransactionClient | PrismaService,
   ): Promise<string[]> {
     const startTime = new Date(show.startTime);
@@ -357,6 +394,8 @@ export class ValidationService {
           },
         },
         deletedAt: null,
+        // Exclude shows from the current schedule being validated
+        scheduleId: { not: scheduleId },
         OR: [
           {
             AND: [
@@ -399,7 +438,15 @@ export class ValidationService {
   private async buildUidLookupMaps(
     shows: ShowPlanItem[],
     prismaClient: Prisma.TransactionClient | PrismaService,
-  ) {
+  ): Promise<{
+    clients: Map<string, bigint>;
+    studioRooms: Map<string, bigint>;
+    showTypes: Map<string, bigint>;
+    showStatuses: Map<string, bigint>;
+    showStandards: Map<string, bigint>;
+    mcs: Map<string, bigint>;
+    platforms: Map<string, bigint>;
+  }> {
     // Collect all unique UIDs
     const clientUids = new Set<string>();
     const studioRoomUids = new Set<string>();
@@ -461,14 +508,26 @@ export class ValidationService {
       }),
     ]);
 
-    // Build maps
-    const clientMap = new Map(clients.map((c) => [c.uid, c.id]));
-    const studioRoomMap = new Map(studioRooms.map((r) => [r.uid, r.id]));
-    const showTypeMap = new Map(showTypes.map((t) => [t.uid, t.id]));
-    const showStatusMap = new Map(showStatuses.map((s) => [s.uid, s.id]));
-    const showStandardMap = new Map(showStandards.map((s) => [s.uid, s.id]));
-    const mcMap = new Map(mcs.map((m) => [m.uid, m.id]));
-    const platformMap = new Map(platforms.map((p) => [p.uid, p.id]));
+    // Build maps with explicit types
+    const clientMap = new Map<string, bigint>(
+      clients.map((c) => [c.uid, c.id]),
+    );
+    const studioRoomMap = new Map<string, bigint>(
+      studioRooms.map((r) => [r.uid, r.id]),
+    );
+    const showTypeMap = new Map<string, bigint>(
+      showTypes.map((t) => [t.uid, t.id]),
+    );
+    const showStatusMap = new Map<string, bigint>(
+      showStatuses.map((s) => [s.uid, s.id]),
+    );
+    const showStandardMap = new Map<string, bigint>(
+      showStandards.map((s) => [s.uid, s.id]),
+    );
+    const mcMap = new Map<string, bigint>(mcs.map((m) => [m.uid, m.id]));
+    const platformMap = new Map<string, bigint>(
+      platforms.map((p) => [p.uid, p.id]),
+    );
 
     return {
       clients: clientMap,
@@ -479,22 +538,5 @@ export class ValidationService {
       mcs: mcMap,
       platforms: platformMap,
     };
-  }
-
-  /**
-   * Checks if two time ranges overlap.
-   */
-  private isTimeOverlapping(
-    start1: string,
-    end1: string,
-    start2: string,
-    end2: string,
-  ): boolean {
-    const s1 = new Date(start1).getTime();
-    const e1 = new Date(end1).getTime();
-    const s2 = new Date(start2).getTime();
-    const e2 = new Date(end2).getTime();
-
-    return s1 < e2 && s2 < e1;
   }
 }

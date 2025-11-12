@@ -1,0 +1,1639 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-12T00:04:59.752Z",
+      "totalShows": 50,
+      "clientName": "The Body Shop",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1762905899752_41",
+        "name": "The Body Shop Show 42",
+        "startTime": "2025-11-01T19:58:09.818Z",
+        "endTime": "2025-11-01T21:34:04.961Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for The Body Shop Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_10",
+        "name": "The Body Shop Show 11",
+        "startTime": "2025-11-03T00:56:17.465Z",
+        "endTime": "2025-11-03T04:51:50.120Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for The Body Shop Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_23",
+        "name": "The Body Shop Show 24",
+        "startTime": "2025-11-04T00:15:52.608Z",
+        "endTime": "2025-11-04T03:30:18.995Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for The Body Shop Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for The Body Shop Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-24",
+            "platformShowId": "platform_show_24_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_47",
+        "name": "The Body Shop Show 48",
+        "startTime": "2025-11-04T09:41:06.743Z",
+        "endTime": "2025-11-04T12:32:42.776Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for The Body Shop Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for The Body Shop Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_29",
+        "name": "The Body Shop Show 30",
+        "startTime": "2025-11-04T15:43:25.025Z",
+        "endTime": "2025-11-04T18:51:07.454Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for The Body Shop Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for The Body Shop Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-30",
+            "platformShowId": "platform_show_30_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_35",
+        "name": "The Body Shop Show 36",
+        "startTime": "2025-11-05T11:59:20.661Z",
+        "endTime": "2025-11-05T15:00:33.161Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for The Body Shop Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for The Body Shop Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for The Body Shop Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-36",
+            "platformShowId": "platform_show_36_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_22",
+        "name": "The Body Shop Show 23",
+        "startTime": "2025-11-05T20:14:31.060Z",
+        "endTime": "2025-11-05T22:50:44.815Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for The Body Shop Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_1",
+        "name": "The Body Shop Show 2",
+        "startTime": "2025-11-06T19:15:26.831Z",
+        "endTime": "2025-11-06T21:20:55.297Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for The Body Shop Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for The Body Shop Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for The Body Shop Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-2",
+            "platformShowId": "platform_show_2_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_15",
+        "name": "The Body Shop Show 16",
+        "startTime": "2025-11-07T04:17:51.030Z",
+        "endTime": "2025-11-07T07:21:06.136Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for The Body Shop Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for The Body Shop Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-16",
+            "platformShowId": "platform_show_16_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_36",
+        "name": "The Body Shop Show 37",
+        "startTime": "2025-11-07T10:40:05.198Z",
+        "endTime": "2025-11-07T12:17:10.541Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for The Body Shop Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-37",
+            "platformShowId": "platform_show_37_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_2",
+        "name": "The Body Shop Show 3",
+        "startTime": "2025-11-07T12:25:03.477Z",
+        "endTime": "2025-11-07T14:54:11.158Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for The Body Shop Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for The Body Shop Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_49",
+        "name": "The Body Shop Show 50",
+        "startTime": "2025-11-07T15:16:10.923Z",
+        "endTime": "2025-11-07T17:05:05.686Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for The Body Shop Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for The Body Shop Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for The Body Shop Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_20",
+        "name": "The Body Shop Show 21",
+        "startTime": "2025-11-09T01:56:30.026Z",
+        "endTime": "2025-11-09T05:28:53.483Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for The Body Shop Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for The Body Shop Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for The Body Shop Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_42",
+        "name": "The Body Shop Show 43",
+        "startTime": "2025-11-09T06:06:33.848Z",
+        "endTime": "2025-11-09T09:10:31.338Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for The Body Shop Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for The Body Shop Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for The Body Shop Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_33",
+        "name": "The Body Shop Show 34",
+        "startTime": "2025-11-09T14:37:29.513Z",
+        "endTime": "2025-11-09T17:45:28.392Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for The Body Shop Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for The Body Shop Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for The Body Shop Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-34",
+            "platformShowId": "platform_show_34_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_19",
+        "name": "The Body Shop Show 20",
+        "startTime": "2025-11-09T22:52:42.281Z",
+        "endTime": "2025-11-10T02:32:52.426Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for The Body Shop Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_11",
+        "name": "The Body Shop Show 12",
+        "startTime": "2025-11-10T08:41:10.203Z",
+        "endTime": "2025-11-10T10:42:01.145Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for The Body Shop Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for The Body Shop Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for The Body Shop Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-12",
+            "platformShowId": "platform_show_12_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_16",
+        "name": "The Body Shop Show 17",
+        "startTime": "2025-11-11T05:57:09.021Z",
+        "endTime": "2025-11-11T08:11:13.809Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for The Body Shop Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_32",
+        "name": "The Body Shop Show 33",
+        "startTime": "2025-11-11T18:03:20.462Z",
+        "endTime": "2025-11-11T21:36:54.993Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for The Body Shop Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for The Body Shop Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for The Body Shop Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_38",
+        "name": "The Body Shop Show 39",
+        "startTime": "2025-11-12T03:18:31.400Z",
+        "endTime": "2025-11-12T05:10:36.344Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for The Body Shop Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_39",
+        "name": "The Body Shop Show 40",
+        "startTime": "2025-11-12T08:24:07.566Z",
+        "endTime": "2025-11-12T12:19:04.160Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for The Body Shop Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for The Body Shop Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-40",
+            "platformShowId": "platform_show_40_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_43",
+        "name": "The Body Shop Show 44",
+        "startTime": "2025-11-13T04:20:49.174Z",
+        "endTime": "2025-11-13T08:07:01.880Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for The Body Shop Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for The Body Shop Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_8",
+        "name": "The Body Shop Show 9",
+        "startTime": "2025-11-13T13:34:15.378Z",
+        "endTime": "2025-11-13T15:25:30.959Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for The Body Shop Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_27",
+        "name": "The Body Shop Show 28",
+        "startTime": "2025-11-14T02:06:31.825Z",
+        "endTime": "2025-11-14T03:15:50.155Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for The Body Shop Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for The Body Shop Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for The Body Shop Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_46",
+        "name": "The Body Shop Show 47",
+        "startTime": "2025-11-14T10:04:10.646Z",
+        "endTime": "2025-11-14T12:48:28.176Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for The Body Shop Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_13",
+        "name": "The Body Shop Show 14",
+        "startTime": "2025-11-15T15:17:52.388Z",
+        "endTime": "2025-11-15T18:42:08.833Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for The Body Shop Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for The Body Shop Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for The Body Shop Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_34",
+        "name": "The Body Shop Show 35",
+        "startTime": "2025-11-16T23:49:43.577Z",
+        "endTime": "2025-11-17T00:51:20.537Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for The Body Shop Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-35",
+            "platformShowId": "platform_show_35_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_21",
+        "name": "The Body Shop Show 22",
+        "startTime": "2025-11-17T10:15:27.348Z",
+        "endTime": "2025-11-17T13:05:51.855Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for The Body Shop Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for The Body Shop Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for The Body Shop Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_26",
+        "name": "The Body Shop Show 27",
+        "startTime": "2025-11-17T23:55:44.995Z",
+        "endTime": "2025-11-18T02:42:07.664Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for The Body Shop Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for The Body Shop Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for The Body Shop Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-27",
+            "platformShowId": "platform_show_27_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_31",
+        "name": "The Body Shop Show 32",
+        "startTime": "2025-11-18T11:39:02.540Z",
+        "endTime": "2025-11-18T14:53:18.683Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for The Body Shop Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_9",
+        "name": "The Body Shop Show 10",
+        "startTime": "2025-11-20T23:17:31.964Z",
+        "endTime": "2025-11-21T01:56:37.879Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for The Body Shop Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for The Body Shop Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_3",
+        "name": "The Body Shop Show 4",
+        "startTime": "2025-11-21T16:48:18.167Z",
+        "endTime": "2025-11-21T18:35:16.627Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for The Body Shop Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for The Body Shop Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for The Body Shop Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_4",
+        "name": "The Body Shop Show 5",
+        "startTime": "2025-11-22T03:16:08.448Z",
+        "endTime": "2025-11-22T06:48:31.908Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for The Body Shop Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_40",
+        "name": "The Body Shop Show 41",
+        "startTime": "2025-11-22T19:13:20.363Z",
+        "endTime": "2025-11-22T21:07:46.946Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for The Body Shop Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_48",
+        "name": "The Body Shop Show 49",
+        "startTime": "2025-11-22T22:42:22.627Z",
+        "endTime": "2025-11-23T01:21:16.944Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for The Body Shop Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for The Body Shop Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_6",
+        "name": "The Body Shop Show 7",
+        "startTime": "2025-11-23T00:26:13.528Z",
+        "endTime": "2025-11-23T03:27:12.443Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for The Body Shop Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_37",
+        "name": "The Body Shop Show 38",
+        "startTime": "2025-11-23T14:33:26.393Z",
+        "endTime": "2025-11-23T18:26:44.031Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for The Body Shop Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for The Body Shop Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for The Body Shop Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_17",
+        "name": "The Body Shop Show 18",
+        "startTime": "2025-11-23T21:56:42.324Z",
+        "endTime": "2025-11-24T00:23:30.501Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for The Body Shop Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for The Body Shop Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for The Body Shop Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_24",
+        "name": "The Body Shop Show 25",
+        "startTime": "2025-11-24T00:22:35.752Z",
+        "endTime": "2025-11-24T03:42:05.271Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for The Body Shop Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for The Body Shop Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for The Body Shop Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-25",
+            "platformShowId": "platform_show_25_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_28",
+        "name": "The Body Shop Show 29",
+        "startTime": "2025-11-26T01:49:19.403Z",
+        "endTime": "2025-11-26T03:30:46.818Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for The Body Shop Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for The Body Shop Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for The Body Shop Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-29",
+            "platformShowId": "platform_show_29_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_14",
+        "name": "The Body Shop Show 15",
+        "startTime": "2025-11-26T06:40:05.898Z",
+        "endTime": "2025-11-26T08:42:59.917Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for The Body Shop Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for The Body Shop Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for The Body Shop Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_25",
+        "name": "The Body Shop Show 26",
+        "startTime": "2025-11-26T20:02:46.718Z",
+        "endTime": "2025-11-26T23:18:01.179Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for The Body Shop Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for The Body Shop Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for The Body Shop Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-26",
+            "platformShowId": "platform_show_26_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_18",
+        "name": "The Body Shop Show 19",
+        "startTime": "2025-11-27T02:32:17.755Z",
+        "endTime": "2025-11-27T05:21:41.065Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for The Body Shop Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for The Body Shop Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for The Body Shop Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-19",
+            "platformShowId": "platform_show_19_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_45",
+        "name": "The Body Shop Show 46",
+        "startTime": "2025-11-27T06:20:21.206Z",
+        "endTime": "2025-11-27T09:57:51.084Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for The Body Shop Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for The Body Shop Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for The Body Shop Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_0",
+        "name": "The Body Shop Show 1",
+        "startTime": "2025-11-27T19:53:19.807Z",
+        "endTime": "2025-11-27T23:40:02.139Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for The Body Shop Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for The Body Shop Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for The Body Shop Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_5",
+        "name": "The Body Shop Show 6",
+        "startTime": "2025-11-28T05:47:15.305Z",
+        "endTime": "2025-11-28T09:08:47.918Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for The Body Shop Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-6",
+            "platformShowId": "platform_show_6_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_44",
+        "name": "The Body Shop Show 45",
+        "startTime": "2025-11-29T06:12:07.627Z",
+        "endTime": "2025-11-29T08:41:58.994Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for The Body Shop Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for The Body Shop Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_30",
+        "name": "The Body Shop Show 31",
+        "startTime": "2025-11-29T16:18:23.187Z",
+        "endTime": "2025-11-29T17:39:33.446Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for The Body Shop Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_7",
+        "name": "The Body Shop Show 8",
+        "startTime": "2025-11-29T21:12:55.646Z",
+        "endTime": "2025-11-29T23:30:38.014Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for The Body Shop Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for The Body Shop Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for The Body Shop Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899752_12",
+        "name": "The Body Shop Show 13",
+        "startTime": "2025-11-30T07:02:40.874Z",
+        "endTime": "2025-11-30T09:31:10.869Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for The Body Shop Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for The Body Shop Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for The Body Shop Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

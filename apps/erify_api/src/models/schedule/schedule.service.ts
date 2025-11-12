@@ -17,6 +17,7 @@ import {
   BulkCreateScheduleDto,
   BulkUpdateScheduleDto,
   CreateScheduleDto,
+  ListSchedulesQuery,
   UpdateScheduleDto,
 } from './schemas/schedule.schema';
 
@@ -77,12 +78,163 @@ export class ScheduleService extends BaseModelService {
     take?: number;
     where?: Prisma.ScheduleWhereInput;
     orderBy?: Record<string, 'asc' | 'desc'>;
+    include?: Prisma.ScheduleInclude;
   }): Promise<Schedule[]> {
     return this.scheduleRepository.findMany(params);
   }
 
   async countSchedules(where?: Prisma.ScheduleWhereInput): Promise<number> {
     return this.scheduleRepository.count(where ?? {});
+  }
+
+  /**
+   * Builds Prisma where clause from filter parameters.
+   *
+   * @param filters - Filter parameters from query
+   * @returns Prisma where clause for schedule filtering
+   */
+  private buildScheduleWhereClause(filters: {
+    client_id?: string | string[];
+    status?: string | string[];
+    created_by?: string | string[];
+    published_by?: string | string[];
+    start_date_from?: string;
+    start_date_to?: string;
+    end_date_from?: string;
+    end_date_to?: string;
+    name?: string;
+    include_deleted: boolean;
+  }): Prisma.ScheduleWhereInput {
+    const where: Prisma.ScheduleWhereInput = {};
+
+    // Handle deleted filter
+    if (!filters.include_deleted) {
+      where.deletedAt = null;
+    }
+
+    // Handle client_id filter (supports single or array)
+    if (filters.client_id) {
+      const clientIds = Array.isArray(filters.client_id)
+        ? filters.client_id
+        : [filters.client_id];
+      where.client = {
+        uid: { in: clientIds },
+        ...(filters.include_deleted ? {} : { deletedAt: null }),
+      };
+    }
+
+    // Handle status filter (supports single or array)
+    if (filters.status) {
+      const statuses = Array.isArray(filters.status)
+        ? filters.status
+        : [filters.status];
+      where.status = { in: statuses };
+    }
+
+    // Handle created_by filter (supports single or array)
+    if (filters.created_by) {
+      const createdByUids = Array.isArray(filters.created_by)
+        ? filters.created_by
+        : [filters.created_by];
+      where.createdByUser = {
+        uid: { in: createdByUids },
+        ...(filters.include_deleted ? {} : { deletedAt: null }),
+      };
+    }
+
+    // Handle published_by filter (supports single or array)
+    if (filters.published_by) {
+      const publishedByUids = Array.isArray(filters.published_by)
+        ? filters.published_by
+        : [filters.published_by];
+      where.publishedByUser = {
+        uid: { in: publishedByUids },
+        ...(filters.include_deleted ? {} : { deletedAt: null }),
+      };
+    }
+
+    // Handle start_date range filter
+    if (filters.start_date_from || filters.start_date_to) {
+      where.startDate = {};
+      if (filters.start_date_from) {
+        where.startDate.gte = new Date(filters.start_date_from);
+      }
+      if (filters.start_date_to) {
+        where.startDate.lte = new Date(filters.start_date_to);
+      }
+    }
+
+    // Handle end_date range filter
+    if (filters.end_date_from || filters.end_date_to) {
+      where.endDate = {};
+      if (filters.end_date_from) {
+        where.endDate.gte = new Date(filters.end_date_from);
+      }
+      if (filters.end_date_to) {
+        where.endDate.lte = new Date(filters.end_date_to);
+      }
+    }
+
+    // Handle name search filter (case-insensitive partial match)
+    if (filters.name) {
+      where.name = {
+        contains: filters.name,
+        mode: 'insensitive',
+      };
+    }
+
+    return where;
+  }
+
+  /**
+   * Gets paginated schedules with filtering.
+   *
+   * @param query - Query parameters including pagination and filters (validated by Zod)
+   * @returns Object containing schedules and total count
+   */
+  async getPaginatedSchedules(query: ListSchedulesQuery): Promise<{
+    schedules: Schedule[];
+    total: number;
+  }> {
+    const where = this.buildScheduleWhereClause(query);
+    const orderBy = this.buildOrderByClause(query);
+
+    const [schedules, total] = await Promise.all([
+      this.getSchedules({
+        skip: query.skip,
+        take: query.take,
+        orderBy,
+        where,
+        include: {
+          client: true,
+          createdByUser: true,
+          publishedByUser: true,
+        },
+      }),
+      this.countSchedules(where),
+    ]);
+
+    return { schedules, total };
+  }
+
+  /**
+   * Builds Prisma orderBy clause from query parameters.
+   *
+   * @param query - Query parameters with order_by and order_direction
+   * @returns Prisma orderBy clause
+   */
+  private buildOrderByClause(
+    query: Pick<ListSchedulesQuery, 'order_by' | 'order_direction'>,
+  ): Record<string, 'asc' | 'desc'> {
+    const fieldMap: Record<string, string> = {
+      created_at: 'createdAt',
+      updated_at: 'updatedAt',
+      start_date: 'startDate',
+      end_date: 'endDate',
+    };
+
+    const field = fieldMap[query.order_by] || 'createdAt';
+    return { [field]: query.order_direction };
   }
 
   async updateScheduleFromDto<

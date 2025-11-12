@@ -99,17 +99,15 @@ export class PublishingService {
 
     // Execute publish workflow in a transaction
     return this.prisma.$transaction(async (tx) => {
-      // 1. Create snapshot before publishing (for rollback capability)
-      await this.scheduleSnapshotService.createScheduleSnapshot({
-        schedule: { connect: { id: schedule.id } },
-        planDocument: planDocument as Prisma.InputJsonValue,
-        version: schedule.version,
-        status: schedule.status,
-        snapshotReason: 'before_publish',
-        user: { connect: { id: userId } },
-      });
+      // Note: We don't create a before_publish snapshot because:
+      // 1. The schedule's planDocument remains unchanged if publish fails
+      // 2. We can only publish the latest version (optimistic locking ensures this)
+      // 3. If we want to publish an old version, we restore from snapshot first (creates new version)
+      // 4. The schedule's planDocument is the source of truth and doesn't change during publish
+      // 5. If publish fails, we can simply retry - no rollback needed
 
-      // 2. Delete existing shows in date range (cascade deletes MCs/Platforms)
+      // 1. Delete existing shows associated with this schedule
+      // cascade deletes ShowMC and ShowPlatform relationships
       const deletedShows = await tx.show.deleteMany({
         where: {
           scheduleId: schedule.id,

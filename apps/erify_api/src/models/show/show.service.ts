@@ -8,6 +8,21 @@ import { UtilityService } from '@/utility/utility.service';
 import { CreateShowDto, UpdateShowDto } from './schemas/show.schema';
 import { ShowRepository } from './show.repository';
 
+type ListShowsQuery = {
+  page: number;
+  limit: number;
+  take: number;
+  skip: number;
+  client_id?: string | string[];
+  start_date_from?: string;
+  start_date_to?: string;
+  end_date_from?: string;
+  end_date_to?: string;
+  order_by: 'created_at' | 'updated_at' | 'start_time' | 'end_time';
+  order_direction: 'asc' | 'desc';
+  include_deleted: boolean;
+};
+
 type ShowWithIncludes<T extends Prisma.ShowInclude> = Prisma.ShowGetPayload<{
   include: T;
 }>;
@@ -60,6 +75,7 @@ export class ShowService extends BaseModelService {
       skip?: number;
       take?: number;
       where?: Prisma.ShowWhereInput;
+      orderBy?: Record<string, 'asc' | 'desc'>;
     },
     include?: T,
   ): Promise<Show[] | ShowWithIncludes<T>[]> {
@@ -114,6 +130,101 @@ export class ShowService extends BaseModelService {
 
   async countShows(where?: Prisma.ShowWhereInput): Promise<number> {
     return this.showRepository.count(where ?? {});
+  }
+
+  async getPaginatedShows(query: ListShowsQuery): Promise<{
+    shows: Show[];
+    total: number;
+  }> {
+    const where = this.buildShowWhereClause(query);
+    const orderBy = this.buildOrderByClause(query);
+
+    const include: Prisma.ShowInclude = {
+      client: true,
+      studioRoom: true,
+      showType: true,
+      showStatus: true,
+      showStandard: true,
+    };
+
+    const [shows, total] = await Promise.all([
+      this.getShows(
+        {
+          skip: query.skip,
+          take: query.take,
+          where,
+          orderBy,
+        },
+        include,
+      ),
+      this.countShows(where),
+    ]);
+
+    return { shows, total };
+  }
+
+  private buildShowWhereClause(filters: {
+    client_id?: string | string[];
+    start_date_from?: string;
+    start_date_to?: string;
+    end_date_from?: string;
+    end_date_to?: string;
+    include_deleted: boolean;
+  }): Prisma.ShowWhereInput {
+    const where: Prisma.ShowWhereInput = {};
+
+    // Filter out soft deleted records by default
+    if (!filters.include_deleted) {
+      where.deletedAt = null;
+    }
+
+    // Client filtering
+    if (filters.client_id) {
+      const clientIds = Array.isArray(filters.client_id)
+        ? filters.client_id
+        : [filters.client_id];
+      where.client = {
+        uid: { in: clientIds },
+        deletedAt: null,
+      };
+    }
+
+    // Date range filtering for start time
+    if (filters.start_date_from || filters.start_date_to) {
+      where.startTime = {};
+      if (filters.start_date_from) {
+        where.startTime.gte = new Date(filters.start_date_from);
+      }
+      if (filters.start_date_to) {
+        where.startTime.lte = new Date(filters.start_date_to);
+      }
+    }
+
+    // Date range filtering for end time
+    if (filters.end_date_from || filters.end_date_to) {
+      where.endTime = {};
+      if (filters.end_date_from) {
+        where.endTime.gte = new Date(filters.end_date_from);
+      }
+      if (filters.end_date_to) {
+        where.endTime.lte = new Date(filters.end_date_to);
+      }
+    }
+
+    return where;
+  }
+
+  private buildOrderByClause(
+    query: Pick<ListShowsQuery, 'order_by' | 'order_direction'>,
+  ): Record<string, 'asc' | 'desc'> {
+    const fieldMap: Record<string, string> = {
+      created_at: 'createdAt',
+      updated_at: 'updatedAt',
+      start_time: 'startTime',
+      end_time: 'endTime',
+    };
+    const field = fieldMap[query.order_by] || 'createdAt';
+    return { [field]: query.order_direction };
   }
 
   async updateShowFromDto<T extends Prisma.ShowInclude = Record<string, never>>(

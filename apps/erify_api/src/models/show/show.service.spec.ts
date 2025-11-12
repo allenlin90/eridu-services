@@ -4,6 +4,21 @@ import { createMockUniqueConstraintError } from '@/common/test-helpers/prisma-er
 import { UtilityService } from '@/utility/utility.service';
 
 import { CreateShowDto, UpdateShowDto } from './schemas/show.schema';
+
+type ListShowsQuery = {
+  page: number;
+  limit: number;
+  take: number;
+  skip: number;
+  client_id?: string | string[];
+  start_date_from?: string;
+  start_date_to?: string;
+  end_date_from?: string;
+  end_date_to?: string;
+  order_by: 'created_at' | 'updated_at' | 'start_time' | 'end_time';
+  order_direction: 'asc' | 'desc';
+  include_deleted: boolean;
+};
 import { ShowRepository } from './show.repository';
 import { ShowService } from './show.service';
 
@@ -27,6 +42,35 @@ describe('ShowService', () => {
 
   const utilityMock: Partial<jest.Mocked<UtilityService>> = {
     generateBrandedId: jest.fn().mockReturnValue('show_123'),
+  };
+
+  const mockClient = {
+    id: BigInt(1),
+    uid: 'client_client001',
+    name: 'Client A',
+    contactPerson: 'John Doe',
+    contactEmail: 'john@clienta.com',
+    metadata: {},
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+  };
+
+  const mockShow = {
+    id: BigInt(1),
+    uid: 'show_show001',
+    clientId: mockClient.id,
+    studioRoomId: BigInt(1),
+    showTypeId: BigInt(1),
+    showStatusId: BigInt(1),
+    showStandardId: BigInt(1),
+    name: 'Test Show',
+    startTime: new Date('2025-01-01T10:00:00Z'),
+    endTime: new Date('2025-01-01T12:00:00Z'),
+    metadata: {},
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
   };
 
   beforeEach(async () => {
@@ -543,6 +587,279 @@ describe('ShowService', () => {
         },
       );
       expect(result).toEqual(shows);
+    });
+  });
+
+  describe('getPaginatedShows', () => {
+    beforeEach(() => {
+      showRepositoryMock.findMany = jest.fn().mockResolvedValue([mockShow]);
+      showRepositoryMock.count = jest.fn().mockResolvedValue(1);
+    });
+
+    it('should return paginated shows with default filtering', async () => {
+      const query: ListShowsQuery = {
+        skip: 0,
+        take: 10,
+        page: 1,
+        limit: 10,
+        client_id: undefined,
+        start_date_from: undefined,
+        start_date_to: undefined,
+        end_date_from: undefined,
+        end_date_to: undefined,
+        order_by: 'created_at',
+        order_direction: 'desc',
+        include_deleted: false,
+      };
+
+      const result = await service.getPaginatedShows(query);
+
+      expect(result.shows).toHaveLength(1);
+      expect(result.total).toBe(1);
+      expect(showRepositoryMock.findMany).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        where: { deletedAt: null },
+        include: {
+          client: true,
+          studioRoom: true,
+          showType: true,
+          showStatus: true,
+          showStandard: true,
+        },
+      });
+      expect(showRepositoryMock.count).toHaveBeenCalledWith({
+        deletedAt: null,
+      });
+    });
+
+    it('should apply client filtering', async () => {
+      const query: ListShowsQuery = {
+        skip: 0,
+        take: 10,
+        page: 1,
+        limit: 10,
+        client_id: mockClient.uid,
+        start_date_from: undefined,
+        start_date_to: undefined,
+        end_date_from: undefined,
+        end_date_to: undefined,
+        order_by: 'created_at',
+        order_direction: 'desc',
+        include_deleted: false,
+      };
+
+      await service.getPaginatedShows(query);
+
+      expect(showRepositoryMock.findMany).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        where: {
+          deletedAt: null,
+          client: {
+            uid: { in: [mockClient.uid] },
+            deletedAt: null,
+          },
+        },
+        include: {
+          client: true,
+          studioRoom: true,
+          showType: true,
+          showStatus: true,
+          showStandard: true,
+        },
+      });
+    });
+
+    it('should apply date range filtering for start time', async () => {
+      const query: ListShowsQuery = {
+        skip: 0,
+        take: 10,
+        page: 1,
+        limit: 10,
+        client_id: undefined,
+        start_date_from: '2025-01-01T00:00:00Z',
+        start_date_to: '2025-01-31T23:59:59Z',
+        end_date_from: undefined,
+        end_date_to: undefined,
+        order_by: 'created_at',
+        order_direction: 'desc',
+        include_deleted: false,
+      };
+
+      await service.getPaginatedShows(query);
+
+      expect(showRepositoryMock.findMany).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        where: {
+          deletedAt: null,
+          startTime: {
+            gte: new Date('2025-01-01T00:00:00Z'),
+            lte: new Date('2025-01-31T23:59:59Z'),
+          },
+        },
+        include: {
+          client: true,
+          studioRoom: true,
+          showType: true,
+          showStatus: true,
+          showStandard: true,
+        },
+      });
+    });
+
+    it('should apply date range filtering for end time', async () => {
+      const query: ListShowsQuery = {
+        skip: 0,
+        take: 10,
+        page: 1,
+        limit: 10,
+        client_id: undefined,
+        start_date_from: undefined,
+        start_date_to: undefined,
+        end_date_from: '2025-01-01T00:00:00Z',
+        end_date_to: '2025-01-31T23:59:59Z',
+        order_by: 'created_at',
+        order_direction: 'desc',
+        include_deleted: false,
+      };
+
+      await service.getPaginatedShows(query);
+
+      expect(showRepositoryMock.findMany).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        where: {
+          deletedAt: null,
+          endTime: {
+            gte: new Date('2025-01-01T00:00:00Z'),
+            lte: new Date('2025-01-31T23:59:59Z'),
+          },
+        },
+        include: {
+          client: true,
+          studioRoom: true,
+          showType: true,
+          showStatus: true,
+          showStandard: true,
+        },
+      });
+    });
+
+    it('should apply custom ordering', async () => {
+      const query: ListShowsQuery = {
+        skip: 0,
+        take: 10,
+        page: 1,
+        limit: 10,
+        client_id: undefined,
+        start_date_from: undefined,
+        start_date_to: undefined,
+        end_date_from: undefined,
+        end_date_to: undefined,
+        order_by: 'start_time',
+        order_direction: 'asc',
+        include_deleted: false,
+      };
+
+      await service.getPaginatedShows(query);
+
+      expect(showRepositoryMock.findMany).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        orderBy: { startTime: 'asc' },
+        where: { deletedAt: null },
+        include: {
+          client: true,
+          studioRoom: true,
+          showType: true,
+          showStatus: true,
+          showStandard: true,
+        },
+      });
+    });
+
+    it('should include deleted records when include_deleted is true', async () => {
+      const query: ListShowsQuery = {
+        skip: 0,
+        take: 10,
+        page: 1,
+        limit: 10,
+        client_id: undefined,
+        start_date_from: undefined,
+        start_date_to: undefined,
+        end_date_from: undefined,
+        end_date_to: undefined,
+        order_by: 'created_at',
+        order_direction: 'desc',
+        include_deleted: true,
+      };
+
+      await service.getPaginatedShows(query);
+
+      expect(showRepositoryMock.findMany).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        where: {}, // No deletedAt filter
+        include: {
+          client: true,
+          studioRoom: true,
+          showType: true,
+          showStatus: true,
+          showStandard: true,
+        },
+      });
+    });
+
+    it('should handle multiple filters combined', async () => {
+      const query: ListShowsQuery = {
+        skip: 0,
+        take: 10,
+        page: 1,
+        limit: 10,
+        client_id: [mockClient.uid],
+        start_date_from: '2025-01-01T00:00:00Z',
+        start_date_to: undefined,
+        end_date_from: undefined,
+        end_date_to: '2025-12-31T23:59:59Z',
+        order_by: 'updated_at',
+        order_direction: 'asc',
+        include_deleted: false,
+      };
+
+      await service.getPaginatedShows(query);
+
+      expect(showRepositoryMock.findMany).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        orderBy: { updatedAt: 'asc' },
+        where: {
+          deletedAt: null,
+          client: {
+            uid: { in: [mockClient.uid] },
+            deletedAt: null,
+          },
+          startTime: {
+            gte: new Date('2025-01-01T00:00:00Z'),
+          },
+          endTime: {
+            lte: new Date('2025-12-31T23:59:59Z'),
+          },
+        },
+        include: {
+          client: true,
+          studioRoom: true,
+          showType: true,
+          showStatus: true,
+          showStandard: true,
+        },
+      });
     });
   });
 });

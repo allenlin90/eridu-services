@@ -1,0 +1,1625 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-12T00:04:59.755Z",
+      "totalShows": 50,
+      "clientName": "Ben And Jerrys",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1762905899755_3",
+        "name": "Ben And Jerrys Show 4",
+        "startTime": "2025-10-31T20:31:43.817Z",
+        "endTime": "2025-10-31T23:53:25.892Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Ben And Jerrys Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Ben And Jerrys Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-4",
+            "platformShowId": "platform_show_4_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_10",
+        "name": "Ben And Jerrys Show 11",
+        "startTime": "2025-11-01T13:46:12.973Z",
+        "endTime": "2025-11-01T17:28:28.253Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Ben And Jerrys Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_40",
+        "name": "Ben And Jerrys Show 41",
+        "startTime": "2025-11-01T18:58:56.772Z",
+        "endTime": "2025-11-01T20:42:54.551Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Ben And Jerrys Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_27",
+        "name": "Ben And Jerrys Show 28",
+        "startTime": "2025-11-02T16:09:28.056Z",
+        "endTime": "2025-11-02T17:47:55.823Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Ben And Jerrys Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Ben And Jerrys Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Ben And Jerrys Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_29",
+        "name": "Ben And Jerrys Show 30",
+        "startTime": "2025-11-03T03:21:31.071Z",
+        "endTime": "2025-11-03T04:53:01.784Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Ben And Jerrys Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Ben And Jerrys Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Ben And Jerrys Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-30",
+            "platformShowId": "platform_show_30_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_0",
+        "name": "Ben And Jerrys Show 1",
+        "startTime": "2025-11-03T06:04:41.353Z",
+        "endTime": "2025-11-03T08:12:57.845Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Ben And Jerrys Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Ben And Jerrys Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Ben And Jerrys Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_35",
+        "name": "Ben And Jerrys Show 36",
+        "startTime": "2025-11-03T16:47:36.846Z",
+        "endTime": "2025-11-03T18:32:31.589Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Ben And Jerrys Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Ben And Jerrys Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Ben And Jerrys Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-36",
+            "platformShowId": "platform_show_36_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_4",
+        "name": "Ben And Jerrys Show 5",
+        "startTime": "2025-11-03T21:34:20.637Z",
+        "endTime": "2025-11-03T23:56:29.838Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Ben And Jerrys Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Ben And Jerrys Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_9",
+        "name": "Ben And Jerrys Show 10",
+        "startTime": "2025-11-03T22:47:58.547Z",
+        "endTime": "2025-11-03T23:56:33.501Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Ben And Jerrys Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_22",
+        "name": "Ben And Jerrys Show 23",
+        "startTime": "2025-11-04T15:12:19.360Z",
+        "endTime": "2025-11-04T17:05:23.205Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Ben And Jerrys Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Ben And Jerrys Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Ben And Jerrys Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_15",
+        "name": "Ben And Jerrys Show 16",
+        "startTime": "2025-11-04T21:14:37.034Z",
+        "endTime": "2025-11-05T01:08:35.001Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Ben And Jerrys Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Ben And Jerrys Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Ben And Jerrys Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_34",
+        "name": "Ben And Jerrys Show 35",
+        "startTime": "2025-11-05T00:42:32.054Z",
+        "endTime": "2025-11-05T04:37:46.646Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Ben And Jerrys Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Ben And Jerrys Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Ben And Jerrys Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_37",
+        "name": "Ben And Jerrys Show 38",
+        "startTime": "2025-11-07T01:32:28.700Z",
+        "endTime": "2025-11-07T03:08:38.212Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Ben And Jerrys Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_25",
+        "name": "Ben And Jerrys Show 26",
+        "startTime": "2025-11-07T17:12:52.547Z",
+        "endTime": "2025-11-07T18:29:54.717Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Ben And Jerrys Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_6",
+        "name": "Ben And Jerrys Show 7",
+        "startTime": "2025-11-08T03:37:06.043Z",
+        "endTime": "2025-11-08T07:14:05.245Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Ben And Jerrys Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_28",
+        "name": "Ben And Jerrys Show 29",
+        "startTime": "2025-11-08T21:31:39.070Z",
+        "endTime": "2025-11-09T00:10:47.474Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Ben And Jerrys Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Ben And Jerrys Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Ben And Jerrys Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_17",
+        "name": "Ben And Jerrys Show 18",
+        "startTime": "2025-11-09T08:57:27.279Z",
+        "endTime": "2025-11-09T12:26:38.883Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Ben And Jerrys Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Ben And Jerrys Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Ben And Jerrys Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-18",
+            "platformShowId": "platform_show_18_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_19",
+        "name": "Ben And Jerrys Show 20",
+        "startTime": "2025-11-11T03:14:49.523Z",
+        "endTime": "2025-11-11T06:33:33.595Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Ben And Jerrys Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Ben And Jerrys Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Ben And Jerrys Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_20",
+        "name": "Ben And Jerrys Show 21",
+        "startTime": "2025-11-11T14:03:25.317Z",
+        "endTime": "2025-11-11T15:10:29.831Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Ben And Jerrys Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Ben And Jerrys Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_42",
+        "name": "Ben And Jerrys Show 43",
+        "startTime": "2025-11-12T06:37:29.606Z",
+        "endTime": "2025-11-12T08:32:53.208Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Ben And Jerrys Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_45",
+        "name": "Ben And Jerrys Show 46",
+        "startTime": "2025-11-13T23:50:20.388Z",
+        "endTime": "2025-11-14T02:24:38.004Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Ben And Jerrys Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Ben And Jerrys Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Ben And Jerrys Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_24",
+        "name": "Ben And Jerrys Show 25",
+        "startTime": "2025-11-15T04:48:21.073Z",
+        "endTime": "2025-11-15T06:03:28.480Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Ben And Jerrys Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-25",
+            "platformShowId": "platform_show_25_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_32",
+        "name": "Ben And Jerrys Show 33",
+        "startTime": "2025-11-15T19:18:00.556Z",
+        "endTime": "2025-11-15T23:07:30.853Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Ben And Jerrys Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_44",
+        "name": "Ben And Jerrys Show 45",
+        "startTime": "2025-11-15T23:10:21.340Z",
+        "endTime": "2025-11-16T02:09:54.474Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Ben And Jerrys Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_47",
+        "name": "Ben And Jerrys Show 48",
+        "startTime": "2025-11-16T05:11:51.095Z",
+        "endTime": "2025-11-16T07:08:46.242Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Ben And Jerrys Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_33",
+        "name": "Ben And Jerrys Show 34",
+        "startTime": "2025-11-16T13:13:42.217Z",
+        "endTime": "2025-11-16T16:02:24.085Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Ben And Jerrys Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Ben And Jerrys Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-34",
+            "platformShowId": "platform_show_34_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_43",
+        "name": "Ben And Jerrys Show 44",
+        "startTime": "2025-11-17T03:52:28.498Z",
+        "endTime": "2025-11-17T07:13:39.329Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Ben And Jerrys Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Ben And Jerrys Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_21",
+        "name": "Ben And Jerrys Show 22",
+        "startTime": "2025-11-17T11:28:22.206Z",
+        "endTime": "2025-11-17T15:01:34.047Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Ben And Jerrys Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_39",
+        "name": "Ben And Jerrys Show 40",
+        "startTime": "2025-11-18T12:16:18.883Z",
+        "endTime": "2025-11-18T13:37:46.148Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Ben And Jerrys Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Ben And Jerrys Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Ben And Jerrys Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-40",
+            "platformShowId": "platform_show_40_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_49",
+        "name": "Ben And Jerrys Show 50",
+        "startTime": "2025-11-18T16:13:58.743Z",
+        "endTime": "2025-11-18T19:30:58.736Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Ben And Jerrys Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Ben And Jerrys Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_31",
+        "name": "Ben And Jerrys Show 32",
+        "startTime": "2025-11-19T01:56:11.514Z",
+        "endTime": "2025-11-19T05:24:30.237Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Ben And Jerrys Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Ben And Jerrys Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Ben And Jerrys Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-32",
+            "platformShowId": "platform_show_32_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_7",
+        "name": "Ben And Jerrys Show 8",
+        "startTime": "2025-11-19T07:46:34.702Z",
+        "endTime": "2025-11-19T08:51:07.033Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Ben And Jerrys Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Ben And Jerrys Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Ben And Jerrys Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_8",
+        "name": "Ben And Jerrys Show 9",
+        "startTime": "2025-11-20T00:30:54.777Z",
+        "endTime": "2025-11-20T02:42:07.961Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Ben And Jerrys Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Ben And Jerrys Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_23",
+        "name": "Ben And Jerrys Show 24",
+        "startTime": "2025-11-21T10:26:38.720Z",
+        "endTime": "2025-11-21T11:46:14.506Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Ben And Jerrys Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Ben And Jerrys Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Ben And Jerrys Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-24",
+            "platformShowId": "platform_show_24_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_13",
+        "name": "Ben And Jerrys Show 14",
+        "startTime": "2025-11-21T12:28:29.515Z",
+        "endTime": "2025-11-21T15:59:59.403Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Ben And Jerrys Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Ben And Jerrys Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_48",
+        "name": "Ben And Jerrys Show 49",
+        "startTime": "2025-11-22T08:01:24.795Z",
+        "endTime": "2025-11-22T11:54:31.976Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Ben And Jerrys Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Ben And Jerrys Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Ben And Jerrys Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-49",
+            "platformShowId": "platform_show_49_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_38",
+        "name": "Ben And Jerrys Show 39",
+        "startTime": "2025-11-22T13:09:45.621Z",
+        "endTime": "2025-11-22T17:07:27.370Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Ben And Jerrys Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_18",
+        "name": "Ben And Jerrys Show 19",
+        "startTime": "2025-11-22T19:25:55.099Z",
+        "endTime": "2025-11-22T22:32:08.519Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Ben And Jerrys Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Ben And Jerrys Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Ben And Jerrys Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-19",
+            "platformShowId": "platform_show_19_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_30",
+        "name": "Ben And Jerrys Show 31",
+        "startTime": "2025-11-22T22:49:23.068Z",
+        "endTime": "2025-11-23T01:33:58.647Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Ben And Jerrys Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_16",
+        "name": "Ben And Jerrys Show 17",
+        "startTime": "2025-11-22T22:50:35.470Z",
+        "endTime": "2025-11-23T01:55:26.838Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Ben And Jerrys Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Ben And Jerrys Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Ben And Jerrys Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_26",
+        "name": "Ben And Jerrys Show 27",
+        "startTime": "2025-11-23T05:54:46.741Z",
+        "endTime": "2025-11-23T08:36:00.097Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Ben And Jerrys Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Ben And Jerrys Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_46",
+        "name": "Ben And Jerrys Show 47",
+        "startTime": "2025-11-23T14:12:50.712Z",
+        "endTime": "2025-11-23T17:48:49.148Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Ben And Jerrys Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Ben And Jerrys Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_36",
+        "name": "Ben And Jerrys Show 37",
+        "startTime": "2025-11-23T19:33:28.988Z",
+        "endTime": "2025-11-23T21:58:13.329Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Ben And Jerrys Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Ben And Jerrys Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_14",
+        "name": "Ben And Jerrys Show 15",
+        "startTime": "2025-11-24T02:00:58.467Z",
+        "endTime": "2025-11-24T05:00:43.798Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Ben And Jerrys Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Ben And Jerrys Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Ben And Jerrys Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_41",
+        "name": "Ben And Jerrys Show 42",
+        "startTime": "2025-11-24T13:03:45.548Z",
+        "endTime": "2025-11-24T17:00:06.419Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Ben And Jerrys Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Ben And Jerrys Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Ben And Jerrys Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-42",
+            "platformShowId": "platform_show_42_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_1",
+        "name": "Ben And Jerrys Show 2",
+        "startTime": "2025-11-25T13:14:35.422Z",
+        "endTime": "2025-11-25T17:14:29.778Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Ben And Jerrys Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_11",
+        "name": "Ben And Jerrys Show 12",
+        "startTime": "2025-11-25T22:38:21.221Z",
+        "endTime": "2025-11-25T23:45:00.834Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Ben And Jerrys Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Ben And Jerrys Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Ben And Jerrys Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_12",
+        "name": "Ben And Jerrys Show 13",
+        "startTime": "2025-11-27T06:36:25.587Z",
+        "endTime": "2025-11-27T09:34:26.063Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Ben And Jerrys Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Ben And Jerrys Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Ben And Jerrys Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_5",
+        "name": "Ben And Jerrys Show 6",
+        "startTime": "2025-11-29T06:05:06.103Z",
+        "endTime": "2025-11-29T07:27:32.737Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Ben And Jerrys Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Ben And Jerrys Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Ben And Jerrys Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_2",
+        "name": "Ben And Jerrys Show 3",
+        "startTime": "2025-11-29T15:00:20.969Z",
+        "endTime": "2025-11-29T17:02:05.369Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Ben And Jerrys Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}
