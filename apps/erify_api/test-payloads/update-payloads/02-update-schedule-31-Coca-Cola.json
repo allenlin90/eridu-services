@@ -1,0 +1,1574 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-12T00:04:59.754Z",
+      "totalShows": 50,
+      "clientName": "Coca Cola",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1762905899754_48",
+        "name": "Coca Cola Show 49",
+        "startTime": "2025-11-01T00:10:01.962Z",
+        "endTime": "2025-11-01T01:27:27.962Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Coca Cola Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Coca Cola Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Coca Cola Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_49",
+        "name": "Coca Cola Show 50",
+        "startTime": "2025-11-01T09:32:41.091Z",
+        "endTime": "2025-11-01T12:29:16.679Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Coca Cola Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Coca Cola Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Coca Cola Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_7",
+        "name": "Coca Cola Show 8",
+        "startTime": "2025-11-02T04:58:36.325Z",
+        "endTime": "2025-11-02T08:18:40.583Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Coca Cola Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Coca Cola Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Coca Cola Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_40",
+        "name": "Coca Cola Show 41",
+        "startTime": "2025-11-03T07:57:22.326Z",
+        "endTime": "2025-11-03T11:55:50.736Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Coca Cola Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Coca Cola Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_18",
+        "name": "Coca Cola Show 19",
+        "startTime": "2025-11-03T17:58:08.089Z",
+        "endTime": "2025-11-03T21:06:52.659Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Coca Cola Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Coca Cola Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-19",
+            "platformShowId": "platform_show_19_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_1",
+        "name": "Coca Cola Show 2",
+        "startTime": "2025-11-04T04:15:43.662Z",
+        "endTime": "2025-11-04T07:33:58.411Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Coca Cola Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_15",
+        "name": "Coca Cola Show 16",
+        "startTime": "2025-11-04T18:49:55.758Z",
+        "endTime": "2025-11-04T20:11:13.292Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Coca Cola Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Coca Cola Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Coca Cola Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_38",
+        "name": "Coca Cola Show 39",
+        "startTime": "2025-11-04T21:04:44.108Z",
+        "endTime": "2025-11-04T23:05:13.280Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Coca Cola Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Coca Cola Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_34",
+        "name": "Coca Cola Show 35",
+        "startTime": "2025-11-05T11:57:01.925Z",
+        "endTime": "2025-11-05T15:36:45.405Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Coca Cola Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_13",
+        "name": "Coca Cola Show 14",
+        "startTime": "2025-11-06T06:42:42.774Z",
+        "endTime": "2025-11-06T09:42:42.498Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Coca Cola Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_35",
+        "name": "Coca Cola Show 36",
+        "startTime": "2025-11-06T11:15:03.313Z",
+        "endTime": "2025-11-06T12:19:37.259Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Coca Cola Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Coca Cola Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_33",
+        "name": "Coca Cola Show 34",
+        "startTime": "2025-11-06T15:29:58.545Z",
+        "endTime": "2025-11-06T17:15:33.798Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Coca Cola Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Coca Cola Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Coca Cola Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_19",
+        "name": "Coca Cola Show 20",
+        "startTime": "2025-11-07T06:42:05.332Z",
+        "endTime": "2025-11-07T07:43:16.033Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Coca Cola Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Coca Cola Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Coca Cola Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_39",
+        "name": "Coca Cola Show 40",
+        "startTime": "2025-11-07T20:53:13.186Z",
+        "endTime": "2025-11-07T23:41:54.201Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Coca Cola Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Coca Cola Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Coca Cola Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-40",
+            "platformShowId": "platform_show_40_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_14",
+        "name": "Coca Cola Show 15",
+        "startTime": "2025-11-08T05:05:10.150Z",
+        "endTime": "2025-11-08T07:49:06.197Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Coca Cola Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_24",
+        "name": "Coca Cola Show 25",
+        "startTime": "2025-11-08T19:39:55.608Z",
+        "endTime": "2025-11-08T22:05:43.081Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Coca Cola Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Coca Cola Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-25",
+            "platformShowId": "platform_show_25_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_3",
+        "name": "Coca Cola Show 4",
+        "startTime": "2025-11-09T08:43:21.137Z",
+        "endTime": "2025-11-09T11:00:40.693Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Coca Cola Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_28",
+        "name": "Coca Cola Show 29",
+        "startTime": "2025-11-11T05:36:04.034Z",
+        "endTime": "2025-11-11T07:20:19.562Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Coca Cola Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_31",
+        "name": "Coca Cola Show 32",
+        "startTime": "2025-11-11T17:29:59.639Z",
+        "endTime": "2025-11-11T19:49:40.138Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Coca Cola Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-32",
+            "platformShowId": "platform_show_32_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_25",
+        "name": "Coca Cola Show 26",
+        "startTime": "2025-11-12T05:05:45.975Z",
+        "endTime": "2025-11-12T08:29:47.914Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Coca Cola Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-26",
+            "platformShowId": "platform_show_26_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_22",
+        "name": "Coca Cola Show 23",
+        "startTime": "2025-11-12T07:07:28.926Z",
+        "endTime": "2025-11-12T09:36:02.052Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Coca Cola Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Coca Cola Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Coca Cola Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_36",
+        "name": "Coca Cola Show 37",
+        "startTime": "2025-11-12T09:59:50.462Z",
+        "endTime": "2025-11-12T13:05:30.776Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Coca Cola Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Coca Cola Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_30",
+        "name": "Coca Cola Show 31",
+        "startTime": "2025-11-14T16:20:31.767Z",
+        "endTime": "2025-11-14T17:54:49.047Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Coca Cola Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Coca Cola Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_44",
+        "name": "Coca Cola Show 45",
+        "startTime": "2025-11-15T00:54:52.265Z",
+        "endTime": "2025-11-15T03:06:37.734Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Coca Cola Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Coca Cola Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_9",
+        "name": "Coca Cola Show 10",
+        "startTime": "2025-11-15T15:04:42.664Z",
+        "endTime": "2025-11-15T17:25:43.568Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Coca Cola Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Coca Cola Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Coca Cola Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-10",
+            "platformShowId": "platform_show_10_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_32",
+        "name": "Coca Cola Show 33",
+        "startTime": "2025-11-16T00:47:47.347Z",
+        "endTime": "2025-11-16T03:04:00.962Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Coca Cola Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Coca Cola Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Coca Cola Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_8",
+        "name": "Coca Cola Show 9",
+        "startTime": "2025-11-17T08:17:59.989Z",
+        "endTime": "2025-11-17T09:23:00.614Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Coca Cola Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Coca Cola Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-9",
+            "platformShowId": "platform_show_9_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_11",
+        "name": "Coca Cola Show 12",
+        "startTime": "2025-11-17T18:54:00.724Z",
+        "endTime": "2025-11-17T22:17:11.400Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Coca Cola Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Coca Cola Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-12",
+            "platformShowId": "platform_show_12_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_46",
+        "name": "Coca Cola Show 47",
+        "startTime": "2025-11-17T21:56:47.048Z",
+        "endTime": "2025-11-18T01:53:49.747Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Coca Cola Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Coca Cola Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_26",
+        "name": "Coca Cola Show 27",
+        "startTime": "2025-11-18T00:21:07.590Z",
+        "endTime": "2025-11-18T01:52:59.868Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Coca Cola Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Coca Cola Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Coca Cola Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_29",
+        "name": "Coca Cola Show 30",
+        "startTime": "2025-11-18T00:46:05.071Z",
+        "endTime": "2025-11-18T03:21:12.116Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Coca Cola Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Coca Cola Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_23",
+        "name": "Coca Cola Show 24",
+        "startTime": "2025-11-18T12:21:34.993Z",
+        "endTime": "2025-11-18T14:58:14.350Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Coca Cola Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_4",
+        "name": "Coca Cola Show 5",
+        "startTime": "2025-11-19T05:21:23.202Z",
+        "endTime": "2025-11-19T09:12:54.889Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Coca Cola Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Coca Cola Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_37",
+        "name": "Coca Cola Show 38",
+        "startTime": "2025-11-19T09:36:21.463Z",
+        "endTime": "2025-11-19T12:09:21.298Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Coca Cola Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Coca Cola Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_43",
+        "name": "Coca Cola Show 44",
+        "startTime": "2025-11-19T21:32:06.899Z",
+        "endTime": "2025-11-19T23:08:23.515Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Coca Cola Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Coca Cola Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Coca Cola Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_2",
+        "name": "Coca Cola Show 3",
+        "startTime": "2025-11-19T22:50:24.769Z",
+        "endTime": "2025-11-20T00:33:10.445Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Coca Cola Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_6",
+        "name": "Coca Cola Show 7",
+        "startTime": "2025-11-20T14:16:25.261Z",
+        "endTime": "2025-11-20T17:00:51.993Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Coca Cola Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-7",
+            "platformShowId": "platform_show_7_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_45",
+        "name": "Coca Cola Show 46",
+        "startTime": "2025-11-21T03:05:17.155Z",
+        "endTime": "2025-11-21T04:58:20.968Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Coca Cola Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_10",
+        "name": "Coca Cola Show 11",
+        "startTime": "2025-11-23T00:11:38.637Z",
+        "endTime": "2025-11-23T03:07:13.342Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Coca Cola Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Coca Cola Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_21",
+        "name": "Coca Cola Show 22",
+        "startTime": "2025-11-23T07:14:27.374Z",
+        "endTime": "2025-11-23T09:40:09.489Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Coca Cola Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_0",
+        "name": "Coca Cola Show 1",
+        "startTime": "2025-11-23T23:33:12.650Z",
+        "endTime": "2025-11-24T03:00:13.935Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Coca Cola Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Coca Cola Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_5",
+        "name": "Coca Cola Show 6",
+        "startTime": "2025-11-24T00:57:28.227Z",
+        "endTime": "2025-11-24T04:27:04.043Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Coca Cola Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Coca Cola Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Coca Cola Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-6",
+            "platformShowId": "platform_show_6_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_42",
+        "name": "Coca Cola Show 43",
+        "startTime": "2025-11-24T10:43:48.859Z",
+        "endTime": "2025-11-24T12:50:20.777Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Coca Cola Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_41",
+        "name": "Coca Cola Show 42",
+        "startTime": "2025-11-24T15:54:24.128Z",
+        "endTime": "2025-11-24T18:52:29.142Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Coca Cola Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Coca Cola Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-42",
+            "platformShowId": "platform_show_42_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_20",
+        "name": "Coca Cola Show 21",
+        "startTime": "2025-11-25T02:27:03.676Z",
+        "endTime": "2025-11-25T04:38:07.770Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Coca Cola Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_17",
+        "name": "Coca Cola Show 18",
+        "startTime": "2025-11-25T14:56:06.249Z",
+        "endTime": "2025-11-25T16:11:39.931Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Coca Cola Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Coca Cola Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_16",
+        "name": "Coca Cola Show 17",
+        "startTime": "2025-11-26T13:33:23.498Z",
+        "endTime": "2025-11-26T16:12:48.344Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Coca Cola Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_27",
+        "name": "Coca Cola Show 28",
+        "startTime": "2025-11-28T08:47:00.004Z",
+        "endTime": "2025-11-28T10:22:41.536Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Coca Cola Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Coca Cola Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Coca Cola Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-28",
+            "platformShowId": "platform_show_28_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899753_12",
+        "name": "Coca Cola Show 13",
+        "startTime": "2025-11-28T10:40:26.349Z",
+        "endTime": "2025-11-28T12:20:30.995Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Coca Cola Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Coca Cola Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899754_47",
+        "name": "Coca Cola Show 48",
+        "startTime": "2025-11-29T20:54:14.235Z",
+        "endTime": "2025-11-29T22:16:42.843Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Coca Cola Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Coca Cola Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

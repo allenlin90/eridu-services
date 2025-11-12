@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, Show } from '@prisma/client';
 
+import { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
@@ -54,6 +55,104 @@ export class ShowOrchestrationService {
       ...params,
       include: include || this.getDefaultIncludes(),
     });
+  }
+
+  /**
+   * Retrieves paginated shows with filtering and full relations.
+   *
+   * @param query - Query parameters with filtering
+   * @returns Object with shows array and total count
+   */
+  async getPaginatedShowsWithRelations(query: ListShowsQueryDto): Promise<{
+    shows: ShowWithIncludes<Prisma.ShowInclude>[];
+    total: number;
+  }> {
+    const where = this.buildShowWhereClause(query);
+    const orderBy = this.buildOrderByClause(query);
+
+    const include = this.getDefaultIncludes();
+
+    const [shows, total] = await Promise.all([
+      this.getShowsWithRelations(
+        {
+          skip: query.skip,
+          take: query.take,
+          where,
+          orderBy,
+        },
+        include,
+      ),
+      this.showService.countShows(where),
+    ]);
+
+    return { shows: shows as ShowWithIncludes<Prisma.ShowInclude>[], total };
+  }
+
+  private buildShowWhereClause(
+    filters: Pick<
+      ListShowsQueryDto,
+      | 'client_id'
+      | 'start_date_from'
+      | 'start_date_to'
+      | 'end_date_from'
+      | 'end_date_to'
+      | 'include_deleted'
+    >,
+  ): Prisma.ShowWhereInput {
+    const where: Prisma.ShowWhereInput = {};
+
+    // Filter out soft deleted records by default
+    if (!filters.include_deleted) {
+      where.deletedAt = null;
+    }
+
+    // Client filtering
+    if (filters.client_id) {
+      const clientIds = Array.isArray(filters.client_id)
+        ? filters.client_id
+        : [filters.client_id];
+      where.client = {
+        uid: { in: clientIds },
+        deletedAt: null,
+      };
+    }
+
+    // Date range filtering for start time
+    if (filters.start_date_from || filters.start_date_to) {
+      where.startTime = {};
+      if (filters.start_date_from) {
+        where.startTime.gte = new Date(filters.start_date_from);
+      }
+      if (filters.start_date_to) {
+        where.startTime.lte = new Date(filters.start_date_to);
+      }
+    }
+
+    // Date range filtering for end time
+    if (filters.end_date_from || filters.end_date_to) {
+      where.endTime = {};
+      if (filters.end_date_from) {
+        where.endTime.gte = new Date(filters.end_date_from);
+      }
+      if (filters.end_date_to) {
+        where.endTime.lte = new Date(filters.end_date_to);
+      }
+    }
+
+    return where;
+  }
+
+  private buildOrderByClause(
+    query: Pick<ListShowsQueryDto, 'order_by' | 'order_direction'>,
+  ): Record<string, 'asc' | 'desc'> {
+    const fieldMap: Record<string, string> = {
+      created_at: 'createdAt',
+      updated_at: 'updatedAt',
+      start_time: 'startTime',
+      end_time: 'endTime',
+    };
+    const field = fieldMap[query.order_by] || 'createdAt';
+    return { [field]: query.order_direction };
   }
 
   /**

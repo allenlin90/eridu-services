@@ -1,0 +1,1599 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-12T00:04:59.746Z",
+      "totalShows": 50,
+      "clientName": "Converse",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1762905899745_16",
+        "name": "Converse Show 17",
+        "startTime": "2025-11-02T02:23:35.419Z",
+        "endTime": "2025-11-02T05:05:09.420Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Converse Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Converse Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-17",
+            "platformShowId": "platform_show_17_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_10",
+        "name": "Converse Show 11",
+        "startTime": "2025-11-02T22:05:06.127Z",
+        "endTime": "2025-11-02T23:11:42.122Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Converse Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Converse Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Converse Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_41",
+        "name": "Converse Show 42",
+        "startTime": "2025-11-02T23:01:43.381Z",
+        "endTime": "2025-11-03T00:49:29.829Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Converse Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Converse Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Converse Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-42",
+            "platformShowId": "platform_show_42_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_3",
+        "name": "Converse Show 4",
+        "startTime": "2025-11-03T01:02:04.409Z",
+        "endTime": "2025-11-03T03:26:26.623Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Converse Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Converse Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_21",
+        "name": "Converse Show 22",
+        "startTime": "2025-11-03T19:25:23.436Z",
+        "endTime": "2025-11-03T22:20:42.759Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Converse Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Converse Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_29",
+        "name": "Converse Show 30",
+        "startTime": "2025-11-04T03:07:35.862Z",
+        "endTime": "2025-11-04T04:20:00.499Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Converse Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_2",
+        "name": "Converse Show 3",
+        "startTime": "2025-11-04T11:21:25.704Z",
+        "endTime": "2025-11-04T14:17:32.102Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Converse Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Converse Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_15",
+        "name": "Converse Show 16",
+        "startTime": "2025-11-05T08:55:44.098Z",
+        "endTime": "2025-11-05T10:51:24.703Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Converse Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Converse Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_9",
+        "name": "Converse Show 10",
+        "startTime": "2025-11-05T23:20:02.942Z",
+        "endTime": "2025-11-06T01:11:56.040Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Converse Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Converse Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Converse Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_0",
+        "name": "Converse Show 1",
+        "startTime": "2025-11-06T03:57:28.835Z",
+        "endTime": "2025-11-06T04:57:44.913Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Converse Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_17",
+        "name": "Converse Show 18",
+        "startTime": "2025-11-06T08:22:04.237Z",
+        "endTime": "2025-11-06T09:44:29.848Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Converse Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_23",
+        "name": "Converse Show 24",
+        "startTime": "2025-11-08T03:21:04.104Z",
+        "endTime": "2025-11-08T04:51:33.182Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Converse Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Converse Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-24",
+            "platformShowId": "platform_show_24_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_48",
+        "name": "Converse Show 49",
+        "startTime": "2025-11-10T02:02:27.117Z",
+        "endTime": "2025-11-10T05:20:23.725Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Converse Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Converse Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Converse Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_39",
+        "name": "Converse Show 40",
+        "startTime": "2025-11-10T11:54:05.876Z",
+        "endTime": "2025-11-10T15:11:56.350Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Converse Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-40",
+            "platformShowId": "platform_show_40_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_47",
+        "name": "Converse Show 48",
+        "startTime": "2025-11-10T23:08:01.245Z",
+        "endTime": "2025-11-11T01:40:18.616Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Converse Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Converse Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-48",
+            "platformShowId": "platform_show_48_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_49",
+        "name": "Converse Show 50",
+        "startTime": "2025-11-11T18:10:19.573Z",
+        "endTime": "2025-11-11T19:37:22.849Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Converse Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_34",
+        "name": "Converse Show 35",
+        "startTime": "2025-11-11T23:08:02.254Z",
+        "endTime": "2025-11-12T00:58:32.035Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Converse Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Converse Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Converse Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-35",
+            "platformShowId": "platform_show_35_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_44",
+        "name": "Converse Show 45",
+        "startTime": "2025-11-12T01:01:49.420Z",
+        "endTime": "2025-11-12T03:39:33.211Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Converse Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Converse Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-45",
+            "platformShowId": "platform_show_45_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_38",
+        "name": "Converse Show 39",
+        "startTime": "2025-11-12T02:21:29.487Z",
+        "endTime": "2025-11-12T03:27:21.368Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Converse Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Converse Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_11",
+        "name": "Converse Show 12",
+        "startTime": "2025-11-13T16:17:55.193Z",
+        "endTime": "2025-11-13T18:12:11.248Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Converse Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Converse Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Converse Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_42",
+        "name": "Converse Show 43",
+        "startTime": "2025-11-13T21:54:08.478Z",
+        "endTime": "2025-11-14T00:33:01.123Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Converse Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Converse Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Converse Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-43",
+            "platformShowId": "platform_show_43_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_40",
+        "name": "Converse Show 41",
+        "startTime": "2025-11-15T03:50:34.902Z",
+        "endTime": "2025-11-15T05:46:42.286Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Converse Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Converse Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Converse Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_6",
+        "name": "Converse Show 7",
+        "startTime": "2025-11-15T06:09:36.502Z",
+        "endTime": "2025-11-15T07:23:39.167Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Converse Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Converse Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_20",
+        "name": "Converse Show 21",
+        "startTime": "2025-11-15T06:17:42.675Z",
+        "endTime": "2025-11-15T08:05:04.618Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Converse Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Converse Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_7",
+        "name": "Converse Show 8",
+        "startTime": "2025-11-16T07:40:49.327Z",
+        "endTime": "2025-11-16T11:14:10.881Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Converse Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Converse Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_14",
+        "name": "Converse Show 15",
+        "startTime": "2025-11-16T08:58:25.543Z",
+        "endTime": "2025-11-16T11:48:10.297Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Converse Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Converse Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_33",
+        "name": "Converse Show 34",
+        "startTime": "2025-11-17T00:41:04.947Z",
+        "endTime": "2025-11-17T01:51:03.998Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Converse Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-34",
+            "platformShowId": "platform_show_34_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_4",
+        "name": "Converse Show 5",
+        "startTime": "2025-11-17T06:34:17.667Z",
+        "endTime": "2025-11-17T07:37:39.817Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Converse Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Converse Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_24",
+        "name": "Converse Show 25",
+        "startTime": "2025-11-18T22:16:46.795Z",
+        "endTime": "2025-11-19T01:04:28.408Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Converse Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Converse Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-25",
+            "platformShowId": "platform_show_25_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_12",
+        "name": "Converse Show 13",
+        "startTime": "2025-11-19T04:01:53.042Z",
+        "endTime": "2025-11-19T06:38:27.870Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Converse Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Converse Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_45",
+        "name": "Converse Show 46",
+        "startTime": "2025-11-19T14:30:41.732Z",
+        "endTime": "2025-11-19T16:50:57.561Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Converse Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Converse Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-46",
+            "platformShowId": "platform_show_46_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_13",
+        "name": "Converse Show 14",
+        "startTime": "2025-11-20T23:29:34.627Z",
+        "endTime": "2025-11-21T00:46:27.537Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Converse Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Converse Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_19",
+        "name": "Converse Show 20",
+        "startTime": "2025-11-21T07:01:54.050Z",
+        "endTime": "2025-11-21T10:44:06.829Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Converse Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Converse Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_18",
+        "name": "Converse Show 19",
+        "startTime": "2025-11-22T17:34:24.748Z",
+        "endTime": "2025-11-22T19:21:39.292Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Converse Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_26",
+        "name": "Converse Show 27",
+        "startTime": "2025-11-22T20:52:21.621Z",
+        "endTime": "2025-11-22T23:30:34.718Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Converse Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-27",
+            "platformShowId": "platform_show_27_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_31",
+        "name": "Converse Show 32",
+        "startTime": "2025-11-22T23:32:54.037Z",
+        "endTime": "2025-11-23T02:45:34.008Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Converse Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-32",
+            "platformShowId": "platform_show_32_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_46",
+        "name": "Converse Show 47",
+        "startTime": "2025-11-23T13:59:44.250Z",
+        "endTime": "2025-11-23T17:48:45.062Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Converse Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_5",
+        "name": "Converse Show 6",
+        "startTime": "2025-11-24T03:45:03.910Z",
+        "endTime": "2025-11-24T06:05:18.314Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Converse Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-6",
+            "platformShowId": "platform_show_6_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_22",
+        "name": "Converse Show 23",
+        "startTime": "2025-11-24T20:02:04.122Z",
+        "endTime": "2025-11-24T22:26:04.173Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Converse Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Converse Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_8",
+        "name": "Converse Show 9",
+        "startTime": "2025-11-25T03:04:55.014Z",
+        "endTime": "2025-11-25T04:12:05.476Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Converse Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_43",
+        "name": "Converse Show 44",
+        "startTime": "2025-11-25T06:23:43.756Z",
+        "endTime": "2025-11-25T08:04:46.558Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Converse Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Converse Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Converse Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_30",
+        "name": "Converse Show 31",
+        "startTime": "2025-11-25T19:05:59.495Z",
+        "endTime": "2025-11-25T20:25:25.458Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Converse Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Converse Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Converse Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_32",
+        "name": "Converse Show 33",
+        "startTime": "2025-11-26T03:58:04.778Z",
+        "endTime": "2025-11-26T07:13:26.492Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Converse Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Converse Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_25",
+        "name": "Converse Show 26",
+        "startTime": "2025-11-26T18:31:33.843Z",
+        "endTime": "2025-11-26T20:26:39.462Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Converse Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Converse Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-26",
+            "platformShowId": "platform_show_26_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_36",
+        "name": "Converse Show 37",
+        "startTime": "2025-11-27T19:28:17.299Z",
+        "endTime": "2025-11-27T22:26:24.939Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Converse Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_27",
+        "name": "Converse Show 28",
+        "startTime": "2025-11-28T05:47:47.050Z",
+        "endTime": "2025-11-28T09:10:16.189Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Converse Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Converse Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Converse Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-28",
+            "platformShowId": "platform_show_28_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_35",
+        "name": "Converse Show 36",
+        "startTime": "2025-11-28T09:43:09.809Z",
+        "endTime": "2025-11-28T13:00:43.912Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Converse Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Converse Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_1",
+        "name": "Converse Show 2",
+        "startTime": "2025-11-28T20:59:09.103Z",
+        "endTime": "2025-11-28T23:52:35.195Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Converse Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Converse Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-2",
+            "platformShowId": "platform_show_2_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_28",
+        "name": "Converse Show 29",
+        "startTime": "2025-11-29T08:58:42.726Z",
+        "endTime": "2025-11-29T10:26:41.558Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Converse Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899745_37",
+        "name": "Converse Show 38",
+        "startTime": "2025-11-29T14:58:48.878Z",
+        "endTime": "2025-11-29T17:49:06.369Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Converse Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Converse Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Converse Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

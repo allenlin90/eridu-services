@@ -62,15 +62,15 @@ For complete Google Sheets integration workflow, API call sequence, error handli
    
    # Phase 1 (Recommended): Multi-client monthly overview
    # Creates one schedule per client with ~100 shows each
-   pnpm run generate:schedule-payload -- --shows=1000 --clients=10
+   pnpm run test:generate -- --shows=1000 --clients=10
    # Generates: 01-bulk-create-schedule.json with 10 schedules (100 shows each)
    
    # Phase 1: Single client (for testing)
-   pnpm run generate:schedule-payload -- --shows=100
+   pnpm run test:generate -- --shows=100
    # Generates: 01-create-schedule.json with 1 schedule (100 shows)
    
    # Phase 2 Only: Chunked upload for large clients (>200 shows per client) or multi-client monthly overviews (500+ shows from 10+ clients)
-   pnpm run generate:schedule-payload -- --shows=500 --clients=1 --chunk-size=50
+   pnpm run test:generate -- --shows=500 --clients=1 --chunk-size=50
    # Generates: chunked/chunk-001.json, chunk-002.json, etc. (50 shows each)
    ```
    
@@ -186,11 +186,73 @@ sequenceDiagram
     Postman-->>Tester: Display monthly overview
 ```
 
+## Automated Scripts Workflow
+
+For convenience, automated scripts are available to simulate the complete Google Sheets workflow:
+
+### Quick Start (Automated)
+
+```bash
+# Step 1: Create schedules (one per client)
+pnpm run test:schedule:create
+
+# Step 2: Upload schedule plan documents
+pnpm run test:schedule:upload
+
+# Step 3: Validate all schedules
+pnpm run test:schedule:validate
+
+# Step 4: Publish validated schedules
+pnpm run test:schedule:publish
+```
+
+### Available Scripts
+
+All scripts are located in `test-payloads/scripts/schedule-planning-flow/` and follow a numbered sequence:
+
+1. **`test:schedule:create`** (`1.create-schedules.ts`) - Creates schedules for the current month (one per client)
+   - Uses bulk create endpoint
+   - Generates schedules with empty plan documents
+
+2. **`test:schedule:upload`** (`2.upload-schedule-plan-documents.ts`) - Uploads plan documents to existing schedules
+   - Updates each schedule with its plan document
+   - Simulates Google Sheets data upload
+
+3. **`test:schedule:validate`** (`3.validate-schedules.ts`) - Validates all draft schedules for the current month
+   - Calls validation endpoint for each schedule
+   - Reports validation results and errors
+   - Filters to only draft schedules (skips already published)
+
+4. **`test:schedule:publish`** (`4.publish-schedules.ts`) - Publishes all validated draft schedules
+   - Publishes each draft schedule using its current version
+   - Reports publishing results and errors
+   - Exits with error code if any publish fails
+
+### Custom API URL
+
+All scripts support a custom API URL via command line argument:
+
+```bash
+pnpm run test:schedule:validate -- --api-url=http://localhost:3000
+pnpm run test:schedule:publish -- --api-url=http://localhost:3000
+```
+
+### Script Workflow Details
+
+The scripts follow this workflow:
+
+1. **Fetch schedules** for the current month (first day to last day)
+2. **Filter schedules** by status (draft for validation/publish)
+3. **Process each schedule** sequentially with small delays
+4. **Report results** with summary statistics
+
+**Note**: The scripts assume schedules have been created and plan documents uploaded before running validation and publish steps.
+
 ## Test Flow
 
 ### Phase 1: Client-by-Client Upload (Recommended)
 
-This is the primary testing workflow for Phase 1.
+This is the primary testing workflow for Phase 1. You can use either the automated scripts (above) or manual API calls (below).
 
 ### Step 1: Create Schedules (One Per Client)
 
@@ -841,7 +903,7 @@ async function uploadMonthlySchedule(shows: ShowPlanItem[]) {
 **Generate chunked payloads**:
 ```bash
 # Generate monthly overview with chunked payloads
-pnpm run generate:schedule-payload -- --shows=500 --clients=10 --chunk-size=50
+pnpm run test:generate -- --shows=500 --clients=10 --chunk-size=50
 ```
 
 **Testing Workflow** (once endpoint is implemented):
@@ -912,7 +974,7 @@ For complete implementation guide, see [SCHEDULE_UPLOAD_API_DESIGN.md](../docs/S
 2. **Generate chunked payloads**: Use multi-client mode with chunking
    ```bash
    # Generate monthly overview with chunked payloads
-   pnpm run generate:schedule-payload -- --shows=500 --clients=10 --chunk-size=50
+   pnpm run test:generate -- --shows=500 --clients=10 --chunk-size=50
    ```
 3. **Use chunked payloads**: Upload shows from `chunked/` directory sequentially using `POST /admin/schedules/:id/shows/append`
 4. **Increase server limits** (quick fix, not recommended for production): Configure NestJS/Express to accept larger payloads
@@ -969,24 +1031,24 @@ If performance is slower, consider:
 
 ```bash
 # Default: 50 shows (recommended for testing)
-pnpm run generate:schedule-payload
+pnpm run test:generate
 
 # Custom number of shows
-pnpm run generate:schedule-payload -- --shows=100
-pnpm run generate:schedule-payload -- --shows=200
+pnpm run test:generate -- --shows=100
+pnpm run test:generate -- --shows=200
 ```
 
 ### Multi-Client Monthly Overview (Realistic Scenario)
 
 ```bash
 # Generate monthly overview with multiple clients
-pnpm run generate:schedule-payload -- --shows=500 --clients=10
+pnpm run test:generate -- --shows=500 --clients=10
 
 # With custom chunk size
-pnpm run generate:schedule-payload -- --shows=1000 --clients=20 --chunk-size=50
+pnpm run test:generate -- --shows=1000 --clients=20 --chunk-size=50
 
 # Large monthly overview (realistic production scenario)
-pnpm run generate:schedule-payload -- --shows=2000 --clients=50 --chunk-size=50
+pnpm run test:generate -- --shows=2000 --clients=50 --chunk-size=50
 ```
 
 **Parameters:**

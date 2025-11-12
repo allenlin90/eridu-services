@@ -1,0 +1,1573 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-12T00:04:59.755Z",
+      "totalShows": 50,
+      "clientName": "Nestle",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1762905899755_10",
+        "name": "Nestle Show 11",
+        "startTime": "2025-11-01T03:58:30.223Z",
+        "endTime": "2025-11-01T06:57:55.840Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Nestle Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Nestle Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_20",
+        "name": "Nestle Show 21",
+        "startTime": "2025-11-01T07:23:35.607Z",
+        "endTime": "2025-11-01T09:54:02.152Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Nestle Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_17",
+        "name": "Nestle Show 18",
+        "startTime": "2025-11-01T09:15:18.222Z",
+        "endTime": "2025-11-01T13:07:59.268Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Nestle Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Nestle Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Nestle Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-18",
+            "platformShowId": "platform_show_18_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_15",
+        "name": "Nestle Show 16",
+        "startTime": "2025-11-01T17:42:43.883Z",
+        "endTime": "2025-11-01T21:11:11.966Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Nestle Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_32",
+        "name": "Nestle Show 33",
+        "startTime": "2025-11-01T21:55:56.049Z",
+        "endTime": "2025-11-01T23:42:30.031Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Nestle Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_3",
+        "name": "Nestle Show 4",
+        "startTime": "2025-11-02T18:33:31.969Z",
+        "endTime": "2025-11-02T21:08:47.582Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Nestle Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_40",
+        "name": "Nestle Show 41",
+        "startTime": "2025-11-03T18:24:08.228Z",
+        "endTime": "2025-11-03T20:59:09.722Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Nestle Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_47",
+        "name": "Nestle Show 48",
+        "startTime": "2025-11-04T03:49:03.894Z",
+        "endTime": "2025-11-04T07:07:37.877Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Nestle Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_44",
+        "name": "Nestle Show 45",
+        "startTime": "2025-11-04T11:58:17.396Z",
+        "endTime": "2025-11-04T14:58:24.390Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Nestle Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Nestle Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Nestle Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-45",
+            "platformShowId": "platform_show_45_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_16",
+        "name": "Nestle Show 17",
+        "startTime": "2025-11-04T21:06:56.681Z",
+        "endTime": "2025-11-04T22:42:13.690Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Nestle Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Nestle Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-17",
+            "platformShowId": "platform_show_17_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_7",
+        "name": "Nestle Show 8",
+        "startTime": "2025-11-05T03:24:46.914Z",
+        "endTime": "2025-11-05T05:54:50.621Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Nestle Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Nestle Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_34",
+        "name": "Nestle Show 35",
+        "startTime": "2025-11-06T05:37:08.264Z",
+        "endTime": "2025-11-06T09:08:37.509Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Nestle Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Nestle Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-35",
+            "platformShowId": "platform_show_35_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_48",
+        "name": "Nestle Show 49",
+        "startTime": "2025-11-06T12:32:03.939Z",
+        "endTime": "2025-11-06T15:10:06.006Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Nestle Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_13",
+        "name": "Nestle Show 14",
+        "startTime": "2025-11-07T09:45:56.665Z",
+        "endTime": "2025-11-07T11:03:44.345Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Nestle Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Nestle Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Nestle Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_27",
+        "name": "Nestle Show 28",
+        "startTime": "2025-11-07T10:40:07.385Z",
+        "endTime": "2025-11-07T13:35:00.368Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Nestle Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_26",
+        "name": "Nestle Show 27",
+        "startTime": "2025-11-07T16:14:42.924Z",
+        "endTime": "2025-11-07T17:30:40.218Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Nestle Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Nestle Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Nestle Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-27",
+            "platformShowId": "platform_show_27_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_1",
+        "name": "Nestle Show 2",
+        "startTime": "2025-11-07T23:11:58.865Z",
+        "endTime": "2025-11-08T02:55:53.259Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Nestle Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_12",
+        "name": "Nestle Show 13",
+        "startTime": "2025-11-08T06:17:25.650Z",
+        "endTime": "2025-11-08T08:07:35.036Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Nestle Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Nestle Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_22",
+        "name": "Nestle Show 23",
+        "startTime": "2025-11-08T12:28:53.074Z",
+        "endTime": "2025-11-08T15:33:33.223Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Nestle Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_9",
+        "name": "Nestle Show 10",
+        "startTime": "2025-11-08T14:21:54.403Z",
+        "endTime": "2025-11-08T15:39:50.068Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Nestle Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_46",
+        "name": "Nestle Show 47",
+        "startTime": "2025-11-09T21:13:17.638Z",
+        "endTime": "2025-11-09T23:25:40.820Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Nestle Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_11",
+        "name": "Nestle Show 12",
+        "startTime": "2025-11-10T01:17:17.045Z",
+        "endTime": "2025-11-10T02:41:48.144Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Nestle Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_21",
+        "name": "Nestle Show 22",
+        "startTime": "2025-11-10T19:02:01.759Z",
+        "endTime": "2025-11-10T22:29:15.115Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Nestle Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Nestle Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_41",
+        "name": "Nestle Show 42",
+        "startTime": "2025-11-11T00:13:45.748Z",
+        "endTime": "2025-11-11T03:07:46.807Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Nestle Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Nestle Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Nestle Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-42",
+            "platformShowId": "platform_show_42_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_36",
+        "name": "Nestle Show 37",
+        "startTime": "2025-11-11T07:21:53.951Z",
+        "endTime": "2025-11-11T10:01:24.800Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Nestle Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_19",
+        "name": "Nestle Show 20",
+        "startTime": "2025-11-12T02:28:42.833Z",
+        "endTime": "2025-11-12T04:55:08.699Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Nestle Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_4",
+        "name": "Nestle Show 5",
+        "startTime": "2025-11-12T15:35:01.638Z",
+        "endTime": "2025-11-12T18:21:30.455Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Nestle Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Nestle Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_23",
+        "name": "Nestle Show 24",
+        "startTime": "2025-11-15T00:11:36.433Z",
+        "endTime": "2025-11-15T04:00:25.332Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Nestle Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Nestle Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Nestle Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_24",
+        "name": "Nestle Show 25",
+        "startTime": "2025-11-15T04:23:22.794Z",
+        "endTime": "2025-11-15T05:56:07.925Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Nestle Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Nestle Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_0",
+        "name": "Nestle Show 1",
+        "startTime": "2025-11-15T10:40:00.025Z",
+        "endTime": "2025-11-15T12:29:27.510Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Nestle Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Nestle Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Nestle Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_2",
+        "name": "Nestle Show 3",
+        "startTime": "2025-11-15T22:19:52.825Z",
+        "endTime": "2025-11-16T01:28:11.751Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Nestle Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Nestle Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Nestle Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_33",
+        "name": "Nestle Show 34",
+        "startTime": "2025-11-16T01:14:49.053Z",
+        "endTime": "2025-11-16T03:47:01.575Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Nestle Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Nestle Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_42",
+        "name": "Nestle Show 43",
+        "startTime": "2025-11-16T21:50:27.953Z",
+        "endTime": "2025-11-17T00:02:23.984Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Nestle Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Nestle Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-43",
+            "platformShowId": "platform_show_43_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_43",
+        "name": "Nestle Show 44",
+        "startTime": "2025-11-17T00:01:14.961Z",
+        "endTime": "2025-11-17T02:26:40.703Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Nestle Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_35",
+        "name": "Nestle Show 36",
+        "startTime": "2025-11-17T07:45:09.953Z",
+        "endTime": "2025-11-17T10:13:02.001Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Nestle Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Nestle Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-36",
+            "platformShowId": "platform_show_36_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_45",
+        "name": "Nestle Show 46",
+        "startTime": "2025-11-17T12:52:31.687Z",
+        "endTime": "2025-11-17T14:28:00.438Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Nestle Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Nestle Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Nestle Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_29",
+        "name": "Nestle Show 30",
+        "startTime": "2025-11-18T17:04:34.033Z",
+        "endTime": "2025-11-18T19:31:18.468Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Nestle Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Nestle Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Nestle Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-30",
+            "platformShowId": "platform_show_30_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_31",
+        "name": "Nestle Show 32",
+        "startTime": "2025-11-18T17:16:21.454Z",
+        "endTime": "2025-11-18T19:33:50.674Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Nestle Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Nestle Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Nestle Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_5",
+        "name": "Nestle Show 6",
+        "startTime": "2025-11-18T17:16:36.664Z",
+        "endTime": "2025-11-18T19:44:40.480Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Nestle Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Nestle Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Nestle Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-6",
+            "platformShowId": "platform_show_6_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_39",
+        "name": "Nestle Show 40",
+        "startTime": "2025-11-19T04:25:21.232Z",
+        "endTime": "2025-11-19T07:04:14.528Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Nestle Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-40",
+            "platformShowId": "platform_show_40_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_18",
+        "name": "Nestle Show 19",
+        "startTime": "2025-11-19T18:11:01.224Z",
+        "endTime": "2025-11-19T21:13:15.850Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Nestle Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Nestle Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_8",
+        "name": "Nestle Show 9",
+        "startTime": "2025-11-21T01:25:22.277Z",
+        "endTime": "2025-11-21T04:55:11.539Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Nestle Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_14",
+        "name": "Nestle Show 15",
+        "startTime": "2025-11-21T03:33:28.206Z",
+        "endTime": "2025-11-21T05:18:32.239Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Nestle Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Nestle Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_30",
+        "name": "Nestle Show 31",
+        "startTime": "2025-11-21T21:59:33.362Z",
+        "endTime": "2025-11-22T00:31:14.956Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Nestle Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Nestle Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Nestle Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_37",
+        "name": "Nestle Show 38",
+        "startTime": "2025-11-22T09:29:26.963Z",
+        "endTime": "2025-11-22T11:39:00.652Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Nestle Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_49",
+        "name": "Nestle Show 50",
+        "startTime": "2025-11-22T19:31:53.699Z",
+        "endTime": "2025-11-22T20:39:10.572Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Nestle Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Nestle Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_6",
+        "name": "Nestle Show 7",
+        "startTime": "2025-11-24T01:44:38.136Z",
+        "endTime": "2025-11-24T04:47:46.901Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Nestle Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_28",
+        "name": "Nestle Show 29",
+        "startTime": "2025-11-25T03:14:43.093Z",
+        "endTime": "2025-11-25T05:59:28.903Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Nestle Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-29",
+            "platformShowId": "platform_show_29_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_25",
+        "name": "Nestle Show 26",
+        "startTime": "2025-11-26T07:44:42.567Z",
+        "endTime": "2025-11-26T10:37:44.456Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Nestle Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Nestle Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Nestle Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-26",
+            "platformShowId": "platform_show_26_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_38",
+        "name": "Nestle Show 39",
+        "startTime": "2025-11-27T19:02:46.348Z",
+        "endTime": "2025-11-27T21:34:04.207Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Nestle Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Nestle Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Nestle Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

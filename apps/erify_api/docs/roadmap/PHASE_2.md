@@ -51,7 +51,25 @@ Phase 2 builds upon the core functions and Schedule Planning Management System f
 
 ### 6. Schedule Planning Enhancements (Deferred from Phase 1)
 
-#### 6.1 Chunked Upload for Large Clients
+#### 6.1 Bulk Publish Operations ⭐ **DEFERRED FROM PHASE 1**
+- **Purpose**: Validate and publish multiple schedules in a single operation with async processing support
+- **New Endpoint**: `POST /admin/schedules/bulk-publish` - Bulk validate and publish multiple schedules
+- **Async Processing**: Support for background job queue processing to avoid timeout risks
+- **Job Status Tracking**: `GET /admin/jobs/:job_id` - Track async publish job status with real-time progress
+- **Use Case**: Monthly planning with ~50 clients, ~50 shows each - publish all schedules at once
+- **Benefits**: 
+  - 93% fewer API calls: 50 create + 1 bulk publish = 51 calls (vs 150+ individual calls)
+  - 90% faster: ~45 seconds total (vs ~7 minutes)
+  - No timeout risk: Well within AppsScript limits
+  - Simple AppsScript: No complex state management needed
+- **Features**:
+  - Partial success handling (failures isolated per client)
+  - Detailed per-schedule results with error reporting
+  - Progress tracking (validated, published, failed, pending)
+  - Real-time status updates via job status endpoint
+- **Design**: See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md#bulk-publish-endpoint-new-) for complete API design
+
+#### 6.2 Chunked Upload for Large Clients
 - **Purpose**: Support clients with >200 shows per month or multi-client monthly overviews (500+ shows from 10+ clients)
 - **New Endpoint**: `POST /admin/schedules/:id/shows/append` - Incremental show uploads
 - **Sequential Tracking**: `uploadProgress` metadata in plan_document
@@ -59,7 +77,7 @@ Phase 2 builds upon the core functions and Schedule Planning Management System f
 - **Use Case**: Very large single-client schedules that exceed payload limits, or multi-client monthly overviews
 - **Design**: See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md#phase-2-chunked-upload--deferred)
 
-#### 6.2 CSV Import/Export Service
+#### 6.3 CSV Import/Export Service
 - **CSV Export**: Export historical data from Google Sheets
 - **CSV Import**: Import CSV file into Schedule as JSON plan document
 - **Migration Support**: Facilitate transition from Google Sheets
@@ -88,6 +106,17 @@ Phase 2 builds upon the core functions and Schedule Planning Management System f
 - [ ] Material expiration date notifications
 
 #### Schedule Planning Enhancements (Deferred from Phase 1)
+- [ ] **Bulk Publish Operations** ⭐ **DEFERRED FROM PHASE 1**
+  - [ ] `POST /admin/schedules/bulk-publish` endpoint - Bulk validate and publish multiple schedules
+  - [ ] `GET /admin/jobs/:job_id` endpoint - Track async publish job status
+  - [ ] Job queue implementation for async processing
+  - [ ] Background worker implementation for schedule publishing
+  - [ ] Progress tracking (validated, published, failed, pending)
+  - [ ] Real-time status updates
+  - [ ] Partial success handling (failures isolated per client)
+  - [ ] Detailed per-schedule results with error reporting
+  - [ ] Integration tests for bulk publish operations
+  - [ ] Job status tracking tests
 - [ ] **Chunked Upload for Large Clients** (>200 shows per client) or multi-client monthly overviews (500+ shows from 10+ clients)
   - [ ] `POST /admin/schedules/:id/shows/append` endpoint (controller endpoint not implemented)
   - [x] `appendShows` service method with `uploadProgress` metadata tracking ✅ **SERVICE LAYER IMPLEMENTED**
@@ -178,6 +207,8 @@ Phase 2 builds upon the core functions and Schedule Planning Management System f
 - Material expiration handling
 - Material reuse across multiple shows
 - Integration with Schedule Planning Management System from Phase 1
+- **Bulk publish operations** ⭐ - Bulk validate and publish multiple schedules in single operation with async job tracking
+- **Job status tracking** ⭐ - Real-time progress monitoring for bulk publish operations
 - Show bulk operations (bulk create and bulk update) working with partial success handling
 - API expand parameter working for all entities with associated data
 - API search and search_term parameters functional for column-based searching
@@ -202,7 +233,12 @@ Phase 2 builds upon the core functions and Schedule Planning Management System f
 
 ### Phase 2 Implementation Timeline (6 weeks)
 
-#### Week 1-2: Material Foundation
+#### Week 1-2: Bulk Publish Operations & Material Foundation
+- [ ] Implement bulk publish endpoint (`POST /admin/schedules/bulk-publish`)
+- [ ] Implement job queue system for async processing
+- [ ] Implement background worker for schedule publishing
+- [ ] Implement job status tracking endpoint (`GET /admin/jobs/:job_id`)
+- [ ] Add progress tracking and real-time status updates
 - [ ] Create Material and MaterialType entities
 - [ ] Implement MaterialService with CRUD operations
 - [ ] Implement MaterialTypeService
@@ -227,19 +263,21 @@ Phase 2 builds upon the core functions and Schedule Planning Management System f
 - [ ] Integrate materials with Schedule Planning Management System
 - [ ] Add material selection to schedule planning JSON documents
 - [ ] Implement material reuse tracking
+- [ ] Comprehensive testing for bulk publish operations and job tracking
 - [ ] Comprehensive testing and documentation
 - [ ] Performance optimization and monitoring
 
 ### Implementation Focus Areas
 
-1. **Material Management**: Complete material CRUD with versioning and lifecycle management
-2. **Show-Material Associations**: Robust association management between shows and materials
-3. **Platform Targeting**: Platform-specific material assignment and filtering
-4. **Material Organization**: Client-scoped materials with search and filtering
-5. **Integration**: Seamless integration with Phase 1 systems (Schedule Planning, Shows)
-6. **API Query Features**: Expand parameter for associated data and search capabilities for flexible querying
-7. **Show Bulk Operations**: Bulk create and bulk update operations for shows with partial success handling (deferred from Phase 1 where schedule bulk operations are implemented)
-8. **Idempotency Handling**: Idempotency support for show and schedule creation to prevent duplicates from retries (critical since no unique constraints exist on names/durations for overlapping packages, events, and campaigns)
+1. **Bulk Publish Operations** ⭐ (Deferred from Phase 1): Bulk validate and publish multiple schedules with async job tracking
+2. **Material Management**: Complete material CRUD with versioning and lifecycle management
+3. **Show-Material Associations**: Robust association management between shows and materials
+4. **Platform Targeting**: Platform-specific material assignment and filtering
+5. **Material Organization**: Client-scoped materials with search and filtering
+6. **Integration**: Seamless integration with Phase 1 systems (Schedule Planning, Shows)
+7. **API Query Features**: Expand parameter for associated data and search capabilities for flexible querying
+8. **Show Bulk Operations**: Bulk create and bulk update operations for shows with partial success handling (deferred from Phase 1 where schedule bulk operations are implemented)
+9. **Idempotency Handling**: Idempotency support for show and schedule creation to prevent duplicates from retries (critical since no unique constraints exist on names/durations for overlapping packages, events, and campaigns)
 
 ### User Access Strategy
 - **Admin Users**: Full CRUD access to all resources including material management

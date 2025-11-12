@@ -1,0 +1,1609 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-12T00:04:59.757Z",
+      "totalShows": 50,
+      "clientName": "Amazon",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1762905899757_3",
+        "name": "Amazon Show 4",
+        "startTime": "2025-10-31T22:30:58.501Z",
+        "endTime": "2025-11-01T01:07:26.720Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Amazon Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Amazon Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Amazon Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_35",
+        "name": "Amazon Show 36",
+        "startTime": "2025-11-01T01:47:45.000Z",
+        "endTime": "2025-11-01T05:20:34.089Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Amazon Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Amazon Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Amazon Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-36",
+            "platformShowId": "platform_show_36_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_6",
+        "name": "Amazon Show 7",
+        "startTime": "2025-11-01T05:10:36.541Z",
+        "endTime": "2025-11-01T08:18:08.162Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Amazon Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Amazon Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_23",
+        "name": "Amazon Show 24",
+        "startTime": "2025-11-01T18:56:20.696Z",
+        "endTime": "2025-11-01T21:45:23.178Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Amazon Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Amazon Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Amazon Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-24",
+            "platformShowId": "platform_show_24_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_16",
+        "name": "Amazon Show 17",
+        "startTime": "2025-11-01T21:14:26.355Z",
+        "endTime": "2025-11-02T01:03:48.549Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Amazon Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-17",
+            "platformShowId": "platform_show_17_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_0",
+        "name": "Amazon Show 1",
+        "startTime": "2025-11-02T19:48:21.746Z",
+        "endTime": "2025-11-02T21:08:42.605Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Amazon Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Amazon Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-1",
+            "platformShowId": "platform_show_1_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_15",
+        "name": "Amazon Show 16",
+        "startTime": "2025-11-02T20:25:19.157Z",
+        "endTime": "2025-11-02T23:09:26.921Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Amazon Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_44",
+        "name": "Amazon Show 45",
+        "startTime": "2025-11-04T06:37:43.340Z",
+        "endTime": "2025-11-04T07:56:49.408Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Amazon Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Amazon Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Amazon Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-45",
+            "platformShowId": "platform_show_45_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_47",
+        "name": "Amazon Show 48",
+        "startTime": "2025-11-04T22:41:48.368Z",
+        "endTime": "2025-11-05T00:18:44.457Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Amazon Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Amazon Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Amazon Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-48",
+            "platformShowId": "platform_show_48_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_26",
+        "name": "Amazon Show 27",
+        "startTime": "2025-11-05T02:57:01.599Z",
+        "endTime": "2025-11-05T03:59:08.856Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Amazon Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_36",
+        "name": "Amazon Show 37",
+        "startTime": "2025-11-05T04:28:44.994Z",
+        "endTime": "2025-11-05T07:09:54.935Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Amazon Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Amazon Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Amazon Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_32",
+        "name": "Amazon Show 33",
+        "startTime": "2025-11-05T23:04:42.028Z",
+        "endTime": "2025-11-06T02:55:18.411Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Amazon Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Amazon Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Amazon Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_29",
+        "name": "Amazon Show 30",
+        "startTime": "2025-11-06T06:04:41.978Z",
+        "endTime": "2025-11-06T10:01:38.297Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Amazon Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Amazon Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_28",
+        "name": "Amazon Show 29",
+        "startTime": "2025-11-06T15:39:00.377Z",
+        "endTime": "2025-11-06T18:22:08.649Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Amazon Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Amazon Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_1",
+        "name": "Amazon Show 2",
+        "startTime": "2025-11-06T18:43:30.444Z",
+        "endTime": "2025-11-06T22:03:35.617Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Amazon Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_17",
+        "name": "Amazon Show 18",
+        "startTime": "2025-11-07T09:01:26.379Z",
+        "endTime": "2025-11-07T10:39:42.244Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Amazon Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Amazon Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-18",
+            "platformShowId": "platform_show_18_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_4",
+        "name": "Amazon Show 5",
+        "startTime": "2025-11-07T11:59:36.184Z",
+        "endTime": "2025-11-07T15:08:15.577Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Amazon Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Amazon Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_43",
+        "name": "Amazon Show 44",
+        "startTime": "2025-11-07T12:24:17.177Z",
+        "endTime": "2025-11-07T15:56:45.580Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Amazon Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Amazon Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-44",
+            "platformShowId": "platform_show_44_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_25",
+        "name": "Amazon Show 26",
+        "startTime": "2025-11-08T01:14:51.612Z",
+        "endTime": "2025-11-08T04:34:04.547Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Amazon Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Amazon Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Amazon Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-26",
+            "platformShowId": "platform_show_26_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_19",
+        "name": "Amazon Show 20",
+        "startTime": "2025-11-09T05:25:33.218Z",
+        "endTime": "2025-11-09T09:24:50.406Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Amazon Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_8",
+        "name": "Amazon Show 9",
+        "startTime": "2025-11-09T09:23:46.963Z",
+        "endTime": "2025-11-09T12:32:10.424Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Amazon Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Amazon Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Amazon Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_45",
+        "name": "Amazon Show 46",
+        "startTime": "2025-11-11T01:19:39.060Z",
+        "endTime": "2025-11-11T04:38:55.621Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Amazon Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_31",
+        "name": "Amazon Show 32",
+        "startTime": "2025-11-13T17:57:34.218Z",
+        "endTime": "2025-11-13T19:00:52.695Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Amazon Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Amazon Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Amazon Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_5",
+        "name": "Amazon Show 6",
+        "startTime": "2025-11-13T19:45:37.565Z",
+        "endTime": "2025-11-13T21:24:51.816Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Amazon Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Amazon Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Amazon Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_49",
+        "name": "Amazon Show 50",
+        "startTime": "2025-11-13T21:44:54.254Z",
+        "endTime": "2025-11-14T00:42:27.361Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Amazon Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_34",
+        "name": "Amazon Show 35",
+        "startTime": "2025-11-14T15:49:27.894Z",
+        "endTime": "2025-11-14T17:19:59.765Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Amazon Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_13",
+        "name": "Amazon Show 14",
+        "startTime": "2025-11-14T16:26:02.922Z",
+        "endTime": "2025-11-14T17:47:43.385Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Amazon Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Amazon Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Amazon Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_21",
+        "name": "Amazon Show 22",
+        "startTime": "2025-11-15T07:06:33.897Z",
+        "endTime": "2025-11-15T10:09:39.432Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Amazon Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_20",
+        "name": "Amazon Show 21",
+        "startTime": "2025-11-15T12:09:49.503Z",
+        "endTime": "2025-11-15T13:45:43.079Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Amazon Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Amazon Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Amazon Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_12",
+        "name": "Amazon Show 13",
+        "startTime": "2025-11-15T22:07:42.164Z",
+        "endTime": "2025-11-16T01:24:06.952Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Amazon Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_18",
+        "name": "Amazon Show 19",
+        "startTime": "2025-11-16T00:36:20.334Z",
+        "endTime": "2025-11-16T03:27:41.453Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Amazon Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Amazon Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_2",
+        "name": "Amazon Show 3",
+        "startTime": "2025-11-17T03:31:34.839Z",
+        "endTime": "2025-11-17T06:45:54.584Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Amazon Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Amazon Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Amazon Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_46",
+        "name": "Amazon Show 47",
+        "startTime": "2025-11-18T02:15:15.546Z",
+        "endTime": "2025-11-18T05:06:34.335Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Amazon Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Amazon Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Amazon Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_38",
+        "name": "Amazon Show 39",
+        "startTime": "2025-11-18T22:24:53.034Z",
+        "endTime": "2025-11-18T23:38:10.578Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Amazon Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Amazon Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Amazon Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_33",
+        "name": "Amazon Show 34",
+        "startTime": "2025-11-18T23:48:53.490Z",
+        "endTime": "2025-11-19T01:45:41.270Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Amazon Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_42",
+        "name": "Amazon Show 43",
+        "startTime": "2025-11-19T10:28:36.659Z",
+        "endTime": "2025-11-19T12:36:33.562Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Amazon Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Amazon Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Amazon Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_9",
+        "name": "Amazon Show 10",
+        "startTime": "2025-11-19T17:34:34.912Z",
+        "endTime": "2025-11-19T19:33:26.921Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Amazon Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-10",
+            "platformShowId": "platform_show_10_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_39",
+        "name": "Amazon Show 40",
+        "startTime": "2025-11-20T08:34:31.199Z",
+        "endTime": "2025-11-20T10:38:50.628Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Amazon Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Amazon Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Amazon Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_7",
+        "name": "Amazon Show 8",
+        "startTime": "2025-11-22T08:00:47.115Z",
+        "endTime": "2025-11-22T09:52:42.707Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Amazon Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Amazon Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-8",
+            "platformShowId": "platform_show_8_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_41",
+        "name": "Amazon Show 42",
+        "startTime": "2025-11-23T20:20:20.894Z",
+        "endTime": "2025-11-24T00:02:27.545Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Amazon Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_22",
+        "name": "Amazon Show 23",
+        "startTime": "2025-11-24T02:43:27.852Z",
+        "endTime": "2025-11-24T05:28:37.553Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Amazon Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_30",
+        "name": "Amazon Show 31",
+        "startTime": "2025-11-24T04:18:16.219Z",
+        "endTime": "2025-11-24T07:59:30.986Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Amazon Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Amazon Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Amazon Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_40",
+        "name": "Amazon Show 41",
+        "startTime": "2025-11-25T21:17:48.641Z",
+        "endTime": "2025-11-26T00:04:15.829Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Amazon Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Amazon Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_11",
+        "name": "Amazon Show 12",
+        "startTime": "2025-11-25T22:25:05.271Z",
+        "endTime": "2025-11-26T01:35:40.796Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Amazon Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-12",
+            "platformShowId": "platform_show_12_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_10",
+        "name": "Amazon Show 11",
+        "startTime": "2025-11-26T10:21:13.553Z",
+        "endTime": "2025-11-26T11:39:49.321Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Amazon Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_37",
+        "name": "Amazon Show 38",
+        "startTime": "2025-11-28T14:51:22.320Z",
+        "endTime": "2025-11-28T17:29:10.810Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Amazon Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_24",
+        "name": "Amazon Show 25",
+        "startTime": "2025-11-28T16:41:28.191Z",
+        "endTime": "2025-11-28T19:21:33.146Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Amazon Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Amazon Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Amazon Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-25",
+            "platformShowId": "platform_show_25_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_14",
+        "name": "Amazon Show 15",
+        "startTime": "2025-11-28T17:17:14.408Z",
+        "endTime": "2025-11-28T21:01:58.437Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Amazon Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Amazon Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Amazon Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_48",
+        "name": "Amazon Show 49",
+        "startTime": "2025-11-29T00:37:19.698Z",
+        "endTime": "2025-11-29T02:08:57.312Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Amazon Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899757_27",
+        "name": "Amazon Show 28",
+        "startTime": "2025-11-30T05:11:37.985Z",
+        "endTime": "2025-11-30T07:22:18.703Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Amazon Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Amazon Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-28",
+            "platformShowId": "platform_show_28_2"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,1685 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-12T00:04:59.747Z",
+      "totalShows": 50,
+      "clientName": "Under Armour",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1762905899746_45",
+        "name": "Under Armour Show 46",
+        "startTime": "2025-10-31T18:27:18.502Z",
+        "endTime": "2025-10-31T20:18:26.390Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Under Armour Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Under Armour Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Under Armour Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-46",
+            "platformShowId": "platform_show_46_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_6",
+        "name": "Under Armour Show 7",
+        "startTime": "2025-10-31T23:58:22.760Z",
+        "endTime": "2025-11-01T02:25:12.384Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Under Armour Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_8",
+        "name": "Under Armour Show 9",
+        "startTime": "2025-11-01T15:30:21.285Z",
+        "endTime": "2025-11-01T17:16:56.189Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Under Armour Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Under Armour Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Under Armour Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_43",
+        "name": "Under Armour Show 44",
+        "startTime": "2025-11-01T16:27:39.961Z",
+        "endTime": "2025-11-01T19:42:40.976Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Under Armour Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_18",
+        "name": "Under Armour Show 19",
+        "startTime": "2025-11-01T23:47:35.194Z",
+        "endTime": "2025-11-02T03:18:07.211Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Under Armour Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Under Armour Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_30",
+        "name": "Under Armour Show 31",
+        "startTime": "2025-11-02T15:39:54.459Z",
+        "endTime": "2025-11-02T17:31:36.322Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Under Armour Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Under Armour Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Under Armour Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_23",
+        "name": "Under Armour Show 24",
+        "startTime": "2025-11-04T07:31:53.902Z",
+        "endTime": "2025-11-04T09:13:34.632Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Under Armour Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Under Armour Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Under Armour Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-24",
+            "platformShowId": "platform_show_24_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_12",
+        "name": "Under Armour Show 13",
+        "startTime": "2025-11-04T14:55:18.330Z",
+        "endTime": "2025-11-04T17:17:43.477Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Under Armour Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Under Armour Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Under Armour Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_22",
+        "name": "Under Armour Show 23",
+        "startTime": "2025-11-05T18:45:57.288Z",
+        "endTime": "2025-11-05T20:41:28.438Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Under Armour Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Under Armour Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Under Armour Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_10",
+        "name": "Under Armour Show 11",
+        "startTime": "2025-11-05T20:52:37.836Z",
+        "endTime": "2025-11-06T00:29:02.458Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Under Armour Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Under Armour Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Under Armour Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_3",
+        "name": "Under Armour Show 4",
+        "startTime": "2025-11-06T06:47:13.132Z",
+        "endTime": "2025-11-06T09:31:36.441Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Under Armour Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-4",
+            "platformShowId": "platform_show_4_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_27",
+        "name": "Under Armour Show 28",
+        "startTime": "2025-11-06T14:29:53.124Z",
+        "endTime": "2025-11-06T16:50:01.538Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Under Armour Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Under Armour Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-28",
+            "platformShowId": "platform_show_28_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_20",
+        "name": "Under Armour Show 21",
+        "startTime": "2025-11-08T06:41:39.443Z",
+        "endTime": "2025-11-08T10:32:28.912Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Under Armour Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Under Armour Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Under Armour Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_39",
+        "name": "Under Armour Show 40",
+        "startTime": "2025-11-08T17:18:05.820Z",
+        "endTime": "2025-11-08T18:49:28.297Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Under Armour Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Under Armour Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_2",
+        "name": "Under Armour Show 3",
+        "startTime": "2025-11-09T01:16:48.669Z",
+        "endTime": "2025-11-09T02:59:30.683Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Under Armour Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Under Armour Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_44",
+        "name": "Under Armour Show 45",
+        "startTime": "2025-11-09T13:00:00.839Z",
+        "endTime": "2025-11-09T16:12:42.286Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Under Armour Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Under Armour Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_29",
+        "name": "Under Armour Show 30",
+        "startTime": "2025-11-10T19:41:37.439Z",
+        "endTime": "2025-11-10T22:28:03.182Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Under Armour Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Under Armour Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Under Armour Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_0",
+        "name": "Under Armour Show 1",
+        "startTime": "2025-11-11T15:44:30.657Z",
+        "endTime": "2025-11-11T17:50:37.002Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Under Armour Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Under Armour Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-1",
+            "platformShowId": "platform_show_1_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_7",
+        "name": "Under Armour Show 8",
+        "startTime": "2025-11-11T21:36:26.768Z",
+        "endTime": "2025-11-12T00:20:50.173Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Under Armour Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_48",
+        "name": "Under Armour Show 49",
+        "startTime": "2025-11-12T01:26:40.663Z",
+        "endTime": "2025-11-12T04:45:16.948Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Under Armour Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Under Armour Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Under Armour Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-49",
+            "platformShowId": "platform_show_49_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_16",
+        "name": "Under Armour Show 17",
+        "startTime": "2025-11-12T10:23:22.309Z",
+        "endTime": "2025-11-12T11:45:54.857Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Under Armour Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Under Armour Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Under Armour Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-17",
+            "platformShowId": "platform_show_17_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_5",
+        "name": "Under Armour Show 6",
+        "startTime": "2025-11-12T22:08:06.733Z",
+        "endTime": "2025-11-13T00:48:08.265Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Under Armour Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Under Armour Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_14",
+        "name": "Under Armour Show 15",
+        "startTime": "2025-11-12T23:35:32.895Z",
+        "endTime": "2025-11-13T02:20:32.450Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Under Armour Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_38",
+        "name": "Under Armour Show 39",
+        "startTime": "2025-11-14T21:41:15.309Z",
+        "endTime": "2025-11-15T00:43:26.343Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Under Armour Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Under Armour Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Under Armour Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_19",
+        "name": "Under Armour Show 20",
+        "startTime": "2025-11-15T05:53:52.707Z",
+        "endTime": "2025-11-15T07:35:42.466Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Under Armour Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_33",
+        "name": "Under Armour Show 34",
+        "startTime": "2025-11-15T09:17:07.732Z",
+        "endTime": "2025-11-15T11:18:53.538Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Under Armour Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Under Armour Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Under Armour Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_15",
+        "name": "Under Armour Show 16",
+        "startTime": "2025-11-15T13:05:19.529Z",
+        "endTime": "2025-11-15T14:56:47.852Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Under Armour Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_35",
+        "name": "Under Armour Show 36",
+        "startTime": "2025-11-16T22:46:13.047Z",
+        "endTime": "2025-11-17T01:11:06.786Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Under Armour Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Under Armour Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Under Armour Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_34",
+        "name": "Under Armour Show 35",
+        "startTime": "2025-11-16T22:56:30.724Z",
+        "endTime": "2025-11-17T00:14:31.359Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Under Armour Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Under Armour Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_37",
+        "name": "Under Armour Show 38",
+        "startTime": "2025-11-17T07:31:21.398Z",
+        "endTime": "2025-11-17T09:22:00.753Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Under Armour Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Under Armour Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_21",
+        "name": "Under Armour Show 22",
+        "startTime": "2025-11-18T19:43:12.968Z",
+        "endTime": "2025-11-18T22:04:02.720Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Under Armour Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Under Armour Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Under Armour Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-22",
+            "platformShowId": "platform_show_22_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_26",
+        "name": "Under Armour Show 27",
+        "startTime": "2025-11-19T06:04:52.384Z",
+        "endTime": "2025-11-19T10:02:21.925Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Under Armour Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Under Armour Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_40",
+        "name": "Under Armour Show 41",
+        "startTime": "2025-11-19T14:22:56.031Z",
+        "endTime": "2025-11-19T17:44:31.517Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Under Armour Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Under Armour Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Under Armour Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_24",
+        "name": "Under Armour Show 25",
+        "startTime": "2025-11-20T05:36:35.303Z",
+        "endTime": "2025-11-20T08:19:50.788Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Under Armour Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Under Armour Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Under Armour Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-25",
+            "platformShowId": "platform_show_25_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_41",
+        "name": "Under Armour Show 42",
+        "startTime": "2025-11-20T18:37:41.914Z",
+        "endTime": "2025-11-20T21:41:33.879Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Under Armour Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_28",
+        "name": "Under Armour Show 29",
+        "startTime": "2025-11-22T04:31:50.669Z",
+        "endTime": "2025-11-22T05:37:09.022Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Under Armour Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Under Armour Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Under Armour Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-29",
+            "platformShowId": "platform_show_29_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_4",
+        "name": "Under Armour Show 5",
+        "startTime": "2025-11-22T10:29:02.289Z",
+        "endTime": "2025-11-22T12:33:25.464Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Under Armour Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Under Armour Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Under Armour Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_32",
+        "name": "Under Armour Show 33",
+        "startTime": "2025-11-22T11:05:28.533Z",
+        "endTime": "2025-11-22T13:21:20.787Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Under Armour Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Under Armour Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Under Armour Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_47",
+        "name": "Under Armour Show 48",
+        "startTime": "2025-11-22T14:32:57.026Z",
+        "endTime": "2025-11-22T17:07:04.877Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Under Armour Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Under Armour Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_11",
+        "name": "Under Armour Show 12",
+        "startTime": "2025-11-22T19:56:09.647Z",
+        "endTime": "2025-11-22T21:24:22.912Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Under Armour Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Under Armour Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-12",
+            "platformShowId": "platform_show_12_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_9",
+        "name": "Under Armour Show 10",
+        "startTime": "2025-11-23T08:25:09.839Z",
+        "endTime": "2025-11-23T10:24:10.956Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Under Armour Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Under Armour Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_25",
+        "name": "Under Armour Show 26",
+        "startTime": "2025-11-25T18:12:28.309Z",
+        "endTime": "2025-11-25T22:11:40.564Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Under Armour Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Under Armour Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Under Armour Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-26",
+            "platformShowId": "platform_show_26_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_46",
+        "name": "Under Armour Show 47",
+        "startTime": "2025-11-26T17:55:01.465Z",
+        "endTime": "2025-11-26T19:22:02.095Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Under Armour Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Under Armour Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_31",
+        "name": "Under Armour Show 32",
+        "startTime": "2025-11-27T11:01:12.151Z",
+        "endTime": "2025-11-27T13:06:05.967Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Under Armour Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Under Armour Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Under Armour Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-32",
+            "platformShowId": "platform_show_32_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_36",
+        "name": "Under Armour Show 37",
+        "startTime": "2025-11-27T19:42:56.844Z",
+        "endTime": "2025-11-27T23:19:46.890Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Under Armour Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Under Armour Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Under Armour Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-37",
+            "platformShowId": "platform_show_37_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_1",
+        "name": "Under Armour Show 2",
+        "startTime": "2025-11-28T09:24:06.868Z",
+        "endTime": "2025-11-28T12:24:12.400Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Under Armour Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Under Armour Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Under Armour Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-2",
+            "platformShowId": "platform_show_2_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_42",
+        "name": "Under Armour Show 43",
+        "startTime": "2025-11-28T14:47:20.986Z",
+        "endTime": "2025-11-28T17:59:52.394Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Under Armour Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Under Armour Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Under Armour Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-43",
+            "platformShowId": "platform_show_43_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_49",
+        "name": "Under Armour Show 50",
+        "startTime": "2025-11-29T16:11:06.687Z",
+        "endTime": "2025-11-29T18:09:28.347Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Under Armour Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Under Armour Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Under Armour Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_17",
+        "name": "Under Armour Show 18",
+        "startTime": "2025-11-30T09:11:18.361Z",
+        "endTime": "2025-11-30T12:14:02.485Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Under Armour Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Under Armour Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899746_13",
+        "name": "Under Armour Show 14",
+        "startTime": "2025-11-30T09:38:08.892Z",
+        "endTime": "2025-11-30T12:07:37.995Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Under Armour Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

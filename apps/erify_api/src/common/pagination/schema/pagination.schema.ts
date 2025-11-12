@@ -82,3 +82,17 @@ export function createPaginationMeta(
     hasPreviousPage: page > 1,
   };
 }
+
+// Helper function to create paginated query schema with filters
+// Combines pagination schema with any filter schema
+// This pattern ensures consistent pagination behavior across all list endpoints.
+export function createPaginatedQuerySchema<T extends z.ZodType>(
+  filterSchema: T,
+) {
+  return paginationQuerySchema.and(filterSchema);
+}
+
+// Helper function to create paginated query DTO class
+export function createPaginatedQueryDto<T extends z.ZodType>(filterSchema: T) {
+  return createZodDto(createPaginatedQuerySchema(filterSchema));
+}

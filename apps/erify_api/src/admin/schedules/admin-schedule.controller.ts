@@ -15,10 +15,7 @@ import { z } from 'zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
 import { ApiZodResponse } from '@/common/openapi/decorators';
-import {
-  createPaginatedResponseSchema,
-  PaginationQueryDto,
-} from '@/common/pagination/schema/pagination.schema';
+import { createPaginatedResponseSchema } from '@/common/pagination/schema/pagination.schema';
 import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import {
@@ -29,6 +26,7 @@ import {
   BulkUpdateScheduleResultDto,
   bulkUpdateScheduleResultSchema,
   CreateScheduleDto,
+  ListSchedulesQueryDto,
   MonthlyOverviewQueryDto,
   MonthlyOverviewResponseDto,
   monthlyOverviewResponseSchema,
@@ -75,23 +73,23 @@ export class AdminScheduleController extends BaseAdminController {
   @HttpCode(HttpStatus.OK)
   @ApiZodResponse(
     createPaginatedResponseSchema(scheduleDto),
-    'List of schedules with pagination',
+    'List of schedules with pagination and filtering',
   )
   @ZodSerializerDto(createPaginatedResponseSchema(scheduleDto))
-  async getSchedules(@Query() query: PaginationQueryDto) {
-    const data = await this.scheduleService.getSchedules({
-      skip: query.skip,
-      take: query.take,
-      orderBy: { createdAt: 'desc' },
-      where: {
-        deletedAt: null,
-      },
-    });
-    const total = await this.scheduleService.countSchedules({
-      deletedAt: null,
-    });
+  async getSchedules(@Query() query: ListSchedulesQueryDto) {
+    // Zod validates and transforms at runtime, so all required properties exist
+    const { schedules, total } =
+      await this.scheduleService.getPaginatedSchedules(query);
 
-    return this.createPaginatedResponse(data, total, query);
+    // Transform schedules to conditionally exclude plan_document
+    const transformedSchedules = schedules.map((schedule) => ({
+      ...schedule,
+      planDocument: query.include_plan_document
+        ? schedule.planDocument
+        : undefined,
+    }));
+
+    return this.createPaginatedResponse(transformedSchedules, total, query);
   }
 
   @Get(':id')
@@ -123,6 +121,8 @@ export class AdminScheduleController extends BaseAdminController {
 
     // If plan document is updated, create snapshot and increment version
     if (body.planDocument) {
+      // TODO: After implementing authentication pipe/decorator, get current user from request
+      // Replace this temporary workaround with: @CurrentUser() user: User
       // Create auto-snapshot before updating
       // Use the schedule's createdBy user ID directly (it's already a bigint)
       // In a real app with auth, this should come from the authenticated user
@@ -180,6 +180,8 @@ export class AdminScheduleController extends BaseAdminController {
     id: string,
     @Body() body: PublishScheduleDto,
   ) {
+    // TODO: After implementing authentication pipe/decorator, get current user from request
+    // Replace this temporary workaround with: @CurrentUser() user: User
     // Get current user from request (this should be injected via decorator in real implementation)
     // For now, we'll get it from the schedule's createdBy user
     const schedule = await this.scheduleService.getScheduleById(id, {
@@ -190,8 +192,6 @@ export class AdminScheduleController extends BaseAdminController {
       throw new Error('Schedule must have a creator');
     }
     const userId = schedule.createdBy;
-
-    // TODO: user can be from the authentication who made the request
     const result = await this.schedulePlanningService.publishSchedule(
       id,
       body.version,
@@ -218,6 +218,8 @@ export class AdminScheduleController extends BaseAdminController {
     id: string,
     @Body() body: { name: string; created_by: string },
   ) {
+    // TODO: After implementing authentication pipe/decorator, get current user from request
+    // Replace body.created_by with: @CurrentUser() user: User
     // Get user by UID
     const user = await this.userService.getUserById(body.created_by);
 

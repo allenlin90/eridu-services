@@ -1,0 +1,1553 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-12T00:04:59.756Z",
+      "totalShows": 50,
+      "clientName": "Red Bull",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1762905899755_11",
+        "name": "Red Bull Show 12",
+        "startTime": "2025-10-31T22:44:28.263Z",
+        "endTime": "2025-11-01T02:22:02.114Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Red Bull Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Red Bull Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-12",
+            "platformShowId": "platform_show_12_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_46",
+        "name": "Red Bull Show 47",
+        "startTime": "2025-11-02T04:05:45.906Z",
+        "endTime": "2025-11-02T05:39:46.000Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Red Bull Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Red Bull Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_1",
+        "name": "Red Bull Show 2",
+        "startTime": "2025-11-02T16:56:02.802Z",
+        "endTime": "2025-11-02T18:48:11.334Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Red Bull Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_29",
+        "name": "Red Bull Show 30",
+        "startTime": "2025-11-03T02:37:27.852Z",
+        "endTime": "2025-11-03T05:15:21.738Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Red Bull Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-30",
+            "platformShowId": "platform_show_30_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_42",
+        "name": "Red Bull Show 43",
+        "startTime": "2025-11-03T08:41:53.193Z",
+        "endTime": "2025-11-03T10:54:57.111Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Red Bull Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Red Bull Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Red Bull Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_39",
+        "name": "Red Bull Show 40",
+        "startTime": "2025-11-03T21:16:02.975Z",
+        "endTime": "2025-11-03T23:05:55.005Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Red Bull Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-40",
+            "platformShowId": "platform_show_40_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_0",
+        "name": "Red Bull Show 1",
+        "startTime": "2025-11-04T05:38:38.332Z",
+        "endTime": "2025-11-04T09:35:11.178Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Red Bull Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-1",
+            "platformShowId": "platform_show_1_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_10",
+        "name": "Red Bull Show 11",
+        "startTime": "2025-11-04T11:22:54.406Z",
+        "endTime": "2025-11-04T13:55:06.517Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Red Bull Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_24",
+        "name": "Red Bull Show 25",
+        "startTime": "2025-11-04T21:24:08.467Z",
+        "endTime": "2025-11-05T00:48:00.795Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Red Bull Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_25",
+        "name": "Red Bull Show 26",
+        "startTime": "2025-11-04T23:17:05.472Z",
+        "endTime": "2025-11-05T02:30:40.222Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Red Bull Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Red Bull Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_18",
+        "name": "Red Bull Show 19",
+        "startTime": "2025-11-05T02:43:06.638Z",
+        "endTime": "2025-11-05T05:18:59.378Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Red Bull Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_40",
+        "name": "Red Bull Show 41",
+        "startTime": "2025-11-05T10:21:57.027Z",
+        "endTime": "2025-11-05T11:52:23.600Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Red Bull Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Red Bull Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Red Bull Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_12",
+        "name": "Red Bull Show 13",
+        "startTime": "2025-11-06T13:30:19.812Z",
+        "endTime": "2025-11-06T16:57:14.398Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Red Bull Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Red Bull Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_7",
+        "name": "Red Bull Show 8",
+        "startTime": "2025-11-07T18:22:05.757Z",
+        "endTime": "2025-11-07T20:13:15.915Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Red Bull Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_28",
+        "name": "Red Bull Show 29",
+        "startTime": "2025-11-08T05:41:35.373Z",
+        "endTime": "2025-11-08T08:25:32.864Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Red Bull Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Red Bull Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Red Bull Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_19",
+        "name": "Red Bull Show 20",
+        "startTime": "2025-11-08T06:12:47.454Z",
+        "endTime": "2025-11-08T09:56:28.671Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Red Bull Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Red Bull Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Red Bull Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_44",
+        "name": "Red Bull Show 45",
+        "startTime": "2025-11-08T07:41:42.837Z",
+        "endTime": "2025-11-08T09:15:38.193Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Red Bull Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_20",
+        "name": "Red Bull Show 21",
+        "startTime": "2025-11-09T03:52:43.745Z",
+        "endTime": "2025-11-09T06:00:10.944Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Red Bull Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_37",
+        "name": "Red Bull Show 38",
+        "startTime": "2025-11-09T21:24:48.358Z",
+        "endTime": "2025-11-09T23:56:51.745Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Red Bull Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_47",
+        "name": "Red Bull Show 48",
+        "startTime": "2025-11-10T15:48:26.181Z",
+        "endTime": "2025-11-10T19:11:01.193Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Red Bull Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Red Bull Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-48",
+            "platformShowId": "platform_show_48_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_35",
+        "name": "Red Bull Show 36",
+        "startTime": "2025-11-11T01:59:29.759Z",
+        "endTime": "2025-11-11T05:08:54.193Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Red Bull Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-36",
+            "platformShowId": "platform_show_36_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_32",
+        "name": "Red Bull Show 33",
+        "startTime": "2025-11-11T10:18:02.489Z",
+        "endTime": "2025-11-11T13:44:49.083Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Red Bull Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_34",
+        "name": "Red Bull Show 35",
+        "startTime": "2025-11-11T22:04:49.536Z",
+        "endTime": "2025-11-12T01:50:07.146Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Red Bull Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Red Bull Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_3",
+        "name": "Red Bull Show 4",
+        "startTime": "2025-11-13T07:14:39.739Z",
+        "endTime": "2025-11-13T08:38:27.079Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Red Bull Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Red Bull Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_14",
+        "name": "Red Bull Show 15",
+        "startTime": "2025-11-13T08:29:54.777Z",
+        "endTime": "2025-11-13T11:35:20.946Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Red Bull Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_43",
+        "name": "Red Bull Show 44",
+        "startTime": "2025-11-14T07:38:45.512Z",
+        "endTime": "2025-11-14T10:17:08.401Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Red Bull Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Red Bull Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Red Bull Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_13",
+        "name": "Red Bull Show 14",
+        "startTime": "2025-11-14T09:19:48.410Z",
+        "endTime": "2025-11-14T12:39:39.731Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Red Bull Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Red Bull Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_22",
+        "name": "Red Bull Show 23",
+        "startTime": "2025-11-15T02:53:42.633Z",
+        "endTime": "2025-11-15T06:53:07.230Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Red Bull Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Red Bull Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_45",
+        "name": "Red Bull Show 46",
+        "startTime": "2025-11-15T08:41:16.371Z",
+        "endTime": "2025-11-15T11:51:24.128Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Red Bull Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Red Bull Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_21",
+        "name": "Red Bull Show 22",
+        "startTime": "2025-11-16T04:08:46.073Z",
+        "endTime": "2025-11-16T05:27:04.380Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Red Bull Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Red Bull Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Red Bull Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_36",
+        "name": "Red Bull Show 37",
+        "startTime": "2025-11-17T00:36:33.991Z",
+        "endTime": "2025-11-17T03:22:15.434Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Red Bull Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_31",
+        "name": "Red Bull Show 32",
+        "startTime": "2025-11-17T16:56:51.805Z",
+        "endTime": "2025-11-17T19:13:46.187Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Red Bull Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Red Bull Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_30",
+        "name": "Red Bull Show 31",
+        "startTime": "2025-11-18T00:21:51.286Z",
+        "endTime": "2025-11-18T04:14:21.805Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Red Bull Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_27",
+        "name": "Red Bull Show 28",
+        "startTime": "2025-11-18T03:48:46.435Z",
+        "endTime": "2025-11-18T05:41:35.544Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Red Bull Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Red Bull Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Red Bull Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-28",
+            "platformShowId": "platform_show_28_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_23",
+        "name": "Red Bull Show 24",
+        "startTime": "2025-11-19T18:21:37.397Z",
+        "endTime": "2025-11-19T20:49:02.933Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Red Bull Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Red Bull Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Red Bull Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-24",
+            "platformShowId": "platform_show_24_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_2",
+        "name": "Red Bull Show 3",
+        "startTime": "2025-11-21T04:32:22.662Z",
+        "endTime": "2025-11-21T07:00:50.584Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Red Bull Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Red Bull Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Red Bull Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_9",
+        "name": "Red Bull Show 10",
+        "startTime": "2025-11-21T04:41:26.716Z",
+        "endTime": "2025-11-21T08:07:33.194Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Red Bull Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_8",
+        "name": "Red Bull Show 9",
+        "startTime": "2025-11-21T08:07:42.586Z",
+        "endTime": "2025-11-21T11:38:20.620Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Red Bull Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Red Bull Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Red Bull Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_17",
+        "name": "Red Bull Show 18",
+        "startTime": "2025-11-21T21:54:30.832Z",
+        "endTime": "2025-11-21T23:03:07.149Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Red Bull Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Red Bull Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-18",
+            "platformShowId": "platform_show_18_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_48",
+        "name": "Red Bull Show 49",
+        "startTime": "2025-11-22T22:12:14.050Z",
+        "endTime": "2025-11-23T01:47:18.781Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Red Bull Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Red Bull Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Red Bull Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_4",
+        "name": "Red Bull Show 5",
+        "startTime": "2025-11-24T17:58:03.439Z",
+        "endTime": "2025-11-24T20:46:18.329Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Red Bull Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Red Bull Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Red Bull Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_41",
+        "name": "Red Bull Show 42",
+        "startTime": "2025-11-26T08:24:09.796Z",
+        "endTime": "2025-11-26T09:36:17.713Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Red Bull Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Red Bull Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Red Bull Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_26",
+        "name": "Red Bull Show 27",
+        "startTime": "2025-11-26T13:09:36.333Z",
+        "endTime": "2025-11-26T14:52:55.537Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Red Bull Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-27",
+            "platformShowId": "platform_show_27_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_5",
+        "name": "Red Bull Show 6",
+        "startTime": "2025-11-26T14:05:00.682Z",
+        "endTime": "2025-11-26T15:16:38.443Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Red Bull Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-6",
+            "platformShowId": "platform_show_6_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_16",
+        "name": "Red Bull Show 17",
+        "startTime": "2025-11-27T04:01:33.592Z",
+        "endTime": "2025-11-27T06:30:04.840Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Red Bull Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-17",
+            "platformShowId": "platform_show_17_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_38",
+        "name": "Red Bull Show 39",
+        "startTime": "2025-11-27T06:19:22.345Z",
+        "endTime": "2025-11-27T09:19:46.175Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Red Bull Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Red Bull Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_6",
+        "name": "Red Bull Show 7",
+        "startTime": "2025-11-27T08:19:40.556Z",
+        "endTime": "2025-11-27T10:20:49.690Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Red Bull Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_49",
+        "name": "Red Bull Show 50",
+        "startTime": "2025-11-27T08:54:29.099Z",
+        "endTime": "2025-11-27T11:19:57.152Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Red Bull Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_33",
+        "name": "Red Bull Show 34",
+        "startTime": "2025-11-28T02:07:27.936Z",
+        "endTime": "2025-11-28T05:52:32.938Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Red Bull Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899755_15",
+        "name": "Red Bull Show 16",
+        "startTime": "2025-11-29T00:31:39.134Z",
+        "endTime": "2025-11-29T02:36:33.570Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Red Bull Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

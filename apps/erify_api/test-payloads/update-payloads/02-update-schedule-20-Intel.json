@@ -1,0 +1,1557 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-12T00:04:59.751Z",
+      "totalShows": 50,
+      "clientName": "Intel",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1762905899751_24",
+        "name": "Intel Show 25",
+        "startTime": "2025-11-03T11:32:09.658Z",
+        "endTime": "2025-11-03T12:38:22.812Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Intel Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Intel Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_27",
+        "name": "Intel Show 28",
+        "startTime": "2025-11-03T20:18:30.541Z",
+        "endTime": "2025-11-03T21:50:50.143Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Intel Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Intel Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-28",
+            "platformShowId": "platform_show_28_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_2",
+        "name": "Intel Show 3",
+        "startTime": "2025-11-04T16:48:51.647Z",
+        "endTime": "2025-11-04T17:50:03.730Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Intel Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Intel Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_0",
+        "name": "Intel Show 1",
+        "startTime": "2025-11-04T19:35:05.618Z",
+        "endTime": "2025-11-04T21:18:01.942Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Intel Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Intel Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_45",
+        "name": "Intel Show 46",
+        "startTime": "2025-11-04T22:57:24.793Z",
+        "endTime": "2025-11-05T02:56:35.191Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Intel Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Intel Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_22",
+        "name": "Intel Show 23",
+        "startTime": "2025-11-05T05:30:18.295Z",
+        "endTime": "2025-11-05T08:33:44.791Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Intel Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_34",
+        "name": "Intel Show 35",
+        "startTime": "2025-11-05T20:49:47.412Z",
+        "endTime": "2025-11-05T23:43:40.505Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Intel Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Intel Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_41",
+        "name": "Intel Show 42",
+        "startTime": "2025-11-06T06:55:46.405Z",
+        "endTime": "2025-11-06T08:34:37.817Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Intel Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Intel Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_39",
+        "name": "Intel Show 40",
+        "startTime": "2025-11-06T10:33:07.413Z",
+        "endTime": "2025-11-06T12:04:15.037Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Intel Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Intel Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-40",
+            "platformShowId": "platform_show_40_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_10",
+        "name": "Intel Show 11",
+        "startTime": "2025-11-06T11:51:49.032Z",
+        "endTime": "2025-11-06T13:08:07.569Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Intel Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_35",
+        "name": "Intel Show 36",
+        "startTime": "2025-11-06T12:45:54.746Z",
+        "endTime": "2025-11-06T14:45:23.898Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Intel Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Intel Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Intel Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_36",
+        "name": "Intel Show 37",
+        "startTime": "2025-11-08T00:51:39.937Z",
+        "endTime": "2025-11-08T03:49:29.542Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Intel Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Intel Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_42",
+        "name": "Intel Show 43",
+        "startTime": "2025-11-08T14:00:01.076Z",
+        "endTime": "2025-11-08T16:17:40.813Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Intel Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-43",
+            "platformShowId": "platform_show_43_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_21",
+        "name": "Intel Show 22",
+        "startTime": "2025-11-08T14:30:55.394Z",
+        "endTime": "2025-11-08T17:57:35.290Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Intel Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_44",
+        "name": "Intel Show 45",
+        "startTime": "2025-11-08T20:04:00.008Z",
+        "endTime": "2025-11-08T23:52:39.428Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Intel Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_30",
+        "name": "Intel Show 31",
+        "startTime": "2025-11-11T05:36:29.459Z",
+        "endTime": "2025-11-11T07:14:55.256Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Intel Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Intel Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_33",
+        "name": "Intel Show 34",
+        "startTime": "2025-11-11T14:10:40.185Z",
+        "endTime": "2025-11-11T16:24:18.762Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Intel Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Intel Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Intel Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_26",
+        "name": "Intel Show 27",
+        "startTime": "2025-11-13T08:33:47.997Z",
+        "endTime": "2025-11-13T09:42:28.641Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Intel Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Intel Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Intel Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_20",
+        "name": "Intel Show 21",
+        "startTime": "2025-11-14T04:20:11.381Z",
+        "endTime": "2025-11-14T05:44:20.885Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Intel Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_1",
+        "name": "Intel Show 2",
+        "startTime": "2025-11-14T18:01:01.766Z",
+        "endTime": "2025-11-14T19:36:55.530Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Intel Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Intel Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-2",
+            "platformShowId": "platform_show_2_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_18",
+        "name": "Intel Show 19",
+        "startTime": "2025-11-15T03:55:25.376Z",
+        "endTime": "2025-11-15T07:44:15.688Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Intel Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-19",
+            "platformShowId": "platform_show_19_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_15",
+        "name": "Intel Show 16",
+        "startTime": "2025-11-16T22:17:54.201Z",
+        "endTime": "2025-11-17T01:27:23.711Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Intel Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_43",
+        "name": "Intel Show 44",
+        "startTime": "2025-11-17T08:10:22.417Z",
+        "endTime": "2025-11-17T11:39:36.667Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Intel Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Intel Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Intel Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_17",
+        "name": "Intel Show 18",
+        "startTime": "2025-11-17T14:00:34.905Z",
+        "endTime": "2025-11-17T17:40:12.190Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Intel Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_31",
+        "name": "Intel Show 32",
+        "startTime": "2025-11-17T20:57:05.857Z",
+        "endTime": "2025-11-18T00:01:51.521Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Intel Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Intel Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-32",
+            "platformShowId": "platform_show_32_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_48",
+        "name": "Intel Show 49",
+        "startTime": "2025-11-18T15:31:53.666Z",
+        "endTime": "2025-11-18T18:06:09.593Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Intel Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Intel Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Intel Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-49",
+            "platformShowId": "platform_show_49_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_29",
+        "name": "Intel Show 30",
+        "startTime": "2025-11-19T06:34:03.492Z",
+        "endTime": "2025-11-19T08:17:05.106Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Intel Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Intel Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_7",
+        "name": "Intel Show 8",
+        "startTime": "2025-11-19T10:55:18.486Z",
+        "endTime": "2025-11-19T13:28:08.930Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Intel Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-8",
+            "platformShowId": "platform_show_8_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_5",
+        "name": "Intel Show 6",
+        "startTime": "2025-11-20T02:44:55.306Z",
+        "endTime": "2025-11-20T06:26:57.637Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Intel Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_37",
+        "name": "Intel Show 38",
+        "startTime": "2025-11-20T09:05:16.922Z",
+        "endTime": "2025-11-20T12:13:37.961Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Intel Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_11",
+        "name": "Intel Show 12",
+        "startTime": "2025-11-21T22:54:33.548Z",
+        "endTime": "2025-11-22T02:43:32.156Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Intel Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Intel Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Intel Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-12",
+            "platformShowId": "platform_show_12_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_46",
+        "name": "Intel Show 47",
+        "startTime": "2025-11-22T12:51:32.393Z",
+        "endTime": "2025-11-22T15:29:31.836Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Intel Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Intel Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Intel Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_38",
+        "name": "Intel Show 39",
+        "startTime": "2025-11-23T19:19:44.423Z",
+        "endTime": "2025-11-23T21:45:15.091Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Intel Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_6",
+        "name": "Intel Show 7",
+        "startTime": "2025-11-24T10:29:03.958Z",
+        "endTime": "2025-11-24T14:17:55.083Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Intel Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Intel Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Intel Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_4",
+        "name": "Intel Show 5",
+        "startTime": "2025-11-24T17:16:11.750Z",
+        "endTime": "2025-11-24T20:19:11.333Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Intel Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Intel Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Intel Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_13",
+        "name": "Intel Show 14",
+        "startTime": "2025-11-25T06:54:13.436Z",
+        "endTime": "2025-11-25T08:34:15.090Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Intel Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Intel Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_9",
+        "name": "Intel Show 10",
+        "startTime": "2025-11-26T00:35:10.391Z",
+        "endTime": "2025-11-26T04:27:59.682Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Intel Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-10",
+            "platformShowId": "platform_show_10_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_3",
+        "name": "Intel Show 4",
+        "startTime": "2025-11-26T02:25:18.641Z",
+        "endTime": "2025-11-26T05:46:00.685Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Intel Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Intel Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_32",
+        "name": "Intel Show 33",
+        "startTime": "2025-11-26T02:30:44.539Z",
+        "endTime": "2025-11-26T03:59:46.835Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Intel Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Intel Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Intel Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_8",
+        "name": "Intel Show 9",
+        "startTime": "2025-11-26T04:41:23.595Z",
+        "endTime": "2025-11-26T08:21:16.412Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Intel Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Intel Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-9",
+            "platformShowId": "platform_show_9_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_25",
+        "name": "Intel Show 26",
+        "startTime": "2025-11-26T16:34:56.021Z",
+        "endTime": "2025-11-26T18:21:01.535Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Intel Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Intel Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Intel Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_49",
+        "name": "Intel Show 50",
+        "startTime": "2025-11-27T07:13:32.781Z",
+        "endTime": "2025-11-27T09:58:30.458Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Intel Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Intel Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_47",
+        "name": "Intel Show 48",
+        "startTime": "2025-11-27T11:26:20.175Z",
+        "endTime": "2025-11-27T13:21:51.385Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Intel Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Intel Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_40",
+        "name": "Intel Show 41",
+        "startTime": "2025-11-27T17:55:01.786Z",
+        "endTime": "2025-11-27T21:42:30.907Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Intel Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Intel Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Intel Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_19",
+        "name": "Intel Show 20",
+        "startTime": "2025-11-27T17:56:39.911Z",
+        "endTime": "2025-11-27T19:35:52.286Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Intel Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_14",
+        "name": "Intel Show 15",
+        "startTime": "2025-11-28T23:28:37.573Z",
+        "endTime": "2025-11-29T03:22:16.101Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Intel Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_12",
+        "name": "Intel Show 13",
+        "startTime": "2025-11-29T04:02:09.934Z",
+        "endTime": "2025-11-29T05:24:59.472Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Intel Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Intel Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Intel Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_23",
+        "name": "Intel Show 24",
+        "startTime": "2025-11-29T10:58:46.496Z",
+        "endTime": "2025-11-29T13:23:39.475Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Intel Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-24",
+            "platformShowId": "platform_show_24_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_28",
+        "name": "Intel Show 29",
+        "startTime": "2025-11-29T15:44:29.189Z",
+        "endTime": "2025-11-29T18:31:58.034Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Intel Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1762905899751_16",
+        "name": "Intel Show 17",
+        "startTime": "2025-11-30T14:46:48.177Z",
+        "endTime": "2025-11-30T16:48:53.166Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Intel Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Intel Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}
