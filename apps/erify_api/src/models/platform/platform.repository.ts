@@ -18,12 +18,16 @@ class PlatformModelWrapper
 {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(args: { data: Prisma.PlatformCreateInput }): Promise<Platform> {
+  async create(args: {
+    data: Prisma.PlatformCreateInput;
+    include?: Record<string, any>;
+  }): Promise<Platform> {
     return this.prisma.platform.create(args);
   }
 
   async findFirst(args: {
     where: Prisma.PlatformWhereInput;
+    include?: Record<string, any>;
   }): Promise<Platform | null> {
     return this.prisma.platform.findFirst(args);
   }
@@ -32,7 +36,8 @@ class PlatformModelWrapper
     where?: Prisma.PlatformWhereInput;
     skip?: number;
     take?: number;
-    orderBy?: Record<string, 'asc' | 'desc'>;
+    orderBy?: any;
+    include?: Record<string, any>;
   }): Promise<Platform[]> {
     return this.prisma.platform.findMany(args);
   }
@@ -40,6 +45,7 @@ class PlatformModelWrapper
   async update(args: {
     where: Prisma.PlatformWhereUniqueInput;
     data: Prisma.PlatformUpdateInput;
+    include?: Record<string, any>;
   }): Promise<Platform> {
     return this.prisma.platform.update(args);
   }

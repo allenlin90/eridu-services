@@ -18,12 +18,16 @@ class StudioModelWrapper
 {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(args: { data: Prisma.StudioCreateInput }): Promise<Studio> {
+  async create(args: {
+    data: Prisma.StudioCreateInput;
+    include?: Record<string, any>;
+  }): Promise<Studio> {
     return this.prisma.studio.create(args);
   }
 
   async findFirst(args: {
     where: Prisma.StudioWhereInput;
+    include?: Record<string, any>;
   }): Promise<Studio | null> {
     return this.prisma.studio.findFirst(args);
   }
@@ -32,7 +36,8 @@ class StudioModelWrapper
     where?: Prisma.StudioWhereInput;
     skip?: number;
     take?: number;
-    orderBy?: Record<string, 'asc' | 'desc'>;
+    orderBy?: any;
+    include?: Record<string, any>;
   }): Promise<Studio[]> {
     return this.prisma.studio.findMany(args);
   }
@@ -40,6 +45,7 @@ class StudioModelWrapper
   async update(args: {
     where: Prisma.StudioWhereUniqueInput;
     data: Prisma.StudioUpdateInput;
+    include?: Record<string, any>;
   }): Promise<Studio> {
     return this.prisma.studio.update(args);
   }

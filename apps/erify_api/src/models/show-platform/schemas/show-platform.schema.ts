@@ -26,9 +26,13 @@ export const showPlatformSchema = z.object({
 export const createShowPlatformSchema = z.object({
   show_id: z.string().startsWith(ShowService.UID_PREFIX), // UID
   platform_id: z.string().startsWith(PlatformService.UID_PREFIX), // UID
-  live_stream_link: z.string(),
-  platform_show_id: z.string(),
-  viewer_count: z.number().int().optional(),
+  live_stream_link: z.string().url('Live stream link must be a valid URL'),
+  platform_show_id: z.string().min(1, 'Platform show ID is required'),
+  viewer_count: z
+    .number()
+    .int()
+    .min(0, 'Viewer count cannot be negative')
+    .optional(),
   metadata: z.record(z.string(), z.any()).optional(),
 });
 
@@ -48,9 +52,19 @@ export const updateShowPlatformSchema = z
   .object({
     show_id: z.string().startsWith(ShowService.UID_PREFIX).optional(), // UID
     platform_id: z.string().startsWith(PlatformService.UID_PREFIX).optional(), // UID
-    live_stream_link: z.string().optional(),
-    platform_show_id: z.string().optional(),
-    viewer_count: z.number().int().optional(),
+    live_stream_link: z
+      .string()
+      .url('Live stream link must be a valid URL')
+      .optional(),
+    platform_show_id: z
+      .string()
+      .min(1, 'Platform show ID is required')
+      .optional(),
+    viewer_count: z
+      .number()
+      .int()
+      .min(0, 'Viewer count cannot be negative')
+      .optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({
@@ -58,7 +72,7 @@ export const updateShowPlatformSchema = z
     platformId: data.platform_id,
     liveStreamLink: data.live_stream_link,
     platformShowId: data.platform_show_id,
-    viewerCount: data.viewer_count,
+    viewerCount: data.viewer_count ?? 0,
     metadata: data.metadata,
   }));
 

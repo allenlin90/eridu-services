@@ -18,11 +18,18 @@
  *
  *   # Custom API base URL
  *   pnpm run upload:schedule-plans -- --api-url=http://localhost:3000
+ *
+ * Authentication:
+ *   The script automatically includes X-API-Key header if GOOGLE_SHEETS_API_KEY
+ *   is configured in the .env file. This allows testing endpoints in both dev
+ *   (no key in .env) and production (key in .env) modes.
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import { z } from 'zod';
+
+import { httpRequest } from '../utils/http-request';
 
 // Import schemas from the source of truth
 import {
@@ -111,48 +118,6 @@ function parseArgs(): {
   }
 
   return { createSchedules, apiUrl };
-}
-
-// Make HTTP request
-async function httpRequest<T = unknown>(
-  method: string,
-  url: string,
-  body?: unknown,
-): Promise<{ status: number; data: T }> {
-  const options: RequestInit = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  };
-
-  if (body) {
-    options.body = JSON.stringify(body);
-  }
-
-  try {
-    const response = await fetch(url, options);
-    let jsonData: unknown;
-    try {
-      jsonData = await response.json();
-    } catch {
-      // If JSON parsing fails, return empty object as fallback
-      jsonData = {};
-    }
-
-    return {
-      status: response.status,
-      // Type assertion is necessary here because response.json() returns unknown
-      // The caller is responsible for validating the response matches the expected type
-      data: jsonData as T,
-    };
-  } catch (error) {
-    throw new Error(
-      `HTTP ${method} ${url} failed: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
-    );
-  }
 }
 
 // Create schedules via bulk endpoint

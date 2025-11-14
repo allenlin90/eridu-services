@@ -38,6 +38,13 @@ class ShowMCModelWrapper
     return this.prismaModel.findFirst(args);
   }
 
+  async findFirstOrThrow(args: {
+    where: Prisma.ShowMCWhereInput;
+    include?: Record<string, any>;
+  }): Promise<ShowMC> {
+    return this.prismaModel.findFirstOrThrow(args);
+  }
+
   async findMany(args: {
     where?: Prisma.ShowMCWhereInput;
     skip?: number;
@@ -49,33 +56,17 @@ class ShowMCModelWrapper
   }
 
   async update(args: {
-    where: Prisma.ShowMCWhereInput;
+    where: Prisma.ShowMCWhereUniqueInput;
     data: Prisma.ShowMCUpdateInput;
     include?: Record<string, any>;
   }): Promise<ShowMC> {
-    // For update operations, we need to find the record first using the where clause
-    // and then update using a unique identifier
-    const record = await this.prismaModel.findFirst({ where: args.where });
-    if (!record) {
-      throw new Error('Record not found');
-    }
-
-    return this.prismaModel.update({
-      where: { id: record.id },
-      data: args.data,
-      ...(args.include && { include: args.include }),
-    });
+    return this.prismaModel.update(args);
   }
 
-  async delete(args: { where: Prisma.ShowMCWhereInput }): Promise<ShowMC> {
-    // For delete operations, we need to find the record first using the where clause
-    // and then delete using a unique identifier
-    const record = await this.prismaModel.findFirst({ where: args.where });
-    if (!record) {
-      throw new Error('Record not found');
-    }
-
-    return this.prismaModel.delete({ where: { id: record.id } });
+  async delete(args: {
+    where: Prisma.ShowMCWhereUniqueInput;
+  }): Promise<ShowMC> {
+    return this.prismaModel.delete(args);
   }
 
   async count(args: { where: Prisma.ShowMCWhereInput }): Promise<number> {

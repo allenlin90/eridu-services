@@ -86,7 +86,15 @@ For complete Google Sheets integration workflow, API call sequence, error handli
 
 4. **API Base URL**: Set your API base URL (default: `http://localhost:3000`)
 
-5. **Authentication**: You may need to authenticate. Check your API documentation for authentication requirements.
+5. **Authentication (Optional)**: The test scripts automatically read `GOOGLE_SHEETS_API_KEY` from your `.env` file:
+   - **Without API Key in .env**: Scripts don't send the header, allowing you to test dev mode behavior (authentication bypassed)
+   - **With API Key in .env**: Scripts automatically include `X-API-Key` header, allowing you to test production mode behavior (authentication enforced)
+   - **Configuration**: Add to your `.env` file:
+     ```env
+     GOOGLE_SHEETS_API_KEY=your-api-key-here
+     ```
+   - This matches the server's actual configuration, so you can test the real behavior based on whether the server runs in dev or prod mode
+   - See [Server-to-Server Authentication Guide](../docs/SERVER_TO_SERVER_AUTH.md) for details
 
 ## Test Data
 
@@ -236,6 +244,35 @@ All scripts support a custom API URL via command line argument:
 pnpm run test:schedule:validate -- --api-url=http://localhost:3000
 pnpm run test:schedule:publish -- --api-url=http://localhost:3000
 ```
+
+### Optional API Key Authentication
+
+All scripts automatically read `GOOGLE_SHEETS_API_KEY` from your `.env` file and include the `X-API-Key` header when configured. This allows testing endpoints protected with `GoogleSheetsApiKeyGuard`:
+
+```bash
+# Test without authentication (no key in .env)
+# Scripts won't send X-API-Key header
+pnpm run test:schedule:create
+
+# Test with authentication (key configured in .env)
+# Add to .env: GOOGLE_SHEETS_API_KEY=your-api-key-here
+# Scripts will automatically include X-API-Key header
+pnpm run test:schedule:create
+```
+
+**Behavior**:
+- **Without `GOOGLE_SHEETS_API_KEY` in .env**: Scripts don't send the header → test dev mode behavior (authentication bypassed if guard allows)
+- **With `GOOGLE_SHEETS_API_KEY` in .env**: Scripts automatically include `X-API-Key` header → test production mode behavior (authentication enforced)
+
+**Testing Different Scenarios**:
+- **Dev mode + no key in .env**: No header sent → bypass auth (expected)
+- **Dev mode + key in .env**: Header sent → auth enforced (expected)
+- **Prod mode + no key in .env**: No header sent → should error (expected per behavior matrix)
+- **Prod mode + key in .env**: Header sent → auth enforced (expected)
+
+This matches the server's actual configuration, allowing you to test the real API behavior based on server mode (dev vs prod) and `.env` configuration.
+
+See [Server-to-Server Authentication Guide](../docs/SERVER_TO_SERVER_AUTH.md) for complete authentication details.
 
 ### Script Workflow Details
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, Show } from '@prisma/client';
 
+import { HttpError } from '@/common/errors/http-error.util';
 import { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
@@ -349,7 +350,7 @@ export class ShowOrchestrationService {
           mcs.map((mc) => {
             const mcId = mcIdMap.get(mc.mcId);
             if (!mcId) {
-              throw new Error(`MC with UID ${mc.mcId} not found`);
+              throw HttpError.notFound('MC', mc.mcId);
             }
             return tx.showMC.create({
               data: {
@@ -419,9 +420,7 @@ export class ShowOrchestrationService {
           platforms.map((platform) => {
             const platformId = platformIdMap.get(platform.platformId);
             if (!platformId) {
-              throw new Error(
-                `Platform with UID ${platform.platformId} not found`,
-              );
+              throw HttpError.notFound('Platform', platform.platformId);
             }
             return tx.showPlatform.create({
               data: {
@@ -515,7 +514,7 @@ export class ShowOrchestrationService {
     // Validate time range if both times are present
     if (dto.startTime && dto.endTime) {
       if (dto.endTime <= dto.startTime) {
-        throw new Error('End time must be after start time');
+        throw HttpError.badRequest('End time must be after start time');
       }
     }
 
@@ -550,7 +549,7 @@ export class ShowOrchestrationService {
     for (const mcAssignment of mcs) {
       const mcId = mcIdMap.get(mcAssignment.mcId);
       if (!mcId) {
-        throw new Error(`MC with UID ${mcAssignment.mcId} not found`);
+        throw HttpError.notFound('MC', mcAssignment.mcId);
       }
 
       processedMcIds.add(mcId);
@@ -629,9 +628,7 @@ export class ShowOrchestrationService {
     for (const platformAssignment of platforms) {
       const platformId = platformIdMap.get(platformAssignment.platformId);
       if (!platformId) {
-        throw new Error(
-          `Platform with UID ${platformAssignment.platformId} not found`,
-        );
+        throw HttpError.notFound('Platform', platformAssignment.platformId);
       }
 
       processedPlatformIds.add(platformId);

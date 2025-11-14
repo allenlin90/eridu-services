@@ -17,8 +17,8 @@ export const studioSchema = z.object({
 // API input schema (snake_case input, transforms to camelCase)
 export const createStudioSchema = z
   .object({
-    name: z.string(),
-    address: z.string(),
+    name: z.string().min(1, 'Studio name is required'),
+    address: z.string().min(1, 'Address is required'),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({
@@ -37,8 +37,8 @@ export const createStudioCoreSchema = z.object({
 // API input schema (snake_case input, transforms to camelCase)
 export const updateStudioSchema = z
   .object({
-    name: z.string().optional(),
-    address: z.string().optional(),
+    name: z.string().min(1, 'Studio name is required').optional(),
+    address: z.string().min(1, 'Address is required').optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({

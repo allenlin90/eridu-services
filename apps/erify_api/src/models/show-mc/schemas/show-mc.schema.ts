@@ -24,7 +24,7 @@ export const showMcSchema = z.object({
 export const createShowMcSchema = z.object({
   show_id: z.string().startsWith(ShowService.UID_PREFIX), // UID
   mc_id: z.string().startsWith(McService.UID_PREFIX), // UID
-  note: z.string().optional(),
+  note: z.string().max(1000).optional(), // Add max length for notes
   metadata: z.record(z.string(), z.any()).optional(),
 });
 
@@ -40,7 +40,7 @@ export const updateShowMcSchema = z
   .object({
     show_id: z.string().startsWith(ShowService.UID_PREFIX).optional(), // UID
     mc_id: z.string().startsWith(McService.UID_PREFIX).optional(), // UID
-    note: z.string().nullable().optional(),
+    note: z.string().max(1000).nullable().optional(), // Add max length for notes
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({

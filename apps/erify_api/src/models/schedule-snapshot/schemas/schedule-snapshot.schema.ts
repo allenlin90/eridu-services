@@ -2,10 +2,21 @@ import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
 import { ScheduleService } from '@/models/schedule/schedule.service';
-import { scheduleSchema } from '@/models/schedule/schemas/schedule.schema';
+import {
+  SCHEDULE_STATUS,
+  scheduleSchema,
+} from '@/models/schedule/schemas/schedule.schema';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
 import { userSchema } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
+
+// Snapshot reason enum
+export const SNAPSHOT_REASON = {
+  AUTO_SAVE: 'auto_save',
+  BEFORE_PUBLISH: 'before_publish',
+  MANUAL: 'manual',
+  BEFORE_RESTORE: 'before_restore',
+} as const;
 
 // Internal schema for database entity
 export const scheduleSnapshotSchema = z.object({
@@ -32,9 +43,18 @@ export const scheduleSnapshotWithRelationsSchema =
 export const createScheduleSnapshotSchema = z
   .object({
     plan_document: z.record(z.string(), z.any()),
-    version: z.number().int(),
-    status: z.string(),
-    snapshot_reason: z.string(),
+    version: z.number().int().positive(),
+    status: z.enum([
+      SCHEDULE_STATUS.DRAFT,
+      SCHEDULE_STATUS.REVIEW,
+      SCHEDULE_STATUS.PUBLISHED,
+    ]),
+    snapshot_reason: z.enum([
+      SNAPSHOT_REASON.AUTO_SAVE,
+      SNAPSHOT_REASON.BEFORE_PUBLISH,
+      SNAPSHOT_REASON.MANUAL,
+      SNAPSHOT_REASON.BEFORE_RESTORE,
+    ]),
     metadata: z.record(z.string(), z.any()).optional(),
     created_by: z.string().startsWith(UserService.UID_PREFIX),
     schedule_id: z.string().startsWith(ScheduleService.UID_PREFIX),
@@ -52,9 +72,18 @@ export const createScheduleSnapshotSchema = z
 // CORE input schema
 export const createScheduleSnapshotCoreSchema = z.object({
   planDocument: z.record(z.string(), z.any()),
-  version: z.number().int(),
-  status: z.string(),
-  snapshotReason: z.string(),
+  version: z.number().int().positive(),
+  status: z.enum([
+    SCHEDULE_STATUS.DRAFT,
+    SCHEDULE_STATUS.REVIEW,
+    SCHEDULE_STATUS.PUBLISHED,
+  ]),
+  snapshotReason: z.enum([
+    SNAPSHOT_REASON.AUTO_SAVE,
+    SNAPSHOT_REASON.BEFORE_PUBLISH,
+    SNAPSHOT_REASON.MANUAL,
+    SNAPSHOT_REASON.BEFORE_RESTORE,
+  ]),
   metadata: z.record(z.string(), z.any()).optional(),
   createdBy: z.bigint(),
   scheduleId: z.bigint(),
@@ -64,9 +93,22 @@ export const createScheduleSnapshotCoreSchema = z.object({
 export const updateScheduleSnapshotSchema = z
   .object({
     plan_document: z.record(z.string(), z.any()).optional(),
-    version: z.number().int().optional(),
-    status: z.string().optional(),
-    snapshot_reason: z.string().optional(),
+    version: z.number().int().positive().optional(),
+    status: z
+      .enum([
+        SCHEDULE_STATUS.DRAFT,
+        SCHEDULE_STATUS.REVIEW,
+        SCHEDULE_STATUS.PUBLISHED,
+      ])
+      .optional(),
+    snapshot_reason: z
+      .enum([
+        SNAPSHOT_REASON.AUTO_SAVE,
+        SNAPSHOT_REASON.BEFORE_PUBLISH,
+        SNAPSHOT_REASON.MANUAL,
+        SNAPSHOT_REASON.BEFORE_RESTORE,
+      ])
+      .optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({
@@ -79,9 +121,22 @@ export const updateScheduleSnapshotSchema = z
 
 export const updateScheduleSnapshotCoreSchema = z.object({
   planDocument: z.record(z.string(), z.any()).optional(),
-  version: z.number().int().optional(),
-  status: z.string().optional(),
-  snapshotReason: z.string().optional(),
+  version: z.number().int().positive().optional(),
+  status: z
+    .enum([
+      SCHEDULE_STATUS.DRAFT,
+      SCHEDULE_STATUS.REVIEW,
+      SCHEDULE_STATUS.PUBLISHED,
+    ])
+    .optional(),
+  snapshotReason: z
+    .enum([
+      SNAPSHOT_REASON.AUTO_SAVE,
+      SNAPSHOT_REASON.BEFORE_PUBLISH,
+      SNAPSHOT_REASON.MANUAL,
+      SNAPSHOT_REASON.BEFORE_RESTORE,
+    ])
+    .optional(),
   metadata: z.record(z.string(), z.any()).optional(),
 });
 

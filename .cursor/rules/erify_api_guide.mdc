@@ -2,101 +2,50 @@
 
 **Applies to:** `apps/erify_api/**/*`
 
-You are an expert NestJS developer working on the Eridu Services API, a livestream production management system. Follow these architectural patterns and design decisions strictly.
+Expert NestJS developer for Eridu Services API (livestream production management). Follow these patterns strictly.
 
-## Project Overview
+**📚 Implementation Status:** Check `docs/roadmap/PHASE_1.md` for current phase status. This guide focuses on **HOW** to implement, not **WHAT** is implemented.
 
-This is a NestJS-based API for managing livestream production workflows, including studios, MCs, platforms, shows, and collaborative scheduling. The system follows a layered architecture with clear separation of concerns.
+## Core Architecture
 
-## Implementation Status Guide
-
-Throughout this document, you'll see these markers:
-- **✅ IMPLEMENTED**: Pattern is currently in use in the codebase
-- **🚧 PLANNED**: Documented pattern for upcoming features (check `docs/roadmap/` for phase)
-- **📋 FUTURE**: Aspirational pattern for later phases
-
-## Core Architecture Patterns
-
-### 1. Layered Architecture ✅ IMPLEMENTED
-- **Admin Layer**: Administrative operations and controllers (`/admin/*` endpoints)
-- **Domain Layer**: Core business logic and services
-- **Infrastructure Layer**: Database access, utilities, and external services
-- **Common Layer**: Shared utilities, decorators, and base classes
-
-### 2. Module Structure ✅ IMPLEMENTED
-Each entity follows this consistent pattern:
+### Module Structure
 ```
-entity/
-├── entity.module.ts          # Domain module
-├── entity.service.ts         # Domain service
-├── entity.repository.ts      # Data access layer
-└── schemas/
-    └── entity.schema.ts      # Zod schemas for validation/serialization
-
-admin/entity/
-├── admin-entity.module.ts    # Admin module
-├── admin-entity.controller.ts # Admin controller
-└── admin-entity.service.ts   # Admin service
+entity/                          admin/entity/
+├── entity.module.ts             ├── admin-entity.module.ts
+├── entity.service.ts            ├── admin-entity.controller.ts
+├── entity.repository.ts         └── admin-entity.service.ts
+└── schemas/entity.schema.ts
 ```
 
-### 3. Repository Pattern Implementation ✅ IMPLEMENTED
+### Repository Pattern
+Extend `BaseRepository<T, C, U, W>` (entity, create, update, where). Soft delete via `deletedAt`.
 
-**Base Repository**: All repositories extend `BaseRepository<T, C, U, W>` with:
-- Generic type parameters: `T` (entity), `C` (create input), `U` (update input), `W` (where input)
-- Soft delete support via `deletedAt` field
-- Consistent CRUD operations with Prisma integration
-
-**Repository Structure**:
 ```typescript
 @Injectable()
-export class EntityRepository extends BaseRepository<
-  Entity,
-  Prisma.EntityCreateInput,
-  Prisma.EntityUpdateInput,
-  Prisma.EntityWhereInput
-> {
+export class EntityRepository extends BaseRepository<Entity, Prisma.EntityCreateInput, Prisma.EntityUpdateInput, Prisma.EntityWhereInput> {
   constructor(private readonly prisma: PrismaService) {
     super(new EntityModelWrapper(prisma));
   }
-
-  // Custom methods specific to entity
+  
   async findByUid<T extends Prisma.EntityInclude = Record<string, never>>(
     uid: string,
     include?: T,
   ): Promise<Entity | Prisma.EntityGetPayload<{ include: T }> | null> {
-    return this.model.findFirst({
-      where: { uid, deletedAt: null },
-      ...(include && { include }),
-    });
+    return this.model.findFirst({ where: { uid, deletedAt: null }, ...(include && { include }) });
   }
 }
 ```
 
-### 4. Service Layer Pattern ✅ IMPLEMENTED
+### Service Layer
+- **Model Services** (`BaseModelService`): Single-entity CRUD, use `UtilityService.generateBrandedId(prefix)`, include `UID_PREFIX` constant
+- **Orchestration Services** (`BaseOrchestrationService`): Multi-entity coordination, transactions
+- **Admin Services**: Delegate to domain services, handle admin concerns
 
-**Service Architecture**: Clear separation between model services and orchestration services
+**Transactions:** Use `prisma.$transaction()` or `prisma.executeTransaction()` for atomic operations. Prefer bulk ops: `createMany`, `updateMany`, `deleteMany`.
 
-**Model Services** (`BaseModelService`): Handle single-entity business logic
-- Use branded ID generation with `UtilityService.generateBrandedId(prefix)`
-- Follow consistent naming: `EntityService` with `UID_PREFIX` constant
-- Support generic includes for flexible data fetching
-- Focus on CRUD operations for single entities
+**Query Building:** Private `buildWhereClause()` methods for filters. Always filter `deletedAt: null` unless `include_deleted=true`. Use `Promise.all()` for parallel queries (data + count).
 
-**Orchestration Services** (`BaseOrchestrationService`): Coordinate multiple model services
-- Handle complex business operations involving multiple entities
-- Manage transactions across multiple services
-- Provide validation helpers and error handling utilities
-- Focus on cross-module coordination and workflows
-
-**Admin Services**: Handle administrative operations and coordinate with domain services
-- Delegate business logic to domain services
-- Handle admin-specific concerns (permissions, validation, etc.)
-
-### 5. Controller Pattern ✅ IMPLEMENTED
-
-**Admin Controllers**: Follow RESTful conventions with consistent structure
-
-**⚠️ NestJS Best Practice: Use proper decorators and response handling**
+### Controller Pattern
 ```typescript
 @Controller('admin/entities')
 export class AdminEntityController {
@@ -106,459 +55,300 @@ export class AdminEntityController {
   async createEntity(@Body() body: CreateEntityDto) {
     return this.adminEntityService.createEntity(body);
   }
-
+  
   @Get()
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(createPaginatedResponseSchema(entityDto))
-  getEntities(@Query() paginationQuery: PaginationQueryDto) {
-    return this.adminEntityService.getEntities(paginationQuery);
+  getEntities(@Query() query: PaginationQueryDto) {
+    return this.adminEntityService.getEntities(query);
   }
-
-  @Get(':uid')
-  @HttpCode(HttpStatus.OK)
-  @ZodSerializerDto(EntityDto)
-  getEntity(@Param('uid') uid: string) {
-    return this.adminEntityService.getEntityById(uid);
-  }
-
-  @Patch(':uid')
-  @HttpCode(HttpStatus.OK)
-  @ZodSerializerDto(EntityDto)
-  updateEntity(@Param('uid') uid: string, @Body() body: UpdateEntityDto) {
-    return this.adminEntityService.updateEntity(uid, body);
-  }
-
-  @Delete(':uid')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteEntity(@Param('uid') uid: string) {
-    await this.adminEntityService.deleteEntity(uid);
-  }
+  
+  // Use @HttpCode(), @ZodSerializerDto(), proper decorators, HTTP status codes (201/204)
 }
 ```
 
-**NestJS Controller Best Practices:**
-- Use `@HttpCode()` decorator for explicit status codes
-- Use `@ZodSerializerDto()` for response serialization
-- Use `@Body()`, `@Param()`, `@Query()` decorators properly
-- Return promises for async operations
-- Use proper HTTP status codes (201 for creation, 204 for deletion)
-
 ## Data Patterns
 
-### 1. ID Management (CRITICAL DESIGN DECISION) ✅ IMPLEMENTED
+### ID Management (CRITICAL)
+**🚨 NEVER expose database IDs in API responses**
 
-**🚨 SECURITY & PRIVACY RULE: NEVER expose internal database IDs in API responses**
+- **Internal**: `bigint` primary keys (internal use only)
+- **External**: Branded UIDs (e.g., `usr_`, `clt_`, `mc_`, `srm_`)
+- **API**: Use UIDs in URLs (`/admin/users/:uid`), map `uid` → `id` in DTOs
+- **DTOs**: Always map `uid` to `id` field, never expose database `id`
 
-- **Internal Database IDs**: Auto-incrementing `bigint` primary keys - **FOR INTERNAL USE ONLY**
-- **External UIDs**: Branded string identifiers for all external API communication
-- **UID Prefixes**: Consistent prefixes per entity (e.g., `usr_`, `clt_`, `mc_`, `srm_`)
-
-**Why this matters:**
-- Prevents enumeration attacks and data leakage
-- Hides internal database structure from external clients
-- Enables database schema changes without breaking external APIs
-- Provides consistent, readable identifiers for debugging and support
-
-**Implementation Rules:**
-- All API endpoints use UIDs in URLs (`/admin/users/:uid`, not `/admin/users/:id`)
-- All API responses map `uid` field to `id` field for external consumption
-- Internal services can use database IDs for performance (joins, indexes)
-- Internal schemas may contain database IDs, but DTOs must never expose them
-- **Never return database IDs in API responses**
-
-### 2. Soft Delete Pattern ✅ IMPLEMENTED
-- All entities support soft delete via `deletedAt` field
-- Base repository automatically filters out soft-deleted records
-- Use `softDelete()` method instead of `delete()` for data preservation
-
-### 3. Data Transformation ✅ IMPLEMENTED
-- **Input**: snake_case from API requests
-- **Internal**: camelCase in TypeScript/Prisma
-- **Output**: snake_case with `uid` mapped to `id` field
-- Use Zod transformers for consistent data conversion
-
-### 4. Pagination ✅ IMPLEMENTED
-- Consistent pagination using `PaginationQueryDto`
-- Response format: `{ data: T[], pagination: { page, limit, total, totalPages } }`
-- Use `createPaginatedResponseSchema()` for response serialization
+### Other Patterns
+- **Soft Delete**: `deletedAt` field, use `softDelete()` method
+- **Data Transformation**: Input snake_case → Internal camelCase → Output snake_case
+- **Pagination**: `PaginationQueryDto`, `createPaginatedResponseSchema()`, use `Promise.all()` for data + count
 
 ## Validation & Serialization
 
-### 1. Zod Schema Pattern ✅ IMPLEMENTED
-
-**🚨 CRITICAL: Always map internal `uid` to external `id` field in DTOs**
-
-**Schema Structure:**
+### Zod Schema Pattern
 ```typescript
-// Internal schema (matches Prisma entity structure)
+// Internal schema (matches Prisma)
 export const entitySchema = z.object({
-  id: z.bigint(),              // ✅ OK: Internal database ID (for Prisma compatibility)
-  uid: z.string().startsWith(EntityService.UID_PREFIX),  // External identifier
+  id: z.bigint(),  // Internal only
+  uid: z.string().startsWith(EntityService.UID_PREFIX),
   name: z.string(),
-  metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
   deletedAt: z.date().nullable(),
 });
 
-// Input schema (snake_case from API, transforms to camelCase)
-export const createEntitySchema = z
-  .object({
-    name: z.string().min(1),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
-    name: data.name,
-    metadata: data.metadata,
-  }));
+// Input schema (snake_case → camelCase)
+export const createEntitySchema = z.object({
+  name: z.string().min(1),
+}).transform((data) => ({ name: data.name }));
 
-// ✅ CORRECT: Output DTO that maps uid to id and hides internal database ID
+// ✅ CORRECT: Output DTO maps uid to id, hides database id
 export const entityDto = entitySchema.transform((obj) => ({
-  id: obj.uid,              // 🚨 CRITICAL: Map UID to external 'id' field
+  id: obj.uid,  // Map UID to external 'id'
   name: obj.name,
-  metadata: obj.metadata,
   created_at: obj.createdAt,
   updated_at: obj.updatedAt,
-  // Note: obj.id (database ID) is NOT included in output
+  // Database id NOT included
 }));
 
-// DTOs
 export class CreateEntityDto extends createZodDto(createEntitySchema) {}
 export class EntityDto extends createZodDto(entityDto) {}
 ```
 
-**Schema Transformation Rules:**
-- **Internal Schema**: May include both `id` (database ID) and `uid` fields to match Prisma entities
-- **Input Schema**: snake_case from API, transforms to camelCase for internal use
-- **Output DTO**: Must transform `uid` to `id` and NEVER expose the database `id` field
-- The database ID is used internally for foreign keys, joins, and indexes
-- The UID is used for all external API communication
+**With Relations:** Create separate `entityWithRelationsSchema` and `entityWithRelationsDto` when needed.
 
-**Key Security Rule:**
-```typescript
-// ❌ WRONG - Exposes database ID in API response
-export const entityDto = entitySchema.transform((obj) => ({
-  id: obj.id,  // NEVER expose database ID!
-  uid: obj.uid,
-  name: obj.name,
-}));
-
-// ✅ CORRECT - Maps UID to 'id', hides database ID
-export const entityDto = entitySchema.transform((obj) => ({
-  id: obj.uid,  // External clients see this as 'id'
-  name: obj.name,
-  // Database ID is completely omitted
-}));
-```
-
-### 2. Schemas with Related Data ✅ IMPLEMENTED
-
-**Pattern for entities with relationships:**
-
-When an entity can include related data, create separate schemas:
-
-```typescript
-// Basic entity schema
-export const entitySchema = z.object({
-  id: z.bigint(),
-  uid: z.string(),
-  name: z.string(),
-  relatedId: z.bigint().nullable(),
-  // ... other fields
-});
-
-// Entity with relations schema (includes related entity)
-export const entityWithRelationsSchema = z.object({
-  id: z.bigint(),
-  uid: z.string(),
-  name: z.string(),
-  relatedId: z.bigint().nullable(),
-  related: relatedEntitySchema.nullable(),
-  // ... other fields
-});
-
-// Basic DTO (without relations)
-export const entityDto = entitySchema.transform((obj) => ({
-  id: obj.uid,
-  name: obj.name,
-  related_id: obj.relatedId,
-}));
-
-// DTO with relations (includes related entity data)
-export const entityWithRelationsDto = entityWithRelationsSchema.transform((obj) => ({
-  id: obj.uid,
-  name: obj.name,
-  related_id: obj.related?.uid ?? null,
-  related: obj.related ? relatedEntityDto.parse(obj.related) : null,
-}));
-
-export class EntityDto extends createZodDto(entityDto) {}
-export class EntityWithRelationsDto extends createZodDto(entityWithRelationsDto) {}
-```
-
-**When to use WithRelations schemas:**
-- When the entity has nullable foreign key relationships
-- When admin endpoints may want to include related data
-- When you need to expose nested object data in responses
-- Examples: `mcWithUserSchema`, `membershipWithRelationsSchema`, `studioRoomWithStudioSchema`
-
-### 3. Global Validation ✅ IMPLEMENTED
-- `ZodValidationPipe`: Validates all incoming requests
-- `ZodSerializerInterceptor`: Serializes all outgoing responses
-- `HttpExceptionFilter`: Handles validation errors consistently
-- `ZodExceptionFilter`: Handles Zod-specific validation errors
+**Global Validation:** `ZodValidationPipe`, `ZodSerializerInterceptor`, `HttpExceptionFilter`, `ZodExceptionFilter`.
 
 ## Database Patterns
 
-### 1. Prisma Integration ✅ IMPLEMENTED
-- Use Prisma client for type-safe database access
-- Leverage Prisma's include/select for flexible data fetching
-- Use Prisma types throughout the application
+- **Prisma**: Use repository for CRUD, direct Prisma for transactions/complex queries
+- **Relationships**: Use `include` for related data, `connect: { uid }` for nested creates
+- **Transactions**: Wrap in `prisma.$transaction()` callback, use `tx` parameter
+- **Migrations**: Prisma migrations, maintain backward compatibility, proper indexing
 
-### 2. Relationship Handling ✅ IMPLEMENTED
-- Use Prisma includes for related data fetching
-- Support polymorphic relationships where needed (e.g., Membership model)
-- Maintain referential integrity through foreign keys
+## Performance (CRITICAL)
 
-### 3. Migration Strategy ✅ IMPLEMENTED
-- Use Prisma migrations for schema changes
-- Maintain backward compatibility
-- Include proper indexing for performance
+**🚨 Always prefer bulk operations and includes over loops**
 
-## Error Handling
+**Bulk Operations:**
+```typescript
+// ❌ WRONG: N+1 queries
+for (const item of items) await this.repository.create(item);
 
-### 1. Exception Strategy ✅ IMPLEMENTED
-- Use NestJS built-in exceptions (`NotFoundException`, `BadRequestException`, etc.)
-- Custom `HttpError` utility for consistent error creation
-- Global exception filters for consistent error responses
-- Structured error responses with proper HTTP status codes
+// ✅ CORRECT: Bulk operation
+await this.prisma.entity.createMany({ data: items });
+```
 
-### 2. Validation Errors ✅ IMPLEMENTED
-- Zod validation errors are automatically handled by `ZodExceptionFilter`
-- Clear error messages for validation failures
-- Consistent error response format across all endpoints
+**Include Pattern:**
+```typescript
+// ❌ WRONG: N+1 queries
+const shows = await this.showRepository.findMany({});
+for (const show of shows) await this.clientRepository.findOne({ id: show.clientId });
+
+// ✅ CORRECT: Single query with include
+const shows = await this.showRepository.findMany({
+  include: { client: true, studioRoom: true, showType: true },
+});
+```
+
+**Promise.all Pattern:**
+```typescript
+// ❌ WRONG: Sequential
+const user = await this.userRepository.findOne({ uid });
+const client = await this.clientRepository.findOne({ uid });
+
+// ✅ CORRECT: Parallel
+const [user, client] = await Promise.all([
+  this.userRepository.findOne({ uid }),
+  this.clientRepository.findOne({ uid }),
+]);
+```
+
+**Decision Rules:** 1) Bulk ops → `createMany`/`updateMany`/`deleteMany`, 2) Related data → `include`, 3) Independent queries → `Promise.all()`, 4) Sequential dependencies → loops (rare)
 
 ## Authentication & Authorization
 
-### Current Status: 🚧 PLANNED (Phase 1 - In Development)
+**📚 Check `docs/roadmap/PHASE_1.md` for current phase status. See `docs/AUTHENTICATION_GUIDE.md` (JWT) and `docs/SERVER_TO_SERVER_AUTH.md` (API keys).**
 
-**📚 ALWAYS Check Design Documentation:**
-- **Primary Reference**: `docs/roadmap/` directory - Contains phase-specific authentication strategies
-- **Implementation Guide**: `docs/AUTHENTICATION_GUIDE.md` - Concrete implementation examples
-- **Architecture Guide**: `docs/ARCHITECTURE.md` - Authentication and authorization patterns
-- **Business Requirements**: `docs/BUSINESS.md` - Authentication strategy and user access patterns
+**Phase 1:** JWT validation from `erify_auth`, Membership check for admin, API keys for service-to-service.
 
-**Current Phase (Phase 1) - Hybrid Authentication Approach:**
-- **User Identification**: JWT validation from `erify_auth` service
-- **Admin Verification**: Simple Membership model check for admin permissions
-- **Service-to-Service**: API key authentication for internal communication
-- **Endpoint Protection**: Admin endpoints will be protected by authentication guards
+**Service-to-Service Auth:** Extend `BaseApiKeyGuard`:
+```typescript
+@Injectable()
+export class MyServiceApiKeyGuard extends BaseApiKeyGuard {
+  constructor(configService: ConfigService<Env>) {
+    super(configService, 'my-service');
+  }
+  protected getApiKeyFromConfig(): string | undefined {
+    return this.configService.get('MY_SERVICE_API_KEY');
+  }
+  protected getEnvKeyName(): string {
+    return 'MY_SERVICE_API_KEY';
+  }
+}
 
-**🚧 Implementation Checklist (Phase 1):**
-- [ ] JWT validation guard for user authentication
-- [ ] Membership-based admin verification
-- [ ] Environment configuration for auth settings
-- [ ] Guards applied to admin controllers
-- [ ] Service-to-service API key authentication
+// Usage: @UseGuards(MyServiceApiKeyGuard)
+```
 
-**📋 Future Phases (Phase 2-3):**
-- **Phase 2**: Enhanced authorization for client-studio collaboration
-- **Phase 3**: Full role-based access control (RBAC) with granular permissions
+## Error Handling (CRITICAL)
 
-**When Implementing Authentication:**
-1. Check `docs/roadmap/PHASE_1.md` for current phase requirements
-2. Reference `docs/AUTHENTICATION_GUIDE.md` for implementation patterns
-3. Add authentication configuration to `src/config/env.schema.ts`
-4. Create guards in `src/common/guards/`
-5. Apply guards to controllers with `@UseGuards()` decorator
-6. Update tests to include authentication scenarios
+**🚨 ALWAYS use `HttpError` utility in service layer - NEVER throw NestJS exceptions directly**
 
-## Security Patterns
+### Service Layer
+```typescript
+import { HttpError } from '@/common/errors/http-error.util';
 
-### 1. Input Validation ✅ IMPLEMENTED
-- All inputs validated with Zod schemas
-- SQL injection prevention via Prisma
-- Type-safe request/response handling
-- Sanitize user inputs to prevent XSS
+// Not found errors
+if (!resource) {
+  throw HttpError.notFound('Resource', identifier);
+}
 
-### 2. Authentication & Authorization 🚧 PLANNED
-- **See `docs/roadmap/`** for current phase authentication strategy
-- **Token Validation**: JWT validation from `erify_auth` service (Phase 1)
-- **Admin Verification**: Membership model check for admin permissions (Phase 1)
-- **Service Auth**: API key authentication for internal services (Phase 1)
-- **RBAC**: Full role-based access control (Phase 3)
+// Bad request errors
+if (invalidInput) {
+  throw HttpError.badRequest('Invalid input provided');
+}
 
-### 3. Data Protection ✅ IMPLEMENTED
-- **CRITICAL**: Never expose internal database IDs in API responses
-- Use UIDs for all external communication
-- Implement proper CORS policies
-- Use HTTPS in production
-- Sanitize error messages to prevent information leakage
+// Bad request with details (for validation errors)
+if (!validationResult.isValid) {
+  throw HttpError.badRequestWithDetails('Validation failed', {
+    errors: validationResult.errors,
+  });
+}
 
-## Performance Considerations
+// Conflict errors (optimistic locking, duplicates)
+if (versionMismatch) {
+  throw HttpError.conflict('Version mismatch. Expected X, but got Y');
+}
 
-### 1. Database Optimization ✅ IMPLEMENTED
-- Indexed UID fields for fast lookups
-- Soft delete pattern for data retention
-- Pagination for large datasets
+// Other status codes
+throw HttpError.unauthorized('Authentication required');
+throw HttpError.forbidden('Access denied');
+throw HttpError.unprocessableEntity('Invalid data format');
+```
 
-### 2. Caching Strategy 📋 FUTURE
-- Repository-level caching ready for implementation
-- Service-level caching for expensive operations
-- Response caching for static data
+**Available Methods:**
+- `HttpError.notFound(resource, identifier?)` → 404
+- `HttpError.badRequest(message)` → 400
+- `HttpError.badRequestWithDetails(message, details)` → 400 with details
+- `HttpError.conflict(message)` → 409
+- `HttpError.unauthorized(message)` → 401
+- `HttpError.forbidden(message)` → 403
+- `HttpError.unprocessableEntity(message)` → 422
 
-## Testing Patterns
+**Error Messages:** Always include context (resource name and identifier) and provide clear, actionable messages.
 
-### 1. Unit Testing ✅ IMPLEMENTED (Partial)
-- Service layer testing with mocked dependencies
-- Repository testing with in-memory database
-- Utility function testing
-- Test files present for most services (`.spec.ts`)
+### Repository Layer
+```typescript
+// ✅ CORRECT: Use Prisma's built-in methods
+const record = await this.prismaModel.findFirstOrThrow({
+  where: { uid, deletedAt: null },
+});
 
-### 2. Integration Testing 📋 FUTURE
-- End-to-end API testing
-- Database integration testing
-- Module integration testing
+// Prisma throws PrismaClientKnownRequestError (P2025) if not found
+// PrismaExceptionFilter automatically converts to HTTP 404
+```
+
+**Never manually throw errors in repositories** - use `findFirstOrThrow()` or `findUniqueOrThrow()` and let Prisma handle errors.
+
+### Global Exception Filters
+- **`PrismaExceptionFilter`**: Handles Prisma errors (P2002 → 409, P2025 → 404)
+- **`ZodExceptionFilter`**: Handles validation errors (400 with details)
+- **`HttpExceptionFilter`**: Handles HTTP exceptions (passes through)
+
+**Filters are registered globally** - no need to handle Prisma errors manually.
+
+## Code Verification & Testing
+
+**🚨 CRITICAL: Always verify code before marking task complete**
+
+**Verification Steps:**
+1. **Linting**: `pnpm lint` - Fix errors, never disable ESLint rules unless solid documented reason
+2. **Testing**: `pnpm test` - All tests pass, update/add tests for new features
+3. **Build**: `pnpm build` - Compiles successfully, never use `any`/`unknown` to bypass type errors
+
+**Checklist:** ✅ `pnpm lint` passes, ✅ `pnpm test` passes, ✅ `pnpm build` succeeds
+
+**When to Verify:** After generating/modifying code, refactoring, before marking complete
 
 ## Code Style & Conventions
 
-### 1. Naming Conventions ✅ IMPLEMENTED
-- **Files**: kebab-case (`studio-room.service.ts`)
-- **Classes**: PascalCase (`StudioRoomService`)
-- **Methods**: camelCase (`createStudioRoom`)
-- **Constants**: UPPER_SNAKE_CASE (`UID_PREFIX`, `GROUP_TYPE`, `ROLE`)
-- **Constants Files**: For shared constants (e.g., `membership.constants.ts`)
-
-### 2. Import Organization ✅ IMPLEMENTED
-```typescript
-// External libraries
-import { Injectable } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
-
-// Internal modules
-import { UtilityService } from '../utility/utility.service';
-import { EntityRepository } from './entity.repository';
-```
-
-### 3. Type Safety ✅ IMPLEMENTED
-- Use TypeScript strict mode
-- Leverage Prisma generated types
-- Use branded types for UIDs
-- Prefer type assertions over `any`
-
-### 4. Linting ✅ IMPLEMENTED
-- ESLint configuration in `eslint.config.mjs`
-- If you encounter linting errors, run `pnpm lint` to surface/fix issues
-
-## Business Logic Patterns
-
-### 1. Entity Lifecycle ✅ IMPLEMENTED
-- Create → Update → Soft Delete
-- Audit trail via timestamps (`createdAt`, `updatedAt`)
-- Status-driven workflows where applicable
-
-### 2. Relationship Management ✅ IMPLEMENTED
-- Polymorphic relationships for flexible associations (e.g., Membership)
-- Many-to-many relationships through join tables
-- Hierarchical relationships with proper constraints
-
-### 3. Workflow Patterns 🚧 PLANNED
-- Draft → Confirmed → Live → Completed (for shows)
-- Status transitions are audited
-- Business rules enforced at service layer
+- **Naming**: Files kebab-case, Classes PascalCase, Methods camelCase, Constants UPPER_SNAKE_CASE
+- **Imports**: External libraries first, then internal modules
+- **Type Safety**: Strict mode, Prisma types, branded UIDs. **🚨 NEVER use `any`/`unknown` to bypass errors** - fix types properly
+- **Linting**: ESLint in `eslint.config.mjs`. **🚨 NEVER disable rules** - fix underlying issues
 
 ## When Adding New Features
 
-1. **Follow the established patterns** ✅ - Don't reinvent the wheel
-2. **Use the base repository** ✅ - Extend `BaseRepository` for new entities
-3. **Implement both layers** ✅ - Create both domain and admin modules/services
-4. **Add proper validation** ✅ - Use Zod schemas for all inputs/outputs
-5. **Include proper error handling** ✅ - Use NestJS exceptions consistently
-6. **Implement authentication** 🚧 - **Check `docs/roadmap/`** for current phase strategy
-7. **Add authorization checks** 🚧 - **Check `docs/roadmap/`** for current phase requirements
-8. **Write tests** ✅ - Follow the established testing patterns
-9. **Update documentation** ✅ - Keep architecture docs current
-10. **Create constants files** ✅ - For shared constants (e.g., roles, types, statuses)
+1. Follow established patterns
+2. Extend `BaseRepository` for new entities
+3. Create domain + admin layers
+4. Use Zod schemas for validation
+5. Handle errors with `HttpError` utility (never throw NestJS exceptions directly)
+6. Check `docs/roadmap/PHASE_1.md` for phase status
+7. Implement authentication per phase requirements
+8. Write tests
+9. Update documentation
+10. Create constants files for shared values
+11. **Verify code**: Run `pnpm lint`, `pnpm test`, `pnpm build`
 
-## NestJS-Specific Best Practices
+## NestJS Best Practices
 
-### 1. Module Organization ✅ IMPLEMENTED
-- Use feature-based modules (not technical layers)
-- Export services from domain modules
-- Import only what you need in admin modules
-- Use `@Global()` decorator sparingly (only for truly global services)
+- **Modules**: Feature-based, export services from domain modules, use `@Global()` sparingly
+- **DI**: Constructor injection, `@Injectable()` on all services, avoid circular deps
+- **Guards**: `BaseApiKeyGuard` for service-to-service, JWT guards for users (see `docs/AUTHENTICATION_GUIDE.md`)
+- **Exceptions**: Always use `HttpError` utility in services, global filters handle Prisma/Zod errors
+- **Validation**: Zod schemas only, global validation pipes, `UidValidationPipe` for path params
 
-### 2. Dependency Injection ✅ IMPLEMENTED
-- Always use constructor injection
-- Prefer interfaces over concrete classes for dependencies
-- Use `@Injectable()` decorator on all services
-- Avoid circular dependencies
+## Anti-Patterns to Avoid
 
-### 3. Guards and Interceptors 🚧 PLANNED
-- Use guards for authentication/authorization (to be implemented Phase 1)
-- Use interceptors for cross-cutting concerns (logging, caching)
-- Apply guards at controller or method level
-- Use `@UseGuards()` decorator properly
+### Data & ID Management
+- ❌ **Expose database IDs** - Always map `uid` → `id` in DTOs
+- ❌ **Include database ID in DTOs** - Only `uid` mapped as `id`
+- ❌ **Use hard deletes** - Use soft delete consistently
 
-### 4. Exception Handling ✅ IMPLEMENTED
-- Use NestJS built-in exceptions (`NotFoundException`, `BadRequestException`)
-- Custom `HttpError` utility for consistent error creation
-- Use global exception filters for consistent error responses
-- Include proper error codes and messages
+### Architecture & Layers
+- ❌ **Bypass service layer** - Controllers don't access repositories directly
+- ❌ **Mix concerns** - Separate admin and domain logic
+- ❌ **Create circular dependencies** - Use `forwardRef()` if absolutely necessary
+- ❌ **Use `@Global()` excessively** - Only for truly global services
 
-### 5. Validation and Transformation ✅ IMPLEMENTED
-- Use Zod schemas (not class-validator)
-- Apply validation pipes globally
-- Use transformation pipes for data conversion
-- Validate at the boundary (controllers)
-- Use `UidValidationPipe` for path parameter UID validation
+### Validation & Type Safety
+- ❌ **Skip validation** - All inputs validated with Zod
+- ❌ **Mix validation libraries** - Zod only
+- ❌ **Ignore type safety** - Proper TypeScript types throughout
+- ❌ **Use `any`/`unknown` to bypass errors** - Fix type issues properly
 
-## Common Anti-Patterns to Avoid
+### Error Handling
+- ❌ **Throw generic `Error` objects** - Use `HttpError` utility or let Prisma handle errors
+- ❌ **Throw NestJS exceptions directly in services** - Always use `HttpError` utility
+- ❌ **Throw HTTP exceptions in repositories** - Use Prisma's `findFirstOrThrow`/`findUniqueOrThrow`
+- ❌ **Skip error handling** - Handle all error cases
 
-1. **🚨 NEVER expose database IDs in API responses** - Map `uid` to `id` in DTOs
-2. **Don't bypass the service layer** - Controllers should not directly access repositories
-3. **Don't skip validation** - All inputs must be validated with Zod
-4. **Don't use hard deletes** - Use soft delete pattern consistently
-5. **Don't mix concerns** - Keep admin and domain logic separate
-6. **Don't ignore type safety** - Use proper TypeScript types throughout
-7. **Don't skip error handling** - Handle all error cases appropriately
-8. **Don't create circular dependencies** - Use forwardRef() if absolutely necessary
-9. **Don't use @Global() excessively** - Only for truly global services
-10. **Don't mix validation libraries** - Stick to Zod exclusively
-11. **Don't skip authentication** 🚧 - **Check `docs/roadmap/`** for current phase strategy
-12. **Don't bypass authorization** 🚧 - **Check `docs/roadmap/`** for current phase requirements
-13. **Don't hardcode user roles/types** - Use constants files (e.g., `membership.constants.ts`)
-14. **Don't ignore JWT validation** 🚧 - Always validate tokens from erify_auth service
-15. **Don't include database ID in DTO outputs** - Only include `uid` mapped as `id`
+### Performance
+- ❌ **Create N+1 queries** - Use bulk ops instead of loops
+- ❌ **Fetch related data in loops** - Use `include` in initial query
+- ❌ **Run independent queries sequentially** - Use `Promise.all()`
+- ❌ **Query count separately** - Use `Promise.all()` for parallel data + count
+- ❌ **Build where clauses inline** - Use private `buildWhereClause()` methods
+- ❌ **Forget transactions** - Use `prisma.$transaction()` for multiple operations
 
-## Key Files to Reference
+### Authentication & Security
+- ❌ **Skip authentication** - Check phase requirements
+- ❌ **Bypass authorization** - Check phase requirements
+- ❌ **Ignore JWT validation** - Always validate tokens
+- ❌ **Create API key guards from scratch** - Extend `BaseApiKeyGuard`
+- ❌ **Expose API keys** - Environment variables only
+- ❌ **Hardcode roles/types** - Use constants files
 
-**✅ Core Implementation Files:**
-- `src/common/repositories/base.repository.ts` - Base repository implementation
-- `src/common/pagination/schema/pagination.schema.ts` - Pagination patterns
-- `src/common/pipes/uid-validation.pipe.ts` - UID path parameter validation
-- `src/common/filters/http-exception.filter.ts` - Global exception handling
-- `src/common/filters/zod-exception.filter.ts` - Zod validation error handling
-- `src/common/errors/http-error.util.ts` - Custom error utility
-- `src/utility/utility.service.ts` - Common utilities (branded IDs, pagination)
-- `src/prisma/prisma.service.ts` - Database service
-- `src/membership/membership.service.ts` - Membership and authorization logic
-- `src/membership/membership.constants.ts` - Role and group type definitions
-- `src/config/env.schema.ts` - Environment configuration
+### Code Quality
+- ❌ **Disable ESLint rules** - Fix underlying issues
+- ❌ **Skip tests** - Write tests for new features
 
-**📚 Documentation Files:**
-- `docs/ARCHITECTURE.md` - Detailed architecture documentation
-- `docs/BUSINESS.md` - Business domain documentation
-- `docs/roadmap/` - Phase-specific implementation plans
-- `docs/roadmap/PHASE_1.md` - Current phase (Core Functions + Hybrid Auth)
-- `docs/roadmap/PHASE_2.md` - Next phase (Scheduling + Collaboration)
-- `docs/roadmap/PHASE_3.md` - Future phase (Advanced Features)
-- `docs/AUTHENTICATION_GUIDE.md` - Authentication implementation guide
-- `docs/SCHEDULING_ARCHITECTURE.md` - Scheduling system architecture
+## Key Files
 
-**🚧 Future Implementation Directories:**
-- `src/common/guards/` - Authentication/authorization guards (to be implemented)
-- `src/common/authz/` - Authorization helpers (to be implemented)
-- `src/common/rbac/` - Role-based access control (Phase 3)
+**Core:** `src/common/repositories/base.repository.ts`, `src/common/pagination/schema/pagination.schema.ts`, `src/common/pipes/uid-validation.pipe.ts`, `src/common/filters/*`, `src/common/errors/http-error.util.ts`, `src/utility/utility.service.ts`, `src/prisma/prisma.service.ts`, `src/membership/membership.service.ts`, `src/membership/membership.constants.ts`, `src/config/env.schema.ts`
 
-Remember: Consistency is key. Follow these patterns religiously to maintain code quality and team productivity. Always check implementation status markers (✅/🚧/📋) to understand what's currently available vs. planned.
+**Docs:** `docs/roadmap/PHASE_1.md` (implementation status), `docs/AUTHENTICATION_GUIDE.md`, `docs/SERVER_TO_SERVER_AUTH.md`, `docs/ARCHITECTURE.md`, `docs/BUSINESS.md`
+
+**Auth:** `src/common/guards/base-api-key.guard.ts`, `src/common/guards/google-sheets-api-key.guard.ts`
+
+**For implementation status, always refer to `docs/roadmap/PHASE_1.md` as the single source of truth.**

@@ -21,13 +21,13 @@ export const mcSchema = z.object({
 // API input schema (snake_case input, transforms to camelCase)
 export const createMcSchema = z
   .object({
-    user_id: z.string().startsWith(UserService.UID_PREFIX).nullish(),
-    name: z.string(),
-    alias_name: z.string(),
+    user_id: z.string().startsWith(UserService.UID_PREFIX).optional(),
+    name: z.string().min(1, 'MC name is required'),
+    alias_name: z.string().min(1, 'Alias name is required'),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({
-    userId: data.user_id,
+    userId: data.user_id ?? null,
     name: data.name,
     aliasName: data.alias_name,
     metadata: data.metadata,
@@ -36,14 +36,14 @@ export const createMcSchema = z
 // API input schema (snake_case input, transforms to camelCase)
 export const updateMcSchema = z
   .object({
-    user_id: z.string().startsWith(UserService.UID_PREFIX).nullish(),
-    name: z.string().min(1).optional(),
-    alias_name: z.string().min(1).optional(),
+    user_id: z.string().startsWith(UserService.UID_PREFIX).optional(),
+    name: z.string().min(1, 'MC name is required').optional(),
+    alias_name: z.string().min(1, 'Alias name is required').optional(),
     is_banned: z.boolean().optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({
-    userId: data.user_id,
+    userId: data.user_id ?? null,
     name: data.name,
     aliasName: data.alias_name,
     isBanned: data.is_banned,
@@ -53,7 +53,7 @@ export const updateMcSchema = z
 export const mcDto = mcSchema
   .transform((obj) => ({
     id: obj.uid,
-    user_id: obj.userId,
+    user_id: null as string | null, // Set to null when user relation is not loaded (use mcWithUserDto for user_id)
     name: obj.name,
     alias_name: obj.aliasName,
     is_banned: obj.isBanned,
@@ -64,7 +64,7 @@ export const mcDto = mcSchema
   .pipe(
     z.object({
       id: z.string(),
-      user_id: z.bigint().nullable(),
+      user_id: z.string().nullable(), // Changed from bigint to string (UID)
       name: z.string(),
       alias_name: z.string(),
       is_banned: z.boolean(),

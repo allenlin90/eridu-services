@@ -1,9 +1,13 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   HttpException,
   HttpStatus,
+  InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 
 export const HttpError = {
@@ -21,8 +25,47 @@ export const HttpError = {
     });
   },
 
+  badRequestWithDetails(
+    message: string,
+    details?: object,
+  ): BadRequestException {
+    return new BadRequestException({
+      statusCode: HttpStatus.BAD_REQUEST,
+      message,
+      ...(details && { details }),
+    });
+  },
+
+  unauthorized(message: string): UnauthorizedException {
+    return new UnauthorizedException({
+      statusCode: HttpStatus.UNAUTHORIZED,
+      message,
+    });
+  },
+
+  forbidden(message: string): ForbiddenException {
+    return new ForbiddenException({
+      statusCode: HttpStatus.FORBIDDEN,
+      message,
+    });
+  },
+
   conflict(message: string): ConflictException {
     return new ConflictException({ statusCode: HttpStatus.CONFLICT, message });
+  },
+
+  unprocessableEntity(message: string): UnprocessableEntityException {
+    return new UnprocessableEntityException({
+      statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+      message,
+    });
+  },
+
+  internalServerError(message: string): InternalServerErrorException {
+    return new InternalServerErrorException({
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      message,
+    });
   },
 
   custom(message: string, status: HttpStatus): HttpException {
