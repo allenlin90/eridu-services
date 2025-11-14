@@ -8,6 +8,13 @@ import { ScheduleService } from '@/models/schedule/schedule.service';
 import { userSchema } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
 
+// Schedule status enum
+export const SCHEDULE_STATUS = {
+  DRAFT: 'draft',
+  REVIEW: 'review',
+  PUBLISHED: 'published',
+} as const;
+
 // Internal schema for database entity
 export const scheduleSchema = z.object({
   id: z.bigint(),
@@ -39,15 +46,25 @@ export const scheduleWithRelationsSchema = scheduleSchema.extend({
 // Use string dates to avoid Date types in JSON Schema generation
 export const createScheduleSchema = z
   .object({
-    name: z.string(),
+    name: z.string().min(1, 'Schedule name is required'),
     start_date: z.iso.datetime(), // ISO 8601 datetime string
     end_date: z.iso.datetime(), // ISO 8601 datetime string
-    status: z.string().default('draft'),
+    status: z
+      .enum([
+        SCHEDULE_STATUS.DRAFT,
+        SCHEDULE_STATUS.REVIEW,
+        SCHEDULE_STATUS.PUBLISHED,
+      ])
+      .default(SCHEDULE_STATUS.DRAFT),
     plan_document: z.record(z.string(), z.any()),
     version: z.number().int().default(1),
     metadata: z.record(z.string(), z.any()).optional(),
     client_id: z.string().startsWith(ClientService.UID_PREFIX),
     created_by: z.string().startsWith(UserService.UID_PREFIX),
+  })
+  .refine((data) => new Date(data.end_date) > new Date(data.start_date), {
+    message: 'End date must be after start date',
+    path: ['end_date'],
   })
   .transform((data) => ({
     name: data.name,
@@ -63,10 +80,16 @@ export const createScheduleSchema = z
 
 // CORE input schema
 export const createScheduleCoreSchema = z.object({
-  name: z.string(),
+  name: z.string().min(1),
   startDate: z.date(),
   endDate: z.date(),
-  status: z.string().optional(),
+  status: z
+    .enum([
+      SCHEDULE_STATUS.DRAFT,
+      SCHEDULE_STATUS.REVIEW,
+      SCHEDULE_STATUS.PUBLISHED,
+    ])
+    .optional(),
   planDocument: z.record(z.string(), z.any()),
   version: z.number().int().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
@@ -78,15 +101,34 @@ export const createScheduleCoreSchema = z.object({
 // Use string dates to avoid Date types in JSON Schema generation
 export const updateScheduleSchema = z
   .object({
-    name: z.string().optional(),
+    name: z.string().min(1, 'Schedule name is required').optional(),
     start_date: z.iso.datetime().optional(), // ISO 8601 datetime string
     end_date: z.iso.datetime().optional(), // ISO 8601 datetime string
-    status: z.string().optional(),
+    status: z
+      .enum([
+        SCHEDULE_STATUS.DRAFT,
+        SCHEDULE_STATUS.REVIEW,
+        SCHEDULE_STATUS.PUBLISHED,
+      ])
+      .optional(),
     plan_document: z.record(z.string(), z.any()).optional(),
     version: z.number().int().positive(), // Required for optimistic locking
     metadata: z.record(z.string(), z.any()).optional(),
     published_by: z.string().startsWith(UserService.UID_PREFIX).optional(),
   })
+  .refine(
+    (data) => {
+      // Only validate if both dates are provided
+      if (data.start_date && data.end_date) {
+        return new Date(data.end_date) > new Date(data.start_date);
+      }
+      return true;
+    },
+    {
+      message: 'End date must be after start date',
+      path: ['end_date'],
+    },
+  )
   .transform((data) => ({
     name: data.name,
     startDate: data.start_date ? new Date(data.start_date) : undefined,
@@ -165,15 +207,34 @@ export const bulkCreateScheduleSchema = z.object({
 export const bulkUpdateScheduleItemSchema = z
   .object({
     schedule_id: z.string().startsWith(ScheduleService.UID_PREFIX),
-    name: z.string().optional(),
+    name: z.string().min(1, 'Schedule name is required').optional(),
     start_date: z.iso.datetime().optional(),
     end_date: z.iso.datetime().optional(),
-    status: z.string().optional(),
+    status: z
+      .enum([
+        SCHEDULE_STATUS.DRAFT,
+        SCHEDULE_STATUS.REVIEW,
+        SCHEDULE_STATUS.PUBLISHED,
+      ])
+      .optional(),
     plan_document: z.record(z.string(), z.any()).optional(),
     version: z.number().int().positive().optional(), // Required for optimistic locking
     metadata: z.record(z.string(), z.any()).optional(),
     published_by: z.string().startsWith(UserService.UID_PREFIX).optional(),
   })
+  .refine(
+    (data) => {
+      // Only validate if both dates are provided
+      if (data.start_date && data.end_date) {
+        return new Date(data.end_date) > new Date(data.start_date);
+      }
+      return true;
+    },
+    {
+      message: 'End date must be after start date',
+      path: ['end_date'],
+    },
+  )
   .transform((data) => ({
     scheduleId: data.schedule_id,
     name: data.name,

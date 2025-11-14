@@ -17,7 +17,7 @@ export const platformSchema = z.object({
 // API input schema (snake_case input, transforms to camelCase)
 export const createPlatformSchema = z
   .object({
-    name: z.string(),
+    name: z.string().min(1, 'Platform name is required'),
     api_config: z.record(z.string(), z.any()),
     metadata: z.record(z.string(), z.any()).optional(),
   })
@@ -37,7 +37,7 @@ export const createPlatformCoreSchema = z.object({
 // API input schema (snake_case input, transforms to camelCase)
 export const updatePlatformSchema = z
   .object({
-    name: z.string().optional(),
+    name: z.string().min(1, 'Platform name is required').optional(),
     api_config: z.record(z.string(), z.any()).optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })

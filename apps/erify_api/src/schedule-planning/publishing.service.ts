@@ -1,10 +1,7 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Prisma, Schedule } from '@prisma/client';
 
+import { HttpError } from '@/common/errors/http-error.util';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
 import { ShowService } from '@/models/show/show.service';
@@ -60,12 +57,12 @@ export class PublishingService {
 
     // Validate status
     if (schedule.status === 'published') {
-      throw new BadRequestException('Schedule is already published');
+      throw HttpError.badRequest('Schedule is already published');
     }
 
     // Validate optimistic locking
     if (schedule.version !== version) {
-      throw new ConflictException(
+      throw HttpError.conflict(
         `Version mismatch. Expected ${version}, but schedule is at version ${schedule.version}`,
       );
     }
@@ -77,7 +74,7 @@ export class PublishingService {
       !planDocument.shows ||
       !Array.isArray(planDocument.shows)
     ) {
-      throw new BadRequestException('Invalid plan document structure');
+      throw HttpError.badRequest('Invalid plan document structure');
     }
 
     // Validate schedule before publishing
@@ -91,8 +88,7 @@ export class PublishingService {
     });
 
     if (!validationResult.isValid) {
-      throw new BadRequestException({
-        message: 'Schedule validation failed',
+      throw HttpError.badRequestWithDetails('Schedule validation failed', {
         errors: validationResult.errors,
       });
     }
@@ -115,12 +111,15 @@ export class PublishingService {
         },
       });
 
-      // 3. Build UID lookup maps for all references
+      // 2. Build UID lookup maps for all references
       const uidMaps = await this.buildUidLookupMaps(planDocument.shows, tx);
 
-      // 4. Bulk insert shows from JSON document
-      const showsToCreate = planDocument.shows.map((showItem) => ({
-        uid: this.showService.generateShowUid(),
+      // 3. Generate UIDs and prepare show data (without relationships)
+      const showUids = planDocument.shows.map(() =>
+        this.showService.generateShowUid(),
+      );
+      const showsToCreate = planDocument.shows.map((showItem, index) => ({
+        uid: showUids[index],
         name: showItem.name,
         startTime: new Date(showItem.startTime),
         endTime: new Date(showItem.endTime),
@@ -131,37 +130,70 @@ export class PublishingService {
         showStatusId: uidMaps.showStatuses.get(showItem.showStatusUid)!,
         showStandardId: uidMaps.showStandards.get(showItem.showStandardUid)!,
         scheduleId: schedule.id,
-        showMCs: {
-          create: (showItem.mcs || []).map((mc) => ({
-            uid: this.showMcService.generateShowUid(),
-            mcId: uidMaps.mcs.get(mc.mcUid)!,
-            note: mc.note,
-            metadata: {},
-          })),
+      }));
+
+      // 4. Bulk create all shows at once (no relationships)
+      await tx.show.createMany({
+        data: showsToCreate,
+      });
+
+      // 5. Query back created shows to get their IDs (needed for relationships)
+      const createdShows = await tx.show.findMany({
+        where: {
+          uid: { in: showUids },
+          scheduleId: schedule.id,
         },
-        showPlatforms: {
-          create: (showItem.platforms || []).map((platform) => ({
+        select: { id: true, uid: true },
+      });
+
+      // 6. Build a map of show UID -> show ID for relationship creation
+      const showIdMap = new Map(
+        createdShows.map((show) => [show.uid, show.id]),
+      );
+
+      // 7. Prepare ShowMC data for bulk insert
+      const showMCsToCreate = planDocument.shows.flatMap((showItem, index) => {
+        const showId = showIdMap.get(showUids[index])!;
+        return (showItem.mcs || []).map((mc) => ({
+          uid: this.showMcService.generateShowUid(),
+          showId,
+          mcId: uidMaps.mcs.get(mc.mcUid)!,
+          note: mc.note,
+          metadata: {},
+        }));
+      });
+
+      // 8. Bulk create all ShowMCs at once
+      if (showMCsToCreate.length > 0) {
+        await tx.showMC.createMany({
+          data: showMCsToCreate,
+        });
+      }
+
+      // 9. Prepare ShowPlatform data for bulk insert
+      const showPlatformsToCreate = planDocument.shows.flatMap(
+        (showItem, index) => {
+          const showId = showIdMap.get(showUids[index])!;
+          return (showItem.platforms || []).map((platform) => ({
             uid: this.showPlatformService.generateShowPlatformUid(),
+            showId,
             platformId: uidMaps.platforms.get(platform.platformUid)!,
             liveStreamLink: platform.liveStreamLink,
             platformShowId: platform.platformShowId,
             viewerCount: 0,
             metadata: {},
-          })),
+          }));
         },
-      }));
-
-      // Use createMany for shows (but we need nested creates for relationships)
-      // So we'll use individual creates in a loop or use Prisma's nested create
-      const createdShows = await Promise.all(
-        showsToCreate.map((showData) =>
-          tx.show.create({
-            data: showData,
-          }),
-        ),
       );
 
-      // 5. Mark schedule as published
+      // 10. Bulk create all ShowPlatforms at once
+      if (showPlatformsToCreate.length > 0) {
+        await tx.showPlatform.createMany({
+          data: showPlatformsToCreate,
+        });
+      }
+
+      // 11. Mark schedule as published
       const updatedSchedule = await tx.schedule.update({
         where: { id: schedule.id },
         data: {

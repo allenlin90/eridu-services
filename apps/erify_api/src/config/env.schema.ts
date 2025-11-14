@@ -33,6 +33,10 @@ export const envSchema = z.object({
     .int({ message: 'SHUTDOWN_TIMEOUT must be an integer' })
     .min(1000, { message: 'SHUTDOWN_TIMEOUT must be at least 1000ms' })
     .default(30000),
+
+  // Server-to-Server Authentication
+  // Google Sheets integration API key
+  GOOGLE_SHEETS_API_KEY: z.string().min(1).optional(),
 });
 
 // Export type for use with ConfigService<Env>

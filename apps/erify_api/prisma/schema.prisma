@@ -143,6 +143,9 @@ model Show {
   @@index([clientId, startTime, deletedAt])
   @@index([clientId, showStatusId, deletedAt])
   @@index([clientId, showStatusId, startTime, deletedAt])
+  @@index([studioRoomId, startTime, endTime, deletedAt]) // Room conflict detection
+  @@index([scheduleId, startTime, deletedAt]) // Publishing workflow queries
+  @@index([clientId, startTime, endTime, deletedAt]) // MC double-booking detection
   @@map("shows")
 }
 
@@ -166,6 +169,7 @@ model ShowMC {
   @@index([deletedAt])
   @@index([showId, deletedAt])
   @@index([mcId, deletedAt])
+  @@index([mcId, showId, deletedAt]) // MC double-booking queries
   @@map("show_mcs")
 }
 
@@ -303,6 +307,7 @@ model StudioMembership {
   @@index([deletedAt])
   @@index([userId, deletedAt])
   @@index([studioId, deletedAt])
+  @@index([userId, role, deletedAt]) // Authorization checks
   @@map("studio_memberships")
 }
 
@@ -346,6 +351,9 @@ model Schedule {
   @@index([clientId, status, startDate, deletedAt])
   @@index([createdBy, deletedAt])
   @@index([publishedBy, deletedAt])
+  @@index([startDate, endDate, deletedAt]) // Monthly overview without client filter
+  @@index([status, startDate, endDate, deletedAt]) // Status-filtered monthly overview
+  @@index([publishedAt, deletedAt]) // Published date queries
   @@map("schedules")
 }
 
@@ -369,5 +377,6 @@ model ScheduleSnapshot {
   @@index([scheduleId, createdAt])
   @@index([createdBy])
   @@index([createdBy, createdAt])
+  @@index([scheduleId, snapshotReason, createdAt]) // Snapshot reason filtering
   @@map("schedule_snapshots")
 }

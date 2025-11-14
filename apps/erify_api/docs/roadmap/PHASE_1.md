@@ -187,10 +187,6 @@ Phase 1 establishes the core production functions with simplified authentication
       - [x] Use existing `GET /admin/schedules/overview/monthly` endpoint
       - [x] Groups schedules by client and status
       - [ ] Test with 50+ clients (documentation/testing pending)
-    - [ ] **Google Sheets Integration**
-      - [ ] Group shows by client before uploading
-      - [ ] Create one schedule per client (~50 shows each)
-      - [ ] Simple AppsScript code using bulk create + individual publish
     - [ ] **Testing**
       - [x] Unit tests: bulk create/update
       - [x] Integration tests: 50 clients, ~50 shows each
@@ -376,7 +372,6 @@ For complete Google Sheets integration workflow, API call sequence, error handli
   - ✅ No chunking needed for typical clients
   - ✅ Bulk create/update operations implemented
   - ✅ Individual schedule publishing (one at a time)
-  - ⚠️ Google Sheets integration examples (documentation pending)
 
 **Phase 1 Limitations:**
 - One direct show operation per API call (no bulk operations for shows)

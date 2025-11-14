@@ -9,11 +9,13 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { z } from 'zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
+import { GoogleSheetsApiKeyGuard } from '@/common/guards/google-sheets-api-key.guard';
 import { ApiZodResponse } from '@/common/openapi/decorators';
 import { createPaginatedResponseSchema } from '@/common/pagination/schema/pagination.schema';
 import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
@@ -46,6 +48,7 @@ import {
 import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/schedules')
+@UseGuards(GoogleSheetsApiKeyGuard)
 export class AdminScheduleController extends BaseAdminController {
   constructor(
     private readonly scheduleService: ScheduleService,

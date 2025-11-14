@@ -269,14 +269,14 @@ export class ScheduleService extends BaseModelService {
 
     // Prevent editing published schedules
     if (schedule.status === 'published') {
-      throw new BadRequestException(
+      throw HttpError.badRequest(
         'Cannot edit published schedule. Duplicate it first.',
       );
     }
 
     // Optimistic locking validation
     if (clientVersion && schedule.version !== clientVersion) {
-      throw new ConflictException(
+      throw HttpError.conflict(
         `Version mismatch. Expected ${clientVersion}, but schedule is at version ${schedule.version}`,
       );
     }
@@ -290,7 +290,7 @@ export class ScheduleService extends BaseModelService {
 
     // Prevent deleting published schedules
     if (schedule.status === 'published') {
-      throw new BadRequestException('Cannot delete published schedule');
+      throw HttpError.badRequest('Cannot delete published schedule');
     }
 
     return this.scheduleRepository.softDelete({ uid });
@@ -336,7 +336,7 @@ export class ScheduleService extends BaseModelService {
             !('name' in show) ||
             typeof show.name !== 'string'
           ) {
-            throw new Error('Invalid show item in plan document');
+            throw HttpError.badRequest('Invalid show item in plan document');
           }
 
           // Cast to ShowPlanItem shape and update tempId
@@ -800,14 +800,14 @@ export class ScheduleService extends BaseModelService {
 
     // Validate schedule is in draft status
     if (schedule.status !== 'draft') {
-      throw new BadRequestException(
+      throw HttpError.badRequest(
         'Can only append shows to schedules in draft status',
       );
     }
 
     // Validate version matches (optimistic locking)
     if (schedule.version !== version) {
-      throw new ConflictException(
+      throw HttpError.conflict(
         `Version mismatch. Expected version ${version}, but schedule is at version ${schedule.version}`,
       );
     }
@@ -829,7 +829,7 @@ export class ScheduleService extends BaseModelService {
 
     // Validate uploadProgress exists
     if (!planDocument.metadata?.uploadProgress) {
-      throw new BadRequestException(
+      throw HttpError.badRequest(
         'Schedule does not have uploadProgress metadata. Cannot append shows.',
       );
     }
@@ -838,34 +838,34 @@ export class ScheduleService extends BaseModelService {
 
     // Validate upload not already complete
     if (uploadProgress.isComplete) {
-      throw new BadRequestException({
-        statusCode: 400,
-        error: 'Bad Request',
-        message: `Upload already complete. All ${uploadProgress.expectedChunks} chunks have been received.`,
-        errorCode: 'UPLOAD_COMPLETE',
-        uploadProgress: {
-          expectedChunks: uploadProgress.expectedChunks,
-          receivedChunks: uploadProgress.receivedChunks,
-          lastChunkIndex: uploadProgress.lastChunkIndex,
-          isComplete: true,
+      throw HttpError.badRequestWithDetails(
+        `Upload already complete. All ${uploadProgress.expectedChunks} chunks have been received.`,
+        {
+          errorCode: 'UPLOAD_COMPLETE',
+          uploadProgress: {
+            expectedChunks: uploadProgress.expectedChunks,
+            receivedChunks: uploadProgress.receivedChunks,
+            lastChunkIndex: uploadProgress.lastChunkIndex,
+            isComplete: true,
+          },
         },
-      });
+      );
     }
 
     // Validate chunk index is valid
     if (chunkIndex < 1 || chunkIndex > uploadProgress.expectedChunks) {
-      throw new BadRequestException({
-        statusCode: 400,
-        error: 'Bad Request',
-        message: `Invalid chunk index ${chunkIndex}. Must be between 1 and ${uploadProgress.expectedChunks}.`,
-        errorCode: 'INVALID_CHUNK_INDEX',
-        uploadProgress: {
-          expectedChunks: uploadProgress.expectedChunks,
-          receivedChunks: uploadProgress.receivedChunks,
-          lastChunkIndex: uploadProgress.lastChunkIndex,
-          isComplete: uploadProgress.isComplete,
+      throw HttpError.badRequestWithDetails(
+        `Invalid chunk index ${chunkIndex}. Must be between 1 and ${uploadProgress.expectedChunks}.`,
+        {
+          errorCode: 'INVALID_CHUNK_INDEX',
+          uploadProgress: {
+            expectedChunks: uploadProgress.expectedChunks,
+            receivedChunks: uploadProgress.receivedChunks,
+            lastChunkIndex: uploadProgress.lastChunkIndex,
+            isComplete: uploadProgress.isComplete,
+          },
         },
-      });
+      );
     }
 
     // Validate sequential chunks
@@ -881,21 +881,9 @@ export class ScheduleService extends BaseModelService {
         missingChunks.push(i);
       }
 
-      throw new ConflictException({
-        statusCode: 409,
-        error: 'Conflict',
-        message: `Chunk must be uploaded sequentially. Expected chunk ${expectedNextChunk}, but received chunk ${chunkIndex}.`,
-        errorCode: 'SEQUENTIAL_VIOLATION',
-        uploadProgress: {
-          expectedChunks: uploadProgress.expectedChunks,
-          receivedChunks: uploadProgress.receivedChunks,
-          lastChunkIndex: uploadProgress.lastChunkIndex,
-          expectedNextChunk,
-          receivedChunk: chunkIndex,
-          missingChunks,
-          isComplete: false,
-        },
-      });
+      throw HttpError.conflict(
+        `Chunk must be uploaded sequentially. Expected chunk ${expectedNextChunk}, but received chunk ${chunkIndex}.`,
+      );
     }
 
     // Merge shows into existing plan document

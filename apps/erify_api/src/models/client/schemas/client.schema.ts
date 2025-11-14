@@ -17,8 +17,8 @@ export const clientSchema = z.object({
 // API input schema (snake_case input, transforms to camelCase)
 export const createClientSchema = z
   .object({
-    name: z.string(),
-    contact_person: z.string(),
+    name: z.string().min(1, 'Client name is required'),
+    contact_person: z.string().min(1, 'Contact person is required'),
     contact_email: z.email(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
@@ -32,8 +32,8 @@ export const createClientSchema = z
 // API input schema (snake_case input, transforms to camelCase)
 export const updateClientSchema = z
   .object({
-    name: z.string().optional(),
-    contact_person: z.string().optional(),
+    name: z.string().min(1, 'Client name is required').optional(),
+    contact_person: z.string().min(1, 'Contact person is required').optional(),
     contact_email: z.email().optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })

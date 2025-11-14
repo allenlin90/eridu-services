@@ -385,6 +385,15 @@ CREATE INDEX "shows_client_id_show_status_id_deleted_at_idx" ON "public"."shows"
 CREATE INDEX "shows_client_id_show_status_id_start_time_deleted_at_idx" ON "public"."shows"("client_id", "show_status_id", "start_time", "deleted_at");
 
 -- CreateIndex
+CREATE INDEX "shows_studio_room_id_start_time_end_time_deleted_at_idx" ON "public"."shows"("studio_room_id", "start_time", "end_time", "deleted_at");
+
+-- CreateIndex
+CREATE INDEX "shows_schedule_id_start_time_deleted_at_idx" ON "public"."shows"("schedule_id", "start_time", "deleted_at");
+
+-- CreateIndex
+CREATE INDEX "shows_client_id_start_time_end_time_deleted_at_idx" ON "public"."shows"("client_id", "start_time", "end_time", "deleted_at");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "show_mcs_uid_key" ON "public"."show_mcs"("uid");
 
 -- CreateIndex
@@ -404,6 +413,9 @@ CREATE INDEX "show_mcs_show_id_deleted_at_idx" ON "public"."show_mcs"("show_id",
 
 -- CreateIndex
 CREATE INDEX "show_mcs_mc_id_deleted_at_idx" ON "public"."show_mcs"("mc_id", "deleted_at");
+
+-- CreateIndex
+CREATE INDEX "show_mcs_mc_id_show_id_deleted_at_idx" ON "public"."show_mcs"("mc_id", "show_id", "deleted_at");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "show_mcs_show_id_mc_id_key" ON "public"."show_mcs"("show_id", "mc_id");
@@ -538,6 +550,9 @@ CREATE INDEX "studio_memberships_user_id_deleted_at_idx" ON "public"."studio_mem
 CREATE INDEX "studio_memberships_studio_id_deleted_at_idx" ON "public"."studio_memberships"("studio_id", "deleted_at");
 
 -- CreateIndex
+CREATE INDEX "studio_memberships_user_id_role_deleted_at_idx" ON "public"."studio_memberships"("user_id", "role", "deleted_at");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "studio_memberships_user_id_studio_id_key" ON "public"."studio_memberships"("user_id", "studio_id");
 
 -- CreateIndex
@@ -595,6 +610,15 @@ CREATE INDEX "schedules_created_by_deleted_at_idx" ON "public"."schedules"("crea
 CREATE INDEX "schedules_published_by_deleted_at_idx" ON "public"."schedules"("published_by", "deleted_at");
 
 -- CreateIndex
+CREATE INDEX "schedules_start_date_end_date_deleted_at_idx" ON "public"."schedules"("start_date", "end_date", "deleted_at");
+
+-- CreateIndex
+CREATE INDEX "schedules_status_start_date_end_date_deleted_at_idx" ON "public"."schedules"("status", "start_date", "end_date", "deleted_at");
+
+-- CreateIndex
+CREATE INDEX "schedules_published_at_deleted_at_idx" ON "public"."schedules"("published_at", "deleted_at");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "schedule_snapshots_uid_key" ON "public"."schedule_snapshots"("uid");
 
 -- CreateIndex
@@ -611,6 +635,9 @@ CREATE INDEX "schedule_snapshots_created_by_idx" ON "public"."schedule_snapshots
 
 -- CreateIndex
 CREATE INDEX "schedule_snapshots_created_by_created_at_idx" ON "public"."schedule_snapshots"("created_by", "created_at");
+
+-- CreateIndex
+CREATE INDEX "schedule_snapshots_schedule_id_snapshot_reason_created_at_idx" ON "public"."schedule_snapshots"("schedule_id", "snapshot_reason", "created_at");
 
 -- AddForeignKey
 ALTER TABLE "public"."mcs" ADD CONSTRAINT "mcs_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;

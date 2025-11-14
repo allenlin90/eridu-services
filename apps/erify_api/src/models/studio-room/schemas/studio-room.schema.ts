@@ -46,11 +46,13 @@ export const updateStudioRoomSchema = z
     ...(data.metadata !== undefined && { metadata: data.metadata }),
   }));
 
-// Transform studio room to API format
+// Basic Studio Room DTO (without studio relation)
+// Note: studio_id is set to null when studio relation is not loaded.
+// Use studioRoomWithStudioDto when studio_id is needed.
 export const studioRoomDto = studioRoomSchema
   .transform((obj) => ({
     id: obj.uid,
-    studio_id: obj.studioId,
+    studio_id: null as string | null, // Set to null when studio relation is not loaded (use studioRoomWithStudioDto for studio_id)
     name: obj.name,
     capacity: obj.capacity,
     metadata: obj.metadata,
@@ -60,7 +62,7 @@ export const studioRoomDto = studioRoomSchema
   .pipe(
     z.object({
       id: z.string(),
-      studio_id: z.bigint(),
+      studio_id: z.string().nullable(), // Changed from bigint to string (UID)
       name: z.string(),
       capacity: z.number().int().positive(),
       metadata: z.record(z.string(), z.any()),

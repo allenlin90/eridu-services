@@ -16,7 +16,7 @@ export const showTypeSchema = z.object({
 // API input schema (snake_case input, transforms to camelCase)
 export const createShowTypeSchema = z
   .object({
-    name: z.string(),
+    name: z.string().min(1, 'Show type name is required'),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({
@@ -33,7 +33,7 @@ export const createShowTypeCoreSchema = z.object({
 // API input schema (snake_case input, transforms to camelCase)
 export const updateShowTypeSchema = z
   .object({
-    name: z.string().optional(),
+    name: z.string().min(1, 'Show type name is required').optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({

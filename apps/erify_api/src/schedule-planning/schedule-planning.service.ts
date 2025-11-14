@@ -1,10 +1,7 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
+import { HttpError } from '@/common/errors/http-error.util';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -38,12 +35,12 @@ export class SchedulePlanningService {
     });
 
     if (!schedule) {
-      throw new NotFoundException(`Schedule with UID ${scheduleUid} not found`);
+      throw HttpError.notFound('Schedule', scheduleUid);
     }
 
     const planDocument = schedule.planDocument as PlanDocument;
     if (!planDocument || !planDocument.shows) {
-      throw new BadRequestException('Invalid plan document structure');
+      throw HttpError.badRequest('Invalid plan document structure');
     }
 
     return this.validationService.validateSchedule({
@@ -99,7 +96,7 @@ export class SchedulePlanningService {
     );
 
     if (!snapshot) {
-      throw new NotFoundException(`Snapshot with UID ${snapshotUid} not found`);
+      throw HttpError.notFound('ScheduleSnapshot', snapshotUid);
     }
 
     // Type assertion for snapshot with schedule relation
@@ -128,14 +125,12 @@ export class SchedulePlanningService {
     const schedule = snapshotWithSchedule.schedule;
 
     if (!schedule) {
-      throw new NotFoundException(
-        `Schedule for snapshot ${snapshotUid} not found`,
-      );
+      throw HttpError.notFound('Schedule', snapshotUid);
     }
 
     // Cannot restore published schedules directly
     if (schedule.status === 'published') {
-      throw new BadRequestException(
+      throw HttpError.badRequest(
         'Cannot restore published schedules. Please unpublish first or create a new schedule from the snapshot.',
       );
     }

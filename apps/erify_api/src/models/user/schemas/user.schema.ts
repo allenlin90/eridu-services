@@ -18,34 +18,34 @@ export const userSchema = z.object({
 // API input schema (snake_case input, transforms to camelCase)
 export const createUserSchema = z
   .object({
-    ext_id: z.string().min(1).nullish(),
+    ext_id: z.string().min(1).optional(),
     email: z.email(),
-    name: z.string(),
-    profile_url: z.url().nullish(),
+    name: z.string().min(1, 'User name is required'),
+    profile_url: z.url().optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({
-    extId: data.ext_id,
+    extId: data.ext_id ?? null,
     email: data.email,
     name: data.name,
-    profileUrl: data.profile_url,
+    profileUrl: data.profile_url ?? null,
     metadata: data.metadata,
   }));
 
 // API input schema (snake_case input, transforms to camelCase)
 export const updateUserSchema = z
   .object({
-    ext_id: z.string().min(1).nullish(),
+    ext_id: z.string().min(1).optional(),
     email: z.email().optional(),
-    name: z.string().optional(),
-    profile_url: z.url().nullish(),
+    name: z.string().min(1, 'User name is required').optional(),
+    profile_url: z.url().optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({
-    extId: data.ext_id,
+    extId: data.ext_id ?? null,
     email: data.email,
     name: data.name,
-    profileUrl: data.profile_url,
+    profileUrl: data.profile_url ?? null,
     metadata: data.metadata,
   }));
 

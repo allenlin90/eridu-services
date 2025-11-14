@@ -10,6 +10,10 @@ export interface IBaseModel<T, C, U, W> {
     where: W;
     include?: Record<string, any>;
   }): Promise<T | null>;
+  findFirstOrThrow?(args: {
+    where: W;
+    include?: Record<string, any>;
+  }): Promise<T>;
   findMany(args: {
     where?: W;
     skip?: number;

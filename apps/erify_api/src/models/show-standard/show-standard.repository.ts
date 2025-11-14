@@ -53,8 +53,6 @@ class ShowStandardModelWrapper
   async delete(args: {
     where: Prisma.ShowStandardWhereUniqueInput;
   }): Promise<ShowStandard> {
-    // For delete operations, we need to find the record first using the where clause
-    // and then delete using a unique identifier
     return this.prisma.showStandard.delete(args);
   }
 

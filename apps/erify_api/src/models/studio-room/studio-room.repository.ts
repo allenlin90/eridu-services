@@ -20,12 +20,14 @@ class StudioRoomModelWrapper
 
   async create(args: {
     data: Prisma.StudioRoomCreateInput;
+    include?: Record<string, any>;
   }): Promise<StudioRoom> {
     return this.prisma.studioRoom.create(args);
   }
 
   async findFirst(args: {
     where: Prisma.StudioRoomWhereInput;
+    include?: Record<string, any>;
   }): Promise<StudioRoom | null> {
     return this.prisma.studioRoom.findFirst(args);
   }
@@ -34,7 +36,8 @@ class StudioRoomModelWrapper
     where?: Prisma.StudioRoomWhereInput;
     skip?: number;
     take?: number;
-    orderBy?: Record<string, 'asc' | 'desc'>;
+    orderBy?: any;
+    include?: Record<string, any>;
   }): Promise<StudioRoom[]> {
     return this.prisma.studioRoom.findMany(args);
   }
@@ -44,10 +47,7 @@ class StudioRoomModelWrapper
     data: Prisma.StudioRoomUpdateInput;
     include?: Record<string, any>;
   }): Promise<StudioRoom> {
-    return this.prisma.studioRoom.update({
-      ...args,
-      ...(args.include && { include: args.include }),
-    });
+    return this.prisma.studioRoom.update(args);
   }
 
   async delete(args: {

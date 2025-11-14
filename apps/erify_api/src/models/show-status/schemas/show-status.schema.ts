@@ -16,7 +16,7 @@ export const showStatusSchema = z.object({
 // API input schema (snake_case input, transforms to camelCase)
 export const createShowStatusSchema = z
   .object({
-    name: z.string(),
+    name: z.string().min(1, 'Show status name is required'),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({
@@ -33,7 +33,7 @@ export const createShowStatusCoreSchema = z.object({
 // API input schema (snake_case input, transforms to camelCase)
 export const updateShowStatusSchema = z
   .object({
-    name: z.string().optional(),
+    name: z.string().min(1, 'Show status name is required').optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({

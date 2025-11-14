@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma, Show } from '@prisma/client';
 
@@ -559,6 +560,215 @@ describe('ShowOrchestrationService', () => {
       expect(mockTransactionClient.showMC.findMany).toHaveBeenCalled();
       expect(mockTransactionClient.showPlatform.findMany).toHaveBeenCalled();
       expect(result).toEqual(mockShow);
+    });
+
+    it('should throw BadRequestException when endTime is before or equal to startTime', async () => {
+      const uid = 'show_test123';
+      const dto: UpdateShowWithAssignmentsDto = {
+        startTime: new Date('2024-01-01T12:00:00Z'),
+        endTime: new Date('2024-01-01T10:00:00Z'), // End time before start time
+        showMcs: undefined,
+        showPlatforms: undefined,
+      } as UpdateShowWithAssignmentsDto;
+
+      showService.getShowById.mockResolvedValue(mockShow);
+
+      await expect(service.updateShowWithAssignments(uid, dto)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.updateShowWithAssignments(uid, dto)).rejects.toThrow(
+        'End time must be after start time',
+      );
+    });
+
+    it('should throw NotFoundException when MC is not found in syncShowMCs', async () => {
+      const uid = 'show_test123';
+      const dto: UpdateShowWithAssignmentsDto = {
+        name: 'Updated Show Name',
+        showMcs: [
+          {
+            mcId: 'mc_notfound',
+            note: 'Test note',
+            metadata: {},
+          },
+        ],
+        showPlatforms: undefined,
+      } as UpdateShowWithAssignmentsDto;
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      mockTransactionClient.showMC.findMany.mockResolvedValue([]);
+      mockTransactionClient.mC.findMany.mockResolvedValue([]); // MC not found
+
+      await expect(service.updateShowWithAssignments(uid, dto)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.updateShowWithAssignments(uid, dto)).rejects.toThrow(
+        'MC not found with id mc_notfound',
+      );
+    });
+
+    it('should throw NotFoundException when Platform is not found in syncShowPlatforms', async () => {
+      const uid = 'show_test123';
+      const dto: UpdateShowWithAssignmentsDto = {
+        name: 'Updated Show Name',
+        showMcs: undefined,
+        showPlatforms: [
+          {
+            platformId: 'plt_notfound',
+            liveStreamLink: 'https://example.com/stream',
+            platformShowId: 'platform_show_123',
+            viewerCount: 100,
+            metadata: {},
+          },
+        ],
+      } as UpdateShowWithAssignmentsDto;
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      mockTransactionClient.showPlatform.findMany.mockResolvedValue([]);
+      mockTransactionClient.platform.findMany.mockResolvedValue([]); // Platform not found
+
+      await expect(service.updateShowWithAssignments(uid, dto)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.updateShowWithAssignments(uid, dto)).rejects.toThrow(
+        'Platform not found with id plt_notfound',
+      );
+    });
+  });
+
+  describe('replaceMCsForShow', () => {
+    it('should replace all MCs for a show', async () => {
+      const uid = 'show_test123';
+      const mcs = [
+        {
+          mcId: 'mc_test123',
+          note: 'Test note',
+          metadata: {},
+        },
+      ];
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      mockTransactionClient.showMC.updateMany.mockResolvedValue({ count: 0 });
+      mockTransactionClient.mC.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'mc_test123' },
+      ]);
+      showMcService.generateShowUid.mockReturnValue('show_mc_test123');
+      mockTransactionClient.showMC.create.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_mc_test123',
+        showId: mockShow.id,
+        mcId: BigInt(1),
+        note: 'Test note',
+        metadata: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      });
+      mockTransactionClient.show.findUniqueOrThrow.mockResolvedValue(mockShow);
+
+      const result = await service.replaceMCsForShow(uid, mcs);
+
+      expect(showService.getShowById).toHaveBeenCalledWith(uid);
+      expect(mockTransactionClient.showMC.updateMany).toHaveBeenCalled();
+      expect(mockTransactionClient.mC.findMany).toHaveBeenCalled();
+      expect(mockTransactionClient.showMC.create).toHaveBeenCalled();
+      expect(result).toEqual(mockShow);
+    });
+
+    it('should throw NotFoundException when MC is not found', async () => {
+      const uid = 'show_test123';
+      const mcs = [
+        {
+          mcId: 'mc_notfound',
+          note: 'Test note',
+          metadata: {},
+        },
+      ];
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      mockTransactionClient.showMC.updateMany.mockResolvedValue({ count: 0 });
+      mockTransactionClient.mC.findMany.mockResolvedValue([]); // MC not found
+
+      await expect(service.replaceMCsForShow(uid, mcs)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.replaceMCsForShow(uid, mcs)).rejects.toThrow(
+        'MC not found with id mc_notfound',
+      );
+    });
+  });
+
+  describe('replacePlatformsForShow', () => {
+    it('should replace all platforms for a show', async () => {
+      const uid = 'show_test123';
+      const platforms = [
+        {
+          platformId: 'plt_test123',
+          liveStreamLink: 'https://example.com/stream',
+          platformShowId: 'platform_show_123',
+          viewerCount: 100,
+          metadata: {},
+        },
+      ];
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      mockTransactionClient.showPlatform.updateMany.mockResolvedValue({
+        count: 0,
+      });
+      mockTransactionClient.platform.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'plt_test123' },
+      ]);
+      showPlatformService.generateShowPlatformUid.mockReturnValue(
+        'show_plt_test123',
+      );
+      mockTransactionClient.showPlatform.create.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_plt_test123',
+        showId: mockShow.id,
+        platformId: BigInt(1),
+        liveStreamLink: 'https://example.com/stream',
+        platformShowId: 'platform_show_123',
+        viewerCount: 100,
+        metadata: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      });
+      mockTransactionClient.show.findUniqueOrThrow.mockResolvedValue(mockShow);
+
+      const result = await service.replacePlatformsForShow(uid, platforms);
+
+      expect(showService.getShowById).toHaveBeenCalledWith(uid);
+      expect(mockTransactionClient.showPlatform.updateMany).toHaveBeenCalled();
+      expect(mockTransactionClient.platform.findMany).toHaveBeenCalled();
+      expect(mockTransactionClient.showPlatform.create).toHaveBeenCalled();
+      expect(result).toEqual(mockShow);
+    });
+
+    it('should throw NotFoundException when Platform is not found', async () => {
+      const uid = 'show_test123';
+      const platforms = [
+        {
+          platformId: 'plt_notfound',
+          liveStreamLink: 'https://example.com/stream',
+          platformShowId: 'platform_show_123',
+          viewerCount: 100,
+          metadata: {},
+        },
+      ];
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      mockTransactionClient.showPlatform.updateMany.mockResolvedValue({
+        count: 0,
+      });
+      mockTransactionClient.platform.findMany.mockResolvedValue([]); // Platform not found
+
+      await expect(
+        service.replacePlatformsForShow(uid, platforms),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        service.replacePlatformsForShow(uid, platforms),
+      ).rejects.toThrow('Platform not found with id plt_notfound');
     });
   });
 });

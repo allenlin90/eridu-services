@@ -31,17 +31,22 @@ export const showSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const createShowSchema = z.object({
-  client_id: z.string().startsWith(ClientService.UID_PREFIX), // UID
-  studio_room_id: z.string().startsWith(StudioRoomService.UID_PREFIX), // UID
-  show_type_id: z.string().startsWith(ShowTypeService.UID_PREFIX), // UID
-  show_status_id: z.string().startsWith(ShowStatusService.UID_PREFIX), // UID
-  show_standard_id: z.string().startsWith(ShowStandardService.UID_PREFIX), // UID
-  name: z.string().min(1),
-  start_time: z.iso.datetime(), // ISO 8601 datetime string
-  end_time: z.iso.datetime(), // ISO 8601 datetime string
-  metadata: z.record(z.string(), z.any()).optional(),
-});
+export const createShowSchema = z
+  .object({
+    client_id: z.string().startsWith(ClientService.UID_PREFIX), // UID
+    studio_room_id: z.string().startsWith(StudioRoomService.UID_PREFIX), // UID
+    show_type_id: z.string().startsWith(ShowTypeService.UID_PREFIX), // UID
+    show_status_id: z.string().startsWith(ShowStatusService.UID_PREFIX), // UID
+    show_standard_id: z.string().startsWith(ShowStandardService.UID_PREFIX), // UID
+    name: z.string().min(1, 'Show name is required'),
+    start_time: z.iso.datetime(), // ISO 8601 datetime string
+    end_time: z.iso.datetime(), // ISO 8601 datetime string
+    metadata: z.record(z.string(), z.any()).optional(),
+  })
+  .refine((data) => new Date(data.end_time) > new Date(data.start_time), {
+    message: 'End time must be after start time',
+    path: ['end_time'],
+  });
 
 const transformCreateShowSchema = createShowSchema.transform((data) => ({
   clientId: data.client_id,
@@ -72,11 +77,24 @@ export const updateShowSchema = z
       .string()
       .startsWith(ShowStandardService.UID_PREFIX)
       .optional(), // UID
-    name: z.string().min(1).optional(),
+    name: z.string().min(1, 'Show name is required').optional(),
     start_time: z.iso.datetime().optional(), // ISO 8601 datetime string
     end_time: z.iso.datetime().optional(), // ISO 8601 datetime string
     metadata: z.record(z.string(), z.any()).optional(),
   })
+  .refine(
+    (data) => {
+      // Only validate if both times are provided
+      if (data.start_time && data.end_time) {
+        return new Date(data.end_time) > new Date(data.start_time);
+      }
+      return true;
+    },
+    {
+      message: 'End time must be after start time',
+      path: ['end_time'],
+    },
+  )
   .transform((data) => ({
     clientId: data.client_id,
     studioRoomId: data.studio_room_id,
