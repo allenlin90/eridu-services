@@ -3,25 +3,22 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   HttpStatus,
   Param,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
-import { ZodSerializerDto } from 'nestjs-zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
-import { ApiZodResponse } from '@/common/openapi/decorators';
 import {
-  createPaginatedResponseSchema,
-  PaginationQueryDto,
-} from '@/common/pagination/schema/pagination.schema';
+  AdminPaginatedResponse,
+  AdminResponse,
+} from '@/admin/decorators/admin-response.decorator';
+import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
 import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
 import {
   CreateStudioDto,
-  StudioDto,
   studioDto,
   UpdateStudioDto,
 } from '@/models/studio/schemas/studio.schema';
@@ -38,20 +35,13 @@ export class AdminStudioController extends BaseAdminController {
   }
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiZodResponse(studioDto, 'Studio created successfully')
-  @ZodSerializerDto(StudioDto)
+  @AdminResponse(studioDto, HttpStatus.CREATED, 'Studio created successfully')
   createStudio(@Body() body: CreateStudioDto) {
     return this.studioService.createStudio(body);
   }
 
   @Get()
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(
-    createPaginatedResponseSchema(studioDto),
-    'List of studios with pagination',
-  )
-  @ZodSerializerDto(createPaginatedResponseSchema(studioDto))
+  @AdminPaginatedResponse(studioDto, 'List of studios with pagination')
   async getStudios(@Query() query: PaginationQueryDto) {
     const data = await this.studioService.getStudios({
       skip: query.skip,
@@ -63,9 +53,7 @@ export class AdminStudioController extends BaseAdminController {
   }
 
   @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(studioDto, 'Studio details')
-  @ZodSerializerDto(StudioDto)
+  @AdminResponse(studioDto, HttpStatus.OK, 'Studio details')
   getStudio(
     @Param('id', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio'))
     id: string,
@@ -74,9 +62,7 @@ export class AdminStudioController extends BaseAdminController {
   }
 
   @Patch(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(studioDto, 'Studio updated successfully')
-  @ZodSerializerDto(StudioDto)
+  @AdminResponse(studioDto, HttpStatus.OK, 'Studio updated successfully')
   updateStudio(
     @Param('id', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio'))
     id: string,
@@ -86,7 +72,7 @@ export class AdminStudioController extends BaseAdminController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @AdminResponse(undefined, HttpStatus.NO_CONTENT)
   async deleteStudio(
     @Param('id', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio'))
     id: string,

@@ -1,0 +1,1104 @@
+{
+  "schedules": [
+    {
+      "name": "Nike Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Nike",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000001",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Adidas Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Adidas",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000002",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Puma Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Puma",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000003",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "New Balance Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "New Balance",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000004",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Converse Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Converse",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000005",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Vans Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Vans",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000006",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Reebok Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Reebok",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000007",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Under Armour Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Under Armour",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000008",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Gucci Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Gucci",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000009",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Zara Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Zara",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000010",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Apple Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Apple",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000011",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Samsung Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Samsung",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000012",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Sony Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Sony",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000013",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Xiaomi Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Xiaomi",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000014",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Lg Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Lg",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000015",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Hp Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Hp",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000016",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Dell Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Dell",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000017",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Lenovo Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Lenovo",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000018",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Microsoft Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Microsoft",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000019",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Intel Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Intel",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000020",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Loreal Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Loreal",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000021",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Maybelline Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Maybelline",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000022",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Mac Cosmetics Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Mac Cosmetics",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000023",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Estee Lauder Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Estee Lauder",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000024",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Clinique Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Clinique",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000025",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "The Body Shop Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "The Body Shop",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000026",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Sephora Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Sephora",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000027",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Glossier Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Glossier",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000028",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Fenty Beauty Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Fenty Beauty",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000029",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Shiseido Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Shiseido",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000030",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Coca Cola Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Coca Cola",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000031",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Pepsi Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Pepsi",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000032",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Starbucks Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Starbucks",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000033",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Mcdonalds Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Mcdonalds",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000034",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Kfc Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Kfc",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000035",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Nestle Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Nestle",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000036",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Unilever Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Unilever",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000037",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Ben And Jerrys Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Ben And Jerrys",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000038",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Red Bull Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Red Bull",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000039",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Tyson Foods Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Tyson Foods",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000040",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Ikea Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Ikea",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000041",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Home Depot Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Home Depot",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000042",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Target Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Target",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000043",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Walmart Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Walmart",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000044",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Amazon Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Amazon",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000045",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Costco Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Costco",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000046",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Nike Home Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Nike Home",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000047",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Wayfair Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Wayfair",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000048",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Bed Bath Beyond Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Bed Bath Beyond",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000049",
+      "created_by": "user_00000000000000000001"
+    },
+    {
+      "name": "Williams Sonoma Schedule - 2025-10-31 to 2025-11-30",
+      "start_date": "2025-10-31T17:00:00.000Z",
+      "end_date": "2025-11-30T16:59:59.999Z",
+      "status": "draft",
+      "plan_document": {
+        "metadata": {
+          "lastEditedBy": "user_00000000000000000001",
+          "lastEditedAt": "2025-11-15T03:35:20.422Z",
+          "totalShows": 0,
+          "clientName": "Williams Sonoma",
+          "dateRange": {
+            "start": "2025-10-31T17:00:00.000Z",
+            "end": "2025-11-30T16:59:59.999Z"
+          }
+        },
+        "shows": []
+      },
+      "version": 1,
+      "client_id": "client_00000000000000000050",
+      "created_by": "user_00000000000000000001"
+    }
+  ]
+}

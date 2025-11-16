@@ -1,0 +1,449 @@
+# Monorepo Package & Dependency Management - Cursor AI Rules
+
+**Applies to:** All packages in `packages/*` and apps consuming them
+
+Expert monorepo architect for Eridu Services. Follow these patterns strictly when creating, modifying, or consuming workspace packages.
+
+## Core Principles
+
+**🚨 CRITICAL: All packages MUST export compiled JavaScript, never TypeScript source files**
+
+1. Packages export compiled code from `dist/` directory
+2. Consuming apps use package.json exports - never direct path mappings to source
+3. Consistent build output structure across all packages
+4. Proper Vite/Turbo configuration for workspace optimization
+
+---
+
+## Package Structure
+
+### Build Output Structure
+
+**✅ CORRECT: Direct output to `dist/`**
+```
+packages/package-name/
+├── src/
+│   ├── hooks/
+│   ├── lib/
+│   └── types/
+├── dist/
+│   ├── hooks/
+│   ├── lib/
+│   └── types/
+└── package.json
+```
+
+**❌ WRONG: Extra `src/` subdirectory in dist**
+```
+packages/package-name/
+├── src/
+└── dist/
+    └── src/  // ❌ Don't do this
+```
+
+---
+
+## Package.json Configuration
+
+### Required Fields
+
+```json
+{
+  "name": "@eridu/package-name",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Clear description of package purpose",
+  "keywords": ["relevant", "keywords"],
+  "sideEffects": [
+    "**/providers/*.tsx",
+    "**/contexts/*.ts"
+  ],
+  "exports": {
+    "./path/*": {
+      "types": "./dist/path/*.d.ts",
+      "default": "./dist/path/*.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch --preserveWatchOutput",
+    "lint": "eslint \"{src,test}/**/*.ts\" --fix"
+  },
+  "peerDependencies": {
+    "react": "^19.1.0"
+  },
+  "dependencies": {
+    "@eridu/other-package": "workspace:*"
+  },
+  "devDependencies": {
+    "@eridu/eslint-config": "workspace:*",
+    "@eridu/typescript-config": "workspace:*"
+  }
+}
+```
+
+### Package Exports Pattern
+
+**✅ CORRECT: Conditional exports with types**
+```json
+{
+  "exports": {
+    "./hooks/*": {
+      "types": "./dist/hooks/*.d.ts",
+      "default": "./dist/hooks/*.js"
+    },
+    "./lib/jwt-validation": {
+      "types": "./dist/lib/jwt-validation.d.ts",
+      "default": "./dist/lib/jwt-validation.js"
+    }
+  }
+}
+```
+
+**❌ WRONG: Exporting source files**
+```json
+{
+  "exports": {
+    "./hooks/*": "./src/hooks/*.ts"  // ❌ Never export source
+  }
+}
+```
+
+**❌ WRONG: Missing types field**
+```json
+{
+  "exports": {
+    "./hooks/*": "./dist/hooks/*.js"  // ❌ Missing types field
+  }
+}
+```
+
+**Pattern rules:**
+- Use `./path/*` for directory exports, `./path/file` for specific files
+- Always provide both `types` and `default` fields
+- TypeScript resolves through exports automatically
+
+### Dependency Management
+
+**✅ CORRECT: Use workspace protocol**
+```json
+{
+  "dependencies": {
+    "@eridu/auth-service": "workspace:*"
+  }
+}
+```
+
+**❌ WRONG:**
+```json
+{
+  "dependencies": {
+    "@eridu/auth-service": "file:../../packages/auth-service",  // ❌ Don't use file:
+    "@eridu/auth-service": "^1.0.0"  // ❌ Don't use versions
+  }
+}
+```
+
+**Peer dependencies:** Declare to prevent duplicates and ensure version compatibility.
+
+**Side effects:** Declare files with side effects (providers, contexts, global listeners, CSS) to prevent tree-shaking.
+
+---
+
+## TypeScript Configuration
+
+### Package tsconfig.json
+
+```json
+{
+  "extends": "@eridu/typescript-config/react-library.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "strict": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}
+```
+
+**Required options:**
+- `declaration: true` - Generate `.d.ts` files
+- `declarationMap: true` - Generate `.d.ts.map` files
+- `sourceMap: true` - Source maps for debugging
+- `include: ["src"]` - Only compile source directory
+- `exclude: ["dist"]` - Don't compile output directory
+
+### App tsconfig.json (Consuming Packages)
+
+**✅ CORRECT: No path mappings to workspace packages**
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+      // ✅ No workspace package mappings - TypeScript resolves through package.json exports
+    }
+  }
+}
+```
+
+**❌ WRONG: Path mappings bypass package exports**
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@eridu/auth-service/*": ["../../packages/auth-service/src/*"]  // ❌ Bypasses exports
+    }
+  }
+}
+```
+
+**Why:** Bypasses package.json exports validation, creates tight coupling, breaks if package structure changes.
+
+---
+
+## Vite Configuration
+
+### Required Pattern
+
+```typescript
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "node:path";
+
+export default defineConfig(() => ({
+  plugins: [react()],
+  resolve: {
+    preserveSymlinks: false, // ✅ Required for pnpm workspaces
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  optimizeDeps: {
+    include: [
+      "@eridu/auth-service/**",
+      "@eridu/ui/**",
+    ],
+  },
+}));
+```
+
+**Why:**
+- `preserveSymlinks: false` ensures pnpm symlinks resolve correctly
+- `optimizeDeps.include` pre-bundles workspace packages for faster dev server
+
+---
+
+## Turbo Configuration
+
+```json
+{
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],  // ✅ Build dependencies first
+      "inputs": [".env*"],
+      "outputs": ["dist/**"]
+    },
+    "dev": {
+      "dependsOn": ["^build"],  // ✅ Build packages before apps start
+      "cache": false,
+      "persistent": true  // ✅ Keeps watch mode running
+    }
+  }
+}
+```
+
+**Why:** 
+- `build`: Ensures workspace packages build before consuming apps
+- `dev`: Builds packages once before starting dev servers, then watch mode takes over
+- Prevents apps from failing to import packages that haven't been built yet
+
+---
+
+## Development Workflow
+
+### How Pre-Compile Works in Development
+
+**Yes, packages must be compiled, but watch mode handles this automatically:**
+
+1. **Initial Setup:**
+   ```bash
+   pnpm build  # Build all packages once
+   ```
+
+2. **Development Mode:**
+   ```bash
+   pnpm dev  # Runs watch mode for all packages + apps
+   ```
+
+3. **What Happens:**
+   - Turbo runs `dev` tasks in parallel across all packages
+   - Each package runs `tsc --watch --preserveWatchOutput` (auto-rebuilds on changes)
+   - Consuming apps run their dev servers (Vite, NestJS, etc.)
+   - When you change a package file → TypeScript watch rebuilds → consuming app picks up changes
+
+### Package Dev Script
+
+**✅ CORRECT: Use watch mode**
+```json
+{
+  "scripts": {
+    "dev": "tsc --watch --preserveWatchOutput",
+    "build": "tsc"
+  }
+}
+```
+
+**Why `--preserveWatchOutput`:**
+- Prevents watch mode from clearing the terminal
+- Shows incremental compilation output
+- Better for parallel dev tasks
+
+### Development Experience
+
+**✅ CORRECT: This workflow**
+- Change package source → Watch mode rebuilds → App dev server picks up changes
+- Fast incremental compilation (~100-500ms per change)
+- Source maps enable debugging original TypeScript
+- No manual rebuilds needed
+
+**❌ WRONG: Source imports in dev**
+- Importing from `src/` bypasses package boundaries
+- Creates inconsistent dev/prod behavior
+- Breaks package encapsulation
+
+### Turbo Dev Task
+
+Turbo's `dev` task:
+- `dependsOn: ["^build"]` ensures packages build before apps start
+- Runs in parallel (all packages watch simultaneously after initial build)
+- `persistent: true` keeps processes running
+- `cache: false` ensures fresh builds
+- Automatically handles dependency order
+
+**Result:** 
+1. Initial: Packages build → Apps start
+2. Ongoing: Change any package → auto-rebuild → consuming apps see changes immediately
+
+---
+
+## Import Patterns
+
+**✅ CORRECT: Import through package name**
+```typescript
+import { useSession } from "@eridu/auth-service/hooks/use-session";
+import { Button } from "@eridu/ui/components/button";
+import type { UserContext } from "@eridu/auth-service/types/jwt";
+```
+
+**❌ WRONG: Direct path mappings to source**
+```typescript
+import { useSession } from "../../packages/auth-service/src/hooks/use-session";  // ❌ Never do this
+```
+
+---
+
+## Creating a New Package
+
+1. **Create package directory** with `src/`, `package.json`, `tsconfig.json`
+
+2. **Configure package.json:**
+   - `name` with `@eridu/` prefix
+   - `type: "module"`
+   - `description` and `keywords`
+   - `exports` pointing to `dist/`
+   - `sideEffects` if needed
+   - `workspace:*` for internal dependencies
+
+3. **Configure tsconfig.json:**
+   - Extend shared config
+   - `outDir: "dist"`
+   - Enable `declaration`, `declarationMap`, `sourceMap`
+   - `include: ["src"]`
+
+4. **Add build script:** `"build": "tsc"`
+
+5. **Update consuming apps:**
+   - Add dependency: `"@eridu/new-package": "workspace:*"`
+   - Add to Vite `optimizeDeps.include` if needed
+   - Import through package name (not path mappings)
+
+6. **Verify:**
+   - `pnpm build` succeeds
+   - `dist/` contains compiled `.js` and `.d.ts` files
+   - Imports work in consuming apps
+
+---
+
+## Anti-Patterns to Avoid
+
+### Package Exports
+- ❌ Export source files - Always export compiled `dist/` files
+- ❌ Missing types field - Always provide both `types` and `default`
+- ❌ Inconsistent output structure - Standardize on `dist/` (no `dist/src/`)
+
+### TypeScript Configuration
+- ❌ Path mappings to workspace sources - Let TypeScript resolve through package.json exports
+- ❌ Missing declaration maps - Always enable `declarationMap: true`
+- ❌ Including dist in compilation - Always exclude `dist/`
+
+### Vite Configuration
+- ❌ Missing preserveSymlinks - Always set `preserveSymlinks: false` for pnpm
+- ❌ Missing optimizeDeps - Include workspace packages in `optimizeDeps.include`
+
+### Dependency Management
+- ❌ Using file: protocol - Always use `workspace:*` protocol
+- ❌ Versioning workspace packages - Use `workspace:*` not specific versions
+- ❌ Missing peer dependencies - Declare peer dependencies to prevent duplicates
+
+### Build Configuration
+- ❌ Not generating declarations - Always generate `.d.ts` files
+- ❌ Missing source maps - Enable source maps for debugging
+
+---
+
+## Verification Checklist
+
+Before marking a package as complete:
+
+- [ ] Package exports point to `dist/` files (not `src/`)
+- [ ] Exports include both `types` and `default` fields
+- [ ] TypeScript config has `declaration: true` and `declarationMap: true`
+- [ ] Build outputs directly to `dist/` (no `dist/src/` subdirectory)
+- [ ] Package has meaningful `description` and `keywords`
+- [ ] Consuming apps use package name imports (not path mappings)
+- [ ] Vite configs include `preserveSymlinks: false` and `optimizeDeps`
+- [ ] Dependencies use `workspace:*` protocol
+- [ ] Peer dependencies are declared
+- [ ] `pnpm build` succeeds and generates correct output
+- [ ] Imports work correctly in consuming apps
+
+---
+
+## Reference Examples
+
+**Complete package.json:** `packages/auth-service/package.json`  
+**TypeScript configs:** `packages/typescript-config/base.json`, `packages/typescript-config/react-library.json`  
+**Vite example:** `apps/erify_production/vite.config.ts`  
+**Workspace config:** `pnpm-workspace.yaml`, `turbo.json`
+
+**When in doubt:** Look at `@eridu/auth-service` as the reference implementation - it follows all best practices.
+
+---
+
+## Summary
+
+**Golden Rules:**
+1. ✅ Packages export compiled JavaScript from `dist/`
+2. ✅ Exports use conditional format with `types` and `default`
+3. ✅ No TypeScript path mappings to workspace package sources
+4. ✅ Vite configs include `preserveSymlinks: false` and `optimizeDeps`
+5. ✅ Dependencies use `workspace:*` protocol
+6. ✅ Build outputs directly to `dist/` (no `dist/src/`)

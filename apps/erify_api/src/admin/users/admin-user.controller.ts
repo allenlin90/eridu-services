@@ -3,26 +3,23 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   HttpStatus,
   Param,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
-import { ZodSerializerDto } from 'nestjs-zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
-import { ApiZodResponse } from '@/common/openapi/decorators';
 import {
-  createPaginatedResponseSchema,
-  PaginationQueryDto,
-} from '@/common/pagination/schema/pagination.schema';
+  AdminPaginatedResponse,
+  AdminResponse,
+} from '@/admin/decorators/admin-response.decorator';
+import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
 import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
 import {
   CreateUserDto,
   UpdateUserDto,
-  UserDto,
   userDto,
 } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
@@ -38,20 +35,13 @@ export class AdminUserController extends BaseAdminController {
   }
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiZodResponse(userDto, 'User created successfully')
-  @ZodSerializerDto(UserDto)
+  @AdminResponse(userDto, HttpStatus.CREATED, 'User created successfully')
   createUser(@Body() body: CreateUserDto) {
     return this.userService.createUser(body);
   }
 
   @Get()
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(
-    createPaginatedResponseSchema(userDto),
-    'List of users with pagination',
-  )
-  @ZodSerializerDto(createPaginatedResponseSchema(userDto))
+  @AdminPaginatedResponse(userDto, 'List of users with pagination')
   async getUsers(@Query() query: PaginationQueryDto) {
     const data = await this.userService.getUsers({
       skip: query.skip,
@@ -63,9 +53,7 @@ export class AdminUserController extends BaseAdminController {
   }
 
   @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(userDto, 'User details')
-  @ZodSerializerDto(UserDto)
+  @AdminResponse(userDto, HttpStatus.OK, 'User details')
   getUser(
     @Param('id', new UidValidationPipe(UserService.UID_PREFIX, 'User'))
     id: string,
@@ -74,9 +62,7 @@ export class AdminUserController extends BaseAdminController {
   }
 
   @Patch(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(userDto, 'User updated successfully')
-  @ZodSerializerDto(UserDto)
+  @AdminResponse(userDto, HttpStatus.OK, 'User updated successfully')
   updateUser(
     @Param('id', new UidValidationPipe(UserService.UID_PREFIX, 'User'))
     id: string,
@@ -86,7 +72,7 @@ export class AdminUserController extends BaseAdminController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @AdminResponse(undefined, HttpStatus.NO_CONTENT)
   async deleteUser(
     @Param('id', new UidValidationPipe(UserService.UID_PREFIX, 'User'))
     id: string,

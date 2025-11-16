@@ -354,7 +354,7 @@ export class ShowOrchestrationService {
             }
             return tx.showMC.create({
               data: {
-                uid: this.showMcService.generateShowUid(),
+                uid: this.showMcService.generateShowMcUid(),
                 showId,
                 mcId,
                 note: mc.note ?? null,
@@ -463,7 +463,7 @@ export class ShowOrchestrationService {
       showStandard: { connect: { uid: data.showStandardId } },
       showMCs: {
         create: data.mcs?.map((mc) => ({
-          uid: this.showMcService.generateShowUid(),
+          uid: this.showMcService.generateShowMcUid(),
           mc: { connect: { uid: mc.mcId } },
           note: mc.note ?? null,
           metadata: mc.metadata ?? {},
@@ -569,7 +569,7 @@ export class ShowOrchestrationService {
         // Create new ShowMC record
         await tx.showMC.create({
           data: {
-            uid: this.showMcService.generateShowUid(),
+            uid: this.showMcService.generateShowMcUid(),
             showId,
             mcId,
             note: mcAssignment.note ?? null,

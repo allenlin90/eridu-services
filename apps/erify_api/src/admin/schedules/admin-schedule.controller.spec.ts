@@ -11,6 +11,7 @@ import {
   MonthlyOverviewQueryDto,
   UpdateScheduleDto,
 } from '@/models/schedule/schemas/schedule.schema';
+import { ListSnapshotsQueryDto } from '@/models/schedule-snapshot/schemas/schedule-snapshot.schema';
 import { UserService } from '@/models/user/user.service';
 import { SchedulePlanningService } from '@/schedule-planning/schedule-planning.service';
 import { PublishScheduleDto } from '@/schedule-planning/schemas/schedule-planning.schema';
@@ -447,7 +448,8 @@ describe('AdminScheduleController', () => {
   describe('getScheduleSnapshots', () => {
     it('should return schedule snapshots', async () => {
       const scheduleId = 'schedule_123';
-      const limit = 10;
+      const query = new ListSnapshotsQueryDto();
+      query.limit = 10;
       const snapshots = [
         { uid: 'snapshot_1', scheduleId, createdAt: new Date() },
         { uid: 'snapshot_2', scheduleId, createdAt: new Date() },
@@ -457,12 +459,12 @@ describe('AdminScheduleController', () => {
         snapshots as any,
       );
 
-      const result = await controller.getScheduleSnapshots(scheduleId, limit);
+      const result = await controller.getScheduleSnapshots(scheduleId, query);
 
       expect(
         mockSchedulePlanningService.getSnapshotsBySchedule,
       ).toHaveBeenCalledWith(scheduleId, {
-        limit: limit,
+        limit: query.limit,
         orderBy: 'desc',
       });
       expect(result).toEqual(snapshots);
@@ -470,13 +472,14 @@ describe('AdminScheduleController', () => {
 
     it('should return snapshots without limit', async () => {
       const scheduleId = 'schedule_123';
+      const query = new ListSnapshotsQueryDto();
       const snapshots = [{ uid: 'snapshot_1', scheduleId }];
 
       mockSchedulePlanningService.getSnapshotsBySchedule.mockResolvedValue(
         snapshots as any,
       );
 
-      const result = await controller.getScheduleSnapshots(scheduleId);
+      const result = await controller.getScheduleSnapshots(scheduleId, query);
 
       expect(
         mockSchedulePlanningService.getSnapshotsBySchedule,

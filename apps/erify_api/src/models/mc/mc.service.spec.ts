@@ -1,5 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-
+import {
+  createMockRepository,
+  createMockUtilityService,
+  createModelServiceTestModule,
+  setupTestMocks,
+} from '@/common/test-helpers/model-service-test.helper';
 import { createMockUniqueConstraintError } from '@/common/test-helpers/prisma-error.helper';
 import { UtilityService } from '@/utility/utility.service';
 
@@ -10,34 +14,25 @@ jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
 describe('McService', () => {
   let service: McService;
-
-  const mcRepositoryMock: Partial<jest.Mocked<McRepository>> = {
-    create: jest.fn(),
-    findByUid: jest.fn(),
-    update: jest.fn(),
-    softDelete: jest.fn(),
-    findMany: jest.fn(),
-    count: jest.fn(),
-  };
-
-  const utilityMock: Partial<jest.Mocked<UtilityService>> = {
-    generateBrandedId: jest.fn().mockReturnValue('mc_123'),
-  };
+  let mcRepositoryMock: Partial<jest.Mocked<McRepository>>;
+  let utilityMock: Partial<jest.Mocked<UtilityService>>;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        McService,
-        { provide: McRepository, useValue: mcRepositoryMock },
-        { provide: UtilityService, useValue: utilityMock },
-      ],
-    }).compile();
+    mcRepositoryMock = createMockRepository<McRepository>();
+    utilityMock = createMockUtilityService('mc_123');
+
+    const module = await createModelServiceTestModule({
+      serviceClass: McService,
+      repositoryClass: McRepository,
+      repositoryMock: mcRepositoryMock,
+      utilityMock: utilityMock,
+    });
 
     service = module.get<McService>(McService);
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    setupTestMocks();
   });
 
   it('createMc returns created mc', async () => {

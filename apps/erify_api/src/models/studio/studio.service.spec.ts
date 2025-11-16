@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { Test, TestingModule } from '@nestjs/testing';
-
+import {
+  createMockRepository,
+  createMockUtilityService,
+  createModelServiceTestModule,
+} from '@/common/test-helpers/model-service-test.helper';
 import { UtilityService } from '@/utility/utility.service';
 
 import { StudioRepository } from './studio.repository';
@@ -14,28 +17,15 @@ describe('StudioService', () => {
   let utilityService: UtilityService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        StudioService,
-        {
-          provide: StudioRepository,
-          useValue: {
-            create: jest.fn(),
-            findOne: jest.fn(),
-            findMany: jest.fn(),
-            update: jest.fn(),
-            softDelete: jest.fn(),
-            count: jest.fn(),
-          },
-        },
-        {
-          provide: UtilityService,
-          useValue: {
-            generateBrandedId: jest.fn().mockReturnValue('std_test123'),
-          },
-        },
-      ],
-    }).compile();
+    const studioRepositoryMock = createMockRepository<StudioRepository>();
+    const utilityMock = createMockUtilityService('std_test123');
+
+    const module = await createModelServiceTestModule({
+      serviceClass: StudioService,
+      repositoryClass: StudioRepository,
+      repositoryMock: studioRepositoryMock,
+      utilityMock: utilityMock,
+    });
 
     service = module.get<StudioService>(StudioService);
     studioRepository = module.get<StudioRepository>(StudioRepository);

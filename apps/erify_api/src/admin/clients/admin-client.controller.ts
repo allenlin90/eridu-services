@@ -3,25 +3,22 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   HttpStatus,
   Param,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
-import { ZodSerializerDto } from 'nestjs-zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
-import { ApiZodResponse } from '@/common/openapi/decorators';
 import {
-  createPaginatedResponseSchema,
-  PaginationQueryDto,
-} from '@/common/pagination/schema/pagination.schema';
+  AdminPaginatedResponse,
+  AdminResponse,
+} from '@/admin/decorators/admin-response.decorator';
+import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
 import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
 import { ClientService } from '@/models/client/client.service';
 import {
-  ClientDto,
   clientDto,
   CreateClientDto,
   UpdateClientDto,
@@ -38,20 +35,13 @@ export class AdminClientController extends BaseAdminController {
   }
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiZodResponse(clientDto, 'Client created successfully')
-  @ZodSerializerDto(ClientDto)
+  @AdminResponse(clientDto, HttpStatus.CREATED, 'Client created successfully')
   createClient(@Body() body: CreateClientDto) {
     return this.clientService.createClient(body);
   }
 
   @Get()
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(
-    createPaginatedResponseSchema(clientDto),
-    'List of clients with pagination',
-  )
-  @ZodSerializerDto(createPaginatedResponseSchema(clientDto))
+  @AdminPaginatedResponse(clientDto, 'List of clients with pagination')
   async getClients(@Query() query: PaginationQueryDto) {
     const data = await this.clientService.getClients({
       skip: query.skip,
@@ -63,9 +53,7 @@ export class AdminClientController extends BaseAdminController {
   }
 
   @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(clientDto, 'Client details')
-  @ZodSerializerDto(ClientDto)
+  @AdminResponse(clientDto, HttpStatus.OK, 'Client details')
   getClient(
     @Param('id', new UidValidationPipe(ClientService.UID_PREFIX, 'Client'))
     id: string,
@@ -74,9 +62,7 @@ export class AdminClientController extends BaseAdminController {
   }
 
   @Patch(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(clientDto, 'Client updated successfully')
-  @ZodSerializerDto(ClientDto)
+  @AdminResponse(clientDto, HttpStatus.OK, 'Client updated successfully')
   updateClient(
     @Param('id', new UidValidationPipe(ClientService.UID_PREFIX, 'Client'))
     id: string,
@@ -86,7 +72,7 @@ export class AdminClientController extends BaseAdminController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @AdminResponse(undefined, HttpStatus.NO_CONTENT)
   async deleteClient(
     @Param('id', new UidValidationPipe(ClientService.UID_PREFIX, 'Client'))
     id: string,

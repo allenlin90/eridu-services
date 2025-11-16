@@ -63,11 +63,13 @@ export const updateStudioMembershipSchema = z
   }));
 
 // Basic studio membership DTO (without related data)
+// Note: user_id and studio_id are set to null when relations are not loaded.
+// Use studioMembershipWithRelationsDto when user_id and studio_id are needed.
 export const studioMembershipDto = studioMembershipSchema
   .transform((obj) => ({
     id: obj.uid,
-    user_id: obj.userId,
-    studio_id: obj.studioId,
+    user_id: null as string | null, // Set to null when user relation is not loaded (use studioMembershipWithRelationsDto for user_id)
+    studio_id: null as string | null, // Set to null when studio relation is not loaded (use studioMembershipWithRelationsDto for studio_id)
     role: obj.role,
     metadata: obj.metadata,
     created_at: obj.createdAt.toISOString(),
@@ -76,8 +78,8 @@ export const studioMembershipDto = studioMembershipSchema
   .pipe(
     z.object({
       id: z.string(),
-      user_id: z.bigint(),
-      studio_id: z.bigint(),
+      user_id: z.string().nullable(), // Changed from bigint to string (UID)
+      studio_id: z.string().nullable(), // Changed from bigint to string (UID)
       role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
       metadata: z.record(z.string(), z.any()),
       created_at: z.iso.datetime(),

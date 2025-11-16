@@ -1,0 +1,1592 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-15T03:35:20.425Z",
+      "totalShows": 50,
+      "clientName": "New Balance",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1763177720425_12",
+        "name": "New Balance Show 13",
+        "startTime": "2025-11-02T14:59:56.388Z",
+        "endTime": "2025-11-02T16:07:31.175Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for New Balance Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_9",
+        "name": "New Balance Show 10",
+        "startTime": "2025-11-02T20:01:19.375Z",
+        "endTime": "2025-11-02T22:14:03.971Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for New Balance Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for New Balance Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for New Balance Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_30",
+        "name": "New Balance Show 31",
+        "startTime": "2025-11-03T09:02:49.695Z",
+        "endTime": "2025-11-03T11:53:39.972Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for New Balance Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for New Balance Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_46",
+        "name": "New Balance Show 47",
+        "startTime": "2025-11-04T10:28:35.048Z",
+        "endTime": "2025-11-04T13:06:29.407Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for New Balance Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for New Balance Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for New Balance Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_0",
+        "name": "New Balance Show 1",
+        "startTime": "2025-11-05T16:14:37.623Z",
+        "endTime": "2025-11-05T19:51:52.911Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for New Balance Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for New Balance Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for New Balance Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-1",
+            "platformShowId": "platform_show_1_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_41",
+        "name": "New Balance Show 42",
+        "startTime": "2025-11-06T05:04:32.174Z",
+        "endTime": "2025-11-06T08:50:37.921Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for New Balance Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for New Balance Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-42",
+            "platformShowId": "platform_show_42_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_1",
+        "name": "New Balance Show 2",
+        "startTime": "2025-11-07T04:14:26.800Z",
+        "endTime": "2025-11-07T07:08:36.143Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for New Balance Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_33",
+        "name": "New Balance Show 34",
+        "startTime": "2025-11-08T05:19:19.503Z",
+        "endTime": "2025-11-08T06:39:40.621Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for New Balance Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_45",
+        "name": "New Balance Show 46",
+        "startTime": "2025-11-08T05:28:14.059Z",
+        "endTime": "2025-11-08T08:56:16.376Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for New Balance Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_13",
+        "name": "New Balance Show 14",
+        "startTime": "2025-11-08T07:24:30.315Z",
+        "endTime": "2025-11-08T10:19:48.045Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for New Balance Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for New Balance Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for New Balance Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_34",
+        "name": "New Balance Show 35",
+        "startTime": "2025-11-08T09:36:51.193Z",
+        "endTime": "2025-11-08T12:26:00.549Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for New Balance Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for New Balance Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for New Balance Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_25",
+        "name": "New Balance Show 26",
+        "startTime": "2025-11-08T23:58:24.851Z",
+        "endTime": "2025-11-09T02:08:11.626Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for New Balance Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_8",
+        "name": "New Balance Show 9",
+        "startTime": "2025-11-09T09:19:43.759Z",
+        "endTime": "2025-11-09T12:30:25.744Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for New Balance Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for New Balance Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for New Balance Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_39",
+        "name": "New Balance Show 40",
+        "startTime": "2025-11-09T22:56:36.372Z",
+        "endTime": "2025-11-10T00:05:41.170Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for New Balance Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for New Balance Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_5",
+        "name": "New Balance Show 6",
+        "startTime": "2025-11-10T00:22:13.722Z",
+        "endTime": "2025-11-10T03:00:09.214Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for New Balance Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for New Balance Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_18",
+        "name": "New Balance Show 19",
+        "startTime": "2025-11-11T06:49:58.727Z",
+        "endTime": "2025-11-11T08:34:17.315Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for New Balance Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_38",
+        "name": "New Balance Show 39",
+        "startTime": "2025-11-12T01:00:59.217Z",
+        "endTime": "2025-11-12T03:15:23.516Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for New Balance Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_42",
+        "name": "New Balance Show 43",
+        "startTime": "2025-11-12T16:35:37.107Z",
+        "endTime": "2025-11-12T18:48:43.616Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for New Balance Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for New Balance Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for New Balance Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-43",
+            "platformShowId": "platform_show_43_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_27",
+        "name": "New Balance Show 28",
+        "startTime": "2025-11-12T19:26:07.310Z",
+        "endTime": "2025-11-12T21:21:08.676Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for New Balance Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for New Balance Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-28",
+            "platformShowId": "platform_show_28_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_26",
+        "name": "New Balance Show 27",
+        "startTime": "2025-11-12T23:18:04.125Z",
+        "endTime": "2025-11-13T01:41:11.125Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for New Balance Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_6",
+        "name": "New Balance Show 7",
+        "startTime": "2025-11-13T00:43:16.980Z",
+        "endTime": "2025-11-13T01:54:30.501Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for New Balance Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for New Balance Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for New Balance Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-7",
+            "platformShowId": "platform_show_7_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_2",
+        "name": "New Balance Show 3",
+        "startTime": "2025-11-13T13:49:39.126Z",
+        "endTime": "2025-11-13T16:39:13.814Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for New Balance Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for New Balance Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for New Balance Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_20",
+        "name": "New Balance Show 21",
+        "startTime": "2025-11-14T04:24:32.109Z",
+        "endTime": "2025-11-14T06:42:22.969Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for New Balance Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for New Balance Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for New Balance Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_11",
+        "name": "New Balance Show 12",
+        "startTime": "2025-11-14T23:57:40.071Z",
+        "endTime": "2025-11-15T01:22:51.752Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for New Balance Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for New Balance Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_3",
+        "name": "New Balance Show 4",
+        "startTime": "2025-11-16T00:52:14.394Z",
+        "endTime": "2025-11-16T03:02:44.811Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for New Balance Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-4",
+            "platformShowId": "platform_show_4_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_21",
+        "name": "New Balance Show 22",
+        "startTime": "2025-11-16T12:58:13.344Z",
+        "endTime": "2025-11-16T16:01:11.140Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for New Balance Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for New Balance Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_44",
+        "name": "New Balance Show 45",
+        "startTime": "2025-11-16T17:39:40.679Z",
+        "endTime": "2025-11-16T19:22:15.976Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for New Balance Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for New Balance Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for New Balance Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_23",
+        "name": "New Balance Show 24",
+        "startTime": "2025-11-16T21:13:05.917Z",
+        "endTime": "2025-11-17T00:06:18.350Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for New Balance Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for New Balance Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-24",
+            "platformShowId": "platform_show_24_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_49",
+        "name": "New Balance Show 50",
+        "startTime": "2025-11-17T20:59:22.148Z",
+        "endTime": "2025-11-17T23:19:54.214Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for New Balance Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for New Balance Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for New Balance Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_47",
+        "name": "New Balance Show 48",
+        "startTime": "2025-11-18T02:20:06.516Z",
+        "endTime": "2025-11-18T04:13:16.264Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for New Balance Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-48",
+            "platformShowId": "platform_show_48_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_4",
+        "name": "New Balance Show 5",
+        "startTime": "2025-11-18T07:56:34.787Z",
+        "endTime": "2025-11-18T11:18:18.627Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for New Balance Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for New Balance Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for New Balance Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_36",
+        "name": "New Balance Show 37",
+        "startTime": "2025-11-18T10:50:51.423Z",
+        "endTime": "2025-11-18T14:34:11.175Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for New Balance Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for New Balance Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for New Balance Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-37",
+            "platformShowId": "platform_show_37_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_17",
+        "name": "New Balance Show 18",
+        "startTime": "2025-11-19T05:45:43.632Z",
+        "endTime": "2025-11-19T09:22:32.392Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for New Balance Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for New Balance Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for New Balance Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_16",
+        "name": "New Balance Show 17",
+        "startTime": "2025-11-19T17:30:03.624Z",
+        "endTime": "2025-11-19T20:17:48.587Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for New Balance Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_32",
+        "name": "New Balance Show 33",
+        "startTime": "2025-11-22T04:29:08.254Z",
+        "endTime": "2025-11-22T06:05:59.430Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for New Balance Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for New Balance Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for New Balance Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_31",
+        "name": "New Balance Show 32",
+        "startTime": "2025-11-22T08:09:53.919Z",
+        "endTime": "2025-11-22T09:22:52.364Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for New Balance Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for New Balance Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_28",
+        "name": "New Balance Show 29",
+        "startTime": "2025-11-22T10:54:18.295Z",
+        "endTime": "2025-11-22T14:44:24.947Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for New Balance Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for New Balance Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_22",
+        "name": "New Balance Show 23",
+        "startTime": "2025-11-23T05:35:37.543Z",
+        "endTime": "2025-11-23T06:42:54.801Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for New Balance Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_35",
+        "name": "New Balance Show 36",
+        "startTime": "2025-11-23T12:12:43.211Z",
+        "endTime": "2025-11-23T14:39:01.640Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for New Balance Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_24",
+        "name": "New Balance Show 25",
+        "startTime": "2025-11-24T06:05:04.116Z",
+        "endTime": "2025-11-24T09:57:49.843Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for New Balance Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for New Balance Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for New Balance Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-25",
+            "platformShowId": "platform_show_25_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_43",
+        "name": "New Balance Show 44",
+        "startTime": "2025-11-24T21:08:45.467Z",
+        "endTime": "2025-11-25T00:35:55.676Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for New Balance Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for New Balance Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for New Balance Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_7",
+        "name": "New Balance Show 8",
+        "startTime": "2025-11-25T09:50:09.217Z",
+        "endTime": "2025-11-25T13:03:20.993Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for New Balance Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for New Balance Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-8",
+            "platformShowId": "platform_show_8_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_14",
+        "name": "New Balance Show 15",
+        "startTime": "2025-11-26T10:53:32.194Z",
+        "endTime": "2025-11-26T14:12:40.973Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for New Balance Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_15",
+        "name": "New Balance Show 16",
+        "startTime": "2025-11-27T13:18:18.449Z",
+        "endTime": "2025-11-27T14:32:44.245Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for New Balance Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-16",
+            "platformShowId": "platform_show_16_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_37",
+        "name": "New Balance Show 38",
+        "startTime": "2025-11-27T17:22:21.887Z",
+        "endTime": "2025-11-27T19:47:22.834Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for New Balance Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for New Balance Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for New Balance Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_29",
+        "name": "New Balance Show 30",
+        "startTime": "2025-11-27T17:23:44.932Z",
+        "endTime": "2025-11-27T19:29:09.135Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for New Balance Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for New Balance Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for New Balance Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_40",
+        "name": "New Balance Show 41",
+        "startTime": "2025-11-27T20:06:54.846Z",
+        "endTime": "2025-11-27T21:28:27.359Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for New Balance Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for New Balance Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for New Balance Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_48",
+        "name": "New Balance Show 49",
+        "startTime": "2025-11-27T20:35:39.169Z",
+        "endTime": "2025-11-28T00:08:39.699Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for New Balance Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for New Balance Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_10",
+        "name": "New Balance Show 11",
+        "startTime": "2025-11-29T14:15:07.332Z",
+        "endTime": "2025-11-29T16:38:46.986Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for New Balance Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for New Balance Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_19",
+        "name": "New Balance Show 20",
+        "startTime": "2025-11-29T19:21:45.020Z",
+        "endTime": "2025-11-29T22:20:39.514Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for New Balance Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

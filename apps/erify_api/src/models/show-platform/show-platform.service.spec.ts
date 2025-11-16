@@ -1,5 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-
+import {
+  createMockRepository,
+  createMockUtilityService,
+  createModelServiceTestModule,
+  setupTestMocks,
+} from '@/common/test-helpers/model-service-test.helper';
 import { createMockUniqueConstraintError } from '@/common/test-helpers/prisma-error.helper';
 import { UtilityService } from '@/utility/utility.service';
 
@@ -14,43 +18,31 @@ jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
 describe('ShowPlatformService', () => {
   let service: ShowPlatformService;
-
-  const showPlatformRepositoryMock: Partial<
-    jest.Mocked<ShowPlatformRepository>
-  > = {
-    create: jest.fn(),
-    findByUid: jest.fn(),
-    update: jest.fn(),
-    softDelete: jest.fn(),
-    findMany: jest.fn(),
-    count: jest.fn(),
-    findActiveShowPlatforms: jest.fn(),
-    findByShow: jest.fn(),
-    findByPlatform: jest.fn(),
-    findByShowAndPlatform: jest.fn(),
-  };
-
-  const utilityMock: Partial<jest.Mocked<UtilityService>> = {
-    generateBrandedId: jest.fn().mockReturnValue('show_plt_123'),
-  };
+  let showPlatformRepositoryMock: Partial<jest.Mocked<ShowPlatformRepository>>;
+  let utilityMock: Partial<jest.Mocked<UtilityService>>;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ShowPlatformService,
-        {
-          provide: ShowPlatformRepository,
-          useValue: showPlatformRepositoryMock,
-        },
-        { provide: UtilityService, useValue: utilityMock },
-      ],
-    }).compile();
+    showPlatformRepositoryMock = createMockRepository<ShowPlatformRepository>({
+      findActiveShowPlatforms: jest.fn(),
+      findByShow: jest.fn(),
+      findByPlatform: jest.fn(),
+      findByShowAndPlatform: jest.fn(),
+    });
+
+    utilityMock = createMockUtilityService('show_plt_123');
+
+    const module = await createModelServiceTestModule({
+      serviceClass: ShowPlatformService,
+      repositoryClass: ShowPlatformRepository,
+      repositoryMock: showPlatformRepositoryMock,
+      utilityMock: utilityMock,
+    });
 
     service = module.get<ShowPlatformService>(ShowPlatformService);
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    setupTestMocks();
   });
 
   describe('createShowPlatformFromDto', () => {

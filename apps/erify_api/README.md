@@ -568,7 +568,7 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[Authentication Guide](docs/AUTHENTICATION_GUIDE.md)** - Phase 1 hybrid authentication guide
 - **[Scheduling Architecture](docs/SCHEDULING_ARCHITECTURE.md)** - Scheduling system design
 - **[Chunked Upload API](docs/SCHEDULE_UPLOAD_API_DESIGN.md)** ⭐ - API design for large schedule uploads
-- **[Testing Guide](test-payloads/README.md)** - Schedule planning test payloads and workflow
+- **[Manual Testing Guide](manual-test/README.md)** - Manual testing scenarios and workflows
 - **[Phase 1 Roadmap](docs/roadmap/PHASE_1.md)** - Phase 1 implementation plan
 - **[Phase 2 Roadmap](docs/roadmap/PHASE_2.md)** - Phase 2 implementation plan
 - **[Phase 3 Roadmap](docs/roadmap/PHASE_3.md)** - Phase 3 implementation plan

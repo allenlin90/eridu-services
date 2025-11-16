@@ -3,25 +3,22 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   HttpStatus,
   Param,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
-import { ZodSerializerDto } from 'nestjs-zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
-import { ApiZodResponse } from '@/common/openapi/decorators';
 import {
-  createPaginatedResponseSchema,
-  PaginationQueryDto,
-} from '@/common/pagination/schema/pagination.schema';
+  AdminPaginatedResponse,
+  AdminResponse,
+} from '@/admin/decorators/admin-response.decorator';
+import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
 import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
 import {
   CreateShowMcDto,
-  ShowMcDto,
   showMcDto,
   UpdateShowMcDto,
 } from '@/models/show-mc/schemas/show-mc.schema';
@@ -38,9 +35,7 @@ export class AdminShowMcController extends BaseAdminController {
   }
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiZodResponse(showMcDto, 'Show MC created successfully')
-  @ZodSerializerDto(ShowMcDto)
+  @AdminResponse(showMcDto, HttpStatus.CREATED, 'Show MC created successfully')
   async createShowMc(@Body() body: CreateShowMcDto) {
     const showMc = await this.showMcService.createShowMcFromDto(body);
     return this.showMcService.getShowMcById(showMc.uid, {
@@ -50,12 +45,7 @@ export class AdminShowMcController extends BaseAdminController {
   }
 
   @Get()
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(
-    createPaginatedResponseSchema(showMcDto),
-    'List of show MCs with pagination',
-  )
-  @ZodSerializerDto(createPaginatedResponseSchema(showMcDto))
+  @AdminPaginatedResponse(showMcDto, 'List of show MCs with pagination')
   async getShowMcs(@Query() query: PaginationQueryDto) {
     const data = await this.showMcService.getActiveShowMcs({
       skip: query.skip,
@@ -72,9 +62,7 @@ export class AdminShowMcController extends BaseAdminController {
   }
 
   @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(showMcDto, 'Show MC details')
-  @ZodSerializerDto(ShowMcDto)
+  @AdminResponse(showMcDto, HttpStatus.OK, 'Show MC details')
   getShowMc(
     @Param('id', new UidValidationPipe(ShowMcService.UID_PREFIX, 'Show MC'))
     id: string,
@@ -86,9 +74,7 @@ export class AdminShowMcController extends BaseAdminController {
   }
 
   @Patch(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(showMcDto, 'Show MC updated successfully')
-  @ZodSerializerDto(ShowMcDto)
+  @AdminResponse(showMcDto, HttpStatus.OK, 'Show MC updated successfully')
   async updateShowMc(
     @Param('id', new UidValidationPipe(ShowMcService.UID_PREFIX, 'Show MC'))
     id: string,
@@ -103,7 +89,7 @@ export class AdminShowMcController extends BaseAdminController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @AdminResponse(undefined, HttpStatus.NO_CONTENT)
   async deleteShowMc(
     @Param('id', new UidValidationPipe(ShowMcService.UID_PREFIX, 'Show MC'))
     id: string,

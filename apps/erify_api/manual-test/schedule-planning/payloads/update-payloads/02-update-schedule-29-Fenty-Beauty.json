@@ -1,0 +1,1615 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-15T03:35:20.433Z",
+      "totalShows": 50,
+      "clientName": "Fenty Beauty",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1763177720433_14",
+        "name": "Fenty Beauty Show 15",
+        "startTime": "2025-10-31T18:16:11.219Z",
+        "endTime": "2025-10-31T21:22:26.418Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Fenty Beauty Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Fenty Beauty Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_23",
+        "name": "Fenty Beauty Show 24",
+        "startTime": "2025-11-01T00:13:54.454Z",
+        "endTime": "2025-11-01T02:56:08.554Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Fenty Beauty Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-24",
+            "platformShowId": "platform_show_24_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_34",
+        "name": "Fenty Beauty Show 35",
+        "startTime": "2025-11-01T02:33:58.424Z",
+        "endTime": "2025-11-01T06:29:17.066Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Fenty Beauty Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Fenty Beauty Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-35",
+            "platformShowId": "platform_show_35_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_46",
+        "name": "Fenty Beauty Show 47",
+        "startTime": "2025-11-01T17:57:02.383Z",
+        "endTime": "2025-11-01T19:44:30.557Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Fenty Beauty Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Fenty Beauty Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_40",
+        "name": "Fenty Beauty Show 41",
+        "startTime": "2025-11-02T05:48:47.323Z",
+        "endTime": "2025-11-02T07:51:34.986Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Fenty Beauty Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Fenty Beauty Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Fenty Beauty Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720432_2",
+        "name": "Fenty Beauty Show 3",
+        "startTime": "2025-11-02T11:34:53.526Z",
+        "endTime": "2025-11-02T14:29:07.654Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Fenty Beauty Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Fenty Beauty Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_43",
+        "name": "Fenty Beauty Show 44",
+        "startTime": "2025-11-02T16:43:03.540Z",
+        "endTime": "2025-11-02T18:03:59.215Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Fenty Beauty Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Fenty Beauty Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Fenty Beauty Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_18",
+        "name": "Fenty Beauty Show 19",
+        "startTime": "2025-11-02T23:48:49.811Z",
+        "endTime": "2025-11-03T02:00:51.422Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Fenty Beauty Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Fenty Beauty Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Fenty Beauty Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-19",
+            "platformShowId": "platform_show_19_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_27",
+        "name": "Fenty Beauty Show 28",
+        "startTime": "2025-11-03T07:34:28.761Z",
+        "endTime": "2025-11-03T11:22:33.523Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Fenty Beauty Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Fenty Beauty Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_7",
+        "name": "Fenty Beauty Show 8",
+        "startTime": "2025-11-03T12:45:29.443Z",
+        "endTime": "2025-11-03T14:26:07.791Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Fenty Beauty Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-8",
+            "platformShowId": "platform_show_8_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_49",
+        "name": "Fenty Beauty Show 50",
+        "startTime": "2025-11-03T17:23:37.278Z",
+        "endTime": "2025-11-03T18:43:33.362Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Fenty Beauty Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Fenty Beauty Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Fenty Beauty Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_26",
+        "name": "Fenty Beauty Show 27",
+        "startTime": "2025-11-05T10:54:51.141Z",
+        "endTime": "2025-11-05T13:36:41.422Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Fenty Beauty Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Fenty Beauty Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Fenty Beauty Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_35",
+        "name": "Fenty Beauty Show 36",
+        "startTime": "2025-11-05T15:00:36.927Z",
+        "endTime": "2025-11-05T17:10:24.818Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Fenty Beauty Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Fenty Beauty Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-36",
+            "platformShowId": "platform_show_36_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_15",
+        "name": "Fenty Beauty Show 16",
+        "startTime": "2025-11-05T23:54:31.674Z",
+        "endTime": "2025-11-06T01:22:54.681Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Fenty Beauty Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-16",
+            "platformShowId": "platform_show_16_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_5",
+        "name": "Fenty Beauty Show 6",
+        "startTime": "2025-11-06T14:28:08.007Z",
+        "endTime": "2025-11-06T16:17:42.727Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Fenty Beauty Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_31",
+        "name": "Fenty Beauty Show 32",
+        "startTime": "2025-11-07T13:52:59.958Z",
+        "endTime": "2025-11-07T16:17:27.917Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Fenty Beauty Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_19",
+        "name": "Fenty Beauty Show 20",
+        "startTime": "2025-11-08T17:39:09.211Z",
+        "endTime": "2025-11-08T19:29:39.174Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Fenty Beauty Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Fenty Beauty Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_47",
+        "name": "Fenty Beauty Show 48",
+        "startTime": "2025-11-10T10:19:07.375Z",
+        "endTime": "2025-11-10T13:34:44.214Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Fenty Beauty Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Fenty Beauty Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-48",
+            "platformShowId": "platform_show_48_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_10",
+        "name": "Fenty Beauty Show 11",
+        "startTime": "2025-11-10T16:58:03.414Z",
+        "endTime": "2025-11-10T20:06:49.710Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Fenty Beauty Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Fenty Beauty Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Fenty Beauty Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_9",
+        "name": "Fenty Beauty Show 10",
+        "startTime": "2025-11-10T18:56:37.604Z",
+        "endTime": "2025-11-10T21:07:42.049Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Fenty Beauty Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-10",
+            "platformShowId": "platform_show_10_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_36",
+        "name": "Fenty Beauty Show 37",
+        "startTime": "2025-11-11T00:45:33.359Z",
+        "endTime": "2025-11-11T03:28:45.163Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Fenty Beauty Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_42",
+        "name": "Fenty Beauty Show 43",
+        "startTime": "2025-11-11T12:48:09.273Z",
+        "endTime": "2025-11-11T15:29:06.062Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Fenty Beauty Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Fenty Beauty Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Fenty Beauty Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_22",
+        "name": "Fenty Beauty Show 23",
+        "startTime": "2025-11-12T11:36:35.188Z",
+        "endTime": "2025-11-12T12:43:16.996Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Fenty Beauty Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Fenty Beauty Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Fenty Beauty Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_8",
+        "name": "Fenty Beauty Show 9",
+        "startTime": "2025-11-12T22:28:01.320Z",
+        "endTime": "2025-11-13T00:26:30.451Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Fenty Beauty Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Fenty Beauty Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Fenty Beauty Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-9",
+            "platformShowId": "platform_show_9_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_28",
+        "name": "Fenty Beauty Show 29",
+        "startTime": "2025-11-13T10:03:29.405Z",
+        "endTime": "2025-11-13T12:07:46.097Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Fenty Beauty Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Fenty Beauty Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Fenty Beauty Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-29",
+            "platformShowId": "platform_show_29_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_39",
+        "name": "Fenty Beauty Show 40",
+        "startTime": "2025-11-13T19:45:11.349Z",
+        "endTime": "2025-11-13T22:06:55.319Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Fenty Beauty Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720432_1",
+        "name": "Fenty Beauty Show 2",
+        "startTime": "2025-11-14T01:23:50.477Z",
+        "endTime": "2025-11-14T04:18:14.857Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Fenty Beauty Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-2",
+            "platformShowId": "platform_show_2_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_25",
+        "name": "Fenty Beauty Show 26",
+        "startTime": "2025-11-14T03:02:43.438Z",
+        "endTime": "2025-11-14T06:29:04.241Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Fenty Beauty Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Fenty Beauty Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_21",
+        "name": "Fenty Beauty Show 22",
+        "startTime": "2025-11-14T15:11:27.635Z",
+        "endTime": "2025-11-14T17:42:59.061Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Fenty Beauty Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-22",
+            "platformShowId": "platform_show_22_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_33",
+        "name": "Fenty Beauty Show 34",
+        "startTime": "2025-11-14T18:15:32.590Z",
+        "endTime": "2025-11-14T21:39:52.797Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Fenty Beauty Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-34",
+            "platformShowId": "platform_show_34_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_24",
+        "name": "Fenty Beauty Show 25",
+        "startTime": "2025-11-15T06:07:23.948Z",
+        "endTime": "2025-11-15T07:50:43.908Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Fenty Beauty Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Fenty Beauty Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Fenty Beauty Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-25",
+            "platformShowId": "platform_show_25_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_11",
+        "name": "Fenty Beauty Show 12",
+        "startTime": "2025-11-15T15:04:27.476Z",
+        "endTime": "2025-11-15T17:00:37.076Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Fenty Beauty Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Fenty Beauty Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-12",
+            "platformShowId": "platform_show_12_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720432_4",
+        "name": "Fenty Beauty Show 5",
+        "startTime": "2025-11-16T01:51:07.778Z",
+        "endTime": "2025-11-16T04:24:34.140Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Fenty Beauty Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Fenty Beauty Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_13",
+        "name": "Fenty Beauty Show 14",
+        "startTime": "2025-11-16T02:17:55.334Z",
+        "endTime": "2025-11-16T03:58:01.706Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Fenty Beauty Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Fenty Beauty Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720432_3",
+        "name": "Fenty Beauty Show 4",
+        "startTime": "2025-11-16T03:07:25.983Z",
+        "endTime": "2025-11-16T04:52:57.806Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Fenty Beauty Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Fenty Beauty Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Fenty Beauty Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-4",
+            "platformShowId": "platform_show_4_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_12",
+        "name": "Fenty Beauty Show 13",
+        "startTime": "2025-11-17T04:49:03.313Z",
+        "endTime": "2025-11-17T07:58:55.171Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Fenty Beauty Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Fenty Beauty Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Fenty Beauty Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_45",
+        "name": "Fenty Beauty Show 46",
+        "startTime": "2025-11-17T04:54:02.819Z",
+        "endTime": "2025-11-17T08:32:15.501Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Fenty Beauty Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_16",
+        "name": "Fenty Beauty Show 17",
+        "startTime": "2025-11-17T08:28:36.608Z",
+        "endTime": "2025-11-17T11:10:27.675Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Fenty Beauty Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Fenty Beauty Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-17",
+            "platformShowId": "platform_show_17_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_17",
+        "name": "Fenty Beauty Show 18",
+        "startTime": "2025-11-17T10:49:05.406Z",
+        "endTime": "2025-11-17T14:21:55.203Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Fenty Beauty Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_30",
+        "name": "Fenty Beauty Show 31",
+        "startTime": "2025-11-18T03:02:13.319Z",
+        "endTime": "2025-11-18T06:27:04.104Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Fenty Beauty Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Fenty Beauty Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720432_0",
+        "name": "Fenty Beauty Show 1",
+        "startTime": "2025-11-19T07:05:04.285Z",
+        "endTime": "2025-11-19T09:44:08.745Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Fenty Beauty Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Fenty Beauty Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_32",
+        "name": "Fenty Beauty Show 33",
+        "startTime": "2025-11-21T10:43:35.782Z",
+        "endTime": "2025-11-21T12:41:41.618Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Fenty Beauty Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Fenty Beauty Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_29",
+        "name": "Fenty Beauty Show 30",
+        "startTime": "2025-11-23T20:32:35.303Z",
+        "endTime": "2025-11-23T23:32:27.136Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Fenty Beauty Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_41",
+        "name": "Fenty Beauty Show 42",
+        "startTime": "2025-11-24T20:57:00.365Z",
+        "endTime": "2025-11-24T23:15:49.437Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Fenty Beauty Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-42",
+            "platformShowId": "platform_show_42_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_20",
+        "name": "Fenty Beauty Show 21",
+        "startTime": "2025-11-25T00:35:46.256Z",
+        "endTime": "2025-11-25T03:32:32.286Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Fenty Beauty Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_38",
+        "name": "Fenty Beauty Show 39",
+        "startTime": "2025-11-26T18:31:05.441Z",
+        "endTime": "2025-11-26T20:36:23.466Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Fenty Beauty Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_44",
+        "name": "Fenty Beauty Show 45",
+        "startTime": "2025-11-26T23:48:28.819Z",
+        "endTime": "2025-11-27T00:48:38.846Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Fenty Beauty Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Fenty Beauty Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_48",
+        "name": "Fenty Beauty Show 49",
+        "startTime": "2025-11-27T00:14:44.656Z",
+        "endTime": "2025-11-27T01:29:56.164Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Fenty Beauty Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-49",
+            "platformShowId": "platform_show_49_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_37",
+        "name": "Fenty Beauty Show 38",
+        "startTime": "2025-11-27T12:11:49.727Z",
+        "endTime": "2025-11-27T14:12:30.881Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Fenty Beauty Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Fenty Beauty Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Fenty Beauty Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_6",
+        "name": "Fenty Beauty Show 7",
+        "startTime": "2025-11-30T03:28:15.752Z",
+        "endTime": "2025-11-30T05:19:03.342Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Fenty Beauty Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Fenty Beauty Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Fenty Beauty Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-7",
+            "platformShowId": "platform_show_7_2"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

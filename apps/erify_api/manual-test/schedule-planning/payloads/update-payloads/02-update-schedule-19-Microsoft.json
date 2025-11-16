@@ -1,0 +1,1534 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-15T03:35:20.430Z",
+      "totalShows": 50,
+      "clientName": "Microsoft",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1763177720430_12",
+        "name": "Microsoft Show 13",
+        "startTime": "2025-10-31T20:35:34.889Z",
+        "endTime": "2025-10-31T23:55:07.655Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Microsoft Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Microsoft Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Microsoft Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_33",
+        "name": "Microsoft Show 34",
+        "startTime": "2025-11-01T09:47:44.329Z",
+        "endTime": "2025-11-01T13:29:14.592Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Microsoft Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Microsoft Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_37",
+        "name": "Microsoft Show 38",
+        "startTime": "2025-11-01T15:35:51.627Z",
+        "endTime": "2025-11-01T18:36:26.392Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Microsoft Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Microsoft Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Microsoft Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_42",
+        "name": "Microsoft Show 43",
+        "startTime": "2025-11-01T19:47:59.149Z",
+        "endTime": "2025-11-01T22:36:43.715Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Microsoft Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-43",
+            "platformShowId": "platform_show_43_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_9",
+        "name": "Microsoft Show 10",
+        "startTime": "2025-11-03T10:17:30.275Z",
+        "endTime": "2025-11-03T11:41:15.927Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Microsoft Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_10",
+        "name": "Microsoft Show 11",
+        "startTime": "2025-11-04T00:23:59.678Z",
+        "endTime": "2025-11-04T03:57:07.252Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Microsoft Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Microsoft Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Microsoft Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_18",
+        "name": "Microsoft Show 19",
+        "startTime": "2025-11-05T06:39:50.587Z",
+        "endTime": "2025-11-05T09:07:18.873Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Microsoft Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Microsoft Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_25",
+        "name": "Microsoft Show 26",
+        "startTime": "2025-11-06T06:28:01.612Z",
+        "endTime": "2025-11-06T09:57:52.756Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Microsoft Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_43",
+        "name": "Microsoft Show 44",
+        "startTime": "2025-11-06T20:11:27.156Z",
+        "endTime": "2025-11-06T22:49:22.605Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Microsoft Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Microsoft Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_41",
+        "name": "Microsoft Show 42",
+        "startTime": "2025-11-08T06:38:13.797Z",
+        "endTime": "2025-11-08T07:58:34.294Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Microsoft Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Microsoft Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_32",
+        "name": "Microsoft Show 33",
+        "startTime": "2025-11-08T12:38:30.771Z",
+        "endTime": "2025-11-08T15:31:22.490Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Microsoft Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_5",
+        "name": "Microsoft Show 6",
+        "startTime": "2025-11-08T17:13:13.088Z",
+        "endTime": "2025-11-08T18:21:34.405Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Microsoft Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Microsoft Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-6",
+            "platformShowId": "platform_show_6_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_7",
+        "name": "Microsoft Show 8",
+        "startTime": "2025-11-09T22:35:12.032Z",
+        "endTime": "2025-11-10T02:07:58.199Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Microsoft Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Microsoft Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_48",
+        "name": "Microsoft Show 49",
+        "startTime": "2025-11-10T13:41:26.261Z",
+        "endTime": "2025-11-10T14:52:11.828Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Microsoft Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Microsoft Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Microsoft Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_30",
+        "name": "Microsoft Show 31",
+        "startTime": "2025-11-11T02:51:42.148Z",
+        "endTime": "2025-11-11T06:20:42.647Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Microsoft Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Microsoft Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Microsoft Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_21",
+        "name": "Microsoft Show 22",
+        "startTime": "2025-11-11T08:01:01.581Z",
+        "endTime": "2025-11-11T09:31:58.191Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Microsoft Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Microsoft Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Microsoft Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-22",
+            "platformShowId": "platform_show_22_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_19",
+        "name": "Microsoft Show 20",
+        "startTime": "2025-11-11T22:36:45.875Z",
+        "endTime": "2025-11-12T01:31:46.600Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Microsoft Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Microsoft Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_16",
+        "name": "Microsoft Show 17",
+        "startTime": "2025-11-12T03:24:17.566Z",
+        "endTime": "2025-11-12T07:11:22.732Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Microsoft Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_3",
+        "name": "Microsoft Show 4",
+        "startTime": "2025-11-12T07:38:36.630Z",
+        "endTime": "2025-11-12T10:35:57.235Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Microsoft Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_13",
+        "name": "Microsoft Show 14",
+        "startTime": "2025-11-12T13:35:03.663Z",
+        "endTime": "2025-11-12T17:21:02.978Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Microsoft Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_44",
+        "name": "Microsoft Show 45",
+        "startTime": "2025-11-13T08:55:26.533Z",
+        "endTime": "2025-11-13T11:06:33.360Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Microsoft Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Microsoft Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Microsoft Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_26",
+        "name": "Microsoft Show 27",
+        "startTime": "2025-11-14T15:13:23.224Z",
+        "endTime": "2025-11-14T18:07:13.590Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Microsoft Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_45",
+        "name": "Microsoft Show 46",
+        "startTime": "2025-11-15T22:25:41.504Z",
+        "endTime": "2025-11-16T00:01:07.090Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Microsoft Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_15",
+        "name": "Microsoft Show 16",
+        "startTime": "2025-11-15T22:50:40.659Z",
+        "endTime": "2025-11-15T23:52:55.363Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Microsoft Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Microsoft Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-16",
+            "platformShowId": "platform_show_16_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_29",
+        "name": "Microsoft Show 30",
+        "startTime": "2025-11-16T18:56:24.555Z",
+        "endTime": "2025-11-16T22:46:52.330Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Microsoft Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Microsoft Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Microsoft Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_46",
+        "name": "Microsoft Show 47",
+        "startTime": "2025-11-18T00:03:04.254Z",
+        "endTime": "2025-11-18T01:35:36.893Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Microsoft Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_36",
+        "name": "Microsoft Show 37",
+        "startTime": "2025-11-18T03:21:02.850Z",
+        "endTime": "2025-11-18T05:29:44.769Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Microsoft Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_11",
+        "name": "Microsoft Show 12",
+        "startTime": "2025-11-19T07:25:05.933Z",
+        "endTime": "2025-11-19T08:32:11.265Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Microsoft Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_6",
+        "name": "Microsoft Show 7",
+        "startTime": "2025-11-19T09:22:46.445Z",
+        "endTime": "2025-11-19T11:32:11.783Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Microsoft Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-7",
+            "platformShowId": "platform_show_7_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_24",
+        "name": "Microsoft Show 25",
+        "startTime": "2025-11-20T04:15:07.301Z",
+        "endTime": "2025-11-20T08:03:21.545Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Microsoft Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Microsoft Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-25",
+            "platformShowId": "platform_show_25_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_31",
+        "name": "Microsoft Show 32",
+        "startTime": "2025-11-20T07:16:47.750Z",
+        "endTime": "2025-11-20T09:01:00.808Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Microsoft Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Microsoft Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Microsoft Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-32",
+            "platformShowId": "platform_show_32_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_27",
+        "name": "Microsoft Show 28",
+        "startTime": "2025-11-21T01:45:10.234Z",
+        "endTime": "2025-11-21T04:13:55.529Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Microsoft Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_14",
+        "name": "Microsoft Show 15",
+        "startTime": "2025-11-21T06:10:31.290Z",
+        "endTime": "2025-11-21T09:53:41.837Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Microsoft Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Microsoft Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_22",
+        "name": "Microsoft Show 23",
+        "startTime": "2025-11-23T10:04:52.299Z",
+        "endTime": "2025-11-23T11:20:10.417Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Microsoft Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Microsoft Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_35",
+        "name": "Microsoft Show 36",
+        "startTime": "2025-11-23T23:10:34.452Z",
+        "endTime": "2025-11-24T02:51:36.130Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Microsoft Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-36",
+            "platformShowId": "platform_show_36_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_0",
+        "name": "Microsoft Show 1",
+        "startTime": "2025-11-24T20:39:25.264Z",
+        "endTime": "2025-11-25T00:27:43.367Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Microsoft Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Microsoft Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Microsoft Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_23",
+        "name": "Microsoft Show 24",
+        "startTime": "2025-11-24T21:40:41.051Z",
+        "endTime": "2025-11-25T00:44:19.702Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Microsoft Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Microsoft Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Microsoft Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_17",
+        "name": "Microsoft Show 18",
+        "startTime": "2025-11-25T05:19:54.069Z",
+        "endTime": "2025-11-25T06:36:14.708Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Microsoft Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Microsoft Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-18",
+            "platformShowId": "platform_show_18_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_38",
+        "name": "Microsoft Show 39",
+        "startTime": "2025-11-25T08:26:35.188Z",
+        "endTime": "2025-11-25T11:02:11.159Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Microsoft Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_20",
+        "name": "Microsoft Show 21",
+        "startTime": "2025-11-25T09:10:35.737Z",
+        "endTime": "2025-11-25T11:53:51.613Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Microsoft Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Microsoft Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_34",
+        "name": "Microsoft Show 35",
+        "startTime": "2025-11-25T22:27:29.156Z",
+        "endTime": "2025-11-26T01:07:30.740Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Microsoft Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Microsoft Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Microsoft Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_28",
+        "name": "Microsoft Show 29",
+        "startTime": "2025-11-26T03:29:27.694Z",
+        "endTime": "2025-11-26T05:08:05.503Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Microsoft Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Microsoft Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_4",
+        "name": "Microsoft Show 5",
+        "startTime": "2025-11-26T06:25:48.110Z",
+        "endTime": "2025-11-26T09:34:50.594Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Microsoft Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Microsoft Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_40",
+        "name": "Microsoft Show 41",
+        "startTime": "2025-11-26T12:34:10.721Z",
+        "endTime": "2025-11-26T15:55:46.268Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Microsoft Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_49",
+        "name": "Microsoft Show 50",
+        "startTime": "2025-11-27T08:22:34.770Z",
+        "endTime": "2025-11-27T09:47:47.288Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Microsoft Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Microsoft Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Microsoft Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_47",
+        "name": "Microsoft Show 48",
+        "startTime": "2025-11-28T03:20:13.441Z",
+        "endTime": "2025-11-28T07:11:42.015Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Microsoft Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Microsoft Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Microsoft Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_39",
+        "name": "Microsoft Show 40",
+        "startTime": "2025-11-28T05:48:42.142Z",
+        "endTime": "2025-11-28T07:41:22.575Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Microsoft Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_2",
+        "name": "Microsoft Show 3",
+        "startTime": "2025-11-28T09:46:02.499Z",
+        "endTime": "2025-11-28T13:13:19.788Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Microsoft Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_1",
+        "name": "Microsoft Show 2",
+        "startTime": "2025-11-28T16:12:58.534Z",
+        "endTime": "2025-11-28T18:25:15.888Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Microsoft Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-2",
+            "platformShowId": "platform_show_2_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_8",
+        "name": "Microsoft Show 9",
+        "startTime": "2025-11-30T07:51:57.322Z",
+        "endTime": "2025-11-30T11:01:38.495Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Microsoft Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

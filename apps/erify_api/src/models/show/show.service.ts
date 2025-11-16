@@ -39,8 +39,12 @@ export class ShowService extends BaseModelService {
     super(utilityService);
   }
 
-  generateShowUid(size?: number) {
-    return this.generateUid(size);
+  /**
+   * Generates a show UID.
+   * Public wrapper for generateUid() to allow external services to generate UIDs.
+   */
+  generateShowUid(): string {
+    return this.generateUid();
   }
 
   async createShowFromDto<T extends Prisma.ShowInclude = Record<string, never>>(
@@ -55,7 +59,7 @@ export class ShowService extends BaseModelService {
     data: Omit<Prisma.ShowCreateInput, 'uid'>,
     include?: T,
   ): Promise<Show | ShowWithIncludes<T>> {
-    const uid = this.generateShowUid();
+    const uid = this.generateUid();
     return this.showRepository.create({ ...data, uid }, include);
   }
 
@@ -75,7 +79,7 @@ export class ShowService extends BaseModelService {
       skip?: number;
       take?: number;
       where?: Prisma.ShowWhereInput;
-      orderBy?: Record<string, 'asc' | 'desc'>;
+      orderBy?: Prisma.ShowOrderByWithRelationInput;
     },
     include?: T,
   ): Promise<Show[] | ShowWithIncludes<T>[]> {

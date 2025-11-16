@@ -16,12 +16,12 @@ This document provides a comprehensive overview of the module architecture and r
 The Eridu Services API is built using NestJS with a modular architecture that separates concerns into distinct layers. Currently, the implementation focuses on the foundation layer with basic administrative operations for core entities.
 
 **Current Implementation Status:**
-- **Phase 1**: Core Functions with Hybrid Authentication - Essential CRUD operations, basic show management, Schedule Planning Management System, JWT validation for user identification, and simple StudioMembership-based admin verification
+- **Phase 1**: Core Functions with Hybrid Authentication - Essential CRUD operations, basic show management, Schedule Planning Management System, JWK-based JWT validation for user identification, and simple StudioMembership-based admin verification
 - **Admin Layer**: Administrative operations for Users, Clients, MCs, Platforms, Studios, and related entities
 - **Domain Layer**: Business logic for core entities with proper service patterns
 - **Infrastructure Layer**: Database access, utilities, and common services
 - **Common Layer**: Shared utilities, decorators, and base classes
-- **Authentication**: JWT token validation from `erify_auth` service for user identification
+- **Authentication**: JWK-based JWT token validation using `@eridu/auth-integration` SDK (validates tokens from `erify_auth` service using Better Auth's JWKS endpoint)
 - **Authorization**: Simple StudioMembership model for admin verification (Phase 1 basics, Phase 3 Client/Platform memberships)
 
 **Phase 2 Planned Features:**
@@ -43,6 +43,7 @@ The Eridu Services API is built using NestJS with a modular architecture that se
 ```mermaid
 graph TB
     App[AppModule] --> Admin[AdminModule]
+    App --> Me[MeModule]
     App --> Config[ConfigModule]
     App --> Logger[LoggerModule]
     
@@ -214,6 +215,12 @@ graph LR
     AdminModule --> AdminScheduleModule
     AdminModule --> AdminSnapshotModule
     
+    MeModule --> ShowsModule
+    
+    ShowsModule --> ShowModule
+    ShowsModule --> ShowMcModule
+    ShowsModule --> McModule
+    
     AdminUserModule --> UserModule
     AdminClientModule --> ClientModule
     AdminMcModule --> McModule
@@ -280,7 +287,8 @@ graph LR
 - **Imports**: 
   - `ConfigModule` (Global configuration)
   - `LoggerModule` (Structured logging)
-  - `AdminModule` (Main business logic)
+  - `AdminModule` (Administrative operations)
+  - `MeModule` (User-scoped operations)
 - **Providers**: Global pipes, interceptors, and filters
 
 ### 2. AdminModule
@@ -341,7 +349,7 @@ graph LR
   - Generic includes for type-safe relation loading (`ShowWithIncludes<T>`)
   - Time range validation (endTime must be after startTime)
   - Core show CRUD operations only (no cross-module orchestration)
-  - Comprehensive test coverage (15 test cases)
+  - Comprehensive test coverage (see `show.service.spec.ts` for test implementation details)
 
 #### ShowOrchestrationModule ⭐
 - **Purpose**: Simplified orchestration for show operations with MC/platform assignments (Phase 1)
@@ -632,6 +640,30 @@ graph LR
 - **Providers**: `UtilityService`
 - **Exports**: `UtilityService`
 
+### 6. User-Scoped Modules (Me Module)
+
+#### MeModule
+- **Purpose**: User-scoped API endpoints for authenticated users
+- **Imports**: `ShowsModule`
+- **Exports**: `ShowsModule`
+- **Features**: Endpoints prefixed with `/me` for user-scoped resources (e.g., `/me/shows`)
+
+#### ShowsModule (Me)
+- **Purpose**: User-scoped show operations for MC users
+- **Imports**: `ShowModule`, `ShowMcModule`, `McModule`, `UtilityModule`
+- **Controllers**: `ShowsController`
+- **Providers**: `ShowsService`
+- **Exports**: `ShowsService`
+- **Features**: Endpoints for MC users to query their assigned shows (list and get by ID)
+- **Key Implementation Details**:
+  - Resolves MC profile from user identifier (supports both `uid` and `extId` from JWT)
+  - Filters shows to only those assigned to the authenticated user's MC via `ShowMC` relationships
+  - Includes all related entities (client, studioRoom, showType, showStatus, showStandard, showPlatforms)
+  - Supports pagination and custom ordering (defaults to `startTime: 'asc'`)
+  - Validates show assignment before returning details (prevents access to unassigned shows)
+  - Returns 404 if MC not found or show not assigned to user's MC
+- **Testing Requirements**: Tests should cover controller endpoints (authentication, pagination, error handling) and service logic (MC resolution, show filtering, include patterns). See `shows.controller.spec.ts` and `shows.service.spec.ts` for test implementation details.
+
 ## Data Flow
 
 ### Entity Relationship Diagram (ERD)
@@ -838,20 +870,13 @@ The API includes comprehensive OpenAPI documentation powered by Scalar UI:
 
 **Service Architecture** (Business Logic Layer)
 
-The service layer follows a clear separation of concerns with two distinct base service types:
+The service layer follows a clear separation of concerns with distinct service types:
 
 ### BaseModelService
 All core entity services extend `BaseModelService` which provides:
 - UID generation with entity-specific prefixes
 - Common CRUD operation patterns
 - Single-entity focus for data persistence
-
-### BaseOrchestrationService
-Cross-module coordination services extend `BaseOrchestrationService` which provides:
-- Multi-service coordination patterns
-- Transaction management utilities
-- Entity validation helpers
-- Error handling for complex operations
 
 **Model Services** (Single Entity Management)
 
@@ -910,235 +935,44 @@ Cross-module coordination services extend `BaseOrchestrationService` which provi
 | `BaseRepository`           | Generic repository pattern with soft delete |
 | `PaginationSchema`         | Pagination query and response schemas       |
 
+**Note on BaseRepository Types**: The `findMany` method uses `orderBy?: any` to support Prisma's complex `OrderByWithRelationInput` types, which include nested relation ordering and multiple sort orders. Type safety is maintained at the service layer where Prisma types are used.
+
 ## API Endpoints
 
-### Admin Endpoints
+The API follows RESTful conventions with consistent patterns across all entities. All endpoints use snake_case for request/response data and generic `id` parameters that map to internal UIDs.
 
-#### Users
-- `GET /admin/users` - List users with pagination, expand, and search
-- `POST /admin/users` - Create user
-- `GET /admin/users/:id` - Get user by ID with expand (maps to internal UID)
-- `PATCH /admin/users/:id` - Update user
-- `DELETE /admin/users/:id` - Soft delete user
+### Endpoint Patterns
 
-#### Clients
-- `GET /admin/clients` - List clients with pagination, expand, and search
-- `POST /admin/clients` - Create client
-- `GET /admin/clients/:id` - Get client by ID with expand (maps to internal UID)
-- `PATCH /admin/clients/:id` - Update client
-- `DELETE /admin/clients/:id` - Soft delete client
+**Admin Endpoints** (`/admin/*`):
+- Standard CRUD operations for all entities (Users, Clients, MCs, Platforms, Shows, Studios, Schedules, etc.)
+- All follow pattern: `GET /admin/{resource}`, `POST /admin/{resource}`, `GET /admin/{resource}/:id`, `PATCH /admin/{resource}/:id`, `DELETE /admin/{resource}/:id`
+- Special operations: Schedule validation/publishing, Show relationship management (MCs/platforms), Bulk operations
 
-#### MCs
-- `GET /admin/mcs` - List MCs with pagination, expand, and search
-- `POST /admin/mcs` - Create MC
-- `GET /admin/mcs/:id` - Get MC by ID with expand (maps to internal UID)
-- `PATCH /admin/mcs/:id` - Update MC
-- `DELETE /admin/mcs/:id` - Soft delete MC
+**User-Scoped Endpoints** (`/me/*`):
+- `GET /me/shows` - List shows assigned to authenticated MC user
+- `GET /me/shows/:show_id` - Get show details (validates assignment)
 
-#### Platforms
-- `GET /admin/platforms` - List platforms with pagination, expand, and search
-- `POST /admin/platforms` - Create platform
-- `GET /admin/platforms/:id` - Get platform by ID with expand (maps to internal UID)
-- `PATCH /admin/platforms/:id` - Update platform
-- `DELETE /admin/platforms/:id` - Soft delete platform
+**Backdoor Endpoints** (`/backdoor/*`):
+- Service-to-service operations protected by API key
+- User creation/updates, membership management, JWKS refresh
 
-#### Shows ⭐
-- `GET /admin/shows` - List shows with pagination, relations, expand, and search
-- `POST /admin/shows` - Create show (validates time range) - **Phase 2**: Supports `Idempotency-Key` header to prevent duplicate creation from retries
-- `GET /admin/shows/:id` - Get show by ID with relations, expand, and search (maps to internal UID)
-- `PATCH /admin/shows/:id` - Update show (validates time range)
-- `DELETE /admin/shows/:id` - Soft delete show
-- `PATCH /admin/shows/:id/mcs/remove` - Remove MCs from show
-- `PATCH /admin/shows/:id/platforms/remove` - Remove platforms from show
-- `PATCH /admin/shows/:id/mcs/replace` - Replace all MCs for show
-- `PATCH /admin/shows/:id/platforms/replace` - Replace all platforms for show
+### Query Parameters
 
-#### ShowTypes
-- `GET /admin/show-types` - List show types with pagination
-- `POST /admin/show-types` - Create show type
-- `GET /admin/show-types/:id` - Get show type by ID (maps to internal UID)
-- `PATCH /admin/show-types/:id` - Update show type
-- `DELETE /admin/show-types/:id` - Soft delete show type
-
-#### ShowStatuses
-- `GET /admin/show-statuses` - List show statuses with pagination
-- `POST /admin/show-statuses` - Create show status
-- `GET /admin/show-statuses/:id` - Get show status by ID (maps to internal UID)
-- `PATCH /admin/show-statuses/:id` - Update show status
-- `DELETE /admin/show-statuses/:id` - Soft delete show status
-
-#### ShowStandards
-- `GET /admin/show-standards` - List show standards with pagination
-- `POST /admin/show-standards` - Create show standard
-- `GET /admin/show-standards/:id` - Get show standard by ID (maps to internal UID)
-- `PATCH /admin/show-standards/:id` - Update show standard
-- `DELETE /admin/show-standards/:id` - Soft delete show standard
-
-#### Studios
-- `GET /admin/studios` - List studios with pagination
-- `POST /admin/studios` - Create studio
-- `GET /admin/studios/:id` - Get studio by ID (maps to internal UID)
-- `PATCH /admin/studios/:id` - Update studio
-- `DELETE /admin/studios/:id` - Soft delete studio
-
-#### StudioRooms
-- `GET /admin/studio-rooms` - List studio rooms with pagination
-- `POST /admin/studio-rooms` - Create studio room
-- `GET /admin/studio-rooms/:id` - Get studio room by ID (maps to internal UID)
-- `PATCH /admin/studio-rooms/:id` - Update studio room
-- `DELETE /admin/studio-rooms/:id` - Soft delete studio room
-
-#### StudioMemberships
-- `GET /admin/studio-memberships` - List studio memberships with pagination
-- `POST /admin/studio-memberships` - Create studio membership
-- `GET /admin/studio-memberships/:id` - Get studio membership by ID (maps to internal UID)
-- `PATCH /admin/studio-memberships/:id` - Update studio membership
-- `DELETE /admin/studio-memberships/:id` - Soft delete studio membership
-
-#### ShowMCs
-- `GET /admin/show-mcs` - List show-MC relationships with pagination
-- `POST /admin/show-mcs` - Create show-MC assignment
-- `GET /admin/show-mcs/:id` - Get show-MC relationship by ID (maps to internal UID)
-- `PATCH /admin/show-mcs/:id` - Update show-MC relationship
-- `DELETE /admin/show-mcs/:id` - Soft delete show-MC relationship
-
-#### ShowPlatforms
-- `GET /admin/show-platforms` - List show-platform integrations with pagination
-- `POST /admin/show-platforms` - Create show-platform integration
-- `GET /admin/show-platforms/:id` - Get show-platform integration by ID (maps to internal UID)
-- `PATCH /admin/show-platforms/:id` - Update show-platform integration
-- `DELETE /admin/show-platforms/:id` - Soft delete show-platform integration
-
-#### Schedules ⭐
-- `GET /admin/schedules` - List schedules with pagination
-- `POST /admin/schedules` - Create schedule (one per client, ~100 shows) - **Phase 2**: Supports `Idempotency-Key` header to prevent duplicate creation from retries
-- `GET /admin/schedules/:id` - Get schedule by ID (maps to internal UID)
-- `PATCH /admin/schedules/:id` - Update schedule
-- `DELETE /admin/schedules/:id` - Soft delete schedule
-- `POST /admin/schedules/:id/validate` - Validate schedule before publish (per-client validation)
-- `POST /admin/schedules/:id/publish` - Publish schedule to shows (can be queued for async processing)
-- `POST /admin/schedules/:id/duplicate` - Duplicate schedule
-- `GET /admin/schedules/:id/snapshots` - List schedule snapshots
-- `POST /admin/schedules/bulk` - Bulk create schedules ✅ **IMPLEMENTED** (supports multiple clients)
-- `PATCH /admin/schedules/bulk` - Bulk update schedules ✅ **IMPLEMENTED**
-- `GET /admin/schedules/overview/monthly` - Monthly overview (schedules grouped by client and status) ✅ **IMPLEMENTED**
-- **Phase 2**: `POST /admin/schedules/:id/shows/append` - Chunked upload for large clients (>200 shows per client) or multi-client monthly overviews (500+ shows from 10+ clients)
-
-#### Snapshots ⭐
-- `GET /admin/snapshots/:id` - Get snapshot by ID with schedule relations (maps to internal UID)
-- `POST /admin/snapshots/:id/restore` - Restore schedule from snapshot
-
-### API Query Parameters
-
-All `GET` endpoints support the following query parameters:
-
-#### Pagination
-- `page` - Page number (default: 1)
-- `limit` - Items per page (default: 20)
-- `offset` - Skip items (alternative to page)
-
-#### Expand Parameter (Phase 2)
-The `expand` query parameter allows including associated data in responses. This helps avoid multiple API calls and reduces N+1 query issues.
-
-**Usage**: `?expand=relation1,relation2,relation3`
-
-**Examples**:
-- `GET /admin/shows?expand=client,platform,schedule` - Include client, platform, and schedule data
-- `GET /admin/shows/:id?expand=client,mc,materials` - Include client, MCs, and materials for a specific show
-- `GET /admin/materials?expand=client,platform,materialType` - Include related entities for materials
-
-**Supported Relations** (entity-specific):
-- **Shows**: `client`, `platform`, `schedule`, `mc`, `materials`, `showType`, `showStatus`, `showStandard`
-- **Materials**: `client`, `platform`, `materialType`, `showMaterials`
-- **Schedules**: `client`, `snapshots`
-
-**Performance Note**: Use expand only when needed, as it increases response payload and query complexity.
-
-#### Search Parameters (Phase 2)
-The `search` and `search_term` query parameters enable column-based searching on objects.
-
-**Usage**: `?search=column1,column2&search_term=query`
-
-**Parameters**:
-- `search` - Comma-separated list of column names to search
-- `search_term` - The search query string
-
-**Examples**:
-- `GET /admin/materials?search=name,description&search_term=script` - Search materials by name or description
-- `GET /admin/shows?search=name&search_term=Morning Show` - Search shows by name
-- `GET /admin/clients?search=name,email&search_term=acme` - Search clients by name or email
-
-**Searchable Columns** (entity-specific):
-- **Materials**: `name`, `description`, `version`
-- **Shows**: `name`, `description`
-- **Clients**: `name`, `email`
-- **MCs**: `name`, `alias_name`, `email`
-
-**Future Enhancement**: Fulltext search capabilities will be added to support advanced search functionality across multiple fields simultaneously.
-
-#### Idempotency Headers (Phase 2)
-Idempotency handling prevents duplicate resource creation from retries or concurrent requests when creating shows or schedules.
-
-**Header**: `Idempotency-Key: <unique-key>`
-
-**Supported Endpoints**:
-- `POST /admin/shows` - Create show
-- `POST /admin/schedules` - Create schedule
-
-**Behavior**:
-- Client sends unique `Idempotency-Key` header with each creation request
-- Server stores idempotency key with request metadata and response reference
-- If same `Idempotency-Key` is used, server returns existing resource (idempotent behavior)
-- Prevents accidental duplicates from network retries or concurrent requests
-
-**Why Needed**: Show and schedule names/durations can overlap for different packages, events, and campaigns - there are no unique constraints on (name, clientId, startTime) or (name, clientId, startDate, endDate) combinations.
-
-**Example**:
-```bash
-POST /admin/shows
-Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000
-{
-  "name": "Morning Show",
-  "start_time": "2024-01-15T10:00:00.000Z",
-  ...
-}
-```
+All `GET` endpoints support:
+- **Pagination**: `page`, `limit`, `offset`
+- **Expand** (Phase 2): `?expand=relation1,relation2` - Include associated data
+- **Search** (Phase 2): `?search=column1,column2&search_term=query` - Column-based searching
 
 ### Data Formats
 
-#### Input Format (snake_case)
-```json
-{
-  "name": "John Doe",
-  "ext_id": "ext_123",
-  "email": "john@example.com",
-  "profile_url": "https://example.com/profile",
-  "contact_person": "Jane Smith",
-  "contact_email": "jane@example.com",
-  "alias_name": "MC Alias",
-  "user_id": 1,
-  "is_banned": false,
-  "metadata": {}
-}
-```
+- **Input**: snake_case (e.g., `user_id`, `start_time`)
+- **Output**: snake_case with `id` field mapping to internal `uid`
+- **IDs**: Generic `id` parameters in URLs map to internal UIDs (e.g., `user_123`)
 
-#### Output Format (snake_case with uid as id)
-```json
-{
-  "id": "user_123",
-  "ext_id": "ext_123",
-  "email": "john@example.com",
-  "name": "John Doe",
-  "profile_url": "https://example.com/profile",
-  "contact_person": "Jane Smith",
-  "contact_email": "jane@example.com",
-  "alias_name": "MC Alias",
-  "user_id": 1,
-  "is_banned": false,
-  "created_at": "2024-01-01T00:00:00Z",
-  "updated_at": "2024-01-01T00:00:00Z"
-}
-```
+**For complete API documentation**, see:
+- **Interactive OpenAPI Docs**: Available at `/api-reference` endpoint (Scalar UI)
+- **OpenAPI JSON Spec**: Available at `/swagger-json` endpoint
+- **Postman Collection**: See `erify-api.postman_collection.json` for complete endpoint collection
 
 ## Design Patterns
 
@@ -1190,44 +1024,31 @@ getUser(
 
 ## Testing Strategy
 
-### Unit Tests
-- **Domain service** testing with mocked repositories
-- **Repository** testing with in-memory database
-- **Utility function** testing
-- **Controller** testing with mocked services
+The codebase follows a comprehensive testing strategy:
 
-### Integration Tests
-- End-to-end API testing
-- Database integration testing
-- Module integration testing
+- **Unit Tests**: Domain services (mocked repositories), repositories (in-memory DB), utilities, controllers (mocked services)
+- **Integration Tests**: End-to-end API testing, database integration, module integration
+- **Test Structure**: Tests co-located with source files (`*.spec.ts`), e2e tests in `test/` directory
 
-### Test Structure
-```
-src/
-├── user/
-│   ├── user.service.spec.ts
-│   └── user.repository.spec.ts
-├── admin/
-│   └── users/
-│       └── admin-user.controller.spec.ts  # Controllers only (no admin services)
-└── test/
-    └── jest-e2e.json
-```
+**Key Testing Patterns**:
+- Admin controllers test directly (no admin service layer)
+- Service layer tests verify business logic and error handling
+- Repository tests validate data access patterns and soft delete filtering
 
-> **Note**: Admin modules test controllers directly since there are no admin service layers.
+For detailed test implementation examples, see test files in `src/` directories.
 
 ## Configuration
 
-### Environment Variables
-- `DATABASE_URL`: PostgreSQL connection string
-- `NODE_ENV`: Environment (development, production)
-- `PORT`: Server port
-- `LOG_LEVEL`: Logging level
+**Environment Variables** (see `src/config/env.schema.ts`):
+- `DATABASE_URL` - PostgreSQL connection string
+- `ERIFY_AUTH_URL` - Base URL of erify_auth service (for JWT/JWKS)
+- `NODE_ENV` - Environment (development, production)
+- `PORT` - Server port
+- `LOG_LEVEL` - Logging level
+- `BACKDOOR_API_KEY` - (Optional) API key for backdoor operations
+- `EDGE_RUNTIME` - (Optional) Set to `true` for edge/worker runtimes
 
-### Database Schema
-- Uses Prisma ORM for type-safe database access
-- Supports migrations and schema evolution
-- Includes soft delete functionality
+**Database**: Prisma ORM with PostgreSQL, supports migrations and schema evolution, includes soft delete functionality
 
 ## Security Considerations
 
@@ -1244,12 +1065,19 @@ src/
 - Sensitive data protection
 
 ### Authentication & Authorization
-- **Phase 1 Hybrid Approach**: JWT validation for user identification + StudioMembership model for admin verification
-- **JWT Validation** (Pending): Token validation from `erify_auth` service for user identification
+- **Phase 1 Hybrid Approach**: JWK-based JWT validation for user identification + StudioMembership model for admin verification
+- **JWK-Based JWT Validation** (Pending): Token validation using `@eridu/auth-integration` SDK
+  - **SDK Package**: `@eridu/auth-integration` provides `JwksService` and `JwtVerifier`
+  - **JWKS Endpoint**: SDK fetches public keys from `{ERIFY_AUTH_URL}/api/auth/jwks`
+  - **Local Verification**: SDK validates JWT tokens locally using cached JWKS (no network call per request)
+  - **Startup Caching**: SDK fetches JWKS on server startup and caches in memory for efficiency
+  - **Edge/Worker Support**: SDK supports on-demand JWKS fetching for edge/worker runtimes
+  - **Automatic Key Rotation**: SDK detects unknown key IDs and automatically refreshes JWKS
+  - **NestJS Adapter**: `JwtAuthGuard` provided by SDK for easy NestJS integration
 - **Admin Verification**: StudioMembership model determines admin permissions (simple lookup in ANY studio)
 - **Access Control**: Admin users get full CRUD access, non-admin users get read-only access
-- **Service Integration** (Pending): API key authentication for internal service communication
-- **Admin Guards** (Pending): JWT + StudioMembership verification for write operations
+- **Service Integration**: API key authentication for internal service communication (implemented)
+- **Admin Guards** (Pending): JWT + StudioMembership verification for write operations (uses SDK's `JwtAuthGuard`)
 - **Phase 3 Enhancement**: Client/Platform memberships and advanced role-based access control
 
 ## Performance Considerations

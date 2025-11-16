@@ -1,0 +1,1638 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-15T03:35:20.426Z",
+      "totalShows": 50,
+      "clientName": "Reebok",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1763177720426_30",
+        "name": "Reebok Show 31",
+        "startTime": "2025-11-01T03:05:10.617Z",
+        "endTime": "2025-11-01T05:30:24.501Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Reebok Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Reebok Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_2",
+        "name": "Reebok Show 3",
+        "startTime": "2025-11-01T11:51:45.937Z",
+        "endTime": "2025-11-01T15:06:31.759Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Reebok Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Reebok Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Reebok Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_9",
+        "name": "Reebok Show 10",
+        "startTime": "2025-11-01T17:22:06.341Z",
+        "endTime": "2025-11-01T20:51:00.566Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Reebok Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-10",
+            "platformShowId": "platform_show_10_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_18",
+        "name": "Reebok Show 19",
+        "startTime": "2025-11-03T11:08:59.956Z",
+        "endTime": "2025-11-03T13:33:53.609Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Reebok Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Reebok Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-19",
+            "platformShowId": "platform_show_19_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_33",
+        "name": "Reebok Show 34",
+        "startTime": "2025-11-03T14:19:18.393Z",
+        "endTime": "2025-11-03T16:42:50.556Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Reebok Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Reebok Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_44",
+        "name": "Reebok Show 45",
+        "startTime": "2025-11-04T10:27:11.006Z",
+        "endTime": "2025-11-04T12:40:12.294Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Reebok Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_21",
+        "name": "Reebok Show 22",
+        "startTime": "2025-11-05T21:17:54.548Z",
+        "endTime": "2025-11-05T23:57:50.860Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Reebok Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_46",
+        "name": "Reebok Show 47",
+        "startTime": "2025-11-06T05:53:49.449Z",
+        "endTime": "2025-11-06T09:43:43.562Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Reebok Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Reebok Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_35",
+        "name": "Reebok Show 36",
+        "startTime": "2025-11-07T05:48:46.205Z",
+        "endTime": "2025-11-07T07:08:30.901Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Reebok Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Reebok Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_14",
+        "name": "Reebok Show 15",
+        "startTime": "2025-11-08T04:51:13.482Z",
+        "endTime": "2025-11-08T05:53:55.517Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Reebok Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Reebok Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Reebok Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_6",
+        "name": "Reebok Show 7",
+        "startTime": "2025-11-08T12:30:38.977Z",
+        "endTime": "2025-11-08T14:16:46.766Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Reebok Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_24",
+        "name": "Reebok Show 25",
+        "startTime": "2025-11-08T21:09:54.485Z",
+        "endTime": "2025-11-08T23:39:52.197Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Reebok Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Reebok Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Reebok Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-25",
+            "platformShowId": "platform_show_25_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_42",
+        "name": "Reebok Show 43",
+        "startTime": "2025-11-09T11:09:27.718Z",
+        "endTime": "2025-11-09T14:39:05.566Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Reebok Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Reebok Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Reebok Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_32",
+        "name": "Reebok Show 33",
+        "startTime": "2025-11-09T23:48:00.061Z",
+        "endTime": "2025-11-10T02:21:28.697Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Reebok Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Reebok Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Reebok Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_3",
+        "name": "Reebok Show 4",
+        "startTime": "2025-11-10T05:38:27.537Z",
+        "endTime": "2025-11-10T08:08:10.504Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Reebok Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Reebok Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-4",
+            "platformShowId": "platform_show_4_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_28",
+        "name": "Reebok Show 29",
+        "startTime": "2025-11-10T09:34:20.917Z",
+        "endTime": "2025-11-10T13:10:56.960Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Reebok Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-29",
+            "platformShowId": "platform_show_29_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_23",
+        "name": "Reebok Show 24",
+        "startTime": "2025-11-10T11:26:18.588Z",
+        "endTime": "2025-11-10T12:54:40.160Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Reebok Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Reebok Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_12",
+        "name": "Reebok Show 13",
+        "startTime": "2025-11-11T00:00:42.321Z",
+        "endTime": "2025-11-11T01:04:15.611Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Reebok Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_15",
+        "name": "Reebok Show 16",
+        "startTime": "2025-11-11T02:21:36.047Z",
+        "endTime": "2025-11-11T04:02:40.167Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Reebok Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Reebok Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Reebok Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-16",
+            "platformShowId": "platform_show_16_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_39",
+        "name": "Reebok Show 40",
+        "startTime": "2025-11-11T10:51:46.534Z",
+        "endTime": "2025-11-11T14:05:30.946Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Reebok Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Reebok Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Reebok Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-40",
+            "platformShowId": "platform_show_40_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_45",
+        "name": "Reebok Show 46",
+        "startTime": "2025-11-11T15:18:04.490Z",
+        "endTime": "2025-11-11T18:48:37.244Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Reebok Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-46",
+            "platformShowId": "platform_show_46_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_48",
+        "name": "Reebok Show 49",
+        "startTime": "2025-11-12T05:34:39.056Z",
+        "endTime": "2025-11-12T09:20:19.192Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Reebok Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Reebok Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Reebok Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-49",
+            "platformShowId": "platform_show_49_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_8",
+        "name": "Reebok Show 9",
+        "startTime": "2025-11-12T19:56:25.841Z",
+        "endTime": "2025-11-12T21:56:27.385Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Reebok Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Reebok Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_40",
+        "name": "Reebok Show 41",
+        "startTime": "2025-11-13T22:14:22.096Z",
+        "endTime": "2025-11-13T23:20:42.631Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Reebok Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_11",
+        "name": "Reebok Show 12",
+        "startTime": "2025-11-14T11:23:45.421Z",
+        "endTime": "2025-11-14T15:06:00.733Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Reebok Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Reebok Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Reebok Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_19",
+        "name": "Reebok Show 20",
+        "startTime": "2025-11-14T15:52:20.846Z",
+        "endTime": "2025-11-14T19:25:08.034Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Reebok Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Reebok Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Reebok Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_26",
+        "name": "Reebok Show 27",
+        "startTime": "2025-11-15T16:42:44.392Z",
+        "endTime": "2025-11-15T19:13:07.585Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Reebok Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-27",
+            "platformShowId": "platform_show_27_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_16",
+        "name": "Reebok Show 17",
+        "startTime": "2025-11-15T20:21:34.211Z",
+        "endTime": "2025-11-15T21:45:07.019Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Reebok Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Reebok Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_27",
+        "name": "Reebok Show 28",
+        "startTime": "2025-11-16T09:51:27.203Z",
+        "endTime": "2025-11-16T12:31:27.428Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Reebok Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Reebok Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Reebok Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_41",
+        "name": "Reebok Show 42",
+        "startTime": "2025-11-17T22:56:59.326Z",
+        "endTime": "2025-11-18T01:52:13.832Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Reebok Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-42",
+            "platformShowId": "platform_show_42_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_4",
+        "name": "Reebok Show 5",
+        "startTime": "2025-11-17T22:58:17.101Z",
+        "endTime": "2025-11-18T02:55:54.517Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Reebok Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Reebok Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Reebok Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_31",
+        "name": "Reebok Show 32",
+        "startTime": "2025-11-18T03:28:09.412Z",
+        "endTime": "2025-11-18T05:35:37.059Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Reebok Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Reebok Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Reebok Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_47",
+        "name": "Reebok Show 48",
+        "startTime": "2025-11-18T03:48:38.401Z",
+        "endTime": "2025-11-18T05:53:44.653Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Reebok Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Reebok Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Reebok Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-48",
+            "platformShowId": "platform_show_48_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_37",
+        "name": "Reebok Show 38",
+        "startTime": "2025-11-18T16:39:16.832Z",
+        "endTime": "2025-11-18T20:04:52.496Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Reebok Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Reebok Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Reebok Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_10",
+        "name": "Reebok Show 11",
+        "startTime": "2025-11-19T06:05:26.440Z",
+        "endTime": "2025-11-19T08:28:07.184Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Reebok Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Reebok Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Reebok Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_7",
+        "name": "Reebok Show 8",
+        "startTime": "2025-11-19T12:20:00.103Z",
+        "endTime": "2025-11-19T13:32:31.018Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Reebok Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-8",
+            "platformShowId": "platform_show_8_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_1",
+        "name": "Reebok Show 2",
+        "startTime": "2025-11-20T02:40:52.655Z",
+        "endTime": "2025-11-20T05:33:54.452Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Reebok Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-2",
+            "platformShowId": "platform_show_2_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_20",
+        "name": "Reebok Show 21",
+        "startTime": "2025-11-20T08:53:09.049Z",
+        "endTime": "2025-11-20T11:24:19.797Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Reebok Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Reebok Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_38",
+        "name": "Reebok Show 39",
+        "startTime": "2025-11-23T00:59:39.827Z",
+        "endTime": "2025-11-23T03:40:48.846Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Reebok Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Reebok Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Reebok Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_49",
+        "name": "Reebok Show 50",
+        "startTime": "2025-11-24T21:03:28.842Z",
+        "endTime": "2025-11-24T23:17:39.855Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Reebok Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Reebok Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Reebok Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_36",
+        "name": "Reebok Show 37",
+        "startTime": "2025-11-25T06:27:13.113Z",
+        "endTime": "2025-11-25T09:59:08.932Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Reebok Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_17",
+        "name": "Reebok Show 18",
+        "startTime": "2025-11-26T03:46:29.492Z",
+        "endTime": "2025-11-26T07:31:54.389Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Reebok Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Reebok Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-18",
+            "platformShowId": "platform_show_18_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_13",
+        "name": "Reebok Show 14",
+        "startTime": "2025-11-26T12:12:58.485Z",
+        "endTime": "2025-11-26T16:03:03.823Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Reebok Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Reebok Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_22",
+        "name": "Reebok Show 23",
+        "startTime": "2025-11-27T05:49:58.670Z",
+        "endTime": "2025-11-27T06:51:34.197Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Reebok Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_0",
+        "name": "Reebok Show 1",
+        "startTime": "2025-11-27T17:57:40.653Z",
+        "endTime": "2025-11-27T20:49:35.123Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Reebok Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_34",
+        "name": "Reebok Show 35",
+        "startTime": "2025-11-28T01:33:08.031Z",
+        "endTime": "2025-11-28T03:35:41.985Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Reebok Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Reebok Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Reebok Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_29",
+        "name": "Reebok Show 30",
+        "startTime": "2025-11-29T06:23:24.871Z",
+        "endTime": "2025-11-29T08:15:27.866Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Reebok Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Reebok Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Reebok Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-30",
+            "platformShowId": "platform_show_30_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720425_5",
+        "name": "Reebok Show 6",
+        "startTime": "2025-11-29T19:27:57.029Z",
+        "endTime": "2025-11-29T23:13:35.273Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Reebok Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-6",
+            "platformShowId": "platform_show_6_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_25",
+        "name": "Reebok Show 26",
+        "startTime": "2025-11-30T00:43:51.989Z",
+        "endTime": "2025-11-30T02:43:10.519Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Reebok Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_43",
+        "name": "Reebok Show 44",
+        "startTime": "2025-11-30T06:12:37.164Z",
+        "endTime": "2025-11-30T09:17:13.256Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Reebok Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Reebok Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Reebok Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

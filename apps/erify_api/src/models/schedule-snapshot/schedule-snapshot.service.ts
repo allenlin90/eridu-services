@@ -42,6 +42,7 @@ export class ScheduleSnapshotService extends BaseModelService {
     take?: number;
     where?: Prisma.ScheduleSnapshotWhereInput;
     orderBy?: Record<string, 'asc' | 'desc'>;
+    include?: Prisma.ScheduleSnapshotInclude;
   }): Promise<ScheduleSnapshot[]> {
     return this.scheduleSnapshotRepository.findMany(params);
   }

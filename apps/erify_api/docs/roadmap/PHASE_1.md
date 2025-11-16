@@ -6,10 +6,12 @@ Phase 1 establishes the core production functions with simplified authentication
 
 ## Related Documentation
 
-- **[Architecture Overview](../ARCHITECTURE.md)** - Complete module architecture, dependencies, and design patterns (including Show Orchestration)
-- **[Business Domain](../BUSINESS.md)** - Comprehensive business domain information and entity relationships
-- **[Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md)** - Complete schedule upload system design with JSON-based planning, snapshot versioning, and publishing workflow
-- **[Authentication Guide](../AUTHENTICATION_GUIDE.md)** - JWT validation and authorization patterns
+- **[Architecture Overview](../ARCHITECTURE.md)** - Module architecture, dependencies, and design patterns
+- **[Business Domain](../BUSINESS.md)** - Business domain information and entity relationships
+- **[Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md)** - Schedule upload system design with JSON-based planning and snapshot versioning
+- **[Authentication & Authorization Guide](../AUTHENTICATION_GUIDE.md)** - JWT validation, authorization patterns, and SDK implementation
+- **[Server-to-Server Authentication Guide](../SERVER_TO_SERVER_AUTH.md)** - API key guard usage
+- **[Auth Integration SDK](../../../packages/auth-integration/README.md)** - Complete SDK documentation and API reference
 
 ## Core Features
 
@@ -69,15 +71,16 @@ Phase 1 establishes the core production functions with simplified authentication
   - Support Google Sheets integration with sorted date-based listings
 - **Implementation Details**: See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md) for complete design
 
-### 5. Authentication & Authorization (Hybrid Approach)
-- **JWT Token Validation**: Validate JWT tokens from `erify_auth` service for user identification only
-- **Simple Authorization**: Use StudioMembership model to distinguish admin vs non-admin users
-- **Admin Verification**: Check if user has admin studio membership in ANY studio (simplified check)
-- **Admin Guard**: Verify JWT + check admin studio membership existence for write operations
-- **Read-Only Access**: Non-admin users get read-only access to all resources
-- **Service-to-Service Auth**: API key authentication for internal service communication
-- **Deferred to Phase 3**: Complex role hierarchy, context-specific permissions, Client and Platform memberships
-- **Implementation Details**: See [Authentication Guide](../AUTHENTICATION_GUIDE.md) for JWT validation patterns and authorization implementation
+### 5. Authentication & Authorization
+- **JWT Validation**: JWK-based validation from `erify_auth` service using Better Auth's JWKS endpoint
+  - Cached JWKS on startup for efficient local token verification
+  - On-demand JWKS fetching for edge/worker runtimes
+  - Automatic key rotation handling
+- **Authorization**: StudioMembership model for admin verification (admin in ANY studio = full CRUD, others = read-only)
+- **Service-to-Service Auth**: API key guards for privileged operations
+  - Google Sheets API key for schedule operations
+  - Backdoor API key for user/membership management (`/backdoor/*` endpoints)
+- **Deferred to Phase 3**: Complex role hierarchy, Client/Platform memberships
 
 ## Implementation Scope
 
@@ -101,13 +104,33 @@ Phase 1 establishes the core production functions with simplified authentication
   - [x] Branded ID generator
 
 - Authentication & Authorization (Hybrid Approach)
-  - [ ] JWT token validation from `erify_auth` service for user identification
+  - [ ] JWK-based JWT token validation using `@eridu/auth-integration` SDK
+    - [ ] Create `@eridu/auth-integration` SDK package structure
+    - [ ] Implement `JwksService` in SDK (framework-agnostic, fetch and cache JWKS on startup)
+    - [ ] Implement `JwtVerifier` in SDK (framework-agnostic, JWT validation using Better Auth JWKS endpoint)
+    - [ ] Implement `JwtAuthGuard` NestJS adapter in SDK
+    - [ ] Edge/worker runtime support (on-demand JWKS fetching)
+    - [ ] Automatic key rotation handling
+    - [ ] Add `@eridu/auth-integration` dependency to erify_api
+    - [ ] Add `ERIFY_AUTH_URL` and `EDGE_RUNTIME` to environment schema
+    - [ ] Register SDK services and guards in CommonModule
+    - [ ] Implement `AdminGuard` in erify_api (service-specific, depends on StudioMembership)
+    - [ ] Admin JWKS management endpoints (`GET /admin/jwks/status`, `POST /admin/jwks/refresh`) - uses SDK's `JwksService`
+    - [ ] Backdoor JWKS management endpoints (`POST /backdoor/jwks/refresh`) - uses SDK's `JwksService`
   - [x] Simple StudioMembership model for admin verification (basic CRUD) 
   - [ ] Admin studio membership lookup (check if user is admin in ANY studio)
   - [ ] Admin guard implementation (JWT + StudioMembership verification)
   - [ ] Read-only access for non-admin users
-  - [ ] API key authentication for service-to-service communication
-  - [ ] Admin endpoint protection
+  - [x] API key authentication for service-to-service communication
+    - [x] Google Sheets API key guard (`GoogleSheetsApiKeyGuard`) for schedule operations
+    - [x] Backdoor API key guard (`BackdoorApiKeyGuard`) for privileged operations
+      - [x] Backdoor controllers separate from admin controllers (`/backdoor/*` vs `/admin/*`)
+      - [x] `POST /backdoor/users` - Create user (API key required)
+      - [x] `PATCH /backdoor/users/:id` - Update user (API key required)
+      - [x] `POST /backdoor/studio-memberships` - Create membership (API key required)
+      - [ ] `POST /backdoor/jwks/refresh` - Refresh JWKS (API key required)
+      - [x] Guard extensible for future IP whitelisting
+  - [x] Backdoor endpoint protection (API key guards at controller level, separate from admin endpoints)
 
 - CRUD entities by admin user
   - [x] User 
@@ -152,101 +175,38 @@ Phase 1 establishes the core production functions with simplified authentication
   - [x] ShowStandard (standard, premium)
 
 - Schedule Planning Management System
-  - [x] Schedule entity with JSON plan document storage
-  - [x] ScheduleSnapshot entity for version history
-  - [x] ScheduleService (basic CRUD operations including duplicate, optimistic locking)
-  - [x] ScheduleService bulk operations (bulk create and bulk update)
-  - [x] ScheduleService monthly overview (schedules grouped by client and status)
-  - [x] ScheduleSnapshotService (basic CRUD operations with auto-snapshot on update)
-  - [x] ValidationService (pre-publish validation with conflict detection)
-  - [x] PublishingService (sync JSON documents to normalized Show tables)
-  - [x] AdminScheduleController with REST API endpoints at `/admin/schedules`
-    - [x] Bulk create endpoint (`POST /admin/schedules/bulk`)
-    - [x] Bulk update endpoint (`PATCH /admin/schedules/bulk`)
-    - [x] Monthly overview endpoint (`GET /admin/schedules/overview/monthly`)
-    - [x] Individual schedule publish endpoint (`POST /admin/schedules/:id/publish`)
-    - [x] Individual schedule validate endpoint (`POST /admin/schedules/:id/validate`)
-  - [x] AdminSnapshotController for version history operations at `/admin/snapshots`
-    - [x] `GET /admin/snapshots/:id` - Get snapshot details
-    - [x] `POST /admin/snapshots/:id/restore` - Restore schedule from snapshot
-  - [x] Schedule restore from snapshot functionality (via SchedulePlanningService)
-    - [x] `GET /admin/schedules/:id/snapshots` - List snapshots for a schedule
-    - [x] Restore workflow with `before_restore` snapshot creation
-  - [x] Update Show model to include `scheduleId` field
-  - [x] **Client-by-Client Schedule Upload** ⭐ (Phase 1 Primary Approach)
-    - [x] **Bulk Create/Update Operations**
-      - [x] `POST /admin/schedules/bulk` - Bulk create schedules (one per client)
-      - [x] `PATCH /admin/schedules/bulk` - Bulk update schedules
-      - [x] Partial success handling (failures isolated per client)
-      - [x] Detailed per-schedule results with error reporting
-    - [x] **Individual Schedule Publishing**
-      - [x] `POST /admin/schedules/:id/publish` - Publish single schedule
-      - [x] `POST /admin/schedules/:id/validate` - Validate before publish
-      - [x] Per-client validation (room conflicts, MC double-booking)
-    - [x] **Monthly Overview**
-      - [x] Use existing `GET /admin/schedules/overview/monthly` endpoint
-      - [x] Groups schedules by client and status
-      - [ ] Test with 50+ clients (documentation/testing pending)
-    - [ ] **Testing**
-      - [x] Unit tests: bulk create/update
-      - [x] Integration tests: 50 clients, ~50 shows each
-      - [x] Individual publish integration tests
-      - [ ] Google Sheets simulation with AppsScript
-    - [x] **Documentation**
-      - [x] Updated test-payloads/README.md with client-by-client workflow
-      - [x] Google Sheets integration examples
-      - [x] API usage guide in SCHEDULE_UPLOAD_API_DESIGN.md
-      - [x] Google Sheets API calling workflow flowchart with complete lifecycle (create → individual publish)
-    - [x] See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md#phase-1-client-by-client-upload--implemented) for complete workflow
-  - ⚠️ **Note**: Chunked upload `appendShows` service method exists (service layer only, no controller endpoint) but is **deferred to Phase 2** as there's no current demand for large single-client schedules
-  - [x] **Enhanced Query Support for Client-Scoped Data (Google Sheets Integration)**
-    - [x] Add query parameters to `GET /admin/schedules` endpoint (client_id, start_date, end_date, order_by) for planning stage queries
-    - [x] Add `include_plan_document` query parameter to `GET /admin/schedules` endpoint (default: `false`) to exclude large `plan_document` from list responses
-    - [x] Add query parameters to `GET /admin/shows` endpoint (client_id, start_date, end_date, order_by)
-    - [x] Add database indexes for performance: `[clientId, startTime]` and `[clientId, startTime, deletedAt]` on Show model 
-    - [x] Add database index for performance: `[clientId, startDate, endDate, deletedAt]` on Schedule model 
-    - [x] Update ScheduleService to support flexible date range queries by client ID (getMonthlyOverview supports clientIds, but regular GET endpoint needs query params)
-    - [x] Update ShowService/ShowOrchestrationService to support flexible date range queries by client ID (getShowsByClient, getShowsByDateRange exist, but need to be exposed via query params)
-    - [x] Verify monthly overview endpoints support proper client filtering and sorting for Google Sheets use case  (Monthly overview supports clientIds filtering)
+  - [x] Schedule and ScheduleSnapshot entities with JSON plan documents
+  - [x] Services: ScheduleService (CRUD, bulk ops, monthly overview), ScheduleSnapshotService, ValidationService, PublishingService
+  - [x] Controllers: AdminScheduleController (`/admin/schedules`), AdminSnapshotController (`/admin/snapshots`)
+  - [x] Client-by-client upload workflow (bulk create/update, individual publishing)
+  - [x] Query support for client-scoped data (Google Sheets integration)
+  - [x] Database indexes for performance
+  - [x] MC-scoped show query endpoints (`GET /me/shows`, `GET /me/shows/:show_id`)
+  - ⚠️ Chunked upload service method exists but deferred to Phase 2 (no controller endpoint)
 
 - Documentation
-  - [x] [Architecture Overview](../ARCHITECTURE.md) - Complete module architecture and design patterns
-  - [x] [Business Domain](../BUSINESS.md) - Comprehensive business domain information
-  - [x] [Architecture Overview](../ARCHITECTURE.md) - Cross-module coordination patterns including Show Orchestration
-  - [x] [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md) - Complete schedule upload system design with JSON-based planning and snapshot versioning
-  - [x] [Authentication Guide](../AUTHENTICATION_GUIDE.md) - JWT validation and authorization patterns
+  - [x] Architecture Overview, Business Domain, Schedule Upload API Design, Authentication Guide
 
 ## Technical Considerations
 
 ### Database Design
-- Consistent UID-based external identifiers (never expose internal database IDs)
-- ID mapping pattern: Generic `id` parameters in URLs map to internal UIDs for external communication
-- Hides number-based primary keys from external stakeholders
-- Soft delete pattern for data preservation
-- Proper indexing for performance
-- Foreign key constraints for data integrity
-- Polymorphic relationships for flexible associations
-- **Entity Relationships**: See [Business Domain](../BUSINESS.md) for comprehensive entity relationship diagrams and business rules
+- UID-based external identifiers (never expose internal database IDs)
+- ID mapping: Generic `id` parameters in URLs map to internal UIDs
+- Soft delete pattern, proper indexing, foreign key constraints
+- See [Business Domain](../BUSINESS.md) for entity relationships and business rules
 
 ### API Design
-- RESTful endpoints following established patterns with ID mapping
-- Generic `id` parameters in URLs that map to internal UIDs for external communication
-- Hides internal database structure (number-based primary keys) from external stakeholders
-- Consistent validation with Zod schemas
-- Proper error handling with NestJS exceptions
-- Pagination support for large datasets
-- Snake_case input/output with proper field mapping
-- **Module Architecture**: See [Architecture Overview](../ARCHITECTURE.md) for detailed module dependencies and API endpoint patterns
+- RESTful endpoints with ID mapping (UIDs for external communication)
+- Zod-based validation, NestJS error handling, pagination
+- Snake_case input/output with field mapping
+- See [Architecture Overview](../ARCHITECTURE.md) for module dependencies and endpoint patterns
 
 ### Security
-- **Hybrid Authentication**: JWT validation for user identification + StudioMembership model for admin verification
-- **Admin Write, Non-Admin Read-Only**: Simple authorization pattern
-- **Input validation and sanitization**
-- **SQL injection prevention via Prisma**
-- **CORS and security headers**
-- **JWT token validation from erify_auth service**
-- **Basic admin verification via StudioMembership lookup**
-- **Implementation Guide**: See [Authentication Guide](../AUTHENTICATION_GUIDE.md) for detailed JWT validation and authorization implementation patterns
+- JWK-based JWT validation with cached JWKS (see Core Features for details)
+- Admin write, non-admin read-only authorization via StudioMembership
+- Service-to-service API key authentication (Google Sheets, Backdoor)
+- Input validation, SQL injection prevention (Prisma), CORS, security headers
+- See [Authentication Guide](../AUTHENTICATION_GUIDE.md) and [Server-to-Server Authentication Guide](../SERVER_TO_SERVER_AUTH.md) for implementation details
 
 ### Performance
 - Indexed queries for common operations
@@ -257,78 +217,41 @@ Phase 1 establishes the core production functions with simplified authentication
 ## Success Criteria
 
 ### Core Entity Management
-- [x] Complete CRUD operations for core entities (Users, Clients, MCs, Platforms, Studios, StudioRooms, ShowType, ShowStatus, ShowStandard)
-- [x] Functional direct show creation with full CRUD operations
-- [x] Working show-MC relationships (ShowMC entity)
-- [x] Working show-platform relationships (ShowPlatform entity)
-- [x] ShowOrchestrationModule implementation:
-  - [x] Atomic show creation with MC/platform assignments
-  - [x] Single show relationship operations (add/remove/replace MCs and platforms)
-  - [x] Relationship management endpoints
-- [x] Admin interface for managing all implemented entities
+- [x] Complete CRUD operations for all core entities
+- [x] Show orchestration with atomic creation and relationship management
+- [x] Admin interface for entity management
 
-### Schedule Planning Management System (Individual Publishing)
-- [x] Schedule entity with JSON plan document storage
-- [x] ScheduleSnapshot for version history
-- [x] Schedule publishing workflow (JSON → normalized Show tables)
-- [x] Per-client validation with conflict detection (room conflicts, MC double-booking)
-- [x] Snapshot restore functionality (via SchedulePlanningService)
-- [x] Bulk operations:
-  - [x] Bulk create schedules with partial success handling
-  - [x] Bulk update schedules with partial success handling
-  - [x] Individual schedule publishing (one schedule at a time)
-- [x] Monthly overview endpoint (schedules grouped by client and status within date range)
-- [x] Client-by-client upload strategy documented and implemented
-- [x] Individual schedule publishing (validate and publish one schedule at a time)
-- ⚠️ Chunked upload service method implemented (Phase 2 feature, no controller endpoint)
+### Schedule Planning Management System
+- [x] JSON-based planning with snapshot versioning
+- [x] Client-by-client upload workflow (bulk create/update, individual publishing)
+- [x] Pre-publish validation and conflict detection
+- [x] Query support for Google Sheets integration
 
-### Authentication & Authorization ⚠️ **PARTIAL**
-- [ ] JWT token validation from `erify_auth` service for user identification
-- [x] Simple StudioMembership model (database model complete, auth integration pending)
-- [ ] Admin guard implementation (JWT + StudioMembership verification)
-- [ ] Hybrid authentication with admin write, others read-only
+### Authentication & Authorization
+- [ ] JWK-based JWT validation (pending)
+- [x] StudioMembership model (database complete, auth integration pending)
+- [x] Service-to-service API key authentication
 
 ### Quality & Performance
-- [x] Comprehensive testing coverage for core services (unit tests)
-- [x] Security best practices implemented (input validation, SQL injection prevention, CORS, headers)
-- [x] Performance optimizations in place (indexed queries, pagination, efficient loading)
-- [x] Seed data for reference tables (ShowType, ShowStatus, ShowStandard)
+- [x] Testing coverage, security best practices, performance optimizations, seed data
 
 ## Dependencies
-- [x] PostgreSQL database setup
-- [x] Prisma ORM configuration
-- [x] NestJS framework setup
-- [x] Environment configuration
-- [x] `erify_auth` service running and accessible
-- [ ] JWT token validation setup
-- [x] Simple StudioMembership model for admin verification (database model complete)
-- [ ] Admin guard implementation using JWT + StudioMembership
-- [ ] Hybrid authentication system (admin vs read-only)
-- [ ] Service-to-service authentication setup
-- **Architecture Reference**: See [Architecture Overview](../ARCHITECTURE.md) for complete module dependencies and implementation patterns
+- [x] Infrastructure: PostgreSQL, Prisma ORM, NestJS framework, environment configuration
+- [x] External services: `erify_auth` service accessible
+- [x] Database models: StudioMembership model complete
+- [x] Service-to-service authentication: API key guards implemented
+- [x] Dependencies: `jose` package available (will be provided by SDK)
+- [ ] Authentication integration: `@eridu/auth-integration` SDK package, JWK-based JWT validation, admin guard implementation (pending)
 
-## Timeline & Rollout Strategy
-
-### Phase 1 Implementation
-This phase delivers the core production functions with hybrid authentication approach. The implementation focuses on:
-
-1. **Core Entities**: Complete CRUD operations for essential entities
-2. **Direct Show Management**: Show creation with CONFIRMED status
-3. **Resource Assignment**: Direct assignment of MCs and platforms
-4. **JWT Validation**: Token validation for user identification
-5. **Simple Authorization**: StudioMembership model for admin verification
-6. **Service Integration**: Integration with `erify_auth` service for authentication
+## Workflows
 
 ### User Access Strategy
-- **Admin Users**: Full CRUD access to all resources (verified via simple StudioMembership lookup)
-- **Other Users**: Read-only access to all resources (authenticated via JWT validation)
-- **Authentication**: JWT tokens from `erify_auth` service for user identification
-- **Authorization**: Simple StudioMembership model determines admin permissions
-- **Service Integration**: API key authentication for internal service communication
-- **Future Enhancement**: Advanced authorization control with Client/Platform memberships in Phase 3
-- **Flexible Rollout**: Features can be enabled/disabled per user type as needed
+- **Admin Users**: Full CRUD access (verified via StudioMembership in ANY studio)
+- **Other Users**: Read-only access (authenticated via JWK-based JWT validation)
+- **Service Integration**: API key authentication for internal operations
+- **Future**: Client/Platform memberships in Phase 3
 
-### Show Management Workflows (Phase 1)
+### Show Management Workflows
 
 #### Direct Show Creation Workflow
 1. **Individual Creation**: Operators create shows one-by-one through admin UI
@@ -346,173 +269,30 @@ This phase delivers the core production functions with hybrid authentication app
 6. **Monthly Overview**: Use `GET /admin/schedules/overview/monthly` to view all client schedules together
 7. **Version History**: Every change creates immutable snapshot for audit trail and rollback capability
 
-**Note**: Bulk publish operations (publish multiple schedules in single API call with async job tracking) are deferred to Phase 2. See Phase 2 roadmap for bulk publish endpoint and job status tracking.
+**Note**: Bulk publish operations (publish multiple schedules in single API call with async job tracking) are deferred to Phase 2.
 
 #### Google Sheets Integration
+For complete workflow, API call sequence, error handling, and AppsScript integration details, see **[Google Sheets Workflow](../manual-test/schedule-planning/GOOGLE_SHEETS_WORKFLOW.md)**.
 
-For complete Google Sheets integration workflow, API call sequence, error handling, and AppsScript integration details, see **[Google Sheets Workflow](../test-payloads/GOOGLE_SHEETS_WORKFLOW.md)**.
+#### Phase 1 Capabilities & Limitations
+**Capabilities:**
+- Direct show creation (one-by-one), schedule planning with JSON documents, snapshot versioning
+- Pre-publish validation, optimistic locking, bulk schedule operations, individual publishing
+- Client-by-client upload workflow (one schedule per client, ~50 shows each)
 
-#### Migration from Google Sheets (Deferred to Phase 2)
-1. **CSV Export**: Export historical data from Google Sheets (planned for Phase 2)
-2. **CSV Import**: Import CSV file into Schedule as JSON plan document (planned for Phase 2)
-3. **Review & Edit**: Operators review and edit schedule in planning UI
-4. **Publish**: Publish schedule to create normalized Show records
+**Limitations:**
+- One show operation per API call (no bulk show operations)
+- No material management, CSV import/export, or chunked upload for large clients (>200 shows)
 
-**Phase 1 Capabilities:**
-- ✅ Direct show creation (one-by-one)
-- ✅ Schedule planning with JSON documents
-- ✅ Snapshot-based version history
-- ✅ Pre-publish validation with conflict detection (per-client)
-- ✅ Optimistic locking for concurrent edits
-- ✅ Schedule bulk operations (bulk create and bulk update)
-- ✅ Individual schedule publishing (validate and publish one schedule at a time)
-- ✅ Monthly overview (schedules grouped by client and status)
-- ✅ **Client-by-Client Schedule Upload** (Primary approach for Phase 1)
-  - ✅ One schedule per client (~50 shows each)
-  - ✅ No chunking needed for typical clients
-  - ✅ Bulk create/update operations implemented
-  - ✅ Individual schedule publishing (one at a time)
-
-**Phase 1 Limitations:**
-- One direct show operation per API call (no bulk operations for shows)
-- No material management capabilities
-- No CSV import/export for Google Sheets migration
-- **No chunked upload** (large clients with 200+ shows not supported)
-
-**Future Enhancements (Phase 2+):**
-- **Bulk Publish Operations** ⭐ - Validate and publish multiple schedules in single API call with async job tracking (Phase 2)
-- **Chunked Upload for Large Clients** (>200 shows per client) - Edge cases only (Phase 2)
-- **Cross-client validation endpoint** - Validate conflicts across multiple schedules (Phase 2)
-- **Enhanced error reporting** - Row numbers and detailed validation errors (Phase 2)
-- **Email notifications** - Notify users when bulk publish jobs complete (Phase 2)
-- Show bulk operations (bulk create and bulk update with partial success handling) (Phase 2)
-- Material Management System (material versioning, platform targeting, show-material associations) (Phase 2)
-- CSV import/export service for migration from Google Sheets (Phase 2)
-- API query features (expand parameter, search and search_term parameters) (Phase 2)
-- Idempotency handling for show and schedule creation requests (Phase 2)
-
-This approach provides a solid foundation with core functions while maintaining simplicity in the authentication layer and preparing for advanced features in later phases.
+**Deferred to Phase 2+:** Bulk publish operations, chunked upload, material management, CSV import/export, enhanced query features, idempotency handling
 
 ## Implementation Details
 
-### Show Service Pattern (✅ Implemented)
+### Service Patterns
 
-The Show service follows a consistent pattern for DTO-to-Prisma payload transformation. For complex show operations involving multiple MCs and platforms, see the [Architecture Overview](../ARCHITECTURE.md#showorchestrationmodule-) for cross-module coordination patterns.
+**Show Service Pattern**: Consistent DTO-to-Prisma transformation with builder methods (`buildCreatePayload`, `buildUpdatePayload`), type-safe relation loading, time range validation, and comprehensive test coverage. For complex operations with multiple MCs/platforms, see [Architecture Overview](../ARCHITECTURE.md#showorchestrationmodule-).
 
-#### Service Methods
-- **`createShowFromDto(dto, include?)`**: Accepts `CreateShowDto` and uses `buildCreatePayload()` to transform to Prisma input
-- **`createShow(data, include?)`**: Accepts `Omit<Prisma.ShowCreateInput, 'uid'>` directly for advanced use cases
-- **`getShowById(uid, include?)`**: Retrieves show with optional relations using generic includes
-- **`getShows(params, include?)`**: Lists shows with pagination and filtering
-- **`updateShowFromDto(uid, dto, include?)`**: Accepts `UpdateShowDto` and uses `buildUpdatePayload()` to transform
-- **`updateShow(uid, data, include?)`**: Accepts `Prisma.ShowUpdateInput` directly
-- **`deleteShow(uid)`**: Soft deletes a show
-
-#### Builder Methods
-- **`buildCreatePayload(dto)`**: Transforms `CreateShowDto` to Prisma create input
-  - Validates time range (endTime must be after startTime)
-  - Handles all foreign key connections via UID
-  - Sets default metadata to empty object
-  
-- **`buildUpdatePayload(dto)`**: Transforms `UpdateShowDto` to Prisma update input
-  - Uses explicit `undefined` checks for optional fields
-  - Validates time range when both times are updated
-  - Handles foreign key updates
-
-#### Type Safety
-- **`ShowWithIncludes<T>`**: Generic type for show results with relations
-- All methods support generic include parameters for type-safe relation loading
-- Return types are properly typed as `Show | ShowWithIncludes<T>`
-
-#### Validation
-- Time range validation: `endTime` must be after `startTime`
-- Validation occurs in `buildCreatePayload()` and `buildUpdatePayload()`
-- Prisma unique constraint violations mapped to 409 Conflict errors
-
-#### Testing
-- Comprehensive test coverage in `show.service.spec.ts`
-- Tests cover create, read, update, delete operations
-- Tests include validation, error handling, and edge cases
-- 15 test cases covering all major service methods
-
-This pattern provides:
-- Clear separation between DTO handling and direct Prisma operations
-- Flexibility for both API endpoints and internal service usage
-- Type-safe relation loading with generic includes
-- Consistent transformation logic in builder methods
-- Easy to test individual components
-
-### ShowPlatform Service Pattern (✅ Implemented)
-
-The ShowPlatform service follows the same consistent pattern as ShowMC for managing show-platform relationships:
-
-#### Service Methods
-- **`createShowPlatformFromDto(dto, include?)`**: Accepts `CreateShowPlatformDto` and uses `buildCreatePayload()` to transform to Prisma input
-- **`createShowPlatform(data, include?)`**: Accepts `Omit<Prisma.ShowPlatformCreateInput, 'uid'>` directly for advanced use cases
-- **`getShowPlatformById(uid, include?)`**: Retrieves show-platform with optional relations using generic includes
-- **`getShowPlatforms(params, include?)`**: Lists show-platforms with pagination and filtering
-- **`getActiveShowPlatforms(params)`**: Lists only non-deleted show-platforms
-- **`getShowPlatformsByShow(showId, params?)`**: Lists all platforms for a specific show
-- **`getShowPlatformsByPlatform(platformId, params?)`**: Lists all shows for a specific platform
-- **`findShowPlatformByShowAndPlatform(showId, platformId)`**: Finds specific show-platform relationship
-- **`updateShowPlatformFromDto(uid, dto, include?)`**: Accepts `UpdateShowPlatformDto` and uses `buildUpdatePayload()` to transform
-- **`updateShowPlatform(uid, data, include?)`**: Accepts `Prisma.ShowPlatformUpdateInput` directly
-- **`deleteShowPlatform(uid)`**: Soft deletes a show-platform relationship
-- **`countShowPlatforms(where?)`**: Counts show-platform records with optional filtering
-
-#### Builder Methods
-- **`buildCreatePayload(dto)`**: Transforms `CreateShowPlatformDto` to Prisma create input
-  - Handles foreign key connections via UID (show, platform)
-  - Sets default viewer count to 0 if not provided
-  - Sets default metadata to empty object
-  
-- **`buildUpdatePayload(dto)`**: Transforms `UpdateShowPlatformDto` to Prisma update input
-  - Uses explicit `undefined` checks for optional fields
-  - Handles foreign key updates for show and platform
-  - Allows updating live stream link, platform show ID, viewer count, and metadata
-
-#### Repository Pattern
-- **Custom Model Wrapper**: Implements `IBaseModel` interface for ShowPlatform
-- **Specialized Queries**:
-  - `findByUid(uid, include?)`: Find by unique identifier with optional relations
-  - `findByShowAndPlatform(showId, platformId)`: Find by composite key
-  - `findByShow(showId, params?)`: Query all platforms for a show
-  - `findByPlatform(platformId, params?)`: Query all shows for a platform
-  - `findActiveShowPlatforms(params)`: Query all non-deleted relationships
-- **Soft Delete Support**: All queries filter out soft-deleted records
-
-#### Type Safety
-- **`ShowPlatformWithIncludes<T>`**: Generic type for show-platform results with relations
-- All methods support generic include parameters for type-safe relation loading
-- Return types are properly typed as `ShowPlatform | ShowPlatformWithIncludes<T>`
-
-#### Schema & Validation
-- **Zod Schemas**: Input validation with snake_case to camelCase transformation
-- **Required Fields**: `show_id`, `platform_id`, `live_stream_link`, `platform_show_id`
-- **Optional Fields**: `viewer_count` (defaults to 0), `metadata`
-- **Unique Constraint**: Composite unique constraint on `[showId, platformId]`
-- Prisma unique constraint violations mapped to 409 Conflict errors
-
-#### Testing
-- Comprehensive test coverage in `show-platform.service.spec.ts`
-- Tests cover all CRUD operations
-- Tests include validation, error handling, and edge cases
-- Tests for relationship queries (by show, by platform)
-- 15 test cases covering all major service methods
-
-#### Admin API Endpoints
-- **`POST /admin/show-platforms`**: Create new show-platform relationship
-- **`GET /admin/show-platforms`**: List with pagination (includes show and platform relations)
-- **`GET /admin/show-platforms/:uid`**: Get specific relationship by UID
-- **`PATCH /admin/show-platforms/:uid`**: Update relationship
-- **`DELETE /admin/show-platforms/:uid`**: Soft delete relationship
-
-This pattern provides the same benefits as other relationship modules:
-- Manages many-to-many show-platform relationships with additional metadata
-- Tracks live stream links and platform-specific show IDs
-- Monitors viewer counts for analytics
-- Type-safe operations with proper relation loading
-- Consistent with ShowMC and other entity patterns
+**ShowPlatform Service Pattern**: Follows same pattern as ShowMC for managing show-platform relationships. Includes specialized queries (by show, by platform, composite key lookup), soft delete support, and relationship-specific metadata (live stream links, platform show IDs, viewer counts).
 
 ## Database Schema
 

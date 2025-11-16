@@ -7,7 +7,63 @@ import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-sna
 import { ShowService } from '@/models/show/show.service';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
-import { PrismaService } from '@/prisma/prisma.service';
+import {
+  PrismaService,
+  TransactionClient,
+  TransactionOptions,
+} from '@/prisma/prisma.service';
+
+// Test helper type for mock transaction clients used in publishing tests
+// This allows test mocks to only implement the properties they need
+// The mock structure matches what's actually used in tests
+type PublishingMockTransactionClientStructure = {
+  show: {
+    deleteMany: jest.Mock;
+    createMany: jest.Mock;
+    findMany: jest.Mock;
+  };
+  showMC: {
+    createMany: jest.Mock;
+  };
+  showPlatform: {
+    createMany: jest.Mock;
+  };
+  schedule: {
+    update: jest.Mock;
+  };
+  client: {
+    findMany: jest.Mock;
+  };
+  studioRoom: {
+    findMany: jest.Mock;
+  };
+  showType: {
+    findMany: jest.Mock;
+  };
+  showStatus: {
+    findMany: jest.Mock;
+  };
+  showStandard: {
+    findMany: jest.Mock;
+  };
+  mC: {
+    findMany: jest.Mock;
+  };
+  platform: {
+    findMany: jest.Mock;
+  };
+};
+
+// Helper function to convert mock transaction client to TransactionClient for tests
+// This is safe because the callback only accesses properties that exist on the mock
+// Using a type assertion that TypeScript accepts for test mocks
+function asTransactionClient(
+  mock: PublishingMockTransactionClientStructure,
+): TransactionClient {
+  // Type assertion is necessary here because test mocks don't implement full TransactionClient
+  // The callback will only access properties that exist on the mock
+  return mock as PublishingMockTransactionClientStructure & TransactionClient;
+}
 
 import { PublishingService, ScheduleWithRelations } from './publishing.service';
 import { PlanDocument } from './schemas/schedule-planning.schema';
@@ -228,7 +284,7 @@ describe('PublishingService', () => {
         {
           provide: ShowMcService,
           useValue: {
-            generateShowUid: jest.fn(),
+            generateShowMcUid: jest.fn(),
           },
         },
         {
@@ -246,12 +302,17 @@ describe('PublishingService', () => {
         {
           provide: PrismaService,
           useValue: {
-            $transaction: jest.fn(
-              async (
-                callback: (
-                  tx: typeof mockTransactionClient,
-                ) => Promise<unknown>,
-              ) => await callback(mockTransactionClient),
+            executeTransaction: jest.fn(
+              async <T>(
+                callback: (tx: TransactionClient) => Promise<T>,
+                _options?: TransactionOptions,
+              ): Promise<T> => {
+                // Mock transaction client only implements subset needed for tests
+                // The callback will only access the properties that exist on mockTransactionClient
+                return await callback(
+                  asTransactionClient(mockTransactionClient),
+                );
+              },
             ),
           },
         },
@@ -274,11 +335,11 @@ describe('PublishingService', () => {
       'createScheduleSnapshot'
     ] as jest.Mock;
     generateShowUidMock = showService['generateShowUid'] as jest.Mock;
-    generateShowMcUidMock = showMcService['generateShowUid'] as jest.Mock;
+    generateShowMcUidMock = showMcService['generateShowMcUid'] as jest.Mock;
     generateShowPlatformUidMock = showPlatformService[
       'generateShowPlatformUid'
     ] as jest.Mock;
-    transactionMock = prismaService['$transaction'] as jest.Mock;
+    transactionMock = prismaService['executeTransaction'] as jest.Mock;
   });
 
   beforeEach(() => {

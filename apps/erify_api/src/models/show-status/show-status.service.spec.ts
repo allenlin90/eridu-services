@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { Test, TestingModule } from '@nestjs/testing';
-
+import {
+  createMockRepository,
+  createMockUtilityService,
+  createModelServiceTestModule,
+} from '@/common/test-helpers/model-service-test.helper';
 import { createMockUniqueConstraintError } from '@/common/test-helpers/prisma-error.helper';
 import { UtilityService } from '@/utility/utility.service';
 
@@ -15,28 +18,16 @@ describe('ShowStatusService', () => {
   let utilityService: UtilityService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ShowStatusService,
-        {
-          provide: ShowStatusRepository,
-          useValue: {
-            create: jest.fn(),
-            findOne: jest.fn(),
-            findMany: jest.fn(),
-            update: jest.fn(),
-            softDelete: jest.fn(),
-            count: jest.fn(),
-          },
-        },
-        {
-          provide: UtilityService,
-          useValue: {
-            generateBrandedId: jest.fn().mockReturnValue('shst_test123'),
-          },
-        },
-      ],
-    }).compile();
+    const showStatusRepositoryMock =
+      createMockRepository<ShowStatusRepository>();
+    const utilityMock = createMockUtilityService('shst_test123');
+
+    const module = await createModelServiceTestModule({
+      serviceClass: ShowStatusService,
+      repositoryClass: ShowStatusRepository,
+      repositoryMock: showStatusRepositoryMock,
+      utilityMock: utilityMock,
+    });
 
     service = module.get<ShowStatusService>(ShowStatusService);
     showStatusRepository =

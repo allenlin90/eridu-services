@@ -1,5 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-
+import {
+  createMockRepository,
+  createMockUtilityService,
+  createModelServiceTestModule,
+  setupTestMocks,
+} from '@/common/test-helpers/model-service-test.helper';
 import { createMockUniqueConstraintError } from '@/common/test-helpers/prisma-error.helper';
 import { UtilityService } from '@/utility/utility.service';
 
@@ -26,23 +30,8 @@ jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
 describe('ShowService', () => {
   let service: ShowService;
-
-  const showRepositoryMock: Partial<jest.Mocked<ShowRepository>> = {
-    create: jest.fn(),
-    findByUid: jest.fn(),
-    update: jest.fn(),
-    softDelete: jest.fn(),
-    findMany: jest.fn(),
-    count: jest.fn(),
-    findActiveShows: jest.fn(),
-    findShowsByClient: jest.fn(),
-    findShowsByStudioRoom: jest.fn(),
-    findShowsByDateRange: jest.fn(),
-  };
-
-  const utilityMock: Partial<jest.Mocked<UtilityService>> = {
-    generateBrandedId: jest.fn().mockReturnValue('show_123'),
-  };
+  let showRepositoryMock: Partial<jest.Mocked<ShowRepository>>;
+  let utilityMock: Partial<jest.Mocked<UtilityService>>;
 
   const mockClient = {
     id: BigInt(1),
@@ -74,19 +63,27 @@ describe('ShowService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ShowService,
-        { provide: ShowRepository, useValue: showRepositoryMock },
-        { provide: UtilityService, useValue: utilityMock },
-      ],
-    }).compile();
+    showRepositoryMock = createMockRepository<ShowRepository>({
+      findActiveShows: jest.fn(),
+      findShowsByClient: jest.fn(),
+      findShowsByStudioRoom: jest.fn(),
+      findShowsByDateRange: jest.fn(),
+    });
+
+    utilityMock = createMockUtilityService('show_123');
+
+    const module = await createModelServiceTestModule({
+      serviceClass: ShowService,
+      repositoryClass: ShowRepository,
+      repositoryMock: showRepositoryMock,
+      utilityMock: utilityMock,
+    });
 
     service = module.get<ShowService>(ShowService);
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    setupTestMocks();
   });
 
   describe('createShowFromDto', () => {

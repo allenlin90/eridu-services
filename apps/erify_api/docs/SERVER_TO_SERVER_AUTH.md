@@ -27,6 +27,7 @@ Add to your `.env` file:
 
 ```env
 GOOGLE_SHEETS_API_KEY=<your-generated-api-key>
+BACKDOOR_API_KEY=<your-generated-api-key>
 ```
 
 **Environment Behavior**:
@@ -128,6 +129,50 @@ export class ScheduleController {
   }
 }
 ```
+
+### BackdoorApiKeyGuard
+
+**Environment Variable**: `BACKDOOR_API_KEY`
+
+**Service Name**: `'backdoor'`
+
+**Purpose**: Validates API keys for service-to-service backdoor operations. These endpoints are separate from admin controllers to allow for:
+- Different authentication mechanism (API key vs JWT)
+- Future IP whitelisting
+- Clear separation of concerns
+
+**Protected Operations**:
+- Creating users
+- Updating users
+- Creating studio memberships for admin users
+
+**Usage**:
+```typescript
+import { BackdoorApiKeyGuard } from '@/common/guards/backdoor-api-key.guard';
+
+@Controller('backdoor/users')
+@UseGuards(BackdoorApiKeyGuard)  // Guard at controller level
+export class BackdoorUserController {
+  @Post()
+  async createUser(@Body() body: CreateUserDto) {
+    // req.service.serviceName === 'backdoor'
+    return this.userService.createUser(body);
+  }
+
+  @Patch(':id')
+  async updateUser(@Param('id') id: string, @Body() body: UpdateUserDto) {
+    // req.service.serviceName === 'backdoor'
+    return this.userService.updateUser(id, body);
+  }
+}
+```
+
+**Protected Endpoints**:
+- `POST /backdoor/users` - Create user (API key required)
+- `PATCH /backdoor/users/:id` - Update user (API key required)
+- `POST /backdoor/studio-memberships` - Create studio membership (API key required)
+
+**Future Enhancement**: IP whitelisting can be added by configuring `BACKDOOR_ALLOWED_IPS` environment variable.
 
 ---
 
@@ -310,6 +355,13 @@ pnpm test:cov
 - ✅ Service name verification (`'google-sheets'`)
 - ✅ Environment-specific behavior
 
+**BackdoorApiKeyGuard**:
+- ✅ Service-specific validation
+- ✅ Service name verification (`'backdoor'`)
+- ✅ Environment-specific behavior
+- ✅ Protects privileged user and membership operations
+- ✅ Extensible for IP whitelisting (via `validateRequest()` override)
+
 ### Integration Test Example
 
 ```typescript
@@ -431,4 +483,4 @@ request.service = {
 ## Related Documentation
 
 - **[Authentication Guide](./AUTHENTICATION_GUIDE.md)** - User authentication with JWT
-- **[Google Sheets Workflow](../test-payloads/GOOGLE_SHEETS_WORKFLOW.md)** - Google Sheets integration guide
+- **[Google Sheets Workflow](../manual-test/schedule-planning/GOOGLE_SHEETS_WORKFLOW.md)** - Google Sheets integration guide

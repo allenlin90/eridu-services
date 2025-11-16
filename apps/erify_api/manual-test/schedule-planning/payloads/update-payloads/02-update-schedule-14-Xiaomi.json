@@ -1,0 +1,1563 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-15T03:35:20.428Z",
+      "totalShows": 50,
+      "clientName": "Xiaomi",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1763177720428_37",
+        "name": "Xiaomi Show 38",
+        "startTime": "2025-11-01T05:17:55.961Z",
+        "endTime": "2025-11-01T08:17:28.652Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Xiaomi Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Xiaomi Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Xiaomi Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_12",
+        "name": "Xiaomi Show 13",
+        "startTime": "2025-11-02T00:52:38.713Z",
+        "endTime": "2025-11-02T02:08:09.972Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Xiaomi Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Xiaomi Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_27",
+        "name": "Xiaomi Show 28",
+        "startTime": "2025-11-02T09:06:02.487Z",
+        "endTime": "2025-11-02T12:31:21.036Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Xiaomi Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Xiaomi Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Xiaomi Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-28",
+            "platformShowId": "platform_show_28_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_23",
+        "name": "Xiaomi Show 24",
+        "startTime": "2025-11-02T10:24:30.933Z",
+        "endTime": "2025-11-02T13:43:19.631Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Xiaomi Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-24",
+            "platformShowId": "platform_show_24_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_30",
+        "name": "Xiaomi Show 31",
+        "startTime": "2025-11-03T01:40:23.031Z",
+        "endTime": "2025-11-03T04:02:32.742Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Xiaomi Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_41",
+        "name": "Xiaomi Show 42",
+        "startTime": "2025-11-04T02:46:02.405Z",
+        "endTime": "2025-11-04T05:54:29.963Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Xiaomi Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-42",
+            "platformShowId": "platform_show_42_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_19",
+        "name": "Xiaomi Show 20",
+        "startTime": "2025-11-05T06:43:39.103Z",
+        "endTime": "2025-11-05T08:49:03.431Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Xiaomi Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_31",
+        "name": "Xiaomi Show 32",
+        "startTime": "2025-11-06T01:42:04.970Z",
+        "endTime": "2025-11-06T04:56:46.201Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Xiaomi Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Xiaomi Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Xiaomi Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_4",
+        "name": "Xiaomi Show 5",
+        "startTime": "2025-11-06T18:01:51.733Z",
+        "endTime": "2025-11-06T20:39:25.242Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Xiaomi Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_8",
+        "name": "Xiaomi Show 9",
+        "startTime": "2025-11-07T03:03:12.302Z",
+        "endTime": "2025-11-07T05:55:05.463Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Xiaomi Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_48",
+        "name": "Xiaomi Show 49",
+        "startTime": "2025-11-07T22:54:04.050Z",
+        "endTime": "2025-11-08T01:29:02.052Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Xiaomi Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Xiaomi Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Xiaomi Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-49",
+            "platformShowId": "platform_show_49_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_22",
+        "name": "Xiaomi Show 23",
+        "startTime": "2025-11-08T19:38:12.326Z",
+        "endTime": "2025-11-08T22:39:56.379Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Xiaomi Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Xiaomi Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_5",
+        "name": "Xiaomi Show 6",
+        "startTime": "2025-11-09T20:14:55.404Z",
+        "endTime": "2025-11-09T22:35:16.538Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Xiaomi Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Xiaomi Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Xiaomi Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_20",
+        "name": "Xiaomi Show 21",
+        "startTime": "2025-11-09T21:44:32.429Z",
+        "endTime": "2025-11-10T00:37:02.000Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Xiaomi Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_43",
+        "name": "Xiaomi Show 44",
+        "startTime": "2025-11-10T01:04:30.375Z",
+        "endTime": "2025-11-10T04:24:06.623Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Xiaomi Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Xiaomi Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Xiaomi Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_1",
+        "name": "Xiaomi Show 2",
+        "startTime": "2025-11-11T16:35:05.959Z",
+        "endTime": "2025-11-11T18:12:08.929Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Xiaomi Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_32",
+        "name": "Xiaomi Show 33",
+        "startTime": "2025-11-12T02:23:57.650Z",
+        "endTime": "2025-11-12T05:04:46.783Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Xiaomi Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Xiaomi Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_14",
+        "name": "Xiaomi Show 15",
+        "startTime": "2025-11-12T10:40:10.430Z",
+        "endTime": "2025-11-12T13:08:14.633Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Xiaomi Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Xiaomi Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Xiaomi Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_2",
+        "name": "Xiaomi Show 3",
+        "startTime": "2025-11-12T14:01:09.291Z",
+        "endTime": "2025-11-12T15:23:52.354Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Xiaomi Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_33",
+        "name": "Xiaomi Show 34",
+        "startTime": "2025-11-12T18:49:28.002Z",
+        "endTime": "2025-11-12T20:30:50.570Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Xiaomi Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-34",
+            "platformShowId": "platform_show_34_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_36",
+        "name": "Xiaomi Show 37",
+        "startTime": "2025-11-13T00:11:24.757Z",
+        "endTime": "2025-11-13T03:06:49.054Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Xiaomi Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Xiaomi Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Xiaomi Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_16",
+        "name": "Xiaomi Show 17",
+        "startTime": "2025-11-13T07:18:58.295Z",
+        "endTime": "2025-11-13T10:46:26.310Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Xiaomi Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Xiaomi Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Xiaomi Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_15",
+        "name": "Xiaomi Show 16",
+        "startTime": "2025-11-13T10:20:09.030Z",
+        "endTime": "2025-11-13T14:11:42.212Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Xiaomi Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_40",
+        "name": "Xiaomi Show 41",
+        "startTime": "2025-11-13T21:56:02.700Z",
+        "endTime": "2025-11-13T23:56:50.274Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Xiaomi Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Xiaomi Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_49",
+        "name": "Xiaomi Show 50",
+        "startTime": "2025-11-14T23:24:43.746Z",
+        "endTime": "2025-11-15T01:45:17.355Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Xiaomi Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Xiaomi Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Xiaomi Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_42",
+        "name": "Xiaomi Show 43",
+        "startTime": "2025-11-16T23:14:39.101Z",
+        "endTime": "2025-11-17T01:24:46.428Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Xiaomi Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_39",
+        "name": "Xiaomi Show 40",
+        "startTime": "2025-11-17T21:25:18.933Z",
+        "endTime": "2025-11-18T00:51:20.806Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Xiaomi Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-40",
+            "platformShowId": "platform_show_40_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_21",
+        "name": "Xiaomi Show 22",
+        "startTime": "2025-11-18T20:11:05.216Z",
+        "endTime": "2025-11-18T22:21:46.955Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Xiaomi Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_7",
+        "name": "Xiaomi Show 8",
+        "startTime": "2025-11-19T10:56:30.410Z",
+        "endTime": "2025-11-19T14:06:39.105Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Xiaomi Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Xiaomi Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_6",
+        "name": "Xiaomi Show 7",
+        "startTime": "2025-11-19T22:29:36.361Z",
+        "endTime": "2025-11-20T00:46:55.612Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Xiaomi Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Xiaomi Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-7",
+            "platformShowId": "platform_show_7_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_0",
+        "name": "Xiaomi Show 1",
+        "startTime": "2025-11-20T11:42:57.099Z",
+        "endTime": "2025-11-20T14:36:55.235Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Xiaomi Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_35",
+        "name": "Xiaomi Show 36",
+        "startTime": "2025-11-20T21:51:22.774Z",
+        "endTime": "2025-11-20T23:02:50.750Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Xiaomi Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_10",
+        "name": "Xiaomi Show 11",
+        "startTime": "2025-11-21T18:54:53.145Z",
+        "endTime": "2025-11-21T22:22:16.590Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Xiaomi Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_46",
+        "name": "Xiaomi Show 47",
+        "startTime": "2025-11-22T18:12:55.581Z",
+        "endTime": "2025-11-22T21:43:30.067Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Xiaomi Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Xiaomi Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Xiaomi Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_24",
+        "name": "Xiaomi Show 25",
+        "startTime": "2025-11-23T23:46:22.554Z",
+        "endTime": "2025-11-24T03:23:42.879Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Xiaomi Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Xiaomi Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Xiaomi Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_34",
+        "name": "Xiaomi Show 35",
+        "startTime": "2025-11-24T01:41:42.060Z",
+        "endTime": "2025-11-24T05:13:30.396Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Xiaomi Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Xiaomi Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_25",
+        "name": "Xiaomi Show 26",
+        "startTime": "2025-11-24T03:32:20.540Z",
+        "endTime": "2025-11-24T07:31:21.852Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Xiaomi Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_29",
+        "name": "Xiaomi Show 30",
+        "startTime": "2025-11-24T12:48:50.728Z",
+        "endTime": "2025-11-24T16:44:05.905Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Xiaomi Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-30",
+            "platformShowId": "platform_show_30_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_18",
+        "name": "Xiaomi Show 19",
+        "startTime": "2025-11-25T02:52:47.228Z",
+        "endTime": "2025-11-25T06:45:48.855Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Xiaomi Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Xiaomi Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-19",
+            "platformShowId": "platform_show_19_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_9",
+        "name": "Xiaomi Show 10",
+        "startTime": "2025-11-25T09:42:38.482Z",
+        "endTime": "2025-11-25T13:15:16.997Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Xiaomi Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Xiaomi Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-10",
+            "platformShowId": "platform_show_10_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_17",
+        "name": "Xiaomi Show 18",
+        "startTime": "2025-11-25T10:49:44.604Z",
+        "endTime": "2025-11-25T14:45:06.699Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Xiaomi Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Xiaomi Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Xiaomi Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-18",
+            "platformShowId": "platform_show_18_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_38",
+        "name": "Xiaomi Show 39",
+        "startTime": "2025-11-25T23:15:53.609Z",
+        "endTime": "2025-11-26T00:28:08.274Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Xiaomi Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_13",
+        "name": "Xiaomi Show 14",
+        "startTime": "2025-11-27T05:31:05.602Z",
+        "endTime": "2025-11-27T07:13:58.811Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Xiaomi Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_11",
+        "name": "Xiaomi Show 12",
+        "startTime": "2025-11-27T07:13:45.160Z",
+        "endTime": "2025-11-27T08:20:58.874Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Xiaomi Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Xiaomi Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Xiaomi Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_3",
+        "name": "Xiaomi Show 4",
+        "startTime": "2025-11-27T17:38:34.536Z",
+        "endTime": "2025-11-27T20:08:03.417Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Xiaomi Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Xiaomi Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Xiaomi Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_47",
+        "name": "Xiaomi Show 48",
+        "startTime": "2025-11-28T02:53:25.541Z",
+        "endTime": "2025-11-28T03:57:21.113Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Xiaomi Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Xiaomi Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_28",
+        "name": "Xiaomi Show 29",
+        "startTime": "2025-11-28T04:50:26.201Z",
+        "endTime": "2025-11-28T08:26:34.327Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Xiaomi Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Xiaomi Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Xiaomi Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-29",
+            "platformShowId": "platform_show_29_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_26",
+        "name": "Xiaomi Show 27",
+        "startTime": "2025-11-29T04:47:00.849Z",
+        "endTime": "2025-11-29T07:37:54.595Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Xiaomi Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_44",
+        "name": "Xiaomi Show 45",
+        "startTime": "2025-11-30T03:15:33.829Z",
+        "endTime": "2025-11-30T04:40:30.961Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Xiaomi Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720428_45",
+        "name": "Xiaomi Show 46",
+        "startTime": "2025-11-30T09:35:12.551Z",
+        "endTime": "2025-11-30T10:53:23.766Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Xiaomi Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Xiaomi Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Xiaomi Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

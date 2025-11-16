@@ -28,8 +28,12 @@ export class ShowPlatformService extends BaseModelService {
     super(utilityService);
   }
 
-  generateShowPlatformUid(size?: number) {
-    return this.generateUid(size);
+  /**
+   * Generates a show platform UID.
+   * Public wrapper for generateUid() to allow external services to generate UIDs.
+   */
+  generateShowPlatformUid(): string {
+    return this.generateUid();
   }
 
   async createShowPlatformFromDto<
@@ -48,7 +52,7 @@ export class ShowPlatformService extends BaseModelService {
     data: Omit<Prisma.ShowPlatformCreateInput, 'uid'>,
     include?: T,
   ): Promise<ShowPlatform | ShowPlatformWithIncludes<T>> {
-    const uid = this.generateShowPlatformUid();
+    const uid = this.generateUid();
     return this.showPlatformRepository.create({ ...data, uid }, include);
   }
 

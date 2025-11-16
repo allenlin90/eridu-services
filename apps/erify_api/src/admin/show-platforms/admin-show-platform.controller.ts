@@ -3,25 +3,22 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   HttpStatus,
   Param,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
-import { ZodSerializerDto } from 'nestjs-zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
-import { ApiZodResponse } from '@/common/openapi/decorators';
 import {
-  createPaginatedResponseSchema,
-  PaginationQueryDto,
-} from '@/common/pagination/schema/pagination.schema';
+  AdminPaginatedResponse,
+  AdminResponse,
+} from '@/admin/decorators/admin-response.decorator';
+import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
 import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
 import {
   CreateShowPlatformDto,
-  ShowPlatformDto,
   showPlatformDto,
   UpdateShowPlatformDto,
 } from '@/models/show-platform/schemas/show-platform.schema';
@@ -38,9 +35,11 @@ export class AdminShowPlatformController extends BaseAdminController {
   }
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiZodResponse(showPlatformDto, 'Show platform created successfully')
-  @ZodSerializerDto(ShowPlatformDto)
+  @AdminResponse(
+    showPlatformDto,
+    HttpStatus.CREATED,
+    'Show platform created successfully',
+  )
   async createShowPlatform(@Body() body: CreateShowPlatformDto) {
     const showPlatform =
       await this.showPlatformService.createShowPlatformFromDto(body);
@@ -51,12 +50,10 @@ export class AdminShowPlatformController extends BaseAdminController {
   }
 
   @Get()
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(
-    createPaginatedResponseSchema(showPlatformDto),
+  @AdminPaginatedResponse(
+    showPlatformDto,
     'List of show platforms with pagination',
   )
-  @ZodSerializerDto(createPaginatedResponseSchema(showPlatformDto))
   async getShowPlatforms(@Query() query: PaginationQueryDto) {
     const data = await this.showPlatformService.getActiveShowPlatforms({
       skip: query.skip,
@@ -73,9 +70,7 @@ export class AdminShowPlatformController extends BaseAdminController {
   }
 
   @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(showPlatformDto, 'Show platform details')
-  @ZodSerializerDto(ShowPlatformDto)
+  @AdminResponse(showPlatformDto, HttpStatus.OK, 'Show platform details')
   getShowPlatform(
     @Param(
       'id',
@@ -90,9 +85,11 @@ export class AdminShowPlatformController extends BaseAdminController {
   }
 
   @Patch(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(showPlatformDto, 'Show platform updated successfully')
-  @ZodSerializerDto(ShowPlatformDto)
+  @AdminResponse(
+    showPlatformDto,
+    HttpStatus.OK,
+    'Show platform updated successfully',
+  )
   async updateShowPlatform(
     @Param(
       'id',
@@ -111,7 +108,7 @@ export class AdminShowPlatformController extends BaseAdminController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @AdminResponse(undefined, HttpStatus.NO_CONTENT)
   async deleteShowPlatform(
     @Param(
       'id',

@@ -1,0 +1,1577 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-15T03:35:20.430Z",
+      "totalShows": 50,
+      "clientName": "Lenovo",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1763177720430_14",
+        "name": "Lenovo Show 15",
+        "startTime": "2025-11-01T08:40:56.635Z",
+        "endTime": "2025-11-01T11:47:58.305Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Lenovo Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Lenovo Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_3",
+        "name": "Lenovo Show 4",
+        "startTime": "2025-11-01T17:33:58.710Z",
+        "endTime": "2025-11-01T19:35:37.167Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Lenovo Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-4",
+            "platformShowId": "platform_show_4_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_40",
+        "name": "Lenovo Show 41",
+        "startTime": "2025-11-02T16:34:04.590Z",
+        "endTime": "2025-11-02T19:25:24.221Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Lenovo Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Lenovo Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Lenovo Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_36",
+        "name": "Lenovo Show 37",
+        "startTime": "2025-11-04T18:59:44.830Z",
+        "endTime": "2025-11-04T21:48:53.522Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Lenovo Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Lenovo Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Lenovo Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_39",
+        "name": "Lenovo Show 40",
+        "startTime": "2025-11-04T23:21:01.654Z",
+        "endTime": "2025-11-05T02:15:25.643Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Lenovo Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_26",
+        "name": "Lenovo Show 27",
+        "startTime": "2025-11-05T00:55:52.077Z",
+        "endTime": "2025-11-05T02:37:42.454Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Lenovo Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Lenovo Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Lenovo Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_0",
+        "name": "Lenovo Show 1",
+        "startTime": "2025-11-05T16:03:06.754Z",
+        "endTime": "2025-11-05T18:27:37.568Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Lenovo Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_23",
+        "name": "Lenovo Show 24",
+        "startTime": "2025-11-05T16:51:22.824Z",
+        "endTime": "2025-11-05T19:36:14.382Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Lenovo Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Lenovo Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-24",
+            "platformShowId": "platform_show_24_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_28",
+        "name": "Lenovo Show 29",
+        "startTime": "2025-11-06T04:17:03.910Z",
+        "endTime": "2025-11-06T05:17:44.250Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Lenovo Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Lenovo Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Lenovo Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_24",
+        "name": "Lenovo Show 25",
+        "startTime": "2025-11-07T06:38:24.007Z",
+        "endTime": "2025-11-07T08:13:48.842Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Lenovo Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_33",
+        "name": "Lenovo Show 34",
+        "startTime": "2025-11-09T03:00:41.124Z",
+        "endTime": "2025-11-09T06:05:58.991Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Lenovo Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Lenovo Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-34",
+            "platformShowId": "platform_show_34_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_48",
+        "name": "Lenovo Show 49",
+        "startTime": "2025-11-09T19:44:52.985Z",
+        "endTime": "2025-11-09T21:49:12.247Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Lenovo Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Lenovo Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-49",
+            "platformShowId": "platform_show_49_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_9",
+        "name": "Lenovo Show 10",
+        "startTime": "2025-11-10T20:13:07.450Z",
+        "endTime": "2025-11-10T23:40:43.625Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Lenovo Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Lenovo Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-10",
+            "platformShowId": "platform_show_10_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_22",
+        "name": "Lenovo Show 23",
+        "startTime": "2025-11-11T03:17:21.338Z",
+        "endTime": "2025-11-11T05:43:11.280Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Lenovo Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Lenovo Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Lenovo Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_45",
+        "name": "Lenovo Show 46",
+        "startTime": "2025-11-11T04:01:55.193Z",
+        "endTime": "2025-11-11T06:04:36.681Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Lenovo Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Lenovo Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Lenovo Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_38",
+        "name": "Lenovo Show 39",
+        "startTime": "2025-11-11T07:51:01.349Z",
+        "endTime": "2025-11-11T11:01:26.669Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Lenovo Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Lenovo Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_41",
+        "name": "Lenovo Show 42",
+        "startTime": "2025-11-11T19:48:35.956Z",
+        "endTime": "2025-11-11T22:52:12.559Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Lenovo Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Lenovo Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Lenovo Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_27",
+        "name": "Lenovo Show 28",
+        "startTime": "2025-11-12T16:10:29.112Z",
+        "endTime": "2025-11-12T17:19:16.850Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Lenovo Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Lenovo Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_19",
+        "name": "Lenovo Show 20",
+        "startTime": "2025-11-13T00:31:23.027Z",
+        "endTime": "2025-11-13T01:41:51.763Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Lenovo Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_13",
+        "name": "Lenovo Show 14",
+        "startTime": "2025-11-13T11:11:31.726Z",
+        "endTime": "2025-11-13T15:10:29.994Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Lenovo Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_30",
+        "name": "Lenovo Show 31",
+        "startTime": "2025-11-13T12:25:18.632Z",
+        "endTime": "2025-11-13T14:48:09.486Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Lenovo Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_18",
+        "name": "Lenovo Show 19",
+        "startTime": "2025-11-14T08:44:15.814Z",
+        "endTime": "2025-11-14T10:17:24.785Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Lenovo Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_44",
+        "name": "Lenovo Show 45",
+        "startTime": "2025-11-14T17:19:31.526Z",
+        "endTime": "2025-11-14T19:03:30.134Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Lenovo Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Lenovo Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Lenovo Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_10",
+        "name": "Lenovo Show 11",
+        "startTime": "2025-11-14T23:34:55.704Z",
+        "endTime": "2025-11-15T01:11:41.143Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Lenovo Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Lenovo Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Lenovo Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_42",
+        "name": "Lenovo Show 43",
+        "startTime": "2025-11-15T06:02:43.324Z",
+        "endTime": "2025-11-15T08:05:14.548Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Lenovo Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_49",
+        "name": "Lenovo Show 50",
+        "startTime": "2025-11-15T13:07:22.356Z",
+        "endTime": "2025-11-15T15:55:06.494Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Lenovo Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Lenovo Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_2",
+        "name": "Lenovo Show 3",
+        "startTime": "2025-11-15T16:33:20.123Z",
+        "endTime": "2025-11-15T19:48:23.037Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Lenovo Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_5",
+        "name": "Lenovo Show 6",
+        "startTime": "2025-11-15T21:19:38.829Z",
+        "endTime": "2025-11-15T22:47:58.323Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Lenovo Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Lenovo Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Lenovo Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_6",
+        "name": "Lenovo Show 7",
+        "startTime": "2025-11-16T09:26:17.379Z",
+        "endTime": "2025-11-16T12:27:20.484Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Lenovo Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Lenovo Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Lenovo Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-7",
+            "platformShowId": "platform_show_7_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_11",
+        "name": "Lenovo Show 12",
+        "startTime": "2025-11-16T23:14:33.231Z",
+        "endTime": "2025-11-17T02:46:36.504Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Lenovo Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_25",
+        "name": "Lenovo Show 26",
+        "startTime": "2025-11-18T01:37:45.481Z",
+        "endTime": "2025-11-18T03:47:12.997Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Lenovo Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_15",
+        "name": "Lenovo Show 16",
+        "startTime": "2025-11-18T17:09:19.233Z",
+        "endTime": "2025-11-18T19:45:04.450Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Lenovo Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-16",
+            "platformShowId": "platform_show_16_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_4",
+        "name": "Lenovo Show 5",
+        "startTime": "2025-11-18T21:13:00.059Z",
+        "endTime": "2025-11-19T00:15:53.670Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Lenovo Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Lenovo Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Lenovo Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_12",
+        "name": "Lenovo Show 13",
+        "startTime": "2025-11-19T16:40:09.287Z",
+        "endTime": "2025-11-19T18:18:02.252Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Lenovo Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Lenovo Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_8",
+        "name": "Lenovo Show 9",
+        "startTime": "2025-11-21T04:35:41.626Z",
+        "endTime": "2025-11-21T07:13:32.773Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Lenovo Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Lenovo Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Lenovo Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-9",
+            "platformShowId": "platform_show_9_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_47",
+        "name": "Lenovo Show 48",
+        "startTime": "2025-11-22T15:34:34.760Z",
+        "endTime": "2025-11-22T17:51:22.393Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Lenovo Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_46",
+        "name": "Lenovo Show 47",
+        "startTime": "2025-11-23T16:27:48.043Z",
+        "endTime": "2025-11-23T20:13:17.612Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Lenovo Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Lenovo Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Lenovo Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_7",
+        "name": "Lenovo Show 8",
+        "startTime": "2025-11-25T10:30:27.377Z",
+        "endTime": "2025-11-25T14:02:01.002Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Lenovo Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-8",
+            "platformShowId": "platform_show_8_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_37",
+        "name": "Lenovo Show 38",
+        "startTime": "2025-11-26T06:42:36.164Z",
+        "endTime": "2025-11-26T07:49:55.906Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Lenovo Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_43",
+        "name": "Lenovo Show 44",
+        "startTime": "2025-11-27T02:00:41.944Z",
+        "endTime": "2025-11-27T03:21:10.641Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Lenovo Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Lenovo Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_1",
+        "name": "Lenovo Show 2",
+        "startTime": "2025-11-27T08:19:24.763Z",
+        "endTime": "2025-11-27T10:53:41.564Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Lenovo Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Lenovo Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Lenovo Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_32",
+        "name": "Lenovo Show 33",
+        "startTime": "2025-11-27T13:52:40.501Z",
+        "endTime": "2025-11-27T16:53:01.881Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Lenovo Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_35",
+        "name": "Lenovo Show 36",
+        "startTime": "2025-11-27T15:00:12.348Z",
+        "endTime": "2025-11-27T16:07:20.103Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Lenovo Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Lenovo Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Lenovo Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_21",
+        "name": "Lenovo Show 22",
+        "startTime": "2025-11-27T23:12:18.856Z",
+        "endTime": "2025-11-28T01:07:05.119Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Lenovo Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Lenovo Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-22",
+            "platformShowId": "platform_show_22_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_34",
+        "name": "Lenovo Show 35",
+        "startTime": "2025-11-28T06:44:34.313Z",
+        "endTime": "2025-11-28T10:10:40.901Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Lenovo Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Lenovo Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Lenovo Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-35",
+            "platformShowId": "platform_show_35_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_20",
+        "name": "Lenovo Show 21",
+        "startTime": "2025-11-28T09:30:23.303Z",
+        "endTime": "2025-11-28T12:27:27.061Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Lenovo Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Lenovo Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Lenovo Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_16",
+        "name": "Lenovo Show 17",
+        "startTime": "2025-11-29T06:36:38.133Z",
+        "endTime": "2025-11-29T08:16:20.731Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Lenovo Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Lenovo Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Lenovo Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_17",
+        "name": "Lenovo Show 18",
+        "startTime": "2025-11-29T10:13:53.297Z",
+        "endTime": "2025-11-29T11:51:47.842Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Lenovo Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-18",
+            "platformShowId": "platform_show_18_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_31",
+        "name": "Lenovo Show 32",
+        "startTime": "2025-11-29T11:42:10.133Z",
+        "endTime": "2025-11-29T14:33:01.376Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Lenovo Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-32",
+            "platformShowId": "platform_show_32_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720430_29",
+        "name": "Lenovo Show 30",
+        "startTime": "2025-11-29T20:54:06.129Z",
+        "endTime": "2025-11-29T22:45:43.403Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Lenovo Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Lenovo Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-30",
+            "platformShowId": "platform_show_30_2"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

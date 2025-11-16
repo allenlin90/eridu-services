@@ -1,0 +1,11 @@
+{
+  "email": "admin@example.com",
+  "name": "Admin User",
+  "ext_id": "sso_admin_123",
+  "profile_url": "https://example.com/profiles/admin",
+  "metadata": {
+    "department": "IT",
+    "role": "super_admin"
+  }
+}
+

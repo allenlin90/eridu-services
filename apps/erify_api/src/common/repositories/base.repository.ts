@@ -65,25 +65,22 @@ export abstract class BaseRepository<T extends WithSoftDelete, C, U, W>
     });
   }
 
-  async findMany<O extends Record<string, 'asc' | 'desc'>>(params: {
+  async findMany(params: {
     where?: W;
     skip?: number;
     take?: number;
-    orderBy?: O;
+
+    // orderBy uses any to support Prisma's complex OrderByWithRelationInput types
+    orderBy?: any;
     include?: Record<string, any>;
   }): Promise<T[]> {
-    const where = params.where;
-    const skip = params.skip;
-    const take = params.take;
-    const orderBy = params.orderBy;
-    const include = params.include;
-
     return this.model.findMany({
-      where: { ...where, deletedAt: null } as W,
-      skip,
-      take,
-      orderBy,
-      ...(include && { include }),
+      where: { ...params.where, deletedAt: null } as W,
+      skip: params.skip,
+      take: params.take,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      orderBy: params.orderBy,
+      ...(params.include && { include: params.include }),
     });
   }
 

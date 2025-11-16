@@ -1,0 +1,1623 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-15T03:35:20.424Z",
+      "totalShows": 50,
+      "clientName": "Adidas",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1763177720424_8",
+        "name": "Adidas Show 9",
+        "startTime": "2025-11-01T04:07:54.589Z",
+        "endTime": "2025-11-01T05:23:51.455Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Adidas Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Adidas Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Adidas Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-9",
+            "platformShowId": "platform_show_9_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_29",
+        "name": "Adidas Show 30",
+        "startTime": "2025-11-02T19:27:00.943Z",
+        "endTime": "2025-11-02T23:07:42.299Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Adidas Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_45",
+        "name": "Adidas Show 46",
+        "startTime": "2025-11-02T20:36:41.157Z",
+        "endTime": "2025-11-02T22:47:10.556Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Adidas Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Adidas Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_9",
+        "name": "Adidas Show 10",
+        "startTime": "2025-11-03T09:59:25.361Z",
+        "endTime": "2025-11-03T11:58:02.817Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Adidas Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Adidas Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_12",
+        "name": "Adidas Show 13",
+        "startTime": "2025-11-03T22:20:27.910Z",
+        "endTime": "2025-11-04T01:32:18.400Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Adidas Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Adidas Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Adidas Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_24",
+        "name": "Adidas Show 25",
+        "startTime": "2025-11-04T12:02:44.669Z",
+        "endTime": "2025-11-04T14:01:51.363Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Adidas Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Adidas Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_3",
+        "name": "Adidas Show 4",
+        "startTime": "2025-11-04T14:12:01.778Z",
+        "endTime": "2025-11-04T17:30:37.218Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Adidas Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Adidas Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Adidas Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_10",
+        "name": "Adidas Show 11",
+        "startTime": "2025-11-05T00:58:29.287Z",
+        "endTime": "2025-11-05T02:29:19.244Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Adidas Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Adidas Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Adidas Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_40",
+        "name": "Adidas Show 41",
+        "startTime": "2025-11-05T21:28:37.929Z",
+        "endTime": "2025-11-06T00:41:35.388Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Adidas Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Adidas Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Adidas Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_47",
+        "name": "Adidas Show 48",
+        "startTime": "2025-11-06T02:57:33.868Z",
+        "endTime": "2025-11-06T04:22:27.890Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Adidas Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Adidas Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_2",
+        "name": "Adidas Show 3",
+        "startTime": "2025-11-06T14:54:21.097Z",
+        "endTime": "2025-11-06T16:18:35.808Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Adidas Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Adidas Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Adidas Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_28",
+        "name": "Adidas Show 29",
+        "startTime": "2025-11-06T18:40:02.489Z",
+        "endTime": "2025-11-06T20:10:17.823Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Adidas Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Adidas Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Adidas Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-29",
+            "platformShowId": "platform_show_29_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_36",
+        "name": "Adidas Show 37",
+        "startTime": "2025-11-07T21:55:07.884Z",
+        "endTime": "2025-11-08T01:09:51.552Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Adidas Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_4",
+        "name": "Adidas Show 5",
+        "startTime": "2025-11-08T07:28:54.557Z",
+        "endTime": "2025-11-08T08:47:36.614Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Adidas Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Adidas Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_46",
+        "name": "Adidas Show 47",
+        "startTime": "2025-11-08T14:34:21.992Z",
+        "endTime": "2025-11-08T17:24:18.709Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Adidas Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Adidas Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Adidas Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_26",
+        "name": "Adidas Show 27",
+        "startTime": "2025-11-08T16:31:36.623Z",
+        "endTime": "2025-11-08T19:31:48.250Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Adidas Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Adidas Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-27",
+            "platformShowId": "platform_show_27_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_6",
+        "name": "Adidas Show 7",
+        "startTime": "2025-11-09T17:19:59.196Z",
+        "endTime": "2025-11-09T20:57:05.744Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Adidas Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Adidas Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-7",
+            "platformShowId": "platform_show_7_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_32",
+        "name": "Adidas Show 33",
+        "startTime": "2025-11-09T18:58:54.603Z",
+        "endTime": "2025-11-09T20:57:21.611Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Adidas Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_1",
+        "name": "Adidas Show 2",
+        "startTime": "2025-11-11T19:40:49.898Z",
+        "endTime": "2025-11-11T22:04:30.739Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Adidas Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Adidas Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Adidas Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-2",
+            "platformShowId": "platform_show_2_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_33",
+        "name": "Adidas Show 34",
+        "startTime": "2025-11-11T21:38:59.510Z",
+        "endTime": "2025-11-12T00:35:56.512Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Adidas Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-34",
+            "platformShowId": "platform_show_34_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_43",
+        "name": "Adidas Show 44",
+        "startTime": "2025-11-13T03:30:19.003Z",
+        "endTime": "2025-11-13T06:50:07.097Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Adidas Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_17",
+        "name": "Adidas Show 18",
+        "startTime": "2025-11-14T13:11:38.750Z",
+        "endTime": "2025-11-14T16:54:22.742Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Adidas Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_49",
+        "name": "Adidas Show 50",
+        "startTime": "2025-11-14T17:34:40.195Z",
+        "endTime": "2025-11-14T21:15:56.719Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Adidas Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_5",
+        "name": "Adidas Show 6",
+        "startTime": "2025-11-15T18:50:13.315Z",
+        "endTime": "2025-11-15T22:03:19.900Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Adidas Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Adidas Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Adidas Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-6",
+            "platformShowId": "platform_show_6_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_15",
+        "name": "Adidas Show 16",
+        "startTime": "2025-11-16T14:43:51.027Z",
+        "endTime": "2025-11-16T17:01:49.694Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Adidas Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Adidas Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Adidas Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_42",
+        "name": "Adidas Show 43",
+        "startTime": "2025-11-16T19:43:27.232Z",
+        "endTime": "2025-11-16T23:40:21.284Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Adidas Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Adidas Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Adidas Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_27",
+        "name": "Adidas Show 28",
+        "startTime": "2025-11-17T01:55:33.525Z",
+        "endTime": "2025-11-17T03:26:02.859Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Adidas Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Adidas Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-28",
+            "platformShowId": "platform_show_28_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_22",
+        "name": "Adidas Show 23",
+        "startTime": "2025-11-17T02:11:56.033Z",
+        "endTime": "2025-11-17T03:18:31.285Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Adidas Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Adidas Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Adidas Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_18",
+        "name": "Adidas Show 19",
+        "startTime": "2025-11-18T05:49:58.254Z",
+        "endTime": "2025-11-18T07:17:04.496Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Adidas Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Adidas Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_16",
+        "name": "Adidas Show 17",
+        "startTime": "2025-11-18T07:59:36.853Z",
+        "endTime": "2025-11-18T11:17:56.930Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Adidas Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_25",
+        "name": "Adidas Show 26",
+        "startTime": "2025-11-20T10:49:47.422Z",
+        "endTime": "2025-11-20T14:46:40.875Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Adidas Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Adidas Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Adidas Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_37",
+        "name": "Adidas Show 38",
+        "startTime": "2025-11-21T17:11:29.821Z",
+        "endTime": "2025-11-21T19:12:57.378Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Adidas Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_48",
+        "name": "Adidas Show 49",
+        "startTime": "2025-11-22T07:32:19.975Z",
+        "endTime": "2025-11-22T09:17:12.315Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Adidas Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Adidas Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Adidas Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_41",
+        "name": "Adidas Show 42",
+        "startTime": "2025-11-23T04:46:44.942Z",
+        "endTime": "2025-11-23T06:04:58.938Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Adidas Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Adidas Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Adidas Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-42",
+            "platformShowId": "platform_show_42_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_21",
+        "name": "Adidas Show 22",
+        "startTime": "2025-11-23T19:57:23.084Z",
+        "endTime": "2025-11-23T22:17:21.709Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Adidas Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_0",
+        "name": "Adidas Show 1",
+        "startTime": "2025-11-24T09:16:49.763Z",
+        "endTime": "2025-11-24T12:30:29.670Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Adidas Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Adidas Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-1",
+            "platformShowId": "platform_show_1_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_31",
+        "name": "Adidas Show 32",
+        "startTime": "2025-11-24T10:19:20.686Z",
+        "endTime": "2025-11-24T12:54:27.258Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Adidas Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Adidas Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Adidas Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_23",
+        "name": "Adidas Show 24",
+        "startTime": "2025-11-25T02:24:01.595Z",
+        "endTime": "2025-11-25T05:14:48.867Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Adidas Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Adidas Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Adidas Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-24",
+            "platformShowId": "platform_show_24_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_14",
+        "name": "Adidas Show 15",
+        "startTime": "2025-11-25T10:52:01.094Z",
+        "endTime": "2025-11-25T12:22:28.983Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Adidas Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_11",
+        "name": "Adidas Show 12",
+        "startTime": "2025-11-26T03:55:31.368Z",
+        "endTime": "2025-11-26T06:51:59.219Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Adidas Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Adidas Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_34",
+        "name": "Adidas Show 35",
+        "startTime": "2025-11-27T00:41:32.438Z",
+        "endTime": "2025-11-27T04:15:14.959Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Adidas Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Adidas Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_38",
+        "name": "Adidas Show 39",
+        "startTime": "2025-11-27T16:04:00.055Z",
+        "endTime": "2025-11-27T17:51:18.842Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Adidas Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Adidas Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Adidas Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_44",
+        "name": "Adidas Show 45",
+        "startTime": "2025-11-27T16:22:40.962Z",
+        "endTime": "2025-11-27T20:10:53.197Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Adidas Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Adidas Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Adidas Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_30",
+        "name": "Adidas Show 31",
+        "startTime": "2025-11-27T17:29:58.973Z",
+        "endTime": "2025-11-27T21:05:40.924Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Adidas Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Adidas Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Adidas Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_39",
+        "name": "Adidas Show 40",
+        "startTime": "2025-11-28T04:02:49.097Z",
+        "endTime": "2025-11-28T06:18:03.984Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Adidas Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Adidas Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_19",
+        "name": "Adidas Show 20",
+        "startTime": "2025-11-28T15:27:50.074Z",
+        "endTime": "2025-11-28T17:05:44.455Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Adidas Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Adidas Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_7",
+        "name": "Adidas Show 8",
+        "startTime": "2025-11-28T22:59:45.702Z",
+        "endTime": "2025-11-29T00:36:03.983Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Adidas Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-8",
+            "platformShowId": "platform_show_8_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_13",
+        "name": "Adidas Show 14",
+        "startTime": "2025-11-29T05:05:35.480Z",
+        "endTime": "2025-11-29T06:29:44.884Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Adidas Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Adidas Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_35",
+        "name": "Adidas Show 36",
+        "startTime": "2025-11-29T07:39:22.530Z",
+        "endTime": "2025-11-29T09:21:09.130Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Adidas Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Adidas Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Adidas Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720424_20",
+        "name": "Adidas Show 21",
+        "startTime": "2025-11-29T15:06:58.356Z",
+        "endTime": "2025-11-29T16:28:00.145Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Adidas Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,11 +1,30 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma, Schedule, ScheduleSnapshot } from '@prisma/client';
 
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
-import { PrismaService } from '@/prisma/prisma.service';
+import { PrismaService, TransactionClient } from '@/prisma/prisma.service';
+
+// Test helper type for mock transaction clients
+// This allows test mocks to only implement the properties they need
+// The mock structure matches what's actually used in tests
+type MockTransactionClientStructure = {
+  schedule: {
+    update: jest.Mock;
+  };
+};
+
+// Helper function to convert mock transaction client to TransactionClient for tests
+// This is safe because the callback only accesses properties that exist on the mock
+// Using a type assertion that TypeScript accepts for test mocks
+function asTransactionClient(
+  mock: MockTransactionClientStructure,
+): TransactionClient {
+  // Type assertion is necessary here because test mocks don't implement full TransactionClient
+  // The callback will only access properties that exist on the mock
+  return mock as MockTransactionClientStructure & TransactionClient;
+}
 
 import { PublishingService } from './publishing.service';
 import { SchedulePlanningService } from './schedule-planning.service';
@@ -27,6 +46,13 @@ describe('SchedulePlanningService', () => {
       update: jest.Mock;
     };
   };
+  let getScheduleByIdMock: jest.Mock;
+  let validateScheduleMock: jest.Mock;
+  let getScheduleSnapshotByIdMock: jest.Mock;
+  let getScheduleSnapshotsMock: jest.Mock;
+  let createScheduleSnapshotMock: jest.Mock;
+  let publishMock: jest.Mock;
+  let executeTransactionMock: jest.Mock;
 
   const mockSchedule = {
     id: BigInt(1),
@@ -140,6 +166,7 @@ describe('SchedulePlanningService', () => {
           useValue: {
             getScheduleSnapshotById: jest.fn(),
             getSnapshotsByScheduleId: jest.fn(),
+            getScheduleSnapshots: jest.fn(),
             createScheduleSnapshot: jest.fn(),
           },
         },
@@ -158,9 +185,16 @@ describe('SchedulePlanningService', () => {
         {
           provide: PrismaService,
           useValue: {
-            $transaction: jest.fn(
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-              async (callback: any) => await callback(mockTransactionClient),
+            executeTransaction: jest.fn(
+              async <T>(
+                callback: (tx: TransactionClient) => Promise<T>,
+              ): Promise<T> => {
+                // Mock transaction client only implements subset needed for tests
+                // The callback will only access the properties that exist on mockTransactionClient
+                return await callback(
+                  asTransactionClient(mockTransactionClient),
+                );
+              },
             ),
           },
         },
@@ -173,6 +207,21 @@ describe('SchedulePlanningService', () => {
     validationService = module.get(ValidationService);
     publishingService = module.get(PublishingService);
     prismaService = module.get(PrismaService);
+
+    // Store mock function references to avoid unbound method errors
+    getScheduleByIdMock = scheduleService['getScheduleById'] as jest.Mock;
+    validateScheduleMock = validationService['validateSchedule'] as jest.Mock;
+    getScheduleSnapshotByIdMock = scheduleSnapshotService[
+      'getScheduleSnapshotById'
+    ] as jest.Mock;
+    getScheduleSnapshotsMock = scheduleSnapshotService[
+      'getScheduleSnapshots'
+    ] as jest.Mock;
+    createScheduleSnapshotMock = scheduleSnapshotService[
+      'createScheduleSnapshot'
+    ] as jest.Mock;
+    publishMock = publishingService['publish'] as jest.Mock;
+    executeTransactionMock = prismaService['executeTransaction'] as jest.Mock;
   });
 
   beforeEach(() => {
@@ -202,11 +251,10 @@ describe('SchedulePlanningService', () => {
 
       const result = await service.validateSchedule(scheduleUid);
 
-      expect(scheduleService.getScheduleById).toHaveBeenCalledWith(
-        scheduleUid,
-        { client: true },
-      );
-      expect(validationService.validateSchedule).toHaveBeenCalledWith({
+      expect(getScheduleByIdMock).toHaveBeenCalledWith(scheduleUid, {
+        client: true,
+      });
+      expect(validateScheduleMock).toHaveBeenCalledWith({
         id: mockSchedule.id,
         uid: mockSchedule.uid,
         startDate: mockSchedule.startDate,
@@ -227,11 +275,10 @@ describe('SchedulePlanningService', () => {
       await expect(service.validateSchedule(scheduleUid)).rejects.toThrow(
         NotFoundException,
       );
-      expect(scheduleService.getScheduleById).toHaveBeenCalledWith(
-        scheduleUid,
-        { client: true },
-      );
-      expect(validationService.validateSchedule).not.toHaveBeenCalled();
+      expect(getScheduleByIdMock).toHaveBeenCalledWith(scheduleUid, {
+        client: true,
+      });
+      expect(validateScheduleMock).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException when plan document is invalid', async () => {
@@ -245,7 +292,7 @@ describe('SchedulePlanningService', () => {
       await expect(service.validateSchedule(scheduleUid)).rejects.toThrow(
         BadRequestException,
       );
-      expect(validationService.validateSchedule).not.toHaveBeenCalled();
+      expect(validateScheduleMock).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException when plan document has no shows', async () => {
@@ -259,7 +306,7 @@ describe('SchedulePlanningService', () => {
       await expect(service.validateSchedule(scheduleUid)).rejects.toThrow(
         BadRequestException,
       );
-      expect(validationService.validateSchedule).not.toHaveBeenCalled();
+      expect(validateScheduleMock).not.toHaveBeenCalled();
     });
 
     it('should return validation errors when schedule is invalid', async () => {
@@ -332,11 +379,7 @@ describe('SchedulePlanningService', () => {
         userId,
       );
 
-      expect(publishingService.publish).toHaveBeenCalledWith(
-        scheduleUid,
-        version,
-        userId,
-      );
+      expect(publishMock).toHaveBeenCalledWith(scheduleUid, version, userId);
       expect(result).toEqual(publishedResult);
     });
   });
@@ -370,7 +413,7 @@ describe('SchedulePlanningService', () => {
           user: { id: bigint; uid: string; name: string; email: string };
         },
       );
-      scheduleSnapshotService.createScheduleSnapshot.mockResolvedValue({
+      createScheduleSnapshotMock.mockResolvedValue({
         id: BigInt(2),
         uid: 'snapshot_backup123',
       } as unknown as ScheduleSnapshot);
@@ -378,9 +421,7 @@ describe('SchedulePlanningService', () => {
 
       const result = await service.restoreFromSnapshot(snapshotUid, userId);
 
-      expect(
-        scheduleSnapshotService.getScheduleSnapshotById,
-      ).toHaveBeenCalledWith(snapshotUid, {
+      expect(getScheduleSnapshotByIdMock).toHaveBeenCalledWith(snapshotUid, {
         schedule: {
           include: {
             client: true,
@@ -389,10 +430,8 @@ describe('SchedulePlanningService', () => {
         },
         user: true,
       });
-      expect(prismaService.$transaction).toHaveBeenCalled();
-      expect(
-        scheduleSnapshotService.createScheduleSnapshot,
-      ).toHaveBeenCalledWith({
+      expect(executeTransactionMock).toHaveBeenCalled();
+      expect(createScheduleSnapshotMock).toHaveBeenCalledWith({
         schedule: { connect: { id: mockSchedule.id } },
         planDocument: mockSchedule.planDocument as Prisma.InputJsonValue,
         version: mockSchedule.version,
@@ -427,9 +466,7 @@ describe('SchedulePlanningService', () => {
       await expect(
         service.restoreFromSnapshot(snapshotUid, userId),
       ).rejects.toThrow(NotFoundException);
-      expect(
-        scheduleSnapshotService.getScheduleSnapshotById,
-      ).toHaveBeenCalledWith(snapshotUid, {
+      expect(getScheduleSnapshotByIdMock).toHaveBeenCalledWith(snapshotUid, {
         schedule: {
           include: {
             client: true,
@@ -438,7 +475,7 @@ describe('SchedulePlanningService', () => {
         },
         user: true,
       });
-      expect(prismaService.$transaction).not.toHaveBeenCalled();
+      expect(executeTransactionMock).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundException when schedule is not found in snapshot', async () => {
@@ -453,7 +490,7 @@ describe('SchedulePlanningService', () => {
       await expect(
         service.restoreFromSnapshot(snapshotUid, userId),
       ).rejects.toThrow(NotFoundException);
-      expect(prismaService.$transaction).not.toHaveBeenCalled();
+      expect(executeTransactionMock).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException when trying to restore published schedule', async () => {
@@ -473,7 +510,7 @@ describe('SchedulePlanningService', () => {
       await expect(
         service.restoreFromSnapshot(snapshotUid, userId),
       ).rejects.toThrow(BadRequestException);
-      expect(prismaService.$transaction).not.toHaveBeenCalled();
+      expect(executeTransactionMock).not.toHaveBeenCalled();
     });
   });
 
@@ -506,7 +543,7 @@ describe('SchedulePlanningService', () => {
       scheduleService.getScheduleById.mockResolvedValue(
         mockSchedule as unknown as Schedule,
       );
-      scheduleSnapshotService.getSnapshotsByScheduleId.mockResolvedValue(
+      scheduleSnapshotService.getScheduleSnapshots.mockResolvedValue(
         mockSnapshots as unknown as Array<
           ScheduleSnapshot & {
             user: { uid: string; name: string; email: string };
@@ -516,15 +553,18 @@ describe('SchedulePlanningService', () => {
 
       const result = await service.getSnapshotsBySchedule(scheduleUid);
 
-      expect(scheduleService.getScheduleById).toHaveBeenCalledWith(scheduleUid);
-      expect(
-        scheduleSnapshotService.getSnapshotsByScheduleId,
-      ).toHaveBeenCalledWith(mockSchedule.id, {
-        user: {
-          select: {
-            uid: true,
-            name: true,
-            email: true,
+      expect(getScheduleByIdMock).toHaveBeenCalledWith(scheduleUid);
+      expect(getScheduleSnapshotsMock).toHaveBeenCalledWith({
+        where: { scheduleId: mockSchedule.id },
+        orderBy: { createdAt: 'desc' },
+        take: undefined,
+        include: {
+          user: {
+            select: {
+              uid: true,
+              name: true,
+              email: true,
+            },
           },
         },
       });
@@ -532,13 +572,14 @@ describe('SchedulePlanningService', () => {
       expect(result).toHaveLength(2);
     });
 
-    it('should sort snapshots by createdAt ascending by default', async () => {
+    it('should sort snapshots by createdAt ascending when specified', async () => {
       const scheduleUid = 'schedule_test123';
+      // Mock returns snapshots sorted ascending (oldest first)
       const mockSnapshots = [
         {
-          id: BigInt(2),
-          uid: 'snapshot_2',
-          createdAt: new Date('2024-01-02'),
+          id: BigInt(1),
+          uid: 'snapshot_1',
+          createdAt: new Date('2024-01-01'),
           user: {
             uid: 'user_test123',
             name: 'Test User',
@@ -546,9 +587,9 @@ describe('SchedulePlanningService', () => {
           },
         },
         {
-          id: BigInt(1),
-          uid: 'snapshot_1',
-          createdAt: new Date('2024-01-01'),
+          id: BigInt(2),
+          uid: 'snapshot_2',
+          createdAt: new Date('2024-01-02'),
           user: {
             uid: 'user_test123',
             name: 'Test User',
@@ -560,7 +601,7 @@ describe('SchedulePlanningService', () => {
       scheduleService.getScheduleById.mockResolvedValue(
         mockSchedule as unknown as Schedule,
       );
-      scheduleSnapshotService.getSnapshotsByScheduleId.mockResolvedValue(
+      scheduleSnapshotService.getScheduleSnapshots.mockResolvedValue(
         mockSnapshots as unknown as Array<
           ScheduleSnapshot & {
             user: { uid: string; name: string; email: string };
@@ -568,19 +609,36 @@ describe('SchedulePlanningService', () => {
         >,
       );
 
-      const result = await service.getSnapshotsBySchedule(scheduleUid);
+      const result = await service.getSnapshotsBySchedule(scheduleUid, {
+        orderBy: 'asc',
+      });
 
+      expect(getScheduleSnapshotsMock).toHaveBeenCalledWith({
+        where: { scheduleId: mockSchedule.id },
+        orderBy: { createdAt: 'asc' },
+        take: undefined,
+        include: {
+          user: {
+            select: {
+              uid: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
       expect(result[0].uid).toBe('snapshot_1');
       expect(result[1].uid).toBe('snapshot_2');
     });
 
     it('should sort snapshots by createdAt descending when specified', async () => {
       const scheduleUid = 'schedule_test123';
+      // Mock returns snapshots sorted descending (newest first)
       const mockSnapshots = [
         {
-          id: BigInt(1),
-          uid: 'snapshot_1',
-          createdAt: new Date('2024-01-01'),
+          id: BigInt(2),
+          uid: 'snapshot_2',
+          createdAt: new Date('2024-01-02'),
           user: {
             uid: 'user_test123',
             name: 'Test User',
@@ -588,9 +646,9 @@ describe('SchedulePlanningService', () => {
           },
         },
         {
-          id: BigInt(2),
-          uid: 'snapshot_2',
-          createdAt: new Date('2024-01-02'),
+          id: BigInt(1),
+          uid: 'snapshot_1',
+          createdAt: new Date('2024-01-01'),
           user: {
             uid: 'user_test123',
             name: 'Test User',
@@ -602,7 +660,7 @@ describe('SchedulePlanningService', () => {
       scheduleService.getScheduleById.mockResolvedValue(
         mockSchedule as unknown as Schedule,
       );
-      scheduleSnapshotService.getSnapshotsByScheduleId.mockResolvedValue(
+      scheduleSnapshotService.getScheduleSnapshots.mockResolvedValue(
         mockSnapshots as unknown as Array<
           ScheduleSnapshot & {
             user: { uid: string; name: string; email: string };
@@ -614,6 +672,20 @@ describe('SchedulePlanningService', () => {
         orderBy: 'desc',
       });
 
+      expect(getScheduleSnapshotsMock).toHaveBeenCalledWith({
+        where: { scheduleId: mockSchedule.id },
+        orderBy: { createdAt: 'desc' },
+        take: undefined,
+        include: {
+          user: {
+            select: {
+              uid: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
       expect(result[0].uid).toBe('snapshot_2');
       expect(result[1].uid).toBe('snapshot_1');
     });
@@ -656,8 +728,10 @@ describe('SchedulePlanningService', () => {
       scheduleService.getScheduleById.mockResolvedValue(
         mockSchedule as unknown as Schedule,
       );
-      scheduleSnapshotService.getSnapshotsByScheduleId.mockResolvedValue(
-        mockSnapshots as unknown as Array<
+      // Mock returns limited snapshots (first 2)
+      const limitedSnapshots = mockSnapshots.slice(0, 2);
+      scheduleSnapshotService.getScheduleSnapshots.mockResolvedValue(
+        limitedSnapshots as unknown as Array<
           ScheduleSnapshot & {
             user: { uid: string; name: string; email: string };
           }
@@ -668,6 +742,20 @@ describe('SchedulePlanningService', () => {
         limit: 2,
       });
 
+      expect(getScheduleSnapshotsMock).toHaveBeenCalledWith({
+        where: { scheduleId: mockSchedule.id },
+        orderBy: { createdAt: 'desc' },
+        take: 2,
+        include: {
+          user: {
+            select: {
+              uid: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
       expect(result).toHaveLength(2);
       expect(result[0].uid).toBe('snapshot_1');
       expect(result[1].uid).toBe('snapshot_2');
@@ -704,10 +792,8 @@ describe('SchedulePlanningService', () => {
         userId,
       );
 
-      expect(scheduleService.getScheduleById).toHaveBeenCalledWith(scheduleUid);
-      expect(
-        scheduleSnapshotService.createScheduleSnapshot,
-      ).toHaveBeenCalledWith({
+      expect(getScheduleByIdMock).toHaveBeenCalledWith(scheduleUid);
+      expect(createScheduleSnapshotMock).toHaveBeenCalledWith({
         schedule: { connect: { id: mockSchedule.id } },
         planDocument: mockSchedule.planDocument as Prisma.InputJsonValue,
         version: mockSchedule.version,
@@ -742,9 +828,7 @@ describe('SchedulePlanningService', () => {
         userId,
       );
 
-      expect(
-        scheduleSnapshotService.createScheduleSnapshot,
-      ).toHaveBeenCalledWith(
+      expect(createScheduleSnapshotMock).toHaveBeenCalledWith(
         expect.objectContaining({
           snapshotReason: 'manual',
         }),

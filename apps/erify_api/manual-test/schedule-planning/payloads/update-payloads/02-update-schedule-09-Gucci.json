@@ -1,0 +1,1552 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-15T03:35:20.426Z",
+      "totalShows": 50,
+      "clientName": "Gucci",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1763177720426_47",
+        "name": "Gucci Show 48",
+        "startTime": "2025-10-31T17:19:09.123Z",
+        "endTime": "2025-10-31T18:23:53.379Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Gucci Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Gucci Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Gucci Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-48",
+            "platformShowId": "platform_show_48_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_46",
+        "name": "Gucci Show 47",
+        "startTime": "2025-10-31T23:21:06.561Z",
+        "endTime": "2025-11-01T01:26:58.257Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Gucci Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Gucci Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_26",
+        "name": "Gucci Show 27",
+        "startTime": "2025-11-01T01:58:36.545Z",
+        "endTime": "2025-11-01T04:32:08.686Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Gucci Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Gucci Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Gucci Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_28",
+        "name": "Gucci Show 29",
+        "startTime": "2025-11-02T00:36:21.908Z",
+        "endTime": "2025-11-02T02:51:17.920Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Gucci Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_17",
+        "name": "Gucci Show 18",
+        "startTime": "2025-11-02T02:53:43.725Z",
+        "endTime": "2025-11-02T05:35:20.466Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Gucci Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Gucci Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_37",
+        "name": "Gucci Show 38",
+        "startTime": "2025-11-03T05:57:44.839Z",
+        "endTime": "2025-11-03T07:49:24.564Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Gucci Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Gucci Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Gucci Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_14",
+        "name": "Gucci Show 15",
+        "startTime": "2025-11-04T06:14:56.309Z",
+        "endTime": "2025-11-04T10:14:40.802Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Gucci Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_27",
+        "name": "Gucci Show 28",
+        "startTime": "2025-11-04T18:58:47.619Z",
+        "endTime": "2025-11-04T22:40:24.747Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Gucci Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Gucci Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Gucci Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_34",
+        "name": "Gucci Show 35",
+        "startTime": "2025-11-06T15:48:59.830Z",
+        "endTime": "2025-11-06T17:44:14.838Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Gucci Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-35",
+            "platformShowId": "platform_show_35_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_49",
+        "name": "Gucci Show 50",
+        "startTime": "2025-11-06T22:44:56.599Z",
+        "endTime": "2025-11-07T01:14:59.322Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Gucci Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_22",
+        "name": "Gucci Show 23",
+        "startTime": "2025-11-07T08:18:44.691Z",
+        "endTime": "2025-11-07T10:55:01.667Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Gucci Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Gucci Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_9",
+        "name": "Gucci Show 10",
+        "startTime": "2025-11-07T17:04:58.960Z",
+        "endTime": "2025-11-07T18:48:14.534Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Gucci Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Gucci Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Gucci Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_7",
+        "name": "Gucci Show 8",
+        "startTime": "2025-11-08T02:21:40.430Z",
+        "endTime": "2025-11-08T04:57:47.994Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Gucci Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Gucci Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Gucci Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-8",
+            "platformShowId": "platform_show_8_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_18",
+        "name": "Gucci Show 19",
+        "startTime": "2025-11-09T06:12:45.335Z",
+        "endTime": "2025-11-09T07:22:05.239Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Gucci Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Gucci Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_31",
+        "name": "Gucci Show 32",
+        "startTime": "2025-11-10T10:16:02.307Z",
+        "endTime": "2025-11-10T14:12:34.352Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Gucci Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-32",
+            "platformShowId": "platform_show_32_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_43",
+        "name": "Gucci Show 44",
+        "startTime": "2025-11-10T15:47:00.620Z",
+        "endTime": "2025-11-10T16:56:38.561Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Gucci Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_0",
+        "name": "Gucci Show 1",
+        "startTime": "2025-11-10T23:17:45.664Z",
+        "endTime": "2025-11-11T01:05:15.344Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Gucci Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_42",
+        "name": "Gucci Show 43",
+        "startTime": "2025-11-11T01:33:30.323Z",
+        "endTime": "2025-11-11T03:23:41.359Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Gucci Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Gucci Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-43",
+            "platformShowId": "platform_show_43_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_24",
+        "name": "Gucci Show 25",
+        "startTime": "2025-11-13T23:03:11.338Z",
+        "endTime": "2025-11-14T00:50:56.979Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Gucci Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Gucci Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_12",
+        "name": "Gucci Show 13",
+        "startTime": "2025-11-14T04:18:33.263Z",
+        "endTime": "2025-11-14T05:30:51.221Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Gucci Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_45",
+        "name": "Gucci Show 46",
+        "startTime": "2025-11-14T16:55:46.245Z",
+        "endTime": "2025-11-14T19:00:37.301Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Gucci Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Gucci Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_44",
+        "name": "Gucci Show 45",
+        "startTime": "2025-11-15T16:56:53.838Z",
+        "endTime": "2025-11-15T18:06:53.874Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Gucci Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_3",
+        "name": "Gucci Show 4",
+        "startTime": "2025-11-15T20:16:29.358Z",
+        "endTime": "2025-11-15T23:39:18.133Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Gucci Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Gucci Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_39",
+        "name": "Gucci Show 40",
+        "startTime": "2025-11-17T00:46:36.931Z",
+        "endTime": "2025-11-17T03:24:28.177Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Gucci Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_16",
+        "name": "Gucci Show 17",
+        "startTime": "2025-11-17T14:26:29.576Z",
+        "endTime": "2025-11-17T16:17:19.568Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Gucci Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Gucci Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-17",
+            "platformShowId": "platform_show_17_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_48",
+        "name": "Gucci Show 49",
+        "startTime": "2025-11-19T12:25:25.872Z",
+        "endTime": "2025-11-19T13:27:43.613Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Gucci Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Gucci Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_1",
+        "name": "Gucci Show 2",
+        "startTime": "2025-11-20T01:52:13.648Z",
+        "endTime": "2025-11-20T05:04:20.992Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Gucci Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Gucci Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_2",
+        "name": "Gucci Show 3",
+        "startTime": "2025-11-20T14:29:34.372Z",
+        "endTime": "2025-11-20T15:35:34.224Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Gucci Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_36",
+        "name": "Gucci Show 37",
+        "startTime": "2025-11-21T05:05:47.068Z",
+        "endTime": "2025-11-21T06:25:55.433Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Gucci Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Gucci Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_8",
+        "name": "Gucci Show 9",
+        "startTime": "2025-11-21T08:41:09.582Z",
+        "endTime": "2025-11-21T12:32:22.499Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Gucci Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Gucci Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Gucci Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_5",
+        "name": "Gucci Show 6",
+        "startTime": "2025-11-22T01:39:54.503Z",
+        "endTime": "2025-11-22T05:00:43.609Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Gucci Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Gucci Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Gucci Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_13",
+        "name": "Gucci Show 14",
+        "startTime": "2025-11-22T07:08:56.756Z",
+        "endTime": "2025-11-22T10:43:44.103Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Gucci Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_40",
+        "name": "Gucci Show 41",
+        "startTime": "2025-11-22T08:20:55.404Z",
+        "endTime": "2025-11-22T12:04:17.379Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Gucci Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Gucci Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Gucci Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_35",
+        "name": "Gucci Show 36",
+        "startTime": "2025-11-22T15:11:35.975Z",
+        "endTime": "2025-11-22T16:23:12.636Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Gucci Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_29",
+        "name": "Gucci Show 30",
+        "startTime": "2025-11-24T00:00:28.207Z",
+        "endTime": "2025-11-24T01:13:49.965Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Gucci Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Gucci Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-30",
+            "platformShowId": "platform_show_30_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_41",
+        "name": "Gucci Show 42",
+        "startTime": "2025-11-24T18:07:16.461Z",
+        "endTime": "2025-11-24T21:44:57.349Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Gucci Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Gucci Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_15",
+        "name": "Gucci Show 16",
+        "startTime": "2025-11-24T22:33:00.218Z",
+        "endTime": "2025-11-25T02:30:57.013Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Gucci Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Gucci Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_32",
+        "name": "Gucci Show 33",
+        "startTime": "2025-11-25T15:21:42.154Z",
+        "endTime": "2025-11-25T18:02:31.141Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Gucci Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_20",
+        "name": "Gucci Show 21",
+        "startTime": "2025-11-25T21:59:55.671Z",
+        "endTime": "2025-11-26T01:16:26.512Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Gucci Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Gucci Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_25",
+        "name": "Gucci Show 26",
+        "startTime": "2025-11-26T09:33:06.630Z",
+        "endTime": "2025-11-26T13:31:46.301Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Gucci Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_19",
+        "name": "Gucci Show 20",
+        "startTime": "2025-11-26T09:54:08.831Z",
+        "endTime": "2025-11-26T13:11:10.344Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Gucci Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Gucci Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Gucci Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_30",
+        "name": "Gucci Show 31",
+        "startTime": "2025-11-26T11:07:34.129Z",
+        "endTime": "2025-11-26T13:57:11.234Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Gucci Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_33",
+        "name": "Gucci Show 34",
+        "startTime": "2025-11-27T08:46:56.797Z",
+        "endTime": "2025-11-27T12:01:48.523Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Gucci Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Gucci Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Gucci Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-34",
+            "platformShowId": "platform_show_34_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_23",
+        "name": "Gucci Show 24",
+        "startTime": "2025-11-28T07:40:55.837Z",
+        "endTime": "2025-11-28T09:24:06.651Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Gucci Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Gucci Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Gucci Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-24",
+            "platformShowId": "platform_show_24_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_4",
+        "name": "Gucci Show 5",
+        "startTime": "2025-11-28T12:41:42.902Z",
+        "endTime": "2025-11-28T14:11:27.363Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Gucci Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_38",
+        "name": "Gucci Show 39",
+        "startTime": "2025-11-28T22:57:45.707Z",
+        "endTime": "2025-11-29T00:52:26.156Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Gucci Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Gucci Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Gucci Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_10",
+        "name": "Gucci Show 11",
+        "startTime": "2025-11-29T13:09:18.001Z",
+        "endTime": "2025-11-29T15:38:05.440Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Gucci Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_11",
+        "name": "Gucci Show 12",
+        "startTime": "2025-11-29T21:03:36.977Z",
+        "endTime": "2025-11-30T00:32:03.322Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Gucci Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_6",
+        "name": "Gucci Show 7",
+        "startTime": "2025-11-30T01:11:03.954Z",
+        "endTime": "2025-11-30T05:01:28.060Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Gucci Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Gucci Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-7",
+            "platformShowId": "platform_show_7_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720426_21",
+        "name": "Gucci Show 22",
+        "startTime": "2025-11-30T07:21:17.327Z",
+        "endTime": "2025-11-30T10:58:07.599Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Gucci Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Gucci Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Gucci Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

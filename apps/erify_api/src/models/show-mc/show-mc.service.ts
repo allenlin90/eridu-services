@@ -25,8 +25,12 @@ export class ShowMcService extends BaseModelService {
     super(utilityService);
   }
 
-  generateShowUid(size?: number) {
-    return this.generateUid(size);
+  /**
+   * Generates a show MC UID.
+   * Public wrapper for generateUid() to allow external services to generate UIDs.
+   */
+  generateShowMcUid(): string {
+    return this.generateUid();
   }
 
   async createShowMcFromDto<
@@ -43,7 +47,7 @@ export class ShowMcService extends BaseModelService {
     data: Omit<Prisma.ShowMCCreateInput, 'uid'>,
     include?: T,
   ): Promise<ShowMC | ShowMCWithIncludes<T>> {
-    const uid = this.generateShowUid();
+    const uid = this.generateUid();
     return this.showMcRepository.create({ ...data, uid }, include);
   }
 
@@ -59,6 +63,7 @@ export class ShowMcService extends BaseModelService {
       skip?: number;
       take?: number;
       where?: Prisma.ShowMCWhereInput;
+      orderBy?: Prisma.ShowMCOrderByWithRelationInput;
     },
     include?: T,
   ): Promise<ShowMC[] | ShowMCWithIncludes<T>[]> {
