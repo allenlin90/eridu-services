@@ -3,21 +3,19 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   HttpStatus,
   Param,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
-import { ZodSerializerDto } from 'nestjs-zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
-import { ApiZodResponse } from '@/common/openapi/decorators';
 import {
-  createPaginatedResponseSchema,
-  PaginationQueryDto,
-} from '@/common/pagination/schema/pagination.schema';
+  AdminPaginatedResponse,
+  AdminResponse,
+} from '@/admin/decorators/admin-response.decorator';
+import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
 import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
 import { McService } from '@/models/mc/mc.service';
 import {
@@ -37,20 +35,13 @@ export class AdminMcController extends BaseAdminController {
   }
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiZodResponse(mcWithUserDto, 'MC created successfully')
-  @ZodSerializerDto(mcWithUserDto)
+  @AdminResponse(mcWithUserDto, HttpStatus.CREATED, 'MC created successfully')
   createMc(@Body() body: CreateMcDto) {
     return this.mcService.createMcFromDto(body, { user: true });
   }
 
   @Get()
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(
-    createPaginatedResponseSchema(mcWithUserDto),
-    'List of MCs with pagination',
-  )
-  @ZodSerializerDto(createPaginatedResponseSchema(mcWithUserDto))
+  @AdminPaginatedResponse(mcWithUserDto, 'List of MCs with pagination')
   async getMcs(@Query() query: PaginationQueryDto) {
     const data = await this.mcService.getMcs(
       { skip: query.skip, take: query.take },
@@ -62,9 +53,7 @@ export class AdminMcController extends BaseAdminController {
   }
 
   @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(mcWithUserDto, 'MC details')
-  @ZodSerializerDto(mcWithUserDto)
+  @AdminResponse(mcWithUserDto, HttpStatus.OK, 'MC details')
   getMc(
     @Param('id', new UidValidationPipe(McService.UID_PREFIX, 'MC'))
     id: string,
@@ -73,9 +62,7 @@ export class AdminMcController extends BaseAdminController {
   }
 
   @Patch(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(mcWithUserDto, 'MC updated successfully')
-  @ZodSerializerDto(mcWithUserDto)
+  @AdminResponse(mcWithUserDto, HttpStatus.OK, 'MC updated successfully')
   updateMc(
     @Param('id', new UidValidationPipe(McService.UID_PREFIX, 'MC'))
     id: string,
@@ -85,7 +72,7 @@ export class AdminMcController extends BaseAdminController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @AdminResponse(undefined, HttpStatus.NO_CONTENT)
   async deleteMc(
     @Param('id', new UidValidationPipe(McService.UID_PREFIX, 'MC'))
     id: string,

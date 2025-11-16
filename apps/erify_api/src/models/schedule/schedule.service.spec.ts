@@ -1,11 +1,14 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { BadRequestException, ConflictException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma, Schedule } from '@prisma/client';
 
+import {
+  createMockRepository,
+  createMockUtilityService,
+  createModelServiceTestModule,
+} from '@/common/test-helpers/model-service-test.helper';
 import { ScheduleRepository } from '@/models/schedule/schedule.repository';
 import { PrismaService } from '@/prisma/prisma.service';
-import { UtilityService } from '@/utility/utility.service';
 
 import { ScheduleService } from './schedule.service';
 import {
@@ -110,35 +113,29 @@ describe('ScheduleService', () => {
   } as ScheduleWithRelations;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ScheduleService,
-        {
-          provide: ScheduleRepository,
-          useValue: {
-            create: jest.fn(),
-            findByUid: jest.fn(),
-            findOne: jest.fn(),
-            findMany: jest.fn(),
-            update: jest.fn(),
-            count: jest.fn(),
-          },
-        },
-        {
-          provide: UtilityService,
-          useValue: {
-            generateUid: jest.fn((prefix: string) => {
-              const random = Math.random().toString(36).substring(2, 8);
-              return `${prefix}_${random}`;
-            }),
-          },
-        },
+    const scheduleRepositoryMock = createMockRepository<ScheduleRepository>({
+      findOne: jest.fn(),
+    });
+
+    const utilityMock = createMockUtilityService();
+    // Override generateBrandedId to use generateUid pattern for schedule
+    utilityMock.generateBrandedId = jest.fn((prefix: string) => {
+      const random = Math.random().toString(36).substring(2, 8);
+      return `${prefix}_${random}`;
+    }) as jest.Mock;
+
+    const module = await createModelServiceTestModule({
+      serviceClass: ScheduleService,
+      repositoryClass: ScheduleRepository,
+      repositoryMock: scheduleRepositoryMock,
+      utilityMock: utilityMock,
+      additionalProviders: [
         {
           provide: PrismaService,
           useValue: {},
         },
       ],
-    }).compile();
+    });
 
     service = module.get<ScheduleService>(ScheduleService);
     scheduleRepository = module.get(ScheduleRepository);

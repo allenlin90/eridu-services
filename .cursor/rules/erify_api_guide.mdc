@@ -38,7 +38,7 @@ export class EntityRepository extends BaseRepository<Entity, Prisma.EntityCreate
 
 ### Service Layer
 - **Model Services** (`BaseModelService`): Single-entity CRUD, use `UtilityService.generateBrandedId(prefix)`, include `UID_PREFIX` constant
-- **Orchestration Services** (`BaseOrchestrationService`): Multi-entity coordination, transactions
+- **Orchestration Services**: Multi-entity coordination, transactions (use `PrismaService.executeTransaction()` directly)
 - **Admin Services**: Delegate to domain services, handle admin concerns
 
 **Transactions:** Use `prisma.$transaction()` or `prisma.executeTransaction()` for atomic operations. Prefer bulk ops: `createMany`, `updateMany`, `deleteMany`.

@@ -1,26 +1,11 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Post,
-} from '@nestjs/common';
-import { ZodSerializerDto } from 'nestjs-zod';
+import { Body, Controller, Get, HttpStatus, Param, Post } from '@nestjs/common';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
-import { ApiZodResponse } from '@/common/openapi/decorators';
+import { AdminResponse } from '@/admin/decorators/admin-response.decorator';
 import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
-import {
-  ScheduleDto,
-  scheduleDto,
-} from '@/models/schedule/schemas/schedule.schema';
+import { scheduleDto } from '@/models/schedule/schemas/schedule.schema';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
-import {
-  ScheduleSnapshotDto,
-  scheduleSnapshotDto,
-} from '@/models/schedule-snapshot/schemas/schedule-snapshot.schema';
+import { scheduleSnapshotDto } from '@/models/schedule-snapshot/schemas/schedule-snapshot.schema';
 import { UserService } from '@/models/user/user.service';
 import { SchedulePlanningService } from '@/schedule-planning/schedule-planning.service';
 import { UtilityService } from '@/utility/utility.service';
@@ -37,9 +22,11 @@ export class AdminSnapshotController extends BaseAdminController {
   }
 
   @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(scheduleSnapshotDto, 'Schedule snapshot details')
-  @ZodSerializerDto(ScheduleSnapshotDto)
+  @AdminResponse(
+    scheduleSnapshotDto,
+    HttpStatus.OK,
+    'Schedule snapshot details',
+  )
   async getSnapshot(
     @Param(
       'id',
@@ -63,9 +50,11 @@ export class AdminSnapshotController extends BaseAdminController {
   }
 
   @Post(':id/restore')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(scheduleDto, 'Schedule restored from snapshot successfully')
-  @ZodSerializerDto(ScheduleDto)
+  @AdminResponse(
+    scheduleDto,
+    HttpStatus.OK,
+    'Schedule restored from snapshot successfully',
+  )
   async restoreFromSnapshot(
     @Param(
       'id',

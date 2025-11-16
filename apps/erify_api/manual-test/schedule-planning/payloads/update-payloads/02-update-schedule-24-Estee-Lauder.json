@@ -1,0 +1,1647 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-15T03:35:20.432Z",
+      "totalShows": 50,
+      "clientName": "Estee Lauder",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1763177720431_38",
+        "name": "Estee Lauder Show 39",
+        "startTime": "2025-10-31T20:42:21.740Z",
+        "endTime": "2025-11-01T00:11:23.942Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Estee Lauder Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Estee Lauder Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Estee Lauder Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_42",
+        "name": "Estee Lauder Show 43",
+        "startTime": "2025-11-01T16:13:46.936Z",
+        "endTime": "2025-11-01T19:26:36.412Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Estee Lauder Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Estee Lauder Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-43",
+            "platformShowId": "platform_show_43_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_20",
+        "name": "Estee Lauder Show 21",
+        "startTime": "2025-11-02T04:59:33.412Z",
+        "endTime": "2025-11-02T06:06:59.268Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Estee Lauder Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Estee Lauder Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Estee Lauder Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_19",
+        "name": "Estee Lauder Show 20",
+        "startTime": "2025-11-02T07:21:04.427Z",
+        "endTime": "2025-11-02T10:05:41.989Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Estee Lauder Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Estee Lauder Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Estee Lauder Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_23",
+        "name": "Estee Lauder Show 24",
+        "startTime": "2025-11-03T19:34:38.946Z",
+        "endTime": "2025-11-03T23:12:44.391Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Estee Lauder Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Estee Lauder Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Estee Lauder Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_30",
+        "name": "Estee Lauder Show 31",
+        "startTime": "2025-11-03T23:52:57.740Z",
+        "endTime": "2025-11-04T02:48:12.851Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Estee Lauder Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Estee Lauder Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Estee Lauder Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_33",
+        "name": "Estee Lauder Show 34",
+        "startTime": "2025-11-04T08:59:46.355Z",
+        "endTime": "2025-11-04T11:15:36.384Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Estee Lauder Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Estee Lauder Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-34",
+            "platformShowId": "platform_show_34_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_47",
+        "name": "Estee Lauder Show 48",
+        "startTime": "2025-11-04T09:02:45.876Z",
+        "endTime": "2025-11-04T12:44:16.717Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Estee Lauder Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_43",
+        "name": "Estee Lauder Show 44",
+        "startTime": "2025-11-04T12:44:09.009Z",
+        "endTime": "2025-11-04T15:59:49.551Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Estee Lauder Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Estee Lauder Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Estee Lauder Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_14",
+        "name": "Estee Lauder Show 15",
+        "startTime": "2025-11-04T22:16:06.641Z",
+        "endTime": "2025-11-04T23:30:53.767Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Estee Lauder Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Estee Lauder Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_18",
+        "name": "Estee Lauder Show 19",
+        "startTime": "2025-11-06T20:45:01.799Z",
+        "endTime": "2025-11-06T23:02:59.271Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Estee Lauder Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Estee Lauder Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Estee Lauder Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-19",
+            "platformShowId": "platform_show_19_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_41",
+        "name": "Estee Lauder Show 42",
+        "startTime": "2025-11-08T01:14:20.307Z",
+        "endTime": "2025-11-08T03:51:43.591Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Estee Lauder Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Estee Lauder Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Estee Lauder Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-42",
+            "platformShowId": "platform_show_42_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_5",
+        "name": "Estee Lauder Show 6",
+        "startTime": "2025-11-10T18:02:37.745Z",
+        "endTime": "2025-11-10T20:44:07.758Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Estee Lauder Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Estee Lauder Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Estee Lauder Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_36",
+        "name": "Estee Lauder Show 37",
+        "startTime": "2025-11-11T00:58:53.517Z",
+        "endTime": "2025-11-11T02:49:06.880Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Estee Lauder Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Estee Lauder Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_10",
+        "name": "Estee Lauder Show 11",
+        "startTime": "2025-11-11T07:30:33.587Z",
+        "endTime": "2025-11-11T11:07:23.014Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Estee Lauder Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_27",
+        "name": "Estee Lauder Show 28",
+        "startTime": "2025-11-12T06:20:32.244Z",
+        "endTime": "2025-11-12T07:29:23.261Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Estee Lauder Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Estee Lauder Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-28",
+            "platformShowId": "platform_show_28_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_3",
+        "name": "Estee Lauder Show 4",
+        "startTime": "2025-11-12T16:04:52.259Z",
+        "endTime": "2025-11-12T19:56:35.164Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Estee Lauder Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Estee Lauder Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_17",
+        "name": "Estee Lauder Show 18",
+        "startTime": "2025-11-13T12:30:58.947Z",
+        "endTime": "2025-11-13T15:07:52.622Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Estee Lauder Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Estee Lauder Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_25",
+        "name": "Estee Lauder Show 26",
+        "startTime": "2025-11-13T17:50:44.865Z",
+        "endTime": "2025-11-13T19:02:18.598Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Estee Lauder Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Estee Lauder Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Estee Lauder Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-26",
+            "platformShowId": "platform_show_26_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_28",
+        "name": "Estee Lauder Show 29",
+        "startTime": "2025-11-13T23:18:47.903Z",
+        "endTime": "2025-11-14T01:43:25.125Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Estee Lauder Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-29",
+            "platformShowId": "platform_show_29_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_1",
+        "name": "Estee Lauder Show 2",
+        "startTime": "2025-11-15T01:46:27.139Z",
+        "endTime": "2025-11-15T03:21:02.774Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Estee Lauder Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Estee Lauder Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Estee Lauder Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_49",
+        "name": "Estee Lauder Show 50",
+        "startTime": "2025-11-15T08:05:50.727Z",
+        "endTime": "2025-11-15T10:01:37.896Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Estee Lauder Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Estee Lauder Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_11",
+        "name": "Estee Lauder Show 12",
+        "startTime": "2025-11-16T09:07:04.572Z",
+        "endTime": "2025-11-16T10:57:40.084Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Estee Lauder Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Estee Lauder Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Estee Lauder Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_32",
+        "name": "Estee Lauder Show 33",
+        "startTime": "2025-11-17T15:32:45.369Z",
+        "endTime": "2025-11-17T17:45:27.599Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Estee Lauder Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Estee Lauder Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Estee Lauder Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-33",
+            "platformShowId": "platform_show_33_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_39",
+        "name": "Estee Lauder Show 40",
+        "startTime": "2025-11-18T16:10:02.662Z",
+        "endTime": "2025-11-18T19:22:30.530Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Estee Lauder Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Estee Lauder Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_37",
+        "name": "Estee Lauder Show 38",
+        "startTime": "2025-11-19T01:45:18.780Z",
+        "endTime": "2025-11-19T04:45:11.862Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Estee Lauder Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Estee Lauder Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_9",
+        "name": "Estee Lauder Show 10",
+        "startTime": "2025-11-19T02:06:27.239Z",
+        "endTime": "2025-11-19T03:48:02.750Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Estee Lauder Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Estee Lauder Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-10",
+            "platformShowId": "platform_show_10_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_45",
+        "name": "Estee Lauder Show 46",
+        "startTime": "2025-11-19T17:18:29.767Z",
+        "endTime": "2025-11-19T19:28:05.752Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Estee Lauder Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Estee Lauder Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Estee Lauder Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_13",
+        "name": "Estee Lauder Show 14",
+        "startTime": "2025-11-20T09:18:57.470Z",
+        "endTime": "2025-11-20T12:04:30.870Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Estee Lauder Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Estee Lauder Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Estee Lauder Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_4",
+        "name": "Estee Lauder Show 5",
+        "startTime": "2025-11-21T03:49:52.721Z",
+        "endTime": "2025-11-21T06:54:15.021Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Estee Lauder Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Estee Lauder Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_21",
+        "name": "Estee Lauder Show 22",
+        "startTime": "2025-11-22T04:16:17.104Z",
+        "endTime": "2025-11-22T05:43:39.311Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Estee Lauder Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-22",
+            "platformShowId": "platform_show_22_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_16",
+        "name": "Estee Lauder Show 17",
+        "startTime": "2025-11-22T05:31:21.255Z",
+        "endTime": "2025-11-22T09:04:57.502Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Estee Lauder Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Estee Lauder Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-17",
+            "platformShowId": "platform_show_17_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_40",
+        "name": "Estee Lauder Show 41",
+        "startTime": "2025-11-22T08:52:50.683Z",
+        "endTime": "2025-11-22T11:51:32.457Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Estee Lauder Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Estee Lauder Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_26",
+        "name": "Estee Lauder Show 27",
+        "startTime": "2025-11-22T09:16:02.159Z",
+        "endTime": "2025-11-22T11:21:56.922Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Estee Lauder Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-27",
+            "platformShowId": "platform_show_27_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_31",
+        "name": "Estee Lauder Show 32",
+        "startTime": "2025-11-22T22:57:45.829Z",
+        "endTime": "2025-11-23T01:22:06.888Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Estee Lauder Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Estee Lauder Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Estee Lauder Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_29",
+        "name": "Estee Lauder Show 30",
+        "startTime": "2025-11-24T01:35:52.534Z",
+        "endTime": "2025-11-24T04:31:51.416Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Estee Lauder Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Estee Lauder Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-30",
+            "platformShowId": "platform_show_30_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_0",
+        "name": "Estee Lauder Show 1",
+        "startTime": "2025-11-24T23:26:42.387Z",
+        "endTime": "2025-11-25T00:50:02.991Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Estee Lauder Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_48",
+        "name": "Estee Lauder Show 49",
+        "startTime": "2025-11-25T18:18:44.672Z",
+        "endTime": "2025-11-25T21:20:48.237Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Estee Lauder Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Estee Lauder Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Estee Lauder Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_7",
+        "name": "Estee Lauder Show 8",
+        "startTime": "2025-11-26T00:08:53.127Z",
+        "endTime": "2025-11-26T03:27:54.188Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Estee Lauder Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Estee Lauder Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_35",
+        "name": "Estee Lauder Show 36",
+        "startTime": "2025-11-26T12:17:41.043Z",
+        "endTime": "2025-11-26T14:58:46.209Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Estee Lauder Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_46",
+        "name": "Estee Lauder Show 47",
+        "startTime": "2025-11-26T13:18:24.160Z",
+        "endTime": "2025-11-26T14:41:53.873Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Estee Lauder Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Estee Lauder Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_12",
+        "name": "Estee Lauder Show 13",
+        "startTime": "2025-11-26T14:47:01.678Z",
+        "endTime": "2025-11-26T16:58:04.316Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Estee Lauder Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Estee Lauder Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_24",
+        "name": "Estee Lauder Show 25",
+        "startTime": "2025-11-26T18:24:46.869Z",
+        "endTime": "2025-11-26T21:03:48.377Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Estee Lauder Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Estee Lauder Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_34",
+        "name": "Estee Lauder Show 35",
+        "startTime": "2025-11-27T06:24:56.527Z",
+        "endTime": "2025-11-27T09:09:25.820Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Estee Lauder Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-35",
+            "platformShowId": "platform_show_35_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_2",
+        "name": "Estee Lauder Show 3",
+        "startTime": "2025-11-27T20:27:19.478Z",
+        "endTime": "2025-11-27T23:10:48.497Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Estee Lauder Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Estee Lauder Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_6",
+        "name": "Estee Lauder Show 7",
+        "startTime": "2025-11-28T10:14:22.923Z",
+        "endTime": "2025-11-28T13:55:35.993Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Estee Lauder Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Estee Lauder Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_44",
+        "name": "Estee Lauder Show 45",
+        "startTime": "2025-11-28T12:03:50.926Z",
+        "endTime": "2025-11-28T14:31:24.165Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Estee Lauder Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Estee Lauder Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_8",
+        "name": "Estee Lauder Show 9",
+        "startTime": "2025-11-29T16:25:44.803Z",
+        "endTime": "2025-11-29T17:29:16.047Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Estee Lauder Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Estee Lauder Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Estee Lauder Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_15",
+        "name": "Estee Lauder Show 16",
+        "startTime": "2025-11-29T22:22:09.988Z",
+        "endTime": "2025-11-30T00:38:41.960Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Estee Lauder Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Estee Lauder Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Estee Lauder Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720431_22",
+        "name": "Estee Lauder Show 23",
+        "startTime": "2025-11-30T11:03:49.892Z",
+        "endTime": "2025-11-30T13:10:49.687Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Estee Lauder Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,1591 @@
+{
+  "name": "Monthly Schedule - 2025-10-31 to 2025-11-30",
+  "start_date": "2025-10-31T17:00:00.000Z",
+  "end_date": "2025-11-30T16:59:59.999Z",
+  "status": "draft",
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-15T03:35:20.422Z",
+      "totalShows": 50,
+      "clientName": "Nike",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1763177720421_15",
+        "name": "Hp Show 16",
+        "startTime": "2025-11-01T21:59:53.677Z",
+        "endTime": "2025-11-02T00:56:01.120Z",
+        "clientUid": "client_00000000000000000016",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Hp Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-16",
+            "platformShowId": "platform_show_16_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_31",
+        "name": "Pepsi Show 32",
+        "startTime": "2025-11-02T04:51:25.491Z",
+        "endTime": "2025-11-02T07:54:11.849Z",
+        "clientUid": "client_00000000000000000032",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Pepsi Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Pepsi Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Pepsi Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_38",
+        "name": "Red Bull Show 39",
+        "startTime": "2025-11-02T20:51:41.631Z",
+        "endTime": "2025-11-02T22:59:03.881Z",
+        "clientUid": "client_00000000000000000039",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Red Bull Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_8",
+        "name": "Gucci Show 9",
+        "startTime": "2025-11-03T06:35:23.909Z",
+        "endTime": "2025-11-03T08:46:43.796Z",
+        "clientUid": "client_00000000000000000009",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Gucci Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Gucci Show 9"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Gucci Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-9",
+            "platformShowId": "platform_show_9_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_25",
+        "name": "The Body Shop Show 26",
+        "startTime": "2025-11-05T05:49:51.231Z",
+        "endTime": "2025-11-05T08:49:20.594Z",
+        "clientUid": "client_00000000000000000026",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for The Body Shop Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for The Body Shop Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_17",
+        "name": "Lenovo Show 18",
+        "startTime": "2025-11-05T09:27:22.328Z",
+        "endTime": "2025-11-05T12:50:31.891Z",
+        "clientUid": "client_00000000000000000018",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Lenovo Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Lenovo Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-18",
+            "platformShowId": "platform_show_18_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_2",
+        "name": "Puma Show 3",
+        "startTime": "2025-11-06T10:27:58.200Z",
+        "endTime": "2025-11-06T12:58:22.040Z",
+        "clientUid": "client_00000000000000000003",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Puma Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Puma Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Puma Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_14",
+        "name": "Lg Show 15",
+        "startTime": "2025-11-06T17:07:57.327Z",
+        "endTime": "2025-11-06T20:20:01.844Z",
+        "clientUid": "client_00000000000000000015",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Lg Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_12",
+        "name": "Sony Show 13",
+        "startTime": "2025-11-08T10:26:27.710Z",
+        "endTime": "2025-11-08T11:48:03.782Z",
+        "clientUid": "client_00000000000000000013",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Sony Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Sony Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_21",
+        "name": "Maybelline Show 22",
+        "startTime": "2025-11-08T22:47:31.207Z",
+        "endTime": "2025-11-09T00:42:55.844Z",
+        "clientUid": "client_00000000000000000022",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Maybelline Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Maybelline Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Maybelline Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_32",
+        "name": "Starbucks Show 33",
+        "startTime": "2025-11-09T04:15:41.297Z",
+        "endTime": "2025-11-09T07:01:18.210Z",
+        "clientUid": "client_00000000000000000033",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Starbucks Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-33",
+            "platformShowId": "platform_show_33_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_23",
+        "name": "Estee Lauder Show 24",
+        "startTime": "2025-11-09T05:02:20.626Z",
+        "endTime": "2025-11-09T07:53:00.186Z",
+        "clientUid": "client_00000000000000000024",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Estee Lauder Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_46",
+        "name": "Nike Home Show 47",
+        "startTime": "2025-11-09T12:18:19.057Z",
+        "endTime": "2025-11-09T13:50:09.129Z",
+        "clientUid": "client_00000000000000000047",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Nike Home Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_18",
+        "name": "Microsoft Show 19",
+        "startTime": "2025-11-10T01:09:48.180Z",
+        "endTime": "2025-11-10T02:53:01.928Z",
+        "clientUid": "client_00000000000000000019",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Microsoft Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-19",
+            "platformShowId": "platform_show_19_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_24",
+        "name": "Clinique Show 25",
+        "startTime": "2025-11-10T07:49:08.808Z",
+        "endTime": "2025-11-10T08:55:54.942Z",
+        "clientUid": "client_00000000000000000025",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Clinique Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Clinique Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Clinique Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_41",
+        "name": "Home Depot Show 42",
+        "startTime": "2025-11-10T12:30:14.803Z",
+        "endTime": "2025-11-10T16:19:58.805Z",
+        "clientUid": "client_00000000000000000042",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Home Depot Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-42",
+            "platformShowId": "platform_show_42_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_42",
+        "name": "Target Show 43",
+        "startTime": "2025-11-10T18:26:00.444Z",
+        "endTime": "2025-11-10T21:19:09.922Z",
+        "clientUid": "client_00000000000000000043",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Target Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Target Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Target Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_43",
+        "name": "Walmart Show 44",
+        "startTime": "2025-11-11T02:42:07.791Z",
+        "endTime": "2025-11-11T03:58:07.368Z",
+        "clientUid": "client_00000000000000000044",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Walmart Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Walmart Show 44"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Walmart Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_22",
+        "name": "Mac Cosmetics Show 23",
+        "startTime": "2025-11-11T11:04:09.139Z",
+        "endTime": "2025-11-11T12:34:34.067Z",
+        "clientUid": "client_00000000000000000023",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Mac Cosmetics Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_29",
+        "name": "Shiseido Show 30",
+        "startTime": "2025-11-11T15:03:26.348Z",
+        "endTime": "2025-11-11T16:06:56.514Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Shiseido Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_26",
+        "name": "Sephora Show 27",
+        "startTime": "2025-11-11T15:41:35.733Z",
+        "endTime": "2025-11-11T18:05:47.876Z",
+        "clientUid": "client_00000000000000000027",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Sephora Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Sephora Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-27",
+            "platformShowId": "platform_show_27_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_13",
+        "name": "Xiaomi Show 14",
+        "startTime": "2025-11-11T23:51:03.414Z",
+        "endTime": "2025-11-12T03:37:23.177Z",
+        "clientUid": "client_00000000000000000014",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Xiaomi Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Xiaomi Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Xiaomi Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_34",
+        "name": "Kfc Show 35",
+        "startTime": "2025-11-15T07:00:47.241Z",
+        "endTime": "2025-11-15T10:05:20.528Z",
+        "clientUid": "client_00000000000000000035",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Kfc Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Kfc Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_7",
+        "name": "Under Armour Show 8",
+        "startTime": "2025-11-15T18:56:25.615Z",
+        "endTime": "2025-11-15T21:32:57.941Z",
+        "clientUid": "client_00000000000000000008",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Under Armour Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Under Armour Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-8",
+            "platformShowId": "platform_show_8_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_33",
+        "name": "Mcdonalds Show 34",
+        "startTime": "2025-11-15T21:43:52.059Z",
+        "endTime": "2025-11-15T22:53:10.618Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Mcdonalds Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_37",
+        "name": "Ben And Jerrys Show 38",
+        "startTime": "2025-11-16T08:46:52.951Z",
+        "endTime": "2025-11-16T12:01:13.286Z",
+        "clientUid": "client_00000000000000000038",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Ben And Jerrys Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Ben And Jerrys Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_11",
+        "name": "Samsung Show 12",
+        "startTime": "2025-11-16T16:39:25.994Z",
+        "endTime": "2025-11-16T18:38:15.933Z",
+        "clientUid": "client_00000000000000000012",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Samsung Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Samsung Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Samsung Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_45",
+        "name": "Costco Show 46",
+        "startTime": "2025-11-16T19:31:59.220Z",
+        "endTime": "2025-11-16T21:12:25.759Z",
+        "clientUid": "client_00000000000000000046",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Costco Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Costco Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Costco Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_9",
+        "name": "Zara Show 10",
+        "startTime": "2025-11-16T22:13:40.249Z",
+        "endTime": "2025-11-17T00:12:28.743Z",
+        "clientUid": "client_00000000000000000010",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Zara Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_35",
+        "name": "Nestle Show 36",
+        "startTime": "2025-11-17T05:52:14.992Z",
+        "endTime": "2025-11-17T07:50:28.296Z",
+        "clientUid": "client_00000000000000000036",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Nestle Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_40",
+        "name": "Ikea Show 41",
+        "startTime": "2025-11-18T02:36:16.285Z",
+        "endTime": "2025-11-18T04:53:54.724Z",
+        "clientUid": "client_00000000000000000041",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Ikea Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_47",
+        "name": "Wayfair Show 48",
+        "startTime": "2025-11-18T05:56:50.474Z",
+        "endTime": "2025-11-18T09:10:45.333Z",
+        "clientUid": "client_00000000000000000048",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Wayfair Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Wayfair Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Wayfair Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-48",
+            "platformShowId": "platform_show_48_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_0",
+        "name": "Nike Show 1",
+        "startTime": "2025-11-18T14:17:00.508Z",
+        "endTime": "2025-11-18T17:34:35.617Z",
+        "clientUid": "client_00000000000000000001",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Nike Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Nike Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Nike Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_30",
+        "name": "Coca Cola Show 31",
+        "startTime": "2025-11-19T10:09:02.231Z",
+        "endTime": "2025-11-19T12:03:12.666Z",
+        "clientUid": "client_00000000000000000031",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Coca Cola Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Coca Cola Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Coca Cola Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_5",
+        "name": "Vans Show 6",
+        "startTime": "2025-11-19T21:59:58.368Z",
+        "endTime": "2025-11-20T00:17:23.600Z",
+        "clientUid": "client_00000000000000000006",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Vans Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-6",
+            "platformShowId": "platform_show_6_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_4",
+        "name": "Converse Show 5",
+        "startTime": "2025-11-20T09:27:44.574Z",
+        "endTime": "2025-11-20T11:56:40.313Z",
+        "clientUid": "client_00000000000000000005",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Converse Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Converse Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_44",
+        "name": "Amazon Show 45",
+        "startTime": "2025-11-21T14:54:58.070Z",
+        "endTime": "2025-11-21T16:45:57.954Z",
+        "clientUid": "client_00000000000000000045",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Amazon Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Amazon Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Amazon Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_3",
+        "name": "New Balance Show 4",
+        "startTime": "2025-11-21T21:03:07.336Z",
+        "endTime": "2025-11-21T22:31:10.487Z",
+        "clientUid": "client_00000000000000000004",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for New Balance Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for New Balance Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_19",
+        "name": "Intel Show 20",
+        "startTime": "2025-11-21T22:37:58.844Z",
+        "endTime": "2025-11-22T00:46:01.854Z",
+        "clientUid": "client_00000000000000000020",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Intel Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Intel Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Intel Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_28",
+        "name": "Fenty Beauty Show 29",
+        "startTime": "2025-11-22T06:12:01.445Z",
+        "endTime": "2025-11-22T09:30:31.674Z",
+        "clientUid": "client_00000000000000000029",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Fenty Beauty Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Fenty Beauty Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Fenty Beauty Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-29",
+            "platformShowId": "platform_show_29_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_6",
+        "name": "Reebok Show 7",
+        "startTime": "2025-11-23T07:24:56.468Z",
+        "endTime": "2025-11-23T08:48:14.162Z",
+        "clientUid": "client_00000000000000000007",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Reebok Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-7",
+            "platformShowId": "platform_show_7_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_39",
+        "name": "Tyson Foods Show 40",
+        "startTime": "2025-11-23T22:14:46.713Z",
+        "endTime": "2025-11-24T02:07:48.290Z",
+        "clientUid": "client_00000000000000000040",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Tyson Foods Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Tyson Foods Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_36",
+        "name": "Unilever Show 37",
+        "startTime": "2025-11-24T15:10:58.269Z",
+        "endTime": "2025-11-24T17:31:51.055Z",
+        "clientUid": "client_00000000000000000037",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Unilever Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_27",
+        "name": "Glossier Show 28",
+        "startTime": "2025-11-26T08:43:41.786Z",
+        "endTime": "2025-11-26T11:52:41.977Z",
+        "clientUid": "client_00000000000000000028",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Glossier Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Glossier Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Glossier Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_20",
+        "name": "Loreal Show 21",
+        "startTime": "2025-11-26T17:41:10.884Z",
+        "endTime": "2025-11-26T20:36:00.403Z",
+        "clientUid": "client_00000000000000000021",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Loreal Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Loreal Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_10",
+        "name": "Apple Show 11",
+        "startTime": "2025-11-28T09:37:34.249Z",
+        "endTime": "2025-11-28T12:01:23.725Z",
+        "clientUid": "client_00000000000000000011",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Apple Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Apple Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_16",
+        "name": "Dell Show 17",
+        "startTime": "2025-11-28T21:29:52.974Z",
+        "endTime": "2025-11-29T00:46:04.778Z",
+        "clientUid": "client_00000000000000000017",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Dell Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Dell Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_48",
+        "name": "Bed Bath Beyond Show 49",
+        "startTime": "2025-11-29T04:55:03.132Z",
+        "endTime": "2025-11-29T06:20:42.841Z",
+        "clientUid": "client_00000000000000000049",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Bed Bath Beyond Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Bed Bath Beyond Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Bed Bath Beyond Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_49",
+        "name": "Williams Sonoma Show 50",
+        "startTime": "2025-11-29T08:17:48.770Z",
+        "endTime": "2025-11-29T10:42:41.613Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Williams Sonoma Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Williams Sonoma Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720421_1",
+        "name": "Adidas Show 2",
+        "startTime": "2025-11-29T13:33:11.079Z",
+        "endTime": "2025-11-29T14:42:47.227Z",
+        "clientUid": "client_00000000000000000002",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Adidas Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Adidas Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Adidas Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1,
+  "client_id": "client_00000000000000000001",
+  "created_by": "user_00000000000000000001"
+}

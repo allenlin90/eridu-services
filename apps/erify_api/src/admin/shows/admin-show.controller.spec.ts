@@ -61,13 +61,20 @@ describe('AdminShowController', () => {
       const createDto: CreateShowWithAssignmentsDto = {
         name: 'Test Show',
         clientId: 'client_123',
-        showMcs: [],
-        showPlatforms: [],
-      } as CreateShowWithAssignmentsDto;
+        studioRoomId: 'srm_123',
+        showTypeId: 'sht_123',
+        showStatusId: 'shst_123',
+        showStandardId: 'shsd_123',
+        startTime: new Date('2024-01-01T10:00:00Z'),
+        endTime: new Date('2024-01-01T12:00:00Z'),
+        metadata: {},
+        mcs: [],
+        platforms: [],
+      };
       const createdShow = { uid: 'show_123', ...createDto };
       const showWithRelations = {
         ...createdShow,
-        showMcs: [],
+        showMCs: [],
         showPlatforms: [],
       };
 
@@ -244,11 +251,11 @@ describe('AdminShowController', () => {
     it('should replace MCs on a show', async () => {
       const showId = 'show_123';
       const replaceDto: ReplaceMcsOnShowDto = {
-        mcs: [{ mcId: 'mc_1', role: 'host' }],
+        mcs: [{ mcId: 'mc_1', note: null, metadata: {} }],
       };
       const updatedShow = {
         uid: showId,
-        showMcs: [{ mcId: 'mc_1', role: 'host' }],
+        showMcs: [{ mcId: 'mc_1', note: null, metadata: {} }],
       };
 
       mockShowOrchestrationService.replaceMCsForShow.mockResolvedValue(
@@ -268,12 +275,26 @@ describe('AdminShowController', () => {
     it('should replace platforms on a show', async () => {
       const showId = 'show_123';
       const replaceDto: ReplacePlatformsOnShowDto = {
-        platforms: [{ platformId: 'platform_1', url: 'https://example.com' }],
+        platforms: [
+          {
+            platformId: 'platform_1',
+            liveStreamLink: 'https://example.com',
+            platformShowId: 'platform_show_1',
+            viewerCount: 0,
+            metadata: {},
+          },
+        ],
       };
       const updatedShow = {
         uid: showId,
         showPlatforms: [
-          { platformId: 'platform_1', url: 'https://example.com' },
+          {
+            platformId: 'platform_1',
+            liveStreamLink: 'https://example.com',
+            platformShowId: 'platform_show_1',
+            viewerCount: 0,
+            metadata: {},
+          },
         ],
       };
 

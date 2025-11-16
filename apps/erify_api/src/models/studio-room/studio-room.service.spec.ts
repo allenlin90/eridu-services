@@ -1,5 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-
+import {
+  createMockRepository,
+  createMockUtilityService,
+  createModelServiceTestModule,
+  setupTestMocks,
+} from '@/common/test-helpers/model-service-test.helper';
 import { UtilityService } from '@/utility/utility.service';
 
 import { StudioRoomRepository } from './studio-room.repository';
@@ -9,38 +13,29 @@ jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
 describe('StudioRoomService', () => {
   let service: StudioRoomService;
-
-  const studioRoomRepositoryMock: Partial<jest.Mocked<StudioRoomRepository>> = {
-    create: jest.fn(),
-    findByUid: jest.fn(),
-    findActiveStudioRooms: jest.fn(),
-    findByStudioId: jest.fn(),
-    update: jest.fn(),
-    softDelete: jest.fn(),
-    count: jest.fn(),
-  };
-
-  const utilityServiceMock: Partial<jest.Mocked<UtilityService>> = {
-    generateBrandedId: jest.fn(),
-  };
+  let studioRoomRepositoryMock: Partial<jest.Mocked<StudioRoomRepository>>;
+  let utilityServiceMock: Partial<jest.Mocked<UtilityService>>;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        StudioRoomService,
-        { provide: StudioRoomRepository, useValue: studioRoomRepositoryMock },
-        { provide: UtilityService, useValue: utilityServiceMock },
-      ],
-    }).compile();
+    studioRoomRepositoryMock = createMockRepository<StudioRoomRepository>({
+      findActiveStudioRooms: jest.fn(),
+      findByStudioId: jest.fn(),
+    });
+
+    utilityServiceMock = createMockUtilityService('srm_test_id');
+
+    const module = await createModelServiceTestModule({
+      serviceClass: StudioRoomService,
+      repositoryClass: StudioRoomRepository,
+      repositoryMock: studioRoomRepositoryMock,
+      utilityMock: utilityServiceMock,
+    });
 
     service = module.get<StudioRoomService>(StudioRoomService);
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (utilityServiceMock.generateBrandedId as jest.Mock).mockReturnValue(
-      'srm_test_id',
-    );
+    setupTestMocks();
   });
 
   describe('createStudioRoom', () => {
@@ -313,6 +308,17 @@ describe('StudioRoomService', () => {
         capacity: 60,
         metadata: { type: 'live' },
       };
+      const existing = {
+        id: 1n,
+        uid: 'srm_123',
+        studioId: 1n,
+        name: 'Room A',
+        capacity: 50,
+        metadata: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      };
       const updated = {
         id: 1n,
         uid: 'srm_123',
@@ -325,10 +331,17 @@ describe('StudioRoomService', () => {
         deletedAt: null,
       };
 
+      (studioRoomRepositoryMock.findByUid as jest.Mock).mockResolvedValue(
+        existing,
+      );
       (studioRoomRepositoryMock.update as jest.Mock).mockResolvedValue(updated);
 
       const result = await service.updateStudioRoom(uid, data);
 
+      expect(studioRoomRepositoryMock.findByUid).toHaveBeenCalledWith(
+        uid,
+        undefined,
+      );
       expect(studioRoomRepositoryMock.update).toHaveBeenCalledWith(
         { uid },
         data,
@@ -344,6 +357,17 @@ describe('StudioRoomService', () => {
         capacity: 60,
       };
       const include = { studio: true };
+      const existing = {
+        id: 1n,
+        uid: 'srm_123',
+        studioId: 1n,
+        name: 'Room A',
+        capacity: 50,
+        metadata: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      };
       const updated = {
         id: 1n,
         uid: 'srm_123',
@@ -361,10 +385,17 @@ describe('StudioRoomService', () => {
         deletedAt: null,
       };
 
+      (studioRoomRepositoryMock.findByUid as jest.Mock).mockResolvedValue(
+        existing,
+      );
       (studioRoomRepositoryMock.update as jest.Mock).mockResolvedValue(updated);
 
       const result = await service.updateStudioRoom(uid, data, include);
 
+      expect(studioRoomRepositoryMock.findByUid).toHaveBeenCalledWith(
+        uid,
+        include,
+      );
       expect(studioRoomRepositoryMock.update).toHaveBeenCalledWith(
         { uid },
         data,
@@ -377,6 +408,17 @@ describe('StudioRoomService', () => {
   describe('deleteStudioRoom', () => {
     it('deletes studio room successfully', async () => {
       const uid = 'srm_123';
+      const existing = {
+        id: 1n,
+        uid: 'srm_123',
+        studioId: 1n,
+        name: 'Room A',
+        capacity: 50,
+        metadata: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      };
       const deleted = {
         id: 1n,
         uid: 'srm_123',
@@ -389,12 +431,19 @@ describe('StudioRoomService', () => {
         deletedAt: new Date(),
       };
 
+      (studioRoomRepositoryMock.findByUid as jest.Mock).mockResolvedValue(
+        existing,
+      );
       (studioRoomRepositoryMock.softDelete as jest.Mock).mockResolvedValue(
         deleted,
       );
 
       const result = await service.deleteStudioRoom(uid);
 
+      expect(studioRoomRepositoryMock.findByUid).toHaveBeenCalledWith(
+        uid,
+        undefined,
+      );
       expect(studioRoomRepositoryMock.softDelete).toHaveBeenCalledWith({ uid });
       expect(result).toEqual(deleted);
     });

@@ -3,25 +3,22 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   HttpStatus,
   Param,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
-import { ZodSerializerDto } from 'nestjs-zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
-import { ApiZodResponse } from '@/common/openapi/decorators';
 import {
-  createPaginatedResponseSchema,
-  PaginationQueryDto,
-} from '@/common/pagination/schema/pagination.schema';
+  AdminPaginatedResponse,
+  AdminResponse,
+} from '@/admin/decorators/admin-response.decorator';
+import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
 import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
 import {
   CreateStudioRoomDto,
-  StudioRoomWithStudioDto,
   studioRoomWithStudioDto,
   UpdateStudioRoomDto,
 } from '@/models/studio-room/schemas/studio-room.schema';
@@ -38,9 +35,11 @@ export class AdminStudioRoomController extends BaseAdminController {
   }
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiZodResponse(studioRoomWithStudioDto, 'Studio room created successfully')
-  @ZodSerializerDto(StudioRoomWithStudioDto)
+  @AdminResponse(
+    studioRoomWithStudioDto,
+    HttpStatus.CREATED,
+    'Studio room created successfully',
+  )
   // TODO: add idempotency check
   createStudioRoom(@Body() body: CreateStudioRoomDto) {
     return this.studioRoomService.createStudioRoomFromDto(body, {
@@ -49,12 +48,10 @@ export class AdminStudioRoomController extends BaseAdminController {
   }
 
   @Get()
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(
-    createPaginatedResponseSchema(studioRoomWithStudioDto),
+  @AdminPaginatedResponse(
+    studioRoomWithStudioDto,
     'List of studio rooms with pagination',
   )
-  @ZodSerializerDto(createPaginatedResponseSchema(studioRoomWithStudioDto))
   // TODO: filter by studio id
   async getStudioRooms(@Query() query: PaginationQueryDto) {
     const data = await this.studioRoomService.getStudioRooms(
@@ -67,9 +64,7 @@ export class AdminStudioRoomController extends BaseAdminController {
   }
 
   @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(studioRoomWithStudioDto, 'Studio room details')
-  @ZodSerializerDto(StudioRoomWithStudioDto)
+  @AdminResponse(studioRoomWithStudioDto, HttpStatus.OK, 'Studio room details')
   getStudioRoom(
     @Param(
       'id',
@@ -81,9 +76,11 @@ export class AdminStudioRoomController extends BaseAdminController {
   }
 
   @Patch(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(studioRoomWithStudioDto, 'Studio room updated successfully')
-  @ZodSerializerDto(StudioRoomWithStudioDto)
+  @AdminResponse(
+    studioRoomWithStudioDto,
+    HttpStatus.OK,
+    'Studio room updated successfully',
+  )
   updateStudioRoom(
     @Param(
       'id',
@@ -98,7 +95,7 @@ export class AdminStudioRoomController extends BaseAdminController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @AdminResponse(undefined, HttpStatus.NO_CONTENT)
   async deleteStudioRoom(
     @Param(
       'id',

@@ -3,25 +3,22 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   HttpStatus,
   Param,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
-import { ZodSerializerDto } from 'nestjs-zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
-import { ApiZodResponse } from '@/common/openapi/decorators';
 import {
-  createPaginatedResponseSchema,
-  PaginationQueryDto,
-} from '@/common/pagination/schema/pagination.schema';
+  AdminPaginatedResponse,
+  AdminResponse,
+} from '@/admin/decorators/admin-response.decorator';
+import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
 import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
 import {
   CreateShowStatusDto,
-  ShowStatusDto,
   showStatusDto,
   UpdateShowStatusDto,
 } from '@/models/show-status/schemas/show-status.schema';
@@ -38,20 +35,20 @@ export class AdminShowStatusController extends BaseAdminController {
   }
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiZodResponse(showStatusDto, 'Show status created successfully')
-  @ZodSerializerDto(ShowStatusDto)
+  @AdminResponse(
+    showStatusDto,
+    HttpStatus.CREATED,
+    'Show status created successfully',
+  )
   createShowStatus(@Body() body: CreateShowStatusDto) {
     return this.showStatusService.createShowStatus(body);
   }
 
   @Get()
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(
-    createPaginatedResponseSchema(showStatusDto),
+  @AdminPaginatedResponse(
+    showStatusDto,
     'List of show statuses with pagination',
   )
-  @ZodSerializerDto(createPaginatedResponseSchema(showStatusDto))
   async getShowStatuses(@Query() query: PaginationQueryDto) {
     const data = await this.showStatusService.getShowStatuses({
       skip: query.skip,
@@ -63,9 +60,7 @@ export class AdminShowStatusController extends BaseAdminController {
   }
 
   @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(showStatusDto, 'Show status details')
-  @ZodSerializerDto(ShowStatusDto)
+  @AdminResponse(showStatusDto, HttpStatus.OK, 'Show status details')
   getShowStatus(
     @Param(
       'id',
@@ -77,9 +72,11 @@ export class AdminShowStatusController extends BaseAdminController {
   }
 
   @Patch(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(showStatusDto, 'Show status updated successfully')
-  @ZodSerializerDto(ShowStatusDto)
+  @AdminResponse(
+    showStatusDto,
+    HttpStatus.OK,
+    'Show status updated successfully',
+  )
   updateShowStatus(
     @Param(
       'id',
@@ -92,7 +89,7 @@ export class AdminShowStatusController extends BaseAdminController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @AdminResponse(undefined, HttpStatus.NO_CONTENT)
   async deleteShowStatus(
     @Param(
       'id',

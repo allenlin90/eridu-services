@@ -37,6 +37,10 @@ export const envSchema = z.object({
   // Server-to-Server Authentication
   // Google Sheets integration API key
   GOOGLE_SHEETS_API_KEY: z.string().min(1).optional(),
+  // Backdoor API key for service-to-service privileged operations (user creation, updates, membership management)
+  BACKDOOR_API_KEY: z.string().min(1).optional(),
+  // Backdoor IP whitelist (comma-separated) - future enhancement
+  BACKDOOR_ALLOWED_IPS: z.string().optional(),
 });
 
 // Export type for use with ConfigService<Env>

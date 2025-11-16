@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { Test, TestingModule } from '@nestjs/testing';
-
+import {
+  createMockRepository,
+  createMockUtilityService,
+  createModelServiceTestModule,
+} from '@/common/test-helpers/model-service-test.helper';
 import { UtilityService } from '@/utility/utility.service';
 
 import { PlatformRepository } from './platform.repository';
@@ -14,28 +17,15 @@ describe('PlatformService', () => {
   let utilityService: UtilityService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        PlatformService,
-        {
-          provide: PlatformRepository,
-          useValue: {
-            create: jest.fn(),
-            findOne: jest.fn(),
-            findMany: jest.fn(),
-            update: jest.fn(),
-            softDelete: jest.fn(),
-            count: jest.fn(),
-          },
-        },
-        {
-          provide: UtilityService,
-          useValue: {
-            generateBrandedId: jest.fn().mockReturnValue('plt_test123'),
-          },
-        },
-      ],
-    }).compile();
+    const platformRepositoryMock = createMockRepository<PlatformRepository>();
+    const utilityMock = createMockUtilityService('plt_test123');
+
+    const module = await createModelServiceTestModule({
+      serviceClass: PlatformService,
+      repositoryClass: PlatformRepository,
+      repositoryMock: platformRepositoryMock,
+      utilityMock: utilityMock,
+    });
 
     service = module.get<PlatformService>(PlatformService);
     platformRepository = module.get<PlatformRepository>(PlatformRepository);

@@ -3,21 +3,19 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   HttpStatus,
   Param,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
-import { ZodSerializerDto } from 'nestjs-zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
-import { ApiZodResponse } from '@/common/openapi/decorators';
 import {
-  createPaginatedResponseSchema,
-  PaginationQueryDto,
-} from '@/common/pagination/schema/pagination.schema';
+  AdminPaginatedResponse,
+  AdminResponse,
+} from '@/admin/decorators/admin-response.decorator';
+import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
 import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
 import { PlatformService } from '@/models/platform/platform.service';
 import {
@@ -37,20 +35,17 @@ export class AdminPlatformController extends BaseAdminController {
   }
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiZodResponse(platformDto, 'Platform created successfully')
-  @ZodSerializerDto(platformDto)
+  @AdminResponse(
+    platformDto,
+    HttpStatus.CREATED,
+    'Platform created successfully',
+  )
   createPlatform(@Body() body: CreatePlatformDto) {
     return this.platformService.createPlatform(body);
   }
 
   @Get()
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(
-    createPaginatedResponseSchema(platformDto),
-    'List of platforms with pagination',
-  )
-  @ZodSerializerDto(createPaginatedResponseSchema(platformDto))
+  @AdminPaginatedResponse(platformDto, 'List of platforms with pagination')
   async getPlatforms(@Query() query: PaginationQueryDto) {
     const data = await this.platformService.getPlatforms({
       skip: query.skip,
@@ -62,9 +57,7 @@ export class AdminPlatformController extends BaseAdminController {
   }
 
   @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(platformDto, 'Platform details')
-  @ZodSerializerDto(platformDto)
+  @AdminResponse(platformDto, HttpStatus.OK, 'Platform details')
   getPlatform(
     @Param('id', new UidValidationPipe(PlatformService.UID_PREFIX, 'Platform'))
     id: string,
@@ -73,9 +66,7 @@ export class AdminPlatformController extends BaseAdminController {
   }
 
   @Patch(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(platformDto, 'Platform updated successfully')
-  @ZodSerializerDto(platformDto)
+  @AdminResponse(platformDto, HttpStatus.OK, 'Platform updated successfully')
   updatePlatform(
     @Param('id', new UidValidationPipe(PlatformService.UID_PREFIX, 'Platform'))
     id: string,
@@ -85,7 +76,7 @@ export class AdminPlatformController extends BaseAdminController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @AdminResponse(undefined, HttpStatus.NO_CONTENT)
   async deletePlatform(
     @Param('id', new UidValidationPipe(PlatformService.UID_PREFIX, 'Platform'))
     id: string,

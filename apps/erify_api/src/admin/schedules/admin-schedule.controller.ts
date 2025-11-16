@@ -36,7 +36,10 @@ import {
   scheduleDto,
   UpdateScheduleDto,
 } from '@/models/schedule/schemas/schedule.schema';
-import { scheduleSnapshotDto } from '@/models/schedule-snapshot/schemas/schedule-snapshot.schema';
+import {
+  ListSnapshotsQueryDto,
+  scheduleSnapshotDto,
+} from '@/models/schedule-snapshot/schemas/schedule-snapshot.schema';
 import { UserService } from '@/models/user/user.service';
 import { ScheduleWithRelations } from '@/schedule-planning/publishing.service';
 import { SchedulePlanningService } from '@/schedule-planning/schedule-planning.service';
@@ -84,7 +87,8 @@ export class AdminScheduleController extends BaseAdminController {
     const { schedules, total } =
       await this.scheduleService.getPaginatedSchedules(query);
 
-    // Transform schedules to conditionally exclude plan_document
+    // Conditionally exclude plan_document from serialization
+    // Setting to undefined allows the serializer to omit it (schema makes it optional)
     const transformedSchedules = schedules.map((schedule) => ({
       ...schedule,
       planDocument: query.include_plan_document
@@ -129,13 +133,15 @@ export class AdminScheduleController extends BaseAdminController {
       // Create auto-snapshot before updating
       // Use the schedule's createdBy user ID directly (it's already a bigint)
       // In a real app with auth, this should come from the authenticated user
-      if (!currentSchedule.createdBy) {
-        throw new Error('Schedule must have a creator');
-      }
+      const createdBy = this.ensureFieldExists(
+        currentSchedule.createdBy,
+        'createdBy',
+        'Schedule',
+      );
       await this.schedulePlanningService.createManualSnapshot(
         id,
         'auto_save',
-        currentSchedule.createdBy,
+        createdBy,
       );
     }
 
@@ -191,10 +197,11 @@ export class AdminScheduleController extends BaseAdminController {
       createdByUser: true,
     });
 
-    if (!schedule.createdBy) {
-      throw new Error('Schedule must have a creator');
-    }
-    const userId = schedule.createdBy;
+    const userId = this.ensureFieldExists(
+      schedule.createdBy,
+      'createdBy',
+      'Schedule',
+    );
     const result = await this.schedulePlanningService.publishSchedule(
       id,
       body.version,
@@ -248,10 +255,10 @@ export class AdminScheduleController extends BaseAdminController {
   async getScheduleSnapshots(
     @Param('id', new UidValidationPipe(ScheduleService.UID_PREFIX, 'Schedule'))
     id: string,
-    @Query('limit') limit?: number,
+    @Query() query: ListSnapshotsQueryDto,
   ) {
     return this.schedulePlanningService.getSnapshotsBySchedule(id, {
-      limit: limit ? parseInt(limit.toString(), 10) : undefined,
+      limit: query.limit,
       orderBy: 'desc',
     });
   }

@@ -5,12 +5,14 @@ import { LoggerModule } from 'nestjs-pino';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
 import { AdminModule } from './admin/admin.module';
+import { BackdoorModule } from './backdoor/backdoor.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { ZodExceptionFilter } from './common/filters/zod-exception.filter';
 import { HealthModule } from './common/health.module';
 import { OpenAPIModule } from './common/openapi/openapi.module';
 import { envSchema } from './config/env.schema';
+import { MeModule } from './me/me.module';
 
 @Module({
   imports: [
@@ -46,6 +48,8 @@ import { envSchema } from './config/env.schema';
     }),
     HealthModule,
     AdminModule,
+    BackdoorModule,
+    MeModule,
     OpenAPIModule.forRoot(),
   ],
   providers: [

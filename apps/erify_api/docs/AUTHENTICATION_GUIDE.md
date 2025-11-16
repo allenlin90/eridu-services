@@ -1,14 +1,17 @@
-# Phase 1 Authentication Guide
+# Authentication & Authorization Guide
 
 ## Overview
 
-This guide provides concrete implementation details for Phase 1's hybrid authentication approach. The system uses JWT validation for user identification and a simple StudioMembership model for admin verification.
+This guide provides comprehensive documentation for authentication and authorization in the erify_api service. The system uses a hybrid approach combining JWT validation for user identification (via `@eridu/auth-integration` SDK) and a simple StudioMembership model for admin verification.
+
+**For SDK implementation details, see**: [Auth Integration SDK README](../../../packages/auth-integration/README.md)
 
 ### Hybrid Approach Rationale
 
-- **JWT Validation**: Extract user information from `erify_auth` service tokens
+- **JWT Validation**: Extract user information from `erify_auth` service tokens using the `@eridu/auth-integration` SDK
 - **Simple Authorization**: Use StudioMembership model to distinguish admin vs non-admin users
 - **Admin Write, Non-Admin Read-Only**: Clear access pattern without complex role hierarchies
+- **Backdoor API Key**: Service-to-service authentication for privileged operations (user creation, updates, membership management) via separate `/backdoor/*` endpoints
 - **Deferred Complexity**: Advanced authorization (Client/Platform memberships, complex roles, permissions) moved to Phase 3
 
 ## Architecture
@@ -16,231 +19,108 @@ This guide provides concrete implementation details for Phase 1's hybrid authent
 ```mermaid
 sequenceDiagram
     participant Client
-    participant API
-    participant JWTGuard
+    participant API as erify_api
+    participant SDK as @eridu/auth-integration SDK
+    participant Auth as erify_auth
     participant StudioMembershipService
     participant Database
     
+    Note over API,SDK: Server Startup
+    API->>SDK: Initialize JwksService
+    SDK->>Auth: Fetch JWKS from /api/auth/jwks
+    Auth-->>SDK: Return JWKS (public keys)
+    SDK->>SDK: Cache JWKS
+    
+    Note over Client,Database: Request Flow
     Client->>API: Request with JWT token
-    API->>JWTGuard: Validate token
-    JWTGuard->>JWTGuard: Extract user info
-    JWTGuard->>StudioMembershipService: Check admin status
-    StudioMembershipService->>Database: Query studio membership
-    Database-->>StudioMembershipService: Return membership data
-    StudioMembershipService-->>JWTGuard: Admin status
-    JWTGuard-->>API: User + Admin status
+    API->>SDK: Validate token (JwtAuthGuard)
+    SDK->>SDK: Verify JWT locally using cached JWKS
+    SDK->>SDK: Extract user info from payload
+    SDK->>API: Attach user to request
+    alt Admin endpoint
+        API->>StudioMembershipService: Check admin status
+        StudioMembershipService->>Database: Query studio membership
+        Database-->>StudioMembershipService: Return membership data
+        StudioMembershipService-->>API: Admin status
+    end
     API-->>Client: Response (write/read-only)
 ```
 
-## Implementation Components
+## High-Level Working Mechanics
 
-### 1. Environment Configuration
+### 1. JWT Validation (SDK)
 
-Add to `src/config/env.schema.ts`:
+The `@eridu/auth-integration` SDK handles all JWT validation:
 
-```typescript
-export const envSchema = z.object({
-  // ... existing config
-  JWT_SECRET: z.string().min(1),
-  ERIFY_AUTH_URL: z.string().url(),
-  ERIFY_AUTH_API_KEY: z.string().min(1),
-});
-```
+- **JWKS Fetching**: SDK fetches JSON Web Key Sets from `erify_auth` service on startup
+- **Local Verification**: Tokens are verified locally using cached public keys (no network call per request)
+- **User Extraction**: User information is extracted from JWT payload and attached to requests
+- **Automatic Key Rotation**: SDK automatically refreshes JWKS when unknown key IDs are detected
+
+**For detailed implementation, see**: [Auth Integration SDK README](../../../packages/auth-integration/README.md)
+
+### 2. Authorization (Service-Specific)
+
+erify_api implements authorization using the StudioMembership model:
+
+- **Admin Check**: `AdminGuard` checks if user has admin role in ANY studio
+- **Read-Only Access**: Non-admin users can only read data
+- **Write Access**: Admin users can perform CRUD operations
+
+### 3. Service-to-Service Authentication
+
+Backdoor endpoints use API key authentication for privileged operations:
+
+- **API Key Guards**: `BackdoorApiKeyGuard` validates service-to-service requests
+- **Separate Endpoints**: `/backdoor/*` endpoints are separate from `/admin/*` endpoints
+- **Use Cases**: User creation, updates, membership management, JWKS refresh
+
+**For detailed API key configuration, see**: [Server-to-Server Authentication Guide](./SERVER_TO_SERVER_AUTH.md)
+
+## Environment Configuration
+
+**Reference**: `src/config/env.schema.ts`
 
 Required environment variables:
-- `JWT_SECRET`: Secret for JWT token validation
-- `ERIFY_AUTH_URL`: URL of the erify_auth service
-- `ERIFY_AUTH_API_KEY`: API key for service-to-service communication
+- `ERIFY_AUTH_URL`: Base URL of the erify_auth service (e.g., `http://localhost:3000` or `https://auth.example.com`)
+- `BACKDOOR_API_KEY`: (Optional) API key for backdoor operations
+- `BACKDOOR_ALLOWED_IPS`: (Optional) Comma-separated IP addresses for IP whitelisting (future enhancement)
+- `EDGE_RUNTIME`: (Optional) Set to `true` if running on edge service or worker where caching isn't possible (defaults to `false`)
 
-### 2. JWT Validation Middleware
+**Note**: JWT validation uses the `@eridu/auth-integration` SDK which fetches JWKS directly from Better Auth's `/api/auth/jwks` endpoint. No shared secret is required - uses asymmetric key cryptography (EdDSA/Ed25519).
 
-Create `src/common/guards/jwt-auth.guard.ts`:
+## Controller Protection Patterns
 
-```typescript
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
+### Admin Endpoints (Write Operations)
 
-@Injectable()
-export class JwtAuthGuard implements CanActivate {
-  constructor(
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
-  ) {}
+**Option 1: JWT + Admin Guard (User-based authentication)**
+- Use `@UseGuards(JwtAuthGuard, AdminGuard)` on endpoints
+- `JwtAuthGuard` is provided by `@eridu/auth-integration/adapters/nestjs`
+- `AdminGuard` is service-specific (depends on StudioMembership)
+- Only admin users can access these endpoints
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const token = this.extractTokenFromHeader(request);
-    
-    if (!token) {
-      throw new UnauthorizedException('No token provided');
-    }
+**Option 2: Backdoor API Key (Service-to-service authentication)**
+- Use `@UseGuards(BackdoorApiKeyGuard)` at controller level
+- Used for service-to-service privileged operations
 
-    try {
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-      });
-      
-      // Attach user info to request
-      request.user = {
-        id: payload.sub,
-        email: payload.email,
-        name: payload.name,
-        extId: payload.extId,
-      };
-      
-      return true;
-    } catch {
-      throw new UnauthorizedException('Invalid token');
-    }
-  }
+**Protected Endpoints with Backdoor API Key**:
+- `POST /backdoor/users` - Create user (API key required)
+- `PATCH /backdoor/users/:id` - Update user (API key required)
+- `POST /backdoor/studio-memberships` - Create studio membership (API key required)
+- `POST /backdoor/jwks/refresh` - Refresh JWKS (API key required)
 
-  private extractTokenFromHeader(request: any): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
-  }
-}
-```
+### Read-Only Endpoints (All Authenticated Users)
 
-### 3. Admin Guard Implementation
+- Use `@UseGuards(JwtAuthGuard)` on endpoints
+- All authenticated users can access these endpoints
 
-Create `src/common/guards/admin.guard.ts`:
+## Module Registration
 
-```typescript
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { StudioMembershipService } from '../../studio-membership/studio-membership.service';
+**Reference**: `src/common/common.module.ts`
 
-@Injectable()
-export class AdminGuard implements CanActivate {
-  constructor(private readonly studioMembershipService: StudioMembershipService) {}
+The SDK's `JwksService`, `JwtVerifier`, and `JwtAuthGuard` are registered in the CommonModule (marked as `@Global()` for app-wide availability). The Admin guard and Backdoor API key guard remain service-specific.
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const user = request.user;
-
-    if (!user) {
-      throw new ForbiddenException('User not authenticated');
-    }
-
-    // Check if user has admin studio membership in ANY studio
-    const isAdmin = await this.studioMembershipService.isUserAdmin(user.id);
-    
-    if (!isAdmin) {
-      throw new ForbiddenException('Admin access required');
-    }
-
-    return true;
-  }
-}
-```
-
-### 4. StudioMembership Service Enhancement
-
-Update `src/studio-membership/studio-membership.service.ts`:
-
-```typescript
-import { Injectable } from '@nestjs/common';
-import { StudioMembershipRepository } from './studio-membership.repository';
-
-@Injectable()
-export class StudioMembershipService {
-  constructor(private readonly studioMembershipRepository: StudioMembershipRepository) {}
-
-  // ... existing methods
-
-  /**
-   * Check if user has admin role in ANY studio
-   * Phase 1: Simple admin check for write operations
-   */
-  async isUserAdmin(userId: string): Promise<boolean> {
-    const memberships = await this.studioMembershipRepository.findMany({
-      where: {
-        userId: userId,
-        role: 'admin',
-        deletedAt: null,
-      },
-    });
-
-    return memberships.length > 0;
-  }
-
-  /**
-   * Get user's studio memberships
-   * Phase 3: Client and Platform memberships will be separate models
-   */
-  async getUserStudioMemberships(userId: string) {
-    return this.studioMembershipRepository.findMany({
-      where: {
-        userId: userId,
-        deletedAt: null,
-      },
-      include: {
-        studio: true,
-      },
-    });
-  }
-}
-```
-
-### 5. Controller Protection Patterns
-
-#### Admin Endpoints (Write Operations)
-
-```typescript
-import { Controller, Post, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { AdminGuard } from '../common/guards/admin.guard';
-
-@Controller('admin/users')
-export class AdminUserController {
-  @Post()
-  @UseGuards(JwtAuthGuard, AdminGuard)
-  async createUser(@Body() body: CreateUserDto) {
-    // Only admin users can access this endpoint
-    return this.adminUserService.createUser(body);
-  }
-}
-```
-
-#### Read-Only Endpoints (All Authenticated Users)
-
-```typescript
-@Controller('users')
-export class UserController {
-  @Get()
-  @UseGuards(JwtAuthGuard)
-  async getUsers(@Query() paginationQuery: PaginationQueryDto) {
-    // All authenticated users can read
-    return this.userService.getUsers(paginationQuery);
-  }
-}
-```
-
-### 6. Service-to-Service Authentication
-
-Create `src/common/guards/api-key.guard.ts`:
-
-```typescript
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-
-@Injectable()
-export class ApiKeyGuard implements CanActivate {
-  constructor(private readonly configService: ConfigService) {}
-
-  canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
-    const apiKey = request.headers['x-api-key'];
-    const expectedApiKey = this.configService.get<string>('ERIFY_AUTH_API_KEY');
-
-    if (!apiKey || apiKey !== expectedApiKey) {
-      throw new UnauthorizedException('Invalid API key');
-    }
-
-    return true;
-  }
-}
-```
+**For detailed module setup, see**: [Auth Integration SDK README - NestJS Adapter](../../../packages/auth-integration/README.md#3-nestjs-adapter)
 
 ## Database Schema
 
@@ -282,124 +162,62 @@ model StudioMembership {
 - Context-specific permissions
 - Permission metadata
 
+## Service-Specific Components
+
+### Admin Guard
+
+**Reference**: `src/common/guards/admin.guard.ts`
+
+**Functionality:**
+- Checks if user has admin studio membership in ANY studio
+- Throws `ForbiddenException` if user is not authenticated or not admin
+- Used in combination with `JwtAuthGuard` for write operations
+
+### StudioMembership Service
+
+**Reference**: `src/studio-membership/studio-membership.service.ts`
+
+**Key Methods:**
+- `isUserAdmin(userId: string)`: Checks if user has admin role in ANY studio (Phase 1 simple check)
+- `getUserStudioMemberships(userId: string)`: Gets user's studio memberships
+
+### JWKS Management Endpoints
+
+**Admin JWKS Controller**: `src/admin/jwks/admin-jwks.controller.ts`
+- Protected with `JwtAuthGuard` (from SDK) and `AdminGuard`
+- Uses `JwksService` from `@eridu/auth-integration/server/jwks`
+- Endpoints: `GET /admin/jwks/status`, `POST /admin/jwks/refresh`
+
+**Backdoor JWKS Controller**: `src/backdoor/jwks/backdoor-jwks.controller.ts`
+- Protected with `BackdoorApiKeyGuard`
+- Uses `JwksService` from `@eridu/auth-integration/server/jwks`
+- Endpoint: `POST /backdoor/jwks/refresh`
+
 ## Testing Strategy
 
+**Reference**: Test files in `src/common/guards/` and `src/admin/` directories
+
 ### Unit Tests
-
-```typescript
-describe('AdminGuard', () => {
-  let guard: AdminGuard;
-  let studioMembershipService: jest.Mocked<StudioMembershipService>;
-
-  beforeEach(async () => {
-    const module = await Test.createTestingModule({
-      providers: [
-        AdminGuard,
-        {
-          provide: StudioMembershipService,
-          useValue: {
-            isUserAdmin: jest.fn(),
-          },
-        },
-      ],
-    }).compile();
-
-    guard = module.get<AdminGuard>(AdminGuard);
-    studioMembershipService = module.get(StudioMembershipService);
-  });
-
-  it('should allow access for admin users', async () => {
-    studioMembershipService.isUserAdmin.mockResolvedValue(true);
-    
-    const context = createMockExecutionContext({
-      user: { id: 'usr_123' },
-    });
-
-    const result = await guard.canActivate(context);
-    expect(result).toBe(true);
-  });
-
-  it('should deny access for non-admin users', async () => {
-    studioMembershipService.isUserAdmin.mockResolvedValue(false);
-    
-    const context = createMockExecutionContext({
-      user: { id: 'usr_123' },
-    });
-
-    await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
-  });
-});
-```
+- Test `AdminGuard` with mocked `StudioMembershipService`
+- Verify admin users are allowed access
+- Verify non-admin users are denied access
 
 ### Integration Tests
-
-```typescript
-describe('Authentication Flow', () => {
-  it('should allow admin to create users', async () => {
-    const adminToken = await createJwtToken({ 
-      sub: 'usr_admin', 
-      email: 'admin@example.com',
-      role: 'admin' 
-    });
-
-    const response = await request(app.getHttpServer())
-      .post('/admin/users')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send(validUserData)
-      .expect(201);
-
-    expect(response.body).toHaveProperty('id');
-  });
-
-  it('should deny non-admin from creating users', async () => {
-    const userToken = await createJwtToken({ 
-      sub: 'usr_user', 
-      email: 'user@example.com',
-      role: 'member' 
-    });
-
-    await request(app.getHttpServer())
-      .post('/admin/users')
-      .set('Authorization', `Bearer ${userToken}`)
-      .send(validUserData)
-      .expect(403);
-  });
-});
-```
+- Test complete authentication flow with JWT tokens
+- Verify admin can create users
+- Verify non-admin cannot create users
+- Test backdoor API key authentication
 
 ## Error Handling
 
 ### Authentication Errors
-
-```typescript
-// JWT validation errors
-throw new UnauthorizedException('No token provided');
-throw new UnauthorizedException('Invalid token');
-throw new UnauthorizedException('Token expired');
-
-// Authorization errors
-throw new ForbiddenException('Admin access required');
-throw new ForbiddenException('User not authenticated');
-```
+- `UnauthorizedException`: No token provided, invalid token, token expired (from SDK)
+- `ForbiddenException`: Admin access required, user not authenticated (from AdminGuard)
 
 ### Error Response Format
-
-```json
-{
-  "statusCode": 403,
-  "message": "Admin access required",
-  "error": "Forbidden",
-  "timestamp": "2024-01-01T00:00:00.000Z",
-  "path": "/admin/users"
-}
-```
+Standard NestJS error response with statusCode, message, error, timestamp, and path.
 
 ## Security Considerations
-
-### Token Security
-- JWT tokens must be validated against the secret from `erify_auth` service
-- Tokens should be extracted from Authorization header only
-- No token storage in localStorage (use httpOnly cookies if needed)
 
 ### Admin Verification
 - Admin status is checked on every write operation
@@ -410,6 +228,8 @@ throw new ForbiddenException('User not authenticated');
 - Service-to-service communication uses API keys
 - API keys are stored in environment variables
 - Keys are validated on every internal request
+
+**For JWT/JWKS security details, see**: [Auth Integration SDK README - Security Considerations](../../../packages/auth-integration/README.md#security-considerations)
 
 ## Future Enhancements (Phase 3)
 
@@ -425,52 +245,60 @@ throw new ForbiddenException('User not authenticated');
 - Audit trails for all authorization decisions
 - Rate limiting per user/role
 
-### Performance Optimizations
-- Redis caching for membership lookups
-- JWT token blacklisting
-- Connection pooling for auth service calls
-
-## Migration Path
-
-### Phase 1 → Phase 3 Migration
-1. **Database Migration**: Create ClientMembership and PlatformMembership models
-2. **Service Enhancement**: Create ClientMembershipService and PlatformMembershipService
-3. **Guard Enhancement**: Add context-specific permission checks
-4. **API Enhancement**: Add permission-based endpoint access
-
-### Backward Compatibility
-- Phase 1 studio admin check remains functional
-- New membership models are additive (no breaking changes)
-- Existing API endpoints continue to work
-- Gradual migration of endpoints to new permission system
-
 ## Troubleshooting
 
 ### Common Issues
 
-1. **JWT Token Invalid**
-   - Check JWT_SECRET matches erify_auth service
-   - Verify token format (Bearer <token>)
-   - Check token expiration
-
-2. **Admin Access Denied**
+1. **Admin Access Denied**
    - Verify user has admin studio membership in database
    - Check StudioMembership.role = 'admin'
    - Ensure StudioMembership.deletedAt is null
 
-3. **Service-to-Service Auth Failed**
-   - Verify ERIFY_AUTH_API_KEY matches
+2. **Service-to-Service Auth Failed**
+   - Verify BACKDOOR_API_KEY matches (if using backdoor endpoints)
    - Check x-api-key header is present
    - Ensure API key is not expired
 
+**For JWT/JWKS troubleshooting, see**: [Auth Integration SDK README - Troubleshooting](../../../packages/auth-integration/README.md#troubleshooting)
+
 ### Debugging Tools
 
-```typescript
-// Add to development environment
-if (process.env.NODE_ENV === 'development') {
-  console.log('User:', request.user);
-  console.log('Is Admin:', await studioMembershipService.isUserAdmin(request.user.id));
-}
-```
+In development environment, log user information and admin status for debugging purposes. Check `request.user` (attached by SDK's `JwtAuthGuard`) and call `studioMembershipService.isUserAdmin()` to verify admin status.
 
-This authentication guide provides a complete implementation path for Phase 1's hybrid authentication approach while maintaining clarity and simplicity for the development team.
+## Implementation Strategy
+
+### SDK Package Approach
+
+**Strategy**: JWT/JWKS functionality is implemented in the `@eridu/auth-integration` SDK package, then used in `erify_api`.
+
+**Rationale**:
+1. **Clear Design**: SDK structure and API are already well-designed
+2. **Clean Separation**: Framework-agnostic core vs framework-specific adapters
+3. **Reusable**: Can be used by other services immediately
+4. **Better Testing**: SDK can be tested independently
+5. **No Refactoring**: Avoids future extraction work
+6. **Professional Structure**: Follows monorepo best practices
+
+### Implementation Components
+
+**SDK Package** (`packages/auth-integration/`):
+- `JwksService` - Fetch and cache JWKS from Better Auth's JWKS endpoint
+- `JwtVerifier` - Local JWT verification using cached public keys
+- `JwtAuthGuard` - NestJS adapter for easy integration
+
+**erify_api Integration** (`apps/erify_api/src/common/`):
+- `AdminGuard` - Service-specific guard (depends on StudioMembership)
+- JWKS management endpoints - Framework-specific endpoints using SDK services
+
+### Module Registration
+
+The SDK's `JwksService`, `JwtVerifier`, and `JwtAuthGuard` are registered in the CommonModule (marked as `@Global()` for app-wide availability). The Admin guard and Backdoor API key guard remain service-specific.
+
+**For detailed module setup and implementation, see**: [Auth Integration SDK README - NestJS Adapter](../../../packages/auth-integration/README.md#3-nestjs-adapter)
+
+## Related Documentation
+
+- **[Server-to-Server Authentication Guide](./SERVER_TO_SERVER_AUTH.md)** - API key guard usage for service-to-service communication
+- **[Auth Integration SDK README](../../../packages/auth-integration/README.md)** - Complete SDK documentation and API reference
+- **[Phase 1 Roadmap](./roadmap/PHASE_1.md)** - Implementation roadmap
+- **[Architecture Overview](./ARCHITECTURE.md)** - System architecture

@@ -136,7 +136,7 @@ export class SchedulePlanningService {
     }
 
     // Execute restore in a transaction
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.executeTransaction(async (tx) => {
       // 1. Create a snapshot of current state before restore (for rollback)
       await this.scheduleSnapshotService.createScheduleSnapshot({
         schedule: { connect: { id: schedule.id } },
@@ -182,8 +182,12 @@ export class SchedulePlanningService {
   ) {
     const schedule = await this.scheduleService.getScheduleById(scheduleUid);
 
-    const snapshots =
-      await this.scheduleSnapshotService.getSnapshotsByScheduleId(schedule.id, {
+    // Use database-level sorting and limiting for better performance
+    return this.scheduleSnapshotService.getScheduleSnapshots({
+      where: { scheduleId: schedule.id },
+      orderBy: { createdAt: filters?.orderBy || 'desc' },
+      take: filters?.limit,
+      include: {
         user: {
           select: {
             uid: true,
@@ -191,24 +195,8 @@ export class SchedulePlanningService {
             email: true,
           },
         },
-      });
-
-    // Sort by createdAt
-    const sorted = snapshots.sort((a, b) => {
-      const dateA = a.createdAt.getTime();
-      const dateB = b.createdAt.getTime();
-      if (filters?.orderBy === 'desc') {
-        return dateB - dateA;
-      }
-      return dateA - dateB;
+      },
     });
-
-    // Apply limit
-    if (filters?.limit) {
-      return sorted.slice(0, filters.limit);
-    }
-
-    return sorted;
   }
 
   /**

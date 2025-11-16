@@ -105,7 +105,7 @@ describe('ShowOrchestrationService', () => {
           provide: ShowMcService,
           useValue: {
             createShowMc: jest.fn(),
-            generateShowUid: jest.fn(),
+            generateShowMcUid: jest.fn(),
           },
         },
         {
@@ -122,10 +122,6 @@ describe('ShowOrchestrationService', () => {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
               async (callback: any) => await callback(mockTransactionClient),
             ),
-            $transaction: jest.fn(
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-              async (callback: any) => await callback(mockTransactionClient),
-            ),
             mC: {
               findMany: jest.fn(),
             },
@@ -138,10 +134,18 @@ describe('ShowOrchestrationService', () => {
     }).compile();
 
     service = module.get<ShowOrchestrationService>(ShowOrchestrationService);
-    showService = module.get(ShowService);
-    showMcService = module.get(ShowMcService);
-    showPlatformService = module.get(ShowPlatformService);
-    prismaService = module.get(PrismaService);
+    showService = module.get<ShowService>(
+      ShowService,
+    ) as jest.Mocked<ShowService>;
+    showMcService = module.get<ShowMcService>(
+      ShowMcService,
+    ) as jest.Mocked<ShowMcService>;
+    showPlatformService = module.get<ShowPlatformService>(
+      ShowPlatformService,
+    ) as jest.Mocked<ShowPlatformService>;
+    prismaService = module.get<PrismaService>(
+      PrismaService,
+    ) as jest.Mocked<PrismaService>;
   });
 
   it('should be defined', () => {
@@ -210,13 +214,13 @@ describe('ShowOrchestrationService', () => {
       };
 
       showService.generateShowUid.mockReturnValue('show_test123');
-      showMcService.generateShowUid.mockReturnValue('show_mc_test123');
+      showMcService.generateShowMcUid.mockReturnValue('show_mc_test123');
       showService.createShow.mockResolvedValue(mockShow);
 
       const result = await service.createShowWithAssignments(dto);
 
       expect(showService.generateShowUid).toHaveBeenCalled();
-      expect(showMcService.generateShowUid).toHaveBeenCalled();
+      expect(showMcService.generateShowMcUid).toHaveBeenCalled();
       expect(showService.createShow).toHaveBeenCalledWith(
         expect.objectContaining({
           uid: 'show_test123',
@@ -322,7 +326,7 @@ describe('ShowOrchestrationService', () => {
       };
 
       showService.generateShowUid.mockReturnValue('show_test123');
-      showMcService.generateShowUid.mockReturnValue('show_mc_test123');
+      showMcService.generateShowMcUid.mockReturnValue('show_mc_test123');
       showPlatformService.generateShowPlatformUid.mockReturnValue(
         'show_plt_test123',
       );
@@ -331,7 +335,7 @@ describe('ShowOrchestrationService', () => {
       const result = await service.createShowWithAssignments(dto);
 
       expect(showService.generateShowUid).toHaveBeenCalled();
-      expect(showMcService.generateShowUid).toHaveBeenCalled();
+      expect(showMcService.generateShowMcUid).toHaveBeenCalled();
       expect(showPlatformService.generateShowPlatformUid).toHaveBeenCalled();
       expect(showService.createShow).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -652,7 +656,7 @@ describe('ShowOrchestrationService', () => {
       mockTransactionClient.mC.findMany.mockResolvedValue([
         { id: BigInt(1), uid: 'mc_test123' },
       ]);
-      showMcService.generateShowUid.mockReturnValue('show_mc_test123');
+      showMcService.generateShowMcUid.mockReturnValue('show_mc_test123');
       mockTransactionClient.showMC.create.mockResolvedValue({
         id: BigInt(1),
         uid: 'show_mc_test123',

@@ -185,3 +185,14 @@ export class UpdateScheduleSnapshotCoreDto extends createZodDto(
   updateScheduleSnapshotCoreSchema,
 ) {}
 export class ScheduleSnapshotDto extends createZodDto(scheduleSnapshotDto) {}
+
+// Query schema for listing snapshots
+export const listSnapshotsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).optional(),
+});
+
+export class ListSnapshotsQueryDto extends createZodDto(
+  listSnapshotsQuerySchema,
+) {
+  declare limit?: number;
+}

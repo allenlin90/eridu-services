@@ -12,7 +12,7 @@ import { showPlatformWithRelationsSchema } from '@/models/show-platform/schemas/
 import { createShowPlatformSchema } from '@/models/show-platform/schemas/show-platform.schema';
 
 // Extended schema for show orchestration with MC and platform assignments
-export const createShowWithAssignmentsSchema = createShowSchema.extend({
+export const createShowWithAssignmentsSchema = createShowSchema.safeExtend({
   // Optional MC assignments
   mcs: z.array(createShowMcSchema.omit({ show_id: true })).optional(),
   // Optional platform assignments

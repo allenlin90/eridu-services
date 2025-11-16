@@ -3,54 +3,46 @@
 ## Overview
 Phase 3 introduces advanced authorization control, comprehensive tracking features, and sophisticated collaboration tools. This phase builds upon the Material Management System from Phase 2 by adding role-based access control, audit trails, task management, and advanced collaboration features.
 
+## Related Documentation
+
+- **[Architecture Overview](../ARCHITECTURE.md)** - Module architecture, dependencies, and design patterns
+- **[Business Domain](../BUSINESS.md)** - Business domain information and entity relationships
+- **[Authentication Guide](../AUTHENTICATION_GUIDE.md)** - JWT validation and authorization patterns
+
 ## Core Features
 
 ### 1. Advanced Authorization Control
 - **Role-Based Access Control**: Granular permissions based on user roles and context
-- **Membership System**: Polymorphic memberships for Studios, Clients, and Platforms
-- **Permission Management**: Fine-grained control over resource access
+- **Polymorphic Membership System**: Memberships for Studios, Clients, and Platforms
 - **Context-Specific Permissions**: Different roles in different contexts (studio admin ≠ client admin)
 
 ### 2. Comprehensive Tracking & Audit
-- **Audit Trail System**: Complete change tracking for all entities
-- **User Attribution**: Track who created/modified entities with timestamps
+- **Audit Trail System**: Complete change tracking for all entities with user attribution
 - **Change History**: Store old and new values for all modifications
 - **Compliance Reporting**: Audit reports for regulatory compliance
 
 ### 3. Task Management System
-- **Task Templates**: Reusable task templates per studio
-- **Task Assignment**: Assign tasks to specific users with due dates
-- **Task Status Tracking**: Complete lifecycle management (pending, assigned, in_progress, review, completed, blocked)
-- **Automated Task Generation**: Generate tasks from templates when shows are confirmed
+- **Task Templates**: Reusable task templates per studio with automated generation
+- **Task Assignment**: Assign tasks to users with due dates and status tracking
+- **Lifecycle Management**: Complete workflow (pending, assigned, in_progress, review, completed, blocked)
 
 ### 4. Advanced Collaboration Features
-- **Tagging System**: Flexible categorization across all entities
 - **Polymorphic Tagging**: Tag any entity type with studio-scoped tags
-- **Enhanced Comments**: Rich commenting with mentions and notifications
+- **Enhanced Comments**: Rich commenting with threading, mentions, and notifications
 - **Real-time Notifications**: Notify users of important events and changes
 
 ## Implementation Scope
 
-### CRUD Entities by Admin User
-- [ ] Membership (Enhanced polymorphic user-group relationships)
-- [ ] Tag
-- [ ] Taggable (Polymorphic tagging system)
-- [ ] Audit (System-generated audit trail)
-- [ ] TaskTemplate
-- [ ] TaskTemplateItem
-- [ ] TaskType
-- [ ] TaskInputType
-- [ ] TaskStatus
-- [ ] Task
-
-**Note**: Material, MaterialType, and ShowMaterial entities are implemented in Phase 2 as part of Material Management System.
+### CRUD Entities
+- [ ] Membership (Enhanced polymorphic user-group relationships), Tag, Taggable, Audit
+- [ ] TaskTemplate, TaskTemplateItem, TaskType, TaskInputType, TaskStatus, Task
+- [ ] Comment (polymorphic commenting system)
+- **Note**: Material, MaterialType, and ShowMaterial entities implemented in Phase 2
 
 ### Advanced Features
-- [ ] Role-based access control with granular permissions
-- [ ] Enhanced polymorphic membership system (building on Phase 1 foundation)
-- [ ] Comprehensive audit trail for all operations
-- [ ] Task template management and automated generation
-- [ ] Task assignment and status tracking workflows
+- [ ] Role-based access control with granular permissions, enhanced polymorphic membership system
+- [ ] Comprehensive audit trail for all CRUD operations
+- [ ] Task template management, automated generation, assignment, and status tracking workflows
 - [ ] Polymorphic tagging system across all entities
 - [ ] Comment system with threading, mentions, and notifications
 - [ ] Real-time notifications for important events
@@ -58,90 +50,67 @@ Phase 3 introduces advanced authorization control, comprehensive tracking featur
 ### Integration Points
 - [ ] Enhanced Membership integration (polymorphic design building on Phase 1)
 - [ ] Audit integration with all CRUD operations
-- [ ] Task assignment to users with proper permissions
-- [ ] Task association with shows/schedules
-- [ ] Tag integration with all entity types
-- [ ] Comment system integration with all entities
+- [ ] Task assignment to users with proper permissions, association with shows/schedules
+- [ ] Tag and Comment system integration with all entities
 
-### Seed Data
-- [ ] TaskType (pre_production, production, post_production, show_mc_review, show_platform_review, other)
-- [ ] TaskInputType (text, number, date, percentage, file, url)
-- [ ] TaskStatus (pending, assigned, in_progress, review, completed, blocked)
-
-### Documentation
-- [ ] Advanced Authorization Architecture
-- [ ] Task Management System Design
-- [ ] Audit Trail Implementation Guide
-- [ ] Tagging System Documentation
+### Seed Data & Documentation
+- [ ] TaskType, TaskInputType, TaskStatus seed data
+- [ ] Advanced Authorization Architecture, Task Management System Design, Audit Trail Implementation Guide, Tagging System Documentation
 
 ## Technical Considerations
 
 ### Database Design
-- Polymorphic relationships for Memberships and Taggables
-- Efficient indexing for audit queries and task assignments
-- Soft delete support for all entities
-- Proper foreign key constraints for data integrity
-- Optimized queries for permission checking
+- Polymorphic relationships for Memberships, Taggables, Tasks, Comments, Audit
+- Efficient indexing for audit queries, task assignments, permission checking
+- Soft delete support, foreign key constraints, optimized queries
 
 ### API Design
-- RESTful endpoints following established patterns
-- Proper validation with Zod schemas
-- Proper error handling with NestJS exceptions
-- Pagination support for large datasets
-- Snake_case input/output with proper field mapping
+- RESTful endpoints with Zod validation, NestJS error handling, pagination
+- Snake_case input/output with field mapping
 - Permission-based endpoint access control
 
-### Security
-- **Advanced Authorization**: Role-based access control with granular permissions
-- **Permission Validation**: Check permissions at service and controller levels
-- **Audit Security**: Secure audit trail with user attribution
-- **Input validation and sanitization**
-- **SQL injection prevention via Prisma**
-- **CORS and security headers**
-
-### Performance
-- Indexed queries for permission checking and audit trails
-- Efficient relationship loading with Prisma includes
-- Pagination for large result sets
-- Soft delete filtering at repository level
-- Optimized queries for task management and tagging
+### Security & Performance
+- Role-based access control with granular permissions, permission validation at service/controller levels
+- Secure audit trail with user attribution, input validation, SQL injection prevention (Prisma), CORS, security headers
+- Indexed queries, efficient Prisma includes, pagination, soft delete filtering, optimized queries for task management and tagging
 
 ## Success Criteria
-- Complete role-based access control system
-- Comprehensive audit trail for all operations
-- Full task management workflow from template to completion
-- Polymorphic tagging system across all entities
-- Enhanced collaboration features with notifications
-- Admin interface for managing all entities
-- Proper documentation and testing coverage
-- Security best practices implemented
-- Performance optimizations in place
+
+### Authorization & Audit
+- [ ] Complete role-based access control system with granular permissions
+- [ ] Comprehensive audit trail for all operations with user attribution
+
+### Task Management
+- [ ] Full task management workflow from template to completion
+- [ ] Automated task generation, assignment, and status tracking
+
+### Collaboration Features
+- [ ] Polymorphic tagging system across all entities
+- [ ] Enhanced comments with threading, mentions, and notifications
+- [ ] Real-time notifications for important events
+
+### Quality
+- [ ] Admin interface for managing all entities
+- [ ] Documentation, testing coverage, security best practices, performance optimizations
 
 ## Dependencies
-- Phase 1 core entities must be complete and stable
-- Phase 2 Material Management System must be operational
-- User management system must be functional
-- Basic CRUD patterns must be established
-- Advanced authentication system with role support
-- JWT token support with role information
+- Phase 1 & 2 complete: Core entities, Schedule Planning Management System, Material Management System
+- User management system functional, basic CRUD patterns established
+- Advanced authentication system with role support, JWT token support with role information
 
 ## Timeline & Rollout Strategy
 
-### Phase 3 Implementation
-This phase delivers advanced authorization control and comprehensive tracking features. The implementation focuses on:
-
+### Implementation Focus Areas
 1. **Authorization Control**: Role-based access control with granular permissions
 2. **Audit & Tracking**: Comprehensive audit trail and change tracking
-3. **Task Management**: Complete task management workflow
-4. **Advanced Collaboration**: Tagging, enhanced comments, and notifications
+3. **Task Management**: Complete task management workflow from template to completion
+4. **Advanced Collaboration**: Polymorphic tagging, enhanced comments, and notifications
 
 ### User Access Strategy
 - **Role-Based Access**: Granular permissions based on user roles and context
-- **Context-Specific Permissions**: Different roles in different contexts
-- **Flexible Rollout**: Features can be enabled/disabled per user type as needed
+- **Context-Specific Permissions**: Different roles in different contexts (studio admin ≠ client admin)
 - **Permission Inheritance**: Proper permission hierarchy and inheritance
-
-This approach provides a complete advanced authorization and tracking system while maintaining security and performance standards.
+- **Flexible Rollout**: Features can be enabled/disabled per user type as needed
 
 ## Database Schema
 

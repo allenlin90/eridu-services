@@ -1,0 +1,1587 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-15T03:35:20.439Z",
+      "totalShows": 50,
+      "clientName": "Williams Sonoma",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1763177720439_13",
+        "name": "Williams Sonoma Show 14",
+        "startTime": "2025-10-31T19:44:11.479Z",
+        "endTime": "2025-10-31T23:02:02.706Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Williams Sonoma Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Williams Sonoma Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_17",
+        "name": "Williams Sonoma Show 18",
+        "startTime": "2025-11-01T02:44:35.043Z",
+        "endTime": "2025-11-01T04:10:45.730Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Williams Sonoma Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_45",
+        "name": "Williams Sonoma Show 46",
+        "startTime": "2025-11-01T08:02:09.673Z",
+        "endTime": "2025-11-01T10:38:51.120Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Williams Sonoma Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_49",
+        "name": "Williams Sonoma Show 50",
+        "startTime": "2025-11-02T13:41:38.967Z",
+        "endTime": "2025-11-02T17:04:21.838Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Williams Sonoma Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Williams Sonoma Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_38",
+        "name": "Williams Sonoma Show 39",
+        "startTime": "2025-11-03T01:00:04.273Z",
+        "endTime": "2025-11-03T03:41:22.955Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Williams Sonoma Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Williams Sonoma Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Williams Sonoma Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_48",
+        "name": "Williams Sonoma Show 49",
+        "startTime": "2025-11-03T05:03:08.351Z",
+        "endTime": "2025-11-03T06:17:30.001Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Williams Sonoma Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Williams Sonoma Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_18",
+        "name": "Williams Sonoma Show 19",
+        "startTime": "2025-11-04T05:57:11.112Z",
+        "endTime": "2025-11-04T09:56:41.285Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Williams Sonoma Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_40",
+        "name": "Williams Sonoma Show 41",
+        "startTime": "2025-11-04T14:47:05.719Z",
+        "endTime": "2025-11-04T18:28:57.778Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Williams Sonoma Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Williams Sonoma Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-41",
+            "platformShowId": "platform_show_41_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_27",
+        "name": "Williams Sonoma Show 28",
+        "startTime": "2025-11-05T10:37:16.113Z",
+        "endTime": "2025-11-05T13:21:15.098Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Williams Sonoma Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Williams Sonoma Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Williams Sonoma Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_37",
+        "name": "Williams Sonoma Show 38",
+        "startTime": "2025-11-05T17:06:30.952Z",
+        "endTime": "2025-11-05T20:17:15.018Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Williams Sonoma Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Williams Sonoma Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_0",
+        "name": "Williams Sonoma Show 1",
+        "startTime": "2025-11-05T21:11:25.207Z",
+        "endTime": "2025-11-05T22:15:21.304Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Williams Sonoma Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Williams Sonoma Show 1"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Williams Sonoma Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_47",
+        "name": "Williams Sonoma Show 48",
+        "startTime": "2025-11-06T05:03:37.416Z",
+        "endTime": "2025-11-06T07:30:08.915Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Williams Sonoma Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Williams Sonoma Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Williams Sonoma Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_15",
+        "name": "Williams Sonoma Show 16",
+        "startTime": "2025-11-06T14:59:48.903Z",
+        "endTime": "2025-11-06T18:17:35.114Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Williams Sonoma Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Williams Sonoma Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_35",
+        "name": "Williams Sonoma Show 36",
+        "startTime": "2025-11-06T17:24:18.192Z",
+        "endTime": "2025-11-06T20:16:32.089Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Williams Sonoma Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Williams Sonoma Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Williams Sonoma Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-36",
+            "platformShowId": "platform_show_36_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_1",
+        "name": "Williams Sonoma Show 2",
+        "startTime": "2025-11-06T20:39:18.798Z",
+        "endTime": "2025-11-07T00:34:24.635Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Williams Sonoma Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Williams Sonoma Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_31",
+        "name": "Williams Sonoma Show 32",
+        "startTime": "2025-11-07T03:12:12.969Z",
+        "endTime": "2025-11-07T06:19:34.883Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Williams Sonoma Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-32",
+            "platformShowId": "platform_show_32_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_9",
+        "name": "Williams Sonoma Show 10",
+        "startTime": "2025-11-08T00:30:18.396Z",
+        "endTime": "2025-11-08T03:03:23.371Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Williams Sonoma Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_19",
+        "name": "Williams Sonoma Show 20",
+        "startTime": "2025-11-08T04:08:01.096Z",
+        "endTime": "2025-11-08T06:25:23.749Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Williams Sonoma Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Williams Sonoma Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Williams Sonoma Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_32",
+        "name": "Williams Sonoma Show 33",
+        "startTime": "2025-11-08T07:06:01.770Z",
+        "endTime": "2025-11-08T10:24:14.673Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Williams Sonoma Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Williams Sonoma Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Williams Sonoma Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_42",
+        "name": "Williams Sonoma Show 43",
+        "startTime": "2025-11-08T07:34:23.103Z",
+        "endTime": "2025-11-08T10:24:19.432Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Williams Sonoma Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Williams Sonoma Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Williams Sonoma Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_25",
+        "name": "Williams Sonoma Show 26",
+        "startTime": "2025-11-09T19:59:46.842Z",
+        "endTime": "2025-11-09T23:28:23.547Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Williams Sonoma Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Williams Sonoma Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_20",
+        "name": "Williams Sonoma Show 21",
+        "startTime": "2025-11-11T04:54:06.611Z",
+        "endTime": "2025-11-11T07:46:30.521Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Williams Sonoma Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Williams Sonoma Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Williams Sonoma Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-21",
+            "platformShowId": "platform_show_21_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_46",
+        "name": "Williams Sonoma Show 47",
+        "startTime": "2025-11-12T11:08:48.977Z",
+        "endTime": "2025-11-12T13:17:40.165Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Williams Sonoma Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_7",
+        "name": "Williams Sonoma Show 8",
+        "startTime": "2025-11-13T03:09:40.936Z",
+        "endTime": "2025-11-13T06:15:24.584Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Williams Sonoma Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-8",
+            "platformShowId": "platform_show_8_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_22",
+        "name": "Williams Sonoma Show 23",
+        "startTime": "2025-11-13T12:57:49.694Z",
+        "endTime": "2025-11-13T16:19:12.209Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Williams Sonoma Show 23"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Williams Sonoma Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_14",
+        "name": "Williams Sonoma Show 15",
+        "startTime": "2025-11-13T23:34:05.712Z",
+        "endTime": "2025-11-14T02:07:38.345Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Williams Sonoma Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Williams Sonoma Show 15"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Williams Sonoma Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_41",
+        "name": "Williams Sonoma Show 42",
+        "startTime": "2025-11-14T16:23:21.031Z",
+        "endTime": "2025-11-14T19:27:17.942Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Williams Sonoma Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Williams Sonoma Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-42",
+            "platformShowId": "platform_show_42_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_23",
+        "name": "Williams Sonoma Show 24",
+        "startTime": "2025-11-15T00:41:36.110Z",
+        "endTime": "2025-11-15T01:44:12.683Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Williams Sonoma Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-24",
+            "platformShowId": "platform_show_24_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_44",
+        "name": "Williams Sonoma Show 45",
+        "startTime": "2025-11-15T04:00:00.881Z",
+        "endTime": "2025-11-15T06:46:54.724Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Williams Sonoma Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Williams Sonoma Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000019",
+            "note": "MC assignment for Williams Sonoma Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_33",
+        "name": "Williams Sonoma Show 34",
+        "startTime": "2025-11-15T07:55:19.639Z",
+        "endTime": "2025-11-15T10:29:30.831Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Williams Sonoma Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Williams Sonoma Show 34"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Williams Sonoma Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-34",
+            "platformShowId": "platform_show_34_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_12",
+        "name": "Williams Sonoma Show 13",
+        "startTime": "2025-11-15T22:10:29.691Z",
+        "endTime": "2025-11-15T23:38:33.546Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Williams Sonoma Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_3",
+        "name": "Williams Sonoma Show 4",
+        "startTime": "2025-11-16T03:57:56.253Z",
+        "endTime": "2025-11-16T05:09:22.532Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Williams Sonoma Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_8",
+        "name": "Williams Sonoma Show 9",
+        "startTime": "2025-11-16T20:18:41.460Z",
+        "endTime": "2025-11-16T21:32:42.719Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Williams Sonoma Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_34",
+        "name": "Williams Sonoma Show 35",
+        "startTime": "2025-11-16T22:21:58.463Z",
+        "endTime": "2025-11-17T01:04:59.383Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Williams Sonoma Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_6",
+        "name": "Williams Sonoma Show 7",
+        "startTime": "2025-11-19T04:53:02.967Z",
+        "endTime": "2025-11-19T08:50:02.091Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Williams Sonoma Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Williams Sonoma Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-7",
+            "platformShowId": "platform_show_7_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_43",
+        "name": "Williams Sonoma Show 44",
+        "startTime": "2025-11-20T23:02:28.428Z",
+        "endTime": "2025-11-21T00:09:49.352Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Williams Sonoma Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_29",
+        "name": "Williams Sonoma Show 30",
+        "startTime": "2025-11-21T00:02:28.906Z",
+        "endTime": "2025-11-21T01:30:31.381Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Williams Sonoma Show 30"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Williams Sonoma Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_4",
+        "name": "Williams Sonoma Show 5",
+        "startTime": "2025-11-22T06:59:29.842Z",
+        "endTime": "2025-11-22T09:12:22.960Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Williams Sonoma Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Williams Sonoma Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_2",
+        "name": "Williams Sonoma Show 3",
+        "startTime": "2025-11-22T13:55:22.501Z",
+        "endTime": "2025-11-22T16:19:18.589Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Williams Sonoma Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Williams Sonoma Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_11",
+        "name": "Williams Sonoma Show 12",
+        "startTime": "2025-11-23T10:33:10.060Z",
+        "endTime": "2025-11-23T14:12:22.456Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Williams Sonoma Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_26",
+        "name": "Williams Sonoma Show 27",
+        "startTime": "2025-11-23T19:55:45.784Z",
+        "endTime": "2025-11-23T21:11:08.251Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Williams Sonoma Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Williams Sonoma Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Williams Sonoma Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_36",
+        "name": "Williams Sonoma Show 37",
+        "startTime": "2025-11-25T09:09:51.175Z",
+        "endTime": "2025-11-25T11:52:24.799Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Williams Sonoma Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Williams Sonoma Show 37"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Williams Sonoma Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_10",
+        "name": "Williams Sonoma Show 11",
+        "startTime": "2025-11-26T00:48:08.514Z",
+        "endTime": "2025-11-26T02:18:19.800Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Williams Sonoma Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Williams Sonoma Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Williams Sonoma Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_30",
+        "name": "Williams Sonoma Show 31",
+        "startTime": "2025-11-26T06:33:05.787Z",
+        "endTime": "2025-11-26T08:45:31.719Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Williams Sonoma Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Williams Sonoma Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_24",
+        "name": "Williams Sonoma Show 25",
+        "startTime": "2025-11-27T13:18:28.637Z",
+        "endTime": "2025-11-27T16:40:16.996Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Williams Sonoma Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-25",
+            "platformShowId": "platform_show_25_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_5",
+        "name": "Williams Sonoma Show 6",
+        "startTime": "2025-11-27T13:31:08.637Z",
+        "endTime": "2025-11-27T15:38:02.885Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Williams Sonoma Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Williams Sonoma Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-6",
+            "platformShowId": "platform_show_6_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_39",
+        "name": "Williams Sonoma Show 40",
+        "startTime": "2025-11-27T17:42:00.418Z",
+        "endTime": "2025-11-27T19:22:51.497Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Williams Sonoma Show 40"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Williams Sonoma Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-40",
+            "platformShowId": "platform_show_40_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_21",
+        "name": "Williams Sonoma Show 22",
+        "startTime": "2025-11-28T16:26:01.516Z",
+        "endTime": "2025-11-28T18:26:52.417Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Williams Sonoma Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Williams Sonoma Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Williams Sonoma Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-22",
+            "platformShowId": "platform_show_22_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_28",
+        "name": "Williams Sonoma Show 29",
+        "startTime": "2025-11-28T19:54:17.594Z",
+        "endTime": "2025-11-28T22:08:20.694Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Williams Sonoma Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720439_16",
+        "name": "Williams Sonoma Show 17",
+        "startTime": "2025-11-30T15:12:39.475Z",
+        "endTime": "2025-11-30T16:54:43.302Z",
+        "clientUid": "client_00000000000000000050",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Williams Sonoma Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Williams Sonoma Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-17",
+            "platformShowId": "platform_show_17_2"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

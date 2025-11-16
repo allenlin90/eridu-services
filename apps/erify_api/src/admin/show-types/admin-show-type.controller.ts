@@ -3,25 +3,22 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   HttpStatus,
   Param,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
-import { ZodSerializerDto } from 'nestjs-zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
-import { ApiZodResponse } from '@/common/openapi/decorators';
 import {
-  createPaginatedResponseSchema,
-  PaginationQueryDto,
-} from '@/common/pagination/schema/pagination.schema';
+  AdminPaginatedResponse,
+  AdminResponse,
+} from '@/admin/decorators/admin-response.decorator';
+import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
 import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
 import {
   CreateShowTypeDto,
-  ShowTypeDto,
   showTypeDto,
   UpdateShowTypeDto,
 } from '@/models/show-type/schemas/show-type.schema';
@@ -38,20 +35,17 @@ export class AdminShowTypeController extends BaseAdminController {
   }
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiZodResponse(showTypeDto, 'Show type created successfully')
-  @ZodSerializerDto(ShowTypeDto)
+  @AdminResponse(
+    showTypeDto,
+    HttpStatus.CREATED,
+    'Show type created successfully',
+  )
   createShowType(@Body() body: CreateShowTypeDto) {
     return this.showTypeService.createShowType(body);
   }
 
   @Get()
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(
-    createPaginatedResponseSchema(showTypeDto),
-    'List of show types with pagination',
-  )
-  @ZodSerializerDto(createPaginatedResponseSchema(showTypeDto))
+  @AdminPaginatedResponse(showTypeDto, 'List of show types with pagination')
   async getShowTypes(@Query() query: PaginationQueryDto) {
     const data = await this.showTypeService.getShowTypes({
       skip: query.skip,
@@ -63,9 +57,7 @@ export class AdminShowTypeController extends BaseAdminController {
   }
 
   @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(showTypeDto, 'Show type details')
-  @ZodSerializerDto(ShowTypeDto)
+  @AdminResponse(showTypeDto, HttpStatus.OK, 'Show type details')
   getShowType(
     @Param('id', new UidValidationPipe(ShowTypeService.UID_PREFIX, 'Show Type'))
     id: string,
@@ -74,9 +66,7 @@ export class AdminShowTypeController extends BaseAdminController {
   }
 
   @Patch(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(showTypeDto, 'Show type updated successfully')
-  @ZodSerializerDto(ShowTypeDto)
+  @AdminResponse(showTypeDto, HttpStatus.OK, 'Show type updated successfully')
   updateShowType(
     @Param('id', new UidValidationPipe(ShowTypeService.UID_PREFIX, 'Show Type'))
     id: string,
@@ -86,7 +76,7 @@ export class AdminShowTypeController extends BaseAdminController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @AdminResponse(undefined, HttpStatus.NO_CONTENT)
   async deleteShowType(
     @Param('id', new UidValidationPipe(ShowTypeService.UID_PREFIX, 'Show Type'))
     id: string,

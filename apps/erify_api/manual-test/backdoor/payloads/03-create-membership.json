@@ -1,0 +1,10 @@
+{
+  "user_id": "user_123",
+  "studio_id": "std_00000000000000000001",
+  "role": "admin",
+  "metadata": {
+    "assigned_by": "system",
+    "assigned_at": "2024-01-15T10:00:00Z"
+  }
+}
+

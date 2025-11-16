@@ -1,0 +1,1621 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-15T03:35:20.433Z",
+      "totalShows": 50,
+      "clientName": "Shiseido",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1763177720433_11",
+        "name": "Shiseido Show 12",
+        "startTime": "2025-11-01T23:14:01.353Z",
+        "endTime": "2025-11-02T02:27:40.866Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Shiseido Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Shiseido Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Shiseido Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-12",
+            "platformShowId": "platform_show_12_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_12",
+        "name": "Shiseido Show 13",
+        "startTime": "2025-11-02T07:51:32.273Z",
+        "endTime": "2025-11-02T09:27:12.258Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Shiseido Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Shiseido Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Shiseido Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_7",
+        "name": "Shiseido Show 8",
+        "startTime": "2025-11-02T12:17:56.716Z",
+        "endTime": "2025-11-02T15:20:39.665Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Shiseido Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Shiseido Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_9",
+        "name": "Shiseido Show 10",
+        "startTime": "2025-11-03T13:29:39.553Z",
+        "endTime": "2025-11-03T16:05:28.207Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Shiseido Show 10"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Shiseido Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_2",
+        "name": "Shiseido Show 3",
+        "startTime": "2025-11-03T20:09:25.043Z",
+        "endTime": "2025-11-03T21:52:50.059Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Shiseido Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Shiseido Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Shiseido Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_5",
+        "name": "Shiseido Show 6",
+        "startTime": "2025-11-04T00:34:56.726Z",
+        "endTime": "2025-11-04T04:09:27.596Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Shiseido Show 6"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Shiseido Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-6",
+            "platformShowId": "platform_show_6_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_49",
+        "name": "Shiseido Show 50",
+        "startTime": "2025-11-04T00:43:33.913Z",
+        "endTime": "2025-11-04T02:07:46.942Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Shiseido Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_13",
+        "name": "Shiseido Show 14",
+        "startTime": "2025-11-05T01:13:22.377Z",
+        "endTime": "2025-11-05T03:45:13.969Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Shiseido Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Shiseido Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_0",
+        "name": "Shiseido Show 1",
+        "startTime": "2025-11-05T01:33:44.603Z",
+        "endTime": "2025-11-05T04:33:11.252Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Shiseido Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_16",
+        "name": "Shiseido Show 17",
+        "startTime": "2025-11-05T21:05:04.224Z",
+        "endTime": "2025-11-06T00:56:41.219Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Shiseido Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Shiseido Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Shiseido Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_19",
+        "name": "Shiseido Show 20",
+        "startTime": "2025-11-06T03:44:26.489Z",
+        "endTime": "2025-11-06T04:57:03.884Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Shiseido Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Shiseido Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Shiseido Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_38",
+        "name": "Shiseido Show 39",
+        "startTime": "2025-11-06T14:07:40.073Z",
+        "endTime": "2025-11-06T17:25:50.671Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Shiseido Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Shiseido Show 39"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Shiseido Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_29",
+        "name": "Shiseido Show 30",
+        "startTime": "2025-11-06T19:20:08.484Z",
+        "endTime": "2025-11-06T21:53:39.908Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Shiseido Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_3",
+        "name": "Shiseido Show 4",
+        "startTime": "2025-11-09T00:36:10.278Z",
+        "endTime": "2025-11-09T02:43:00.665Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Shiseido Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Shiseido Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Shiseido Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-4",
+            "platformShowId": "platform_show_4_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_48",
+        "name": "Shiseido Show 49",
+        "startTime": "2025-11-09T01:50:55.064Z",
+        "endTime": "2025-11-09T03:55:04.234Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Shiseido Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_37",
+        "name": "Shiseido Show 38",
+        "startTime": "2025-11-09T07:42:20.887Z",
+        "endTime": "2025-11-09T09:10:35.741Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Shiseido Show 38"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Shiseido Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-38",
+            "platformShowId": "platform_show_38_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_35",
+        "name": "Shiseido Show 36",
+        "startTime": "2025-11-09T08:06:20.620Z",
+        "endTime": "2025-11-09T10:28:22.386Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Shiseido Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Shiseido Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_1",
+        "name": "Shiseido Show 2",
+        "startTime": "2025-11-09T09:33:08.141Z",
+        "endTime": "2025-11-09T13:32:39.059Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Shiseido Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Shiseido Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-2",
+            "platformShowId": "platform_show_2_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_45",
+        "name": "Shiseido Show 46",
+        "startTime": "2025-11-09T10:20:15.250Z",
+        "endTime": "2025-11-09T12:12:38.327Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Shiseido Show 46"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Shiseido Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-46",
+            "platformShowId": "platform_show_46_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_27",
+        "name": "Shiseido Show 28",
+        "startTime": "2025-11-10T22:19:47.478Z",
+        "endTime": "2025-11-11T01:33:12.076Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Shiseido Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000018",
+            "note": "MC assignment for Shiseido Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Shiseido Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_41",
+        "name": "Shiseido Show 42",
+        "startTime": "2025-11-11T20:41:45.899Z",
+        "endTime": "2025-11-11T22:57:29.728Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Shiseido Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Shiseido Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000024",
+            "note": "MC assignment for Shiseido Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_18",
+        "name": "Shiseido Show 19",
+        "startTime": "2025-11-12T22:57:20.379Z",
+        "endTime": "2025-11-13T02:35:54.763Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Shiseido Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Shiseido Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_25",
+        "name": "Shiseido Show 26",
+        "startTime": "2025-11-13T18:31:30.694Z",
+        "endTime": "2025-11-13T22:06:21.464Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Shiseido Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_32",
+        "name": "Shiseido Show 33",
+        "startTime": "2025-11-13T22:35:45.176Z",
+        "endTime": "2025-11-14T01:18:57.444Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Shiseido Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Shiseido Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Shiseido Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_14",
+        "name": "Shiseido Show 15",
+        "startTime": "2025-11-14T12:47:24.068Z",
+        "endTime": "2025-11-14T15:12:19.792Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Shiseido Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_4",
+        "name": "Shiseido Show 5",
+        "startTime": "2025-11-14T16:35:49.288Z",
+        "endTime": "2025-11-14T18:22:13.185Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Shiseido Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Shiseido Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Shiseido Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_43",
+        "name": "Shiseido Show 44",
+        "startTime": "2025-11-15T10:07:53.729Z",
+        "endTime": "2025-11-15T13:02:59.829Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Shiseido Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-44",
+            "platformShowId": "platform_show_44_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_42",
+        "name": "Shiseido Show 43",
+        "startTime": "2025-11-15T23:10:02.955Z",
+        "endTime": "2025-11-16T00:23:59.949Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Shiseido Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Shiseido Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Shiseido Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_21",
+        "name": "Shiseido Show 22",
+        "startTime": "2025-11-16T16:57:18.663Z",
+        "endTime": "2025-11-16T18:27:58.437Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Shiseido Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Shiseido Show 22"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Shiseido Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-22",
+            "platformShowId": "platform_show_22_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_24",
+        "name": "Shiseido Show 25",
+        "startTime": "2025-11-16T21:29:08.938Z",
+        "endTime": "2025-11-16T23:06:22.146Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Shiseido Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Shiseido Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-25",
+            "platformShowId": "platform_show_25_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_22",
+        "name": "Shiseido Show 23",
+        "startTime": "2025-11-17T01:34:14.403Z",
+        "endTime": "2025-11-17T02:55:06.435Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Shiseido Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-23",
+            "platformShowId": "platform_show_23_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_20",
+        "name": "Shiseido Show 21",
+        "startTime": "2025-11-17T11:59:26.992Z",
+        "endTime": "2025-11-17T13:10:11.765Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Shiseido Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Shiseido Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Shiseido Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-21",
+            "platformShowId": "platform_show_21_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_17",
+        "name": "Shiseido Show 18",
+        "startTime": "2025-11-17T14:45:37.017Z",
+        "endTime": "2025-11-17T18:04:03.032Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Shiseido Show 18"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Shiseido Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-18",
+            "platformShowId": "platform_show_18_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_46",
+        "name": "Shiseido Show 47",
+        "startTime": "2025-11-19T05:10:15.655Z",
+        "endTime": "2025-11-19T06:54:38.828Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Shiseido Show 47"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Shiseido Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_8",
+        "name": "Shiseido Show 9",
+        "startTime": "2025-11-19T12:53:33.979Z",
+        "endTime": "2025-11-19T14:56:43.794Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Shiseido Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-9",
+            "platformShowId": "platform_show_9_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_26",
+        "name": "Shiseido Show 27",
+        "startTime": "2025-11-20T00:28:33.736Z",
+        "endTime": "2025-11-20T03:29:06.957Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Shiseido Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Shiseido Show 27"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Shiseido Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_36",
+        "name": "Shiseido Show 37",
+        "startTime": "2025-11-20T03:51:36.674Z",
+        "endTime": "2025-11-20T05:43:42.667Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Shiseido Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_40",
+        "name": "Shiseido Show 41",
+        "startTime": "2025-11-20T18:15:06.980Z",
+        "endTime": "2025-11-20T21:49:30.556Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Shiseido Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Shiseido Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_39",
+        "name": "Shiseido Show 40",
+        "startTime": "2025-11-21T22:24:28.180Z",
+        "endTime": "2025-11-21T23:54:47.390Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Shiseido Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-40",
+            "platformShowId": "platform_show_40_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_15",
+        "name": "Shiseido Show 16",
+        "startTime": "2025-11-22T12:29:00.878Z",
+        "endTime": "2025-11-22T16:11:29.791Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Shiseido Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Shiseido Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Shiseido Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-16",
+            "platformShowId": "platform_show_16_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_10",
+        "name": "Shiseido Show 11",
+        "startTime": "2025-11-22T12:39:55.279Z",
+        "endTime": "2025-11-22T14:11:02.983Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Shiseido Show 11"
+          },
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Shiseido Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_28",
+        "name": "Shiseido Show 29",
+        "startTime": "2025-11-24T19:42:26.838Z",
+        "endTime": "2025-11-24T23:33:17.195Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Shiseido Show 29"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Shiseido Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-29",
+            "platformShowId": "platform_show_29_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_47",
+        "name": "Shiseido Show 48",
+        "startTime": "2025-11-24T21:37:33.428Z",
+        "endTime": "2025-11-25T01:02:37.218Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Shiseido Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Shiseido Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-48",
+            "platformShowId": "platform_show_48_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_33",
+        "name": "Shiseido Show 34",
+        "startTime": "2025-11-25T02:17:53.800Z",
+        "endTime": "2025-11-25T06:00:07.562Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Shiseido Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_6",
+        "name": "Shiseido Show 7",
+        "startTime": "2025-11-26T12:35:34.103Z",
+        "endTime": "2025-11-26T16:05:36.351Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Shiseido Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Shiseido Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Shiseido Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_23",
+        "name": "Shiseido Show 24",
+        "startTime": "2025-11-27T02:31:53.938Z",
+        "endTime": "2025-11-27T04:23:31.185Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Shiseido Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-24",
+            "platformShowId": "platform_show_24_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_44",
+        "name": "Shiseido Show 45",
+        "startTime": "2025-11-28T04:06:15.112Z",
+        "endTime": "2025-11-28T07:38:19.076Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Shiseido Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Shiseido Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Shiseido Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_34",
+        "name": "Shiseido Show 35",
+        "startTime": "2025-11-29T05:37:47.633Z",
+        "endTime": "2025-11-29T09:03:01.323Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Shiseido Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Shiseido Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Shiseido Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-35",
+            "platformShowId": "platform_show_35_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_31",
+        "name": "Shiseido Show 32",
+        "startTime": "2025-11-29T08:52:09.929Z",
+        "endTime": "2025-11-29T10:13:47.468Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Shiseido Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Shiseido Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Shiseido Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-32",
+            "platformShowId": "platform_show_32_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720433_30",
+        "name": "Shiseido Show 31",
+        "startTime": "2025-11-29T11:59:33.994Z",
+        "endTime": "2025-11-29T15:35:45.159Z",
+        "clientUid": "client_00000000000000000030",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Shiseido Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}

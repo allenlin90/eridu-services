@@ -848,6 +848,6 @@ sequenceDiagram
 
 ## Related Documentation
 
-- **Testing Guide**: See [test-payloads/README.md](../test-payloads/README.md) for testing workflow
+- **Testing Guide**: See [manual-test/README.md](../manual-test/README.md) for testing workflow
 - **Phase 1 Roadmap**: See [roadmap/PHASE_1.md](./roadmap/PHASE_1.md) for implementation plan
 - **Phase 2 Roadmap**: See [roadmap/PHASE_2.md](./roadmap/PHASE_2.md) for chunked upload implementation

@@ -1,0 +1,10 @@
+{
+  "name": "Updated Admin User",
+  "profile_url": "https://example.com/profiles/admin-updated",
+  "metadata": {
+    "department": "IT",
+    "role": "super_admin",
+    "updated_at": "2024-01-15T10:00:00Z"
+  }
+}
+

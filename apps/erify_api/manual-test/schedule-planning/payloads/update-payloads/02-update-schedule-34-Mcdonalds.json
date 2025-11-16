@@ -1,0 +1,1577 @@
+{
+  "plan_document": {
+    "metadata": {
+      "lastEditedBy": "user_00000000000000000001",
+      "lastEditedAt": "2025-11-15T03:35:20.434Z",
+      "totalShows": 50,
+      "clientName": "Mcdonalds",
+      "dateRange": {
+        "start": "2025-10-31T17:00:00.000Z",
+        "end": "2025-11-30T16:59:59.999Z"
+      }
+    },
+    "shows": [
+      {
+        "tempId": "temp_1763177720434_39",
+        "name": "Mcdonalds Show 40",
+        "startTime": "2025-11-01T04:37:34.301Z",
+        "endTime": "2025-11-01T05:59:52.018Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Mcdonalds Show 40"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-40",
+            "platformShowId": "platform_show_40_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_33",
+        "name": "Mcdonalds Show 34",
+        "startTime": "2025-11-01T04:40:17.373Z",
+        "endTime": "2025-11-01T06:01:11.230Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000015",
+            "note": "MC assignment for Mcdonalds Show 34"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-34",
+            "platformShowId": "platform_show_34_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-34",
+            "platformShowId": "platform_show_34_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_0",
+        "name": "Mcdonalds Show 1",
+        "startTime": "2025-11-01T06:32:41.885Z",
+        "endTime": "2025-11-01T08:08:24.095Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Mcdonalds Show 1"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-1",
+            "platformShowId": "platform_show_1_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_24",
+        "name": "Mcdonalds Show 25",
+        "startTime": "2025-11-01T11:24:08.524Z",
+        "endTime": "2025-11-01T12:55:27.479Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Mcdonalds Show 25"
+          },
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Mcdonalds Show 25"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-25",
+            "platformShowId": "platform_show_25_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_38",
+        "name": "Mcdonalds Show 39",
+        "startTime": "2025-11-02T07:44:27.580Z",
+        "endTime": "2025-11-02T11:39:46.898Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Mcdonalds Show 39"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-39",
+            "platformShowId": "platform_show_39_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-39",
+            "platformShowId": "platform_show_39_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_3",
+        "name": "Mcdonalds Show 4",
+        "startTime": "2025-11-03T14:57:16.676Z",
+        "endTime": "2025-11-03T17:54:15.824Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Mcdonalds Show 4"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Mcdonalds Show 4"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-4",
+            "platformShowId": "platform_show_4_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_20",
+        "name": "Mcdonalds Show 21",
+        "startTime": "2025-11-04T14:04:21.890Z",
+        "endTime": "2025-11-04T17:43:45.113Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Mcdonalds Show 21"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Mcdonalds Show 21"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-21",
+            "platformShowId": "platform_show_21_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_2",
+        "name": "Mcdonalds Show 3",
+        "startTime": "2025-11-05T15:56:11.807Z",
+        "endTime": "2025-11-05T19:46:15.348Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Mcdonalds Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Mcdonalds Show 3"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Mcdonalds Show 3"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-3",
+            "platformShowId": "platform_show_3_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-3",
+            "platformShowId": "platform_show_3_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_5",
+        "name": "Mcdonalds Show 6",
+        "startTime": "2025-11-06T04:29:57.339Z",
+        "endTime": "2025-11-06T07:21:08.643Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Mcdonalds Show 6"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-6",
+            "platformShowId": "platform_show_6_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_42",
+        "name": "Mcdonalds Show 43",
+        "startTime": "2025-11-07T14:53:29.544Z",
+        "endTime": "2025-11-07T17:07:30.077Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Mcdonalds Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Mcdonalds Show 43"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Mcdonalds Show 43"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-43",
+            "platformShowId": "platform_show_43_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_7",
+        "name": "Mcdonalds Show 8",
+        "startTime": "2025-11-09T04:41:32.323Z",
+        "endTime": "2025-11-09T07:31:48.756Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000013",
+            "note": "MC assignment for Mcdonalds Show 8"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Mcdonalds Show 8"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-8",
+            "platformShowId": "platform_show_8_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_36",
+        "name": "Mcdonalds Show 37",
+        "startTime": "2025-11-09T09:26:52.330Z",
+        "endTime": "2025-11-09T12:31:23.001Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Mcdonalds Show 37"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-37",
+            "platformShowId": "platform_show_37_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-37",
+            "platformShowId": "platform_show_37_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_1",
+        "name": "Mcdonalds Show 2",
+        "startTime": "2025-11-09T12:00:44.891Z",
+        "endTime": "2025-11-09T13:40:39.656Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Mcdonalds Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Mcdonalds Show 2"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Mcdonalds Show 2"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-2",
+            "platformShowId": "platform_show_2_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-2",
+            "platformShowId": "platform_show_2_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_37",
+        "name": "Mcdonalds Show 38",
+        "startTime": "2025-11-11T00:15:10.314Z",
+        "endTime": "2025-11-11T03:56:30.713Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Mcdonalds Show 38"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-38",
+            "platformShowId": "platform_show_38_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_6",
+        "name": "Mcdonalds Show 7",
+        "startTime": "2025-11-11T04:00:45.769Z",
+        "endTime": "2025-11-11T05:03:58.673Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Mcdonalds Show 7"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Mcdonalds Show 7"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-7",
+            "platformShowId": "platform_show_7_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-7",
+            "platformShowId": "platform_show_7_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_19",
+        "name": "Mcdonalds Show 20",
+        "startTime": "2025-11-11T14:15:54.017Z",
+        "endTime": "2025-11-11T16:19:34.591Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Mcdonalds Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Mcdonalds Show 20"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Mcdonalds Show 20"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-20",
+            "platformShowId": "platform_show_20_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-20",
+            "platformShowId": "platform_show_20_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_13",
+        "name": "Mcdonalds Show 14",
+        "startTime": "2025-11-11T21:43:58.485Z",
+        "endTime": "2025-11-12T00:30:56.314Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000023",
+            "note": "MC assignment for Mcdonalds Show 14"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Mcdonalds Show 14"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-14",
+            "platformShowId": "platform_show_14_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-14",
+            "platformShowId": "platform_show_14_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_46",
+        "name": "Mcdonalds Show 47",
+        "startTime": "2025-11-11T22:04:59.130Z",
+        "endTime": "2025-11-12T01:00:15.720Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Mcdonalds Show 47"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-47",
+            "platformShowId": "platform_show_47_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-47",
+            "platformShowId": "platform_show_47_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_17",
+        "name": "Mcdonalds Show 18",
+        "startTime": "2025-11-13T11:17:47.879Z",
+        "endTime": "2025-11-13T12:19:47.110Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Mcdonalds Show 18"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-18",
+            "platformShowId": "platform_show_18_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-18",
+            "platformShowId": "platform_show_18_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_40",
+        "name": "Mcdonalds Show 41",
+        "startTime": "2025-11-14T01:19:12.207Z",
+        "endTime": "2025-11-14T02:52:48.001Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000003",
+            "note": "MC assignment for Mcdonalds Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Mcdonalds Show 41"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Mcdonalds Show 41"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-41",
+            "platformShowId": "platform_show_41_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_32",
+        "name": "Mcdonalds Show 33",
+        "startTime": "2025-11-14T01:59:23.174Z",
+        "endTime": "2025-11-14T03:36:18.104Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Mcdonalds Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Mcdonalds Show 33"
+          },
+          {
+            "mcUid": "mc_00000000000000000020",
+            "note": "MC assignment for Mcdonalds Show 33"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-33",
+            "platformShowId": "platform_show_33_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-33",
+            "platformShowId": "platform_show_33_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_35",
+        "name": "Mcdonalds Show 36",
+        "startTime": "2025-11-15T23:28:56.363Z",
+        "endTime": "2025-11-16T00:53:18.641Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Mcdonalds Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Mcdonalds Show 36"
+          },
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Mcdonalds Show 36"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-36",
+            "platformShowId": "platform_show_36_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-36",
+            "platformShowId": "platform_show_36_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_4",
+        "name": "Mcdonalds Show 5",
+        "startTime": "2025-11-16T01:31:30.559Z",
+        "endTime": "2025-11-16T05:02:12.813Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Mcdonalds Show 5"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Mcdonalds Show 5"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-5",
+            "platformShowId": "platform_show_5_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-5",
+            "platformShowId": "platform_show_5_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_41",
+        "name": "Mcdonalds Show 42",
+        "startTime": "2025-11-16T20:56:11.396Z",
+        "endTime": "2025-11-17T00:27:15.137Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Mcdonalds Show 42"
+          },
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Mcdonalds Show 42"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-42",
+            "platformShowId": "platform_show_42_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_18",
+        "name": "Mcdonalds Show 19",
+        "startTime": "2025-11-17T23:04:38.612Z",
+        "endTime": "2025-11-18T00:44:23.960Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Mcdonalds Show 19"
+          },
+          {
+            "mcUid": "mc_00000000000000000027",
+            "note": "MC assignment for Mcdonalds Show 19"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-19",
+            "platformShowId": "platform_show_19_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_31",
+        "name": "Mcdonalds Show 32",
+        "startTime": "2025-11-18T03:38:51.484Z",
+        "endTime": "2025-11-18T04:53:06.910Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000028",
+            "note": "MC assignment for Mcdonalds Show 32"
+          },
+          {
+            "mcUid": "mc_00000000000000000025",
+            "note": "MC assignment for Mcdonalds Show 32"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-32",
+            "platformShowId": "platform_show_32_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_25",
+        "name": "Mcdonalds Show 26",
+        "startTime": "2025-11-18T07:50:53.051Z",
+        "endTime": "2025-11-18T09:43:05.338Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Mcdonalds Show 26"
+          },
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Mcdonalds Show 26"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-26",
+            "platformShowId": "platform_show_26_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_30",
+        "name": "Mcdonalds Show 31",
+        "startTime": "2025-11-20T16:22:28.323Z",
+        "endTime": "2025-11-20T18:18:14.805Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Mcdonalds Show 31"
+          },
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Mcdonalds Show 31"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-31",
+            "platformShowId": "platform_show_31_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-31",
+            "platformShowId": "platform_show_31_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_47",
+        "name": "Mcdonalds Show 48",
+        "startTime": "2025-11-20T20:51:40.782Z",
+        "endTime": "2025-11-21T00:06:47.407Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000029",
+            "note": "MC assignment for Mcdonalds Show 48"
+          },
+          {
+            "mcUid": "mc_00000000000000000010",
+            "note": "MC assignment for Mcdonalds Show 48"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-48",
+            "platformShowId": "platform_show_48_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-48",
+            "platformShowId": "platform_show_48_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_9",
+        "name": "Mcdonalds Show 10",
+        "startTime": "2025-11-20T23:34:38.084Z",
+        "endTime": "2025-11-21T02:12:58.968Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Mcdonalds Show 10"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-10",
+            "platformShowId": "platform_show_10_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_45",
+        "name": "Mcdonalds Show 46",
+        "startTime": "2025-11-21T00:46:55.020Z",
+        "endTime": "2025-11-21T04:44:32.095Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000005",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000009",
+            "note": "MC assignment for Mcdonalds Show 46"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-46",
+            "platformShowId": "platform_show_46_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-46",
+            "platformShowId": "platform_show_46_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_49",
+        "name": "Mcdonalds Show 50",
+        "startTime": "2025-11-22T05:26:34.578Z",
+        "endTime": "2025-11-22T08:55:36.055Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Mcdonalds Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Mcdonalds Show 50"
+          },
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Mcdonalds Show 50"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-50",
+            "platformShowId": "platform_show_50_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-50",
+            "platformShowId": "platform_show_50_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_23",
+        "name": "Mcdonalds Show 24",
+        "startTime": "2025-11-22T05:50:35.521Z",
+        "endTime": "2025-11-22T07:32:19.210Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000030",
+            "note": "MC assignment for Mcdonalds Show 24"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Mcdonalds Show 24"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-24",
+            "platformShowId": "platform_show_24_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_14",
+        "name": "Mcdonalds Show 15",
+        "startTime": "2025-11-22T18:29:24.929Z",
+        "endTime": "2025-11-22T20:43:11.350Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Mcdonalds Show 15"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-15",
+            "platformShowId": "platform_show_15_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-15",
+            "platformShowId": "platform_show_15_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_43",
+        "name": "Mcdonalds Show 44",
+        "startTime": "2025-11-22T18:53:56.971Z",
+        "endTime": "2025-11-22T21:10:21.199Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Mcdonalds Show 44"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-44",
+            "platformShowId": "platform_show_44_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_22",
+        "name": "Mcdonalds Show 23",
+        "startTime": "2025-11-23T10:28:40.408Z",
+        "endTime": "2025-11-23T14:05:55.632Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Mcdonalds Show 23"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-23",
+            "platformShowId": "platform_show_23_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_10",
+        "name": "Mcdonalds Show 11",
+        "startTime": "2025-11-25T00:00:03.683Z",
+        "endTime": "2025-11-25T02:20:11.308Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Mcdonalds Show 11"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-11",
+            "platformShowId": "platform_show_11_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-11",
+            "platformShowId": "platform_show_11_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_8",
+        "name": "Mcdonalds Show 9",
+        "startTime": "2025-11-26T06:39:56.227Z",
+        "endTime": "2025-11-26T09:03:10.239Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Mcdonalds Show 9"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-9",
+            "platformShowId": "platform_show_9_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_12",
+        "name": "Mcdonalds Show 13",
+        "startTime": "2025-11-26T15:54:47.291Z",
+        "endTime": "2025-11-26T19:29:45.548Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000008",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Mcdonalds Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Mcdonalds Show 13"
+          },
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Mcdonalds Show 13"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-13",
+            "platformShowId": "platform_show_13_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-13",
+            "platformShowId": "platform_show_13_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_48",
+        "name": "Mcdonalds Show 49",
+        "startTime": "2025-11-26T20:01:18.944Z",
+        "endTime": "2025-11-26T21:12:54.262Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000002",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Mcdonalds Show 49"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Mcdonalds Show 49"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-49",
+            "platformShowId": "platform_show_49_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-49",
+            "platformShowId": "platform_show_49_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_28",
+        "name": "Mcdonalds Show 29",
+        "startTime": "2025-11-26T20:30:03.390Z",
+        "endTime": "2025-11-26T22:08:48.230Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000001",
+        "showTypeUid": "sht_00000000000000000003",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Mcdonalds Show 29"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-29",
+            "platformShowId": "platform_show_29_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-29",
+            "platformShowId": "platform_show_29_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_21",
+        "name": "Mcdonalds Show 22",
+        "startTime": "2025-11-27T08:27:44.732Z",
+        "endTime": "2025-11-27T10:41:18.690Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Mcdonalds Show 22"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-22",
+            "platformShowId": "platform_show_22_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_15",
+        "name": "Mcdonalds Show 16",
+        "startTime": "2025-11-27T16:37:19.868Z",
+        "endTime": "2025-11-27T18:46:45.476Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Mcdonalds Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Mcdonalds Show 16"
+          },
+          {
+            "mcUid": "mc_00000000000000000021",
+            "note": "MC assignment for Mcdonalds Show 16"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-16",
+            "platformShowId": "platform_show_16_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_29",
+        "name": "Mcdonalds Show 30",
+        "startTime": "2025-11-28T10:21:13.545Z",
+        "endTime": "2025-11-28T12:55:11.414Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000009",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000002",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000011",
+            "note": "MC assignment for Mcdonalds Show 30"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-30",
+            "platformShowId": "platform_show_30_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-30",
+            "platformShowId": "platform_show_30_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_27",
+        "name": "Mcdonalds Show 28",
+        "startTime": "2025-11-28T16:57:50.868Z",
+        "endTime": "2025-11-28T19:00:04.978Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000010",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Mcdonalds Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Mcdonalds Show 28"
+          },
+          {
+            "mcUid": "mc_00000000000000000016",
+            "note": "MC assignment for Mcdonalds Show 28"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-28",
+            "platformShowId": "platform_show_28_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-28",
+            "platformShowId": "platform_show_28_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_16",
+        "name": "Mcdonalds Show 17",
+        "startTime": "2025-11-28T22:10:36.174Z",
+        "endTime": "2025-11-29T01:59:52.668Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000003",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000005",
+            "note": "MC assignment for Mcdonalds Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000014",
+            "note": "MC assignment for Mcdonalds Show 17"
+          },
+          {
+            "mcUid": "mc_00000000000000000002",
+            "note": "MC assignment for Mcdonalds Show 17"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-17",
+            "platformShowId": "platform_show_17_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_26",
+        "name": "Mcdonalds Show 27",
+        "startTime": "2025-11-29T02:35:27.334Z",
+        "endTime": "2025-11-29T04:27:47.922Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000004",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000012",
+            "note": "MC assignment for Mcdonalds Show 27"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-27",
+            "platformShowId": "platform_show_27_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-27",
+            "platformShowId": "platform_show_27_2"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_11",
+        "name": "Mcdonalds Show 12",
+        "startTime": "2025-11-29T04:54:58.489Z",
+        "endTime": "2025-11-29T07:57:32.762Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000007",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000006",
+            "note": "MC assignment for Mcdonalds Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000008",
+            "note": "MC assignment for Mcdonalds Show 12"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Mcdonalds Show 12"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000001",
+            "liveStreamLink": "https://plt_00000000000000000001.com/live/show-12",
+            "platformShowId": "platform_show_12_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_44",
+        "name": "Mcdonalds Show 45",
+        "startTime": "2025-11-29T08:40:57.035Z",
+        "endTime": "2025-11-29T11:05:25.930Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000002",
+        "showTypeUid": "sht_00000000000000000001",
+        "showStatusUid": "shst_00000000000000000003",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000001",
+            "note": "MC assignment for Mcdonalds Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000004",
+            "note": "MC assignment for Mcdonalds Show 45"
+          },
+          {
+            "mcUid": "mc_00000000000000000017",
+            "note": "MC assignment for Mcdonalds Show 45"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-45",
+            "platformShowId": "platform_show_45_1"
+          }
+        ],
+        "metadata": {}
+      },
+      {
+        "tempId": "temp_1763177720434_34",
+        "name": "Mcdonalds Show 35",
+        "startTime": "2025-11-30T08:53:11.604Z",
+        "endTime": "2025-11-30T12:36:09.198Z",
+        "clientUid": "client_00000000000000000034",
+        "studioRoomUid": "srm_00000000000000000006",
+        "showTypeUid": "sht_00000000000000000002",
+        "showStatusUid": "shst_00000000000000000001",
+        "showStandardUid": "shsd_00000000000000000001",
+        "mcs": [
+          {
+            "mcUid": "mc_00000000000000000026",
+            "note": "MC assignment for Mcdonalds Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000022",
+            "note": "MC assignment for Mcdonalds Show 35"
+          },
+          {
+            "mcUid": "mc_00000000000000000007",
+            "note": "MC assignment for Mcdonalds Show 35"
+          }
+        ],
+        "platforms": [
+          {
+            "platformUid": "plt_00000000000000000003",
+            "liveStreamLink": "https://plt_00000000000000000003.com/live/show-35",
+            "platformShowId": "platform_show_35_1"
+          },
+          {
+            "platformUid": "plt_00000000000000000002",
+            "liveStreamLink": "https://plt_00000000000000000002.com/live/show-35",
+            "platformShowId": "platform_show_35_2"
+          }
+        ],
+        "metadata": {}
+      }
+    ]
+  },
+  "version": 1
+}
