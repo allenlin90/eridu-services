@@ -3,7 +3,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
 import { UserService } from '@/models/user/user.service';
 import { SchedulePlanningService } from '@/schedule-planning/schedule-planning.service';
-import { UtilityService } from '@/utility/utility.service';
 
 import { AdminSnapshotController } from './admin-snapshot.controller';
 
@@ -21,13 +20,6 @@ describe('AdminSnapshotController', () => {
   const mockUserService = {
     getUserById: jest.fn(),
   };
-
-  const mockUtilityService = {
-    createPaginationMeta: jest.fn(),
-    generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminSnapshotController],
@@ -41,7 +33,6 @@ describe('AdminSnapshotController', () => {
           useValue: mockSchedulePlanningService,
         },
         { provide: UserService, useValue: mockUserService },
-        { provide: UtilityService, useValue: mockUtilityService },
       ],
     }).compile();
 
@@ -73,7 +64,6 @@ describe('AdminSnapshotController', () => {
       );
 
       const result = await controller.getSnapshot(snapshotId);
-
       expect(
         mockScheduleSnapshotService.getScheduleSnapshotById,
       ).toHaveBeenCalledWith(snapshotId, {
@@ -108,7 +98,6 @@ describe('AdminSnapshotController', () => {
       const result = await controller.restoreFromSnapshot(snapshotId, {
         user_id: userId,
       });
-
       expect(mockUserService.getUserById).toHaveBeenCalledWith(userId);
       expect(
         mockSchedulePlanningService.restoreFromSnapshot,

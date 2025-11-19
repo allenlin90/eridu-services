@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import {
   CreateShowTypeDto,
   UpdateShowTypeDto,
 } from '@/models/show-type/schemas/show-type.schema';
 import { ShowTypeService } from '@/models/show-type/show-type.service';
-import { UtilityService } from '@/utility/utility.service';
 
 import { AdminShowTypeController } from './admin-show-type.controller';
 
@@ -21,20 +20,10 @@ describe('AdminShowTypeController', () => {
     updateShowType: jest.fn(),
     deleteShowType: jest.fn(),
   };
-
-  const mockUtilityService = {
-    createPaginationMeta: jest.fn(),
-    generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminShowTypeController],
-      providers: [
-        { provide: ShowTypeService, useValue: mockShowTypeService },
-        { provide: UtilityService, useValue: mockUtilityService },
-      ],
+      providers: [{ provide: ShowTypeService, useValue: mockShowTypeService }],
     }).compile();
 
     controller = module.get<AdminShowTypeController>(AdminShowTypeController);
@@ -55,7 +44,6 @@ describe('AdminShowTypeController', () => {
       mockShowTypeService.createShowType.mockResolvedValue(createdType as any);
 
       const result = await controller.createShowType(createDto);
-
       expect(mockShowTypeService.createShowType).toHaveBeenCalledWith(
         createDto,
       );
@@ -87,20 +75,13 @@ describe('AdminShowTypeController', () => {
 
       mockShowTypeService.getShowTypes.mockResolvedValue(types as any);
       mockShowTypeService.countShowTypes.mockResolvedValue(total);
-      mockUtilityService.createPaginationMeta.mockReturnValue(paginationMeta);
 
       const result = await controller.getShowTypes(query);
-
       expect(mockShowTypeService.getShowTypes).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
       });
       expect(mockShowTypeService.countShowTypes).toHaveBeenCalled();
-      expect(mockUtilityService.createPaginationMeta).toHaveBeenCalledWith(
-        query.page,
-        query.limit,
-        total,
-      );
       expect(result).toEqual({
         data: types,
         meta: paginationMeta,
@@ -116,7 +97,6 @@ describe('AdminShowTypeController', () => {
       mockShowTypeService.getShowTypeById.mockResolvedValue(type as any);
 
       const result = await controller.getShowType(typeId);
-
       expect(mockShowTypeService.getShowTypeById).toHaveBeenCalledWith(typeId);
       expect(result).toEqual(type);
     });
@@ -133,7 +113,6 @@ describe('AdminShowTypeController', () => {
       mockShowTypeService.updateShowType.mockResolvedValue(updatedType as any);
 
       const result = await controller.updateShowType(typeId, updateDto);
-
       expect(mockShowTypeService.updateShowType).toHaveBeenCalledWith(
         typeId,
         updateDto,
@@ -149,7 +128,6 @@ describe('AdminShowTypeController', () => {
       mockShowTypeService.deleteShowType.mockResolvedValue(undefined);
 
       await controller.deleteShowType(typeId);
-
       expect(mockShowTypeService.deleteShowType).toHaveBeenCalledWith(typeId);
     });
   });

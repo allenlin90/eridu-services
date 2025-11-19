@@ -24,7 +24,7 @@ This directory contains comprehensive documentation for the Eridu Services API (
 ## External Documentation
 
 ### SDK Documentation
-- **[Auth Integration SDK](../../../packages/auth-integration/README.md)** - Complete SDK documentation for JWT/JWKS integration with Better Auth
+- **[Auth SDK](../../../packages/auth-sdk/README.md)** - Complete SDK documentation for JWT/JWKS integration with Better Auth
 
 ## Quick Start
 
@@ -53,19 +53,28 @@ docs/
 ## Key Concepts
 
 ### Authentication
-- **JWT Validation**: Uses `@eridu/auth-integration` SDK to validate tokens from `erify_auth` service
+- **JWT Validation**: Uses `@eridu/auth-sdk` SDK to validate tokens from `erify_auth` service
+  - Automatic JWKS caching on startup
+  - Edge/worker runtime support with on-demand JWKS fetching
+  - Automatic key rotation handling
+  - `@CurrentUser()` decorator for accessing authenticated user information
 - **JWKS**: JSON Web Key Sets fetched from Better Auth's JWKS endpoint
 - **Admin Verification**: StudioMembership model determines admin permissions
 
 ### Authorization
-- **Admin Users**: Full CRUD access (verified via StudioMembership in ANY studio)
-- **Other Users**: Read-only access (authenticated via JWT)
+- **Admin Users**: Full CRUD access via admin endpoints (verified via StudioMembership in ANY studio)
+- **Other Users**: Access user-scoped endpoints (`/me/*`) with JWT authentication for their own data
 - **Service Integration**: API key authentication for internal operations
+  - Google Sheets API key for schedule operations
+  - Backdoor API key for user/membership management
 
 ### Architecture
-- **Modular Design**: Separated into Admin, Me, and Common modules
+- **Modular Design**: Separated into Admin, Me, Backdoor, and Common modules
 - **Service Pattern**: Consistent service patterns across all entities
 - **Repository Pattern**: Base repository with soft delete support
+- **Schedule Planning System**: JSON-based planning with snapshot versioning and optimistic locking
+- **Bulk Operations**: Bulk create and update schedules with partial success handling
+- **Validation & Publishing**: Pre-publish validation and sync to normalized Show tables
 
 ## Contributing
 
@@ -78,4 +87,4 @@ When updating documentation:
 ## Related Services
 
 - **erify_auth**: Authentication service using Better Auth (provides JWT tokens and JWKS endpoint)
-- **auth-integration SDK**: Shared SDK for JWT/JWKS validation (`@eridu/auth-integration` package)
+- **auth-sdk**: Shared SDK for JWT/JWKS validation (`@eridu/auth-sdk` package)

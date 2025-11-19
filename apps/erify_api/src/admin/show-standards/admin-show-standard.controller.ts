@@ -15,23 +15,19 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
-import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateShowStandardDto,
   showStandardDto,
   UpdateShowStandardDto,
 } from '@/models/show-standard/schemas/show-standard.schema';
 import { ShowStandardService } from '@/models/show-standard/show-standard.service';
-import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/show-standards')
 export class AdminShowStandardController extends BaseAdminController {
-  constructor(
-    private readonly showStandardService: ShowStandardService,
-    utilityService: UtilityService,
-  ) {
-    super(utilityService);
+  constructor(private readonly showStandardService: ShowStandardService) {
+    super();
   }
 
   @Post()

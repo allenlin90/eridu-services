@@ -1,18 +1,22 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
-import { AdminModule } from './admin/admin.module';
-import { BackdoorModule } from './backdoor/backdoor.module';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
-import { ZodExceptionFilter } from './common/filters/zod-exception.filter';
-import { HealthModule } from './common/health.module';
-import { OpenAPIModule } from './common/openapi/openapi.module';
-import { envSchema } from './config/env.schema';
-import { MeModule } from './me/me.module';
+import { AdminModule } from '@/admin/admin.module';
+import { BackdoorModule } from '@/backdoor/backdoor.module';
+import { envSchema } from '@/config/env.schema';
+import { HealthModule } from '@/health/health.module';
+import { AuthModule } from '@/lib/auth/auth.module';
+import { JwtAuthGuard } from '@/lib/auth/jwt-auth.guard';
+import { HttpExceptionFilter } from '@/lib/filters/http-exception.filter';
+import { PrismaExceptionFilter } from '@/lib/filters/prisma-exception.filter';
+import { ZodExceptionFilter } from '@/lib/filters/zod-exception.filter';
+import { AdminGuard } from '@/lib/guards/admin.guard';
+import { OpenAPIModule } from '@/lib/openapi/openapi.module';
+import { MeModule } from '@/me/me.module';
+import { MembershipModule } from '@/models/membership/membership.module';
 
 @Module({
   imports: [
@@ -46,13 +50,23 @@ import { MeModule } from './me/me.module';
         }),
       }),
     }),
-    HealthModule,
     AdminModule,
+    AuthModule,
     BackdoorModule,
+    HealthModule,
+    MembershipModule,
     MeModule,
     OpenAPIModule.forRoot(),
   ],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AdminGuard,
+    },
     {
       provide: APP_PIPE,
       useClass: ZodValidationPipe,

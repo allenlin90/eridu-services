@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { ClientService } from '@/models/client/client.service';
 import {
   CreateClientDto,
   UpdateClientDto,
 } from '@/models/client/schemas/client.schema';
-import { UtilityService } from '@/utility/utility.service';
 
 import { AdminClientController } from './admin-client.controller';
 
@@ -22,19 +21,10 @@ describe('AdminClientController', () => {
     deleteClient: jest.fn(),
   };
 
-  const mockUtilityService = {
-    createPaginationMeta: jest.fn(),
-    generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminClientController],
-      providers: [
-        { provide: ClientService, useValue: mockClientService },
-        { provide: UtilityService, useValue: mockUtilityService },
-      ],
+      providers: [{ provide: ClientService, useValue: mockClientService }],
     }).compile();
 
     controller = module.get<AdminClientController>(AdminClientController);
@@ -85,7 +75,6 @@ describe('AdminClientController', () => {
 
       mockClientService.getClients.mockResolvedValue(clients as any);
       mockClientService.countClients.mockResolvedValue(total);
-      mockUtilityService.createPaginationMeta.mockReturnValue(paginationMeta);
 
       const result = await controller.getClients(query);
 
@@ -94,11 +83,6 @@ describe('AdminClientController', () => {
         take: query.take,
       });
       expect(mockClientService.countClients).toHaveBeenCalled();
-      expect(mockUtilityService.createPaginationMeta).toHaveBeenCalledWith(
-        query.page,
-        query.limit,
-        total,
-      );
       expect(result).toEqual({
         data: clients,
         meta: paginationMeta,

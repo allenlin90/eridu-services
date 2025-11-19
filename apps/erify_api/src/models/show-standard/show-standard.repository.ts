@@ -1,10 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma, ShowStandard } from '@prisma/client';
 
-import {
-  BaseRepository,
-  IBaseModel,
-} from '@/common/repositories/base.repository';
+import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
 class ShowStandardModelWrapper

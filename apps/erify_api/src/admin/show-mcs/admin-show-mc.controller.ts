@@ -15,23 +15,19 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
-import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateShowMcDto,
   showMcDto,
   UpdateShowMcDto,
 } from '@/models/show-mc/schemas/show-mc.schema';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
-import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/show-mcs')
 export class AdminShowMcController extends BaseAdminController {
-  constructor(
-    private readonly showMcService: ShowMcService,
-    utilityService: UtilityService,
-  ) {
-    super(utilityService);
+  constructor(private readonly showMcService: ShowMcService) {
+    super();
   }
 
   @Post()

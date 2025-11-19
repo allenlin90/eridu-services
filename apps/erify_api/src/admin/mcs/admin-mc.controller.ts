@@ -15,23 +15,19 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
-import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { McService } from '@/models/mc/mc.service';
 import {
   CreateMcDto,
   mcWithUserDto,
   UpdateMcDto,
 } from '@/models/mc/schemas/mc.schema';
-import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/mcs')
 export class AdminMcController extends BaseAdminController {
-  constructor(
-    private readonly mcService: McService,
-    utilityService: UtilityService,
-  ) {
-    super(utilityService);
+  constructor(private readonly mcService: McService) {
+    super();
   }
 
   @Post()

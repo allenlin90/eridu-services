@@ -15,7 +15,9 @@
     "db:check": "npx drizzle-kit check",
     "db:generate": "npx drizzle-kit generate",
     "db:migrate": "cross-env DB_MIGRATING=true tsx src/db/migrate.ts",
+    "db:drop": "cross-env DB_MIGRATING=true tsx src/db/drop.ts",
     "db:seed": "cross-env DB_SEEDING=true tsx src/db/seed.ts",
+    "db:reset": "pnpm db:drop && pnpm db:migrate && pnpm db:seed",
     "studio": "npx drizzle-kit studio"
   },
   "dependencies": {

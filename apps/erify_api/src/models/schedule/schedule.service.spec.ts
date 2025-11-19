@@ -2,13 +2,13 @@
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { Prisma, Schedule } from '@prisma/client';
 
+import { ScheduleRepository } from '@/models/schedule/schedule.repository';
+import { PrismaService } from '@/prisma/prisma.service';
 import {
   createMockRepository,
   createMockUtilityService,
   createModelServiceTestModule,
-} from '@/common/test-helpers/model-service-test.helper';
-import { ScheduleRepository } from '@/models/schedule/schedule.repository';
-import { PrismaService } from '@/prisma/prisma.service';
+} from '@/testing/model-service-test.helper';
 
 import { ScheduleService } from './schedule.service';
 import {

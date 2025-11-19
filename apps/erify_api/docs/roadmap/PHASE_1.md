@@ -2,7 +2,7 @@
 # Phase 1: Core Functions with Simplified Auth
 
 ## Overview
-Phase 1 establishes the core production functions with simplified authentication where admin users have full CRUD access and other users have read-only access. This phase includes essential entities, basic show management, and the Schedule Planning Management System using JSON-based planning documents with snapshot-based versioning.
+Phase 1 establishes the core production functions with simplified authentication where admin users have full CRUD access via admin endpoints and other users access their own data via user-scoped endpoints (`/me/*`). This phase includes essential entities, basic show management, and the Schedule Planning Management System using JSON-based planning documents with snapshot-based versioning.
 
 ## Related Documentation
 
@@ -11,7 +11,7 @@ Phase 1 establishes the core production functions with simplified authentication
 - **[Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md)** - Schedule upload system design with JSON-based planning and snapshot versioning
 - **[Authentication & Authorization Guide](../AUTHENTICATION_GUIDE.md)** - JWT validation, authorization patterns, and SDK implementation
 - **[Server-to-Server Authentication Guide](../SERVER_TO_SERVER_AUTH.md)** - API key guard usage
-- **[Auth Integration SDK](../../../packages/auth-integration/README.md)** - Complete SDK documentation and API reference
+- **[Auth SDK](../../../packages/auth-sdk/README.md)** - Complete SDK documentation and API reference
 
 ## Core Features
 
@@ -20,7 +20,7 @@ Phase 1 establishes the core production functions with simplified authentication
 - **Validation & Serialization**: Zod-based input validation and response serialization
 - **Database Integration**: Prisma ORM with PostgreSQL, base repository patterns
 - **API Foundation**: RESTful endpoints with consistent error handling and pagination
-- **Simplified Authentication**: Admin write access, others read-only
+- **Simplified Authentication**: Admin users access admin endpoints for CRUD operations, other users access user-scoped endpoints (`/me/*`) for their own data
 
 ### 2. Core Entity Management
 - **User Management**: User accounts with SSO integration support
@@ -74,12 +74,17 @@ Phase 1 establishes the core production functions with simplified authentication
 ### 5. Authentication & Authorization
 - **JWT Validation**: JWK-based validation from `erify_auth` service using Better Auth's JWKS endpoint
   - Cached JWKS on startup for efficient local token verification
-  - On-demand JWKS fetching for edge/worker runtimes
+  - Automatic cache recovery: SDK automatically refetches JWKS if cache is missing (handles edge/worker runtimes seamlessly)
   - Automatic key rotation handling
-- **Authorization**: StudioMembership model for admin verification (admin in ANY studio = full CRUD, others = read-only)
+  - `JwtAuthGuard` integrated using `@eridu/auth-sdk` SDK
+- **Authorization**: StudioMembership model for admin verification (admin in ANY studio = full CRUD via admin endpoints)
+  - StudioMembership model and service methods (`isUserAdmin()`)
+  - AdminGuard implementation pending (JWT + StudioMembership verification)
+  - Non-admin users access user-scoped endpoints (`/me/*`) with JWT authentication
 - **Service-to-Service Auth**: API key guards for privileged operations
   - Google Sheets API key for schedule operations
   - Backdoor API key for user/membership management (`/backdoor/*` endpoints)
+  - Backdoor JWKS refresh endpoint (`POST /backdoor/auth/jwks/refresh`)
 - **Deferred to Phase 3**: Complex role hierarchy, Client/Platform memberships
 
 ## Implementation Scope
@@ -104,23 +109,33 @@ Phase 1 establishes the core production functions with simplified authentication
   - [x] Branded ID generator
 
 - Authentication & Authorization (Hybrid Approach)
-  - [ ] JWK-based JWT token validation using `@eridu/auth-integration` SDK
-    - [ ] Create `@eridu/auth-integration` SDK package structure
-    - [ ] Implement `JwksService` in SDK (framework-agnostic, fetch and cache JWKS on startup)
-    - [ ] Implement `JwtVerifier` in SDK (framework-agnostic, JWT validation using Better Auth JWKS endpoint)
-    - [ ] Implement `JwtAuthGuard` NestJS adapter in SDK
-    - [ ] Edge/worker runtime support (on-demand JWKS fetching)
-    - [ ] Automatic key rotation handling
-    - [ ] Add `@eridu/auth-integration` dependency to erify_api
-    - [ ] Add `ERIFY_AUTH_URL` and `EDGE_RUNTIME` to environment schema
-    - [ ] Register SDK services and guards in CommonModule
-    - [ ] Implement `AdminGuard` in erify_api (service-specific, depends on StudioMembership)
+  - [x] JWK-based JWT token validation using `@eridu/auth-sdk` SDK
+    - [x] Create `@eridu/auth-sdk` SDK package structure
+    - [x] Implement `JwksService` in SDK (framework-agnostic, fetch and cache JWKS on startup)
+    - [x] Implement `JwtVerifier` in SDK (framework-agnostic, JWT validation using Better Auth JWKS endpoint)
+    - [x] Implement `JwtAuthGuard` NestJS adapter in SDK
+    - [x] Edge/worker runtime support (on-demand JWKS fetching)
+    - [x] Automatic key rotation handling
+    - [x] Add `@eridu/auth-sdk` dependency to erify_api
+    - [x] Add `ERIFY_AUTH_URL` to environment schema
+    - [x] Register SDK services and guards in AuthModule
+    - [x] Implement `JwtAuthGuard` in erify_api (extends SDK guard, adds ext_id mapping)
+    - [x] Register `JwtAuthGuard` as global guard in `app.module.ts`
+    - [x] Implement `@Public()` decorator for public endpoints
+    - [x] User-scoped endpoints with JWT authentication (`/me/*` endpoints)
+      - [x] `GET /me` - User profile endpoint (JWT guard protected via global guard)
+      - [x] `GET /me/shows` - List shows assigned to authenticated MC user (JWT guard protected via global guard)
+      - [x] `GET /me/shows/:show_id` - Get show details for authenticated MC user (JWT guard protected via global guard)
+      - [x] `@CurrentUser()` decorator integration for accessing authenticated user
+    - [x] Implement `AdminGuard` in erify_api (service-specific, depends on StudioMembership)
+    - [x] Register `AdminGuard` as global guard in `app.module.ts`
+    - [x] Implement `@AdminProtected()` decorator for admin-only endpoints
+    - [x] Admin guard checks `@AdminProtected()` decorator (opt-in admin authorization)
     - [ ] Admin JWKS management endpoints (`GET /admin/jwks/status`, `POST /admin/jwks/refresh`) - uses SDK's `JwksService`
-    - [ ] Backdoor JWKS management endpoints (`POST /backdoor/jwks/refresh`) - uses SDK's `JwksService`
+    - [x] Backdoor JWKS management endpoints (`POST /backdoor/auth/jwks/refresh`) - uses SDK's `JwksService`
   - [x] Simple StudioMembership model for admin verification (basic CRUD) 
-  - [ ] Admin studio membership lookup (check if user is admin in ANY studio)
-  - [ ] Admin guard implementation (JWT + StudioMembership verification)
-  - [ ] Read-only access for non-admin users
+  - [x] Admin studio membership lookup (check if user is admin in ANY studio) - `StudioMembershipService.findAdminMembershipByExtId()`
+  - [x] Admin guard implementation (JWT + StudioMembership verification) ✅ (Implemented as global guard)
   - [x] API key authentication for service-to-service communication
     - [x] Google Sheets API key guard (`GoogleSheetsApiKeyGuard`) for schedule operations
     - [x] Backdoor API key guard (`BackdoorApiKeyGuard`) for privileged operations
@@ -128,9 +143,16 @@ Phase 1 establishes the core production functions with simplified authentication
       - [x] `POST /backdoor/users` - Create user (API key required)
       - [x] `PATCH /backdoor/users/:id` - Update user (API key required)
       - [x] `POST /backdoor/studio-memberships` - Create membership (API key required)
-      - [ ] `POST /backdoor/jwks/refresh` - Refresh JWKS (API key required)
+      - [x] `POST /backdoor/auth/jwks/refresh` - Refresh JWKS (API key required)
       - [x] Guard extensible for future IP whitelisting
   - [x] Backdoor endpoint protection (API key guards at controller level, separate from admin endpoints)
+
+- User-scoped endpoints (JWT authentication required)
+  - [x] User profile endpoint (`GET /me`) - Returns authenticated user information from JWT payload
+  - [x] MC show query endpoints (`GET /me/shows`, `GET /me/shows/:show_id`) - Query shows assigned to authenticated MC user
+    - [x] ShowsController with JWT guard protection
+    - [x] ShowsService for MC-scoped show queries
+    - [x] User identifier extraction from JWT payload (ext_id mapping)
 
 - CRUD entities by admin user
   - [x] User 
@@ -181,7 +203,7 @@ Phase 1 establishes the core production functions with simplified authentication
   - [x] Client-by-client upload workflow (bulk create/update, individual publishing)
   - [x] Query support for client-scoped data (Google Sheets integration)
   - [x] Database indexes for performance
-  - [x] MC-scoped show query endpoints (`GET /me/shows`, `GET /me/shows/:show_id`)
+  - [x] MC-scoped show query endpoints (`GET /me/shows`, `GET /me/shows/:show_id`) with JWT authentication
   - ⚠️ Chunked upload service method exists but deferred to Phase 2 (no controller endpoint)
 
 - Documentation
@@ -203,7 +225,7 @@ Phase 1 establishes the core production functions with simplified authentication
 
 ### Security
 - JWK-based JWT validation with cached JWKS (see Core Features for details)
-- Admin write, non-admin read-only authorization via StudioMembership
+- Admin authorization via StudioMembership (admin users access admin endpoints, non-admin users access `/me/*` endpoints)
 - Service-to-service API key authentication (Google Sheets, Backdoor)
 - Input validation, SQL injection prevention (Prisma), CORS, security headers
 - See [Authentication Guide](../AUTHENTICATION_GUIDE.md) and [Server-to-Server Authentication Guide](../SERVER_TO_SERVER_AUTH.md) for implementation details
@@ -228,8 +250,15 @@ Phase 1 establishes the core production functions with simplified authentication
 - [x] Query support for Google Sheets integration
 
 ### Authentication & Authorization
-- [ ] JWK-based JWT validation (pending)
-- [x] StudioMembership model (database complete, auth integration pending)
+- [x] JWK-based JWT validation (SDK implemented, JwtAuthGuard integrated as global guard)
+- [x] Global guards configuration (JwtAuthGuard and AdminGuard registered in app.module.ts)
+- [x] Decorator-based protection (`@Public()`, `@AdminProtected()`, `@CurrentUser()`)
+- [x] User-scoped endpoints with JWT authentication (`/me/*` endpoints protected via global guard)
+  - [x] User profile endpoint (`GET /me`) with JWT guard (automatic via global guard)
+  - [x] MC show query endpoints (`GET /me/shows`, `GET /me/shows/:show_id`) with JWT guard (automatic via global guard)
+  - [x] `@CurrentUser()` decorator for accessing authenticated user information
+- [x] StudioMembership model (database complete, service methods implemented)
+- [x] AdminGuard implementation ✅ (Implemented as global guard with `@AdminProtected()` decorator)
 - [x] Service-to-service API key authentication
 
 ### Quality & Performance
@@ -240,14 +269,17 @@ Phase 1 establishes the core production functions with simplified authentication
 - [x] External services: `erify_auth` service accessible
 - [x] Database models: StudioMembership model complete
 - [x] Service-to-service authentication: API key guards implemented
-- [x] Dependencies: `jose` package available (will be provided by SDK)
-- [ ] Authentication integration: `@eridu/auth-integration` SDK package, JWK-based JWT validation, admin guard implementation (pending)
+- [x] Dependencies: `jose` package available (provided by SDK)
+- [x] Authentication integration: `@eridu/auth-sdk` SDK package, JWK-based JWT validation (JwtAuthGuard implemented)
+- [x] Global guards registration: JwtAuthGuard and AdminGuard registered in app.module.ts
+- [x] Decorator system: `@Public()`, `@AdminProtected()`, `@CurrentUser()` decorators implemented
+- [x] Admin guard implementation ✅ (AdminGuard implemented and registered as global guard)
 
 ## Workflows
 
 ### User Access Strategy
-- **Admin Users**: Full CRUD access (verified via StudioMembership in ANY studio)
-- **Other Users**: Read-only access (authenticated via JWK-based JWT validation)
+- **Admin Users**: Full CRUD access via admin endpoints (verified via StudioMembership in ANY studio)
+- **Other Users**: Access user-scoped endpoints (`/me/*`) with JWT authentication for their own data
 - **Service Integration**: API key authentication for internal operations
 - **Future**: Client/Platform memberships in Phase 3
 

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { MC, Prisma } from '@prisma/client';
 
-import { HttpError } from '@/common/errors/http-error.util';
-import { BaseModelService } from '@/common/services/base-model.service';
+import { HttpError } from '@/lib/errors/http-error.util';
+import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
 import { McRepository } from './mc.repository';

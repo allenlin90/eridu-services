@@ -3,7 +3,7 @@ import {
   createMockUtilityService,
   createModelServiceTestModule,
   setupTestMocks,
-} from '@/common/test-helpers/model-service-test.helper';
+} from '@/testing/model-service-test.helper';
 import { UtilityService } from '@/utility/utility.service';
 
 import { StudioRoomRepository } from './studio-room.repository';

@@ -15,23 +15,19 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
-import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateStudioDto,
   studioDto,
   UpdateStudioDto,
 } from '@/models/studio/schemas/studio.schema';
 import { StudioService } from '@/models/studio/studio.service';
-import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/studios')
 export class AdminStudioController extends BaseAdminController {
-  constructor(
-    private readonly studioService: StudioService,
-    utilityService: UtilityService,
-  ) {
-    super(utilityService);
+  constructor(private readonly studioService: StudioService) {
+    super();
   }
 
   @Post()

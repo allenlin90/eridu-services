@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import {
   CreateStudioRoomDto,
   UpdateStudioRoomDto,
 } from '@/models/studio-room/schemas/studio-room.schema';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
-import { UtilityService } from '@/utility/utility.service';
 
 import { AdminStudioRoomController } from './admin-studio-room.controller';
 
@@ -21,19 +20,11 @@ describe('AdminStudioRoomController', () => {
     updateStudioRoomFromDto: jest.fn(),
     deleteStudioRoom: jest.fn(),
   };
-
-  const mockUtilityService = {
-    createPaginationMeta: jest.fn(),
-    generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminStudioRoomController],
       providers: [
         { provide: StudioRoomService, useValue: mockStudioRoomService },
-        { provide: UtilityService, useValue: mockUtilityService },
       ],
     }).compile();
 
@@ -60,7 +51,6 @@ describe('AdminStudioRoomController', () => {
       );
 
       const result = await controller.createStudioRoom(createDto);
-
       expect(
         mockStudioRoomService.createStudioRoomFromDto,
       ).toHaveBeenCalledWith(createDto, { studio: true });
@@ -92,20 +82,13 @@ describe('AdminStudioRoomController', () => {
 
       mockStudioRoomService.getStudioRooms.mockResolvedValue(rooms as any);
       mockStudioRoomService.countStudioRooms.mockResolvedValue(total);
-      mockUtilityService.createPaginationMeta.mockReturnValue(paginationMeta);
 
       const result = await controller.getStudioRooms(query);
-
       expect(mockStudioRoomService.getStudioRooms).toHaveBeenCalledWith(
         { skip: query.skip, take: query.take },
         { studio: true },
       );
       expect(mockStudioRoomService.countStudioRooms).toHaveBeenCalled();
-      expect(mockUtilityService.createPaginationMeta).toHaveBeenCalledWith(
-        query.page,
-        query.limit,
-        total,
-      );
       expect(result).toEqual({
         data: rooms,
         meta: paginationMeta,
@@ -126,7 +109,6 @@ describe('AdminStudioRoomController', () => {
       mockStudioRoomService.getStudioRoomById.mockResolvedValue(room as any);
 
       const result = await controller.getStudioRoom(roomId);
-
       expect(mockStudioRoomService.getStudioRoomById).toHaveBeenCalledWith(
         roomId,
         {
@@ -150,7 +132,6 @@ describe('AdminStudioRoomController', () => {
       );
 
       const result = await controller.updateStudioRoom(roomId, updateDto);
-
       expect(
         mockStudioRoomService.updateStudioRoomFromDto,
       ).toHaveBeenCalledWith(roomId, updateDto, { studio: true });
@@ -165,7 +146,6 @@ describe('AdminStudioRoomController', () => {
       mockStudioRoomService.deleteStudioRoom.mockResolvedValue(undefined);
 
       await controller.deleteStudioRoom(roomId);
-
       expect(mockStudioRoomService.deleteStudioRoom).toHaveBeenCalledWith(
         roomId,
       );

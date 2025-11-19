@@ -19,6 +19,10 @@ manual-test/
 │   ├── BACKDOOR_WORKFLOW.md           # Complete workflow docs
 │   ├── payloads/                      # Backdoor payloads
 │   └── scripts/                       # Backdoor scripts
+├── auth/                              # JWT authentication workflow
+│   ├── README.md                      # Auth guide
+│   ├── payloads/                      # Login payloads
+│   └── scripts/                       # Auth scripts
 └── scripts/
     └── utils/                         # Shared utilities
         ├── http-request.ts            # Google Sheets HTTP utility
@@ -80,6 +84,29 @@ pnpm run manual:backdoor:create-memberships
 - `manual:backdoor:create-memberships` - Create membership
 - `manual:backdoor:all` - Run all steps sequentially
 
+### 3. JWT Authentication Flow
+
+**Purpose**: Test JWT authentication flow with `erify_auth` service and `@eridu/auth-sdk` SDK.
+
+**Location**: `auth/`
+
+**Quick Start**:
+```bash
+# Run complete workflow (recommended)
+pnpm run manual:auth:all
+
+# Or run steps individually:
+pnpm run manual:auth:login
+pnpm run manual:auth:test-me -- --token=<JWT_TOKEN>
+```
+
+**Documentation**: See [auth/README.md](./auth/README.md)
+
+**Scripts**:
+- `manual:auth:login` - Login and get JWT token from erify_auth
+- `manual:auth:test-me` - Test GET /me endpoint with JWT token
+- `manual:auth:all` - Run all steps sequentially
+
 ## Prerequisites
 
 1. **Database Setup**: Ensure the database is seeded with fixtures
@@ -88,13 +115,26 @@ pnpm run manual:backdoor:create-memberships
    pnpm run db:seed
    ```
 
-2. **API Server**: Start the API server
+2. **Auth Service**: Start the erify_auth service (required for JWT authentication flow)
    ```bash
+   cd apps/erify_auth
+   pnpm run dev
+   # Ensure database is seeded with test users
+   pnpm db:seed
+   ```
+
+3. **API Server**: Start the API server
+   ```bash
+   cd apps/erify_api
    pnpm run dev
    ```
 
-3. **Environment Variables**: Configure API keys in `.env` file (optional for dev mode):
+4. **Environment Variables**: Configure environment variables in `.env` file:
    ```env
+   # Required for JWT authentication flow
+   ERIFY_AUTH_URL=http://localhost:3000
+   
+   # Optional for service-to-service authentication (dev mode)
    GOOGLE_SHEETS_API_KEY=your-api-key-here
    BACKDOOR_API_KEY=your-backdoor-api-key-here
    ```

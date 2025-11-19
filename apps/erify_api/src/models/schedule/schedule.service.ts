@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { Prisma, Schedule } from '@prisma/client';
 
-import { HttpError } from '@/common/errors/http-error.util';
-import { BaseModelService } from '@/common/services/base-model.service';
+import { HttpError } from '@/lib/errors/http-error.util';
+import { BaseModelService } from '@/lib/services/base-model.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ShowPlanItem } from '@/schedule-planning/schemas/schedule-planning.schema';
 import { UtilityService } from '@/utility/utility.service';

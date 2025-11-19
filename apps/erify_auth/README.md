@@ -57,7 +57,7 @@ open http://localhost:3000
 
 ## API Documentation
 
-When running in development, visit `http://localhost:3000/api/auth/openapi` for interactive API documentation.
+When running in development, visit `http://localhost:3001/api/auth/reference` for interactive API documentation.
 
 ## Environment Configuration
 

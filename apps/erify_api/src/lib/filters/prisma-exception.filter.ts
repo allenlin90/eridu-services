@@ -8,7 +8,7 @@ import { Prisma } from '@prisma/client';
 import { Response } from 'express';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
-import { PRISMA_ERROR } from '@/common/errors/prisma-error-codes';
+import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 
 /**
  * Global exception filter for Prisma errors.

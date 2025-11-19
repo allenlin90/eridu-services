@@ -1,8 +1,8 @@
 # Eridu Services API
 
-A modern, scalable REST API built with NestJS, providing administrative operations for managing users, clients, MCs (Master of Ceremonies), and platforms with comprehensive CRUD functionality.
+A modern, scalable REST API built with NestJS, providing administrative operations for managing users, clients, MCs (Master of Ceremonies), platforms, shows, schedules, and related entities with comprehensive CRUD functionality.
 
-> **Current Status**: Phase 1 (~90% complete). The current implementation provides comprehensive CRUD operations for core entities (Users, Clients, MCs, Platforms, Studios, StudioRooms, Shows, ShowMCs, ShowPlatforms, and related lookup tables). **Remaining Phase 1 items:** Authentication/authorization system and seed data as outlined in the development roadmap. See [ASSESSMENT_SUMMARY.md](./ASSESSMENT_SUMMARY.md) for detailed status.
+The API uses JWT validation via `@eridu/auth-sdk` SDK for authentication and StudioMembership model for authorization. For detailed implementation status and roadmap, see [Phase 1 Roadmap](docs/roadmap/PHASE_1.md).
 
 ## 🚀 Quick Start
 
@@ -142,6 +142,11 @@ The API follows a modular architecture with clear separation of concerns:
 - **📝 Case Conversion**: Automatic snake_case ↔ camelCase conversion
 - **🏷️ Entity Resolution**: Automatic UID to ID resolution for relationships
 - **📋 Comprehensive CRUD**: Complete Create, Read, Update, Delete operations
+- **📦 Bulk Operations**: Bulk create and update schedules with partial success handling
+- **📸 Snapshot Versioning**: Automatic version history with immutable snapshots for schedules
+- **🔒 Optimistic Locking**: Version-based conflict prevention for concurrent updates
+- **✅ Pre-Publish Validation**: Validation service for schedule conflicts and data integrity
+- **📅 Monthly Overview**: Schedules grouped by client and status within date ranges
 - **🏥 Health Checks**: Liveness and readiness probes for load balancers
 - **🛡️ Graceful Shutdown**: Production-ready shutdown with request draining
 - **📚 OpenAPI Documentation**: Interactive API documentation with Scalar UI
@@ -154,9 +159,29 @@ http://localhost:3000
 ```
 
 ### Authentication
-Currently, the API is designed for administrative use. Authentication can be added by integrating with the auth service.
+The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from the `erify_auth` service using Better Auth's JWKS endpoint. The SDK provides:
+- Automatic JWKS caching on startup
+- Edge/worker runtime support with on-demand JWKS fetching
+- Automatic key rotation handling
+- `@CurrentUser()` decorator for accessing authenticated user information
+
+**Authorization**: Admin authorization is determined via StudioMembership model (admin in ANY studio = full CRUD via admin endpoints, others = read-only access to `/me/*` endpoints). See [Authentication Guide](docs/AUTHENTICATION_GUIDE.md) for details.
+
+**Service-to-Service Authentication**: 
+- Backdoor endpoints (`/backdoor/*`) use API key authentication for privileged operations
+- Schedule endpoints (`/admin/schedules/*`) use Google Sheets API key authentication
+- See [Server-to-Server Authentication Guide](docs/SERVER_TO_SERVER_AUTH.md) for details
 
 ### Available Endpoints
+
+#### 👤 User Profile (`/me`)
+- `GET /me` - Get authenticated user profile information from JWT token
+
+#### 🎬 User Shows (`/me/shows`)
+- `GET /me/shows` - List shows assigned to the authenticated MC user (paginated, sorted by start time descending)
+- `GET /me/shows/:show_id` - Get show details for a specific show assigned to the authenticated MC user
+
+**Note**: These endpoints require JWT authentication. The user information is extracted from the JWT token payload using the `@CurrentUser()` decorator, and the `ext_id` field is used to query MC assignments.
 
 #### 👥 Users (`/admin/users`)
 - `GET /admin/users` - List users with pagination
@@ -250,15 +275,33 @@ Currently, the API is designed for administrative use. Authentication can be add
 - `DELETE /admin/studio-memberships/:uid` - Soft delete studio membership
 
 #### 📅 Schedules (`/admin/schedules`)
-- `GET /admin/schedules` - List schedules with pagination
+- `GET /admin/schedules` - List schedules with pagination and filtering
 - `POST /admin/schedules` - Create a new schedule
 - `GET /admin/schedules/:id` - Get schedule by ID
-- `PATCH /admin/schedules/:id` - Update schedule
+- `PATCH /admin/schedules/:id` - Update schedule (auto-creates snapshot on plan document changes)
 - `DELETE /admin/schedules/:id` - Soft delete schedule
 - `POST /admin/schedules/:id/validate` - Validate schedule before publish
 - `POST /admin/schedules/:id/publish` - Publish schedule to shows
 - `POST /admin/schedules/:id/duplicate` - Duplicate schedule
 - `GET /admin/schedules/:id/snapshots` - List schedule snapshots
+- `POST /admin/schedules/bulk` - Bulk create schedules with partial success handling
+- `PATCH /admin/schedules/bulk` - Bulk update schedules with partial success handling
+- `GET /admin/schedules/overview/monthly` - Get monthly overview with schedules grouped by client and status
+
+#### 📸 Schedule Snapshots (`/admin/snapshots`)
+- `GET /admin/snapshots/:id` - Get schedule snapshot details
+- `POST /admin/snapshots/:id/restore` - Restore schedule from snapshot
+
+**Note**: Snapshots are automatically created when schedule plan documents are updated. They provide immutable version history for audit trails and rollback capabilities.
+
+#### 🔐 Backdoor Endpoints (`/backdoor/*`)
+Service-to-service API key authenticated endpoints for privileged operations:
+- `POST /backdoor/users` - Create user (API key required)
+- `PATCH /backdoor/users/:id` - Update user (API key required)
+- `POST /backdoor/studio-memberships` - Create studio membership (API key required)
+- `POST /backdoor/auth/jwks/refresh` - Manually refresh JWKS cache (API key required)
+
+**Note**: These endpoints are separate from admin endpoints and use API key authentication. See [Server-to-Server Authentication Guide](docs/SERVER_TO_SERVER_AUTH.md) for details.
 
 ## 📚 OpenAPI Documentation
 
@@ -411,99 +454,71 @@ The OpenAPI implementation includes:
 - `metadata` (JSON)
 - `created_at`, `updated_at`, `deleted_at`
 
-#### Membership
+#### StudioMembership (Phase 1)
 - `id` (Primary Key)
 - `uid` (Unique Identifier)
 - `user_id` (Foreign Key to User)
-- `group_id` (Polymorphic reference)
-- `group_type` (client, platform, studio)
-- `role` (admin, member, etc.)
+- `studio_id` (Foreign Key to Studio)
+- `role` (admin, manager, member)
 - `metadata` (JSON)
 - `created_at`, `updated_at`, `deleted_at`
 
+**Note**: Phase 1 implements studio-specific memberships only. Client and Platform memberships will be added in Phase 3.
+
+#### Schedule
+- `id` (Primary Key)
+- `uid` (Unique Identifier)
+- `name`
+- `start_date`, `end_date`
+- `status` (draft, review, published)
+- `published_at` (DateTime, nullable)
+- `plan_document` (JSON) - Complete schedule data stored as JSON with metadata and show items
+- `version` (Integer, for optimistic locking)
+- `client_id` (Foreign Key to Client, nullable)
+- `created_by` (Foreign Key to User, nullable)
+- `published_by` (Foreign Key to User, nullable)
+- `metadata` (JSON)
+- `created_at`, `updated_at`, `deleted_at`
+
+**Note**: The Schedule Planning Management System uses JSON-based planning documents for flexible spreadsheet-like editing during draft phase. Only published schedules sync their JSON data to normalized Show tables. Automatic snapshots are created when plan documents are updated.
+
+#### ScheduleSnapshot
+- `id` (Primary Key)
+- `uid` (Unique Identifier)
+- `plan_document` (JSON) - Immutable snapshot of schedule plan document
+- `version` (Integer) - Which version this snapshot represents
+- `status` (String) - Status at time of snapshot
+- `snapshot_reason` (String) - auto_save, before_publish, manual, before_restore
+- `created_by` (Foreign Key to User, nullable)
+- `schedule_id` (Foreign Key to Schedule)
+- `metadata` (JSON)
+- `created_at` (DateTime, immutable)
+
+**Note**: Snapshots provide immutable version history for audit trails and rollback capabilities. They are automatically created when schedule plan documents are updated.
+
 ### Relationships
 - **User** ↔ **MC**: One-to-One (User can optionally have one MC profile)
-- **User** ↔ **Membership**: One-to-Many (User can have multiple memberships)
+- **User** ↔ **StudioMembership**: One-to-Many (User can have multiple studio memberships)
 - **Studio** ↔ **StudioRoom**: One-to-Many (Studio has multiple rooms)
-- **Client** ↔ **Show**: One-to-Many (Planned for Phase 1)
-- **StudioRoom** ↔ **Show**: One-to-Many (Planned for Phase 1)
+- **Studio** ↔ **StudioMembership**: One-to-Many (Studio has multiple memberships)
+- **Client** ↔ **Show**: One-to-Many
+- **Client** ↔ **Schedule**: One-to-Many
+- **StudioRoom** ↔ **Show**: One-to-Many
 - **Client** ↔ **Material**: One-to-Many (Planned for Phase 3)
 - **Platform** ↔ **Material**: One-to-Many (Planned for Phase 3)
 
 ### Future Entities (Planned)
 The database schema includes comprehensive models for the full livestream production system:
-- **Shows**: Core operational records for livestream productions (Phase 1) ✅
-- **ShowMC & ShowPlatform**: Show relationship management (Phase 1) ✅
-- **Schedules & ScheduleSnapshots**: Collaborative planning system (Phase 1) ✅
+- **Shows**: Core operational records for livestream productions ✅ (Implemented)
+- **ShowMC & ShowPlatform**: Show relationship management ✅ (Implemented)
+- **Schedules & ScheduleSnapshots**: Collaborative planning system ✅ (Implemented)
 - **Materials & MaterialTypes**: Content assets management (Phase 2)
 - **Tasks & TaskTemplates**: Workflow automation (Phase 3)
 - **Comments**: Collaboration system (Phase 3)
 - **Tags & Taggables**: Flexible categorization (Phase 3)
 - **Audits**: Complete audit trail (Phase 3)
 
-See the [Business Documentation](docs/BUSINESS.md) for detailed information about the complete system architecture.
-
-## 📋 Implementation Status
-
-### ✅ Phase 0: Foundation & Core Setup (COMPLETED)
-- [x] Turborepo monorepo setup
-- [x] NestJS backend service
-- [x] Prisma ORM with PostgreSQL
-- [x] TypeScript with strict configuration
-- [x] Zod validation and serialization
-- [x] Comprehensive testing setup
-- [x] Code quality tools (ESLint, Prettier)
-- [x] OpenAPI documentation with Scalar UI
-
-### 🚧 Phase 1: Core Functions with Hybrid Auth (IN PROGRESS - ~90% Complete)
-- [x] User management (CRUD operations)
-- [x] Client management (CRUD operations)
-- [x] MC management (CRUD operations)
-- [x] Platform management (CRUD operations)
-- [x] ShowType management (CRUD operations)
-- [x] ShowStatus management (CRUD operations)
-- [x] ShowStandard management (CRUD operations)
-- [x] Show management (CRUD operations)
-- [x] ShowMC management (CRUD operations)
-- [x] ShowPlatform management (CRUD operations) ✅
-- [x] Studio management (CRUD operations)
-- [x] StudioRoom management (CRUD operations)
-- [x] StudioMembership management (CRUD operations)
-- [x] Pagination and filtering
-- [x] Soft delete functionality
-- [x] UID system for external references
-- [ ] **Authentication & Authorization** (JWT validation + Admin guard) ⚠️
-- [ ] **Seed data** (ShowType, ShowStatus, ShowStandard, Membership roles) ⚠️
-
-### ✅ Phase 1: Scheduling & Planning Workflow (COMPLETED)
-- [x] Schedule and ScheduleSnapshot management (JSON-based planning with snapshots)
-- [x] Per-client validation (room conflicts, MC double-booking within client)
-- [x] Bulk operations (bulk create and bulk update schedules)
-- [x] Monthly overview (schedules grouped by client and status)
-- [x] Client-by-client upload strategy documented
-- [x] Publishing workflow (JSON → normalized Show tables with delete + insert strategy)
-- ⚠️ Chunked upload service method implemented (Phase 2 feature, no controller endpoint)
-
-### ⏳ Phase 2: Material Management & Advanced Schedule Features (PLANNED)
-- [ ] Material and MaterialType management (versioning, platform targeting)
-- [ ] ShowMaterial associations
-- [ ] **Chunked Upload** for large single-client schedules (>200 shows)
-- [ ] **Cross-Client Validation Service** (conflict detection between clients)
-- [ ] **CSV Import/Export** service for Google Sheets migration
-- [ ] API expand parameter and search capabilities
-- [ ] Idempotency handling for show/schedule creation
-
-### ⏳ Phase 3: User Collaboration & Access Control (PLANNED)
-- [ ] Advanced role-based access control (polymorphic memberships)
-- [ ] Comments system
-- [ ] Audit trail implementation
-- [ ] Tagging system
-
-### ⏳ Phase 4: Advanced Features & Reporting (PLANNED)
-- [ ] Task management system
-- [ ] Workflow automation
-- [ ] Analytics and reporting
-- [ ] Performance optimization
+See the [Business Documentation](docs/BUSINESS.md) for detailed information about the complete system architecture. For implementation status and roadmap, see [Phase 1 Roadmap](docs/roadmap/PHASE_1.md), [Phase 2 Roadmap](docs/roadmap/PHASE_2.md), and [Phase 3 Roadmap](docs/roadmap/PHASE_3.md).
 
 ## 🛠️ Development
 
@@ -584,6 +599,13 @@ DATABASE_URL="postgresql://user:password@localhost:5432/eridu_db"
 # Application
 NODE_ENV="development"
 PORT=3000
+
+# Authentication & Authorization
+ERIFY_AUTH_URL="http://localhost:3000"  # Base URL of erify_auth service
+
+# Service-to-Service Authentication (Required for schedule operations)
+BACKDOOR_API_KEY="your-api-key-here"     # API key for backdoor endpoints (/backdoor/*)
+GOOGLE_SHEETS_API_KEY="your-api-key"     # API key for Google Sheets integration (required for /admin/schedules/* endpoints)
 
 # Graceful Shutdown
 SHUTDOWN_TIMEOUT=30000  # milliseconds (default: 30 seconds)

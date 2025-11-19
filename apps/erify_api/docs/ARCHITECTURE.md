@@ -21,7 +21,7 @@ The Eridu Services API is built using NestJS with a modular architecture that se
 - **Domain Layer**: Business logic for core entities with proper service patterns
 - **Infrastructure Layer**: Database access, utilities, and common services
 - **Common Layer**: Shared utilities, decorators, and base classes
-- **Authentication**: JWK-based JWT token validation using `@eridu/auth-integration` SDK (validates tokens from `erify_auth` service using Better Auth's JWKS endpoint)
+- **Authentication**: JWK-based JWT token validation using `@eridu/auth-sdk` SDK (validates tokens from `erify_auth` service using Better Auth's JWKS endpoint)
 - **Authorization**: Simple StudioMembership model for admin verification (Phase 1 basics, Phase 3 Client/Platform memberships)
 
 **Phase 2 Planned Features:**
@@ -287,8 +287,11 @@ graph LR
 - **Imports**: 
   - `ConfigModule` (Global configuration)
   - `LoggerModule` (Structured logging)
+  - `HealthModule` (Health check endpoints)
   - `AdminModule` (Administrative operations)
   - `MeModule` (User-scoped operations)
+  - `BackdoorModule` (Service-to-service operations)
+  - `OpenAPIModule` (API documentation)
 - **Providers**: Global pipes, interceptors, and filters
 
 ### 2. AdminModule
@@ -644,9 +647,18 @@ graph LR
 
 #### MeModule
 - **Purpose**: User-scoped API endpoints for authenticated users
-- **Imports**: `ShowsModule`
+- **Imports**: `ProfileModule`, `ShowsModule`
 - **Exports**: `ShowsModule`
-- **Features**: Endpoints prefixed with `/me` for user-scoped resources (e.g., `/me/shows`)
+- **Features**: Endpoints prefixed with `/me` for user-scoped resources (e.g., `/me`, `/me/shows`)
+
+#### ProfileModule
+- **Purpose**: User profile endpoint for authenticated users
+- **Imports**: `AuthModule` (for JWT authentication)
+- **Controllers**: `ProfileController`
+- **Features**: 
+  - `GET /me` - Returns authenticated user profile information from JWT token payload
+  - Maps JWT `id` to `ext_id` for database lookup
+  - Includes full JWT payload for advanced use cases
 
 #### ShowsModule (Me)
 - **Purpose**: User-scoped show operations for MC users
@@ -663,6 +675,16 @@ graph LR
   - Validates show assignment before returning details (prevents access to unassigned shows)
   - Returns 404 if MC not found or show not assigned to user's MC
 - **Testing Requirements**: Tests should cover controller endpoints (authentication, pagination, error handling) and service logic (MC resolution, show filtering, include patterns). See `shows.controller.spec.ts` and `shows.service.spec.ts` for test implementation details.
+
+### 7. Health Check Module
+
+#### HealthModule
+- **Purpose**: Health check endpoints for load balancers and monitoring
+- **Controllers**: `HealthController`
+- **Features**:
+  - `GET /health` - Liveness probe (returns 200 if application is running)
+  - `GET /health/ready` - Readiness probe (returns 200 if application is ready to accept traffic)
+- **Implementation**: Basic implementation with service name and timestamp; can be extended with database connectivity checks
 
 ## Data Flow
 
@@ -949,8 +971,13 @@ The API follows RESTful conventions with consistent patterns across all entities
 - Special operations: Schedule validation/publishing, Show relationship management (MCs/platforms), Bulk operations
 
 **User-Scoped Endpoints** (`/me/*`):
+- `GET /me` - Get authenticated user profile information from JWT token
 - `GET /me/shows` - List shows assigned to authenticated MC user
 - `GET /me/shows/:show_id` - Get show details (validates assignment)
+
+**Health Check Endpoints**:
+- `GET /health` - Liveness probe (returns 200 if application is running)
+- `GET /health/ready` - Readiness probe (returns 200 if application is ready to accept traffic)
 
 **Backdoor Endpoints** (`/backdoor/*`):
 - Service-to-service operations protected by API key
@@ -1046,7 +1073,6 @@ For detailed test implementation examples, see test files in `src/` directories.
 - `PORT` - Server port
 - `LOG_LEVEL` - Logging level
 - `BACKDOOR_API_KEY` - (Optional) API key for backdoor operations
-- `EDGE_RUNTIME` - (Optional) Set to `true` for edge/worker runtimes
 
 **Database**: Prisma ORM with PostgreSQL, supports migrations and schema evolution, includes soft delete functionality
 
@@ -1066,18 +1092,19 @@ For detailed test implementation examples, see test files in `src/` directories.
 
 ### Authentication & Authorization
 - **Phase 1 Hybrid Approach**: JWK-based JWT validation for user identification + StudioMembership model for admin verification
-- **JWK-Based JWT Validation** (Pending): Token validation using `@eridu/auth-integration` SDK
-  - **SDK Package**: `@eridu/auth-integration` provides `JwksService` and `JwtVerifier`
+- **JWK-Based JWT Validation**: Token validation using `@eridu/auth-sdk` SDK
+  - **SDK Package**: `@eridu/auth-sdk` provides `JwksService` and `JwtVerifier`
   - **JWKS Endpoint**: SDK fetches public keys from `{ERIFY_AUTH_URL}/api/auth/jwks`
   - **Local Verification**: SDK validates JWT tokens locally using cached JWKS (no network call per request)
   - **Startup Caching**: SDK fetches JWKS on server startup and caches in memory for efficiency
-  - **Edge/Worker Support**: SDK supports on-demand JWKS fetching for edge/worker runtimes
+  - **Automatic Cache Recovery**: SDK automatically refetches JWKS if cache is missing (seamlessly handles edge/worker runtimes without configuration)
   - **Automatic Key Rotation**: SDK detects unknown key IDs and automatically refreshes JWKS
-  - **NestJS Adapter**: `JwtAuthGuard` provided by SDK for easy NestJS integration
+  - **NestJS Adapter**: `JwtAuthGuard` provided by SDK, extended in erify_api with ext_id mapping
 - **Admin Verification**: StudioMembership model determines admin permissions (simple lookup in ANY studio)
+  - `StudioMembershipService.isUserAdmin()` method implemented
 - **Access Control**: Admin users get full CRUD access, non-admin users get read-only access
-- **Service Integration**: API key authentication for internal service communication (implemented)
-- **Admin Guards** (Pending): JWT + StudioMembership verification for write operations (uses SDK's `JwtAuthGuard`)
+- **Service Integration**: API key authentication for internal service communication
+- **Admin Guards** (Pending): JWT + StudioMembership verification guard for write operations
 - **Phase 3 Enhancement**: Client/Platform memberships and advanced role-based access control
 
 ## Performance Considerations

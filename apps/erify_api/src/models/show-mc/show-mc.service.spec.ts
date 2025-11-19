@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { createMockUniqueConstraintError } from '@/common/test-helpers/prisma-error.helper';
+import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
 import { UtilityService } from '@/utility/utility.service';
 
 import { CreateShowMcDto, UpdateShowMcDto } from './schemas/show-mc.schema';

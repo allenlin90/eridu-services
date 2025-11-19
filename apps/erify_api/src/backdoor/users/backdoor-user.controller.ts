@@ -10,15 +10,14 @@ import {
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
 import { AdminResponse } from '@/admin/decorators/admin-response.decorator';
-import { BackdoorApiKeyGuard } from '@/common/guards/backdoor-api-key.guard';
-import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
+import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
+import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateUserDto,
   UpdateUserDto,
   userDto,
 } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
-import { UtilityService } from '@/utility/utility.service';
 
 /**
  * Backdoor User Controller
@@ -36,11 +35,8 @@ import { UtilityService } from '@/utility/utility.service';
 @Controller('backdoor/users')
 @UseGuards(BackdoorApiKeyGuard)
 export class BackdoorUserController extends BaseAdminController {
-  constructor(
-    private readonly userService: UserService,
-    utilityService: UtilityService,
-  ) {
-    super(utilityService);
+  constructor(private readonly userService: UserService) {
+    super();
   }
 
   @Post()

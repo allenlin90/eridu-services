@@ -5,7 +5,7 @@ import {
   BaseRepository,
   IBaseModel,
   WithSoftDelete,
-} from '@/common/repositories/base.repository';
+} from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
 // Type aliases for better readability and type safety
@@ -119,6 +119,34 @@ export class StudioMembershipRepository extends BaseRepository<
       where: { userId, deletedAt: null },
       ...(include && { include }),
     }) as Promise<(StudioMembership | StudioMembershipWithIncludes<T>)[]>;
+  }
+
+  /**
+   * Find admin studio membership for user by ext_id
+   * Returns the first admin membership found (user can have admin role in multiple studios)
+   * This is optimized to query in a single database call by joining User and StudioMembership
+   *
+   * @param extId - User's external ID (from JWT payload)
+   * @param include - Optional Prisma include to load relations (e.g., { user: true, studio: true })
+   * @returns StudioMembership with optional relations, or null if user is not admin
+   */
+  async findAdminMembershipByExtId<
+    T extends Prisma.StudioMembershipInclude = Record<string, never>,
+  >(
+    extId: string,
+    include?: T,
+  ): Promise<StudioMembership | StudioMembershipWithIncludes<T> | null> {
+    return this.prisma.studioMembership.findFirst({
+      where: {
+        user: {
+          extId: extId,
+          deletedAt: null,
+        },
+        role: 'admin',
+        deletedAt: null,
+      },
+      ...(include && { include }),
+    }) as Promise<StudioMembership | StudioMembershipWithIncludes<T> | null>;
   }
 
   async updateStudioMembership<
