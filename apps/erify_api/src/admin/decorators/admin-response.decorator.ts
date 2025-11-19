@@ -2,8 +2,8 @@ import { applyDecorators, HttpCode, HttpStatus } from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { ZodType } from 'zod';
 
-import { ApiZodResponse } from '@/common/openapi/decorators';
-import { createPaginatedResponseSchema } from '@/common/pagination/schema/pagination.schema';
+import { ApiZodResponse } from '@/lib/openapi/decorators';
+import { createPaginatedResponseSchema } from '@/lib/pagination/pagination.schema';
 
 /**
  * Combines common response decorators used in admin controllers.

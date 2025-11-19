@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, ShowStatus } from '@prisma/client';
 
-import { HttpError } from '@/common/errors/http-error.util';
-import { BaseModelService } from '@/common/services/base-model.service';
+import { HttpError } from '@/lib/errors/http-error.util';
+import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
 import { ShowStatusRepository } from './show-status.repository';

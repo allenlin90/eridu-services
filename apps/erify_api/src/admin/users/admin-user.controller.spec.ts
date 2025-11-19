@@ -1,12 +1,47 @@
+// Mock auth-sdk modules to avoid ES module import issues
+jest.mock('@eridu/auth-sdk/adapters/nestjs/current-user.decorator', () => ({
+  CurrentUser: jest.fn(() => () => {}),
+}));
+
+jest.mock('@eridu/auth-sdk/schemas/jwt-payload.schema', () => ({
+  jwtPayloadSchema: {
+    describe: jest.fn(() => ({
+      describe: jest.fn(() => ({})),
+    })),
+  },
+}));
+
+jest.mock('@eridu/auth-sdk/adapters/nestjs/jwt-auth.guard', () => ({
+  JwtAuthGuard: class MockSdkJwtAuthGuard {},
+}));
+
+jest.mock('@eridu/auth-sdk/server/jwks/jwks-service', () => ({
+  JwksService: class MockJwksService {
+    constructor() {}
+    async initialize() {}
+  },
+}));
+
+jest.mock('@eridu/auth-sdk/server/jwt/jwt-verifier', () => ({
+  JwtVerifier: class MockJwtVerifier {
+    constructor() {}
+  },
+}));
+
+jest.mock('@eridu/auth-sdk/server/jwks/types', () => ({}));
+jest.mock('@eridu/auth-sdk/server/jwt/types', () => ({}));
+jest.mock('@eridu/auth-sdk/types', () => ({}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
+import { JwtAuthGuard } from '@/lib/auth/jwt-auth.guard';
+import { AdminGuard } from '@/lib/guards/admin.guard';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import {
   CreateUserDto,
   UpdateUserDto,
 } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
-import { UtilityService } from '@/utility/utility.service';
 
 import { AdminUserController } from './admin-user.controller';
 
@@ -22,20 +57,24 @@ describe('AdminUserController', () => {
     deleteUser: jest.fn(),
   };
 
-  const mockUtilityService = {
-    createPaginationMeta: jest.fn(),
-    generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
+  const mockJwtAuthGuard = {
+    canActivate: jest.fn(() => true),
+  };
+
+  const mockAdminGuard = {
+    canActivate: jest.fn(() => true),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminUserController],
-      providers: [
-        { provide: UserService, useValue: mockUserService },
-        { provide: UtilityService, useValue: mockUtilityService },
-      ],
-    }).compile();
+      providers: [{ provide: UserService, useValue: mockUserService }],
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue(mockJwtAuthGuard)
+      .overrideGuard(AdminGuard)
+      .useValue(mockAdminGuard)
+      .compile();
 
     controller = module.get<AdminUserController>(AdminUserController);
   });
@@ -56,7 +95,6 @@ describe('AdminUserController', () => {
       mockUserService.createUser.mockResolvedValue(createdUser as any);
 
       const result = await controller.createUser(createDto);
-
       expect(mockUserService.createUser).toHaveBeenCalledWith(createDto);
       expect(result).toEqual(createdUser);
     });
@@ -86,20 +124,13 @@ describe('AdminUserController', () => {
 
       mockUserService.getUsers.mockResolvedValue(users as any);
       mockUserService.countUsers.mockResolvedValue(total);
-      mockUtilityService.createPaginationMeta.mockReturnValue(paginationMeta);
 
       const result = await controller.getUsers(query);
-
       expect(mockUserService.getUsers).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
       });
       expect(mockUserService.countUsers).toHaveBeenCalled();
-      expect(mockUtilityService.createPaginationMeta).toHaveBeenCalledWith(
-        query.page,
-        query.limit,
-        total,
-      );
       expect(result).toEqual({
         data: users,
         meta: paginationMeta,
@@ -119,7 +150,6 @@ describe('AdminUserController', () => {
       mockUserService.getUserById.mockResolvedValue(user as any);
 
       const result = await controller.getUser(userId);
-
       expect(mockUserService.getUserById).toHaveBeenCalledWith(userId);
       expect(result).toEqual(user);
     });
@@ -136,7 +166,6 @@ describe('AdminUserController', () => {
       mockUserService.updateUser.mockResolvedValue(updatedUser as any);
 
       const result = await controller.updateUser(userId, updateDto);
-
       expect(mockUserService.updateUser).toHaveBeenCalledWith(
         userId,
         updateDto,
@@ -152,7 +181,6 @@ describe('AdminUserController', () => {
       mockUserService.deleteUser.mockResolvedValue(undefined);
 
       await controller.deleteUser(userId);
-
       expect(mockUserService.deleteUser).toHaveBeenCalledWith(userId);
     });
   });

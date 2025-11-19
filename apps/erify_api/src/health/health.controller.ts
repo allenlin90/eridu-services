@@ -1,6 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
+import { Public } from '@/lib/decorators/public.decorator';
+
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(

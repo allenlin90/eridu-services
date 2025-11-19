@@ -41,6 +41,10 @@ export const envSchema = z.object({
   BACKDOOR_API_KEY: z.string().min(1).optional(),
   // Backdoor IP whitelist (comma-separated) - future enhancement
   BACKDOOR_ALLOWED_IPS: z.string().optional(),
+
+  // Authentication & Authorization (JWT/JWKS)
+  // Base URL of the erify_auth service (e.g., http://localhost:3000 or https://auth.example.com)
+  ERIFY_AUTH_URL: z.url({ message: 'ERIFY_AUTH_URL must be a valid URL' }),
 });
 
 // Export type for use with ConfigService<Env>

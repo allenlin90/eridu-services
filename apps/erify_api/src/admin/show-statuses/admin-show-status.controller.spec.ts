@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import {
   CreateShowStatusDto,
   UpdateShowStatusDto,
 } from '@/models/show-status/schemas/show-status.schema';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
-import { UtilityService } from '@/utility/utility.service';
 
 import { AdminShowStatusController } from './admin-show-status.controller';
 
@@ -21,19 +20,11 @@ describe('AdminShowStatusController', () => {
     updateShowStatus: jest.fn(),
     deleteShowStatus: jest.fn(),
   };
-
-  const mockUtilityService = {
-    createPaginationMeta: jest.fn(),
-    generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminShowStatusController],
       providers: [
         { provide: ShowStatusService, useValue: mockShowStatusService },
-        { provide: UtilityService, useValue: mockUtilityService },
       ],
     }).compile();
 
@@ -59,7 +50,6 @@ describe('AdminShowStatusController', () => {
       );
 
       const result = await controller.createShowStatus(createDto);
-
       expect(mockShowStatusService.createShowStatus).toHaveBeenCalledWith(
         createDto,
       );
@@ -91,20 +81,13 @@ describe('AdminShowStatusController', () => {
 
       mockShowStatusService.getShowStatuses.mockResolvedValue(statuses as any);
       mockShowStatusService.countShowStatuses.mockResolvedValue(total);
-      mockUtilityService.createPaginationMeta.mockReturnValue(paginationMeta);
 
       const result = await controller.getShowStatuses(query);
-
       expect(mockShowStatusService.getShowStatuses).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
       });
       expect(mockShowStatusService.countShowStatuses).toHaveBeenCalled();
-      expect(mockUtilityService.createPaginationMeta).toHaveBeenCalledWith(
-        query.page,
-        query.limit,
-        total,
-      );
       expect(result).toEqual({
         data: statuses,
         meta: paginationMeta,
@@ -120,7 +103,6 @@ describe('AdminShowStatusController', () => {
       mockShowStatusService.getShowStatusById.mockResolvedValue(status as any);
 
       const result = await controller.getShowStatus(statusId);
-
       expect(mockShowStatusService.getShowStatusById).toHaveBeenCalledWith(
         statusId,
       );
@@ -141,7 +123,6 @@ describe('AdminShowStatusController', () => {
       );
 
       const result = await controller.updateShowStatus(statusId, updateDto);
-
       expect(mockShowStatusService.updateShowStatus).toHaveBeenCalledWith(
         statusId,
         updateDto,
@@ -157,7 +138,6 @@ describe('AdminShowStatusController', () => {
       mockShowStatusService.deleteShowStatus.mockResolvedValue(undefined);
 
       await controller.deleteShowStatus(statusId);
-
       expect(mockShowStatusService.deleteShowStatus).toHaveBeenCalledWith(
         statusId,
       );

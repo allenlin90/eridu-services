@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { GoogleSheetsApiKeyGuard } from '@/common/guards/google-sheets-api-key.guard';
+import { GoogleSheetsApiKeyGuard } from '@/lib/guards/google-sheets-api-key.guard';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import {
   BulkCreateScheduleDto,
@@ -15,7 +15,6 @@ import { ListSnapshotsQueryDto } from '@/models/schedule-snapshot/schemas/schedu
 import { UserService } from '@/models/user/user.service';
 import { SchedulePlanningService } from '@/schedule-planning/schedule-planning.service';
 import { PublishScheduleDto } from '@/schedule-planning/schemas/schedule-planning.schema';
-import { UtilityService } from '@/utility/utility.service';
 
 import { AdminScheduleController } from './admin-schedule.controller';
 
@@ -44,13 +43,6 @@ describe('AdminScheduleController', () => {
   const mockUserService = {
     getUserById: jest.fn(),
   };
-
-  const mockUtilityService = {
-    createPaginationMeta: jest.fn(),
-    generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
-  };
-
   beforeEach(async () => {
     const mockConfigService = {
       get: jest.fn((key: string) => {
@@ -69,7 +61,6 @@ describe('AdminScheduleController', () => {
           useValue: mockSchedulePlanningService,
         },
         { provide: UserService, useValue: mockUserService },
-        { provide: UtilityService, useValue: mockUtilityService },
         { provide: ConfigService, useValue: mockConfigService },
         GoogleSheetsApiKeyGuard,
       ],
@@ -103,7 +94,6 @@ describe('AdminScheduleController', () => {
       );
 
       const result = await controller.createSchedule(createDto);
-
       expect(mockScheduleService.createScheduleFromDto).toHaveBeenCalledWith(
         createDto,
         {
@@ -143,17 +133,10 @@ describe('AdminScheduleController', () => {
         schedules,
         total,
       });
-      mockUtilityService.createPaginationMeta.mockReturnValue(paginationMeta);
 
       const result = await controller.getSchedules(query);
-
       expect(mockScheduleService.getPaginatedSchedules).toHaveBeenCalledWith(
         query,
-      );
-      expect(mockUtilityService.createPaginationMeta).toHaveBeenCalledWith(
-        query.page,
-        query.limit,
-        total,
       );
       expect(result).toEqual({
         data: schedules.map((s) => ({ ...s, planDocument: undefined })),
@@ -177,23 +160,13 @@ describe('AdminScheduleController', () => {
         },
       ];
       const total = 1;
-      const paginationMeta = {
-        page: 1,
-        limit: 10,
-        total: 1,
-        totalPages: 1,
-        hasNextPage: false,
-        hasPreviousPage: false,
-      };
 
       mockScheduleService.getPaginatedSchedules.mockResolvedValue({
         schedules,
         total,
       });
-      mockUtilityService.createPaginationMeta.mockReturnValue(paginationMeta);
 
       const result = await controller.getSchedules(query);
-
       expect(result.data[0].planDocument).toEqual({ shows: [] });
     });
   });
@@ -212,7 +185,6 @@ describe('AdminScheduleController', () => {
       mockScheduleService.getScheduleById.mockResolvedValue(schedule as any);
 
       const result = await controller.getSchedule(scheduleId);
-
       expect(mockScheduleService.getScheduleById).toHaveBeenCalledWith(
         scheduleId,
         {
@@ -249,7 +221,6 @@ describe('AdminScheduleController', () => {
       );
 
       const result = await controller.updateSchedule(scheduleId, updateDto);
-
       expect(mockScheduleService.getScheduleById).toHaveBeenCalledWith(
         scheduleId,
       );
@@ -293,7 +264,6 @@ describe('AdminScheduleController', () => {
       );
 
       const result = await controller.updateSchedule(scheduleId, updateDto);
-
       expect(
         mockSchedulePlanningService.createManualSnapshot,
       ).toHaveBeenCalledWith(
@@ -312,7 +282,6 @@ describe('AdminScheduleController', () => {
       mockScheduleService.deleteSchedule.mockResolvedValue(undefined);
 
       await controller.deleteSchedule(scheduleId);
-
       expect(mockScheduleService.deleteSchedule).toHaveBeenCalledWith(
         scheduleId,
       );
@@ -333,7 +302,6 @@ describe('AdminScheduleController', () => {
       );
 
       const result = await controller.validateSchedule(scheduleId);
-
       expect(mockSchedulePlanningService.validateSchedule).toHaveBeenCalledWith(
         scheduleId,
       );
@@ -375,7 +343,6 @@ describe('AdminScheduleController', () => {
         .mockResolvedValueOnce(publishedSchedule as any);
 
       const result = await controller.publishSchedule(scheduleId, publishDto);
-
       expect(mockSchedulePlanningService.publishSchedule).toHaveBeenCalledWith(
         scheduleId,
         publishDto.version,
@@ -424,7 +391,6 @@ describe('AdminScheduleController', () => {
         scheduleId,
         duplicateDto,
       );
-
       expect(mockUserService.getUserById).toHaveBeenCalledWith(
         duplicateDto.created_by,
       );
@@ -460,7 +426,6 @@ describe('AdminScheduleController', () => {
       );
 
       const result = await controller.getScheduleSnapshots(scheduleId, query);
-
       expect(
         mockSchedulePlanningService.getSnapshotsBySchedule,
       ).toHaveBeenCalledWith(scheduleId, {
@@ -480,7 +445,6 @@ describe('AdminScheduleController', () => {
       );
 
       const result = await controller.getScheduleSnapshots(scheduleId, query);
-
       expect(
         mockSchedulePlanningService.getSnapshotsBySchedule,
       ).toHaveBeenCalledWith(scheduleId, {
@@ -516,7 +480,6 @@ describe('AdminScheduleController', () => {
       );
 
       const result = await controller.bulkCreateSchedules(bulkDto);
-
       expect(mockScheduleService.bulkCreateSchedules).toHaveBeenCalledWith(
         bulkDto,
         {
@@ -558,7 +521,6 @@ describe('AdminScheduleController', () => {
       );
 
       const result = await controller.bulkUpdateSchedules(bulkDto);
-
       expect(mockScheduleService.bulkUpdateSchedules).toHaveBeenCalledWith(
         bulkDto,
         {
@@ -604,7 +566,6 @@ describe('AdminScheduleController', () => {
       );
 
       const result = await controller.getMonthlyOverview(query);
-
       expect(mockScheduleService.getMonthlyOverview).toHaveBeenCalledWith(
         {
           startDate: new Date(query.start_date),

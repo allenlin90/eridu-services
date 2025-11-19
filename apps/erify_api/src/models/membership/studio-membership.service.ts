@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, StudioMembership } from '@prisma/client';
 
-import { HttpError } from '@/common/errors/http-error.util';
-import { BaseModelService } from '@/common/services/base-model.service';
+import { HttpError } from '@/lib/errors/http-error.util';
+import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
 import {
@@ -109,6 +109,30 @@ export class StudioMembershipService extends BaseModelService {
     });
 
     return memberships.length > 0;
+  }
+
+  /**
+   * Find admin studio membership for user by ext_id
+   * Returns the first admin membership found with optional relations included
+   * This is optimized to query in a single database call by joining User and StudioMembership
+   *
+   * Use this method when you need the membership data, not just a boolean check.
+   * For guard usage, check if the result is not null.
+   *
+   * @param extId - User's external ID (from JWT payload)
+   * @param include - Optional Prisma include to load relations (e.g., { user: true, studio: true })
+   * @returns StudioMembership with optional relations, or null if user is not admin
+   */
+  async findAdminMembershipByExtId<
+    T extends Prisma.StudioMembershipInclude = Record<string, never>,
+  >(
+    extId: string,
+    include?: T,
+  ): Promise<StudioMembership | StudioMembershipWithIncludes<T> | null> {
+    return this.studioMembershipRepository.findAdminMembershipByExtId(
+      extId,
+      include,
+    );
   }
 
   async isUserStudioAdmin(

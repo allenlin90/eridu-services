@@ -12,7 +12,6 @@ import {
   ReplacePlatformsOnShowDto,
 } from '@/show-orchestration/schemas/show-orchestration.schema';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
-import { UtilityService } from '@/utility/utility.service';
 
 import { AdminShowController } from './admin-show.controller';
 
@@ -30,13 +29,6 @@ describe('AdminShowController', () => {
     replaceMCsForShow: jest.fn(),
     replacePlatformsForShow: jest.fn(),
   };
-
-  const mockUtilityService = {
-    createPaginationMeta: jest.fn(),
-    generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminShowController],
@@ -45,7 +37,6 @@ describe('AdminShowController', () => {
           provide: ShowOrchestrationService,
           useValue: mockShowOrchestrationService,
         },
-        { provide: UtilityService, useValue: mockUtilityService },
       ],
     }).compile();
 
@@ -86,7 +77,6 @@ describe('AdminShowController', () => {
       );
 
       const result = await controller.createShow(createDto);
-
       expect(
         mockShowOrchestrationService.createShowWithAssignments,
       ).toHaveBeenCalledWith(createDto);
@@ -125,18 +115,11 @@ describe('AdminShowController', () => {
           total,
         },
       );
-      mockUtilityService.createPaginationMeta.mockReturnValue(paginationMeta);
 
       const result = await controller.getShows(query);
-
       expect(
         mockShowOrchestrationService.getPaginatedShowsWithRelations,
       ).toHaveBeenCalledWith(query);
-      expect(mockUtilityService.createPaginationMeta).toHaveBeenCalledWith(
-        query.page,
-        query.limit,
-        total,
-      );
       expect(result).toEqual({
         data: shows,
         meta: paginationMeta,
@@ -159,7 +142,6 @@ describe('AdminShowController', () => {
       );
 
       const result = await controller.getShow(showId);
-
       expect(
         mockShowOrchestrationService.getShowWithRelations,
       ).toHaveBeenCalledWith(showId);
@@ -185,7 +167,6 @@ describe('AdminShowController', () => {
       );
 
       const result = await controller.updateShow(showId, updateDto);
-
       expect(
         mockShowOrchestrationService.updateShowWithAssignments,
       ).toHaveBeenCalledWith(showId, {
@@ -204,7 +185,6 @@ describe('AdminShowController', () => {
       mockShowOrchestrationService.deleteShow.mockResolvedValue(undefined);
 
       await controller.deleteShow(showId);
-
       expect(mockShowOrchestrationService.deleteShow).toHaveBeenCalledWith(
         showId,
       );
@@ -221,7 +201,6 @@ describe('AdminShowController', () => {
       );
 
       await controller.removeMCsFromShow(showId, removeDto);
-
       expect(
         mockShowOrchestrationService.removeMCsFromShow,
       ).toHaveBeenCalledWith(showId, removeDto.mcIds);
@@ -240,7 +219,6 @@ describe('AdminShowController', () => {
       );
 
       await controller.removePlatformsFromShow(showId, removeDto);
-
       expect(
         mockShowOrchestrationService.removePlatformsFromShow,
       ).toHaveBeenCalledWith(showId, removeDto.platformIds);
@@ -263,7 +241,6 @@ describe('AdminShowController', () => {
       );
 
       const result = await controller.replaceMCsOnShow(showId, replaceDto);
-
       expect(
         mockShowOrchestrationService.replaceMCsForShow,
       ).toHaveBeenCalledWith(showId, replaceDto.mcs);
@@ -306,7 +283,6 @@ describe('AdminShowController', () => {
         showId,
         replaceDto,
       );
-
       expect(
         mockShowOrchestrationService.replacePlatformsForShow,
       ).toHaveBeenCalledWith(showId, replaceDto.platforms);

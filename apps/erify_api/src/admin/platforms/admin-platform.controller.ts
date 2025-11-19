@@ -15,23 +15,19 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
-import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { PlatformService } from '@/models/platform/platform.service';
 import {
   CreatePlatformDto,
   platformDto,
   UpdatePlatformDto,
 } from '@/models/platform/schemas/platform.schema';
-import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/platforms')
 export class AdminPlatformController extends BaseAdminController {
-  constructor(
-    private readonly platformService: PlatformService,
-    utilityService: UtilityService,
-  ) {
-    super(utilityService);
+  constructor(private readonly platformService: PlatformService) {
+    super();
   }
 
   @Post()

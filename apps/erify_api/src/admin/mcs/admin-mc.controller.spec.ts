@@ -1,9 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { McService } from '@/models/mc/mc.service';
 import { CreateMcDto, UpdateMcDto } from '@/models/mc/schemas/mc.schema';
-import { UtilityService } from '@/utility/utility.service';
 
 import { AdminMcController } from './admin-mc.controller';
 
@@ -18,20 +17,10 @@ describe('AdminMcController', () => {
     updateMcFromDto: jest.fn(),
     deleteMc: jest.fn(),
   };
-
-  const mockUtilityService = {
-    createPaginationMeta: jest.fn(),
-    generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminMcController],
-      providers: [
-        { provide: McService, useValue: mockMcService },
-        { provide: UtilityService, useValue: mockUtilityService },
-      ],
+      providers: [{ provide: McService, useValue: mockMcService }],
     }).compile();
 
     controller = module.get<AdminMcController>(AdminMcController);
@@ -52,7 +41,6 @@ describe('AdminMcController', () => {
       mockMcService.createMcFromDto.mockResolvedValue(createdMc as any);
 
       const result = await controller.createMc(createDto);
-
       expect(mockMcService.createMcFromDto).toHaveBeenCalledWith(createDto, {
         user: true,
       });
@@ -84,20 +72,13 @@ describe('AdminMcController', () => {
 
       mockMcService.getMcs.mockResolvedValue(mcs as any);
       mockMcService.countMcs.mockResolvedValue(total);
-      mockUtilityService.createPaginationMeta.mockReturnValue(paginationMeta);
 
       const result = await controller.getMcs(query);
-
       expect(mockMcService.getMcs).toHaveBeenCalledWith(
         { skip: query.skip, take: query.take },
         { user: true },
       );
       expect(mockMcService.countMcs).toHaveBeenCalled();
-      expect(mockUtilityService.createPaginationMeta).toHaveBeenCalledWith(
-        query.page,
-        query.limit,
-        total,
-      );
       expect(result).toEqual({
         data: mcs,
         meta: paginationMeta,
@@ -113,7 +94,6 @@ describe('AdminMcController', () => {
       mockMcService.getMcById.mockResolvedValue(mc as any);
 
       const result = await controller.getMc(mcId);
-
       expect(mockMcService.getMcById).toHaveBeenCalledWith(mcId, {
         user: true,
       });
@@ -130,7 +110,6 @@ describe('AdminMcController', () => {
       mockMcService.updateMcFromDto.mockResolvedValue(updatedMc as any);
 
       const result = await controller.updateMc(mcId, updateDto);
-
       expect(mockMcService.updateMcFromDto).toHaveBeenCalledWith(
         mcId,
         updateDto,
@@ -149,7 +128,6 @@ describe('AdminMcController', () => {
       mockMcService.deleteMc.mockResolvedValue(undefined);
 
       await controller.deleteMc(mcId);
-
       expect(mockMcService.deleteMc).toHaveBeenCalledWith(mcId);
     });
   });

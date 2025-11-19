@@ -15,10 +15,10 @@ import { ZodSerializerDto } from 'nestjs-zod';
 import { z } from 'zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
-import { GoogleSheetsApiKeyGuard } from '@/common/guards/google-sheets-api-key.guard';
-import { ApiZodResponse } from '@/common/openapi/decorators';
-import { createPaginatedResponseSchema } from '@/common/pagination/schema/pagination.schema';
-import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
+import { GoogleSheetsApiKeyGuard } from '@/lib/guards/google-sheets-api-key.guard';
+import { ApiZodResponse } from '@/lib/openapi/decorators';
+import { createPaginatedResponseSchema } from '@/lib/pagination/pagination.schema';
+import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import {
   BulkCreateScheduleDto,
@@ -48,7 +48,6 @@ import {
   ValidationResult,
   validationResultSchema,
 } from '@/schedule-planning/schemas/schedule-planning.schema';
-import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/schedules')
 @UseGuards(GoogleSheetsApiKeyGuard)
@@ -57,9 +56,8 @@ export class AdminScheduleController extends BaseAdminController {
     private readonly scheduleService: ScheduleService,
     private readonly schedulePlanningService: SchedulePlanningService,
     private readonly userService: UserService,
-    utilityService: UtilityService,
   ) {
-    super(utilityService);
+    super();
   }
 
   @Post()

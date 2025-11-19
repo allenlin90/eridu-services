@@ -3,7 +3,7 @@ import {
   createMockRepository,
   createMockUtilityService,
   createModelServiceTestModule,
-} from '@/common/test-helpers/model-service-test.helper';
+} from '@/testing/model-service-test.helper';
 import { UtilityService } from '@/utility/utility.service';
 
 import { PlatformRepository } from './platform.repository';

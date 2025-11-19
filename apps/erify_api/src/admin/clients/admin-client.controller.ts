@@ -15,23 +15,19 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
-import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { ClientService } from '@/models/client/client.service';
 import {
   clientDto,
   CreateClientDto,
   UpdateClientDto,
 } from '@/models/client/schemas/client.schema';
-import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/clients')
 export class AdminClientController extends BaseAdminController {
-  constructor(
-    private readonly clientService: ClientService,
-    utilityService: UtilityService,
-  ) {
-    super(utilityService);
+  constructor(private readonly clientService: ClientService) {
+    super();
   }
 
   @Post()

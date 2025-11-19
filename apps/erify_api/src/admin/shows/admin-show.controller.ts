@@ -15,7 +15,7 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
+import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   ListShowsQueryDto,
   UpdateShowDto,
@@ -30,15 +30,13 @@ import {
   showWithAssignmentsDto,
 } from '@/show-orchestration/schemas/show-orchestration.schema';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
-import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/shows')
 export class AdminShowController extends BaseAdminController {
   constructor(
     private readonly showOrchestrationService: ShowOrchestrationService,
-    utilityService: UtilityService,
   ) {
-    super(utilityService);
+    super();
   }
 
   @Post()

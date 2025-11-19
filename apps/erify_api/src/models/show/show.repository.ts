@@ -1,10 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, Show } from '@prisma/client';
 
-import {
-  BaseRepository,
-  IBaseModel,
-} from '@/common/repositories/base.repository';
+import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
 // Custom model wrapper that implements IBaseModel with ShowWhereInput

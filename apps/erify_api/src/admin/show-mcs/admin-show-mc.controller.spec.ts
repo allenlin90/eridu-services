@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import {
   CreateShowMcDto,
   UpdateShowMcDto,
 } from '@/models/show-mc/schemas/show-mc.schema';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
-import { UtilityService } from '@/utility/utility.service';
 
 import { AdminShowMcController } from './admin-show-mc.controller';
 
@@ -21,20 +20,10 @@ describe('AdminShowMcController', () => {
     updateShowMcFromDto: jest.fn(),
     deleteShowMc: jest.fn(),
   };
-
-  const mockUtilityService = {
-    createPaginationMeta: jest.fn(),
-    generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminShowMcController],
-      providers: [
-        { provide: ShowMcService, useValue: mockShowMcService },
-        { provide: UtilityService, useValue: mockUtilityService },
-      ],
+      providers: [{ provide: ShowMcService, useValue: mockShowMcService }],
     }).compile();
 
     controller = module.get<AdminShowMcController>(AdminShowMcController);
@@ -66,7 +55,6 @@ describe('AdminShowMcController', () => {
       );
 
       const result = await controller.createShowMc(createDto);
-
       expect(mockShowMcService.createShowMcFromDto).toHaveBeenCalledWith(
         createDto,
       );
@@ -105,10 +93,8 @@ describe('AdminShowMcController', () => {
 
       mockShowMcService.getActiveShowMcs.mockResolvedValue(showMcs as any);
       mockShowMcService.countShowMcs.mockResolvedValue(total);
-      mockUtilityService.createPaginationMeta.mockReturnValue(paginationMeta);
 
       const result = await controller.getShowMcs(query);
-
       expect(mockShowMcService.getActiveShowMcs).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
@@ -119,11 +105,6 @@ describe('AdminShowMcController', () => {
         },
       });
       expect(mockShowMcService.countShowMcs).toHaveBeenCalled();
-      expect(mockUtilityService.createPaginationMeta).toHaveBeenCalledWith(
-        query.page,
-        query.limit,
-        total,
-      );
       expect(result).toEqual({
         data: showMcs,
         meta: paginationMeta,
@@ -145,7 +126,6 @@ describe('AdminShowMcController', () => {
       mockShowMcService.getShowMcById.mockResolvedValue(showMc as any);
 
       const result = await controller.getShowMc(showMcId);
-
       expect(mockShowMcService.getShowMcById).toHaveBeenCalledWith(showMcId, {
         show: true,
         mc: true,
@@ -173,7 +153,6 @@ describe('AdminShowMcController', () => {
       );
 
       const result = await controller.updateShowMc(showMcId, updateDto);
-
       expect(mockShowMcService.updateShowMcFromDto).toHaveBeenCalledWith(
         showMcId,
         updateDto,
@@ -196,7 +175,6 @@ describe('AdminShowMcController', () => {
       mockShowMcService.deleteShowMc.mockResolvedValue(undefined);
 
       await controller.deleteShowMc(showMcId);
-
       expect(mockShowMcService.deleteShowMc).toHaveBeenCalledWith(showMcId);
     });
   });

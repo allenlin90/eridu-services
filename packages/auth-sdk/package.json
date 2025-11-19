@@ -1,0 +1,76 @@
+{
+  "name": "@eridu/auth-sdk",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Framework-agnostic SDK for authentication (JWT/JWKS validation). Supports both frontend and backend integration.",
+  "author": "",
+  "license": "ISC",
+  "keywords": ["jwt", "jwks", "authentication", "sdk"],
+  "exports": {
+    "./server/jwks/jwks-service": {
+      "types": "./dist/server/jwks/jwks-service.d.ts",
+      "default": "./dist/server/jwks/jwks-service.js"
+    },
+    "./server/jwks/jwks-client": {
+      "types": "./dist/server/jwks/jwks-client.d.ts",
+      "default": "./dist/server/jwks/jwks-client.js"
+    },
+    "./server/jwks/types": {
+      "types": "./dist/server/jwks/types.d.ts",
+      "default": "./dist/server/jwks/types.js"
+    },
+    "./server/jwt/jwt-verifier": {
+      "types": "./dist/server/jwt/jwt-verifier.d.ts",
+      "default": "./dist/server/jwt/jwt-verifier.js"
+    },
+    "./server/jwt/jwt-payload": {
+      "types": "./dist/server/jwt/jwt-payload.d.ts",
+      "default": "./dist/server/jwt/jwt-payload.js"
+    },
+    "./server/jwt/types": {
+      "types": "./dist/server/jwt/types.d.ts",
+      "default": "./dist/server/jwt/types.js"
+    },
+    "./adapters/nestjs/jwt-auth.guard": {
+      "types": "./dist/adapters/nestjs/jwt-auth.guard.d.ts",
+      "default": "./dist/adapters/nestjs/jwt-auth.guard.js"
+    },
+    "./adapters/nestjs/current-user.decorator": {
+      "types": "./dist/adapters/nestjs/current-user.decorator.d.ts",
+      "default": "./dist/adapters/nestjs/current-user.decorator.js"
+    },
+    "./adapters/nestjs": {
+      "types": "./dist/adapters/nestjs/index.d.ts",
+      "default": "./dist/adapters/nestjs/index.js"
+    },
+    "./schemas/jwt-payload.schema": {
+      "types": "./dist/schemas/jwt-payload.schema.d.ts",
+      "default": "./dist/schemas/jwt-payload.schema.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "default": "./dist/types.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch --preserveWatchOutput",
+    "lint": "eslint \"{src,test}/**/*.ts\" --fix"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11.0.0"
+  },
+  "dependencies": {
+    "jose": "^6.0.11",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@eridu/eslint-config": "workspace:*",
+    "@eridu/typescript-config": "workspace:*",
+    "@nestjs/common": "^11.0.1",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.7",
+    "typescript": "^5.8.3"
+  }
+}

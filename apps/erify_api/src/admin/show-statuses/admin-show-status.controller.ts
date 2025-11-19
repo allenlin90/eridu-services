@@ -15,23 +15,19 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
-import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateShowStatusDto,
   showStatusDto,
   UpdateShowStatusDto,
 } from '@/models/show-status/schemas/show-status.schema';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
-import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/show-statuses')
 export class AdminShowStatusController extends BaseAdminController {
-  constructor(
-    private readonly showStatusService: ShowStatusService,
-    utilityService: UtilityService,
-  ) {
-    super(utilityService);
+  constructor(private readonly showStatusService: ShowStatusService) {
+    super();
   }
 
   @Post()

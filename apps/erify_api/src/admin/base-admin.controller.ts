@@ -1,14 +1,17 @@
-import { HttpError } from '@/common/errors/http-error.util';
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
-import { UtilityService } from '@/utility/utility.service';
+import { AdminProtected } from '@/lib/decorators/admin-protected.decorator';
+import { HttpError } from '@/lib/errors/http-error.util';
+import {
+  createPaginationMeta,
+  PaginationQueryDto,
+} from '@/lib/pagination/pagination.schema';
 
 /**
  * Base controller for admin endpoints providing common functionality
  * such as pagination response creation and error handling.
  */
+@AdminProtected()
 export abstract class BaseAdminController {
-  constructor(protected readonly utilityService: UtilityService) {}
-
+  constructor() {}
   /**
    * Creates a paginated response with data and pagination metadata.
    *
@@ -22,11 +25,8 @@ export abstract class BaseAdminController {
     total: number,
     query: PaginationQueryDto,
   ) {
-    const meta = this.utilityService.createPaginationMeta(
-      query.page,
-      query.limit,
-      total,
-    );
+    // Use pure function from pagination schema
+    const meta = createPaginationMeta(query.page, query.limit, total);
     return { data, meta };
   }
 

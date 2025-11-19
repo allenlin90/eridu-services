@@ -2,13 +2,12 @@ import { Body, Controller, HttpStatus, Post, UseGuards } from '@nestjs/common';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
 import { AdminResponse } from '@/admin/decorators/admin-response.decorator';
-import { BackdoorApiKeyGuard } from '@/common/guards/backdoor-api-key.guard';
+import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 import {
   CreateStudioMembershipDto,
   studioMembershipWithRelationsDto,
 } from '@/models/membership/schemas/studio-membership.schema';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
-import { UtilityService } from '@/utility/utility.service';
 
 /**
  * Backdoor Membership Controller
@@ -27,9 +26,8 @@ import { UtilityService } from '@/utility/utility.service';
 export class BackdoorMembershipController extends BaseAdminController {
   constructor(
     private readonly studioMembershipService: StudioMembershipService,
-    utilityService: UtilityService,
   ) {
-    super(utilityService);
+    super();
   }
 
   @Post()

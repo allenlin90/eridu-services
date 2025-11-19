@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, Show } from '@prisma/client';
 
-import { HttpError } from '@/common/errors/http-error.util';
+import { HttpError } from '@/lib/errors/http-error.util';
 import { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';

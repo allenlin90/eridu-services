@@ -35,9 +35,13 @@
     "manual:backdoor:create-users": "ts-node -r tsconfig-paths/register manual-test/backdoor/scripts/1.create-users.ts",
     "manual:backdoor:update-users": "ts-node -r tsconfig-paths/register manual-test/backdoor/scripts/2.update-users.ts",
     "manual:backdoor:create-memberships": "ts-node -r tsconfig-paths/register manual-test/backdoor/scripts/3.create-memberships.ts",
-    "manual:backdoor:all": "ts-node -r tsconfig-paths/register manual-test/backdoor/scripts/workflows/run-all.ts"
+    "manual:backdoor:all": "ts-node -r tsconfig-paths/register manual-test/backdoor/scripts/workflows/run-all.ts",
+    "manual:auth:login": "ts-node -r tsconfig-paths/register manual-test/auth/scripts/1.login.ts",
+    "manual:auth:test-me": "ts-node -r tsconfig-paths/register manual-test/auth/scripts/2.test-me.ts",
+    "manual:auth:all": "ts-node -r tsconfig-paths/register manual-test/auth/scripts/workflows/run-all.ts"
   },
   "dependencies": {
+    "@eridu/auth-sdk": "workspace:*",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",

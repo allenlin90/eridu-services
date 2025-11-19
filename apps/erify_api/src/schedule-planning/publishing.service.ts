@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Schedule } from '@prisma/client';
 
-import { HttpError } from '@/common/errors/http-error.util';
+import { HttpError } from '@/lib/errors/http-error.util';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ShowService } from '@/models/show/show.service';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';

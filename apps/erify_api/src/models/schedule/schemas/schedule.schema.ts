@@ -1,7 +1,7 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
-import { paginationQuerySchema } from '@/common/pagination/schema/pagination.schema';
+import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { ClientService } from '@/models/client/client.service';
 import { clientSchema } from '@/models/client/schemas/client.schema';
 import { ScheduleService } from '@/models/schedule/schedule.service';

@@ -2,13 +2,12 @@ import { Body, Controller, Get, HttpStatus, Param, Post } from '@nestjs/common';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
 import { AdminResponse } from '@/admin/decorators/admin-response.decorator';
-import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
+import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { scheduleDto } from '@/models/schedule/schemas/schedule.schema';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
 import { scheduleSnapshotDto } from '@/models/schedule-snapshot/schemas/schedule-snapshot.schema';
 import { UserService } from '@/models/user/user.service';
 import { SchedulePlanningService } from '@/schedule-planning/schedule-planning.service';
-import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/snapshots')
 export class AdminSnapshotController extends BaseAdminController {
@@ -16,9 +15,8 @@ export class AdminSnapshotController extends BaseAdminController {
     private readonly scheduleSnapshotService: ScheduleSnapshotService,
     private readonly schedulePlanningService: SchedulePlanningService,
     private readonly userService: UserService,
-    utilityService: UtilityService,
   ) {
-    super(utilityService);
+    super();
   }
 
   @Get(':id')

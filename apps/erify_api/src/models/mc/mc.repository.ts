@@ -1,10 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MC, Prisma } from '@prisma/client';
 
-import {
-  BaseRepository,
-  IBaseModel,
-} from '@/common/repositories/base.repository';
+import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
 type MCWithIncludes<T extends Prisma.MCInclude> = Prisma.MCGetPayload<{

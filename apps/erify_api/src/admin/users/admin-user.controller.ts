@@ -15,23 +15,19 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
-import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateUserDto,
   UpdateUserDto,
   userDto,
 } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
-import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/users')
 export class AdminUserController extends BaseAdminController {
-  constructor(
-    private readonly userService: UserService,
-    utilityService: UtilityService,
-  ) {
-    super(utilityService);
+  constructor(private readonly userService: UserService) {
+    super();
   }
 
   @Post()

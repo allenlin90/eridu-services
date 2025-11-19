@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import {
   CreateStudioMembershipDto,
   UpdateStudioMembershipDto,
 } from '@/models/membership/schemas/studio-membership.schema';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
-import { UtilityService } from '@/utility/utility.service';
 
 import { AdminStudioMembershipController } from './admin-studio-membership.controller';
 
@@ -21,13 +20,6 @@ describe('AdminStudioMembershipController', () => {
     updateStudioMembershipFromDto: jest.fn(),
     deleteStudioMembership: jest.fn(),
   };
-
-  const mockUtilityService = {
-    createPaginationMeta: jest.fn(),
-    generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminStudioMembershipController],
@@ -36,7 +28,6 @@ describe('AdminStudioMembershipController', () => {
           provide: StudioMembershipService,
           useValue: mockStudioMembershipService,
         },
-        { provide: UtilityService, useValue: mockUtilityService },
       ],
     }).compile();
 
@@ -63,7 +54,6 @@ describe('AdminStudioMembershipController', () => {
       );
 
       const result = await controller.createStudioMembership(createDto);
-
       expect(
         mockStudioMembershipService.createStudioMembershipFromDto,
       ).toHaveBeenCalledWith(createDto, { user: true, studio: true });
@@ -99,10 +89,8 @@ describe('AdminStudioMembershipController', () => {
       mockStudioMembershipService.countStudioMemberships.mockResolvedValue(
         total,
       );
-      mockUtilityService.createPaginationMeta.mockReturnValue(paginationMeta);
 
       const result = await controller.getStudioMemberships(query);
-
       expect(
         mockStudioMembershipService.getStudioMemberships,
       ).toHaveBeenCalledWith(
@@ -112,11 +100,6 @@ describe('AdminStudioMembershipController', () => {
       expect(
         mockStudioMembershipService.countStudioMemberships,
       ).toHaveBeenCalled();
-      expect(mockUtilityService.createPaginationMeta).toHaveBeenCalledWith(
-        query.page,
-        query.limit,
-        total,
-      );
       expect(result).toEqual({
         data: memberships,
         meta: paginationMeta,
@@ -140,7 +123,6 @@ describe('AdminStudioMembershipController', () => {
       );
 
       const result = await controller.getStudioMembership(membershipId);
-
       expect(
         mockStudioMembershipService.getStudioMembershipById,
       ).toHaveBeenCalledWith(membershipId, { user: true, studio: true });
@@ -164,7 +146,6 @@ describe('AdminStudioMembershipController', () => {
         membershipId,
         updateDto,
       );
-
       expect(
         mockStudioMembershipService.updateStudioMembershipFromDto,
       ).toHaveBeenCalledWith(membershipId, updateDto, {
@@ -184,7 +165,6 @@ describe('AdminStudioMembershipController', () => {
       );
 
       await controller.deleteStudioMembership(membershipId);
-
       expect(
         mockStudioMembershipService.deleteStudioMembership,
       ).toHaveBeenCalledWith(membershipId);

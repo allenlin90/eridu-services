@@ -15,23 +15,21 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
-import { UidValidationPipe } from '@/common/pipes/uid-validation.pipe';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateStudioMembershipDto,
   studioMembershipWithRelationsDto,
   UpdateStudioMembershipDto,
 } from '@/models/membership/schemas/studio-membership.schema';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
-import { UtilityService } from '@/utility/utility.service';
 
 @Controller('admin/studio-memberships')
 export class AdminStudioMembershipController extends BaseAdminController {
   constructor(
     private readonly studioMembershipService: StudioMembershipService,
-    utilityService: UtilityService,
   ) {
-    super(utilityService);
+    super();
   }
 
   @Post()

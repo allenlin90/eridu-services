@@ -1,13 +1,12 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { BackdoorApiKeyGuard } from '@/common/guards/backdoor-api-key.guard';
+import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 import {
   CreateUserDto,
   UpdateUserDto,
 } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
-import { UtilityService } from '@/utility/utility.service';
 
 import { BackdoorUserController } from './backdoor-user.controller';
 
@@ -17,12 +16,6 @@ describe('BackdoorUserController', () => {
   const mockUserService = {
     createUser: jest.fn(),
     updateUser: jest.fn(),
-  };
-
-  const mockUtilityService = {
-    createPaginationMeta: jest.fn(),
-    generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -38,7 +31,6 @@ describe('BackdoorUserController', () => {
       controllers: [BackdoorUserController],
       providers: [
         { provide: UserService, useValue: mockUserService },
-        { provide: UtilityService, useValue: mockUtilityService },
         { provide: ConfigService, useValue: mockConfigService },
         BackdoorApiKeyGuard,
       ],

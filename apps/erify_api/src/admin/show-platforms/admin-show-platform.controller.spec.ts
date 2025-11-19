@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import {
   CreateShowPlatformDto,
   UpdateShowPlatformDto,
 } from '@/models/show-platform/schemas/show-platform.schema';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
-import { UtilityService } from '@/utility/utility.service';
 
 import { AdminShowPlatformController } from './admin-show-platform.controller';
 
@@ -21,19 +20,11 @@ describe('AdminShowPlatformController', () => {
     updateShowPlatformFromDto: jest.fn(),
     deleteShowPlatform: jest.fn(),
   };
-
-  const mockUtilityService = {
-    createPaginationMeta: jest.fn(),
-    generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminShowPlatformController],
       providers: [
         { provide: ShowPlatformService, useValue: mockShowPlatformService },
-        { provide: UtilityService, useValue: mockUtilityService },
       ],
     }).compile();
 
@@ -68,7 +59,6 @@ describe('AdminShowPlatformController', () => {
       );
 
       const result = await controller.createShowPlatform(createDto);
-
       expect(
         mockShowPlatformService.createShowPlatformFromDto,
       ).toHaveBeenCalledWith(createDto);
@@ -109,10 +99,8 @@ describe('AdminShowPlatformController', () => {
         showPlatforms as any,
       );
       mockShowPlatformService.countShowPlatforms.mockResolvedValue(total);
-      mockUtilityService.createPaginationMeta.mockReturnValue(paginationMeta);
 
       const result = await controller.getShowPlatforms(query);
-
       expect(
         mockShowPlatformService.getActiveShowPlatforms,
       ).toHaveBeenCalledWith({
@@ -125,11 +113,6 @@ describe('AdminShowPlatformController', () => {
         },
       });
       expect(mockShowPlatformService.countShowPlatforms).toHaveBeenCalled();
-      expect(mockUtilityService.createPaginationMeta).toHaveBeenCalledWith(
-        query.page,
-        query.limit,
-        total,
-      );
       expect(result).toEqual({
         data: showPlatforms,
         meta: paginationMeta,
@@ -153,7 +136,6 @@ describe('AdminShowPlatformController', () => {
       );
 
       const result = await controller.getShowPlatform(showPlatformId);
-
       expect(mockShowPlatformService.getShowPlatformById).toHaveBeenCalledWith(
         showPlatformId,
         {
@@ -189,7 +171,6 @@ describe('AdminShowPlatformController', () => {
         showPlatformId,
         updateDto,
       );
-
       expect(
         mockShowPlatformService.updateShowPlatformFromDto,
       ).toHaveBeenCalledWith(showPlatformId, updateDto);
@@ -211,7 +192,6 @@ describe('AdminShowPlatformController', () => {
       mockShowPlatformService.deleteShowPlatform.mockResolvedValue(undefined);
 
       await controller.deleteShowPlatform(showPlatformId);
-
       expect(mockShowPlatformService.deleteShowPlatform).toHaveBeenCalledWith(
         showPlatformId,
       );

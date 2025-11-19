@@ -3,8 +3,8 @@ import {
   createMockRepository,
   createMockUtilityService,
   createModelServiceTestModule,
-} from '@/common/test-helpers/model-service-test.helper';
-import { createMockUniqueConstraintError } from '@/common/test-helpers/prisma-error.helper';
+} from '@/testing/model-service-test.helper';
+import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
 import { UtilityService } from '@/utility/utility.service';
 
 import { ShowStatusRepository } from './show-status.repository';

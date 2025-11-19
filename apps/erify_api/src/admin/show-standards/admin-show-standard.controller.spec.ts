@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import {
   CreateShowStandardDto,
   UpdateShowStandardDto,
 } from '@/models/show-standard/schemas/show-standard.schema';
 import { ShowStandardService } from '@/models/show-standard/show-standard.service';
-import { UtilityService } from '@/utility/utility.service';
 
 import { AdminShowStandardController } from './admin-show-standard.controller';
 
@@ -21,19 +20,11 @@ describe('AdminShowStandardController', () => {
     updateShowStandard: jest.fn(),
     deleteShowStandard: jest.fn(),
   };
-
-  const mockUtilityService = {
-    createPaginationMeta: jest.fn(),
-    generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminShowStandardController],
       providers: [
         { provide: ShowStandardService, useValue: mockShowStandardService },
-        { provide: UtilityService, useValue: mockUtilityService },
       ],
     }).compile();
 
@@ -59,7 +50,6 @@ describe('AdminShowStandardController', () => {
       );
 
       const result = await controller.createShowStandard(createDto);
-
       expect(mockShowStandardService.createShowStandard).toHaveBeenCalledWith(
         createDto,
       );
@@ -93,20 +83,13 @@ describe('AdminShowStandardController', () => {
         standards as any,
       );
       mockShowStandardService.countShowStandards.mockResolvedValue(total);
-      mockUtilityService.createPaginationMeta.mockReturnValue(paginationMeta);
 
       const result = await controller.getShowStandards(query);
-
       expect(mockShowStandardService.getShowStandards).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
       });
       expect(mockShowStandardService.countShowStandards).toHaveBeenCalled();
-      expect(mockUtilityService.createPaginationMeta).toHaveBeenCalledWith(
-        query.page,
-        query.limit,
-        total,
-      );
       expect(result).toEqual({
         data: standards,
         meta: paginationMeta,
@@ -124,7 +107,6 @@ describe('AdminShowStandardController', () => {
       );
 
       const result = await controller.getShowStandard(standardId);
-
       expect(mockShowStandardService.getShowStandardById).toHaveBeenCalledWith(
         standardId,
       );
@@ -145,7 +127,6 @@ describe('AdminShowStandardController', () => {
       );
 
       const result = await controller.updateShowStandard(standardId, updateDto);
-
       expect(mockShowStandardService.updateShowStandard).toHaveBeenCalledWith(
         standardId,
         updateDto,
@@ -161,7 +142,6 @@ describe('AdminShowStandardController', () => {
       mockShowStandardService.deleteShowStandard.mockResolvedValue(undefined);
 
       await controller.deleteShowStandard(standardId);
-
       expect(mockShowStandardService.deleteShowStandard).toHaveBeenCalledWith(
         standardId,
       );

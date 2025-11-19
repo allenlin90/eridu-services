@@ -1,10 +1,9 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { BackdoorApiKeyGuard } from '@/common/guards/backdoor-api-key.guard';
+import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 import { CreateStudioMembershipDto } from '@/models/membership/schemas/studio-membership.schema';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
-import { UtilityService } from '@/utility/utility.service';
 
 import { BackdoorMembershipController } from './backdoor-membership.controller';
 
@@ -13,12 +12,6 @@ describe('BackdoorMembershipController', () => {
 
   const mockStudioMembershipService = {
     createStudioMembershipFromDto: jest.fn(),
-  };
-
-  const mockUtilityService = {
-    createPaginationMeta: jest.fn(),
-    generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -37,7 +30,6 @@ describe('BackdoorMembershipController', () => {
           provide: StudioMembershipService,
           useValue: mockStudioMembershipService,
         },
-        { provide: UtilityService, useValue: mockUtilityService },
         { provide: ConfigService, useValue: mockConfigService },
         BackdoorApiKeyGuard,
       ],

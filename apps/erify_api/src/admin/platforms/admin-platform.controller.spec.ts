@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { PaginationQueryDto } from '@/common/pagination/schema/pagination.schema';
+import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { PlatformService } from '@/models/platform/platform.service';
 import {
   CreatePlatformDto,
   UpdatePlatformDto,
 } from '@/models/platform/schemas/platform.schema';
-import { UtilityService } from '@/utility/utility.service';
 
 import { AdminPlatformController } from './admin-platform.controller';
 
@@ -21,20 +20,10 @@ describe('AdminPlatformController', () => {
     updatePlatform: jest.fn(),
     deletePlatform: jest.fn(),
   };
-
-  const mockUtilityService = {
-    createPaginationMeta: jest.fn(),
-    generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminPlatformController],
-      providers: [
-        { provide: PlatformService, useValue: mockPlatformService },
-        { provide: UtilityService, useValue: mockUtilityService },
-      ],
+      providers: [{ provide: PlatformService, useValue: mockPlatformService }],
     }).compile();
 
     controller = module.get<AdminPlatformController>(AdminPlatformController);
@@ -57,7 +46,6 @@ describe('AdminPlatformController', () => {
       );
 
       const result = await controller.createPlatform(createDto);
-
       expect(mockPlatformService.createPlatform).toHaveBeenCalledWith(
         createDto,
       );
@@ -89,20 +77,13 @@ describe('AdminPlatformController', () => {
 
       mockPlatformService.getPlatforms.mockResolvedValue(platforms as any);
       mockPlatformService.countPlatforms.mockResolvedValue(total);
-      mockUtilityService.createPaginationMeta.mockReturnValue(paginationMeta);
 
       const result = await controller.getPlatforms(query);
-
       expect(mockPlatformService.getPlatforms).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
       });
       expect(mockPlatformService.countPlatforms).toHaveBeenCalled();
-      expect(mockUtilityService.createPaginationMeta).toHaveBeenCalledWith(
-        query.page,
-        query.limit,
-        total,
-      );
       expect(result).toEqual({
         data: platforms,
         meta: paginationMeta,
@@ -118,7 +99,6 @@ describe('AdminPlatformController', () => {
       mockPlatformService.getPlatformById.mockResolvedValue(platform as any);
 
       const result = await controller.getPlatform(platformId);
-
       expect(mockPlatformService.getPlatformById).toHaveBeenCalledWith(
         platformId,
       );
@@ -139,7 +119,6 @@ describe('AdminPlatformController', () => {
       );
 
       const result = await controller.updatePlatform(platformId, updateDto);
-
       expect(mockPlatformService.updatePlatform).toHaveBeenCalledWith(
         platformId,
         updateDto,
@@ -155,7 +134,6 @@ describe('AdminPlatformController', () => {
       mockPlatformService.deletePlatform.mockResolvedValue(undefined);
 
       await controller.deletePlatform(platformId);
-
       expect(mockPlatformService.deletePlatform).toHaveBeenCalledWith(
         platformId,
       );

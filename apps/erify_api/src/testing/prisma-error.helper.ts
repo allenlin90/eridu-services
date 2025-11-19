@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 
-import { PRISMA_ERROR } from '@/common/errors/prisma-error-codes';
+import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 
 /**
  * Creates a mock Prisma.PrismaClientKnownRequestError for testing.
