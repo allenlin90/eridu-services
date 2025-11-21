@@ -1,7 +1,7 @@
 import { Body, Controller, HttpStatus, Post, UseGuards } from '@nestjs/common';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
-import { AdminResponse } from '@/admin/decorators/admin-response.decorator';
+import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 import {
   CreateStudioMembershipDto,
@@ -31,7 +31,7 @@ export class BackdoorMembershipController extends BaseAdminController {
   }
 
   @Post()
-  @AdminResponse(
+  @ZodResponse(
     studioMembershipWithRelationsDto,
     HttpStatus.CREATED,
     'Studio membership created successfully',

@@ -26,8 +26,9 @@ import { StudioMembershipService } from '@/models/membership/studio-membership.s
  * Behavior:
  * 1. Reads authenticated user from request.user (populated by JwtAuthGuard)
  * 2. Queries database for admin membership using optimized query
- * 3. Throws UnauthorizedException if user is not authenticated
- * 4. Throws ForbiddenException if user is not admin
+ * 3. Attaches adminMembership to request.adminMembership for downstream use
+ * 4. Throws UnauthorizedException if user is not authenticated
+ * 5. Throws ForbiddenException if user is not admin
  *
  * Usage (with explicit guard composition):
  * ```typescript
@@ -35,6 +36,13 @@ import { StudioMembershipService } from '@/models/membership/studio-membership.s
  * @UseGuards(JwtAuthGuard, AdminGuard)  // Guards run in sequence
  * export class AdminUserController {
  *   // Only authenticated admin users can access these endpoints
+ *
+ *   @Get('reports')
+ *   getReports(@Req() req: AuthenticatedRequest) {
+ *     // Access admin membership without re-querying database
+ *     const studioId = req.adminMembership?.studioId;
+ *     // ... use studioId for filtering, etc.
+ *   }
  * }
  * ```
  *
@@ -85,6 +93,10 @@ export class AdminGuard implements CanActivate {
       );
       throw HttpError.forbidden('Admin access required');
     }
+
+    // Attach admin membership to request for downstream use (e.g., in controllers)
+    // This avoids re-querying the database when studio context is needed
+    request.adminMembership = adminMembership;
 
     this.logger.debug(
       `Admin access granted for user: ${email} (ext_id: ${ext_id}, studio: ${adminMembership.studioId})`,

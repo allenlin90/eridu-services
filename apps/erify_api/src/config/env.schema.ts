@@ -45,6 +45,20 @@ export const envSchema = z.object({
   // Authentication & Authorization (JWT/JWKS)
   // Base URL of the erify_auth service (e.g., http://localhost:3000 or https://auth.example.com)
   ERIFY_AUTH_URL: z.url({ message: 'ERIFY_AUTH_URL must be a valid URL' }),
+
+  // Rate Limiting (Throttling)
+  // Time window in milliseconds for rate limiting (default: 60000 = 1 minute)
+  THROTTLE_TTL: z.coerce
+    .number()
+    .int({ message: 'THROTTLE_TTL must be an integer' })
+    .min(1000, { message: 'THROTTLE_TTL must be at least 1000ms' })
+    .default(60000),
+  // Maximum number of requests per time window (default: 10)
+  THROTTLE_LIMIT: z.coerce
+    .number()
+    .int({ message: 'THROTTLE_LIMIT must be an integer' })
+    .min(1, { message: 'THROTTLE_LIMIT must be at least 1' })
+    .default(10),
 });
 
 // Export type for use with ConfigService<Env>

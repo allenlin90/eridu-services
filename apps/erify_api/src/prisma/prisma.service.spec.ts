@@ -4,6 +4,31 @@ import { Prisma } from '@prisma/client';
 
 import { PrismaService, TransactionClient } from './prisma.service';
 
+// Mock the pg module
+jest.mock('pg', () => {
+  return {
+    Pool: jest.fn().mockImplementation(() => ({
+      connect: jest.fn(),
+      end: jest.fn().mockResolvedValue(undefined),
+      query: jest.fn(),
+    })),
+  };
+});
+
+// Mock the adapter
+jest.mock('@prisma/adapter-pg', () => {
+  return {
+    PrismaPg: jest.fn().mockImplementation(() => ({
+      // Return a valid adapter-like object
+      provider: 'postgres',
+      adapterName: '@prisma/adapter-pg',
+      queryRaw: jest.fn(),
+      executeRaw: jest.fn(),
+      startTransaction: jest.fn(),
+    })),
+  };
+});
+
 describe('PrismaService', () => {
   let service: PrismaService;
   let connectSpy: jest.SpyInstance;
@@ -15,6 +40,9 @@ describe('PrismaService', () => {
     get: jest.fn((key: string) => {
       if (key === 'NODE_ENV') {
         return 'test';
+      }
+      if (key === 'DATABASE_URL') {
+        return 'postgresql://test:test@localhost:5432/testdb';
       }
       return undefined;
     }),
@@ -90,9 +118,11 @@ describe('PrismaService', () => {
   });
 
   describe('onModuleDestroy', () => {
-    it('should disconnect from database', async () => {
+    it('should disconnect from database and close pool', async () => {
+      const poolEndSpy = jest.spyOn(service['pool'], 'end');
       await service.onModuleDestroy();
       expect(disconnectSpy).toHaveBeenCalledTimes(1);
+      expect(poolEndSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should log disconnection success', async () => {

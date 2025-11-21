@@ -1,6 +1,5 @@
 import {
   Controller,
-  HttpCode,
   HttpStatus,
   Logger,
   Post,
@@ -8,8 +7,8 @@ import {
 } from '@nestjs/common';
 import { z } from 'zod';
 
-import { AdminResponse } from '@/admin/decorators/admin-response.decorator';
 import { AuthService } from '@/lib/auth/auth.service';
+import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 
@@ -37,8 +36,7 @@ export class BackdoorAuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('jwks/refresh')
-  @HttpCode(HttpStatus.OK)
-  @AdminResponse(
+  @ZodResponse(
     refreshJwksResponseSchema,
     HttpStatus.OK,
     'JWKS cache refreshed successfully',
