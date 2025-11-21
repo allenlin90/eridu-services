@@ -16,7 +16,7 @@ import {
 import { Label } from "@eridu/ui/components/label";
 import { cn } from "@eridu/ui/lib/utils";
 
-const Form = FormProvider;
+const Form: typeof FormProvider = FormProvider;
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,

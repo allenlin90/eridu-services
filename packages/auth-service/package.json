@@ -22,14 +22,14 @@
   "dependencies": {
     "better-auth": "^1.3.34",
     "jose": "^6.0.11",
-    "react": "^19.1.0",
+    "react": "^19.2.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
     "@eridu/eslint-config": "workspace:*",
     "@eridu/typescript-config": "workspace:*",
-    "@types/react": "^19.1.2",
-    "@types/react-dom": "^19.1.2",
+    "@types/react": "^19.2.6",
+    "@types/react-dom": "^19.2.3",
     "typescript": "^5.8.3"
   }
 }
