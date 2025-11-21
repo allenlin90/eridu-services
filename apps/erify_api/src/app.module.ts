@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
 import { AdminModule } from '@/admin/admin.module';
 import { BackdoorModule } from '@/backdoor/backdoor.module';
-import { envSchema } from '@/config/env.schema';
+import { Env, envSchema } from '@/config/env.schema';
 import { HealthModule } from '@/health/health.module';
 import { AuthModule } from '@/lib/auth/auth.module';
 import { JwtAuthGuard } from '@/lib/auth/jwt-auth.guard';
@@ -50,6 +51,16 @@ import { MembershipModule } from '@/models/membership/membership.module';
         }),
       }),
     }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env>) => [
+        {
+          ttl: config.getOrThrow('THROTTLE_TTL'),
+          limit: config.getOrThrow('THROTTLE_LIMIT'),
+        },
+      ],
+    }),
     AdminModule,
     AuthModule,
     BackdoorModule,
@@ -59,6 +70,10 @@ import { MembershipModule } from '@/models/membership/membership.module';
     OpenAPIModule.forRoot(),
   ],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

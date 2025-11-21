@@ -5,7 +5,9 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { Prisma, PrismaClient } from '@prisma/client';
+import { Pool } from 'pg';
 
 import { Env } from '@/config/env.schema';
 
@@ -46,15 +48,27 @@ export class PrismaService
 {
   private readonly logger = new Logger(PrismaService.name);
   private readonly isDevelopment: boolean;
+  private readonly pool: Pool;
 
   constructor(private readonly configService: ConfigService<Env>) {
     const isDevelopment =
       configService.get('NODE_ENV', { infer: true }) === 'development';
 
+    // Get DATABASE_URL from config
+    const databaseUrl = configService.get('DATABASE_URL', { infer: true });
+    if (!databaseUrl) {
+      throw new Error('DATABASE_URL is not defined in environment variables');
+    }
+
+    // Create connection pool for the adapter
+    const pool = new Pool({ connectionString: databaseUrl });
+    const adapter = new PrismaPg(pool);
+
     const errorFormat = isDevelopment
       ? ('pretty' as const)
       : ('minimal' as const);
     const prismaOptions = {
+      adapter,
       log: isDevelopment
         ? [
             { level: 'query' as const, emit: 'event' as const },
@@ -70,6 +84,7 @@ export class PrismaService
 
     super(prismaOptions);
     this.isDevelopment = isDevelopment;
+    this.pool = pool;
   }
 
   async onModuleInit() {
@@ -94,6 +109,7 @@ export class PrismaService
   async onModuleDestroy() {
     try {
       await this.$disconnect();
+      await this.pool.end();
       this.logger.log('Database disconnected successfully');
     } catch (error) {
       this.logger.error('Error disconnecting from database', error);

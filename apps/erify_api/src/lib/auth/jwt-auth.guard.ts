@@ -2,6 +2,7 @@ import { JwtAuthGuard as SdkJwtAuthGuard } from '@eridu/auth-sdk/adapters/nestjs
 import type { JwtPayload, UserInfo } from '@eridu/auth-sdk/types';
 import { ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import type { StudioMembership } from '@prisma/client';
 import type { Request } from 'express';
 
 import { IS_PUBLIC_KEY } from '@/lib/decorators/public.decorator';
@@ -24,9 +25,11 @@ export type AuthenticatedUser = {
 
 /**
  * Extended Request interface with user information and ext_id
+ * Also includes adminMembership when AdminGuard has verified admin access
  */
 export interface AuthenticatedRequest extends Request {
   user?: AuthenticatedUser;
+  adminMembership?: StudioMembership; // Attached by AdminGuard when admin access is verified
 }
 
 /**

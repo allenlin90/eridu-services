@@ -1,9 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import { Public } from '@/lib/decorators/public.decorator';
 
 @Public()
+@SkipThrottle()
 @Controller('health')
 export class HealthController {
   constructor(

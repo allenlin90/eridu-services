@@ -1,9 +1,20 @@
+import 'dotenv/config';
+
+import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient, Studio, User } from '@prisma/client';
+import { Pool } from 'pg';
 
 import { fixtures, getClientUidByName } from './fixtures';
 
-// initialize Prisma Client
-const prisma = new PrismaClient();
+// Initialize Prisma Client with adapter
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error('DATABASE_URL is not defined in environment variables');
+}
+
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 // Check if database is already seeded with complete reference data
 async function isDatabaseSeeded(): Promise<boolean> {
@@ -796,7 +807,8 @@ void main()
     console.error(e);
     process.exit(1);
   })
-  .finally(() => {
-    // close Prisma Client at the end
-    void prisma.$disconnect();
+  .finally(async () => {
+    // close Prisma Client and pool at the end
+    await prisma.$disconnect();
+    await pool.end();
   });

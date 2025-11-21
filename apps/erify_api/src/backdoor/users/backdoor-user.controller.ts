@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
-import { AdminResponse } from '@/admin/decorators/admin-response.decorator';
+import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
@@ -40,13 +40,13 @@ export class BackdoorUserController extends BaseAdminController {
   }
 
   @Post()
-  @AdminResponse(userDto, HttpStatus.CREATED, 'User created successfully')
+  @ZodResponse(userDto, HttpStatus.CREATED, 'User created successfully')
   createUser(@Body() body: CreateUserDto) {
     return this.userService.createUser(body);
   }
 
   @Patch(':id')
-  @AdminResponse(userDto, HttpStatus.OK, 'User updated successfully')
+  @ZodResponse(userDto, HttpStatus.OK, 'User updated successfully')
   updateUser(
     @Param('id', new UidValidationPipe(UserService.UID_PREFIX, 'User'))
     id: string,
