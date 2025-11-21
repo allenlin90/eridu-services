@@ -1,6 +1,5 @@
 "use client";
 
-import { ScrollArea, ScrollBar } from "@eridu/ui/components/scroll-area";
 import { format } from "date-fns";
 import { Calendar1 } from "lucide-react";
 import * as React from "react";
@@ -12,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@eridu/ui/components/popover";
+import { ScrollArea, ScrollBar } from "@eridu/ui/components/scroll-area";
 import { cn } from "@eridu/ui/lib/utils";
 
 type DateTimePicker24hProps = {

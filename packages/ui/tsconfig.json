@@ -10,8 +10,9 @@
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": false,
-    "outDir": "dist"
+    "outDir": "dist",
+    "skipLibCheck": true
   },
-  "include": ["."],
+  "include": [".", "src/types/**/*"],
   "exclude": ["node_modules", "dist"]
 }
