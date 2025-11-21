@@ -5,9 +5,7 @@ import { Reflector } from '@nestjs/core';
 import type { StudioMembership } from '@prisma/client';
 import type { Request } from 'express';
 
-import { IS_BACKDOOR_KEY } from '@/lib/decorators/backdoor.decorator';
-import { IS_GOOGLE_SHEETS_KEY } from '@/lib/decorators/google-sheets.decorator';
-import { IS_PUBLIC_KEY } from '@/lib/decorators/public.decorator';
+import { SKIP_JWT_AUTH_KEY } from '@/lib/decorators/skip-jwt-auth.decorator';
 import { HttpError } from '@/lib/errors/http-error.util';
 
 import { AuthService } from './auth.service';
@@ -72,22 +70,14 @@ export class JwtAuthGuard extends SdkJwtAuthGuard {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    // Check for any decorator that skips JWT authentication
+    // This unified approach allows adding new skip decorators without modifying the guard
+    const skipAuth = this.reflector.getAllAndOverride<{
+      skip: boolean;
+      reason?: string;
+    }>(SKIP_JWT_AUTH_KEY, [context.getHandler(), context.getClass()]);
 
-    const isBackdoor = this.reflector.getAllAndOverride<boolean>(
-      IS_BACKDOOR_KEY,
-      [context.getHandler(), context.getClass()],
-    );
-
-    const isGoogleSheets = this.reflector.getAllAndOverride<boolean>(
-      IS_GOOGLE_SHEETS_KEY,
-      [context.getHandler(), context.getClass()],
-    );
-
-    if (isPublic || isBackdoor || isGoogleSheets) {
+    if (skipAuth?.skip) {
       return true;
     }
 
