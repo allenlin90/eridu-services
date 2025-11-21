@@ -39,7 +39,7 @@ BACKDOOR_API_KEY=<your-generated-api-key>
 
 ```typescript
 import { Controller, Post, UseGuards, Request } from '@nestjs/common';
-import { GoogleSheetsApiKeyGuard } from '@/common/guards/google-sheets-api-key.guard';
+import { GoogleSheetsApiKeyGuard } from '@/lib/guards/google-sheets-api-key.guard';
 
 @Controller('schedules')
 export class ScheduleController {
@@ -118,7 +118,7 @@ sequenceDiagram
 
 **Usage**:
 ```typescript
-import { GoogleSheetsApiKeyGuard } from '@/common/guards/google-sheets-api-key.guard';
+import { GoogleSheetsApiKeyGuard } from '@/lib/guards/google-sheets-api-key.guard';
 
 @Controller('schedules')
 export class ScheduleController {
@@ -148,7 +148,7 @@ export class ScheduleController {
 
 **Usage**:
 ```typescript
-import { BackdoorApiKeyGuard } from '@/common/guards/backdoor-api-key.guard';
+import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 
 @Controller('backdoor/users')
 @UseGuards(BackdoorApiKeyGuard)  // Guard at controller level
@@ -171,6 +171,9 @@ export class BackdoorUserController {
 - `POST /backdoor/users` - Create user (API key required)
 - `PATCH /backdoor/users/:id` - Update user (API key required)
 - `POST /backdoor/studio-memberships` - Create studio membership (API key required)
+- `POST /backdoor/auth/jwks/refresh` - Refresh JWKS cache (API key required)
+
+**Note**: Backdoor controllers extend `BaseBackdoorController` which uses the `@Backdoor()` decorator to skip JWT authentication. This allows these endpoints to use API key authentication via `BackdoorApiKeyGuard` instead.
 
 **Future Enhancement**: IP whitelisting can be added by configuring `BACKDOOR_ALLOWED_IPS` environment variable.
 
@@ -186,7 +189,7 @@ Extend `BaseApiKeyGuard` to create service-specific guards:
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Env } from '@/config/env.schema';
-import { BaseApiKeyGuard } from '@/common/guards/base-api-key.guard';
+import { BaseApiKeyGuard } from '@/lib/guards/base-api-key.guard';
 
 @Injectable()
 export class MyServiceApiKeyGuard extends BaseApiKeyGuard {
@@ -280,8 +283,8 @@ Accept requests from multiple services. Request passes if **any** guard validate
 
 ```typescript
 import { UseGuards } from '@nestjs/common';
-import { GoogleSheetsApiKeyGuard } from '@/common/guards/google-sheets-api-key.guard';
-import { MyServiceApiKeyGuard } from '@/common/guards/my-service-api-key.guard';
+import { GoogleSheetsApiKeyGuard } from '@/lib/guards/google-sheets-api-key.guard';
+import { MyServiceApiKeyGuard } from '@/lib/guards/my-service-api-key.guard';
 
 @Controller('shared')
 export class SharedController {
@@ -334,7 +337,7 @@ The guards throw `UnauthorizedException` (401) in these cases:
 pnpm test
 
 # Run guard tests only
-pnpm test common/guards
+pnpm test lib/guards
 
 # Run with coverage
 pnpm test:cov
@@ -370,8 +373,8 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { Controller, Post, UseGuards, Request } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { GoogleSheetsApiKeyGuard } from '@/common/guards/google-sheets-api-key.guard';
-import { ServiceContext } from '@/common/guards/base-api-key.guard';
+import { GoogleSheetsApiKeyGuard } from '@/lib/guards/google-sheets-api-key.guard';
+import { ServiceContext } from '@/lib/guards/base-api-key.guard';
 
 @Controller('test')
 class TestController {

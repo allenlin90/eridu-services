@@ -17,10 +17,9 @@
     }
   },
   "include": [
-    "src/**/*",
-    "!src/frontend/**/*"
+    "src/**/*"
   ],
-  "exclude": ["node_modules", "src/frontend"],
+  "exclude": ["node_modules"],
   "tsc-alias": {
     "resolveFullPaths": true,
     "verbose": true

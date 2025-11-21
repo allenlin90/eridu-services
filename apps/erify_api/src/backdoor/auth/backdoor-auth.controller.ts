@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { z } from 'zod';
 
+import { BaseBackdoorController } from '@/backdoor/base-backdoor.controller';
 import { AuthService } from '@/lib/auth/auth.service';
 import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { HttpError } from '@/lib/errors/http-error.util';
@@ -30,10 +31,12 @@ const refreshJwksResponseSchema = z.object({
  */
 @Controller('backdoor/auth')
 @UseGuards(BackdoorApiKeyGuard)
-export class BackdoorAuthController {
+export class BackdoorAuthController extends BaseBackdoorController {
   private readonly logger = new Logger(BackdoorAuthController.name);
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {
+    super();
+  }
 
   @Post('jwks/refresh')
   @ZodResponse(

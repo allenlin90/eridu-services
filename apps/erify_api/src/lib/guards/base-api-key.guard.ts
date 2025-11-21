@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 
 import { Env } from '@/config/env.schema';
+import { HttpError } from '@/lib/errors/http-error.util';
 
 /**
  * Service context attached to request when API key is validated
@@ -94,7 +95,7 @@ export abstract class BaseApiKeyGuard implements CanActivate {
       this.logger.error(
         `${this.serviceName} API key (${this.getEnvKeyName()}) is required in production but not configured`,
       );
-      throw new UnauthorizedException(
+      throw HttpError.unauthorized(
         `${this.serviceName} API key authentication is required in production`,
       );
     }

@@ -170,4 +170,3 @@ seed().catch((error) => {
   console.error('Fatal error during seeding:', error);
   process.exit(1);
 });
-

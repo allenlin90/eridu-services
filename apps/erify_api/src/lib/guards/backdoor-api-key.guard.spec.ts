@@ -168,7 +168,11 @@ describe('BackdoorApiKeyGuard', () => {
 
     it('should call validateRequest after API key validation', () => {
       mockRequest.headers = { 'x-api-key': 'valid-backdoor-key-123' };
-      const validateRequestSpy = jest.spyOn(guard, 'validateRequest');
+      // Use 'as any' to access protected method for testing
+      const validateRequestSpy = jest.spyOn(
+        guard as any,
+        'validateRequest',
+      ) as jest.SpyInstance;
 
       guard.canActivate(mockExecutionContext);
 

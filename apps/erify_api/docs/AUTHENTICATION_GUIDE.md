@@ -101,6 +101,7 @@ Both `JwtAuthGuard` and `AdminGuard` are registered as **global guards** in `app
 1. **JwtAuthGuard** (Global):
    - Runs on all endpoints by default
    - Checks for `@Public()` decorator - if present, skips authentication
+   - Checks for `@Backdoor()` decorator - if present, skips authentication (backdoor endpoints use API key auth)
    - Validates JWT token and populates `request.user`
    - Extracts user information and maps `user.id` to `ext_id` for database lookups
 
@@ -170,14 +171,18 @@ export class HealthController {
 
 **Using API Key Guards:**
 ```typescript
+import { BaseBackdoorController } from '@/backdoor/base-backdoor.controller';
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 
 @Controller('backdoor/users')
 @UseGuards(BackdoorApiKeyGuard)  // API key authentication
-export class BackdoorUserController {
+export class BackdoorUserController extends BaseBackdoorController {
   // Service-to-service operations
+  // BaseBackdoorController uses @Backdoor() decorator to skip JWT authentication
 }
 ```
+
+**Note**: Backdoor controllers extend `BaseBackdoorController` which uses the `@Backdoor()` decorator. This decorator tells `JwtAuthGuard` to skip JWT authentication, allowing these endpoints to use API key authentication instead.
 
 **Protected Endpoints with Backdoor API Key**:
 - `POST /backdoor/users` - Create user (API key required)
@@ -197,6 +202,12 @@ export class BackdoorUserController {
 - **Usage**: Apply to admin controllers or methods
 - **Behavior**: AdminGuard checks if user has admin role in ANY studio
 - **Example**: Admin CRUD endpoints
+
+### `@Backdoor()`
+- **Purpose**: Skip JWT authentication for backdoor endpoints (use API key auth instead)
+- **Usage**: Apply to backdoor controllers (typically via `BaseBackdoorController`)
+- **Behavior**: Tells `JwtAuthGuard` to skip JWT validation, allowing API key authentication
+- **Example**: Backdoor service-to-service endpoints
 
 ### `@CurrentUser()`
 - **Purpose**: Extract authenticated user from request (provided by SDK)
@@ -320,7 +331,7 @@ model StudioMembership {
 
 ## Testing Strategy
 
-**Reference**: Test files in `src/common/guards/` and `src/admin/` directories
+**Reference**: Test files in `src/lib/guards/` and `src/admin/` directories
 
 ### Unit Tests
 - Test `AdminGuard` with mocked `StudioMembershipService`

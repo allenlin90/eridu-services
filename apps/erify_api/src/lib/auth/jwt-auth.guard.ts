@@ -5,6 +5,8 @@ import { Reflector } from '@nestjs/core';
 import type { StudioMembership } from '@prisma/client';
 import type { Request } from 'express';
 
+import { IS_BACKDOOR_KEY } from '@/lib/decorators/backdoor.decorator';
+import { IS_GOOGLE_SHEETS_KEY } from '@/lib/decorators/google-sheets.decorator';
 import { IS_PUBLIC_KEY } from '@/lib/decorators/public.decorator';
 import { HttpError } from '@/lib/errors/http-error.util';
 
@@ -75,7 +77,17 @@ export class JwtAuthGuard extends SdkJwtAuthGuard {
       context.getClass(),
     ]);
 
-    if (isPublic) {
+    const isBackdoor = this.reflector.getAllAndOverride<boolean>(
+      IS_BACKDOOR_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    const isGoogleSheets = this.reflector.getAllAndOverride<boolean>(
+      IS_GOOGLE_SHEETS_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (isPublic || isBackdoor || isGoogleSheets) {
       return true;
     }
 

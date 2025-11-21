@@ -160,7 +160,7 @@ export class StudioMembershipRepository extends BaseRepository<
       where: { ...where, deletedAt: null },
       data,
       ...(include && { include }),
-    }) as Promise<StudioMembership | StudioMembershipWithIncludes<T>>;
+    });
   }
 
   async findByUid<
