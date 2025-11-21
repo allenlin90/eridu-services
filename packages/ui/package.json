@@ -1,7 +1,7 @@
 {
   "name": "@eridu/ui",
   "type": "module",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "exports": {
     "./globals.css": "./src/styles/globals.css",
@@ -46,7 +46,7 @@
     "react-hook-form": "^7.56.2",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^4.0.17"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@eridu/eslint-config": "workspace:*",
@@ -56,7 +56,7 @@
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.47",
+    "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3"
   }
