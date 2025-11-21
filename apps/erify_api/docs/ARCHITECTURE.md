@@ -291,6 +291,7 @@ graph LR
   - `AdminModule` (Administrative operations)
   - `MeModule` (User-scoped operations)
   - `BackdoorModule` (Service-to-service operations)
+  - `GoogleSheetsModule` (Google Sheets integration endpoints)
   - `OpenAPIModule` (API documentation)
 - **Providers**: Global pipes, interceptors, and filters
 
@@ -676,7 +677,52 @@ graph LR
   - Returns 404 if MC not found or show not assigned to user's MC
 - **Testing Requirements**: Tests should cover controller endpoints (authentication, pagination, error handling) and service logic (MC resolution, show filtering, include patterns). See `shows.controller.spec.ts` and `shows.service.spec.ts` for test implementation details.
 
-### 7. Health Check Module
+### 7. Service-to-Service Modules
+
+#### BackdoorModule
+- **Purpose**: Service-to-service operations with API key authentication
+- **Architecture**: Uses `@Backdoor()` decorator pattern for API key authentication
+- **Controllers**: Backdoor controllers extend `BaseBackdoorController`
+- **Features**: User creation, updates, membership management, JWKS refresh
+- **Authentication**: `BackdoorApiKeyGuard` (global guard, opt-in via `@Backdoor()` decorator)
+
+#### GoogleSheetsModule ⭐
+- **Purpose**: Google Sheets integration endpoints for schedule management
+- **Architecture**: Uses `@GoogleSheets()` decorator pattern for API key authentication
+- **Imports**: `GoogleSheetsScheduleModule`
+- **Controllers**: 
+  - `GoogleSheetsScheduleController` (extends `BaseGoogleSheetsController`)
+- **Base Controller Pattern**:
+  ```typescript
+  @GoogleSheets()  // Decorator enables API key authentication
+  export abstract class BaseGoogleSheetsController {
+    // Shared utility methods for pagination, validation, etc.
+  }
+  ```
+- **Features**:
+  - Full CRUD operations for schedules via Google Sheets
+  - Schedule validation and publishing
+  - Bulk operations (bulk create and bulk update)
+  - Monthly overview with client grouping
+  - Snapshot management
+- **Authentication**: `GoogleSheetsApiKeyGuard` (global guard, opt-in via `@GoogleSheets()` decorator)
+- **Guard Integration**:
+  - `JwtAuthGuard` automatically skips JWT validation when `@GoogleSheets()` is present
+  - `GoogleSheetsApiKeyGuard` validates `X-API-Key` header against `GOOGLE_SHEETS_API_KEY`
+  - Service context attached to `request.service` with `serviceName: 'google-sheets'`
+- **Module Structure**:
+  ```
+  google-sheets/
+    ├── google-sheets.module.ts
+    ├── base-google-sheets.controller.ts
+    └── schedules/
+        ├── google-sheets-schedule.controller.ts
+        └── google-sheets-schedule.module.ts
+  ```
+- **Endpoints**: All endpoints prefixed with `/google-sheets/schedules`
+- **Status**: ✅ IMPLEMENTED - Full schedule management via Google Sheets integration
+
+### 8. Health Check Module
 
 #### HealthModule
 - **Purpose**: Health check endpoints for load balancers and monitoring

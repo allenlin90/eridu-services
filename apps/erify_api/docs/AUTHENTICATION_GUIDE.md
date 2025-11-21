@@ -102,10 +102,23 @@ Both `JwtAuthGuard` and `AdminGuard` are registered as **global guards** in `app
    - Runs on all endpoints by default
    - Checks for `@Public()` decorator - if present, skips authentication
    - Checks for `@Backdoor()` decorator - if present, skips authentication (backdoor endpoints use API key auth)
+   - Checks for `@GoogleSheets()` decorator - if present, skips authentication (Google Sheets endpoints use API key auth)
    - Validates JWT token and populates `request.user`
    - Extracts user information and maps `user.id` to `ext_id` for database lookups
 
-2. **AdminGuard** (Global):
+2. **BackdoorApiKeyGuard** (Global, Opt-in):
+   - Registered as global guard but only runs when `@Backdoor()` decorator is present
+   - Validates `X-API-Key` header against `BACKDOOR_API_KEY` environment variable
+   - Attaches service context to `request.service` with `serviceName: 'backdoor'`
+   - Skips validation if API key not configured in development mode
+
+3. **GoogleSheetsApiKeyGuard** (Global, Opt-in):
+   - Registered as global guard but only runs when `@GoogleSheets()` decorator is present
+   - Validates `X-API-Key` header against `GOOGLE_SHEETS_API_KEY` environment variable
+   - Attaches service context to `request.service` with `serviceName: 'google-sheets'`
+   - Skips validation if API key not configured in development mode
+
+4. **AdminGuard** (Global, Opt-in):
    - Runs on all endpoints by default
    - Checks for `@AdminProtected()` decorator - if present, enforces admin authorization
    - If decorator not present, allows access (returns `true`)
@@ -223,24 +236,45 @@ export class BackdoorUserController extends BaseBackdoorController {
 
 ### Global Guards Registration
 
-Both `JwtAuthGuard` and `AdminGuard` are registered as **global guards** in `app.module.ts`:
+Five guards are registered as **global guards** in `app.module.ts`:
 
 ```typescript
 @Module({
   providers: [
     {
       provide: APP_GUARD,
-      useClass: JwtAuthGuard,  // Global JWT authentication
+      useClass: ThrottlerGuard,           // Rate limiting
     },
     {
       provide: APP_GUARD,
-      useClass: AdminGuard,    // Global admin authorization (opt-in via decorator)
+      useClass: JwtAuthGuard,             // Global JWT authentication
+    },
+    {
+      provide: APP_GUARD,
+      useClass: BackdoorApiKeyGuard,      // API key auth for backdoor endpoints (opt-in via @Backdoor())
+    },
+    {
+      provide: APP_GUARD,
+      useClass: GoogleSheetsApiKeyGuard,  // API key auth for Google Sheets endpoints (opt-in via @GoogleSheets())
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AdminGuard,               // Global admin authorization (opt-in via @AdminProtected())
     },
     // ... other providers
   ],
 })
 export class AppModule {}
 ```
+
+**Guard Execution Order**:
+1. `ThrottlerGuard` - Rate limiting (applies to all requests)
+2. `JwtAuthGuard` - JWT validation (skips if `@Public()`, `@Backdoor()`, or `@GoogleSheets()`)
+3. `BackdoorApiKeyGuard` - API key validation (only runs if `@Backdoor()` decorator present)
+4. `GoogleSheetsApiKeyGuard` - API key validation (only runs if `@GoogleSheets()` decorator present)
+5. `AdminGuard` - Admin authorization (only runs if `@AdminProtected()` decorator present)
+
+**Note**: API key guards (`BackdoorApiKeyGuard` and `GoogleSheetsApiKeyGuard`) are global but use decorator-based opt-in. They only validate API keys when the corresponding decorator (`@Backdoor()` or `@GoogleSheets()`) is present on the controller or route. The `JwtAuthGuard` also checks for these decorators and skips JWT validation when they are present, allowing API key authentication to take precedence.
 
 ### Auth Module
 
