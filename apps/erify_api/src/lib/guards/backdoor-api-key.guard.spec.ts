@@ -1,5 +1,6 @@
 import { ExecutionContext } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 
 import { Env } from '@/config/env.schema';
@@ -9,6 +10,7 @@ import { BackdoorApiKeyGuard } from './backdoor-api-key.guard';
 describe('BackdoorApiKeyGuard', () => {
   let guard: BackdoorApiKeyGuard;
   let configService: jest.Mocked<ConfigService<Env>>;
+  let reflector: jest.Mocked<Reflector>;
   let mockExecutionContext: ExecutionContext;
   let mockRequest: Partial<Request>;
 
@@ -17,6 +19,11 @@ describe('BackdoorApiKeyGuard', () => {
     configService = {
       get: jest.fn(),
     } as unknown as jest.Mocked<ConfigService<Env>>;
+
+    // Mock Reflector
+    reflector = {
+      getAllAndOverride: jest.fn().mockReturnValue(true),
+    } as unknown as jest.Mocked<Reflector>;
 
     // Mock ExecutionContext
     mockRequest = {
@@ -28,9 +35,11 @@ describe('BackdoorApiKeyGuard', () => {
       switchToHttp: jest.fn().mockReturnValue({
         getRequest: getRequestMock,
       }),
+      getHandler: jest.fn(),
+      getClass: jest.fn(),
     } as unknown as ExecutionContext;
 
-    guard = new BackdoorApiKeyGuard(configService);
+    guard = new BackdoorApiKeyGuard(configService, reflector);
   });
 
   describe('when API key is configured', () => {
@@ -121,7 +130,7 @@ describe('BackdoorApiKeyGuard', () => {
         return undefined;
       });
       // Create guard AFTER mock is set up so isProduction is set correctly
-      productionGuard = new BackdoorApiKeyGuard(configService);
+      productionGuard = new BackdoorApiKeyGuard(configService, reflector);
     });
 
     it('should throw UnauthorizedException when header is provided but env is not set', () => {
@@ -133,6 +142,8 @@ describe('BackdoorApiKeyGuard', () => {
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: getRequestMock,
         }),
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
       } as unknown as ExecutionContext;
 
       expect(() => {
@@ -149,6 +160,8 @@ describe('BackdoorApiKeyGuard', () => {
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: getRequestMock,
         }),
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
       } as unknown as ExecutionContext;
 
       expect(() => {
