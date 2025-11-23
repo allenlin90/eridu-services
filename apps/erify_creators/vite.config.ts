@@ -7,8 +7,13 @@ import path from 'path';
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
+    preserveSymlinks: false, // Required for pnpm workspaces
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    conditions: ['default', 'module'],
+  },
+  optimizeDeps: {
+    exclude: ['@eridu/ui'], // Exclude UI package from pre-bundling for JIT compilation
   },
 });

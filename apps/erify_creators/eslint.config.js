@@ -7,13 +7,13 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['dist', 'eslint.config.js'],
+    ignores: ['dist', 'eslint.config.js', 'tailwind.config.js', '*.config.js'],
   },
   js.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
   eslintPluginPrettierRecommended,
   {
     files: ['**/*.{ts,tsx}'],
+    extends: [...tseslint.configs.recommendedTypeChecked],
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
