@@ -1,4 +1,5 @@
 ### MC Client
+
 - [x] Authentication with `email` by Clerk.io
 - [x] Root error boundary
 - [x] Browser router
