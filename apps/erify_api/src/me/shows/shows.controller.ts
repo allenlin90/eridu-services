@@ -17,10 +17,12 @@ import { ApiZodResponse } from '@/lib/openapi/decorators';
 import {
   createPaginatedResponseSchema,
   createPaginationMeta,
-  PaginationQueryDto,
 } from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
-import { showDto } from '@/models/show/schemas/show.schema';
+import {
+  ListShowsQueryDto,
+  showDto,
+} from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 
 /**
@@ -46,19 +48,13 @@ export class ShowsController {
   @ZodSerializerDto(createPaginatedResponseSchema(showDto))
   async getShows(
     @CurrentUser() user: AuthenticatedUser,
-    @Query() query: PaginationQueryDto,
+    @Query() query: ListShowsQueryDto,
   ) {
     const userIdentifier = user.ext_id;
 
     const { shows, total } = await this.showsService.getShowsForMcUser(
       userIdentifier,
-      {
-        skip: query.skip,
-        take: query.take,
-        orderBy: {
-          startTime: 'desc',
-        },
-      },
+      query,
     );
 
     const meta = createPaginationMeta(query.page, query.limit, total);
