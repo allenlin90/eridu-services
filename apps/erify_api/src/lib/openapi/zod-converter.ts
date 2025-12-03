@@ -3,7 +3,7 @@ import { z } from 'zod';
 /**
  * OpenAPI Schema types
  */
-interface OpenAPISchema {
+type OpenAPISchema = {
   type?: string;
   format?: string;
   nullable?: boolean;
@@ -11,7 +11,7 @@ interface OpenAPISchema {
   properties?: Record<string, OpenAPISchema>;
   required?: string[];
   additionalProperties?: OpenAPISchema;
-}
+};
 
 /**
  * Utility to convert Zod schemas to OpenAPI schemas
@@ -112,8 +112,8 @@ export class ZodOpenAPIConverter {
       // Check if field is required
       // A field is required if it's not optional and not nullable (unless explicitly nullable)
       if (
-        !(value instanceof z.ZodOptional) &&
-        !(value instanceof z.ZodNullable)
+        !(value instanceof z.ZodOptional)
+        && !(value instanceof z.ZodNullable)
       ) {
         required.push(key);
       }

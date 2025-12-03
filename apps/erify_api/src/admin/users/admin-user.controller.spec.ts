@@ -1,4 +1,18 @@
 // Mock auth-sdk modules to avoid ES module import issues
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+
+import { AdminUserController } from './admin-user.controller';
+
+import { JwtAuthGuard } from '@/lib/auth/jwt-auth.guard';
+import { AdminGuard } from '@/lib/guards/admin.guard';
+import type { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+import type {
+  CreateUserDto,
+  UpdateUserDto,
+} from '@/models/user/schemas/user.schema';
+import { UserService } from '@/models/user/user.service';
+
 jest.mock('@eridu/auth-sdk/adapters/nestjs/current-user.decorator', () => ({
   CurrentUser: jest.fn(() => () => {}),
 }));
@@ -32,20 +46,7 @@ jest.mock('@eridu/auth-sdk/server/jwks/types', () => ({}));
 jest.mock('@eridu/auth-sdk/server/jwt/types', () => ({}));
 jest.mock('@eridu/auth-sdk/types', () => ({}));
 
-import { Test, TestingModule } from '@nestjs/testing';
-
-import { JwtAuthGuard } from '@/lib/auth/jwt-auth.guard';
-import { AdminGuard } from '@/lib/guards/admin.guard';
-import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
-import {
-  CreateUserDto,
-  UpdateUserDto,
-} from '@/models/user/schemas/user.schema';
-import { UserService } from '@/models/user/user.service';
-
-import { AdminUserController } from './admin-user.controller';
-
-describe('AdminUserController', () => {
+describe('adminUserController', () => {
   let controller: AdminUserController;
 
   const mockUserService = {

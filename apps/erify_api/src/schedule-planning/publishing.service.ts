@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { Schedule } from '@prisma/client';
 
+import { PlanDocument, ShowPlanItem } from './schemas/schedule-planning.schema';
+import { ValidationService } from './validation.service';
+
 import { HttpError } from '@/lib/errors/http-error.util';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ShowService } from '@/models/show/show.service';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { PrismaService, TransactionClient } from '@/prisma/prisma.service';
-
-import { PlanDocument, ShowPlanItem } from './schemas/schedule-planning.schema';
-import { ValidationService } from './validation.service';
 
 // Type for Schedule with relations from publish
 export type ScheduleWithRelations = Schedule & {
@@ -43,10 +43,10 @@ export class PublishingService {
     version: number,
     userId: bigint,
   ): Promise<{
-    schedule: ScheduleWithRelations;
-    showsCreated: number;
-    showsDeleted: number;
-  }> {
+      schedule: ScheduleWithRelations;
+      showsCreated: number;
+      showsDeleted: number;
+    }> {
     // Get schedule with plan document
     const schedule = await this.scheduleService.getScheduleById(scheduleUid, {
       client: true,
@@ -68,9 +68,9 @@ export class PublishingService {
     // Validate plan document structure
     const planDocument = schedule.planDocument as PlanDocument;
     if (
-      !planDocument ||
-      !planDocument.shows ||
-      !Array.isArray(planDocument.shows)
+      !planDocument
+      || !planDocument.shows
+      || !Array.isArray(planDocument.shows)
     ) {
       throw HttpError.badRequest('Invalid plan document structure');
     }

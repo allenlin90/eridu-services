@@ -1,4 +1,6 @@
-/* eslint-disable @typescript-eslint/unbound-method */
+import { ShowStandardRepository } from './show-standard.repository';
+import { ShowStandardService } from './show-standard.service';
+
 import {
   createMockRepository,
   createMockUtilityService,
@@ -7,26 +9,23 @@ import {
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
 import { UtilityService } from '@/utility/utility.service';
 
-import { ShowStandardRepository } from './show-standard.repository';
-import { ShowStandardService } from './show-standard.service';
-
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
-describe('ShowStandardService', () => {
+describe('showStandardService', () => {
   let service: ShowStandardService;
   let showStandardRepository: ShowStandardRepository;
   let utilityService: UtilityService;
 
   beforeEach(async () => {
-    const showStandardRepositoryMock =
-      createMockRepository<ShowStandardRepository>();
+    const showStandardRepositoryMock
+      = createMockRepository<ShowStandardRepository>();
     const utilityMock = createMockUtilityService('shsd_test123');
 
     const module = await createModelServiceTestModule({
       serviceClass: ShowStandardService,
       repositoryClass: ShowStandardRepository,
       repositoryMock: showStandardRepositoryMock,
-      utilityMock: utilityMock,
+      utilityMock,
     });
 
     service = module.get<ShowStandardService>(ShowStandardService);

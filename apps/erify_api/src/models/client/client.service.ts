@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Client, Prisma } from '@prisma/client';
 
+import { CreateClientDto, UpdateClientDto } from './schemas/client.schema';
+import { ClientRepository } from './client.repository';
+
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
-
-import { ClientRepository } from './client.repository';
-import { CreateClientDto, UpdateClientDto } from './schemas/client.schema';
 
 @Injectable()
 export class ClientService extends BaseModelService {

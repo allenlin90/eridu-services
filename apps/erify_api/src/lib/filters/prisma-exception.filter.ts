@@ -21,8 +21,7 @@ import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
  */
 @Catch(Prisma.PrismaClientKnownRequestError)
 export class PrismaExceptionFilter
-  implements ExceptionFilter<Prisma.PrismaClientKnownRequestError>
-{
+implements ExceptionFilter<Prisma.PrismaClientKnownRequestError> {
   constructor(
     @InjectPinoLogger(PrismaExceptionFilter.name)
     private readonly logger: PinoLogger,
@@ -166,7 +165,8 @@ export class PrismaExceptionFilter
   }): string | undefined {
     const { cause, modelName } = meta;
 
-    if (!cause) return undefined;
+    if (!cause)
+      return undefined;
 
     // Strategy 1: Extract from relation name pattern
     // Example: "relation 'MCToUser'" → "User" (the related model)

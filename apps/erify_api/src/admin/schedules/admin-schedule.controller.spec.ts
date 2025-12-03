@@ -1,9 +1,12 @@
 import { ConfigService } from '@nestjs/config';
-import { Test, TestingModule } from '@nestjs/testing';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+
+import { AdminScheduleController } from './admin-schedule.controller';
 
 import { GoogleSheetsApiKeyGuard } from '@/lib/guards/google-sheets-api-key.guard';
 import { ScheduleService } from '@/models/schedule/schedule.service';
-import {
+import type {
   BulkCreateScheduleDto,
   BulkUpdateScheduleDto,
   CreateScheduleDto,
@@ -14,11 +17,9 @@ import {
 import { ListSnapshotsQueryDto } from '@/models/schedule-snapshot/schemas/schedule-snapshot.schema';
 import { UserService } from '@/models/user/user.service';
 import { SchedulePlanningService } from '@/schedule-planning/schedule-planning.service';
-import { PublishScheduleDto } from '@/schedule-planning/schemas/schedule-planning.schema';
+import type { PublishScheduleDto } from '@/schedule-planning/schemas/schedule-planning.schema';
 
-import { AdminScheduleController } from './admin-schedule.controller';
-
-describe('AdminScheduleController', () => {
+describe('adminScheduleController', () => {
   let controller: AdminScheduleController;
 
   const mockScheduleService = {
@@ -46,8 +47,10 @@ describe('AdminScheduleController', () => {
   beforeEach(async () => {
     const mockConfigService = {
       get: jest.fn((key: string) => {
-        if (key === 'GOOGLE_SHEETS_API_KEY') return undefined;
-        if (key === 'NODE_ENV') return 'development';
+        if (key === 'GOOGLE_SHEETS_API_KEY')
+          return undefined;
+        if (key === 'NODE_ENV')
+          return 'development';
         return undefined;
       }),
     };

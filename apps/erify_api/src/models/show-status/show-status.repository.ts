@@ -5,14 +5,13 @@ import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
 class ShowStatusModelWrapper
-  implements
+implements
     IBaseModel<
       ShowStatus,
       Prisma.ShowStatusCreateInput,
       Prisma.ShowStatusUpdateInput,
       Prisma.ShowStatusWhereInput
-    >
-{
+    > {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(args: {

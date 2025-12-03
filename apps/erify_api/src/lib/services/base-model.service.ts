@@ -1,4 +1,4 @@
-import { UtilityService } from '@/utility/utility.service';
+import type { UtilityService } from '@/utility/utility.service';
 
 /**
  * Base service class for core model entity services providing common functionality

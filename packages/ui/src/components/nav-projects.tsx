@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
 import {
   Folder,
-  Forward,
   type LucideIcon,
   MoreHorizontal,
+  Share,
   Trash2,
-} from "lucide-react";
+} from 'lucide-react';
 
 import {
   DropdownMenu,
@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@eridu/ui/components/dropdown-menu";
+} from '@eridu/ui/components/ui/dropdown-menu';
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -23,32 +23,30 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@eridu/ui/components/sidebar";
+} from '@eridu/ui/components/ui/sidebar';
 
 export function NavProjects({
   projects,
 }: {
   projects: {
     name: string;
-    icon?: LucideIcon;
-    onClick?: React.MouseEventHandler<HTMLButtonElement>;
+    url: string;
+    icon: LucideIcon;
   }[];
 }) {
   const { isMobile } = useSidebar();
-
-  if (!projects?.length) {
-    return null;
-  }
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Projects</SidebarGroupLabel>
       <SidebarMenu>
-        {projects.map(item => (
+        {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild onClick={item?.onClick} disabled={!item?.onClick}>
-              {item.icon && <item.icon />}
-              <span>{item.name}</span>
+            <SidebarMenuButton asChild>
+              <a href={item.url}>
+                <item.icon />
+                <span>{item.name}</span>
+              </a>
             </SidebarMenuButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -58,16 +56,16 @@ export function NavProjects({
                 </SidebarMenuAction>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-48 rounded-lg"
-                side={isMobile ? "bottom" : "right"}
-                align={isMobile ? "end" : "start"}
+                className="w-48"
+                side={isMobile ? 'bottom' : 'right'}
+                align={isMobile ? 'end' : 'start'}
               >
                 <DropdownMenuItem>
                   <Folder className="text-muted-foreground" />
                   <span>View Project</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Forward className="text-muted-foreground" />
+                  <Share className="text-muted-foreground" />
                   <span>Share Project</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -79,6 +77,12 @@ export function NavProjects({
             </DropdownMenu>
           </SidebarMenuItem>
         ))}
+        <SidebarMenuItem>
+          <SidebarMenuButton>
+            <MoreHorizontal />
+            <span>More</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroup>
   );

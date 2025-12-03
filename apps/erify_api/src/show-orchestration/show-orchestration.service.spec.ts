@@ -1,19 +1,20 @@
-/* eslint-disable @typescript-eslint/unbound-method */
+/* eslint-disable  */
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-import { Prisma, Show } from '@prisma/client';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+import type { Prisma, Show } from '@prisma/client';
 
 import { ShowService } from '@/models/show/show.service';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { PrismaService } from '@/prisma/prisma.service';
-import {
+import type {
   CreateShowWithAssignmentsDto,
   UpdateShowWithAssignmentsDto,
 } from '@/show-orchestration/schemas/show-orchestration.schema';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 
-describe('ShowOrchestrationService', () => {
+describe('showOrchestrationService', () => {
   let service: ShowOrchestrationService;
   let showService: jest.Mocked<ShowService>;
   let showMcService: jest.Mocked<ShowMcService>;
@@ -119,7 +120,7 @@ describe('ShowOrchestrationService', () => {
           provide: PrismaService,
           useValue: {
             executeTransaction: jest.fn(
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+               
               async (callback: any) => await callback(mockTransactionClient),
             ),
             mC: {
@@ -391,9 +392,9 @@ describe('ShowOrchestrationService', () => {
           showType: true,
           showStatus: true,
           showStandard: true,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+           
           showMCs: expect.any(Object),
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+           
           showPlatforms: expect.any(Object),
         }) as Prisma.ShowInclude,
       });
@@ -438,9 +439,9 @@ describe('ShowOrchestrationService', () => {
           showType: true,
           showStatus: true,
           showStandard: true,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+           
           showMCs: expect.any(Object),
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+           
           showPlatforms: expect.any(Object),
         }) as Prisma.ShowInclude,
       );
@@ -482,7 +483,7 @@ describe('ShowOrchestrationService', () => {
       expect(mockTransactionClient.show.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: mockShow.id },
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+           
           data: expect.objectContaining({ name: 'Updated Show Name' }),
         }),
       );

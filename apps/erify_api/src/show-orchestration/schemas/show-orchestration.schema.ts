@@ -2,14 +2,12 @@ import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
 import {
+  createShowSchema,
   showDto,
   showWithRelationsSchema,
 } from '@/models/show/schemas/show.schema';
-import { createShowSchema } from '@/models/show/schemas/show.schema';
-import { showMcWithRelationsSchema } from '@/models/show-mc/schemas/show-mc.schema';
-import { createShowMcSchema } from '@/models/show-mc/schemas/show-mc.schema';
-import { showPlatformWithRelationsSchema } from '@/models/show-platform/schemas/show-platform.schema';
-import { createShowPlatformSchema } from '@/models/show-platform/schemas/show-platform.schema';
+import { createShowMcSchema, showMcWithRelationsSchema } from '@/models/show-mc/schemas/show-mc.schema';
+import { createShowPlatformSchema, showPlatformWithRelationsSchema } from '@/models/show-platform/schemas/show-platform.schema';
 
 // Extended schema for show orchestration with MC and platform assignments
 export const createShowWithAssignmentsSchema = createShowSchema.safeExtend({
@@ -21,8 +19,8 @@ export const createShowWithAssignmentsSchema = createShowSchema.safeExtend({
     .optional(),
 });
 
-const transformCreateShowWithAssignmentsSchema =
-  createShowWithAssignmentsSchema.transform((data) => ({
+const transformCreateShowWithAssignmentsSchema
+  = createShowWithAssignmentsSchema.transform((data) => ({
     // Base show data
     clientId: data.client_id,
     studioRoomId: data.studio_room_id,
@@ -49,11 +47,11 @@ const transformCreateShowWithAssignmentsSchema =
     })),
   }));
 
-export const updateShowWithAssignmentsSchema =
-  createShowWithAssignmentsSchema.partial();
+export const updateShowWithAssignmentsSchema
+  = createShowWithAssignmentsSchema.partial();
 
-const transformUpdateShowWithAssignmentsSchema =
-  updateShowWithAssignmentsSchema.transform((data) => ({
+const transformUpdateShowWithAssignmentsSchema
+  = updateShowWithAssignmentsSchema.transform((data) => ({
     // Base show data
     clientId: data.client_id,
     studioRoomId: data.studio_room_id,
@@ -166,35 +164,35 @@ export const replacePlatformsOnShowSchema = z.object({
 });
 
 // Type definitions for transformed DTOs
-export interface RemoveMcsFromShowTransformed {
+export type RemoveMcsFromShowTransformed = {
   mcIds: string[];
-}
+};
 
-export interface RemovePlatformsFromShowTransformed {
+export type RemovePlatformsFromShowTransformed = {
   platformIds: string[];
-}
+};
 
-export interface ReplaceMcItem {
+export type ReplaceMcItem = {
   mcId: string;
   note?: string | null;
   metadata?: object;
-}
+};
 
-export interface ReplaceMcsOnShowTransformed {
+export type ReplaceMcsOnShowTransformed = {
   mcs: ReplaceMcItem[];
-}
+};
 
-export interface ReplacePlatformItem {
+export type ReplacePlatformItem = {
   platformId: string;
   liveStreamLink?: string;
   platformShowId?: string;
   viewerCount?: number;
   metadata?: object;
-}
+};
 
-export interface ReplacePlatformsOnShowTransformed {
+export type ReplacePlatformsOnShowTransformed = {
   platforms: ReplacePlatformItem[];
-}
+};
 
 // DTOs for removing/replacing operations
 export class RemoveMcsFromShowDto extends createZodDto(

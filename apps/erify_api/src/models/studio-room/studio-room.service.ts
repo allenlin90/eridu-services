@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, StudioRoom } from '@prisma/client';
 
-import { HttpError } from '@/lib/errors/http-error.util';
-import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
-
 import {
   CreateStudioRoomDto,
   UpdateStudioRoomDto,
 } from './schemas/studio-room.schema';
 import { StudioRoomRepository } from './studio-room.repository';
+
+import { HttpError } from '@/lib/errors/http-error.util';
+import { BaseModelService } from '@/lib/services/base-model.service';
+import { UtilityService } from '@/utility/utility.service';
 
 type StudioRoomWithIncludes<T extends Prisma.StudioRoomInclude> =
   Prisma.StudioRoomGetPayload<{
@@ -50,7 +50,9 @@ export class StudioRoomService extends BaseModelService {
 
   async getStudioRoomById<
     T extends Prisma.StudioRoomInclude = Record<string, never>,
-  >(uid: string, include?: T): Promise<StudioRoom | StudioRoomWithIncludes<T>> {
+  >(uid: string,
+    include?: T,
+  ): Promise<StudioRoom | StudioRoomWithIncludes<T>> {
     return this.findStudioRoomOrThrow(uid, include);
   }
 
@@ -123,9 +125,12 @@ export class StudioRoomService extends BaseModelService {
   ): Prisma.StudioRoomUpdateInput {
     const payload: Prisma.StudioRoomUpdateInput = {};
 
-    if (dto.name !== undefined) payload.name = dto.name;
-    if (dto.capacity !== undefined) payload.capacity = dto.capacity;
-    if (dto.metadata !== undefined) payload.metadata = dto.metadata;
+    if (dto.name !== undefined)
+      payload.name = dto.name;
+    if (dto.capacity !== undefined)
+      payload.capacity = dto.capacity;
+    if (dto.metadata !== undefined)
+      payload.metadata = dto.metadata;
 
     if (dto.studioId !== undefined) {
       payload.studio = { connect: { uid: dto.studioId } };
@@ -136,7 +141,9 @@ export class StudioRoomService extends BaseModelService {
 
   private async findStudioRoomOrThrow<
     T extends Prisma.StudioRoomInclude = Record<string, never>,
-  >(uid: string, include?: T): Promise<StudioRoom | StudioRoomWithIncludes<T>> {
+  >(uid: string,
+    include?: T,
+  ): Promise<StudioRoom | StudioRoomWithIncludes<T>> {
     const studioRoom = await this.studioRoomRepository.findByUid(uid, include);
     if (!studioRoom) {
       throw HttpError.notFound('Studio Room', uid);

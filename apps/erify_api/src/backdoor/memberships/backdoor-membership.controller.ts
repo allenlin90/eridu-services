@@ -1,6 +1,6 @@
 import { Body, Controller, HttpStatus, Post, UseGuards } from '@nestjs/common';
 
-import { BaseAdminController } from '@/admin/base-admin.controller';
+import { BaseBackdoorController } from '@/backdoor/base-backdoor.controller';
 import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 import {
@@ -23,7 +23,7 @@ import { StudioMembershipService } from '@/models/membership/studio-membership.s
  */
 @Controller('backdoor/studio-memberships')
 @UseGuards(BackdoorApiKeyGuard)
-export class BackdoorMembershipController extends BaseAdminController {
+export class BackdoorMembershipController extends BaseBackdoorController {
   constructor(
     private readonly studioMembershipService: StudioMembershipService,
   ) {

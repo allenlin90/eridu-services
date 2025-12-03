@@ -5,14 +5,13 @@ import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
 class ShowTypeModelWrapper
-  implements
+implements
     IBaseModel<
       ShowType,
       Prisma.ShowTypeCreateInput,
       Prisma.ShowTypeUpdateInput,
       Prisma.ShowTypeWhereInput
-    >
-{
+    > {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(args: {

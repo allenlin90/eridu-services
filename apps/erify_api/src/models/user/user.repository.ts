@@ -6,14 +6,13 @@ import { PrismaService } from '@/prisma/prisma.service';
 
 // Custom model wrapper that implements IBaseModel with UserWhereInput
 class UserModelWrapper
-  implements
+implements
     IBaseModel<
       User,
       Prisma.UserCreateInput,
       Prisma.UserUpdateInput,
       Prisma.UserWhereInput
-    >
-{
+    > {
   constructor(private readonly prismaModel: Prisma.UserDelegate) {}
 
   async create(args: {

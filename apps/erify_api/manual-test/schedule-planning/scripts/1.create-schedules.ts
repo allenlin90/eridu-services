@@ -81,7 +81,7 @@ const PORT = process.env.PORT || 3000;
 
 // Configuration
 const DEFAULT_API_URL = `http://${API_HOST}:${PORT}`;
-const BASE_URL = '/admin/schedules';
+const BASE_URL = '/google-sheets/schedules';
 
 // Parse command line arguments
 function parseArgs(): {

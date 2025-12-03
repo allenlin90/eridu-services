@@ -13,27 +13,27 @@ flowchart TD
     Start([Start: Google Sheets<br/>Monthly Planning Data]) --> Group[Group Shows by Client<br/>AppsScript Processing]
     Group --> InitLoop["Initialize: clientIndex = 1<br/>schedules = []"]
     InitLoop --> CheckClients{More Clients?}
-    
+
     CheckClients -->|No| AllCreated[All Schedules Created]
     CheckClients -->|Yes| CreateSchedule["POST /admin/schedules<br/>Create Schedule for Client N<br/>Body: name, start_date, end_date,<br/>plan_document with ~100 shows,<br/>client_id, created_by"]
-    
+
     CreateSchedule --> SaveSchedule["Save schedule_id and version<br/>schedules.push schedule_id"]
     SaveSchedule --> IncrementClient["clientIndex++"]
     IncrementClient --> CheckClients
-    
+
     AllCreated --> ReviewLoop[For each schedule in schedules]
     ReviewLoop --> UpdateSchedule["PATCH /admin/schedules/:id<br/>Update plan_document<br/>Body: plan_document, version<br/>Auto-creates snapshot"]
-    
+
     UpdateSchedule --> ValidateSchedule["POST /admin/schedules/:id/validate<br/>Check room conflicts,<br/>MC double-booking"]
-    
+
     ValidateSchedule --> PublishSchedule["POST /admin/schedules/:id/publish<br/>Body: version<br/>Deletes existing shows,<br/>Creates new shows from plan_document"]
-    
+
     PublishSchedule --> NextSchedule{More Schedules?}
     NextSchedule -->|Yes| ReviewLoop
     NextSchedule -->|No| MonthlyOverview["GET /admin/schedules/overview/monthly<br/>Query: start_date, end_date<br/>View all schedules grouped by client"]
-    
+
     MonthlyOverview --> Complete([Complete:<br/>All Schedules Published])
-    
+
     style CreateSchedule fill:#e1f5ff
     style UpdateSchedule fill:#fff4e1
     style ValidateSchedule fill:#fff4e1
@@ -52,6 +52,7 @@ flowchart TD
   - Response includes: `id` (schedule UID), `version` (starts at 1)
 
 **AppsScript Processing**:
+
 - Group shows by client from Google Sheets data
 - For each client, create a schedule with ~100 shows
 - Store schedule IDs and versions for subsequent operations
@@ -108,6 +109,7 @@ flowchart TD
 ## Overview
 
 The Google Sheets integration workflow enables operators to:
+
 1. Maintain monthly planning data in Google Sheets (sorted by client)
 2. Use AppsScript to group shows by client and create schedules via API
 3. Update, validate, and publish schedules client-by-client
@@ -124,57 +126,57 @@ flowchart TD
     Start([Start: Google Sheets<br/>Monthly Planning Data]) --> Group[Group Shows by Client<br/>AppsScript Processing]
     Group --> InitLoop["Initialize: clientIndex = 1<br/>schedules = []"]
     InitLoop --> CheckClients{More Clients?}
-    
+
     CheckClients -->|No| AllCreated[All Schedules Created]
     CheckClients -->|Yes| CreateSchedule["POST /admin/schedules<br/>Create Schedule for Client N<br/>Body: name, start_date, end_date,<br/>plan_document with ~100 shows,<br/>client_id, created_by"]
-    
+
     CreateSchedule --> CreateResult{Create Success?}
     CreateResult -->|Error| LogError[Log Error<br/>Continue to Next Client]
     CreateResult -->|Success| SaveSchedule["Save schedule_id and version<br/>schedules.push schedule_id"]
-    
+
     LogError --> IncrementClient["clientIndex++"]
     SaveSchedule --> IncrementClient
     IncrementClient --> CheckClients
-    
+
     AllCreated --> ReviewLoop[For each schedule in schedules]
     ReviewLoop --> GetSchedule["GET /admin/schedules/:id<br/>Get current schedule state"]
     GetSchedule --> CheckVersion{Version Changed?<br/>Another user edited?}
-    
+
     CheckVersion -->|Yes| HandleConflict["Handle Version Conflict<br/>Option 1: Merge changes<br/>Option 2: Fetch latest and retry<br/>Option 3: Notify user"]
     HandleConflict --> UpdateSchedule
-    
+
     CheckVersion -->|No| UpdateSchedule["PATCH /admin/schedules/:id<br/>Update plan_document<br/>Body: plan_document, version<br/>Auto-creates snapshot"]
-    
+
     UpdateSchedule --> UpdateResult{Update Success?}
     UpdateResult -->|409 Conflict| HandleConflict
     UpdateResult -->|Success| ValidateSchedule["POST /admin/schedules/:id/validate<br/>Check room conflicts,<br/>MC double-booking"]
-    
+
     ValidateSchedule --> ValidationResult{Validation Passes?}
     ValidationResult -->|No| ShowErrors["Show Validation Errors<br/>Fix in Google Sheets<br/>Update schedule again"]
     ShowErrors --> UpdateSchedule
-    
+
     ValidationResult -->|Yes| GetLatestVersion["GET /admin/schedules/:id<br/>Get latest version before publish"]
     GetLatestVersion --> PublishSchedule["POST /admin/schedules/:id/publish<br/>Body: version<br/>Deletes existing shows,<br/>Creates new shows from plan_document<br/>Supports republishing"]
-    
+
     PublishSchedule --> PublishResult{Publish Success?}
     PublishResult -->|409 Conflict| GetLatestVersion
     PublishResult -->|Error| LogPublishError[Log Publish Error<br/>Continue to Next Schedule]
     PublishResult -->|Success| MarkPublished["Mark schedule as published<br/>Shows created/updated in database"]
-    
+
     LogPublishError --> NextSchedule{More Schedules?}
     MarkPublished --> NextSchedule
     NextSchedule -->|Yes| ReviewLoop
     NextSchedule -->|No| CheckRepublish{Need Adjustments?<br/>Republish Required?}
-    
+
     CheckRepublish -->|Yes| UpdateAfterPublish["PATCH /admin/schedules/:id<br/>Update plan_document<br/>Make adjustments to shows"]
     UpdateAfterPublish --> ValidateAfterUpdate["POST /admin/schedules/:id/validate<br/>Re-validate with updated shows"]
     ValidateAfterUpdate --> RepublishSchedule["POST /admin/schedules/:id/publish<br/>Republish with updated version<br/>Deletes old shows, creates new ones"]
     RepublishSchedule --> CheckRepublish
-    
+
     CheckRepublish -->|No| MonthlyOverview["GET /admin/schedules/overview/monthly<br/>Query: start_date, end_date<br/>View all schedules grouped by client"]
-    
+
     MonthlyOverview --> Complete([Complete:<br/>All Schedules Published])
-    
+
     style CreateSchedule fill:#e1f5ff
     style UpdateSchedule fill:#fff4e1
     style ValidateSchedule fill:#fff4e1
@@ -196,6 +198,7 @@ flowchart TD
   - **Error handling**: If creation fails for a client, log error and continue to next client
 
 **AppsScript Processing**:
+
 - Group shows by client from Google Sheets data
 - For each client, create a schedule with ~100 shows
 - Store schedule IDs and versions for subsequent operations
@@ -217,6 +220,7 @@ flowchart TD
   - **Efficient operation**: Single JSON column update
 
 **Error Handling**:
+
 - **409 Conflict**: Version mismatch detected
   - Fetch latest version and retry update
   - Option 1: Merge changes manually
@@ -234,6 +238,7 @@ flowchart TD
   - Validates time range constraints
 
 **Error Handling**:
+
 - **Validation Errors**: If validation fails
   - Show validation errors to user
   - Fix issues in Google Sheets
@@ -261,6 +266,7 @@ flowchart TD
   - **Can be queued in background workers** due to expense
 
 **Error Handling**:
+
 - **409 Conflict**: Version mismatch detected
   - Fetch latest version and retry publish
 - **Publish Errors**: If publish fails
@@ -306,11 +312,13 @@ flowchart TD
 **When**: Version mismatch detected during update or publish
 
 **Recovery Options**:
+
 1. **Merge changes**: Manually merge changes from both versions
 2. **Fetch latest and retry**: Fetch latest version and retry operation
 3. **Notify user**: Notify user of conflict and let them decide
 
 **Implementation**:
+
 - Always fetch latest version before update/publish
 - Compare versions before making changes
 - Handle 409 Conflict responses gracefully
@@ -320,6 +328,7 @@ flowchart TD
 **When**: Schedule validation fails (room conflicts, MC double-booking, invalid references)
 
 **Recovery**:
+
 1. Show validation errors to user
 2. Fix issues in Google Sheets
 3. Update schedule again via `PATCH /admin/schedules/:id`
@@ -330,6 +339,7 @@ flowchart TD
 **When**: Publishing fails (database errors, transaction failures)
 
 **Recovery**:
+
 - Log error for the specific schedule
 - Continue with next schedule (independent error handling per client)
 - Allow retry of failed publishes
@@ -372,12 +382,14 @@ flowchart TD
 **Purpose**: Revert a schedule to a previous version using snapshot history
 
 **Use Cases**:
+
 - Undo accidental changes or mistakes
 - Revert to a known good state after validation errors
 - Restore from a previous version before making new changes
 - Recover from corrupted or invalid plan documents
 
 **Workflow**:
+
 1. **List Snapshots**: `GET /admin/schedules/:id/snapshots` - View all available snapshots for a schedule
 2. **Get Snapshot Details**: `GET /admin/snapshots/:id` - View specific snapshot details (version, reason, timestamp)
 3. **Restore from Snapshot**: `POST /admin/snapshots/:id/restore` - Restore schedule to snapshot version
@@ -389,11 +401,13 @@ flowchart TD
    - Returns restored schedule
 
 **Error Handling**:
+
 - **404 Not Found**: Snapshot or schedule not found
 - **400 Bad Request**: Cannot restore published schedules (must unpublish first)
 - **Recovery**: If restore fails, use the `before_restore` snapshot to rollback
 
 **Best Practices**:
+
 - Review snapshot details before restoring to ensure correct version
 - Test restore on draft schedules before using in production
 - Use restore for draft/review schedules only (published schedules require unpublish first)
@@ -426,4 +440,3 @@ flowchart TD
 - **[Schedule Upload API Design](../../docs/SCHEDULE_UPLOAD_API_DESIGN.md)** - Complete API design and architecture
 - **[Phase 1 Roadmap](../../docs/roadmap/PHASE_1.md)** - Phase 1 implementation plan
 - **[Test Payloads README](./README.md)** - Test payloads and testing guide
-

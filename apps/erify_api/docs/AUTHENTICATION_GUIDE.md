@@ -8,7 +8,7 @@ This guide provides comprehensive documentation for authentication and authoriza
 
 ### Hybrid Approach Rationale
 
-- **JWT Validation**: Extract user information from `erify_auth` service tokens using the `@eridu/auth-sdk` SDK
+- **JWT Validation**: Extract user information from `eridu_auth` service tokens using the `@eridu/auth-sdk` SDK
 - **Simple Authorization**: Use StudioMembership model to distinguish admin vs non-admin users
 - **Admin Write, Non-Admin Read-Only**: Clear access pattern without complex role hierarchies
 - **Backdoor API Key**: Service-to-service authentication for privileged operations (user creation, updates, membership management) via separate `/backdoor/*` endpoints
@@ -21,16 +21,16 @@ sequenceDiagram
     participant Client
     participant API as erify_api
     participant SDK as @eridu/auth-sdk
-    participant Auth as erify_auth
+    participant Auth as eridu_auth
     participant StudioMembershipService
     participant Database
-    
+
     Note over API,SDK: Server Startup
     API->>SDK: Initialize JwksService
     SDK->>Auth: Fetch JWKS from /api/auth/jwks
     Auth-->>SDK: Return JWKS (public keys)
     SDK->>SDK: Cache JWKS
-    
+
     Note over Client,Database: Request Flow
     Client->>API: Request with JWT token
     API->>SDK: Validate token (JwtAuthGuard)
@@ -52,7 +52,7 @@ sequenceDiagram
 
 The `@eridu/auth-sdk` SDK handles all JWT validation:
 
-- **JWKS Fetching**: SDK fetches JSON Web Key Sets from `erify_auth` service on startup
+- **JWKS Fetching**: SDK fetches JSON Web Key Sets from `eridu_auth` service on startup
 - **Local Verification**: Tokens are verified locally using cached public keys (no network call per request)
 - **User Extraction**: User information is extracted from JWT payload and attached to requests
 - **Automatic Key Rotation**: SDK automatically refreshes JWKS when unknown key IDs are detected
@@ -82,7 +82,8 @@ Backdoor endpoints use API key authentication for privileged operations:
 **Reference**: `src/config/env.schema.ts`
 
 Required environment variables:
-- `ERIFY_AUTH_URL`: Base URL of the erify_auth service (e.g., `http://localhost:3000` or `https://auth.example.com`)
+
+- `ERIDU_AUTH_URL`: Base URL of the eridu_auth service (e.g., `http://localhost:3000` or `https://auth.example.com`)
 - `BACKDOOR_API_KEY`: (Optional) API key for backdoor operations
 - `BACKDOOR_ALLOWED_IPS`: (Optional) Comma-separated IP addresses for IP whitelisting (future enhancement)
 
@@ -101,10 +102,24 @@ Both `JwtAuthGuard` and `AdminGuard` are registered as **global guards** in `app
 1. **JwtAuthGuard** (Global):
    - Runs on all endpoints by default
    - Checks for `@Public()` decorator - if present, skips authentication
+   - Checks for `@Backdoor()` decorator - if present, skips authentication (backdoor endpoints use API key auth)
+   - Checks for `@GoogleSheets()` decorator - if present, skips authentication (Google Sheets endpoints use API key auth)
    - Validates JWT token and populates `request.user`
    - Extracts user information and maps `user.id` to `ext_id` for database lookups
 
-2. **AdminGuard** (Global):
+2. **BackdoorApiKeyGuard** (Global, Opt-in):
+   - Registered as global guard but only runs when `@Backdoor()` decorator is present
+   - Validates `X-API-Key` header against `BACKDOOR_API_KEY` environment variable
+   - Attaches service context to `request.service` with `serviceName: 'backdoor'`
+   - Skips validation if API key not configured in development mode
+
+3. **GoogleSheetsApiKeyGuard** (Global, Opt-in):
+   - Registered as global guard but only runs when `@GoogleSheets()` decorator is present
+   - Validates `X-API-Key` header against `GOOGLE_SHEETS_API_KEY` environment variable
+   - Attaches service context to `request.service` with `serviceName: 'google-sheets'`
+   - Skips validation if API key not configured in development mode
+
+4. **AdminGuard** (Global, Opt-in):
    - Runs on all endpoints by default
    - Checks for `@AdminProtected()` decorator - if present, enforces admin authorization
    - If decorator not present, allows access (returns `true`)
@@ -115,17 +130,19 @@ Both `JwtAuthGuard` and `AdminGuard` are registered as **global guards** in `app
 ### Admin Endpoints (Write Operations)
 
 **Using `@AdminProtected()` Decorator:**
+
 ```typescript
 import { AdminProtected } from '@/lib/decorators/admin-protected.decorator';
 
 @Controller('admin/users')
-@AdminProtected()  // Requires authenticated admin user
+@AdminProtected() // Requires authenticated admin user
 export class AdminUserController {
   // All endpoints require admin access
 }
 ```
 
 **Or on individual routes:**
+
 ```typescript
 @Post()
 @AdminProtected()  // Only this endpoint requires admin access
@@ -139,6 +156,7 @@ async createUser(@Body() body: CreateUserDto) {
 ### User-Scoped Endpoints (All Authenticated Users)
 
 **No decorator needed** - JWT authentication is automatic:
+
 ```typescript
 @Controller('me/shows')
 export class ShowsController {
@@ -153,10 +171,11 @@ export class ShowsController {
 ### Public Endpoints (No Authentication)
 
 **Using `@Public()` Decorator:**
+
 ```typescript
 import { Public } from '@/lib/decorators/public.decorator';
 
-@Public()  // Skip authentication
+@Public() // Skip authentication
 @Controller('health')
 export class HealthController {
   @Get()
@@ -169,17 +188,23 @@ export class HealthController {
 ### Service-to-Service Authentication (Backdoor Endpoints)
 
 **Using API Key Guards:**
+
 ```typescript
+import { BaseBackdoorController } from '@/backdoor/base-backdoor.controller';
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 
 @Controller('backdoor/users')
-@UseGuards(BackdoorApiKeyGuard)  // API key authentication
-export class BackdoorUserController {
+@UseGuards(BackdoorApiKeyGuard) // API key authentication
+export class BackdoorUserController extends BaseBackdoorController {
   // Service-to-service operations
+  // BaseBackdoorController uses @Backdoor() decorator to skip JWT authentication
 }
 ```
 
+**Note**: Backdoor controllers extend `BaseBackdoorController` which uses the `@Backdoor()` decorator. This decorator tells `JwtAuthGuard` to skip JWT authentication, allowing these endpoints to use API key authentication instead.
+
 **Protected Endpoints with Backdoor API Key**:
+
 - `POST /backdoor/users` - Create user (API key required)
 - `PATCH /backdoor/users/:id` - Update user (API key required)
 - `POST /backdoor/studio-memberships` - Create studio membership (API key required)
@@ -188,17 +213,27 @@ export class BackdoorUserController {
 ## Available Decorators
 
 ### `@Public()`
+
 - **Purpose**: Skip JWT authentication for public endpoints
 - **Usage**: Apply to controller or method level
 - **Example**: Health check endpoints, public API documentation
 
 ### `@AdminProtected()`
+
 - **Purpose**: Require admin authorization (in addition to JWT authentication)
 - **Usage**: Apply to admin controllers or methods
 - **Behavior**: AdminGuard checks if user has admin role in ANY studio
 - **Example**: Admin CRUD endpoints
 
+### `@Backdoor()`
+
+- **Purpose**: Skip JWT authentication for backdoor endpoints (use API key auth instead)
+- **Usage**: Apply to backdoor controllers (typically via `BaseBackdoorController`)
+- **Behavior**: Tells `JwtAuthGuard` to skip JWT validation, allowing API key authentication
+- **Example**: Backdoor service-to-service endpoints
+
 ### `@CurrentUser()`
+
 - **Purpose**: Extract authenticated user from request (provided by SDK)
 - **Usage**: Method parameter decorator
 - **Returns**: `AuthenticatedUser` object with `ext_id`, `id`, `name`, `email`, `image`, `payload`
@@ -212,24 +247,46 @@ export class BackdoorUserController {
 
 ### Global Guards Registration
 
-Both `JwtAuthGuard` and `AdminGuard` are registered as **global guards** in `app.module.ts`:
+Five guards are registered as **global guards** in `app.module.ts`:
 
 ```typescript
 @Module({
   providers: [
     {
       provide: APP_GUARD,
-      useClass: JwtAuthGuard,  // Global JWT authentication
+      useClass: ThrottlerGuard, // Rate limiting
     },
     {
       provide: APP_GUARD,
-      useClass: AdminGuard,    // Global admin authorization (opt-in via decorator)
+      useClass: JwtAuthGuard, // Global JWT authentication
+    },
+    {
+      provide: APP_GUARD,
+      useClass: BackdoorApiKeyGuard, // API key auth for backdoor endpoints (opt-in via @Backdoor())
+    },
+    {
+      provide: APP_GUARD,
+      useClass: GoogleSheetsApiKeyGuard, // API key auth for Google Sheets endpoints (opt-in via @GoogleSheets())
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AdminGuard, // Global admin authorization (opt-in via @AdminProtected())
     },
     // ... other providers
   ],
 })
 export class AppModule {}
 ```
+
+**Guard Execution Order**:
+
+1. `ThrottlerGuard` - Rate limiting (applies to all requests)
+2. `JwtAuthGuard` - JWT validation (skips if `@Public()`, `@Backdoor()`, or `@GoogleSheets()`)
+3. `BackdoorApiKeyGuard` - API key validation (only runs if `@Backdoor()` decorator present)
+4. `GoogleSheetsApiKeyGuard` - API key validation (only runs if `@GoogleSheets()` decorator present)
+5. `AdminGuard` - Admin authorization (only runs if `@AdminProtected()` decorator present)
+
+**Note**: API key guards (`BackdoorApiKeyGuard` and `GoogleSheetsApiKeyGuard`) are global but use decorator-based opt-in. They only validate API keys when the corresponding decorator (`@Backdoor()` or `@GoogleSheets()`) is present on the controller or route. The `JwtAuthGuard` also checks for these decorators and skips JWT validation when they are present, allowing API key authentication to take precedence.
 
 ### Auth Module
 
@@ -266,12 +323,14 @@ model StudioMembership {
 ```
 
 **Phase 1 Implementation:**
+
 - Studio-specific memberships only
 - Direct foreign key relationship (easier for Prisma)
 - Simple role system (admin, manager, member)
 - Clean indexes for efficient queries
 
 **Phase 3 Enhancements:**
+
 - Separate ClientMembership and PlatformMembership models
 - Role hierarchy (admin > manager > member)
 - Context-specific permissions
@@ -284,6 +343,7 @@ model StudioMembership {
 **Reference**: `src/lib/guards/admin.guard.ts` ✅ (Implemented)
 
 **Functionality:**
+
 - Registered as global guard in `app.module.ts`
 - Checks for `@AdminProtected()` decorator - only enforces admin check if present
 - Verifies user has admin studio membership in ANY studio via `StudioMembershipService.findAdminMembershipByExtId()`
@@ -292,6 +352,7 @@ model StudioMembership {
 - Uses `ext_id` from authenticated user for database lookup
 
 **Behavior:**
+
 - If `@AdminProtected()` decorator is present: Enforces admin authorization
 - If decorator not present: Allows access (returns `true`) - useful for user-scoped endpoints
 
@@ -302,6 +363,7 @@ model StudioMembership {
 **Reference**: `src/models/membership/studio-membership.service.ts`
 
 **Key Methods:**
+
 - `findAdminMembershipByExtId(extId: string)`: Finds admin studio membership by user's ext_id (used by AdminGuard)
 - `isUserAdmin(userId: UserId)`: Checks if user has admin role in ANY studio (Phase 1 simple check)
 - `getUserStudioMemberships(userId: UserId)`: Gets user's studio memberships
@@ -309,25 +371,29 @@ model StudioMembership {
 ### JWKS Management Endpoints
 
 **Admin JWKS Controller**: `src/admin/auth/admin-auth.controller.ts` (Pending Implementation)
+
 - Would be protected with `@AdminProtected()` decorator (global guards handle authentication)
 - Uses `JwksService` from `@eridu/auth-sdk/server/jwks`
 - Endpoints: `GET /admin/jwks/status`, `POST /admin/jwks/refresh`
 
 **Backdoor JWKS Controller**: `src/backdoor/auth/backdoor-auth.controller.ts` ✅ (Implemented)
+
 - Protected with `BackdoorApiKeyGuard` (service-to-service authentication)
 - Uses `JwksService` from `@eridu/auth-sdk/server/jwks`
 - Endpoint: `POST /backdoor/auth/jwks/refresh`
 
 ## Testing Strategy
 
-**Reference**: Test files in `src/common/guards/` and `src/admin/` directories
+**Reference**: Test files in `src/lib/guards/` and `src/admin/` directories
 
 ### Unit Tests
+
 - Test `AdminGuard` with mocked `StudioMembershipService`
 - Verify admin users are allowed access
 - Verify non-admin users are denied access
 
 ### Integration Tests
+
 - Test complete authentication flow with JWT tokens
 - Verify admin can create users
 - Verify non-admin cannot create users
@@ -336,20 +402,24 @@ model StudioMembership {
 ## Error Handling
 
 ### Authentication Errors
+
 - `UnauthorizedException`: No token provided, invalid token, token expired (from SDK)
 - `ForbiddenException`: Admin access required, user not authenticated (from AdminGuard)
 
 ### Error Response Format
+
 Standard NestJS error response with statusCode, message, error, timestamp, and path.
 
 ## Security Considerations
 
 ### Admin Verification
+
 - Admin status is checked on every write operation
 - StudioMembership lookup is cached for performance
 - Admin status changes require re-authentication
 
 ### API Key Security
+
 - Service-to-service communication uses API keys
 - API keys are stored in environment variables
 - Keys are validated on every internal request
@@ -359,12 +429,14 @@ Standard NestJS error response with statusCode, message, error, timestamp, and p
 ## Future Enhancements (Phase 3)
 
 ### Advanced Authorization
+
 - Separate ClientMembership and PlatformMembership models
 - Role hierarchy with permission inheritance
 - Context-specific permissions (studio admin ≠ client admin)
 - Permission metadata for custom access control
 
 ### Enhanced Security
+
 - Token refresh mechanisms
 - Multi-factor authentication
 - Audit trails for all authorization decisions
@@ -397,6 +469,7 @@ In development environment, log user information and admin status for debugging 
 **Strategy**: JWT/JWKS functionality is implemented in the `@eridu/auth-sdk` SDK package, then used in `erify_api`.
 
 **Rationale**:
+
 1. **Clear Design**: SDK structure and API are already well-designed
 2. **Clean Separation**: Framework-agnostic core vs framework-specific adapters
 3. **Reusable**: Can be used by other services immediately
@@ -407,11 +480,13 @@ In development environment, log user information and admin status for debugging 
 ### Implementation Components
 
 **SDK Package** (`packages/auth-sdk/`):
+
 - `JwksService` - Fetch and cache JWKS from Better Auth's JWKS endpoint
 - `JwtVerifier` - Local JWT verification using cached public keys
 - `JwtAuthGuard` - NestJS adapter for easy integration
 
 **erify_api Integration** (`apps/erify_api/src/common/`):
+
 - `AdminGuard` - Service-specific guard (depends on StudioMembership)
 - JWKS management endpoints - Framework-specific endpoints using SDK services
 

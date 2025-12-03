@@ -1,4 +1,6 @@
-/* eslint-disable @typescript-eslint/unbound-method */
+import { PlatformRepository } from './platform.repository';
+import { PlatformService } from './platform.service';
+
 import {
   createMockRepository,
   createMockUtilityService,
@@ -6,12 +8,9 @@ import {
 } from '@/testing/model-service-test.helper';
 import { UtilityService } from '@/utility/utility.service';
 
-import { PlatformRepository } from './platform.repository';
-import { PlatformService } from './platform.service';
-
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
-describe('PlatformService', () => {
+describe('platformService', () => {
   let service: PlatformService;
   let platformRepository: PlatformRepository;
   let utilityService: UtilityService;
@@ -24,7 +23,7 @@ describe('PlatformService', () => {
       serviceClass: PlatformService,
       repositoryClass: PlatformRepository,
       repositoryMock: platformRepositoryMock,
-      utilityMock: utilityMock,
+      utilityMock,
     });
 
     service = module.get<PlatformService>(PlatformService);

@@ -6,13 +6,6 @@ import {
 } from '@nestjs/common';
 import { Prisma, Schedule } from '@prisma/client';
 
-import { HttpError } from '@/lib/errors/http-error.util';
-import { BaseModelService } from '@/lib/services/base-model.service';
-import { PrismaService } from '@/prisma/prisma.service';
-import { ShowPlanItem } from '@/schedule-planning/schemas/schedule-planning.schema';
-import { UtilityService } from '@/utility/utility.service';
-
-import { ScheduleRepository } from './schedule.repository';
 import {
   BulkCreateScheduleDto,
   BulkUpdateScheduleDto,
@@ -20,6 +13,13 @@ import {
   ListSchedulesQuery,
   UpdateScheduleDto,
 } from './schemas/schedule.schema';
+import { ScheduleRepository } from './schedule.repository';
+
+import { HttpError } from '@/lib/errors/http-error.util';
+import { BaseModelService } from '@/lib/services/base-model.service';
+import { PrismaService } from '@/prisma/prisma.service';
+import { ShowPlanItem } from '@/schedule-planning/schemas/schedule-planning.schema';
+import { UtilityService } from '@/utility/utility.service';
 
 type ScheduleWithIncludes<T extends Prisma.ScheduleInclude> =
   Prisma.ScheduleGetPayload<{
@@ -65,7 +65,9 @@ export class ScheduleService extends BaseModelService {
 
   async getScheduleById<
     T extends Prisma.ScheduleInclude = Record<string, never>,
-  >(uid: string, include?: T): Promise<Schedule | ScheduleWithIncludes<T>> {
+  >(uid: string,
+    include?: T,
+  ): Promise<Schedule | ScheduleWithIncludes<T>> {
     return this.findScheduleOrThrow(uid, include);
   }
 
@@ -320,10 +322,10 @@ export class ScheduleService extends BaseModelService {
 
     // Update tempIds for shows if plan document has shows array
     if (
-      clonedPlanDocument &&
-      typeof clonedPlanDocument === 'object' &&
-      'shows' in clonedPlanDocument &&
-      Array.isArray(clonedPlanDocument.shows)
+      clonedPlanDocument
+      && typeof clonedPlanDocument === 'object'
+      && 'shows' in clonedPlanDocument
+      && Array.isArray(clonedPlanDocument.shows)
     ) {
       // Create new object with updated shows array
       // Type guard to ensure shows are ShowPlanItem-like objects
@@ -331,10 +333,10 @@ export class ScheduleService extends BaseModelService {
         (show: unknown): ShowPlanItem => {
           // Validate that show is an object
           if (
-            typeof show !== 'object' ||
-            show === null ||
-            !('name' in show) ||
-            typeof show.name !== 'string'
+            typeof show !== 'object'
+            || show === null
+            || !('name' in show)
+            || typeof show.name !== 'string'
           ) {
             throw HttpError.badRequest('Invalid show item in plan document');
           }
@@ -366,7 +368,9 @@ export class ScheduleService extends BaseModelService {
 
   private async findScheduleOrThrow<
     T extends Prisma.ScheduleInclude = Record<string, never>,
-  >(uid: string, include?: T): Promise<Schedule | ScheduleWithIncludes<T>> {
+  >(uid: string,
+    include?: T,
+  ): Promise<Schedule | ScheduleWithIncludes<T>> {
     const schedule = await this.scheduleRepository.findByUid(uid, include);
     if (!schedule) {
       throw HttpError.notFound('Schedule', uid);
@@ -400,17 +404,23 @@ export class ScheduleService extends BaseModelService {
   ): Prisma.ScheduleUpdateInput {
     const payload: Prisma.ScheduleUpdateInput = {};
 
-    if (dto.name) payload.name = dto.name;
-    if (dto.startDate) payload.startDate = dto.startDate;
-    if (dto.endDate) payload.endDate = dto.endDate;
-    if (dto.status) payload.status = dto.status;
+    if (dto.name)
+      payload.name = dto.name;
+    if (dto.startDate)
+      payload.startDate = dto.startDate;
+    if (dto.endDate)
+      payload.endDate = dto.endDate;
+    if (dto.status)
+      payload.status = dto.status;
     if (dto.planDocument) {
       payload.planDocument = dto.planDocument;
       // Increment version when plan document is updated
       payload.version = { increment: 1 };
     }
-    if (dto.metadata) payload.metadata = dto.metadata;
-    if (dto.publishedByUser) payload.publishedByUser = dto.publishedByUser;
+    if (dto.metadata)
+      payload.metadata = dto.metadata;
+    if (dto.publishedByUser)
+      payload.publishedByUser = dto.publishedByUser;
 
     // Validate date range if both dates are present
     if (dto.startDate && dto.endDate) {
@@ -434,22 +444,22 @@ export class ScheduleService extends BaseModelService {
     dto: BulkCreateScheduleDto,
     include?: Prisma.ScheduleInclude,
   ): Promise<{
-    total: number;
-    successful: number;
-    failed: number;
-    results: Array<{
-      index?: number;
-      schedule_id?: string | null;
-      client_id?: string | null;
-      client_name?: string | null;
-      success: boolean;
-      error?: string | null;
-      error_code?: string | null;
-    }>;
-    successfulSchedules?: Array<
+      total: number;
+      successful: number;
+      failed: number;
+      results: Array<{
+        index?: number;
+        schedule_id?: string | null;
+        client_id?: string | null;
+        client_name?: string | null;
+        success: boolean;
+        error?: string | null;
+        error_code?: string | null;
+      }>;
+      successfulSchedules?: Array<
       Schedule | Prisma.ScheduleGetPayload<{ include: Prisma.ScheduleInclude }>
-    >;
-  }> {
+      >;
+    }> {
     const results: Array<{
       index?: number;
       schedule_id?: string | null;
@@ -471,12 +481,12 @@ export class ScheduleService extends BaseModelService {
         const schedule = await this.createScheduleFromDto(scheduleDto, include);
 
         // Extract client info for result
-        const clientId =
-          'client' in schedule && schedule.client
+        const clientId
+          = 'client' in schedule && schedule.client
             ? (schedule.client as { uid: string }).uid
             : undefined;
-        const clientName =
-          'client' in schedule && schedule.client
+        const clientName
+          = 'client' in schedule && schedule.client
             ? (schedule.client as { name: string }).name
             : undefined;
 
@@ -492,10 +502,10 @@ export class ScheduleService extends BaseModelService {
         successfulSchedules.push(schedule);
       } catch (error) {
         // Extract error information
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        const errorCode =
-          error instanceof BadRequestException
+        const errorMessage
+          = error instanceof Error ? error.message : String(error);
+        const errorCode
+          = error instanceof BadRequestException
             ? 'BAD_REQUEST'
             : error instanceof ConflictException
               ? 'CONFLICT'
@@ -539,22 +549,22 @@ export class ScheduleService extends BaseModelService {
     dto: BulkUpdateScheduleDto,
     include?: Prisma.ScheduleInclude,
   ): Promise<{
-    total: number;
-    successful: number;
-    failed: number;
-    results: Array<{
-      index?: number;
-      schedule_id?: string | null;
-      client_id?: string | null;
-      client_name?: string | null;
-      success: boolean;
-      error?: string | null;
-      error_code?: string | null;
-    }>;
-    successfulSchedules?: Array<
+      total: number;
+      successful: number;
+      failed: number;
+      results: Array<{
+        index?: number;
+        schedule_id?: string | null;
+        client_id?: string | null;
+        client_name?: string | null;
+        success: boolean;
+        error?: string | null;
+        error_code?: string | null;
+      }>;
+      successfulSchedules?: Array<
       Schedule | Prisma.ScheduleGetPayload<{ include: Prisma.ScheduleInclude }>
-    >;
-  }> {
+      >;
+    }> {
     const results: Array<{
       index?: number;
       schedule_id?: string | null;
@@ -576,16 +586,20 @@ export class ScheduleService extends BaseModelService {
       try {
         // Build update payload from the bulk update item
         const updatePayload: Prisma.ScheduleUpdateInput = {};
-        if (updateItem.name !== undefined) updatePayload.name = updateItem.name;
+        if (updateItem.name !== undefined)
+          updatePayload.name = updateItem.name;
         if (updateItem.startDate)
           updatePayload.startDate = updateItem.startDate;
-        if (updateItem.endDate) updatePayload.endDate = updateItem.endDate;
-        if (updateItem.status) updatePayload.status = updateItem.status;
+        if (updateItem.endDate)
+          updatePayload.endDate = updateItem.endDate;
+        if (updateItem.status)
+          updatePayload.status = updateItem.status;
         if (updateItem.planDocument) {
           updatePayload.planDocument = updateItem.planDocument;
           updatePayload.version = { increment: 1 };
         }
-        if (updateItem.metadata) updatePayload.metadata = updateItem.metadata;
+        if (updateItem.metadata)
+          updatePayload.metadata = updateItem.metadata;
         if (updateItem.publishedByUser)
           updatePayload.publishedByUser = updateItem.publishedByUser;
 
@@ -605,12 +619,12 @@ export class ScheduleService extends BaseModelService {
         );
 
         // Extract client info for result
-        const clientId =
-          'client' in schedule && schedule.client
+        const clientId
+          = 'client' in schedule && schedule.client
             ? (schedule.client as { uid: string }).uid
             : undefined;
-        const clientName =
-          'client' in schedule && schedule.client
+        const clientName
+          = 'client' in schedule && schedule.client
             ? (schedule.client as { name: string }).name
             : undefined;
 
@@ -626,10 +640,10 @@ export class ScheduleService extends BaseModelService {
         successfulSchedules.push(schedule);
       } catch (error) {
         // Extract error information
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        const errorCode =
-          error instanceof BadRequestException
+        const errorMessage
+          = error instanceof Error ? error.message : String(error);
+        const errorCode
+          = error instanceof BadRequestException
             ? 'BAD_REQUEST'
             : error instanceof ConflictException
               ? 'CONFLICT'
@@ -676,26 +690,26 @@ export class ScheduleService extends BaseModelService {
     },
     include?: Prisma.ScheduleInclude,
   ): Promise<{
-    startDate: Date;
-    endDate: Date;
-    totalSchedules: number;
-    schedulesByClient: Record<
-      string,
-      {
-        clientId: string;
-        clientName: string;
-        count: number;
-        schedules: Array<
-          | Schedule
-          | Prisma.ScheduleGetPayload<{ include: Prisma.ScheduleInclude }>
-        >;
-      }
-    >;
-    schedulesByStatus: Record<string, number>;
-    schedules: Array<
+      startDate: Date;
+      endDate: Date;
+      totalSchedules: number;
+      schedulesByClient: Record<
+        string,
+        {
+          clientId: string;
+          clientName: string;
+          count: number;
+          schedules: Array<
+            | Schedule
+            | Prisma.ScheduleGetPayload<{ include: Prisma.ScheduleInclude }>
+          >;
+        }
+      >;
+      schedulesByStatus: Record<string, number>;
+      schedules: Array<
       Schedule | Prisma.ScheduleGetPayload<{ include: Prisma.ScheduleInclude }>
-    >;
-  }> {
+      >;
+    }> {
     // Build where clause
     const where: Prisma.ScheduleWhereInput = {
       startDate: { lte: params.endDate },
@@ -740,12 +754,12 @@ export class ScheduleService extends BaseModelService {
 
     for (const schedule of schedules) {
       // Extract client info
-      const clientId =
-        'client' in schedule && schedule.client
+      const clientId
+        = 'client' in schedule && schedule.client
           ? (schedule.client as { uid: string }).uid
           : null;
-      const clientName =
-        'client' in schedule && schedule.client
+      const clientName
+        = 'client' in schedule && schedule.client
           ? (schedule.client as { name: string }).name
           : 'Unknown Client';
 

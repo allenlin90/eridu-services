@@ -55,17 +55,16 @@ const { apiUrl: API_BASE_URL, userId } = parseArgs();
 
 if (!userId) {
   console.error('❌ Error: --user-id argument is required');
-  console.error('Usage: pnpm run manual:backdoor:update-users -- --user-id=user_123');
+  console.error(
+    'Usage: pnpm run manual:backdoor:update-users -- --user-id=user_123',
+  );
   process.exit(1);
 }
 
 const BACKDOOR_USERS_ENDPOINT = `${API_BASE_URL}/backdoor/users/${userId}`;
 
 // Load test payload
-const payloadPath = path.join(
-  __dirname,
-  '../payloads/02-update-user.json',
-);
+const payloadPath = path.join(__dirname, '../payloads/02-update-user.json');
 const payload = JSON.parse(fs.readFileSync(payloadPath, 'utf-8'));
 
 async function updateUser() {
@@ -106,4 +105,3 @@ updateUser()
     console.error('💥 Script failed:', error);
     process.exit(1);
   });
-

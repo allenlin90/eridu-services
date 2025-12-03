@@ -1,3 +1,10 @@
+import type {
+  CreateShowPlatformDto,
+  UpdateShowPlatformDto,
+} from './schemas/show-platform.schema';
+import { ShowPlatformRepository } from './show-platform.repository';
+import { ShowPlatformService } from './show-platform.service';
+
 import {
   createMockRepository,
   createMockUtilityService,
@@ -5,18 +12,11 @@ import {
   setupTestMocks,
 } from '@/testing/model-service-test.helper';
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
-import { UtilityService } from '@/utility/utility.service';
-
-import {
-  CreateShowPlatformDto,
-  UpdateShowPlatformDto,
-} from './schemas/show-platform.schema';
-import { ShowPlatformRepository } from './show-platform.repository';
-import { ShowPlatformService } from './show-platform.service';
+import type { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
-describe('ShowPlatformService', () => {
+describe('showPlatformService', () => {
   let service: ShowPlatformService;
   let showPlatformRepositoryMock: Partial<jest.Mocked<ShowPlatformRepository>>;
   let utilityMock: Partial<jest.Mocked<UtilityService>>;
@@ -35,7 +35,7 @@ describe('ShowPlatformService', () => {
       serviceClass: ShowPlatformService,
       repositoryClass: ShowPlatformRepository,
       repositoryMock: showPlatformRepositoryMock,
-      utilityMock: utilityMock,
+      utilityMock,
     });
 
     service = module.get<ShowPlatformService>(ShowPlatformService);

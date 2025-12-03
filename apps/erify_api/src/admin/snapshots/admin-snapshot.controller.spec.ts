@@ -1,12 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+
+import { AdminSnapshotController } from './admin-snapshot.controller';
 
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
 import { UserService } from '@/models/user/user.service';
 import { SchedulePlanningService } from '@/schedule-planning/schedule-planning.service';
 
-import { AdminSnapshotController } from './admin-snapshot.controller';
-
-describe('AdminSnapshotController', () => {
+describe('adminSnapshotController', () => {
   let controller: AdminSnapshotController;
 
   const mockScheduleSnapshotService = {

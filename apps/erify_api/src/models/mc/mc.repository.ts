@@ -10,14 +10,13 @@ type MCWithIncludes<T extends Prisma.MCInclude> = Prisma.MCGetPayload<{
 
 // Custom model wrapper that implements IBaseModel with MCWhereInput
 class MCModelWrapper
-  implements
+implements
     IBaseModel<
       MC,
       Prisma.MCCreateInput,
       Prisma.MCUpdateInput,
       Prisma.MCWhereInput
-    >
-{
+    > {
   constructor(private readonly prismaModel: Prisma.MCDelegate) {}
 
   async create(args: {

@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, ShowMC } from '@prisma/client';
 
+import { CreateShowMcDto, UpdateShowMcDto } from './schemas/show-mc.schema';
+import { ShowMcRepository } from './show-mc.repository';
+
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
-
-import { CreateShowMcDto, UpdateShowMcDto } from './schemas/show-mc.schema';
-import { ShowMcRepository } from './show-mc.repository';
 
 type ShowMCWithIncludes<T extends Prisma.ShowMCInclude> =
   Prisma.ShowMCGetPayload<{
@@ -141,7 +141,9 @@ export class ShowMcService extends BaseModelService {
 
   private async findShowMcOrThrow<
     T extends Prisma.ShowMCInclude = Record<string, never>,
-  >(uid: string, include?: T): Promise<ShowMC | ShowMCWithIncludes<T>> {
+  >(uid: string,
+    include?: T,
+  ): Promise<ShowMC | ShowMCWithIncludes<T>> {
     const showMc = await this.showMcRepository.findByUid(uid, include);
     if (!showMc) {
       throw HttpError.notFound('ShowMC', uid);
@@ -163,8 +165,10 @@ export class ShowMcService extends BaseModelService {
   private buildUpdatePayload(dto: UpdateShowMcDto): Prisma.ShowMCUpdateInput {
     const payload: Prisma.ShowMCUpdateInput = {};
 
-    if (dto.note !== undefined) payload.note = dto.note;
-    if (dto.metadata !== undefined) payload.metadata = dto.metadata;
+    if (dto.note !== undefined)
+      payload.note = dto.note;
+    if (dto.metadata !== undefined)
+      payload.metadata = dto.metadata;
 
     if (dto.showId !== undefined) {
       payload.show = { connect: { uid: dto.showId } };

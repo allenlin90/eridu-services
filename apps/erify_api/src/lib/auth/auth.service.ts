@@ -1,9 +1,10 @@
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+
 import { JwksService } from '@eridu/auth-sdk/server/jwks/jwks-service';
 import type { JwksServiceConfig } from '@eridu/auth-sdk/server/jwks/types';
 import { JwtVerifier } from '@eridu/auth-sdk/server/jwt/jwt-verifier';
 import type { JwtVerifierConfig } from '@eridu/auth-sdk/server/jwt/types';
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 
 import type { Env } from '@/config/env.schema';
 import { HttpError } from '@/lib/errors/http-error.util';
@@ -18,10 +19,10 @@ export class AuthService implements OnModuleInit {
   private readonly jwtVerifier: JwtVerifier;
 
   constructor(private readonly configService: ConfigService<Env>) {
-    const authUrl = this.configService.get('ERIFY_AUTH_URL', { infer: true });
+    const authUrl = this.configService.get('ERIDU_AUTH_URL', { infer: true });
 
     if (!authUrl) {
-      throw HttpError.internalServerError('ERIFY_AUTH_URL is required');
+      throw HttpError.internalServerError('ERIDU_AUTH_URL is required');
     }
 
     // Initialize JWKS Service
@@ -56,8 +57,8 @@ export class AuthService implements OnModuleInit {
     } catch (error) {
       // Log warning but don't throw - cache recovery will handle it
       // This allows the app to start even if auth service is temporarily unavailable
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage
+        = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(
         `Failed to initialize JWKS on startup: ${errorMessage}. Will retry on first use.`,
       );

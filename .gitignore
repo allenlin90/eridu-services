@@ -28,6 +28,14 @@ build
 dist
 storybook-static
 
+# Paraglide generated files
+**/paraglide/
+**/src/paraglide/
+
+# Inlang/Paraglide cache
+**/project.inlang/cache/
+**/.inlang/cache/
+
 
 # Debug
 npm-debug.log*

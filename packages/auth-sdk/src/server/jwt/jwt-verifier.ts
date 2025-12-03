@@ -2,18 +2,18 @@
  * JWT Verifier - Verifies JWT tokens locally using cached JWKS
  */
 
-import { createRemoteJWKSet, jwtVerify } from "jose";
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 
-import type { JwtPayload, UserInfo } from "../../types.js";
-import type { JwtVerifierConfig } from "./types.js";
+import type { JwtPayload, UserInfo } from '../../types.js';
 
-import { extractUserInfo, validateJwtPayload } from "./jwt-payload.js";
+import { extractUserInfo, validateJwtPayload } from './jwt-payload.js';
+import type { JwtVerifierConfig } from './types.js';
 
 /**
  * Service for verifying JWT tokens using JWKS
  */
 export class JwtVerifier {
-  private readonly jwksService: JwtVerifierConfig["jwksService"];
+  private readonly jwksService: JwtVerifierConfig['jwksService'];
   private readonly issuer: string;
   private readonly audience: string;
   private remoteJWKSet: ReturnType<typeof createRemoteJWKSet> | null = null;
@@ -24,7 +24,7 @@ export class JwtVerifier {
     this.audience = config.audience ?? config.issuer;
 
     if (!this.issuer) {
-      throw new Error("issuer is required");
+      throw new Error('issuer is required');
     }
   }
 
@@ -50,17 +50,16 @@ export class JwtVerifier {
 
       // Validate payload structure
       if (!validateJwtPayload(payload)) {
-        throw new Error("Invalid JWT payload structure");
+        throw new Error('Invalid JWT payload structure');
       }
 
       return payload as JwtPayload;
-    }
-    catch (error) {
+    } catch (error) {
       if (error instanceof Error) {
         // Check if it's a key rotation issue (unknown key ID)
         if (
-          error.message.includes("no matching key")
-          || error.message.includes("key not found")
+          error.message.includes('no matching key')
+          || error.message.includes('key not found')
         ) {
           // Refresh JWKS and retry once
           await this.jwksService.refreshJwks();
@@ -77,7 +76,7 @@ export class JwtVerifier {
           });
 
           if (!validateJwtPayload(payload)) {
-            throw new Error("Invalid JWT payload structure");
+            throw new Error('Invalid JWT payload structure');
           }
 
           return payload as JwtPayload;
@@ -86,7 +85,7 @@ export class JwtVerifier {
         throw new Error(`JWT verification failed: ${error.message}`);
       }
 
-      throw new Error("Unknown error occurred during JWT verification");
+      throw new Error('Unknown error occurred during JWT verification');
     }
   }
 

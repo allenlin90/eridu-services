@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 
+import { CreateUserDto, UpdateUserDto } from './schemas/user.schema';
+import { UserRepository } from './user.repository';
+
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
-
-import { CreateUserDto, UpdateUserDto } from './schemas/user.schema';
-import { UserRepository } from './user.repository';
 
 @Injectable()
 export class UserService extends BaseModelService {

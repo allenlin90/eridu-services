@@ -1,10 +1,12 @@
 import { ExecutionContext, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 
-import { Env } from '@/config/env.schema';
-
 import { BaseApiKeyGuard } from './base-api-key.guard';
+
+import { Env } from '@/config/env.schema';
+import { IS_BACKDOOR_KEY } from '@/lib/decorators/backdoor.decorator';
 
 /**
  * Backdoor API Key Guard
@@ -29,7 +31,10 @@ import { BaseApiKeyGuard } from './base-api-key.guard';
  */
 @Injectable()
 export class BackdoorApiKeyGuard extends BaseApiKeyGuard {
-  constructor(configService: ConfigService<Env>) {
+  constructor(
+    configService: ConfigService<Env>,
+    private readonly reflector: Reflector,
+  ) {
     super(configService, 'backdoor');
   }
 
@@ -61,6 +66,17 @@ export class BackdoorApiKeyGuard extends BaseApiKeyGuard {
   }
 
   canActivate(context: ExecutionContext): boolean {
+    // Only run on routes marked with @Backdoor() decorator
+    const isBackdoor = this.reflector.getAllAndOverride<boolean>(
+      IS_BACKDOOR_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (!isBackdoor) {
+      // Skip this guard if route is not marked as backdoor
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest<Request>();
 
     // First validate API key (parent class logic)

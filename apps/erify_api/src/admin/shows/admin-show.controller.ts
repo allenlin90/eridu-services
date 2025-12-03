@@ -46,8 +46,8 @@ export class AdminShowController extends BaseAdminController {
     'Show created successfully with assignments',
   )
   async createShow(@Body() body: CreateShowWithAssignmentsDto) {
-    const show =
-      await this.showOrchestrationService.createShowWithAssignments(body);
+    const show
+      = await this.showOrchestrationService.createShowWithAssignments(body);
     // Fetch with relations for proper serialization
     return this.showOrchestrationService.getShowWithRelations(show.uid);
   }
@@ -59,8 +59,8 @@ export class AdminShowController extends BaseAdminController {
   )
   async getShows(@Query() query: ListShowsQueryDto) {
     // Zod validates and transforms at runtime, so all required properties exist
-    const result =
-      await this.showOrchestrationService.getPaginatedShowsWithRelations(query);
+    const result
+      = await this.showOrchestrationService.getPaginatedShowsWithRelations(query);
     const { shows, total } = result;
 
     return this.createPaginatedResponse(shows, total, query);

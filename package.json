@@ -6,16 +6,18 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "test": "turbo test",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "sherif": "pnpm dlx sherif@latest"
+    "sherif": "pnpm dlx sherif@latest",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "prettier": "^3.5.3",
-    "turbo": "^2.5.2",
-    "typescript": "^5.8.3"
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "husky": "^9.1.7",
+    "turbo": "^2.6.1",
+    "typescript": "^5.9.3"
   },
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@10.23.0",
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   }
 }

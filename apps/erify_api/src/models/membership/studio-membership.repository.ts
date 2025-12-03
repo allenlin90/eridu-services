@@ -18,14 +18,13 @@ type StudioMembershipWithIncludes<T extends Prisma.StudioMembershipInclude> =
   }>;
 
 class StudioMembershipModelWrapper
-  implements
+implements
     IBaseModel<
       StudioMembership & WithSoftDelete,
       Prisma.StudioMembershipCreateInput,
       Prisma.StudioMembershipUpdateInput,
       Prisma.StudioMembershipWhereInput
-    >
-{
+    > {
   constructor(private readonly prismaModel: Prisma.StudioMembershipDelegate) {}
 
   async create(args: {
@@ -101,7 +100,8 @@ export class StudioMembershipRepository extends BaseRepository<
   >(params: {
     studioId: StudioId;
     include?: T;
-  }): Promise<(StudioMembership | StudioMembershipWithIncludes<T>)[]> {
+  },
+  ): Promise<(StudioMembership | StudioMembershipWithIncludes<T>)[]> {
     const { studioId, include } = params;
     return this.prisma.studioMembership.findMany({
       where: { studioId, deletedAt: null },
@@ -139,7 +139,7 @@ export class StudioMembershipRepository extends BaseRepository<
     return this.prisma.studioMembership.findFirst({
       where: {
         user: {
-          extId: extId,
+          extId,
           deletedAt: null,
         },
         role: 'admin',
@@ -160,7 +160,7 @@ export class StudioMembershipRepository extends BaseRepository<
       where: { ...where, deletedAt: null },
       data,
       ...(include && { include }),
-    }) as Promise<StudioMembership | StudioMembershipWithIncludes<T>>;
+    });
   }
 
   async findByUid<
@@ -170,7 +170,7 @@ export class StudioMembershipRepository extends BaseRepository<
     include?: T,
   ): Promise<
     StudioMembership | Prisma.StudioMembershipGetPayload<{ include: T }> | null
-  > {
+    > {
     return this.model.findFirst({
       where: { uid, deletedAt: null },
       ...(include && { include }),

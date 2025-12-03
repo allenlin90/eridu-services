@@ -1,6 +1,7 @@
-import { jwtPayloadSchema } from '@eridu/auth-sdk/schemas/jwt-payload.schema';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
+
+import { jwtPayloadSchema } from '@eridu/auth-sdk/schemas/jwt-payload.schema';
 
 /**
  * Profile response schema

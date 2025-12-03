@@ -1,10 +1,20 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-import { Prisma, Schedule, ScheduleSnapshot } from '@prisma/client';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+import type { Prisma, Schedule, ScheduleSnapshot } from '@prisma/client';
+
+import type {
+  PlanDocument,
+  ValidationResult,
+} from './schemas/schedule-planning.schema';
+import { PublishingService } from './publishing.service';
+import { SchedulePlanningService } from './schedule-planning.service';
+import { ValidationService } from './validation.service';
 
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
-import { PrismaService, TransactionClient } from '@/prisma/prisma.service';
+import type { TransactionClient } from '@/prisma/prisma.service';
+import { PrismaService } from '@/prisma/prisma.service';
 
 // Test helper type for mock transaction clients
 // This allows test mocks to only implement the properties they need
@@ -26,15 +36,7 @@ function asTransactionClient(
   return mock as MockTransactionClientStructure & TransactionClient;
 }
 
-import { PublishingService } from './publishing.service';
-import { SchedulePlanningService } from './schedule-planning.service';
-import {
-  PlanDocument,
-  ValidationResult,
-} from './schemas/schedule-planning.schema';
-import { ValidationService } from './validation.service';
-
-describe('SchedulePlanningService', () => {
+describe('schedulePlanningService', () => {
   let service: SchedulePlanningService;
   let scheduleService: jest.Mocked<ScheduleService>;
   let scheduleSnapshotService: jest.Mocked<ScheduleSnapshotService>;
@@ -209,19 +211,13 @@ describe('SchedulePlanningService', () => {
     prismaService = module.get(PrismaService);
 
     // Store mock function references to avoid unbound method errors
-    getScheduleByIdMock = scheduleService['getScheduleById'] as jest.Mock;
-    validateScheduleMock = validationService['validateSchedule'] as jest.Mock;
-    getScheduleSnapshotByIdMock = scheduleSnapshotService[
-      'getScheduleSnapshotById'
-    ] as jest.Mock;
-    getScheduleSnapshotsMock = scheduleSnapshotService[
-      'getScheduleSnapshots'
-    ] as jest.Mock;
-    createScheduleSnapshotMock = scheduleSnapshotService[
-      'createScheduleSnapshot'
-    ] as jest.Mock;
-    publishMock = publishingService['publish'] as jest.Mock;
-    executeTransactionMock = prismaService['executeTransaction'] as jest.Mock;
+    getScheduleByIdMock = scheduleService.getScheduleById as jest.Mock;
+    validateScheduleMock = validationService.validateSchedule as jest.Mock;
+    getScheduleSnapshotByIdMock = scheduleSnapshotService.getScheduleSnapshotById as jest.Mock;
+    getScheduleSnapshotsMock = scheduleSnapshotService.getScheduleSnapshots as jest.Mock;
+    createScheduleSnapshotMock = scheduleSnapshotService.createScheduleSnapshot as jest.Mock;
+    publishMock = publishingService.publish as jest.Mock;
+    executeTransactionMock = prismaService.executeTransaction as jest.Mock;
   });
 
   beforeEach(() => {

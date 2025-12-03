@@ -1,8 +1,9 @@
-import { INestApplication } from '@nestjs/common';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 
 export function setupOpenAPI(app: INestApplication) {
   const config = new DocumentBuilder()
@@ -27,7 +28,7 @@ export function setupOpenAPI(app: INestApplication) {
         'utf8',
       );
       res.send(scalarHtml);
-    } catch (_error) {
+    } catch {
       res.status(404).send('Scalar documentation not found');
     }
   });

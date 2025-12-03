@@ -9,25 +9,27 @@ import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 
 import { Env } from '@/config/env.schema';
+import { HttpError } from '@/lib/errors/http-error.util';
 
 /**
  * Service context attached to request when API key is validated
  * Ready for future JWT integration
  */
-export interface ServiceContext {
+export type ServiceContext = {
   type: 'api-key';
   serviceName: string;
   // Future: Add user context from JWT
   // userId?: string;
   // userEmail?: string;
-}
+};
 
 /**
  * Extend Express Request to include service context
  */
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
+
   namespace Express {
+    // eslint-disable-next-line ts/consistent-type-definitions
     interface Request {
       service?: ServiceContext;
     }
@@ -94,7 +96,7 @@ export abstract class BaseApiKeyGuard implements CanActivate {
       this.logger.error(
         `${this.serviceName} API key (${this.getEnvKeyName()}) is required in production but not configured`,
       );
-      throw new UnauthorizedException(
+      throw HttpError.unauthorized(
         `${this.serviceName} API key authentication is required in production`,
       );
     }

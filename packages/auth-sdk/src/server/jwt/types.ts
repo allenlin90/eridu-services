@@ -2,7 +2,7 @@
  * JWT-related types
  */
 
-import type { JwksService } from "../jwks/jwks-service.js";
+import type { JwksService } from '../jwks/jwks-service.js';
 
 /**
  * Configuration for JWT Verifier
@@ -13,7 +13,7 @@ export type JwtVerifierConfig = {
    */
   jwksService: JwksService;
   /**
-   * Expected JWT issuer (should match ERIFY_AUTH_URL)
+   * Expected JWT issuer (should match ERIDU_AUTH_URL)
    */
   issuer: string;
   /**

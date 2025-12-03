@@ -5,14 +5,13 @@ import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
 class StudioModelWrapper
-  implements
+implements
     IBaseModel<
       Studio,
       Prisma.StudioCreateInput,
       Prisma.StudioUpdateInput,
       Prisma.StudioWhereInput
-    >
-{
+    > {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(args: {

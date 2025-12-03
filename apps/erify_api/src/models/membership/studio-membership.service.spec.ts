@@ -1,11 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
-
-import { UtilityService } from '@/utility/utility.service';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 
 import { StudioMembershipRepository } from './studio-membership.repository';
 import { StudioMembershipService } from './studio-membership.service';
 
-describe('StudioMembershipService', () => {
+import { UtilityService } from '@/utility/utility.service';
+
+describe('studioMembershipService', () => {
   let service: StudioMembershipService;
   let findAdminMembershipByExtIdSpy: jest.Mock;
 
@@ -84,7 +85,7 @@ describe('StudioMembershipService', () => {
         user: {
           id: BigInt(10),
           uid: 'user_123',
-          extId: extId,
+          extId,
           email: 'admin@example.com',
           name: 'Admin User',
         },

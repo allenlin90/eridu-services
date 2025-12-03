@@ -1,15 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 
-import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
-import {
+import { AdminStudioRoomController } from './admin-studio-room.controller';
+
+import type { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+import type {
   CreateStudioRoomDto,
   UpdateStudioRoomDto,
 } from '@/models/studio-room/schemas/studio-room.schema';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 
-import { AdminStudioRoomController } from './admin-studio-room.controller';
-
-describe('AdminStudioRoomController', () => {
+describe('adminStudioRoomController', () => {
   let controller: AdminStudioRoomController;
 
   const mockStudioRoomService = {

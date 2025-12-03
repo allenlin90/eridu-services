@@ -1,17 +1,11 @@
-// @ts-check
-import eslint from '@eslint/js';
-import simpleImportSort from "eslint-plugin-simple-import-sort";
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import createConfig from '@eridu/eslint-config/create-config';
 import globals from 'globals';
-import tseslint from 'typescript-eslint';
 
-export default tseslint.config(
+/** @type {import('eslint').Linter.Config} */
+export default createConfig(
   {
-    ignores: ['eslint.config.mjs'],
+    type: 'app',
   },
-  eslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
-  eslintPluginPrettierRecommended,
   {
     languageOptions: {
       globals: {
@@ -24,24 +18,31 @@ export default tseslint.config(
         tsconfigRootDir: import.meta.dirname,
       },
     },
-  },
-  {
-    plugins: {
-      'simple-import-sort': simpleImportSort,
-    },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
-      "simple-import-sort/imports": "error",
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        {
-          "argsIgnorePattern": "^_",
-          "varsIgnorePattern": "^_",
-          "caughtErrorsIgnorePattern": "^_"
-        }
+      // Allow namespace declarations for Express types
+      'ts/no-namespace': 'off',
+      // Allow process.env in main.ts (needed for config)
+      'node/no-process-env': [
+        'error',
+        { allowedVariables: ['NODE_ENV', 'PORT', 'SHUTDOWN_TIMEOUT'] },
       ],
+      // Disable rules that aren't available in antfu config
+      // These are defined here so eslint-disable comments don't error
+      '@typescript-eslint/no-namespace': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/unbound-method': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      // Allow unused regex capturing groups
+      'regexp/no-unused-capturing-group': 'off',
+      // Allow eslint-disable comments for rules that don't exist (for compatibility)
+      'eslint-comments/no-unlimited-disable': 'off',
+      'eslint-comments/disable-enable-pair': 'off',
     },
   },
 );

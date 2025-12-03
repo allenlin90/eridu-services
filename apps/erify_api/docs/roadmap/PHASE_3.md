@@ -1,6 +1,7 @@
 # Phase 3: Advanced Authorization Control & Tracking Features
 
 ## Overview
+
 Phase 3 introduces advanced authorization control, comprehensive tracking features, and sophisticated collaboration tools. This phase builds upon the Material Management System from Phase 2 by adding role-based access control, audit trails, task management, and advanced collaboration features.
 
 ## Related Documentation
@@ -12,21 +13,25 @@ Phase 3 introduces advanced authorization control, comprehensive tracking featur
 ## Core Features
 
 ### 1. Advanced Authorization Control
+
 - **Role-Based Access Control**: Granular permissions based on user roles and context
 - **Polymorphic Membership System**: Memberships for Studios, Clients, and Platforms
 - **Context-Specific Permissions**: Different roles in different contexts (studio admin ≠ client admin)
 
 ### 2. Comprehensive Tracking & Audit
+
 - **Audit Trail System**: Complete change tracking for all entities with user attribution
 - **Change History**: Store old and new values for all modifications
 - **Compliance Reporting**: Audit reports for regulatory compliance
 
 ### 3. Task Management System
+
 - **Task Templates**: Reusable task templates per studio with automated generation
 - **Task Assignment**: Assign tasks to users with due dates and status tracking
 - **Lifecycle Management**: Complete workflow (pending, assigned, in_progress, review, completed, blocked)
 
 ### 4. Advanced Collaboration Features
+
 - **Polymorphic Tagging**: Tag any entity type with studio-scoped tags
 - **Enhanced Comments**: Rich commenting with threading, mentions, and notifications
 - **Real-time Notifications**: Notify users of important events and changes
@@ -34,12 +39,14 @@ Phase 3 introduces advanced authorization control, comprehensive tracking featur
 ## Implementation Scope
 
 ### CRUD Entities
+
 - [ ] Membership (Enhanced polymorphic user-group relationships), Tag, Taggable, Audit
 - [ ] TaskTemplate, TaskTemplateItem, TaskType, TaskInputType, TaskStatus, Task
 - [ ] Comment (polymorphic commenting system)
 - **Note**: Material, MaterialType, and ShowMaterial entities implemented in Phase 2
 
 ### Advanced Features
+
 - [ ] Role-based access control with granular permissions, enhanced polymorphic membership system
 - [ ] Comprehensive audit trail for all CRUD operations
 - [ ] Task template management, automated generation, assignment, and status tracking workflows
@@ -48,28 +55,33 @@ Phase 3 introduces advanced authorization control, comprehensive tracking featur
 - [ ] Real-time notifications for important events
 
 ### Integration Points
+
 - [ ] Enhanced Membership integration (polymorphic design building on Phase 1)
 - [ ] Audit integration with all CRUD operations
 - [ ] Task assignment to users with proper permissions, association with shows/schedules
 - [ ] Tag and Comment system integration with all entities
 
 ### Seed Data & Documentation
+
 - [ ] TaskType, TaskInputType, TaskStatus seed data
 - [ ] Advanced Authorization Architecture, Task Management System Design, Audit Trail Implementation Guide, Tagging System Documentation
 
 ## Technical Considerations
 
 ### Database Design
+
 - Polymorphic relationships for Memberships, Taggables, Tasks, Comments, Audit
 - Efficient indexing for audit queries, task assignments, permission checking
 - Soft delete support, foreign key constraints, optimized queries
 
 ### API Design
+
 - RESTful endpoints with Zod validation, NestJS error handling, pagination
 - Snake_case input/output with field mapping
 - Permission-based endpoint access control
 
 ### Security & Performance
+
 - Role-based access control with granular permissions, permission validation at service/controller levels
 - Secure audit trail with user attribution, input validation, SQL injection prevention (Prisma), CORS, security headers
 - Indexed queries, efficient Prisma includes, pagination, soft delete filtering, optimized queries for task management and tagging
@@ -77,23 +89,28 @@ Phase 3 introduces advanced authorization control, comprehensive tracking featur
 ## Success Criteria
 
 ### Authorization & Audit
+
 - [ ] Complete role-based access control system with granular permissions
 - [ ] Comprehensive audit trail for all operations with user attribution
 
 ### Task Management
+
 - [ ] Full task management workflow from template to completion
 - [ ] Automated task generation, assignment, and status tracking
 
 ### Collaboration Features
+
 - [ ] Polymorphic tagging system across all entities
 - [ ] Enhanced comments with threading, mentions, and notifications
 - [ ] Real-time notifications for important events
 
 ### Quality
+
 - [ ] Admin interface for managing all entities
 - [ ] Documentation, testing coverage, security best practices, performance optimizations
 
 ## Dependencies
+
 - Phase 1 & 2 complete: Core entities, Schedule Planning Management System, Material Management System
 - User management system functional, basic CRUD patterns established
 - Advanced authentication system with role support, JWT token support with role information
@@ -101,12 +118,14 @@ Phase 3 introduces advanced authorization control, comprehensive tracking featur
 ## Timeline & Rollout Strategy
 
 ### Implementation Focus Areas
+
 1. **Authorization Control**: Role-based access control with granular permissions
 2. **Audit & Tracking**: Comprehensive audit trail and change tracking
 3. **Task Management**: Complete task management workflow from template to completion
 4. **Advanced Collaboration**: Polymorphic tagging, enhanced comments, and notifications
 
 ### User Access Strategy
+
 - **Role-Based Access**: Granular permissions based on user roles and context
 - **Context-Specific Permissions**: Different roles in different contexts (studio admin ≠ client admin)
 - **Permission Inheritance**: Proper permission hierarchy and inheritance
@@ -119,6 +138,7 @@ Phase 3 introduces advanced authorization control, comprehensive tracking featur
 ### Tagging System
 
 #### Tag
+
 ```prisma
 model Tag {
   id        BigInt     @id @default(autoincrement())
@@ -142,6 +162,7 @@ model Tag {
 ```
 
 #### Taggable
+
 ```prisma
 model Taggable {
   id           BigInt    @id @default(autoincrement())
@@ -167,6 +188,7 @@ model Taggable {
 ### Task Management System
 
 #### TaskTemplate
+
 ```prisma
 model TaskTemplate {
   id                BigInt             @id @default(autoincrement())
@@ -194,6 +216,7 @@ model TaskTemplate {
 ```
 
 #### TaskTemplateItem
+
 ```prisma
 model TaskTemplateItem {
   id             BigInt        @id @default(autoincrement())
@@ -224,6 +247,7 @@ model TaskTemplateItem {
 ```
 
 #### TaskType
+
 ```prisma
 model TaskType {
   id                BigInt             @id @default(autoincrement())
@@ -242,6 +266,7 @@ model TaskType {
 ```
 
 #### TaskInputType
+
 ```prisma
 model TaskInputType {
   id                BigInt             @id @default(autoincrement())
@@ -260,6 +285,7 @@ model TaskInputType {
 ```
 
 #### Task
+
 ```prisma
 model Task {
   id                 BigInt           @id @default(autoincrement())
@@ -296,6 +322,7 @@ model Task {
 ```
 
 #### TaskStatus
+
 ```prisma
 model TaskStatus {
   id        BigInt    @id @default(autoincrement())
@@ -316,6 +343,7 @@ model TaskStatus {
 ### Collaboration Features
 
 #### Comment
+
 ```prisma
 model Comment {
   id              BigInt    @id @default(autoincrement())
@@ -347,6 +375,7 @@ model Comment {
 ### Audit System
 
 #### Audit
+
 ```prisma
 model Audit {
   id            BigInt   @id @default(autoincrement())
@@ -374,7 +403,9 @@ model Audit {
 ```
 
 ### Enhanced Membership (Phase 3 Enhancement)
+
 The Membership model from Phase 1 is enhanced in Phase 3 to support polymorphic relationships:
+
 - Basic structure from Phase 1 already supports polymorphic `groupType` and `groupId`
 - Phase 3 adds advanced role-based permissions and context-specific access control
 - Enables granular permissions per entity type and studio/client context

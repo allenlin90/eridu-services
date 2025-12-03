@@ -2,7 +2,7 @@
  * JWT Payload parsing and validation
  */
 
-import type { JwtPayload, UserInfo } from "../../types.js";
+import type { JwtPayload, UserInfo } from '../../types.js';
 
 /**
  * Extract user information from JWT payload
@@ -21,16 +21,16 @@ export function extractUserInfo(payload: JwtPayload): UserInfo {
  * Validate JWT payload structure
  */
 export function validateJwtPayload(payload: unknown): payload is JwtPayload {
-  if (!payload || typeof payload !== "object") {
+  if (!payload || typeof payload !== 'object') {
     return false;
   }
 
   const p = payload as Record<string, unknown>;
 
   return (
-    typeof p.id === "string"
-    && typeof p.name === "string"
-    && typeof p.email === "string"
-    && (p.image === undefined || p.image === null || typeof p.image === "string")
+    typeof p.id === 'string'
+    && typeof p.name === 'string'
+    && typeof p.email === 'string'
+    && (p.image === undefined || p.image === null || typeof p.image === 'string')
   );
 }

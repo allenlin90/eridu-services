@@ -1,18 +1,18 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { CanActivate, ExecutionContext } from '@nestjs/common';
-import { Request, Response } from 'express';
+/* eslint-disable  */
+import type { CanActivate, ExecutionContext } from '@nestjs/common';
+import type { Request, Response } from 'express';
 
 /**
  * Interface for guards that can be tested
  */
-interface TestableGuard extends CanActivate {
-  canActivate(context: ExecutionContext): boolean | Promise<boolean>;
-}
+type TestableGuard = {
+  canActivate: (context: ExecutionContext) => boolean | Promise<boolean>;
+} & CanActivate;
 
 /**
  * Mock ExecutionContext factory for guard testing
  */
-export interface MockExecutionContextOptions {
+export type MockExecutionContextOptions = {
   /** Request object or overrides */
   request?: Partial<Request>;
   /** Response object or overrides */
@@ -31,7 +31,7 @@ export interface MockExecutionContextOptions {
   query?: Record<string, string>;
   /** Request user (for authenticated requests) */
   user?: any;
-}
+};
 
 /**
  * Creates a mock ExecutionContext for guard testing.
@@ -234,7 +234,8 @@ export function expectGuardToThrow(
 ) {
   if (expectedError) {
     expect(() => guard.canActivate(context)).toThrow(expectedError);
-  } else {
+  }
+  else {
     expect(() => guard.canActivate(context)).toThrow();
   }
 }

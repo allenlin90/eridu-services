@@ -1,20 +1,21 @@
 {
   "$schema": "https://ui.shadcn.com/schema.json",
   "style": "new-york",
-  "rsc": true,
+  "rsc": false,
   "tsx": true,
   "tailwind": {
-    "config": "tailwind.config.ts",
+    "config": "",
     "css": "src/styles/globals.css",
-    "baseColor": "zinc",
-    "cssVariables": true
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
   },
-  "iconLibrary": "lucide",
   "aliases": {
     "components": "@eridu/ui/components",
     "utils": "@eridu/ui/lib/utils",
-    "hooks": "@eridu/ui/hooks",
+    "ui": "@eridu/ui/components/ui",
     "lib": "@eridu/ui/lib",
-    "ui": "@eridu/ui/components"
-  }
+    "hooks": "@eridu/ui/hooks"
+  },
+  "iconLibrary": "lucide"
 }

@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, Show } from '@prisma/client';
 
+import {
+  CreateShowWithAssignmentsDto,
+  UpdateShowWithAssignmentsDto,
+} from './schemas/show-orchestration.schema';
+
 import { HttpError } from '@/lib/errors/http-error.util';
 import { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { PrismaService, TransactionClient } from '@/prisma/prisma.service';
-
-import {
-  CreateShowWithAssignmentsDto,
-  UpdateShowWithAssignmentsDto,
-} from './schemas/show-orchestration.schema';
 
 type ShowWithIncludes<T extends Prisma.ShowInclude> = Prisma.ShowGetPayload<{
   include: T;
@@ -165,7 +165,9 @@ export class ShowOrchestrationService {
    */
   async getShowWithRelations<
     T extends Prisma.ShowInclude = Record<string, never>,
-  >(uid: string, include?: T): Promise<Show | ShowWithIncludes<T>> {
+  >(uid: string,
+    include?: T,
+  ): Promise<Show | ShowWithIncludes<T>> {
     return this.showService.getShowById(
       uid,
       include || this.getDefaultIncludes(),
@@ -490,10 +492,14 @@ export class ShowOrchestrationService {
   ): Prisma.ShowUpdateInput {
     const payload: Prisma.ShowUpdateInput = {};
 
-    if (dto.name) payload.name = dto.name;
-    if (dto.startTime) payload.startTime = dto.startTime;
-    if (dto.endTime) payload.endTime = dto.endTime;
-    if (dto.metadata) payload.metadata = dto.metadata;
+    if (dto.name)
+      payload.name = dto.name;
+    if (dto.startTime)
+      payload.startTime = dto.startTime;
+    if (dto.endTime)
+      payload.endTime = dto.endTime;
+    if (dto.metadata)
+      payload.metadata = dto.metadata;
 
     if (dto.clientId) {
       payload.client = { connect: { uid: dto.clientId } };

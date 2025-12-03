@@ -82,8 +82,8 @@ export class AdminScheduleController extends BaseAdminController {
   @ZodSerializerDto(createPaginatedResponseSchema(scheduleDto))
   async getSchedules(@Query() query: ListSchedulesQueryDto) {
     // Zod validates and transforms at runtime, so all required properties exist
-    const { schedules, total } =
-      await this.scheduleService.getPaginatedSchedules(query);
+    const { schedules, total }
+      = await this.scheduleService.getPaginatedSchedules(query);
 
     // Conditionally exclude plan_document from serialization
     // Setting to undefined allows the serializer to omit it (schema makes it optional)

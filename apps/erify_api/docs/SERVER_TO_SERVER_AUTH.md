@@ -31,6 +31,7 @@ BACKDOOR_API_KEY=<your-generated-api-key>
 ```
 
 **Environment Behavior**:
+
 - **Production**: **Required**. API key must be configured in `.env`. Returns 401 if not configured or if header doesn't match.
 - **Development**: Optional. If not set, authentication is bypassed (allows requests without key).
 - **When Set**: Authentication is always enforced regardless of environment.
@@ -39,7 +40,7 @@ BACKDOOR_API_KEY=<your-generated-api-key>
 
 ```typescript
 import { Controller, Post, UseGuards, Request } from '@nestjs/common';
-import { GoogleSheetsApiKeyGuard } from '@/common/guards/google-sheets-api-key.guard';
+import { GoogleSheetsApiKeyGuard } from '@/lib/guards/google-sheets-api-key.guard';
 
 @Controller('schedules')
 export class ScheduleController {
@@ -55,11 +56,13 @@ export class ScheduleController {
 ### 4. Make Request from External Service
 
 **Google Apps Script Example**:
+
 ```javascript
 function callEriduAPI(endpoint, payload) {
-  const apiKey = PropertiesService.getScriptProperties()
-    .getProperty('ERIDU_GOOGLE_SHEETS_API_KEY');
-  
+  const apiKey = PropertiesService.getScriptProperties().getProperty(
+    'ERIDU_GOOGLE_SHEETS_API_KEY',
+  );
+
   const response = UrlFetchApp.fetch('https://api.eridu.com' + endpoint, {
     method: 'POST',
     headers: {
@@ -68,7 +71,7 @@ function callEriduAPI(endpoint, payload) {
     },
     payload: JSON.stringify(payload),
   });
-  
+
   return JSON.parse(response.getContentText());
 }
 ```
@@ -83,11 +86,11 @@ sequenceDiagram
     participant API as erify_api
     participant Guard as Service Guard
     participant Env as Environment
-    
+
     Client->>API: Request with X-API-Key header
     API->>Guard: Validate API key
     Guard->>Env: Check service env var
-    
+
     alt API Key Configured
         Guard->>Guard: Compare header key with env var
         alt Valid Key
@@ -116,19 +119,49 @@ sequenceDiagram
 
 **Service Name**: `'google-sheets'`
 
-**Usage**:
+**Guard Type**: Global guard with decorator-based opt-in
+
+**Usage Pattern** (Recommended - Base Controller):
+
 ```typescript
-import { GoogleSheetsApiKeyGuard } from '@/common/guards/google-sheets-api-key.guard';
+import { GoogleSheets } from '@/lib/decorators/google-sheets.decorator';
+import { BaseGoogleSheetsController } from '@/google-sheets/base-google-sheets.controller';
+
+@GoogleSheets() // Decorator marks controller for API key authentication
+export abstract class BaseGoogleSheetsController {
+  // Shared utility methods
+}
+
+@Controller('google-sheets/schedules')
+export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
+  @Post()
+  async createSchedule(@Request() req) {
+    // req.service.serviceName === 'google-sheets'
+    // API key validation happens automatically via global guard
+  }
+}
+```
+
+**Usage Pattern** (Alternative - Direct Decorator):
+
+```typescript
+import { GoogleSheets } from '@/lib/decorators/google-sheets.decorator';
 
 @Controller('schedules')
 export class ScheduleController {
   @Post('from-sheets')
-  @UseGuards(GoogleSheetsApiKeyGuard)
+  @GoogleSheets() // Decorator enables API key authentication
   async importFromSheets(@Request() req) {
     // req.service.serviceName === 'google-sheets'
   }
 }
 ```
+
+**Note**:
+
+- The guard is registered globally, so you don't need `@UseGuards(GoogleSheetsApiKeyGuard)`
+- Use the `@GoogleSheets()` decorator to opt-in to API key authentication
+- The `JwtAuthGuard` automatically skips JWT validation when `@GoogleSheets()` is present
 
 ### BackdoorApiKeyGuard
 
@@ -137,25 +170,34 @@ export class ScheduleController {
 **Service Name**: `'backdoor'`
 
 **Purpose**: Validates API keys for service-to-service backdoor operations. These endpoints are separate from admin controllers to allow for:
+
 - Different authentication mechanism (API key vs JWT)
 - Future IP whitelisting
 - Clear separation of concerns
 
 **Protected Operations**:
+
 - Creating users
 - Updating users
 - Creating studio memberships for admin users
 
-**Usage**:
+**Usage Pattern** (Recommended - Base Controller):
+
 ```typescript
-import { BackdoorApiKeyGuard } from '@/common/guards/backdoor-api-key.guard';
+import { Backdoor } from '@/lib/decorators/backdoor.decorator';
+import { BaseBackdoorController } from '@/backdoor/base-backdoor.controller';
+
+@Backdoor() // Decorator marks controller for API key authentication
+export abstract class BaseBackdoorController {
+  // Shared utility methods
+}
 
 @Controller('backdoor/users')
-@UseGuards(BackdoorApiKeyGuard)  // Guard at controller level
-export class BackdoorUserController {
+export class BackdoorUserController extends BaseBackdoorController {
   @Post()
   async createUser(@Body() body: CreateUserDto) {
     // req.service.serviceName === 'backdoor'
+    // API key validation happens automatically via global guard
     return this.userService.createUser(body);
   }
 
@@ -167,10 +209,36 @@ export class BackdoorUserController {
 }
 ```
 
+**Usage Pattern** (Alternative - Direct Decorator):
+
+```typescript
+import { Backdoor } from '@/lib/decorators/backdoor.decorator';
+
+@Controller('backdoor/users')
+@Backdoor() // Decorator enables API key authentication
+export class BackdoorUserController {
+  @Post()
+  async createUser(@Body() body: CreateUserDto) {
+    // req.service.serviceName === 'backdoor'
+    return this.userService.createUser(body);
+  }
+}
+```
+
+**Note**:
+
+- The guard is registered globally, so you don't need `@UseGuards(BackdoorApiKeyGuard)`
+- Use the `@Backdoor()` decorator to opt-in to API key authentication
+- The `JwtAuthGuard` automatically skips JWT validation when `@Backdoor()` is present
+
 **Protected Endpoints**:
+
 - `POST /backdoor/users` - Create user (API key required)
 - `PATCH /backdoor/users/:id` - Update user (API key required)
 - `POST /backdoor/studio-memberships` - Create studio membership (API key required)
+- `POST /backdoor/auth/jwks/refresh` - Refresh JWKS cache (API key required)
+
+**Note**: Backdoor controllers extend `BaseBackdoorController` which uses the `@Backdoor()` decorator to skip JWT authentication. This allows these endpoints to use API key authentication via `BackdoorApiKeyGuard` instead.
 
 **Future Enhancement**: IP whitelisting can be added by configuring `BACKDOOR_ALLOWED_IPS` environment variable.
 
@@ -186,7 +254,7 @@ Extend `BaseApiKeyGuard` to create service-specific guards:
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Env } from '@/config/env.schema';
-import { BaseApiKeyGuard } from '@/common/guards/base-api-key.guard';
+import { BaseApiKeyGuard } from '@/lib/guards/base-api-key.guard';
 
 @Injectable()
 export class MyServiceApiKeyGuard extends BaseApiKeyGuard {
@@ -203,7 +271,10 @@ export class MyServiceApiKeyGuard extends BaseApiKeyGuard {
   }
 
   // Optional: Override for custom validation logic
-  protected validateApiKey(providedKey: string, configuredKey: string): boolean {
+  protected validateApiKey(
+    providedKey: string,
+    configuredKey: string,
+  ): boolean {
     return providedKey === configuredKey;
   }
 }
@@ -212,6 +283,7 @@ export class MyServiceApiKeyGuard extends BaseApiKeyGuard {
 **Required Steps**:
 
 1. Add environment variable to `env.schema.ts`:
+
    ```typescript
    MY_SERVICE_API_KEY: z.string().min(1).optional(),
    ```
@@ -232,13 +304,16 @@ request.service = {
   type: 'api-key',
   serviceName: 'google-sheets', // or 'my-service', etc.
   // Future: userId, userEmail from JWT
-}
+};
 ```
 
 Access in your controller:
+
 ```typescript
+import { GoogleSheets } from '@/lib/decorators/google-sheets.decorator';
+
 @Post('endpoint')
-@UseGuards(GoogleSheetsApiKeyGuard)
+@GoogleSheets()  // Decorator enables API key authentication
 async handler(@Request() req) {
   const serviceName = req.service?.serviceName; // 'google-sheets'
 }
@@ -248,13 +323,13 @@ async handler(@Request() req) {
 
 ## Behavior Matrix
 
-| Scenario | Development | Production |
-|----------|-------------|------------|
-| **API Key Configured + Valid Header** | ✅ Validates, allows | ✅ Validates, allows |
-| **API Key Configured + Invalid Header** | ❌ Returns 401 | ❌ Returns 401 |
-| **API Key Configured + No Header** | ❌ Returns 401 | ❌ Returns 401 |
-| **No API Key Configured + No Header** | ✅ Bypasses auth | ❌ Returns 401 (required) |
-| **No API Key Configured + Header Provided** | ✅ Bypasses auth | ❌ Returns 401 (misconfigured) |
+| Scenario                                    | Development          | Production                     |
+| ------------------------------------------- | -------------------- | ------------------------------ |
+| **API Key Configured + Valid Header**       | ✅ Validates, allows | ✅ Validates, allows           |
+| **API Key Configured + Invalid Header**     | ❌ Returns 401       | ❌ Returns 401                 |
+| **API Key Configured + No Header**          | ❌ Returns 401       | ❌ Returns 401                 |
+| **No API Key Configured + No Header**       | ✅ Bypasses auth     | ❌ Returns 401 (required)      |
+| **No API Key Configured + Header Provided** | ✅ Bypasses auth     | ❌ Returns 401 (misconfigured) |
 
 ---
 
@@ -263,10 +338,12 @@ async handler(@Request() req) {
 ### Single Service Guard
 
 ```typescript
+import { GoogleSheets } from '@/lib/decorators/google-sheets.decorator';
+
 @Controller('schedules')
 export class ScheduleController {
   @Post('from-sheets')
-  @UseGuards(GoogleSheetsApiKeyGuard)
+  @GoogleSheets() // Decorator enables API key authentication
   async importFromSheets(@Request() req, @Body() data: unknown) {
     // req.service.serviceName === 'google-sheets'
     return this.scheduleService.importFromSheets(data);
@@ -276,20 +353,30 @@ export class ScheduleController {
 
 ### Multiple Service Guards (OR Logic)
 
-Accept requests from multiple services. Request passes if **any** guard validates successfully:
+**Note**: The current implementation uses decorator-based opt-in guards. To accept requests from multiple services, you would need to create a custom guard that checks multiple API keys. The decorator-based pattern is designed for single-service authentication.
+
+For multi-service support, consider:
+
+1. Creating a custom guard that validates multiple API keys
+2. Using a shared API key for multiple services
+3. Implementing a service registry pattern
+
+**Example Custom Multi-Service Guard** (if needed):
 
 ```typescript
-import { UseGuards } from '@nestjs/common';
-import { GoogleSheetsApiKeyGuard } from '@/common/guards/google-sheets-api-key.guard';
-import { MyServiceApiKeyGuard } from '@/common/guards/my-service-api-key.guard';
+@Injectable()
+export class MultiServiceApiKeyGuard extends BaseApiKeyGuard {
+  // Override to check multiple API keys
+  protected validateApiKey(
+    providedKey: string,
+    configuredKey: string,
+  ): boolean {
+    const allowedKeys = [
+      this.configService.get('GOOGLE_SHEETS_API_KEY'),
+      this.configService.get('MY_SERVICE_API_KEY'),
+    ].filter(Boolean);
 
-@Controller('shared')
-export class SharedController {
-  @Post('endpoint')
-  @UseGuards(GoogleSheetsApiKeyGuard, MyServiceApiKeyGuard)
-  async sharedEndpoint(@Request() req) {
-    const serviceName = req.service?.serviceName; // 'google-sheets' or 'my-service'
-    return { success: true, serviceName };
+    return allowedKeys.includes(providedKey);
   }
 }
 ```
@@ -316,6 +403,7 @@ The guards throw `UnauthorizedException` (401) in these cases:
 - **Production Misconfiguration**: Header provided but environment variable not set in production
 
 **Error Response**:
+
 ```json
 {
   "statusCode": 401,
@@ -334,7 +422,7 @@ The guards throw `UnauthorizedException` (401) in these cases:
 pnpm test
 
 # Run guard tests only
-pnpm test common/guards
+pnpm test lib/guards
 
 # Run with coverage
 pnpm test:cov
@@ -343,6 +431,7 @@ pnpm test:cov
 ### Test Coverage
 
 **BaseApiKeyGuard**:
+
 - ✅ Valid API key validation
 - ✅ Invalid/missing API key rejection
 - ✅ Development mode bypass
@@ -351,11 +440,13 @@ pnpm test:cov
 - ✅ Service context attachment
 
 **GoogleSheetsApiKeyGuard**:
+
 - ✅ Service-specific validation
 - ✅ Service name verification (`'google-sheets'`)
 - ✅ Environment-specific behavior
 
 **BackdoorApiKeyGuard**:
+
 - ✅ Service-specific validation
 - ✅ Service name verification (`'backdoor'`)
 - ✅ Environment-specific behavior
@@ -370,8 +461,8 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { Controller, Post, UseGuards, Request } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { GoogleSheetsApiKeyGuard } from '@/common/guards/google-sheets-api-key.guard';
-import { ServiceContext } from '@/common/guards/base-api-key.guard';
+import { GoogleSheetsApiKeyGuard } from '@/lib/guards/google-sheets-api-key.guard';
+import { ServiceContext } from '@/lib/guards/base-api-key.guard';
 
 @Controller('test')
 class TestController {
@@ -438,6 +529,7 @@ describe('GoogleSheetsApiKeyGuard Integration', () => {
 **Symptoms**: 401 error with message "API key is required"
 
 **Solutions**:
+
 - Ensure `X-API-Key` header is present in the request (case-insensitive: `x-api-key` or `X-API-Key`)
 - Verify the environment variable is set: `GOOGLE_SHEETS_API_KEY` (or your service's key)
 - Check that environment variables are loaded correctly in your application
@@ -447,6 +539,7 @@ describe('GoogleSheetsApiKeyGuard Integration', () => {
 **Symptoms**: 401 error with message "Invalid API key"
 
 **Solutions**:
+
 - Verify the header value exactly matches the environment variable (no extra spaces or characters)
 - Ensure you're using the correct service's API key (e.g., `GOOGLE_SHEETS_API_KEY` for Google Sheets)
 - Check for copy/paste errors or encoding issues
@@ -457,6 +550,7 @@ describe('GoogleSheetsApiKeyGuard Integration', () => {
 **Symptoms**: Requests succeed without API key when they shouldn't
 
 **Solutions**:
+
 - Check if environment variable is set: `echo $GOOGLE_SHEETS_API_KEY`
 - Verify environment variables are loaded: Check your `.env` file and application startup logs
 - Check logs for "API key not configured" warning messages
@@ -473,9 +567,9 @@ The guards are designed to integrate with JWT authentication for enhanced user c
 request.service = {
   type: 'api-key',
   serviceName: 'google-sheets',
-  userId: jwtPayload.sub,      // User ID from JWT
+  userId: jwtPayload.sub, // User ID from JWT
   userEmail: jwtPayload.email, // User email from JWT
-}
+};
 ```
 
 ---

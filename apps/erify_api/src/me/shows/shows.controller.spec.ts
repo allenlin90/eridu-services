@@ -1,4 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-assignment */
+import { ShowsController } from './shows.controller';
+import { ShowsService } from './shows.service';
+
 import {
   createControllerUser,
   createJwtControllerTestModule,
@@ -10,13 +12,10 @@ import {
   showMockFactory,
 } from '@/testing/mock-data-factories';
 
-import { ShowsController } from './shows.controller';
-import { ShowsService } from './shows.service';
-
 // Setup JWT controller mocks globally
 setupJwtControllerMocks();
 
-describe('ShowsController', () => {
+describe('showsController', () => {
   let controller: ShowsController;
 
   // Use mock data factories with proper typing for test purposes

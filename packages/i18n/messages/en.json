@@ -1,0 +1,90 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "common": {
+    "welcome": "Welcome",
+    "hello": "Hello",
+    "goodbye": "Goodbye",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "reset": "Reset",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close",
+    "open": "Open",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "navigation": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "settings": "Settings",
+    "profile": "Profile",
+    "logout": "Logout",
+    "login": "Login"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Please enter a valid email address",
+    "minLength": "Must be at least {min} characters",
+    "maxLength": "Must be no more than {max} characters"
+  },
+  "app": {
+    "name": "Eridu Creators",
+    "title": "Creators Dashboard"
+  },
+  "shows": {
+    "title": "Shows",
+    "list": "Shows List",
+    "create": "Create Show",
+    "edit": "Edit Show",
+    "delete": "Delete Show",
+    "noShows": "No shows found",
+    "loading": "Loading shows...",
+    "noResults": "No results.",
+    "searchPlaceholder": "Search by name...",
+    "resetButton": "Reset",
+    "typeLabel": "Type:",
+    "statusLabel": "Status:",
+    "startLabel": "Start:",
+    "endLabel": "End:",
+    "createdLabel": "Created:",
+    "updatedLabel": "Updated:"
+  },
+  "table": {
+    "name": "Name",
+    "client": "Client",
+    "studioRoom": "Studio Room",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "rowsSelected": "{selected} of {total} row(s) selected.",
+    "rowsPerPage": "Rows per page",
+    "page": "Page {current} of {total}",
+    "goToFirstPage": "Go to first page",
+    "goToPreviousPage": "Go to previous page",
+    "goToNextPage": "Go to next page",
+    "goToLastPage": "Go to last page"
+  },
+  "pages": {
+    "notFound": "Page Not Found",
+    "error": "An error occurred",
+    "failedToLoadShows": "Failed to load shows. Please try again.",
+    "failedToLoadShowDetails": "Failed to load show details. Please try again.",
+    "showNotFound": "Show Not Found",
+    "showNotFoundMessage": "The show with ID \"{showId}\" could not be found."
+  },
+  "sidebar": {
+    "activities": "Activities",
+    "shows": "Shows"
+  }
+}

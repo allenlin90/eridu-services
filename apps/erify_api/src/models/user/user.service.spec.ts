@@ -1,3 +1,7 @@
+import type { CreateUserDto, UpdateUserDto } from './schemas/user.schema';
+import { UserRepository } from './user.repository';
+import { UserService } from './user.service';
+
 import {
   createMockRepository,
   createMockUtilityService,
@@ -5,15 +9,11 @@ import {
   setupTestMocks,
 } from '@/testing/model-service-test.helper';
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
-import { UtilityService } from '@/utility/utility.service';
-
-import { CreateUserDto, UpdateUserDto } from './schemas/user.schema';
-import { UserRepository } from './user.repository';
-import { UserService } from './user.service';
+import type { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
-describe('UserService', () => {
+describe('userService', () => {
   let service: UserService;
   let userRepositoryMock: Partial<jest.Mocked<UserRepository>>;
   let utilityMock: Partial<jest.Mocked<UtilityService>>;
@@ -26,7 +26,7 @@ describe('UserService', () => {
       serviceClass: UserService,
       repositoryClass: UserRepository,
       repositoryMock: userRepositoryMock,
-      utilityMock: utilityMock,
+      utilityMock,
     });
 
     service = module.get<UserService>(UserService);

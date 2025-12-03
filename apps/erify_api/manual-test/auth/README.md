@@ -1,42 +1,46 @@
 # JWT Authentication E2E Testing Flow
 
-This directory contains test scripts and documentation for testing JWT authentication flow with `erify_auth` service and `@eridu/auth-sdk` SDK.
+This directory contains test scripts and documentation for testing JWT authentication flow with `eridu_auth` service and `@eridu/auth-sdk` SDK.
 
 ## Overview
 
 This flow tests the complete authentication workflow:
-1. **Login** - Authenticate with `erify_auth` service using seeded test user credentials
+
+1. **Login** - Authenticate with `eridu_auth` service using seeded test user credentials
 2. **Get JWT Token** - Extract JWT token from login response
 3. **Test /me Endpoint** - Use JWT token to access authenticated endpoint in `erify_api`
 
 ## Prerequisites
 
-1. **erify_auth Service Running**: The auth service must be running and accessible
+1. **eridu_auth Service Running**: The auth service must be running and accessible
+
    ```bash
-   # In apps/erify_auth
+   # In apps/eridu_auth
    pnpm run dev
    ```
 
 2. **erify_api Service Running**: The API service must be running
+
    ```bash
    # In apps/erify_api
    pnpm run dev
    ```
 
-3. **Database Seeded**: Ensure `erify_auth` database is seeded with test users
+3. **Database Seeded**: Ensure `eridu_auth` database is seeded with test users
+
    ```bash
-   # In apps/erify_auth
+   # In apps/eridu_auth
    pnpm db:seed
    ```
 
-4. **Environment Variables**: Configure `ERIFY_AUTH_URL` in `erify_api/.env`
+4. **Environment Variables**: Configure `ERIDU_AUTH_URL` in `erify_api/.env`
    ```env
-   ERIFY_AUTH_URL=http://localhost:3000
+   ERIDU_AUTH_URL=http://localhost:3000
    ```
 
 ## Test Users
 
-The seed creates the following test users (from `erify_auth`):
+The seed creates the following test users (from `eridu_auth`):
 
 | Email                     | Password          | Role    | Email Verified |
 | ------------------------- | ----------------- | ------- | -------------- |
@@ -65,7 +69,8 @@ pnpm run manual:auth:all -- --email=test-user@example.com --password=testpasswor
 ```
 
 This will:
-1. Login to `erify_auth` and get JWT token
+
+1. Login to `eridu_auth` and get JWT token
 2. Test `GET /me` endpoint with the JWT token
 
 ### Option 2: Run Steps Individually
@@ -103,7 +108,7 @@ auth/
 
 ## Workflow Steps
 
-1. **Login** - Authenticate with `erify_auth` service using test user credentials
+1. **Login** - Authenticate with `eridu_auth` service using test user credentials
    - Calls `POST /api/auth/sign-in/email` to establish session
    - Calls `GET /api/auth/token` to get JWT token
    - Returns JWT token string
@@ -122,21 +127,23 @@ auth/
 
 ## Endpoints
 
-### erify_auth Service
+### eridu_auth Service
+
 - `POST /api/auth/sign-in/email` - Login with email/password
 
 ### erify_api Service
+
 - `GET /me` - Get authenticated user profile (requires JWT token)
 
 ## How It Works
 
-1. **Login Request**: Script sends POST request to `erify_auth` with email/password
+1. **Login Request**: Script sends POST request to `eridu_auth` with email/password
 2. **Token Extraction**: Better Auth returns JWT token in response (cookie or body)
 3. **Token Validation**: `erify_api` uses `@eridu/auth-sdk` to validate token via JWKS
 4. **Profile Access**: Validated token allows access to `/me` endpoint
 
 The `@eridu/auth-sdk` SDK automatically:
-- Fetches JWKS from `{ERIFY_AUTH_URL}/api/auth/jwks` on startup
+
+- Fetches JWKS from `{ERIDU_AUTH_URL}/api/auth/jwks` on startup
 - Validates JWT tokens locally using cached public keys
 - Extracts user information from token payload
-

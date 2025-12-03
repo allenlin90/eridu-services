@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, ScheduleSnapshot } from '@prisma/client';
 
+import { ScheduleSnapshotRepository } from './schedule-snapshot.repository';
+
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
-import { ScheduleSnapshotRepository } from './schedule-snapshot.repository';
+type ScheduleSnapshotWithIncludes<T extends Prisma.ScheduleSnapshotInclude> =
+  Prisma.ScheduleSnapshotGetPayload<{
+    include: T;
+  }>;
 
 @Injectable()
 export class ScheduleSnapshotService extends BaseModelService {
@@ -26,10 +31,12 @@ export class ScheduleSnapshotService extends BaseModelService {
     return this.scheduleSnapshotRepository.create({ ...data, uid });
   }
 
-  getScheduleSnapshotById(
+  getScheduleSnapshotById<
+    T extends Prisma.ScheduleSnapshotInclude = Record<string, never>,
+  >(
     uid: string,
-    include?: Prisma.ScheduleSnapshotInclude,
-  ): Promise<ScheduleSnapshot> {
+    include?: T,
+  ): Promise<ScheduleSnapshot | ScheduleSnapshotWithIncludes<T>> {
     return this.findScheduleSnapshotOrThrow(uid, include);
   }
 
@@ -75,13 +82,14 @@ export class ScheduleSnapshotService extends BaseModelService {
     return this.scheduleSnapshotRepository.count(where ?? {});
   }
 
-  async updateScheduleSnapshot(
-    uid: string,
-    data: Prisma.ScheduleSnapshotUpdateInput,
-    include?: Prisma.ScheduleSnapshotInclude,
-  ): Promise<ScheduleSnapshot> {
-    await this.findScheduleSnapshotOrThrow(uid);
-    return this.scheduleSnapshotRepository.update({ uid }, data, include);
+  /**
+   * Update is not supported for snapshots - they are immutable.
+   * @throws HttpError.badRequest if called
+   */
+  updateScheduleSnapshot(): never {
+    throw HttpError.badRequest(
+      'ScheduleSnapshot does not support update - snapshots are immutable',
+    );
   }
 
   async deleteScheduleSnapshot(uid: string): Promise<ScheduleSnapshot> {
@@ -90,10 +98,12 @@ export class ScheduleSnapshotService extends BaseModelService {
     return this.scheduleSnapshotRepository.delete({ uid });
   }
 
-  private async findScheduleSnapshotOrThrow(
+  private async findScheduleSnapshotOrThrow<
+    T extends Prisma.ScheduleSnapshotInclude = Record<string, never>,
+  >(
     uid: string,
-    include?: Prisma.ScheduleSnapshotInclude,
-  ): Promise<ScheduleSnapshot> {
+    include?: T,
+  ): Promise<ScheduleSnapshot | ScheduleSnapshotWithIncludes<T>> {
     const snapshot = await this.scheduleSnapshotRepository.findByUid(
       uid,
       include,
@@ -101,6 +111,6 @@ export class ScheduleSnapshotService extends BaseModelService {
     if (!snapshot) {
       throw HttpError.notFound('ScheduleSnapshot', uid);
     }
-    return snapshot;
+    return snapshot as ScheduleSnapshot | ScheduleSnapshotWithIncludes<T>;
   }
 }

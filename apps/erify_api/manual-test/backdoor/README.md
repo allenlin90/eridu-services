@@ -38,6 +38,7 @@ pnpm run manual:backdoor:all -- --studio-id=studio_456
 ```
 
 This will:
+
 1. Create a user
 2. Update the created user
 3. Create a studio membership for the user
@@ -81,6 +82,7 @@ pnpm run manual:backdoor:create-memberships
 ## Authentication
 
 Scripts automatically read `BACKDOOR_API_KEY` from `.env` file:
+
 - **Without key**: Scripts don't send header (dev mode behavior)
 - **With key**: Scripts include `X-API-Key` header (production behavior)
 
@@ -91,4 +93,3 @@ See [Server-to-Server Authentication Guide](../../docs/SERVER_TO_SERVER_AUTH.md)
 - `POST /backdoor/users` - Create user (API key required)
 - `PATCH /backdoor/users/:id` - Update user (API key required)
 - `POST /backdoor/studio-memberships` - Create membership (API key required)
-

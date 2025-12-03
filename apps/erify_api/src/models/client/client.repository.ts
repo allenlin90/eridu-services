@@ -6,14 +6,13 @@ import { PrismaService } from '@/prisma/prisma.service';
 
 // Custom model wrapper that implements IBaseModel with ClientWhereInput
 class ClientModelWrapper
-  implements
+implements
     IBaseModel<
       Client,
       Prisma.ClientCreateInput,
       Prisma.ClientUpdateInput,
       Prisma.ClientWhereInput
-    >
-{
+    > {
   constructor(private readonly prismaModel: Prisma.ClientDelegate) {}
 
   async create(args: {

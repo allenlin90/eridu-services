@@ -5,14 +5,13 @@ import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
 class ScheduleModelWrapper
-  implements
+implements
     IBaseModel<
       Schedule,
       Prisma.ScheduleCreateInput,
       Prisma.ScheduleUpdateInput,
       Prisma.ScheduleWhereInput
-    >
-{
+    > {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(args: {

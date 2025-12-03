@@ -5,26 +5,39 @@ This directory contains comprehensive documentation for the Eridu Services API (
 ## Core Documentation
 
 ### Architecture & Design
+
 - **[Architecture Overview](./ARCHITECTURE.md)** - Module architecture, dependencies, and design patterns
 - **[Business Domain](./BUSINESS.md)** - Business domain information and entity relationships
 
 ### Authentication & Security
+
 - **[Authentication & Authorization Guide](./AUTHENTICATION_GUIDE.md)** - JWT validation, authorization patterns, and SDK implementation strategy
 - **[Server-to-Server Authentication Guide](./SERVER_TO_SERVER_AUTH.md)** - API key guard usage for service-to-service communication
 
 ### Features & Roadmap
+
 - **[Phase 1 Roadmap](./roadmap/PHASE_1.md)** - Core Functions with Simplified Auth (current phase)
 - **[Phase 2 Roadmap](./roadmap/PHASE_2.md)** - Material Management System (planned)
 - **[Phase 3 Roadmap](./roadmap/PHASE_3.md)** - Advanced Authorization & Tracking (planned)
 - **[Schedule Upload API Design](./SCHEDULE_UPLOAD_API_DESIGN.md)** - Schedule upload system design with JSON-based planning and snapshot versioning
 
 ### API Reference
+
 - **[Postman Collection](./erify-api.postman_collection.json)** - Complete API endpoint collection for testing
 
 ## External Documentation
 
 ### SDK Documentation
+
 - **[Auth SDK](../../../packages/auth-sdk/README.md)** - Complete SDK documentation for JWT/JWKS integration with Better Auth
+
+### Shared Packages
+
+- **[API Types](../../../packages/api-types/README.md)** - Shared API types and schemas package (`@eridu/api-types`)
+  - Zod schemas for runtime validation
+  - TypeScript types inferred from schemas
+  - Constants (UID prefixes, etc.)
+  - Reusable pagination schemas
 
 ## Quick Start
 
@@ -53,7 +66,8 @@ docs/
 ## Key Concepts
 
 ### Authentication
-- **JWT Validation**: Uses `@eridu/auth-sdk` SDK to validate tokens from `erify_auth` service
+
+- **JWT Validation**: Uses `@eridu/auth-sdk` SDK to validate tokens from `eridu_auth` service
   - Automatic JWKS caching on startup
   - Edge/worker runtime support with on-demand JWKS fetching
   - Automatic key rotation handling
@@ -62,6 +76,7 @@ docs/
 - **Admin Verification**: StudioMembership model determines admin permissions
 
 ### Authorization
+
 - **Admin Users**: Full CRUD access via admin endpoints (verified via StudioMembership in ANY studio)
 - **Other Users**: Access user-scoped endpoints (`/me/*`) with JWT authentication for their own data
 - **Service Integration**: API key authentication for internal operations
@@ -69,6 +84,7 @@ docs/
   - Backdoor API key for user/membership management
 
 ### Architecture
+
 - **Modular Design**: Separated into Admin, Me, Backdoor, and Common modules
 - **Service Pattern**: Consistent service patterns across all entities
 - **Repository Pattern**: Base repository with soft delete support
@@ -79,6 +95,7 @@ docs/
 ## Contributing
 
 When updating documentation:
+
 1. Keep architecture diagrams up to date
 2. Update roadmap checklists as features are implemented
 3. Add examples for new patterns or features
@@ -86,5 +103,6 @@ When updating documentation:
 
 ## Related Services
 
-- **erify_auth**: Authentication service using Better Auth (provides JWT tokens and JWKS endpoint)
+- **eridu_auth**: Authentication service using Better Auth (provides JWT tokens and JWKS endpoint)
 - **auth-sdk**: Shared SDK for JWT/JWKS validation (`@eridu/auth-sdk` package)
+- **api-types**: Shared API types and schemas (`@eridu/api-types` package) - Centralized Zod schemas and TypeScript types for API contracts

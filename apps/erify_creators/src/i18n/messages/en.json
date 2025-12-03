@@ -1,0 +1,52 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "app": {
+    "name": "Eridu Creators",
+    "title": "Creators Dashboard"
+  },
+  "shows": {
+    "title": "Shows",
+    "list": "Shows List",
+    "create": "Create Show",
+    "edit": "Edit Show",
+    "delete": "Delete Show",
+    "noShows": "No shows found",
+    "loading": "Loading shows...",
+    "noResults": "No results.",
+    "searchPlaceholder": "Search by name...",
+    "resetButton": "Reset",
+    "typeLabel": "Type:",
+    "statusLabel": "Status:",
+    "startLabel": "Start:",
+    "endLabel": "End:",
+    "createdLabel": "Created:",
+    "updatedLabel": "Updated:",
+    "refresh": "Refresh"
+  },
+  "pages": {
+    "notFound": "Page Not Found",
+    "error": "An error occurred",
+    "failedToLoadShows": "Failed to load shows. Please try again.",
+    "failedToLoadShowDetails": "Failed to load show details. Please try again.",
+    "showNotFound": "Show Not Found",
+    "showNotFoundMessage": "The show with ID \"{showId}\" could not be found."
+  },
+  "table": {
+    "name": "Name",
+    "client": "Client",
+    "studioRoom": "Studio Room",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "rowsSelected": "{selected} of {total} row(s) selected.",
+    "rowsPerPage": "Rows per page",
+    "page": "Page {current} of {total}",
+    "goToFirstPage": "Go to first page",
+    "goToPreviousPage": "Go to previous page",
+    "goToNextPage": "Go to next page",
+    "goToLastPage": "Go to last page"
+  },
+  "sidebar": {
+    "activities": "Activities",
+    "shows": "Shows"
+  }
+}

@@ -1,5 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Provider, Test, TestingModule } from '@nestjs/testing';
+/* eslint-disable  */
+import type { Provider, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 
 /**
  * Common mock services used across admin controllers
@@ -18,7 +19,7 @@ export const adminMockServices = {
  * Configuration for creating an admin controller test module.
  * Admin controllers typically don't use JWT auth but may have other guards.
  */
-export interface AdminControllerTestConfig<TController> {
+export type AdminControllerTestConfig<TController> = {
   /** The controller class to test */
   controllerClass: new (...args: any[]) => TController;
   /** Service mocks specific to this controller - key should be the service class, value the mock instance */
@@ -27,7 +28,7 @@ export interface AdminControllerTestConfig<TController> {
   additionalProviders?: Provider[];
   /** Guards to include (admin controllers may use different auth) */
   guards?: unknown[];
-}
+};
 
 /**
  * Creates a NestJS testing module for admin controllers with standardized setup.
@@ -77,7 +78,7 @@ export async function createAdminControllerTestModule<TController>({
     ),
     // Guards (if any)
 
-    ...guards.map((guard) => ({
+    ...guards.map(guard => ({
       provide: guard,
       useValue: { canActivate: jest.fn(() => true) },
     })),

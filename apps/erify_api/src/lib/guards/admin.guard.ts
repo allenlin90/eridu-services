@@ -84,8 +84,8 @@ export class AdminGuard implements CanActivate {
 
     const { ext_id, email } = request.user;
 
-    const adminMembership: StudioMembership | null =
-      await this.studioMembershipService.findAdminMembershipByExtId(ext_id);
+    const adminMembership: StudioMembership | null
+      = await this.studioMembershipService.findAdminMembershipByExtId(ext_id);
 
     if (!adminMembership) {
       this.logger.warn(

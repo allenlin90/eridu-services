@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 
-import { AuthModule } from '@/lib/auth/auth.module';
-
 import { BackdoorAuthController } from './backdoor-auth.controller';
+
+import { AuthModule } from '@/lib/auth/auth.module';
 
 @Module({
   imports: [AuthModule],

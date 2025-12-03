@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
-import { PrismaService } from '@/prisma/prisma.service';
-import { UtilityService } from '@/utility/utility.service';
-
 import {
   PlanDocument,
   ShowPlanItem,
   ValidationError,
   ValidationResult,
 } from './schemas/schedule-planning.schema';
+
+import { PrismaService } from '@/prisma/prisma.service';
+import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
 export class ValidationService {
@@ -41,8 +41,8 @@ export class ValidationService {
 
     // Validate plan document structure
     if (
-      !schedule.planDocument.shows ||
-      !Array.isArray(schedule.planDocument.shows)
+      !schedule.planDocument.shows
+      || !Array.isArray(schedule.planDocument.shows)
     ) {
       errors.push({
         type: 'reference_not_found',
@@ -257,8 +257,8 @@ export class ValidationService {
         const show2 = shows[j];
 
         if (
-          show1.studioRoomUid === show2.studioRoomUid &&
-          this.utilityService.isTimeOverlapping(
+          show1.studioRoomUid === show2.studioRoomUid
+          && this.utilityService.isTimeOverlapping(
             show1.startTime,
             show1.endTime,
             show2.startTime,
@@ -389,7 +389,7 @@ export class ValidationService {
       where: {
         showMCs: {
           some: {
-            mcId: mcId,
+            mcId,
             deletedAt: null,
           },
         },
@@ -439,14 +439,14 @@ export class ValidationService {
     shows: ShowPlanItem[],
     prismaClient: Prisma.TransactionClient | PrismaService,
   ): Promise<{
-    clients: Map<string, bigint>;
-    studioRooms: Map<string, bigint>;
-    showTypes: Map<string, bigint>;
-    showStatuses: Map<string, bigint>;
-    showStandards: Map<string, bigint>;
-    mcs: Map<string, bigint>;
-    platforms: Map<string, bigint>;
-  }> {
+      clients: Map<string, bigint>;
+      studioRooms: Map<string, bigint>;
+      showTypes: Map<string, bigint>;
+      showStatuses: Map<string, bigint>;
+      showStandards: Map<string, bigint>;
+      mcs: Map<string, bigint>;
+      platforms: Map<string, bigint>;
+    }> {
     // Collect all unique UIDs
     const clientUids = new Set<string>();
     const studioRoomUids = new Set<string>();

@@ -1,0 +1,90 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "app": {
+    "name": "Eridu 創作者",
+    "title": "創作者儀表板"
+  },
+  "shows": {
+    "title": "節目",
+    "list": "節目列表",
+    "create": "建立節目",
+    "edit": "編輯節目",
+    "delete": "刪除節目",
+    "noShows": "找不到節目",
+    "loading": "載入節目中...",
+    "noResults": "沒有結果。",
+    "searchPlaceholder": "依名稱搜尋...",
+    "resetButton": "重設",
+    "typeLabel": "類型：",
+    "statusLabel": "狀態：",
+    "startLabel": "開始：",
+    "endLabel": "結束：",
+    "createdLabel": "建立：",
+    "updatedLabel": "更新："
+  },
+  "pages": {
+    "notFound": "找不到頁面",
+    "error": "發生錯誤",
+    "failedToLoadShows": "載入節目失敗。請再試一次。",
+    "failedToLoadShowDetails": "載入節目詳細資訊失敗。請再試一次。",
+    "showNotFound": "找不到節目",
+    "showNotFoundMessage": "找不到 ID 為 \"{showId}\" 的節目。"
+  },
+  "common": {
+    "welcome": "歡迎",
+    "hello": "你好",
+    "goodbye": "再見",
+    "loading": "載入中...",
+    "error": "錯誤",
+    "success": "成功",
+    "cancel": "取消",
+    "confirm": "確認",
+    "save": "儲存",
+    "delete": "刪除",
+    "edit": "編輯",
+    "create": "建立",
+    "search": "搜尋",
+    "filter": "篩選",
+    "reset": "重設",
+    "submit": "提交",
+    "back": "返回",
+    "next": "下一步",
+    "previous": "上一步",
+    "close": "關閉",
+    "open": "開啟",
+    "yes": "是",
+    "no": "否"
+  },
+  "navigation": {
+    "home": "首頁",
+    "dashboard": "儀表板",
+    "settings": "設定",
+    "profile": "個人資料",
+    "logout": "登出",
+    "login": "登入"
+  },
+  "validation": {
+    "required": "此欄位為必填",
+    "email": "請輸入有效的電子郵件地址",
+    "minLength": "至少需要 {min} 個字元",
+    "maxLength": "不得超過 {max} 個字元"
+  },
+  "table": {
+    "name": "名稱",
+    "client": "客戶",
+    "studioRoom": "錄音室",
+    "startTime": "開始時間",
+    "endTime": "結束時間",
+    "rowsSelected": "已選擇 {selected} / {total} 行。",
+    "rowsPerPage": "每頁行數",
+    "page": "第 {current} 頁，共 {total} 頁",
+    "goToFirstPage": "前往第一頁",
+    "goToPreviousPage": "前往上一頁",
+    "goToNextPage": "前往下一頁",
+    "goToLastPage": "前往最後一頁"
+  },
+  "sidebar": {
+    "activities": "活動",
+    "shows": "節目"
+  }
+}

@@ -1,8 +1,10 @@
 import { ConfigService } from '@nestjs/config';
-import { Test, TestingModule } from '@nestjs/testing';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 import { Prisma } from '@prisma/client';
 
-import { PrismaService, TransactionClient } from './prisma.service';
+import type { TransactionClient } from './prisma.service';
+import { PrismaService } from './prisma.service';
 
 // Mock the pg module
 jest.mock('pg', () => {
@@ -29,7 +31,7 @@ jest.mock('@prisma/adapter-pg', () => {
   };
 });
 
-describe('PrismaService', () => {
+describe('prismaService', () => {
   let service: PrismaService;
   let connectSpy: jest.SpyInstance;
   let disconnectSpy: jest.SpyInstance;
@@ -99,7 +101,7 @@ describe('PrismaService', () => {
     });
 
     it('should log connection success', async () => {
-      const loggerSpy = jest.spyOn(service['logger'], 'log');
+      const loggerSpy = jest.spyOn(service.logger, 'log');
       await service.onModuleInit();
       expect(loggerSpy).toHaveBeenCalledWith('Database connected successfully');
     });
@@ -107,7 +109,7 @@ describe('PrismaService', () => {
     it('should handle connection errors', async () => {
       const error = new Error('Connection failed');
       connectSpy.mockRejectedValueOnce(error);
-      const loggerSpy = jest.spyOn(service['logger'], 'error');
+      const loggerSpy = jest.spyOn(service.logger, 'error');
 
       await expect(service.onModuleInit()).rejects.toThrow('Connection failed');
       expect(loggerSpy).toHaveBeenCalledWith(
@@ -119,14 +121,14 @@ describe('PrismaService', () => {
 
   describe('onModuleDestroy', () => {
     it('should disconnect from database and close pool', async () => {
-      const poolEndSpy = jest.spyOn(service['pool'], 'end');
+      const poolEndSpy = jest.spyOn(service.pool, 'end');
       await service.onModuleDestroy();
       expect(disconnectSpy).toHaveBeenCalledTimes(1);
       expect(poolEndSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should log disconnection success', async () => {
-      const loggerSpy = jest.spyOn(service['logger'], 'log');
+      const loggerSpy = jest.spyOn(service.logger, 'log');
       await service.onModuleDestroy();
       expect(loggerSpy).toHaveBeenCalledWith(
         'Database disconnected successfully',
@@ -136,7 +138,7 @@ describe('PrismaService', () => {
     it('should handle disconnection errors gracefully', async () => {
       const error = new Error('Disconnect failed');
       disconnectSpy.mockRejectedValueOnce(error);
-      const loggerSpy = jest.spyOn(service['logger'], 'error');
+      const loggerSpy = jest.spyOn(service.logger, 'error');
 
       await service.onModuleDestroy();
       expect(loggerSpy).toHaveBeenCalledWith(
@@ -188,7 +190,7 @@ describe('PrismaService', () => {
     it('should handle transaction errors', async () => {
       const error = new Error('Transaction failed');
       transactionSpy.mockRejectedValueOnce(error);
-      const loggerSpy = jest.spyOn(service['logger'], 'error');
+      const loggerSpy = jest.spyOn(service.logger, 'error');
       const callback = jest.fn().mockResolvedValue('result');
 
       await expect(service.executeTransaction(callback)).rejects.toThrow(
@@ -208,7 +210,7 @@ describe('PrismaService', () => {
     it('should return false when database health check fails', async () => {
       const error = new Error('Database connection failed');
       queryRawSpy.mockRejectedValueOnce(error);
-      const loggerSpy = jest.spyOn(service['logger'], 'error');
+      const loggerSpy = jest.spyOn(service.logger, 'error');
 
       const result = await service.isHealthy();
 

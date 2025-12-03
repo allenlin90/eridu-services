@@ -37,8 +37,8 @@ export class AdminShowPlatformController extends BaseAdminController {
     'Show platform created successfully',
   )
   async createShowPlatform(@Body() body: CreateShowPlatformDto) {
-    const showPlatform =
-      await this.showPlatformService.createShowPlatformFromDto(body);
+    const showPlatform
+      = await this.showPlatformService.createShowPlatformFromDto(body);
     return this.showPlatformService.getShowPlatformById(showPlatform.uid, {
       show: true,
       platform: true,
@@ -94,8 +94,8 @@ export class AdminShowPlatformController extends BaseAdminController {
     id: string,
     @Body() body: UpdateShowPlatformDto,
   ) {
-    const showPlatform =
-      await this.showPlatformService.updateShowPlatformFromDto(id, body);
+    const showPlatform
+      = await this.showPlatformService.updateShowPlatformFromDto(id, body);
     // Fetch with relations for proper serialization
     return this.showPlatformService.getShowPlatformById(showPlatform.uid, {
       show: true,

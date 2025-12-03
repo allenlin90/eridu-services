@@ -3,8 +3,12 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Test, TestingModule } from '@nestjs/testing';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 
+import { BackdoorAuthController } from './backdoor-auth.controller';
+
+import { AuthService } from '@/lib/auth/auth.service';
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 
 // Mock AuthService to avoid ES module import issues
@@ -12,11 +16,7 @@ jest.mock('@/lib/auth/auth.service', () => ({
   AuthService: jest.fn(),
 }));
 
-import { AuthService } from '@/lib/auth/auth.service';
-
-import { BackdoorAuthController } from './backdoor-auth.controller';
-
-describe('BackdoorAuthController', () => {
+describe('backdoorAuthController', () => {
   let controller: BackdoorAuthController;
   let mockAuthService: {
     getJwksService: jest.Mock;
@@ -46,8 +46,10 @@ describe('BackdoorAuthController', () => {
 
     const mockConfigService = {
       get: jest.fn((key: string) => {
-        if (key === 'BACKDOOR_API_KEY') return undefined;
-        if (key === 'NODE_ENV') return 'development';
+        if (key === 'BACKDOOR_API_KEY')
+          return undefined;
+        if (key === 'NODE_ENV')
+          return 'development';
         return undefined;
       }),
     };
@@ -204,8 +206,8 @@ describe('BackdoorAuthController', () => {
       expect(typeof result.message).toBe('string');
       expect(typeof result.keysCount).toBe('number');
       expect(
-        result.lastFetchedTime === null ||
-          typeof result.lastFetchedTime === 'string',
+        result.lastFetchedTime === null
+        || typeof result.lastFetchedTime === 'string',
       ).toBe(true);
     });
 

@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, StudioMembership } from '@prisma/client';
 
-import { HttpError } from '@/lib/errors/http-error.util';
-import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
-
 import {
   CreateStudioMembershipDto,
   UpdateStudioMembershipDto,
 } from './schemas/studio-membership.schema';
 import { StudioMembershipRepository } from './studio-membership.repository';
+
+import { HttpError } from '@/lib/errors/http-error.util';
+import { BaseModelService } from '@/lib/services/base-model.service';
+import { UtilityService } from '@/utility/utility.service';
 
 // Type aliases for better readability and type safety
 type UserId = Prisma.UserWhereUniqueInput['id'];
@@ -102,7 +102,7 @@ export class StudioMembershipService extends BaseModelService {
   async isUserAdmin(userId: UserId): Promise<boolean> {
     const memberships = await this.studioMembershipRepository.findMany({
       where: {
-        userId: userId,
+        userId,
         role: 'admin',
         deletedAt: null,
       },
@@ -140,8 +140,8 @@ export class StudioMembershipService extends BaseModelService {
     studioId: StudioId,
   ): Promise<boolean> {
     const membership = await this.studioMembershipRepository.findOne({
-      userId: userId,
-      studioId: studioId,
+      userId,
+      studioId,
       role: 'admin',
       deletedAt: null,
     });
@@ -218,8 +218,10 @@ export class StudioMembershipService extends BaseModelService {
   ): Prisma.StudioMembershipUpdateInput {
     const payload: Prisma.StudioMembershipUpdateInput = {};
 
-    if (dto.role !== undefined) payload.role = dto.role;
-    if (dto.metadata !== undefined) payload.metadata = dto.metadata;
+    if (dto.role !== undefined)
+      payload.role = dto.role;
+    if (dto.metadata !== undefined)
+      payload.metadata = dto.metadata;
 
     if (dto.userId !== undefined) {
       payload.user = { connect: { uid: dto.userId } };

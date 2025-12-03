@@ -1,10 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 
-import {
+import { AdminShowController } from './admin-show.controller';
+
+import type {
   ListShowsQueryDto,
   UpdateShowDto,
 } from '@/models/show/schemas/show.schema';
-import {
+import type {
   CreateShowWithAssignmentsDto,
   RemoveMcsFromShowDto,
   RemovePlatformsFromShowDto,
@@ -13,9 +16,7 @@ import {
 } from '@/show-orchestration/schemas/show-orchestration.schema';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 
-import { AdminShowController } from './admin-show.controller';
-
-describe('AdminShowController', () => {
+describe('adminShowController', () => {
   let controller: AdminShowController;
 
   const mockShowOrchestrationService = {

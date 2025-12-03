@@ -61,16 +61,10 @@ function loadPayloads() {
   // Payloads are in manual-test/backdoor/payloads/, not in scripts/payloads/
   const payloadsDir = path.join(__dirname, '../../payloads');
   const createUserPayload = JSON.parse(
-    fs.readFileSync(
-      path.join(payloadsDir, '01-create-user.json'),
-      'utf-8',
-    ),
+    fs.readFileSync(path.join(payloadsDir, '01-create-user.json'), 'utf-8'),
   );
   const updateUserPayload = JSON.parse(
-    fs.readFileSync(
-      path.join(payloadsDir, '02-update-user.json'),
-      'utf-8',
-    ),
+    fs.readFileSync(path.join(payloadsDir, '02-update-user.json'), 'utf-8'),
   );
   const createMembershipPayload = JSON.parse(
     fs.readFileSync(
@@ -93,20 +87,20 @@ async function createUser(apiUrl: string) {
   console.log(`${'='.repeat(60)}\n`);
 
   const { createUserPayload } = loadPayloads();
-  
+
   // Generate unique email to avoid conflicts when running multiple times
   const timestamp = Date.now();
   const randomSuffix = Math.floor(Math.random() * 10000);
   const baseEmail = createUserPayload.email || 'admin@example.com';
   const [emailLocal, emailDomain] = baseEmail.split('@');
   const uniqueEmail = `${emailLocal}+${timestamp}-${randomSuffix}@${emailDomain}`;
-  
+
   // Create payload with unique email
   const payload = {
     ...createUserPayload,
     email: uniqueEmail,
   };
-  
+
   const endpoint = `${apiUrl}/backdoor/users`;
 
   console.log(`📡 Endpoint: POST ${endpoint}`);
@@ -261,10 +255,11 @@ async function main() {
     await createMembership(apiUrl, userId, studioId);
     results.push({ name: 'Create Membership', success: true });
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(`\n❌ Workflow failed: ${errorMessage}`);
-    console.error(`\n⚠️  Workflow stopped. Previous steps completed successfully.`);
+    console.error(
+      `\n⚠️  Workflow stopped. Previous steps completed successfully.`,
+    );
     process.exit(1);
   }
 
@@ -300,4 +295,3 @@ if (require.main === module) {
     process.exit(1);
   });
 }
-

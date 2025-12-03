@@ -32,9 +32,31 @@ export async function httpRequest<T = unknown>(
   // This matches the server's configuration and allows testing actual behavior:
   // - If key is in .env: header is sent → auth is enforced (dev or prod)
   // - If key is NOT in .env: no header sent → can test bypass behavior
-  const apiKey = process.env.GOOGLE_SHEETS_API_KEY;
+  const apiKey = process.env.GOOGLE_SHEETS_API_KEY?.trim();
   if (apiKey) {
-    headers['X-API-Key'] = apiKey;
+    // Use lowercase header name as the guard checks for 'x-api-key' first
+    headers['x-api-key'] = apiKey;
+    // Debug: Log first and last few chars (for security, don't log full key)
+    const preview =
+      apiKey.length > 10
+        ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}`
+        : '***';
+    console.log(
+      `🔑 Sending API key header (length: ${apiKey.length}, preview: ${preview})`,
+    );
+  } else {
+    console.error(
+      '❌ GOOGLE_SHEETS_API_KEY not found in environment variables',
+    );
+    console.error(
+      '   Available env vars:',
+      Object.keys(process.env)
+        .filter((k) => k.includes('API') || k.includes('KEY'))
+        .join(', ') || 'none',
+    );
+    console.error(
+      '   This request will fail if the endpoint requires authentication',
+    );
   }
 
   const options: RequestInit = {
@@ -70,4 +92,3 @@ export async function httpRequest<T = unknown>(
     );
   }
 }
-

@@ -1,12 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
-
-import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
-import { McService } from '@/models/mc/mc.service';
-import { CreateMcDto, UpdateMcDto } from '@/models/mc/schemas/mc.schema';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 
 import { AdminMcController } from './admin-mc.controller';
 
-describe('AdminMcController', () => {
+import type { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+import { McService } from '@/models/mc/mc.service';
+import type { CreateMcDto, UpdateMcDto } from '@/models/mc/schemas/mc.schema';
+
+describe('adminMcController', () => {
   let controller: AdminMcController;
 
   const mockMcService = {

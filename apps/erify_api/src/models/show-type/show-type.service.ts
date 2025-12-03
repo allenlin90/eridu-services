@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, ShowType } from '@prisma/client';
 
+import { ShowTypeRepository } from './show-type.repository';
+
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
-
-import { ShowTypeRepository } from './show-type.repository';
 
 @Injectable()
 export class ShowTypeService extends BaseModelService {

@@ -1,0 +1,90 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "app": {
+    "name": "Eridu Creators",
+    "title": "แดชบอร์ดผู้สร้าง"
+  },
+  "shows": {
+    "title": "รายการ",
+    "list": "รายการทั้งหมด",
+    "create": "สร้างรายการ",
+    "edit": "แก้ไขรายการ",
+    "delete": "ลบรายการ",
+    "noShows": "ไม่พบรายการ",
+    "loading": "กำลังโหลดรายการ...",
+    "noResults": "ไม่มีผลลัพธ์",
+    "searchPlaceholder": "ค้นหาตามชื่อ...",
+    "resetButton": "รีเซ็ต",
+    "typeLabel": "ประเภท:",
+    "statusLabel": "สถานะ:",
+    "startLabel": "เริ่ม:",
+    "endLabel": "สิ้นสุด:",
+    "createdLabel": "สร้างเมื่อ:",
+    "updatedLabel": "อัปเดตเมื่อ:"
+  },
+  "pages": {
+    "notFound": "ไม่พบหน้า",
+    "error": "เกิดข้อผิดพลาด",
+    "failedToLoadShows": "ไม่สามารถโหลดรายการได้ กรุณาลองใหม่อีกครั้ง",
+    "failedToLoadShowDetails": "ไม่สามารถโหลดรายละเอียดรายการได้ กรุณาลองใหม่อีกครั้ง",
+    "showNotFound": "ไม่พบรายการ",
+    "showNotFoundMessage": "ไม่พบรายการที่มี ID \"{showId}\""
+  },
+  "common": {
+    "welcome": "ยินดีต้อนรับ",
+    "hello": "สวัสดี",
+    "goodbye": "ลาก่อน",
+    "loading": "กำลังโหลด...",
+    "error": "ข้อผิดพลาด",
+    "success": "สำเร็จ",
+    "cancel": "ยกเลิก",
+    "confirm": "ยืนยัน",
+    "save": "บันทึก",
+    "delete": "ลบ",
+    "edit": "แก้ไข",
+    "create": "สร้าง",
+    "search": "ค้นหา",
+    "filter": "กรอง",
+    "reset": "รีเซ็ต",
+    "submit": "ส่ง",
+    "back": "กลับ",
+    "next": "ถัดไป",
+    "previous": "ก่อนหน้า",
+    "close": "ปิด",
+    "open": "เปิด",
+    "yes": "ใช่",
+    "no": "ไม่"
+  },
+  "navigation": {
+    "home": "หน้าแรก",
+    "dashboard": "แดชบอร์ด",
+    "settings": "การตั้งค่า",
+    "profile": "โปรไฟล์",
+    "logout": "ออกจากระบบ",
+    "login": "เข้าสู่ระบบ"
+  },
+  "validation": {
+    "required": "ฟิลด์นี้จำเป็นต้องกรอก",
+    "email": "กรุณากรอกอีเมลที่ถูกต้อง",
+    "minLength": "ต้องมีอย่างน้อย {min} ตัวอักษร",
+    "maxLength": "ต้องไม่เกิน {max} ตัวอักษร"
+  },
+  "table": {
+    "name": "ชื่อ",
+    "client": "ลูกค้า",
+    "studioRoom": "ห้องสตูดิโอ",
+    "startTime": "เวลาเริ่ม",
+    "endTime": "เวลาสิ้นสุด",
+    "rowsSelected": "เลือกแล้ว {selected} จาก {total} แถว",
+    "rowsPerPage": "แถวต่อหน้า",
+    "page": "หน้า {current} จาก {total}",
+    "goToFirstPage": "ไปหน้าแรก",
+    "goToPreviousPage": "ไปหน้าก่อนหน้า",
+    "goToNextPage": "ไปหน้าถัดไป",
+    "goToLastPage": "ไปหน้าสุดท้าย"
+  },
+  "sidebar": {
+    "activities": "กิจกรรม",
+    "shows": "รายการ"
+  }
+}

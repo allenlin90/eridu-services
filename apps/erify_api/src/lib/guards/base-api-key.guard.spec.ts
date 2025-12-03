@@ -1,11 +1,11 @@
+import type { ExecutionContext } from '@nestjs/common';
 import { UnauthorizedException } from '@nestjs/common';
-import { ExecutionContext } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Request } from 'express';
-
-import { Env } from '@/config/env.schema';
+import type { ConfigService } from '@nestjs/config';
+import type { Request } from 'express';
 
 import { BaseApiKeyGuard } from './base-api-key.guard';
+
+import type { Env } from '@/config/env.schema';
 
 /**
  * Concrete implementation of BaseApiKeyGuard for testing
@@ -20,7 +20,7 @@ class TestApiKeyGuard extends BaseApiKeyGuard {
   }
 }
 
-describe('BaseApiKeyGuard', () => {
+describe('baseApiKeyGuard', () => {
   let guard: TestApiKeyGuard;
   let configService: jest.Mocked<ConfigService<Env>>;
   let mockExecutionContext: ExecutionContext;
@@ -50,8 +50,10 @@ describe('BaseApiKeyGuard', () => {
   describe('when API key is configured', () => {
     beforeEach(() => {
       configService.get.mockImplementation((key: string) => {
-        if (key === 'TEST_API_KEY') return 'valid-api-key-123';
-        if (key === 'NODE_ENV') return 'development';
+        if (key === 'TEST_API_KEY')
+          return 'valid-api-key-123';
+        if (key === 'NODE_ENV')
+          return 'development';
         return undefined;
       });
     });
@@ -114,8 +116,10 @@ describe('BaseApiKeyGuard', () => {
   describe('when API key is not configured in development', () => {
     beforeEach(() => {
       configService.get.mockImplementation((key: string) => {
-        if (key === 'TEST_API_KEY') return undefined;
-        if (key === 'NODE_ENV') return 'development';
+        if (key === 'TEST_API_KEY')
+          return undefined;
+        if (key === 'NODE_ENV')
+          return 'development';
         return undefined;
       });
     });
@@ -144,8 +148,10 @@ describe('BaseApiKeyGuard', () => {
 
     beforeEach(() => {
       configService.get.mockImplementation((key: string) => {
-        if (key === 'TEST_API_KEY') return undefined;
-        if (key === 'NODE_ENV') return 'production';
+        if (key === 'TEST_API_KEY')
+          return undefined;
+        if (key === 'NODE_ENV')
+          return 'production';
         return undefined;
       });
       // Create guard AFTER mock is set up so isProduction is set correctly
@@ -211,8 +217,10 @@ describe('BaseApiKeyGuard', () => {
   describe('header extraction', () => {
     beforeEach(() => {
       configService.get.mockImplementation((key: string) => {
-        if (key === 'TEST_API_KEY') return 'valid-api-key-123';
-        if (key === 'NODE_ENV') return 'development';
+        if (key === 'TEST_API_KEY')
+          return 'valid-api-key-123';
+        if (key === 'NODE_ENV')
+          return 'development';
         return undefined;
       });
     });

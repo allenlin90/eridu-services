@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `@eridu/auth-sdk` package provides a framework-agnostic SDK for authentication (JWT validation and JWKS management), enabling both frontend and backend services to authenticate users via tokens issued by the `erify_auth` service (Better Auth).
+The `@eridu/auth-sdk` package provides a framework-agnostic SDK for authentication (JWT validation and JWKS management), enabling both frontend and backend services to authenticate users via tokens issued by the `eridu_auth` service (Better Auth).
 
 **Purpose**: This is an **SDK package** that provides reusable authentication utilities for JWT/JWKS validation. It can be integrated into any Node.js service (NestJS, Express, Hono, etc.) and will support frontend integration in the future (replacing `@eridu/auth-service`).
 
@@ -23,12 +23,12 @@ This SDK design provides:
 
 **Needed Components:**
 
-1. **JWKS Service** - Fetch JWKS from `{ERIFY_AUTH_URL}/api/auth/jwks` on startup, cache in memory, support edge/worker runtimes
+1. **JWKS Service** - Fetch JWKS from `{ERIDU_AUTH_URL}/api/auth/jwks` on startup, cache in memory, support edge/worker runtimes
 2. **JWT Validation Guard** - Local JWT verification using JWKS, extract user info, validate issuer/audience
 3. **Admin Guard** - Service-specific (depends on StudioMembership) - remains in erify_api
 4. **JWKS Management Endpoints** - Framework-specific - remains in erify_api
 
-### erify_auth Service
+### eridu_auth Service
 
 **Provides:**
 
@@ -97,7 +97,7 @@ pnpm add @eridu/auth-sdk
 
 **Runtime Requirements:**
 
-- Node.js 18+ (for native `fetch` API)
+- Node.js 22+ (for native `fetch` API)
 - TypeScript 5.8+
 
 ## Core Components
@@ -108,7 +108,7 @@ pnpm add @eridu/auth-sdk
 
 **Features:**
 
-- Fetches JWKS from `{ERIFY_AUTH_URL}/api/auth/jwks` on startup
+- Fetches JWKS from `{ERIDU_AUTH_URL}/api/auth/jwks` on startup
 - Caches JWKS in memory for efficient local JWT verification
 - Supports edge/worker runtimes with on-demand fetching (when `EDGE_RUNTIME=true`)
 - Automatic key rotation detection and refresh
@@ -117,11 +117,11 @@ pnpm add @eridu/auth-sdk
 **Usage:**
 
 ```typescript
-import { JwksService } from "@eridu/auth-sdk/server/jwks";
+import { JwksService } from '@eridu/auth-sdk/server/jwks';
 
 const jwksService = new JwksService({
-  authServiceUrl: process.env.ERIFY_AUTH_URL!,
-  jwksPath: "/api/auth/jwks", // optional, defaults to '/api/auth/jwks'
+  authServiceUrl: process.env.ERIDU_AUTH_URL!,
+  jwksPath: '/api/auth/jwks', // optional, defaults to '/api/auth/jwks'
   edgeRuntime: false, // optional, defaults to false
 });
 
@@ -142,25 +142,25 @@ await jwksService.refreshJwks();
 **Features:**
 
 - Local JWT verification using public keys from JWKS
-- Validates issuer and audience against `ERIFY_AUTH_URL`
+- Validates issuer and audience against `ERIDU_AUTH_URL`
 - Extracts user information from JWT payload
 - Automatic key rotation handling (refreshes JWKS if unknown key ID detected)
 
 **Usage:**
 
 ```typescript
-import { JwksService } from "@eridu/auth-sdk/server/jwks";
-import { JwtVerifier } from "@eridu/auth-sdk/server/jwt";
+import { JwksService } from '@eridu/auth-sdk/server/jwks';
+import { JwtVerifier } from '@eridu/auth-sdk/server/jwt';
 
 const jwksService = new JwksService({
-  authServiceUrl: process.env.ERIFY_AUTH_URL!,
+  authServiceUrl: process.env.ERIDU_AUTH_URL!,
 });
 await jwksService.initialize();
 
 const jwtVerifier = new JwtVerifier({
   jwksService,
-  issuer: process.env.ERIFY_AUTH_URL!,
-  audience: process.env.ERIFY_AUTH_URL!, // optional, defaults to issuer
+  issuer: process.env.ERIDU_AUTH_URL!,
+  audience: process.env.ERIDU_AUTH_URL!, // optional, defaults to issuer
 });
 
 // Verify token
@@ -177,13 +177,13 @@ const userInfo = jwtVerifier.extractUserInfo(payload);
 **Usage:**
 
 ```typescript
-import { JwtAuthGuard } from "@eridu/auth-sdk/adapters/nestjs";
+import { JwtAuthGuard } from '@eridu/auth-sdk/adapters/nestjs';
 // Use in controllers with @CurrentUser() decorator (recommended)
-import { CurrentUser } from "@eridu/auth-sdk/adapters/nestjs";
-import { JwksService, JwtVerifier } from "@eridu/auth-sdk/server";
-import { ConfigService } from "@nestjs/config";
+import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs';
+import { JwksService, JwtVerifier } from '@eridu/auth-sdk/server';
+import { ConfigService } from '@nestjs/config';
 
-import type { UserInfo } from "@eridu/auth-sdk/types";
+import type { UserInfo } from '@eridu/auth-sdk/types';
 
 @Module({
   providers: [
@@ -191,8 +191,8 @@ import type { UserInfo } from "@eridu/auth-sdk/types";
       provide: JwksService,
       useFactory: async (config: ConfigService) => {
         const service = new JwksService({
-          authServiceUrl: config.get("ERIFY_AUTH_URL")!,
-          edgeRuntime: config.get("EDGE_RUNTIME", false),
+          authServiceUrl: config.get('ERIDU_AUTH_URL')!,
+          edgeRuntime: config.get('EDGE_RUNTIME', false),
         });
         // Initialize on startup (fetches and caches JWKS)
         await service.initialize();
@@ -205,7 +205,7 @@ import type { UserInfo } from "@eridu/auth-sdk/types";
       useFactory: (jwksService: JwksService, config: ConfigService) => {
         return new JwtVerifier({
           jwksService,
-          issuer: config.get("ERIFY_AUTH_URL")!,
+          issuer: config.get('ERIDU_AUTH_URL')!,
         });
       },
       inject: [JwksService, ConfigService],
@@ -216,7 +216,7 @@ import type { UserInfo } from "@eridu/auth-sdk/types";
 })
 export class CommonModule {}
 
-@Controller("profile")
+@Controller('profile')
 @UseGuards(JwtAuthGuard)
 export class ProfileController {
   @Get()
@@ -231,17 +231,17 @@ export class ProfileController {
 }
 
 // Alternative: Use @Request() with AuthenticatedRequest (legacy approach)
-@Controller("admin")
+@Controller('admin')
 @UseGuards(JwtAuthGuard)
 export class AdminController {
-  @Get("profile")
+  @Get('profile')
   getProfile(@Request() req: AuthenticatedRequest) {
     return req.user; // UserInfo attached by guard
   }
 }
 ```
 
-**Note**: Environment variables (`ERIFY_AUTH_URL`, `EDGE_RUNTIME`) are validated via Zod schema in `env.schema.ts` on application startup. The SDK uses a pre-compile strategy where these values are resolved at runtime, not at build time.
+**Note**: Environment variables (`ERIDU_AUTH_URL`, `EDGE_RUNTIME`) are validated via Zod schema in `env.schema.ts` on application startup. The SDK uses a pre-compile strategy where these values are resolved at runtime, not at build time.
 
 ### 4. CurrentUser Decorator
 
@@ -258,11 +258,11 @@ export class AdminController {
 **Usage:**
 
 ```typescript
-import { CurrentUser, JwtAuthGuard } from "@eridu/auth-sdk/adapters/nestjs";
+import { CurrentUser, JwtAuthGuard } from '@eridu/auth-sdk/adapters/nestjs';
 
-import type { UserInfo } from "@eridu/auth-sdk/types";
+import type { UserInfo } from '@eridu/auth-sdk/types';
 
-@Controller("profile")
+@Controller('profile')
 @UseGuards(JwtAuthGuard)
 export class ProfileController {
   @Get()
@@ -275,11 +275,8 @@ export class ProfileController {
     };
   }
 
-  @Get(":id")
-  getItem(
-    @CurrentUser() user: UserInfo,
-    @Param("id") id: string,
-  ) {
+  @Get(':id')
+  getItem(@CurrentUser() user: UserInfo, @Param('id') id: string) {
     return this.service.getItem(id, user.id);
   }
 }
@@ -290,7 +287,7 @@ export class ProfileController {
 If your app extends `JwtAuthGuard` and transforms the user:
 
 ```typescript
-import { CurrentUser, JwtAuthGuard } from "@eridu/auth-sdk/adapters/nestjs";
+import { CurrentUser, JwtAuthGuard } from '@eridu/auth-sdk/adapters/nestjs';
 
 // App-specific user type (from guard transformation)
 type AuthenticatedUser = {
@@ -302,7 +299,7 @@ type AuthenticatedUser = {
   payload: JwtPayload;
 };
 
-@Controller("profile")
+@Controller('profile')
 @UseGuards(CustomJwtAuthGuard) // Transforms UserInfo → AuthenticatedUser
 export class ProfileController {
   @Get()
@@ -360,18 +357,18 @@ export type UserInfo = {
 
 **erify_api (consuming service):**
 
-- `ERIFY_AUTH_URL`: Base URL of the erify_auth service (e.g., `http://localhost:3000` or `https://auth.example.com`)
+- `ERIDU_AUTH_URL`: Base URL of the eridu_auth service (e.g., `http://localhost:3000` or `https://auth.example.com`)
   - **Required**: Must be a valid URL
   - **Validation**: Validated via Zod schema in `env.schema.ts` on application startup
-  - **Usage**: Used to construct JWKS endpoint URL (`{ERIFY_AUTH_URL}/api/auth/jwks`) and validate JWT issuer/audience
+  - **Usage**: Used to construct JWKS endpoint URL (`{ERIDU_AUTH_URL}/api/auth/jwks`) and validate JWT issuer/audience
 - `EDGE_RUNTIME`: (Optional) Set to `true` if running on edge service or worker where caching isn't possible (defaults to `false`)
   - **Default**: `false` (standard Node.js runtime with caching)
   - **Validation**: Coerced to boolean via Zod schema
   - **Usage**: When `true`, JWKS are fetched on-demand per request instead of cached on startup
 
-**erify_auth (auth service):**
+**eridu_auth (auth service):**
 
-- `BETTER_AUTH_URL`: Base URL for Better Auth (should match `ERIFY_AUTH_URL`)
+- `BETTER_AUTH_URL`: Base URL for Better Auth (should match `ERIDU_AUTH_URL`)
 - `BETTER_AUTH_SECRET`: Secret key for JWT signing
 - Base path: `/api/auth` (default)
 
@@ -393,19 +390,19 @@ The SDK uses a **pre-compile strategy** where environment variables are resolved
 ConfigModule.forRoot({
   validate: (config) => {
     const result = envSchema.safeParse(config);
-    // ERIFY_AUTH_URL and EDGE_RUNTIME are validated here
+    // ERIDU_AUTH_URL and EDGE_RUNTIME are validated here
     return result.data;
   },
 });
 
 // 2. Services are instantiated with validated config
 const jwksService = new JwksService({
-  authServiceUrl: configService.get("ERIFY_AUTH_URL"), // From validated env
-  edgeRuntime: configService.get("EDGE_RUNTIME", false), // From validated env
+  authServiceUrl: configService.get('ERIDU_AUTH_URL'), // From validated env
+  edgeRuntime: configService.get('EDGE_RUNTIME', false), // From validated env
 });
 
 // 3. SDK uses these values at runtime
-await jwksService.initialize(); // Fetches from {ERIFY_AUTH_URL}/api/auth/jwks
+await jwksService.initialize(); // Fetches from {ERIDU_AUTH_URL}/api/auth/jwks
 ```
 
 **Benefits:**
@@ -418,8 +415,8 @@ await jwksService.initialize(); // Fetches from {ERIFY_AUTH_URL}/api/auth/jwks
 
 ### Validation
 
-- Ensure `ERIFY_AUTH_URL` matches `BETTER_AUTH_URL` in erify_auth
-- Verify JWKS endpoint is accessible at `{ERIFY_AUTH_URL}/api/auth/jwks`
+- Ensure `ERIDU_AUTH_URL` matches `BETTER_AUTH_URL` in eridu_auth
+- Verify JWKS endpoint is accessible at `{ERIDU_AUTH_URL}/api/auth/jwks`
 - Test JWT token format matches SDK expectations
 - Environment variables are validated on application startup via Zod schema
 
@@ -432,7 +429,7 @@ sequenceDiagram
     participant Client
     participant API as erify_api
     participant SDK as auth-sdk
-    participant Auth as erify_auth
+    participant Auth as eridu_auth
     participant DB as Database
 
     Note over API,SDK: Server Startup
@@ -461,7 +458,7 @@ sequenceDiagram
 
 ### How JWT/JWKS Validation Works
 
-1. **Server Startup**: When the server starts, `JwksService.initialize()` fetches the JWKS from `{ERIFY_AUTH_URL}/api/auth/jwks`
+1. **Server Startup**: When the server starts, `JwksService.initialize()` fetches the JWKS from `{ERIDU_AUTH_URL}/api/auth/jwks`
 2. **JWKS Caching**: The JWKS (public keys) are cached in memory for efficient local JWT verification
 3. **Edge/Worker Runtime**: If `EDGE_RUNTIME=true`, JWKS are not cached and are fetched on-demand when needed
 4. **JWT Verification**: Each request validates the JWT token locally using the cached JWKS - no network call per request
@@ -538,10 +535,10 @@ sequenceDiagram
 ### Better Auth Integration
 
 - **JWKS Endpoint**: Fetched directly via HTTP from Better Auth's standard endpoint
-  - Default endpoint: `{ERIFY_AUTH_URL}/api/auth/jwks` (Better Auth's default `basePath`)
+  - Default endpoint: `{ERIDU_AUTH_URL}/api/auth/jwks` (Better Auth's default `basePath`)
   - Uses standard HTTP `fetch` API - no client library required
-- **JWT Issuer**: Matches `ERIFY_AUTH_URL` (configured in Better Auth's `baseURL`)
-- **JWT Audience**: Matches `ERIFY_AUTH_URL` (default in Better Auth)
+- **JWT Issuer**: Matches `ERIDU_AUTH_URL` (configured in Better Auth's `baseURL`)
+- **JWT Audience**: Matches `ERIDU_AUTH_URL` (default in Better Auth)
 - **Algorithm**: EdDSA with Ed25519 curve (Better Auth default)
 - **Key Format**: JWK (JSON Web Key) format as per RFC 7517
 
@@ -578,22 +575,20 @@ sequenceDiagram
 ### Common Issues
 
 1. **JWT Token Invalid**
-
    - Verify token format (Bearer <token>)
    - Check token expiration
-   - Verify ERIFY_AUTH_URL is correct and erify_auth service is accessible
-   - Check JWKS endpoint is accessible: `GET {ERIFY_AUTH_URL}/api/auth/jwks`
-   - Verify token issuer and audience match ERIFY_AUTH_URL
+   - Verify ERIDU_AUTH_URL is correct and eridu_auth service is accessible
+   - Check JWKS endpoint is accessible: `GET {ERIDU_AUTH_URL}/api/auth/jwks`
+   - Verify token issuer and audience match ERIDU_AUTH_URL
    - Check logs for JWKS fetch errors on startup
 
 2. **JWKS Fetch Failed**
-
-   - Verify ERIFY_AUTH_URL is correct and accessible
-   - Check that the JWKS endpoint is accessible: `GET {ERIFY_AUTH_URL}/api/auth/jwks`
+   - Verify ERIDU_AUTH_URL is correct and accessible
+   - Check that the JWKS endpoint is accessible: `GET {ERIDU_AUTH_URL}/api/auth/jwks`
    - Verify Better Auth's `basePath` matches the default `/api/auth` (or update JWKS URL construction if custom)
-   - Check network connectivity to erify_auth service
-   - Verify erify_auth service is running and JWKS endpoint is available
-   - Check erify_auth logs for errors
+   - Check network connectivity to eridu_auth service
+   - Verify eridu_auth service is running and JWKS endpoint is available
+   - Check eridu_auth logs for errors
    - For edge/worker runtimes, ensure on-demand fetching is working
    - **Recovery**: Use manual refresh endpoints (if implemented by consuming service) to refresh JWKS
 

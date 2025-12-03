@@ -1,4 +1,6 @@
-/* eslint-disable @typescript-eslint/unbound-method */
+import { StudioRepository } from './studio.repository';
+import { StudioService } from './studio.service';
+
 import {
   createMockRepository,
   createMockUtilityService,
@@ -6,12 +8,9 @@ import {
 } from '@/testing/model-service-test.helper';
 import { UtilityService } from '@/utility/utility.service';
 
-import { StudioRepository } from './studio.repository';
-import { StudioService } from './studio.service';
-
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
-describe('StudioService', () => {
+describe('studioService', () => {
   let service: StudioService;
   let studioRepository: StudioRepository;
   let utilityService: UtilityService;
@@ -24,7 +23,7 @@ describe('StudioService', () => {
       serviceClass: StudioService,
       repositoryClass: StudioRepository,
       repositoryMock: studioRepositoryMock,
-      utilityMock: utilityMock,
+      utilityMock,
     });
 
     service = module.get<StudioService>(StudioService);

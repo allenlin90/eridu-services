@@ -108,8 +108,8 @@ export type StudioMembershipWithRelations = z.infer<
 >;
 
 // Transform studio membership with relations to API format (properly maps UIDs)
-export const studioMembershipWithRelationsDto =
-  studioMembershipWithRelationsSchema
+export const studioMembershipWithRelationsDto
+  = studioMembershipWithRelationsSchema
     .transform((obj) => {
       const parsedUser = userDto.parse(obj.user);
       return {

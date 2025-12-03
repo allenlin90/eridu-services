@@ -1,14 +1,16 @@
-import { ExecutionContext } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Request } from 'express';
-
-import { Env } from '@/config/env.schema';
+import type { ExecutionContext } from '@nestjs/common';
+import type { ConfigService } from '@nestjs/config';
+import type { Reflector } from '@nestjs/core';
+import type { Request } from 'express';
 
 import { BackdoorApiKeyGuard } from './backdoor-api-key.guard';
 
-describe('BackdoorApiKeyGuard', () => {
+import type { Env } from '@/config/env.schema';
+
+describe('backdoorApiKeyGuard', () => {
   let guard: BackdoorApiKeyGuard;
   let configService: jest.Mocked<ConfigService<Env>>;
+  let reflector: jest.Mocked<Reflector>;
   let mockExecutionContext: ExecutionContext;
   let mockRequest: Partial<Request>;
 
@@ -17,6 +19,11 @@ describe('BackdoorApiKeyGuard', () => {
     configService = {
       get: jest.fn(),
     } as unknown as jest.Mocked<ConfigService<Env>>;
+
+    // Mock Reflector
+    reflector = {
+      getAllAndOverride: jest.fn().mockReturnValue(true),
+    } as unknown as jest.Mocked<Reflector>;
 
     // Mock ExecutionContext
     mockRequest = {
@@ -28,16 +35,20 @@ describe('BackdoorApiKeyGuard', () => {
       switchToHttp: jest.fn().mockReturnValue({
         getRequest: getRequestMock,
       }),
+      getHandler: jest.fn(),
+      getClass: jest.fn(),
     } as unknown as ExecutionContext;
 
-    guard = new BackdoorApiKeyGuard(configService);
+    guard = new BackdoorApiKeyGuard(configService, reflector);
   });
 
   describe('when API key is configured', () => {
     beforeEach(() => {
       configService.get.mockImplementation((key: string) => {
-        if (key === 'BACKDOOR_API_KEY') return 'valid-backdoor-key-123';
-        if (key === 'NODE_ENV') return 'development';
+        if (key === 'BACKDOOR_API_KEY')
+          return 'valid-backdoor-key-123';
+        if (key === 'NODE_ENV')
+          return 'development';
         return undefined;
       });
     });
@@ -86,8 +97,10 @@ describe('BackdoorApiKeyGuard', () => {
   describe('when API key is not configured in development', () => {
     beforeEach(() => {
       configService.get.mockImplementation((key: string) => {
-        if (key === 'BACKDOOR_API_KEY') return undefined;
-        if (key === 'NODE_ENV') return 'development';
+        if (key === 'BACKDOOR_API_KEY')
+          return undefined;
+        if (key === 'NODE_ENV')
+          return 'development';
         return undefined;
       });
     });
@@ -116,12 +129,14 @@ describe('BackdoorApiKeyGuard', () => {
 
     beforeEach(() => {
       configService.get.mockImplementation((key: string) => {
-        if (key === 'BACKDOOR_API_KEY') return undefined;
-        if (key === 'NODE_ENV') return 'production';
+        if (key === 'BACKDOOR_API_KEY')
+          return undefined;
+        if (key === 'NODE_ENV')
+          return 'production';
         return undefined;
       });
       // Create guard AFTER mock is set up so isProduction is set correctly
-      productionGuard = new BackdoorApiKeyGuard(configService);
+      productionGuard = new BackdoorApiKeyGuard(configService, reflector);
     });
 
     it('should throw UnauthorizedException when header is provided but env is not set', () => {
@@ -133,6 +148,8 @@ describe('BackdoorApiKeyGuard', () => {
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: getRequestMock,
         }),
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
       } as unknown as ExecutionContext;
 
       expect(() => {
@@ -149,6 +166,8 @@ describe('BackdoorApiKeyGuard', () => {
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: getRequestMock,
         }),
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
       } as unknown as ExecutionContext;
 
       expect(() => {
@@ -160,15 +179,21 @@ describe('BackdoorApiKeyGuard', () => {
   describe('validateRequest method', () => {
     beforeEach(() => {
       configService.get.mockImplementation((key: string) => {
-        if (key === 'BACKDOOR_API_KEY') return 'valid-backdoor-key-123';
-        if (key === 'NODE_ENV') return 'development';
+        if (key === 'BACKDOOR_API_KEY')
+          return 'valid-backdoor-key-123';
+        if (key === 'NODE_ENV')
+          return 'development';
         return undefined;
       });
     });
 
     it('should call validateRequest after API key validation', () => {
       mockRequest.headers = { 'x-api-key': 'valid-backdoor-key-123' };
-      const validateRequestSpy = jest.spyOn(guard, 'validateRequest');
+      // Use 'as any' to access protected method for testing
+      const validateRequestSpy = jest.spyOn(
+        guard as any,
+        'validateRequest',
+      ) as jest.SpyInstance;
 
       guard.canActivate(mockExecutionContext);
 
