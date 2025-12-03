@@ -9,7 +9,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "nest build",
+    "build": "pnpm db:generate && nest build",
     "start": "NODE_ENV=production nest start",
     "dev": "NODE_ENV=development nest start --watch",
     "start:debug": "NODE_ENV=development nest start --debug --watch",
