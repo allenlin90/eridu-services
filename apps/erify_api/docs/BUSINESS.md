@@ -6,11 +6,12 @@ This document provides comprehensive business domain information for the Eridu S
 
 The system is being developed in structured phases:
 
-- **Phase 1**: Core Functions with Hybrid Authentication - Essential CRUD operations, basic show management, Schedule Planning Management System, JWT validation from erify_auth service, and simple StudioMembership-based authorization
+- **Phase 1**: Core Functions with Hybrid Authentication - Essential CRUD operations, basic show management, Schedule Planning Management System, JWT validation from eridu_auth service, and simple StudioMembership-based authorization
 - **Phase 2**: Material Management System - Material versioning, platform targeting, and show-material associations
 - **Phase 3**: Advanced Authorization Control & Tracking Features - Role-based access control, audit trails, task management, tagging, and collaboration features
 
 For detailed implementation plans, see:
+
 - [Phase 1 Roadmap](./roadmap/PHASE_1.md)
 - [Phase 2 Roadmap](./roadmap/PHASE_2.md)
 - [Phase 3 Roadmap](./roadmap/PHASE_3.md)
@@ -28,7 +29,7 @@ Key Models: `audits`
 
 Relationships: Belongs to `User` (audit creator), polymorphic to any auditable entity
 
-## Client 
+## Client
 
 Purpose: Manages external companies that book shows and their associated resources.
 
@@ -412,14 +413,14 @@ erDiagram
     shows |o--o{ show_mcs : hosted_by
     studios ||--o{ studio_rooms : has_many
     studios |o--o{ tags : has_many
-    studio_rooms ||--o{ shows : lives_many    
+    studio_rooms ||--o{ shows : lives_many
     show_mcs }o--o| mcs: hosts
     shows }o--|| show_standards: is
     shows }o--|| show_status: is
     shows }o--|| show_types: is
     shows }o--o{ show_materials: has_many
     show_materials }o--o{ materials: has_many
-    materials }o--|| material_types: is 
+    materials }o--|| material_types: is
     shows }o--o{ show_platforms: has_many
     show_platforms }o--o{ platforms: has_many
     studios |o--o{ task_templates: has_many
@@ -643,7 +644,7 @@ erDiagram
       int schedule_id FK "nullable"
       int studio_room_id FK "nullable"
       int show_type_id FK
-      int show_status_id FK 
+      int show_status_id FK
       int show_standard_id FK
       string name
       datetime show_start

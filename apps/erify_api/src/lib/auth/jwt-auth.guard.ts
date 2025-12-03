@@ -1,14 +1,15 @@
-import { JwtAuthGuard as SdkJwtAuthGuard } from '@eridu/auth-sdk/adapters/nestjs/jwt-auth.guard';
-import type { JwtPayload, UserInfo } from '@eridu/auth-sdk/types';
 import { ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { StudioMembership } from '@prisma/client';
 import type { Request } from 'express';
 
-import { IS_PUBLIC_KEY } from '@/lib/decorators/public.decorator';
-import { HttpError } from '@/lib/errors/http-error.util';
+import { JwtAuthGuard as SdkJwtAuthGuard } from '@eridu/auth-sdk/adapters/nestjs/jwt-auth.guard';
+import type { JwtPayload, UserInfo } from '@eridu/auth-sdk/types';
 
 import { AuthService } from './auth.service';
+
+import { SKIP_JWT_AUTH_KEY } from '@/lib/decorators/skip-jwt-auth.decorator';
+import { HttpError } from '@/lib/errors/http-error.util';
 
 /**
  * Authenticated user type returned by JwtAuthGuard
@@ -27,10 +28,10 @@ export type AuthenticatedUser = {
  * Extended Request interface with user information and ext_id
  * Also includes adminMembership when AdminGuard has verified admin access
  */
-export interface AuthenticatedRequest extends Request {
+export type AuthenticatedRequest = {
   user?: AuthenticatedUser;
   adminMembership?: StudioMembership; // Attached by AdminGuard when admin access is verified
-}
+} & Request;
 
 /**
  * JWT Auth Guard that extends the SDK guard and adds API-specific behavior:
@@ -70,12 +71,14 @@ export class JwtAuthGuard extends SdkJwtAuthGuard {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    // Check for any decorator that skips JWT authentication
+    // This unified approach allows adding new skip decorators without modifying the guard
+    const skipAuth = this.reflector.getAllAndOverride<{
+      skip: boolean;
+      reason?: string;
+    }>(SKIP_JWT_AUTH_KEY, [context.getHandler(), context.getClass()]);
 
-    if (isPublic) {
+    if (skipAuth?.skip) {
       return true;
     }
 
@@ -89,13 +92,13 @@ export class JwtAuthGuard extends SdkJwtAuthGuard {
     payload: JwtPayload,
     userInfo: UserInfo,
   ): {
-    ext_id: string;
-    id: string;
-    name: string;
-    email: string;
-    image?: string;
-    payload: JwtPayload;
-  } {
+      ext_id: string;
+      id: string;
+      name: string;
+      email: string;
+      image?: string;
+      payload: JwtPayload;
+    } {
     const transformed = super.transformUser(payload, userInfo) as {
       ext_id: string;
       id: string;

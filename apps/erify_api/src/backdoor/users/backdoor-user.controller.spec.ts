@@ -1,16 +1,17 @@
 import { ConfigService } from '@nestjs/config';
-import { Test, TestingModule } from '@nestjs/testing';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+
+import { BackdoorUserController } from './backdoor-user.controller';
 
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
-import {
+import type {
   CreateUserDto,
   UpdateUserDto,
 } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
 
-import { BackdoorUserController } from './backdoor-user.controller';
-
-describe('BackdoorUserController', () => {
+describe('backdoorUserController', () => {
   let controller: BackdoorUserController;
 
   const mockUserService = {
@@ -21,8 +22,10 @@ describe('BackdoorUserController', () => {
   beforeEach(async () => {
     const mockConfigService = {
       get: jest.fn((key: string) => {
-        if (key === 'BACKDOOR_API_KEY') return undefined;
-        if (key === 'NODE_ENV') return 'development';
+        if (key === 'BACKDOOR_API_KEY')
+          return undefined;
+        if (key === 'NODE_ENV')
+          return 'development';
         return undefined;
       }),
     };

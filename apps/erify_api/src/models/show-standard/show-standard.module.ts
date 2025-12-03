@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 
-import { PrismaModule } from '@/prisma/prisma.module';
-import { UtilityModule } from '@/utility/utility.module';
-
 import { ShowStandardRepository } from './show-standard.repository';
 import { ShowStandardService } from './show-standard.service';
+
+import { PrismaModule } from '@/prisma/prisma.module';
+import { UtilityModule } from '@/utility/utility.module';
 
 @Module({
   imports: [PrismaModule, UtilityModule],

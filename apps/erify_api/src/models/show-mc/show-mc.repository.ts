@@ -11,14 +11,13 @@ type ShowMCWithIncludes<T extends Prisma.ShowMCInclude> =
 
 // Custom model wrapper that implements IBaseModel with ShowMCWhereInput
 class ShowMCModelWrapper
-  implements
+implements
     IBaseModel<
       ShowMC,
       Prisma.ShowMCCreateInput,
       Prisma.ShowMCUpdateInput,
       Prisma.ShowMCWhereInput
-    >
-{
+    > {
   constructor(private readonly prismaModel: Prisma.ShowMCDelegate) {}
 
   async create(args: {

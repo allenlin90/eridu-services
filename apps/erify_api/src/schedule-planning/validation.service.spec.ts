@@ -1,13 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { Prisma } from '@prisma/client';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+import type { Prisma } from '@prisma/client';
+
+import type { PlanDocument } from './schemas/schedule-planning.schema';
+import { ValidationService } from './validation.service';
 
 import { PrismaService } from '@/prisma/prisma.service';
 import { UtilityService } from '@/utility/utility.service';
 
-import { PlanDocument } from './schemas/schedule-planning.schema';
-import { ValidationService } from './validation.service';
-
-describe('ValidationService', () => {
+describe('validationService', () => {
   let service: ValidationService;
   let _prismaService: jest.Mocked<PrismaService>;
   let _utilityService: jest.Mocked<UtilityService>;
@@ -734,7 +735,7 @@ describe('ValidationService', () => {
       // Complete overlap
       _utilityService.isTimeOverlapping.mockReturnValue(true);
       expect(
-        service['utilityService'].isTimeOverlapping(
+        service.utilityService.isTimeOverlapping(
           `${baseDate}10:00:00Z`,
           `${baseDate}12:00:00Z`,
           `${baseDate}10:00:00Z`,
@@ -744,7 +745,7 @@ describe('ValidationService', () => {
 
       // Partial overlap - second starts during first
       expect(
-        service['utilityService'].isTimeOverlapping(
+        service.utilityService.isTimeOverlapping(
           `${baseDate}10:00:00Z`,
           `${baseDate}12:00:00Z`,
           `${baseDate}11:00:00Z`,
@@ -754,7 +755,7 @@ describe('ValidationService', () => {
 
       // Partial overlap - first starts during second
       expect(
-        service['utilityService'].isTimeOverlapping(
+        service.utilityService.isTimeOverlapping(
           `${baseDate}11:00:00Z`,
           `${baseDate}13:00:00Z`,
           `${baseDate}10:00:00Z`,
@@ -765,7 +766,7 @@ describe('ValidationService', () => {
       // Touching edges (no overlap)
       _utilityService.isTimeOverlapping.mockReturnValue(false);
       expect(
-        service['utilityService'].isTimeOverlapping(
+        service.utilityService.isTimeOverlapping(
           `${baseDate}10:00:00Z`,
           `${baseDate}12:00:00Z`,
           `${baseDate}12:00:00Z`,
@@ -775,7 +776,7 @@ describe('ValidationService', () => {
 
       // No overlap - second starts after first ends
       expect(
-        service['utilityService'].isTimeOverlapping(
+        service.utilityService.isTimeOverlapping(
           `${baseDate}10:00:00Z`,
           `${baseDate}12:00:00Z`,
           `${baseDate}13:00:00Z`,
@@ -785,7 +786,7 @@ describe('ValidationService', () => {
 
       // No overlap - first starts after second ends
       expect(
-        service['utilityService'].isTimeOverlapping(
+        service.utilityService.isTimeOverlapping(
           `${baseDate}13:00:00Z`,
           `${baseDate}15:00:00Z`,
           `${baseDate}10:00:00Z`,
@@ -796,7 +797,7 @@ describe('ValidationService', () => {
       // One contains the other
       _utilityService.isTimeOverlapping.mockReturnValue(true);
       expect(
-        service['utilityService'].isTimeOverlapping(
+        service.utilityService.isTimeOverlapping(
           `${baseDate}10:00:00Z`,
           `${baseDate}14:00:00Z`,
           `${baseDate}11:00:00Z`,
@@ -805,7 +806,7 @@ describe('ValidationService', () => {
       ).toBe(true);
 
       expect(
-        service['utilityService'].isTimeOverlapping(
+        service.utilityService.isTimeOverlapping(
           `${baseDate}11:00:00Z`,
           `${baseDate}13:00:00Z`,
           `${baseDate}10:00:00Z`,
@@ -817,7 +818,7 @@ describe('ValidationService', () => {
     it('should handle ISO date strings', () => {
       _utilityService.isTimeOverlapping.mockReturnValue(true);
       expect(
-        service['utilityService'].isTimeOverlapping(
+        service.utilityService.isTimeOverlapping(
           '2024-01-01T10:00:00Z',
           '2024-01-01T12:00:00Z',
           '2024-01-01T11:00:00Z',
@@ -827,7 +828,7 @@ describe('ValidationService', () => {
 
       _utilityService.isTimeOverlapping.mockReturnValue(false);
       expect(
-        service['utilityService'].isTimeOverlapping(
+        service.utilityService.isTimeOverlapping(
           '2024-01-01T10:00:00Z',
           '2024-01-01T12:00:00Z',
           '2024-01-01T13:00:00Z',

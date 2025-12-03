@@ -1,3 +1,7 @@
+import type { CreateShowDto, UpdateShowDto } from './schemas/show.schema';
+import { ShowRepository } from './show.repository';
+import { ShowService } from './show.service';
+
 import {
   createMockRepository,
   createMockUtilityService,
@@ -5,9 +9,7 @@ import {
   setupTestMocks,
 } from '@/testing/model-service-test.helper';
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
-import { UtilityService } from '@/utility/utility.service';
-
-import { CreateShowDto, UpdateShowDto } from './schemas/show.schema';
+import type { UtilityService } from '@/utility/utility.service';
 
 type ListShowsQuery = {
   page: number;
@@ -23,12 +25,10 @@ type ListShowsQuery = {
   order_direction: 'asc' | 'desc';
   include_deleted: boolean;
 };
-import { ShowRepository } from './show.repository';
-import { ShowService } from './show.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
-describe('ShowService', () => {
+describe('showService', () => {
   let service: ShowService;
   let showRepositoryMock: Partial<jest.Mocked<ShowRepository>>;
   let utilityMock: Partial<jest.Mocked<UtilityService>>;
@@ -76,7 +76,7 @@ describe('ShowService', () => {
       serviceClass: ShowService,
       repositoryClass: ShowRepository,
       repositoryMock: showRepositoryMock,
-      utilityMock: utilityMock,
+      utilityMock,
     });
 
     service = module.get<ShowService>(ShowService);

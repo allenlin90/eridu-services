@@ -1,9 +1,8 @@
-### MC Client
-- [x] Authentication with `email` by Clerk.io
-- [x] Root error boundary
-- [x] Browser router
+### Apps
 
----
+- **`erify_api`** - REST API service built with NestJS for managing shows, schedules, users, and related entities
+- **`eridu_auth`** - Better Auth service for SSO across all services in the monorepo
+- **`erify_creators`** - React application for managing shows, built with TanStack Router, TypeScript, and Vite
 
 ### Authentication service
 
@@ -11,32 +10,65 @@
 2. generate sql migration for database `pnpm db:generate`
 3. migrate auth schema to db `pnpm db:migrate`
 
-### Apps and Packages
+### Packages
 
-- [x] `/apps/storybook` for components testing.
-- [x] `/packages/eslint-config` for `eslint` base configuration.
-- [x] `/packages/ts-config` for `ts-config` base configuration.
-- [x] `/packages/ui` for sharable UI components with [`shadcn/ui`](https://ui.shadcn.com/).
+- **`@eridu/api-types`** - Shared API type definitions and Zod schemas
+- **`@eridu/auth-sdk`** - Authentication SDK for JWT validation and JWKS management
+- **`@eridu/eslint-config`** - Shared ESLint base configuration
+- **`@eridu/i18n`** - Shared internationalization translations and locale utilities
+- **`@eridu/typescript-config`** - Shared TypeScript base configuration
+- **`@eridu/ui`** - Shared UI components with [`shadcn/ui`](https://ui.shadcn.com/)
 
 ### to-dos
 
-- [ ] Manage environment variables (ENVs)
 - [ ] setup semantic versioning
-- [ ] setup `docker-compose` for related services
-- [ ] Optimize `eslint` and `prettier` settings for editor
-- setup `husky` commit hooks
-  - [ ] `eslint` before commit
-  - [ ] `commitlint` before commit
-  - [ ] `sherif` before commit
+- [x] setup `docker-compose` for related services
+- [x] Optimize `eslint` settings for editor
+- [x] setup `husky` commit hooks
+  - [x] `eslint` before commit
+  - [x] `sherif` before commit
+  - [x] `commitlint` before commit
 - setup `vitest` for unit tests
-  - [x] `mc_client` app
+  - [x] `erify_creators` app
 - setup CI
   - [ ] Github actions
 
 ### Engineering
 
 - [ ] Update `tailwind@4`
-- [ ] Update `storybook`
+
+### Git Hooks
+
+This monorepo uses [`husky`](https://typicode.github.io/husky/) to manage Git hooks and ensure code quality before commits.
+
+#### Pre-commit Hook
+
+The pre-commit hook runs automatically before each commit and executes:
+
+1. **ESLint** - Lints all code across the monorepo using `pnpm lint`
+2. **Sherif** - Checks that dependency versions are aligned across all packages using `pnpm sherif`
+
+If any of these checks fail, the commit will be blocked.
+
+#### Commit Message Hook
+
+The commit-msg hook validates commit messages using [`commitlint`](https://commitlint.js.org/) with the [Conventional Commits](https://www.conventionalcommits.org/) format.
+
+Commit messages must follow the format:
+```
+<type>(<scope>): <subject>
+```
+
+Examples:
+- `feat: add new authentication endpoint`
+- `fix(api): resolve schedule validation bug`
+- `chore: update dependencies`
+
+Valid types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `ci`, `build`, `revert`
+
+#### Setup
+
+Husky is automatically initialized when you run `pnpm install` (via the `prepare` script). The hooks are located in `.husky/` directory.
 
 ### Utilities
 

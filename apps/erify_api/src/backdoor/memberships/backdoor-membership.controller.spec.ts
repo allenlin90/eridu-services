@@ -1,13 +1,14 @@
 import { ConfigService } from '@nestjs/config';
-import { Test, TestingModule } from '@nestjs/testing';
-
-import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
-import { CreateStudioMembershipDto } from '@/models/membership/schemas/studio-membership.schema';
-import { StudioMembershipService } from '@/models/membership/studio-membership.service';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 
 import { BackdoorMembershipController } from './backdoor-membership.controller';
 
-describe('BackdoorMembershipController', () => {
+import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
+import type { CreateStudioMembershipDto } from '@/models/membership/schemas/studio-membership.schema';
+import { StudioMembershipService } from '@/models/membership/studio-membership.service';
+
+describe('backdoorMembershipController', () => {
   let controller: BackdoorMembershipController;
 
   const mockStudioMembershipService = {
@@ -17,8 +18,10 @@ describe('BackdoorMembershipController', () => {
   beforeEach(async () => {
     const mockConfigService = {
       get: jest.fn((key: string) => {
-        if (key === 'BACKDOOR_API_KEY') return undefined;
-        if (key === 'NODE_ENV') return 'development';
+        if (key === 'BACKDOOR_API_KEY')
+          return undefined;
+        if (key === 'NODE_ENV')
+          return 'development';
         return undefined;
       }),
     };

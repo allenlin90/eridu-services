@@ -1,6 +1,6 @@
 import { applyDecorators, HttpCode, HttpStatus } from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
-import { ZodType } from 'zod';
+import type { ZodType } from 'zod';
 
 import { ApiZodResponse } from '@/lib/openapi/decorators';
 import { createPaginatedResponseSchema } from '@/lib/pagination/pagination.schema';

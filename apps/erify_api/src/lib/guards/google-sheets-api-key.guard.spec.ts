@@ -1,15 +1,17 @@
+import type { ExecutionContext } from '@nestjs/common';
 import { UnauthorizedException } from '@nestjs/common';
-import { ExecutionContext } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Request } from 'express';
-
-import { Env } from '@/config/env.schema';
+import type { ConfigService } from '@nestjs/config';
+import type { Reflector } from '@nestjs/core';
+import type { Request } from 'express';
 
 import { GoogleSheetsApiKeyGuard } from './google-sheets-api-key.guard';
 
-describe('GoogleSheetsApiKeyGuard', () => {
+import type { Env } from '@/config/env.schema';
+
+describe('googleSheetsApiKeyGuard', () => {
   let guard: GoogleSheetsApiKeyGuard;
   let configService: jest.Mocked<ConfigService<Env>>;
+  let reflector: jest.Mocked<Reflector>;
   let mockExecutionContext: ExecutionContext;
   let mockRequest: Partial<Request>;
 
@@ -18,6 +20,11 @@ describe('GoogleSheetsApiKeyGuard', () => {
     configService = {
       get: jest.fn(),
     } as unknown as jest.Mocked<ConfigService<Env>>;
+
+    // Mock Reflector
+    reflector = {
+      getAllAndOverride: jest.fn().mockReturnValue(true),
+    } as unknown as jest.Mocked<Reflector>;
 
     // Mock ExecutionContext
     mockRequest = {
@@ -28,16 +35,20 @@ describe('GoogleSheetsApiKeyGuard', () => {
       switchToHttp: jest.fn().mockReturnValue({
         getRequest: jest.fn().mockReturnValue(mockRequest),
       }),
+      getHandler: jest.fn(),
+      getClass: jest.fn(),
     } as unknown as ExecutionContext;
 
-    guard = new GoogleSheetsApiKeyGuard(configService);
+    guard = new GoogleSheetsApiKeyGuard(configService, reflector);
   });
 
   describe('when GOOGLE_SHEETS_API_KEY is configured', () => {
     beforeEach(() => {
       configService.get.mockImplementation((key: string) => {
-        if (key === 'GOOGLE_SHEETS_API_KEY') return 'google-sheets-key-123';
-        if (key === 'NODE_ENV') return 'development';
+        if (key === 'GOOGLE_SHEETS_API_KEY')
+          return 'google-sheets-key-123';
+        if (key === 'NODE_ENV')
+          return 'development';
         return undefined;
       });
     });
@@ -88,8 +99,10 @@ describe('GoogleSheetsApiKeyGuard', () => {
   describe('when GOOGLE_SHEETS_API_KEY is not configured in development', () => {
     beforeEach(() => {
       configService.get.mockImplementation((key: string) => {
-        if (key === 'GOOGLE_SHEETS_API_KEY') return undefined;
-        if (key === 'NODE_ENV') return 'development';
+        if (key === 'GOOGLE_SHEETS_API_KEY')
+          return undefined;
+        if (key === 'NODE_ENV')
+          return 'development';
         return undefined;
       });
     });
@@ -109,12 +122,14 @@ describe('GoogleSheetsApiKeyGuard', () => {
 
     beforeEach(() => {
       configService.get.mockImplementation((key: string) => {
-        if (key === 'GOOGLE_SHEETS_API_KEY') return undefined;
-        if (key === 'NODE_ENV') return 'production';
+        if (key === 'GOOGLE_SHEETS_API_KEY')
+          return undefined;
+        if (key === 'NODE_ENV')
+          return 'production';
         return undefined;
       });
       // Create guard AFTER mock is set up so isProduction is set correctly
-      productionGuard = new GoogleSheetsApiKeyGuard(configService);
+      productionGuard = new GoogleSheetsApiKeyGuard(configService, reflector);
     });
 
     it('should throw error when header is provided but env is not set', () => {
@@ -127,6 +142,8 @@ describe('GoogleSheetsApiKeyGuard', () => {
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: getRequestMock,
         }),
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
       } as unknown as ExecutionContext;
 
       expect(() => {
@@ -142,6 +159,8 @@ describe('GoogleSheetsApiKeyGuard', () => {
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: getRequestMock2,
         }),
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
       } as unknown as ExecutionContext;
 
       expect(() => {
@@ -160,6 +179,8 @@ describe('GoogleSheetsApiKeyGuard', () => {
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: getRequestMock,
         }),
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
       } as unknown as ExecutionContext;
 
       expect(() => {
@@ -176,8 +197,10 @@ describe('GoogleSheetsApiKeyGuard', () => {
   describe('service name', () => {
     beforeEach(() => {
       configService.get.mockImplementation((key: string) => {
-        if (key === 'GOOGLE_SHEETS_API_KEY') return 'google-sheets-key-123';
-        if (key === 'NODE_ENV') return 'development';
+        if (key === 'GOOGLE_SHEETS_API_KEY')
+          return 'google-sheets-key-123';
+        if (key === 'NODE_ENV')
+          return 'development';
         return undefined;
       });
     });

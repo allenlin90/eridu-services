@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Provider, Test, TestingModule } from '@nestjs/testing';
-
-import { UtilityService } from '@/utility/utility.service';
+/* eslint-disable  */
+import type { Provider, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 
 import {
   type AuthenticatedUser,
@@ -9,6 +8,8 @@ import {
   createJwtAuthProviders,
   setupJwtAuthMocks,
 } from './jwt-auth-test.helper';
+
+import { UtilityService } from '@/utility/utility.service';
 
 /**
  * Common mock services used across JWT-protected controllers
@@ -23,7 +24,7 @@ export const commonMockServices = {
 /**
  * Configuration for creating a JWT-protected controller test module.
  */
-export interface JwtControllerTestConfig<TController> {
+export type JwtControllerTestConfig<TController> = {
   /** The controller class to test */
   controllerClass: new (...args: any[]) => TController;
   /** Service mocks specific to this controller - key should be the service class, value the mock instance */
@@ -32,7 +33,7 @@ export interface JwtControllerTestConfig<TController> {
   additionalProviders?: Provider[];
   /** Custom JWT auth providers (optional) */
   jwtProviders?: Provider[];
-}
+};
 
 /**
  * Creates a NestJS testing module for JWT-protected controllers with standardized setup.
@@ -108,7 +109,7 @@ export async function createJwtControllerTestModule<TController>({
 export function createControllerUser(
   overrides: Partial<AuthenticatedUser> = {},
 ): AuthenticatedUser {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+   
   return createAuthenticatedUser(overrides);
 }
 

@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, Studio } from '@prisma/client';
 
+import { StudioRepository } from './studio.repository';
+
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
-
-import { StudioRepository } from './studio.repository';
 
 @Injectable()
 export class StudioService extends BaseModelService {

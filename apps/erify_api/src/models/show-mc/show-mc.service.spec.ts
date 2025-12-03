@@ -1,15 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+
+import type { CreateShowMcDto, UpdateShowMcDto } from './schemas/show-mc.schema';
+import { ShowMcRepository } from './show-mc.repository';
+import { ShowMcService } from './show-mc.service';
 
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
 import { UtilityService } from '@/utility/utility.service';
 
-import { CreateShowMcDto, UpdateShowMcDto } from './schemas/show-mc.schema';
-import { ShowMcRepository } from './show-mc.repository';
-import { ShowMcService } from './show-mc.service';
-
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
-describe('ShowMcService', () => {
+describe('showMcService', () => {
   let service: ShowMcService;
 
   const showMcRepositoryMock: Partial<jest.Mocked<ShowMcRepository>> = {

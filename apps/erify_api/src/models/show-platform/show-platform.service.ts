@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, ShowPlatform } from '@prisma/client';
 
-import { HttpError } from '@/lib/errors/http-error.util';
-import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
-
 import {
   CreateShowPlatformDto,
   UpdateShowPlatformDto,
 } from './schemas/show-platform.schema';
 import { ShowPlatformRepository } from './show-platform.repository';
+
+import { HttpError } from '@/lib/errors/http-error.util';
+import { BaseModelService } from '@/lib/services/base-model.service';
+import { UtilityService } from '@/utility/utility.service';
 
 type ShowPlatformWithIncludes<T extends Prisma.ShowPlatformInclude> =
   Prisma.ShowPlatformGetPayload<{
@@ -192,8 +192,10 @@ export class ShowPlatformService extends BaseModelService {
       payload.liveStreamLink = dto.liveStreamLink;
     if (dto.platformShowId !== undefined)
       payload.platformShowId = dto.platformShowId;
-    if (dto.viewerCount !== undefined) payload.viewerCount = dto.viewerCount;
-    if (dto.metadata !== undefined) payload.metadata = dto.metadata;
+    if (dto.viewerCount !== undefined)
+      payload.viewerCount = dto.viewerCount;
+    if (dto.metadata !== undefined)
+      payload.metadata = dto.metadata;
 
     if (dto.showId !== undefined) {
       payload.show = { connect: { uid: dto.showId } };

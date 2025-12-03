@@ -933,11 +933,13 @@ function main() {
     const clientUids = getClientUids();
     const totalClients = clientUids.length;
     const showsPerClient = shows; // Each client gets this many shows
-    
+
     console.log(`Generating payloads for client-by-client workflow...`);
     console.log(`   Total clients: ${totalClients}`);
     console.log(`   Shows per client: ${showsPerClient} (testing maximum: 50)`);
-    console.log(`   Total shows across all clients: ${totalClients * showsPerClient}`);
+    console.log(
+      `   Total shows across all clients: ${totalClients * showsPerClient}`,
+    );
 
     // Generate create schedule payload (example for single client)
     const createPayload = generateCreateSchedulePayload(showsPerClient);
@@ -945,7 +947,9 @@ function main() {
       path.join(outputDir, '01-create-schedule.json'),
       JSON.stringify(createPayload, null, 2),
     );
-    console.log('✓ Generated 01-create-schedule.json (example for single client)');
+    console.log(
+      '✓ Generated 01-create-schedule.json (example for single client)',
+    );
 
     // Generate bulk create schedule payload (one empty schedule per client - 50 schedules total)
     const bulkCreatePayload = generateBulkCreateSchedulePayload();
@@ -975,7 +979,8 @@ function main() {
       fs.mkdirSync(updatePayloadsDir, { recursive: true });
     }
 
-    const updatePayloads = generateUpdateSchedulePayloadsForAllClients(showsPerClient);
+    const updatePayloads =
+      generateUpdateSchedulePayloadsForAllClients(showsPerClient);
     for (const { clientUid, clientName, payload } of updatePayloads) {
       // Extract client number from UID (e.g., client_00000000000000000001 -> 01)
       const clientNumber = clientUid.split('_').pop()?.slice(-2) || '00';
@@ -1004,7 +1009,9 @@ function main() {
     console.log('✓ Generated 03-publish-schedule.json');
 
     console.log(`\n✅ Successfully generated payloads:`);
-    console.log(`   - Single schedule example: ${showsPerClient} shows for 1 client`);
+    console.log(
+      `   - Single schedule example: ${showsPerClient} shows for 1 client`,
+    );
     console.log(
       `   - Bulk create: ${totalClients} empty schedules (one per client)`,
     );

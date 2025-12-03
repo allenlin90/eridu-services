@@ -38,6 +38,7 @@ manual-test/
 **Location**: `schedule-planning/`
 
 **Quick Start**:
+
 ```bash
 # Generate payloads (default: 50 shows per client for all 50 clients = 2500 total)
 pnpm run manual:schedule:generate
@@ -52,6 +53,7 @@ pnpm run manual:schedule:all
 **Documentation**: See [schedule-planning/README.md](./schedule-planning/README.md) and [schedule-planning/GOOGLE_SHEETS_WORKFLOW.md](./schedule-planning/GOOGLE_SHEETS_WORKFLOW.md)
 
 **Scripts**:
+
 - `test:generate:schedule-payload` - Generate test payloads
 - `test:create:schedules` - Create schedules
 - `test:upload:schedule-plans` - Upload plan documents
@@ -66,6 +68,7 @@ pnpm run manual:schedule:all
 **Location**: `backdoor/`
 
 **Quick Start**:
+
 ```bash
 # Run complete workflow (recommended)
 pnpm run manual:backdoor:all
@@ -79,6 +82,7 @@ pnpm run manual:backdoor:create-memberships
 **Documentation**: See [backdoor/README.md](./backdoor/README.md) and [backdoor/BACKDOOR_WORKFLOW.md](./backdoor/BACKDOOR_WORKFLOW.md)
 
 **Scripts**:
+
 - `manual:backdoor:create-users` - Create user
 - `manual:backdoor:update-users` - Update user
 - `manual:backdoor:create-memberships` - Create membership
@@ -86,11 +90,12 @@ pnpm run manual:backdoor:create-memberships
 
 ### 3. JWT Authentication Flow
 
-**Purpose**: Test JWT authentication flow with `erify_auth` service and `@eridu/auth-sdk` SDK.
+**Purpose**: Test JWT authentication flow with `eridu_auth` service and `@eridu/auth-sdk` SDK.
 
 **Location**: `auth/`
 
 **Quick Start**:
+
 ```bash
 # Run complete workflow (recommended)
 pnpm run manual:auth:all
@@ -103,37 +108,42 @@ pnpm run manual:auth:test-me -- --token=<JWT_TOKEN>
 **Documentation**: See [auth/README.md](./auth/README.md)
 
 **Scripts**:
-- `manual:auth:login` - Login and get JWT token from erify_auth
+
+- `manual:auth:login` - Login and get JWT token from eridu_auth
 - `manual:auth:test-me` - Test GET /me endpoint with JWT token
 - `manual:auth:all` - Run all steps sequentially
 
 ## Prerequisites
 
 1. **Database Setup**: Ensure the database is seeded with fixtures
+
    ```bash
    cd apps/erify_api
    pnpm run db:seed
    ```
 
-2. **Auth Service**: Start the erify_auth service (required for JWT authentication flow)
+2. **Auth Service**: Start the eridu_auth service (required for JWT authentication flow)
+
    ```bash
-   cd apps/erify_auth
+   cd apps/eridu_auth
    pnpm run dev
    # Ensure database is seeded with test users
    pnpm db:seed
    ```
 
 3. **API Server**: Start the API server
+
    ```bash
    cd apps/erify_api
    pnpm run dev
    ```
 
 4. **Environment Variables**: Configure environment variables in `.env` file:
+
    ```env
    # Required for JWT authentication flow
-   ERIFY_AUTH_URL=http://localhost:3000
-   
+   ERIDU_AUTH_URL=http://localhost:3000
+
    # Optional for service-to-service authentication (dev mode)
    GOOGLE_SHEETS_API_KEY=your-api-key-here
    BACKDOOR_API_KEY=your-backdoor-api-key-here
@@ -165,6 +175,7 @@ pnpm run test:backdoor:create-users -- --api-url=http://localhost:3000
 ## Testing Different Scenarios
 
 **Behavior Matrix**:
+
 - **Dev mode + no key in .env**: No header sent → bypass auth (expected)
 - **Dev mode + key in .env**: Header sent → auth enforced (expected)
 - **Prod mode + no key in .env**: No header sent → should error (expected per behavior matrix)

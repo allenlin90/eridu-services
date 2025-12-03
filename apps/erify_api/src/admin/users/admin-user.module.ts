@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 
+import { AdminUserController } from './admin-user.controller';
+
 import { UserModule } from '@/models/user/user.module';
 import { UtilityModule } from '@/utility/utility.module';
-
-import { AdminUserController } from './admin-user.controller';
 
 /**
  * Admin User Module

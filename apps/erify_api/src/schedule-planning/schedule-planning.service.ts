@@ -1,17 +1,29 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
+import {
+  PlanDocument,
+  ValidationResult,
+} from './schemas/schedule-planning.schema';
+import { PublishingService, ScheduleWithRelations } from './publishing.service';
+import { ValidationService } from './validation.service';
+
 import { HttpError } from '@/lib/errors/http-error.util';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
 import { PrismaService } from '@/prisma/prisma.service';
 
-import { PublishingService, ScheduleWithRelations } from './publishing.service';
-import {
-  PlanDocument,
-  ValidationResult,
-} from './schemas/schedule-planning.schema';
-import { ValidationService } from './validation.service';
+type SnapshotWithScheduleInclude = Prisma.ScheduleSnapshotGetPayload<{
+  include: {
+    schedule: {
+      include: {
+        client: true;
+        createdByUser: true;
+      };
+    };
+    user: true;
+  };
+}>;
 
 @Injectable()
 export class SchedulePlanningService {
@@ -66,10 +78,10 @@ export class SchedulePlanningService {
     version: number,
     userId: bigint,
   ): Promise<{
-    schedule: ScheduleWithRelations;
-    showsCreated: number;
-    showsDeleted: number;
-  }> {
+      schedule: ScheduleWithRelations;
+      showsCreated: number;
+      showsDeleted: number;
+    }> {
     return this.publishingService.publish(scheduleUid, version, userId);
   }
 
@@ -82,9 +94,8 @@ export class SchedulePlanningService {
    */
   async restoreFromSnapshot(snapshotUid: string, userId: bigint) {
     // Get snapshot with schedule
-    const snapshot = await this.scheduleSnapshotService.getScheduleSnapshotById(
-      snapshotUid,
-      {
+    const snapshot
+      = (await this.scheduleSnapshotService.getScheduleSnapshotById(snapshotUid, {
         schedule: {
           include: {
             client: true,
@@ -92,37 +103,13 @@ export class SchedulePlanningService {
           },
         },
         user: true,
-      },
-    );
+      })) as SnapshotWithScheduleInclude;
 
     if (!snapshot) {
       throw HttpError.notFound('ScheduleSnapshot', snapshotUid);
     }
 
-    // Type assertion for snapshot with schedule relation
-    const snapshotWithSchedule = snapshot as typeof snapshot & {
-      schedule: {
-        id: bigint;
-        uid: string;
-        status: string;
-        planDocument: Prisma.JsonValue;
-        version: number;
-        clientId: bigint;
-        createdAt: Date;
-        updatedAt: Date;
-        deletedAt: Date | null;
-        client?: {
-          uid: string;
-          name: string;
-        } | null;
-        createdByUser?: {
-          uid: string;
-          name: string;
-        } | null;
-      };
-    };
-
-    const schedule = snapshotWithSchedule.schedule;
+    const schedule = snapshot.schedule;
 
     if (!schedule) {
       throw HttpError.notFound('Schedule', snapshotUid);

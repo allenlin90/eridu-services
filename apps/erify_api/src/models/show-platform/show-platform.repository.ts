@@ -11,14 +11,13 @@ type ShowPlatformWithIncludes<T extends Prisma.ShowPlatformInclude> =
 
 // Custom model wrapper that implements IBaseModel with ShowPlatformWhereInput
 class ShowPlatformModelWrapper
-  implements
+implements
     IBaseModel<
       ShowPlatform,
       Prisma.ShowPlatformCreateInput,
       Prisma.ShowPlatformUpdateInput,
       Prisma.ShowPlatformWhereInput
-    >
-{
+    > {
   constructor(private readonly prismaModel: Prisma.ShowPlatformDelegate) {}
 
   async create(args: {

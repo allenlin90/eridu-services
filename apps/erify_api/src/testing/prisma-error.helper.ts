@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 
 import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 

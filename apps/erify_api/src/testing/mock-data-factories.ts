@@ -3,14 +3,14 @@ import type { User } from '@prisma/client';
 /**
  * Base mock entity with common fields
  */
-export interface BaseMockEntity {
+export type BaseMockEntity = {
   id: bigint;
   uid: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
   metadata: Record<string, unknown>;
-}
+};
 
 /**
  * Creates a base mock entity with standard fields.

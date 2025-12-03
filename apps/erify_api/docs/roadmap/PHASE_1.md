@@ -1,7 +1,7 @@
-
 # Phase 1: Core Functions with Simplified Auth
 
 ## Overview
+
 Phase 1 establishes the core production functions with simplified authentication where admin users have full CRUD access via admin endpoints and other users access their own data via user-scoped endpoints (`/me/*`). This phase includes essential entities, basic show management, and the Schedule Planning Management System using JSON-based planning documents with snapshot-based versioning.
 
 ## Related Documentation
@@ -16,6 +16,7 @@ Phase 1 establishes the core production functions with simplified authentication
 ## Core Features
 
 ### 1. Application Infrastructure
+
 - **Configuration Management**: Environment validation, logging, security headers
 - **Validation & Serialization**: Zod-based input validation and response serialization
 - **Database Integration**: Prisma ORM with PostgreSQL, base repository patterns
@@ -23,6 +24,7 @@ Phase 1 establishes the core production functions with simplified authentication
 - **Simplified Authentication**: Admin users access admin endpoints for CRUD operations, other users access user-scoped endpoints (`/me/*`) for their own data
 
 ### 2. Core Entity Management
+
 - **User Management**: User accounts with SSO integration support
 - **Client Management**: Client organizations and contact information
 - **MC Management**: Master of Ceremonies profiles and aliases
@@ -31,6 +33,7 @@ Phase 1 establishes the core production functions with simplified authentication
 - **Studio Membership Management**: User-studio relationships for admin authentication (Client/Platform memberships deferred to Phase 3)
 
 ### 3. Basic Show Management
+
 - **Show Creation**: Direct show creation with CONFIRMED status, or via Schedule publishing
 - **Show Relationships**: Basic MC assignments and platform integrations
 - **Show Types**: Categorization (BAU, campaign, other)
@@ -48,6 +51,7 @@ Phase 1 establishes the core production functions with simplified authentication
 - **Note**: Material associations implemented in Phase 2
 
 ### 4. Schedule Planning Management System
+
 - **JSON-Based Planning**: Flexible spreadsheet-like editing during draft phase
 - **Plan Documents**: Complete schedule data stored as JSON with metadata and show items
 - **Snapshot Versioning**: Automatic version history with immutable snapshots for audit trail
@@ -72,7 +76,8 @@ Phase 1 establishes the core production functions with simplified authentication
 - **Implementation Details**: See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md) for complete design
 
 ### 5. Authentication & Authorization
-- **JWT Validation**: JWK-based validation from `erify_auth` service using Better Auth's JWKS endpoint
+
+- **JWT Validation**: JWK-based validation from `eridu_auth` service using Better Auth's JWKS endpoint
   - Cached JWKS on startup for efficient local token verification
   - Automatic cache recovery: SDK automatically refetches JWKS if cache is missing (handles edge/worker runtimes seamlessly)
   - Automatic key rotation handling
@@ -90,20 +95,21 @@ Phase 1 establishes the core production functions with simplified authentication
 ## Implementation Scope
 
 ### App Configuration
-  - [x] Logger
-  - [x] Pretty print logger in development mode
-  - [x] Graceful shutdown
-  - [ ] SSO integration
-  - [x] Basic Helmet
-  - [x] Basic CORS
-  - [x] OpenAPI (Scalar UI with Zod integration) 
-  - [x] ENV validation
-  - Zod validator and serializer
-    - [x] Global pipe (input validation)
-    - [x] Global interceptor (serializer)
-    - [x] http-exception filter (catching zod errors)
-    - [x] base repository class
-    - [x] Pagination params and response
+
+- [x] Logger
+- [x] Pretty print logger in development mode
+- [x] Graceful shutdown
+- [ ] SSO integration
+- [x] Basic Helmet
+- [x] Basic CORS
+- [x] OpenAPI (Scalar UI with Zod integration)
+- [x] ENV validation
+- Zod validator and serializer
+  - [x] Global pipe (input validation)
+  - [x] Global interceptor (serializer)
+  - [x] http-exception filter (catching zod errors)
+  - [x] base repository class
+  - [x] Pagination params and response
 
 - Common utils
   - [x] Branded ID generator
@@ -117,7 +123,7 @@ Phase 1 establishes the core production functions with simplified authentication
     - [x] Edge/worker runtime support (on-demand JWKS fetching)
     - [x] Automatic key rotation handling
     - [x] Add `@eridu/auth-sdk` dependency to erify_api
-    - [x] Add `ERIFY_AUTH_URL` to environment schema
+    - [x] Add `ERIDU_AUTH_URL` to environment schema
     - [x] Register SDK services and guards in AuthModule
     - [x] Implement `JwtAuthGuard` in erify_api (extends SDK guard, adds ext_id mapping)
     - [x] Register `JwtAuthGuard` as global guard in `app.module.ts`
@@ -133,7 +139,7 @@ Phase 1 establishes the core production functions with simplified authentication
     - [x] Admin guard checks `@AdminProtected()` decorator (opt-in admin authorization)
     - [ ] Admin JWKS management endpoints (`GET /admin/jwks/status`, `POST /admin/jwks/refresh`) - uses SDK's `JwksService`
     - [x] Backdoor JWKS management endpoints (`POST /backdoor/auth/jwks/refresh`) - uses SDK's `JwksService`
-  - [x] Simple StudioMembership model for admin verification (basic CRUD) 
+  - [x] Simple StudioMembership model for admin verification (basic CRUD)
   - [x] Admin studio membership lookup (check if user is admin in ANY studio) - `StudioMembershipService.findAdminMembershipByExtId()`
   - [x] Admin guard implementation (JWT + StudioMembership verification) ✅ (Implemented as global guard)
   - [x] API key authentication for service-to-service communication
@@ -155,20 +161,20 @@ Phase 1 establishes the core production functions with simplified authentication
     - [x] User identifier extraction from JWT payload (ext_id mapping)
 
 - CRUD entities by admin user
-  - [x] User 
-  - [x] Client 
-  - [x] MC 
-  - [x] Platform 
-  - [x] ShowType 
-  - [x] ShowStatus 
-  - [x] ShowStandard 
+  - [x] User
+  - [x] Client
+  - [x] MC
+  - [x] Platform
+  - [x] ShowType
+  - [x] ShowStatus
+  - [x] ShowStandard
   - [x] Show (Direct show creation with full CRUD operations)
   - [x] ShowMC (Show-MC relationships)
   - [x] ShowPlatform (Show-platform integrations)
-  - [x] Studio 
-  - [x] StudioRoom 
+  - [x] Studio
+  - [x] StudioRoom
   - [x] StudioMembership (Essential for admin verification - studio-specific only)
-  - [x] ShowOrchestrationModule (Simplified orchestration for atomic show creation with assignments) 
+  - [x] ShowOrchestrationModule (Simplified orchestration for atomic show creation with assignments)
   - [x] Atomic show creation with MC/platform assignments
   - [x] Update show with assignments (updateShowWithAssignments)
   - [x] Single show relationship operations (add/remove/replace MCs and platforms)
@@ -212,18 +218,21 @@ Phase 1 establishes the core production functions with simplified authentication
 ## Technical Considerations
 
 ### Database Design
+
 - UID-based external identifiers (never expose internal database IDs)
 - ID mapping: Generic `id` parameters in URLs map to internal UIDs
 - Soft delete pattern, proper indexing, foreign key constraints
 - See [Business Domain](../BUSINESS.md) for entity relationships and business rules
 
 ### API Design
+
 - RESTful endpoints with ID mapping (UIDs for external communication)
 - Zod-based validation, NestJS error handling, pagination
 - Snake_case input/output with field mapping
 - See [Architecture Overview](../ARCHITECTURE.md) for module dependencies and endpoint patterns
 
 ### Security
+
 - JWK-based JWT validation with cached JWKS (see Core Features for details)
 - Admin authorization via StudioMembership (admin users access admin endpoints, non-admin users access `/me/*` endpoints)
 - Service-to-service API key authentication (Google Sheets, Backdoor)
@@ -231,6 +240,7 @@ Phase 1 establishes the core production functions with simplified authentication
 - See [Authentication Guide](../AUTHENTICATION_GUIDE.md) and [Server-to-Server Authentication Guide](../SERVER_TO_SERVER_AUTH.md) for implementation details
 
 ### Performance
+
 - Indexed queries for common operations
 - Efficient relationship loading with Prisma includes
 - Pagination for large result sets
@@ -239,17 +249,20 @@ Phase 1 establishes the core production functions with simplified authentication
 ## Success Criteria
 
 ### Core Entity Management
+
 - [x] Complete CRUD operations for all core entities
 - [x] Show orchestration with atomic creation and relationship management
 - [x] Admin interface for entity management
 
 ### Schedule Planning Management System
+
 - [x] JSON-based planning with snapshot versioning
 - [x] Client-by-client upload workflow (bulk create/update, individual publishing)
 - [x] Pre-publish validation and conflict detection
 - [x] Query support for Google Sheets integration
 
 ### Authentication & Authorization
+
 - [x] JWK-based JWT validation (SDK implemented, JwtAuthGuard integrated as global guard)
 - [x] Global guards configuration (JwtAuthGuard and AdminGuard registered in app.module.ts)
 - [x] Decorator-based protection (`@Public()`, `@AdminProtected()`, `@CurrentUser()`)
@@ -262,11 +275,13 @@ Phase 1 establishes the core production functions with simplified authentication
 - [x] Service-to-service API key authentication
 
 ### Quality & Performance
+
 - [x] Testing coverage, security best practices, performance optimizations, seed data
 
 ## Dependencies
+
 - [x] Infrastructure: PostgreSQL, Prisma ORM, NestJS framework, environment configuration
-- [x] External services: `erify_auth` service accessible
+- [x] External services: `eridu_auth` service accessible
 - [x] Database models: StudioMembership model complete
 - [x] Service-to-service authentication: API key guards implemented
 - [x] Dependencies: `jose` package available (provided by SDK)
@@ -278,6 +293,7 @@ Phase 1 establishes the core production functions with simplified authentication
 ## Workflows
 
 ### User Access Strategy
+
 - **Admin Users**: Full CRUD access via admin endpoints (verified via StudioMembership in ANY studio)
 - **Other Users**: Access user-scoped endpoints (`/me/*`) with JWT authentication for their own data
 - **Service Integration**: API key authentication for internal operations
@@ -286,11 +302,13 @@ Phase 1 establishes the core production functions with simplified authentication
 ### Show Management Workflows
 
 #### Direct Show Creation Workflow
+
 1. **Individual Creation**: Operators create shows one-by-one through admin UI
 2. **Atomic Creation**: Each show created with MC/platform assignments in single transaction
 3. **Relationship Management**: Add/remove/replace MCs and platforms for individual shows as needed
 
 #### Schedule Planning Workflow (Client-by-Client Approach)
+
 1. **Google Sheets Preparation**: Operators maintain monthly planning data in Google Sheets (sorted by client)
 2. **Group by Client**: AppsScript groups shows by client (one schedule per client)
 3. **Bulk Create Schedules**: Create all schedules at once via `POST /admin/schedules/bulk` (~50 schedules, ~50 shows each)
@@ -304,15 +322,19 @@ Phase 1 establishes the core production functions with simplified authentication
 **Note**: Bulk publish operations (publish multiple schedules in single API call with async job tracking) are deferred to Phase 2.
 
 #### Google Sheets Integration
+
 For complete workflow, API call sequence, error handling, and AppsScript integration details, see **[Google Sheets Workflow](../manual-test/schedule-planning/GOOGLE_SHEETS_WORKFLOW.md)**.
 
 #### Phase 1 Capabilities & Limitations
+
 **Capabilities:**
+
 - Direct show creation (one-by-one), schedule planning with JSON documents, snapshot versioning
 - Pre-publish validation, optimistic locking, bulk schedule operations, individual publishing
 - Client-by-client upload workflow (one schedule per client, ~50 shows each)
 
 **Limitations:**
+
 - One show operation per API call (no bulk show operations)
 - No material management, CSV import/export, or chunked upload for large clients (>200 shows)
 
@@ -333,6 +355,7 @@ For complete workflow, API call sequence, error handling, and AppsScript integra
 ### User Management
 
 #### User
+
 ```prisma
 model User {
   id                 BigInt             @id @default(autoincrement())
@@ -365,6 +388,7 @@ model User {
 **Note**: Relations to `Comment`, `Task`, `Audit` (Phase 3) will be added in that phase. Relations to `Material` (Phase 2) will be added in that phase.
 
 #### MC
+
 ```prisma
 model MC {
   id        BigInt    @id @default(autoincrement())
@@ -393,6 +417,7 @@ model MC {
 ### Client & Platform Management
 
 #### Client
+
 ```prisma
 model Client {
   id            BigInt     @id @default(autoincrement())
@@ -419,6 +444,7 @@ model Client {
 **Note**: Relations to `Material` (Phase 2) will be added in that phase. The `schedules` relation links clients to their schedule planning documents.
 
 #### Platform
+
 ```prisma
 model Platform {
   id            BigInt         @id @default(autoincrement())
@@ -443,6 +469,7 @@ model Platform {
 ### Show Management
 
 #### Show
+
 ```prisma
 model Show {
   id             BigInt         @id @default(autoincrement())
@@ -493,6 +520,7 @@ model Show {
 **Note**: The `scheduleId` field and `Schedule` relation link shows to schedules for planning workflows. The `showMaterials` relation (Phase 2) will be added in that phase.
 
 #### ShowMC
+
 ```prisma
 model ShowMC {
   id        BigInt    @id @default(autoincrement())
@@ -519,6 +547,7 @@ model ShowMC {
 ```
 
 #### ShowPlatform
+
 ```prisma
 model ShowPlatform {
   id             BigInt    @id @default(autoincrement())
@@ -548,6 +577,7 @@ model ShowPlatform {
 ```
 
 #### ShowType
+
 ```prisma
 model ShowType {
   id        BigInt    @id @default(autoincrement())
@@ -566,6 +596,7 @@ model ShowType {
 ```
 
 #### ShowStatus
+
 ```prisma
 model ShowStatus {
   id        BigInt    @id @default(autoincrement())
@@ -584,6 +615,7 @@ model ShowStatus {
 ```
 
 #### ShowStandard
+
 ```prisma
 model ShowStandard {
   id        BigInt    @id @default(autoincrement())
@@ -604,6 +636,7 @@ model ShowStandard {
 ### Studio Management
 
 #### Studio
+
 ```prisma
 model Studio {
   id                BigInt             @id @default(autoincrement())
@@ -627,6 +660,7 @@ model Studio {
 **Note**: Relations to `Tag` and `TaskTemplate` (Phase 3) will be added in that phase. The `materials` relation (Phase 2) will be added in that phase.
 
 #### StudioRoom
+
 ```prisma
 model StudioRoom {
   id        BigInt    @id @default(autoincrement())
@@ -655,6 +689,7 @@ model StudioRoom {
 ### Authorization (Basic)
 
 #### StudioMembership
+
 ```prisma
 model StudioMembership {
   id        BigInt    @id @default(autoincrement())
@@ -687,6 +722,7 @@ model StudioMembership {
 ### Schedule Planning Management System
 
 #### Schedule
+
 ```prisma
 model Schedule {
   id              BigInt             @id @default(autoincrement())
@@ -728,6 +764,7 @@ model Schedule {
 ```
 
 #### ScheduleSnapshot
+
 ```prisma
 model ScheduleSnapshot {
   id             BigInt   @id @default(autoincrement())

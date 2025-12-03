@@ -1,9 +1,9 @@
 #!/usr/bin/env ts-node
 
 /**
- * Script to login and get JWT token from erify_auth service
+ * Script to login and get JWT token from eridu_auth service
  *
- * This script authenticates with the erify_auth service using seeded test user
+ * This script authenticates with the eridu_auth service using seeded test user
  * credentials and extracts the JWT token from the response.
  *
  * Usage:
@@ -30,8 +30,8 @@ function parseArgs(): {
   password?: string;
 } {
   const args = process.argv.slice(2);
-  // Use ERIFY_AUTH_URL from environment, fallback to default
-  let authUrl = process.env.ERIFY_AUTH_URL || 'http://localhost:3000';
+  // Use ERIDU_AUTH_URL from environment, fallback to default
+  let authUrl = process.env.ERIDU_AUTH_URL || 'http://localhost:3000';
   let email: string | undefined;
   let password: string | undefined;
 
@@ -84,7 +84,7 @@ export async function performLogin(
   const payload = loadLoginPayload(email, password);
   const endpoint = `${authUrl}/api/auth/sign-in/email`;
 
-  console.log('🔐 Logging in to erify_auth service...');
+  console.log('🔐 Logging in to eridu_auth service...');
   console.log(`📡 Endpoint: POST ${endpoint}`);
   console.log(`👤 Email: ${payload.email}`);
 

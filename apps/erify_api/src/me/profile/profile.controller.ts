@@ -1,14 +1,15 @@
-import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
 
-import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
-import { ApiZodResponse } from '@/lib/openapi/decorators';
+import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 
 import {
   ProfileResponseDto,
   profileResponseSchema,
 } from './schemas/profile.schema';
+
+import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
+import { ApiZodResponse } from '@/lib/openapi/decorators';
 
 /**
  * Profile Controller

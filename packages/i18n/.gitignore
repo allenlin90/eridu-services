@@ -1,0 +1,12 @@
+# Build outputs
+dist/
+
+# Paraglide generated files
+src/paraglide/
+
+# Inlang cache
+project.inlang/cache/
+project.inlang/project_id
+
+# Dependencies
+node_modules/

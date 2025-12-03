@@ -1,5 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Provider, Test, TestingModule } from '@nestjs/testing';
+/* eslint-disable  */
+import type { Provider, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 
@@ -19,7 +20,7 @@ export const backdoorMockServices = {
  * Configuration for creating a backdoor controller test module.
  * Backdoor controllers use API key authentication.
  */
-export interface BackdoorControllerTestConfig<TController> {
+export type BackdoorControllerTestConfig<TController> = {
   /** The controller class to test */
   controllerClass: new (...args: any[]) => TController;
   /** Service mocks specific to this controller - key should be the service class, value the mock instance */
@@ -28,7 +29,7 @@ export interface BackdoorControllerTestConfig<TController> {
   additionalProviders?: Provider[];
   /** Whether to include the backdoor API key guard (default: true) */
   includeApiKeyGuard?: boolean;
-}
+};
 
 /**
  * Creates a NestJS testing module for backdoor controllers with standardized setup.

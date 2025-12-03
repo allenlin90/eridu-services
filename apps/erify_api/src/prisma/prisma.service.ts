@@ -23,7 +23,7 @@ export type TransactionClient = Omit<
 /**
  * Options for executing a transaction
  */
-export interface TransactionOptions {
+export type TransactionOptions = {
   /**
    * Maximum time (in milliseconds) to wait for a transaction slot to become available
    * @default 5000
@@ -39,20 +39,19 @@ export interface TransactionOptions {
    * @default 'ReadCommitted'
    */
   isolationLevel?: Prisma.TransactionIsolationLevel;
-}
+};
 
 @Injectable()
 export class PrismaService
   extends PrismaClient
-  implements OnModuleInit, OnModuleDestroy
-{
+  implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
   private readonly isDevelopment: boolean;
   private readonly pool: Pool;
 
   constructor(private readonly configService: ConfigService<Env>) {
-    const isDevelopment =
-      configService.get('NODE_ENV', { infer: true }) === 'development';
+    const isDevelopment
+      = configService.get('NODE_ENV', { infer: true }) === 'development';
 
     // Get DATABASE_URL from config
     const databaseUrl = configService.get('DATABASE_URL', { infer: true });

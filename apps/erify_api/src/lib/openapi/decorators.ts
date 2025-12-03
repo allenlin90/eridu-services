@@ -6,7 +6,7 @@ import {
   ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger';
-import { ZodType } from 'zod';
+import type { ZodType } from 'zod';
 
 import { ZodOpenAPIConverter } from './zod-converter';
 

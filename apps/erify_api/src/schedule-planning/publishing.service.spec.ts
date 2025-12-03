@@ -1,16 +1,24 @@
 import { BadRequestException, ConflictException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-import { Schedule } from '@prisma/client';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+import type { Schedule } from '@prisma/client';
+
+import type { PlanDocument } from './schemas/schedule-planning.schema';
+import type { ScheduleWithRelations } from './publishing.service';
+import { PublishingService } from './publishing.service';
+import { ValidationService } from './validation.service';
 
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
 import { ShowService } from '@/models/show/show.service';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
-import {
-  PrismaService,
+import type {
   TransactionClient,
   TransactionOptions,
+} from '@/prisma/prisma.service';
+import {
+  PrismaService,
 } from '@/prisma/prisma.service';
 
 // Test helper type for mock transaction clients used in publishing tests
@@ -65,11 +73,7 @@ function asTransactionClient(
   return mock as PublishingMockTransactionClientStructure & TransactionClient;
 }
 
-import { PublishingService, ScheduleWithRelations } from './publishing.service';
-import { PlanDocument } from './schemas/schedule-planning.schema';
-import { ValidationService } from './validation.service';
-
-describe('PublishingService', () => {
+describe('publishingService', () => {
   let service: PublishingService;
   let scheduleService: jest.Mocked<ScheduleService>;
   let scheduleSnapshotService: jest.Mocked<ScheduleSnapshotService>;
@@ -329,17 +333,13 @@ describe('PublishingService', () => {
     prismaService = module.get(PrismaService);
 
     // Store mock functions to avoid unbound-method issues
-    getScheduleByIdMock = scheduleService['getScheduleById'] as jest.Mock;
-    validateScheduleMock = validationService['validateSchedule'] as jest.Mock;
-    createScheduleSnapshotMock = scheduleSnapshotService[
-      'createScheduleSnapshot'
-    ] as jest.Mock;
-    generateShowUidMock = showService['generateShowUid'] as jest.Mock;
-    generateShowMcUidMock = showMcService['generateShowMcUid'] as jest.Mock;
-    generateShowPlatformUidMock = showPlatformService[
-      'generateShowPlatformUid'
-    ] as jest.Mock;
-    transactionMock = prismaService['executeTransaction'] as jest.Mock;
+    getScheduleByIdMock = scheduleService.getScheduleById as jest.Mock;
+    validateScheduleMock = validationService.validateSchedule as jest.Mock;
+    createScheduleSnapshotMock = scheduleSnapshotService.createScheduleSnapshot as jest.Mock;
+    generateShowUidMock = showService.generateShowUid as jest.Mock;
+    generateShowMcUidMock = showMcService.generateShowMcUid as jest.Mock;
+    generateShowPlatformUidMock = showPlatformService.generateShowPlatformUid as jest.Mock;
+    transactionMock = prismaService.executeTransaction as jest.Mock;
   });
 
   beforeEach(() => {
@@ -475,7 +475,8 @@ describe('PublishingService', () => {
         mockTransactionClient.showPlatform.createMany,
       ).toHaveBeenCalledTimes(1);
       const showPlatformCall = mockTransactionClient.showPlatform.createMany
-        .mock.calls[0] as unknown as [
+        .mock
+        .calls[0] as unknown as [
         {
           data: Array<{ platformId: bigint; liveStreamLink: string }>;
         },
@@ -732,7 +733,8 @@ describe('PublishingService', () => {
         mockTransactionClient.showPlatform.createMany,
       ).toHaveBeenCalledTimes(1);
       const showPlatformCall = mockTransactionClient.showPlatform.createMany
-        .mock.calls[0] as unknown as [{ data: Array<unknown> }];
+        .mock
+        .calls[0] as unknown as [{ data: Array<unknown> }];
       expect(showPlatformCall[0].data).toHaveLength(2);
     });
 

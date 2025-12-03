@@ -43,8 +43,8 @@ export const envSchema = z.object({
   BACKDOOR_ALLOWED_IPS: z.string().optional(),
 
   // Authentication & Authorization (JWT/JWKS)
-  // Base URL of the erify_auth service (e.g., http://localhost:3000 or https://auth.example.com)
-  ERIFY_AUTH_URL: z.url({ message: 'ERIFY_AUTH_URL must be a valid URL' }),
+  // Base URL of the eridu_auth service (e.g., http://localhost:3000 or https://auth.example.com)
+  ERIDU_AUTH_URL: z.url({ message: 'ERIDU_AUTH_URL must be a valid URL' }),
 
   // Rate Limiting (Throttling)
   // Time window in milliseconds for rate limiting (default: 60000 = 1 minute)

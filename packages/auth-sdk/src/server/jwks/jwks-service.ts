@@ -2,12 +2,12 @@
  * JWKS Service - Fetches and caches JSON Web Key Sets from Better Auth's JWKS endpoint
  */
 
-import type { JWK } from "jose";
+import type { JWK } from 'jose';
 
-import type { JwksResponse, JwksServiceConfig } from "./types.js";
+import { BETTER_AUTH_ENDPOINTS } from '../../constants.js';
 
-import { BETTER_AUTH_ENDPOINTS } from "../../constants.js";
-import { fetchJwks } from "./jwks-client.js";
+import { fetchJwks } from './jwks-client.js';
+import type { JwksResponse, JwksServiceConfig } from './types.js';
 
 /**
  * Service for managing JWKS fetching and caching
@@ -33,7 +33,7 @@ export class JwksService {
     this.jwksPath = config.jwksPath ?? BETTER_AUTH_ENDPOINTS.JWKS;
 
     if (!this.authServiceUrl) {
-      throw new Error("authServiceUrl is required");
+      throw new Error('authServiceUrl is required');
     }
   }
 
@@ -47,12 +47,11 @@ export class JwksService {
   async initialize(): Promise<void> {
     try {
       await this.refreshJwks();
-    }
-    catch (error) {
+    } catch (error) {
       // Log but don't throw - cache recovery will handle it on first use
       // This allows the app to start even if auth service is temporarily unavailable
       console.warn(
-        `Failed to initialize JWKS on startup: ${error instanceof Error ? error.message : "Unknown error"}. Will retry on first use.`,
+        `Failed to initialize JWKS on startup: ${error instanceof Error ? error.message : 'Unknown error'}. Will retry on first use.`,
       );
     }
   }
@@ -71,7 +70,7 @@ export class JwksService {
     }
 
     if (!this.cachedJwks) {
-      throw new Error("Failed to fetch JWKS");
+      throw new Error('Failed to fetch JWKS');
     }
 
     return this.cachedJwks;

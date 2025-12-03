@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Platform, Prisma } from '@prisma/client';
 
+import { PlatformRepository } from './platform.repository';
+
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
-
-import { PlatformRepository } from './platform.repository';
 
 @Injectable()
 export class PlatformService extends BaseModelService {

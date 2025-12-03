@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "paths": {
+      "@/*": ["./src/*"],
+      "$/*": ["./*"]
+    },
+    "types": ["node"],
+    "strict": true,
+    "outDir": "dist",
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "src/frontend/**/*"],
+  "tsc-alias": {
+    "resolveFullPaths": true,
+    "verbose": true
+  }
+}

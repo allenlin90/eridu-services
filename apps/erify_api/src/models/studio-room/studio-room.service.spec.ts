@@ -1,17 +1,17 @@
+import { StudioRoomRepository } from './studio-room.repository';
+import { StudioRoomService } from './studio-room.service';
+
 import {
   createMockRepository,
   createMockUtilityService,
   createModelServiceTestModule,
   setupTestMocks,
 } from '@/testing/model-service-test.helper';
-import { UtilityService } from '@/utility/utility.service';
-
-import { StudioRoomRepository } from './studio-room.repository';
-import { StudioRoomService } from './studio-room.service';
+import type { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
-describe('StudioRoomService', () => {
+describe('studioRoomService', () => {
   let service: StudioRoomService;
   let studioRoomRepositoryMock: Partial<jest.Mocked<StudioRoomRepository>>;
   let utilityServiceMock: Partial<jest.Mocked<UtilityService>>;

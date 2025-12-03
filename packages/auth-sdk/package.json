@@ -6,7 +6,12 @@
   "description": "Framework-agnostic SDK for authentication (JWT/JWKS validation). Supports both frontend and backend integration.",
   "author": "",
   "license": "ISC",
-  "keywords": ["jwt", "jwks", "authentication", "sdk"],
+  "keywords": [
+    "jwt",
+    "jwks",
+    "authentication",
+    "sdk"
+  ],
   "exports": {
     "./server/jwks/jwks-service": {
       "types": "./dist/server/jwks/jwks-service.d.ts",
@@ -48,29 +53,39 @@
       "types": "./dist/schemas/jwt-payload.schema.d.ts",
       "default": "./dist/schemas/jwt-payload.schema.js"
     },
+    "./client/react": {
+      "types": "./dist/client/react.d.ts",
+      "default": "./dist/client/react.js"
+    },
     "./types": {
       "types": "./dist/types.d.ts",
       "default": "./dist/types.js"
     }
   },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch --preserveWatchOutput",
-    "lint": "eslint \"{src,test}/**/*.ts\" --fix"
+    "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0"
   },
   "dependencies": {
+    "better-auth": "^1.4.1",
     "jose": "^6.0.11",
-    "zod": "^4.1.12"
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@eridu/eslint-config": "workspace:*",
     "@eridu/typescript-config": "workspace:*",
     "@nestjs/common": "^11.0.1",
     "@types/express": "^5.0.0",
-    "@types/node": "^22.10.7",
-    "typescript": "^5.8.3"
+    "@types/node": "^24.10.1",
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.3"
   }
 }

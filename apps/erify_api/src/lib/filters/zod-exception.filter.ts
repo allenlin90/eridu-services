@@ -10,8 +10,7 @@ import { ZodError } from 'zod';
 
 @Catch(ZodError, ZodSerializationException)
 export class ZodExceptionFilter
-  implements ExceptionFilter<ZodError | ZodSerializationException>
-{
+implements ExceptionFilter<ZodError | ZodSerializationException> {
   catch(exception: ZodError | ZodSerializationException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();

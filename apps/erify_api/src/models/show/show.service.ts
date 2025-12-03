@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, Show } from '@prisma/client';
 
+import { CreateShowDto, UpdateShowDto } from './schemas/show.schema';
+import { ShowRepository } from './show.repository';
+
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
-
-import { CreateShowDto, UpdateShowDto } from './schemas/show.schema';
-import { ShowRepository } from './show.repository';
 
 type ListShowsQuery = {
   page: number;
@@ -256,7 +256,9 @@ export class ShowService extends BaseModelService {
 
   private async findShowOrThrow<
     T extends Prisma.ShowInclude = Record<string, never>,
-  >(uid: string, include?: T): Promise<Show | ShowWithIncludes<T>> {
+  >(uid: string,
+    include?: T,
+  ): Promise<Show | ShowWithIncludes<T>> {
     const show = await this.showRepository.findByUid(uid, include);
     if (!show) {
       throw HttpError.notFound('Show', uid);
@@ -288,10 +290,14 @@ export class ShowService extends BaseModelService {
   private buildUpdatePayload(dto: UpdateShowDto): Prisma.ShowUpdateInput {
     const payload: Prisma.ShowUpdateInput = {};
 
-    if (dto.name !== undefined) payload.name = dto.name;
-    if (dto.startTime !== undefined) payload.startTime = dto.startTime;
-    if (dto.endTime !== undefined) payload.endTime = dto.endTime;
-    if (dto.metadata !== undefined) payload.metadata = dto.metadata;
+    if (dto.name !== undefined)
+      payload.name = dto.name;
+    if (dto.startTime !== undefined)
+      payload.startTime = dto.startTime;
+    if (dto.endTime !== undefined)
+      payload.endTime = dto.endTime;
+    if (dto.metadata !== undefined)
+      payload.metadata = dto.metadata;
 
     if (dto.clientId !== undefined) {
       payload.client = { connect: { uid: dto.clientId } };

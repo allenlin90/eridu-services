@@ -29,17 +29,17 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { z } from 'zod';
 
-import { httpRequest } from '../../scripts/utils/http-request';
-
 // Import schemas from the source of truth
 import {
   createPaginatedResponseSchema,
   PaginatedResponse,
-} from '@/common/pagination/schema/pagination.schema';
+} from '@/lib/pagination/pagination.schema';
 import {
   bulkCreateScheduleResultSchema,
   updateScheduleSchema,
 } from '@/models/schedule/schemas/schedule.schema';
+
+import { httpRequest } from '../../scripts/utils/http-request';
 
 // Create a schema for parsing API responses (DTO format with snake_case)
 // Note: scheduleDto in the schema file is a transform schema (internal -> DTO) with a .pipe() output.
@@ -78,7 +78,7 @@ const PORT = process.env.PORT || 3000;
 
 // Configuration
 const DEFAULT_API_URL = `http://${API_HOST}:${PORT}`;
-const BASE_URL = '/admin/schedules';
+const BASE_URL = '/google-sheets/schedules';
 
 interface UpdateResult {
   clientId: string;

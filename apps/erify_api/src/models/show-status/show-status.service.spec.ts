@@ -1,4 +1,6 @@
-/* eslint-disable @typescript-eslint/unbound-method */
+import { ShowStatusRepository } from './show-status.repository';
+import { ShowStatusService } from './show-status.service';
+
 import {
   createMockRepository,
   createMockUtilityService,
@@ -7,31 +9,28 @@ import {
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
 import { UtilityService } from '@/utility/utility.service';
 
-import { ShowStatusRepository } from './show-status.repository';
-import { ShowStatusService } from './show-status.service';
-
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
-describe('ShowStatusService', () => {
+describe('showStatusService', () => {
   let service: ShowStatusService;
   let showStatusRepository: ShowStatusRepository;
   let utilityService: UtilityService;
 
   beforeEach(async () => {
-    const showStatusRepositoryMock =
-      createMockRepository<ShowStatusRepository>();
+    const showStatusRepositoryMock
+      = createMockRepository<ShowStatusRepository>();
     const utilityMock = createMockUtilityService('shst_test123');
 
     const module = await createModelServiceTestModule({
       serviceClass: ShowStatusService,
       repositoryClass: ShowStatusRepository,
       repositoryMock: showStatusRepositoryMock,
-      utilityMock: utilityMock,
+      utilityMock,
     });
 
     service = module.get<ShowStatusService>(ShowStatusService);
-    showStatusRepository =
-      module.get<ShowStatusRepository>(ShowStatusRepository);
+    showStatusRepository
+      = module.get<ShowStatusRepository>(ShowStatusRepository);
     utilityService = module.get<UtilityService>(UtilityService);
   });
 

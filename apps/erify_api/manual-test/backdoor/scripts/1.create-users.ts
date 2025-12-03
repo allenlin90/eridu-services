@@ -48,10 +48,7 @@ const API_BASE_URL = parseApiUrl();
 const BACKDOOR_USERS_ENDPOINT = `${API_BASE_URL}/backdoor/users`;
 
 // Load test payload
-const payloadPath = path.join(
-  __dirname,
-  '../payloads/01-create-user.json',
-);
+const payloadPath = path.join(__dirname, '../payloads/01-create-user.json');
 const payload = JSON.parse(fs.readFileSync(payloadPath, 'utf-8'));
 
 async function createUser() {
@@ -91,4 +88,3 @@ createUser()
     console.error('💥 Script failed:', error);
     process.exit(1);
   });
-

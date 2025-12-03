@@ -8,20 +8,12 @@
  * - Add additional validation logic
  */
 
-import type {
-  CanActivate,
-  ExecutionContext,
-} from "@nestjs/common";
-import type { Request } from "express";
+import type { CanActivate, ExecutionContext } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import type { Request } from 'express';
 
-import {
-  Injectable,
-  Logger,
-  UnauthorizedException,
-} from "@nestjs/common";
-
-import type { JwtVerifier } from "../../server/jwt/jwt-verifier.js";
-import type { JwtPayload, UserInfo } from "../../types.js";
+import type { JwtVerifier } from '../../server/jwt/jwt-verifier.js';
+import type { JwtPayload, UserInfo } from '../../types.js';
 
 /**
  * Extended Request interface with user information
@@ -40,10 +32,7 @@ export type JwtAuthGuardOptions = {
    * @param originalError - Original error if available
    * @returns Error to throw
    */
-  createUnauthorizedError?: (
-    message: string,
-    originalError?: Error,
-  ) => Error;
+  createUnauthorizedError?: (message: string, originalError?: Error) => Error;
 
   /**
    * Transform user data before attaching to request
@@ -88,10 +77,7 @@ export class JwtAuthGuard implements CanActivate {
   protected readonly jwtVerifier: JwtVerifier;
   protected readonly options?: JwtAuthGuardOptions;
 
-  constructor(
-    jwtVerifier: JwtVerifier,
-    options?: JwtAuthGuardOptions,
-  ) {
+  constructor(jwtVerifier: JwtVerifier, options?: JwtAuthGuardOptions) {
     this.jwtVerifier = jwtVerifier;
     this.options = options;
     this.logger = new Logger(JwtAuthGuard.name);
@@ -104,8 +90,8 @@ export class JwtAuthGuard implements CanActivate {
     const token = this.extractTokenFromHeader(request);
 
     if (!token) {
-      this.logger.warn("No JWT token provided in request");
-      throw this.createUnauthorizedError("Authentication token is required");
+      this.logger.warn('No JWT token provided in request');
+      throw this.createUnauthorizedError('Authentication token is required');
     }
 
     try {
@@ -124,23 +110,30 @@ export class JwtAuthGuard implements CanActivate {
       this.logger.debug(`JWT token validated for user: ${userInfo.email}`);
 
       return true;
-    }
-    catch (error) {
+    } catch (error) {
       this.logger.warn(
-        `JWT token validation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+        `JWT token validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
 
       const errorMessage
-        = error instanceof Error ? `Invalid token: ${error.message}` : "Invalid authentication token";
+        = error instanceof Error
+          ? `Invalid token: ${error.message}`
+          : 'Invalid authentication token';
 
-      throw this.createUnauthorizedError(errorMessage, error instanceof Error ? error : undefined);
+      throw this.createUnauthorizedError(
+        errorMessage,
+        error instanceof Error ? error : undefined,
+      );
     }
   }
 
   /**
    * Create unauthorized error - can be overridden for custom error handling
    */
-  protected createUnauthorizedError(message: string, originalError?: Error): Error {
+  protected createUnauthorizedError(
+    message: string,
+    originalError?: Error,
+  ): Error {
     if (this.options?.createUnauthorizedError) {
       return this.options.createUnauthorizedError(message, originalError);
     }
@@ -170,7 +163,7 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     // Handle "Bearer <token>" format
-    if (authHeader.startsWith("Bearer ")) {
+    if (authHeader.startsWith('Bearer ')) {
       return authHeader.substring(7);
     }
 

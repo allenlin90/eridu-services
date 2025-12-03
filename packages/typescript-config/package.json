@@ -3,6 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "license": "PROPRIETARY",
+  "scripts": {
+    "build": "echo \"No build needed for typescript-config\" && exit 0",
+    "dev": "echo \"No dev mode for typescript-config - keeping process alive\" && node -e \"setInterval(() => {}, 1000)\"",
+    "lint": "echo \"No linting needed for typescript-config\" && exit 0",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
   "publishConfig": {
     "access": "public"
   }

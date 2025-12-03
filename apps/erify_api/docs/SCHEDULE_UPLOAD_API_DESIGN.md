@@ -25,6 +25,7 @@ This document describes the complete architecture for a show planning system tha
 **Primary Strategy**: Create one schedule per client (~50 shows each), then bulk publish all schedules
 
 **Rationale**:
+
 - Typical monthly planning has ~50 clients with ~50 shows per client
 - Each client schedule fits within payload limits (~1-2MB per schedule)
 - **Payload size constraint**: 50 clients × 50 shows in single schedule = 2,500 shows (~2-5MB) → Risk of HTTP 417 (Payload Too Large)
@@ -34,6 +35,7 @@ This document describes the complete architecture for a show planning system tha
 - **Database is read-only for MCs**: Query assigned shows only
 
 **Workflow**:
+
 1. **Planning in Google Sheets**: All clients visible in monthly view, conflicts resolved before upload
 2. **Group by client**: AppsScript groups shows by client (one schedule per client)
 3. **Create schedules**: Bulk create API with 50 schedules (~50 shows each)
@@ -42,6 +44,7 @@ This document describes the complete architecture for a show planning system tha
 6. **View monthly overview**: Query all published shows across clients
 
 **Available Features**:
+
 - ✅ `POST /admin/schedules` - Create schedule per client
 - ✅ `POST /admin/schedules/bulk` - Bulk create schedules (one per client)
 - ✅ **`POST /admin/schedules/bulk-publish`** - Bulk validate and publish multiple schedules ⭐ **NEW**
@@ -51,6 +54,7 @@ This document describes the complete architecture for a show planning system tha
 - ✅ `POST /admin/schedules/:id/publish` - Publish single schedule
 
 **Phase 1 Benefits**:
+
 - ✅ **93% fewer API calls**: 50 create + 1 bulk publish = 51 calls (vs 150+)
 - ✅ **90% faster**: ~45 seconds total (vs ~7 minutes)
 - ✅ **No timeout risk**: Well within AppsScript limits
@@ -61,6 +65,7 @@ This document describes the complete architecture for a show planning system tha
 ### Phase 2: Chunked Upload (⚠️ Deferred)
 
 **Use Cases** (Edge Cases Only):
+
 - Very large single-client schedules (>100 shows per client) - Rare
 - Emergency bulk uploads with payload size constraints
 
@@ -73,17 +78,20 @@ This document describes the complete architecture for a show planning system tha
 ### Core Entities
 
 **Schedule**: Main planning entity containing JSON `plan_document`
+
 - Status: `draft`, `review`, `published`
 - Version: Increments on each update (optimistic locking)
 - `plan_document`: JSON structure with metadata and shows array
 - Relations: Client, Creator, Publisher, Snapshots, Shows
 
 **ScheduleSnapshot**: Immutable version history
+
 - Captures `plan_document` at specific version
 - Snapshot reasons: `auto_save`, `manual`, `before_restore`
 - Used for restore functionality
 
 **Show**: Normalized table for published shows
+
 - Created from published schedules
 - Relations: Client, StudioRoom, ShowType, ShowStatus, ShowStandard, Schedule
 - Related entities: ShowMC, ShowPlatform
@@ -115,6 +123,7 @@ The `plan_document` is a JSON structure containing:
 ```
 
 **ShowPlanItem** structure:
+
 - `tempId`: UUID for client-side operations
 - `existingShowUid?`: If updating existing show
 - Show details: `name`, `startTime`, `endTime` (ISO datetime)
@@ -145,10 +154,10 @@ The `plan_document` is a JSON structure containing:
 
 ### Bulk Operations ⭐ **ENHANCED**
 
-| Method  | Endpoint                          | Purpose                                                    |
-| ------- | --------------------------------- | ---------------------------------------------------------- |
-| `POST`  | `/admin/schedules/bulk`           | Bulk create schedules (one per client)                     |
-| `PATCH` | `/admin/schedules/bulk`           | Bulk update schedules                                      |
+| Method  | Endpoint                           | Purpose                                                    |
+| ------- | ---------------------------------- | ---------------------------------------------------------- |
+| `POST`  | `/admin/schedules/bulk`            | Bulk create schedules (one per client)                     |
+| `PATCH` | `/admin/schedules/bulk`            | Bulk update schedules                                      |
 | `POST`  | `/admin/schedules/bulk-publish` ⭐ | **Bulk validate and publish multiple schedules** **(NEW)** |
 | `GET`   | `/admin/jobs/:job_id` ⭐           | **Track async publish job status** **(NEW)**               |
 
@@ -159,22 +168,24 @@ The `plan_document` is a JSON structure containing:
 **Purpose**: Validate and publish multiple schedules in a single operation with async processing support
 
 **Request Format**:
+
 ```json
 {
   "schedule_ids": [
     "schedule_001",
-    "schedule_002",
+    "schedule_002"
     // ... up to 50 schedule IDs
   ],
   "options": {
-    "validate_before_publish": true,  // Default: true - Validate before publishing
-    "stop_on_error": false,            // Default: false - Continue with other schedules if one fails
-    "async": true                      // Default: false - Queue for background processing
+    "validate_before_publish": true, // Default: true - Validate before publishing
+    "stop_on_error": false, // Default: false - Continue with other schedules if one fails
+    "async": true // Default: false - Queue for background processing
   }
 }
 ```
 
 **Response Format (Synchronous)**:
+
 ```json
 {
   "total": 50,
@@ -205,6 +216,7 @@ The `plan_document` is a JSON structure containing:
 ```
 
 **Response Format (Asynchronous)**:
+
 ```json
 {
   "job_id": "job_abc123",
@@ -215,6 +227,7 @@ The `plan_document` is a JSON structure containing:
 ```
 
 **Error Responses**:
+
 - `400 Bad Request`: Invalid schedule IDs or options
 - `404 Not Found`: One or more schedules not found
 - `409 Conflict`: Version mismatch (if schedules were updated)
@@ -226,10 +239,11 @@ The `plan_document` is a JSON structure containing:
 **Purpose**: Track progress of async bulk publish operations
 
 **Response Format**:
+
 ```json
 {
   "job_id": "job_abc123",
-  "status": "processing",  // queued | processing | completed | failed
+  "status": "processing", // queued | processing | completed | failed
   "created_at": "2025-11-04T10:00:00Z",
   "started_at": "2025-11-04T10:00:05Z",
   "completed_at": null,
@@ -256,6 +270,7 @@ The `plan_document` is a JSON structure containing:
 ```
 
 **Status Values**:
+
 - `queued`: Job created, waiting for worker
 - `processing`: Currently being processed
 - `completed`: All schedules processed (some may have failed)
@@ -288,6 +303,7 @@ The `plan_document` is a JSON structure containing:
 | `POST` | `/admin/schedules/:id/shows/append` | Append shows incrementally (for large uploads) |
 
 **Request**:
+
 ```json
 {
   "shows": ShowPlanItem[],
@@ -297,11 +313,13 @@ The `plan_document` is a JSON structure containing:
 ```
 
 **Response** (Success):
+
 - Returns updated schedule with incremented version
 - Updates `uploadProgress.receivedChunks` and `lastChunkIndex`
 - Sets `uploadProgress.isComplete` when all chunks received
 
 **Error Responses**:
+
 - `409 SEQUENTIAL_VIOLATION`: Chunk out of order (includes `expectedNextChunk`, `missingChunks`)
 - `409 VERSION_MISMATCH`: Version conflict (includes `currentVersion`, `receivedVersion`)
 - `400 UPLOAD_COMPLETE`: All chunks already received
@@ -316,6 +334,7 @@ The `plan_document` is a JSON structure containing:
 ### Query Parameters
 
 **List Schedules** (`GET /admin/schedules`):
+
 - **Pagination**: `page`, `limit`, `offset`
 - **Filters** (Phase 2): `client_id`, `start_date`, `end_date`, `status`
 - **Fields Control**: `include_plan_document` (boolean, default: `false`) - Include full `plan_document` in list response
@@ -345,6 +364,7 @@ The `plan_document` is a JSON structure containing:
    - Retries update
 
 **Key Design Principle**:
+
 - **Update operations (`PATCH`)**: Only update `planDocument` JSON column, never touch Show table (efficient, cheap operation)
 - **Publish operations (`POST /publish`)**: **Only operation that creates/deletes shows** from normalized tables (expensive, can be queued in background workers)
 - **Efficiency**: This separation allows frequent updates without expensive database operations
@@ -362,6 +382,7 @@ The `plan_document` is a JSON structure containing:
 7. **Handle Errors**: Review failed schedules, fix in Google Sheets, retry
 
 **Timeline**:
+
 - Bulk create (50 schedules): **~30 seconds**
 - Bulk publish (async): **~5 seconds** (returns job ID immediately)
 - Background processing: **~2-3 minutes** (doesn't block UI)
@@ -405,6 +426,7 @@ The `plan_document` is a JSON structure containing:
    - **Can be queued in background workers** due to expense
 
 **Key Points**:
+
 - **Republishing supported**: Delete + insert strategy allows republishing published schedules
 - **Clean replacement**: All existing shows for the schedule are deleted before creating new ones
 - **Version tracking**: Each republish increments version and creates a snapshot
@@ -416,6 +438,7 @@ The `plan_document` is a JSON structure containing:
 **Purpose**: Revert a schedule to a previous version using snapshot history for rollback capabilities
 
 **Use Cases**:
+
 - Undo accidental changes or mistakes during planning
 - Revert to a known good state after validation errors
 - Restore from a previous version before making new changes
@@ -423,6 +446,7 @@ The `plan_document` is a JSON structure containing:
 - Rollback after unsuccessful updates
 
 **Workflow**:
+
 1. **List Snapshots**: `GET /admin/schedules/:id/snapshots` - View all available snapshots for a schedule
    - Returns snapshots sorted by creation date (newest first)
    - Each snapshot includes: `uid`, `version`, `snapshotReason`, `createdAt`, `createdBy`
@@ -444,11 +468,13 @@ The `plan_document` is a JSON structure containing:
    - Returns restored schedule with relations
 
 **Error Handling**:
+
 - **404 Not Found**: Snapshot or schedule not found
 - **400 Bad Request**: Cannot restore published schedules (must unpublish first)
 - **Recovery**: If restore fails, use the `before_restore` snapshot to rollback
 
 **Key Points**:
+
 - **Restore creates rollback snapshot**: Always creates `before_restore` snapshot before restoring
 - **Version increments**: Restore increments version to maintain version history
 - **Draft/Review only**: Cannot restore published schedules (must unpublish first)
@@ -456,6 +482,7 @@ The `plan_document` is a JSON structure containing:
 - **Rollback capability**: `before_restore` snapshot enables undoing a restore if needed
 
 **Example Workflow**:
+
 ```typescript
 // 1. List snapshots to find the version to restore
 const snapshots = await GET('/admin/schedules/schedule_001/snapshots');
@@ -467,7 +494,7 @@ const snapshot = await GET('/admin/snapshots/snapshot_001');
 
 // 3. Restore from snapshot
 const restored = await POST('/admin/snapshots/snapshot_001/restore', {
-  user_id: 'user_001'
+  user_id: 'user_001',
 });
 // Returns: Restored schedule with updated planDocument and incremented version
 // Creates 'before_restore' snapshot automatically
@@ -494,25 +521,30 @@ const restored = await POST('/admin/snapshots/snapshot_001/restore', {
 **Phase 1: Per-Client Validation (In-Schedule Only)**
 
 **Per-Show Validation**:
+
 - Time range: Show must be within schedule date range
 - Time logic: End time must be after start time
 - References: All UIDs (client, room, type, status, standard) must exist
 - Client consistency: All shows in schedule must belong to the same client (Phase 1 requirement)
 
 **Internal Conflicts** (within schedule only):
+
 - Room conflicts: No two shows in same room with overlapping times **within the same schedule**
 - MC conflicts: No MC assigned to overlapping shows **within the same schedule**
 
 **Phase 1 Scope**:
+
 - ✅ **In-Schedule Validation**: Checks conflicts only within the schedule being validated
 - ⚠️ **Cross-Schedule Validation**: **Deferred to Phase 2** - Conflicts with shows in other published schedules are not checked
 - **Rationale**: Google Sheets is the source of truth during planning phase, and conflicts are resolved before upload. Cross-schedule validation will be added in Phase 2 for bulk publish operations.
 
 **Phase 2: Cross-Schedule Validation** (Future Enhancement):
+
 - Room availability: No conflicts with existing published shows in same room (across all schedules)
 - MC availability: No double-booking for same MC at overlapping times (across all schedules)
 
 **Chunked Upload Validation** (Phase 2):
+
 - Chunk index must be sequential: `chunkIndex === (lastChunkIndex ?? 0) + 1`
 - Version must match: `version === schedule.version`
 - Upload not complete: `!uploadProgress.isComplete`
@@ -555,6 +587,7 @@ For monthly overviews with shows from multiple clients (e.g., 500+ shows from 10
 ### Validation Considerations
 
 **Phase 1 (Per-Client Schedules)**:
+
 - Each schedule contains shows from a single client only
 - Validation checks conflicts **within the schedule only** (in-schedule validation)
 - Cross-schedule validation (conflicts with other published schedules) is **not checked** in Phase 1
@@ -562,6 +595,7 @@ For monthly overviews with shows from multiple clients (e.g., 500+ shows from 10
 
 **Phase 2 (Multi-Client Schedules)**:
 When validating a multi-client schedule (Phase 2 feature):
+
 - **Room conflicts**: Checked across **all shows in the schedule** regardless of client
 - **MC double-booking**: Checked across **all shows in the schedule** regardless of client
 - **Data integrity**: All shows in the schedule are validated together
@@ -572,11 +606,13 @@ This ensures that shows from different clients don't conflict with each other wi
 ### Google Sheets Structure
 
 **Option 1: Single Sheet with Client Column** (Recommended)
+
 - Use a single "Shows" sheet with a `clientUid` column
 - Each row specifies which client the show belongs to
 - All shows are uploaded to the same schedule
 
 **Option 2: Separate Sheets per Client**
+
 - Create separate sheets for each client (e.g., "Client1", "Client2")
 - Combine all shows before uploading
 - Use a single schedule for the monthly overview
@@ -595,6 +631,7 @@ This ensures that shows from different clients don't conflict with each other wi
 ### Why This Design?
 
 **Advantages**:
+
 - **Simple**: One new endpoint for chunked uploads (`POST /admin/schedules/:id/shows/append`)
 - **RESTful**: Uses existing schedule resource, standard HTTP codes
 - **Stateless**: No server-side session management, easy to scale
@@ -603,6 +640,7 @@ This ensures that shows from different clients don't conflict with each other wi
 - **Extendable**: Can add features (parallel chunks, webhooks) without breaking changes
 
 **Alternative Approaches Considered**:
+
 - Separate upload session pattern (`/upload/start`, `/upload/chunk`, `/upload/complete`, `/upload/cancel`)
   - ❌ 4 new endpoints vs 1
   - ❌ Requires session state management
@@ -639,40 +677,40 @@ sequenceDiagram
     participant Queue[Job Queue]
     participant Worker[Background Worker]
     participant DB[(Database)]
-    
+
     Note over GS,DB: Phase 1: Bulk Publish Workflow
-    
+
     GS->>Client: Export monthly planning<br/>(50 clients, ~50 shows each)
     Client->>Client: Group shows by client
-    
+
     Client->>API: POST /admin/schedules/bulk<br/>(50 schedules)
     API->>ScheduleSvc: bulkCreateSchedules()
     ScheduleSvc->>DB: Create 50 schedules
     DB-->>ScheduleSvc: Schedules created
     ScheduleSvc-->>API: Schedule IDs
     API-->>Client: 50 schedule IDs
-    
+
     Client->>API: POST /admin/schedules/bulk-publish<br/>{schedule_ids, async: true}
     API->>PlanningSvc: bulkPublish(scheduleIds, {async: true})
     PlanningSvc->>Queue: Create publish job
     Queue-->>PlanningSvc: Job ID
     PlanningSvc-->>API: Job ID + status
     API-->>Client: {job_id, status: "queued"}
-    
+
     Note over Client: User sees progress UI
-    
+
     loop Poll job status
         Client->>API: GET /admin/jobs/:job_id
         API->>Queue: Get job status
         Queue-->>API: Job progress
         API-->>Client: {status, progress}
     end
-    
+
     Note over Worker,DB: Background processing
-    
+
     Worker->>Queue: Pick up job
     Worker->>PlanningSvc: Process schedules
-    
+
     loop For each schedule
         PlanningSvc->>PlanningSvc: Validate schedule
         alt Validation passes
@@ -683,14 +721,14 @@ sequenceDiagram
             PlanningSvc->>Queue: Mark schedule failed
         end
     end
-    
+
     Worker->>Queue: Mark job complete
-    
+
     Client->>API: GET /admin/jobs/:job_id
     API->>Queue: Get final status
     Queue-->>API: Job completed
     API-->>Client: {status: "completed", results}
-    
+
     Client-->>GS: Display results
 ```
 
@@ -704,26 +742,26 @@ sequenceDiagram
     participant ValidationSvc[ValidationService]
     participant PublishingSvc[PublishingService]
     participant DB[(Database)]
-    
+
     Note over Client,DB: Phase 2: Chunked Upload for Large Clients
-    
+
     Client->>Client: Prepare shows data<br/>(500+ shows)
     Client->>Client: Calculate chunks<br/>(CHUNK_SIZE = 50)
-    
+
     Client->>API: POST /admin/schedules<br/>{plan_document: {metadata: {uploadProgress: {expectedChunks: 10}}}}
     API->>ScheduleSvc: createSchedule()
     ScheduleSvc->>DB: Create schedule with uploadProgress
     DB-->>ScheduleSvc: Schedule created (version: 1)
     ScheduleSvc-->>API: Schedule with UID
     API-->>Client: Schedule UID, version: 1
-    
+
     loop For each chunk (1 to 10)
         Client->>API: POST /admin/schedules/:id/shows/append<br/>{chunkIndex, version, shows}
         API->>ScheduleSvc: appendShows(scheduleId, shows, chunkIndex, version)
-        
+
         ScheduleSvc->>DB: Load schedule
         DB-->>ScheduleSvc: Schedule with current version
-        
+
         alt Version mismatch
             ScheduleSvc-->>API: 409 VERSION_MISMATCH
             API-->>Client: Error: Version mismatch
@@ -745,18 +783,18 @@ sequenceDiagram
             API-->>Client: Schedule with progress
         end
     end
-    
+
     Client->>API: POST /admin/schedules/:id/validate
     API->>ValidationSvc: validateSchedule()
     ValidationSvc->>DB: Check conflicts
     DB-->>ValidationSvc: Validation result
     ValidationSvc-->>API: Validation result
     API-->>Client: Validation status
-    
+
     alt Validation passes
         Client->>API: POST /admin/schedules/:id/publish<br/>{version}
         API->>PublishingSvc: publish()
-        
+
         PublishingSvc->>PublishingSvc: Check uploadProgress.isComplete
         alt Upload incomplete
             PublishingSvc-->>API: 400 UPLOAD_INCOMPLETE
@@ -830,6 +868,7 @@ sequenceDiagram
 ### Implementation Status
 
 **Phase 1** (✅ Implemented):
+
 - Core Schedule CRUD
 - Bulk create operations
 - Single schedule validation and publishing
@@ -839,6 +878,7 @@ sequenceDiagram
 - **Job status tracking** ⭐ **NEW**
 
 **Phase 2** (⚠️ Deferred):
+
 - Cross-client validation endpoint
 - Chunked upload (for edge cases with very large clients)
 - Enhanced error reporting with row numbers

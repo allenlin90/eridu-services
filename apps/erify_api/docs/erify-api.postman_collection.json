@@ -1,2485 +1,2009 @@
 {
-	"info": {
-		"_postman_id": "da5c4f1b-ebd5-4f16-a44e-1cdccaf2a3eb",
-		"name": "erify-api",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "49556646",
-		"_collection_link": "https://erify-production.postman.co/workspace/c7f95606-86b7-4df0-8ff4-87ec35eea463/collection/49556646-da5c4f1b-ebd5-4f16-a44e-1cdccaf2a3eb?action=share&source=collection_link&creator=49556646"
-	},
-	"item": [
-		{
-			"name": "Clients",
-			"item": [
-				{
-					"name": "Get Clients",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/clients",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"clients"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create a Client",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"client_id\", jsonData.id);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"puma\",\n    \"contact_person\": \"puma\",\n    \"contact_email\": \"puma@puma.com\"\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/clients",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"clients"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get a Client",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{url}}/admin/clients/{{client_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"clients",
-								"{{client_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update a Client",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/clients/{{client_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"clients",
-								"{{client_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete a Client",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{url}}/admin/clients/{{client_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"clients",
-								"{{client_id}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Users",
-			"item": [
-				{
-					"name": "Get Users",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/users",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"users"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create a User",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"user_id\", jsonData.id);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"puma\",\n    \"email\": \"puma@puma.com\"\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/users",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"users"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get a User",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
-						},
-						"url": {
-							"raw": "{{url}}/admin/users/{{user_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"users",
-								"{{user_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update a User",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"\",\n    \"email\": \"\",\n    \"ext_id\": \"\",\n    \"profile_url\": \"\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/users/{{user_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"users",
-								"{{user_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete a User",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{url}}/admin/users/{{user_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"users",
-								"{{user_id}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "MCs",
-			"item": [
-				{
-					"name": "Get MCs",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/mcs",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"mcs"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create a MC",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"mc_id\", jsonData.id);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"nike\",\n    \"user_id\": \"{{user_id}}\",\n    \"alias_name\": \"nike\"\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/mcs",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"mcs"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get a MC",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
-						},
-						"url": {
-							"raw": "{{url}}/admin/mcs/{{mc_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"mcs",
-								"{{mc_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update a MC",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"nike\",\n    \"user_id\": \"{{user_id}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/mcs/{{mc_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"mcs",
-								"{{mc_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete a MC",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{url}}/admin/mcs/{{mc_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"mcs",
-								"{{mc_id}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Platforms",
-			"item": [
-				{
-					"name": "Get Platforms",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/platforms",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"platforms"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create a Platform",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"platform_id\", jsonData.id);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"nike\",\n    \"user_id\": \"{{user_id}}\",\n    \"alias_name\": \"nike\"\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/platforms",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"platforms"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get a Platform",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
-						},
-						"url": {
-							"raw": "{{url}}/admin/platforms/{{platform_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"platforms",
-								"{{platform_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update a Platform",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"nike\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/platforms/{{platform_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"platforms",
-								"{{platform_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete a Platform",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{url}}/admin/platforms/{{platform_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"platforms",
-								"{{platform_id}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Studios",
-			"item": [
-				{
-					"name": "Get Studios",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/studios",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"studios"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create a Studio",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"studio_id\", jsonData.id);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"onnut\",\n    \"address\": \"Bangkok\"\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/studios",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"studios"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get a Studio",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
-						},
-						"url": {
-							"raw": "{{url}}/admin/studios/{{studio_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"studios",
-								"{{studio_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update a Studio",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"erify_onnut\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/studios/{{studio_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"studios",
-								"{{studio_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete a Studio",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{url}}/admin/studios/{{studio_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"studios",
-								"{{studio_id}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Studio Rooms",
-			"item": [
-				{
-					"name": "Get Studio rooms",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/studio-rooms",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"studio-rooms"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create a Studio room",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"studio_room_id\", jsonData.id);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"301\",\n    \"studio_id\": \"{{studio_id}}\",\n    \"capacity\": 1\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/studio-rooms",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"studio-rooms"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get a Studio Room",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{url}}/admin/studio-rooms/{{studio_room_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"studio-rooms",
-								"{{studio_room_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update a Studio Room",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"301 Updated\",\n    \"capacity\": 2\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/studio-rooms/{{studio_room_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"studio-rooms",
-								"{{studio_room_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete a Studio Room",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{url}}/admin/studio-rooms/{{studio_room_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"studio-rooms",
-								"{{studio_room_id}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Studio Memberships",
-			"item": [
-				{
-					"name": "Get Studio Memberships",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/studio-memberships",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"studio-memberships"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create a Studio Membership",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"studio_membership_id\", jsonData.id);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"studio_id\": \"{{studio_id}}\",\n    \"user_id\": \"{{user_id}}\",\n    \"role\": \"admin\"\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/studio-memberships",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"studio-memberships"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get a Studio Membership",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
-						},
-						"url": {
-							"raw": "{{url}}/admin/studio-memberships/{{studio_membership_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"studio-memberships",
-								"{{studio_membership_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update a Studio Membership",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"user_id\": \"{{user_id}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/studio-memberships/{{studio_membership_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"studio-memberships",
-								"{{studio_membership_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete a Studio Membership",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{url}}/admin/studio-memberships/{{studio_membership_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"studio-memberships",
-								"{{studio_membership_id}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Shows",
-			"item": [
-				{
-					"name": "Get Shows",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/shows",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"shows"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create a Show",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"show_id\", jsonData.id);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Test Show\",\n    \"start_time\": \"2024-01-15T10:00:00.000Z\",\n    \"end_time\": \"2024-01-15T12:00:00.000Z\",\n    \"studio_room_id\": \"{{studio_room_id}}\",\n    \"show_type_id\": \"{{show_type_id}}\",\n    \"show_status_id\": \"{{show_status_id}}\",\n    \"show_standard_id\": \"{{show_standard_id}}\",\n    \"client_id\": \"{{client_id}}\"\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/shows",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"shows"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get a Show",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
-						},
-						"url": {
-							"raw": "{{url}}/admin/shows/{{show_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"shows",
-								"{{show_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update a Show",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Updated Show Name\",\n    \"start_time\": \"2024-01-15T11:00:00.000Z\",\n    \"end_time\": \"2024-01-15T13:00:00.000Z\",\n    \"client_id\": \"{{client_id}}\",\n    \"studio_room_id\": \"{{studio_room_id}}\",\n    \"show_type_id\": \"{{show_type_id}}\",\n    \"show_status_id\": \"{{show_status_id}}\",\n    \"show_standard_id\": \"{{show_standard_id}}\",\n    \"metadata\": {}\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/shows/{{show_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"shows",
-								"{{show_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete a Show",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{url}}/admin/shows/{{show_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"shows",
-								"{{show_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Remove MCs from Show",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"mc_ids\": [\"{{mc_id}}\"]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/shows/{{show_id}}/mcs/remove",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"shows",
-								"{{show_id}}",
-								"mcs",
-								"remove"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Remove Platforms from Show",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"platform_ids\": [\"{{platform_id}}\"]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/shows/{{show_id}}/platforms/remove",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"shows",
-								"{{show_id}}",
-								"platforms",
-								"remove"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Replace MCs on Show",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"mcs\": [\n        {\n            \"mc_id\": \"{{mc_id}}\",\n            \"note\": null,\n            \"metadata\": {}\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/shows/{{show_id}}/mcs/replace",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"shows",
-								"{{show_id}}",
-								"mcs",
-								"replace"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Replace Platforms on Show",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"platforms\": [\n        {\n            \"platform_id\": \"{{platform_id}}\",\n            \"live_stream_link\": \"\",\n            \"platform_show_id\": \"\",\n            \"viewer_count\": 0,\n            \"metadata\": {}\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/shows/{{show_id}}/platforms/replace",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"shows",
-								"{{show_id}}",
-								"platforms",
-								"replace"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Show Standards",
-			"item": [
-				{
-					"name": "Get Studio Standards",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/show-standards",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-standards"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create a Studio Standard",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"show_standard_id\", jsonData.id);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"\"\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-standards",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-standards"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get a Studio Standard",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-standards/{{show_standard_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-standards",
-								"{{show_standard_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update a Show Standard",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Updated Standard\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-standards/{{show_standard_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-standards",
-								"{{show_standard_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete a Studio Standard",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-standards/{{show_standard_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-standards",
-								"{{show_standard_id}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Show Types",
-			"item": [
-				{
-					"name": "Get Studio Types",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/show-types",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-types"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create a Studio Type",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"show_type_id\", jsonData.id);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"\"\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-types",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-types"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get a Studio Type",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-types/{{show_type_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-types",
-								"{{show_type_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update a Studio Type",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"user_id\": \"{{user_id}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-types/{{show_type_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-types",
-								"{{show_type_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete a Studio Type",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-types/{{show_type_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-types",
-								"{{show_type_id}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Show Status",
-			"item": [
-				{
-					"name": "Get Studio Statuses",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/show-statuses",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-statuses"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create a Studio Statuses",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"show_status_id\", jsonData.id);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"\"\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-statuses",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-statuses"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get a Studio Status",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-statuses/{{show_status_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-statuses",
-								"{{show_status_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update a Studio Status",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"user_id\": \"{{user_id}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-statuses/{{show_status_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-statuses",
-								"{{show_status_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete a Show Status",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-statuses/{{show_status_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-statuses",
-								"{{show_status_id}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Show-Platform",
-			"item": [
-				{
-					"name": "Get Show Platforms",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/show-platforms",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-platforms"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create a Show Platform",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"show_platform_id\", jsonData.id);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"show_id\": \"{{show_id}}\",\n    \"platform_id\": \"{{platform_id}}\"\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-platforms",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-platforms"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get a Show Platform",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-platforms/{{show_platform_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-platforms",
-								"{{show_platform_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update a Show Platform",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"user_id\": \"{{user_id}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-platforms/{{show_platform_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-platforms",
-								"{{show_platform_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete a Show Platform",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-platforms/{{show_platform_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-platforms",
-								"{{show_platform_id}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Show-MC",
-			"item": [
-				{
-					"name": "Get Show MCs",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/show-mcs",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-mcs"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create a Show MC",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"show_mc_id\", jsonData.id);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"show_id\": \"{{show_id}}\",\n    \"mc_id\": \"{{mc_id}}\"\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-mcs",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-mcs"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get a Show MC",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-mcs/{{show_mc_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-mcs",
-								"{{show_mc_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update a Show MC",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"user_id\": \"{{user_id}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-mcs/{{show_mc_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-mcs",
-								"{{show_mc_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete a Show MC",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{url}}/admin/show-mcs/{{show_mc_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"show-mcs",
-								"{{show_mc_id}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Schedules",
-			"item": [
-				{
-					"name": "Get Schedules",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/schedules?skip=0&take=10",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"schedules"
-							],
-							"query": [
-								{
-									"key": "skip",
-									"value": "0"
-								},
-								{
-									"key": "take",
-									"value": "10"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create a Schedule",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"schedule_id\", jsonData.id);",
-									"pm.environment.set(\"schedule_version\", jsonData.version);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Test Schedule\",\n    \"start_date\": \"2024-01-01T00:00:00.000Z\",\n    \"end_date\": \"2024-01-31T23:59:59.999Z\",\n    \"status\": \"draft\",\n    \"plan_document\": {\n        \"metadata\": {\n            \"lastEditedBy\": \"{{user_id}}\",\n            \"lastEditedAt\": \"2024-01-01T00:00:00.000Z\",\n            \"totalShows\": 0,\n            \"clientName\": \"Test Client\",\n            \"dateRange\": {\n                \"start\": \"2024-01-01T00:00:00.000Z\",\n                \"end\": \"2024-01-31T23:59:59.999Z\"\n            }\n        },\n        \"shows\": []\n    },\n    \"version\": 1,\n    \"client_id\": \"{{client_id}}\",\n    \"created_by\": \"{{user_id}}\"\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/schedules",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"schedules"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get a Schedule",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/schedules/{{schedule_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"schedules",
-								"{{schedule_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update a Schedule",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"schedule_version\", jsonData.version);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Updated Schedule\",\n    \"version\": {{schedule_version}},\n    \"plan_document\": {\n        \"metadata\": {\n            \"lastEditedBy\": \"{{user_id}}\",\n            \"lastEditedAt\": \"2024-01-02T00:00:00.000Z\",\n            \"totalShows\": 0,\n            \"clientName\": \"Test Client\",\n            \"dateRange\": {\n                \"start\": \"2024-01-01T00:00:00.000Z\",\n                \"end\": \"2024-01-31T23:59:59.999Z\"\n            }\n        },\n        \"shows\": []\n    }\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/schedules/{{schedule_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"schedules",
-								"{{schedule_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete a Schedule",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{url}}/admin/schedules/{{schedule_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"schedules",
-								"{{schedule_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Validate Schedule",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/schedules/{{schedule_id}}/validate",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"schedules",
-								"{{schedule_id}}",
-								"validate"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Publish Schedule",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"schedule_version\", jsonData.version);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"version\": {{schedule_version}}\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/schedules/{{schedule_id}}/publish",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"schedules",
-								"{{schedule_id}}",
-								"publish"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Duplicate Schedule",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"schedule_id\", jsonData.id);",
-									"pm.environment.set(\"schedule_version\", jsonData.version);",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Duplicated Schedule\",\n    \"created_by\": \"{{user_id}}\"\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/schedules/{{schedule_id}}/duplicate",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"schedules",
-								"{{schedule_id}}",
-								"duplicate"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Schedule Snapshots",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"if (jsonData && jsonData.length > 0) {",
-									"    pm.environment.set(\"snapshot_id\", jsonData[0].id);",
-									"}"
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/schedules/{{schedule_id}}/snapshots?limit=10",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"schedules",
-								"{{schedule_id}}",
-								"snapshots"
-							],
-							"query": [
-								{
-									"key": "limit",
-									"value": "10"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Bulk Create Schedules",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"schedules\": [\n        {\n            \"name\": \"Bulk Schedule 1\",\n            \"start_date\": \"2024-01-01T00:00:00.000Z\",\n            \"end_date\": \"2024-01-31T23:59:59.999Z\",\n            \"status\": \"draft\",\n            \"plan_document\": {\n                \"metadata\": {\n                    \"lastEditedBy\": \"{{user_id}}\",\n                    \"lastEditedAt\": \"2024-01-01T00:00:00.000Z\",\n                    \"totalShows\": 0,\n                    \"clientName\": \"Test Client\",\n                    \"dateRange\": {\n                        \"start\": \"2024-01-01T00:00:00.000Z\",\n                        \"end\": \"2024-01-31T23:59:59.999Z\"\n                    }\n                },\n                \"shows\": []\n            },\n            \"version\": 1,\n            \"client_id\": \"{{client_id}}\",\n            \"created_by\": \"{{user_id}}\"\n        },\n        {\n            \"name\": \"Bulk Schedule 2\",\n            \"start_date\": \"2024-02-01T00:00:00.000Z\",\n            \"end_date\": \"2024-02-29T23:59:59.999Z\",\n            \"status\": \"draft\",\n            \"plan_document\": {\n                \"metadata\": {\n                    \"lastEditedBy\": \"{{user_id}}\",\n                    \"lastEditedAt\": \"2024-02-01T00:00:00.000Z\",\n                    \"totalShows\": 0,\n                    \"clientName\": \"Test Client\",\n                    \"dateRange\": {\n                        \"start\": \"2024-02-01T00:00:00.000Z\",\n                        \"end\": \"2024-02-29T23:59:59.999Z\"\n                    }\n                },\n                \"shows\": []\n            },\n            \"version\": 1,\n            \"client_id\": \"{{client_id}}\",\n            \"created_by\": \"{{user_id}}\"\n        }\n    ]\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/schedules/bulk",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"schedules",
-								"bulk"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Bulk Update Schedules",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"schedules\": [\n        {\n            \"schedule_id\": \"{{schedule_id}}\",\n            \"name\": \"Updated Bulk Schedule\",\n            \"version\": {{schedule_version}},\n            \"plan_document\": {\n                \"metadata\": {\n                    \"lastEditedBy\": \"{{user_id}}\",\n                    \"lastEditedAt\": \"2024-01-02T00:00:00.000Z\",\n                    \"totalShows\": 0,\n                    \"clientName\": \"Test Client\",\n                    \"dateRange\": {\n                        \"start\": \"2024-01-01T00:00:00.000Z\",\n                        \"end\": \"2024-01-31T23:59:59.999Z\"\n                    }\n                },\n                \"shows\": []\n            }\n        }\n    ]\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/schedules/bulk",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"schedules",
-								"bulk"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Monthly Overview",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/schedules/overview/monthly?start_date=2024-01-01T00:00:00.000Z&end_date=2024-01-31T23:59:59.999Z&include_deleted=false",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"schedules",
-								"overview",
-								"monthly"
-							],
-							"query": [
-								{
-									"key": "start_date",
-									"value": "2024-01-01T00:00:00.000Z"
-								},
-								{
-									"key": "end_date",
-									"value": "2024-01-31T23:59:59.999Z"
-								},
-								{
-									"key": "include_deleted",
-									"value": "false"
-								},
-								{
-									"key": "client_ids",
-									"value": "{{client_id}}",
-									"disabled": true
-								},
-								{
-									"key": "status",
-									"value": "draft",
-									"disabled": true
-								}
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Snapshots",
-			"item": [
-				{
-					"name": "Get a Snapshot",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/admin/snapshots/{{snapshot_id}}",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"snapshots",
-								"{{snapshot_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Restore from Snapshot",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"if (jsonData && jsonData.id) {",
-									"    pm.environment.set(\"schedule_id\", jsonData.id);",
-									"    pm.environment.set(\"schedule_version\", jsonData.version);",
-									"}"
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"user_id\": \"{{user_id}}\"\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/admin/snapshots/{{snapshot_id}}/restore",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"admin",
-								"snapshots",
-								"{{snapshot_id}}",
-								"restore"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "health check",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{url}}/health",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"health"
-					]
-				}
-			},
-			"response": []
-		}
-	]
+  "info": {
+    "_postman_id": "da5c4f1b-ebd5-4f16-a44e-1cdccaf2a3eb",
+    "name": "erify-api",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "49556646",
+    "_collection_link": "https://erify-production.postman.co/workspace/c7f95606-86b7-4df0-8ff4-87ec35eea463/collection/49556646-da5c4f1b-ebd5-4f16-a44e-1cdccaf2a3eb?action=share&source=collection_link&creator=49556646"
+  },
+  "item": [
+    {
+      "name": "Clients",
+      "item": [
+        {
+          "name": "Get Clients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/clients",
+              "host": ["{{url}}"],
+              "path": ["admin", "clients"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create a Client",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"client_id\", jsonData.id);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"puma\",\n    \"contact_person\": \"puma\",\n    \"contact_email\": \"puma@puma.com\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/clients",
+              "host": ["{{url}}"],
+              "path": ["admin", "clients"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get a Client",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{url}}/admin/clients/{{client_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "clients", "{{client_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update a Client",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/clients/{{client_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "clients", "{{client_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a Client",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{url}}/admin/clients/{{client_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "clients", "{{client_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/users",
+              "host": ["{{url}}"],
+              "path": ["admin", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create a User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"user_id\", jsonData.id);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"puma\",\n    \"email\": \"puma@puma.com\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/users",
+              "host": ["{{url}}"],
+              "path": ["admin", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get a User",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{url}}/admin/users/{{user_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "users", "{{user_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update a User",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\",\n    \"email\": \"\",\n    \"ext_id\": \"\",\n    \"profile_url\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/users/{{user_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "users", "{{user_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{url}}/admin/users/{{user_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "users", "{{user_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "MCs",
+      "item": [
+        {
+          "name": "Get MCs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/mcs",
+              "host": ["{{url}}"],
+              "path": ["admin", "mcs"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create a MC",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"mc_id\", jsonData.id);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"nike\",\n    \"user_id\": \"{{user_id}}\",\n    \"alias_name\": \"nike\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/mcs",
+              "host": ["{{url}}"],
+              "path": ["admin", "mcs"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get a MC",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{url}}/admin/mcs/{{mc_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "mcs", "{{mc_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update a MC",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"nike\",\n    \"user_id\": \"{{user_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/mcs/{{mc_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "mcs", "{{mc_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a MC",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{url}}/admin/mcs/{{mc_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "mcs", "{{mc_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Platforms",
+      "item": [
+        {
+          "name": "Get Platforms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/platforms",
+              "host": ["{{url}}"],
+              "path": ["admin", "platforms"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create a Platform",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"platform_id\", jsonData.id);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"nike\",\n    \"user_id\": \"{{user_id}}\",\n    \"alias_name\": \"nike\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/platforms",
+              "host": ["{{url}}"],
+              "path": ["admin", "platforms"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get a Platform",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{url}}/admin/platforms/{{platform_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "platforms", "{{platform_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update a Platform",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"nike\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/platforms/{{platform_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "platforms", "{{platform_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a Platform",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{url}}/admin/platforms/{{platform_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "platforms", "{{platform_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Studios",
+      "item": [
+        {
+          "name": "Get Studios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/studios",
+              "host": ["{{url}}"],
+              "path": ["admin", "studios"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create a Studio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"studio_id\", jsonData.id);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"onnut\",\n    \"address\": \"Bangkok\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/studios",
+              "host": ["{{url}}"],
+              "path": ["admin", "studios"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get a Studio",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{url}}/admin/studios/{{studio_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "studios", "{{studio_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update a Studio",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"erify_onnut\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/studios/{{studio_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "studios", "{{studio_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a Studio",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{url}}/admin/studios/{{studio_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "studios", "{{studio_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Studio Rooms",
+      "item": [
+        {
+          "name": "Get Studio rooms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/studio-rooms",
+              "host": ["{{url}}"],
+              "path": ["admin", "studio-rooms"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create a Studio room",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"studio_room_id\", jsonData.id);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"301\",\n    \"studio_id\": \"{{studio_id}}\",\n    \"capacity\": 1\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/studio-rooms",
+              "host": ["{{url}}"],
+              "path": ["admin", "studio-rooms"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get a Studio Room",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{url}}/admin/studio-rooms/{{studio_room_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "studio-rooms", "{{studio_room_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update a Studio Room",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"301 Updated\",\n    \"capacity\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/studio-rooms/{{studio_room_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "studio-rooms", "{{studio_room_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a Studio Room",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{url}}/admin/studio-rooms/{{studio_room_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "studio-rooms", "{{studio_room_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Studio Memberships",
+      "item": [
+        {
+          "name": "Get Studio Memberships",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/studio-memberships",
+              "host": ["{{url}}"],
+              "path": ["admin", "studio-memberships"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create a Studio Membership",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"studio_membership_id\", jsonData.id);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"studio_id\": \"{{studio_id}}\",\n    \"user_id\": \"{{user_id}}\",\n    \"role\": \"admin\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/studio-memberships",
+              "host": ["{{url}}"],
+              "path": ["admin", "studio-memberships"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get a Studio Membership",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{url}}/admin/studio-memberships/{{studio_membership_id}}",
+              "host": ["{{url}}"],
+              "path": [
+                "admin",
+                "studio-memberships",
+                "{{studio_membership_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update a Studio Membership",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": \"{{user_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/studio-memberships/{{studio_membership_id}}",
+              "host": ["{{url}}"],
+              "path": [
+                "admin",
+                "studio-memberships",
+                "{{studio_membership_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a Studio Membership",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{url}}/admin/studio-memberships/{{studio_membership_id}}",
+              "host": ["{{url}}"],
+              "path": [
+                "admin",
+                "studio-memberships",
+                "{{studio_membership_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Shows",
+      "item": [
+        {
+          "name": "Get Shows",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/shows",
+              "host": ["{{url}}"],
+              "path": ["admin", "shows"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create a Show",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"show_id\", jsonData.id);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Test Show\",\n    \"start_time\": \"2024-01-15T10:00:00.000Z\",\n    \"end_time\": \"2024-01-15T12:00:00.000Z\",\n    \"studio_room_id\": \"{{studio_room_id}}\",\n    \"show_type_id\": \"{{show_type_id}}\",\n    \"show_status_id\": \"{{show_status_id}}\",\n    \"show_standard_id\": \"{{show_standard_id}}\",\n    \"client_id\": \"{{client_id}}\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/shows",
+              "host": ["{{url}}"],
+              "path": ["admin", "shows"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get a Show",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{url}}/admin/shows/{{show_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "shows", "{{show_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update a Show",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Show Name\",\n    \"start_time\": \"2024-01-15T11:00:00.000Z\",\n    \"end_time\": \"2024-01-15T13:00:00.000Z\",\n    \"client_id\": \"{{client_id}}\",\n    \"studio_room_id\": \"{{studio_room_id}}\",\n    \"show_type_id\": \"{{show_type_id}}\",\n    \"show_status_id\": \"{{show_status_id}}\",\n    \"show_standard_id\": \"{{show_standard_id}}\",\n    \"metadata\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/shows/{{show_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "shows", "{{show_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a Show",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{url}}/admin/shows/{{show_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "shows", "{{show_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove MCs from Show",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"mc_ids\": [\"{{mc_id}}\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/shows/{{show_id}}/mcs/remove",
+              "host": ["{{url}}"],
+              "path": ["admin", "shows", "{{show_id}}", "mcs", "remove"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Platforms from Show",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"platform_ids\": [\"{{platform_id}}\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/shows/{{show_id}}/platforms/remove",
+              "host": ["{{url}}"],
+              "path": ["admin", "shows", "{{show_id}}", "platforms", "remove"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Replace MCs on Show",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"mcs\": [\n        {\n            \"mc_id\": \"{{mc_id}}\",\n            \"note\": null,\n            \"metadata\": {}\n        }\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/shows/{{show_id}}/mcs/replace",
+              "host": ["{{url}}"],
+              "path": ["admin", "shows", "{{show_id}}", "mcs", "replace"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Replace Platforms on Show",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"platforms\": [\n        {\n            \"platform_id\": \"{{platform_id}}\",\n            \"live_stream_link\": \"\",\n            \"platform_show_id\": \"\",\n            \"viewer_count\": 0,\n            \"metadata\": {}\n        }\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/shows/{{show_id}}/platforms/replace",
+              "host": ["{{url}}"],
+              "path": ["admin", "shows", "{{show_id}}", "platforms", "replace"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Show Standards",
+      "item": [
+        {
+          "name": "Get Studio Standards",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/show-standards",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-standards"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create a Studio Standard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"show_standard_id\", jsonData.id);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-standards",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-standards"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get a Studio Standard",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-standards/{{show_standard_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-standards", "{{show_standard_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update a Show Standard",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Standard\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-standards/{{show_standard_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-standards", "{{show_standard_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a Studio Standard",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-standards/{{show_standard_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-standards", "{{show_standard_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Show Types",
+      "item": [
+        {
+          "name": "Get Studio Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/show-types",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-types"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create a Studio Type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"show_type_id\", jsonData.id);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-types",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-types"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get a Studio Type",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-types/{{show_type_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-types", "{{show_type_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update a Studio Type",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": \"{{user_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-types/{{show_type_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-types", "{{show_type_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a Studio Type",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-types/{{show_type_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-types", "{{show_type_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Show Status",
+      "item": [
+        {
+          "name": "Get Studio Statuses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/show-statuses",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-statuses"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create a Studio Statuses",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"show_status_id\", jsonData.id);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-statuses",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-statuses"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get a Studio Status",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-statuses/{{show_status_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-statuses", "{{show_status_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update a Studio Status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": \"{{user_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-statuses/{{show_status_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-statuses", "{{show_status_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a Show Status",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-statuses/{{show_status_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-statuses", "{{show_status_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Show-Platform",
+      "item": [
+        {
+          "name": "Get Show Platforms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/show-platforms",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-platforms"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create a Show Platform",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"show_platform_id\", jsonData.id);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"show_id\": \"{{show_id}}\",\n    \"platform_id\": \"{{platform_id}}\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-platforms",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-platforms"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get a Show Platform",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-platforms/{{show_platform_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-platforms", "{{show_platform_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update a Show Platform",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": \"{{user_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-platforms/{{show_platform_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-platforms", "{{show_platform_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a Show Platform",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-platforms/{{show_platform_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-platforms", "{{show_platform_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Show-MC",
+      "item": [
+        {
+          "name": "Get Show MCs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/show-mcs",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-mcs"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create a Show MC",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"show_mc_id\", jsonData.id);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"show_id\": \"{{show_id}}\",\n    \"mc_id\": \"{{mc_id}}\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-mcs",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-mcs"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get a Show MC",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\",\n    \"contact_person\": \"\",\n    \"contact_email\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-mcs/{{show_mc_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-mcs", "{{show_mc_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update a Show MC",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": \"{{user_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-mcs/{{show_mc_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-mcs", "{{show_mc_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a Show MC",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{url}}/admin/show-mcs/{{show_mc_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "show-mcs", "{{show_mc_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Schedules",
+      "item": [
+        {
+          "name": "Get Schedules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/schedules?skip=0&take=10",
+              "host": ["{{url}}"],
+              "path": ["admin", "schedules"],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "take",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create a Schedule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"schedule_id\", jsonData.id);",
+                  "pm.environment.set(\"schedule_version\", jsonData.version);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Test Schedule\",\n    \"start_date\": \"2024-01-01T00:00:00.000Z\",\n    \"end_date\": \"2024-01-31T23:59:59.999Z\",\n    \"status\": \"draft\",\n    \"plan_document\": {\n        \"metadata\": {\n            \"lastEditedBy\": \"{{user_id}}\",\n            \"lastEditedAt\": \"2024-01-01T00:00:00.000Z\",\n            \"totalShows\": 0,\n            \"clientName\": \"Test Client\",\n            \"dateRange\": {\n                \"start\": \"2024-01-01T00:00:00.000Z\",\n                \"end\": \"2024-01-31T23:59:59.999Z\"\n            }\n        },\n        \"shows\": []\n    },\n    \"version\": 1,\n    \"client_id\": \"{{client_id}}\",\n    \"created_by\": \"{{user_id}}\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/schedules",
+              "host": ["{{url}}"],
+              "path": ["admin", "schedules"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get a Schedule",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/schedules/{{schedule_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "schedules", "{{schedule_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update a Schedule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"schedule_version\", jsonData.version);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Schedule\",\n    \"version\": {{schedule_version}},\n    \"plan_document\": {\n        \"metadata\": {\n            \"lastEditedBy\": \"{{user_id}}\",\n            \"lastEditedAt\": \"2024-01-02T00:00:00.000Z\",\n            \"totalShows\": 0,\n            \"clientName\": \"Test Client\",\n            \"dateRange\": {\n                \"start\": \"2024-01-01T00:00:00.000Z\",\n                \"end\": \"2024-01-31T23:59:59.999Z\"\n            }\n        },\n        \"shows\": []\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/schedules/{{schedule_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "schedules", "{{schedule_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a Schedule",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{url}}/admin/schedules/{{schedule_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "schedules", "{{schedule_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Schedule",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/schedules/{{schedule_id}}/validate",
+              "host": ["{{url}}"],
+              "path": ["admin", "schedules", "{{schedule_id}}", "validate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Publish Schedule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"schedule_version\", jsonData.version);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"version\": {{schedule_version}}\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/schedules/{{schedule_id}}/publish",
+              "host": ["{{url}}"],
+              "path": ["admin", "schedules", "{{schedule_id}}", "publish"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Duplicate Schedule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"schedule_id\", jsonData.id);",
+                  "pm.environment.set(\"schedule_version\", jsonData.version);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Duplicated Schedule\",\n    \"created_by\": \"{{user_id}}\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/schedules/{{schedule_id}}/duplicate",
+              "host": ["{{url}}"],
+              "path": ["admin", "schedules", "{{schedule_id}}", "duplicate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Schedule Snapshots",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.length > 0) {",
+                  "    pm.environment.set(\"snapshot_id\", jsonData[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/schedules/{{schedule_id}}/snapshots?limit=10",
+              "host": ["{{url}}"],
+              "path": ["admin", "schedules", "{{schedule_id}}", "snapshots"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Create Schedules",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"schedules\": [\n        {\n            \"name\": \"Bulk Schedule 1\",\n            \"start_date\": \"2024-01-01T00:00:00.000Z\",\n            \"end_date\": \"2024-01-31T23:59:59.999Z\",\n            \"status\": \"draft\",\n            \"plan_document\": {\n                \"metadata\": {\n                    \"lastEditedBy\": \"{{user_id}}\",\n                    \"lastEditedAt\": \"2024-01-01T00:00:00.000Z\",\n                    \"totalShows\": 0,\n                    \"clientName\": \"Test Client\",\n                    \"dateRange\": {\n                        \"start\": \"2024-01-01T00:00:00.000Z\",\n                        \"end\": \"2024-01-31T23:59:59.999Z\"\n                    }\n                },\n                \"shows\": []\n            },\n            \"version\": 1,\n            \"client_id\": \"{{client_id}}\",\n            \"created_by\": \"{{user_id}}\"\n        },\n        {\n            \"name\": \"Bulk Schedule 2\",\n            \"start_date\": \"2024-02-01T00:00:00.000Z\",\n            \"end_date\": \"2024-02-29T23:59:59.999Z\",\n            \"status\": \"draft\",\n            \"plan_document\": {\n                \"metadata\": {\n                    \"lastEditedBy\": \"{{user_id}}\",\n                    \"lastEditedAt\": \"2024-02-01T00:00:00.000Z\",\n                    \"totalShows\": 0,\n                    \"clientName\": \"Test Client\",\n                    \"dateRange\": {\n                        \"start\": \"2024-02-01T00:00:00.000Z\",\n                        \"end\": \"2024-02-29T23:59:59.999Z\"\n                    }\n                },\n                \"shows\": []\n            },\n            \"version\": 1,\n            \"client_id\": \"{{client_id}}\",\n            \"created_by\": \"{{user_id}}\"\n        }\n    ]\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/schedules/bulk",
+              "host": ["{{url}}"],
+              "path": ["admin", "schedules", "bulk"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Update Schedules",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"schedules\": [\n        {\n            \"schedule_id\": \"{{schedule_id}}\",\n            \"name\": \"Updated Bulk Schedule\",\n            \"version\": {{schedule_version}},\n            \"plan_document\": {\n                \"metadata\": {\n                    \"lastEditedBy\": \"{{user_id}}\",\n                    \"lastEditedAt\": \"2024-01-02T00:00:00.000Z\",\n                    \"totalShows\": 0,\n                    \"clientName\": \"Test Client\",\n                    \"dateRange\": {\n                        \"start\": \"2024-01-01T00:00:00.000Z\",\n                        \"end\": \"2024-01-31T23:59:59.999Z\"\n                    }\n                },\n                \"shows\": []\n            }\n        }\n    ]\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/schedules/bulk",
+              "host": ["{{url}}"],
+              "path": ["admin", "schedules", "bulk"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Monthly Overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/schedules/overview/monthly?start_date=2024-01-01T00:00:00.000Z&end_date=2024-01-31T23:59:59.999Z&include_deleted=false",
+              "host": ["{{url}}"],
+              "path": ["admin", "schedules", "overview", "monthly"],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2024-01-01T00:00:00.000Z"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2024-01-31T23:59:59.999Z"
+                },
+                {
+                  "key": "include_deleted",
+                  "value": "false"
+                },
+                {
+                  "key": "client_ids",
+                  "value": "{{client_id}}",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "draft",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Snapshots",
+      "item": [
+        {
+          "name": "Get a Snapshot",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/admin/snapshots/{{snapshot_id}}",
+              "host": ["{{url}}"],
+              "path": ["admin", "snapshots", "{{snapshot_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Restore from Snapshot",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.id) {",
+                  "    pm.environment.set(\"schedule_id\", jsonData.id);",
+                  "    pm.environment.set(\"schedule_version\", jsonData.version);",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": \"{{user_id}}\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/snapshots/{{snapshot_id}}/restore",
+              "host": ["{{url}}"],
+              "path": ["admin", "snapshots", "{{snapshot_id}}", "restore"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "health check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/health",
+          "host": ["{{url}}"],
+          "path": ["health"]
+        }
+      },
+      "response": []
+    }
+  ]
 }

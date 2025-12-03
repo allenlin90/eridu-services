@@ -1,3 +1,6 @@
+import { McRepository } from './mc.repository';
+import { McService } from './mc.service';
+
 import {
   createMockRepository,
   createMockUtilityService,
@@ -5,14 +8,11 @@ import {
   setupTestMocks,
 } from '@/testing/model-service-test.helper';
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
-import { UtilityService } from '@/utility/utility.service';
-
-import { McRepository } from './mc.repository';
-import { McService } from './mc.service';
+import type { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
-describe('McService', () => {
+describe('mcService', () => {
   let service: McService;
   let mcRepositoryMock: Partial<jest.Mocked<McRepository>>;
   let utilityMock: Partial<jest.Mocked<UtilityService>>;
@@ -25,7 +25,7 @@ describe('McService', () => {
       serviceClass: McService,
       repositoryClass: McRepository,
       repositoryMock: mcRepositoryMock,
-      utilityMock: utilityMock,
+      utilityMock,
     });
 
     service = module.get<McService>(McService);

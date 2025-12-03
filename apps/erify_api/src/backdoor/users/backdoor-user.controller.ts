@@ -8,7 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
-import { BaseAdminController } from '@/admin/base-admin.controller';
+import { BaseBackdoorController } from '@/backdoor/base-backdoor.controller';
 import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
@@ -34,7 +34,7 @@ import { UserService } from '@/models/user/user.service';
  */
 @Controller('backdoor/users')
 @UseGuards(BackdoorApiKeyGuard)
-export class BackdoorUserController extends BaseAdminController {
+export class BackdoorUserController extends BaseBackdoorController {
   constructor(private readonly userService: UserService) {
     super();
   }

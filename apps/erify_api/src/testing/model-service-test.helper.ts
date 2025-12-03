@@ -1,4 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 
 import { UtilityService } from '@/utility/utility.service';
 
@@ -6,7 +7,7 @@ import { UtilityService } from '@/utility/utility.service';
  * Common repository methods that most model repositories implement.
  * Extend this interface for repositories with additional methods.
  */
-export interface BaseRepositoryMethods {
+export type BaseRepositoryMethods = {
   create: jest.Mock;
   findByUid?: jest.Mock;
   findOne?: jest.Mock;
@@ -14,7 +15,7 @@ export interface BaseRepositoryMethods {
   softDelete: jest.Mock;
   findMany: jest.Mock;
   count: jest.Mock;
-}
+};
 
 /**
  * Creates a mock repository with common CRUD methods.
@@ -71,7 +72,7 @@ export function createMockUtilityService(
 /**
  * Configuration for creating a test module for model services.
  */
-export interface ModelServiceTestConfig<TService, TRepository> {
+export type ModelServiceTestConfig<TService, TRepository> = {
   /** The service class to test */
   serviceClass: new (...args: any[]) => TService;
   /** The repository class to mock */
@@ -82,7 +83,7 @@ export interface ModelServiceTestConfig<TService, TRepository> {
   utilityMock?: Partial<jest.Mocked<UtilityService>>;
   /** Additional providers to include in the test module */
   additionalProviders?: any[];
-}
+};
 
 /**
  * Creates a NestJS testing module for model service tests with standardized setup.
@@ -117,7 +118,7 @@ export async function createModelServiceTestModule<TService, TRepository>({
       provide: UtilityService,
       useValue: utilityMock,
     },
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     ...additionalProviders,
   ];
 
@@ -130,14 +131,14 @@ export async function createModelServiceTestModule<TService, TRepository>({
  * Common mock data factory for entities with standard fields.
  * Useful for creating consistent test data across model tests.
  */
-export interface BaseMockEntity {
+export type BaseMockEntity = {
   id: bigint;
   uid: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
   metadata: Record<string, unknown>;
-}
+};
 
 /**
  * Creates a base mock entity with standard fields.

@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { MC, Prisma } from '@prisma/client';
 
+import { CreateMcDto, UpdateMcDto } from './schemas/mc.schema';
+import { McRepository } from './mc.repository';
+
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
-
-import { McRepository } from './mc.repository';
-import { CreateMcDto, UpdateMcDto } from './schemas/mc.schema';
 
 type MCWithIncludes<T extends Prisma.MCInclude> = Prisma.MCGetPayload<{
   include: T;
@@ -116,7 +116,9 @@ export class McService extends BaseModelService {
 
   private async findMcOrThrow<
     T extends Prisma.MCInclude = Record<string, never>,
-  >(uid: string, include?: T): Promise<MC | MCWithIncludes<T>> {
+  >(uid: string,
+    include?: T,
+  ): Promise<MC | MCWithIncludes<T>> {
     const mc = await this.mcRepository.findByUid(uid, include);
     if (!mc) {
       throw HttpError.notFound('MC', uid);
@@ -138,10 +140,14 @@ export class McService extends BaseModelService {
   private buildUpdatePayload(dto: UpdateMcDto): Prisma.MCUpdateInput {
     const payload: Prisma.MCUpdateInput = {};
 
-    if (dto.name !== undefined) payload.name = dto.name;
-    if (dto.aliasName !== undefined) payload.aliasName = dto.aliasName;
-    if (dto.isBanned !== undefined) payload.isBanned = dto.isBanned;
-    if (dto.metadata !== undefined) payload.metadata = dto.metadata;
+    if (dto.name !== undefined)
+      payload.name = dto.name;
+    if (dto.aliasName !== undefined)
+      payload.aliasName = dto.aliasName;
+    if (dto.isBanned !== undefined)
+      payload.isBanned = dto.isBanned;
+    if (dto.metadata !== undefined)
+      payload.metadata = dto.metadata;
 
     if (dto.userId !== undefined) {
       payload.user = dto.userId

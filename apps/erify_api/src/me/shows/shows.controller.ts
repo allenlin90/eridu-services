@@ -1,4 +1,3 @@
-import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 import {
   Controller,
   Get,
@@ -8,6 +7,10 @@ import {
   Query,
 } from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
+
+import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
+
+import { ShowsService } from './shows.service';
 
 import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { ApiZodResponse } from '@/lib/openapi/decorators';
@@ -19,8 +22,6 @@ import {
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { showDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
-
-import { ShowsService } from './shows.service';
 
 /**
  * Shows Controller

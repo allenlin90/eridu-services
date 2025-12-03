@@ -13,7 +13,7 @@
  * Better Auth standard base path
  * This is the default base path where Better Auth exposes all auth endpoints
  */
-export const BETTER_AUTH_BASE_PATH = "/api/auth" as const;
+export const BETTER_AUTH_BASE_PATH = '/api/auth' as const;
 
 /**
  * Better Auth standard endpoints
@@ -71,10 +71,14 @@ export const BETTER_AUTH_ENDPOINTS = {
   ORGANIZATION: {
     CREATE: `${BETTER_AUTH_BASE_PATH}/organization` as const,
     INVITE: `${BETTER_AUTH_BASE_PATH}/organization/invite` as const,
-    ACCEPT_INVITATION: `${BETTER_AUTH_BASE_PATH}/organization/accept-invitation` as const,
-    REJECT_INVITATION: `${BETTER_AUTH_BASE_PATH}/organization/reject-invitation` as const,
-    REMOVE_MEMBER: `${BETTER_AUTH_BASE_PATH}/organization/remove-member` as const,
-    UPDATE_MEMBER_ROLE: `${BETTER_AUTH_BASE_PATH}/organization/update-member-role` as const,
+    ACCEPT_INVITATION:
+      `${BETTER_AUTH_BASE_PATH}/organization/accept-invitation` as const,
+    REJECT_INVITATION:
+      `${BETTER_AUTH_BASE_PATH}/organization/reject-invitation` as const,
+    REMOVE_MEMBER:
+      `${BETTER_AUTH_BASE_PATH}/organization/remove-member` as const,
+    UPDATE_MEMBER_ROLE:
+      `${BETTER_AUTH_BASE_PATH}/organization/update-member-role` as const,
   },
 
   /**
@@ -91,7 +95,8 @@ export const BETTER_AUTH_ENDPOINTS = {
    */
   ADMIN: {
     IMPERSONATE: `${BETTER_AUTH_BASE_PATH}/admin/impersonate` as const,
-    STOP_IMPERSONATING: `${BETTER_AUTH_BASE_PATH}/admin/stop-impersonating` as const,
+    STOP_IMPERSONATING:
+      `${BETTER_AUTH_BASE_PATH}/admin/stop-impersonating` as const,
     CREATE_USER: `${BETTER_AUTH_BASE_PATH}/admin/create-user` as const,
     DELETE_USER: `${BETTER_AUTH_BASE_PATH}/admin/delete-user` as const,
     UPDATE_USER: `${BETTER_AUTH_BASE_PATH}/admin/update-user` as const,

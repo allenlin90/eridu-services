@@ -1,6 +1,14 @@
-/* eslint-disable @typescript-eslint/unbound-method */
+/* eslint-disable  */
 import { BadRequestException, ConflictException } from '@nestjs/common';
-import { Prisma, Schedule } from '@prisma/client';
+import type { Prisma, Schedule } from '@prisma/client';
+
+import {
+  type BulkCreateScheduleDto,
+  bulkCreateScheduleSchema,
+  type BulkUpdateScheduleDto,
+  bulkUpdateScheduleSchema,
+} from './schemas/schedule.schema';
+import { ScheduleService } from './schedule.service';
 
 import { ScheduleRepository } from '@/models/schedule/schedule.repository';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -10,14 +18,6 @@ import {
   createModelServiceTestModule,
 } from '@/testing/model-service-test.helper';
 
-import { ScheduleService } from './schedule.service';
-import {
-  type BulkCreateScheduleDto,
-  bulkCreateScheduleSchema,
-  type BulkUpdateScheduleDto,
-  bulkUpdateScheduleSchema,
-} from './schemas/schedule.schema';
-
 type ScheduleWithRelations = Prisma.ScheduleGetPayload<{
   include: {
     client: true;
@@ -26,7 +26,7 @@ type ScheduleWithRelations = Prisma.ScheduleGetPayload<{
   };
 }>;
 
-describe('ScheduleService', () => {
+describe('scheduleService', () => {
   let service: ScheduleService;
   let scheduleRepository: jest.Mocked<ScheduleRepository>;
 
@@ -128,7 +128,7 @@ describe('ScheduleService', () => {
       serviceClass: ScheduleService,
       repositoryClass: ScheduleRepository,
       repositoryMock: scheduleRepositoryMock,
-      utilityMock: utilityMock,
+      utilityMock,
       additionalProviders: [
         {
           provide: PrismaService,
@@ -1121,16 +1121,16 @@ describe('ScheduleService', () => {
       expect(scheduleRepository.update).toHaveBeenCalledWith(
         { uid: mockSchedule1.uid },
         expect.objectContaining({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+           
           planDocument: expect.any(Object),
           version: 2,
         }) as Prisma.ScheduleUpdateInput,
         undefined,
       );
       // Verify the nested structure separately
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const updateCall = (scheduleRepository.update as jest.Mock).mock.calls[0];
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+       
       expect(updateCall[1]).toMatchObject({
         planDocument: {
           metadata: {
@@ -1180,15 +1180,15 @@ describe('ScheduleService', () => {
       expect(scheduleRepository.update).toHaveBeenCalledWith(
         { uid: mockSchedule1.uid },
         expect.objectContaining({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+           
           planDocument: expect.any(Object),
         }) as Prisma.ScheduleUpdateInput,
         undefined,
       );
       // Verify the nested structure separately
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const updateCall = (scheduleRepository.update as jest.Mock).mock.calls[0];
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+       
       expect(updateCall[1]).toMatchObject({
         planDocument: {
           metadata: {

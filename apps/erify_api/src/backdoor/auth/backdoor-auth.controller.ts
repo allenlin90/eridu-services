@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { z } from 'zod';
 
+import { BaseBackdoorController } from '@/backdoor/base-backdoor.controller';
 import { AuthService } from '@/lib/auth/auth.service';
 import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { HttpError } from '@/lib/errors/http-error.util';
@@ -30,10 +31,12 @@ const refreshJwksResponseSchema = z.object({
  */
 @Controller('backdoor/auth')
 @UseGuards(BackdoorApiKeyGuard)
-export class BackdoorAuthController {
+export class BackdoorAuthController extends BaseBackdoorController {
   private readonly logger = new Logger(BackdoorAuthController.name);
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {
+    super();
+  }
 
   @Post('jwks/refresh')
   @ZodResponse(
@@ -57,17 +60,17 @@ export class BackdoorAuthController {
         lastFetchedTime: lastFetchedTime?.toISOString() ?? null,
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage
+        = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Failed to refresh JWKS: ${errorMessage}`, error);
 
       // Check if it's a network/connection error
       if (
-        error instanceof Error &&
-        (errorMessage.includes('fetch') ||
-          errorMessage.includes('network') ||
-          errorMessage.includes('ECONNREFUSED') ||
-          errorMessage.includes('ENOTFOUND'))
+        error instanceof Error
+        && (errorMessage.includes('fetch')
+          || errorMessage.includes('network')
+          || errorMessage.includes('ECONNREFUSED')
+          || errorMessage.includes('ENOTFOUND'))
       ) {
         throw HttpError.badRequest(
           `Failed to connect to auth service at ${this.authService.getJwksService().getJwksUrl()}. Please ensure the auth service is running and accessible.`,
@@ -76,8 +79,8 @@ export class BackdoorAuthController {
 
       // Check if it's an HTTP error response
       if (
-        error instanceof Error &&
-        (errorMessage.includes('status') || errorMessage.includes('HTTP'))
+        error instanceof Error
+        && (errorMessage.includes('status') || errorMessage.includes('HTTP'))
       ) {
         throw HttpError.badRequest(
           `Failed to fetch JWKS from auth service: ${errorMessage}`,

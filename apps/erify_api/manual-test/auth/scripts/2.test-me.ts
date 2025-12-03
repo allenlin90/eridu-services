@@ -4,7 +4,7 @@
  * Script to test GET /me endpoint with JWT token
  *
  * This script tests the /me endpoint in erify_api using a JWT token
- * obtained from erify_auth service. It validates that the auth-sdk
+ * obtained from eridu_auth service. It validates that the auth-sdk
  * correctly validates the token and extracts user information.
  *
  * Usage:
@@ -104,9 +104,9 @@ export async function performTestMe(
         console.error('\n💡 Possible issues:');
         console.error('   - JWT token is invalid or expired');
         console.error(
-          '   - erify_auth service JWKS endpoint is not accessible',
+          '   - eridu_auth service JWKS endpoint is not accessible',
         );
-        console.error('   - ERIFY_AUTH_URL environment variable is incorrect');
+        console.error('   - ERIDU_AUTH_URL environment variable is incorrect');
       }
       throw new Error(`/me endpoint failed: ${response.status}`);
     }

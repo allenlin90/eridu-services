@@ -6,14 +6,13 @@ import { PrismaService } from '@/prisma/prisma.service';
 
 // Custom model wrapper that implements IBaseModel with ShowWhereInput
 class ShowModelWrapper
-  implements
+implements
     IBaseModel<
       Show,
       Prisma.ShowCreateInput,
       Prisma.ShowUpdateInput,
       Prisma.ShowWhereInput
-    >
-{
+    > {
   constructor(private readonly prismaModel: Prisma.ShowDelegate) {}
 
   async create(args: {

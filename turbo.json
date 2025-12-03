@@ -5,7 +5,10 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": [".env*"],
-      "outputs": ["dist/**", "storybook-static/**"]
+      "outputs": ["dist/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"]
     },
     "lint": {
       "dependsOn": ["^lint"]

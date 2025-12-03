@@ -20,8 +20,8 @@
  * the script will exit with an error code.
  */
 
-// Load environment variables before any other imports
-import '../../../scripts/utils/load-env';
+// Note: Individual scripts will load env via httpRequest import
+// We don't need to load it here since each script runs in its own process
 
 import { execSync } from 'child_process';
 import * as fs from 'fs';
@@ -73,12 +73,15 @@ function runScript(
 
     // Run from the project root (apps/erify_api)
     const projectRoot = path.resolve(__dirname, '../../../../');
+    // Pass environment variables to child process
+    const env = { ...process.env };
     const output = execSync(
       `ts-node -r tsconfig-paths/register "${fullPath}" --api-url=${apiUrl}`,
       {
         cwd: projectRoot,
         encoding: 'utf-8',
         stdio: 'inherit',
+        env,
       },
     );
     return { success: true, output };

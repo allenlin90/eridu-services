@@ -1,15 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 
-import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
-import {
+import { AdminShowStandardController } from './admin-show-standard.controller';
+
+import type { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+import type {
   CreateShowStandardDto,
   UpdateShowStandardDto,
 } from '@/models/show-standard/schemas/show-standard.schema';
 import { ShowStandardService } from '@/models/show-standard/show-standard.service';
 
-import { AdminShowStandardController } from './admin-show-standard.controller';
-
-describe('AdminShowStandardController', () => {
+describe('adminShowStandardController', () => {
   let controller: AdminShowStandardController;
 
   const mockShowStandardService = {

@@ -33,8 +33,8 @@ export const scheduleSnapshotSchema = z.object({
 });
 
 // Schema for ScheduleSnapshot with relations (used in admin endpoints)
-export const scheduleSnapshotWithRelationsSchema =
-  scheduleSnapshotSchema.extend({
+export const scheduleSnapshotWithRelationsSchema
+  = scheduleSnapshotSchema.extend({
     user: userSchema.optional(),
     schedule: scheduleSchema.optional(),
   });

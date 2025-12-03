@@ -1,9 +1,8 @@
-import type { ExecutionContext } from "@nestjs/common";
-import type { Request } from "express";
+import type { ExecutionContext } from '@nestjs/common';
+import { createParamDecorator, UnauthorizedException } from '@nestjs/common';
+import type { Request } from 'express';
 
-import { createParamDecorator, UnauthorizedException } from "@nestjs/common";
-
-import type { UserInfo } from "../../types.js";
+import type { UserInfo } from '../../types.js';
 
 /**
  * Type-safe request interface for authenticated endpoints
@@ -57,7 +56,7 @@ export const CurrentUser = createParamDecorator(
 
     if (!request.user) {
       throw new UnauthorizedException(
-        "User not found in request - JwtAuthGuard should have set this",
+        'User not found in request - JwtAuthGuard should have set this',
       );
     }
 

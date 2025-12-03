@@ -1,15 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 
-import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+import { AdminPlatformController } from './admin-platform.controller';
+
+import type { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { PlatformService } from '@/models/platform/platform.service';
-import {
+import type {
   CreatePlatformDto,
   UpdatePlatformDto,
 } from '@/models/platform/schemas/platform.schema';
 
-import { AdminPlatformController } from './admin-platform.controller';
-
-describe('AdminPlatformController', () => {
+describe('adminPlatformController', () => {
   let controller: AdminPlatformController;
 
   const mockPlatformService = {

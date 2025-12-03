@@ -7,31 +7,35 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK for authentication and Stu
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ 
+
+- Node.js 22+
 - pnpm (recommended) or npm
 - PostgreSQL database
 
 ### Installation
 
 1. **Install dependencies**
+
    ```bash
    pnpm install
    ```
 
 2. **Set up environment variables**
+
    ```bash
    cp .env.example .env
    # Edit .env with your database and configuration settings
    ```
 
 3. **Set up the database**
+
    ```bash
    # Generate Prisma client
    pnpm run db:generate
-   
+
    # Run database migrations
    pnpm run db:migrate:deploy
-   
+
    # Seed the database (optional)
    pnpm run db:seed
    ```
@@ -44,16 +48,19 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK for authentication and Stu
 The API will be available at `http://localhost:3000`
 
 ### API Documentation
+
 - `GET /api-reference` - Interactive API documentation (Scalar UI)
 - `GET /swagger-json` - OpenAPI specification in JSON format
 
 ### Health Check Endpoints
+
 - `GET /health` - Liveness probe (returns 200 if application is running)
 - `GET /health/ready` - Readiness probe (returns 200 if application is ready to accept traffic)
 
 ## 📋 Available Scripts
 
 ### Development
+
 ```bash
 # Start development server with hot reload
 pnpm run start:dev
@@ -66,6 +73,7 @@ pnpm run build
 ```
 
 ### Database Operations
+
 ```bash
 # Create a new migration
 pnpm run db:migrate:create
@@ -87,6 +95,7 @@ pnpm run db:generate
 ```
 
 ### Testing
+
 ```bash
 # Run unit tests
 pnpm run test
@@ -102,6 +111,7 @@ pnpm run test:cov
 ```
 
 ### Code Quality
+
 ```bash
 # Run ESLint
 pnpm run lint
@@ -154,12 +164,15 @@ The API follows a modular architecture with clear separation of concerns:
 ## 🌐 API Endpoints
 
 ### Base URL
+
 ```
 http://localhost:3000
 ```
 
 ### Authentication
-The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from the `erify_auth` service using Better Auth's JWKS endpoint. The SDK provides:
+
+The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from the `eridu_auth` service using Better Auth's JWKS endpoint. The SDK provides:
+
 - Automatic JWKS caching on startup
 - Edge/worker runtime support with on-demand JWKS fetching
 - Automatic key rotation handling
@@ -167,7 +180,8 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 
 **Authorization**: Admin authorization is determined via StudioMembership model (admin in ANY studio = full CRUD via admin endpoints, others = read-only access to `/me/*` endpoints). See [Authentication Guide](docs/AUTHENTICATION_GUIDE.md) for details.
 
-**Service-to-Service Authentication**: 
+**Service-to-Service Authentication**:
+
 - Backdoor endpoints (`/backdoor/*`) use API key authentication for privileged operations
 - Schedule endpoints (`/admin/schedules/*`) use Google Sheets API key authentication
 - See [Server-to-Server Authentication Guide](docs/SERVER_TO_SERVER_AUTH.md) for details
@@ -175,15 +189,18 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 ### Available Endpoints
 
 #### 👤 User Profile (`/me`)
+
 - `GET /me` - Get authenticated user profile information from JWT token
 
 #### 🎬 User Shows (`/me/shows`)
+
 - `GET /me/shows` - List shows assigned to the authenticated MC user (paginated, sorted by start time descending)
 - `GET /me/shows/:show_id` - Get show details for a specific show assigned to the authenticated MC user
 
 **Note**: These endpoints require JWT authentication. The user information is extracted from the JWT token payload using the `@CurrentUser()` decorator, and the `ext_id` field is used to query MC assignments.
 
 #### 👥 Users (`/admin/users`)
+
 - `GET /admin/users` - List users with pagination
 - `POST /admin/users` - Create a new user
 - `GET /admin/users/:uid` - Get user by UID
@@ -191,6 +208,7 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 - `DELETE /admin/users/:uid` - Soft delete user
 
 #### 🏢 Clients (`/admin/clients`)
+
 - `GET /admin/clients` - List clients with pagination
 - `POST /admin/clients` - Create a new client
 - `GET /admin/clients/:uid` - Get client by UID
@@ -198,6 +216,7 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 - `DELETE /admin/clients/:uid` - Soft delete client
 
 #### 🎤 MCs (`/admin/mcs`)
+
 - `GET /admin/mcs` - List MCs with pagination
 - `POST /admin/mcs` - Create a new MC
 - `GET /admin/mcs/:uid` - Get MC by UID
@@ -205,6 +224,7 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 - `DELETE /admin/mcs/:uid` - Soft delete MC
 
 #### 📺 Platforms (`/admin/platforms`)
+
 - `GET /admin/platforms` - List platforms with pagination
 - `POST /admin/platforms` - Create a new platform
 - `GET /admin/platforms/:uid` - Get platform by UID
@@ -212,6 +232,7 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 - `DELETE /admin/platforms/:uid` - Soft delete platform
 
 #### 🎭 Show Types (`/admin/show-types`)
+
 - `GET /admin/show-types` - List show types with pagination
 - `POST /admin/show-types` - Create a new show type
 - `GET /admin/show-types/:uid` - Get show type by UID
@@ -219,6 +240,7 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 - `DELETE /admin/show-types/:uid` - Soft delete show type
 
 #### 📊 Show Statuses (`/admin/show-statuses`)
+
 - `GET /admin/show-statuses` - List show statuses with pagination
 - `POST /admin/show-statuses` - Create a new show status
 - `GET /admin/show-statuses/:uid` - Get show status by UID
@@ -226,6 +248,7 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 - `DELETE /admin/show-statuses/:uid` - Soft delete show status
 
 #### ⭐ Show Standards (`/admin/show-standards`)
+
 - `GET /admin/show-standards` - List show standards with pagination
 - `POST /admin/show-standards` - Create a new show standard
 - `GET /admin/show-standards/:uid` - Get show standard by UID
@@ -233,6 +256,7 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 - `DELETE /admin/show-standards/:uid` - Soft delete show standard
 
 #### 🏢 Studios (`/admin/studios`)
+
 - `GET /admin/studios` - List studios with pagination
 - `POST /admin/studios` - Create a new studio
 - `GET /admin/studios/:uid` - Get studio by UID
@@ -240,6 +264,7 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 - `DELETE /admin/studios/:uid` - Soft delete studio
 
 #### 🚪 Studio Rooms (`/admin/studio-rooms`)
+
 - `GET /admin/studio-rooms` - List studio rooms with pagination
 - `POST /admin/studio-rooms` - Create a new studio room
 - `GET /admin/studio-rooms/:uid` - Get studio room by UID
@@ -247,6 +272,7 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 - `DELETE /admin/studio-rooms/:uid` - Soft delete studio room
 
 #### 📺 Shows (`/admin/shows`)
+
 - `GET /admin/shows` - List shows with pagination and relations
 - `POST /admin/shows` - Create a new show
 - `GET /admin/shows/:uid` - Get show by UID
@@ -254,6 +280,7 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 - `DELETE /admin/shows/:uid` - Soft delete show
 
 #### 🎬 Show MCs (`/admin/show-mcs`)
+
 - `GET /admin/show-mcs` - List show-MC relationships with pagination
 - `POST /admin/show-mcs` - Create show-MC assignment
 - `GET /admin/show-mcs/:uid` - Get show-MC by UID
@@ -261,6 +288,7 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 - `DELETE /admin/show-mcs/:uid` - Soft delete show-MC assignment
 
 #### 🌐 Show Platforms (`/admin/show-platforms`)
+
 - `GET /admin/show-platforms` - List show-platform integrations with pagination
 - `POST /admin/show-platforms` - Create show-platform integration
 - `GET /admin/show-platforms/:uid` - Get show-platform by UID
@@ -268,6 +296,7 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 - `DELETE /admin/show-platforms/:uid` - Soft delete show-platform integration
 
 #### 👥 Studio Memberships (`/admin/studio-memberships`)
+
 - `GET /admin/studio-memberships` - List studio memberships with pagination
 - `POST /admin/studio-memberships` - Create studio membership
 - `GET /admin/studio-memberships/:uid` - Get studio membership by UID
@@ -275,6 +304,7 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 - `DELETE /admin/studio-memberships/:uid` - Soft delete studio membership
 
 #### 📅 Schedules (`/admin/schedules`)
+
 - `GET /admin/schedules` - List schedules with pagination and filtering
 - `POST /admin/schedules` - Create a new schedule
 - `GET /admin/schedules/:id` - Get schedule by ID
@@ -289,13 +319,16 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 - `GET /admin/schedules/overview/monthly` - Get monthly overview with schedules grouped by client and status
 
 #### 📸 Schedule Snapshots (`/admin/snapshots`)
+
 - `GET /admin/snapshots/:id` - Get schedule snapshot details
 - `POST /admin/snapshots/:id/restore` - Restore schedule from snapshot
 
 **Note**: Snapshots are automatically created when schedule plan documents are updated. They provide immutable version history for audit trails and rollback capabilities.
 
 #### 🔐 Backdoor Endpoints (`/backdoor/*`)
+
 Service-to-service API key authenticated endpoints for privileged operations:
+
 - `POST /backdoor/users` - Create user (API key required)
 - `PATCH /backdoor/users/:id` - Update user (API key required)
 - `POST /backdoor/studio-memberships` - Create studio membership (API key required)
@@ -332,6 +365,7 @@ The OpenAPI implementation includes:
 ### Request/Response Format
 
 #### Input Format (snake_case)
+
 ```json
 {
   "name": "John Doe",
@@ -349,6 +383,7 @@ The OpenAPI implementation includes:
 ```
 
 #### Output Format (snake_case)
+
 ```json
 {
   "id": "user_123",
@@ -360,6 +395,7 @@ The OpenAPI implementation includes:
 ```
 
 #### Pagination Response
+
 ```json
 {
   "data": [...],
@@ -379,6 +415,7 @@ The OpenAPI implementation includes:
 ### Currently Implemented Entities
 
 #### User
+
 - `id` (Primary Key)
 - `uid` (Unique Identifier)
 - `ext_id` (External ID for SSO)
@@ -390,6 +427,7 @@ The OpenAPI implementation includes:
 - `created_at`, `updated_at`, `deleted_at`
 
 #### Client
+
 - `id` (Primary Key)
 - `uid` (Unique Identifier)
 - `name` (Unique)
@@ -399,6 +437,7 @@ The OpenAPI implementation includes:
 - `created_at`, `updated_at`, `deleted_at`
 
 #### MC (Master of Ceremonies)
+
 - `id` (Primary Key)
 - `uid` (Unique Identifier)
 - `name`
@@ -409,6 +448,7 @@ The OpenAPI implementation includes:
 - `created_at`, `updated_at`, `deleted_at`
 
 #### Platform
+
 - `id` (Primary Key)
 - `uid` (Unique Identifier)
 - `name`
@@ -417,6 +457,7 @@ The OpenAPI implementation includes:
 - `created_at`, `updated_at`, `deleted_at`
 
 #### ShowType
+
 - `id` (Primary Key)
 - `uid` (Unique Identifier)
 - `name` (Unique)
@@ -424,6 +465,7 @@ The OpenAPI implementation includes:
 - `created_at`, `updated_at`, `deleted_at`
 
 #### ShowStatus
+
 - `id` (Primary Key)
 - `uid` (Unique Identifier)
 - `name` (Unique)
@@ -431,6 +473,7 @@ The OpenAPI implementation includes:
 - `created_at`, `updated_at`, `deleted_at`
 
 #### ShowStandard
+
 - `id` (Primary Key)
 - `uid` (Unique Identifier)
 - `name` (Unique)
@@ -438,6 +481,7 @@ The OpenAPI implementation includes:
 - `created_at`, `updated_at`, `deleted_at`
 
 #### Studio
+
 - `id` (Primary Key)
 - `uid` (Unique Identifier)
 - `name`
@@ -446,6 +490,7 @@ The OpenAPI implementation includes:
 - `created_at`, `updated_at`, `deleted_at`
 
 #### StudioRoom
+
 - `id` (Primary Key)
 - `uid` (Unique Identifier)
 - `studio_id` (Foreign Key to Studio)
@@ -455,6 +500,7 @@ The OpenAPI implementation includes:
 - `created_at`, `updated_at`, `deleted_at`
 
 #### StudioMembership (Phase 1)
+
 - `id` (Primary Key)
 - `uid` (Unique Identifier)
 - `user_id` (Foreign Key to User)
@@ -466,6 +512,7 @@ The OpenAPI implementation includes:
 **Note**: Phase 1 implements studio-specific memberships only. Client and Platform memberships will be added in Phase 3.
 
 #### Schedule
+
 - `id` (Primary Key)
 - `uid` (Unique Identifier)
 - `name`
@@ -483,6 +530,7 @@ The OpenAPI implementation includes:
 **Note**: The Schedule Planning Management System uses JSON-based planning documents for flexible spreadsheet-like editing during draft phase. Only published schedules sync their JSON data to normalized Show tables. Automatic snapshots are created when plan documents are updated.
 
 #### ScheduleSnapshot
+
 - `id` (Primary Key)
 - `uid` (Unique Identifier)
 - `plan_document` (JSON) - Immutable snapshot of schedule plan document
@@ -497,6 +545,7 @@ The OpenAPI implementation includes:
 **Note**: Snapshots provide immutable version history for audit trails and rollback capabilities. They are automatically created when schedule plan documents are updated.
 
 ### Relationships
+
 - **User** ↔ **MC**: One-to-One (User can optionally have one MC profile)
 - **User** ↔ **StudioMembership**: One-to-Many (User can have multiple studio memberships)
 - **Studio** ↔ **StudioRoom**: One-to-Many (Studio has multiple rooms)
@@ -508,7 +557,9 @@ The OpenAPI implementation includes:
 - **Platform** ↔ **Material**: One-to-Many (Planned for Phase 3)
 
 ### Future Entities (Planned)
+
 The database schema includes comprehensive models for the full livestream production system:
+
 - **Shows**: Core operational records for livestream productions ✅ (Implemented)
 - **ShowMC & ShowPlatform**: Show relationship management ✅ (Implemented)
 - **Schedules & ScheduleSnapshots**: Collaborative planning system ✅ (Implemented)
@@ -523,6 +574,7 @@ See the [Business Documentation](docs/BUSINESS.md) for detailed information abou
 ## 🛠️ Development
 
 ### Project Structure
+
 ```
 apps/erify_api/
 ├── 📁 docs/                 # Comprehensive documentation
@@ -539,6 +591,7 @@ apps/erify_api/
 ### Adding New Entities
 
 1. **Create Domain Module**
+
    ```bash
    # Generate module structure
    nest g module [entity-name]
@@ -547,6 +600,7 @@ apps/erify_api/
    ```
 
 2. **Create Admin Module**
+
    ```bash
    # Generate admin module
    nest g module admin/[entity-name]
@@ -601,7 +655,7 @@ NODE_ENV="development"
 PORT=3000
 
 # Authentication & Authorization
-ERIFY_AUTH_URL="http://localhost:3000"  # Base URL of erify_auth service
+ERIDU_AUTH_URL="http://localhost:3000"  # Base URL of eridu_auth service
 
 # Service-to-Service Authentication (Required for schedule operations)
 BACKDOOR_API_KEY="your-api-key-here"     # API key for backdoor endpoints (/backdoor/*)
@@ -621,12 +675,14 @@ The project uses Prisma as the ORM with PostgreSQL. Configuration is in `prisma/
 ### OpenAPI Configuration
 
 The API documentation is powered by:
+
 - **@nestjs/swagger**: NestJS Swagger integration
 - **@scalar/nestjs-api-reference**: Scalar UI for modern API documentation
 - **zod-openapi**: Zod to OpenAPI schema conversion
 - **swagger-ui-express**: Swagger UI Express integration
 
 The OpenAPI setup is configured in `src/common/openapi/openapi.config.ts` and provides:
+
 - Interactive documentation at `/api-reference`
 - OpenAPI JSON specification at `/swagger-json`
 - Custom Zod decorators for type-safe documentation
@@ -634,6 +690,7 @@ The OpenAPI setup is configured in `src/common/openapi/openapi.config.ts` and pr
 ## 🚀 Deployment
 
 ### Production Build
+
 ```bash
 # Build the application
 pnpm run build
@@ -643,6 +700,7 @@ pnpm run start:prod
 ```
 
 ### Graceful Shutdown
+
 The application supports production-ready graceful shutdown for zero-downtime deployments:
 
 - **Signal Handling**: Responds to SIGTERM and SIGINT signals
@@ -652,6 +710,7 @@ The application supports production-ready graceful shutdown for zero-downtime de
 - **Configurable Timeout**: `SHUTDOWN_TIMEOUT` environment variable (default: 30s)
 
 ### Docker (Optional)
+
 ```bash
 # Build Docker image
 docker build -t eridu-api .
@@ -665,6 +724,7 @@ docker run -p 3000:3000 eridu-api
 ### Development Workflow
 
 1. **Create Feature Branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -675,6 +735,7 @@ docker run -p 3000:3000 eridu-api
    - Update documentation
 
 3. **Test Changes**
+
    ```bash
    pnpm run test
    pnpm run lint
@@ -699,6 +760,7 @@ docker run -p 3000:3000 eridu-api
 ### Common Issues
 
 #### Database Connection
+
 ```bash
 # Check database connection
 pnpm run db:studio
@@ -708,6 +770,7 @@ pnpm run db:migrate:reset
 ```
 
 #### TypeScript Errors
+
 ```bash
 # Check TypeScript compilation
 npx tsc --noEmit
@@ -717,6 +780,7 @@ pnpm run db:generate
 ```
 
 #### Test Failures
+
 ```bash
 # Run tests with verbose output
 pnpm run test -- --verbose

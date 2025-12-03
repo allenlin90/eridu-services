@@ -1,6 +1,8 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import { showApiResponseSchema } from '@eridu/api-types/shows';
+
 import { ClientService } from '@/models/client/client.service';
 import { clientSchema } from '@/models/client/schemas/client.schema';
 import { ShowService } from '@/models/show/show.service';
@@ -117,6 +119,7 @@ export const showWithRelationsSchema = showSchema.extend({
 });
 
 // API output schema (transforms to snake_case)
+// Uses shared schema from @eridu/api-types for consistency
 export const showDto = showWithRelationsSchema
   .transform((obj) => ({
     id: obj.uid,
@@ -137,27 +140,7 @@ export const showDto = showWithRelationsSchema
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
   }))
-  .pipe(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      client_id: z.string().nullable(),
-      client_name: z.string().nullable(),
-      studio_room_id: z.string().nullable(),
-      studio_room_name: z.string().nullable(),
-      show_type_id: z.string().nullable(),
-      show_type_name: z.string().nullable(),
-      show_status_id: z.string().nullable(),
-      show_status_name: z.string().nullable(),
-      show_standard_id: z.string().nullable(),
-      show_standard_name: z.string().nullable(),
-      start_time: z.iso.datetime(),
-      end_time: z.iso.datetime(),
-      metadata: z.record(z.string(), z.any()),
-      created_at: z.iso.datetime(),
-      updated_at: z.iso.datetime(),
-    }),
-  );
+  .pipe(showApiResponseSchema);
 
 // Show list filter schema (similar to schedule filtering)
 export const listShowsFilterSchema = z.object({

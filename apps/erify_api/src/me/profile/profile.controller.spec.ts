@@ -1,5 +1,9 @@
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+
 import type { JwtPayload } from '@eridu/auth-sdk/types';
-import { Test, TestingModule } from '@nestjs/testing';
+
+import { ProfileController } from './profile.controller';
 
 import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 
@@ -22,9 +26,7 @@ jest.mock('@/lib/auth/jwt-auth.guard', () => ({
   })),
 }));
 
-import { ProfileController } from './profile.controller';
-
-describe('ProfileController', () => {
+describe('profileController', () => {
   let controller: ProfileController;
 
   const mockJwtPayload: JwtPayload = {

@@ -5,10 +5,12 @@ This document describes the complete API calling workflow for service-to-service
 ## Overview
 
 The backdoor endpoints provide service-to-service operations for privileged tasks:
+
 - **User Management**: Create and update users
 - **Membership Management**: Create studio memberships for admin users
 
 **Key Differences from Admin Endpoints**:
+
 - **Authentication**: API key (`BACKDOOR_API_KEY`) instead of JWT
 - **Endpoints**: `/backdoor/*` instead of `/admin/*`
 - **Future Enhancement**: IP whitelisting support via `BACKDOOR_ALLOWED_IPS`
@@ -19,21 +21,21 @@ The backdoor endpoints provide service-to-service operations for privileged task
 ```mermaid
 flowchart TD
     Start([Start: Service Needs<br/>User/Membership Operations]) --> CheckAuth{API Key<br/>Configured?}
-    
+
     CheckAuth -->|No| DevMode[Development Mode:<br/>Auth Bypassed]
     CheckAuth -->|Yes| ProdMode[Production Mode:<br/>Auth Enforced]
-    
+
     DevMode --> CreateUser[POST /backdoor/users<br/>Create User<br/>Body: email, name, ext_id,<br/>profile_url, metadata]
     ProdMode --> CreateUser
-    
+
     CreateUser --> SaveUserID[Save user_id<br/>for membership creation]
-    
+
     SaveUserID --> UpdateUser[PATCH /backdoor/users/:id<br/>Update User<br/>Body: name, profile_url,<br/>metadata]
-    
+
     UpdateUser --> CreateMembership[POST /backdoor/studio-memberships<br/>Create Membership<br/>Body: user_id, studio_id,<br/>role, metadata]
-    
+
     CreateMembership --> Complete([Complete:<br/>User & Membership Created])
-    
+
     style CreateUser fill:#e1f5ff
     style UpdateUser fill:#fff4e1
     style CreateMembership fill:#e8f5e9
@@ -51,6 +53,7 @@ flowchart TD
   - **Authentication**: Requires `X-API-Key` header with `BACKDOOR_API_KEY` value
 
 **Example Request**:
+
 ```bash
 curl -X POST http://localhost:3000/backdoor/users \
   -H "X-API-Key: your-backdoor-api-key" \
@@ -68,6 +71,7 @@ curl -X POST http://localhost:3000/backdoor/users \
 ```
 
 **Example Response**:
+
 ```json
 {
   "id": "user_abc123",
@@ -90,6 +94,7 @@ curl -X POST http://localhost:3000/backdoor/users \
   - **Authentication**: Requires `X-API-Key` header with `BACKDOOR_API_KEY` value
 
 **Example Request**:
+
 ```bash
 curl -X PATCH http://localhost:3000/backdoor/users/user_abc123 \
   -H "X-API-Key: your-backdoor-api-key" \
@@ -115,6 +120,7 @@ curl -X PATCH http://localhost:3000/backdoor/users/user_abc123 \
   - **Authentication**: Requires `X-API-Key` header with `BACKDOOR_API_KEY` value
 
 **Example Request**:
+
 ```bash
 curl -X POST http://localhost:3000/backdoor/studio-memberships \
   -H "X-API-Key: your-backdoor-api-key" \
@@ -131,6 +137,7 @@ curl -X POST http://localhost:3000/backdoor/studio-memberships \
 ```
 
 **Example Response**:
+
 ```json
 {
   "id": "membership_def456",
@@ -167,6 +174,7 @@ BACKDOOR_API_KEY=your-generated-api-key-here
 ```
 
 **Generate API Key**:
+
 ```bash
 openssl rand -base64 32
 ```
@@ -261,6 +269,7 @@ pnpm run manual:backdoor:create-users
 ```
 
 **Behavior**:
+
 - **Without `BACKDOOR_API_KEY` in .env**: Scripts don't send the header → test dev mode behavior (authentication bypassed if guard allows)
 - **With `BACKDOOR_API_KEY` in .env**: Scripts automatically include `X-API-Key` header → test production mode behavior (authentication enforced)
 
@@ -285,6 +294,7 @@ All payload files are located in `backdoor/payloads/`:
 ### Authentication Errors
 
 **401 Unauthorized** - Missing or invalid API key:
+
 ```json
 {
   "statusCode": 401,
@@ -304,6 +314,7 @@ or
 ### Validation Errors
 
 **400 Bad Request** - Invalid payload:
+
 ```json
 {
   "statusCode": 400,
@@ -320,6 +331,7 @@ or
 ### Not Found Errors
 
 **404 Not Found** - User or studio not found:
+
 ```json
 {
   "statusCode": 404,
@@ -335,6 +347,7 @@ or
 **Scenario**: Setting up initial admin users and memberships during system deployment
 
 **Workflow**:
+
 1. Create admin user via `POST /backdoor/users`
 2. Create studio membership with admin role via `POST /backdoor/studio-memberships`
 3. User can now authenticate via JWT and access admin endpoints
@@ -344,6 +357,7 @@ or
 **Scenario**: Importing users from external system (SSO, LDAP, etc.)
 
 **Workflow**:
+
 1. For each user:
    - Create user via `POST /backdoor/users` (with `ext_id` for SSO mapping)
    - Optionally create memberships via `POST /backdoor/studio-memberships`
@@ -353,6 +367,7 @@ or
 **Scenario**: Updating user profiles from external system
 
 **Workflow**:
+
 1. Update user via `PATCH /backdoor/users/:id`
 2. Can update name, profile URL, or metadata without affecting authentication
 
@@ -381,4 +396,3 @@ or
 - **[Server-to-Server Authentication Guide](../docs/SERVER_TO_SERVER_AUTH.md)** - Complete API key guard documentation
 - **[Authentication Guide](../docs/AUTHENTICATION_GUIDE.md)** - JWT validation and authorization patterns
 - **[Test Payloads README](./README.md)** - Complete testing guide
-

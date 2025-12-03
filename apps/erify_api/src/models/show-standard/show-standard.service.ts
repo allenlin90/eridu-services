@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, ShowStandard } from '@prisma/client';
 
+import { ShowStandardRepository } from './show-standard.repository';
+
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
-
-import { ShowStandardRepository } from './show-standard.repository';
 
 @Injectable()
 export class ShowStandardService extends BaseModelService {

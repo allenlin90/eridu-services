@@ -1,4 +1,13 @@
 // Mock auth-sdk modules to avoid ES module import issues
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import type { Reflector } from '@nestjs/core';
+
+import { AdminGuard } from './admin.guard';
+
+import { IS_ADMIN_KEY } from '@/lib/decorators/admin-protected.decorator';
+import type { StudioMembershipService } from '@/models/membership/studio-membership.service';
+import { createMockExecutionContext } from '@/testing/guard-test.helper';
+
 jest.mock('@eridu/auth-sdk/adapters/nestjs/current-user.decorator', () => ({
   CurrentUser: jest.fn(() => () => {}),
 }));
@@ -32,16 +41,7 @@ jest.mock('@eridu/auth-sdk/server/jwks/types', () => ({}));
 jest.mock('@eridu/auth-sdk/server/jwt/types', () => ({}));
 jest.mock('@eridu/auth-sdk/types', () => ({}));
 
-import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-
-import { IS_ADMIN_KEY } from '@/lib/decorators/admin-protected.decorator';
-import { StudioMembershipService } from '@/models/membership/studio-membership.service';
-import { createMockExecutionContext } from '@/testing/guard-test.helper';
-
-import { AdminGuard } from './admin.guard';
-
-describe('AdminGuard', () => {
+describe('adminGuard', () => {
   let guard: AdminGuard;
   let studioMembershipService: jest.Mocked<StudioMembershipService>;
   let reflector: jest.Mocked<Reflector>;

@@ -1,10 +1,11 @@
+import type { Server } from 'node:http';
+
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
-import { Server } from 'http';
 import { Logger } from 'nestjs-pino';
 
-import { AppModule } from './app.module';
 import { setupOpenAPI } from './lib/openapi/openapi.config';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -13,26 +14,26 @@ async function bootstrap() {
     helmet({
       contentSecurityPolicy: {
         directives: {
-          defaultSrc: ["'self'"],
+          defaultSrc: ['\'self\''],
           styleSrc: [
-            "'self'",
-            "'unsafe-inline'",
+            '\'self\'',
+            '\'unsafe-inline\'',
             'https://cdnjs.cloudflare.com',
             'https://unpkg.com',
             'https://cdn.jsdelivr.net',
           ],
           scriptSrc: [
-            "'self'",
-            "'unsafe-inline'",
-            "'unsafe-eval'",
+            '\'self\'',
+            '\'unsafe-inline\'',
+            '\'unsafe-eval\'',
             'https://cdnjs.cloudflare.com',
             'https://unpkg.com',
             'https://cdn.jsdelivr.net',
           ],
-          imgSrc: ["'self'", 'data:', 'https:'],
-          connectSrc: ["'self'"],
+          imgSrc: ['\'self\'', 'data:', 'https:'],
+          connectSrc: ['\'self\''],
           fontSrc: [
-            "'self'",
+            '\'self\'',
             'https://cdnjs.cloudflare.com',
             'https://fonts.scalar.com',
           ],
@@ -40,7 +41,10 @@ async function bootstrap() {
       },
     }),
   );
-  app.enableCors();
+  app.enableCors({
+    origin: true,
+    credentials: true,
+  });
 
   // Setup OpenAPI documentation
   setupOpenAPI(app);
@@ -55,7 +59,7 @@ async function bootstrap() {
   logger.log(`🚀 Application is running on: http://localhost:${port}`);
 
   // Graceful shutdown configuration
-  const SHUTDOWN_TIMEOUT = parseInt(
+  const SHUTDOWN_TIMEOUT = Number.parseInt(
     process.env.SHUTDOWN_TIMEOUT || '30000',
     10,
   ); // 30 seconds default

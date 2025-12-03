@@ -1,13 +1,14 @@
 import { NotFoundException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-import { MC, Prisma, Show } from '@prisma/client';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+import type { MC, Prisma, Show } from '@prisma/client';
+
+import { ShowsService } from './shows.service';
 
 import { McService } from '@/models/mc/mc.service';
 import { ShowService } from '@/models/show/show.service';
 
-import { ShowsService } from './shows.service';
-
-describe('ShowsService', () => {
+describe('showsService', () => {
   let service: ShowsService;
 
   const mockUser = {

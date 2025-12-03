@@ -4,7 +4,7 @@
  * Script to run the complete JWT authentication workflow
  *
  * This script orchestrates the complete authentication workflow:
- * 1. Login to erify_auth and get JWT token
+ * 1. Login to eridu_auth and get JWT token
  * 2. Test GET /me endpoint with the JWT token
  *
  * Usage:
@@ -39,8 +39,8 @@ function parseArgs(): {
   password?: string;
 } {
   const args = process.argv.slice(2);
-  // Use ERIFY_AUTH_URL from environment, fallback to default
-  let authUrl = process.env.ERIFY_AUTH_URL || 'http://localhost:3000';
+  // Use ERIDU_AUTH_URL from environment, fallback to default
+  let authUrl = process.env.ERIDU_AUTH_URL || 'http://localhost:3000';
   // Use PORT from environment for API URL, fallback to default
   const apiPort = process.env.PORT || 3001;
   let apiUrl = `http://localhost:${apiPort}`;
@@ -82,7 +82,7 @@ async function main() {
     console.log(`   Email: ${email}`);
   }
   console.log(`\nThis will run the following steps:`);
-  console.log(`   1. Login to erify_auth and get JWT token`);
+  console.log(`   1. Login to eridu_auth and get JWT token`);
   console.log(`   2. Test GET /me endpoint with JWT token`);
 
   const results: Array<{ name: string; success: boolean }> = [];
@@ -126,7 +126,7 @@ async function main() {
     console.log(`\n✅ All steps completed successfully!`);
     console.log(`\n💡 The auth-sdk successfully validated the JWT token!`);
     console.log(`\n📋 Summary:`);
-    console.log(`   - JWT token obtained from erify_auth`);
+    console.log(`   - JWT token obtained from eridu_auth`);
     console.log(`   - Token validated by @eridu/auth-sdk`);
     console.log(`   - User profile accessed via /me endpoint`);
   } else {

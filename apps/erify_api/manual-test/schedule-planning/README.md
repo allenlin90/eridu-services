@@ -30,7 +30,8 @@ schedule-planning/
 
 ### 1. Generate Test Payloads
 
-**Default Behavior**: 
+**Default Behavior**:
+
 - Single client: 50 shows
 - Multiple clients: **50 shows per client** (testing maximum)
   - Example: `--clients=50` generates 2500 total shows (50 clients × 50 shows each)
@@ -51,7 +52,8 @@ pnpm run manual:schedule:generate -- --shows=1000 --clients=10
 pnpm run manual:schedule:generate -- --shows=100
 ```
 
-**Note**: 
+**Note**:
+
 - When `--clients` is specified without `--shows`, it defaults to **50 shows per client** (testing maximum)
 - The `02-update-schedule.json` and `update-payloads/*.json` files will contain the specified number of shows
 - After publishing, you'll have the full number of shows in the database
@@ -84,8 +86,8 @@ pnpm run test:publish:schedules
 ## Authentication
 
 Scripts automatically read `GOOGLE_SHEETS_API_KEY` from `.env` file:
+
 - **Without key**: Scripts don't send header (dev mode behavior)
 - **With key**: Scripts include `X-API-Key` header (production behavior)
 
 See [Server-to-Server Authentication Guide](../../docs/SERVER_TO_SERVER_AUTH.md) for details.
-

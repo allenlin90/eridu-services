@@ -25,21 +25,19 @@ export const paginationMetaSchema = z.object({
 });
 
 // Helper function to create paginated response schema for any data type
-export const createPaginatedResponseSchema = <T extends z.ZodType>(
-  itemSchema: T,
-) =>
-  z.object({
+export function createPaginatedResponseSchema<T extends z.ZodType>(itemSchema: T) {
+  return z.object({
     data: z.array(itemSchema),
     meta: paginationMetaSchema,
   });
+}
 
 // DTOs and types
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
 
 export class PaginationQueryDto
   extends createZodDto(paginationQuerySchema)
-  implements PaginationQuery
-{
+  implements PaginationQuery {
   declare page: number;
   declare limit: number;
   declare take: number;

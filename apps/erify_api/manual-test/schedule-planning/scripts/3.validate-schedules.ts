@@ -23,14 +23,14 @@
 
 import { z } from 'zod';
 
-import { httpRequest } from '../../scripts/utils/http-request';
-
 // Import schemas from the source of truth
 import {
   createPaginatedResponseSchema,
   PaginatedResponse,
-} from '@/common/pagination/schema/pagination.schema';
+} from '@/lib/pagination/pagination.schema';
 import { validationResultSchema } from '@/schedule-planning/schemas/schedule-planning.schema';
+
+import { httpRequest } from '../../scripts/utils/http-request';
 
 // Create a schema for parsing API responses (DTO format with snake_case)
 // This matches the API response format exactly.
@@ -63,7 +63,7 @@ const PORT = process.env.PORT || 3000;
 
 // Configuration
 const DEFAULT_API_URL = `http://${API_HOST}:${PORT}`;
-const BASE_URL = '/admin/schedules';
+const BASE_URL = '/google-sheets/schedules';
 
 interface ValidationResultSummary {
   scheduleId: string;

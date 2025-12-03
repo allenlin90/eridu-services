@@ -1,57 +1,56 @@
 // Base interface for soft-deletable entities
-export interface WithSoftDelete {
+export type WithSoftDelete = {
   deletedAt: Date | null;
-}
+};
 
 // Base interface for repository model
-export interface IBaseModel<T, C, U, W> {
-  create(args: { data: C; include?: Record<string, any> }): Promise<T>;
-  findFirst(args: {
+export type IBaseModel<T, C, U, W> = {
+  create: (args: { data: C; include?: Record<string, any> }) => Promise<T>;
+  findFirst: (args: {
     where: W;
     include?: Record<string, any>;
-  }): Promise<T | null>;
-  findFirstOrThrow?(args: {
+  }) => Promise<T | null>;
+  findFirstOrThrow?: (args: {
     where: W;
     include?: Record<string, any>;
-  }): Promise<T>;
-  findMany(args: {
+  }) => Promise<T>;
+  findMany: (args: {
     where?: W;
     skip?: number;
     take?: number;
     orderBy?: any;
     include?: Record<string, any>;
-  }): Promise<T[]>;
-  update(args: {
+  }) => Promise<T[]>;
+  update: (args: {
     where: W;
     data: U;
     include?: Record<string, any>;
-  }): Promise<T>;
-  delete(args: { where: W }): Promise<T>;
-  count(args: { where: W }): Promise<number>;
-}
+  }) => Promise<T>;
+  delete: (args: { where: W }) => Promise<T>;
+  count: (args: { where: W }) => Promise<number>;
+};
 
 // Base repository interface
-export interface IBaseRepository<T, C, U, W> {
-  create(data: C, include?: Record<string, any>): Promise<T>;
-  findOne(where: W, include?: Record<string, any>): Promise<T | null>;
-  findMany(params: {
+export type IBaseRepository<T, C, U, W> = {
+  create: (data: C, include?: Record<string, any>) => Promise<T>;
+  findOne: (where: W, include?: Record<string, any>) => Promise<T | null>;
+  findMany: (params: {
     where?: W;
     skip?: number;
     take?: number;
     orderBy?: any;
     include?: Record<string, any>;
-  }): Promise<T[]>;
-  update(where: W, data: U, include?: Record<string, any>): Promise<T>;
-  delete(where: W): Promise<T>;
-  softDelete(where: W): Promise<T>;
-  restore(where: W): Promise<T>;
-  count(where: W): Promise<number>;
-}
+  }) => Promise<T[]>;
+  update: (where: W, data: U, include?: Record<string, any>) => Promise<T>;
+  delete: (where: W) => Promise<T>;
+  softDelete: (where: W) => Promise<T>;
+  restore: (where: W) => Promise<T>;
+  count: (where: W) => Promise<number>;
+};
 
 // Base repository implementation with generics
 export abstract class BaseRepository<T extends WithSoftDelete, C, U, W>
-  implements IBaseRepository<T, C, U, W>
-{
+implements IBaseRepository<T, C, U, W> {
   constructor(protected readonly model: IBaseModel<T, C, U, W>) {}
 
   async create(data: C, include?: Record<string, any>): Promise<T> {
@@ -78,7 +77,7 @@ export abstract class BaseRepository<T extends WithSoftDelete, C, U, W>
       where: { ...params.where, deletedAt: null } as W,
       skip: params.skip,
       take: params.take,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       orderBy: params.orderBy,
       ...(params.include && { include: params.include }),
     });

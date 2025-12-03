@@ -1,138 +1,67 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, ScheduleSnapshot } from '@prisma/client';
 
-import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
-type ScheduleSnapshotWithDeletedAt = ScheduleSnapshot & { deletedAt: null };
-
-class ScheduleSnapshotModelWrapper
-  implements
-    IBaseModel<
-      ScheduleSnapshotWithDeletedAt,
-      Prisma.ScheduleSnapshotCreateInput,
-      Prisma.ScheduleSnapshotUpdateInput,
-      Prisma.ScheduleSnapshotWhereInput
-    >
-{
+/**
+ * Repository for ScheduleSnapshot.
+ * Note: Snapshots are immutable - they only support create, read, and hard delete operations.
+ * Updates and soft deletes are not supported.
+ */
+@Injectable()
+export class ScheduleSnapshotRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(args: {
-    data: Prisma.ScheduleSnapshotCreateInput;
-    include?: Record<string, any>;
-  }): Promise<ScheduleSnapshotWithDeletedAt> {
-    const result = await this.prisma.scheduleSnapshot.create(args);
-    return result as ScheduleSnapshotWithDeletedAt;
+  async create(
+    data: Prisma.ScheduleSnapshotCreateInput,
+    include?: Prisma.ScheduleSnapshotInclude,
+  ): Promise<ScheduleSnapshot> {
+    return this.prisma.scheduleSnapshot.create({
+      data,
+      ...(include && { include }),
+    });
   }
 
-  async findFirst(args: {
-    where: Prisma.ScheduleSnapshotWhereInput;
-    include?: Record<string, any>;
-  }): Promise<ScheduleSnapshotWithDeletedAt | null> {
-    const result = await this.prisma.scheduleSnapshot.findFirst(args);
-    return result ? (result as ScheduleSnapshotWithDeletedAt) : null;
-  }
-
-  async findMany(args: {
-    where?: Prisma.ScheduleSnapshotWhereInput;
-    skip?: number;
-    take?: number;
-    orderBy?: any;
-    include?: Record<string, any>;
-  }): Promise<ScheduleSnapshotWithDeletedAt[]> {
-    const result = await this.prisma.scheduleSnapshot.findMany(args);
-    return result as ScheduleSnapshotWithDeletedAt[];
-  }
-
-  async update(args: {
-    where: Prisma.ScheduleSnapshotWhereUniqueInput;
-    data: Prisma.ScheduleSnapshotUpdateInput;
-    include?: Record<string, any>;
-  }): Promise<ScheduleSnapshotWithDeletedAt> {
-    const result = await this.prisma.scheduleSnapshot.update(args);
-    return result as ScheduleSnapshotWithDeletedAt;
-  }
-
-  async delete(args: {
-    where: Prisma.ScheduleSnapshotWhereUniqueInput;
-  }): Promise<ScheduleSnapshotWithDeletedAt> {
-    const result = await this.prisma.scheduleSnapshot.delete(args);
-    return result as ScheduleSnapshotWithDeletedAt;
-  }
-
-  async count(args: {
-    where: Prisma.ScheduleSnapshotWhereInput;
-  }): Promise<number> {
-    return this.prisma.scheduleSnapshot.count(args);
-  }
-}
-
-@Injectable()
-export class ScheduleSnapshotRepository extends BaseRepository<
-  ScheduleSnapshotWithDeletedAt,
-  Prisma.ScheduleSnapshotCreateInput,
-  Prisma.ScheduleSnapshotUpdateInput,
-  Prisma.ScheduleSnapshotWhereInput
-> {
-  constructor(private readonly prisma: PrismaService) {
-    super(new ScheduleSnapshotModelWrapper(prisma));
-  }
-
-  // Override methods since ScheduleSnapshot doesn't have deletedAt
-  override async findOne(
+  async findOne(
     where: Prisma.ScheduleSnapshotWhereInput,
     include?: Prisma.ScheduleSnapshotInclude,
-  ): Promise<ScheduleSnapshotWithDeletedAt | null> {
-    const result = await this.model.findFirst({
+  ): Promise<ScheduleSnapshot | null> {
+    return this.prisma.scheduleSnapshot.findFirst({
       where,
       ...(include && { include }),
     });
-    return result ? result : null;
   }
 
-  override async findMany(params: {
+  async findMany(params: {
     where?: Prisma.ScheduleSnapshotWhereInput;
     skip?: number;
     take?: number;
     orderBy?: Record<string, 'asc' | 'desc'>;
     include?: Prisma.ScheduleSnapshotInclude;
-  }): Promise<ScheduleSnapshotWithDeletedAt[]> {
-    const result = await this.model.findMany({
+  }): Promise<ScheduleSnapshot[]> {
+    return this.prisma.scheduleSnapshot.findMany({
       where: params.where,
       skip: params.skip,
       take: params.take,
       orderBy: params.orderBy,
       ...(params.include && { include: params.include }),
     });
-    return result;
   }
 
-  override async update(
-    where: Prisma.ScheduleSnapshotWhereInput,
-    data: Prisma.ScheduleSnapshotUpdateInput,
-    include?: Prisma.ScheduleSnapshotInclude,
-  ): Promise<ScheduleSnapshotWithDeletedAt> {
-    const result = await this.model.update({
-      where,
-      data,
-      ...(include && { include }),
-    });
-    return result;
-  }
-
-  override async delete(
-    where: Prisma.ScheduleSnapshotWhereInput,
-  ): Promise<ScheduleSnapshotWithDeletedAt> {
-    const result = await this.model.delete({
+  /**
+   * Hard delete a snapshot.
+   * Note: Snapshots are immutable and don't support soft delete.
+   */
+  async delete(
+    where: Prisma.ScheduleSnapshotWhereUniqueInput,
+  ): Promise<ScheduleSnapshot> {
+    return this.prisma.scheduleSnapshot.delete({
       where,
     });
-    return result;
   }
 
-  override async count(
-    where?: Prisma.ScheduleSnapshotWhereInput,
-  ): Promise<number> {
-    return this.model.count({
+  async count(where?: Prisma.ScheduleSnapshotWhereInput): Promise<number> {
+    return this.prisma.scheduleSnapshot.count({
       where: where ?? {},
     });
   }
@@ -141,20 +70,17 @@ export class ScheduleSnapshotRepository extends BaseRepository<
     uid: string,
     include?: Prisma.ScheduleSnapshotInclude,
   ): Promise<ScheduleSnapshot | null> {
-    return this.model.findFirst({
-      where: { uid },
-      ...(include && { include }),
-    });
+    return this.findOne({ uid }, include);
   }
 
   async findByScheduleId(
     scheduleId: bigint,
     include?: Prisma.ScheduleSnapshotInclude,
   ): Promise<ScheduleSnapshot[]> {
-    return this.model.findMany({
+    return this.findMany({
       where: { scheduleId },
       orderBy: { createdAt: 'desc' },
-      ...(include && { include }),
+      include,
     });
   }
 
@@ -163,22 +89,6 @@ export class ScheduleSnapshotRepository extends BaseRepository<
     version: number,
     include?: Prisma.ScheduleSnapshotInclude,
   ): Promise<ScheduleSnapshot | null> {
-    return this.model.findFirst({
-      where: { scheduleId, version },
-      ...(include && { include }),
-    });
-  }
-
-  // Disable soft delete for snapshots (they're immutable)
-  override async softDelete(): Promise<never> {
-    return Promise.reject(
-      new Error('ScheduleSnapshot does not support soft delete'),
-    );
-  }
-
-  override async restore(): Promise<never> {
-    return Promise.reject(
-      new Error('ScheduleSnapshot does not support restore'),
-    );
+    return this.findOne({ scheduleId, version }, include);
   }
 }
