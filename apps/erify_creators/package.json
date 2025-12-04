@@ -7,8 +7,8 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "paraglide-js compile --project ./project.inlang --outdir ./dist/paraglide && mkdir -p src/paraglide && cp -r dist/paraglide/* src/paraglide/ && concurrently -n paraglide,vite -c cyan,magenta \"chokidar \\\"src/i18n/messages/**/*.json\\\" \\\"project.inlang/**/*\\\" -c \\\"paraglide-js compile --project ./project.inlang --outdir ./dist/paraglide && mkdir -p src/paraglide && cp -r dist/paraglide/* src/paraglide/\\\"\" \"vite\"",
-    "build": "paraglide-js compile --project ./project.inlang --outdir ./dist/paraglide && mkdir -p src/paraglide && cp -r dist/paraglide/* src/paraglide/ && vite build",
+    "dev": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide && concurrently -n paraglide,vite -c cyan,magenta \"chokidar \\\"src/i18n/messages/**/*.json\\\" \\\"project.inlang/**/*\\\" -c \\\"paraglide-js compile --project ./project.inlang --outdir ./src/paraglide\\\"\" \"vite\"",
+    "build": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide && vite build",
     "lint": "eslint . --fix",
     "preview": "vite preview",
     "start": "npx serve -s ./dist",
