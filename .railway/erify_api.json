@@ -2,10 +2,11 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "RAILPACK",
-    "buildCommand": "npx turbo run build --filter=erify_creators"
+    "buildCommand": "npx turbo run build --filter=erify_api"
   },
   "deploy": {
-    "startCommand": "pnpm --filter erify_creators start",
+    "preDeployCommand": ["pnpm --filter erify_api db:migrate:deploy"], 
+    "startCommand": "pnpm --filter erify_api start",
     "healthcheckPath": "/",
     "healthcheckTimeout": 100,
     "restartPolicyType": "ON_FAILURE",
