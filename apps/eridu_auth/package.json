@@ -1,5 +1,5 @@
 {
-  "name": "eridu-auth",
+  "name": "eridu_auth",
   "type": "module",
   "engines": {
     "node": ">=22"

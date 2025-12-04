@@ -21,7 +21,7 @@ pnpm db:seed
 Or from the monorepo root:
 
 ```bash
-pnpm --filter eridu-auth db:seed
+pnpm --filter eridu_auth db:seed
 ```
 
 ## Test Users Created
