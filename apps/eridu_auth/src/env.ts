@@ -9,14 +9,23 @@ const stringBoolean = z.coerce
   .transform((val) => val === 'true')
   .default(false);
 
-expand(
-  config({
-    path: path.resolve(
-      process.cwd(),
-      process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
-    ),
-  }),
+// Load environment variables from .env file if it exists
+// In production (Railway), environment variables are injected directly via process.env
+const envPath = path.resolve(
+  process.cwd(),
+  process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
 );
+
+try {
+  expand(config({ path: envPath }));
+} catch (error) {
+  // In production, .env file might not exist - this is expected
+  if (process.env.NODE_ENV === 'production') {
+    // Continue without .env file - Railway injects env vars directly
+  } else {
+    throw error;
+  }
+}
 
 const EnvSchema = z
   .object({
@@ -77,12 +86,23 @@ const EnvSchema = z
 
 export type Env = z.infer<typeof EnvSchema>;
 
-const { data: env, error } = EnvSchema.safeParse(process.env);
+const parsed = EnvSchema.safeParse(process.env);
 
-if (error) {
-  console.error('❌ Invalid env:');
-  console.error(JSON.stringify(z.treeifyError(error), null, 2));
-  process.exit(1);
+if (parsed.success === false) {
+  const skip
+    = !!process.env.SKIP_ENV_VALIDATION
+    || !!process.env.SKIP_ENV_CHECK
+    || process.env.NODE_ENV === 'test';
+
+  if (skip) {
+    console.warn('⚠️  Skipping env validation');
+  } else {
+    console.error('❌ Invalid env:');
+    console.error(JSON.stringify(z.treeifyError(parsed.error), null, 2));
+    process.exit(1);
+  }
 }
 
-export default env!;
+const env = (parsed.success ? parsed.data : process.env) as Env;
+
+export default env;

@@ -9,7 +9,7 @@
     "dev:frontend": "vite",
     "dev": "concurrently -n backend,frontend -c cyan,magenta \"pnpm dev:backend\" \"pnpm dev:frontend\"",
     "build:backend": "tsc --project tsconfig.server.json && tsc-alias --project tsconfig.server.json",
-    "build:frontend": "vite build",
+    "build:frontend": "cross-env SKIP_ENV_VALIDATION=true vite build",
     "build": "pnpm build:frontend && pnpm build:backend",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
