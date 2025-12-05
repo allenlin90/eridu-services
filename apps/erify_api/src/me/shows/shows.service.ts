@@ -185,8 +185,10 @@ export class ShowsService {
       start_time: 'startTime',
       end_time: 'endTime',
     };
-    const field = fieldMap[query.order_by] || 'startTime';
-    return { [field]: query.order_direction };
+    // Use DTO defaults if not provided
+    const field = fieldMap[query.order_by || 'created_at'] || 'createdAt';
+    const direction = query.order_direction || 'desc';
+    return { [field]: direction };
   }
 
   /**
