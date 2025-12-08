@@ -7,7 +7,7 @@
   "deploy": {
     "preDeployCommand": ["pnpm --filter erify_api db:migrate:deploy"], 
     "startCommand": "pnpm --filter erify_api start:prod",
-    "healthcheckPath": "/",
+    "healthcheckPath": "/health",
     "healthcheckTimeout": 100,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
