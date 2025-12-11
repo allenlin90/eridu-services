@@ -81,7 +81,8 @@
     "goToFirstPage": "前往第一頁",
     "goToPreviousPage": "前往上一頁",
     "goToNextPage": "前往下一頁",
-    "goToLastPage": "前往最後一頁"
+    "goToLastPage": "前往最後一頁",
+    "date": "日期"
   },
   "sidebar": {
     "activities": "活動",
