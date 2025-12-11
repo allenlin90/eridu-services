@@ -81,7 +81,8 @@
     "goToFirstPage": "ไปหน้าแรก",
     "goToPreviousPage": "ไปหน้าก่อนหน้า",
     "goToNextPage": "ไปหน้าถัดไป",
-    "goToLastPage": "ไปหน้าสุดท้าย"
+    "goToLastPage": "ไปหน้าสุดท้าย",
+    "date": "วันที่"
   },
   "sidebar": {
     "activities": "กิจกรรม",
