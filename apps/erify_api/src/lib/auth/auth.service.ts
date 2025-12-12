@@ -38,7 +38,6 @@ export class AuthService implements OnModuleInit {
     const jwtConfig: JwtVerifierConfig = {
       jwksService: this.jwksService,
       issuer: authUrl,
-      audience: authUrl,
     };
     this.jwtVerifier = new JwtVerifier(jwtConfig);
   }
