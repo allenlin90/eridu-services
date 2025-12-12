@@ -37,6 +37,7 @@ export const auth = betterAuth({
     cookiePrefix: 'eridu_auth',
     crossSubDomainCookies: {
       enabled: true,
+      domain: env.COOKIE_DOMAIN,
     },
   },
   emailAndPassword: {
