@@ -80,6 +80,7 @@ serve(
   {
     fetch: app.fetch,
     port: env.PORT,
+    hostname: '::',
   },
   (info) => {
     console.warn(`Server is running on http://localhost:${info.port}`);
