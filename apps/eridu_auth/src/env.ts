@@ -58,6 +58,7 @@ const EnvSchema = z
     OIDC_CLIENT_ID: z.string().optional(),
     OIDC_CLIENT_SECRET: z.string().optional(),
     OIDC_ISSUER: z.url().optional(),
+    COOKIE_DOMAIN: z.string().optional(),
   })
   .transform((data) => {
     // Construct BETTER_AUTH_URL from PORT, ensuring it matches the actual server port
