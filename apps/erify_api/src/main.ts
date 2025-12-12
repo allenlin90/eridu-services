@@ -53,7 +53,7 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   const port = process.env.PORT ?? 3000;
-  const server = (await app.listen(port)) as Server;
+  const server = (await app.listen(port, '::')) as Server;
 
   const logger = app.get(Logger);
   logger.log(`🚀 Application is running on: http://localhost:${port}`);
