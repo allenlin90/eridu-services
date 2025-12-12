@@ -45,6 +45,7 @@ export const envSchema = z.object({
   // Authentication & Authorization (JWT/JWKS)
   // Base URL of the eridu_auth service (e.g., http://localhost:3000 or https://auth.example.com)
   ERIDU_AUTH_URL: z.url({ message: 'ERIDU_AUTH_URL must be a valid URL' }),
+  ERIDU_PRIVATE_AUTH_URL: z.url({ message: 'ERIDU_PRIVATE_AUTH_URL must be a valid URL' }).optional(),
 
   // Rate Limiting (Throttling)
   // Time window in milliseconds for rate limiting (default: 60000 = 1 minute)

@@ -20,6 +20,7 @@ export class AuthService implements OnModuleInit {
 
   constructor(private readonly configService: ConfigService<Env>) {
     const authUrl = this.configService.get('ERIDU_AUTH_URL', { infer: true });
+    const privateAuthUrl = this.configService.get('ERIDU_PRIVATE_AUTH_URL', { infer: true });
 
     if (!authUrl) {
       throw HttpError.internalServerError('ERIDU_AUTH_URL is required');
@@ -30,7 +31,7 @@ export class AuthService implements OnModuleInit {
     // the service will automatically refetch on the next request
     // Uses Better Auth standard JWKS path (/api/auth/jwks) by default
     const jwksConfig: JwksServiceConfig = {
-      authServiceUrl: authUrl,
+      authServiceUrl: privateAuthUrl ?? authUrl,
     };
     this.jwksService = new JwksService(jwksConfig);
 
