@@ -144,6 +144,7 @@ export const showDto = showWithRelationsSchema
 
 // Show list filter schema (similar to schedule filtering)
 export const listShowsFilterSchema = z.object({
+  name: z.string().optional(),
   client_id: z
     .union([
       z.string().startsWith(ClientService.UID_PREFIX),
@@ -172,6 +173,7 @@ export const listShowsQuerySchema = z
     limit: data.limit,
     take: data.limit,
     skip: (data.page - 1) * data.limit,
+    name: data.name,
     client_id: data.client_id,
     start_date_from: data.start_date_from,
     start_date_to: data.start_date_to,
@@ -187,6 +189,7 @@ export class ListShowsQueryDto extends createZodDto(listShowsQuerySchema) {
   declare limit: number;
   declare take: number;
   declare skip: number;
+  declare name: string | undefined;
   declare client_id: string | string[] | undefined;
   declare start_date_from: string | undefined;
   declare start_date_to: string | undefined;

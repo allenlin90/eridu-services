@@ -65,6 +65,7 @@
     "name": "Name",
     "client": "Client",
     "studioRoom": "Studio Room",
+    "date": "Date",
     "startTime": "Start Time",
     "endTime": "End Time",
     "rowsSelected": "{selected} of {total} row(s) selected.",

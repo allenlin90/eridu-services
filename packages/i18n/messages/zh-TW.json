@@ -65,6 +65,7 @@
     "name": "名稱",
     "client": "客戶",
     "studioRoom": "錄音室",
+    "date": "日期",
     "startTime": "開始時間",
     "endTime": "結束時間",
     "rowsSelected": "已選擇 {selected} / {total} 行。",

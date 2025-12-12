@@ -150,7 +150,8 @@ describe('showsService', () => {
       const params = {
         skip: 0,
         take: 10,
-        orderBy: { startTime: 'asc' as const },
+        order_by: 'start_time',
+        order_direction: 'asc' as const,
       };
 
       mockMcService.getMcs.mockResolvedValue([mockMc]);
@@ -198,7 +199,7 @@ describe('showsService', () => {
           },
           skip: params.skip,
           take: params.take,
-          orderBy: params.orderBy,
+          orderBy: { startTime: 'asc' },
         },
         expectedInclude,
       );
@@ -264,7 +265,7 @@ describe('showsService', () => {
         { orderBy: { startTime: string } },
         Prisma.ShowInclude,
       ];
-      expect(callArgs[0].orderBy).toEqual({ startTime: 'asc' });
+      expect(callArgs[0].orderBy).toEqual({ createdAt: 'desc' });
     });
 
     it('should handle pagination correctly', async () => {
@@ -272,7 +273,8 @@ describe('showsService', () => {
       const params = {
         skip: 10,
         take: 20,
-        orderBy: { startTime: 'desc' as const },
+        order_by: 'start_time',
+        order_direction: 'desc' as const,
       };
 
       mockMcService.getMcs.mockResolvedValue([mockMc]);

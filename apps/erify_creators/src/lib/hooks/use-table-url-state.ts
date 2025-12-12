@@ -8,12 +8,12 @@ import type { DateRange } from 'react-day-picker';
  */
 export type TableUrlState = {
   page: number;
-  pageSize: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  page_size: number;
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
   search?: string;
-  startDate?: string;
-  endDate?: string;
+  from?: string;
+  to?: string;
 };
 
 /**
@@ -40,35 +40,35 @@ export function useTableUrlState(from: string): UseTableUrlStateReturn {
   const pagination: PaginationState = React.useMemo(
     () => ({
       pageIndex: Math.max(0, (searchParams.page || 1) - 1), // Ensure pageIndex is never negative
-      pageSize: searchParams.pageSize || 10,
+      pageSize: searchParams.page_size || 10,
     }),
-    [searchParams.page, searchParams.pageSize],
+    [searchParams.page, searchParams.page_size],
   );
 
   const sorting: SortingState = React.useMemo(
     () =>
-      searchParams.sortBy
-        ? [{ id: searchParams.sortBy, desc: searchParams.sortOrder === 'desc' }]
+      searchParams.sort_by
+        ? [{ id: searchParams.sort_by, desc: searchParams.sort_order === 'desc' }]
         : [],
-    [searchParams.sortBy, searchParams.sortOrder],
+    [searchParams.sort_by, searchParams.sort_order],
   );
 
   const columnFilters: ColumnFiltersState = React.useMemo(
     () => [
       ...(searchParams.search ? [{ id: 'name', value: searchParams.search }] : []),
-      ...(searchParams.startDate || searchParams.endDate
+      ...(searchParams.from || searchParams.to
         ? [
             {
               id: 'start_time',
               value: {
-                from: searchParams.startDate ? new Date(searchParams.startDate) : undefined,
-                to: searchParams.endDate ? new Date(searchParams.endDate) : undefined,
+                from: searchParams.from ? new Date(searchParams.from) : undefined,
+                to: searchParams.to ? new Date(searchParams.to) : undefined,
               } as DateRange,
             },
           ]
         : []),
     ],
-    [searchParams.search, searchParams.startDate, searchParams.endDate],
+    [searchParams.search, searchParams.from, searchParams.to],
   );
 
   // Update URL when table state changes
@@ -79,7 +79,7 @@ export function useTableUrlState(from: string): UseTableUrlStateReturn {
         search: (prev: Record<string, unknown>) => ({
           ...prev,
           page: newPagination.pageIndex + 1,
-          pageSize: newPagination.pageSize,
+          page_size: newPagination.pageSize,
         }),
       });
     },
@@ -92,8 +92,8 @@ export function useTableUrlState(from: string): UseTableUrlStateReturn {
       (navigate as unknown as (options: { search: (prev: Record<string, unknown>) => Record<string, unknown> }) => void)({
         search: (prev: Record<string, unknown>) => ({
           ...prev,
-          sortBy: newSorting[0]?.id,
-          sortOrder: newSorting[0]?.desc ? 'desc' : 'asc',
+          sort_by: newSorting[0]?.id,
+          sort_order: newSorting[0]?.desc ? 'desc' : 'asc',
         }),
       });
     },
@@ -111,8 +111,8 @@ export function useTableUrlState(from: string): UseTableUrlStateReturn {
         search: (prev: Record<string, unknown>) => ({
           ...prev,
           search: searchFilter || undefined,
-          startDate: dateFilter?.from?.toISOString(),
-          endDate: dateFilter?.to?.toISOString(),
+          from: dateFilter?.from?.toISOString(),
+          to: dateFilter?.to?.toISOString(),
           page: 1, // Reset to first page when filters change
         }),
       });
