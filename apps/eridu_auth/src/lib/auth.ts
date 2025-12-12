@@ -48,6 +48,7 @@ export const auth = betterAuth({
     sendResetPassword: async (data) => {
       // TODO: send reset password email
       console.warn('Password reset requested for:', data.user.email, '- Email sending not implemented yet');
+      console.warn('reset token:', data.token);
     },
   },
   emailVerification: {
