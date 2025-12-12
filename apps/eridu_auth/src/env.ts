@@ -61,19 +61,10 @@ const EnvSchema = z
     COOKIE_DOMAIN: z.string().optional(),
   })
   .transform((data) => {
-    // Construct BETTER_AUTH_URL from PORT, ensuring it matches the actual server port
-    // If BETTER_AUTH_URL is set, extract the protocol and hostname, but use the actual PORT
+    // Construct BETTER_AUTH_URL from PORT only if not provided or if localhost
     const BETTER_AUTH_URL
       = data.BETTER_AUTH_URL && data.BETTER_AUTH_URL !== ''
-        ? (() => {
-            try {
-              const url = new URL(data.BETTER_AUTH_URL);
-              url.port = data.PORT.toString();
-              return url.toString();
-            } catch {
-              return `http://localhost:${data.PORT}`;
-            }
-          })()
+        ? data.BETTER_AUTH_URL
         : `http://localhost:${data.PORT}`;
 
     return {
