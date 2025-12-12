@@ -3,6 +3,7 @@ import { MC, Prisma } from '@prisma/client';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { McService } from '@/models/mc/mc.service';
+import { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 
 @Injectable()
@@ -15,21 +16,17 @@ export class ShowsService {
   /**
    * Gets shows assigned to the MC linked to the given user identifier.
    * @param userIdentifier - The user identifier (uid or extId string) from JWT to find the associated MC
-   * @param params - Optional pagination and ordering parameters
+   * @param query - Query parameters including pagination, filters, and sorting
    * @returns Object containing shows array and total count
    */
   async getShowsForMcUser(
     userIdentifier: string,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowOrderByWithRelationInput;
-    },
+    query: ListShowsQueryDto,
   ) {
     const mc = await this.findMcByUserIdentifier(userIdentifier);
 
-    const where = this.buildShowWhereClause(mc.id);
-    const orderBy = params?.orderBy ?? { startTime: 'asc' };
+    const where = this.buildShowWhereClause(mc.id, query);
+    const orderBy = this.buildOrderByClause(query);
     const include = this.buildShowInclude();
 
     // Fetch shows directly with pagination and includes
@@ -37,8 +34,8 @@ export class ShowsService {
       this.showService.getShows(
         {
           where,
-          skip: params?.skip,
-          take: params?.take,
+          skip: query.skip,
+          take: query.take,
           orderBy,
         },
         include,
@@ -58,7 +55,18 @@ export class ShowsService {
   async getShowForMcUser(userIdentifier: string, showId: string) {
     const mc = await this.findMcByUserIdentifier(userIdentifier);
 
-    const where = this.buildShowWhereClause(mc.id, showId);
+    // Build where clause with MC filter and specific show ID
+    const where: Prisma.ShowWhereInput = {
+      uid: showId,
+      deletedAt: null,
+      showMCs: {
+        some: {
+          mcId: mc.id,
+          deletedAt: null,
+        },
+      },
+    };
+
     const include = this.buildShowInclude();
 
     // Query show directly with MC filter to ensure it's assigned to this MC
@@ -106,15 +114,17 @@ export class ShowsService {
   /**
    * Builds the where clause for querying shows assigned to a specific MC.
    * @param mcId - The MC's bigint ID
-   * @param showId - Optional show UID to filter by specific show
+   * @param query - Query parameters with filters
    * @returns Prisma ShowWhereInput
    */
   private buildShowWhereClause(
     mcId: bigint,
-    showId?: string,
+    query: Pick<
+      ListShowsQueryDto,
+      'name' | 'start_date_from' | 'start_date_to' | 'end_date_from' | 'end_date_to' | 'include_deleted'
+    >,
   ): Prisma.ShowWhereInput {
     const where: Prisma.ShowWhereInput = {
-      deletedAt: null,
       showMCs: {
         some: {
           mcId,
@@ -123,11 +133,62 @@ export class ShowsService {
       },
     };
 
-    if (showId) {
-      where.uid = showId;
+    // Filter out soft deleted records by default
+    if (!query.include_deleted) {
+      where.deletedAt = null;
+    }
+
+    // Name filtering (case-insensitive partial match)
+    if (query.name) {
+      where.name = {
+        contains: query.name,
+        mode: 'insensitive',
+      };
+    }
+
+    // Date range filtering for start time
+    if (query.start_date_from || query.start_date_to) {
+      where.startTime = {};
+      if (query.start_date_from) {
+        where.startTime.gte = new Date(query.start_date_from);
+      }
+      if (query.start_date_to) {
+        where.startTime.lte = new Date(query.start_date_to);
+      }
+    }
+
+    // Date range filtering for end time
+    if (query.end_date_from || query.end_date_to) {
+      where.endTime = {};
+      if (query.end_date_from) {
+        where.endTime.gte = new Date(query.end_date_from);
+      }
+      if (query.end_date_to) {
+        where.endTime.lte = new Date(query.end_date_to);
+      }
     }
 
     return where;
+  }
+
+  /**
+   * Builds the order by clause for sorting shows.
+   * @param query - Query parameters with sorting options
+   * @returns Prisma ShowOrderByWithRelationInput
+   */
+  private buildOrderByClause(
+    query: Pick<ListShowsQueryDto, 'order_by' | 'order_direction'>,
+  ): Prisma.ShowOrderByWithRelationInput {
+    const fieldMap: Record<string, string> = {
+      created_at: 'createdAt',
+      updated_at: 'updatedAt',
+      start_time: 'startTime',
+      end_time: 'endTime',
+    };
+    // Use DTO defaults if not provided
+    const field = fieldMap[query.order_by || 'created_at'] || 'createdAt';
+    const direction = query.order_direction || 'desc';
+    return { [field]: direction };
   }
 
   /**

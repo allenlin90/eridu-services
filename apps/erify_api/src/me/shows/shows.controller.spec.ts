@@ -1,6 +1,7 @@
 import { ShowsController } from './shows.controller';
 import { ShowsService } from './shows.service';
 
+import type { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
 import {
   createControllerUser,
   createJwtControllerTestModule,
@@ -47,7 +48,18 @@ describe('showsController', () => {
   describe('getShows', () => {
     it('should return paginated list of shows for authenticated MC user', async () => {
       const userIdentifier = 'user_test123';
-      const query = paginationMockFactory.query();
+      const query: ListShowsQueryDto = {
+        ...paginationMockFactory.query(),
+        name: undefined,
+        client_id: undefined,
+        start_date_from: undefined,
+        start_date_to: undefined,
+        end_date_from: undefined,
+        end_date_to: undefined,
+        order_by: 'start_time',
+        order_direction: 'desc',
+        include_deleted: false,
+      };
 
       const user = createControllerUser({
         ext_id: userIdentifier,
@@ -71,25 +83,30 @@ describe('showsController', () => {
 
       expect(mockShowsService.getShowsForMcUser).toHaveBeenCalledWith(
         userIdentifier,
-        {
-          skip: query.skip,
-          take: query.take,
-          orderBy: {
-            startTime: 'desc',
-          },
-        },
+        query,
       );
       expect(result).toEqual(createPaginatedResponse(shows, paginationMeta));
     });
 
     it('should handle pagination with custom page and limit', async () => {
       const userIdentifier = 'user_test123';
-      const query = paginationMockFactory.query({
-        page: 2,
-        limit: 20,
-        skip: 20,
-        take: 20,
-      });
+      const query: ListShowsQueryDto = {
+        ...paginationMockFactory.query({
+          page: 2,
+          limit: 20,
+          skip: 20,
+          take: 20,
+        }),
+        name: undefined,
+        client_id: undefined,
+        start_date_from: undefined,
+        start_date_to: undefined,
+        end_date_from: undefined,
+        end_date_to: undefined,
+        order_by: 'start_time',
+        order_direction: 'desc',
+        include_deleted: false,
+      };
 
       const user = createControllerUser({
         ext_id: userIdentifier,
@@ -115,20 +132,25 @@ describe('showsController', () => {
 
       expect(mockShowsService.getShowsForMcUser).toHaveBeenCalledWith(
         userIdentifier,
-        {
-          skip: 20,
-          take: 20,
-          orderBy: {
-            startTime: 'desc',
-          },
-        },
+        query,
       );
       expect(result).toEqual(createPaginatedResponse(shows, paginationMeta));
     });
 
     it('should handle empty results', async () => {
       const userIdentifier = 'user_test123';
-      const query = paginationMockFactory.query();
+      const query: ListShowsQueryDto = {
+        ...paginationMockFactory.query(),
+        name: undefined,
+        client_id: undefined,
+        start_date_from: undefined,
+        start_date_to: undefined,
+        end_date_from: undefined,
+        end_date_to: undefined,
+        order_by: 'start_time',
+        order_direction: 'desc',
+        include_deleted: false,
+      };
 
       const user = createControllerUser({
         ext_id: userIdentifier,

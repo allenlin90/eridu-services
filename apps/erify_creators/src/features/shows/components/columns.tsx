@@ -23,6 +23,20 @@ export const columns: ColumnDef<ShowApiResponse>[] = [
     cell: ({ row }) => (row.getValue('studio_room_name') as string) || '-',
   },
   {
+    id: 'date',
+    accessorKey: 'start_time',
+    header: m['table.date'](),
+    cell: ({ row }) => {
+      const startTime = row.getValue('start_time') as string;
+      if (!startTime)
+        return '-';
+      const date = new Date(startTime);
+      if (Number.isNaN(date.getTime()))
+        return '-';
+      return format(date, 'MMM d, yyyy');
+    },
+  },
+  {
     accessorKey: 'start_time',
     header: m['table.startTime'](),
     cell: ({ row }) => {
@@ -32,7 +46,7 @@ export const columns: ColumnDef<ShowApiResponse>[] = [
       const date = new Date(startTime);
       if (Number.isNaN(date.getTime()))
         return '-';
-      return format(date, 'MMM d, yyyy HH:mm');
+      return format(date, 'HH:mm');
     },
   },
   {
@@ -45,7 +59,7 @@ export const columns: ColumnDef<ShowApiResponse>[] = [
       const date = new Date(endTime);
       if (Number.isNaN(date.getTime()))
         return '-';
-      return format(date, 'MMM d, yyyy HH:mm');
+      return format(date, 'HH:mm');
     },
   },
 ];

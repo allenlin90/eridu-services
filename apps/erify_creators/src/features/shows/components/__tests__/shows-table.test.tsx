@@ -59,9 +59,30 @@ describe('showsTable', () => {
   it('renders table with shows data', () => {
     renderWithQueryClient(<ShowsTable {...defaultProps} />);
 
+    // Test show names
     expect(screen.getByText('Test Show 1')).toBeInTheDocument();
     expect(screen.getByText('Test Show 2')).toBeInTheDocument();
+
+    // Test client names
     expect(screen.getByText('Test Client')).toBeInTheDocument();
+    expect(screen.getByText('Test Client 2')).toBeInTheDocument();
+
+    // Test studio room names
+    expect(screen.getByText('Studio A')).toBeInTheDocument();
+    expect(screen.getByText('Studio B')).toBeInTheDocument();
+
+    // Test column headers
+    expect(screen.getByText('Date')).toBeInTheDocument();
+    expect(screen.getByText('Start Time')).toBeInTheDocument();
+    expect(screen.getByText('End Time')).toBeInTheDocument();
+
+    // Test that time values are rendered (exact format may vary by timezone)
+    // We check for presence of time-like patterns rather than exact values
+    const table = screen.getByRole('table');
+    const timeCells = Array.from(table.querySelectorAll('td')).filter((cell) =>
+      /\d{1,2}:\d{2}/.test(cell.textContent || ''),
+    );
+    expect(timeCells.length).toBeGreaterThan(0); // Should have time-formatted cells
   });
 
   it('navigates to show details when row is clicked', async () => {

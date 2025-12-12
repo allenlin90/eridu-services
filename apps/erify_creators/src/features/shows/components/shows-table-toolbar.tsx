@@ -60,7 +60,15 @@ export function ShowsTableToolbar<TData>({
         <div className="w-full sm:w-auto">
           <DatePickerWithRange
             date={tempDate}
-            setDate={setTempDate}
+            setDate={(date) => {
+              if (date?.to) {
+                const newTo = new Date(date.to);
+                newTo.setHours(23, 59, 59, 999);
+                setTempDate({ ...date, to: newTo });
+              } else {
+                setTempDate(date);
+              }
+            }}
             open={isDatePickerOpen}
             onOpenChange={handleDatePickerOpenChange}
           />

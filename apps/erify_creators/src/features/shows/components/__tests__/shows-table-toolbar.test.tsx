@@ -8,6 +8,7 @@ import { ShowsTableToolbar } from '../shows-table-toolbar';
 
 // Mock React Query
 const mockInvalidateQueries = vi.fn();
+let mockFetchingCount = 0;
 vi.mock('@tanstack/react-query', async () => {
   const actual = await vi.importActual('@tanstack/react-query');
   return {
@@ -15,7 +16,7 @@ vi.mock('@tanstack/react-query', async () => {
     useQueryClient: () => ({
       invalidateQueries: mockInvalidateQueries,
     }),
-    useIsFetching: () => 0,
+    useIsFetching: () => mockFetchingCount,
   };
 });
 
@@ -116,6 +117,7 @@ mockGetColumn.mockImplementation((columnName: string) => ({
 describe('showsTableToolbar', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFetchingCount = 0; // Reset fetching state
     mockGetState.mockReturnValue({ columnFilters: [] });
     // Reset to default column behavior
     mockGetColumn.mockImplementation((columnName: string) => ({
@@ -190,6 +192,32 @@ describe('showsTableToolbar', () => {
 
     const refreshButton = screen.getByRole('button', { name: /Refresh/i });
     expect(refreshButton).toHaveTextContent('Refresh');
+  });
+
+  it('disables refresh button when fetching', () => {
+    mockFetchingCount = 1; // Simulate fetching in progress
+    render(<ShowsTableToolbar table={mockTable as any} />);
+
+    const refreshButton = screen.getByRole('button', { name: /Refresh/i });
+    expect(refreshButton).toBeDisabled();
+  });
+
+  it('shows spinning animation on refresh button when fetching', () => {
+    mockFetchingCount = 1; // Simulate fetching in progress
+    render(<ShowsTableToolbar table={mockTable as any} />);
+
+    const refreshButton = screen.getByRole('button', { name: /Refresh/i });
+    const rotateCwIcon = refreshButton.querySelector('.animate-spin');
+    expect(rotateCwIcon).toBeInTheDocument();
+  });
+
+  it('does not show spinning animation on refresh button when not fetching', () => {
+    mockFetchingCount = 0; // No fetching in progress
+    render(<ShowsTableToolbar table={mockTable as any} />);
+
+    const refreshButton = screen.getByRole('button', { name: /Refresh/i });
+    const rotateCwIcon = refreshButton.querySelector('.animate-spin');
+    expect(rotateCwIcon).not.toBeInTheDocument();
   });
 
   it('syncs date range with table state when date picker is closed', () => {

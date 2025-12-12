@@ -65,6 +65,7 @@
     "name": "ชื่อ",
     "client": "ลูกค้า",
     "studioRoom": "ห้องสตูดิโอ",
+    "date": "วันที่",
     "startTime": "เวลาเริ่ม",
     "endTime": "เวลาสิ้นสุด",
     "rowsSelected": "เลือกแล้ว {selected} จาก {total} แถว",

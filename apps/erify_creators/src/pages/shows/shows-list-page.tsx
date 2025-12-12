@@ -23,15 +23,17 @@ export function ShowsListPage() {
 
   // Extract filters for API
   const dateRange = columnFilters.find((filter) => filter.id === 'start_time')?.value as DateRange | undefined;
+  const nameFilter = columnFilters.find((filter) => filter.id === 'name')?.value as string | undefined;
 
   const { data, isLoading, error } = useShows({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
+    name: nameFilter,
     start_date_from: dateRange?.from?.toISOString(),
-    end_date_to: dateRange?.to?.toISOString(),
+    start_date_to: dateRange?.to?.toISOString(),
     order_by: sorting.length > 0 && sorting[0]?.id
       ? (sorting[0].id as 'created_at' | 'updated_at' | 'start_time' | 'end_time')
-      : 'created_at',
+      : 'start_time',
     order_direction: sorting.length > 0 ? (sorting[0].desc ? 'desc' : 'asc') : 'desc',
     include_deleted: false,
   });
