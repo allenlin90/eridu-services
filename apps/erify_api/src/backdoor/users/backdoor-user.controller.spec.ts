@@ -16,6 +16,7 @@ describe('backdoorUserController', () => {
 
   const mockUserService = {
     createUser: jest.fn(),
+    createUsersBulk: jest.fn(),
     updateUser: jest.fn(),
   };
 
@@ -63,15 +64,33 @@ describe('backdoorUserController', () => {
       expect(result).toEqual(createdUser);
     });
 
-    it('should handle user creation with all fields', async () => {
+    it('should handle user creation with MC', async () => {
       const createDto: CreateUserDto = {
-        email: 'full@example.com',
-        name: 'Full User',
-        extId: 'ext_123',
-        profileUrl: 'https://example.com/profile',
-        metadata: { custom: 'data' },
+        email: 'mc@example.com',
+        name: 'MC User',
+        mc: {
+          name: 'MC One',
+          aliasName: 'MC One',
+        },
       } as CreateUserDto;
-      const createdUser = { uid: 'user_456', ...createDto };
+      const createdUser = {
+        uid: 'user_456',
+        email: 'mc@example.com',
+        name: 'MC User',
+        extId: null,
+        profileUrl: null,
+        metadata: {},
+        mc: {
+          uid: 'mc_123',
+          name: 'MC One',
+          aliasName: 'MC One',
+          isBanned: false,
+          metadata: {},
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          deletedAt: null,
+        },
+      };
 
       mockUserService.createUser.mockResolvedValue(createdUser as any);
 
@@ -79,6 +98,53 @@ describe('backdoorUserController', () => {
 
       expect(mockUserService.createUser).toHaveBeenCalledWith(createDto);
       expect(result).toEqual(createdUser);
+    });
+  });
+
+  describe('createUsersBulk', () => {
+    it('should create multiple users', async () => {
+      const userData = [
+        {
+          email: 'user1@example.com',
+          name: 'User 1',
+        },
+        {
+          email: 'user2@example.com',
+          name: 'User 2',
+          mc: {
+            name: 'MC',
+            aliasName: 'MC',
+          },
+        },
+      ];
+      const bulkDto = { data: userData };
+      const createdUsers = userData.map((dto, i) => ({
+        uid: `user_${i}`,
+        email: dto.email,
+        name: dto.name,
+        extId: null,
+        profileUrl: null,
+        metadata: {},
+        mc: dto.mc
+          ? {
+              uid: `mc_${i}`,
+              name: dto.mc.name,
+              aliasName: dto.mc.aliasName,
+              isBanned: false,
+              metadata: {},
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              deletedAt: null,
+            }
+          : null,
+      }));
+
+      mockUserService.createUsersBulk.mockResolvedValue(createdUsers);
+
+      const result = await controller.createUsersBulk(bulkDto);
+
+      expect(mockUserService.createUsersBulk).toHaveBeenCalledWith(userData);
+      expect(result).toEqual(createdUsers);
     });
   });
 
@@ -109,7 +175,7 @@ describe('backdoorUserController', () => {
       const userId = 'user_123';
       const updateDto: UpdateUserDto = {
         metadata: { updated: true },
-      } as UpdateUserDto;
+      } as unknown as UpdateUserDto;
       const updatedUser = {
         uid: userId,
         email: 'test@example.com',

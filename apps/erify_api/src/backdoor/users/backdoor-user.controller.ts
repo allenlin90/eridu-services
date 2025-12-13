@@ -7,15 +7,18 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import z from 'zod';
 
 import { BaseBackdoorController } from '@/backdoor/base-backdoor.controller';
 import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
+  BulkCreateUserDto,
   CreateUserDto,
   UpdateUserDto,
   userDto,
+  userWithMcDto,
 } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
 
@@ -40,9 +43,15 @@ export class BackdoorUserController extends BaseBackdoorController {
   }
 
   @Post()
-  @ZodResponse(userDto, HttpStatus.CREATED, 'User created successfully')
+  @ZodResponse(userWithMcDto, HttpStatus.CREATED, 'User created successfully')
   createUser(@Body() body: CreateUserDto) {
     return this.userService.createUser(body);
+  }
+
+  @Post('bulk')
+  @ZodResponse(z.array(userWithMcDto), HttpStatus.CREATED, 'Users created successfully')
+  createUsersBulk(@Body() body: BulkCreateUserDto) {
+    return this.userService.createUsersBulk(body.data);
   }
 
   @Patch(':id')
