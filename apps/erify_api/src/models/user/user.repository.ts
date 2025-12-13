@@ -110,4 +110,17 @@ export class UserRepository extends BaseRepository<
       orderBy,
     });
   }
+
+  async createManyAndReturn(data: Prisma.UserCreateInput[]): Promise<User[]> {
+    return this.prisma.user.createManyAndReturn({ data });
+  }
+
+  async findByUids(uids: string[]): Promise<User[]> {
+    return this.model.findMany({
+      where: {
+        uid: { in: uids },
+        deletedAt: null,
+      },
+    });
+  }
 }

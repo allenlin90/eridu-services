@@ -6,6 +6,7 @@ import { UserRepository } from './user.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { McService } from '@/models/mc/mc.service';
 import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
@@ -21,8 +22,68 @@ export class UserService extends BaseModelService {
   }
 
   async createUser(data: CreateUserDto): Promise<User> {
+    const { mc, ...userData } = data;
     const uid = this.generateUid();
-    return this.userRepository.create({ ...data, uid });
+
+    return this.userRepository.create({
+      ...userData,
+      uid,
+      ...(mc && { mc: {
+        create: {
+          name: mc.name,
+          aliasName: mc.aliasName,
+          metadata: mc.metadata ?? {},
+          uid: this.utilityService.generateBrandedId(McService.UID_PREFIX),
+        },
+      } }),
+    }, {
+      mc: true,
+    });
+  }
+
+  async createUsersBulk(data: CreateUserDto[]): Promise<User[]> {
+    const { usersWithMc, usersWithoutMc } = this.separateUsersByMcPresence(data);
+
+    const [bulkCreatedUsers, individualCreatedUsers] = await Promise.all([
+      this.createUsersWithoutMc(usersWithoutMc),
+      this.createUsersWithMc(usersWithMc),
+    ]);
+
+    return [...bulkCreatedUsers, ...individualCreatedUsers];
+  }
+
+  private separateUsersByMcPresence(data: CreateUserDto[]) {
+    return data.reduce(
+      (acc, user) => {
+        if (user.mc) {
+          acc.usersWithMc.push(user);
+        } else {
+          acc.usersWithoutMc.push(user);
+        }
+        return acc;
+      },
+      { usersWithMc: [] as CreateUserDto[], usersWithoutMc: [] as CreateUserDto[] },
+    );
+  }
+
+  private async createUsersWithoutMc(users: CreateUserDto[]): Promise<User[]> {
+    if (users.length === 0)
+      return [];
+
+    const createInputs = users.map(({ mc: _mc, ...userData }) => ({
+      ...userData,
+      uid: this.generateUid(),
+    }));
+
+    return this.userRepository.createManyAndReturn(createInputs);
+  }
+
+  private async createUsersWithMc(users: CreateUserDto[]): Promise<User[]> {
+    if (users.length === 0)
+      return [];
+
+    const createPromises = users.map((user) => this.createUser(user));
+    return Promise.all(createPromises);
   }
 
   async getUserById(uid: string): Promise<User> {
