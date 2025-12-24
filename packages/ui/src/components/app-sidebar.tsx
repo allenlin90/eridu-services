@@ -46,6 +46,7 @@ export type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   user?: SidebarUser;
   footer?: React.ReactNode;
   onLogout?: () => void | Promise<void>;
+  linkComponent?: React.ElementType;
 };
 
 export function AppSidebar({
@@ -55,6 +56,7 @@ export function AppSidebar({
   user,
   footer,
   onLogout,
+  linkComponent,
   ...props
 }: AppSidebarProps) {
   const renderHeader = () => {
@@ -107,20 +109,34 @@ export function AppSidebar({
       </>
     );
 
+    const LinkComponent = linkComponent;
+
+    const renderHeaderButton = () => {
+      if (!headerContent.url) {
+        return headerContentElement;
+      }
+
+      if (LinkComponent) {
+        return (
+          <LinkComponent href={headerContent.url}>
+            {headerContentElement}
+          </LinkComponent>
+        );
+      }
+
+      return (
+        <a href={headerContent.url}>
+          {headerContentElement}
+        </a>
+      );
+    };
+
     return (
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild={!!headerContent.url}>
-              {headerContent.url
-                ? (
-                    <a href={headerContent.url}>
-                      {headerContentElement}
-                    </a>
-                  )
-                : (
-                    headerContentElement
-                  )}
+              {renderHeaderButton()}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -145,7 +161,7 @@ export function AppSidebar({
     <Sidebar variant="inset" {...props}>
       {renderHeader()}
       <SidebarContent>
-        <NavMain items={navMain} label={navMainLabel} />
+        <NavMain items={navMain} label={navMainLabel} linkComponent={linkComponent} />
       </SidebarContent>
       {renderFooter()}
     </Sidebar>

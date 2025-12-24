@@ -5,54 +5,28 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { StudioMembership } from '@prisma/client';
 
 import { AuthenticatedRequest } from '@/lib/auth/jwt-auth.guard';
 import { IS_ADMIN_KEY } from '@/lib/decorators/admin-protected.decorator';
 import { HttpError } from '@/lib/errors/http-error.util';
-import { StudioMembershipService } from '@/models/membership/studio-membership.service';
+import { UserService } from '@/models/user/user.service';
 
 /**
  * Admin Guard
  *
- * Authorization guard that verifies the authenticated user has admin role.
+ * Authorization guard that verifies the authenticated user has SYSTEM ADMIN privileges.
  * This guard assumes authentication has already been performed by JwtAuthGuard.
  *
  * Architecture:
  * - Expects request.user to be populated by JwtAuthGuard
- * - Checks if user has admin role in ANY studio via StudioMembershipService
+ * - Checks if user has `isSystemAdmin` flag set to true in User table
  * - Stateless: no dependencies on other guards (follows NestJS best practice)
  *
  * Behavior:
  * 1. Reads authenticated user from request.user (populated by JwtAuthGuard)
- * 2. Queries database for admin membership using optimized query
- * 3. Attaches adminMembership to request.adminMembership for downstream use
- * 4. Throws UnauthorizedException if user is not authenticated
- * 5. Throws ForbiddenException if user is not admin
- *
- * Usage (with explicit guard composition):
- * ```typescript
- * @Controller('admin/users')
- * @UseGuards(JwtAuthGuard, AdminGuard)  // Guards run in sequence
- * export class AdminUserController {
- *   // Only authenticated admin users can access these endpoints
- *
- *   @Get('reports')
- *   getReports(@Req() req: AuthenticatedRequest) {
- *     // Access admin membership without re-querying database
- *     const studioId = req.adminMembership?.studioId;
- *     // ... use studioId for filtering, etc.
- *   }
- * }
- * ```
- *
- * Why separate guards instead of one composed guard?
- * - Guards are stateless and composable (NestJS idiomatic pattern)
- * - Avoids guard-to-guard DI coupling
- * - Clear separation of concerns: authentication vs authorization
- * - Better testability (test each guard independently)
- * - Avoids circular dependencies between modules
- * - Explicit dependencies in modules (no hidden re-exports)
+ * 2. Queries database for User by ext_id
+ * 3. Throws UnauthorizedException if user is not authenticated
+ * 4. Throws ForbiddenException if user is not a system admin
  */
 @Injectable()
 export class AdminGuard implements CanActivate {
@@ -60,7 +34,7 @@ export class AdminGuard implements CanActivate {
 
   constructor(
     private reflector: Reflector,
-    private readonly studioMembershipService: StudioMembershipService,
+    private readonly userService: UserService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -84,22 +58,19 @@ export class AdminGuard implements CanActivate {
 
     const { ext_id, email } = request.user;
 
-    const adminMembership: StudioMembership | null
-      = await this.studioMembershipService.findAdminMembershipByExtId(ext_id);
+    // Check system admin status via UserService
+    // We fetch the full user record to check the isSystemAdmin flag
+    const user = await this.userService.getUserByExtId(ext_id);
 
-    if (!adminMembership) {
+    if (!user || !user.isSystemAdmin) {
       this.logger.warn(
-        `User ${email} (ext_id: ${ext_id}) attempted to access admin endpoint but is not an admin`,
+        `User ${email} (ext_id: ${ext_id}) attempted to access system admin endpoint but is not a system admin`,
       );
-      throw HttpError.forbidden('Admin access required');
+      throw HttpError.forbidden('System Admin access required');
     }
 
-    // Attach admin membership to request for downstream use (e.g., in controllers)
-    // This avoids re-querying the database when studio context is needed
-    request.adminMembership = adminMembership;
-
     this.logger.debug(
-      `Admin access granted for user: ${email} (ext_id: ${ext_id}, studio: ${adminMembership.studioId})`,
+      `System Admin access granted for user: ${email} (ext_id: ${ext_id})`,
     );
 
     return true;

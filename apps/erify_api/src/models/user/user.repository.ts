@@ -76,6 +76,15 @@ export class UserRepository extends BaseRepository<
     });
   }
 
+  async findByExtId(extId: string): Promise<User | null> {
+    return this.model.findFirst({
+      where: {
+        extId,
+        deletedAt: null,
+      },
+    });
+  }
+
   async findById(id: number): Promise<User | null> {
     return this.model.findFirst({
       where: {

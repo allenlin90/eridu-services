@@ -178,7 +178,10 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 - Automatic key rotation handling
 - `@CurrentUser()` decorator for accessing authenticated user information
 
-**Authorization**: Admin authorization is determined via StudioMembership model (admin in ANY studio = full CRUD via admin endpoints, others = read-only access to `/me/*` endpoints). See [Authentication Guide](docs/AUTHENTICATION_GUIDE.md) for details.
+**Authorization**:
+- **System Admin**: Users with `is_system_admin=true` have full access to `/admin/*` endpoints.
+- **Studio Admin**: Admin access within specific studios is determined via StudioMembership model (Phase 1).
+See [Authentication Guide](docs/AUTHENTICATION_GUIDE.md) for details.
 
 **Service-to-Service Authentication**:
 
@@ -190,7 +193,7 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 
 #### 👤 User Profile (`/me`)
 
-- `GET /me` - Get authenticated user profile information from JWT token
+- `GET /me` - Get authenticated user profile (including `is_system_admin` status)
 
 #### 🎬 User Shows (`/me/shows`)
 

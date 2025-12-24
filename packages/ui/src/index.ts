@@ -1,4 +1,15 @@
 export { LoadingPage, LoadingSpinner } from './components/loading';
+export {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from './components/ui/alert-dialog';
 export { Badge, badgeVariants } from './components/ui/badge';
 export {
   Breadcrumb,
@@ -12,12 +23,47 @@ export {
 export { Button, buttonVariants } from './components/ui/button';
 export { Calendar } from './components/ui/calendar';
 export { DatePickerWithRange } from './components/ui/date-range-picker';
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+} from './components/ui/dialog';
+export {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  useFormField,
+} from './components/ui/form';
 export { Input } from './components/ui/input';
+export { Label } from './components/ui/label';
 export {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from './components/ui/popover';
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from './components/ui/select';
 export { Spinner } from './components/ui/spinner';
 export {
   Table,
@@ -29,6 +75,7 @@ export {
   TableHeader,
   TableRow,
 } from './components/ui/table';
+export { Textarea } from './components/ui/textarea';
 
 // Sidebar components and types
 export type {
@@ -43,3 +90,12 @@ export { NavProjects } from './components/nav-projects';
 export { NavSecondary } from './components/nav-secondary';
 export { NavUser } from './components/nav-user';
 export * from './components/page-transition';
+export { type Team, TeamSwitcher } from './components/team-switcher';
+
+// Hooks
+export type {
+  TableUrlState,
+  TableUrlStateOptions,
+  UseTableUrlStateReturn,
+} from './hooks/use-table-url-state';
+export { useTableUrlState } from './hooks/use-table-url-state';

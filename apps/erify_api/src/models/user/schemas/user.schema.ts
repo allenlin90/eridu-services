@@ -82,19 +82,38 @@ export const bulkCreateUserSchema = z.object({
 // API input schema (snake_case input, transforms to camelCase)
 export const updateUserSchema = z
   .object({
-    ext_id: z.string().min(1).optional(),
+    // Allow null or empty string to clear the value
+    ext_id: z.union([z.string(), z.null()]).optional(),
     email: z.email().optional(),
     name: z.string().min(1, 'User name is required').optional(),
-    profile_url: z.url().optional(),
+    // Allow null or empty string to clear the value
+    profile_url: z.union([z.string().url(), z.literal(''), z.null()]).optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
-  .transform((data) => ({
-    extId: data.ext_id ?? null,
-    email: data.email,
-    name: data.name,
-    profileUrl: data.profile_url ?? null,
-    metadata: data.metadata,
-  }));
+  .transform((data) => {
+    // Only include fields that are present in the input
+    // DO NOT default to null, as this overwrites existing data with null
+    const result: any = {};
+
+    // Transform empty string or null to null for nullable fields
+    if (data.ext_id !== undefined) {
+      result.extId = (data.ext_id === '' || data.ext_id === null) ? null : data.ext_id;
+    }
+
+    if (data.email !== undefined)
+      result.email = data.email;
+    if (data.name !== undefined)
+      result.name = data.name;
+
+    // Transform empty string or null to null for nullable fields
+    if (data.profile_url !== undefined) {
+      result.profileUrl = (data.profile_url === '' || data.profile_url === null) ? null : data.profile_url;
+    }
+
+    if (data.metadata !== undefined)
+      result.metadata = data.metadata;
+    return result;
+  });
 
 export const userDto = userSchema
   .transform((obj) => ({

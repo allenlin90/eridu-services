@@ -1,19 +1,18 @@
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import type { ColumnFiltersState, PaginationState, SortingState } from '@tanstack/react-table';
 import * as React from 'react';
-import type { DateRange } from 'react-day-picker';
 
 /**
  * URL search parameters for table state
  */
 export type TableUrlState = {
-  page: number;
-  page_size: number;
-  sort_by?: string;
-  sort_order?: 'asc' | 'desc';
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
   search?: string;
-  from?: string;
-  to?: string;
+  startDate?: string;
+  endDate?: string;
 };
 
 /**
@@ -26,60 +25,89 @@ export type UseTableUrlStateReturn = {
   onPaginationChange: (updater: PaginationState | ((old: PaginationState) => PaginationState)) => void;
   onSortingChange: (updater: SortingState | ((old: SortingState) => SortingState)) => void;
   onColumnFiltersChange: (updater: ColumnFiltersState | ((old: ColumnFiltersState) => ColumnFiltersState)) => void;
+  setPageCount: (count: number) => void;
+};
+
+export type TableUrlStateOptions = {
+  from: string;
+  autoCorrectPage?: boolean;
 };
 
 /**
  * Custom hook to synchronize URL state with table state
  * Handles conversion between URL search params and TanStack Table state objects
  */
-export function useTableUrlState(from: string): UseTableUrlStateReturn {
+export function useTableUrlState(options: TableUrlStateOptions): UseTableUrlStateReturn {
+  const { from, autoCorrectPage = true } = options;
   const navigate = useNavigate({ from: from as never });
   const searchParams = useSearch({ from: from as never }) as unknown as TableUrlState;
+
+  const [pageCount, setPageCount] = React.useState<number | undefined>(undefined);
 
   // Convert URL params to table state
   const pagination: PaginationState = React.useMemo(
     () => ({
       pageIndex: Math.max(0, (searchParams.page || 1) - 1), // Ensure pageIndex is never negative
-      pageSize: searchParams.page_size || 10,
+      pageSize: searchParams.pageSize || 10,
     }),
-    [searchParams.page, searchParams.page_size],
+    [searchParams.page, searchParams.pageSize],
   );
+
+  // Auto-correct page if it's out of bounds
+  React.useEffect(() => {
+    // If we have data (pageCount defined) and current page is beyond total pages
+    // Note: pagination.pageIndex is 0-indexed, so it must be < pageCount
+    if (autoCorrectPage && pageCount !== undefined) {
+      const currentPage = pagination.pageIndex + 1;
+      const maxPage = Math.max(1, pageCount);
+
+      if (currentPage > maxPage) {
+        (navigate as any)({
+          search: (prev: any) => ({
+            ...prev,
+            page: maxPage,
+          }),
+          replace: true,
+        });
+      }
+    }
+  }, [autoCorrectPage, pageCount, pagination.pageIndex, navigate]);
 
   const sorting: SortingState = React.useMemo(
     () =>
-      searchParams.sort_by
-        ? [{ id: searchParams.sort_by, desc: searchParams.sort_order === 'desc' }]
+      searchParams.sortBy
+        ? [{ id: searchParams.sortBy, desc: searchParams.sortOrder === 'desc' }]
         : [],
-    [searchParams.sort_by, searchParams.sort_order],
+    [searchParams.sortBy, searchParams.sortOrder],
   );
 
   const columnFilters: ColumnFiltersState = React.useMemo(
     () => [
       ...(searchParams.search ? [{ id: 'name', value: searchParams.search }] : []),
-      ...(searchParams.from || searchParams.to
+      ...(searchParams.startDate || searchParams.endDate
         ? [
             {
-              id: 'start_time',
+              id: 'date',
               value: {
-                from: searchParams.from ? new Date(searchParams.from) : undefined,
-                to: searchParams.to ? new Date(searchParams.to) : undefined,
-              } as DateRange,
+                from: searchParams.startDate ? new Date(searchParams.startDate) : undefined,
+                to: searchParams.endDate ? new Date(searchParams.endDate) : undefined,
+              },
             },
           ]
         : []),
     ],
-    [searchParams.search, searchParams.from, searchParams.to],
+    [searchParams.search, searchParams.startDate, searchParams.endDate],
   );
 
   // Update URL when table state changes
   const handlePaginationChange = React.useCallback(
     (updater: PaginationState | ((old: PaginationState) => PaginationState)) => {
       const newPagination = typeof updater === 'function' ? updater(pagination) : updater;
-      (navigate as unknown as (options: { search: (prev: Record<string, unknown>) => Record<string, unknown> }) => void)({
-        search: (prev: Record<string, unknown>) => ({
+      (navigate as any)({
+        search: (prev: any) => ({
           ...prev,
           page: newPagination.pageIndex + 1,
-          page_size: newPagination.pageSize,
+          pageSize: newPagination.pageSize,
         }),
       });
     },
@@ -89,11 +117,11 @@ export function useTableUrlState(from: string): UseTableUrlStateReturn {
   const handleSortingChange = React.useCallback(
     (updater: SortingState | ((old: SortingState) => SortingState)) => {
       const newSorting = typeof updater === 'function' ? updater(sorting) : updater;
-      (navigate as unknown as (options: { search: (prev: Record<string, unknown>) => Record<string, unknown> }) => void)({
-        search: (prev: Record<string, unknown>) => ({
+      (navigate as any)({
+        search: (prev: any) => ({
           ...prev,
-          sort_by: newSorting[0]?.id,
-          sort_order: newSorting[0]?.desc ? 'desc' : 'asc',
+          sortBy: newSorting[0]?.id,
+          sortOrder: newSorting[0]?.desc ? 'desc' : 'asc',
         }),
       });
     },
@@ -104,15 +132,15 @@ export function useTableUrlState(from: string): UseTableUrlStateReturn {
     (updater: ColumnFiltersState | ((old: ColumnFiltersState) => ColumnFiltersState)) => {
       const newFilters = typeof updater === 'function' ? updater(columnFilters) : updater;
 
-      const searchFilter = newFilters.find((f) => f.id === 'name')?.value as string | undefined;
-      const dateFilter = newFilters.find((f) => f.id === 'start_time')?.value as DateRange | undefined;
+      const searchFilter = newFilters.find((f: any) => f.id === 'name')?.value as string | undefined;
+      const dateFilter = newFilters.find((f: any) => f.id === 'date')?.value as { from?: Date; to?: Date } | undefined;
 
-      (navigate as unknown as (options: { search: (prev: Record<string, unknown>) => Record<string, unknown> }) => void)({
-        search: (prev: Record<string, unknown>) => ({
+      (navigate as any)({
+        search: (prev: any) => ({
           ...prev,
           search: searchFilter || undefined,
-          from: dateFilter?.from?.toISOString(),
-          to: dateFilter?.to?.toISOString(),
+          startDate: dateFilter?.from?.toISOString(),
+          endDate: dateFilter?.to?.toISOString(),
           page: 1, // Reset to first page when filters change
         }),
       });
@@ -127,5 +155,6 @@ export function useTableUrlState(from: string): UseTableUrlStateReturn {
     onPaginationChange: handlePaginationChange,
     onSortingChange: handleSortingChange,
     onColumnFiltersChange: handleColumnFiltersChange,
+    setPageCount,
   };
 }

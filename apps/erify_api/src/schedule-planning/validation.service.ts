@@ -22,6 +22,12 @@ export class ValidationService {
    * Validates an entire schedule including all shows in the plan document.
    *
    * @param schedule - The schedule to validate
+   * @param schedule.id - Schedule ID
+   * @param schedule.uid - Schedule unique identifier
+   * @param schedule.startDate - Schedule start date
+   * @param schedule.endDate - Schedule end date
+   * @param schedule.planDocument - Plan document containing shows
+   * @param schedule.clientId - Client ID (nullable)
    * @param tx - Optional transaction context
    * @returns Validation result with errors if any
    */

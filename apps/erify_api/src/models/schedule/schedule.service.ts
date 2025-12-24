@@ -93,6 +93,16 @@ export class ScheduleService extends BaseModelService {
    * Builds Prisma where clause from filter parameters.
    *
    * @param filters - Filter parameters from query
+   * @param filters.client_id - Optional client ID filter
+   * @param filters.status - Optional status filter
+   * @param filters.created_by - Optional created by filter
+   * @param filters.published_by - Optional published by filter
+   * @param filters.start_date_from - Optional start date from filter
+   * @param filters.start_date_to - Optional start date to filter
+   * @param filters.end_date_from - Optional end date from filter
+   * @param filters.end_date_to - Optional end date to filter
+   * @param filters.name - Optional name filter
+   * @param filters.include_deleted - Whether to include deleted records
    * @returns Prisma where clause for schedule filtering
    */
   private buildScheduleWhereClause(filters: {
@@ -677,6 +687,11 @@ export class ScheduleService extends BaseModelService {
    * Gets monthly overview of schedules within a date range, optionally filtered by clients.
    *
    * @param params - Query parameters for monthly overview
+   * @param params.startDate - Start date for the overview period
+   * @param params.endDate - End date for the overview period
+   * @param params.clientIds - Optional array of client IDs to filter by
+   * @param params.status - Optional status filter
+   * @param params.includeDeleted - Whether to include deleted schedules
    * @param include - Optional relations to include
    * @returns Monthly overview with schedules grouped by client and status
    */

@@ -5,7 +5,7 @@ import type { Reflector } from '@nestjs/core';
 import { AdminGuard } from './admin.guard';
 
 import { IS_ADMIN_KEY } from '@/lib/decorators/admin-protected.decorator';
-import type { StudioMembershipService } from '@/models/membership/studio-membership.service';
+import type { UserService } from '@/models/user/user.service';
 import { createMockExecutionContext } from '@/testing/guard-test.helper';
 
 jest.mock('@eridu/auth-sdk/adapters/nestjs/current-user.decorator', () => ({
@@ -43,24 +43,24 @@ jest.mock('@eridu/auth-sdk/types', () => ({}));
 
 describe('adminGuard', () => {
   let guard: AdminGuard;
-  let studioMembershipService: jest.Mocked<StudioMembershipService>;
+  let userService: jest.Mocked<UserService>;
   let reflector: jest.Mocked<Reflector>;
-  let findAdminMembershipByExtIdSpy: jest.Mock;
+  let getUserByExtIdSpy: jest.Mock;
   let getAllAndOverrideSpy: jest.Mock;
 
   beforeEach(() => {
-    findAdminMembershipByExtIdSpy = jest.fn();
+    getUserByExtIdSpy = jest.fn();
     getAllAndOverrideSpy = jest.fn().mockReturnValue(true);
-    studioMembershipService = {
-      findAdminMembershipByExtId: findAdminMembershipByExtIdSpy,
+    userService = {
+      getUserByExtId: getUserByExtIdSpy,
       // Other methods are not used in this guard
-    } as unknown as jest.Mocked<StudioMembershipService>;
+    } as unknown as jest.Mocked<UserService>;
 
     reflector = {
       getAllAndOverride: getAllAndOverrideSpy,
     } as unknown as jest.Mocked<Reflector>;
 
-    guard = new AdminGuard(reflector, studioMembershipService);
+    guard = new AdminGuard(reflector, userService);
   });
 
   afterEach(() => {
@@ -72,8 +72,9 @@ describe('adminGuard', () => {
     const email = 'admin@example.com';
 
     getAllAndOverrideSpy.mockReturnValue(true);
-    findAdminMembershipByExtIdSpy.mockResolvedValue({
-      studioId: BigInt(1),
+    getUserByExtIdSpy.mockResolvedValue({
+      id: BigInt(1),
+      isSystemAdmin: true,
     } as unknown);
 
     const context = createMockExecutionContext({
@@ -90,7 +91,7 @@ describe('adminGuard', () => {
       context.getHandler(),
       context.getClass(),
     ]);
-    expect(findAdminMembershipByExtIdSpy).toHaveBeenCalledWith(extId);
+    expect(getUserByExtIdSpy).toHaveBeenCalledWith(extId);
   });
 
   it('should throw UnauthorizedException when user is missing', async () => {
@@ -106,8 +107,8 @@ describe('adminGuard', () => {
       context.getHandler(),
       context.getClass(),
     ]);
-    // Should not call membership service if user is missing
-    expect(findAdminMembershipByExtIdSpy).not.toHaveBeenCalled();
+    // Should not call user service if user is missing
+    expect(getUserByExtIdSpy).not.toHaveBeenCalled();
   });
 
   it('should throw ForbiddenException when user is not admin', async () => {
@@ -115,7 +116,10 @@ describe('adminGuard', () => {
     const email = 'user@example.com';
 
     getAllAndOverrideSpy.mockReturnValue(true);
-    findAdminMembershipByExtIdSpy.mockResolvedValue(null);
+    getUserByExtIdSpy.mockResolvedValue({
+      id: BigInt(2),
+      isSystemAdmin: false,
+    } as unknown);
 
     const context = createMockExecutionContext({
       user: {
@@ -131,6 +135,6 @@ describe('adminGuard', () => {
       context.getHandler(),
       context.getClass(),
     ]);
-    expect(findAdminMembershipByExtIdSpy).toHaveBeenCalledWith(extId);
+    expect(getUserByExtIdSpy).toHaveBeenCalledWith(extId);
   });
 });

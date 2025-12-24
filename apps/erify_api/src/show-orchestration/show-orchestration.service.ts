@@ -38,6 +38,10 @@ export class ShowOrchestrationService {
    * Retrieves shows with all relations (MCs, platforms, clients, etc.).
    *
    * @param params - Query parameters
+   * @param params.skip - Number of records to skip
+   * @param params.take - Number of records to take
+   * @param params.where - Where clause for filtering
+   * @param params.orderBy - Order by clause for sorting
    * @param include - Optional Prisma include for relations
    * @returns Shows with relations
    */

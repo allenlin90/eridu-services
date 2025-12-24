@@ -23,7 +23,7 @@ The Eridu Services API is built using NestJS with a modular architecture that se
 - **Infrastructure Layer**: Database access, utilities, and common services
 - **Common Layer**: Shared utilities, decorators, and base classes
 - **Authentication**: JWK-based JWT token validation using `@eridu/auth-sdk` SDK (validates tokens from `eridu_auth` service using Better Auth's JWKS endpoint)
-- **Authorization**: Simple StudioMembership model for admin verification (Phase 1 basics, Phase 3 Client/Platform memberships)
+- **Authorization**: System Admin via `isSystemAdmin` flag (Phase 1), Studio Admin via StudioMembership model (Phase 1), Client/Platform memberships (Phase 3)
 
 **Phase 2 Planned Features:**
 

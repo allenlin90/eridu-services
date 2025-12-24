@@ -1,6 +1,12 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import {
+  createShowStandardInputSchema,
+  showStandardApiResponseSchema,
+  updateShowStandardInputSchema,
+} from '@eridu/api-types/show-standards';
+
 import { ShowStandardService } from '@/models/show-standard/show-standard.service';
 
 export const showStandardSchema = z.object({
@@ -14,15 +20,12 @@ export const showStandardSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const createShowStandardSchema = z
-  .object({
-    name: z.string().min(1),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
+export const createShowStandardSchema = createShowStandardInputSchema.transform(
+  (data) => ({
     name: data.name,
     metadata: data.metadata,
-  }));
+  }),
+);
 
 // CORE input schema
 export const createShowStandardCoreSchema = z.object({
@@ -31,15 +34,12 @@ export const createShowStandardCoreSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const updateShowStandardSchema = z
-  .object({
-    name: z.string().min(1).optional(),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
+export const updateShowStandardSchema = updateShowStandardInputSchema.transform(
+  (data) => ({
     name: data.name,
     metadata: data.metadata,
-  }));
+  }),
+);
 
 export const updateShowStandardCoreSchema = z.object({
   name: z.string().optional(),
@@ -54,15 +54,7 @@ export const showStandardDto = showStandardSchema
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
   }))
-  .pipe(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      metadata: z.record(z.string(), z.any()),
-      created_at: z.iso.datetime(),
-      updated_at: z.iso.datetime(),
-    }),
-  );
+  .pipe(showStandardApiResponseSchema);
 
 // DTOs for input/output
 export class CreateShowStandardDto extends createZodDto(

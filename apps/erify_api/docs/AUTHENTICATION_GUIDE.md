@@ -9,10 +9,10 @@ This guide provides comprehensive documentation for authentication and authoriza
 ### Hybrid Approach Rationale
 
 - **JWT Validation**: Extract user information from `eridu_auth` service tokens using the `@eridu/auth-sdk` SDK
-- **Simple Authorization**: Use StudioMembership model to distinguish admin vs non-admin users
-- **Admin Write, Non-Admin Read-Only**: Clear access pattern without complex role hierarchies
+- **System Admin Authorization**: Use `isSystemAdmin` flag on User model for system-wide admin access (Phase 1)
+- **Studio Authorization**: Use StudioMembership model for studio-specific access (Phase 1)
 - **Backdoor API Key**: Service-to-service authentication for privileged operations (user creation, updates, membership management) via separate `/backdoor/*` endpoints
-- **Deferred Complexity**: Advanced authorization (Client/Platform memberships, complex roles, permissions) moved to Phase 3
+- **Deferred Complexity**: Advanced authorization (Client/Platform memberships, complex roles, granular permissions) moved to Phase 3
 
 ## Architecture
 
@@ -38,10 +38,10 @@ sequenceDiagram
     SDK->>SDK: Extract user info from payload
     SDK->>API: Attach user to request
     alt Admin endpoint
-        API->>StudioMembershipService: Check admin status
-        StudioMembershipService->>Database: Query studio membership
-        Database-->>StudioMembershipService: Return membership data
-        StudioMembershipService-->>API: Admin status
+        API->>UserService: Check isSystemAdmin status
+        UserService->>Database: Query user by ext_id
+        Database-->>UserService: Return user data
+        UserService-->>API: Allow/Deny
     end
     API-->>Client: Response (write/read-only)
 ```
@@ -61,11 +61,12 @@ The `@eridu/auth-sdk` SDK handles all JWT validation:
 
 ### 2. Authorization (Service-Specific)
 
-erify_api implements authorization using the StudioMembership model:
+erify_api implements authorization using the `isSystemAdmin` flag and StudioMembership model:
 
-- **Admin Check**: `AdminGuard` checks if user has admin role in ANY studio
-- **Read-Only Access**: Non-admin users can only read data
-- **Write Access**: Admin users can perform CRUD operations
+- **System Admin Check**: `AdminGuard` checks if user has `isSystemAdmin=true` on their User record. This grants global access to `/admin/*` endpoints.
+- **Studio Admin Check**: Non-system admins may still have admin roles within specific studios via `StudioMembership`. (Handled by service logic, not global guard).
+- **Read-Only Access**: General users have read access to their own data (`/me`).
+- **Write Access**: System Admins can perform global CRUD operations. Studio Admins can manage their specific studio resources.
 
 ### 3. Service-to-Service Authentication
 
@@ -346,14 +347,14 @@ model StudioMembership {
 
 - Registered as global guard in `app.module.ts`
 - Checks for `@AdminProtected()` decorator - only enforces admin check if present
-- Verifies user has admin studio membership in ANY studio via `StudioMembershipService.findAdminMembershipByExtId()`
+- Verifies user has `isSystemAdmin=true` via `UserService.getUserByExtId()`
 - Throws `UnauthorizedException` if user is not authenticated
-- Throws `ForbiddenException` if user is not admin
+- Throws `ForbiddenException` if user is not a system admin
 - Uses `ext_id` from authenticated user for database lookup
 
 **Behavior:**
 
-- If `@AdminProtected()` decorator is present: Enforces admin authorization
+- If `@AdminProtected()` decorator is present: Enforces System Admin authorization
 - If decorator not present: Allows access (returns `true`) - useful for user-scoped endpoints
 
 **Status**: ✅ Implemented and registered as global guard
@@ -447,9 +448,9 @@ Standard NestJS error response with statusCode, message, error, timestamp, and p
 ### Common Issues
 
 1. **Admin Access Denied**
-   - Verify user has admin studio membership in database
-   - Check StudioMembership.role = 'admin'
-   - Ensure StudioMembership.deletedAt is null
+   - Verify user has `isSystemAdmin=true` in `users` table
+   - Ensure user record is not deleted (`deletedAt` is null)
+   - Studio membership roles do not grant global `/admin/*` access (replaced in Phase 1 Refactor)
 
 2. **Service-to-Service Auth Failed**
    - Verify BACKDOOR_API_KEY matches (if using backdoor endpoints)

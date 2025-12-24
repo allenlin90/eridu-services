@@ -89,6 +89,11 @@ export type ModelServiceTestConfig<TService, TRepository> = {
  * Creates a NestJS testing module for model service tests with standardized setup.
  *
  * @param config - Configuration for the test module
+ * @param config.serviceClass - The service class to test
+ * @param config.repositoryClass - The repository class to mock
+ * @param config.repositoryMock - Mock instance for the repository
+ * @param config.utilityMock - Optional mock for UtilityService
+ * @param config.additionalProviders - Additional providers for the test module
  * @returns A compiled TestingModule
  *
  * @example

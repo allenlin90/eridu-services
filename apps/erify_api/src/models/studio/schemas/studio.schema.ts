@@ -1,6 +1,12 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import {
+  createStudioInputSchema,
+  studioApiResponseSchema,
+  updateStudioInputSchema,
+} from '@eridu/api-types/studios';
+
 import { StudioService } from '@/models/studio/studio.service';
 
 export const studioSchema = z.object({
@@ -15,17 +21,11 @@ export const studioSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const createStudioSchema = z
-  .object({
-    name: z.string().min(1, 'Studio name is required'),
-    address: z.string().min(1, 'Address is required'),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
-    name: data.name,
-    address: data.address,
-    metadata: data.metadata,
-  }));
+export const createStudioSchema = createStudioInputSchema.transform((data) => ({
+  name: data.name,
+  address: data.address,
+  metadata: data.metadata,
+}));
 
 // CORE input schema
 export const createStudioCoreSchema = z.object({
@@ -35,17 +35,11 @@ export const createStudioCoreSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const updateStudioSchema = z
-  .object({
-    name: z.string().min(1, 'Studio name is required').optional(),
-    address: z.string().min(1, 'Address is required').optional(),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
-    name: data.name,
-    address: data.address,
-    metadata: data.metadata,
-  }));
+export const updateStudioSchema = updateStudioInputSchema.transform((data) => ({
+  name: data.name,
+  address: data.address,
+  metadata: data.metadata,
+}));
 
 export const updateStudioCoreSchema = z.object({
   name: z.string().optional(),
@@ -62,16 +56,7 @@ export const studioDto = studioSchema
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
   }))
-  .pipe(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      address: z.string(),
-      metadata: z.record(z.string(), z.any()),
-      created_at: z.iso.datetime(),
-      updated_at: z.iso.datetime(),
-    }),
-  );
+  .pipe(studioApiResponseSchema);
 
 // DTOs for input/output
 export class CreateStudioDto extends createZodDto(createStudioSchema) {}

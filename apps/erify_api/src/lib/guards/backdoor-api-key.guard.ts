@@ -50,7 +50,7 @@ export class BackdoorApiKeyGuard extends BaseApiKeyGuard {
    * Validate additional request requirements (e.g., IP whitelisting)
    * Override this method to add IP whitelisting or other validations
    *
-   * @param request - Express request object
+   * @param _request - Express request object
    * @returns true if request is valid, throws exception otherwise
    */
   protected validateRequest(_request: Request): boolean {

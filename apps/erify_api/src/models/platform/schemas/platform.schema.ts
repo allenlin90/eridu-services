@@ -1,6 +1,12 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import {
+  createPlatformInputSchema,
+  platformApiResponseSchema,
+  updatePlatformInputSchema,
+} from '@eridu/api-types/platforms';
+
 import { PlatformService } from '@/models/platform/platform.service';
 
 export const platformSchema = z.object({
@@ -15,17 +21,13 @@ export const platformSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const createPlatformSchema = z
-  .object({
-    name: z.string().min(1, 'Platform name is required'),
-    api_config: z.record(z.string(), z.any()),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
+export const createPlatformSchema = createPlatformInputSchema.transform(
+  (data) => ({
     name: data.name,
-    apiConfig: data.api_config,
+    apiConfig: data.api_config || {},
     metadata: data.metadata,
-  }));
+  }),
+);
 
 // CORE input schema
 export const createPlatformCoreSchema = z.object({
@@ -35,17 +37,13 @@ export const createPlatformCoreSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const updatePlatformSchema = z
-  .object({
-    name: z.string().min(1, 'Platform name is required').optional(),
-    api_config: z.record(z.string(), z.any()).optional(),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
+export const updatePlatformSchema = updatePlatformInputSchema.transform(
+  (data) => ({
     name: data.name,
     apiConfig: data.api_config,
     metadata: data.metadata,
-  }));
+  }),
+);
 
 export const updatePlatformCoreSchema = z.object({
   name: z.string().optional(),
@@ -62,16 +60,7 @@ export const platformDto = platformSchema
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
   }))
-  .pipe(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      api_config: z.record(z.string(), z.any()),
-      metadata: z.record(z.string(), z.any()),
-      created_at: z.iso.datetime(),
-      updated_at: z.iso.datetime(),
-    }),
-  );
+  .pipe(platformApiResponseSchema);
 
 // DTOs for input/output
 export class CreatePlatformDto extends createZodDto(createPlatformSchema) {}

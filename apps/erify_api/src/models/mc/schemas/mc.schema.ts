@@ -1,9 +1,14 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import {
+  createMcInputSchema,
+  mcApiResponseSchema,
+  updateMcInputSchema,
+} from '@eridu/api-types/mcs';
+
 import { McService } from '@/models/mc/mc.service';
 import { userDto, userSchema } from '@/models/user/schemas/user.schema';
-import { UserService } from '@/models/user/user.service';
 
 export const mcSchema = z.object({
   id: z.bigint(),
@@ -19,36 +24,21 @@ export const mcSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const createMcSchema = z
-  .object({
-    user_id: z.string().startsWith(UserService.UID_PREFIX).optional(),
-    name: z.string().min(1, 'MC name is required'),
-    alias_name: z.string().min(1, 'Alias name is required'),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
-    userId: data.user_id ?? null,
-    name: data.name,
-    aliasName: data.alias_name,
-    metadata: data.metadata,
-  }));
+export const createMcSchema = createMcInputSchema.transform((data) => ({
+  userId: data.user_id ?? null,
+  name: data.name,
+  aliasName: data.alias_name,
+  metadata: data.metadata,
+}));
 
 // API input schema (snake_case input, transforms to camelCase)
-export const updateMcSchema = z
-  .object({
-    user_id: z.string().startsWith(UserService.UID_PREFIX).optional(),
-    name: z.string().min(1, 'MC name is required').optional(),
-    alias_name: z.string().min(1, 'Alias name is required').optional(),
-    is_banned: z.boolean().optional(),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
-    userId: data.user_id ?? null,
-    name: data.name,
-    aliasName: data.alias_name,
-    isBanned: data.is_banned,
-    metadata: data.metadata,
-  }));
+export const updateMcSchema = updateMcInputSchema.transform((data) => ({
+  userId: data.user_id ?? null,
+  name: data.name,
+  aliasName: data.alias_name,
+  isBanned: data.is_banned,
+  metadata: data.metadata,
+}));
 
 export const mcDto = mcSchema
   .transform((obj) => ({
@@ -61,18 +51,7 @@ export const mcDto = mcSchema
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
   }))
-  .pipe(
-    z.object({
-      id: z.string(),
-      user_id: z.string().nullable(), // Changed from bigint to string (UID)
-      name: z.string(),
-      alias_name: z.string(),
-      is_banned: z.boolean(),
-      metadata: z.record(z.string(), z.any()),
-      created_at: z.iso.datetime(),
-      updated_at: z.iso.datetime(),
-    }),
-  );
+  .pipe(mcApiResponseSchema);
 
 // Schema for MC with user data (used in admin endpoints)
 export const mcWithUserSchema = z.object({
@@ -106,15 +85,7 @@ export const mcWithUserDto = mcWithUserSchema
     };
   })
   .pipe(
-    z.object({
-      id: z.string(),
-      user_id: z.string().nullable(),
-      name: z.string(),
-      alias_name: z.string(),
-      is_banned: z.boolean(),
-      metadata: z.record(z.string(), z.any()),
-      created_at: z.iso.datetime(),
-      updated_at: z.iso.datetime(),
+    mcApiResponseSchema.extend({
       user: z
         .object({
           id: z.string(),

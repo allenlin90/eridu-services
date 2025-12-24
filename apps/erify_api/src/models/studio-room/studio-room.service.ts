@@ -63,18 +63,28 @@ export class StudioRoomService extends BaseModelService {
       skip?: number;
       take?: number;
       orderBy?: Record<string, 'asc' | 'desc'>;
+      studioId?: string;
     },
     include?: T,
   ): Promise<StudioRoom[] | StudioRoomWithIncludes<T>[]> {
-    return this.studioRoomRepository.findActiveStudioRooms(params, include);
+    const { studioId, ...rest } = params;
+    return this.studioRoomRepository.findActiveStudioRooms(
+      {
+        ...rest,
+        studioUid: studioId,
+      },
+      include,
+    );
   }
 
   async getStudioRoomsByStudioId(studioId: bigint): Promise<StudioRoom[]> {
     return this.studioRoomRepository.findByStudioId(studioId);
   }
 
-  async countStudioRooms(): Promise<number> {
-    return this.studioRoomRepository.count({});
+  async countStudioRooms(params?: { studioId?: string }): Promise<number> {
+    return this.studioRoomRepository.count({
+      ...(params?.studioId && { studio: { uid: params.studioId } }),
+    });
   }
 
   async countStudioRoomsByStudioId(studioId: bigint): Promise<number> {

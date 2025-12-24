@@ -1,12 +1,14 @@
 import 'dotenv/config';
 
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient, Studio, User } from '@prisma/client';
+import type { Studio, User } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 
 import { fixtures, getClientUidByName } from './fixtures';
 
 // Initialize Prisma Client with adapter
+// eslint-disable-next-line
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
   throw new Error('DATABASE_URL is not defined in environment variables');
@@ -90,16 +92,16 @@ async function isDatabaseSeeded(): Promise<boolean> {
     const hasAllMCs = mcs >= 30;
     const hasAllStudios = studios.length === 1;
 
-    const isComplete =
-      hasAllShowTypes &&
-      hasAllShowStatuses &&
-      hasAllShowStandards &&
-      hasAllPlatforms &&
-      hasAllClients &&
-      hasAllUsers &&
-      hasAllMCs &&
-      hasAllStudios &&
-      hasAllRooms;
+    const isComplete
+      = hasAllShowTypes
+      && hasAllShowStatuses
+      && hasAllShowStandards
+      && hasAllPlatforms
+      && hasAllClients
+      && hasAllUsers
+      && hasAllMCs
+      && hasAllStudios
+      && hasAllRooms;
 
     if (!isComplete) {
       console.log('🔍 Incomplete seeding detected:');
@@ -402,7 +404,7 @@ async function main() {
         { name: 'Intel', category: 'Semiconductors', industry: 'Technology' },
         // Beauty & Cosmetics (10)
         {
-          name: "L'Oréal",
+          name: 'L\'Oréal',
           category: 'Cosmetics',
           industry: 'Beauty & Personal Care',
         },
@@ -460,7 +462,7 @@ async function main() {
         { name: 'Pepsi', category: 'Beverages', industry: 'Food & Beverage' },
         { name: 'Starbucks', category: 'Coffee', industry: 'Food & Beverage' },
         {
-          name: "McDonald's",
+          name: 'McDonald\'s',
           category: 'Fast Food',
           industry: 'Food & Beverage',
         },
@@ -476,7 +478,7 @@ async function main() {
           industry: 'Food & Beverage',
         },
         {
-          name: "Ben & Jerry's",
+          name: 'Ben & Jerry\'s',
           category: 'Ice Cream',
           industry: 'Food & Beverage',
         },
@@ -568,6 +570,7 @@ async function main() {
           uid: fixtures.users.admin,
           email: 'admin@example.com',
           name: 'Admin User',
+          isSystemAdmin: true,
           metadata: {
             role: 'admin',
             department: 'Management',
@@ -597,8 +600,8 @@ async function main() {
       ];
 
       for (let i = 1; i <= 30; i++) {
-        const specialization =
-          specializations[(i - 1) % specializations.length];
+        const specialization
+          = specializations[(i - 1) % specializations.length];
         const experience = `${Math.floor(Math.random() * 10) + 1} years`;
         const uidKey = `mc${i}` as keyof typeof fixtures.users;
         const mcUser = await tx.user.upsert({
@@ -642,8 +645,8 @@ async function main() {
 
       // Create 30 MCs, each linked to one of the 30 MC users (skip admin user at index 0)
       for (let i = 1; i <= 30; i++) {
-        const specialization =
-          mcSpecializations[(i - 1) % mcSpecializations.length];
+        const specialization
+          = mcSpecializations[(i - 1) % mcSpecializations.length];
         const experience = `${Math.floor(Math.random() * 10) + 1} years`;
         const mcName = `MC ${i}`;
         const aliasName = `MC${i}`;

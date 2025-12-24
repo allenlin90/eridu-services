@@ -21,7 +21,7 @@ Phase 1 establishes the core production functions with simplified authentication
 - **Validation & Serialization**: Zod-based input validation and response serialization
 - **Database Integration**: Prisma ORM with PostgreSQL, base repository patterns
 - **API Foundation**: RESTful endpoints with consistent error handling and pagination
-- **Simplified Authentication**: Admin users access admin endpoints for CRUD operations, other users access user-scoped endpoints (`/me/*`) for their own data
+- **Simplified Authentication**: System Admin users access admin endpoints for CRUD operations, other users access user-scoped endpoints (`/me/*`) for their own data
 
 ### 2. Core Entity Management
 
@@ -82,9 +82,10 @@ Phase 1 establishes the core production functions with simplified authentication
   - Automatic cache recovery: SDK automatically refetches JWKS if cache is missing (handles edge/worker runtimes seamlessly)
   - Automatic key rotation handling
   - `JwtAuthGuard` integrated using `@eridu/auth-sdk` SDK
-- **Authorization**: StudioMembership model for admin verification (admin in ANY studio = full CRUD via admin endpoints)
-  - StudioMembership model and service methods (`isUserAdmin()`)
-  - AdminGuard implementation pending (JWT + StudioMembership verification)
+- **Authorization**:
+  - **System Admin**: Users with `isSystemAdmin=true` have full CRUD access via `/admin/*` endpoints.
+  - **Studio Admin**: StudioMembership model handles studio-specific roles (Phase 1).
+  - **AdminGuard**: Global guard enforces System Admin check for `@AdminProtected()` endpoints.
   - Non-admin users access user-scoped endpoints (`/me/*`) with JWT authentication
 - **Service-to-Service Auth**: API key guards for privileged operations
   - Google Sheets API key for schedule operations
@@ -294,7 +295,8 @@ Phase 1 establishes the core production functions with simplified authentication
 
 ### User Access Strategy
 
-- **Admin Users**: Full CRUD access via admin endpoints (verified via StudioMembership in ANY studio)
+- **System Admin Users**: Full CRUD access via admin endpoints (verified via `isSystemAdmin=true`)
+- **Studio Admin Users**: Studio-specific access via StudioMembership (Phase 1)
 - **Other Users**: Access user-scoped endpoints (`/me/*`) with JWT authentication for their own data
 - **Service Integration**: API key authentication for internal operations
 - **Future**: Client/Platform memberships in Phase 3
