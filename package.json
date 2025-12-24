@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
-    "dev": "turbo dev",
+    "dev": "turbo dev --concurrency=20",
+    "dev:studios": "turbo dev --filter=erify_studios... --filter=erify_api... --filter=eridu_auth...",
     "lint": "turbo lint",
     "test": "turbo test",
     "sherif": "pnpm dlx sherif@latest",
@@ -16,7 +17,7 @@
     "turbo": "^2.6.1",
     "typescript": "^5.9.3"
   },
-  "packageManager": "pnpm@10.23.0",
+  "packageManager": "pnpm@10.25.0",
   "engines": {
     "node": ">=22"
   }

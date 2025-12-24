@@ -23,10 +23,15 @@ import {
   UpdateStudioDto,
 } from '@/models/studio/schemas/studio.schema';
 import { StudioService } from '@/models/studio/studio.service';
+import { studioRoomWithStudioDto } from '@/models/studio-room/schemas/studio-room.schema';
+import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 
 @Controller('admin/studios')
 export class AdminStudioController extends BaseAdminController {
-  constructor(private readonly studioService: StudioService) {
+  constructor(
+    private readonly studioService: StudioService,
+    private readonly studioRoomService: StudioRoomService,
+  ) {
     super();
   }
 
@@ -34,6 +39,26 @@ export class AdminStudioController extends BaseAdminController {
   @AdminResponse(studioDto, HttpStatus.CREATED, 'Studio created successfully')
   createStudio(@Body() body: CreateStudioDto) {
     return this.studioService.createStudio(body);
+  }
+
+  @Get(':id/studio-rooms')
+  @AdminPaginatedResponse(
+    studioRoomWithStudioDto,
+    'List of studio rooms for a studio',
+  )
+  async getStudioRooms(
+    @Param('id', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio'))
+    id: string,
+    @Query() query: PaginationQueryDto,
+  ) {
+    const data = await this.studioRoomService.getStudioRooms(
+      { skip: query.skip, take: query.take, studioId: id },
+      { studio: true },
+    );
+    const total = await this.studioRoomService.countStudioRooms({
+      studioId: id,
+    });
+    return this.createPaginatedResponse(data, total, query);
   }
 
   @Get()

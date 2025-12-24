@@ -1,0 +1,9 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "admin_access_verifying": "Verifying admin access...",
+  "admin_access_denied_title": "Access Denied",
+  "admin_access_denied_desc": "You do not have permission to view this page.",
+  "admin_access_required_title": "Admin Access Required",
+  "admin_access_required_desc": "Your account does not have system administrator privileges.",
+  "go_home": "Go Home"
+}

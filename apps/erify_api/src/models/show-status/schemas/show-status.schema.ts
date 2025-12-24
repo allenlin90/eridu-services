@@ -1,6 +1,12 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import {
+  createShowStatusInputSchema,
+  showStatusApiResponseSchema,
+  updateShowStatusInputSchema,
+} from '@eridu/api-types/show-statuses';
+
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 
 export const showStatusSchema = z.object({
@@ -14,15 +20,12 @@ export const showStatusSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const createShowStatusSchema = z
-  .object({
-    name: z.string().min(1, 'Show status name is required'),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
+export const createShowStatusSchema = createShowStatusInputSchema.transform(
+  (data) => ({
     name: data.name,
     metadata: data.metadata,
-  }));
+  }),
+);
 
 // CORE input schema
 export const createShowStatusCoreSchema = z.object({
@@ -31,15 +34,12 @@ export const createShowStatusCoreSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const updateShowStatusSchema = z
-  .object({
-    name: z.string().min(1, 'Show status name is required').optional(),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
+export const updateShowStatusSchema = updateShowStatusInputSchema.transform(
+  (data) => ({
     name: data.name,
     metadata: data.metadata,
-  }));
+  }),
+);
 
 export const updateShowStatusCoreSchema = z.object({
   name: z.string().optional(),
@@ -54,15 +54,7 @@ export const showStatusDto = showStatusSchema
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
   }))
-  .pipe(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      metadata: z.record(z.string(), z.any()),
-      created_at: z.iso.datetime(),
-      updated_at: z.iso.datetime(),
-    }),
-  );
+  .pipe(showStatusApiResponseSchema);
 
 // DTOs for input/output
 export class CreateShowStatusDto extends createZodDto(createShowStatusSchema) {}

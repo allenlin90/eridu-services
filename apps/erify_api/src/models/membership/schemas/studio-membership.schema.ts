@@ -1,20 +1,20 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import {
+  createMembershipInputSchema,
+  membershipApiResponseSchema,
+  STUDIO_ROLE,
+  updateMembershipInputSchema,
+} from '@eridu/api-types/memberships';
+
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { studioSchema } from '@/models/studio/schemas/studio.schema';
 import { StudioService } from '@/models/studio/studio.service';
 import { userDto, userSchema } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
 
-// Role types for studio membership permissions
-export const STUDIO_ROLE = {
-  ADMIN: 'admin',
-  MANAGER: 'manager',
-  MEMBER: 'member',
-} as const;
-
-// Reusable validation functions
+// Basic validation for UIDs from services
 const validateUserUid = z.string().startsWith(UserService.UID_PREFIX);
 const validateStudioUid = z.string().startsWith(StudioService.UID_PREFIX);
 
@@ -31,36 +31,24 @@ export const studioMembershipSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const createStudioMembershipSchema = z
-  .object({
-    user_id: validateUserUid,
-    studio_id: validateStudioUid,
-    role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
+export const createStudioMembershipSchema = createMembershipInputSchema.transform(
+  (data) => ({
     userId: data.user_id,
     studioId: data.studio_id,
     role: data.role,
     metadata: data.metadata || {},
-  }));
+  }),
+);
 
 // API input schema (snake_case input, transforms to camelCase)
-export const updateStudioMembershipSchema = z
-  .object({
-    user_id: validateUserUid.optional(),
-    studio_id: validateStudioUid.optional(),
-    role: z
-      .enum(Object.values(STUDIO_ROLE) as [string, ...string[]])
-      .optional(),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
+export const updateStudioMembershipSchema = updateMembershipInputSchema.transform(
+  (data) => ({
     userId: data.user_id,
     studioId: data.studio_id,
     role: data.role,
     metadata: data.metadata,
-  }));
+  }),
+);
 
 // Basic studio membership DTO (without related data)
 // Note: user_id and studio_id are set to null when relations are not loaded.
@@ -75,17 +63,7 @@ export const studioMembershipDto = studioMembershipSchema
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
   }))
-  .pipe(
-    z.object({
-      id: z.string(),
-      user_id: z.string().nullable(), // Changed from bigint to string (UID)
-      studio_id: z.string().nullable(), // Changed from bigint to string (UID)
-      role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
-      metadata: z.record(z.string(), z.any()),
-      created_at: z.iso.datetime(),
-      updated_at: z.iso.datetime(),
-    }),
-  );
+  .pipe(membershipApiResponseSchema);
 
 // Schema for studio membership with related data (used in admin endpoints)
 export const studioMembershipWithRelationsSchema = z.object({
@@ -108,51 +86,45 @@ export type StudioMembershipWithRelations = z.infer<
 >;
 
 // Transform studio membership with relations to API format (properly maps UIDs)
-export const studioMembershipWithRelationsDto
-  = studioMembershipWithRelationsSchema
-    .transform((obj) => {
-      const parsedUser = userDto.parse(obj.user);
-      return {
-        id: obj.uid,
-        user_id: obj.user.uid,
-        studio_id: obj.studio.uid,
-        role: obj.role,
-        metadata: obj.metadata,
-        created_at: obj.createdAt.toISOString(),
-        updated_at: obj.updatedAt.toISOString(),
-        user: parsedUser,
-        studio: {
-          id: obj.studio.uid,
-          name: obj.studio.name,
-          address: obj.studio.address,
-        },
-      };
-    })
-    .pipe(
-      z.object({
+export const studioMembershipWithRelationsDto = studioMembershipWithRelationsSchema
+  .transform((obj) => {
+    const parsedUser = userDto.parse(obj.user);
+    return {
+      id: obj.uid,
+      user_id: obj.user.uid,
+      studio_id: obj.studio.uid,
+      role: obj.role,
+      metadata: obj.metadata,
+      created_at: obj.createdAt.toISOString(),
+      updated_at: obj.updatedAt.toISOString(),
+      user: parsedUser,
+      studio: {
+        id: obj.studio.uid,
+        name: obj.studio.name,
+        address: obj.studio.address,
+      },
+    };
+  })
+  .pipe(
+    membershipApiResponseSchema.extend({
+      user_id: z.string(),
+      studio_id: z.string(),
+      user: z.object({
         id: z.string(),
-        user_id: z.string(),
-        studio_id: z.string(),
-        role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
-        metadata: z.record(z.string(), z.any()),
+        ext_id: z.string().nullable(),
+        email: z.string().email(),
+        name: z.string(),
+        profile_url: z.string().url().nullable(),
         created_at: z.iso.datetime(),
         updated_at: z.iso.datetime(),
-        user: z.object({
-          id: z.string(),
-          ext_id: z.string().nullable(),
-          email: z.string().email(),
-          name: z.string(),
-          profile_url: z.string().url().nullable(),
-          created_at: z.iso.datetime(),
-          updated_at: z.iso.datetime(),
-        }),
-        studio: z.object({
-          id: z.string(),
-          name: z.string(),
-          address: z.string(),
-        }),
       }),
-    );
+      studio: z.object({
+        id: z.string(),
+        name: z.string(),
+        address: z.string(),
+      }),
+    }),
+  );
 
 export type CreateStudioMembershipSchema = z.infer<
   typeof createStudioMembershipSchema
@@ -194,9 +166,7 @@ export const updateStudioMembershipInternalSchema = z
   .object({
     userId: validateUserUid.optional(),
     studioId: validateStudioUid.optional(),
-    role: z
-      .enum(Object.values(STUDIO_ROLE) as [string, ...string[]])
-      .optional(),
+    role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]).optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .strict();

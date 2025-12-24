@@ -20,7 +20,7 @@ import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 import { GoogleSheetsApiKeyGuard } from '@/lib/guards/google-sheets-api-key.guard';
 import { OpenAPIModule } from '@/lib/openapi/openapi.module';
 import { MeModule } from '@/me/me.module';
-import { MembershipModule } from '@/models/membership/membership.module';
+import { UserModule } from '@/models/user/user.module';
 
 @Module({
   imports: [
@@ -77,7 +77,7 @@ import { MembershipModule } from '@/models/membership/membership.module';
     BackdoorModule,
     GoogleSheetsModule,
     HealthModule,
-    MembershipModule,
+    UserModule,
     MeModule,
     OpenAPIModule.forRoot(),
   ],

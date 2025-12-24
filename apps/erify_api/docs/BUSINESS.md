@@ -393,6 +393,12 @@ User Roles (Studio Context):
 - manager: Operational management permissions
 - member: Basic access and participation rights
 
+Note: System Admin status is tracked via `is_system_admin` flag on the User record.
+
+**System Access**:
+
+- System Admin: `is_system_admin` flag grants full access to all `/admin` endpoints
+
 Business Rules:
 
 - Users can have different roles in different studios
@@ -779,7 +785,7 @@ erDiagram
       string ext_id
       string email
       string name
-      string role "admin, manager, user"
+      bool is_system_admin
       bool is_banned
       jsonb metadata
       datetime created_at

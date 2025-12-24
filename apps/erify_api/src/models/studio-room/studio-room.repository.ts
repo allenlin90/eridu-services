@@ -100,12 +100,16 @@ export class StudioRoomRepository extends BaseRepository<
       skip?: number;
       take?: number;
       orderBy?: Prisma.StudioRoomOrderByWithRelationInput;
+      studioUid?: string;
     },
     include?: T,
   ): Promise<StudioRoom[] | Prisma.StudioRoomGetPayload<{ include: T }>[]> {
-    const { skip, take, orderBy } = params;
+    const { skip, take, orderBy, studioUid } = params;
     return this.model.findMany({
-      where: { deletedAt: null },
+      where: {
+        deletedAt: null,
+        ...(studioUid && { studio: { uid: studioUid } }),
+      },
       skip,
       take,
       orderBy,

@@ -268,6 +268,45 @@ describe('studioRoomService', () => {
       ).toHaveBeenCalledWith(params, include);
       expect(result).toEqual(studioRooms);
     });
+
+    it('returns studio rooms filtered by studioId', async () => {
+      const params = {
+        skip: 0,
+        take: 10,
+        studioId: 'studio_123',
+      };
+      const studioRooms = [
+        {
+          id: 1n,
+          uid: 'srm_1',
+          studioId: 1n,
+          name: 'Room A',
+          capacity: 50,
+          metadata: {},
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          deletedAt: null,
+        },
+      ];
+
+      (
+        studioRoomRepositoryMock.findActiveStudioRooms as jest.Mock
+      ).mockResolvedValue(studioRooms);
+
+      const result = await service.getStudioRooms(params);
+
+      expect(
+        studioRoomRepositoryMock.findActiveStudioRooms,
+      ).toHaveBeenCalledWith(
+        {
+          skip: 0,
+          take: 10,
+          studioUid: 'studio_123',
+        },
+        undefined,
+      );
+      expect(result).toEqual(studioRooms);
+    });
   });
 
   describe('getStudioRoomsByStudioId', () => {
@@ -459,6 +498,20 @@ describe('studioRoomService', () => {
 
       expect(studioRoomRepositoryMock.count).toHaveBeenCalledWith({});
       expect(result).toBe(total);
+    });
+
+    it('returns count of studio rooms filtered by studioId', async () => {
+      const studioId = 'studio_123';
+      const count = 3;
+
+      (studioRoomRepositoryMock.count as jest.Mock).mockResolvedValue(count);
+
+      const result = await service.countStudioRooms({ studioId });
+
+      expect(studioRoomRepositoryMock.count).toHaveBeenCalledWith({
+        studio: { uid: studioId },
+      });
+      expect(result).toBe(count);
     });
   });
 

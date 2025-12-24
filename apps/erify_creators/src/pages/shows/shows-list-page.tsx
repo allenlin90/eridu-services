@@ -1,11 +1,12 @@
+import type { ColumnFiltersState, PaginationState, SortingState } from '@tanstack/react-table';
+import { useEffect } from 'react';
 import type { DateRange } from 'react-day-picker';
 
-import { LoadingPage, PageTransition } from '@eridu/ui';
+import { LoadingPage, PageTransition, useTableUrlState } from '@eridu/ui';
 
 import { useShows } from '@/features/shows/api';
 import { columns } from '@/features/shows/components/columns';
 import { ShowsTable } from '@/features/shows/components/shows-table';
-import { useTableUrlState } from '@/lib/hooks';
 import * as m from '@/paraglide/messages.js';
 
 /**
@@ -18,12 +19,21 @@ import * as m from '@/paraglide/messages.js';
  * - URL state management for filters, sorting, and pagination
  */
 export function ShowsListPage() {
-  const { pagination, sorting, columnFilters, onPaginationChange, onSortingChange, onColumnFiltersChange }
-    = useTableUrlState('/shows/');
+  const {
+    pagination,
+    sorting,
+    columnFilters,
+    onPaginationChange,
+    onSortingChange,
+    onColumnFiltersChange,
+    setPageCount,
+  } = useTableUrlState({ from: '/shows/' });
 
   // Extract filters for API
-  const dateRange = columnFilters.find((filter) => filter.id === 'start_time')?.value as DateRange | undefined;
-  const nameFilter = columnFilters.find((filter) => filter.id === 'name')?.value as string | undefined;
+  const dateRange = columnFilters.find((filter: { id: string; value: unknown }) => filter.id === 'start_time')
+    ?.value as DateRange | undefined;
+  const nameFilter = columnFilters.find((filter: { id: string; value: unknown }) => filter.id === 'name')
+    ?.value as string | undefined;
 
   const { data, isLoading, error } = useShows({
     page: pagination.pageIndex + 1,
@@ -37,6 +47,13 @@ export function ShowsListPage() {
     order_direction: sorting.length > 0 ? (sorting[0].desc ? 'desc' : 'asc') : 'desc',
     include_deleted: false,
   });
+
+  // Sync page count for auto-correction
+  useEffect(() => {
+    if (data?.meta?.totalPages !== undefined) {
+      setPageCount(data.meta.totalPages);
+    }
+  }, [data?.meta?.totalPages, setPageCount]);
 
   if (isLoading && !data) {
     return <LoadingPage />;
@@ -62,11 +79,11 @@ export function ShowsListPage() {
         columns={columns}
         data={data?.data ?? []}
         pageCount={data?.meta?.totalPages ?? -1}
-        pagination={pagination}
+        pagination={pagination as PaginationState}
         onPaginationChange={onPaginationChange}
-        sorting={sorting}
+        sorting={sorting as SortingState}
         onSortingChange={onSortingChange}
-        columnFilters={columnFilters}
+        columnFilters={columnFilters as ColumnFiltersState}
         onColumnFiltersChange={onColumnFiltersChange}
       />
     </PageTransition>

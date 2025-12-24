@@ -11,7 +11,8 @@ vi.mock('../../../features/shows/api', () => ({
   useShows: vi.fn(),
 }));
 
-vi.mock('../../../lib/hooks', () => ({
+// Mock UI components
+vi.mock('@eridu/ui', () => ({
   useTableUrlState: vi.fn(() => ({
     pagination: { pageIndex: 0, pageSize: 10 },
     sorting: [],
@@ -19,11 +20,8 @@ vi.mock('../../../lib/hooks', () => ({
     onPaginationChange: vi.fn(),
     onSortingChange: vi.fn(),
     onColumnFiltersChange: vi.fn(),
+    setPageCount: vi.fn(),
   })),
-}));
-
-// Mock UI components
-vi.mock('@eridu/ui', () => ({
   LoadingPage: () => <div aria-label="Loading">Loading</div>,
   PageTransition: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Table: ({ children }: { children: React.ReactNode }) => <table>{children}</table>,

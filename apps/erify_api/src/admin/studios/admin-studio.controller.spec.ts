@@ -9,6 +9,7 @@ import type {
   UpdateStudioDto,
 } from '@/models/studio/schemas/studio.schema';
 import { StudioService } from '@/models/studio/studio.service';
+import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 
 describe('adminStudioController', () => {
   let controller: AdminStudioController;
@@ -21,10 +22,18 @@ describe('adminStudioController', () => {
     updateStudio: jest.fn(),
     deleteStudio: jest.fn(),
   };
+
+  const mockStudioRoomService = {
+    getStudioRooms: jest.fn(),
+    countStudioRooms: jest.fn(),
+  };
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminStudioController],
-      providers: [{ provide: StudioService, useValue: mockStudioService }],
+      providers: [
+        { provide: StudioService, useValue: mockStudioService },
+        { provide: StudioRoomService, useValue: mockStudioRoomService },
+      ],
     }).compile();
 
     controller = module.get<AdminStudioController>(AdminStudioController);
@@ -128,6 +137,60 @@ describe('adminStudioController', () => {
 
       await controller.deleteStudio(studioId);
       expect(mockStudioService.deleteStudio).toHaveBeenCalledWith(studioId);
+    });
+  });
+
+  describe('getStudioRooms', () => {
+    it('should return paginated list of studio rooms for a studio', async () => {
+      const studioId = 'studio_123';
+      const query: PaginationQueryDto = {
+        page: 1,
+        limit: 10,
+        skip: 0,
+        take: 10,
+      };
+      const studioRooms = [
+        {
+          uid: 'srm_1',
+          name: 'Room A',
+          studioId: 1n,
+          studio: { uid: studioId, name: 'Test Studio' },
+        },
+        {
+          uid: 'srm_2',
+          name: 'Room B',
+          studioId: 1n,
+          studio: { uid: studioId, name: 'Test Studio' },
+        },
+      ];
+      const total = 2;
+      const paginationMeta = {
+        page: 1,
+        limit: 10,
+        total: 2,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      };
+
+      mockStudioRoomService.getStudioRooms.mockResolvedValue(
+        studioRooms as any,
+      );
+      mockStudioRoomService.countStudioRooms.mockResolvedValue(total);
+
+      const result = await controller.getStudioRooms(studioId, query);
+
+      expect(mockStudioRoomService.getStudioRooms).toHaveBeenCalledWith(
+        { skip: query.skip, take: query.take, studioId },
+        { studio: true },
+      );
+      expect(mockStudioRoomService.countStudioRooms).toHaveBeenCalledWith({
+        studioId,
+      });
+      expect(result).toEqual({
+        data: studioRooms,
+        meta: paginationMeta,
+      });
     });
   });
 });

@@ -94,6 +94,10 @@ export class UserService extends BaseModelService {
     return this.userRepository.findByUid(uid);
   }
 
+  async getUserByExtId(extId: string): Promise<User | null> {
+    return this.userRepository.findByExtId(extId);
+  }
+
   async getUsers(params: {
     skip?: number;
     take?: number;

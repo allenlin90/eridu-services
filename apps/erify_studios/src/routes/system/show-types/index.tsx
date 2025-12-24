@@ -1,0 +1,192 @@
+import { useQueryClient } from '@tanstack/react-query';
+import { createFileRoute } from '@tanstack/react-router';
+import type { ColumnDef } from '@tanstack/react-table';
+import { useState } from 'react';
+import { z } from 'zod';
+
+import type {
+  CreateShowTypeInput,
+  ShowTypeApiResponse,
+  UpdateShowTypeInput,
+} from '@eridu/api-types/show-types';
+import {
+  createShowTypeInputSchema,
+  updateShowTypeInputSchema,
+} from '@eridu/api-types/show-types';
+import { useTableUrlState } from '@eridu/ui';
+
+import {
+  AdminFormDialog,
+  AdminLayout,
+  AdminTable,
+  DeleteConfirmDialog,
+} from '@/features/admin/components';
+import { queryKeys } from '@/lib/api/query-keys';
+import {
+  useAdminCreate,
+  useAdminDelete,
+  useAdminList,
+  useAdminUpdate,
+} from '@/lib/hooks/use-admin-crud';
+
+const showTypesSearchSchema = z.object({
+  page: z.number().int().min(1).catch(1),
+  pageSize: z.number().int().min(10).max(100).catch(10),
+  search: z.string().optional().catch(undefined),
+});
+
+export const Route = createFileRoute('/system/show-types/')({
+  component: ShowTypesList,
+  validateSearch: (search) => showTypesSearchSchema.parse(search),
+});
+
+// ShowType type from shared schema
+type ShowType = ShowTypeApiResponse;
+
+function ShowTypesList() {
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingShowType, setEditingShowType] = useState<ShowType | null>(null);
+
+  const queryClient = useQueryClient();
+
+  // URL state
+  const { pagination, onPaginationChange } = useTableUrlState({
+    from: '/system/show-types/',
+  });
+
+  // Fetch show types list
+  const { data, isLoading } = useAdminList<ShowType>('show-types', {
+    page: pagination.pageIndex + 1,
+    limit: pagination.pageSize,
+  });
+
+  // Mutations
+  const createMutation = useAdminCreate<ShowType, CreateShowTypeInput>('show-types');
+  const updateMutation = useAdminUpdate<ShowType, UpdateShowTypeInput>('show-types');
+  const deleteMutation = useAdminDelete('show-types');
+
+  // Table columns
+  const columns: ColumnDef<ShowType>[] = [
+    {
+      accessorKey: 'name',
+      header: 'Name',
+    },
+    {
+      accessorKey: 'created_at',
+      header: 'Created At',
+      cell: ({ row }) => new Date(row.original.created_at).toLocaleString(),
+    },
+    {
+      accessorKey: 'updated_at',
+      header: 'Updated At',
+      cell: ({ row }) => new Date(row.original.updated_at).toLocaleString(),
+    },
+  ];
+
+  const handleDelete = async () => {
+    if (!deleteId)
+      return;
+
+    try {
+      await deleteMutation.mutateAsync(deleteId);
+      setDeleteId(null);
+    } catch (error) {
+      console.error('Failed to delete show type:', error);
+    }
+  };
+
+  const handleCreate = async (data: CreateShowTypeInput) => {
+    await createMutation.mutateAsync(data);
+  };
+
+  const handleUpdate = async (data: UpdateShowTypeInput) => {
+    if (!editingShowType)
+      return;
+    await updateMutation.mutateAsync({ id: editingShowType.id, data });
+    setEditingShowType(null);
+  };
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.admin.lists('show-types'),
+    });
+  };
+
+  return (
+    <AdminLayout
+      title="Show Types"
+      description="Manage different types of shows"
+      action={{
+        label: 'Create Show Type',
+        onClick: () => setIsCreateDialogOpen(true),
+      }}
+      onRefresh={handleRefresh}
+      refreshQueryKey={queryKeys.admin.lists('show-types')}
+    >
+      <AdminTable
+        data={data?.data || []}
+        columns={columns}
+        isLoading={isLoading}
+        onEdit={(type) => setEditingShowType(type)}
+        onDelete={(type) => setDeleteId(type.id)}
+        emptyMessage="No show types found. Create one to get started."
+        pagination={
+          data?.meta
+            ? {
+                pageIndex: data.meta.page - 1,
+                pageSize: data.meta.limit,
+                total: data.meta.total,
+                pageCount: data.meta.totalPages,
+              }
+            : undefined
+        }
+        onPaginationChange={onPaginationChange}
+      />
+
+      <AdminFormDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        title="Create Show Type"
+        description="Add a new show type to the system"
+        schema={createShowTypeInputSchema}
+        onSubmit={handleCreate}
+        isLoading={createMutation.isPending}
+        fields={[
+          {
+            name: 'name',
+            label: 'Name',
+            placeholder: 'Enter show type name',
+          },
+        ]}
+      />
+
+      <AdminFormDialog
+        open={!!editingShowType}
+        onOpenChange={(open) => !open && setEditingShowType(null)}
+        title="Edit Show Type"
+        description="Update show type information"
+        schema={updateShowTypeInputSchema}
+        defaultValues={editingShowType ? { name: editingShowType.name } : undefined}
+        onSubmit={handleUpdate}
+        isLoading={updateMutation.isPending}
+        fields={[
+          {
+            name: 'name',
+            label: 'Name',
+            placeholder: 'Enter show type name',
+          },
+        ]}
+      />
+
+      <DeleteConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={handleDelete}
+        title="Delete Show Type"
+        description="Are you sure you want to delete this show type? This action cannot be undone."
+        isLoading={deleteMutation.isPending}
+      />
+    </AdminLayout>
+  );
+}

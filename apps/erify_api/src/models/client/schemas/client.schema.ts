@@ -1,6 +1,12 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import {
+  clientApiResponseSchema,
+  createClientInputSchema,
+  updateClientInputSchema,
+} from '@eridu/api-types/clients';
+
 import { ClientService } from '@/models/client/client.service';
 
 export const clientSchema = z.object({
@@ -15,34 +21,20 @@ export const clientSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const createClientSchema = z
-  .object({
-    name: z.string().min(1, 'Client name is required'),
-    contact_person: z.string().min(1, 'Contact person is required'),
-    contact_email: z.email(),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
-    name: data.name,
-    contactPerson: data.contact_person,
-    contactEmail: data.contact_email,
-    metadata: data.metadata,
-  }));
+export const createClientSchema = createClientInputSchema.transform((data) => ({
+  name: data.name,
+  contactPerson: data.contact_person,
+  contactEmail: data.contact_email,
+  metadata: data.metadata,
+}));
 
 // API input schema (snake_case input, transforms to camelCase)
-export const updateClientSchema = z
-  .object({
-    name: z.string().min(1, 'Client name is required').optional(),
-    contact_person: z.string().min(1, 'Contact person is required').optional(),
-    contact_email: z.email().optional(),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
-    name: data.name,
-    contactPerson: data.contact_person,
-    contactEmail: data.contact_email,
-    metadata: data.metadata,
-  }));
+export const updateClientSchema = updateClientInputSchema.transform((data) => ({
+  name: data.name,
+  contactPerson: data.contact_person,
+  contactEmail: data.contact_email,
+  metadata: data.metadata,
+}));
 
 export const clientDto = clientSchema
   .transform((obj) => ({
@@ -53,16 +45,7 @@ export const clientDto = clientSchema
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
   }))
-  .pipe(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      contact_person: z.string(),
-      contact_email: z.string().email(),
-      created_at: z.iso.datetime(),
-      updated_at: z.iso.datetime(),
-    }),
-  );
+  .pipe(clientApiResponseSchema);
 
 // DTOs for input/output
 export class CreateClientDto extends createZodDto(createClientSchema) {}

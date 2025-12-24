@@ -158,6 +158,8 @@ export class SchedulePlanningService {
    *
    * @param scheduleUid - The schedule UID
    * @param filters - Optional filters
+   * @param filters.limit - Optional limit for number of snapshots
+   * @param filters.orderBy - Optional sort order (asc or desc)
    * @returns List of snapshots
    */
   async getSnapshotsBySchedule(

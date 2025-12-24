@@ -1,6 +1,12 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import {
+  createShowTypeInputSchema,
+  showTypeApiResponseSchema,
+  updateShowTypeInputSchema,
+} from '@eridu/api-types/show-types';
+
 import { ShowTypeService } from '@/models/show-type/show-type.service';
 
 export const showTypeSchema = z.object({
@@ -14,15 +20,12 @@ export const showTypeSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const createShowTypeSchema = z
-  .object({
-    name: z.string().min(1, 'Show type name is required'),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
+export const createShowTypeSchema = createShowTypeInputSchema.transform(
+  (data) => ({
     name: data.name,
     metadata: data.metadata,
-  }));
+  }),
+);
 
 // CORE input schema
 export const createShowTypeCoreSchema = z.object({
@@ -31,15 +34,12 @@ export const createShowTypeCoreSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const updateShowTypeSchema = z
-  .object({
-    name: z.string().min(1, 'Show type name is required').optional(),
-    metadata: z.record(z.string(), z.any()).optional(),
-  })
-  .transform((data) => ({
+export const updateShowTypeSchema = updateShowTypeInputSchema.transform(
+  (data) => ({
     name: data.name,
     metadata: data.metadata,
-  }));
+  }),
+);
 
 export const updateShowTypeCoreSchema = z.object({
   name: z.string().optional(),
@@ -54,15 +54,7 @@ export const showTypeDto = showTypeSchema
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
   }))
-  .pipe(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      metadata: z.record(z.string(), z.any()),
-      created_at: z.iso.datetime(),
-      updated_at: z.iso.datetime(),
-    }),
-  );
+  .pipe(showTypeApiResponseSchema);
 
 // DTOs for input/output
 export class CreateShowTypeDto extends createZodDto(createShowTypeSchema) {}

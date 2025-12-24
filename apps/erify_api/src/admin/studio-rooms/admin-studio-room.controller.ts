@@ -48,7 +48,6 @@ export class AdminStudioRoomController extends BaseAdminController {
     studioRoomWithStudioDto,
     'List of studio rooms with pagination',
   )
-  // TODO: filter by studio id
   async getStudioRooms(@Query() query: PaginationQueryDto) {
     const data = await this.studioRoomService.getStudioRooms(
       { skip: query.skip, take: query.take },

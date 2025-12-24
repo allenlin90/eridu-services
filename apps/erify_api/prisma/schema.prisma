@@ -15,6 +15,7 @@ model User {
   email              String             @unique
   name               String
   isBanned           Boolean            @default(false) @map("is_banned")
+  isSystemAdmin      Boolean            @default(false) @map("is_system_admin") // System-level admin flag
   profileUrl         String?            @map("profile_url")
   metadata           Json               @default("{}")
   mc                 MC? // Optional MC profile linkage
@@ -31,6 +32,7 @@ model User {
   @@index([name])
   @@index([extId])
   @@index([isBanned])
+  @@index([isSystemAdmin])
   @@index([deletedAt])
   @@map("users")
 }

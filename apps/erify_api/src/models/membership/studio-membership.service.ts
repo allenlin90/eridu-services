@@ -73,8 +73,16 @@ export class StudioMembershipService extends BaseModelService {
     });
   }
 
-  async getUserStudioMemberships(userId: UserId): Promise<StudioMembership[]> {
-    return this.studioMembershipRepository.findUserStudioMemberships(userId);
+  async getUserStudioMemberships<
+    T extends Prisma.StudioMembershipInclude = Record<string, never>,
+  >(
+    userId: UserId,
+    include?: T,
+  ): Promise<StudioMembership[] | StudioMembershipWithIncludes<T>[]> {
+    return this.studioMembershipRepository.findUserStudioMemberships(
+      userId,
+      include,
+    );
   }
 
   async getStudioMemberships<
