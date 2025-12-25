@@ -1,11 +1,13 @@
 import { ConfigService } from '@nestjs/config';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
+import type { Prisma, User } from '@prisma/client';
 
 import { BackdoorUserController } from './backdoor-user.controller';
 
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 import type {
+  BulkCreateUserDto,
   CreateUserDto,
   UpdateUserDto,
 } from '@/models/user/schemas/user.schema';
@@ -53,10 +55,26 @@ describe('backdoorUserController', () => {
         email: 'test@example.com',
         name: 'Test User',
         metadata: {},
-      } as CreateUserDto;
-      const createdUser = { uid: 'user_123', ...createDto };
+        extId: null,
+        profileUrl: null,
+        mc: undefined,
+      };
+      const createdUser: User = {
+        id: BigInt(1),
+        uid: 'user_123',
+        email: createDto.email,
+        name: createDto.name,
+        extId: null,
+        isBanned: false,
+        isSystemAdmin: false,
+        profileUrl: null,
+        metadata: createDto.metadata as Prisma.JsonObject,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      };
 
-      mockUserService.createUser.mockResolvedValue(createdUser as any);
+      mockUserService.createUser.mockResolvedValue(createdUser);
 
       const result = await controller.createUser(createDto);
 
@@ -68,19 +86,30 @@ describe('backdoorUserController', () => {
       const createDto: CreateUserDto = {
         email: 'mc@example.com',
         name: 'MC User',
-        mc: {
-          name: 'MC One',
-          aliasName: 'MC One',
-        },
-      } as CreateUserDto;
-      const createdUser = {
-        uid: 'user_456',
-        email: 'mc@example.com',
-        name: 'MC User',
         extId: null,
         profileUrl: null,
         metadata: {},
         mc: {
+          name: 'MC One',
+          aliasName: 'MC One',
+          metadata: {},
+        },
+      };
+      const createdUser = {
+        id: BigInt(1),
+        uid: 'user_456',
+        email: 'mc@example.com',
+        name: 'MC User',
+        extId: null,
+        isBanned: false,
+        isSystemAdmin: false,
+        profileUrl: null,
+        metadata: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        mc: {
+          id: BigInt(1),
           uid: 'mc_123',
           name: 'MC One',
           aliasName: 'MC One',
@@ -89,6 +118,7 @@ describe('backdoorUserController', () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           deletedAt: null,
+          userId: BigInt(1),
         },
       };
 
@@ -103,38 +133,54 @@ describe('backdoorUserController', () => {
 
   describe('createUsersBulk', () => {
     it('should create multiple users', async () => {
-      const userData = [
+      const userData: Array<BulkCreateUserDto['data'][number]> = [
         {
           email: 'user1@example.com',
           name: 'User 1',
+          extId: null,
+          profileUrl: null,
+          metadata: {},
+          mc: undefined,
         },
         {
           email: 'user2@example.com',
           name: 'User 2',
+          extId: null,
+          profileUrl: null,
+          metadata: {},
           mc: {
             name: 'MC',
             aliasName: 'MC',
+            metadata: {},
           },
         },
       ];
-      const bulkDto = { data: userData };
+      const bulkDto: BulkCreateUserDto = { data: userData };
       const createdUsers = userData.map((dto, i) => ({
+        id: BigInt(i),
         uid: `user_${i}`,
         email: dto.email,
         name: dto.name,
-        extId: null,
-        profileUrl: null,
-        metadata: {},
+        extId: dto.extId,
+        isBanned: false,
+        isSystemAdmin: false,
+        profileUrl: dto.profileUrl,
+        metadata: dto.metadata as Prisma.JsonObject,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
         mc: dto.mc
           ? {
+              id: BigInt(i),
               uid: `mc_${i}`,
               name: dto.mc.name,
               aliasName: dto.mc.aliasName,
               isBanned: false,
-              metadata: {},
+              metadata: dto.mc.metadata as Prisma.JsonObject,
               createdAt: new Date(),
               updatedAt: new Date(),
               deletedAt: null,
+              userId: BigInt(i),
             }
           : null,
       }));
@@ -153,14 +199,23 @@ describe('backdoorUserController', () => {
       const userId = 'user_123';
       const updateDto: UpdateUserDto = {
         name: 'Updated Name',
-      } as UpdateUserDto;
-      const updatedUser = {
+      };
+      const updatedUser: User = {
+        id: BigInt(1),
         uid: userId,
         email: 'test@example.com',
         name: 'Updated Name',
+        extId: null,
+        isBanned: false,
+        isSystemAdmin: false,
+        profileUrl: null,
+        metadata: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
       };
 
-      mockUserService.updateUser.mockResolvedValue(updatedUser as any);
+      mockUserService.updateUser.mockResolvedValue(updatedUser);
 
       const result = await controller.updateUser(userId, updateDto);
 
@@ -175,15 +230,23 @@ describe('backdoorUserController', () => {
       const userId = 'user_123';
       const updateDto: UpdateUserDto = {
         metadata: { updated: true },
-      } as unknown as UpdateUserDto;
-      const updatedUser = {
+      };
+      const updatedUser: User = {
+        id: BigInt(1),
         uid: userId,
         email: 'test@example.com',
         name: 'Test User',
-        metadata: { updated: true },
+        extId: null,
+        isBanned: false,
+        isSystemAdmin: false,
+        profileUrl: null,
+        metadata: { updated: true } as Prisma.JsonObject,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
       };
 
-      mockUserService.updateUser.mockResolvedValue(updatedUser as any);
+      mockUserService.updateUser.mockResolvedValue(updatedUser);
 
       const result = await controller.updateUser(userId, updateDto);
 

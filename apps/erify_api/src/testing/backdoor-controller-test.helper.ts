@@ -1,5 +1,6 @@
 /* eslint-disable  */
-import type { Provider, TestingModule } from '@nestjs/testing';
+import type { Provider } from '@nestjs/common';
+import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
@@ -71,7 +72,7 @@ export async function createBackdoorControllerTestModule<TController>({
       ([serviceClass, mockInstance]) => ({
         provide: serviceClass,
         useValue: mockInstance,
-      }),
+      } as any),
     ),
     // Backdoor API key guard (if enabled)
 

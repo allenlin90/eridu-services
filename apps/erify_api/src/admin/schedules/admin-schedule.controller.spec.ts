@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
+import type { Prisma, Schedule } from '@prisma/client';
 
 import { AdminScheduleController } from './admin-schedule.controller';
 
@@ -18,6 +19,14 @@ import { ListSnapshotsQueryDto } from '@/models/schedule-snapshot/schemas/schedu
 import { UserService } from '@/models/user/user.service';
 import { SchedulePlanningService } from '@/schedule-planning/schedule-planning.service';
 import type { PublishScheduleDto } from '@/schedule-planning/schemas/schedule-planning.schema';
+
+type ScheduleWithRelations = Prisma.ScheduleGetPayload<{
+  include: {
+    client: true;
+    createdByUser: true;
+    publishedByUser: true;
+  };
+}>;
 
 describe('adminScheduleController', () => {
   let controller: AdminScheduleController;
@@ -44,6 +53,34 @@ describe('adminScheduleController', () => {
   const mockUserService = {
     getUserById: jest.fn(),
   };
+
+  const mockClient = {
+    id: BigInt(1),
+    uid: 'client_123',
+    name: 'Test Client',
+    contactPerson: 'Test Person',
+    contactEmail: 'test@example.com',
+    metadata: {},
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+  };
+
+  const mockUser = {
+    id: BigInt(1),
+    uid: 'user_123',
+    email: 'test@example.com',
+    name: 'Test User',
+    extId: 'ext_123',
+    isBanned: false,
+    isSystemAdmin: false,
+    profileUrl: null,
+    metadata: {},
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+  };
+
   beforeEach(async () => {
     const mockConfigService = {
       get: jest.fn((key: string) => {
@@ -80,20 +117,39 @@ describe('adminScheduleController', () => {
     it('should create a schedule', async () => {
       const createDto: CreateScheduleDto = {
         name: 'Test Schedule',
-        clientId: 'client_123',
-        startDate: '2024-01-01',
-        endDate: '2024-01-31',
-      } as CreateScheduleDto;
-      const createdSchedule = {
+        client: { connect: { uid: 'client_123' } },
+        createdByUser: { connect: { uid: 'user_123' } },
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2024-01-31'),
+        status: 'draft',
+        planDocument: { shows: [] },
+        version: 1,
+        metadata: {},
+      };
+      const createdSchedule: ScheduleWithRelations = {
+        id: BigInt(1),
         uid: 'schedule_123',
-        ...createDto,
-        client: { uid: 'client_123' },
-        createdByUser: { uid: 'user_123' },
+        name: createDto.name,
+        startDate: createDto.startDate,
+        endDate: createDto.endDate,
+        status: createDto.status as any, // Cast to any for the enum type if needed, but the object itself is typed
+        version: createDto.version,
+        planDocument: createDto.planDocument as Prisma.JsonObject,
+        metadata: createDto.metadata as Prisma.JsonObject,
+        clientId: mockClient.id,
+        createdBy: mockUser.id,
+        publishedBy: null,
+        publishedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        client: mockClient,
+        createdByUser: mockUser,
         publishedByUser: null,
       };
 
       mockScheduleService.createScheduleFromDto.mockResolvedValue(
-        createdSchedule as any,
+        createdSchedule,
       );
 
       const result = await controller.createSchedule(createDto);
@@ -177,15 +233,29 @@ describe('adminScheduleController', () => {
   describe('getSchedule', () => {
     it('should return a schedule by id', async () => {
       const scheduleId = 'schedule_123';
-      const schedule = {
+      const schedule: ScheduleWithRelations = {
+        id: BigInt(1),
         uid: scheduleId,
         name: 'Test Schedule',
-        client: { uid: 'client_123' },
-        createdByUser: { uid: 'user_123' },
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'draft',
+        version: 1,
+        planDocument: { shows: [] },
+        metadata: {},
+        clientId: mockClient.id,
+        createdBy: mockUser.id,
+        publishedBy: null,
+        publishedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        client: mockClient,
+        createdByUser: mockUser,
         publishedByUser: null,
       };
 
-      mockScheduleService.getScheduleById.mockResolvedValue(schedule as any);
+      mockScheduleService.getScheduleById.mockResolvedValue(schedule);
 
       const result = await controller.getSchedule(scheduleId);
       expect(mockScheduleService.getScheduleById).toHaveBeenCalledWith(
@@ -203,16 +273,39 @@ describe('adminScheduleController', () => {
   describe('updateSchedule', () => {
     it('should update a schedule without plan document', async () => {
       const scheduleId = 'schedule_123';
-      const updateDto: UpdateScheduleDto = { name: 'Updated Schedule' };
-      const currentSchedule = {
-        uid: scheduleId,
-        createdBy: BigInt(1),
+      const updateDto: UpdateScheduleDto = {
+        name: 'Updated Schedule',
+        startDate: undefined,
+        endDate: undefined,
+        status: undefined,
+        planDocument: undefined,
+        version: 1,
+        metadata: undefined,
+        publishedByUser: undefined,
       };
-      const updatedSchedule = {
+      const currentSchedule: Partial<ScheduleWithRelations> = {
         uid: scheduleId,
-        ...updateDto,
-        client: { uid: 'client_123' },
-        createdByUser: { uid: 'user_123' },
+        createdBy: mockUser.id,
+      };
+      const updatedSchedule: ScheduleWithRelations = {
+        id: BigInt(1),
+        uid: scheduleId,
+        name: updateDto.name || 'Updated',
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'draft',
+        version: updateDto.version || 2,
+        planDocument: (updateDto.planDocument as Prisma.JsonObject) || { shows: [] },
+        metadata: (updateDto.metadata as Prisma.JsonObject) || {},
+        clientId: mockClient.id,
+        createdBy: mockUser.id,
+        publishedBy: null,
+        publishedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        client: mockClient,
+        createdByUser: mockUser,
         publishedByUser: null,
       };
 
@@ -220,7 +313,7 @@ describe('adminScheduleController', () => {
         currentSchedule as any,
       );
       mockScheduleService.updateScheduleFromDto.mockResolvedValue(
-        updatedSchedule as any,
+        updatedSchedule,
       );
 
       const result = await controller.updateSchedule(scheduleId, updateDto);
@@ -243,16 +336,37 @@ describe('adminScheduleController', () => {
       const scheduleId = 'schedule_123';
       const updateDto: UpdateScheduleDto = {
         planDocument: { shows: [] },
+        name: undefined,
+        startDate: undefined,
+        endDate: undefined,
+        status: undefined,
+        version: 1,
+        metadata: undefined,
+        publishedByUser: undefined,
       };
-      const currentSchedule = {
+      const currentSchedule: Partial<ScheduleWithRelations> = {
         uid: scheduleId,
-        createdBy: BigInt(1),
+        createdBy: mockUser.id,
       };
-      const updatedSchedule = {
+      const updatedSchedule: ScheduleWithRelations = {
+        id: BigInt(1),
         uid: scheduleId,
-        ...updateDto,
-        client: { uid: 'client_123' },
-        createdByUser: { uid: 'user_123' },
+        name: 'Snapshot Schedule',
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'draft',
+        version: 2,
+        planDocument: updateDto.planDocument as Prisma.JsonObject,
+        metadata: {},
+        clientId: mockClient.id,
+        createdBy: mockUser.id,
+        publishedBy: null,
+        publishedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        client: mockClient,
+        createdByUser: mockUser,
         publishedByUser: null,
       };
 
@@ -263,7 +377,7 @@ describe('adminScheduleController', () => {
         undefined,
       );
       mockScheduleService.updateScheduleFromDto.mockResolvedValue(
-        updatedSchedule as any,
+        updatedSchedule,
       );
 
       const result = await controller.updateSchedule(scheduleId, updateDto);
@@ -316,10 +430,10 @@ describe('adminScheduleController', () => {
     it('should publish a schedule', async () => {
       const scheduleId = 'schedule_123';
       const publishDto: PublishScheduleDto = { version: 1 };
-      const schedule = {
+      const schedule: Partial<ScheduleWithRelations> = {
         uid: scheduleId,
-        createdBy: BigInt(1),
-        createdByUser: { uid: 'user_123' },
+        createdBy: mockUser.id,
+        createdByUser: mockUser,
       };
       const publishResult = {
         schedule: {
@@ -329,12 +443,26 @@ describe('adminScheduleController', () => {
         showsCreated: 5,
         showsDeleted: 0,
       };
-      const publishedSchedule = {
+      const publishedSchedule: ScheduleWithRelations = {
+        id: BigInt(1),
         uid: scheduleId,
         name: 'Published Schedule',
-        client: { uid: 'client_123' },
-        createdByUser: { uid: 'user_123' },
-        publishedByUser: { uid: 'user_123' },
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'published',
+        version: 1,
+        planDocument: { shows: [] },
+        metadata: {},
+        clientId: mockClient.id,
+        createdBy: mockUser.id,
+        publishedBy: mockUser.id,
+        publishedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        client: mockClient,
+        createdByUser: mockUser,
+        publishedByUser: mockUser,
       };
 
       mockScheduleService.getScheduleById.mockResolvedValue(schedule as any);
@@ -343,7 +471,7 @@ describe('adminScheduleController', () => {
       );
       mockScheduleService.getScheduleById
         .mockResolvedValueOnce(schedule as any)
-        .mockResolvedValueOnce(publishedSchedule as any);
+        .mockResolvedValueOnce(publishedSchedule);
 
       const result = await controller.publishSchedule(scheduleId, publishDto);
       expect(mockSchedulePlanningService.publishSchedule).toHaveBeenCalledWith(
@@ -370,24 +498,39 @@ describe('adminScheduleController', () => {
         name: 'Duplicated Schedule',
         created_by: 'user_123',
       };
-      const user = { uid: 'user_123', id: BigInt(1) };
+      const user = { ...mockUser, id: BigInt(1) };
       const duplicatedSchedule = {
         uid: 'schedule_456',
         name: 'Duplicated Schedule',
       };
-      const scheduleWithRelations = {
-        ...duplicatedSchedule,
-        client: { uid: 'client_123' },
-        createdByUser: { uid: 'user_123' },
+      const scheduleWithRelations: ScheduleWithRelations = {
+        id: BigInt(2),
+        uid: 'schedule_456',
+        name: 'Duplicated Schedule',
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'draft',
+        version: 1,
+        planDocument: { shows: [] },
+        metadata: {},
+        clientId: mockClient.id,
+        createdBy: user.id,
+        publishedBy: null,
+        publishedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        client: mockClient,
+        createdByUser: user,
         publishedByUser: null,
       };
 
-      mockUserService.getUserById.mockResolvedValue(user as any);
+      mockUserService.getUserById.mockResolvedValue(user);
       mockScheduleService.duplicateSchedule.mockResolvedValue(
         duplicatedSchedule as any,
       );
       mockScheduleService.getScheduleById.mockResolvedValue(
-        scheduleWithRelations as any,
+        scheduleWithRelations,
       );
 
       const result = await controller.duplicateSchedule(
@@ -464,9 +607,14 @@ describe('adminScheduleController', () => {
         schedules: [
           {
             name: 'Schedule 1',
-            clientId: 'client_123',
-            startDate: '2024-01-01',
-            endDate: '2024-01-31',
+            client: { connect: { uid: 'client_123' } },
+            createdByUser: { connect: { uid: 'user_123' } },
+            startDate: new Date('2024-01-01'),
+            endDate: new Date('2024-01-31'),
+            status: 'draft',
+            planDocument: { shows: [] },
+            version: 1,
+            metadata: {},
           },
         ],
       };
@@ -475,11 +623,11 @@ describe('adminScheduleController', () => {
         successful: 1,
         failed: 0,
         results: [],
-        successfulSchedules: [{ uid: 'schedule_1' }],
+        successfulSchedules: [{ uid: 'schedule_1' }] as Schedule[],
       };
 
       mockScheduleService.bulkCreateSchedules.mockResolvedValue(
-        bulkResult as any,
+        bulkResult,
       );
 
       const result = await controller.bulkCreateSchedules(bulkDto);
@@ -506,8 +654,15 @@ describe('adminScheduleController', () => {
       const bulkDto: BulkUpdateScheduleDto = {
         schedules: [
           {
-            id: 'schedule_123',
+            scheduleId: 'schedule_123',
             name: 'Updated Schedule',
+            startDate: undefined,
+            endDate: undefined,
+            status: undefined,
+            planDocument: undefined,
+            version: 1,
+            metadata: undefined,
+            publishedByUser: undefined,
           },
         ],
       };
@@ -516,11 +671,11 @@ describe('adminScheduleController', () => {
         successful: 1,
         failed: 0,
         results: [],
-        successfulSchedules: [{ uid: 'schedule_123' }],
+        successfulSchedules: [{ uid: 'schedule_123' }] as Schedule[],
       };
 
       mockScheduleService.bulkUpdateSchedules.mockResolvedValue(
-        bulkResult as any,
+        bulkResult,
       );
 
       const result = await controller.bulkUpdateSchedules(bulkDto);
@@ -557,15 +712,15 @@ describe('adminScheduleController', () => {
             clientId: 'client_123',
             clientName: 'Client 1',
             count: 5,
-            schedules: [],
+            schedules: [] as Schedule[],
           },
         },
         schedulesByStatus: {},
-        schedules: [],
+        schedules: [] as Schedule[],
       };
 
       mockScheduleService.getMonthlyOverview.mockResolvedValue(
-        overviewResult as any,
+        overviewResult,
       );
 
       const result = await controller.getMonthlyOverview(query);

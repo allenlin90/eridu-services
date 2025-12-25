@@ -10,6 +10,7 @@
     "dev": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide && concurrently -n paraglide,vite -c cyan,magenta \"chokidar \\\"src/i18n/messages/**/*.json\\\" \\\"project.inlang/**/*\\\" -c \\\"paraglide-js compile --project ./project.inlang --outdir ./src/paraglide\\\"\" \"vite\"",
     "build": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide && vite build",
     "lint": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "start": "npx serve -s ./dist",
     "test": "vitest run",

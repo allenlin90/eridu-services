@@ -9,7 +9,8 @@ export type BaseMockEntity = {
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
-  metadata: Record<string, unknown>;
+  metadata: any;
+  [key: string]: any;
 };
 
 /**
@@ -29,7 +30,7 @@ export function createBaseMockEntity<T extends Partial<BaseMockEntity>>(
     createdAt: now,
     updatedAt: now,
     deletedAt: null,
-    metadata: {},
+    metadata: {} as any,
     ...overrides,
   } as BaseMockEntity & T;
 }
@@ -45,9 +46,13 @@ export const userMockFactory = {
     ...createBaseMockEntity({
       email: 'test@example.com',
       name: 'Test User',
+      extId: 'test-ext-id',
+      isBanned: false,
+      isSystemAdmin: false,
+      profileUrl: null,
       ...overrides,
     }),
-  }),
+  } as User),
 
   /**
    * Creates a user creation DTO

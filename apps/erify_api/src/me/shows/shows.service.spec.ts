@@ -6,6 +6,7 @@ import type { MC, Prisma, Show } from '@prisma/client';
 import { ShowsService } from './shows.service';
 
 import { McService } from '@/models/mc/mc.service';
+import type { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 
 describe('showsService', () => {
@@ -147,11 +148,20 @@ describe('showsService', () => {
   describe('getShowsForMcUser', () => {
     it('should return shows assigned to MC user by uid', async () => {
       const userIdentifier = 'user_test123';
-      const params = {
+      const params: ListShowsQueryDto = {
+        page: 1,
+        limit: 10,
         skip: 0,
         take: 10,
         order_by: 'start_time',
-        order_direction: 'asc' as const,
+        order_direction: 'asc',
+        include_deleted: false,
+        name: undefined,
+        client_id: undefined,
+        start_date_from: undefined,
+        start_date_to: undefined,
+        end_date_from: undefined,
+        end_date_to: undefined,
       };
 
       mockMcService.getMcs.mockResolvedValue([mockMc]);
@@ -220,9 +230,20 @@ describe('showsService', () => {
 
     it('should return shows assigned to MC user by extId', async () => {
       const userIdentifier = 'ext_test123';
-      const params = {
+      const params: ListShowsQueryDto = {
+        page: 1,
+        limit: 10,
         skip: 0,
         take: 10,
+        order_by: 'created_at',
+        order_direction: 'desc',
+        include_deleted: false,
+        name: undefined,
+        client_id: undefined,
+        start_date_from: undefined,
+        start_date_to: undefined,
+        end_date_from: undefined,
+        end_date_to: undefined,
       };
 
       mockMcService.getMcs.mockResolvedValue([mockMc]);
@@ -249,9 +270,20 @@ describe('showsService', () => {
 
     it('should use default orderBy when not provided', async () => {
       const userIdentifier = 'user_test123';
-      const params = {
+      const params: ListShowsQueryDto = {
+        page: 1,
+        limit: 10,
         skip: 0,
         take: 10,
+        order_by: 'created_at',
+        order_direction: 'desc',
+        include_deleted: false,
+        name: undefined,
+        client_id: undefined,
+        start_date_from: undefined,
+        start_date_to: undefined,
+        end_date_from: undefined,
+        end_date_to: undefined,
       };
 
       mockMcService.getMcs.mockResolvedValue([mockMc]);
@@ -270,11 +302,20 @@ describe('showsService', () => {
 
     it('should handle pagination correctly', async () => {
       const userIdentifier = 'user_test123';
-      const params = {
+      const params: ListShowsQueryDto = {
+        page: 2,
+        limit: 10,
         skip: 10,
         take: 20,
         order_by: 'start_time',
-        order_direction: 'desc' as const,
+        order_direction: 'desc',
+        include_deleted: false,
+        name: undefined,
+        client_id: undefined,
+        start_date_from: undefined,
+        start_date_to: undefined,
+        end_date_from: undefined,
+        end_date_to: undefined,
       };
 
       mockMcService.getMcs.mockResolvedValue([mockMc]);
@@ -303,15 +344,30 @@ describe('showsService', () => {
 
     it('should throw NotFoundException when MC is not found', async () => {
       const userIdentifier = 'user_notfound';
+      const params: ListShowsQueryDto = {
+        page: 1,
+        limit: 10,
+        skip: 0,
+        take: 10,
+        order_by: 'created_at',
+        order_direction: 'desc',
+        include_deleted: false,
+        name: undefined,
+        client_id: undefined,
+        start_date_from: undefined,
+        start_date_to: undefined,
+        end_date_from: undefined,
+        end_date_to: undefined,
+      };
 
       mockMcService.getMcs.mockResolvedValue([]);
 
-      await expect(service.getShowsForMcUser(userIdentifier)).rejects.toThrow(
-        NotFoundException,
-      );
-      await expect(service.getShowsForMcUser(userIdentifier)).rejects.toThrow(
-        'MC not found with id for user user_notfound',
-      );
+      await expect(
+        service.getShowsForMcUser(userIdentifier, params),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        service.getShowsForMcUser(userIdentifier, params),
+      ).rejects.toThrow(`MC not found with id for user ${userIdentifier}`);
     });
   });
 

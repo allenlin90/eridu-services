@@ -11,6 +11,7 @@
     "build": "echo \"No build needed for eslint-config\" && exit 0",
     "dev": "echo \"No dev mode for eslint-config - keeping process alive\" && node -e \"setInterval(() => {}, 1000)\"",
     "lint": "echo \"No linting needed for eslint-config\" && exit 0",
+    "typecheck": "echo \"No type-checking needed for eslint-config\" && exit 0",
     "test": "echo \"No tests specified\" && exit 0"
   },
   "devDependencies": {

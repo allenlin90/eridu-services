@@ -100,6 +100,8 @@ export const mockAuthenticatedUser = {
   payload: mockJwtPayload,
 };
 
+export type AuthenticatedUser = typeof mockAuthenticatedUser;
+
 /**
  * Creates an authenticated user object for testing.
  * This matches the AuthenticatedUser type from JwtAuthGuard.

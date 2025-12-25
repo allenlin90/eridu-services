@@ -45,9 +45,9 @@ export type TransactionOptions = {
 export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(PrismaService.name);
+  public readonly logger = new Logger(PrismaService.name);
   private readonly isDevelopment: boolean;
-  private readonly pool: Pool;
+  public readonly pool: Pool;
 
   constructor(private readonly configService: ConfigService<Env>) {
     const isDevelopment

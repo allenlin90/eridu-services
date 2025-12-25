@@ -8,13 +8,13 @@ import { UtilityService } from '@/utility/utility.service';
  * Extend this interface for repositories with additional methods.
  */
 export type BaseRepositoryMethods = {
-  create: jest.Mock;
-  findByUid?: jest.Mock;
-  findOne?: jest.Mock;
-  update: jest.Mock;
-  softDelete: jest.Mock;
-  findMany: jest.Mock;
-  count: jest.Mock;
+  create: (...args: any[]) => any;
+  update: (...args: any[]) => any;
+  softDelete: (...args: any[]) => any;
+  findMany: (...args: any[]) => any;
+  count: (...args: any[]) => any;
+  delete?: (...args: any[]) => any;
+  restore?: (...args: any[]) => any;
 };
 
 /**
@@ -33,8 +33,8 @@ export type BaseRepositoryMethods = {
  * ```
  */
 export function createMockRepository<T extends BaseRepositoryMethods>(
-  additionalMethods: Partial<T> = {},
-): Partial<T> {
+  additionalMethods: any = {},
+): Partial<jest.Mocked<T>> {
   return {
     create: jest.fn(),
     findByUid: jest.fn(),
@@ -44,7 +44,7 @@ export function createMockRepository<T extends BaseRepositoryMethods>(
     findMany: jest.fn(),
     count: jest.fn(),
     ...additionalMethods,
-  } as Partial<T>;
+  } as any;
 }
 
 /**

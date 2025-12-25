@@ -39,7 +39,7 @@ describe('prismaService', () => {
   let queryRawSpy: jest.SpyInstance;
 
   const mockConfigService = {
-    get: jest.fn((key: string) => {
+    get: jest.fn((key: string): any => {
       if (key === 'NODE_ENV') {
         return 'test';
       }

@@ -15,7 +15,7 @@ import { UtilityService } from '@/utility/utility.service';
 export class ValidationService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly utilityService: UtilityService,
+    public readonly utilityService: UtilityService,
   ) {}
 
   /**

@@ -1,5 +1,6 @@
 /* eslint-disable  */
-import type { Provider, TestingModule } from '@nestjs/testing';
+import type { Provider } from '@nestjs/common';
+import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
 /**
@@ -74,14 +75,14 @@ export async function createAdminControllerTestModule<TController>({
       ([serviceClass, mockInstance]) => ({
         provide: serviceClass,
         useValue: mockInstance,
-      }),
+      } as any),
     ),
     // Guards (if any)
 
     ...guards.map(guard => ({
       provide: guard,
       useValue: { canActivate: jest.fn(() => true) },
-    })),
+    } as any)),
 
     ...additionalProviders,
   ];

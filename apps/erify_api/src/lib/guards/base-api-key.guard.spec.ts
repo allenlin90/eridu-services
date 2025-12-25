@@ -7,12 +7,14 @@ import { BaseApiKeyGuard } from './base-api-key.guard';
 
 import type { Env } from '@/config/env.schema';
 
+type TestEnv = Env & { TEST_API_KEY: string };
+
 /**
  * Concrete implementation of BaseApiKeyGuard for testing
  */
 class TestApiKeyGuard extends BaseApiKeyGuard {
   protected getApiKeyFromConfig(): string | undefined {
-    return this.configService.get('TEST_API_KEY');
+    return (this.configService as ConfigService<TestEnv>).get('TEST_API_KEY', { infer: true });
   }
 
   protected getEnvKeyName(): string {
@@ -22,7 +24,7 @@ class TestApiKeyGuard extends BaseApiKeyGuard {
 
 describe('baseApiKeyGuard', () => {
   let guard: TestApiKeyGuard;
-  let configService: jest.Mocked<ConfigService<Env>>;
+  let configService: jest.Mocked<ConfigService<TestEnv>>;
   let mockExecutionContext: ExecutionContext;
   let mockRequest: Partial<Request>;
 
@@ -30,7 +32,7 @@ describe('baseApiKeyGuard', () => {
     // Mock ConfigService
     configService = {
       get: jest.fn(),
-    } as unknown as jest.Mocked<ConfigService<Env>>;
+    } as unknown as jest.Mocked<ConfigService<TestEnv>>;
 
     // Mock ExecutionContext
     mockRequest = {
