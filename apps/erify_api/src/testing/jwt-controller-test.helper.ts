@@ -1,5 +1,6 @@
 /* eslint-disable  */
-import type { Provider, TestingModule } from '@nestjs/testing';
+import type { Provider } from '@nestjs/common';
+import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
 import {
@@ -78,7 +79,7 @@ export async function createJwtControllerTestModule<TController>({
       ([serviceClass, mockInstance]) => ({
         provide: serviceClass,
         useValue: mockInstance,
-      }),
+      } as any),
     ),
 
     ...additionalProviders,

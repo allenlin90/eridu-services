@@ -69,6 +69,7 @@
     "build": "tsc",
     "dev": "tsc --watch --preserveWatchOutput",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+    "typecheck": "tsc --noEmit",
     "test": "echo \"No tests specified\" && exit 0"
   },
   "peerDependencies": {

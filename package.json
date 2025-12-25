@@ -6,6 +6,7 @@
     "dev": "turbo dev --concurrency=20",
     "dev:studios": "turbo dev --filter=erify_studios... --filter=erify_api... --filter=eridu_auth...",
     "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
     "test": "turbo test",
     "sherif": "pnpm dlx sherif@latest",
     "prepare": "husky"

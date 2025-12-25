@@ -61,6 +61,7 @@ describe('scheduleService', () => {
     name: 'Admin User',
     extId: null,
     isBanned: false,
+    isSystemAdmin: false,
     profileUrl: null,
     metadata: {},
     createdAt: new Date(),
