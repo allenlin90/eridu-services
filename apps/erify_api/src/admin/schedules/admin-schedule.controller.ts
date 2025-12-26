@@ -15,6 +15,7 @@ import { ZodSerializerDto } from 'nestjs-zod';
 import { z } from 'zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
+import { HttpError } from '@/lib/errors/http-error.util';
 import { GoogleSheetsApiKeyGuard } from '@/lib/guards/google-sheets-api-key.guard';
 import { ApiZodResponse } from '@/lib/openapi/decorators';
 import { createPaginatedResponseSchema } from '@/lib/pagination/pagination.schema';
@@ -86,7 +87,7 @@ export class AdminScheduleController extends BaseAdminController {
       = await this.scheduleService.getPaginatedSchedules(query);
 
     // Conditionally exclude plan_document from serialization
-    // Setting to undefined allows the serializer to omit it (schema makes it optional)
+    // Set to undefined when not requested - the Zod transform will omit it
     const transformedSchedules = schedules.map((schedule) => ({
       ...schedule,
       planDocument: query.include_plan_document
@@ -125,21 +126,15 @@ export class AdminScheduleController extends BaseAdminController {
     const currentSchedule = await this.scheduleService.getScheduleById(id);
 
     // If plan document is updated, create snapshot and increment version
-    if (body.planDocument) {
+    if (body.planDocument && currentSchedule.createdBy) {
       // TODO: After implementing authentication pipe/decorator, get current user from request
       // Replace this temporary workaround with: @CurrentUser() user: User
       // Create auto-snapshot before updating
-      // Use the schedule's createdBy user ID directly (it's already a bigint)
-      // In a real app with auth, this should come from the authenticated user
-      const createdBy = this.ensureFieldExists(
-        currentSchedule.createdBy,
-        'createdBy',
-        'Schedule',
-      );
+      // Only create snapshot if schedule has a createdBy user
       await this.schedulePlanningService.createManualSnapshot(
         id,
         'auto_save',
-        createdBy,
+        currentSchedule.createdBy,
       );
     }
 
@@ -195,11 +190,13 @@ export class AdminScheduleController extends BaseAdminController {
       createdByUser: true,
     });
 
-    const userId = this.ensureFieldExists(
-      schedule.createdBy,
-      'createdBy',
-      'Schedule',
-    );
+    // Ensure schedule has a creator for publishing
+    if (!schedule.createdBy) {
+      throw HttpError.badRequest(
+        'Schedule must have a creator (createdBy) to be published',
+      );
+    }
+    const userId = schedule.createdBy;
     const result = await this.schedulePlanningService.publishSchedule(
       id,
       body.version,
@@ -250,6 +247,7 @@ export class AdminScheduleController extends BaseAdminController {
   @Get(':id/snapshots')
   @HttpCode(HttpStatus.OK)
   @ApiZodResponse(z.array(scheduleSnapshotDto), 'List of schedule snapshots')
+  @ZodSerializerDto(z.array(scheduleSnapshotDto))
   async getScheduleSnapshots(
     @Param('id', new UidValidationPipe(ScheduleService.UID_PREFIX, 'Schedule'))
     id: string,

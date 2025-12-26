@@ -1,13 +1,16 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import {
+  listSnapshotsQuerySchema,
+  scheduleSnapshotApiResponseSchema,
+} from '@eridu/api-types/schedules';
+
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import {
   SCHEDULE_STATUS,
-  scheduleSchema,
 } from '@/models/schedule/schemas/schedule.schema';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
-import { userSchema } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
 
 // Snapshot reason enum
@@ -27,7 +30,7 @@ export const scheduleSnapshotSchema = z.object({
   status: z.string(),
   snapshotReason: z.string(),
   metadata: z.record(z.string(), z.any()),
-  createdBy: z.bigint(),
+  createdBy: z.bigint().nullable(),
   scheduleId: z.bigint(),
   createdAt: z.date(),
 });
@@ -35,8 +38,8 @@ export const scheduleSnapshotSchema = z.object({
 // Schema for ScheduleSnapshot with relations (used in admin endpoints)
 export const scheduleSnapshotWithRelationsSchema
   = scheduleSnapshotSchema.extend({
-    user: userSchema.optional(),
-    schedule: scheduleSchema.optional(),
+    user: z.object({ uid: z.string(), name: z.string().nullable() }).passthrough().optional().nullable(),
+    schedule: z.object({ uid: z.string(), name: z.string().nullable() }).passthrough().optional().nullable(),
   });
 
 // API input schema (snake_case input, transforms to camelCase)
@@ -140,6 +143,8 @@ export const updateScheduleSnapshotCoreSchema = z.object({
   metadata: z.record(z.string(), z.any()).optional(),
 });
 
+// ... (keep imports)
+
 // API output schema (transforms to snake_case)
 export const scheduleSnapshotDto = scheduleSnapshotWithRelationsSchema
   .transform((obj) => ({
@@ -148,28 +153,18 @@ export const scheduleSnapshotDto = scheduleSnapshotWithRelationsSchema
     version: obj.version,
     status: obj.status,
     snapshot_reason: obj.snapshotReason,
-    metadata: obj.metadata,
+    metadata: obj.metadata ?? {},
     created_by: obj.user?.uid ?? null,
     created_by_name: obj.user?.name ?? null,
     schedule_id: obj.schedule?.uid ?? null,
     schedule_name: obj.schedule?.name ?? null,
     created_at: obj.createdAt.toISOString(),
   }))
-  .pipe(
-    z.object({
-      id: z.string(),
-      plan_document: z.record(z.string(), z.any()),
-      version: z.number().int(),
-      status: z.string(),
-      snapshot_reason: z.string(),
-      metadata: z.record(z.string(), z.any()),
-      created_by: z.string().nullable(),
-      created_by_name: z.string().nullable(),
-      schedule_id: z.string().nullable(),
-      schedule_name: z.string().nullable(),
-      created_at: z.iso.datetime(),
-    }),
-  );
+  .pipe(scheduleSnapshotApiResponseSchema);
+
+// ... (keep DTOs)
+
+export const listSnapshotsQueryDtoSchema = listSnapshotsQuerySchema;
 
 // DTOs for input/output
 export class CreateScheduleSnapshotDto extends createZodDto(
@@ -187,12 +182,6 @@ export class UpdateScheduleSnapshotCoreDto extends createZodDto(
 export class ScheduleSnapshotDto extends createZodDto(scheduleSnapshotDto) {}
 
 // Query schema for listing snapshots
-export const listSnapshotsQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).optional(),
-});
-
 export class ListSnapshotsQueryDto extends createZodDto(
   listSnapshotsQuerySchema,
-) {
-  declare limit?: number;
-}
+) {}
