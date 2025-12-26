@@ -79,6 +79,10 @@ export function StudioRoomsList() {
   // Table columns
   const columns: ColumnDef<StudioRoom>[] = [
     {
+      accessorKey: 'id',
+      header: 'ID',
+    },
+    {
       accessorKey: 'name',
       header: 'Name',
     },

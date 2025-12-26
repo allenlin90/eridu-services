@@ -90,6 +90,10 @@ function MembershipsList() {
   // Table columns
   const columns: ColumnDef<Membership>[] = [
     {
+      accessorKey: 'id',
+      header: 'ID',
+    },
+    {
       accessorKey: 'user_id',
       header: 'User ID',
     },

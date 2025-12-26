@@ -83,6 +83,10 @@ function PlatformsList() {
   // Table columns
   const columns: ColumnDef<Platform>[] = [
     {
+      accessorKey: 'id',
+      header: 'ID',
+    },
+    {
       accessorKey: 'name',
       header: 'Name',
     },
