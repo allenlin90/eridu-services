@@ -562,6 +562,12 @@ describe('schedulePlanningService', () => {
               email: true,
             },
           },
+          schedule: {
+            select: {
+              uid: true,
+              name: true,
+            },
+          },
         },
       });
       expect(result).toEqual(mockSnapshots);
@@ -621,6 +627,12 @@ describe('schedulePlanningService', () => {
               email: true,
             },
           },
+          schedule: {
+            select: {
+              uid: true,
+              name: true,
+            },
+          },
         },
       });
       expect(result[0].uid).toBe('snapshot_1');
@@ -678,6 +690,12 @@ describe('schedulePlanningService', () => {
               uid: true,
               name: true,
               email: true,
+            },
+          },
+          schedule: {
+            select: {
+              uid: true,
+              name: true,
             },
           },
         },
@@ -748,6 +766,12 @@ describe('schedulePlanningService', () => {
               uid: true,
               name: true,
               email: true,
+            },
+          },
+          schedule: {
+            select: {
+              uid: true,
+              name: true,
             },
           },
         },

@@ -49,6 +49,10 @@
       "types": "./dist/shows/index.d.ts",
       "default": "./dist/shows/index.js"
     },
+    "./schedules": {
+      "types": "./dist/schedules/index.d.ts",
+      "default": "./dist/schedules/index.js"
+    },
     "./studio-rooms": {
       "types": "./dist/studio-rooms/index.d.ts",
       "default": "./dist/studio-rooms/index.js"

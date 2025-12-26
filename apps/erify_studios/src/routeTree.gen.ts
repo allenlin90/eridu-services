@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as SystemRouteRouteImport } from './routes/system/route'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SystemUsersIndexRouteImport } from './routes/system/users/index'
 import { Route as SystemStudiosIndexRouteImport } from './routes/system/studios/index'
@@ -20,7 +21,10 @@ import { Route as SystemPlatformsIndexRouteImport } from './routes/system/platfo
 import { Route as SystemMembershipsIndexRouteImport } from './routes/system/memberships/index'
 import { Route as SystemMcsIndexRouteImport } from './routes/system/mcs/index'
 import { Route as SystemClientsIndexRouteImport } from './routes/system/clients/index'
+import { Route as AdminShowsIndexRouteImport } from './routes/admin/shows/index'
+import { Route as AdminSchedulesIndexRouteImport } from './routes/admin/schedules/index'
 import { Route as SystemStudiosStudioIdStudioRoomsIndexRouteImport } from './routes/system/studios/$studioId/studio-rooms/index'
+import { Route as AdminSchedulesScheduleIdSnapshotsIndexRouteImport } from './routes/admin/schedules/$scheduleId/snapshots/index'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -30,6 +34,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const SystemRouteRoute = SystemRouteRouteImport.update({
   id: '/system',
   path: '/system',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -78,17 +87,36 @@ const SystemClientsIndexRoute = SystemClientsIndexRouteImport.update({
   path: '/clients/',
   getParentRoute: () => SystemRouteRoute,
 } as any)
+const AdminShowsIndexRoute = AdminShowsIndexRouteImport.update({
+  id: '/shows/',
+  path: '/shows/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminSchedulesIndexRoute = AdminSchedulesIndexRouteImport.update({
+  id: '/schedules/',
+  path: '/schedules/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const SystemStudiosStudioIdStudioRoomsIndexRoute =
   SystemStudiosStudioIdStudioRoomsIndexRouteImport.update({
     id: '/studios/$studioId/studio-rooms/',
     path: '/studios/$studioId/studio-rooms/',
     getParentRoute: () => SystemRouteRoute,
   } as any)
+const AdminSchedulesScheduleIdSnapshotsIndexRoute =
+  AdminSchedulesScheduleIdSnapshotsIndexRouteImport.update({
+    id: '/schedules/$scheduleId/snapshots/',
+    path: '/schedules/$scheduleId/snapshots/',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/system': typeof SystemRouteRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/admin/schedules': typeof AdminSchedulesIndexRoute
+  '/admin/shows': typeof AdminShowsIndexRoute
   '/system/clients': typeof SystemClientsIndexRoute
   '/system/mcs': typeof SystemMcsIndexRoute
   '/system/memberships': typeof SystemMembershipsIndexRoute
@@ -97,12 +125,16 @@ export interface FileRoutesByFullPath {
   '/system/show-types': typeof SystemShowTypesIndexRoute
   '/system/studios': typeof SystemStudiosIndexRoute
   '/system/users': typeof SystemUsersIndexRoute
+  '/admin/schedules/$scheduleId/snapshots': typeof AdminSchedulesScheduleIdSnapshotsIndexRoute
   '/system/studios/$studioId/studio-rooms': typeof SystemStudiosStudioIdStudioRoomsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/system': typeof SystemRouteRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/admin/schedules': typeof AdminSchedulesIndexRoute
+  '/admin/shows': typeof AdminShowsIndexRoute
   '/system/clients': typeof SystemClientsIndexRoute
   '/system/mcs': typeof SystemMcsIndexRoute
   '/system/memberships': typeof SystemMembershipsIndexRoute
@@ -111,13 +143,17 @@ export interface FileRoutesByTo {
   '/system/show-types': typeof SystemShowTypesIndexRoute
   '/system/studios': typeof SystemStudiosIndexRoute
   '/system/users': typeof SystemUsersIndexRoute
+  '/admin/schedules/$scheduleId/snapshots': typeof AdminSchedulesScheduleIdSnapshotsIndexRoute
   '/system/studios/$studioId/studio-rooms': typeof SystemStudiosStudioIdStudioRoomsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/system': typeof SystemRouteRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/admin/schedules/': typeof AdminSchedulesIndexRoute
+  '/admin/shows/': typeof AdminShowsIndexRoute
   '/system/clients/': typeof SystemClientsIndexRoute
   '/system/mcs/': typeof SystemMcsIndexRoute
   '/system/memberships/': typeof SystemMembershipsIndexRoute
@@ -126,14 +162,18 @@ export interface FileRoutesById {
   '/system/show-types/': typeof SystemShowTypesIndexRoute
   '/system/studios/': typeof SystemStudiosIndexRoute
   '/system/users/': typeof SystemUsersIndexRoute
+  '/admin/schedules/$scheduleId/snapshots/': typeof AdminSchedulesScheduleIdSnapshotsIndexRoute
   '/system/studios/$studioId/studio-rooms/': typeof SystemStudiosStudioIdStudioRoomsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/system'
     | '/dashboard'
+    | '/admin/schedules'
+    | '/admin/shows'
     | '/system/clients'
     | '/system/mcs'
     | '/system/memberships'
@@ -142,12 +182,16 @@ export interface FileRouteTypes {
     | '/system/show-types'
     | '/system/studios'
     | '/system/users'
+    | '/admin/schedules/$scheduleId/snapshots'
     | '/system/studios/$studioId/studio-rooms'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/system'
     | '/dashboard'
+    | '/admin/schedules'
+    | '/admin/shows'
     | '/system/clients'
     | '/system/mcs'
     | '/system/memberships'
@@ -156,12 +200,16 @@ export interface FileRouteTypes {
     | '/system/show-types'
     | '/system/studios'
     | '/system/users'
+    | '/admin/schedules/$scheduleId/snapshots'
     | '/system/studios/$studioId/studio-rooms'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/system'
     | '/dashboard'
+    | '/admin/schedules/'
+    | '/admin/shows/'
     | '/system/clients/'
     | '/system/mcs/'
     | '/system/memberships/'
@@ -170,11 +218,13 @@ export interface FileRouteTypes {
     | '/system/show-types/'
     | '/system/studios/'
     | '/system/users/'
+    | '/admin/schedules/$scheduleId/snapshots/'
     | '/system/studios/$studioId/studio-rooms/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
   SystemRouteRoute: typeof SystemRouteRouteWithChildren
   DashboardRoute: typeof DashboardRoute
 }
@@ -193,6 +243,13 @@ declare module '@tanstack/react-router' {
       path: '/system'
       fullPath: '/system'
       preLoaderRoute: typeof SystemRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -258,6 +315,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SystemClientsIndexRouteImport
       parentRoute: typeof SystemRouteRoute
     }
+    '/admin/shows/': {
+      id: '/admin/shows/'
+      path: '/shows'
+      fullPath: '/admin/shows'
+      preLoaderRoute: typeof AdminShowsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/schedules/': {
+      id: '/admin/schedules/'
+      path: '/schedules'
+      fullPath: '/admin/schedules'
+      preLoaderRoute: typeof AdminSchedulesIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/system/studios/$studioId/studio-rooms/': {
       id: '/system/studios/$studioId/studio-rooms/'
       path: '/studios/$studioId/studio-rooms'
@@ -265,8 +336,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SystemStudiosStudioIdStudioRoomsIndexRouteImport
       parentRoute: typeof SystemRouteRoute
     }
+    '/admin/schedules/$scheduleId/snapshots/': {
+      id: '/admin/schedules/$scheduleId/snapshots/'
+      path: '/schedules/$scheduleId/snapshots'
+      fullPath: '/admin/schedules/$scheduleId/snapshots'
+      preLoaderRoute: typeof AdminSchedulesScheduleIdSnapshotsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
   }
 }
+
+interface AdminRouteRouteChildren {
+  AdminSchedulesIndexRoute: typeof AdminSchedulesIndexRoute
+  AdminShowsIndexRoute: typeof AdminShowsIndexRoute
+  AdminSchedulesScheduleIdSnapshotsIndexRoute: typeof AdminSchedulesScheduleIdSnapshotsIndexRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminSchedulesIndexRoute: AdminSchedulesIndexRoute,
+  AdminShowsIndexRoute: AdminShowsIndexRoute,
+  AdminSchedulesScheduleIdSnapshotsIndexRoute:
+    AdminSchedulesScheduleIdSnapshotsIndexRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
 
 interface SystemRouteRouteChildren {
   SystemClientsIndexRoute: typeof SystemClientsIndexRoute
@@ -299,6 +394,7 @@ const SystemRouteRouteWithChildren = SystemRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
   SystemRouteRoute: SystemRouteRouteWithChildren,
   DashboardRoute: DashboardRoute,
 }

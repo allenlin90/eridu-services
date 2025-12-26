@@ -2,10 +2,12 @@ import { useLocation } from '@tanstack/react-router';
 import {
   AudioWaveform,
   Building2,
+  CalendarDays,
   Command,
   GalleryVerticalEnd,
   LayoutDashboard,
   Settings,
+  Tv,
   Users,
 } from 'lucide-react';
 import type * as React from 'react';
@@ -88,6 +90,22 @@ const SYSTEM_NAV_ITEMS: SidebarNavItem[] = [
   },
 ];
 
+/**
+ * Admin navigation configuration
+ */
+const ADMIN_NAV_ITEMS: SidebarNavItem[] = [
+  {
+    title: 'Schedules',
+    url: '/admin/schedules',
+    icon: CalendarDays,
+  },
+  {
+    title: 'Shows',
+    url: '/admin/shows',
+    icon: Tv,
+  },
+];
+
 export function useSidebarConfig(
   session: Session | null,
 ): Omit<AppSidebarProps, keyof React.ComponentProps<'div'>> {
@@ -115,6 +133,14 @@ export function useSidebarConfig(
         icon: Settings,
         isActive: currentPath.startsWith('/system'),
         items: SYSTEM_NAV_ITEMS,
+      });
+
+      baseItems.push({
+        title: 'Admin',
+        url: '/admin',
+        icon: Settings,
+        isActive: currentPath.startsWith('/admin'),
+        items: ADMIN_NAV_ITEMS,
       });
     }
 

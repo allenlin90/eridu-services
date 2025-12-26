@@ -1,6 +1,12 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import {
+  createScheduleInputSchema,
+  scheduleApiResponseSchema,
+  updateScheduleInputSchema,
+} from '@eridu/api-types/schedules';
+
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { ClientService } from '@/models/client/client.service';
 import { clientSchema } from '@/models/client/schemas/client.schema';
@@ -27,8 +33,8 @@ export const scheduleSchema = z.object({
   planDocument: z.record(z.string(), z.any()),
   version: z.number().int(),
   metadata: z.record(z.string(), z.any()),
-  clientId: z.bigint(),
-  createdBy: z.bigint(),
+  clientId: z.bigint().nullable(),
+  createdBy: z.bigint().nullable(),
   publishedBy: z.bigint().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -40,33 +46,12 @@ export const scheduleWithRelationsSchema = scheduleSchema.extend({
   client: clientSchema.optional(),
   createdByUser: userSchema.optional(),
   publishedByUser: userSchema.nullable().optional(),
+  planDocument: z.record(z.string(), z.any()).optional(), // Override to make optional for conditional inclusion
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-// Use string dates to avoid Date types in JSON Schema generation
-export const createScheduleSchema = z
-  .object({
-    name: z.string().min(1, 'Schedule name is required'),
-    start_date: z.iso.datetime(), // ISO 8601 datetime string
-    end_date: z.iso.datetime(), // ISO 8601 datetime string
-    status: z
-      .enum([
-        SCHEDULE_STATUS.DRAFT,
-        SCHEDULE_STATUS.REVIEW,
-        SCHEDULE_STATUS.PUBLISHED,
-      ])
-      .default(SCHEDULE_STATUS.DRAFT),
-    plan_document: z.record(z.string(), z.any()),
-    version: z.number().int().default(1),
-    metadata: z.record(z.string(), z.any()).optional(),
-    client_id: z.string().startsWith(ClientService.UID_PREFIX),
-    created_by: z.string().startsWith(UserService.UID_PREFIX),
-  })
-  .refine((data) => new Date(data.end_date) > new Date(data.start_date), {
-    message: 'End date must be after start date',
-    path: ['end_date'],
-  })
-  .transform((data) => ({
+export const createScheduleSchema = createScheduleInputSchema.transform(
+  (data) => ({
     name: data.name,
     startDate: new Date(data.start_date),
     endDate: new Date(data.end_date),
@@ -76,7 +61,8 @@ export const createScheduleSchema = z
     metadata: data.metadata,
     client: { connect: { uid: data.client_id } },
     createdByUser: { connect: { uid: data.created_by } },
-  }));
+  }),
+);
 
 // CORE input schema
 export const createScheduleCoreSchema = z.object({
@@ -98,38 +84,8 @@ export const createScheduleCoreSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-// Use string dates to avoid Date types in JSON Schema generation
-export const updateScheduleSchema = z
-  .object({
-    name: z.string().min(1, 'Schedule name is required').optional(),
-    start_date: z.iso.datetime().optional(), // ISO 8601 datetime string
-    end_date: z.iso.datetime().optional(), // ISO 8601 datetime string
-    status: z
-      .enum([
-        SCHEDULE_STATUS.DRAFT,
-        SCHEDULE_STATUS.REVIEW,
-        SCHEDULE_STATUS.PUBLISHED,
-      ])
-      .optional(),
-    plan_document: z.record(z.string(), z.any()).optional(),
-    version: z.number().int().positive(), // Required for optimistic locking
-    metadata: z.record(z.string(), z.any()).optional(),
-    published_by: z.string().startsWith(UserService.UID_PREFIX).optional(),
-  })
-  .refine(
-    (data) => {
-      // Only validate if both dates are provided
-      if (data.start_date && data.end_date) {
-        return new Date(data.end_date) > new Date(data.start_date);
-      }
-      return true;
-    },
-    {
-      message: 'End date must be after start date',
-      path: ['end_date'],
-    },
-  )
-  .transform((data) => ({
+export const updateScheduleSchema = updateScheduleInputSchema.transform(
+  (data) => ({
     name: data.name,
     startDate: data.start_date ? new Date(data.start_date) : undefined,
     endDate: data.end_date ? new Date(data.end_date) : undefined,
@@ -140,7 +96,8 @@ export const updateScheduleSchema = z
     publishedByUser: data.published_by
       ? { connect: { uid: data.published_by } }
       : undefined,
-  }));
+  }),
+);
 
 export const updateScheduleCoreSchema = z.object({
   name: z.string().optional(),
@@ -155,8 +112,6 @@ export const updateScheduleCoreSchema = z.object({
 });
 
 // API output schema (transforms to snake_case)
-// Use a transform schema that accepts schedule with relations and converts to DTO format
-// This avoids Date types in JSON Schema by defining the output shape directly
 export const scheduleDto = scheduleWithRelationsSchema
   .transform((obj) => ({
     id: obj.uid,
@@ -177,64 +132,17 @@ export const scheduleDto = scheduleWithRelationsSchema
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
   }))
-  .pipe(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      start_date: z.iso.datetime(),
-      end_date: z.iso.datetime(),
-      status: z.string(),
-      published_at: z.iso.datetime().nullable(),
-      plan_document: z.record(z.string(), z.any()).optional(),
-      version: z.number().int(),
-      metadata: z.record(z.string(), z.any()),
-      client_id: z.string().nullable(),
-      client_name: z.string().nullable(),
-      created_by: z.string().nullable(),
-      created_by_name: z.string().nullable(),
-      published_by: z.string().nullable(),
-      published_by_name: z.string().nullable(),
-      created_at: z.iso.datetime(),
-      updated_at: z.iso.datetime(),
-    }),
-  );
+  .pipe(scheduleApiResponseSchema);
 
 // Bulk operation schemas
 export const bulkCreateScheduleSchema = z.object({
   schedules: z.array(createScheduleSchema).min(1).max(1000), // Limit to prevent abuse
 });
 
-export const bulkUpdateScheduleItemSchema = z
-  .object({
+export const bulkUpdateScheduleItemSchema = updateScheduleInputSchema
+  .safeExtend({
     schedule_id: z.string().startsWith(ScheduleService.UID_PREFIX),
-    name: z.string().min(1, 'Schedule name is required').optional(),
-    start_date: z.iso.datetime().optional(),
-    end_date: z.iso.datetime().optional(),
-    status: z
-      .enum([
-        SCHEDULE_STATUS.DRAFT,
-        SCHEDULE_STATUS.REVIEW,
-        SCHEDULE_STATUS.PUBLISHED,
-      ])
-      .optional(),
-    plan_document: z.record(z.string(), z.any()).optional(),
-    version: z.number().int().positive().optional(), // Required for optimistic locking
-    metadata: z.record(z.string(), z.any()).optional(),
-    published_by: z.string().startsWith(UserService.UID_PREFIX).optional(),
   })
-  .refine(
-    (data) => {
-      // Only validate if both dates are provided
-      if (data.start_date && data.end_date) {
-        return new Date(data.end_date) > new Date(data.start_date);
-      }
-      return true;
-    },
-    {
-      message: 'End date must be after start date',
-      path: ['end_date'],
-    },
-  )
   .transform((data) => ({
     scheduleId: data.schedule_id,
     name: data.name,
@@ -325,19 +233,17 @@ export type ListSchedulesQuery = z.infer<typeof listSchedulesQuerySchema>;
 
 // Monthly overview query schema
 export const monthlyOverviewQuerySchema = z.object({
-  start_date: z.iso.datetime(),
-  end_date: z.iso.datetime(),
-  client_ids: z
-    .array(z.string().startsWith(ClientService.UID_PREFIX))
-    .optional(),
+  start_date: z.string(),
+  end_date: z.string(),
+  client_ids: z.array(z.string()).optional(),
   status: z.string().optional(),
   include_deleted: z.coerce.boolean().default(false),
 });
 
 // Monthly overview response schema
 export const monthlyOverviewResponseSchema = z.object({
-  start_date: z.iso.datetime(),
-  end_date: z.iso.datetime(),
+  start_date: z.string(),
+  end_date: z.string(),
   total_schedules: z.number().int(),
   schedules_by_client: z.record(
     z.string(),

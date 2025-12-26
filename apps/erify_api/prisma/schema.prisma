@@ -320,7 +320,7 @@ model Schedule {
   endDate         DateTime           @map("end_date")
   status          String             @default("draft") // draft, review, published
   publishedAt     DateTime?          @map("published_at")
-  planDocument    Json               @map("plan_document")
+  planDocument    Json               @default("{}") @map("plan_document")
   version         Int                @default(1)
   metadata        Json               @default("{}")
   clientId        BigInt?            @map("client_id")

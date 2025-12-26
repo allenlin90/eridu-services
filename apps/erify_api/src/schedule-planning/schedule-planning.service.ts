@@ -184,6 +184,12 @@ export class SchedulePlanningService {
             email: true,
           },
         },
+        schedule: {
+          select: {
+            uid: true,
+            name: true,
+          },
+        },
       },
     });
   }

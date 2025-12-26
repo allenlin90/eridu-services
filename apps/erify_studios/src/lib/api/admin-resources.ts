@@ -11,6 +11,8 @@ export const ADMIN_RESOURCES = [
   'show-types',
   'studio-rooms',
   'studios',
+  'schedules',
+  'shows',
   'users',
 ] as const;
 
@@ -70,6 +72,16 @@ export const ADMIN_RESOURCE_META: Record<
     singular: 'Studio',
     plural: 'Studios',
     apiPath: 'studios',
+  },
+  'schedules': {
+    singular: 'Schedule',
+    plural: 'Schedules',
+    apiPath: 'schedules',
+  },
+  'shows': {
+    singular: 'Show',
+    plural: 'Shows',
+    apiPath: 'shows',
   },
   'users': {
     singular: 'User',

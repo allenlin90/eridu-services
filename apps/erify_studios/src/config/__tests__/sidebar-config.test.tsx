@@ -12,6 +12,8 @@ vi.mock('lucide-react', () => ({
   Building2: vi.fn(),
   Settings: vi.fn(),
   Users: vi.fn(),
+  CalendarDays: vi.fn(),
+  Tv: vi.fn(),
 }));
 
 // Mock auth client
@@ -104,7 +106,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
-    expect(result.current.navMain).toHaveLength(2); // Dashboard + System
+    expect(result.current.navMain).toHaveLength(3); // Dashboard + System + Admin
     expect(result.current.navMain[0]).toEqual({
       title: 'Dashboard',
       url: '/dashboard',
