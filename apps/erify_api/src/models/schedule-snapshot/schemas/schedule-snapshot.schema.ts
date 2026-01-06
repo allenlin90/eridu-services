@@ -6,10 +6,10 @@ import {
   scheduleSnapshotApiResponseSchema,
 } from '@eridu/api-types/schedules';
 
-import { ScheduleService } from '@/models/schedule/schedule.service';
 import {
   SCHEDULE_STATUS,
-} from '@/models/schedule/schemas/schedule.schema';
+  SCHEDULE_UID_PREFIX,
+} from '@/models/schedule/schedule.constants';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
 import { UserService } from '@/models/user/user.service';
 
@@ -60,7 +60,7 @@ export const createScheduleSnapshotSchema = z
     ]),
     metadata: z.record(z.string(), z.any()).optional(),
     created_by: z.string().startsWith(UserService.UID_PREFIX),
-    schedule_id: z.string().startsWith(ScheduleService.UID_PREFIX),
+    schedule_id: z.string().startsWith(SCHEDULE_UID_PREFIX),
   })
   .transform((data) => ({
     planDocument: data.plan_document,

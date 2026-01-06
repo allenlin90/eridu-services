@@ -13,6 +13,10 @@ import {
   ListSchedulesQuery,
   UpdateScheduleDto,
 } from './schemas/schedule.schema';
+import {
+  SCHEDULE_STATUS,
+  SCHEDULE_UID_PREFIX,
+} from './schedule.constants';
 import { ScheduleRepository } from './schedule.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
@@ -28,7 +32,7 @@ type ScheduleWithIncludes<T extends Prisma.ScheduleInclude> =
 
 @Injectable()
 export class ScheduleService extends BaseModelService {
-  static readonly UID_PREFIX = 'schedule';
+  static readonly UID_PREFIX = SCHEDULE_UID_PREFIX;
   protected readonly uidPrefix = ScheduleService.UID_PREFIX;
 
   constructor(
@@ -279,11 +283,13 @@ export class ScheduleService extends BaseModelService {
   ): Promise<Schedule | ScheduleWithIncludes<T>> {
     const schedule = await this.findScheduleOrThrow(uid);
 
-    // Prevent editing published schedules
-    if (schedule.status === 'published') {
-      throw HttpError.badRequest(
-        'Cannot edit published schedule. Duplicate it first.',
-      );
+    // If published, move back to draft on update to require re-publishing
+    // This ensures changes are reviewed and synced to live tables via the publish endpoint
+    if (
+      schedule.status === SCHEDULE_STATUS.PUBLISHED
+      && (!data.status || data.status === SCHEDULE_STATUS.PUBLISHED)
+    ) {
+      data.status = SCHEDULE_STATUS.DRAFT;
     }
 
     // Optimistic locking validation
@@ -298,12 +304,7 @@ export class ScheduleService extends BaseModelService {
   }
 
   async deleteSchedule(uid: string): Promise<Schedule> {
-    const schedule = await this.findScheduleOrThrow(uid);
-
-    // Prevent deleting published schedules
-    if (schedule.status === 'published') {
-      throw HttpError.badRequest('Cannot delete published schedule');
-    }
+    await this.findScheduleOrThrow(uid);
 
     return this.scheduleRepository.softDelete({ uid });
   }
@@ -813,7 +814,6 @@ export class ScheduleService extends BaseModelService {
    * @param shows - Shows to append
    * @param chunkIndex - 1-based chunk number (must be sequential)
    * @param version - Current schedule version (for optimistic locking)
-   * @param userId - User ID for snapshot creation
    * @param include - Optional relations to include
    * @returns Updated schedule
    */
@@ -822,15 +822,15 @@ export class ScheduleService extends BaseModelService {
     shows: ShowPlanItem[],
     chunkIndex: number,
     version: number,
-    userId: bigint,
     include?: T,
   ): Promise<Schedule | ScheduleWithIncludes<T>> {
     const schedule = await this.findScheduleOrThrow(scheduleUid);
 
-    // Validate schedule is in draft status
-    if (schedule.status !== 'draft') {
-      throw HttpError.badRequest(
-        'Can only append shows to schedules in draft status',
+    // If published, move back to draft to require re-publishing
+    if (schedule.status === SCHEDULE_STATUS.PUBLISHED) {
+      await this.scheduleRepository.update(
+        { uid: scheduleUid },
+        { status: SCHEDULE_STATUS.DRAFT },
       );
     }
 

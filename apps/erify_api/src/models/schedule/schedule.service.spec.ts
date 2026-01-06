@@ -973,8 +973,7 @@ describe('scheduleService', () => {
         mockSchedule1.uid,
         mockShows,
         1,
-        1,
-        mockUser.id,
+        1
       );
 
       expect(scheduleRepository.findByUid).toHaveBeenCalledWith(
@@ -1010,7 +1009,7 @@ describe('scheduleService', () => {
 
       // Try to upload chunk 3 (should fail, expecting chunk 2)
       await expect(
-        service.appendShows(mockSchedule1.uid, mockShows, 3, 2, mockUser.id),
+        service.appendShows(mockSchedule1.uid, mockShows, 3, 2),
       ).rejects.toThrow(ConflictException);
     });
 
@@ -1036,7 +1035,7 @@ describe('scheduleService', () => {
         .mockResolvedValue(scheduleComplete);
 
       await expect(
-        service.appendShows(mockSchedule1.uid, mockShows, 1, 1, mockUser.id),
+        service.appendShows(mockSchedule1.uid, mockShows, 1, 1),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -1050,14 +1049,46 @@ describe('scheduleService', () => {
         .fn()
         .mockResolvedValue(publishedSchedule);
 
-      await expect(
-        service.appendShows(mockSchedule1.uid, mockShows, 1, 1, mockUser.id),
-      ).rejects.toThrow(BadRequestException);
+      const result = await service.appendShows(mockSchedule1.uid, mockShows, 1, 1);
+      
+      // Should have been called twice: 1. Status transition, 2. Data update
+      expect(scheduleRepository.update).toHaveBeenCalledTimes(2);
+      expect(scheduleRepository.update).toHaveBeenNthCalledWith(
+        1,
+        { uid: mockSchedule1.uid },
+        { status: 'draft' },
+      );
+      expect(result.status).toBe('draft');
+    });
+
+    it('should transition to draft on updateSchedule if published', async () => {
+      const publishedSchedule = {
+        ...mockSchedule1,
+        status: 'published',
+      };
+      scheduleRepository.findByUid = jest.fn().mockResolvedValue(publishedSchedule);
+      scheduleRepository.update = jest.fn().mockResolvedValue({
+        ...publishedSchedule,
+        status: 'draft',
+      });
+
+      const result = await service.updateSchedule(
+        mockSchedule1.uid,
+        { name: 'Updated Name' },
+        1
+      );
+
+      expect(scheduleRepository.update).toHaveBeenCalledWith(
+        { uid: mockSchedule1.uid },
+        expect.objectContaining({ name: 'Updated Name', status: 'draft' }),
+        undefined
+      );
+      expect(result.status).toBe('draft');
     });
 
     it('should reject append if version mismatch', async () => {
       await expect(
-        service.appendShows(mockSchedule1.uid, mockShows, 1, 999, mockUser.id),
+        service.appendShows(mockSchedule1.uid, mockShows, 1, 999),
       ).rejects.toThrow(ConflictException);
     });
 
@@ -1084,7 +1115,7 @@ describe('scheduleService', () => {
         .mockResolvedValue(scheduleWithoutProgress);
 
       await expect(
-        service.appendShows(mockSchedule1.uid, mockShows, 1, 1, mockUser.id),
+        service.appendShows(mockSchedule1.uid, mockShows, 1, 1),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -1094,8 +1125,7 @@ describe('scheduleService', () => {
           mockSchedule1.uid,
           mockShows,
           11, // > expectedChunks (10)
-          1,
-          mockUser.id,
+          1
         ),
       ).rejects.toThrow(BadRequestException);
 
@@ -1105,7 +1135,6 @@ describe('scheduleService', () => {
           mockShows,
           0, // < 1
           1,
-          mockUser.id,
         ),
       ).rejects.toThrow(BadRequestException);
     });
@@ -1115,8 +1144,7 @@ describe('scheduleService', () => {
         mockSchedule1.uid,
         mockShows,
         1,
-        1,
-        mockUser.id,
+        1
       );
 
       expect(scheduleRepository.update).toHaveBeenCalledWith(
@@ -1175,15 +1203,13 @@ describe('scheduleService', () => {
         mockShows,
         10, // Last chunk
         10,
-        mockUser.id,
       );
 
       expect(scheduleRepository.update).toHaveBeenCalledWith(
         { uid: mockSchedule1.uid },
         expect.objectContaining({
-           
           planDocument: expect.any(Object),
-        }) as Prisma.ScheduleUpdateInput,
+        }),
         undefined,
       );
       // Verify the nested structure separately
