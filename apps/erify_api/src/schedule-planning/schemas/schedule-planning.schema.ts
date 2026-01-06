@@ -1,6 +1,12 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import { ClientService } from '@/models/client/client.service';
+import { ShowStandardService } from '@/models/show-standard/show-standard.service';
+import { ShowStatusService } from '@/models/show-status/show-status.service';
+import { ShowTypeService } from '@/models/show-type/show-type.service';
+import { StudioService } from '@/models/studio/studio.service';
+
 // ShowPlanItem schema for plan document
 export const showPlanItemMcSchema = z.object({
   mcUid: z.string(),
@@ -22,11 +28,11 @@ export const showPlanItemSchema = z
     name: z.string().min(1).max(255),
     startTime: z.iso.datetime(),
     endTime: z.iso.datetime(),
-    clientUid: z.string(),
-    studioRoomUid: z.string(),
-    showTypeUid: z.string(),
-    showStatusUid: z.string(),
-    showStandardUid: z.string(),
+    clientUid: z.string().startsWith(ClientService.UID_PREFIX),
+    studioRoomUid: z.string().startsWith(StudioService.UID_PREFIX),
+    showTypeUid: z.string().startsWith(ShowTypeService.UID_PREFIX),
+    showStatusUid: z.string().startsWith(ShowStatusService.UID_PREFIX),
+    showStandardUid: z.string().startsWith(ShowStandardService.UID_PREFIX),
     mcs: z.array(showPlanItemMcSchema).optional().default([]),
     platforms: z.array(showPlanItemPlatformSchema).optional().default([]),
     metadata: z.record(z.string(), z.any()).optional(),
