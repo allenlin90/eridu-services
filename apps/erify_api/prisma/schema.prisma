@@ -177,7 +177,7 @@ model ShowMC {
 model ShowPlatform {
   id             BigInt    @id @default(autoincrement())
   uid            String    @unique
-  liveStreamLink String    @map("live_stream_link")
+  liveStreamLink String?   @map("live_stream_link") // external link of the live stream e.g., tiktok
   platformShowId String?   @map("platform_show_id") // external id of the platform e.g., tiktok
   viewerCount    Int       @default(0) @map("viewer_count")
   metadata       Json      @default("{}")
