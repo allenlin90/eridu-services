@@ -7,24 +7,21 @@ import {
   updateScheduleInputSchema,
 } from '@eridu/api-types/schedules';
 
+import {
+  SCHEDULE_STATUS,
+  SCHEDULE_UID_PREFIX,
+} from '../schedule.constants';
+
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { ClientService } from '@/models/client/client.service';
 import { clientSchema } from '@/models/client/schemas/client.schema';
-import { ScheduleService } from '@/models/schedule/schedule.service';
 import { userSchema } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
-
-// Schedule status enum
-export const SCHEDULE_STATUS = {
-  DRAFT: 'draft',
-  REVIEW: 'review',
-  PUBLISHED: 'published',
-} as const;
 
 // Internal schema for database entity
 export const scheduleSchema = z.object({
   id: z.bigint(),
-  uid: z.string().startsWith(ScheduleService.UID_PREFIX),
+  uid: z.string().startsWith(SCHEDULE_UID_PREFIX),
   name: z.string(),
   startDate: z.date(),
   endDate: z.date(),
@@ -141,7 +138,7 @@ export const bulkCreateScheduleSchema = z.object({
 
 export const bulkUpdateScheduleItemSchema = updateScheduleInputSchema
   .safeExtend({
-    schedule_id: z.string().startsWith(ScheduleService.UID_PREFIX),
+    schedule_id: z.string().startsWith(SCHEDULE_UID_PREFIX),
   })
   .transform((data) => ({
     scheduleId: data.schedule_id,
