@@ -10,15 +10,13 @@ import { StudioService } from '@/models/studio/studio.service';
 // ShowPlanItem schema for plan document
 export const showPlanItemMcSchema = z.object({
   mcUid: z.string(),
-  mcName: z.string().optional(),
   note: z.string().optional(),
 });
 
 export const showPlanItemPlatformSchema = z.object({
   platformUid: z.string(),
-  platformName: z.string().optional(),
-  liveStreamLink: z.string(),
-  platformShowId: z.string(),
+  liveStreamLink: z.string().optional(),
+  platformShowId: z.string().optional(),
 });
 
 export const showPlanItemSchema = z
