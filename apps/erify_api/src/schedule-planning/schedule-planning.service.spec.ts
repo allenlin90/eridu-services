@@ -123,7 +123,7 @@ describe('schedulePlanningService', () => {
           startTime: '2024-01-01T10:00:00Z',
           endTime: '2024-01-01T12:00:00Z',
           clientUid: 'client_test123',
-          studioRoomUid: 'room_test123',
+          studioRoomUid: undefined,
           showTypeUid: 'sht_test123',
           showStatusUid: 'shst_test123',
           showStandardUid: 'shsd_test123',

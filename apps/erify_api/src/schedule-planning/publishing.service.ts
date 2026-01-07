@@ -125,7 +125,9 @@ export class PublishingService {
           endTime: new Date(showItem.endTime),
           metadata: showItem.metadata || {},
           clientId: uidMaps.clients.get(showItem.clientUid)!,
-          studioRoomId: uidMaps.studioRooms.get(showItem.studioRoomUid)!,
+          studioRoomId: showItem.studioRoomUid
+            ? uidMaps.studioRooms.get(showItem.studioRoomUid)!
+            : null,
           showTypeId: uidMaps.showTypes.get(showItem.showTypeUid)!,
           showStatusId: uidMaps.showStatuses.get(showItem.showStatusUid)!,
           showStandardId: uidMaps.showStandards.get(showItem.showStandardUid)!,
@@ -241,7 +243,7 @@ export class PublishingService {
 
     shows.forEach((show) => {
       clientUids.add(show.clientUid);
-      studioRoomUids.add(show.studioRoomUid);
+      show.studioRoomUid && studioRoomUids.add(show.studioRoomUid);
       showTypeUids.add(show.showTypeUid);
       showStatusUids.add(show.showStatusUid);
       showStandardUids.add(show.showStandardUid);

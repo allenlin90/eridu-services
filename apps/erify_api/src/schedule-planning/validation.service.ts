@@ -145,7 +145,7 @@ export class ValidationService {
       });
     }
 
-    if (!uidMaps.studioRooms.has(show.studioRoomUid)) {
+    if (show.studioRoomUid && !uidMaps.studioRooms.has(show.studioRoomUid)) {
       errors.push({
         type: 'reference_not_found',
         message: `Studio room with UID ${show.studioRoomUid} not found`,
@@ -263,7 +263,9 @@ export class ValidationService {
         const show2 = shows[j];
 
         if (
-          show1.studioRoomUid === show2.studioRoomUid
+          show1.studioRoomUid
+          && show2.studioRoomUid
+          && show1.studioRoomUid === show2.studioRoomUid
           && this.utilityService.isTimeOverlapping(
             show1.startTime,
             show1.endTime,
@@ -464,7 +466,7 @@ export class ValidationService {
 
     shows.forEach((show) => {
       clientUids.add(show.clientUid);
-      studioRoomUids.add(show.studioRoomUid);
+      show.studioRoomUid && studioRoomUids.add(show.studioRoomUid);
       showTypeUids.add(show.showTypeUid);
       showStatusUids.add(show.showStatusUid);
       showStandardUids.add(show.showStandardUid);

@@ -107,7 +107,7 @@ describe('validationService', () => {
         startTime: '2024-01-02T10:00:00Z',
         endTime: '2024-01-02T12:00:00Z',
         clientUid: 'client_test123',
-        studioRoomUid: 'room_test456',
+        studioRoomUid: undefined, // No room for show 2
         showTypeUid: 'sht_test123',
         showStatusUid: 'shst_test123',
         showStandardUid: 'shsd_test123',
@@ -408,14 +408,26 @@ describe('validationService', () => {
           showTempId: 'temp_1',
         }),
       );
-      expect(result.errors).toContainEqual(
-        expect.objectContaining({
-          type: 'reference_not_found',
-          message: 'Studio room with UID room_test456 not found',
-          showIndex: 1,
-          showTempId: 'temp_2',
-        }),
-      );
+    });
+
+    it('should validate successfully when studioRoomUid is missing', async () => {
+      const scheduleWithMissingRoom = {
+        ...mockScheduleData,
+        planDocument: {
+          ...mockValidPlanDocument,
+          shows: [
+            {
+              ...mockValidPlanDocument.shows[0],
+              studioRoomUid: undefined,
+            },
+          ],
+        },
+      };
+
+      const result = await service.validateSchedule(scheduleWithMissingRoom);
+
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
     });
 
     it('should validate show type reference existence', async () => {
@@ -554,6 +566,37 @@ describe('validationService', () => {
           showTempId: 'temp_1',
         }),
       );
+    });
+
+    it('should NOT detect room conflicts when shows have no room assigned', async () => {
+      // Mock isTimeOverlapping to return true for overlapping times
+      _utilityService.isTimeOverlapping.mockReturnValue(true);
+
+      const noRoomSchedule = {
+        ...mockScheduleData,
+        planDocument: {
+          ...mockValidPlanDocument,
+          shows: [
+            {
+              ...mockValidPlanDocument.shows[0],
+              studioRoomUid: undefined, // No room
+              startTime: '2024-01-01T10:00:00Z',
+              endTime: '2024-01-01T12:00:00Z',
+            },
+            {
+              ...mockValidPlanDocument.shows[1],
+              studioRoomUid: undefined, // No room
+              startTime: '2024-01-01T11:00:00Z', // Overlapping time
+              endTime: '2024-01-01T13:00:00Z',
+            },
+          ],
+        },
+      };
+
+      const result = await service.validateSchedule(noRoomSchedule);
+
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
     });
 
     it('should detect MC double-booking within schedule', async () => {
@@ -704,7 +747,7 @@ describe('validationService', () => {
 
       expect(mockPrismaClient.studioRoom.findMany).toHaveBeenCalledWith({
         where: {
-          uid: { in: ['room_test123', 'room_test456'] },
+          uid: { in: ['room_test123'] }, // room_test456 is gone
           deletedAt: null,
         },
         select: { id: true, uid: true },

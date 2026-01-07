@@ -29,7 +29,7 @@ export const showPlanItemSchema = z
     startTime: z.iso.datetime(),
     endTime: z.iso.datetime(),
     clientUid: z.string().startsWith(ClientService.UID_PREFIX),
-    studioRoomUid: z.string().startsWith(StudioService.UID_PREFIX),
+    studioRoomUid: z.string().startsWith(StudioService.UID_PREFIX).optional(),
     showTypeUid: z.string().startsWith(ShowTypeService.UID_PREFIX),
     showStatusUid: z.string().startsWith(ShowStatusService.UID_PREFIX),
     showStandardUid: z.string().startsWith(ShowStandardService.UID_PREFIX),
