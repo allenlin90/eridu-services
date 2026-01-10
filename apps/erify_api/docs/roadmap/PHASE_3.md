@@ -1,8 +1,12 @@
 # Phase 3: Advanced Authorization Control & Tracking Features
 
+**Status**: ⏳ Planning phase (not yet started)
+
 ## Overview
 
 Phase 3 introduces advanced authorization control, comprehensive tracking features, and sophisticated collaboration tools. This phase builds upon the Material Management System from Phase 2 by adding role-based access control, audit trails, task management, and advanced collaboration features.
+
+**Timeline**: Dependent on Phase 1 and Phase 2 completion
 
 ## Related Documentation
 

@@ -2,192 +2,675 @@
 
 Shared API types and schemas for the eridu-services monorepo.
 
+**Current Status**: Phase 1 ✅ - 15 entities with Zod validation and TypeScript types
+
 ## Overview
 
-This package provides a single source of truth for API types and schemas used across both the backend API (`erify_api`) and frontend SPA (`erify_creators`). It uses **Zod schemas** as the foundation and exports TypeScript types inferred from those schemas.
+This package is the **single source of truth** for API contracts across the entire monorepo. It provides:
+
+- **Zod schemas** for runtime validation and API contract enforcement
+- **TypeScript types** inferred directly from Zod schemas (type-safe and always in sync)
+- **UID prefix constants** for all entity types (centralized, never hard-coded)
+- **Reusable pagination schemas** for consistent list responses
+- **Input/output schemas** for create, update, and query operations
+
+Used by:
+- **Backend** (`erify_api`): NestJS controllers and services validate requests/responses
+- **Frontend** (`erify_creators`, `erify_studios`): React apps use types for form validation and API response handling
+- **Auth** (`eridu_auth`): JWT payload validation and user profile schemas
 
 ## Strategy: Precompiled (Recommended)
 
 We use a **precompiled strategy** where:
-- Types are compiled to JavaScript and TypeScript declaration files during build
-- Both backend and frontend import from the compiled `dist` directory
-- This provides better type safety, faster builds, and clearer dependency boundaries
+- Schemas are compiled to JavaScript and TypeScript declaration files during build
+- All consumers (backend, frontend, auth) import compiled code from the `dist` directory
+- Zod validators run at runtime in each consumer, not in this package
 
 ### Why Precompiled?
 
-1. **Type Safety**: TypeScript can properly resolve types across package boundaries
-2. **Performance**: No runtime compilation overhead
-3. **Clear Dependencies**: Explicit build dependencies in Turbo
-4. **IDE Support**: Better autocomplete and type checking
-5. **Monorepo Best Practices**: Aligns with Turbo monorepo recommendations
+1. **Type Safety**: TypeScript properly resolves types across package boundaries
+2. **Performance**: Compiled output is faster and has no runtime overhead in this package
+3. **Clear Dependencies**: Explicit build dependencies in Turbo ensure consistent ordering
+4. **IDE Support**: Full autocomplete and inline documentation via JSDoc
+5. **Distributed Validation**: Each consumer runs schema validation independently
+6. **Framework Agnostic**: Schemas work equally well in NestJS, React, Hono, etc.
 
 ## Structure
+
+This package contains **15 Phase 1 entities** organized by domain:
 
 ```
 packages/api-types/
 ├── src/
-│   ├── constants.ts          # UID prefixes and shared constants
-│   ├── pagination/           # Reusable pagination schemas
-│   │   ├── schemas.ts        # Pagination metadata and factory
-│   │   ├── types.ts          # Pagination types
+│   ├── constants.ts          # UID prefix constants (single source of truth)
+│   │
+│   ├── pagination/           # Reusable pagination patterns
+│   │   ├── schemas.ts        # createPaginatedResponseSchema factory
+│   │   ├── types.ts          # Pagination TypeScript types
 │   │   └── index.ts
-│   ├── clients/              # Client entity schemas
+│   │
+│   ├── users/                # User entity (Phase 1)
+│   │   ├── schemas.ts        # User request/response schemas
+│   │   └── index.ts
+│   │
+│   ├── studios/              # Studio entity (Phase 1)
 │   │   ├── schemas.ts
 │   │   └── index.ts
-│   ├── studio-rooms/         # Studio Room entity schemas
+│   │
+│   ├── studio-rooms/         # Studio Room entity (Phase 1)
 │   │   ├── schemas.ts
 │   │   └── index.ts
-│   ├── show-types/           # Show Type entity schemas
+│   │
+│   ├── clients/              # Client entity (Phase 1)
 │   │   ├── schemas.ts
 │   │   └── index.ts
-│   ├── show-statuses/        # Show Status entity schemas
+│   │
+│   ├── mcs/                  # MC (Media Personality) entity (Phase 1)
 │   │   ├── schemas.ts
 │   │   └── index.ts
-│   ├── show-standards/       # Show Standard entity schemas
+│   │
+│   ├── platforms/            # Platform entity (Phase 1)
 │   │   ├── schemas.ts
 │   │   └── index.ts
-│   ├── shows/                # Show entity schemas
-│   │   ├── schemas.ts        # Show-specific schemas
-│   │   ├── types.ts          # TypeScript types and helpers
+│   │
+│   ├── shows/                # Show entity (Phase 1)
+│   │   ├── schemas.ts        # Show API response, creation, query schemas
+│   │   ├── types.ts          # Show TypeScript types
 │   │   └── index.ts
-│   └── index.ts              # Main entry point
-├── dist/                     # Compiled output (generated)
-└── package.json
+│   │
+│   ├── show-types/           # Show Type entity (Phase 1)
+│   │   ├── schemas.ts
+│   │   └── index.ts
+│   │
+│   ├── show-statuses/        # Show Status entity (Phase 1)
+│   │   ├── schemas.ts
+│   │   └── index.ts
+│   │
+│   ├── show-standards/       # Show Standard entity (Phase 1)
+│   │   ├── schemas.ts
+│   │   └── index.ts
+│   │
+│   ├── schedules/            # Schedule entity (Phase 1)
+│   │   ├── schemas.ts        # Schedule request/response schemas
+│   │   ├── snapshot.schemas.ts # ScheduleSnapshot schemas
+│   │   ├── snapshot.types.ts # ScheduleSnapshot types
+│   │   ├── types.ts          # Schedule types
+│   │   └── index.ts
+│   │
+│   ├── memberships/          # Studio Membership entity (Phase 1)
+│   │   ├── schemas.ts        # STUDIO_ROLE constants
+│   │   └── index.ts
+│   │
+│   └── index.ts              # Main entry point (re-exports all)
+│
+├── dist/                     # Compiled output (generated by build)
+├── package.json              # Exports map pointing to dist/
+└── README.md                 # This file
 ```
+
+### Phase 1 Entities (15 total)
+
+| Entity                | UID Prefix  | Module            | Purpose                                       |
+| --------------------- | ----------- | ----------------- | --------------------------------------------- |
+| **User**              | `usr_`      | `users/`          | System users (via eridu_auth)                 |
+| **Studio**            | `std_`      | `studios/`        | Broadcast studios/production facilities       |
+| **Studio Room**       | `srm_`      | `studio-rooms/`   | Physical/virtual rooms within studios         |
+| **Client**            | `clt_`      | `clients/`        | Broadcast clients/organizations               |
+| **MC**                | `mc_`       | `mcs/`            | Media personalities/celebrities               |
+| **Platform**          | `plt_`      | `platforms/`      | Broadcast platforms (YouTube, TV, etc.)       |
+| **Show**              | `show_`     | `shows/`          | Individual broadcast shows                    |
+| **Show Type**         | `sht_`      | `show-types/`     | Show classification (talk, music, news, etc.) |
+| **Show Status**       | `shst_`     | `show-statuses/`  | Show state (draft, scheduled, live, archived) |
+| **Show Standard**     | `shsd_`     | `show-standards/` | Technical standards (SD, HD, 4K, etc.)        |
+| **Schedule**          | `schedule_` | `schedules/`      | Broadcast schedule with multiple shows        |
+| **ScheduleSnapshot**  | `snapshot_` | `schedules/`      | Immutable snapshot of schedule state          |
+| **Studio Membership** | `mem_`      | `memberships/`    | User ↔ Studio relationship + role             |
+
+> **UID Prefixes**: All entity identifiers use branded string types with prefixes. Never hard-code prefixes—always import from `constants.ts`.
 
 ### Benefits of This Structure
 
-- **Tree-shaking**: Each entity is in its own module, allowing bundlers to eliminate unused code
-- **Organization**: Related schemas are grouped together
-- **Reusability**: Pagination schemas can be used by any entity
-- **Maintainability**: Easier to find and update specific schemas
+- **Tree-shaking**: Each entity in its own module; bundlers eliminate unused schemas
+- **Organization**: Related schemas grouped by entity/domain
+- **Reusability**: `createPaginatedResponseSchema()` used by all list endpoints
+- **Maintainability**: Clear file structure makes it easy to locate specific schemas
+- **Scalability**: Adding new Phase 2 entities requires minimal changes
 
 ## Usage
 
-### Backend (NestJS)
+### Importing from @eridu/api-types
+
+Always import from **compiled paths** (never from `src/`):
 
 ```typescript
-import { showApiResponseSchema } from '@eridu/api-types/shows';
-import { ShowDto } from './show.schema';
-
-// Use the shared schema for API response validation
-export const showDto = showWithRelationsSchema
-  .transform(/* ... */)
-  .pipe(showApiResponseSchema);
-```
-
-### Using Pagination
-
-```typescript
+// ✅ CORRECT - Import from module
+import { UID_PREFIXES } from '@eridu/api-types/constants';
 import { createPaginatedResponseSchema } from '@eridu/api-types/pagination';
-import { clientApiResponseSchema } from '@eridu/api-types/clients';
-
-// Create a paginated response schema for any entity
-const paginatedClientsSchema = createPaginatedResponseSchema(clientApiResponseSchema);
+import { showApiResponseSchema } from '@eridu/api-types/shows';
+// ❌ WRONG - Never import from src
+import { showApiResponseSchema } from '@eridu/api-types/src/shows'; // Error!
 ```
 
-### Frontend (React)
+### Backend Usage (NestJS in erify_api)
+
+Use schemas for **input/output validation** in controllers:
 
 ```typescript
-import type { Show, ShowApiResponse } from '@eridu/api-types/shows';
-import { showApiResponseToShow } from '@eridu/api-types/shows';
+import { showApiResponseSchema, createShowInputSchema } from '@eridu/api-types/shows';
+import { ZodSerializerDto } from 'nestjs-zod';
 
-// Use the Show type (camelCase-friendly)
-function ShowComponent({ show }: { show: Show }) {
+// Validate API input
+@Post('shows')
+@ZodSerializerDto(createShowInputSchema)
+async createShow(@Body() input: CreateShowInput) {
+  const show = await this.showService.create(input);
+
+  // Validate API output
+  return showApiResponseSchema.parse(show);
+}
+
+// Validate paginated list
+@Get('shows')
+async listShows() {
+  const [shows, total] = await this.showService.findAll();
+  return showListResponseSchema.parse({
+    data: shows,
+    meta: { page: 1, limit: 10, total, totalPages: Math.ceil(total / 10) }
+  });
+}
+```
+
+### Using Pagination Factory
+
+```typescript
+import { clientApiResponseSchema } from '@eridu/api-types/clients';
+import { createPaginatedResponseSchema } from '@eridu/api-types/pagination';
+
+// Create schema for paginated client list
+const paginatedClientsSchema = createPaginatedResponseSchema(clientApiResponseSchema);
+
+// Use it
+const response = paginatedClientsSchema.parse({
+  data: clients,
+  meta: { page: 1, limit: 20, total: 100, totalPages: 5 }
+});
+```
+
+### Frontend Usage (React in erify_creators/erify_studios)
+
+Use types for **API calls and state management**:
+
+```typescript
+import type { ShowApiResponse, CreateShowInput } from '@eridu/api-types/shows';
+import { showApiResponseSchema } from '@eridu/api-types/shows';
+import { useQuery, useMutation } from '@tanstack/react-query';
+
+// Type API responses
+function ShowComponent({ show }: { show: ShowApiResponse }) {
   return <div>{show.name}</div>;
 }
 
-// Convert API response to frontend-friendly format
-const show = showApiResponseToShow(apiResponse);
+// Validate API response at runtime
+const { data: show } = useQuery({
+  queryKey: ['show', id],
+  queryFn: async () => {
+    const res = await fetch(`/api/shows/${id}`);
+    return showApiResponseSchema.parse(await res.json());
+  }
+});
+
+// Type form inputs
+function CreateShowForm() {
+  const mutation = useMutation({
+    mutationFn: async (input: CreateShowInput) => {
+      const res = await fetch('/api/shows', {
+        method: 'POST',
+        body: JSON.stringify(input)
+      });
+      return showApiResponseSchema.parse(await res.json());
+    }
+  });
+
+  return (/* form JSX */);
+}
+```
+
+### Using UID Prefixes (Never Hard-Code!)
+
+```typescript
+import { UID_PREFIXES } from '@eridu/api-types/constants';
+
+// ✅ CORRECT
+const showId = `${UID_PREFIXES.SHOW}_${uuid()}`; // "show_abc123"
+
+// ❌ WRONG - Never hard-code
+const showId = `show_${uuid()}`; // Bad practice!
+
+// Use in Zod schema validation
+const querySchema = z.object({
+  client_id: z.string().startsWith(UID_PREFIXES.CLIENT)
+});
 ```
 
 ## API Response Format
 
-The API returns data in **snake_case** format (following REST API conventions):
+All API responses use **snake_case** (REST API convention). Schemas enforce this:
+
+### Show API Response (snake_case)
 
 ```typescript
 type ShowApiResponse = {
-  id: string;
+  id: string; // UID: "show_abc123"
   name: string;
-  client_id: string | null;
+  client_id: string | null; // UID: "clt_xyz789" or null
   client_name: string | null;
-  start_time: string; // ISO 8601 datetime
-  // ...
+  studio_room_id: string | null;
+  studio_room_name: string | null;
+  show_type_id: string | null;
+  show_type_name: string | null;
+  show_status_id: string | null;
+  show_status_name: string | null;
+  show_standard_id: string | null;
+  show_standard_name: string | null;
+  start_time: string; // ISO 8601: "2024-01-10T14:00:00Z"
+  end_time: string; // ISO 8601: "2024-01-10T15:30:00Z"
+  metadata: Record<string, any>;
+  created_at: string; // ISO 8601
+  updated_at: string; // ISO 8601
 };
 ```
 
-## Frontend-Friendly Format
-
-For frontend usage, we provide a **camelCase** type and conversion helpers:
+### Schedule API Response (snake_case)
 
 ```typescript
-type Show = {
-  id: string;
+type ScheduleApiResponse = {
+  id: string; // UID: "schedule_123"
   name: string;
-  clientId: string | null;
-  clientName: string | null;
-  startTime: string;
+  start_date: string; // ISO 8601 datetime
+  end_date: string; // ISO 8601 datetime
+  status: string; // "draft" | "review" | "published"
+  published_at: string | null;
+  plan_document: Record<string, any>;
+  version: number;
+  metadata: Record<string, any>;
+  client_id: string | null; // UID: "clt_xyz789"
+  client_name: string | null;
+  created_by: string | null; // User ID (ext_id from better-auth)
+  created_by_name: string | null;
+  published_by: string | null;
+  published_by_name: string | null;
+  created_at: string; // ISO 8601
+  updated_at: string; // ISO 8601
+};
+```
+
+### Pagination Response
+
+```typescript
+type PaginatedResponse<T> = {
+  data: T[];
+  meta: {
+    page: number; // 1-indexed
+    limit: number;
+    total: number; // Total records in database
+    totalPages: number; // Calculated: Math.ceil(total / limit)
+  };
+};
+```
+
+## Schema Categories
+
+### 1. API Response Schemas (snake_case Output)
+
+Name: `{entity}ApiResponseSchema`
+Use: Validate API responses in controllers, clients, frontend
+
+```typescript
+export const showApiResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  // ...
+});
+```
+
+### 2. Input Schemas (Create/Update - snake_case Input)
+
+Name: `create{Entity}InputSchema`, `update{Entity}InputSchema`
+Use: Validate request bodies in controllers
+
+```typescript
+export const createShowInputSchema = z.object({
+  name: z.string().min(1),
+  client_id: z.string().startsWith(UID_PREFIXES.CLIENT),
+  // ...
+});
+```
+
+### 3. Query/Filter Schemas
+
+Name: `list{Entities}QuerySchema`
+Use: Validate query parameters in GET endpoints
+
+```typescript
+export const listShowsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).optional().default(10),
+  name: z.string().optional(),
+  client_id: z.union([...]).optional(),
+  // ...
+});
+```
+
+### 4. Pagination Schemas
+
+Name: `{entity}ListResponseSchema` or `paginatedResponseSchema`
+Use: Validate paginated list endpoints
+
+```typescript
+export const showListResponseSchema
+  = createPaginatedResponseSchema(showApiResponseSchema);
+```
+
+### 5. Typed Exports
+
+Name: `{Entity}ApiResponse`, `Create{Entity}Input`, etc.
+Use: TypeScript type annotations in code
+
+```typescript
+export type ShowApiResponse = z.infer<typeof showApiResponseSchema>;
+export type CreateShowInput = z.infer<typeof createShowInputSchema>;
+```
+
+## Important: No camelCase Conversion
+
+**Unlike previous versions**, this package does **NOT** include camelCase conversion helpers. Frontend and backend apps work directly with snake_case API contracts:
+
+```typescript
+// Frontend code receives snake_case from API
+const show: ShowApiResponse = {
+  id: 'show_123',
+  client_id: 'clt_456', // ← snake_case, not clientId
+  studio_room_id: 'srm_789',
   // ...
 };
 ```
+
+This simplifies the package, reduces errors, and makes the API contract explicit.
 
 ## Development
 
 ### Build
 
 ```bash
+# Build all packages including api-types
 pnpm build
+
+# Or build just this package
+pnpm -F @eridu/api-types build
 ```
 
 ### Watch Mode
 
 ```bash
-pnpm dev
+# Watch and rebuild on changes
+pnpm -F @eridu/api-types dev
 ```
 
 ### Type Check
 
 ```bash
+# Check types in this package
+pnpm -F @eridu/api-types typecheck
+
+# Or check all packages
 pnpm typecheck
+```
+
+### Testing Changes
+
+After updating schemas, rebuild before testing:
+
+```bash
+pnpm build
+pnpm test  # Run tests in consumer packages
 ```
 
 ## Adding New Types
 
-1. Create a new directory `src/{entity}/`
-2. Create `schemas.ts` with your Zod schemas
-3. Create `types.ts` if you need TypeScript types or helpers
-4. Create `index.ts` to export everything
-5. Add exports to `src/index.ts` and `package.json` exports field
-6. Build the package: `pnpm build`
+### 1. Create a New Entity Module
 
-### Example: Adding a New Entity
+```bash
+# Example: Adding Payment entity
+mkdir src/payments
+```
+
+### 2. Create Schemas File
 
 ```typescript
-// src/users/schemas.ts
+// src/payments/schemas.ts
 import { z } from 'zod';
 
-export const userApiResponseSchema = z.object({
+import { UID_PREFIXES } from '../constants.js';
+import { createPaginatedResponseSchema } from '../pagination/schemas.js';
+
+export const paymentApiResponseSchema = z.object({
   id: z.string(),
-  email: z.email(),
-  name: z.string(),
+  amount: z.number(),
+  currency: z.string(),
+  client_id: z.string().startsWith(UID_PREFIXES.CLIENT),
+  status: z.enum(['pending', 'completed', 'failed']),
   created_at: z.string(),
+  updated_at: z.string(),
 });
 
-// src/users/index.ts
-export * from './schemas.js';
+export const createPaymentInputSchema = z.object({
+  amount: z.number().positive(),
+  currency: z.string().length(3),
+  client_id: z.string().startsWith(UID_PREFIXES.CLIENT),
+});
 
-// src/index.ts
-export * from './users/index.js';
+export const paymentListResponseSchema
+  = createPaginatedResponseSchema(paymentApiResponseSchema);
+```
+
+### 3. Create Types File (Optional)
+
+Only create if you need custom TypeScript types beyond schema inference:
+
+```typescript
+// src/payments/types.ts
+import type { z } from 'zod';
+
+import type { createPaymentInputSchema, paymentApiResponseSchema } from './schemas.js';
+
+export type PaymentApiResponse = z.infer<typeof paymentApiResponseSchema>;
+export type CreatePaymentInput = z.infer<typeof createPaymentInputSchema>;
+```
+
+### 4. Create Index File
+
+```typescript
+// src/payments/index.ts
+/**
+ * Payment-related schemas and types
+ */
+export * from './schemas.js';
+export * from './types.js';
+```
+
+### 5. Export from Main Index
+
+```typescript
+// src/index.ts - Add this line
+export * from './payments/index.js';
+```
+
+### 6. Update package.json Exports
+
+```json
+{
+  "exports": {
+    "./payments": {
+      "types": "./dist/payments/index.d.ts",
+      "default": "./dist/payments/index.js"
+    }
+  }
+}
+```
+
+### 7. Add UID Prefix (If Needed)
+
+```typescript
+// src/constants.ts
+export const UID_PREFIXES = {
+  // ... existing
+  PAYMENT: 'pay', // Add this
+} as const;
+```
+
+### 8. Build and Test
+
+```bash
+pnpm build
+pnpm -F erify_api test  # Test in backend
+pnpm -F erify_creators test  # Test in frontend
 ```
 
 ## Best Practices
 
-1. **Keep schemas framework-agnostic**: Don't import NestJS-specific types
-2. **Use Zod 4 API**: Use `z.email()`, `z.url()`, etc. instead of `z.string().email()`
-3. **Separate entities into modules**: Each entity should have its own directory for better tree-shaking
-4. **Reuse pagination**: Use `createPaginatedResponseSchema()` for paginated endpoints
-5. **Export both schemas and types**: Schemas for runtime validation, types for compile-time
-6. **Document API format**: Clearly indicate snake_case vs camelCase
-7. **Provide conversion helpers**: Make it easy to convert between formats
-8. **Keep DTOs in correct modules**: Don't put client DTOs in show schemas, etc.
+1. ✅ **Keep schemas framework-agnostic**: Don't import NestJS, React, or Hono types
+2. ✅ **Use proper Zod types**: Use `z.email()`, `z.url()`, `z.iso.datetime()` for validation
+3. ✅ **Separate entities into modules**: Each entity gets its own directory for tree-shaking
+4. ✅ **Reuse pagination**: Use `createPaginatedResponseSchema()` for all list endpoints
+5. ✅ **Export both schemas and types**: Schemas for runtime, types for compile-time safety
+6. ✅ **Use JSDoc comments**: Document schema purpose and usage
+7. ✅ **Provide conversion helpers**: If needed (e.g., date string ↔ Date object), create pure functions
+8. ✅ **Import from constants**: Always use `UID_PREFIXES.*`, never hard-code
+9. ✅ **Use `.js` extensions**: Import paths must include `.js` for ESM compatibility
+10. ✅ **Document API format**: Add comments showing snake_case input/output
 
+## Anti-Patterns
+
+❌ **Don't hard-code UID prefixes**
+```typescript
+// Bad
+// Good
+import { UID_PREFIXES } from '@eridu/api-types/constants';
+
+const uid = `show_${id}`;
+const uid = `${UID_PREFIXES.SHOW}_${id}`;
+```
+
+❌ **Don't import from src in other packages**
+```typescript
+// Bad
+// Good
+import { showApiResponseSchema } from '@eridu/api-types/shows';
+import { showSchema } from '@eridu/api-types/src/shows';
+```
+
+❌ **Don't add framework-specific types**
+```typescript
+// Bad - Creates dependency on NestJS
+import { Controller } from '@nestjs/common';
+
+export const showControllerSchema = z.object({
+  // ...
+});
+
+// Good - Framework-agnostic
+export const showApiResponseSchema = z.object({
+  // ...
+});
+```
+
+❌ **Don't create camelCase conversion helpers**
+```typescript
+// Bad - Adds maintenance burden
+export function apiToFrontend(show: ShowApiResponse): ShowFrontend {
+  return {
+    id: show.id,
+    clientId: show.client_id, // ← error-prone
+  };
+}
+
+// Good - Work directly with API format
+const show: ShowApiResponse = apiResponse; // ← use directly
+```
+
+## Consumers of This Package
+
+### Backend (erify_api)
+
+**Location**: `apps/erify_api/src/`
+**Usage**: Validates all API requests/responses
+
+- Controllers import schemas for `@ZodSerializerDto()` decorator
+- Services use types for TypeScript safety
+- `admin/` endpoints validate CRUD operations
+- List endpoints use pagination schemas
+
+**Files to check**:
+- `models/{entity}/schemas/` - Entity-specific schemas
+- `admin/{entity}/admin-{entity}.controller.ts` - Admin CRUD endpoints
+- Response DTOs validate before returning to clients
+
+### Frontend - Creators (erify_creators)
+
+**Location**: `apps/erify_creators/src/`
+**Usage**: API calls and form validation
+
+- `lib/api/` - API client uses schemas for request/response validation
+- Features use types for React Query and form handling
+- Table components use pagination response types
+
+### Frontend - Studios (erify_studios)
+
+**Location**: `apps/erify_studios/src/`
+**Usage**: Admin interface with CRUD operations
+
+- `lib/api/admin-resources.ts` - Admin API client
+- Features use admin CRUD hook with schema types
+- Form dialogs validate input before submission
+
+### Auth Service (eridu_auth)
+
+**Location**: `apps/eridu_auth/src/`
+**Usage**: User profile and authentication
+
+- User profile endpoint uses `profileResponseSchema`
+- JWT validation uses user types
+- Session management references user entity
+
+## Resources
+
+### API Documentation (When API is Running)
+
+```
+http://localhost:3000/api-reference
+```
+
+Interactive Scalar UI showing all endpoints, schemas, and example requests/responses.
+
+### Related Documentation
+
+- **[Copilot Instructions](../../.github/copilot-instructions.md)** - Conventions for AI agents
+- **[erify_api Architecture](../erify_api/docs/ARCHITECTURE.md)** - Backend module structure
+- **[erify_api Business Logic](../erify_api/docs/BUSINESS.md)** - Entity relationships and rules
+- **[Authentication Guide](../erify_api/docs/AUTHENTICATION_GUIDE.md)** - Auth patterns and JWTs
+
+### Zod Documentation
+
+- [Zod Official Docs](https://zod.dev) - Schema validation library
+- [Zod Cheatsheet](https://zod.dev/?id=basic-usage) - Common patterns
+
+### TypeScript
+
+- [Type Inference from Zod](https://zod.dev/?id=type-inference) - Using `z.infer<T>`
+- [Branded Types](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-4.html#use-unknown-in-catch-variables) - Adding type metadata
+
+---
+
+**Last Updated**: January 2026
+**Maintainers**: Eridu Services Team
+**Questions?** See [Copilot Instructions](../../.github/copilot-instructions.md) or check erify_api architecture docs.

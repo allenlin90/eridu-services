@@ -42,13 +42,16 @@ Phase 2 builds upon the core functions and Schedule Planning Management System f
 
 ### 4. Schedule Planning Enhancements (Deferred from Phase 1)
 
-#### 4.1 Bulk Publish Operations ⭐
+#### 4.1 Bulk Publish Operations ⭐ (Deferred)
+
+**Status**: Deferred pending Material Management completion and system stabilization
 
 - **Endpoint**: `POST /admin/schedules/bulk-publish` - Bulk validate and publish multiple schedules
 - **Job Tracking**: `GET /admin/jobs/:job_id` - Track async publish job status with real-time progress
 - **Benefits**: 93% fewer API calls (51 vs 150+), 90% faster (~45s vs ~7min), no timeout risk
 - **Features**: Async processing, partial success handling, progress tracking, detailed error reporting
 - **Use Case**: Monthly planning with ~50 clients, ~50 shows each - publish all schedules at once
+- **Current Approach**: Individual publishing via `POST /admin/schedules/:id/publish` (works reliably for Phase 1/2 scale)
 - **Design**: See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md#bulk-publish-endpoint-new-)
 
 #### 4.2 Chunked Upload for Large Clients
@@ -78,12 +81,12 @@ Phase 2 builds upon the core functions and Schedule Planning Management System f
 
 ### Schedule Planning Enhancements
 
-- [ ] **Bulk Publish Operations** ⭐
+- [ ] **Bulk Publish Operations** ⭐ (Deferred - Use individual publish for now)
   - [ ] `POST /admin/schedules/bulk-publish`, `GET /admin/jobs/:job_id`
   - [ ] Job queue, background worker, progress tracking, partial success handling
 - [ ] **Chunked Upload**
-  - [ ] `POST /admin/schedules/:id/shows/append` controller endpoint
   - [x] Service layer implemented (`appendShows` with `uploadProgress`, sequential validation, error recovery)
+  - [ ] `POST /admin/schedules/:id/shows/append` controller endpoint
 - [ ] **CSV Import/Export**: Export/import functionality for Google Sheets migration
 
 ### API Features
@@ -138,7 +141,7 @@ Phase 2 builds upon the core functions and Schedule Planning Management System f
 ### API Features
 
 - [ ] Expand parameter, search/search_term parameters, fulltext search infrastructure
-- [ ] Show bulk operations (bulk create/update with partial success handling)
+- [x] Schedule bulk operations (bulk create/update with partial success handling) ✅ (Implemented)
 - [ ] Idempotency handling for show/schedule creation (prevents duplicates from retries)
 
 ### Quality
@@ -174,11 +177,11 @@ Phase 2 builds upon the core functions and Schedule Planning Management System f
 
 ### Implementation Focus Areas
 
-1. **Bulk Publish Operations** ⭐ (Deferred from Phase 1)
+1. **Bulk Publish Operations** ⭐ (Deferred - Current approach: individual schedule publishing)
 2. **Material Management**: CRUD with versioning and lifecycle management
 3. **Show-Material Associations**: Robust association management
 4. **API Query Features**: Expand parameter, search capabilities
-5. **Show Bulk Operations**: Bulk create/update with partial success handling
+5. **Chunked Upload**: Controller endpoint for large client schedules
 6. **Idempotency Handling**: Prevent duplicates from retries (critical since no unique constraints on names/durations)
 
 ### User Access Strategy

@@ -47,20 +47,20 @@ This document describes the complete architecture for a show planning system tha
 
 - ✅ `POST /admin/schedules` - Create schedule per client
 - ✅ `POST /admin/schedules/bulk` - Bulk create schedules (one per client)
-- ✅ **`POST /admin/schedules/bulk-publish`** - Bulk validate and publish multiple schedules ⭐ **NEW**
-- ✅ **`GET /admin/jobs/:job_id`** - Track async publish job status ⭐ **NEW**
+- ⏳ `POST /admin/schedules/bulk-publish` - Bulk validate and publish multiple schedules (Deferred to Phase 2)
+- ⏳ `GET /admin/jobs/:job_id` - Track async publish job status (Deferred to Phase 2)
 - ✅ `GET /admin/schedules/overview/monthly` - Monthly overview (all clients)
 - ✅ `POST /admin/schedules/:id/validate` - Per-client validation
 - ✅ `POST /admin/schedules/:id/publish` - Publish single schedule
 
-**Phase 1 Benefits**:
+**Phase 1 Implementation**:
 
-- ✅ **93% fewer API calls**: 50 create + 1 bulk publish = 51 calls (vs 150+)
-- ✅ **90% faster**: ~45 seconds total (vs ~7 minutes)
+- ✅ **50 create + 50 publish = 100 API calls** (individual publishing, vs 150+ without bulk ops)
+- ✅ **~2-3 minutes total** with individual publishing (simple, reliable approach)
 - ✅ **No timeout risk**: Well within AppsScript limits
-- ✅ **Simple AppsScript**: No complex state management
-- ✅ **Partial success**: Failures isolated per client
-- ✅ **Async support**: Background processing for scalability
+- ✅ **Simple AppsScript**: No complex state management or job polling
+- ✅ **Partial success**: Failures isolated per schedule
+- ⏳ **Bulk publish** (93% fewer API calls, 90% faster) deferred to Phase 2 for optimization
 
 ### Phase 2: Chunked Upload (⚠️ Deferred)
 
