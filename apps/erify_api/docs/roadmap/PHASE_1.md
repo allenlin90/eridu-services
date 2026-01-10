@@ -62,14 +62,14 @@ Phase 1 establishes the core production functions with simplified authentication
 - **Version History**: Restore from any snapshot for rollback capabilities
 - **Bulk Operations**: Bulk create and update schedules with partial success handling
 - **Monthly Overview**: Get schedules grouped by client and status within a date range
-- **Client-by-Client Schedule Upload**: Simple upload workflow for typical monthly planning
+- **Client-by-Client Schedule Upload**: Simple upload workflow for typical monthly planning ✅ (Implemented)
   - **Strategy**: One schedule per client (~50 shows each), then publish schedules individually
   - **No Chunking Needed**: Typical client schedules fit within payload limits (~1-2MB per schedule)
+  - **Bulk Create**: `POST /admin/schedules/bulk` to create multiple schedules in one API call
   - **Individual Publishing**: Publish each schedule via `POST /admin/schedules/:id/publish` (one at a time)
   - **Use Case**: Monthly planning with ~50 clients, ~50 shows per client
   - **Note**: Bulk publish operations (publish multiple schedules in single API call) are deferred to Phase 2
   - **Design**: See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md#phase-1-client-by-client-upload--implemented) for workflow and rationale
-  - **Status**: Recommended approach for Phase 1 implementation
 - **Schedule Query Support**: Flexible queries for planning workflows
   - Query schedules by client ID and date range (for planning stage)
   - Support Google Sheets integration with sorted date-based listings

@@ -314,12 +314,14 @@ See [Authentication Guide](docs/AUTHENTICATION_GUIDE.md) for details.
 - `PATCH /admin/schedules/:id` - Update schedule (auto-creates snapshot on plan document changes)
 - `DELETE /admin/schedules/:id` - Soft delete schedule
 - `POST /admin/schedules/:id/validate` - Validate schedule before publish
-- `POST /admin/schedules/:id/publish` - Publish schedule to shows
+- `POST /admin/schedules/:id/publish` - Publish schedule to shows (individual publishing)
 - `POST /admin/schedules/:id/duplicate` - Duplicate schedule
 - `GET /admin/schedules/:id/snapshots` - List schedule snapshots
-- `POST /admin/schedules/bulk` - Bulk create schedules with partial success handling
-- `PATCH /admin/schedules/bulk` - Bulk update schedules with partial success handling
-- `GET /admin/schedules/overview/monthly` - Get monthly overview with schedules grouped by client and status
+- `POST /admin/schedules/bulk` - Bulk create schedules with partial success handling ✅
+- `PATCH /admin/schedules/bulk` - Bulk update schedules with partial success handling ✅
+- `GET /admin/schedules/overview/monthly` - Get monthly overview with schedules grouped by client and status ✅
+
+**Note**: Bulk publish operations (publish multiple schedules in single API call) are deferred to Phase 2. Current approach: publish schedules individually via `POST /admin/schedules/:id/publish`.
 
 #### 📸 Schedule Snapshots (`/admin/snapshots`)
 
@@ -630,20 +632,41 @@ apps/erify_api/
 - **Mocking**: Repository and service mocking
 - **Coverage**: Minimum 80% coverage requirement
 
+### Manual Testing Workflows
+
+Test complex E2E workflows to understand realistic usage patterns:
+
+```bash
+# Schedule Planning workflow (create, validate, publish)
+pnpm -F erify_api manual:schedule:all
+
+# User & Membership setup workflow (backdoor operations)
+pnpm -F erify_api manual:backdoor:all
+
+# Authentication workflow (login, token validation)
+pnpm -F erify_api manual:auth:all
+```
+
+**Note**: Manual tests use generated data and are resilient to feature updates. They provide comprehensive validation of multi-step workflows across the API.
+
+See [Manual Testing Guide](manual-test/README.md) for detailed workflow documentation and individual script usage.
+
 ## 📚 Documentation
 
-Comprehensive documentation is available in the `docs/` directory:
+Comprehensive documentation is available in the `docs/` directory. Refer to specific documents based on your task:
 
-- **[Documentation Index](docs/README.md)** - Complete documentation structure and index
-- **[Architecture Guide](docs/ARCHITECTURE.md)** - Complete system architecture
-- **[Business Domain](docs/BUSINESS.md)** - Business domain models and relationships
-- **[Authentication Guide](docs/AUTHENTICATION_GUIDE.md)** - Phase 1 hybrid authentication guide
-- **[Scheduling Architecture](docs/SCHEDULING_ARCHITECTURE.md)** - Scheduling system design
-- **[Chunked Upload API](docs/SCHEDULE_UPLOAD_API_DESIGN.md)** ⭐ - API design for large schedule uploads
-- **[Manual Testing Guide](manual-test/README.md)** - Manual testing scenarios and workflows
-- **[Phase 1 Roadmap](docs/roadmap/PHASE_1.md)** - Phase 1 implementation plan
-- **[Phase 2 Roadmap](docs/roadmap/PHASE_2.md)** - Phase 2 implementation plan
-- **[Phase 3 Roadmap](docs/roadmap/PHASE_3.md)** - Phase 3 implementation plan
+| Document                                                         | Use When                                                       |
+| ---------------------------------------------------------------- | -------------------------------------------------------------- |
+| [Documentation Index](docs/README.md)                            | Need a quick overview of all documentation                     |
+| [Architecture Guide](docs/ARCHITECTURE.md)                       | Creating new modules, understanding dependencies               |
+| [Business Domain](docs/BUSINESS.md)                              | Understanding entity relationships and business rules          |
+| [Authentication Guide](docs/AUTHENTICATION_GUIDE.md)             | Implementing auth patterns and guard usage                     |
+| [Server-to-Server Auth](docs/SERVER_TO_SERVER_AUTH.md)           | Adding service-to-service endpoints                            |
+| [Schedule Upload API Design](docs/SCHEDULE_UPLOAD_API_DESIGN.md) | Working on schedule planning features                          |
+| [Phase 1 Roadmap](docs/roadmap/PHASE_1.md)                       | Checking current implementation status ✅                       |
+| [Phase 2 Roadmap](docs/roadmap/PHASE_2.md)                       | Understanding planned features                                 |
+| [Phase 3 Roadmap](docs/roadmap/PHASE_3.md)                       | Long-term vision and planning                                  |
+| [Manual Testing Guide](manual-test/README.md)                    | Running E2E workflows: `pnpm -F erify_api manual:schedule:all` |
 
 ## 🔧 Configuration
 

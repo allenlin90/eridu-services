@@ -1,10 +1,22 @@
 # Auth SDK
 
+**Current Status**: Phase 1 ✅ - JWT/JWKS validation + NestJS adapters + React client
+
 ## Overview
 
-The `@eridu/auth-sdk` package provides a framework-agnostic SDK for authentication (JWT validation and JWKS management), enabling both frontend and backend services to authenticate users via tokens issued by the `eridu_auth` service (Better Auth).
+The `@eridu/auth-sdk` package provides **framework-agnostic server utilities** and **framework-specific adapters** for authentication, enabling services to validate JWT tokens issued by the `eridu_auth` service (Better Auth).
 
-**Purpose**: This is an **SDK package** that provides reusable authentication utilities for JWT/JWKS validation. It can be integrated into any Node.js service (NestJS, Express, Hono, etc.) and will support frontend integration in the future (replacing `@eridu/auth-service`).
+**Components**:
+- **Server Utilities** (`./server`): Framework-agnostic JWKS fetching, caching, and JWT verification
+- **NestJS Adapters** (`./adapters/nestjs`): Guard and decorator implementations for NestJS
+- **React Client** (`./client/react`): Better Auth client wrapper with redirect utilities
+- **Schemas** (`./schemas`): Zod validation schemas for JWT payloads
+- **Types** (`./types`): Shared TypeScript types for JWT and user data
+
+**Purpose**: Single source of truth for authentication logic. Used by:
+- **erify_api**: Server-side JWT validation via NestJS guard
+- **eridu_auth**: User profile and JWT payload validation via schemas
+- **erify_creators/erify_studios**: React client for session management and redirects
 
 ## Executive Summary
 
@@ -65,19 +77,23 @@ packages/auth-sdk/
 
 ## Package Exports
 
+The package provides granular exports for tree-shaking and flexibility:
+
 ```json
 {
   "exports": {
-    // Server-side (Node.js)
-    "./server/jwks": "./src/server/jwks/index.ts",
-    "./server/jwt": "./src/server/jwt/index.ts",
-    "./server": "./src/server/index.ts",
-
-    // Framework adapters
-    "./adapters/nestjs": "./src/adapters/nestjs/index.ts",
-
-    // Types
-    "./types": "./src/types.ts"
+    "./server/jwks/jwks-service": "./dist/server/jwks/jwks-service.js",
+    "./server/jwks/jwks-client": "./dist/server/jwks/jwks-client.js",
+    "./server/jwks/types": "./dist/server/jwks/types.js",
+    "./server/jwt/jwt-verifier": "./dist/server/jwt/jwt-verifier.js",
+    "./server/jwt/jwt-payload": "./dist/server/jwt/jwt-payload.js",
+    "./server/jwt/types": "./dist/server/jwt/types.js",
+    "./adapters/nestjs/jwt-auth.guard": "./dist/adapters/nestjs/jwt-auth.guard.js",
+    "./adapters/nestjs/current-user.decorator": "./dist/adapters/nestjs/current-user.decorator.js",
+    "./adapters/nestjs": "./dist/adapters/nestjs/index.js",
+    "./schemas/jwt-payload.schema": "./dist/schemas/jwt-payload.schema.js",
+    "./client/react": "./dist/client/react.js",
+    "./types": "./dist/types.js"
   }
 }
 ```
@@ -104,53 +120,60 @@ pnpm add @eridu/auth-sdk
 
 ### 1. JWKS Service
 
-**Purpose**: Fetch and cache JSON Web Key Sets from Better Auth's JWKS endpoint.
+**Purpose**: Fetch and cache JSON Web Key Sets from Better Auth's JWKS endpoint with automatic recovery.
 
 **Features:**
 
-- Fetches JWKS from `{ERIDU_AUTH_URL}/api/auth/jwks` on startup
-- Caches JWKS in memory for efficient local JWT verification
-- Supports edge/worker runtimes with on-demand fetching (when `EDGE_RUNTIME=true`)
-- Automatic key rotation detection and refresh
-- Methods: `getJwks()`, `refreshJwks()`, `getKeysCount()`, `getLastFetchedTime()`
+- **Startup Initialization**: Fetches JWKS from `{ERIDU_AUTH_URL}/api/auth/jwks` on application startup
+- **Automatic Caching**: Caches JWKS in memory for efficient local JWT verification (zero network overhead per request)
+- **Automatic Recovery**: If cache is lost (server restart, redeploy, etc.), automatically refetches on next use
+- **Key Rotation Support**: JwtVerifier triggers automatic JWKS refresh when unknown key ID detected
+- **All Runtime Environments**: Works in server, edge, and worker runtimes (cache recovery handles stateless environments)
+- **Public Methods**: `initialize()`, `getJwks()`, `getKeys()`, `refreshJwks()`, `getKeysCount()`, `getLastFetchedTime()`
 
 **Usage:**
 
 ```typescript
-import { JwksService } from '@eridu/auth-sdk/server/jwks';
+import { BETTER_AUTH_ENDPOINTS } from '@eridu/auth-sdk';
+import { JwksService } from '@eridu/auth-sdk/server/jwks/jwks-service';
 
 const jwksService = new JwksService({
   authServiceUrl: process.env.ERIDU_AUTH_URL!,
-  jwksPath: '/api/auth/jwks', // optional, defaults to '/api/auth/jwks'
-  edgeRuntime: false, // optional, defaults to false
+  jwksPath: BETTER_AUTH_ENDPOINTS.JWKS, // '/api/auth/jwks'
 });
 
-// Initialize on startup
+// Initialize on startup (fetches and caches JWKS)
+// If initialization fails, the service will automatically recover on first use
 await jwksService.initialize();
 
-// Get cached JWKS
+// Get cached JWKS (automatically refetches if cache is lost)
 const jwks = await jwksService.getJwks();
 
-// Manually refresh JWKS
+// Get specific keys from cache
+const keys = await jwksService.getKeys();
+
+// Manually refresh JWKS (useful for key rotation)
 await jwksService.refreshJwks();
 ```
 
 ### 2. JWT Verifier
 
-**Purpose**: Verify JWT tokens locally using cached JWKS (no network call per request).
+**Purpose**: Verify JWT tokens locally using cached JWKS (zero network overhead per request).
 
 **Features:**
 
-- Local JWT verification using public keys from JWKS
-- Validates issuer and audience against `ERIDU_AUTH_URL`
-- Extracts user information from JWT payload
-- Automatic key rotation handling (refreshes JWKS if unknown key ID detected)
+- **Local Verification**: Uses jose's `jwtVerify()` with cached JWKS - no network calls per request
+- **Issuer Validation**: Validates JWT issuer matches `ERIDU_AUTH_URL`
+- **Audience Validation**: Validates JWT audience (defaults to issuer if not specified)
+- **Automatic Rotation**: Detects unknown key IDs and automatically refreshes JWKS, then retries
+- **User Extraction**: Extracts and validates user info from JWT payload
+- **Payload Validation**: Uses `validateJwtPayload()` to ensure required fields are present
 
 **Usage:**
 
 ```typescript
-import { JwksService } from '@eridu/auth-sdk/server/jwks';
-import { JwtVerifier } from '@eridu/auth-sdk/server/jwt';
+import { JwksService } from '@eridu/auth-sdk/server/jwks/jwks-service';
+import { JwtVerifier } from '@eridu/auth-sdk/server/jwt/jwt-verifier';
 
 const jwksService = new JwksService({
   authServiceUrl: process.env.ERIDU_AUTH_URL!,
@@ -163,11 +186,13 @@ const jwtVerifier = new JwtVerifier({
   audience: process.env.ERIDU_AUTH_URL!, // optional, defaults to issuer
 });
 
-// Verify token
+// Verify token (locally using cached JWKS)
 const payload = await jwtVerifier.verify(token);
+// Returns JwtPayload type with full token claims
 
-// Extract user info
+// Extract user info from payload
 const userInfo = jwtVerifier.extractUserInfo(payload);
+// Returns UserInfo: { id, name, email, image? }
 ```
 
 ### 3. NestJS Adapter
@@ -177,12 +202,12 @@ const userInfo = jwtVerifier.extractUserInfo(payload);
 **Usage:**
 
 ```typescript
+import { ConfigService } from '@nestjs/config';
+
 import { JwtAuthGuard } from '@eridu/auth-sdk/adapters/nestjs';
 // Use in controllers with @CurrentUser() decorator (recommended)
 import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs';
 import { JwksService, JwtVerifier } from '@eridu/auth-sdk/server';
-import { ConfigService } from '@nestjs/config';
-
 import type { UserInfo } from '@eridu/auth-sdk/types';
 
 @Module({
@@ -192,9 +217,10 @@ import type { UserInfo } from '@eridu/auth-sdk/types';
       useFactory: async (config: ConfigService) => {
         const service = new JwksService({
           authServiceUrl: config.get('ERIDU_AUTH_URL')!,
-          edgeRuntime: config.get('EDGE_RUNTIME', false),
+          // jwksPath defaults to BETTER_AUTH_ENDPOINTS.JWKS ('/api/auth/jwks')
         });
         // Initialize on startup (fetches and caches JWKS)
+        // If init fails, auto-recovery handles it on first JWT verification
         await service.initialize();
         return service;
       },
@@ -241,9 +267,43 @@ export class AdminController {
 }
 ```
 
-**Note**: Environment variables (`ERIDU_AUTH_URL`, `EDGE_RUNTIME`) are validated via Zod schema in `env.schema.ts` on application startup. The SDK uses a pre-compile strategy where these values are resolved at runtime, not at build time.
+**Note**: Environment variables are validated via Zod schema (e.g., in `env.schema.ts`) on application startup. The SDK uses a runtime resolution strategy where configuration values are passed through constructor parameters.
 
-### 4. CurrentUser Decorator
+### 4. React Client
+
+**Purpose**: Better Auth client wrapper for frontend applications with convenience utilities.
+
+**Features:**
+
+- **JWT Client Plugin**: Automatically handles JWT tokens with `jwtClient()` plugin
+- **Redirect to Login**: Helper function to redirect to login page with callback URL
+- **Type Safety**: Re-exports Better Auth `Session` type
+- **Callback Handling**: Prevents redirect loops (checks if already on auth app)
+- **Standard Integration**: Works seamlessly with Better Auth's React client
+
+**Usage:**
+
+```typescript
+import type { Session } from '@eridu/auth-sdk/client/react';
+import { createAuthClient } from '@eridu/auth-sdk/client/react';
+
+const { client, redirectToLogin } = createAuthClient({
+  baseURL: 'http://localhost:3000',
+});
+
+// Get current session
+const { data: session } = await client.getSession();
+
+// Redirect to login if not authenticated
+if (!session?.user) {
+  redirectToLogin(); // Redirects to /sign-in with callback URL
+}
+
+// Or provide custom return URL
+redirectToLogin('http://localhost:5173/dashboard');
+```
+
+### 5. CurrentUser Decorator
 
 **Purpose**: Type-safe decorator to extract authenticated user from request objects in NestJS controllers.
 
@@ -259,7 +319,6 @@ export class AdminController {
 
 ```typescript
 import { CurrentUser, JwtAuthGuard } from '@eridu/auth-sdk/adapters/nestjs';
-
 import type { UserInfo } from '@eridu/auth-sdk/types';
 
 @Controller('profile')
@@ -324,30 +383,48 @@ export class ProfileController {
 
 ### JWT Payload
 
+**Full JWT payload from Better Auth** (all claims plus standard JWT fields):
+
 ```typescript
 export type JwtPayload = {
-  id: string;
-  name: string;
-  email: string;
-  image?: string;
-  activeOrganizationId?: string | null;
-  activeTeamId?: string | null;
-  impersonatedBy?: string | null;
-  iat?: number;
-  exp?: number;
-  iss?: string;
-  aud?: string;
+  // Better Auth specific claims
+  id: string; // User ID
+  name: string; // User display name
+  email: string; // User email
+  image?: string | null; // Profile image URL
+  activeOrganizationId?: string | null; // Current org context
+  activeTeamId?: string | null; // Current team context
+  impersonatedBy?: string | null; // If session is impersonated
+
+  // Standard JWT claims
+  sub?: string; // Subject (standard claim)
+  iat?: number; // Issued at
+  exp?: number; // Expiration
+  iss?: string; // Issuer
+  aud?: string; // Audience
 };
+```
+
+**Zod Validation Schema:**
+
+Use `jwtPayloadSchema` for runtime validation:
+
+```typescript
+import { jwtPayloadSchema } from '@eridu/auth-sdk/schemas/jwt-payload.schema';
+
+const validated = jwtPayloadSchema.parse(payload);
 ```
 
 ### User Info
 
+**Extracted user information** (subset of JWT payload for common use):
+
 ```typescript
 export type UserInfo = {
-  id: string;
-  name: string;
-  email: string;
-  image?: string;
+  id: string; // User ID
+  name: string; // User display name
+  email: string; // User email
+  image?: string; // Profile image URL (optional)
 };
 ```
 
@@ -357,68 +434,44 @@ export type UserInfo = {
 
 **erify_api (consuming service):**
 
-- `ERIDU_AUTH_URL`: Base URL of the eridu_auth service (e.g., `http://localhost:3000` or `https://auth.example.com`)
+- `ERIDU_AUTH_URL`: Base URL of the eridu_auth service
+  - **Example**: `http://localhost:3000` or `https://auth.example.com`
   - **Required**: Must be a valid URL
-  - **Validation**: Validated via Zod schema in `env.schema.ts` on application startup
-  - **Usage**: Used to construct JWKS endpoint URL (`{ERIDU_AUTH_URL}/api/auth/jwks`) and validate JWT issuer/audience
-- `EDGE_RUNTIME`: (Optional) Set to `true` if running on edge service or worker where caching isn't possible (defaults to `false`)
-  - **Default**: `false` (standard Node.js runtime with caching)
-  - **Validation**: Coerced to boolean via Zod schema
-  - **Usage**: When `true`, JWKS are fetched on-demand per request instead of cached on startup
+  - **Usage**: Used to construct JWKS endpoint (`{ERIDU_AUTH_URL}/api/auth/jwks`) and validate JWT issuer/audience
+  - **Validation**: Validate via Zod schema in your application's `env.schema.ts` on startup
 
 **eridu_auth (auth service):**
 
-- `BETTER_AUTH_URL`: Base URL for Better Auth (should match `ERIDU_AUTH_URL`)
+- `BETTER_AUTH_URL`: Base URL for Better Auth (should match ERIDU_AUTH_URL in consuming apps)
 - `BETTER_AUTH_SECRET`: Secret key for JWT signing
-- Base path: `/api/auth` (default)
+- Base path: `/api/auth` (Better Auth default)
 
-### Environment Variable Resolution Strategy
+### Configuration Strategy
 
-The SDK uses a **pre-compile strategy** where environment variables are resolved at runtime by the consuming application (erify_api), not at build time. This approach:
-
-1. **Runtime Resolution**: Environment variables are read from `process.env` when services are instantiated
-2. **Type Safety**: Environment variables are validated using Zod schemas in `env.schema.ts` on application startup
-3. **Configuration Injection**: Services receive configuration through constructor parameters, allowing for:
-   - Dependency injection in NestJS
-   - Testing with mock configurations
-   - Different configurations per environment
-
-**Example Flow:**
+The SDK uses **runtime configuration injection** where services receive configuration through constructor parameters:
 
 ```typescript
-// 1. Environment variables are validated on startup via ConfigModule
-ConfigModule.forRoot({
-  validate: (config) => {
-    const result = envSchema.safeParse(config);
-    // ERIDU_AUTH_URL and EDGE_RUNTIME are validated here
-    return result.data;
-  },
-});
-
-// 2. Services are instantiated with validated config
+// Configuration is passed at runtime, not at build time
 const jwksService = new JwksService({
-  authServiceUrl: configService.get('ERIDU_AUTH_URL'), // From validated env
-  edgeRuntime: configService.get('EDGE_RUNTIME', false), // From validated env
+  authServiceUrl: configService.get('ERIDU_AUTH_URL'), // From env var
+  jwksPath: BETTER_AUTH_ENDPOINTS.JWKS, // '/api/auth/jwks' from constants
 });
 
-// 3. SDK uses these values at runtime
-await jwksService.initialize(); // Fetches from {ERIDU_AUTH_URL}/api/auth/jwks
+await jwksService.initialize(); // Uses authServiceUrl at runtime
 ```
 
 **Benefits:**
+- No hardcoded values in compiled code
+- Environment-specific configuration without rebuilds
+- Easy testing with mock configurations
+- Works across dev, staging, and production environments
 
-- ✅ No hardcoded values in compiled code
-- ✅ Environment-specific configuration without rebuilds
-- ✅ Type-safe configuration with runtime validation
-- ✅ Easy testing with mock configurations
-- ✅ Supports multiple environments (dev, staging, production)
+### Validation Checklist
 
-### Validation
-
-- Ensure `ERIDU_AUTH_URL` matches `BETTER_AUTH_URL` in eridu_auth
-- Verify JWKS endpoint is accessible at `{ERIDU_AUTH_URL}/api/auth/jwks`
-- Test JWT token format matches SDK expectations
-- Environment variables are validated on application startup via Zod schema
+- ✅ `ERIDU_AUTH_URL` matches `BETTER_AUTH_URL` in eridu_auth
+- ✅ JWKS endpoint is accessible: `GET {ERIDU_AUTH_URL}/api/auth/jwks`
+- ✅ JWT tokens are issued by the eridu_auth service
+- ✅ JwtVerifier issuer validation matches ERIDU_AUTH_URL
 
 ## Architecture
 
@@ -512,8 +565,8 @@ sequenceDiagram
 
 ## Compatibility Matrix
 
-| Component             | Framework          | Status                                             |
-| --------------------- | ------------------ | -------------------------------------------------- |
+| Component             | Framework          | Status                                            |
+| --------------------- | ------------------ | ------------------------------------------------- |
 | JwksService           | Framework-agnostic | ✅ Can be used anywhere                            |
 | JwtVerifier           | Framework-agnostic | ✅ Can be used anywhere                            |
 | JwtAuthGuard          | NestJS             | ✅ Adapter provided                                |

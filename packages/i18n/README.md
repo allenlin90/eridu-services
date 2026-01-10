@@ -1,17 +1,22 @@
 # @eridu/i18n
 
+**Current Status**: Phase 1 ✅ - Shared translations (3 languages) + Paraglide compilation
+
 Shared i18n translations package for Eridu Services monorepo.
 
-This package provides common translations that can be shared across all applications. Each app should have its own app-specific translations setup.
+This package provides common translations that can be shared across all applications. Each app maintains its own app-specific translations while importing from this package.
 
 ## Overview
 
-This package uses [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs) for type-safe internationalization with compile-time translation processing.
+This package uses [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs) for **type-safe internationalization with compile-time translation processing**. Translations are precompiled during the build process into framework-agnostic runtime code.
 
 ### Architecture
 
-- **Shared Package (`@eridu/i18n`)**: Contains common translations shared across all apps
-- **App-Specific Translations**: Each app has its own translations in `src/i18n/messages/`
+- **Precompilation Strategy**: Translations are compiled at build time to JavaScript + TypeScript definitions
+  - Shared package (`@eridu/i18n`): Compiles common translations → `dist/` + `src/paraglide/`
+  - Each app: Compiles app-specific translations → `src/paraglide/`
+- **Shared Package (`@eridu/i18n`)**: Provides common translations from `messages/{lang}.json`
+- **App-Specific Translations**: Each app has its own translations in `src/i18n/messages/` + `use-language` hook + synchronization utilities
 
 ### Supported Languages
 
@@ -23,22 +28,25 @@ This package uses [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-pa
 
 ### Initial Setup
 
-1. **Build the shared i18n package**:
+1. **Build shared translations** (must be done before using in apps):
    ```bash
    cd packages/i18n
-   pnpm build
+   pnpm build  # Compiles messages + generates src/paraglide/ and dist/
    ```
-   This compiles translations and generates Paraglide runtime files.
+   This compiles translations from `messages/{lang}.json` and generates:
+   - `src/paraglide/` - Generated Paraglide runtime files
+   - `dist/` - Built package for distribution (included in exports)
 
-2. **Build app-specific translations**:
+2. **Build/dev app-specific translations**:
    ```bash
    cd apps/[app-name]
-   pnpm build
+   pnpm build  # One-time compilation
+   # OR
+   pnpm dev    # Watch mode (auto-compiles on file changes)
    ```
-   Or run in dev mode (auto-compiles on changes):
-   ```bash
-   pnpm dev
-   ```
+   This compiles app-specific messages and merges with shared translations.
+
+**Important**: Both shared and app packages must be built before running the full application.
 
 ### Development
 
@@ -55,7 +63,7 @@ pnpm dev
 ### Basic Usage
 
 ```typescript
-import { setLocale, getLocale } from '@eridu/i18n';
+import { getLocale, setLocale } from '@eridu/i18n';
 import * as m from '@eridu/i18n';
 
 // Set the language
@@ -71,7 +79,7 @@ const welcome = m.common_welcome(); // "Welcome", "歡迎", or "ยินดี�
 ### Using Locale Enum and Utilities
 
 ```typescript
-import { LocaleEnum, AVAILABLE_LOCALES, LOCALE_LABELS, isValidLocale } from '@eridu/i18n';
+import { AVAILABLE_LOCALES, isValidLocale, LOCALE_LABELS, LocaleEnum } from '@eridu/i18n';
 
 // Use enum for type-safe references
 const locale = LocaleEnum.Thai; // 'th'
@@ -112,7 +120,7 @@ function LanguageSwitcher() {
 
   return (
     <select value={locale} onChange={(e) => setLocale(e.target.value)}>
-      {availableLocales.map(loc => (
+      {availableLocales.map((loc) => (
         <option key={loc} value={loc}>{loc}</option>
       ))}
     </select>
@@ -160,7 +168,7 @@ function LanguageSwitcher() {
    export const LOCALE_LABELS: Record<Locale, string> = {
      // ... existing labels
      [LocaleEnum.NewLanguage]: 'Display Name',
-   }
+   };
    ```
 
 4. **Create translation files**:
@@ -178,34 +186,44 @@ function LanguageSwitcher() {
 ```
 packages/i18n/
 ├── messages/
-│   ├── en.json          # English translations
-│   ├── zh-TW.json       # Traditional Chinese translations
-│   └── th.json          # Thai translations
+│   ├── en.json           # English messages (source of truth)
+│   ├── zh-TW.json        # Traditional Chinese messages
+│   └── th.json           # Thai messages
 ├── src/
-│   ├── index.ts         # Package exports
-│   ├── locales.ts       # Locale enum and utilities
-│   └── paraglide/       # Generated files (gitignored)
-│       ├── messages.js
-│       └── runtime.js
-└── project.inlang/
-    └── settings.json    # Paraglide configuration
+│   ├── paraglide/        # Generated Paraglide runtime (auto-generated, don't edit)
+│   ├── lib/
+│   │   └── i18n.ts       # Shared i18n utilities & runtime config
+│   ├── locales.ts        # Locale enum and utilities (LocaleEnum, LOCALE_LABELS, isValidLocale)
+│   └── index.ts          # Package exports (exports compiled messages + paraglide)
+├── dist/                 # Built package output (included in exports)
+├── vite.config.ts        # Vite config for compilation
+├── inlang.config.mjs     # Paraglide configuration (language tags, output paths)
+├── project.inlang/       # VS Code extension data (auto-generated)
+├── package.json
+└── tsconfig.json
 
 apps/[app-name]/
 ├── src/
 │   ├── i18n/
 │   │   ├── messages/
-│   │   │   ├── en.json
-│   │   │   ├── zh-TW.json
-│   │   │   └── th.json
-│   │   ├── index.ts
-│   │   ├── utils.ts
-│   │   └── use-language.ts  # React hook
-│   └── paraglide/       # Generated files (gitignored)
-│       ├── messages.js
-│       └── runtime.js
-└── project.inlang/
-    └── settings.json    # Paraglide configuration
+│   │   │   ├── en.json           # App-specific English translations
+│   │   │   ├── zh-TW.json        # App-specific Traditional Chinese
+│   │   │   └── th.json           # App-specific Thai
+│   │   ├── index.ts              # App i18n exports
+│   │   ├── utils.ts              # App-specific i18n utilities
+│   │   └── use-language.ts       # React hook for language switching
+│   └── paraglide/                # Generated app-specific runtime (auto-generated)
+├── vite.config.ts
+├── inlang.config.mjs             # Paraglide configuration for this app
+├── project.inlang/               # VS Code extension data (auto-generated)
+└── package.json
 ```
+
+### Generated Files (Don't Edit)
+- **`paraglide/`**: Auto-generated by Paraglide during build
+  - Contains compiled messages and language runtime functions
+- **`project.inlang/`**: Auto-generated by Paraglide VS Code extension
+  - Metadata for IDE features (hover info, autocomplete)
 
 ## Troubleshooting
 

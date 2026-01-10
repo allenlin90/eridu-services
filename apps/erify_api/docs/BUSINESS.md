@@ -2,17 +2,19 @@
 
 This document provides comprehensive business domain information for the Eridu Services API. For development roadmap and implementation phases, see the [Core Production Management System](./roadmap/PHASE_1.md) documentation.
 
+> **⚠️ Note**: This document describes the full domain vision across all phases. For current implementation status, see [Phase 1 Roadmap](./roadmap/PHASE_1.md). **Phase 1 models currently implemented**: User, MC, Client, Platform, Show, ShowMC, ShowPlatform, Studio, StudioRoom, ShowType, ShowStatus, ShowStandard, StudioMembership, Schedule, ScheduleSnapshot
+
 ## Development Approach
 
 The system is being developed in structured phases:
 
-- **Phase 1**: Core Functions with Hybrid Authentication - Essential CRUD operations, basic show management, Schedule Planning Management System, JWT validation from eridu_auth service, and simple StudioMembership-based authorization
-- **Phase 2**: Material Management System - Material versioning, platform targeting, and show-material associations
-- **Phase 3**: Advanced Authorization Control & Tracking Features - Role-based access control, audit trails, task management, tagging, and collaboration features
+- **Phase 1** ✅ (Current): Core Functions with Hybrid Authentication - Essential CRUD operations, basic show management, Schedule Planning Management System, JWT validation from eridu_auth service, and simple StudioMembership-based authorization
+- **Phase 2** (Planned): Material Management System - Material versioning, platform targeting, and show-material associations
+- **Phase 3** (Planned): Advanced Authorization Control & Tracking Features - Role-based access control, audit trails, task management, tagging, and collaboration features
 
 For detailed implementation plans, see:
 
-- [Phase 1 Roadmap](./roadmap/PHASE_1.md)
+- [Phase 1 Roadmap](./roadmap/PHASE_1.md) ✅ (Current implementation)
 - [Phase 2 Roadmap](./roadmap/PHASE_2.md)
 - [Phase 3 Roadmap](./roadmap/PHASE_3.md)
 - [Schedule Upload API Design](./SCHEDULE_UPLOAD_API_DESIGN.md)
@@ -21,7 +23,7 @@ For detailed implementation plans, see:
 
 ## Audit
 
-Purpose: Maintains complete audit trail of all significant system changes for compliance and debugging.
+**Phase 3 Feature** - Purpose: Maintains complete audit trail of all significant system changes for compliance and debugging.
 
 The `Audits` table tracks all CRUD operations performed by users, storing both old and new values for complete change history. This enables rollback capabilities, compliance reporting, and debugging of data issues.
 
@@ -72,7 +74,7 @@ Business Rules:
 
 ## Comment
 
-Purpose: Enables threaded collaboration and communication across all system entities.
+**Phase 3 Feature** - Purpose: Enables threaded collaboration and communication across all system entities.
 
 `Users` can leave `Comments` on various records (shows, schedules, tasks) to facilitate collaboration. Comments support threading for organized discussions and can include mentions and notifications.
 

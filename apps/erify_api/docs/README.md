@@ -41,10 +41,12 @@ This directory contains comprehensive documentation for the Eridu Services API (
 
 ## Quick Start
 
-1. **Read the Architecture Overview** to understand the system design
-2. **Review the Authentication Guide** to understand how JWT validation works
-3. **Check Phase 1 Roadmap** to see what's implemented and what's pending
-4. **Use the Postman Collection** to test API endpoints
+1. **Check Current Implementation Status** - See [Phase 1 Roadmap](./roadmap/PHASE_1.md) for what's implemented and pending
+2. **Read the Architecture Overview** to understand the system design
+3. **Review the Authentication Guide** to understand how JWT validation works
+4. **Check Phase Roadmaps** to see what's implemented and what's planned
+5. **Use the Postman Collection** to test API endpoints
+6. **Run Manual Tests** - `pnpm -F erify_api manual:*` to verify complex workflows
 
 ## Documentation Structure
 

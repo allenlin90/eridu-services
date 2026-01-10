@@ -2,12 +2,16 @@
 
 A modern React application for managing shows, built with TanStack Router, TypeScript, and Vite.
 
+**Current Status**: Phase 1 ✅ - Content creator UI for viewing and managing shows with advanced table features
+
 ## 🚀 Getting Started
 
 ### Prerequisites
 
 - Node.js 22+
 - pnpm (recommended) or npm/yarn
+- `erify_api` service running (for API endpoints)
+- `eridu_auth` service running (for authentication)
 
 ### Installation
 
@@ -15,7 +19,7 @@ A modern React application for managing shows, built with TanStack Router, TypeS
 # Install dependencies
 pnpm install
 
-# Start development server
+# Start development server (with API/Auth services running)
 pnpm dev
 
 # Build for production
@@ -31,11 +35,62 @@ pnpm lint
 pnpm format
 ```
 
+### Environment Setup
+
+Create a `.env` file (copy from `.env.example`):
+
+```env
+# Auth service URL (used for login/session validation)
+VITE_AUTH_URL=http://localhost:5173
+
+# API service URL (for backend API calls)
+VITE_API_URL=http://localhost:3000
+```
+
+**Note**: In development, Vite dev server handles proxying to backend services.
+
+## � Documentation for AI Agents
+
+When working on erify_creators, refer to these guides:
+
+| Document                                                      | Use When                                                                  |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| This README                                                   | Understanding project structure, architecture, testing, and setup         |
+| [Copilot Instructions](../../.github/copilot-instructions.md) | Understanding monorepo patterns, conventions, and cross-app communication |
+| [erify_api Docs](../erify_api/docs/)                          | Working on API integration, understanding backend features                |
+| [Auth SDK Docs](../../packages/auth-sdk/README.md)            | Implementing authentication flows, session management                     |
+| [API Types Docs](../../packages/api-types/README.md)          | Understanding shared schemas and types                                    |
+| [UI Library](../../packages/ui/README.md)                     | Building UI components with shadcn/ui                                     |
+| [i18n Package](../../packages/i18n/README.md)                 | Adding new translations or language support                               |
+
+**Key Reference**: The [Architecture Principles](#architecture-principles) section below explains the three-layer pattern used throughout this app.
+
+## ✨ Current Features
+
+### Implemented (Phase 1) ✅
+
+- ✅ **Shows Management**: View list of shows assigned to authenticated user
+- ✅ **Show Details**: View detailed information for individual shows
+- ✅ **Advanced Table**: Pagination, sorting, filtering with URL state persistence
+- ✅ **Authentication**: JWT-based session management via `@eridu/auth-sdk`
+- ✅ **Internationalization**: Multi-language support (English, Traditional Chinese, Thai)
+- ✅ **Offline Support**: IndexedDB persistence for offline capability
+- ✅ **Error Handling**: Global error boundary with recovery options
+- ✅ **Responsive Design**: Mobile-friendly UI with sidebar collapse
+- ✅ **Comprehensive Testing**: Unit and component tests with good coverage
+
+### Planned Features (Phase 2+)
+
+- ⏳ **Show Creation**: Create new shows as a creator
+- ⏳ **Show Editing**: Edit show details and schedule information
+- ⏳ **Schedule Management**: View and manage show schedules
+- ⏳ **Team Collaboration**: Collaborate with other creators on shows
+- ⏳ **Activity History**: Track changes and activity on shows
+- ⏳ **Notifications**: Real-time notifications for show updates
+
 ## 📁 Project Structure
 
 This project follows the **Bulletproof React** architecture pattern with feature-based organization and includes comprehensive testing, API integration, and offline support:
-
-```
 src/
 ├── app.tsx                    # Main app component with providers
 ├── components/                # Shared UI components
@@ -130,7 +185,19 @@ src/
 
 ## 🛣️ Routing
 
-The application uses [TanStack Router](https://tanstack.com/router) for type-safe routing.
+The application uses [TanStack Router](https://tanstack.com/router) for type-safe routing with a **thin routing layer** pattern.
+
+### Route Architecture Pattern
+
+Following the three-layer architecture:
+
+```
+Routes (Thin) → Pages (Orchestration) → Features (UI Logic)
+```
+
+- **Routes** (`routes/`): Only handle routing configuration, delegate to pages
+- **Pages** (`pages/`): Orchestrate features, manage data fetching, handle page-level state
+- **Features** (`features/`): Encapsulate UI components, business logic, API calls
 
 ### Current Routes
 
@@ -864,9 +931,55 @@ Access via `import.meta.env.VITE_AUTH_URL` or `import.meta.env.VITE_API_URL`
 4. Create route(s) in `src/routes/` that use the feature components
 5. Update this README if needed
 
+## 🤝 Development Workflow
+
+### Before Starting Work
+
+1. Review the [Copilot Instructions](.github/copilot-instructions.md) for monorepo conventions
+2. Check [erify_api docs](../erify_api/docs/) to understand API features you'll integrate
+3. Review the Architecture Principles section to understand the three-layer pattern
+4. Run `pnpm dev` to start the dev server
+
+### Working on Features
+
+- Follow the feature-based organization pattern
+- Use the three-layer architecture (routes → pages → features)
+- Create tests alongside your implementation
+- Keep components focused and reusable
+- Use TypeScript for type safety
+- Reference shared schemas from `@eridu/api-types`
+
+### Common Tasks
+
+```bash
+# Add a new route
+# 1. Create route file in src/routes/
+# 2. Create page in src/pages/
+# 3. Create feature components in src/features/
+
+# Add new translations
+# 1. Edit src/i18n/messages/*.json files
+# 2. Run dev server - translations auto-compile
+
+# Run tests
+pnpm test
+
+# Check component coverage
+pnpm test:coverage
+
+# Debug in browser
+# 1. Start dev server: pnpm dev
+# 2. Open http://localhost:5173
+# 3. Use DevTools and React DevTools extension
+```
+
 ## 📚 Resources
 
 - [TanStack Router Docs](https://tanstack.com/router)
+- [React Query Docs](https://tanstack.com/query/latest)
+- [Paraglide JS i18n](https://inlang.com/m/gerre34r/library-inlang-paraglideJs)
+- [Monorepo Conventions](../../.github/copilot-instructions.md)
+- [API Documentation](../erify_api/docs/)
 - [React Documentation](https://react.dev)
 - [Vite Documentation](https://vite.dev)
 - [Tailwind CSS Documentation](https://tailwindcss.com)
