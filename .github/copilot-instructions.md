@@ -25,13 +25,13 @@
 - **API responses**: Always map `uid` → `id` field in DTOs
 - **URLs**: `/admin/users/:uid` (never use database ID)
 - **Future**: UID prefix constants will be expanded as features are added
-- See [erify_api_guide.mdc](.cursor/rules/erify_api_guide.mdc) for details
+- See [erify_api_guide.mdc](../.cursor/rules/erify_api_guide.mdc) for details
 
 ### Monorepo Packages
 - **Exports**: All packages compile TypeScript to `dist/` and expose via `package.json` exports
 - **Consumption**: Import compiled code only (e.g., `@eridu/api-types`), never relative imports to src/
 - **Build structure**: NO nested `src/` in dist output
-- See [monorepo_packages_guide.mdc](.cursor/rules/monorepo_packages_guide.mdc) for structure
+- See [monorepo_packages_guide.mdc](../.cursor/rules/monorepo_packages_guide.mdc) for structure
 
 ### NestJS API Layer (erify_api)
 **Module Pattern**: `models/{entity}/` contains repository, service, module
@@ -154,14 +154,14 @@ Detailed documentation available at `apps/erify_api/docs/`. Use as context when 
 
 | Document | Use When |
 |----------|----------|
-| [PHASE_1.md](apps/erify_api/docs/roadmap/PHASE_1.md) | Understanding what's implemented vs pending, implementation scope, success criteria |
-| [PHASE_2.md](apps/erify_api/docs/roadmap/PHASE_2.md) | Seeing what's coming next, understanding deferred features (bulk publish), chunked uploads |
-| [ARCHITECTURE.md](apps/erify_api/docs/ARCHITECTURE.md) | Creating new modules/features, understanding module dependencies and layer patterns |
-| [BUSINESS.md](apps/erify_api/docs/BUSINESS.md) | Understanding entity relationships, business rules, soft-delete patterns |
-| [AUTHENTICATION_GUIDE.md](apps/erify_api/docs/AUTHENTICATION_GUIDE.md) | Implementing auth patterns, guard usage, JWT validation, admin authorization |
-| [SERVER_TO_SERVER_AUTH.md](apps/erify_api/docs/AUTHENTICATION_GUIDE.md) | Adding service-to-service endpoints, API key authentication |
-| [SCHEDULE_UPLOAD_API_DESIGN.md](apps/erify_api/docs/SCHEDULE_UPLOAD_API_DESIGN.md) | Working on schedule planning features, understanding data model, publish workflow |
-| [Manual Tests](apps/erify_api/manual-test/README.md) | Verifying complex workflows, understanding realistic usage patterns |
+| [PHASE_1.md](../apps/erify_api/docs/roadmap/PHASE_1.md) | Understanding what's implemented vs pending, implementation scope, success criteria |
+| [PHASE_2.md](../apps/erify_api/docs/roadmap/PHASE_2.md) | Seeing what's coming next, understanding deferred features (bulk publish), chunked uploads |
+| [ARCHITECTURE.md](../apps/erify_api/docs/ARCHITECTURE.md) | Creating new modules/features, understanding module dependencies and layer patterns |
+| [BUSINESS.md](../apps/erify_api/docs/BUSINESS.md) | Understanding entity relationships, business rules, soft-delete patterns |
+| [AUTHENTICATION_GUIDE.md](../apps/erify_api/docs/AUTHENTICATION_GUIDE.md) | Implementing auth patterns, guard usage, JWT validation, admin authorization |
+| [SERVER_TO_SERVER_AUTH.md](../apps/erify_api/docs/SERVER_TO_SERVER_AUTH.md) | Adding service-to-service endpoints, API key authentication |
+| [SCHEDULE_UPLOAD_API_DESIGN.md](../apps/erify_api/docs/SCHEDULE_UPLOAD_API_DESIGN.md) | Working on schedule planning features, understanding data model, publish workflow |
+| [Manual Tests](../apps/erify_api/manual-test/README.md) | Verifying complex workflows, understanding realistic usage patterns |
 
 **Quick Reference**:
 - `pnpm -F erify_api manual:schedule:all` - Run schedule planning E2E workflow
@@ -170,4 +170,4 @@ Detailed documentation available at `apps/erify_api/docs/`. Use as context when 
 
 ### General Documentation
 - API reference: `GET /api-reference` (Scalar UI) when server running
-- Detailed guides: `.cursor/rules/*.mdc` files
+- Detailed guides: [`.cursor/rules/*.mdc`](../.cursor/rules/) files
