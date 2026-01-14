@@ -1,6 +1,6 @@
 ---
-name: Eridu Services - Code Quality & Best Practices Skill
-description: Provides guidance for maintaining code quality, testing patterns, and avoiding anti-patterns.
+name: eridu-code-quality
+description: Provides general code quality and best practices guidance applicable across languages and frameworks. Use when ensuring proper testing, linting, type safety, and avoiding common anti-patterns. Covers testing strategies, TypeScript strictness, performance optimization, and how to identify architectural issues.
 ---
 
 # Instructions
@@ -22,12 +22,12 @@ description: Provides guidance for maintaining code quality, testing patterns, a
 
 **For Eridu Services, refer to pattern-specific skills**:
 
-- **eridu-service-pattern.md** - Service implementation checklist
-- **eridu-repository-pattern.md** - Repository implementation checklist
-- **eridu-controller-pattern.md** - Controller implementation checklist
-- **eridu-database-patterns.md** - Database query patterns checklist
-- **eridu-authentication-authorization.md** - Auth/security checklist
-- **eridu-data-validation.md** - Validation & serialization checklist
+- **service-pattern/SKILL.md** & **service-pattern-nestjs/SKILL.md** - Service implementation patterns
+- **repository-pattern/SKILL.md** & **repository-pattern-nestjs/SKILL.md** - Repository implementation patterns
+- **backend-controller-pattern/SKILL.md** & **backend-controller-pattern-nestjs/SKILL.md** - Controller implementation patterns
+- **database-patterns/SKILL.md** - Database query patterns and optimization
+- **authentication-authorization-backend/SKILL.md** - Backend auth/security checklist
+- **data-validation/SKILL.md** - Validation & serialization checklist
 
 ## Linting
 
