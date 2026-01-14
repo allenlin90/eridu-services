@@ -1,23 +1,33 @@
-# Eridu Services - Code Quality & Best Practices Skill
+---
+name: Eridu Services - Code Quality & Best Practices Skill
+description: Provides guidance for maintaining code quality, testing patterns, and avoiding anti-patterns.
+---
 
-Provides guidance for maintaining code quality, testing patterns, and avoiding anti-patterns.
+# Instructions
 
 ## Pre-Submission Quality Checklist
 
 **Before marking code as complete, verify all items**:
 
+### General Code Quality
+
 - [ ] `pnpm lint` passes (no ESLint rule disables)
 - [ ] `pnpm test` passes (new features have tests)
 - [ ] `pnpm build` succeeds (no TypeScript errors, no `any`/`unknown`)
-- [ ] No database IDs exposed in APIs
-- [ ] All services use `HttpError` utility
-- [ ] All repositories include `deletedAt: null`
-- [ ] All lists use pagination
-- [ ] All dependent queries use `Promise.all()`
+- [ ] No `any`/`unknown` types used
 - [ ] Proper HTTP status codes (201/204/404)
-- [ ] `@AdminProtected()` on write operations
-- [ ] `UidValidationPipe` on path parameters
-- [ ] `@ZodSerializerDto()` on endpoints
+- [ ] Clear error messages for all error cases
+
+### Architecture-Specific Checklists
+
+**For Eridu Services, refer to pattern-specific skills**:
+
+- **eridu-service-pattern.md** - Service implementation checklist
+- **eridu-repository-pattern.md** - Repository implementation checklist
+- **eridu-controller-pattern.md** - Controller implementation checklist
+- **eridu-database-patterns.md** - Database query patterns checklist
+- **eridu-authentication-authorization.md** - Auth/security checklist
+- **eridu-data-validation.md** - Validation & serialization checklist
 
 ## Linting
 
@@ -393,12 +403,13 @@ const studio = await prisma.studio.create({
 
 Before submission, verify:
 
-**Code Quality**:
+**Code Quality** (General):
 
 - ✅ No `any`/`unknown` types
 - ✅ No ESLint rule disables
 - ✅ Proper TypeScript types
 - ✅ Clean, readable code
+- ✅ Tests for new features
 
 **Functionality**:
 
@@ -406,25 +417,15 @@ Before submission, verify:
 - ✅ `pnpm test` passes
 - ✅ `pnpm build` succeeds
 - ✅ All features tested
+- ✅ Clear error messages
 
-**Architecture**:
+**Architecture-Specific** (Framework/Domain Dependent):
 
-- ✅ Repository → Service → Controller layers
-- ✅ No N+1 queries
-- ✅ No soft delete filter omissions
-- ✅ Proper HTTP status codes
-- ✅ ID mapping (uid → id)
-
-**Security**:
-
-- ✅ No database IDs exposed
-- ✅ Proper admin checks
-- ✅ Input validation
-- ✅ Error handling
-
-**Performance**:
-
-- ✅ Bulk operations instead of loops
-- ✅ Parallel queries with Promise.all
-- ✅ Proper pagination
-- ✅ Efficient includes
+For Eridu Services architecture patterns, refer to:
+- **eridu-service-pattern.md** - Service layer patterns
+- **eridu-repository-pattern.md** - Repository patterns
+- **eridu-controller-pattern.md** - Controller patterns
+- **eridu-database-patterns.md** - Database operation patterns
+- **eridu-authentication-authorization.md** - Auth/security patterns
+- **eridu-data-validation.md** - Validation patterns
+- **eridu-design-patterns.md** - Design pattern practices
