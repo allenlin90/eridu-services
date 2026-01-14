@@ -1,6 +1,11 @@
-# Eridu Services - Controller Pattern Skill
+---
+name: backend-controller-pattern-nestjs
+description: Provides NestJS-specific controller implementation patterns for erify_api. Use when building REST endpoints with NestJS decorators, guards, pipes, and serializers. Includes examples for admin protection, pagination, error handling, and service-to-service authentication.
+---
 
-Provides guidance for implementing controller layers in Eridu Services.
+# Backend Controller Pattern - NestJS Implementation
+
+NestJS-specific implementation patterns for controllers. For general principles, see **backend-controller-pattern/SKILL.md**.
 
 ## Admin Controller Structure
 
@@ -70,24 +75,11 @@ export class AdminUserController {
 }
 ```
 
-## HTTP Status Codes
-
-**Standard REST conventions**:
-
-| Operation | Method | Status | Example |
-|-----------|--------|--------|---------|
-| Create    | POST   | 201    | @HttpCode(HttpStatus.CREATED) |
-| Read      | GET    | 200    | @HttpCode(HttpStatus.OK) |
-| Update    | PATCH  | 200    | @HttpCode(HttpStatus.OK) |
-| Delete    | DELETE | 204    | @HttpCode(HttpStatus.NO_CONTENT) |
-| Not Found | ANY    | 404    | Handled by service layer |
-| Bad Request | ANY  | 400    | Handled by service layer |
-
-## Decorators & Validation
+## NestJS Decorators
 
 ### Authorization Decorators
 
-**Admin Protection** (all endpoints):
+**Admin Protection** (all endpoints in controller):
 
 ```typescript
 @Controller('admin/users')
@@ -95,7 +87,7 @@ export class AdminUserController {
 export class AdminUserController { ... }
 ```
 
-**Admin Protection** (individual routes):
+**Admin Protection** (specific route):
 
 ```typescript
 @Post()
@@ -103,9 +95,9 @@ export class AdminUserController { ... }
 async createUser(@Body() body: CreateUserDto) { ... }
 ```
 
-### Validation Decorators
+### Response Serialization
 
-**Response Serialization**:
+**Single response**:
 
 ```typescript
 @Get(':id')
@@ -113,7 +105,7 @@ async createUser(@Body() body: CreateUserDto) { ... }
 async getUser(@Param('id') id: string) { ... }
 ```
 
-**Pagination Response**:
+**Paginated response**:
 
 ```typescript
 @Get()
@@ -121,9 +113,29 @@ async getUser(@Param('id') id: string) { ... }
 async listUsers(@Query() query: PaginationQueryDto) { ... }
 ```
 
-### Path Parameter Validation
+### HTTP Status Codes
 
-**Always use `UidValidationPipe`**:
+**Use NestJS HttpStatus enum**:
+
+```typescript
+@Post()
+@HttpCode(HttpStatus.CREATED)  // 201
+async create() { ... }
+
+@Get()
+@HttpCode(HttpStatus.OK)       // 200
+async list() { ... }
+
+@Delete(':id')
+@HttpCode(HttpStatus.NO_CONTENT) // 204
+async delete() { ... }
+```
+
+## Pipes and Validation
+
+### UidValidationPipe
+
+**Always use for `:id` path parameters**:
 
 ```typescript
 @Get(':id')
@@ -133,18 +145,41 @@ async getUser(
 ) {
   return this.userService.getUserById(id);
 }
+
+@Patch(':id')
+async updateUser(
+  @Param('id', new UidValidationPipe(UserService.UID_PREFIX, 'User'))
+  id: string,
+  @Body() body: UpdateUserDto,
+) {
+  return this.userService.updateUser(id, body);
+}
 ```
 
-**Usage Rules**:
-
-- ✅ Use `UidValidationPipe` for all `:id` path parameters
+**Rules**:
+- ✅ Use for all `:id` path parameters
 - ✅ Pass service's `UID_PREFIX` constant
-- ✅ Pass human-readable model name (for error messages)
+- ✅ Pass human-readable model name
 - ❌ Never skip validation on path parameters
+
+**Error Example**:
+
+```json
+{
+  "statusCode": 400,
+  "message": "Invalid User ID",
+  "error": "BadRequest"
+}
+```
 
 ## Authenticated User Access
 
+**User-scoped endpoints** (JWT authentication automatic):
+
 ```typescript
+import { CurrentUser } from '@/lib/decorators/current-user.decorator';
+import { AuthenticatedUser } from '@/lib/types/authenticated-user.type';
+
 @Controller('me/shows')
 export class ShowsController {
   @Get()
@@ -152,21 +187,32 @@ export class ShowsController {
     // user contains: ext_id, id, name, email, image, payload
     return this.showsService.getShowsByMcUser(user.ext_id);
   }
+
+  @Get(':show_id')
+  async getShow(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('show_id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show'))
+    showId: string,
+  ) {
+    return this.showsService.getShowForMcUser(user.ext_id, showId);
+  }
 }
 ```
 
 **Key Points**:
-
 - ✅ JWT authentication is automatic (global guard)
 - ✅ Use `@CurrentUser()` to access user data
 - ✅ Use `user.ext_id` for database lookups
+- ✅ No `@AdminProtected()` decorator needed
+- ❌ Never use `@AdminProtected()` on `/me` endpoints
 
-## Pagination
+## Pagination Implementation
 
-**Always implement pagination for list endpoints**:
+**Complete pagination example**:
 
 ```typescript
 @Get()
+@HttpCode(HttpStatus.OK)
 @ZodSerializerDto(createPaginatedResponseSchema(UserDto))
 async listUsers(@Query() query: PaginationQueryDto) {
   const { page = 1, limit = 10 } = query;
@@ -191,19 +237,31 @@ async listUsers(@Query() query: PaginationQueryDto) {
 }
 ```
 
-**Key Rules**:
+**Query Parameter DTO**:
 
+```typescript
+export class PaginationQueryDto {
+  @Type(() => Number)
+  page?: number = 1;
+
+  @Type(() => Number)
+  limit?: number = 10;
+}
+```
+
+**Key Rules**:
 - ✅ Use `Promise.all()` for data + count queries
 - ✅ Provide default page (1) and limit (10)
 - ✅ Calculate skip: `(page - 1) * limit`
 - ✅ Return metadata with total count
+- ❌ Never query count separately after data
 
-## Error Response Handling
+## Error Handling
 
-**Errors are handled by global exception filters** - services throw, filters handle:
+**Global exception filters handle errors** - services throw, filters respond:
 
 ```typescript
-// Service throws
+// Service layer throws
 throw HttpError.notFound('User', uid);
 
 // Global filter converts to HTTP response
@@ -214,29 +272,21 @@ throw HttpError.notFound('User', uid);
 }
 ```
 
-## User-Scoped Endpoint Pattern
+**Never throw NestJS exceptions directly in services**:
 
 ```typescript
-@Controller('me')
-export class ProfileController {
-  @Get()
-  @HttpCode(HttpStatus.OK)
-  @ZodSerializerDto(UserDto)
-  async getProfile(@CurrentUser() user: AuthenticatedUser) {
-    // Return authenticated user's data
-    return this.userService.getUserById(user.ext_id);
-  }
-}
+// ❌ WRONG: Direct NestJS exception
+throw new BadRequestException('Invalid input');
+throw new NotFoundException('User not found');
+
+// ✅ CORRECT: Use HttpError utility
+throw HttpError.badRequest('Invalid input provided');
+throw HttpError.notFound('User', uid);
 ```
 
-**Key Rules**:
-
-- ✅ No `@AdminProtected()` decorator (JWT auth is automatic)
-- ✅ Use `@CurrentUser()` to get authenticated user
-- ✅ Validate user can only access their own data
-- ❌ Never use `@AdminProtected()` on user-scoped endpoints
-
 ## Service-to-Service Endpoints
+
+**Google Sheets integration**:
 
 ```typescript
 import { GoogleSheets } from '@/lib/decorators/google-sheets.decorator';
@@ -245,6 +295,8 @@ import { GoogleSheets } from '@/lib/decorators/google-sheets.decorator';
 @GoogleSheets() // API key authentication
 export class GoogleSheetsScheduleController {
   @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ZodSerializerDto(ScheduleDto)
   async createSchedule(@Request() req, @Body() data: CreateScheduleDto) {
     // req.service.serviceName === 'google-sheets'
     return this.scheduleService.createSchedule(data);
@@ -252,18 +304,95 @@ export class GoogleSheetsScheduleController {
 }
 ```
 
-**Key Rules**:
+**Backdoor endpoints**:
 
+```typescript
+import { Backdoor } from '@/lib/decorators/backdoor.decorator';
+import { BaseBackdoorController } from '@/backdoor/base-backdoor.controller';
+
+@Controller('backdoor/users')
+@Backdoor() // API key authentication
+export class BackdoorUserController extends BaseBackdoorController {
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ZodSerializerDto(UserDto)
+  async createUser(@Body() body: CreateUserDto) {
+    // req.service.serviceName === 'backdoor'
+    return this.userService.createUser(body);
+  }
+}
+```
+
+**Rules**:
 - ✅ Use `@GoogleSheets()` or `@Backdoor()` decorator
 - ✅ Skip `@AdminProtected()` (decorator replaces auth)
-- ✅ Extend appropriate base controller if available
+- ✅ Extend base controller if available
+- ❌ Never mix decorators (choose one auth mechanism)
 
-## Related Skills
+## NestJS DTOs and Schemas
 
-- **eridu-service-pattern.md** - Services called by controllers
-- **eridu-data-validation.md** - DTOs and Zod schemas
-- **eridu-authentication-authorization.md** - Guards and decorators
-- **eridu-database-patterns.md** - Querying patterns
+**Create DTO** (input validation):
+
+```typescript
+import { createZodDto } from 'nestjs-zod';
+import { z } from 'zod';
+
+export const createUserSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1),
+  is_banned: z.boolean().optional(),
+});
+
+export class CreateUserDto extends createZodDto(createUserSchema) {}
+```
+
+**Response DTO** (output serialization):
+
+```typescript
+export const userSchema = z.object({
+  id: z.string(),        // uid mapped to id
+  email: z.string(),
+  name: z.string(),
+  is_banned: z.boolean(),
+  created_at: z.date(),
+  updated_at: z.date(),
+});
+
+export class UserDto extends createZodDto(userSchema) {}
+```
+
+**Pagination schema**:
+
+```typescript
+export function createPaginatedResponseSchema<T extends z.ZodTypeAny>(
+  itemSchema: T,
+) {
+  return z.object({
+    data: z.array(itemSchema),
+    meta: z.object({
+      page: z.number(),
+      limit: z.number(),
+      total: z.number(),
+    }),
+  });
+}
+```
+
+## Module Registration
+
+**Controller in module**:
+
+```typescript
+import { Module } from '@nestjs/common';
+import { AdminUserController } from './admin-user.controller';
+import { UserModule } from '../../user/user.module';
+
+@Module({
+  imports: [UserModule],
+  controllers: [AdminUserController],
+})
+export class AdminUserModule {}
+```
 
 ## Best Practices Checklist
 
@@ -276,4 +405,13 @@ export class GoogleSheetsScheduleController {
 - [ ] Use `@CurrentUser()` for authenticated users
 - [ ] No separate admin service layer
 - [ ] Controllers directly call domain services
+- [ ] Use `HttpError` utility in services
 - [ ] All errors handled by global filters
+- [ ] Never expose database IDs in API
+
+## Related Skills
+
+- **backend-controller-pattern/SKILL.md** - General controller principles
+- **service-pattern/SKILL.md** - Service layer design
+- **data-validation/SKILL.md** - DTO and Zod patterns
+- **authentication-authorization-backend/SKILL.md** - Auth implementation

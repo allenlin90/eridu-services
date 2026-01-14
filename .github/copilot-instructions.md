@@ -25,13 +25,13 @@
 - **API responses**: Always map `uid` → `id` field in DTOs
 - **URLs**: `/admin/users/:uid` (never use database ID)
 - **Future**: UID prefix constants will be expanded as features are added
-- See [erify_api_guide.mdc](../.cursor/rules/erify_api_guide.mdc) for details
+- See **data-validation** skill for complete ID mapping patterns
 
 ### Monorepo Packages
 - **Exports**: All packages compile TypeScript to `dist/` and expose via `package.json` exports
 - **Consumption**: Import compiled code only (e.g., `@eridu/api-types`), never relative imports to src/
 - **Build structure**: NO nested `src/` in dist output
-- See [monorepo_packages_guide.mdc](../.cursor/rules/monorepo_packages_guide.mdc) for structure
+- **Detailed patterns**: See app-specific docs in `apps/erify_api/docs/` for architecture and implementation guidance
 
 ### NestJS API Layer (erify_api)
 **Module Pattern**: `models/{entity}/` contains repository, service, module
@@ -51,6 +51,7 @@ admin/user/
 - **Services**: Single-entity CRUD (`BaseModelService`) or multi-entity orchestration
 - **Controllers**: Use `@ZodSerializerDto()`, proper HTTP status codes (201/204/404)
 - **Transactions**: Use `prisma.$transaction()` or `prisma.executeTransaction()`
+- **Detailed patterns**: See **service-pattern-nestjs**, **repository-pattern-nestjs**, **backend-controller-pattern-nestjs** skills
 
 ## Developer Workflows
 
@@ -93,23 +94,16 @@ Format: `<type>(<scope>): <subject>` (Conventional Commits)
 - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`
 - Examples: `feat(auth): add SSO support`, `fix(api): resolve schedule validation`
 
-## Key Patterns & Files
+## Key Skills & Patterns
 
-### Validation & Serialization
-- **Zod schemas** (define once, reuse): `apps/erify_api/src/models/{entity}/schemas/`
-- **Input DTOs**: Transform snake_case input → camelCase internal
-- **Output DTOs**: Transform camelCase → snake_case API response
-- **Decorators**: `@ZodSerializerDto()` for auto serialization
-
-### Querying & Pagination
-- **Private `buildWhereClause()`**: Encapsulates filters; always include `deletedAt: null` unless `include_deleted=true`
-- **Pagination**: `PaginationQueryDto` + `createPaginatedResponseSchema()`
-- **Parallel queries**: Use `Promise.all()` for data + count operations
-
-### Authentication & Authorization
-- **JWT**: 15-minute expiration (eridu_auth)
-- **Validation**: `@eridu/auth-sdk` JWT validation decorators
-- **Authorization**: StudioMembership model determines resource access in erify_api
+**Use these skills for implementation guidance** (available in `.github/skills/`):
+- **Data validation** - ID mapping, Zod schemas, DTOs, serialization
+- **Database patterns** - Soft delete, transactions, bulk operations, optimistic locking
+- **Design patterns** - Separation of concerns, error handling, dependency injection
+- **Service pattern** (general) & **service-pattern-nestjs** - CRUD operations, business logic
+- **Repository pattern** (general) & **repository-pattern-nestjs** - Data access layer, queries
+- **Backend controller pattern** (general) & **backend-controller-pattern-nestjs** - HTTP endpoints
+- **Authentication & authorization** (general, backend, frontend) - JWT, guards, authorization checks
 
 ### UI Patterns (erify_creators & erify_studios)
 - **Routing**: TanStack Router with file-based route definitions
@@ -118,19 +112,20 @@ Format: `<type>(<scope>): <subject>` (Conventional Commits)
 - **i18n**: Paraglide JS (compile-time, project.inlang config)
 - **Components**: shadcn/ui (Tailwind CSS)
 
-## Important Directories
+## Important Directories (Optional Reference)
 
+**For detailed directory navigation, refer to:**
 | Path | Purpose |
 |------|---------|
 | `apps/erify_api/src/lib/` | Base repository, utility classes, decorators |
 | `apps/erify_api/src/models/` | Entity repositories & services (domain layer) |
 | `apps/erify_api/src/admin/` | Admin controllers & admin-specific services |
 | `apps/erify_api/prisma/` | Schema, migrations, seed |
-| `apps/erify_api/docs/` | **Detailed architecture, business rules, roadmaps - refer when implementing features** |
+| `apps/erify_api/docs/` | **Detailed architecture, business rules, roadmaps** |
 | `apps/eridu_auth/src/db/` | Drizzle schema, migrations |
 | `packages/api-types/src/` | Shared Zod schemas & TypeScript types |
 | `packages/auth-sdk/src/` | JWT validation, JWKS management |
-| `.cursor/rules/` | Detailed implementation guides |
+| `.github/skills/` | AI agent implementation guides (patterns, best practices) |
 
 ## Cross-App Communication
 
@@ -138,7 +133,7 @@ Format: `<type>(<scope>): <subject>` (Conventional Commits)
 
 **Future**: Event-driven architecture (Kafka/RabbitMQ) when features like user onboarding require multi-app coordination. Plan to document event schemas in `@eridu/api-types` when implemented.
 
-## Common Pitfalls
+## Common Pitfalls (See design-patterns skill for details)
 
 - ❌ Exposing database `id` in API responses → ✅ Use `uid` field
 - ❌ Hard-coding UID prefixes → ✅ Import from `@eridu/api-types/src/constants.ts`
@@ -149,25 +144,4 @@ Format: `<type>(<scope>): <subject>` (Conventional Commits)
 
 ## App-Specific Documentation
 
-### When Working on erify_api
-Detailed documentation available at `apps/erify_api/docs/`. Use as context when implementing features:
-
-| Document | Use When |
-|----------|----------|
-| [PHASE_1.md](../apps/erify_api/docs/roadmap/PHASE_1.md) | Understanding what's implemented vs pending, implementation scope, success criteria |
-| [PHASE_2.md](../apps/erify_api/docs/roadmap/PHASE_2.md) | Seeing what's coming next, understanding deferred features (bulk publish), chunked uploads |
-| [ARCHITECTURE.md](../apps/erify_api/docs/ARCHITECTURE.md) | Creating new modules/features, understanding module dependencies and layer patterns |
-| [BUSINESS.md](../apps/erify_api/docs/BUSINESS.md) | Understanding entity relationships, business rules, soft-delete patterns |
-| [AUTHENTICATION_GUIDE.md](../apps/erify_api/docs/AUTHENTICATION_GUIDE.md) | Implementing auth patterns, guard usage, JWT validation, admin authorization |
-| [SERVER_TO_SERVER_AUTH.md](../apps/erify_api/docs/SERVER_TO_SERVER_AUTH.md) | Adding service-to-service endpoints, API key authentication |
-| [SCHEDULE_UPLOAD_API_DESIGN.md](../apps/erify_api/docs/SCHEDULE_UPLOAD_API_DESIGN.md) | Working on schedule planning features, understanding data model, publish workflow |
-| [Manual Tests](../apps/erify_api/manual-test/README.md) | Verifying complex workflows, understanding realistic usage patterns |
-
-**Quick Reference**:
-- `pnpm -F erify_api manual:schedule:all` - Run schedule planning E2E workflow
-- `pnpm -F erify_api manual:backdoor:all` - Run user/membership setup workflow
-- `pnpm -F erify_api manual:auth:all` - Run authentication workflow
-
-### General Documentation
-- API reference: `GET /api-reference` (Scalar UI) when server running
-- Detailed guides: [`.cursor/rules/*.mdc`](../.cursor/rules/) files
+Detailed documentation available in `apps/erify_api/docs/` covers architecture, business rules, roadmaps, and implementation guides. Load these docs directly when working on specific features rather than relying on this file to reference them.
