@@ -4,6 +4,7 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev --concurrency=20",
+    "dev:creators": "turbo dev --filter=erify_creators... --filter=erify_api... --filter=eridu_auth...",
     "dev:studios": "turbo dev --filter=erify_studios... --filter=erify_api... --filter=eridu_auth...",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
