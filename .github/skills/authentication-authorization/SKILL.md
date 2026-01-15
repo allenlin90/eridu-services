@@ -1,6 +1,6 @@
 ---
 name: eridu-authentication-authorization
-description: Provides general authentication and authorization principles for designing secure systems. Use when implementing login flows, protecting endpoints, enforcing permissions, or designing API security. Covers public/authenticated/authorized access patterns and error handling best practices.
+description: Provides general authentication and authorization principles for designing secure systems. This skill should be used when implementing login flows, protecting endpoints, enforcing permissions, or designing API security.
 ---
 
 # Eridu Services - Authentication & Authorization Skill

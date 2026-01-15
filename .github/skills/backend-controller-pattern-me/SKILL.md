@@ -1,6 +1,6 @@
 ---
 name: backend-controller-pattern-me
-description: NestJS Controller patterns for User-facing (Me) endpoints
+description: Provides NestJS Controller patterns for User-facing (Me) endpoints. This skill should be used when building endpoints for authenticated users to interact with their own resources.
 ---
 
 # User (Me) Controller Pattern (NestJS)

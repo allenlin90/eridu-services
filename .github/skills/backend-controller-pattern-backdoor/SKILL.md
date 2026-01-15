@@ -1,6 +1,6 @@
 ---
 name: backend-controller-pattern-backdoor
-description: NestJS Controller patterns for Backdoor (Service-to-Service) endpoints
+description: Provides NestJS Controller patterns for Backdoor (Service-to-Service) endpoints. This skill should be used when building endpoints that require API Key authentication for internal communication.
 ---
 
 # Backdoor Controller Pattern (NestJS)

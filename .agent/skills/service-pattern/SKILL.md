@@ -1,6 +1,6 @@
 ---
 name: service-pattern
-description: Provides general guidance for implementing service layers in backend applications. Use when designing service architectures, implementing CRUD operations, handling business logic, or organizing orchestration services. Framework-agnostic principles applicable to NestJS, Express, FastAPI, and other frameworks.
+description: Provides general guidance for implementing service layers in backend applications. This skill should be used when designing service architectures, implementing CRUD operations, or organizing orchestration services.
 ---
 
 # Service Pattern Skill

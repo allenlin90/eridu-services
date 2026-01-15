@@ -1,3 +1,8 @@
+---
+name: code-quality
+description: Provides general code quality and best practices guidance applicable across languages and frameworks. Focuses on linting, testing, and type safety.
+---
+
 # Code Quality Skill
 
 Provides general code quality and best practices guidance applicable across languages and frameworks. Focuses on **Linting**, **Testing**, and **Type Safety**.
@@ -11,12 +16,12 @@ For architecture-specific patterns (N+1 queries, Soft Deletes, etc.), refer to:
 
 **Before marking any task as complete**:
 
-- [ ] `pnpm lint` passes (no ESLint rule disables).
-- [ ] `pnpm test` passes (new features have tests).
-- [ ] `pnpm build` succeeds (no TypeScript errors).
-- [ ] **No `any` / `unknown` types used** (strict type safety).
-- [ ] **No `console.log`** (use logger).
-- [ ] Error messages are clear and actionable.
+- [ ] Ensure `pnpm lint` passes (no ESLint rule disables).
+- [ ] Ensure `pnpm test` passes (new features have tests).
+- [ ] Ensure `pnpm build` succeeds (no TypeScript errors).
+- [ ] **Avoid** `any` / `unknown` types (maintain strict type safety).
+- [ ] **Remove** `console.log` statements (use a dedicated logger).
+- [ ] Ensure error messages are clear and actionable.
 
 ## Linting
 
@@ -73,11 +78,11 @@ describe('UserService', () => {
 
 ## Common Anti-Patterns (General)
 
-1.  **Ignoring Lint Errors**: "I'll fix it later" -> No you won't. Fix it now.
+1.  **Ignoring Lint Errors**: Address them immediately.
 2.  **Logic in Controllers**: Controllers should only handle HTTP req/res. Move logic to Services.
 3.  **Hardcoded Strings/Magic Numbers**: Use constants or enums.
 4.  **Complex Conditionals**: Break down complex `if/else` blocks into helper methods.
-5.  **Catch-All Error Handling**: Don't just `console.error`. Handle specific errors or let global filters handle them.
+5.  **Catch-All Error Handling**: Avoid just using `console.error`. Handle specific errors or let global filters handle them.
 
 ## Related Skills
 

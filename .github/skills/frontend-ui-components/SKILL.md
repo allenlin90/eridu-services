@@ -1,6 +1,6 @@
 ---
 name: frontend-ui-components
-description: Guidelines for using shared UI components (Shadcn/Radix) and styling
+description: Provides guidelines for using shared UI components and styling. This skill should be used when implementing UI features using Shadcn/Radix components and the shared @eridu/ui package.
 ---
 
 # Frontend UI Components

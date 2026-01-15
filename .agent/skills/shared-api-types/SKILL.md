@@ -1,6 +1,6 @@
 ---
 name: shared-api-types
-description: Guidelines for using keys, schemas, and types from the shared @eridu/api-types package
+description: Provides guidelines for using keys, schemas, and types from the shared @eridu/api-types package. This skill should be used when defining API contracts, ensuring type safety between frontend and backend, or implementing Zod schemas.
 ---
 
 # Shared API Types & Schemas

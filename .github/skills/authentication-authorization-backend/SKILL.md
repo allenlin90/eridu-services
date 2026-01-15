@@ -1,11 +1,9 @@
 ---
 name: eridu-authentication-authorization-backend
-description: Provides backend-specific authentication and authorization implementation patterns for NestJS/TypeScript servers. Use when implementing JWT validation, role-based access control, API key guards, token lifecycle management, or designing protected endpoints. Includes service-to-service authentication patterns.
+description: Provides backend-specific authentication and authorization implementation patterns for NestJS/TypeScript servers. This skill should be used when implementing JWT validation, role-based access control, API key guards, token lifecycle management, or designing protected endpoints.
 ---
 
 # Eridu Services - Backend Authentication & Authorization Skill
-
-Provides guidance for implementing backend authentication and authorization patterns in Eridu Services.
 
 ## Backend Responsibilities
 

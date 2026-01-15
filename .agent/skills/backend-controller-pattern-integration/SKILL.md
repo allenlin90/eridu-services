@@ -1,6 +1,6 @@
 ---
 name: backend-controller-pattern-integration
-description: NestJS Controller patterns for Integration endpoints (e.g., Google Sheets, Webhooks)
+description: Provides NestJS Controller patterns for Integration endpoints. This skill should be used when building endpoints for external integrations like Google Sheets or Webhooks.
 ---
 
 # Integration Controller Pattern (NestJS)

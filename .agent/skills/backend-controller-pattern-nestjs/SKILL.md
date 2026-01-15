@@ -1,6 +1,6 @@
 ---
 name: backend-controller-pattern-nestjs
-description: General NestJS Controller patterns and shared principles
+description: Provides shared NestJS Controller patterns and principles. This skill should be used when implementing controllers in NestJS to ensure consistency and use of shared utilities.
 ---
 
 # NestJS Controller Patterns (General)

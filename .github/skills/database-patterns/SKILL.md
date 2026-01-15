@@ -1,6 +1,6 @@
 ---
 name: database-patterns
-description: Provides Prisma-specific patterns for soft delete, transactions, optimistic locking, bulk operations, and performance optimization. Use when implementing data persistence, handling concurrent updates, managing complex multi-table operations, or optimizing query performance.
+description: Provides Prisma-specific patterns for soft delete, transactions, optimistic locking, bulk operations, and performance optimization. This skill should be used when implementing data persistence, handling concurrent updates, managing complex multi-table operations, or optimizing query performance.
 ---
 
 # Database Patterns Skill (Prisma/PostgreSQL)

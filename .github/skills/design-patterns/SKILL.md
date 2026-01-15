@@ -1,3 +1,8 @@
+---
+name: design-patterns
+description: Provides comprehensive architectural patterns for building scalable systems. This skill focuses on high-level architecture, layer boundaries, and package organization.
+---
+
 # Design Patterns Skill
 
 Provides comprehensive architectural patterns for building scalable systems. This skill focuses on **High-Level Architecture**, **Layer Boundaries**, and **Package Organization**.
@@ -46,13 +51,13 @@ For implementation details, refer to the specific layer skills:
 
 **Pattern**: Inversion of Control.
 
-- **Dependencies are injected**, not instantiated.
-- **Low Coupling**: Classes rely on interfaces/contracts, not concrete implementations (where possible).
-- **Testability**: Dependencies can be easily mocked in unit tests.
+- **Inject dependencies**, do not instantiate them manually.
+- **Low Coupling**: Rely on interfaces/contracts instead of concrete implementations where possible.
+- **Testability**: Ensure dependencies can be easily mocked in unit tests.
 
 ## Service Architecture Strategy
 
-We distinguish between two types of services to manage complexity and avoid circular dependencies.
+Distinguish between two types of services to manage complexity and avoid circular dependencies.
 
 | Type | Responsibility | Dependencies | Example |
 | :--- | :--- | :--- | :--- |
@@ -75,16 +80,16 @@ We distinguish between two types of services to manage complexity and avoid circ
 **Best Practices**:
 - ✅ Always export compiled code from `dist/` in packages.
 - ✅ Use `workspace:*` for internal dependencies.
-- ❌ A `package` should never import from an `app` (Cyclic dependency).
-- ❌ Apps should rely on packages, not other apps.
+- ❌ **Never** import from an `app` into a `package` (Cyclic dependency).
+- ❌ Ensure apps rely on packages, not other apps.
 
 ## Performance Optimization Strategy
 
 Address performance at the correct layer:
 
 **1. Database Layer (The Foundation)**
-- Indexes on foreign keys and frequently queried fields.
-- Correct column types.
+- Create indexes on foreign keys and frequently queried fields.
+- Use correct column types.
 
 **2. Repository Layer (The Query)**
 - **Eager Loading**: Use `include` to solve N+1 problems.

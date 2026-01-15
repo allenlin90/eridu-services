@@ -1,6 +1,6 @@
 ---
 name: backend-controller-pattern
-description: Provides general guidelines for designing backend controller layers across any framework. Use when implementing REST endpoints, handling HTTP status codes, managing pagination, or structuring API request/response handling. Framework-agnostic principles applicable to NestJS, Express, FastAPI, and other frameworks.
+description: This skill provides general guidelines for designing backend controller layers across any framework. It should be used when implementing REST endpoints, handling HTTP status codes, managing pagination, or structuring API request/response handling.
 ---
 
 # Backend Controller Pattern Skill

@@ -1,6 +1,6 @@
 ---
 name: eridu-authentication-authorization-frontend
-description: Provides frontend-specific authentication and authorization implementation patterns for React applications. Use when implementing login flows, protecting routes, storing tokens securely, managing user context, refreshing tokens, or handling logout. Includes HTTP-only cookies, context providers, and route protection examples.
+description: Provides frontend-specific authentication and authorization implementation patterns for React applications. This skill should be used when implementing login flows, protecting routes, storing tokens securely, managing user context, refreshing tokens, or handling logout.
 ---
 
 # Eridu Services - Frontend Authentication & Authorization Skill
