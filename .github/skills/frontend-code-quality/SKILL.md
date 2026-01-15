@@ -1,6 +1,6 @@
 ---
 name: frontend-code-quality
-description: Code quality standards for frontend applications (Linting, File Structure)
+description: Provides code quality standards for frontend applications. This skill should be used when configuring linting rules, organizing file structures, or ensuring consistency across React applications.
 ---
 
 # Frontend Code Quality

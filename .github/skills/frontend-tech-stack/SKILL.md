@@ -1,6 +1,6 @@
 ---
 name: frontend-tech-stack
-description: Standards for frontend application setup (React 19, Vite, Tailwind v4)
+description: Provides standards for the frontend application technology stack. This skill should be used when setting up new frontend projects or upgrading existing ones with React 19, Vite, and Tailwind v4.
 ---
 
 # Frontend Tech Stack

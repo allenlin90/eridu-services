@@ -1,6 +1,6 @@
 ---
 name: repository-pattern
-description: Provides general guidance for implementing data access layers in backend applications. Use when designing repositories, implementing query methods, handling soft deletes, or managing database access patterns. Framework-agnostic principles applicable to NestJS, Express, FastAPI, and other frameworks.
+description: Provides general guidance for implementing data access layers in backend applications. This skill should be used when designing repositories, implementing query methods, or managing database access patterns.
 ---
 
 # Repository Pattern Skill

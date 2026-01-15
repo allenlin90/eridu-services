@@ -1,6 +1,6 @@
 ---
 name: service-pattern-nestjs
-description: Provides NestJS-specific service implementation patterns for erify_api. Use when implementing Model Services, Orchestration Services, CRUD operations, and business logic with NestJS decorators. Includes error handling with HttpError utility and dependency injection patterns.
+description: Provides NestJS-specific service implementation patterns. This skill should be used when implementing Model Services, Orchestration Services, or business logic with NestJS decorators.
 ---
 
 # Service Pattern - NestJS Implementation

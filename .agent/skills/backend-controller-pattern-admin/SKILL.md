@@ -1,6 +1,6 @@
 ---
 name: backend-controller-pattern-admin
-description: NestJS Controller patterns for Admin-facing endpoints
+description: Provides NestJS Controller patterns for Admin-facing endpoints. This skill should be used when building controllers protected by authentication and role-based authorization.
 ---
 
 # Admin Controller Pattern (NestJS)
