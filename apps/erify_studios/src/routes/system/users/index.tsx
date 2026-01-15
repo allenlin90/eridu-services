@@ -30,7 +30,7 @@ import {
 const usersSearchSchema = z.object({
   page: z.number().int().min(1).catch(1),
   pageSize: z.number().int().min(10).max(100).catch(10),
-  search: z.string().optional().catch(undefined),
+  name: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/system/users/')({
@@ -52,14 +52,24 @@ export function UsersList() {
   const queryClient = useQueryClient();
 
   // URL state
-  const { pagination, onPaginationChange, setPageCount } = useTableUrlState({
+  const {
+    pagination,
+    onPaginationChange,
+    setPageCount,
+    columnFilters,
+    onColumnFiltersChange,
+  } = useTableUrlState({
     from: '/system/users/',
   });
+
+  const nameFilter = columnFilters.find((filter) => filter.id === 'name')
+    ?.value as string | undefined;
 
   // Fetch users list
   const { data, isLoading, isFetching } = useAdminList<User>('users', {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
+    name: nameFilter,
   });
 
   // Sync page count for auto-correction
@@ -147,6 +157,10 @@ export function UsersList() {
         onEdit={(user) => setEditingUser(user)}
         onDelete={(user) => setDeleteId(user.id)}
         emptyMessage="No users found. Create one to get started."
+        columnFilters={columnFilters}
+        onColumnFiltersChange={onColumnFiltersChange}
+        searchColumn="name"
+        searchPlaceholder="Search by name..."
         pagination={
           data?.meta
             ? {

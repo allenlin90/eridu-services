@@ -6,9 +6,9 @@ import { AdminUserController } from './admin-user.controller';
 
 import { JwtAuthGuard } from '@/lib/auth/jwt-auth.guard';
 import { AdminGuard } from '@/lib/guards/admin.guard';
-import type { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import type {
   CreateUserDto,
+  ListUsersQueryDto,
   UpdateUserDto,
 } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
@@ -104,12 +104,12 @@ describe('adminUserController', () => {
 
   describe('getUsers', () => {
     it('should return paginated list of users', async () => {
-      const query: PaginationQueryDto = {
+      const query: ListUsersQueryDto = {
         page: 1,
         limit: 10,
         skip: 0,
         take: 10,
-      };
+      } as ListUsersQueryDto;
       const users = [
         { uid: 'user_1', email: 'user1@example.com', name: 'User 1' },
         { uid: 'user_2', email: 'user2@example.com', name: 'User 2' },
@@ -133,10 +133,35 @@ describe('adminUserController', () => {
       expect(mockUserService.listUsers).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
+        name: undefined,
       });
       expect(result).toEqual({
         data: users,
         meta: paginationMeta,
+      });
+    });
+
+    it('should filter users by name', async () => {
+      const query: ListUsersQueryDto = {
+        page: 1,
+        limit: 10,
+        skip: 0,
+        take: 10,
+        name: 'test',
+      } as ListUsersQueryDto;
+      const users = [{ uid: 'user_1', name: 'test', email: 'test@example.com' }];
+      const total = 1;
+
+      mockUserService.listUsers.mockResolvedValue({
+        data: users,
+        total,
+      } as any);
+
+      await controller.getUsers(query);
+      expect(mockUserService.listUsers).toHaveBeenCalledWith({
+        skip: query.skip,
+        take: query.take,
+        name: 'test',
       });
     });
   });

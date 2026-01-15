@@ -194,3 +194,30 @@ export class UserDto extends createZodDto(userDto) {}
 export class UserWithMcDto extends createZodDto(userWithMcDto) {}
 
 export class UpdateUserDto extends createZodDto(updateUserSchema) {}
+
+// User list filter schema
+export const listUsersFilterSchema = z.object({
+  name: z.string().optional(),
+});
+
+export const listUsersQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).optional().default(1),
+    limit: z.coerce.number().int().min(1).optional().default(10),
+  })
+  .and(listUsersFilterSchema)
+  .transform((data) => ({
+    page: data.page,
+    limit: data.limit,
+    take: data.limit,
+    skip: (data.page - 1) * data.limit,
+    name: data.name,
+  }));
+
+export class ListUsersQueryDto extends createZodDto(listUsersQuerySchema) {
+  declare page: number;
+  declare limit: number;
+  declare take: number;
+  declare skip: number;
+  declare name: string | undefined;
+}

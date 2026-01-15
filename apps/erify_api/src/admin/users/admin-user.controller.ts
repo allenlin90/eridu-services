@@ -15,10 +15,10 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateUserDto,
+  ListUsersQueryDto,
   UpdateUserDto,
   userDto,
 } from '@/models/user/schemas/user.schema';
@@ -38,10 +38,11 @@ export class AdminUserController extends BaseAdminController {
 
   @Get()
   @AdminPaginatedResponse(userDto, 'List of users with pagination')
-  async getUsers(@Query() query: PaginationQueryDto) {
+  async getUsers(@Query() query: ListUsersQueryDto) {
     const { data, total } = await this.userService.listUsers({
       skip: query.skip,
       take: query.take,
+      name: query.name,
     });
 
     return this.createPaginatedResponse(data, total, query);

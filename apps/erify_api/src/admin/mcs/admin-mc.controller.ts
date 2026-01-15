@@ -15,11 +15,11 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { McService } from '@/models/mc/mc.service';
 import {
   CreateMcDto,
+  ListMcsQueryDto,
   mcWithUserDto,
   UpdateMcDto,
 } from '@/models/mc/schemas/mc.schema';
@@ -38,9 +38,14 @@ export class AdminMcController extends BaseAdminController {
 
   @Get()
   @AdminPaginatedResponse(mcWithUserDto, 'List of MCs with pagination')
-  async getMcs(@Query() query: PaginationQueryDto) {
+  async getMcs(@Query() query: ListMcsQueryDto) {
     const { data, total } = await this.mcService.listMcs(
-      { skip: query.skip, take: query.take },
+      {
+        skip: query.skip,
+        take: query.take,
+        name: query.name,
+        include_deleted: query.include_deleted,
+      },
       { user: true },
     );
 

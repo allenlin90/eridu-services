@@ -85,13 +85,33 @@ export class McService extends BaseModelService {
     params: {
       skip?: number;
       take?: number;
+      name?: string;
+      include_deleted?: boolean;
       where?: Prisma.MCWhereInput;
     },
     include?: T,
   ): Promise<{ data: MC[] | MCWithIncludes<T>[]; total: number }> {
+    const where: Prisma.MCWhereInput = { ...params.where };
+
+    if (!params.include_deleted) {
+      where.deletedAt = null;
+    }
+
+    if (params.name) {
+      where.name = {
+        contains: params.name,
+        mode: 'insensitive',
+      };
+    }
+
     const [data, total] = await Promise.all([
-      this.mcRepository.findMany({ ...params, include }),
-      this.mcRepository.count(params.where ?? {}),
+      this.mcRepository.findMany({
+        skip: params.skip,
+        take: params.take,
+        where,
+        include,
+      }),
+      this.mcRepository.count(where),
     ]);
 
     return { data, total };

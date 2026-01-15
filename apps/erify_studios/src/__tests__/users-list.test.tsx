@@ -22,6 +22,8 @@ vi.mock('@eridu/ui', () => ({
     pagination: { pageIndex: 0, pageSize: 10 },
     onPaginationChange: vi.fn(),
     setPageCount: vi.fn(),
+    columnFilters: [],
+    onColumnFiltersChange: vi.fn(),
   }),
   Select: ({ children, ...props }: any) => <select {...props}>{children}</select>,
   SelectTrigger: ({ children }: any) => <div>{children}</div>,

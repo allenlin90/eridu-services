@@ -105,3 +105,33 @@ export class CreateMcDto extends createZodDto(createMcSchema) {}
 export class UpdateMcDto extends createZodDto(updateMcSchema) {}
 export class McDto extends createZodDto(mcDto) {}
 export class McWithUserDto extends createZodDto(mcWithUserDto) {}
+
+// MC list filter schema
+export const listMcsFilterSchema = z.object({
+  name: z.string().optional(),
+  include_deleted: z.coerce.boolean().default(false),
+});
+
+export const listMcsQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).optional().default(1),
+    limit: z.coerce.number().int().min(1).optional().default(10),
+  })
+  .and(listMcsFilterSchema)
+  .transform((data) => ({
+    page: data.page,
+    limit: data.limit,
+    take: data.limit,
+    skip: (data.page - 1) * data.limit,
+    name: data.name,
+    include_deleted: data.include_deleted,
+  }));
+
+export class ListMcsQueryDto extends createZodDto(listMcsQuerySchema) {
+  declare page: number;
+  declare limit: number;
+  declare take: number;
+  declare skip: number;
+  declare name: string | undefined;
+  declare include_deleted: boolean;
+}

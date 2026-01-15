@@ -28,7 +28,7 @@ import {
 const mcsSearchSchema = z.object({
   page: z.number().int().min(1).catch(1),
   pageSize: z.number().int().min(10).max(100).catch(10),
-  search: z.string().optional().catch(undefined),
+  name: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/system/mcs/')({
@@ -50,14 +50,24 @@ function McsList() {
   const queryClient = useQueryClient();
 
   // URL state
-  const { pagination, onPaginationChange, setPageCount } = useTableUrlState({
+  const {
+    pagination,
+    onPaginationChange,
+    setPageCount,
+    columnFilters,
+    onColumnFiltersChange,
+  } = useTableUrlState({
     from: '/system/mcs/',
   });
+
+  const nameFilter = columnFilters.find((filter) => filter.id === 'name')
+    ?.value as string | undefined;
 
   // Fetch MCs list
   const { data, isLoading } = useAdminList<Mc>('mcs', {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
+    name: nameFilter,
   });
 
   // Sync page count for auto-correction
@@ -145,6 +155,10 @@ function McsList() {
         onEdit={(mc) => setEditingMc(mc)}
         onDelete={(mc) => setDeleteId(mc.id)}
         emptyMessage="No MCs found. Create one to get started."
+        columnFilters={columnFilters}
+        onColumnFiltersChange={onColumnFiltersChange}
+        searchColumn="name"
+        searchPlaceholder="Search by name..."
         pagination={
           data?.meta
             ? {
