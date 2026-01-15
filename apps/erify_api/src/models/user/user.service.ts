@@ -122,6 +122,7 @@ export class UserService extends BaseModelService {
     skip?: number;
     take?: number;
     name?: string;
+    email?: string;
     where?: Prisma.UserWhereInput;
   }): Promise<{ data: User[]; total: number }> {
     const where: Prisma.UserWhereInput = { ...params.where };
@@ -129,6 +130,13 @@ export class UserService extends BaseModelService {
     if (params.name) {
       where.name = {
         contains: params.name,
+        mode: 'insensitive',
+      };
+    }
+
+    if (params.email) {
+      where.email = {
+        contains: params.email,
         mode: 'insensitive',
       };
     }

@@ -46,6 +46,7 @@ type AdminTableProps<TData> = {
   columnFilters?: ColumnFiltersState;
   onColumnFiltersChange?: (filters: ColumnFiltersState) => void;
   searchColumn?: string;
+  searchableColumns?: { id: string; title: string }[];
   searchPlaceholder?: string;
 };
 
@@ -62,6 +63,7 @@ export function AdminTable<TData>({
   columnFilters,
   onColumnFiltersChange,
   searchColumn,
+  searchableColumns,
   searchPlaceholder,
 }: AdminTableProps<TData>) {
   // Add actions column if edit or delete handlers are provided
@@ -145,6 +147,7 @@ export function AdminTable<TData>({
       <AdminTableToolbar
         table={table}
         searchColumn={searchColumn}
+        searchableColumns={searchableColumns}
         searchPlaceholder={searchPlaceholder}
       />
       <div className="rounded-md border overflow-x-auto relative">

@@ -134,6 +134,7 @@ describe('adminUserController', () => {
         skip: query.skip,
         take: query.take,
         name: undefined,
+        email: undefined,
       });
       expect(result).toEqual({
         data: users,
@@ -141,13 +142,14 @@ describe('adminUserController', () => {
       });
     });
 
-    it('should filter users by name', async () => {
+    it('should filter users by name and email', async () => {
       const query: ListUsersQueryDto = {
         page: 1,
         limit: 10,
         skip: 0,
         take: 10,
         name: 'test',
+        email: 'test@example.com',
       } as ListUsersQueryDto;
       const users = [{ uid: 'user_1', name: 'test', email: 'test@example.com' }];
       const total = 1;
@@ -162,6 +164,7 @@ describe('adminUserController', () => {
         skip: query.skip,
         take: query.take,
         name: 'test',
+        email: 'test@example.com',
       });
     });
   });

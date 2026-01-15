@@ -198,6 +198,7 @@ export class UpdateUserDto extends createZodDto(updateUserSchema) {}
 // User list filter schema
 export const listUsersFilterSchema = z.object({
   name: z.string().optional(),
+  email: z.string().optional(),
 });
 
 export const listUsersQuerySchema = z
@@ -212,6 +213,7 @@ export const listUsersQuerySchema = z
     take: data.limit,
     skip: (data.page - 1) * data.limit,
     name: data.name,
+    email: data.email,
   }));
 
 export class ListUsersQueryDto extends createZodDto(listUsersQuerySchema) {
@@ -220,4 +222,5 @@ export class ListUsersQueryDto extends createZodDto(listUsersQuerySchema) {
   declare take: number;
   declare skip: number;
   declare name: string | undefined;
+  declare email: string | undefined;
 }

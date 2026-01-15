@@ -13,6 +13,7 @@ export type TableUrlState = {
   search?: string;
   startDate?: string;
   endDate?: string;
+  [key: string]: any;
 };
 
 /**
@@ -32,6 +33,8 @@ export type TableUrlStateOptions = {
   from: string;
   autoCorrectPage?: boolean;
 };
+
+const RESERVED_KEYS = ['page', 'pageSize', 'sortBy', 'sortOrder', 'search', 'startDate', 'endDate'];
 
 /**
  * Custom hook to synchronize URL state with table state
@@ -82,21 +85,32 @@ export function useTableUrlState(options: TableUrlStateOptions): UseTableUrlStat
   );
 
   const columnFilters: ColumnFiltersState = React.useMemo(
-    () => [
-      ...(searchParams.search ? [{ id: 'name', value: searchParams.search }] : []),
-      ...(searchParams.startDate || searchParams.endDate
-        ? [
-            {
-              id: 'date',
-              value: {
-                from: searchParams.startDate ? new Date(searchParams.startDate) : undefined,
-                to: searchParams.endDate ? new Date(searchParams.endDate) : undefined,
+    () => {
+      const filters = [
+        ...(searchParams.search ? [{ id: 'name', value: searchParams.search }] : []),
+        ...(searchParams.startDate || searchParams.endDate
+          ? [
+              {
+                id: 'date',
+                value: {
+                  from: searchParams.startDate ? new Date(searchParams.startDate) : undefined,
+                  to: searchParams.endDate ? new Date(searchParams.endDate) : undefined,
+                },
               },
-            },
-          ]
-        : []),
-    ],
-    [searchParams.search, searchParams.startDate, searchParams.endDate],
+            ]
+          : []),
+      ];
+
+      // Add dynamic filters
+      Object.entries(searchParams).forEach(([key, value]) => {
+        if (!RESERVED_KEYS.includes(key) && value !== undefined && value !== null) {
+          filters.push({ id: key, value });
+        }
+      });
+
+      return filters;
+    },
+    [searchParams, searchParams.search, searchParams.startDate, searchParams.endDate],
   );
 
   // Update URL when table state changes
@@ -135,14 +149,35 @@ export function useTableUrlState(options: TableUrlStateOptions): UseTableUrlStat
       const searchFilter = newFilters.find((f: any) => f.id === 'name')?.value as string | undefined;
       const dateFilter = newFilters.find((f: any) => f.id === 'date')?.value as { from?: Date; to?: Date } | undefined;
 
+      // Identify dynamic filters to remove (present in old but not in new)
+      const filtersToRemove = columnFilters
+        .filter((f) => f.id !== 'name' && f.id !== 'date')
+        .filter((f) => !newFilters.find((nf) => nf.id === f.id))
+        .map((f) => f.id);
+
+      // Identify dynamic filters to add/update
+      const dynamicFilters = newFilters
+        .filter((f) => f.id !== 'name' && f.id !== 'date')
+        .reduce((acc, f) => ({ ...acc, [f.id]: f.value }), {});
+
       (navigate as any)({
-        search: (prev: any) => ({
-          ...prev,
-          search: searchFilter || undefined,
-          startDate: dateFilter?.from?.toISOString(),
-          endDate: dateFilter?.to?.toISOString(),
-          page: 1, // Reset to first page when filters change
-        }),
+        search: (prev: any) => {
+          const next = {
+            ...prev,
+            search: searchFilter || undefined,
+            startDate: dateFilter?.from?.toISOString(),
+            endDate: dateFilter?.to?.toISOString(),
+            page: 1, // Reset to first page when filters change
+            ...dynamicFilters,
+          };
+
+          // Remove deleted filters
+          filtersToRemove.forEach((id) => {
+            delete next[id];
+          });
+
+          return next;
+        },
       });
     },
     [navigate, columnFilters],

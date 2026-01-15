@@ -43,6 +43,7 @@ export class AdminUserController extends BaseAdminController {
       skip: query.skip,
       take: query.take,
       name: query.name,
+      email: query.email,
     });
 
     return this.createPaginatedResponse(data, total, query);

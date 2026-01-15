@@ -44,6 +44,7 @@ export class AdminMcController extends BaseAdminController {
         skip: query.skip,
         take: query.take,
         name: query.name,
+        aliasName: query.aliasName,
         include_deleted: query.include_deleted,
       },
       { user: true },

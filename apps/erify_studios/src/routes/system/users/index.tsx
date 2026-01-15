@@ -31,6 +31,7 @@ const usersSearchSchema = z.object({
   page: z.number().int().min(1).catch(1),
   pageSize: z.number().int().min(10).max(100).catch(10),
   name: z.string().optional().catch(undefined),
+  email: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/system/users/')({
@@ -64,12 +65,15 @@ export function UsersList() {
 
   const nameFilter = columnFilters.find((filter) => filter.id === 'name')
     ?.value as string | undefined;
+  const emailFilter = columnFilters.find((filter) => filter.id === 'email')
+    ?.value as string | undefined;
 
   // Fetch users list
   const { data, isLoading, isFetching } = useAdminList<User>('users', {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     name: nameFilter,
+    email: emailFilter,
   });
 
   // Sync page count for auto-correction
@@ -159,7 +163,10 @@ export function UsersList() {
         emptyMessage="No users found. Create one to get started."
         columnFilters={columnFilters}
         onColumnFiltersChange={onColumnFiltersChange}
-        searchColumn="name"
+        searchableColumns={[
+          { id: 'name', title: 'Name' },
+          { id: 'email', title: 'Email' },
+        ]}
         searchPlaceholder="Search by name..."
         pagination={
           data?.meta

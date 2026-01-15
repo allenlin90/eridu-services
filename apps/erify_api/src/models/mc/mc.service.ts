@@ -86,6 +86,7 @@ export class McService extends BaseModelService {
       skip?: number;
       take?: number;
       name?: string;
+      aliasName?: string;
       include_deleted?: boolean;
       where?: Prisma.MCWhereInput;
     },
@@ -100,6 +101,13 @@ export class McService extends BaseModelService {
     if (params.name) {
       where.name = {
         contains: params.name,
+        mode: 'insensitive',
+      };
+    }
+
+    if (params.aliasName) {
+      where.aliasName = {
+        contains: params.aliasName,
         mode: 'insensitive',
       };
     }

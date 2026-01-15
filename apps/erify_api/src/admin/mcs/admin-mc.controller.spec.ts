@@ -84,6 +84,7 @@ describe('adminMcController', () => {
           skip: query.skip,
           take: query.take,
           name: undefined,
+          aliasName: undefined,
           include_deleted: false,
         },
         { user: true },
@@ -94,16 +95,17 @@ describe('adminMcController', () => {
       });
     });
 
-    it('should filter MCs by name', async () => {
+    it('should filter MCs by name and aliasName', async () => {
       const query: ListMcsQueryDto = {
         page: 1,
         limit: 10,
         skip: 0,
         take: 10,
         name: 'test',
+        aliasName: 'alias',
         include_deleted: false,
       } as ListMcsQueryDto;
-      const mcs = [{ uid: 'mc_1', userId: 'user_1', name: 'test' }];
+      const mcs = [{ uid: 'mc_1', userId: 'user_1', name: 'test', aliasName: 'alias' }];
       const total = 1;
 
       mockMcService.listMcs.mockResolvedValue({ data: mcs, total } as any);
@@ -114,6 +116,7 @@ describe('adminMcController', () => {
           skip: query.skip,
           take: query.take,
           name: 'test',
+          aliasName: 'alias',
           include_deleted: false,
         },
         { user: true },

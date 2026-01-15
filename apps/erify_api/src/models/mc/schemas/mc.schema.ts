@@ -109,6 +109,7 @@ export class McWithUserDto extends createZodDto(mcWithUserDto) {}
 // MC list filter schema
 export const listMcsFilterSchema = z.object({
   name: z.string().optional(),
+  alias_name: z.string().optional(),
   include_deleted: z.coerce.boolean().default(false),
 });
 
@@ -124,6 +125,7 @@ export const listMcsQuerySchema = z
     take: data.limit,
     skip: (data.page - 1) * data.limit,
     name: data.name,
+    aliasName: data.alias_name,
     include_deleted: data.include_deleted,
   }));
 
@@ -133,5 +135,6 @@ export class ListMcsQueryDto extends createZodDto(listMcsQuerySchema) {
   declare take: number;
   declare skip: number;
   declare name: string | undefined;
+  declare aliasName: string | undefined;
   declare include_deleted: boolean;
 }
