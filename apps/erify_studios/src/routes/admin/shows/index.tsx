@@ -43,7 +43,7 @@ function ShowsList() {
   });
 
   // Fetch shows list
-  const { data, isLoading } = useAdminList<Show>('shows', {
+  const { data, isLoading, isFetching } = useAdminList<Show>('shows', {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
   });
@@ -116,6 +116,7 @@ function ShowsList() {
         data={data?.data || []}
         columns={columns}
         isLoading={isLoading}
+        isFetching={isFetching}
         onDelete={(show) => setDeleteId(show.id)}
         emptyMessage="No shows found."
         pagination={

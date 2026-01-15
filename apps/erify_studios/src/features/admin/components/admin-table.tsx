@@ -1,4 +1,4 @@
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, ColumnFiltersState } from '@tanstack/react-table';
 import {
   flexRender,
   getCoreRowModel,
@@ -24,10 +24,13 @@ import {
   TableRow,
 } from '@eridu/ui';
 
+import { AdminTableToolbar } from './admin-table-toolbar';
+
 type AdminTableProps<TData> = {
   data: TData[];
   columns: ColumnDef<TData>[];
   isLoading?: boolean;
+  isFetching?: boolean;
   onEdit?: (row: TData) => void;
   onDelete?: (row: TData) => void;
   emptyMessage?: string;
@@ -39,17 +42,27 @@ type AdminTableProps<TData> = {
     pageCount: number;
   };
   onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void;
+  // Filtering props
+  columnFilters?: ColumnFiltersState;
+  onColumnFiltersChange?: (filters: ColumnFiltersState) => void;
+  searchColumn?: string;
+  searchPlaceholder?: string;
 };
 
 export function AdminTable<TData>({
   data,
   columns,
   isLoading,
+  isFetching,
   onEdit,
   onDelete,
   emptyMessage = 'No data available',
   pagination,
   onPaginationChange,
+  columnFilters,
+  onColumnFiltersChange,
+  searchColumn,
+  searchPlaceholder,
 }: AdminTableProps<TData>) {
   // Add actions column if edit or delete handlers are provided
   const columnsWithActions: ColumnDef<TData>[] = [
@@ -91,15 +104,19 @@ export function AdminTable<TData>({
     columns: columnsWithActions,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: !!pagination,
+    manualFiltering: !!onColumnFiltersChange,
     pageCount: pagination?.pageCount,
-    state: pagination
-      ? {
-          pagination: {
-            pageIndex: pagination.pageIndex,
-            pageSize: pagination.pageSize,
-          },
-        }
-      : undefined,
+    state: {
+      ...(pagination
+        ? {
+            pagination: {
+              pageIndex: pagination.pageIndex,
+              pageSize: pagination.pageSize,
+            },
+          }
+        : {}),
+      ...(columnFilters ? { columnFilters } : {}),
+    },
     onPaginationChange: pagination && onPaginationChange
       ? (updater) => {
           const nextPagination
@@ -112,58 +129,80 @@ export function AdminTable<TData>({
           onPaginationChange(nextPagination);
         }
       : undefined,
+    onColumnFiltersChange: onColumnFiltersChange
+      ? (updater) => {
+          const nextFilters
+            = typeof updater === 'function'
+              ? updater(columnFilters || [])
+              : updater;
+          onColumnFiltersChange(nextFilters);
+        }
+      : undefined,
   });
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (data.length === 0) {
-    return (
-      <div className="flex items-center justify-center p-8 text-muted-foreground">
-        {emptyMessage}
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border overflow-x-auto">
-        <div className="min-w-full inline-block align-middle">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} className="whitespace-nowrap">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="whitespace-nowrap">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+      <AdminTableToolbar
+        table={table}
+        searchColumn={searchColumn}
+        searchPlaceholder={searchPlaceholder}
+      />
+      <div className="rounded-md border overflow-x-auto relative">
+        {isFetching && !isLoading && (
+          <div className="absolute top-0 left-0 right-0 z-20 h-0.5 bg-primary/10 overflow-hidden">
+            <div className="h-full w-1/3 bg-primary animate-[infinite-scroll_2s_linear_infinite]" />
+          </div>
+        )}
+        {isLoading
+          ? (
+              <div className="flex items-center justify-center p-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            )
+          : (
+              <div className="min-w-full inline-block align-middle">
+                <Table>
+                  <TableHeader>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                          <TableHead key={header.id} className="whitespace-nowrap">
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {table.getRowModel().rows.length > 0
+                      ? table.getRowModel().rows.map((row) => (
+                          <TableRow key={row.id}>
+                            {row.getVisibleCells().map((cell) => (
+                              <TableCell key={cell.id} className="whitespace-nowrap">
+                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))
+                      : (
+                          <TableRow>
+                            <TableCell
+                              colSpan={columnsWithActions.length}
+                              className="h-24 text-center text-muted-foreground"
+                            >
+                              {emptyMessage}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
       </div>
       {pagination && onPaginationChange && (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2">

@@ -33,12 +33,30 @@ export class ClientService extends BaseModelService {
     return this.clientRepository.findOne({ id });
   }
 
-  async getClients(params: {
+  async getClients(query: {
     skip?: number;
     take?: number;
-    where?: Prisma.ClientWhereInput;
+    name?: string;
+    include_deleted?: boolean;
   }): Promise<Client[]> {
-    return this.clientRepository.findMany(params);
+    const where: Prisma.ClientWhereInput = {};
+
+    if (!query.include_deleted) {
+      where.deletedAt = null;
+    }
+
+    if (query.name) {
+      where.name = {
+        contains: query.name,
+        mode: 'insensitive',
+      };
+    }
+
+    return this.clientRepository.findMany({
+      skip: query.skip,
+      take: query.take,
+      where,
+    });
   }
 
   async getActiveClients(params: {
