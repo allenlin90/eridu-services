@@ -51,3 +51,33 @@ export const clientDto = clientSchema
 export class CreateClientDto extends createZodDto(createClientSchema) {}
 export class UpdateClientDto extends createZodDto(updateClientSchema) {}
 export class ClientDto extends createZodDto(clientDto) {}
+
+// Client list filter schema
+export const listClientsFilterSchema = z.object({
+  name: z.string().optional(),
+  include_deleted: z.coerce.boolean().default(false),
+});
+
+export const listClientsQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).optional().default(1),
+    limit: z.coerce.number().int().min(1).optional().default(10),
+  })
+  .and(listClientsFilterSchema)
+  .transform((data) => ({
+    page: data.page,
+    limit: data.limit,
+    take: data.limit,
+    skip: (data.page - 1) * data.limit,
+    name: data.name,
+    include_deleted: data.include_deleted,
+  }));
+
+export class ListClientsQueryDto extends createZodDto(listClientsQuerySchema) {
+  declare page: number;
+  declare limit: number;
+  declare take: number;
+  declare skip: number;
+  declare name: string | undefined;
+  declare include_deleted: boolean;
+}

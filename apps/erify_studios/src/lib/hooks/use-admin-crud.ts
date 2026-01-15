@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { adminApi, type PaginationParams } from '@/lib/api/admin';
 import type { AdminResource } from '@/lib/api/admin-resources';
@@ -22,6 +22,7 @@ export function useAdminList<T>(
     refetchOnWindowFocus: true, // Refetch when user comes back to the tab
     refetchOnMount: true, // Refetch when component mounts (if stale)
     refetchOnReconnect: true, // Refetch when network reconnects
+    placeholderData: keepPreviousData,
   });
 }
 

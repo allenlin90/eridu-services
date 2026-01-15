@@ -131,6 +131,10 @@ async listUsers(params: PaginationParams) {
 }
 ```
 
+### Advanced Search and Filtering
+
+For services that require complex search logic (e.g. partial matches, date ranges, soft-delete filtering), see the **[Admin List Pattern](../admin-list-pattern/SKILL.md)**.
+
 ## Bulk Operations
 
 **Use Repository bulk methods, DO NOT loop in Service.**

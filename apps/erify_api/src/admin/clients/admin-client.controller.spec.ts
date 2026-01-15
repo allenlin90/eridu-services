@@ -3,10 +3,10 @@ import { Test } from '@nestjs/testing';
 
 import { AdminClientController } from './admin-client.controller';
 
-import type { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { ClientService } from '@/models/client/client.service';
 import type {
   CreateClientDto,
+  ListClientsQueryDto,
   UpdateClientDto,
 } from '@/models/client/schemas/client.schema';
 
@@ -54,11 +54,13 @@ describe('adminClientController', () => {
 
   describe('getClients', () => {
     it('should return paginated list of clients', async () => {
-      const query: PaginationQueryDto = {
+      const query: ListClientsQueryDto = {
         page: 1,
         limit: 10,
         skip: 0,
         take: 10,
+        name: 'test',
+        include_deleted: false,
       };
       const clients = [
         { uid: 'client_1', name: 'Client 1' },
@@ -82,6 +84,8 @@ describe('adminClientController', () => {
       expect(mockClientService.getClients).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
+        name: query.name,
+        include_deleted: query.include_deleted,
       });
       expect(mockClientService.countClients).toHaveBeenCalled();
       expect(result).toEqual({

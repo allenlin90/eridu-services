@@ -57,7 +57,7 @@ export function UsersList() {
   });
 
   // Fetch users list
-  const { data, isLoading } = useAdminList<User>('users', {
+  const { data, isLoading, isFetching } = useAdminList<User>('users', {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
   });
@@ -143,6 +143,7 @@ export function UsersList() {
         data={data?.data || []}
         columns={columns}
         isLoading={isLoading}
+        isFetching={isFetching}
         onEdit={(user) => setEditingUser(user)}
         onDelete={(user) => setDeleteId(user.id)}
         emptyMessage="No users found. Create one to get started."

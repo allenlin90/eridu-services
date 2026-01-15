@@ -15,12 +15,12 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { ClientService } from '@/models/client/client.service';
 import {
   clientDto,
   CreateClientDto,
+  ListClientsQueryDto,
   UpdateClientDto,
 } from '@/models/client/schemas/client.schema';
 
@@ -38,12 +38,21 @@ export class AdminClientController extends BaseAdminController {
 
   @Get()
   @AdminPaginatedResponse(clientDto, 'List of clients with pagination')
-  async getClients(@Query() query: PaginationQueryDto) {
+  async getClients(@Query() query: ListClientsQueryDto) {
     const data = await this.clientService.getClients({
       skip: query.skip,
       take: query.take,
+      name: query.name,
+      include_deleted: query.include_deleted,
     });
-    const total = await this.clientService.countClients();
+
+    const where = {
+      name: query.name
+        ? { contains: query.name, mode: 'insensitive' as const }
+        : undefined,
+      deletedAt: query.include_deleted ? undefined : null,
+    };
+    const total = await this.clientService.countClients(where);
 
     return this.createPaginatedResponse(data, total, query);
   }

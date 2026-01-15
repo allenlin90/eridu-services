@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AdminTable } from '../admin-table';
@@ -17,6 +16,7 @@ vi.mock('@eridu/ui', () => ({
       {children}
     </button>
   ),
+  Input: (props: any) => <input {...props} />,
   flexRender: (Comp: any, props: any) => (typeof Comp === 'function' ? Comp(props) : Comp),
 }));
 
@@ -29,7 +29,20 @@ vi.mock('lucide-react', () => ({
   Loader2: () => <span>Loading...</span>,
   Pencil: () => <span>Edit</span>,
   Trash2: () => <span>Delete</span>,
+  X: () => <span>X</span>,
 }));
+
+// Mock i18n messages
+vi.mock('@/paraglide/messages.js', () => {
+  const messages = {
+    'admin.searchPlaceholder': () => 'Search...',
+    'admin.resetButton': () => 'Reset',
+  };
+  return {
+    ...messages,
+    m: messages,
+  };
+});
 
 describe('adminTable', () => {
   const data = [
