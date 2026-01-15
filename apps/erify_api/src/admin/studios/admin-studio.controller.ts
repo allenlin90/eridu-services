@@ -64,11 +64,10 @@ export class AdminStudioController extends BaseAdminController {
   @Get()
   @AdminPaginatedResponse(studioDto, 'List of studios with pagination')
   async getStudios(@Query() query: PaginationQueryDto) {
-    const data = await this.studioService.getStudios({
+    const { data, total } = await this.studioService.listStudios({
       skip: query.skip,
       take: query.take,
     });
-    const total = await this.studioService.countStudios();
 
     return this.createPaginatedResponse(data, total, query);
   }

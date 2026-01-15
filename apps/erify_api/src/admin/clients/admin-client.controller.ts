@@ -39,20 +39,12 @@ export class AdminClientController extends BaseAdminController {
   @Get()
   @AdminPaginatedResponse(clientDto, 'List of clients with pagination')
   async getClients(@Query() query: ListClientsQueryDto) {
-    const data = await this.clientService.getClients({
+    const { data, total } = await this.clientService.listClients({
       skip: query.skip,
       take: query.take,
       name: query.name,
       include_deleted: query.include_deleted,
     });
-
-    const where = {
-      name: query.name
-        ? { contains: query.name, mode: 'insensitive' as const }
-        : undefined,
-      deletedAt: query.include_deleted ? undefined : null,
-    };
-    const total = await this.clientService.countClients(where);
 
     return this.createPaginatedResponse(data, total, query);
   }

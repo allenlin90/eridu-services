@@ -59,6 +59,37 @@ export class ClientService extends BaseModelService {
     });
   }
 
+  async listClients(query: {
+    skip?: number;
+    take?: number;
+    name?: string;
+    include_deleted?: boolean;
+  }): Promise<{ data: Client[]; total: number }> {
+    const where: Prisma.ClientWhereInput = {};
+
+    if (!query.include_deleted) {
+      where.deletedAt = null;
+    }
+
+    if (query.name) {
+      where.name = {
+        contains: query.name,
+        mode: 'insensitive',
+      };
+    }
+
+    const [data, total] = await Promise.all([
+      this.clientRepository.findMany({
+        skip: query.skip,
+        take: query.take,
+        where,
+      }),
+      this.clientRepository.count(where),
+    ]);
+
+    return { data, total };
+  }
+
   async getActiveClients(params: {
     skip?: number;
     take?: number;

@@ -46,11 +46,10 @@ export class AdminShowStandardController extends BaseAdminController {
     'List of show standards with pagination',
   )
   async getShowStandards(@Query() query: PaginationQueryDto) {
-    const data = await this.showStandardService.getShowStandards({
+    const { data, total } = await this.showStandardService.listShowStandards({
       skip: query.skip,
       take: query.take,
     });
-    const total = await this.showStandardService.countShowStandards();
 
     return this.createPaginatedResponse(data, total, query);
   }

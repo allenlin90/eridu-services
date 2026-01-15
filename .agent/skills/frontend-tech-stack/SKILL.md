@@ -28,11 +28,73 @@ src/
 │   ├── __root.tsx      # Root layout
 │   ├── index.tsx       # Homepage
 │   └── feature.tsx     # Feature route
-├── components/         # App-specific components
-├── hooks/              # App-specific hooks
+├── features/           # Feature-based modules (see below)
+├── components/         # Shared components used across features
+├── hooks/              # Shared hooks used across features
 ├── lib/                # Utilities and API clients
+├── stores/             # Global state stores
+├── types/              # Shared types
 ├── main.tsx            # Entry point
 └── index.css           # Global styles (Tailwind imports)
+```
+
+### Feature-Based Architecture
+
+For scalability and maintainability, organize most code within the `features/` folder. Each feature should be **self-contained** with its own components, hooks, API calls, and types.
+
+**Feature Structure**:
+
+```
+src/features/awesome-feature/
+├── api/                # API calls specific to this feature
+│   ├── get-items.ts
+│   └── create-item.ts
+├── components/         # Components used only in this feature
+│   ├── ItemList.tsx
+│   └── ItemForm.tsx
+├── hooks/              # Hooks specific to this feature
+│   └── useItemFilters.ts
+├── stores/             # State stores for this feature (if needed)
+│   └── item-store.ts
+├── types/              # TypeScript types for this feature
+│   └── item.types.ts
+└── utils/              # Utility functions for this feature
+    └── format-item.ts
+```
+
+**Key Principles**:
+
+1. **Colocation**: Keep related code together. If a component is only used in one feature, it belongs in that feature's `components/` folder, not the global one.
+
+2. **No Cross-Feature Imports**: Features should not import from each other. Instead, compose features at the application level (in routes or app-level components).
+
+3. **Shared Code**: Only code used by multiple features should live in the global folders (`src/components/`, `src/hooks/`, etc.).
+
+**Preventing Cross-Feature Imports**:
+
+Add this ESLint rule to enforce feature isolation:
+
+```javascript
+// .eslintrc.cjs
+'import/no-restricted-paths': [
+  'error',
+  {
+    zones: [
+      // Prevent features from importing from each other
+      {
+        target: './src/features/auth',
+        from: './src/features',
+        except: ['./auth'],
+      },
+      {
+        target: './src/features/dashboard',
+        from: './src/features',
+        except: ['./dashboard'],
+      },
+      // Add more features as needed
+    ],
+  },
+],
 ```
 
 ## Configuration

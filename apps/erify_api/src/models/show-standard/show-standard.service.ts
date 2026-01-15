@@ -45,6 +45,19 @@ export class ShowStandardService extends BaseModelService {
     return this.showStandardRepository.count({});
   }
 
+  async listShowStandards(params: {
+    skip?: number;
+    take?: number;
+    where?: Prisma.ShowStandardWhereInput;
+  }): Promise<{ data: ShowStandard[]; total: number }> {
+    const [data, total] = await Promise.all([
+      this.showStandardRepository.findMany(params),
+      this.showStandardRepository.count(params.where ?? {}),
+    ]);
+
+    return { data, total };
+  }
+
   async updateShowStandard(
     uid: string,
     data: Prisma.ShowStandardUpdateInput,

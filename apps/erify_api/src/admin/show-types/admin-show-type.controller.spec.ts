@@ -14,6 +14,7 @@ describe('adminShowTypeController', () => {
   let controller: AdminShowTypeController;
 
   const mockShowTypeService = {
+    listShowTypes: jest.fn(),
     createShowType: jest.fn(),
     getShowTypes: jest.fn(),
     countShowTypes: jest.fn(),
@@ -74,15 +75,16 @@ describe('adminShowTypeController', () => {
         hasPreviousPage: false,
       };
 
-      mockShowTypeService.getShowTypes.mockResolvedValue(types as any);
-      mockShowTypeService.countShowTypes.mockResolvedValue(total);
+      mockShowTypeService.listShowTypes.mockResolvedValue({
+        data: types,
+        total,
+      } as any);
 
       const result = await controller.getShowTypes(query);
-      expect(mockShowTypeService.getShowTypes).toHaveBeenCalledWith({
+      expect(mockShowTypeService.listShowTypes).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
       });
-      expect(mockShowTypeService.countShowTypes).toHaveBeenCalled();
       expect(result).toEqual({
         data: types,
         meta: paginationMeta,

@@ -15,6 +15,7 @@ describe('adminStudioController', () => {
   let controller: AdminStudioController;
 
   const mockStudioService = {
+    listStudios: jest.fn(),
     createStudio: jest.fn(),
     getStudios: jest.fn(),
     countStudios: jest.fn(),
@@ -81,15 +82,13 @@ describe('adminStudioController', () => {
         hasPreviousPage: false,
       };
 
-      mockStudioService.getStudios.mockResolvedValue(studios as any);
-      mockStudioService.countStudios.mockResolvedValue(total);
+      mockStudioService.listStudios.mockResolvedValue({ data: studios, total } as any);
 
       const result = await controller.getStudios(query);
-      expect(mockStudioService.getStudios).toHaveBeenCalledWith({
+      expect(mockStudioService.listStudios).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
       });
-      expect(mockStudioService.countStudios).toHaveBeenCalled();
       expect(result).toEqual({
         data: studios,
         meta: paginationMeta,

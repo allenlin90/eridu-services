@@ -91,6 +91,38 @@ export class StudioRoomService extends BaseModelService {
     return this.studioRoomRepository.count({ studioId });
   }
 
+  async listStudioRooms<
+    T extends Prisma.StudioRoomInclude = Record<string, never>,
+  >(
+    params: {
+      skip?: number;
+      take?: number;
+      studioId?: string;
+      where?: Prisma.StudioRoomWhereInput;
+    },
+    include?: T,
+  ): Promise<{
+      data: StudioRoom[] | StudioRoomWithIncludes<T>[];
+      total: number;
+    }> {
+    const where: Prisma.StudioRoomWhereInput = {
+      ...params.where,
+      ...(params.studioId && { studio: { uid: params.studioId } }),
+    };
+
+    const [data, total] = await Promise.all([
+      this.studioRoomRepository.findMany({
+        skip: params.skip,
+        take: params.take,
+        where,
+        include,
+      }),
+      this.studioRoomRepository.count(where),
+    ]);
+
+    return { data, total };
+  }
+
   async updateStudioRoomFromDto<
     T extends Prisma.StudioRoomInclude = Record<string, never>,
   >(

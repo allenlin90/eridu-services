@@ -127,6 +127,27 @@ export class ShowPlatformService extends BaseModelService {
     return this.showPlatformRepository.count(where ?? {});
   }
 
+  async listShowPlatforms<
+    T extends Prisma.ShowPlatformInclude = Record<string, never>,
+  >(
+    params: {
+      skip?: number;
+      take?: number;
+      where?: Prisma.ShowPlatformWhereInput;
+    },
+    include?: T,
+  ): Promise<{
+      data: ShowPlatform[] | ShowPlatformWithIncludes<T>[];
+      total: number;
+    }> {
+    const [data, total] = await Promise.all([
+      this.showPlatformRepository.findMany({ ...params, include }),
+      this.showPlatformRepository.count(params.where ?? {}),
+    ]);
+
+    return { data, total };
+  }
+
   async updateShowPlatformFromDto<
     T extends Prisma.ShowPlatformInclude = Record<string, never>,
   >(

@@ -14,6 +14,7 @@ describe('adminShowStatusController', () => {
   let controller: AdminShowStatusController;
 
   const mockShowStatusService = {
+    listShowStatuses: jest.fn(),
     createShowStatus: jest.fn(),
     getShowStatuses: jest.fn(),
     countShowStatuses: jest.fn(),
@@ -80,15 +81,16 @@ describe('adminShowStatusController', () => {
         hasPreviousPage: false,
       };
 
-      mockShowStatusService.getShowStatuses.mockResolvedValue(statuses as any);
-      mockShowStatusService.countShowStatuses.mockResolvedValue(total);
+      mockShowStatusService.listShowStatuses.mockResolvedValue({
+        data: statuses,
+        total,
+      } as any);
 
       const result = await controller.getShowStatuses(query);
-      expect(mockShowStatusService.getShowStatuses).toHaveBeenCalledWith({
+      expect(mockShowStatusService.listShowStatuses).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
       });
-      expect(mockShowStatusService.countShowStatuses).toHaveBeenCalled();
       expect(result).toEqual({
         data: statuses,
         meta: paginationMeta,

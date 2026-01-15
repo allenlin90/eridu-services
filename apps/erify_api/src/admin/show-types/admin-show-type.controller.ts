@@ -43,11 +43,10 @@ export class AdminShowTypeController extends BaseAdminController {
   @Get()
   @AdminPaginatedResponse(showTypeDto, 'List of show types with pagination')
   async getShowTypes(@Query() query: PaginationQueryDto) {
-    const data = await this.showTypeService.getShowTypes({
+    const { data, total } = await this.showTypeService.listShowTypes({
       skip: query.skip,
       take: query.take,
     });
-    const total = await this.showTypeService.countShowTypes();
 
     return this.createPaginatedResponse(data, total, query);
   }

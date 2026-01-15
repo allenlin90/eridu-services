@@ -51,6 +51,7 @@ describe('adminUserController', () => {
 
   const mockUserService = {
     createUser: jest.fn(),
+    listUsers: jest.fn(),
     getUsers: jest.fn(),
     countUsers: jest.fn(),
     getUserById: jest.fn(),
@@ -123,15 +124,16 @@ describe('adminUserController', () => {
         hasPreviousPage: false,
       };
 
-      mockUserService.getUsers.mockResolvedValue(users as any);
-      mockUserService.countUsers.mockResolvedValue(total);
+      mockUserService.listUsers.mockResolvedValue({
+        data: users,
+        total,
+      } as any);
 
       const result = await controller.getUsers(query);
-      expect(mockUserService.getUsers).toHaveBeenCalledWith({
+      expect(mockUserService.listUsers).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
       });
-      expect(mockUserService.countUsers).toHaveBeenCalled();
       expect(result).toEqual({
         data: users,
         meta: paginationMeta,
