@@ -39,11 +39,10 @@ export class AdminUserController extends BaseAdminController {
   @Get()
   @AdminPaginatedResponse(userDto, 'List of users with pagination')
   async getUsers(@Query() query: PaginationQueryDto) {
-    const data = await this.userService.getUsers({
+    const { data, total } = await this.userService.listUsers({
       skip: query.skip,
       take: query.take,
     });
-    const total = await this.userService.countUsers();
 
     return this.createPaginatedResponse(data, total, query);
   }

@@ -39,11 +39,10 @@ export class AdminMcController extends BaseAdminController {
   @Get()
   @AdminPaginatedResponse(mcWithUserDto, 'List of MCs with pagination')
   async getMcs(@Query() query: PaginationQueryDto) {
-    const data = await this.mcService.getMcs(
+    const { data, total } = await this.mcService.listMcs(
       { skip: query.skip, take: query.take },
       { user: true },
     );
-    const total = await this.mcService.countMcs();
 
     return this.createPaginatedResponse(data, total, query);
   }

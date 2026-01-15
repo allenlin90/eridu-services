@@ -107,6 +107,27 @@ export class StudioMembershipService extends BaseModelService {
     return this.studioMembershipRepository.count(where);
   }
 
+  async listStudioMemberships<
+    T extends Prisma.StudioMembershipInclude = Record<string, never>,
+  >(
+    params: {
+      skip?: number;
+      take?: number;
+      where?: Prisma.StudioMembershipWhereInput;
+    },
+    include?: T,
+  ): Promise<{
+      data: StudioMembership[] | StudioMembershipWithIncludes<T>[];
+      total: number;
+    }> {
+    const [data, total] = await Promise.all([
+      this.studioMembershipRepository.findMany({ ...params, include }),
+      this.studioMembershipRepository.count(params.where ?? {}),
+    ]);
+
+    return { data, total };
+  }
+
   async isUserAdmin(userId: UserId): Promise<boolean> {
     const memberships = await this.studioMembershipRepository.findMany({
       where: {

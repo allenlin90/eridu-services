@@ -82,6 +82,21 @@ export class ScheduleSnapshotService extends BaseModelService {
     return this.scheduleSnapshotRepository.count(where ?? {});
   }
 
+  async listScheduleSnapshots(params: {
+    skip?: number;
+    take?: number;
+    where?: Prisma.ScheduleSnapshotWhereInput;
+    orderBy?: Record<string, 'asc' | 'desc'>;
+    include?: Prisma.ScheduleSnapshotInclude;
+  }): Promise<{ data: ScheduleSnapshot[]; total: number }> {
+    const [data, total] = await Promise.all([
+      this.scheduleSnapshotRepository.findMany(params),
+      this.scheduleSnapshotRepository.count(params.where ?? {}),
+    ]);
+
+    return { data, total };
+  }
+
   /**
    * Update is not supported for snapshots - they are immutable.
    * @throws HttpError.badRequest if called

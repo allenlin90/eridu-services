@@ -11,6 +11,7 @@ describe('adminMcController', () => {
   let controller: AdminMcController;
 
   const mockMcService = {
+    listMcs: jest.fn(),
     createMcFromDto: jest.fn(),
     getMcs: jest.fn(),
     countMcs: jest.fn(),
@@ -71,15 +72,13 @@ describe('adminMcController', () => {
         hasPreviousPage: false,
       };
 
-      mockMcService.getMcs.mockResolvedValue(mcs as any);
-      mockMcService.countMcs.mockResolvedValue(total);
+      mockMcService.listMcs.mockResolvedValue({ data: mcs, total } as any);
 
       const result = await controller.getMcs(query);
-      expect(mockMcService.getMcs).toHaveBeenCalledWith(
+      expect(mockMcService.listMcs).toHaveBeenCalledWith(
         { skip: query.skip, take: query.take },
         { user: true },
       );
-      expect(mockMcService.countMcs).toHaveBeenCalled();
       expect(result).toEqual({
         data: mcs,
         meta: paginationMeta,

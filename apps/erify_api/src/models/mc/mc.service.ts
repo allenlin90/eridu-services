@@ -81,6 +81,22 @@ export class McService extends BaseModelService {
     return this.mcRepository.count(where ?? {});
   }
 
+  async listMcs<T extends Prisma.MCInclude = Record<string, never>>(
+    params: {
+      skip?: number;
+      take?: number;
+      where?: Prisma.MCWhereInput;
+    },
+    include?: T,
+  ): Promise<{ data: MC[] | MCWithIncludes<T>[]; total: number }> {
+    const [data, total] = await Promise.all([
+      this.mcRepository.findMany({ ...params, include }),
+      this.mcRepository.count(params.where ?? {}),
+    ]);
+
+    return { data, total };
+  }
+
   async updateMcFromDto<T extends Prisma.MCInclude = Record<string, never>>(
     uid: string,
     dto: UpdateMcDto,

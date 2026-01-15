@@ -14,6 +14,7 @@ describe('adminPlatformController', () => {
   let controller: AdminPlatformController;
 
   const mockPlatformService = {
+    listPlatforms: jest.fn(),
     createPlatform: jest.fn(),
     getPlatforms: jest.fn(),
     countPlatforms: jest.fn(),
@@ -76,15 +77,13 @@ describe('adminPlatformController', () => {
         hasPreviousPage: false,
       };
 
-      mockPlatformService.getPlatforms.mockResolvedValue(platforms as any);
-      mockPlatformService.countPlatforms.mockResolvedValue(total);
+      mockPlatformService.listPlatforms.mockResolvedValue({ data: platforms, total } as any);
 
       const result = await controller.getPlatforms(query);
-      expect(mockPlatformService.getPlatforms).toHaveBeenCalledWith({
+      expect(mockPlatformService.listPlatforms).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
       });
-      expect(mockPlatformService.countPlatforms).toHaveBeenCalled();
       expect(result).toEqual({
         data: platforms,
         meta: paginationMeta,

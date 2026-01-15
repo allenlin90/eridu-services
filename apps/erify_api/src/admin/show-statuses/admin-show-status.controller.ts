@@ -46,11 +46,10 @@ export class AdminShowStatusController extends BaseAdminController {
     'List of show statuses with pagination',
   )
   async getShowStatuses(@Query() query: PaginationQueryDto) {
-    const data = await this.showStatusService.getShowStatuses({
+    const { data, total } = await this.showStatusService.listShowStatuses({
       skip: query.skip,
       take: query.take,
     });
-    const total = await this.showStatusService.countShowStatuses();
 
     return this.createPaginatedResponse(data, total, query);
   }

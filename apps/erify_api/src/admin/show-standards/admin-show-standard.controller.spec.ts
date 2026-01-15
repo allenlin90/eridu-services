@@ -14,6 +14,7 @@ describe('adminShowStandardController', () => {
   let controller: AdminShowStandardController;
 
   const mockShowStandardService = {
+    listShowStandards: jest.fn(),
     createShowStandard: jest.fn(),
     getShowStandards: jest.fn(),
     countShowStandards: jest.fn(),
@@ -80,17 +81,16 @@ describe('adminShowStandardController', () => {
         hasPreviousPage: false,
       };
 
-      mockShowStandardService.getShowStandards.mockResolvedValue(
-        standards as any,
-      );
-      mockShowStandardService.countShowStandards.mockResolvedValue(total);
+      mockShowStandardService.listShowStandards.mockResolvedValue({
+        data: standards,
+        total,
+      } as any);
 
       const result = await controller.getShowStandards(query);
-      expect(mockShowStandardService.getShowStandards).toHaveBeenCalledWith({
+      expect(mockShowStandardService.listShowStandards).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
       });
-      expect(mockShowStandardService.countShowStandards).toHaveBeenCalled();
       expect(result).toEqual({
         data: standards,
         meta: paginationMeta,

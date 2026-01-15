@@ -118,6 +118,19 @@ export class UserService extends BaseModelService {
     return this.userRepository.count(where ?? {});
   }
 
+  async listUsers(params: {
+    skip?: number;
+    take?: number;
+    where?: Prisma.UserWhereInput;
+  }): Promise<{ data: User[]; total: number }> {
+    const [data, total] = await Promise.all([
+      this.userRepository.findMany(params),
+      this.userRepository.count(params.where ?? {}),
+    ]);
+
+    return { data, total };
+  }
+
   async updateUser(uid: string, data: UpdateUserDto): Promise<User> {
     await this.findUserOrThrow(uid);
     return this.userRepository.update({ uid }, data);

@@ -114,6 +114,23 @@ export class ShowMcService extends BaseModelService {
     return this.showMcRepository.count(where ?? {});
   }
 
+  async listShowMcs<T extends Prisma.ShowMCInclude = Record<string, never>>(
+    params: {
+      skip?: number;
+      take?: number;
+      where?: Prisma.ShowMCWhereInput;
+      orderBy?: Prisma.ShowMCOrderByWithRelationInput;
+    },
+    include?: T,
+  ): Promise<{ data: ShowMC[] | ShowMCWithIncludes<T>[]; total: number }> {
+    const [data, total] = await Promise.all([
+      this.showMcRepository.findMany({ ...params, include }),
+      this.showMcRepository.count(params.where ?? {}),
+    ]);
+
+    return { data, total };
+  }
+
   async updateShowMcFromDto<
     T extends Prisma.ShowMCInclude = Record<string, never>,
   >(

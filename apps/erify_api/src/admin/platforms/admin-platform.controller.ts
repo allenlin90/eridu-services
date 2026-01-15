@@ -43,11 +43,10 @@ export class AdminPlatformController extends BaseAdminController {
   @Get()
   @AdminPaginatedResponse(platformDto, 'List of platforms with pagination')
   async getPlatforms(@Query() query: PaginationQueryDto) {
-    const data = await this.platformService.getPlatforms({
+    const { data, total } = await this.platformService.listPlatforms({
       skip: query.skip,
       take: query.take,
     });
-    const total = await this.platformService.countPlatforms();
 
     return this.createPaginatedResponse(data, total, query);
   }

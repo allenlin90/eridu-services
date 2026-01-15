@@ -42,6 +42,19 @@ export class ShowStatusService extends BaseModelService {
     return this.showStatusRepository.count({});
   }
 
+  async listShowStatuses(params: {
+    skip?: number;
+    take?: number;
+    where?: Prisma.ShowStatusWhereInput;
+  }): Promise<{ data: ShowStatus[]; total: number }> {
+    const [data, total] = await Promise.all([
+      this.showStatusRepository.findMany(params),
+      this.showStatusRepository.count(params.where ?? {}),
+    ]);
+
+    return { data, total };
+  }
+
   async updateShowStatus(
     uid: string,
     data: Prisma.ShowStatusUpdateInput,

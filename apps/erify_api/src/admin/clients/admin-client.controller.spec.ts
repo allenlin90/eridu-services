@@ -15,6 +15,7 @@ describe('adminClientController', () => {
 
   const mockClientService = {
     createClient: jest.fn(),
+    listClients: jest.fn(),
     getClients: jest.fn(),
     countClients: jest.fn(),
     getClientById: jest.fn(),
@@ -76,18 +77,19 @@ describe('adminClientController', () => {
         hasPreviousPage: false,
       };
 
-      mockClientService.getClients.mockResolvedValue(clients as any);
-      mockClientService.countClients.mockResolvedValue(total);
+      mockClientService.listClients.mockResolvedValue({
+        data: clients,
+        total,
+      } as any);
 
       const result = await controller.getClients(query);
 
-      expect(mockClientService.getClients).toHaveBeenCalledWith({
+      expect(mockClientService.listClients).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
         name: query.name,
         include_deleted: query.include_deleted,
       });
-      expect(mockClientService.countClients).toHaveBeenCalled();
       expect(result).toEqual({
         data: clients,
         meta: paginationMeta,
