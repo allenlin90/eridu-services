@@ -93,12 +93,13 @@ export class ShowRepository extends BaseRepository<
   async findActiveShows(params: {
     skip?: number;
     take?: number;
+    where?: Prisma.ShowWhereInput;
     orderBy?: Prisma.ShowOrderByWithRelationInput;
     include?: Prisma.ShowInclude;
   }): Promise<Show[]> {
-    const { skip, take, orderBy, include } = params;
+    const { skip, take, where, orderBy, include } = params;
     return this.model.findMany({
-      where: { deletedAt: null },
+      where: { ...where, deletedAt: null },
       skip,
       take,
       orderBy,

@@ -30,6 +30,7 @@ export function useAdminList<T>(
  * Hook to get a single admin resource
  * @param resource - Type-safe admin resource (autocomplete in IDE)
  * @param id - Resource ID
+ * @param options - Query options
  * @param options.enabled - Whether the query should be enabled
  */
 export function useAdminDetail<T>(

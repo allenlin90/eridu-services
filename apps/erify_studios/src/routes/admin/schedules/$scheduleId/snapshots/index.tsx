@@ -7,8 +7,8 @@ import { AdminLayout, AdminTable } from '@/features/admin/components';
 import { adminApi } from '@/lib/api/admin';
 
 const snapshotsSearchSchema = z.object({
-  page: z.number().int().min(1).catch(1),
-  pageSize: z.number().int().min(10).max(100).catch(10),
+  page: z.coerce.number().int().min(1).catch(1),
+  pageSize: z.coerce.number().int().min(10).max(100).catch(10),
 });
 
 export const Route = createFileRoute('/admin/schedules/$scheduleId/snapshots/')({

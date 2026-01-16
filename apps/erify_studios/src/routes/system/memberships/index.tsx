@@ -37,7 +37,7 @@ import {
 const membershipsSearchSchema = z.object({
   page: z.number().int().min(1).catch(1),
   pageSize: z.number().int().min(10).max(100).catch(10),
-  search: z.string().optional().catch(undefined),
+  name: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/system/memberships/')({
@@ -59,14 +59,27 @@ function MembershipsList() {
   const queryClient = useQueryClient();
 
   // URL state
-  const { pagination, onPaginationChange, setPageCount } = useTableUrlState({
+  const {
+    pagination,
+    onPaginationChange,
+    setPageCount,
+    columnFilters,
+    onColumnFiltersChange,
+  } = useTableUrlState({
     from: '/system/memberships/',
+    paramNames: {
+      search: 'name',
+    },
   });
+
+  const nameFilter = columnFilters.find((filter) => filter.id === 'name')
+    ?.value as string | undefined;
 
   // Fetch studio memberships list
   const { data, isLoading } = useAdminList<Membership>('studio-memberships', {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
+    name: nameFilter,
   });
 
   // Fetch studios for dropdown
@@ -159,6 +172,13 @@ function MembershipsList() {
         onEdit={(membership) => setEditingMembership(membership)}
         onDelete={(membership) => setDeleteId(membership.id)}
         emptyMessage="No memberships found. Create one to get started."
+        columnFilters={columnFilters}
+        onColumnFiltersChange={onColumnFiltersChange}
+        searchableColumns={[
+          { id: 'user_id', title: 'User ID' },
+          { id: 'studio_id', title: 'Studio ID' },
+        ]}
+        searchPlaceholder="Search by user or studio..."
         pagination={
           data?.meta
             ? {

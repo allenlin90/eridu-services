@@ -12,6 +12,14 @@ import {
   AdminTable,
   DeleteConfirmDialog,
 } from '@/features/admin/components';
+import {
+  DateCell,
+  IdCopyCell,
+  ItemsList,
+  PlatformList,
+  ShowStatusBadge,
+  ShowTypeBadge,
+} from '@/features/admin/components/show-table-cells';
 import { queryKeys } from '@/lib/api/query-keys';
 import {
   useAdminDelete,
@@ -19,9 +27,15 @@ import {
 } from '@/lib/hooks/use-admin-crud';
 
 const showsSearchSchema = z.object({
-  page: z.number().int().min(1).catch(1),
-  pageSize: z.number().int().min(10).max(100).catch(10),
-  search: z.string().optional().catch(undefined),
+  page: z.coerce.number().int().min(1).catch(1),
+  pageSize: z.coerce.number().int().min(10).max(100).catch(10),
+  name: z.string().optional().catch(undefined),
+  client_name: z.string().optional().catch(undefined),
+  mc_name: z.string().optional().catch(undefined),
+  start_date_from: z.string().optional().catch(undefined),
+  start_date_to: z.string().optional().catch(undefined),
+  sortBy: z.string().default('start_time').catch('start_time'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc').catch('desc'),
 });
 
 export const Route = createFileRoute('/admin/shows/')({
@@ -29,61 +43,118 @@ export const Route = createFileRoute('/admin/shows/')({
   validateSearch: (search) => showsSearchSchema.parse(search),
 });
 
-// Basic show type matching API response
-type Show = ShowApiResponse;
+type Show = ShowApiResponse & {
+  mcs: { mc_name: string }[];
+  platforms: { platform_name: string }[];
+};
+
+const TABLE_OPTIONS = {
+  from: '/admin/shows/',
+  dateColumnId: 'start_time',
+  paramNames: {
+    search: 'name',
+    startDate: 'start_date_from',
+    endDate: 'start_date_to',
+  },
+  defaultSorting: [{ id: 'start_time', desc: true }],
+};
 
 function ShowsList() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
 
-  // URL state
-  const { pagination, onPaginationChange, setPageCount } = useTableUrlState({
-    from: '/admin/shows/',
-  });
+  const {
+    pagination,
+    onPaginationChange,
+    setPageCount,
+    columnFilters,
+    onColumnFiltersChange,
+    sorting,
+    onSortingChange,
+  } = useTableUrlState(TABLE_OPTIONS);
 
-  // Fetch shows list
+  const search = Route.useSearch();
+
   const { data, isLoading, isFetching } = useAdminList<Show>('shows', {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
+    name: search.name,
+    client_name: search.client_name,
+    mc_name: search.mc_name,
+    start_date_from: search.start_date_from,
+    start_date_to: search.start_date_to,
+    order_by: search.sortBy,
+    order_direction: search.sortOrder,
   });
 
-  // Sync page count for auto-correction
   useEffect(() => {
     if (data?.meta?.totalPages !== undefined) {
       setPageCount(data.meta.totalPages);
     }
   }, [data?.meta?.totalPages, setPageCount]);
 
-  // Mutations
   const deleteMutation = useAdminDelete('shows');
 
-  // Table columns
   const columns: ColumnDef<Show>[] = [
     {
       accessorKey: 'id',
       header: 'ID',
+      cell: ({ row }) => <IdCopyCell id={row.original.id} />,
+      enableSorting: false,
     },
     {
       accessorKey: 'name',
       header: 'Name',
+      cell: ({ row }) => (
+        <div className="flex flex-col gap-1">
+          <span className="font-medium">{row.original.name}</span>
+          <div className="flex">
+            <ShowTypeBadge type={row.original.show_type_name || undefined} />
+          </div>
+        </div>
+      ),
     },
     {
-      accessorKey: 'client_name',
-      header: 'Client',
-    },
-    {
-      accessorKey: 'studio_room_name',
-      header: 'Room',
+      id: 'client_name',
+      header: 'Client / Room',
+      cell: ({ row }) => (
+        <div className="flex flex-col">
+          <span>{row.original.client_name}</span>
+          <span className="text-xs text-muted-foreground">{row.original.studio_room_name}</span>
+        </div>
+      ),
     },
     {
       accessorKey: 'show_status_name',
       header: 'Status',
+      cell: ({ row }) => <ShowStatusBadge status={row.original.show_status_name || 'unknown'} />,
+    },
+    {
+      id: 'mc_name',
+      header: 'MCs',
+      cell: ({ row }) => (
+        <ItemsList
+          items={row.original.mcs?.map((mc) => mc.mc_name || '').filter((n) => n.length > 0) || []}
+          label="MCs"
+        />
+      ),
+      enableSorting: false,
+    },
+    {
+      id: 'platforms',
+      header: 'Platforms',
+      cell: ({ row }) => (
+        <PlatformList
+          items={row.original.platforms?.map((p) => p.platform_name || '').filter((n) => n.length > 0) || []}
+        />
+      ),
+      enableSorting: false,
     },
     {
       accessorKey: 'start_time',
       header: 'Start Time',
-      cell: ({ row }) => new Date(row.original.start_time).toLocaleString(),
+      cell: ({ row }) => <DateCell date={row.original.start_time} />,
     },
   ];
 
@@ -91,12 +162,8 @@ function ShowsList() {
     if (!deleteId)
       return;
 
-    try {
-      await deleteMutation.mutateAsync(deleteId);
-      setDeleteId(null);
-    } catch (error) {
-      console.error('Failed to delete show:', error);
-    }
+    await deleteMutation.mutateAsync(deleteId);
+    setDeleteId(null);
   };
 
   const handleRefresh = () => {
@@ -119,6 +186,14 @@ function ShowsList() {
         isFetching={isFetching}
         onDelete={(show) => setDeleteId(show.id)}
         emptyMessage="No shows found."
+        searchColumn="name"
+        searchableColumns={[
+          { id: 'name', title: 'Name', type: 'text' },
+          { id: 'client_name', title: 'Client', type: 'text' },
+          { id: 'mc_name', title: 'MC', type: 'text' },
+          { id: 'start_time', title: 'Date', type: 'date-range' },
+        ]}
+        searchPlaceholder="Search shows..."
         pagination={
           data?.meta
             ? {
@@ -129,7 +204,11 @@ function ShowsList() {
               }
             : undefined
         }
+        columnFilters={columnFilters}
+        onColumnFiltersChange={onColumnFiltersChange}
         onPaginationChange={onPaginationChange}
+        sorting={sorting}
+        onSortingChange={onSortingChange}
       />
 
       <DeleteConfirmDialog

@@ -29,7 +29,7 @@ import {
 const studiosSearchSchema = z.object({
   page: z.number().int().min(1).catch(1),
   pageSize: z.number().int().min(10).max(100).catch(10),
-  search: z.string().optional().catch(undefined),
+  name: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/system/studios/')({
@@ -52,14 +52,27 @@ function StudiosList() {
   const queryClient = useQueryClient();
 
   // URL state
-  const { pagination, onPaginationChange, setPageCount } = useTableUrlState({
+  const {
+    pagination,
+    onPaginationChange,
+    setPageCount,
+    columnFilters,
+    onColumnFiltersChange,
+  } = useTableUrlState({
     from: '/system/studios/',
+    paramNames: {
+      search: 'name',
+    },
   });
+
+  const nameFilter = columnFilters.find((filter) => filter.id === 'name')
+    ?.value as string | undefined;
 
   // Fetch studios list
   const { data, isLoading } = useAdminList<Studio>('studios', {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
+    name: nameFilter,
   });
 
   // Sync page count for auto-correction
@@ -159,6 +172,12 @@ function StudiosList() {
         onEdit={(studio) => setEditingStudio(studio)}
         onDelete={(studio) => setDeleteId(studio.id)}
         emptyMessage="No studios found. Create one to get started."
+        columnFilters={columnFilters}
+        onColumnFiltersChange={onColumnFiltersChange}
+        searchableColumns={[
+          { id: 'name', title: 'Name' },
+        ]}
+        searchPlaceholder="Search studios..."
         pagination={
           data?.meta
             ? {

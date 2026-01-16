@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createStudioRoomInputSchema } from '@eridu/api-types/studio-rooms';
@@ -19,6 +18,8 @@ vi.mock('@eridu/ui', async () => {
       pagination: { pageIndex: 0, pageSize: 10 },
       onPaginationChange: vi.fn(),
       setPageCount: vi.fn(),
+      columnFilters: [],
+      onColumnFiltersChange: vi.fn(),
     })),
     // Simplified components for testing
     Button: ({ children, onClick, disabled, type, ...props }: any) => (

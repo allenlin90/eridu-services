@@ -96,7 +96,10 @@ export class ShowOrchestrationService {
   private buildShowWhereClause(
     filters: Pick<
       ListShowsQueryDto,
+      | 'name'
       | 'client_id'
+      | 'client_name'
+      | 'mc_name'
       | 'start_date_from'
       | 'start_date_to'
       | 'end_date_from'
@@ -111,7 +114,15 @@ export class ShowOrchestrationService {
       where.deletedAt = null;
     }
 
-    // Client filtering
+    // Name filtering
+    if (filters.name) {
+      where.name = {
+        contains: filters.name,
+        mode: 'insensitive',
+      };
+    }
+
+    // Client filtering (ID)
     if (filters.client_id) {
       const clientIds = Array.isArray(filters.client_id)
         ? filters.client_id
@@ -122,6 +133,32 @@ export class ShowOrchestrationService {
       };
     }
 
+    // Client filtering (Name)
+    if (filters.client_name) {
+      where.client = {
+        ...((where.client as Prisma.ClientWhereInput) || {}),
+        name: {
+          contains: filters.client_name,
+          mode: 'insensitive',
+        },
+      };
+    }
+
+    // MC filtering (Name)
+    if (filters.mc_name) {
+      where.showMCs = {
+        some: {
+          mc: {
+            name: {
+              contains: filters.mc_name,
+              mode: 'insensitive',
+            },
+          },
+          deletedAt: null,
+        },
+      };
+    }
+
     // Date range filtering for start time
     if (filters.start_date_from || filters.start_date_to) {
       where.startTime = {};
@@ -129,7 +166,9 @@ export class ShowOrchestrationService {
         where.startTime.gte = new Date(filters.start_date_from);
       }
       if (filters.start_date_to) {
-        where.startTime.lte = new Date(filters.start_date_to);
+        const endDate = new Date(filters.start_date_to);
+        endDate.setHours(23, 59, 59, 999);
+        where.startTime.lte = endDate;
       }
     }
 
@@ -140,7 +179,9 @@ export class ShowOrchestrationService {
         where.endTime.gte = new Date(filters.end_date_from);
       }
       if (filters.end_date_to) {
-        where.endTime.lte = new Date(filters.end_date_to);
+        const endDate = new Date(filters.end_date_to);
+        endDate.setHours(23, 59, 59, 999);
+        where.endTime.lte = endDate;
       }
     }
 

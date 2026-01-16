@@ -58,6 +58,9 @@ function ClientsList() {
     onColumnFiltersChange,
   } = useTableUrlState({
     from: '/system/clients/',
+    paramNames: {
+      search: 'name',
+    },
   });
 
   const nameFilter = columnFilters.find((filter) => filter.id === 'name')
@@ -157,8 +160,10 @@ function ClientsList() {
         emptyMessage="No clients found. Create one to get started."
         columnFilters={columnFilters}
         onColumnFiltersChange={onColumnFiltersChange}
-        searchColumn="name"
-        searchPlaceholder="Search by name..."
+        searchableColumns={[
+          { id: 'name', title: 'Name' },
+        ]}
+        searchPlaceholder="Search clients..."
         pagination={
           data?.meta
             ? {

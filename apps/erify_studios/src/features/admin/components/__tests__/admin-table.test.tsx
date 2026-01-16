@@ -11,6 +11,19 @@ vi.mock('@eridu/ui', () => ({
   TableHead: ({ children }: any) => <th>{children}</th>,
   TableRow: ({ children }: any) => <tr>{children}</tr>,
   TableCell: ({ children }: any) => <td>{children}</td>,
+  TableSkeleton: ({ columnCount, rowCount }: any) => (
+    <div data-testid="table-skeleton">
+      Loading skeleton:
+      {' '}
+      {columnCount}
+      {' '}
+      columns,
+      {' '}
+      {rowCount}
+      {' '}
+      rows
+    </div>
+  ),
   Button: ({ children, onClick, disabled, type }: any) => (
     <button onClick={onClick} disabled={disabled} type={type || 'button'}>
       {children}
@@ -74,7 +87,7 @@ describe('adminTable', () => {
   it('renders loading state', () => {
     render(<AdminTable data={[]} columns={columns} isLoading />);
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.getByTestId('table-skeleton')).toBeInTheDocument();
   });
 
   it('renders pagination controls when pagination prop is provided', () => {

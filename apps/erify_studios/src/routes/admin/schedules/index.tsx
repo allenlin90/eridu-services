@@ -20,9 +20,10 @@ import {
 } from '@/lib/hooks/use-admin-crud';
 
 const schedulesSearchSchema = z.object({
-  page: z.number().int().min(1).catch(1),
-  pageSize: z.number().int().min(10).max(100).catch(10),
-  search: z.string().optional().catch(undefined),
+  page: z.coerce.number().int().min(1).catch(1),
+  pageSize: z.coerce.number().int().min(10).max(100).catch(10),
+  name: z.string().optional().catch(undefined),
+  client_name: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/admin/schedules/')({
@@ -40,14 +41,27 @@ function SchedulesList() {
   const queryClient = useQueryClient();
 
   // URL state
-  const { pagination, onPaginationChange, setPageCount } = useTableUrlState({
+  const {
+    pagination,
+    onPaginationChange,
+    setPageCount,
+    columnFilters,
+    onColumnFiltersChange,
+  } = useTableUrlState({
     from: '/admin/schedules/',
+    paramNames: {
+      search: 'name',
+    },
   });
+
+  const search = Route.useSearch();
 
   // Fetch schedules list
   const { data, isLoading } = useAdminList<Schedule>('schedules', {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
+    name: search.name,
+    client_name: search.client_name,
   });
 
   // Sync page count for auto-correction
@@ -114,12 +128,8 @@ function SchedulesList() {
     if (!deleteId)
       return;
 
-    try {
-      await deleteMutation.mutateAsync(deleteId);
-      setDeleteId(null);
-    } catch (error) {
-      console.error('Failed to delete schedule:', error);
-    }
+    await deleteMutation.mutateAsync(deleteId);
+    setDeleteId(null);
   };
 
   const handleRefresh = () => {
@@ -141,6 +151,11 @@ function SchedulesList() {
         isLoading={isLoading}
         onDelete={(schedule) => setDeleteId(schedule.id)}
         emptyMessage="No schedules found."
+        searchColumn="name"
+        searchableColumns={[
+          { id: 'name', title: 'Name' },
+          { id: 'client_name', title: 'Client' },
+        ]}
         pagination={
           data?.meta
             ? {
@@ -152,6 +167,8 @@ function SchedulesList() {
             : undefined
         }
         onPaginationChange={onPaginationChange}
+        columnFilters={columnFilters}
+        onColumnFiltersChange={onColumnFiltersChange}
       />
 
       <DeleteConfirmDialog

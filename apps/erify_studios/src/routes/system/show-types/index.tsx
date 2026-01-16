@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { z } from 'zod';
 
 import type {
@@ -32,7 +32,7 @@ import {
 const showTypesSearchSchema = z.object({
   page: z.number().int().min(1).catch(1),
   pageSize: z.number().int().min(10).max(100).catch(10),
-  search: z.string().optional().catch(undefined),
+  name: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/system/show-types/')({
@@ -51,15 +51,34 @@ function ShowTypesList() {
   const queryClient = useQueryClient();
 
   // URL state
-  const { pagination, onPaginationChange } = useTableUrlState({
+  const {
+    pagination,
+    onPaginationChange,
+    setPageCount,
+    columnFilters,
+    onColumnFiltersChange,
+  } = useTableUrlState({
     from: '/system/show-types/',
+    paramNames: {
+      search: 'name',
+    },
   });
+
+  const nameFilter = columnFilters.find((filter) => filter.id === 'name')
+    ?.value as string | undefined;
 
   // Fetch show types list
   const { data, isLoading } = useAdminList<ShowType>('show-types', {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
+    name: nameFilter,
   });
+  // Sync page count for auto-correction
+  useEffect(() => {
+    if (data?.meta?.totalPages !== undefined) {
+      setPageCount(data.meta.totalPages);
+    }
+  }, [data?.meta?.totalPages, setPageCount]);
 
   // Mutations
   const createMutation = useAdminCreate<ShowType, CreateShowTypeInput>('show-types');
@@ -135,6 +154,12 @@ function ShowTypesList() {
         onEdit={(type) => setEditingShowType(type)}
         onDelete={(type) => setDeleteId(type.id)}
         emptyMessage="No show types found. Create one to get started."
+        columnFilters={columnFilters}
+        onColumnFiltersChange={onColumnFiltersChange}
+        searchableColumns={[
+          { id: 'name', title: 'Name' },
+        ]}
+        searchPlaceholder="Search show types..."
         pagination={
           data?.meta
             ? {

@@ -28,7 +28,7 @@ import {
 const studioRoomsSearchSchema = z.object({
   page: z.number().int().min(1).catch(1),
   pageSize: z.number().int().min(10).max(100).catch(10),
-  search: z.string().optional().catch(undefined),
+  name: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute(
@@ -53,15 +53,28 @@ export function StudioRoomsList() {
   const queryClient = useQueryClient();
 
   // URL state
-  const { pagination, onPaginationChange, setPageCount } = useTableUrlState({
+  const {
+    pagination,
+    onPaginationChange,
+    setPageCount,
+    columnFilters,
+    onColumnFiltersChange,
+  } = useTableUrlState({
     from: '/system/studios/$studioId/studio-rooms/',
+    paramNames: {
+      search: 'name',
+    },
   });
+
+  const nameFilter = columnFilters.find((filter) => filter.id === 'name')
+    ?.value as string | undefined;
 
   // Fetch studio rooms list
   const { data, isLoading } = useAdminList<StudioRoom>('studio-rooms', {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     studio_id: studioId,
+    name: nameFilter,
   });
 
   // Sync page count for auto-correction
@@ -144,6 +157,12 @@ export function StudioRoomsList() {
         onEdit={(room) => setEditingRoom(room)}
         onDelete={(room) => setDeleteId(room.id)}
         emptyMessage="No rooms found. Create one to get started."
+        columnFilters={columnFilters}
+        onColumnFiltersChange={onColumnFiltersChange}
+        searchableColumns={[
+          { id: 'name', title: 'Name' },
+        ]}
+        searchPlaceholder="Search rooms..."
         pagination={
           data?.meta
             ? {

@@ -59,6 +59,9 @@ function McsList() {
     onColumnFiltersChange,
   } = useTableUrlState({
     from: '/system/mcs/',
+    paramNames: {
+      search: 'name',
+    },
   });
 
   const nameFilter = columnFilters.find((filter) => filter.id === 'name')

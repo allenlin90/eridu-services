@@ -61,6 +61,9 @@ export function UsersList() {
     onColumnFiltersChange,
   } = useTableUrlState({
     from: '/system/users/',
+    paramNames: {
+      search: 'name',
+    },
   });
 
   const nameFilter = columnFilters.find((filter) => filter.id === 'name')

@@ -217,6 +217,7 @@ export const listSchedulesFilterSchema = z.object({
   order_direction: z.enum(['asc', 'desc']).default('desc'),
   include_plan_document: z.coerce.boolean().default(false),
   include_deleted: z.coerce.boolean().default(false),
+  client_name: z.string().optional(),
 });
 
 // List schedules query schema (extends pagination with filters)
@@ -285,6 +286,7 @@ export class ListSchedulesQueryDto extends createZodDto(
   declare limit: number;
   declare take: number;
   declare skip: number;
+  declare name?: string;
   declare client_id?: string | string[];
   declare status?: string | string[];
   declare created_by?: string | string[];
@@ -293,11 +295,11 @@ export class ListSchedulesQueryDto extends createZodDto(
   declare start_date_to?: string;
   declare end_date_from?: string;
   declare end_date_to?: string;
-  declare name?: string;
   declare order_by: 'created_at' | 'updated_at' | 'start_date' | 'end_date';
   declare order_direction: 'asc' | 'desc';
   declare include_plan_document: boolean;
   declare include_deleted: boolean;
+  declare client_name?: string;
 }
 export class MonthlyOverviewQueryDto extends createZodDto(
   monthlyOverviewQuerySchema,

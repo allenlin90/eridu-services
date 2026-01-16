@@ -3,6 +3,7 @@ import z from 'zod';
 
 import { showApiResponseSchema } from '@eridu/api-types/shows';
 
+import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { ClientService } from '@/models/client/client.service';
 import { clientSchema } from '@/models/client/schemas/client.schema';
 import { ShowService } from '@/models/show/show.service';
@@ -142,9 +143,10 @@ export const showDto = showWithRelationsSchema
   }))
   .pipe(showApiResponseSchema);
 
-// Show list filter schema (similar to schedule filtering)
 export const listShowsFilterSchema = z.object({
   name: z.string().optional(),
+  client_name: z.string().optional(),
+  mc_name: z.string().optional(),
   client_id: z
     .union([
       z.string().startsWith(ClientService.UID_PREFIX),
@@ -162,39 +164,21 @@ export const listShowsFilterSchema = z.object({
   include_deleted: z.coerce.boolean().default(false),
 });
 
-export const listShowsQuerySchema = z
-  .object({
-    page: z.coerce.number().int().min(1).optional().default(1),
-    limit: z.coerce.number().int().min(1).optional().default(10),
-  })
-  .and(listShowsFilterSchema)
-  .transform((data) => ({
-    page: data.page,
-    limit: data.limit,
-    take: data.limit,
-    skip: (data.page - 1) * data.limit,
-    name: data.name,
-    client_id: data.client_id,
-    start_date_from: data.start_date_from,
-    start_date_to: data.start_date_to,
-    end_date_from: data.end_date_from,
-    end_date_to: data.end_date_to,
-    order_by: data.order_by,
-    order_direction: data.order_direction,
-    include_deleted: data.include_deleted,
-  }));
+export const listShowsQuerySchema = paginationQuerySchema.and(listShowsFilterSchema);
 
 export class ListShowsQueryDto extends createZodDto(listShowsQuerySchema) {
   declare page: number;
   declare limit: number;
   declare take: number;
   declare skip: number;
-  declare name: string | undefined;
-  declare client_id: string | string[] | undefined;
-  declare start_date_from: string | undefined;
-  declare start_date_to: string | undefined;
-  declare end_date_from: string | undefined;
-  declare end_date_to: string | undefined;
+  declare name?: string;
+  declare client_name?: string;
+  declare mc_name?: string;
+  declare client_id?: string | string[];
+  declare start_date_from?: string;
+  declare start_date_to?: string;
+  declare end_date_from?: string;
+  declare end_date_to?: string;
   declare order_by: 'created_at' | 'updated_at' | 'start_time' | 'end_time';
   declare order_direction: 'asc' | 'desc';
   declare include_deleted: boolean;

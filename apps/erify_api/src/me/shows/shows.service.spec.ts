@@ -156,12 +156,6 @@ describe('showsService', () => {
         order_by: 'start_time',
         order_direction: 'asc',
         include_deleted: false,
-        name: undefined,
-        client_id: undefined,
-        start_date_from: undefined,
-        start_date_to: undefined,
-        end_date_from: undefined,
-        end_date_to: undefined,
       };
 
       mockMcService.getMcs.mockResolvedValue([mockMc]);
@@ -238,12 +232,6 @@ describe('showsService', () => {
         order_by: 'created_at',
         order_direction: 'desc',
         include_deleted: false,
-        name: undefined,
-        client_id: undefined,
-        start_date_from: undefined,
-        start_date_to: undefined,
-        end_date_from: undefined,
-        end_date_to: undefined,
       };
 
       mockMcService.getMcs.mockResolvedValue([mockMc]);
@@ -278,12 +266,6 @@ describe('showsService', () => {
         order_by: 'created_at',
         order_direction: 'desc',
         include_deleted: false,
-        name: undefined,
-        client_id: undefined,
-        start_date_from: undefined,
-        start_date_to: undefined,
-        end_date_from: undefined,
-        end_date_to: undefined,
       };
 
       mockMcService.getMcs.mockResolvedValue([mockMc]);
@@ -310,12 +292,6 @@ describe('showsService', () => {
         order_by: 'start_time',
         order_direction: 'desc',
         include_deleted: false,
-        name: undefined,
-        client_id: undefined,
-        start_date_from: undefined,
-        start_date_to: undefined,
-        end_date_from: undefined,
-        end_date_to: undefined,
       };
 
       mockMcService.getMcs.mockResolvedValue([mockMc]);
@@ -352,12 +328,6 @@ describe('showsService', () => {
         order_by: 'created_at',
         order_direction: 'desc',
         include_deleted: false,
-        name: undefined,
-        client_id: undefined,
-        start_date_from: undefined,
-        start_date_to: undefined,
-        end_date_from: undefined,
-        end_date_to: undefined,
       };
 
       mockMcService.getMcs.mockResolvedValue([]);
