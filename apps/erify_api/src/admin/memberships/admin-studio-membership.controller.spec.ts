@@ -70,6 +70,7 @@ describe('adminStudioMembershipController', () => {
         skip: 0,
         take: 10,
         uid: undefined,
+        studioUid: undefined,
         name: undefined,
         include_deleted: false,
       };
@@ -100,6 +101,7 @@ describe('adminStudioMembershipController', () => {
           skip: query.skip,
           take: query.take,
           uid: query.uid,
+          studioUid: query.studioUid,
         },
         { user: true, studio: true },
       );

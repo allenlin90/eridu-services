@@ -40,6 +40,7 @@ const membershipsSearchSchema = z.object({
   pageSize: z.number().int().min(10).max(100).catch(10),
   name: z.string().optional().catch(undefined),
   id: z.string().optional().catch(undefined),
+  studio_id: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/system/memberships/')({
@@ -78,6 +79,8 @@ function MembershipsList() {
     ?.value as string | undefined;
   const idFilter = columnFilters.find((filter) => filter.id === 'id')
     ?.value as string | undefined;
+  const studioIdFilter = columnFilters.find((filter) => filter.id === 'studio_id')
+    ?.value as string | undefined;
 
   // Fetch studio memberships list
   const { data, isLoading } = useAdminList<Membership>('studio-memberships', {
@@ -85,6 +88,7 @@ function MembershipsList() {
     limit: pagination.pageSize,
     name: nameFilter,
     id: idFilter,
+    studio_id: studioIdFilter,
   });
 
   // Fetch studios for dropdown

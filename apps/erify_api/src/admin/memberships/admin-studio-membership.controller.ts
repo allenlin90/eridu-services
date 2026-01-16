@@ -52,7 +52,7 @@ export class AdminStudioMembershipController extends BaseAdminController {
   )
   async getStudioMemberships(@Query() query: ListStudioMembershipsQueryDto) {
     const { data, total } = await this.studioMembershipService.listStudioMemberships(
-      { skip: query.skip, take: query.take, uid: query.uid },
+      { skip: query.skip, take: query.take, uid: query.uid, studioUid: query.studioUid },
       { user: true, studio: true },
     );
 

@@ -114,6 +114,7 @@ export class StudioMembershipService extends BaseModelService {
       skip?: number;
       take?: number;
       uid?: string;
+      studioUid?: string;
       where?: Prisma.StudioMembershipWhereInput;
     },
     include?: T,
@@ -127,6 +128,15 @@ export class StudioMembershipService extends BaseModelService {
       where.uid = {
         contains: params.uid,
         mode: 'insensitive',
+      };
+    }
+
+    if (params.studioUid) {
+      where.studio = {
+        uid: {
+          contains: params.studioUid,
+          mode: 'insensitive',
+        },
       };
     }
 

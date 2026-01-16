@@ -203,6 +203,7 @@ export function assertStudioRole(value: unknown): string {
 export const listStudioMembershipsFilterSchema = z.object({
   name: z.string().optional(),
   id: z.string().optional(),
+  studio_id: z.string().optional(),
   include_deleted: z.coerce.boolean().default(false),
 });
 
@@ -220,6 +221,7 @@ export const listStudioMembershipsQuerySchema = z
     name: data.name,
     include_deleted: data.include_deleted,
     uid: data.id,
+    studioUid: data.studio_id,
   }));
 
 export class ListStudioMembershipsQueryDto extends createZodDto(listStudioMembershipsQuerySchema) {
@@ -230,4 +232,5 @@ export class ListStudioMembershipsQueryDto extends createZodDto(listStudioMember
   declare name: string | undefined;
   declare include_deleted: boolean;
   declare uid: string | undefined;
+  declare studioUid: string | undefined;
 }
