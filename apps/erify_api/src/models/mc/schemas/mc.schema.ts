@@ -117,10 +117,14 @@ export const listMcsFilterSchema = z.object({
 
 export const listMcsQuerySchema = paginationQuerySchema
   .and(listMcsFilterSchema)
-  .transform((data) => ({
-    ...data,
-    uid: data.id,
-  }));
+  .transform((data) => {
+    const { id, alias_name, ...rest } = data;
+    return {
+      ...rest,
+      uid: id,
+      aliasName: alias_name,
+    };
+  });
 
 export class ListMcsQueryDto extends createZodDto(listMcsQuerySchema) {
   declare page: number;
@@ -128,7 +132,7 @@ export class ListMcsQueryDto extends createZodDto(listMcsQuerySchema) {
   declare take: number;
   declare skip: number;
   declare name?: string;
-  declare aliasName?: string;
+  declare aliasName: string | undefined;
   declare include_deleted: boolean;
   declare uid: string | undefined;
 }
