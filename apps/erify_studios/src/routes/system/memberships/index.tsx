@@ -39,6 +39,7 @@ const membershipsSearchSchema = z.object({
   page: z.number().int().min(1).catch(1),
   pageSize: z.number().int().min(10).max(100).catch(10),
   name: z.string().optional().catch(undefined),
+  id: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/system/memberships/')({
@@ -75,12 +76,15 @@ function MembershipsList() {
 
   const nameFilter = columnFilters.find((filter) => filter.id === 'name')
     ?.value as string | undefined;
+  const idFilter = columnFilters.find((filter) => filter.id === 'id')
+    ?.value as string | undefined;
 
   // Fetch studio memberships list
   const { data, isLoading } = useAdminList<Membership>('studio-memberships', {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     name: nameFilter,
+    id: idFilter,
   });
 
   // Fetch studios for dropdown
@@ -179,6 +183,7 @@ function MembershipsList() {
         searchableColumns={[
           { id: 'user_id', title: 'User ID' },
           { id: 'studio_id', title: 'Studio ID' },
+          { id: 'id', title: 'ID' },
         ]}
         searchPlaceholder="Search by user or studio..."
         pagination={

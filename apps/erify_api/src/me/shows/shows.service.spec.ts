@@ -156,6 +156,7 @@ describe('showsService', () => {
         order_by: 'start_time',
         order_direction: 'asc',
         include_deleted: false,
+        uid: undefined,
       };
 
       mockMcService.getMcs.mockResolvedValue([mockMc]);
@@ -232,6 +233,7 @@ describe('showsService', () => {
         order_by: 'created_at',
         order_direction: 'desc',
         include_deleted: false,
+        uid: undefined,
       };
 
       mockMcService.getMcs.mockResolvedValue([mockMc]);
@@ -266,6 +268,7 @@ describe('showsService', () => {
         order_by: 'created_at',
         order_direction: 'desc',
         include_deleted: false,
+        uid: undefined,
       };
 
       mockMcService.getMcs.mockResolvedValue([mockMc]);
@@ -292,6 +295,7 @@ describe('showsService', () => {
         order_by: 'start_time',
         order_direction: 'desc',
         include_deleted: false,
+        uid: undefined,
       };
 
       mockMcService.getMcs.mockResolvedValue([mockMc]);
@@ -328,6 +332,7 @@ describe('showsService', () => {
         order_by: 'created_at',
         order_direction: 'desc',
         include_deleted: false,
+        uid: undefined,
       };
 
       mockMcService.getMcs.mockResolvedValue([]);

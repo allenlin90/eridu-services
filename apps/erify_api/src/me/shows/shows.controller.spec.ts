@@ -53,6 +53,7 @@ describe('showsController', () => {
         order_by: 'start_time',
         order_direction: 'desc',
         include_deleted: false,
+        uid: undefined,
       };
 
       const user = createControllerUser({
@@ -94,6 +95,7 @@ describe('showsController', () => {
         order_by: 'start_time',
         order_direction: 'desc',
         include_deleted: false,
+        uid: undefined,
       };
 
       const user = createControllerUser({
@@ -132,6 +134,7 @@ describe('showsController', () => {
         order_by: 'start_time',
         order_direction: 'desc',
         include_deleted: false,
+        uid: undefined,
       };
 
       const user = createControllerUser({

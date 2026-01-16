@@ -66,3 +66,36 @@ export class UpdateShowTypeCoreDto extends createZodDto(
   updateShowTypeCoreSchema,
 ) {}
 export class ShowTypeDto extends createZodDto(showTypeDto) {}
+
+// ShowType list filter schema
+export const listShowTypesFilterSchema = z.object({
+  name: z.string().optional(),
+  id: z.string().optional(),
+  include_deleted: z.coerce.boolean().default(false),
+});
+
+export const listShowTypesQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).optional().default(1),
+    limit: z.coerce.number().int().min(1).optional().default(10),
+  })
+  .and(listShowTypesFilterSchema)
+  .transform((data) => ({
+    page: data.page,
+    limit: data.limit,
+    take: data.limit,
+    skip: (data.page - 1) * data.limit,
+    name: data.name,
+    include_deleted: data.include_deleted,
+    uid: data.id,
+  }));
+
+export class ListShowTypesQueryDto extends createZodDto(listShowTypesQuerySchema) {
+  declare page: number;
+  declare limit: number;
+  declare take: number;
+  declare skip: number;
+  declare name: string | undefined;
+  declare include_deleted: boolean;
+  declare uid: string | undefined;
+}

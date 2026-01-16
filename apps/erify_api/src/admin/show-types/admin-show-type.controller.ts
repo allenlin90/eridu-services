@@ -15,10 +15,11 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+// import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateShowTypeDto,
+  ListShowTypesQueryDto,
   showTypeDto,
   UpdateShowTypeDto,
 } from '@/models/show-type/schemas/show-type.schema';
@@ -42,10 +43,13 @@ export class AdminShowTypeController extends BaseAdminController {
 
   @Get()
   @AdminPaginatedResponse(showTypeDto, 'List of show types with pagination')
-  async getShowTypes(@Query() query: PaginationQueryDto) {
+  async getShowTypes(@Query() query: ListShowTypesQueryDto) {
     const { data, total } = await this.showTypeService.listShowTypes({
       skip: query.skip,
       take: query.take,
+      name: query.name,
+      uid: query.uid,
+      include_deleted: query.include_deleted,
     });
 
     return this.createPaginatedResponse(data, total, query);

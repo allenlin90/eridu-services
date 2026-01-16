@@ -46,14 +46,40 @@ export class StudioService extends BaseModelService {
     return this.studioRepository.count({});
   }
 
-  async listStudios(params: {
+  async listStudios(query: {
     skip?: number;
     take?: number;
-    where?: Prisma.StudioWhereInput;
+    name?: string;
+    uid?: string;
+    include_deleted?: boolean;
   }): Promise<{ data: Studio[]; total: number }> {
+    const where: Prisma.StudioWhereInput = {};
+
+    if (!query.include_deleted) {
+      where.deletedAt = null;
+    }
+
+    if (query.name) {
+      where.name = {
+        contains: query.name,
+        mode: 'insensitive',
+      };
+    }
+
+    if (query.uid) {
+      where.uid = {
+        contains: query.uid,
+        mode: 'insensitive',
+      };
+    }
+
     const [data, total] = await Promise.all([
-      this.studioRepository.findMany(params),
-      this.studioRepository.count(params.where ?? {}),
+      this.studioRepository.findMany({
+        skip: query.skip,
+        take: query.take,
+        where,
+      }),
+      this.studioRepository.count(where),
     ]);
 
     return { data, total };

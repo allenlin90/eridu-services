@@ -44,6 +44,7 @@ export class AdminUserController extends BaseAdminController {
       take: query.take,
       name: query.name,
       email: query.email,
+      uid: query.uid,
     });
 
     return this.createPaginatedResponse(data, total, query);

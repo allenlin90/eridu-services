@@ -36,6 +36,7 @@ const showsSearchSchema = z.object({
   start_date_to: z.string().optional().catch(undefined),
   sortBy: z.string().default('start_time').catch('start_time'),
   sortOrder: z.enum(['asc', 'desc']).default('desc').catch('desc'),
+  id: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/admin/shows/')({
@@ -86,6 +87,7 @@ function ShowsList() {
     start_date_to: search.start_date_to,
     order_by: search.sortBy,
     order_direction: search.sortOrder,
+    id: search.id,
   });
 
   useEffect(() => {
@@ -192,6 +194,7 @@ function ShowsList() {
           { id: 'client_name', title: 'Client', type: 'text' },
           { id: 'mc_name', title: 'MC', type: 'text' },
           { id: 'start_time', title: 'Date', type: 'date-range' },
+          { id: 'id', title: 'ID', type: 'text' },
         ]}
         searchPlaceholder="Search shows..."
         pagination={

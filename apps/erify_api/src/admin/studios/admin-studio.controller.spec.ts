@@ -6,6 +6,7 @@ import { AdminStudioController } from './admin-studio.controller';
 import type { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import type {
   CreateStudioDto,
+  ListStudiosQueryDto,
   UpdateStudioDto,
 } from '@/models/studio/schemas/studio.schema';
 import { StudioService } from '@/models/studio/studio.service';
@@ -62,11 +63,14 @@ describe('adminStudioController', () => {
 
   describe('getStudios', () => {
     it('should return paginated list of studios', async () => {
-      const query: PaginationQueryDto = {
+      const query: ListStudiosQueryDto = {
         page: 1,
         limit: 10,
         skip: 0,
         take: 10,
+        uid: undefined,
+        name: undefined,
+        include_deleted: false,
       };
       const studios = [
         { uid: 'studio_1', name: 'Studio 1' },
@@ -88,6 +92,9 @@ describe('adminStudioController', () => {
       expect(mockStudioService.listStudios).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
+        uid: query.uid,
+        name: query.name,
+        include_deleted: query.include_deleted,
       });
       expect(result).toEqual({
         data: studios,

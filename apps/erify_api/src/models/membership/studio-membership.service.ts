@@ -113,6 +113,7 @@ export class StudioMembershipService extends BaseModelService {
     params: {
       skip?: number;
       take?: number;
+      uid?: string;
       where?: Prisma.StudioMembershipWhereInput;
     },
     include?: T,
@@ -120,9 +121,23 @@ export class StudioMembershipService extends BaseModelService {
       data: StudioMembership[] | StudioMembershipWithIncludes<T>[];
       total: number;
     }> {
+    const where: Prisma.StudioMembershipWhereInput = { ...params.where };
+
+    if (params.uid) {
+      where.uid = {
+        contains: params.uid,
+        mode: 'insensitive',
+      };
+    }
+
     const [data, total] = await Promise.all([
-      this.studioMembershipRepository.findMany({ ...params, include }),
-      this.studioMembershipRepository.count(params.where ?? {}),
+      this.studioMembershipRepository.findMany({
+        skip: params.skip,
+        take: params.take,
+        where,
+        include,
+      }),
+      this.studioMembershipRepository.count(where),
     ]);
 
     return { data, total };

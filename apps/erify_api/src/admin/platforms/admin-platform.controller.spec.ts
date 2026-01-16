@@ -3,10 +3,10 @@ import { Test } from '@nestjs/testing';
 
 import { AdminPlatformController } from './admin-platform.controller';
 
-import type { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { PlatformService } from '@/models/platform/platform.service';
 import type {
   CreatePlatformDto,
+  ListPlatformsQueryDto,
   UpdatePlatformDto,
 } from '@/models/platform/schemas/platform.schema';
 
@@ -57,11 +57,14 @@ describe('adminPlatformController', () => {
 
   describe('getPlatforms', () => {
     it('should return paginated list of platforms', async () => {
-      const query: PaginationQueryDto = {
+      const query: ListPlatformsQueryDto = {
         page: 1,
         limit: 10,
         skip: 0,
         take: 10,
+        uid: undefined,
+        name: undefined,
+        include_deleted: false,
       };
       const platforms = [
         { uid: 'platform_1', name: 'Platform 1' },
@@ -83,6 +86,9 @@ describe('adminPlatformController', () => {
       expect(mockPlatformService.listPlatforms).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
+        uid: query.uid,
+        name: query.name,
+        include_deleted: query.include_deleted,
       });
       expect(result).toEqual({
         data: platforms,

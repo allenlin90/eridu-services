@@ -3,9 +3,9 @@ import { Test } from '@nestjs/testing';
 
 import { AdminShowStandardController } from './admin-show-standard.controller';
 
-import type { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import type {
   CreateShowStandardDto,
+  ListShowStandardsQueryDto,
   UpdateShowStandardDto,
 } from '@/models/show-standard/schemas/show-standard.schema';
 import { ShowStandardService } from '@/models/show-standard/show-standard.service';
@@ -61,11 +61,14 @@ describe('adminShowStandardController', () => {
 
   describe('getShowStandards', () => {
     it('should return paginated list of show standards', async () => {
-      const query: PaginationQueryDto = {
+      const query: ListShowStandardsQueryDto = {
         page: 1,
         limit: 10,
         skip: 0,
         take: 10,
+        uid: undefined,
+        name: undefined,
+        include_deleted: false,
       };
       const standards = [
         { uid: 'show_standard_1', name: 'HD' },
@@ -90,6 +93,9 @@ describe('adminShowStandardController', () => {
       expect(mockShowStandardService.listShowStandards).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
+        uid: query.uid,
+        name: query.name,
+        include_deleted: query.include_deleted,
       });
       expect(result).toEqual({
         data: standards,

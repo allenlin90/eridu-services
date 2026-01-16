@@ -31,6 +31,7 @@ const mcsSearchSchema = z.object({
   pageSize: z.number().int().min(10).max(100).catch(10),
   name: z.string().optional().catch(undefined),
   alias_name: z.string().optional().catch(undefined),
+  id: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/system/mcs/')({
@@ -69,6 +70,8 @@ function McsList() {
     ?.value as string | undefined;
   const aliasNameFilter = columnFilters.find((filter) => filter.id === 'alias_name')
     ?.value as string | undefined;
+  const idFilter = columnFilters.find((filter) => filter.id === 'id')
+    ?.value as string | undefined;
 
   // Fetch MCs list
   const { data, isLoading } = useAdminList<Mc>('mcs', {
@@ -76,6 +79,7 @@ function McsList() {
     limit: pagination.pageSize,
     name: nameFilter,
     alias_name: aliasNameFilter,
+    id: idFilter,
   });
 
   // Sync page count for auto-correction
@@ -169,6 +173,7 @@ function McsList() {
         searchableColumns={[
           { id: 'name', title: 'Name' },
           { id: 'alias_name', title: 'Alias' },
+          { id: 'id', title: 'ID' },
         ]}
         searchPlaceholder="Search by name..."
         pagination={

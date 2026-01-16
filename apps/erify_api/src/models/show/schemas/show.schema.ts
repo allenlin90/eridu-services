@@ -162,9 +162,15 @@ export const listShowsFilterSchema = z.object({
     .default('created_at'),
   order_direction: z.enum(['asc', 'desc']).default('desc'),
   include_deleted: z.coerce.boolean().default(false),
+  id: z.string().optional(),
 });
 
-export const listShowsQuerySchema = paginationQuerySchema.and(listShowsFilterSchema);
+export const listShowsQuerySchema = paginationQuerySchema
+  .and(listShowsFilterSchema)
+  .transform((data) => ({
+    ...data,
+    uid: data.id,
+  }));
 
 export class ListShowsQueryDto extends createZodDto(listShowsQuerySchema) {
   declare page: number;
@@ -182,6 +188,7 @@ export class ListShowsQueryDto extends createZodDto(listShowsQuerySchema) {
   declare order_by: 'created_at' | 'updated_at' | 'start_time' | 'end_time';
   declare order_direction: 'asc' | 'desc';
   declare include_deleted: boolean;
+  declare uid: string | undefined;
 }
 
 // DTOs for input/output

@@ -15,10 +15,11 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+// import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateShowStandardDto,
+  ListShowStandardsQueryDto,
   showStandardDto,
   UpdateShowStandardDto,
 } from '@/models/show-standard/schemas/show-standard.schema';
@@ -45,10 +46,13 @@ export class AdminShowStandardController extends BaseAdminController {
     showStandardDto,
     'List of show standards with pagination',
   )
-  async getShowStandards(@Query() query: PaginationQueryDto) {
+  async getShowStandards(@Query() query: ListShowStandardsQueryDto) {
     const { data, total } = await this.showStandardService.listShowStandards({
       skip: query.skip,
       take: query.take,
+      name: query.name,
+      uid: query.uid,
+      include_deleted: query.include_deleted,
     });
 
     return this.createPaginatedResponse(data, total, query);

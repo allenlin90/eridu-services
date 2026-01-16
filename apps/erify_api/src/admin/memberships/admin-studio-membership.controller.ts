@@ -15,10 +15,10 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateStudioMembershipDto,
+  ListStudioMembershipsQueryDto,
   studioMembershipWithRelationsDto,
   UpdateStudioMembershipDto,
 } from '@/models/membership/schemas/studio-membership.schema';
@@ -50,12 +50,11 @@ export class AdminStudioMembershipController extends BaseAdminController {
     studioMembershipWithRelationsDto,
     'List of studio memberships with pagination',
   )
-  async getStudioMemberships(@Query() query: PaginationQueryDto) {
-    const data = await this.studioMembershipService.getStudioMemberships(
-      { skip: query.skip, take: query.take },
+  async getStudioMemberships(@Query() query: ListStudioMembershipsQueryDto) {
+    const { data, total } = await this.studioMembershipService.listStudioMemberships(
+      { skip: query.skip, take: query.take, uid: query.uid },
       { user: true, studio: true },
     );
-    const total = await this.studioMembershipService.countStudioMemberships();
 
     return this.createPaginatedResponse(data, total, query);
   }

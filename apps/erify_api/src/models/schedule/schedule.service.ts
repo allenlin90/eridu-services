@@ -107,6 +107,7 @@ export class ScheduleService extends BaseModelService {
    * @param filters.end_date_to - Optional end date to filter
    * @param filters.name - Optional name filter
    * @param filters.client_name - Optional client name filter
+   * @param filters.uid - Optional uid filter
    * @param filters.include_deleted - Whether to include deleted records
    * @returns Prisma where clause for schedule filtering
    */
@@ -121,6 +122,7 @@ export class ScheduleService extends BaseModelService {
     end_date_to?: string;
     name?: string;
     client_name?: string;
+    uid?: string;
     include_deleted: boolean;
   }): Prisma.ScheduleWhereInput {
     const where: Prisma.ScheduleWhereInput = {};
@@ -209,6 +211,14 @@ export class ScheduleService extends BaseModelService {
           mode: 'insensitive',
         },
         ...(filters.include_deleted ? {} : { deletedAt: null }),
+      };
+    }
+
+    // Handle uid filter
+    if (filters.uid) {
+      where.uid = {
+        contains: filters.uid,
+        mode: 'insensitive',
       };
     }
 

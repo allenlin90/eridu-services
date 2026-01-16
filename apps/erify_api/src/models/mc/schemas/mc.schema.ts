@@ -111,10 +111,16 @@ export class McWithUserDto extends createZodDto(mcWithUserDto) {}
 export const listMcsFilterSchema = z.object({
   name: z.string().optional(),
   alias_name: z.string().optional(),
+  id: z.string().optional(),
   include_deleted: z.coerce.boolean().default(false),
 });
 
-export const listMcsQuerySchema = paginationQuerySchema.and(listMcsFilterSchema);
+export const listMcsQuerySchema = paginationQuerySchema
+  .and(listMcsFilterSchema)
+  .transform((data) => ({
+    ...data,
+    uid: data.id,
+  }));
 
 export class ListMcsQueryDto extends createZodDto(listMcsQuerySchema) {
   declare page: number;
@@ -124,4 +130,5 @@ export class ListMcsQueryDto extends createZodDto(listMcsQuerySchema) {
   declare name?: string;
   declare aliasName?: string;
   declare include_deleted: boolean;
+  declare uid: string | undefined;
 }

@@ -218,13 +218,17 @@ export const listSchedulesFilterSchema = z.object({
   include_plan_document: z.coerce.boolean().default(false),
   include_deleted: z.coerce.boolean().default(false),
   client_name: z.string().optional(),
+  id: z.string().optional(),
 });
 
 // List schedules query schema (extends pagination with filters)
 // Use .and() to combine schemas while preserving type inference
-export const listSchedulesQuerySchema = paginationQuerySchema.and(
-  listSchedulesFilterSchema,
-);
+export const listSchedulesQuerySchema = paginationQuerySchema
+  .and(listSchedulesFilterSchema)
+  .transform((data) => ({
+    ...data,
+    uid: data.id,
+  }));
 
 // Type inference for the query schema
 export type ListSchedulesQuery = z.infer<typeof listSchedulesQuerySchema>;
@@ -300,6 +304,7 @@ export class ListSchedulesQueryDto extends createZodDto(
   declare include_plan_document: boolean;
   declare include_deleted: boolean;
   declare client_name?: string;
+  declare uid: string | undefined;
 }
 export class MonthlyOverviewQueryDto extends createZodDto(
   monthlyOverviewQuerySchema,

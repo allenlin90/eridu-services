@@ -104,7 +104,10 @@ export class ShowOrchestrationService {
       | 'start_date_to'
       | 'end_date_from'
       | 'end_date_to'
+      | 'end_date_from'
+      | 'end_date_to'
       | 'include_deleted'
+      | 'uid'
     >,
   ): Prisma.ShowWhereInput {
     const where: Prisma.ShowWhereInput = {};
@@ -118,6 +121,14 @@ export class ShowOrchestrationService {
     if (filters.name) {
       where.name = {
         contains: filters.name,
+        mode: 'insensitive',
+      };
+    }
+
+    // UID filtering
+    if (filters.uid) {
+      where.uid = {
+        contains: filters.uid,
         mode: 'insensitive',
       };
     }

@@ -3,9 +3,9 @@ import { Test } from '@nestjs/testing';
 
 import { AdminStudioMembershipController } from './admin-studio-membership.controller';
 
-import type { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import type {
   CreateStudioMembershipDto,
+  ListStudioMembershipsQueryDto,
   UpdateStudioMembershipDto,
 } from '@/models/membership/schemas/studio-membership.schema';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
@@ -15,7 +15,7 @@ describe('adminStudioMembershipController', () => {
 
   const mockStudioMembershipService = {
     createStudioMembershipFromDto: jest.fn(),
-    getStudioMemberships: jest.fn(),
+    listStudioMemberships: jest.fn(),
     countStudioMemberships: jest.fn(),
     getStudioMembershipById: jest.fn(),
     updateStudioMembershipFromDto: jest.fn(),
@@ -64,11 +64,14 @@ describe('adminStudioMembershipController', () => {
 
   describe('getStudioMemberships', () => {
     it('should return paginated list of studio memberships', async () => {
-      const query: PaginationQueryDto = {
+      const query: ListStudioMembershipsQueryDto = {
         page: 1,
         limit: 10,
         skip: 0,
         take: 10,
+        uid: undefined,
+        name: undefined,
+        include_deleted: false,
       };
       const memberships = [
         { uid: 'membership_1', userId: 'user_1', studioId: 'studio_1' },
@@ -84,23 +87,22 @@ describe('adminStudioMembershipController', () => {
         hasPreviousPage: false,
       };
 
-      mockStudioMembershipService.getStudioMemberships.mockResolvedValue(
-        memberships as any,
-      );
-      mockStudioMembershipService.countStudioMemberships.mockResolvedValue(
+      mockStudioMembershipService.listStudioMemberships.mockResolvedValue({
+        data: memberships,
         total,
-      );
+      });
 
       const result = await controller.getStudioMemberships(query);
       expect(
-        mockStudioMembershipService.getStudioMemberships,
+        mockStudioMembershipService.listStudioMemberships,
       ).toHaveBeenCalledWith(
-        { skip: query.skip, take: query.take },
+        {
+          skip: query.skip,
+          take: query.take,
+          uid: query.uid,
+        },
         { user: true, studio: true },
       );
-      expect(
-        mockStudioMembershipService.countStudioMemberships,
-      ).toHaveBeenCalled();
       expect(result).toEqual({
         data: memberships,
         meta: paginationMeta,

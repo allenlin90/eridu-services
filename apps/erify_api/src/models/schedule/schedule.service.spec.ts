@@ -594,6 +594,7 @@ describe('scheduleService', () => {
         order_direction: 'desc' as const,
         include_plan_document: false,
         include_deleted: false,
+        uid: undefined,
       };
 
       const result = await service.getPaginatedSchedules(query);
@@ -637,6 +638,7 @@ describe('scheduleService', () => {
         order_direction: 'desc' as const,
         include_plan_document: false,
         include_deleted: false,
+        uid: undefined,
       };
 
       await service.getPaginatedSchedules(query);
@@ -681,6 +683,7 @@ describe('scheduleService', () => {
         order_direction: 'desc' as const,
         include_plan_document: false,
         include_deleted: false,
+        uid: undefined,
       };
 
       await service.getPaginatedSchedules(query);
@@ -720,6 +723,7 @@ describe('scheduleService', () => {
         order_direction: 'desc' as const,
         include_plan_document: false,
         include_deleted: false,
+        uid: undefined,
       };
 
       await service.getPaginatedSchedules(query);
@@ -762,6 +766,7 @@ describe('scheduleService', () => {
         order_direction: 'desc' as const,
         include_plan_document: false,
         include_deleted: false,
+        uid: undefined,
       };
 
       await service.getPaginatedSchedules(query);
@@ -804,6 +809,7 @@ describe('scheduleService', () => {
         order_direction: 'asc' as const,
         include_plan_document: false,
         include_deleted: false,
+        uid: undefined,
       };
 
       await service.getPaginatedSchedules(query);
@@ -842,6 +848,7 @@ describe('scheduleService', () => {
         order_direction: 'desc' as const,
         include_plan_document: false,
         include_deleted: true,
+        uid: undefined,
       };
 
       await service.getPaginatedSchedules(query);
@@ -878,6 +885,7 @@ describe('scheduleService', () => {
         order_direction: 'asc' as const,
         include_plan_document: false,
         include_deleted: false,
+        uid: undefined,
       };
 
       await service.getPaginatedSchedules(query);

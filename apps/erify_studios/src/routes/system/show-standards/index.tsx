@@ -30,6 +30,7 @@ const showStandardsSearchSchema = z.object({
   page: z.number().int().min(1).catch(1),
   pageSize: z.number().int().min(10).max(100).catch(10),
   name: z.string().optional().catch(undefined),
+  id: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/system/show-standards/')({
@@ -66,12 +67,15 @@ function ShowStandardsList() {
 
   const nameFilter = columnFilters.find((filter) => filter.id === 'name')
     ?.value as string | undefined;
+  const idFilter = columnFilters.find((filter) => filter.id === 'id')
+    ?.value as string | undefined;
 
   // Fetch show standards list
   const { data, isLoading } = useAdminList<ShowStandard>('show-standards', {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     name: nameFilter,
+    id: idFilter,
   });
 
   // Sync page count for auto-correction
@@ -160,6 +164,7 @@ function ShowStandardsList() {
         onColumnFiltersChange={onColumnFiltersChange}
         searchableColumns={[
           { id: 'name', title: 'Name' },
+          { id: 'id', title: 'ID' },
         ]}
         searchPlaceholder="Search show standards..."
         pagination={

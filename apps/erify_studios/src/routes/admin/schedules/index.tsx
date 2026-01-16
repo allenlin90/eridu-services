@@ -25,6 +25,7 @@ const schedulesSearchSchema = z.object({
   pageSize: z.coerce.number().int().min(10).max(100).catch(10),
   name: z.string().optional().catch(undefined),
   client_name: z.string().optional().catch(undefined),
+  id: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/admin/schedules/')({
@@ -63,6 +64,7 @@ function SchedulesList() {
     limit: pagination.pageSize,
     name: search.name,
     client_name: search.client_name,
+    id: search.id,
   });
 
   // Sync page count for auto-correction
@@ -157,6 +159,7 @@ function SchedulesList() {
         searchableColumns={[
           { id: 'name', title: 'Name' },
           { id: 'client_name', title: 'Client' },
+          { id: 'id', title: 'ID' },
         ]}
         pagination={
           data?.meta
