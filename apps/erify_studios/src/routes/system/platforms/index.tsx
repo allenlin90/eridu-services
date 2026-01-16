@@ -13,6 +13,7 @@ import {
   AdminTable,
   DeleteConfirmDialog,
 } from '@/features/admin/components';
+import { CopyIdCell } from '@/features/admin/components/copy-id-cell';
 import { queryKeys } from '@/lib/api/query-keys';
 import {
   useAdminCreate,
@@ -98,6 +99,7 @@ function PlatformsList() {
     {
       accessorKey: 'id',
       header: 'ID',
+      cell: ({ row }) => <CopyIdCell id={row.original.id} />,
     },
     {
       accessorKey: 'name',

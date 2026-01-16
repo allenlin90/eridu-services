@@ -13,8 +13,8 @@ import {
   DeleteConfirmDialog,
 } from '@/features/admin/components';
 import {
+  CopyIdCell,
   DateCell,
-  IdCopyCell,
   ItemsList,
   PlatformList,
   ShowStatusBadge,
@@ -100,7 +100,7 @@ function ShowsList() {
     {
       accessorKey: 'id',
       header: 'ID',
-      cell: ({ row }) => <IdCopyCell id={row.original.id} />,
+      cell: ({ row }) => <CopyIdCell id={row.original.id} />,
       enableSorting: false,
     },
     {
