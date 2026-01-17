@@ -5,9 +5,11 @@ import { useEffect, useState } from 'react';
 import { z } from 'zod';
 
 import type { ShowApiResponse } from '@eridu/api-types/shows';
-import { useTableUrlState } from '@eridu/ui';
+import { updateShowInputSchema } from '@eridu/api-types/shows';
+import { Input, useTableUrlState } from '@eridu/ui';
 
 import {
+  AdminFormDialog,
   AdminLayout,
   AdminTable,
   DeleteConfirmDialog,
@@ -24,6 +26,7 @@ import { queryKeys } from '@/lib/api/query-keys';
 import {
   useAdminDelete,
   useAdminList,
+  useAdminUpdate,
 } from '@/lib/hooks/use-admin-crud';
 
 const showsSearchSchema = z.object({
@@ -48,6 +51,7 @@ type Show = ShowApiResponse & {
   mcs: { mc_name: string }[];
   platforms: { platform_name: string }[];
 };
+type UpdateShowFormData = z.infer<typeof updateShowInputSchema>;
 
 const TABLE_OPTIONS = {
   from: '/admin/shows/',
@@ -62,6 +66,7 @@ const TABLE_OPTIONS = {
 
 function ShowsList() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editingShow, setEditingShow] = useState<Show | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -96,6 +101,7 @@ function ShowsList() {
     }
   }, [data?.meta?.totalPages, setPageCount]);
 
+  const updateMutation = useAdminUpdate<Show, UpdateShowFormData>('shows');
   const deleteMutation = useAdminDelete('shows');
 
   const columns: ColumnDef<Show>[] = [
@@ -168,6 +174,13 @@ function ShowsList() {
     setDeleteId(null);
   };
 
+  const handleUpdate = async (data: UpdateShowFormData) => {
+    if (!editingShow)
+      return;
+    await updateMutation.mutateAsync({ id: editingShow.id, data });
+    setEditingShow(null);
+  };
+
   const handleRefresh = () => {
     queryClient.invalidateQueries({
       queryKey: queryKeys.admin.lists('shows'),
@@ -186,6 +199,7 @@ function ShowsList() {
         columns={columns}
         isLoading={isLoading}
         isFetching={isFetching}
+        onEdit={(show) => setEditingShow(show)}
         onDelete={(show) => setDeleteId(show.id)}
         emptyMessage="No shows found."
         searchColumn="name"
@@ -212,6 +226,73 @@ function ShowsList() {
         onPaginationChange={onPaginationChange}
         sorting={sorting}
         onSortingChange={onSortingChange}
+      />
+
+      <AdminFormDialog
+        open={!!editingShow}
+        onOpenChange={(open) => !open && setEditingShow(null)}
+        title="Edit Show"
+        description="Update show details"
+        schema={updateShowInputSchema}
+        defaultValues={
+          editingShow
+            ? {
+                name: editingShow.name,
+                start_time: editingShow.start_time,
+                end_time: editingShow.end_time,
+              }
+            : undefined
+        }
+        onSubmit={handleUpdate}
+        isLoading={updateMutation.isPending}
+        fields={[
+          {
+            // 'id' is NOT in updateShowInputSchema, so we must cast it.
+            name: 'id' as any,
+            label: 'ID',
+            render: () => (
+              <div className="flex flex-col gap-2">
+                <input
+                  className="flex h-9 w-full rounded-md border border-input bg-muted px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  value={editingShow?.id || ''}
+                  readOnly
+                  onClick={(e) => {
+                    e.currentTarget.select();
+                    navigator.clipboard.writeText(editingShow?.id || '');
+                  }}
+                  title="Click to copy ID"
+                />
+              </div>
+            ),
+          },
+          {
+            name: 'name',
+            label: 'Name',
+            placeholder: 'Show name',
+          },
+          {
+            name: 'start_time',
+            label: 'Start Time',
+            render: (field) => (
+              <Input
+                type="datetime-local"
+                {...field}
+                value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
+              />
+            ),
+          },
+          {
+            name: 'end_time',
+            label: 'End Time',
+            render: (field) => (
+              <Input
+                type="datetime-local"
+                {...field}
+                value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
+              />
+            ),
+          },
+        ]}
       />
 
       <DeleteConfirmDialog

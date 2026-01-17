@@ -1,14 +1,25 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
-import { ArrowRight, History } from 'lucide-react';
+import { History } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { z } from 'zod';
 
 import type { ScheduleApiResponse } from '@eridu/api-types/schedules';
-import { Button, useTableUrlState } from '@eridu/ui';
+import { updateScheduleInputSchema } from '@eridu/api-types/schedules';
+import {
+  DropdownMenuItem,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  useTableUrlState,
+} from '@eridu/ui';
 
 import {
+  AdminFormDialog,
   AdminLayout,
   AdminTable,
   DeleteConfirmDialog,
@@ -18,6 +29,7 @@ import { queryKeys } from '@/lib/api/query-keys';
 import {
   useAdminDelete,
   useAdminList,
+  useAdminUpdate,
 } from '@/lib/hooks/use-admin-crud';
 
 const schedulesSearchSchema = z.object({
@@ -35,10 +47,12 @@ export const Route = createFileRoute('/admin/schedules/')({
 
 // Basic schedule type matching API response
 type Schedule = ScheduleApiResponse;
+type UpdateScheduleFormData = z.infer<typeof updateScheduleInputSchema>;
 
 function SchedulesList() {
   const navigate = useNavigate();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -59,7 +73,7 @@ function SchedulesList() {
   const search = Route.useSearch();
 
   // Fetch schedules list
-  const { data, isLoading } = useAdminList<Schedule>('schedules', {
+  const { data, isLoading, isFetching } = useAdminList<Schedule>('schedules', {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     name: search.name,
@@ -75,6 +89,7 @@ function SchedulesList() {
   }, [data?.meta?.totalPages, setPageCount]);
 
   // Mutations
+  const updateMutation = useAdminUpdate<Schedule, UpdateScheduleFormData>('schedules');
   const deleteMutation = useAdminDelete('schedules');
 
   // Table columns
@@ -83,14 +98,28 @@ function SchedulesList() {
       accessorKey: 'id',
       header: 'ID',
       cell: ({ row }) => <CopyIdCell id={row.original.id} />,
+      meta: {
+        className: 'hidden xl:table-cell',
+      },
     },
     {
       accessorKey: 'name',
       header: 'Name',
+      cell: ({ row }) => (
+        <div>
+          <span className="font-medium">{row.original.name}</span>
+          <span className="block text-xs text-muted-foreground md:hidden">
+            {row.original.client_name}
+          </span>
+        </div>
+      ),
     },
     {
       accessorKey: 'client_name',
       header: 'Client',
+      meta: {
+        className: 'hidden md:table-cell',
+      },
     },
     {
       accessorKey: 'status',
@@ -99,32 +128,17 @@ function SchedulesList() {
     {
       accessorKey: 'version',
       header: 'Version',
+      meta: {
+        className: 'hidden lg:table-cell',
+      },
     },
     {
       accessorKey: 'start_date',
       header: 'Start Date',
       cell: ({ row }) => new Date(row.original.start_date).toLocaleString(),
-    },
-    {
-      id: 'actions-snapshots',
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate({
-              to: '/admin/schedules/$scheduleId/snapshots',
-              params: { scheduleId: row.original.id },
-              search: { page: 1, pageSize: 10 },
-            });
-          }}
-        >
-          <History className="mr-2 h-4 w-4" />
-          Snapshots
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      meta: {
+        className: 'hidden md:table-cell',
+      },
     },
   ];
 
@@ -134,6 +148,13 @@ function SchedulesList() {
 
     await deleteMutation.mutateAsync(deleteId);
     setDeleteId(null);
+  };
+
+  const handleUpdate = async (data: UpdateScheduleFormData) => {
+    if (!editingSchedule)
+      return;
+    await updateMutation.mutateAsync({ id: editingSchedule.id, data });
+    setEditingSchedule(null);
   };
 
   const handleRefresh = () => {
@@ -153,7 +174,24 @@ function SchedulesList() {
         data={data?.data || []}
         columns={columns}
         isLoading={isLoading}
+        isFetching={isFetching}
+        onEdit={(schedule) => setEditingSchedule(schedule)}
         onDelete={(schedule) => setDeleteId(schedule.id)}
+        renderExtraActions={(schedule) => (
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate({
+                to: '/admin/schedules/$scheduleId/snapshots',
+                params: { scheduleId: schedule.id },
+                search: { page: 1, pageSize: 10 },
+              });
+            }}
+          >
+            <History className="mr-2 h-4 w-4" />
+            View Snapshots
+          </DropdownMenuItem>
+        )}
         emptyMessage="No schedules found."
         searchColumn="name"
         searchableColumns={[
@@ -174,6 +212,91 @@ function SchedulesList() {
         onPaginationChange={onPaginationChange}
         columnFilters={columnFilters}
         onColumnFiltersChange={onColumnFiltersChange}
+      />
+
+      <AdminFormDialog
+        open={!!editingSchedule}
+        onOpenChange={(open) => !open && setEditingSchedule(null)}
+        title="Edit Schedule"
+        description="Update schedule details"
+        schema={updateScheduleInputSchema}
+        defaultValues={
+          editingSchedule
+            ? {
+                name: editingSchedule.name,
+                status: editingSchedule.status as 'draft' | 'review' | 'published',
+                start_date: editingSchedule.start_date,
+                end_date: editingSchedule.end_date,
+                version: editingSchedule.version,
+              }
+            : undefined
+        }
+        onSubmit={handleUpdate}
+        isLoading={updateMutation.isPending}
+        fields={[
+          {
+            // 'id' is NOT in updateScheduleInputSchema, so we must cast it.
+            name: 'id' as any,
+            label: 'ID',
+            render: () => (
+              <div className="flex flex-col gap-2">
+                <input
+                  className="flex h-9 w-full rounded-md border border-input bg-muted px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  value={editingSchedule?.id || ''}
+                  readOnly
+                  onClick={(e) => {
+                    e.currentTarget.select();
+                    navigator.clipboard.writeText(editingSchedule?.id || '');
+                  }}
+                  title="Click to copy ID"
+                />
+              </div>
+            ),
+          },
+          {
+            name: 'name',
+            label: 'Name',
+            placeholder: 'Schedule name',
+          },
+          {
+            name: 'status',
+            label: 'Status',
+            render: (field) => (
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="review">Review</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                </SelectContent>
+              </Select>
+            ),
+          },
+          {
+            name: 'start_date',
+            label: 'Start Date',
+            render: (field) => (
+              <Input
+                type="datetime-local"
+                {...field}
+                value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
+              />
+            ),
+          },
+          {
+            name: 'end_date',
+            label: 'End Date',
+            render: (field) => (
+              <Input
+                type="datetime-local"
+                {...field}
+                value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
+              />
+            ),
+          },
+        ]}
       />
 
       <DeleteConfirmDialog
