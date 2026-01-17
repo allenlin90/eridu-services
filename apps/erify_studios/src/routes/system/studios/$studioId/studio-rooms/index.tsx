@@ -1,35 +1,25 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import type { ColumnDef } from '@tanstack/react-table';
-import { useEffect, useState } from 'react';
-import { z } from 'zod';
+import { useState } from 'react';
+import type { z } from 'zod';
 
-import type { StudioRoomApiResponse } from '@eridu/api-types/studio-rooms';
-import {
-  createStudioRoomInputSchema,
+import type {
+  StudioRoomApiResponse,
   updateStudioRoomInputSchema,
 } from '@eridu/api-types/studio-rooms';
-import { useTableUrlState } from '@eridu/ui';
 
+import { AdminLayout, AdminTable } from '@/features/admin/components';
 import {
-  AdminFormDialog,
-  AdminLayout,
-  AdminTable,
-  DeleteConfirmDialog,
-} from '@/features/admin/components';
+  StudioRoomCreateDialog,
+  StudioRoomDeleteDialog,
+  StudioRoomUpdateDialog,
+} from '@/features/studio-rooms/components/studio-room-dialogs';
+import {
+  studioRoomColumns,
+  studioRoomSearchableColumns,
+} from '@/features/studio-rooms/config/studio-room-columns';
+import { studioRoomsSearchSchema } from '@/features/studio-rooms/config/studio-room-search-schema';
+import { useStudioRooms } from '@/features/studio-rooms/hooks/use-studio-rooms';
 import { queryKeys } from '@/lib/api/query-keys';
-import {
-  useAdminCreate,
-  useAdminDelete,
-  useAdminList,
-  useAdminUpdate,
-} from '@/lib/hooks/use-admin-crud';
-
-const studioRoomsSearchSchema = z.object({
-  page: z.number().int().min(1).catch(1),
-  pageSize: z.number().int().min(10).max(100).catch(10),
-  name: z.string().optional().catch(undefined),
-});
 
 export const Route = createFileRoute(
   '/system/studios/$studioId/studio-rooms/',
@@ -38,10 +28,7 @@ export const Route = createFileRoute(
   validateSearch: (search) => studioRoomsSearchSchema.parse(search),
 });
 
-// StudioRoom type from shared schema
 type StudioRoom = StudioRoomApiResponse;
-
-type StudioRoomFormData = z.infer<typeof createStudioRoomInputSchema>;
 type UpdateStudioRoomFormData = z.infer<typeof updateStudioRoomInputSchema>;
 
 export function StudioRoomsList() {
@@ -50,65 +37,19 @@ export function StudioRoomsList() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<StudioRoom | null>(null);
 
-  const queryClient = useQueryClient();
-
-  // URL state
   const {
-    pagination,
+    data,
+    isLoading,
+    isFetching,
     onPaginationChange,
-    setPageCount,
     columnFilters,
     onColumnFiltersChange,
-  } = useTableUrlState({
-    from: '/system/studios/$studioId/studio-rooms/',
-    paramNames: {
-      search: 'name',
-    },
-  });
-
-  const nameFilter = columnFilters.find((filter) => filter.id === 'name')
-    ?.value as string | undefined;
-
-  // Fetch studio rooms list
-  const { data, isLoading } = useAdminList<StudioRoom>('studio-rooms', {
-    page: pagination.pageIndex + 1,
-    limit: pagination.pageSize,
-    studio_id: studioId,
-    name: nameFilter,
-  });
-
-  // Sync page count for auto-correction
-  useEffect(() => {
-    if (data?.meta?.totalPages !== undefined) {
-      setPageCount(data.meta.totalPages);
-    }
-  }, [data?.meta?.totalPages, setPageCount]);
-
-  // Mutations
-  const createMutation = useAdminCreate<StudioRoom, StudioRoomFormData>('studio-rooms');
-  const updateMutation = useAdminUpdate<StudioRoom, UpdateStudioRoomFormData>('studio-rooms');
-  const deleteMutation = useAdminDelete('studio-rooms');
-
-  // Table columns
-  const columns: ColumnDef<StudioRoom>[] = [
-    {
-      accessorKey: 'id',
-      header: 'ID',
-    },
-    {
-      accessorKey: 'name',
-      header: 'Name',
-    },
-    {
-      accessorKey: 'capacity',
-      header: 'Capacity',
-    },
-    {
-      accessorKey: 'created_at',
-      header: 'Created At',
-      cell: ({ row }) => new Date(row.original.created_at).toLocaleString(),
-    },
-  ];
+    createMutation,
+    updateMutation,
+    deleteMutation,
+    handleRefresh,
+    handleCreate,
+  } = useStudioRooms(studioId);
 
   const handleDelete = async () => {
     if (!deleteId)
@@ -122,8 +63,9 @@ export function StudioRoomsList() {
     }
   };
 
-  const handleCreate = async (data: StudioRoomFormData) => {
-    await createMutation.mutateAsync({ ...data, studio_id: studioId });
+  const onCreateSubmit = async (formData: any) => {
+    await handleCreate(formData);
+    setIsCreateDialogOpen(false);
   };
 
   const handleUpdate = async (data: UpdateStudioRoomFormData) => {
@@ -131,12 +73,6 @@ export function StudioRoomsList() {
       return;
     await updateMutation.mutateAsync({ id: editingRoom.id, data });
     setEditingRoom(null);
-  };
-
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.admin.lists('studio-rooms'),
-    });
   };
 
   return (
@@ -152,16 +88,15 @@ export function StudioRoomsList() {
     >
       <AdminTable
         data={data?.data || []}
-        columns={columns}
+        columns={studioRoomColumns}
         isLoading={isLoading}
+        isFetching={isFetching}
         onEdit={(room) => setEditingRoom(room)}
         onDelete={(room) => setDeleteId(room.id)}
         emptyMessage="No rooms found. Create one to get started."
         columnFilters={columnFilters}
         onColumnFiltersChange={onColumnFiltersChange}
-        searchableColumns={[
-          { id: 'name', title: 'Name' },
-        ]}
+        searchableColumns={studioRoomSearchableColumns}
         searchPlaceholder="Search rooms..."
         pagination={
           data?.meta
@@ -176,66 +111,24 @@ export function StudioRoomsList() {
         onPaginationChange={onPaginationChange}
       />
 
-      <AdminFormDialog
+      <StudioRoomCreateDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
-        title="Create Room"
-        description="Add a new room to this studio"
-        schema={createStudioRoomInputSchema}
-        onSubmit={handleCreate}
+        onSubmit={onCreateSubmit}
         isLoading={createMutation.isPending}
-        fields={[
-          {
-            name: 'name',
-            label: 'Name',
-            placeholder: 'Enter room name',
-          },
-          {
-            name: 'capacity',
-            label: 'Capacity',
-            placeholder: 'Enter room capacity',
-            type: 'number',
-          },
-        ]}
       />
 
-      <AdminFormDialog
-        open={!!editingRoom}
+      <StudioRoomUpdateDialog
+        room={editingRoom}
         onOpenChange={(open) => !open && setEditingRoom(null)}
-        title="Edit Room"
-        description="Update room information"
-        schema={updateStudioRoomInputSchema}
-        defaultValues={
-          editingRoom
-            ? {
-                name: editingRoom.name,
-                capacity: editingRoom.capacity,
-              }
-            : undefined
-        }
         onSubmit={handleUpdate}
         isLoading={updateMutation.isPending}
-        fields={[
-          {
-            name: 'name',
-            label: 'Name',
-            placeholder: 'Enter room name',
-          },
-          {
-            name: 'capacity',
-            label: 'Capacity',
-            placeholder: 'Enter room capacity',
-            type: 'number',
-          },
-        ]}
       />
 
-      <DeleteConfirmDialog
+      <StudioRoomDeleteDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
         onConfirm={handleDelete}
-        title="Delete Room"
-        description="Are you sure you want to delete this room? This action cannot be undone."
         isLoading={deleteMutation.isPending}
       />
     </AdminLayout>
