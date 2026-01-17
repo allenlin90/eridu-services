@@ -27,4 +27,5 @@ export const studioRoomColumns: ColumnDef<StudioRoomApiResponse>[] = [
 
 export const studioRoomSearchableColumns = [
   { id: 'name', title: 'Name' },
+  { id: 'id', title: 'ID' },
 ];

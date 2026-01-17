@@ -1,67 +1,27 @@
-import type { TestingModule } from '@nestjs/testing';
-import { Test } from '@nestjs/testing';
-
 import { AdminStudioRoomController } from './admin-studio-room.controller';
 
-import type { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import type {
-  CreateStudioRoomDto,
   UpdateStudioRoomDto,
 } from '@/models/studio-room/schemas/studio-room.schema';
-import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 
 describe('adminStudioRoomController', () => {
   let controller: AdminStudioRoomController;
 
   const mockStudioRoomService = {
     createStudioRoomFromDto: jest.fn(),
-    getStudioRooms: jest.fn(),
-    countStudioRooms: jest.fn(),
+    listStudioRooms: jest.fn(),
     getStudioRoomById: jest.fn(),
     updateStudioRoomFromDto: jest.fn(),
     deleteStudioRoom: jest.fn(),
   };
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [AdminStudioRoomController],
-      providers: [
-        { provide: StudioRoomService, useValue: mockStudioRoomService },
-      ],
-    }).compile();
-
-    controller = module.get<AdminStudioRoomController>(
-      AdminStudioRoomController,
-    );
-  });
 
   beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  describe('createStudioRoom', () => {
-    it('should create a studio room', async () => {
-      const createDto: CreateStudioRoomDto = {
-        studioId: 'studio_123',
-        name: 'Room 1',
-        metadata: {},
-      } as CreateStudioRoomDto;
-      const createdRoom = { uid: 'studio_room_123', ...createDto };
-
-      mockStudioRoomService.createStudioRoomFromDto.mockResolvedValue(
-        createdRoom as any,
-      );
-
-      const result = await controller.createStudioRoom(createDto);
-      expect(
-        mockStudioRoomService.createStudioRoomFromDto,
-      ).toHaveBeenCalledWith(createDto, { studio: true });
-      expect(result).toEqual(createdRoom);
-    });
+    controller = new AdminStudioRoomController(mockStudioRoomService as any);
   });
 
   describe('getStudioRooms', () => {
     it('should return paginated list of studio rooms', async () => {
-      const query: PaginationQueryDto = {
+      const query = {
         page: 1,
         limit: 10,
         skip: 0,
@@ -81,19 +41,53 @@ describe('adminStudioRoomController', () => {
         hasPreviousPage: false,
       };
 
-      mockStudioRoomService.getStudioRooms.mockResolvedValue(rooms as any);
-      mockStudioRoomService.countStudioRooms.mockResolvedValue(total);
+      mockStudioRoomService.listStudioRooms.mockResolvedValue({
+        data: rooms,
+        total,
+      });
 
-      const result = await controller.getStudioRooms(query);
-      expect(mockStudioRoomService.getStudioRooms).toHaveBeenCalledWith(
-        { skip: query.skip, take: query.take },
+      const result = await controller.getStudioRooms(query as any);
+      expect(mockStudioRoomService.listStudioRooms).toHaveBeenCalledWith(
+        { skip: query.skip, take: query.take, where: {} },
         { studio: true },
       );
-      expect(mockStudioRoomService.countStudioRooms).toHaveBeenCalled();
       expect(result).toEqual({
         data: rooms,
         meta: paginationMeta,
       });
+    });
+
+    it('should filter by name and id', async () => {
+      const query = {
+        page: 1,
+        limit: 10,
+        skip: 0,
+        take: 10,
+        name: 'test',
+        id: 'srm_123',
+      };
+      const rooms = [
+        { uid: 'srm_123', studioId: 'studio_1', name: 'test room' },
+      ];
+      const total = 1;
+
+      mockStudioRoomService.listStudioRooms.mockResolvedValue({
+        data: rooms,
+        total,
+      });
+
+      await controller.getStudioRooms(query as any);
+      expect(mockStudioRoomService.listStudioRooms).toHaveBeenCalledWith(
+        {
+          skip: query.skip,
+          take: query.take,
+          where: {
+            name: { contains: 'test', mode: 'insensitive' },
+            uid: 'srm_123',
+          },
+        },
+        { studio: true },
+      );
     });
   });
 

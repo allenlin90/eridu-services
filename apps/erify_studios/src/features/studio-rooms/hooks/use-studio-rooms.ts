@@ -39,12 +39,15 @@ export function useStudioRooms(studioId: string) {
 
   const nameFilter = columnFilters.find((filter) => filter.id === 'name')
     ?.value as string | undefined;
+  const idFilter = columnFilters.find((filter) => filter.id === 'id')
+    ?.value as string | undefined;
 
   const { data, isLoading, isFetching } = useAdminList<StudioRoom>('studio-rooms', {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     studio_id: studioId,
     name: nameFilter,
+    id: idFilter,
   });
 
   useEffect(() => {

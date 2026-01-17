@@ -33,6 +33,7 @@ const studioRoomListQuerySchema = createPaginatedQuerySchema(
     name: z.string().optional(),
     studioId: z.string().optional(),
     studio_id: z.string().optional(),
+    id: z.string().optional(),
   }),
 ).transform((data) => ({
   ...data,
@@ -74,6 +75,10 @@ export class AdminStudioRoomController extends BaseAdminController {
 
     if (query.studioId) {
       where.studio = { uid: query.studioId };
+    }
+
+    if (query.id) {
+      where.uid = query.id;
     }
 
     const { data, total } = await this.studioRoomService.listStudioRooms(
