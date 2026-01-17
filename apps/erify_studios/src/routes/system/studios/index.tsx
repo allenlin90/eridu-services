@@ -1,4 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { DoorOpen } from 'lucide-react';
 import { useState } from 'react';
 import type { z } from 'zod';
 
@@ -7,6 +8,7 @@ import type {
   StudioApiResponse,
   updateStudioInputSchema,
 } from '@eridu/api-types/studios';
+import { DropdownMenuItem } from '@eridu/ui';
 
 import { AdminLayout, AdminTable } from '@/features/admin/components';
 import {
@@ -31,7 +33,8 @@ type Studio = StudioApiResponse;
 type StudioFormData = z.infer<typeof createStudioInputSchema>;
 type UpdateStudioFormData = z.infer<typeof updateStudioInputSchema>;
 
-function StudiosList() {
+export function StudiosList() {
+  const navigate = useNavigate();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingStudio, setEditingStudio] = useState<Studio | null>(null);
@@ -93,6 +96,21 @@ function StudiosList() {
         isFetching={isFetching}
         onEdit={(studio) => setEditingStudio(studio)}
         onDelete={(studio) => setDeleteId(studio.id)}
+        renderExtraActions={(studio) => (
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate({
+                to: '/system/studios/$studioId/studio-rooms',
+                params: { studioId: studio.id },
+                search: { page: 1, pageSize: 10 },
+              });
+            }}
+          >
+            <DoorOpen className="mr-2 h-4 w-4" />
+            View Rooms
+          </DropdownMenuItem>
+        )}
         emptyMessage="No studios found. Create one to get started."
         columnFilters={columnFilters}
         onColumnFiltersChange={onColumnFiltersChange}
