@@ -31,6 +31,16 @@ vi.mock('@eridu/ui', () => ({
   ),
   Input: (props: any) => <input {...props} />,
   flexRender: (Comp: any, props: any) => (typeof Comp === 'function' ? Comp(props) : Comp),
+  DropdownMenu: ({ children }: any) => <div data-testid="dropdown-menu">{children}</div>,
+  DropdownMenuTrigger: ({ children }: any) => <div data-testid="dropdown-trigger">{children}</div>,
+  DropdownMenuContent: ({ children }: any) => <div data-testid="dropdown-content">{children}</div>,
+  DropdownMenuItem: ({ children, onClick }: any) => (
+    <button type="button" onClick={onClick} data-testid="dropdown-item">
+      {children}
+    </button>
+  ),
+  DropdownMenuLabel: ({ children }: any) => <div>{children}</div>,
+  DropdownMenuSeparator: () => <hr />,
 }));
 
 // Mock Lucide icons
@@ -40,9 +50,10 @@ vi.mock('lucide-react', () => ({
   ChevronsLeft: () => <span>ChevronsLeft</span>,
   ChevronsRight: () => <span>ChevronsRight</span>,
   Loader2: () => <span>Loading...</span>,
-  Pencil: () => <span>Edit</span>,
-  Trash2: () => <span>Delete</span>,
+  Pencil: () => <span>PencilIcon</span>,
+  Trash2: () => <span>TrashIcon</span>,
   X: () => <span>X</span>,
+  MoreHorizontal: () => <span>More</span>,
 }));
 
 // Mock i18n messages
@@ -125,7 +136,14 @@ describe('adminTable', () => {
       />,
     );
 
-    // Should find edit/delete buttons/icons
+    // Should find trigger buttons (MoreHorizontal icon mocked as "More")
+    const triggers = screen.getAllByTestId('dropdown-trigger');
+    expect(triggers).toHaveLength(2);
+    expect(screen.getAllByText('More')).toHaveLength(2);
+
+    // Since we mocked DropdownMenu components to just render children (not handling open/close state logic of Radix),
+    // the content is likely rendered in the DOM immediately in our mock.
+    // Let's check if the items are present.
     expect(screen.getAllByText('Edit')).toHaveLength(2);
     expect(screen.getAllByText('Delete')).toHaveLength(2);
   });

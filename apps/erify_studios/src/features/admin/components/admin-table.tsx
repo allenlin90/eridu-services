@@ -9,12 +9,19 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  MoreHorizontal,
   Pencil,
   Trash2,
 } from 'lucide-react';
 
 import {
   Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   Table,
   TableBody,
   TableCell,
@@ -52,6 +59,8 @@ type AdminTableProps<TData> = {
   // Sorting props
   sorting?: SortingState;
   onSortingChange?: (sorting: SortingState) => void;
+  // Extra actions
+  renderExtraActions?: (row: TData) => React.ReactNode;
 };
 
 export function AdminTable<TData>({
@@ -71,37 +80,48 @@ export function AdminTable<TData>({
   searchPlaceholder,
   sorting,
   onSortingChange,
+  renderExtraActions,
 }: AdminTableProps<TData>) {
   // Add actions column if edit or delete handlers are provided
   const columnsWithActions: ColumnDef<TData>[] = [
     ...columns,
-    ...(onEdit || onDelete
+    ...(onEdit || onDelete || renderExtraActions
       ? [
           {
             id: 'actions',
-            header: 'Actions',
             cell: ({ row }: { row: { original: TData } }) => (
-              <div className="flex gap-2">
-                {onEdit && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEdit(row.original)}
-                  >
-                    <Pencil className="h-4 w-4" />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
                   </Button>
-                )}
-                {onDelete && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDelete(row.original)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  {renderExtraActions && renderExtraActions(row.original)}
+                  {renderExtraActions && (onEdit || onDelete) && <DropdownMenuSeparator />}
+                  {onEdit && (
+                    <DropdownMenuItem onClick={() => onEdit(row.original)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                  )}
+                  {onDelete && (
+                    <DropdownMenuItem
+                      onClick={() => onDelete(row.original)}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             ),
+            // Ensure actions column is always visible and minimal width
+            size: 50,
+            enableHiding: false,
           } as ColumnDef<TData>,
         ]
       : []),
@@ -197,7 +217,7 @@ export function AdminTable<TData>({
                         {table.getHeaderGroups().map((headerGroup) => (
                           <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header) => (
-                              <TableHead key={header.id} className="whitespace-nowrap">
+                              <TableHead key={header.id} className={cn('whitespace-nowrap', (header.column.columnDef.meta as { className?: string })?.className)}>
                                 {header.isPlaceholder
                                   ? null
                                   : flexRender(
@@ -218,7 +238,7 @@ export function AdminTable<TData>({
                           ? table.getRowModel().rows.map((row) => (
                               <TableRow key={row.id}>
                                 {row.getVisibleCells().map((cell) => (
-                                  <TableCell key={cell.id} className="whitespace-nowrap">
+                                  <TableCell key={cell.id} className={cn('whitespace-nowrap', (cell.column.columnDef.meta as { className?: string })?.className)}>
                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                   </TableCell>
                                 ))}
