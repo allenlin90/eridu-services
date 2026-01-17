@@ -135,59 +135,142 @@ Phase 3 introduces advanced authorization control, comprehensive tracking featur
 - **Permission Inheritance**: Proper permission hierarchy and inheritance
 - **Flexible Rollout**: Features can be enabled/disabled per user type as needed
 
-## Database Schema
-
-> **Note**: Material, MaterialType, and ShowMaterial entities are implemented in Phase 2. See Phase 2 documentation for complete schema.
-
-### Tagging System
-
-#### Tag
-
-```prisma
-model Tag {
-  id        BigInt     @id @default(autoincrement())
-  uid       String     @unique
-  studioId  BigInt?    @map("studio_id")
-  name      String
-  metadata  Json       @default("{}")
-  studio    Studio?    @relation(fields: [studioId], references: [id], onDelete: SetNull)
-  taggables Taggable[]
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
-  deletedAt DateTime?  @map("deleted_at")
-
-  @@unique([studioId, name])
-  @@index([uid])
-  @@index([studioId])
-  @@index([deletedAt])
-  @@index([studioId, deletedAt])
-  @@map("tags")
-}
 ```
 
-#### Taggable
+---
 
-```prisma
-model Taggable {
-  id           BigInt    @id @default(autoincrement())
-  uid          String    @unique
-  tagId        BigInt    @map("tag_id")
-  taggableId   BigInt    @map("taggable_id")
-  taggableType String    @map("taggable_type")
-  tag          Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  deletedAt    DateTime? @map("deleted_at")
+## Polymorphic Tagging System - Implementation Plan
 
-  @@unique([tagId, taggableId])
-  @@index([uid])
-  @@index([tagId])
-  @@index([taggableId, taggableType])
-  @@index([deletedAt])
-  @@index([tagId, deletedAt])
-  @@map("taggables")
-}
+### Overview
+
+The polymorphic tagging system enables studio-scoped tags that can be attached to any entity (Shows, Users, Clients, etc.) without requiring separate join tables per entity type.
+
+**Key Features:**
+- Studio-scoped tag management (create, update, delete tags)
+- Polymorphic tagging (attach tags to any entity type)
+- Type-safe validation using application-level enums
+- Soft delete support for both tags and taggables
+- Query tags by entity or list all entities with a specific tag
+
+### Architectural Decisions
+
+#### Polymorphism Strategy: Loose Polymorphism
+
+**Chosen Approach:** Loose polymorphism (`taggableId` + `taggableType` string fields)
+
+**Advantages:**
+- ✅ True polymorphism: any entity can be tagged without schema changes
+- ✅ Flexible for future entity types
+- ✅ Simple query patterns for "all tags on entity X"
+
+**Disadvantages:**
+- ❌ **No database-level foreign key integrity**
+- ❌ Orphaned `Taggable` records if tagged entity is deleted
+- ❌ Cannot use CASCADE delete at database level
+
+**Mitigation Strategy:**
+- Define `TaggableType` enum in application code
+- Validate all `taggableType` values against enum
+- Implement application-level cleanup hooks
+- Add periodic cleanup job for orphaned records
+
+### Module Structure
+
+Following existing patterns in `apps/erify_api/src/models/`:
+- `tag/` - Main tag module directory
+  - `tag.module.ts` - NestJS module registration
+  - `tag.service.ts` - Business logic for tags and taggables
+  - `tag.controller.ts` - Admin endpoints
+  - `dto/` - Zod validation schemas
+  - `schemas/` - Response serialization schemas
+  - `constants/taggable-types.ts` - TaggableType enum
+
+### Implementation Components
+
+#### TaggableType Enum
+
+```typescript
+export const TaggableType = {
+  SHOW: 'show',
+  USER: 'user',
+  CLIENT: 'client',
+  MC: 'mc',
+  PLATFORM: 'platform',
+  STUDIO: 'studio',
+  SCHEDULE: 'schedule',
+} as const;
+
+export type TaggableType = typeof TaggableType[keyof typeof TaggableType];
 ```
+
+#### Tag Service Methods
+
+**Core Methods:**
+- `createTag(dto)` - Create studio-scoped tag
+- `updateTag(id, dto)` - Update tag name/metadata
+- `deleteTag(id)` - Soft delete tag (cascades to taggables via Prisma)
+- `findAll(filters)` - List tags with pagination, filter by studio
+- `findOne(id)` - Get single tag with taggables included
+- `attachTag(tagId, entityId, entityType)` - Create taggable link
+- `detachTag(tagId, entityId, entityType)` - Soft delete taggable link
+- `getTagsForEntity(entityId, entityType)` - Get all tags on an entity
+- `getEntitiesWithTag(tagId)` - Get all entities tagged with a tag
+
+#### Admin Endpoints
+
+- `POST /admin/tags` - Create tag
+- `GET /admin/tags` - List tags (filter by studio_id)
+- `GET /admin/tags/:id` - Get tag details
+- `PATCH /admin/tags/:id` - Update tag
+- `DELETE /admin/tags/:id` - Delete tag
+- `POST /admin/tags/:id/attach` - Attach tag to entity
+- `POST /admin/tags/:id/detach` - Detach tag from entity
+- `GET /admin/tags/:id/entities` - List entities with this tag
+
+### Implementation Steps
+
+1. **Database Schema Migration**
+   - Add `Tag` and `Taggable` models to `schema.prisma`
+   - Update `Studio` model with `tags` relation
+   - Run `npx prisma migrate dev --name add-polymorphic-tagging`
+
+2. **Create Module Structure**
+   - Create `src/models/tag/` directory
+   - Create subdirectories: `dto/`, `schemas/`, `constants/`
+   - Create `TaggableType` enum
+
+3. **Implement Service Layer**
+   - Create `tag.service.ts` with core CRUD methods
+   - Implement soft delete filtering (follow `database-patterns` skill)
+   - Add transaction support for attach/detach operations
+
+4. **Implement Controller Layer**
+   - Create `tag.controller.ts` with admin endpoints
+   - Add Zod validation schemas in `dto/`
+   - Add response schemas in `schemas/`
+   - Apply `@AdminProtected()` decorator
+
+5. **Register Module**
+   - Create `tag.module.ts`
+   - Import `TagModule` in `app.module.ts`
+
+6. **Testing**
+   - Write unit tests for `TagService`
+   - Write e2e tests for `TagController`
+   - Test with Prisma Studio
+   - Manual API testing
+
+### Future Enhancements
+
+- **Cleanup Hooks:** Automatically delete orphaned `Taggable` records when entities are deleted
+- **Periodic Cleanup Job:** Scheduled task to find and remove orphaned records
+- **Tag Analytics:** Count entities per tag, most-used tags
+- **Tag Suggestions:** Auto-suggest tags based on entity attributes
+- **Bulk Tagging:** Attach/detach tags to multiple entities at once
+
+---
+
+
 
 ### Task Management System
 
