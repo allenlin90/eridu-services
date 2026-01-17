@@ -2,10 +2,13 @@ import type { ColumnDef } from '@tanstack/react-table';
 
 import type { StudioRoomApiResponse } from '@eridu/api-types/studio-rooms';
 
+import { CopyIdCell } from '@/features/admin/components/copy-id-cell';
+
 export const studioRoomColumns: ColumnDef<StudioRoomApiResponse>[] = [
   {
     accessorKey: 'id',
     header: 'ID',
+    cell: ({ row }) => <CopyIdCell id={row.original.id} />,
   },
   {
     accessorKey: 'name',
