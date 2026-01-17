@@ -7,7 +7,7 @@ import {
   AdminFormDialog,
   DeleteConfirmDialog,
 } from '@/features/admin/components';
-import type { Show } from '@/features/shows/config/show-columns';
+import type { Show } from '@/features/shows/api/get-shows';
 
 type UpdateShowFormData = z.infer<typeof updateShowInputSchema>;
 

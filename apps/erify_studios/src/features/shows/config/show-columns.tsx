@@ -1,7 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
-import type { ShowApiResponse } from '@eridu/api-types/shows';
-
 import {
   CopyIdCell,
   DateCell,
@@ -10,11 +8,7 @@ import {
   ShowStatusBadge,
   ShowTypeBadge,
 } from '@/features/admin/components/show-table-cells';
-
-export type Show = ShowApiResponse & {
-  mcs: { mc_name: string }[];
-  platforms: { platform_name: string }[];
-};
+import type { Show } from '@/features/shows/api/get-shows';
 
 export const showColumns: ColumnDef<Show>[] = [
   {

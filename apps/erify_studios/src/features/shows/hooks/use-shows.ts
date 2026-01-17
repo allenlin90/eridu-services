@@ -1,19 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type { z } from 'zod';
 
-import type { updateShowInputSchema } from '@eridu/api-types/shows';
 import { useTableUrlState } from '@eridu/ui';
 
-import type { Show } from '@/features/shows/config/show-columns';
-import { queryKeys } from '@/lib/api/query-keys';
-import {
-  useAdminDelete,
-  useAdminList,
-  useAdminUpdate,
-} from '@/lib/hooks/use-admin-crud';
-
-type UpdateShowFormData = z.infer<typeof updateShowInputSchema>;
+import { useDeleteShow } from '@/features/shows/api/delete-show';
+import { useShowsQuery } from '@/features/shows/api/get-shows';
+import { useUpdateShow } from '@/features/shows/api/update-show';
 
 type UseShowsParams = {
   name?: string;
@@ -50,17 +42,10 @@ export function useShows(params: UseShowsParams) {
     onSortingChange,
   } = useTableUrlState(TABLE_OPTIONS);
 
-  const { data, isLoading, isFetching } = useAdminList<Show>('shows', {
+  const { data, isLoading, isFetching } = useShowsQuery({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
-    name: params.name,
-    client_name: params.client_name,
-    mc_name: params.mc_name,
-    start_date_from: params.start_date_from,
-    start_date_to: params.start_date_to,
-    order_by: params.sortBy,
-    order_direction: params.sortOrder,
-    id: params.id,
+    ...params,
   });
 
   useEffect(() => {
@@ -69,12 +54,12 @@ export function useShows(params: UseShowsParams) {
     }
   }, [data?.meta?.totalPages, setPageCount]);
 
-  const updateMutation = useAdminUpdate<Show, UpdateShowFormData>('shows');
-  const deleteMutation = useAdminDelete('shows');
+  const updateMutation = useUpdateShow();
+  const deleteMutation = useDeleteShow();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({
-      queryKey: queryKeys.admin.lists('shows'),
+      queryKey: ['shows'],
     });
   };
 
