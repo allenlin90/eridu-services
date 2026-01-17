@@ -1,5 +1,4 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UsersList } from '../routes/system/users/index';
@@ -10,6 +9,7 @@ const mockUseAdminCreate = vi.fn();
 const mockUseAdminUpdate = vi.fn();
 const mockUseAdminDelete = vi.fn();
 const mockInvalidateQueries = vi.fn();
+const mockUseTableUrlState = vi.fn();
 
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({
@@ -18,13 +18,7 @@ vi.mock('@tanstack/react-query', () => ({
 }));
 
 vi.mock('@eridu/ui', () => ({
-  useTableUrlState: () => ({
-    pagination: { pageIndex: 0, pageSize: 10 },
-    onPaginationChange: vi.fn(),
-    setPageCount: vi.fn(),
-    columnFilters: [],
-    onColumnFiltersChange: vi.fn(),
-  }),
+  useTableUrlState: (...args: any[]) => mockUseTableUrlState(...args),
   Select: ({ children, ...props }: any) => <select {...props}>{children}</select>,
   SelectTrigger: ({ children }: any) => <div>{children}</div>,
   SelectValue: ({ placeholder }: any) => <div>{placeholder}</div>,
@@ -108,6 +102,14 @@ describe('usersList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    mockUseTableUrlState.mockReturnValue({
+      pagination: { pageIndex: 0, pageSize: 10 },
+      onPaginationChange: vi.fn(),
+      setPageCount: vi.fn(),
+      columnFilters: [],
+      onColumnFiltersChange: vi.fn(),
+    });
+
     mockUseAdminList.mockReturnValue({
       data: {
         data: [],
@@ -155,6 +157,22 @@ describe('usersList', () => {
 
     expect(screen.getByText('User One')).toBeInTheDocument();
     expect(screen.getByText('User Two')).toBeInTheDocument();
+  });
+
+  it('filters by external ID when present in URL state', () => {
+    mockUseTableUrlState.mockReturnValue({
+      pagination: { pageIndex: 0, pageSize: 10 },
+      onPaginationChange: vi.fn(),
+      setPageCount: vi.fn(),
+      columnFilters: [{ id: 'ext_id', value: 'ext_123' }],
+      onColumnFiltersChange: vi.fn(),
+    } as any);
+
+    render(<UsersList />);
+
+    expect(mockUseAdminList).toHaveBeenCalledWith('users', expect.objectContaining({
+      ext_id: 'ext_123',
+    }));
   });
 
   it('opens create dialog with external ID field', () => {

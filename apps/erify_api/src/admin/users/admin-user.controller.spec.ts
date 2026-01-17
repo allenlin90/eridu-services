@@ -135,6 +135,8 @@ describe('adminUserController', () => {
         take: query.take,
         name: undefined,
         email: undefined,
+        uid: undefined,
+        extId: undefined,
       });
       expect(result).toEqual({
         data: users,
@@ -150,8 +152,9 @@ describe('adminUserController', () => {
         take: 10,
         name: 'test',
         email: 'test@example.com',
+        extId: 'ext_123',
       } as ListUsersQueryDto;
-      const users = [{ uid: 'user_1', name: 'test', email: 'test@example.com' }];
+      const users = [{ uid: 'user_1', name: 'test', email: 'test@example.com', extId: 'ext_123' }];
       const total = 1;
 
       mockUserService.listUsers.mockResolvedValue({
@@ -165,6 +168,8 @@ describe('adminUserController', () => {
         take: query.take,
         name: 'test',
         email: 'test@example.com',
+        uid: undefined,
+        extId: 'ext_123',
       });
     });
   });
