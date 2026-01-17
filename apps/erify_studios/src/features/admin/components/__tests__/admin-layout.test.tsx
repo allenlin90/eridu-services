@@ -207,4 +207,15 @@ describe('adminLayout', () => {
     expect(screen.getByText('Add New')).toBeInTheDocument();
     expect(screen.getByText('Refresh')).toBeInTheDocument();
   });
+
+  it('renders breadcrumbs when provided', () => {
+    render(
+      <AdminLayout title="Test Title" breadcrumbs={<div data-testid="breadcrumbs">Breadcrumbs</div>}>
+        <div>Content</div>
+      </AdminLayout>,
+    );
+
+    expect(screen.getByTestId('breadcrumbs')).toBeInTheDocument();
+    expect(screen.getByText('Breadcrumbs')).toBeInTheDocument();
+  });
 });
