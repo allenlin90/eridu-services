@@ -200,6 +200,7 @@ export const listUsersFilterSchema = z.object({
   name: z.string().optional(),
   email: z.string().optional(),
   id: z.string().optional(),
+  ext_id: z.string().optional(),
 });
 
 export const listUsersQuerySchema = z
@@ -216,6 +217,7 @@ export const listUsersQuerySchema = z
     name: data.name,
     email: data.email,
     uid: data.id,
+    extId: data.ext_id,
   }));
 
 export class ListUsersQueryDto extends createZodDto(listUsersQuerySchema) {
@@ -226,4 +228,5 @@ export class ListUsersQueryDto extends createZodDto(listUsersQuerySchema) {
   declare name: string | undefined;
   declare email: string | undefined;
   declare uid: string | undefined;
+  declare extId: string | undefined;
 }

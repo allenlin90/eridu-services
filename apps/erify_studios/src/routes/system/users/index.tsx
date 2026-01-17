@@ -34,6 +34,7 @@ const usersSearchSchema = z.object({
   name: z.string().optional().catch(undefined),
   email: z.string().optional().catch(undefined),
   id: z.string().optional().catch(undefined),
+  ext_id: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/system/users/')({
@@ -74,6 +75,8 @@ export function UsersList() {
     ?.value as string | undefined;
   const idFilter = columnFilters.find((filter) => filter.id === 'id')
     ?.value as string | undefined;
+  const extIdFilter = columnFilters.find((filter) => filter.id === 'ext_id')
+    ?.value as string | undefined;
 
   // Fetch users list
   const { data, isLoading, isFetching } = useAdminList<User>('users', {
@@ -82,6 +85,7 @@ export function UsersList() {
     name: nameFilter,
     email: emailFilter,
     id: idFilter,
+    ext_id: extIdFilter,
   });
 
   // Sync page count for auto-correction
@@ -176,6 +180,7 @@ export function UsersList() {
           { id: 'name', title: 'Name' },
           { id: 'email', title: 'Email' },
           { id: 'id', title: 'ID' },
+          { id: 'ext_id', title: 'External ID' },
         ]}
         searchPlaceholder="Search by name..."
         pagination={
