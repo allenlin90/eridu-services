@@ -127,8 +127,8 @@ vi.mock('@/features/admin/components', () => ({
 
 // Mock Hooks
 const mockMutateAsync = vi.fn();
-vi.mock('@/lib/hooks/use-admin-crud', () => ({
-  useAdminList: vi.fn(() => ({
+vi.mock('@/features/studio-rooms/api/get-studio-rooms', () => ({
+  useStudioRoomsQuery: vi.fn(() => ({
     data: {
       data: [
         {
@@ -141,16 +141,26 @@ vi.mock('@/lib/hooks/use-admin-crud', () => ({
       meta: { total: 1, page: 1, limit: 10, totalPages: 1 },
     },
     isLoading: false,
+    isFetching: false,
   })),
-  useAdminCreate: vi.fn(() => ({
+}));
+
+vi.mock('@/features/studio-rooms/api/create-studio-room', () => ({
+  useCreateStudioRoom: vi.fn(() => ({
     mutateAsync: mockMutateAsync,
     isPending: false,
   })),
-  useAdminUpdate: vi.fn(() => ({
+}));
+
+vi.mock('@/features/studio-rooms/api/update-studio-room', () => ({
+  useUpdateStudioRoom: vi.fn(() => ({
     mutateAsync: mockMutateAsync,
     isPending: false,
   })),
-  useAdminDelete: vi.fn(() => ({
+}));
+
+vi.mock('@/features/studio-rooms/api/delete-studio-room', () => ({
+  useDeleteStudioRoom: vi.fn(() => ({
     mutateAsync: mockMutateAsync,
     isPending: false,
   })),
