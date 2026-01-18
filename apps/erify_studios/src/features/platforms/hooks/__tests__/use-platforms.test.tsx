@@ -15,9 +15,9 @@ vi.mock('@eridu/ui', () => ({
   })),
 }));
 
-// Mock the admin CRUD hooks
-vi.mock('@/lib/hooks/use-admin-crud', () => ({
-  useAdminList: vi.fn(() => ({
+// Mock the explicit API hooks
+vi.mock('@/features/platforms/api/get-platforms', () => ({
+  usePlatformsQuery: vi.fn(() => ({
     data: {
       data: [],
       meta: { page: 1, limit: 10, total: 0, totalPages: 1 },
@@ -25,15 +25,24 @@ vi.mock('@/lib/hooks/use-admin-crud', () => ({
     isLoading: false,
     isFetching: false,
   })),
-  useAdminCreate: vi.fn(() => ({
+}));
+
+vi.mock('@/features/platforms/api/create-platform', () => ({
+  useCreatePlatform: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
-  useAdminUpdate: vi.fn(() => ({
+}));
+
+vi.mock('@/features/platforms/api/update-platform', () => ({
+  useUpdatePlatform: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
-  useAdminDelete: vi.fn(() => ({
+}));
+
+vi.mock('@/features/platforms/api/delete-platform', () => ({
+  useDeletePlatform: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
@@ -102,9 +111,8 @@ describe('usePlatforms', () => {
       wrapper: createWrapper(),
     });
 
-    expect(result.current.handleCreate).toBeDefined();
-    expect(result.current.handleUpdate).toBeDefined();
-    expect(typeof result.current.handleCreate).toBe('function');
-    expect(typeof result.current.handleUpdate).toBe('function');
+    expect(result.current.createMutation).toBeDefined();
+    expect(result.current.updateMutation).toBeDefined();
+    expect(result.current.deleteMutation).toBeDefined();
   });
 });
