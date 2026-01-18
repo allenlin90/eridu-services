@@ -1,25 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type { z } from 'zod';
 
-import type {
-  createMcInputSchema,
-  McApiResponse,
-  updateMcInputSchema,
-} from '@eridu/api-types/mcs';
 import { useTableUrlState } from '@eridu/ui';
 
-import { queryKeys } from '@/lib/api/query-keys';
-import {
-  useAdminCreate,
-  useAdminDelete,
-  useAdminList,
-  useAdminUpdate,
-} from '@/lib/hooks/use-admin-crud';
-
-type Mc = McApiResponse;
-type McFormData = z.infer<typeof createMcInputSchema>;
-type UpdateMcFormData = z.infer<typeof updateMcInputSchema>;
+import { useCreateMc } from '@/features/mcs/api/create-mc';
+import { useDeleteMc } from '@/features/mcs/api/delete-mc';
+import { useMcsQuery } from '@/features/mcs/api/get-mcs';
+import { useUpdateMc } from '@/features/mcs/api/update-mc';
 
 export function useMcs() {
   const queryClient = useQueryClient();
@@ -44,7 +31,7 @@ export function useMcs() {
   const idFilter = columnFilters.find((filter) => filter.id === 'id')
     ?.value as string | undefined;
 
-  const { data, isLoading, isFetching } = useAdminList<Mc>('mcs', {
+  const { data, isLoading, isFetching } = useMcsQuery({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     name: nameFilter,
@@ -58,13 +45,13 @@ export function useMcs() {
     }
   }, [data?.meta?.totalPages, setPageCount]);
 
-  const createMutation = useAdminCreate<Mc, McFormData>('mcs');
-  const updateMutation = useAdminUpdate<Mc, UpdateMcFormData>('mcs');
-  const deleteMutation = useAdminDelete('mcs');
+  const createMutation = useCreateMc();
+  const updateMutation = useUpdateMc();
+  const deleteMutation = useDeleteMc();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({
-      queryKey: queryKeys.admin.lists('mcs'),
+      queryKey: ['mcs'],
     });
   };
 
