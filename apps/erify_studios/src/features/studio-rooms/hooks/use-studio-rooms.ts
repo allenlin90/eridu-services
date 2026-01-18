@@ -1,25 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type { z } from 'zod';
 
-import type {
-  createStudioRoomInputSchema,
-  StudioRoomApiResponse,
-  updateStudioRoomInputSchema,
-} from '@eridu/api-types/studio-rooms';
 import { useTableUrlState } from '@eridu/ui';
 
-import { queryKeys } from '@/lib/api/query-keys';
-import {
-  useAdminCreate,
-  useAdminDelete,
-  useAdminList,
-  useAdminUpdate,
-} from '@/lib/hooks/use-admin-crud';
-
-type StudioRoom = StudioRoomApiResponse;
-type StudioRoomFormData = z.infer<typeof createStudioRoomInputSchema>;
-type UpdateStudioRoomFormData = z.infer<typeof updateStudioRoomInputSchema>;
+import { useCreateStudioRoom } from '@/features/studio-rooms/api/create-studio-room';
+import { useDeleteStudioRoom } from '@/features/studio-rooms/api/delete-studio-room';
+import { useStudioRoomsQuery } from '@/features/studio-rooms/api/get-studio-rooms';
+import { useUpdateStudioRoom } from '@/features/studio-rooms/api/update-studio-room';
 
 export function useStudioRooms(studioId: string) {
   const queryClient = useQueryClient();
@@ -42,7 +29,7 @@ export function useStudioRooms(studioId: string) {
   const idFilter = columnFilters.find((filter) => filter.id === 'id')
     ?.value as string | undefined;
 
-  const { data, isLoading, isFetching } = useAdminList<StudioRoom>('studio-rooms', {
+  const { data, isLoading, isFetching } = useStudioRoomsQuery({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     studio_id: studioId,
@@ -56,17 +43,17 @@ export function useStudioRooms(studioId: string) {
     }
   }, [data?.meta?.totalPages, setPageCount]);
 
-  const createMutation = useAdminCreate<StudioRoom, StudioRoomFormData>('studio-rooms');
-  const updateMutation = useAdminUpdate<StudioRoom, UpdateStudioRoomFormData>('studio-rooms');
-  const deleteMutation = useAdminDelete('studio-rooms');
+  const createMutation = useCreateStudioRoom();
+  const updateMutation = useUpdateStudioRoom();
+  const deleteMutation = useDeleteStudioRoom();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({
-      queryKey: queryKeys.admin.lists('studio-rooms'),
+      queryKey: ['studio-rooms'],
     });
   };
 
-  const handleCreate = async (data: StudioRoomFormData) => {
+  const handleCreate = async (data: Parameters<typeof createMutation.mutateAsync>[0]) => {
     await createMutation.mutateAsync({ ...data, studio_id: studioId });
   };
 
