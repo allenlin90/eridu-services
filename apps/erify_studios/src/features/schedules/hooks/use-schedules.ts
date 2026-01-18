@@ -1,19 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type { z } from 'zod';
 
-import type { ScheduleApiResponse, updateScheduleInputSchema } from '@eridu/api-types/schedules';
 import { useTableUrlState } from '@eridu/ui';
 
-import { queryKeys } from '@/lib/api/query-keys';
-import {
-  useAdminDelete,
-  useAdminList,
-  useAdminUpdate,
-} from '@/lib/hooks/use-admin-crud';
-
-type Schedule = ScheduleApiResponse;
-type UpdateScheduleFormData = z.infer<typeof updateScheduleInputSchema>;
+import { useDeleteSchedule } from '@/features/schedules/api/delete-schedule';
+import { useSchedulesQuery } from '@/features/schedules/api/get-schedules';
+import { useUpdateSchedule } from '@/features/schedules/api/update-schedule';
 
 type UseSchedulesParams = {
   name?: string;
@@ -37,12 +29,10 @@ export function useSchedules(params: UseSchedulesParams) {
     },
   });
 
-  const { data, isLoading, isFetching } = useAdminList<Schedule>('schedules', {
+  const { data, isLoading, isFetching } = useSchedulesQuery({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
-    name: params.name,
-    client_name: params.client_name,
-    id: params.id,
+    ...params,
   });
 
   useEffect(() => {
@@ -51,12 +41,12 @@ export function useSchedules(params: UseSchedulesParams) {
     }
   }, [data?.meta?.totalPages, setPageCount]);
 
-  const updateMutation = useAdminUpdate<Schedule, UpdateScheduleFormData>('schedules');
-  const deleteMutation = useAdminDelete('schedules');
+  const updateMutation = useUpdateSchedule();
+  const deleteMutation = useDeleteSchedule();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({
-      queryKey: queryKeys.admin.lists('schedules'),
+      queryKey: ['schedules'],
     });
   };
 
