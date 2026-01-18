@@ -1,25 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type { z } from 'zod';
 
-import type {
-  ClientApiResponse,
-  createClientInputSchema,
-  updateClientInputSchema,
-} from '@eridu/api-types/clients';
 import { useTableUrlState } from '@eridu/ui';
 
-import { queryKeys } from '@/lib/api/query-keys';
-import {
-  useAdminCreate,
-  useAdminDelete,
-  useAdminList,
-  useAdminUpdate,
-} from '@/lib/hooks/use-admin-crud';
-
-type Client = ClientApiResponse;
-type ClientFormData = z.infer<typeof createClientInputSchema>;
-type UpdateClientFormData = z.infer<typeof updateClientInputSchema>;
+import { useCreateClient } from '@/features/clients/api/create-client';
+import { useDeleteClient } from '@/features/clients/api/delete-client';
+import { useClientsQuery } from '@/features/clients/api/get-clients';
+import { useUpdateClient } from '@/features/clients/api/update-client';
 
 export function useClients() {
   const queryClient = useQueryClient();
@@ -42,7 +29,7 @@ export function useClients() {
   const idFilter = columnFilters.find((filter) => filter.id === 'id')
     ?.value as string | undefined;
 
-  const { data, isLoading, isFetching } = useAdminList<Client>('clients', {
+  const { data, isLoading, isFetching } = useClientsQuery({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     name: nameFilter,
@@ -55,13 +42,13 @@ export function useClients() {
     }
   }, [data?.meta?.totalPages, setPageCount]);
 
-  const createMutation = useAdminCreate<Client, ClientFormData>('clients');
-  const updateMutation = useAdminUpdate<Client, UpdateClientFormData>('clients');
-  const deleteMutation = useAdminDelete('clients');
+  const createMutation = useCreateClient();
+  const updateMutation = useUpdateClient();
+  const deleteMutation = useDeleteClient();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({
-      queryKey: queryKeys.admin.lists('clients'),
+      queryKey: ['clients'],
     });
   };
 
