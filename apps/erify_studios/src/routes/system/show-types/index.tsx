@@ -19,7 +19,6 @@ import {
 } from '@/features/show-types/config/show-type-columns';
 import { showTypesSearchSchema } from '@/features/show-types/config/show-type-search-schema';
 import { useShowTypes } from '@/features/show-types/hooks/use-show-types';
-import { queryKeys } from '@/lib/api/query-keys';
 
 export const Route = createFileRoute('/system/show-types/')({
   component: ShowTypesList,
@@ -79,7 +78,7 @@ function ShowTypesList() {
         onClick: () => setIsCreateDialogOpen(true),
       }}
       onRefresh={handleRefresh}
-      refreshQueryKey={queryKeys.admin.lists('show-types')}
+      refreshQueryKey={['show-types']}
     >
       <AdminTable
         data={data?.data || []}

@@ -15,7 +15,6 @@ import {
 } from '@/features/platforms/config/platform-columns';
 import { platformsSearchSchema } from '@/features/platforms/config/platform-search-schema';
 import { usePlatforms } from '@/features/platforms/hooks/use-platforms';
-import { queryKeys } from '@/lib/api/query-keys';
 
 export const Route = createFileRoute('/system/platforms/')({
   component: PlatformsList,
@@ -40,8 +39,6 @@ function PlatformsList() {
     updateMutation,
     deleteMutation,
     handleRefresh,
-    handleCreate,
-    handleUpdate,
   } = usePlatforms();
 
   const handleDelete = async () => {
@@ -57,14 +54,14 @@ function PlatformsList() {
   };
 
   const onCreateSubmit = async (formData: any) => {
-    await handleCreate(formData);
+    await createMutation.mutateAsync(formData);
     setIsCreateDialogOpen(false);
   };
 
   const onUpdateSubmit = async (formData: any) => {
     if (!editingPlatform)
       return;
-    await handleUpdate(editingPlatform.id, formData);
+    await updateMutation.mutateAsync({ id: editingPlatform.id, data: formData });
     setEditingPlatform(null);
   };
 
@@ -77,7 +74,7 @@ function PlatformsList() {
         onClick: () => setIsCreateDialogOpen(true),
       }}
       onRefresh={handleRefresh}
-      refreshQueryKey={queryKeys.admin.lists('platforms')}
+      refreshQueryKey={['platforms']}
     >
       <AdminTable
         data={data?.data || []}

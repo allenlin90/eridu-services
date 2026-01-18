@@ -20,7 +20,6 @@ import {
 } from '@/features/show-standards/config/show-standard-columns';
 import { showStandardsSearchSchema } from '@/features/show-standards/config/show-standard-search-schema';
 import { useShowStandards } from '@/features/show-standards/hooks/use-show-standards';
-import { queryKeys } from '@/lib/api/query-keys';
 
 export const Route = createFileRoute('/system/show-standards/')({
   component: ShowStandardsList,
@@ -82,7 +81,7 @@ function ShowStandardsList() {
         onClick: () => setIsCreateDialogOpen(true),
       }}
       onRefresh={handleRefresh}
-      refreshQueryKey={queryKeys.admin.lists('show-standards')}
+      refreshQueryKey={['show-standards']}
     >
       <AdminTable
         data={data?.data || []}
