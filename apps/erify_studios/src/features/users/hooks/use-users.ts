@@ -1,25 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type { z } from 'zod';
 
-import type {
-  createUserInputSchema,
-  updateUserInputSchema,
-  UserApiResponse,
-} from '@eridu/api-types/users';
 import { useTableUrlState } from '@eridu/ui';
 
-import { queryKeys } from '@/lib/api/query-keys';
-import {
-  useAdminCreate,
-  useAdminDelete,
-  useAdminList,
-  useAdminUpdate,
-} from '@/lib/hooks/use-admin-crud';
-
-type User = UserApiResponse;
-type UserFormData = z.infer<typeof createUserInputSchema>;
-type UpdateUserFormData = z.infer<typeof updateUserInputSchema>;
+import { useCreateUser } from '@/features/users/api/create-user';
+import { useDeleteUser } from '@/features/users/api/delete-user';
+import { useUsersQuery } from '@/features/users/api/get-users';
+import { useUpdateUser } from '@/features/users/api/update-user';
 
 export function useUsers() {
   const queryClient = useQueryClient();
@@ -46,7 +33,7 @@ export function useUsers() {
   const extIdFilter = columnFilters.find((filter) => filter.id === 'ext_id')
     ?.value as string | undefined;
 
-  const { data, isLoading, isFetching } = useAdminList<User>('users', {
+  const { data, isLoading, isFetching } = useUsersQuery({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     name: nameFilter,
@@ -61,13 +48,13 @@ export function useUsers() {
     }
   }, [data?.meta?.totalPages, setPageCount]);
 
-  const createMutation = useAdminCreate<User, UserFormData>('users');
-  const updateMutation = useAdminUpdate<User, UpdateUserFormData>('users');
-  const deleteMutation = useAdminDelete('users');
+  const createMutation = useCreateUser();
+  const updateMutation = useUpdateUser();
+  const deleteMutation = useDeleteUser();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({
-      queryKey: queryKeys.admin.lists('users'),
+      queryKey: ['users'],
     });
   };
 

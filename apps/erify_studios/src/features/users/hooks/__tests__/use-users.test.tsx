@@ -15,9 +15,9 @@ vi.mock('@eridu/ui', () => ({
   })),
 }));
 
-// Mock the admin CRUD hooks
-vi.mock('@/lib/hooks/use-admin-crud', () => ({
-  useAdminList: vi.fn(() => ({
+// Mock the explicit API hooks
+vi.mock('@/features/users/api/get-users', () => ({
+  useUsersQuery: vi.fn(() => ({
     data: {
       data: [],
       meta: { page: 1, limit: 10, total: 0, totalPages: 1 },
@@ -25,15 +25,24 @@ vi.mock('@/lib/hooks/use-admin-crud', () => ({
     isLoading: false,
     isFetching: false,
   })),
-  useAdminCreate: vi.fn(() => ({
+}));
+
+vi.mock('@/features/users/api/create-user', () => ({
+  useCreateUser: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
-  useAdminUpdate: vi.fn(() => ({
+}));
+
+vi.mock('@/features/users/api/update-user', () => ({
+  useUpdateUser: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
-  useAdminDelete: vi.fn(() => ({
+}));
+
+vi.mock('@/features/users/api/delete-user', () => ({
+  useDeleteUser: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
