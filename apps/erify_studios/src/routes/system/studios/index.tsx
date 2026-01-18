@@ -22,7 +22,6 @@ import {
 } from '@/features/studios/config/studio-columns';
 import { studiosSearchSchema } from '@/features/studios/config/studio-search-schema';
 import { useStudios } from '@/features/studios/hooks/use-studios';
-import { queryKeys } from '@/lib/api/query-keys';
 
 export const Route = createFileRoute('/system/studios/')({
   component: StudiosList,
@@ -87,7 +86,7 @@ export function StudiosList() {
         onClick: () => setIsCreateDialogOpen(true),
       }}
       onRefresh={handleRefresh}
-      refreshQueryKey={queryKeys.admin.lists('studios')}
+      refreshQueryKey={['studios']}
     >
       <AdminTable
         data={data?.data || []}

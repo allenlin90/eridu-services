@@ -17,7 +17,6 @@ import {
 } from '@/features/schedules/config/schedule-columns';
 import { schedulesSearchSchema } from '@/features/schedules/config/schedule-search-schema';
 import { useSchedules } from '@/features/schedules/hooks/use-schedules';
-import { queryKeys } from '@/lib/api/query-keys';
 
 export const Route = createFileRoute('/admin/schedules/')({
   component: SchedulesList,
@@ -69,7 +68,7 @@ function SchedulesList() {
       title="Schedules"
       description="Manage schedules"
       onRefresh={handleRefresh}
-      refreshQueryKey={queryKeys.admin.lists('schedules')}
+      refreshQueryKey={['schedules']}
     >
       <AdminTable
         data={data?.data || []}

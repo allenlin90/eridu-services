@@ -20,7 +20,6 @@ import {
 } from '@/features/clients/config/client-columns';
 import { clientsSearchSchema } from '@/features/clients/config/client-search-schema';
 import { useClients } from '@/features/clients/hooks/use-clients';
-import { queryKeys } from '@/lib/api/query-keys';
 
 export const Route = createFileRoute('/system/clients/')({
   component: ClientsList,
@@ -82,7 +81,7 @@ function ClientsList() {
         onClick: () => setIsCreateDialogOpen(true),
       }}
       onRefresh={handleRefresh}
-      refreshQueryKey={queryKeys.admin.lists('clients')}
+      refreshQueryKey={['clients']}
     >
       <AdminTable
         data={data?.data || []}

@@ -20,7 +20,6 @@ import {
 } from '@/features/memberships/config/membership-columns';
 import { membershipsSearchSchema } from '@/features/memberships/config/membership-search-schema';
 import { useMemberships } from '@/features/memberships/hooks/use-memberships';
-import { queryKeys } from '@/lib/api/query-keys';
 
 export const Route = createFileRoute('/system/memberships/')({
   component: MembershipsList,
@@ -83,7 +82,7 @@ function MembershipsList() {
         onClick: () => setIsCreateDialogOpen(true),
       }}
       onRefresh={handleRefresh}
-      refreshQueryKey={queryKeys.admin.lists('studio-memberships')}
+      refreshQueryKey={['memberships']}
     >
       <AdminTable
         data={data?.data || []}

@@ -19,7 +19,6 @@ import {
 } from '@/features/studio-rooms/config/studio-room-columns';
 import { studioRoomsSearchSchema } from '@/features/studio-rooms/config/studio-room-search-schema';
 import { useStudioRooms } from '@/features/studio-rooms/hooks/use-studio-rooms';
-import { queryKeys } from '@/lib/api/query-keys';
 
 export const Route = createFileRoute(
   '/system/studios/$studioId/studio-rooms/',
@@ -80,7 +79,7 @@ export function StudioRoomsList() {
       title="Studio Rooms"
       description="Manage rooms for this studio"
       onRefresh={handleRefresh}
-      refreshQueryKey={queryKeys.admin.lists('studio-rooms')}
+      refreshQueryKey={['studio-rooms']}
       action={{
         label: 'Create Room',
         onClick: () => setIsCreateDialogOpen(true),

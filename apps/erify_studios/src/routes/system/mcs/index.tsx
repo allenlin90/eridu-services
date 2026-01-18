@@ -20,7 +20,6 @@ import {
 } from '@/features/mcs/config/mc-columns';
 import { mcsSearchSchema } from '@/features/mcs/config/mc-search-schema';
 import { useMcs } from '@/features/mcs/hooks/use-mcs';
-import { queryKeys } from '@/lib/api/query-keys';
 
 export const Route = createFileRoute('/system/mcs/')({
   component: McsList,
@@ -82,7 +81,7 @@ function McsList() {
         onClick: () => setIsCreateDialogOpen(true),
       }}
       onRefresh={handleRefresh}
-      refreshQueryKey={queryKeys.admin.lists('mcs')}
+      refreshQueryKey={['mcs']}
     >
       <AdminTable
         data={data?.data || []}

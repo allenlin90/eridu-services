@@ -20,7 +20,6 @@ import {
 } from '@/features/users/config/user-columns';
 import { usersSearchSchema } from '@/features/users/config/user-search-schema';
 import { useUsers } from '@/features/users/hooks/use-users';
-import { queryKeys } from '@/lib/api/query-keys';
 
 export const Route = createFileRoute('/system/users/')({
   component: UsersList,
@@ -82,7 +81,7 @@ export function UsersList() {
         onClick: () => setIsCreateDialogOpen(true),
       }}
       onRefresh={handleRefresh}
-      refreshQueryKey={queryKeys.admin.lists('users')}
+      refreshQueryKey={['users']}
     >
       <AdminTable
         data={data?.data || []}

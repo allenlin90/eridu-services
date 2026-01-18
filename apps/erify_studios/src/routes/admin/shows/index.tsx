@@ -5,18 +5,17 @@ import type { z } from 'zod';
 import type { updateShowInputSchema } from '@eridu/api-types/shows';
 
 import { AdminLayout, AdminTable } from '@/features/admin/components';
+import type { Show } from '@/features/shows/api/get-shows';
 import {
   ShowDeleteDialog,
   ShowUpdateDialog,
 } from '@/features/shows/components/show-dialogs';
-import type { Show } from '@/features/shows/config/show-columns';
 import {
   showColumns,
   showSearchableColumns,
 } from '@/features/shows/config/show-columns';
 import { showsSearchSchema } from '@/features/shows/config/show-search-schema';
 import { useShows } from '@/features/shows/hooks/use-shows';
-import { queryKeys } from '@/lib/api/query-keys';
 
 export const Route = createFileRoute('/admin/shows/')({
   component: ShowsList,
@@ -73,7 +72,7 @@ function ShowsList() {
       title="Shows"
       description="Manage shows"
       onRefresh={handleRefresh}
-      refreshQueryKey={queryKeys.admin.lists('shows')}
+      refreshQueryKey={['shows']}
     >
       <AdminTable
         data={data?.data || []}
