@@ -1,25 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type { z } from 'zod';
 
-import type {
-  createShowStandardInputSchema,
-  ShowStandardApiResponse,
-  updateShowStandardInputSchema,
-} from '@eridu/api-types/show-standards';
 import { useTableUrlState } from '@eridu/ui';
 
-import { queryKeys } from '@/lib/api/query-keys';
-import {
-  useAdminCreate,
-  useAdminDelete,
-  useAdminList,
-  useAdminUpdate,
-} from '@/lib/hooks/use-admin-crud';
-
-type ShowStandard = ShowStandardApiResponse;
-type ShowStandardFormData = z.infer<typeof createShowStandardInputSchema>;
-type UpdateShowStandardFormData = z.infer<typeof updateShowStandardInputSchema>;
+import { useCreateShowStandard } from '@/features/show-standards/api/create-show-standard';
+import { useDeleteShowStandard } from '@/features/show-standards/api/delete-show-standard';
+import { useShowStandardsQuery } from '@/features/show-standards/api/get-show-standards';
+import { useUpdateShowStandard } from '@/features/show-standards/api/update-show-standard';
 
 export function useShowStandards() {
   const queryClient = useQueryClient();
@@ -42,26 +29,27 @@ export function useShowStandards() {
   const idFilter = columnFilters.find((filter) => filter.id === 'id')
     ?.value as string | undefined;
 
-  const { data, isLoading, isFetching } = useAdminList<ShowStandard>('show-standards', {
+  const { data, isLoading, isFetching } = useShowStandardsQuery({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     name: nameFilter,
     id: idFilter,
   });
 
+  // Sync page count for auto-correction
   useEffect(() => {
     if (data?.meta?.totalPages !== undefined) {
       setPageCount(data.meta.totalPages);
     }
   }, [data?.meta?.totalPages, setPageCount]);
 
-  const createMutation = useAdminCreate<ShowStandard, ShowStandardFormData>('show-standards');
-  const updateMutation = useAdminUpdate<ShowStandard, UpdateShowStandardFormData>('show-standards');
-  const deleteMutation = useAdminDelete('show-standards');
+  const createMutation = useCreateShowStandard();
+  const updateMutation = useUpdateShowStandard();
+  const deleteMutation = useDeleteShowStandard();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({
-      queryKey: queryKeys.admin.lists('show-standards'),
+      queryKey: ['show-standards'],
     });
   };
 
