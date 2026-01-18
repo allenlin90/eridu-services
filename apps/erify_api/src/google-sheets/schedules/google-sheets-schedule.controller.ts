@@ -58,6 +58,54 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
     super();
   }
 
+  @Post('bulk')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiZodResponse(
+    bulkCreateScheduleResultSchema,
+    'Bulk create schedules result',
+  )
+  @ZodSerializerDto(BulkCreateScheduleResultDto)
+  async bulkCreateSchedules(@Body() body: BulkCreateScheduleDto) {
+    const result = await this.scheduleService.bulkCreateSchedules(body, {
+      client: true,
+      createdByUser: true,
+      publishedByUser: true,
+    });
+
+    // Return result directly - serializer will handle transformation
+    return {
+      total: result.total,
+      successful: result.successful,
+      failed: result.failed,
+      results: result.results,
+      successful_schedules: result.successfulSchedules,
+    };
+  }
+
+  @Patch('bulk')
+  @HttpCode(HttpStatus.OK)
+  @ApiZodResponse(
+    bulkUpdateScheduleResultSchema,
+    'Bulk update schedules result',
+  )
+  @ZodSerializerDto(BulkUpdateScheduleResultDto)
+  async bulkUpdateSchedules(@Body() body: BulkUpdateScheduleDto) {
+    const result = await this.scheduleService.bulkUpdateSchedules(body, {
+      client: true,
+      createdByUser: true,
+      publishedByUser: true,
+    });
+
+    // Return result directly - serializer will handle transformation
+    return {
+      total: result.total,
+      successful: result.successful,
+      failed: result.failed,
+      results: result.results,
+      successful_schedules: result.successfulSchedules,
+    };
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiZodResponse(scheduleDto, 'Schedule created successfully')
@@ -257,54 +305,6 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
       limit: query.limit,
       orderBy: 'desc',
     });
-  }
-
-  @Post('bulk')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiZodResponse(
-    bulkCreateScheduleResultSchema,
-    'Bulk create schedules result',
-  )
-  @ZodSerializerDto(BulkCreateScheduleResultDto)
-  async bulkCreateSchedules(@Body() body: BulkCreateScheduleDto) {
-    const result = await this.scheduleService.bulkCreateSchedules(body, {
-      client: true,
-      createdByUser: true,
-      publishedByUser: true,
-    });
-
-    // Return result directly - serializer will handle transformation
-    return {
-      total: result.total,
-      successful: result.successful,
-      failed: result.failed,
-      results: result.results,
-      successful_schedules: result.successfulSchedules,
-    };
-  }
-
-  @Patch('bulk')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(
-    bulkUpdateScheduleResultSchema,
-    'Bulk update schedules result',
-  )
-  @ZodSerializerDto(BulkUpdateScheduleResultDto)
-  async bulkUpdateSchedules(@Body() body: BulkUpdateScheduleDto) {
-    const result = await this.scheduleService.bulkUpdateSchedules(body, {
-      client: true,
-      createdByUser: true,
-      publishedByUser: true,
-    });
-
-    // Return result directly - serializer will handle transformation
-    return {
-      total: result.total,
-      successful: result.successful,
-      failed: result.failed,
-      results: result.results,
-      successful_schedules: result.successfulSchedules,
-    };
   }
 
   @Get('overview/monthly')
