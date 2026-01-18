@@ -4,18 +4,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsersList } from '../routes/system/users/index';
 
 // Mock hook dependencies
-const mockUseAdminList = vi.fn();
-const mockUseAdminCreate = vi.fn();
-const mockUseAdminUpdate = vi.fn();
-const mockUseAdminDelete = vi.fn();
+const mockUseUsersQuery = vi.fn();
+const mockUseCreateUser = vi.fn();
+const mockUseUpdateUser = vi.fn();
+const mockUseDeleteUser = vi.fn();
 const mockInvalidateQueries = vi.fn();
 const mockUseTableUrlState = vi.fn();
 
-vi.mock('@tanstack/react-query', () => ({
-  useQueryClient: () => ({
-    invalidateQueries: mockInvalidateQueries,
-  }),
-}));
+vi.mock('@tanstack/react-query', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useQueryClient: () => ({
+      invalidateQueries: mockInvalidateQueries,
+    }),
+  };
+});
 
 vi.mock('@eridu/ui', () => ({
   useTableUrlState: (...args: any[]) => mockUseTableUrlState(...args),
@@ -26,11 +30,20 @@ vi.mock('@eridu/ui', () => ({
   SelectItem: ({ children, value }: any) => <option value={value}>{children}</option>,
 }));
 
-vi.mock('@/lib/hooks/use-admin-crud', () => ({
-  useAdminList: (...args: any[]) => mockUseAdminList(...args),
-  useAdminCreate: (...args: any[]) => mockUseAdminCreate(...args),
-  useAdminUpdate: (...args: any[]) => mockUseAdminUpdate(...args),
-  useAdminDelete: (...args: any[]) => mockUseAdminDelete(...args),
+vi.mock('@/features/users/api/get-users', () => ({
+  useUsersQuery: (...args: any[]) => mockUseUsersQuery(...args),
+}));
+
+vi.mock('@/features/users/api/create-user', () => ({
+  useCreateUser: (...args: any[]) => mockUseCreateUser(...args),
+}));
+
+vi.mock('@/features/users/api/update-user', () => ({
+  useUpdateUser: (...args: any[]) => mockUseUpdateUser(...args),
+}));
+
+vi.mock('@/features/users/api/delete-user', () => ({
+  useDeleteUser: (...args: any[]) => mockUseDeleteUser(...args),
 }));
 
 // Mock child components to simplify testing
@@ -110,12 +123,13 @@ describe('usersList', () => {
       onColumnFiltersChange: vi.fn(),
     });
 
-    mockUseAdminList.mockReturnValue({
+    mockUseUsersQuery.mockReturnValue({
       data: {
         data: [],
         meta: { page: 1, limit: 10, total: 0, totalPages: 0 },
       },
       isLoading: false,
+      isFetching: false,
     });
 
     const mockMutation = {
@@ -123,9 +137,9 @@ describe('usersList', () => {
       isPending: false,
     };
 
-    mockUseAdminCreate.mockReturnValue(mockMutation);
-    mockUseAdminUpdate.mockReturnValue(mockMutation);
-    mockUseAdminDelete.mockReturnValue(mockMutation);
+    mockUseCreateUser.mockReturnValue(mockMutation);
+    mockUseUpdateUser.mockReturnValue(mockMutation);
+    mockUseDeleteUser.mockReturnValue(mockMutation);
   });
 
   it('renders the users list title and create button', () => {
@@ -145,12 +159,13 @@ describe('usersList', () => {
       { id: '2', name: 'User Two', email: 'user2@example.com', created_at: new Date().toISOString() },
     ];
 
-    mockUseAdminList.mockReturnValue({
+    mockUseUsersQuery.mockReturnValue({
       data: {
         data: mockUsers,
         meta: { page: 1, limit: 10, total: 2, totalPages: 1 },
       },
       isLoading: false,
+      isFetching: false,
     });
 
     render(<UsersList />);
@@ -170,7 +185,7 @@ describe('usersList', () => {
 
     render(<UsersList />);
 
-    expect(mockUseAdminList).toHaveBeenCalledWith('users', expect.objectContaining({
+    expect(mockUseUsersQuery).toHaveBeenCalledWith(expect.objectContaining({
       ext_id: 'ext_123',
     }));
   });
@@ -199,12 +214,13 @@ describe('usersList', () => {
   it('opens edit dialog when edit button is clicked', () => {
     const mockUser = { id: '1', name: 'User One', email: 'user1@example.com', created_at: new Date().toISOString() };
 
-    mockUseAdminList.mockReturnValue({
+    mockUseUsersQuery.mockReturnValue({
       data: {
         data: [mockUser],
         meta: { page: 1, limit: 10, total: 1, totalPages: 1 },
       },
       isLoading: false,
+      isFetching: false,
     });
 
     render(<UsersList />);
@@ -218,12 +234,13 @@ describe('usersList', () => {
   it('calls update mutation when edit form is submitted', async () => {
     const mockUser = { id: '1', name: 'User One', email: 'user1@example.com', created_at: new Date().toISOString() };
 
-    mockUseAdminList.mockReturnValue({
+    mockUseUsersQuery.mockReturnValue({
       data: {
         data: [mockUser],
         meta: { page: 1, limit: 10, total: 1, totalPages: 1 },
       },
       isLoading: false,
+      isFetching: false,
     });
 
     render(<UsersList />);
@@ -239,12 +256,13 @@ describe('usersList', () => {
   it('opens delete confirmation when delete button is clicked', () => {
     const mockUser = { id: '1', name: 'User One', email: 'user1@example.com', created_at: new Date().toISOString() };
 
-    mockUseAdminList.mockReturnValue({
+    mockUseUsersQuery.mockReturnValue({
       data: {
         data: [mockUser],
         meta: { page: 1, limit: 10, total: 1, totalPages: 1 },
       },
       isLoading: false,
+      isFetching: false,
     });
 
     render(<UsersList />);
@@ -258,12 +276,13 @@ describe('usersList', () => {
   it('calls delete mutation when delete is confirmed', async () => {
     const mockUser = { id: '1', name: 'User One', email: 'user1@example.com', created_at: new Date().toISOString() };
 
-    mockUseAdminList.mockReturnValue({
+    mockUseUsersQuery.mockReturnValue({
       data: {
         data: [mockUser],
         meta: { page: 1, limit: 10, total: 1, totalPages: 1 },
       },
       isLoading: false,
+      isFetching: false,
     });
 
     render(<UsersList />);
