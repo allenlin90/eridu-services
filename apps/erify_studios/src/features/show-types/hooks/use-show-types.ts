@@ -1,22 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
-import type {
-  CreateShowTypeInput,
-  ShowTypeApiResponse,
-  UpdateShowTypeInput,
-} from '@eridu/api-types/show-types';
 import { useTableUrlState } from '@eridu/ui';
 
-import { queryKeys } from '@/lib/api/query-keys';
-import {
-  useAdminCreate,
-  useAdminDelete,
-  useAdminList,
-  useAdminUpdate,
-} from '@/lib/hooks/use-admin-crud';
-
-type ShowType = ShowTypeApiResponse;
+import { useCreateShowType } from '@/features/show-types/api/create-show-type';
+import { useDeleteShowType } from '@/features/show-types/api/delete-show-type';
+import { useShowTypesQuery } from '@/features/show-types/api/get-show-types';
+import { useUpdateShowType } from '@/features/show-types/api/update-show-type';
 
 export function useShowTypes() {
   const queryClient = useQueryClient();
@@ -39,26 +29,27 @@ export function useShowTypes() {
   const idFilter = columnFilters.find((filter) => filter.id === 'id')
     ?.value as string | undefined;
 
-  const { data, isLoading, isFetching } = useAdminList<ShowType>('show-types', {
+  const { data, isLoading, isFetching } = useShowTypesQuery({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     name: nameFilter,
     id: idFilter,
   });
 
+  // Sync page count for auto-correction
   useEffect(() => {
     if (data?.meta?.totalPages !== undefined) {
       setPageCount(data.meta.totalPages);
     }
   }, [data?.meta?.totalPages, setPageCount]);
 
-  const createMutation = useAdminCreate<ShowType, CreateShowTypeInput>('show-types');
-  const updateMutation = useAdminUpdate<ShowType, UpdateShowTypeInput>('show-types');
-  const deleteMutation = useAdminDelete('show-types');
+  const createMutation = useCreateShowType();
+  const updateMutation = useUpdateShowType();
+  const deleteMutation = useDeleteShowType();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({
-      queryKey: queryKeys.admin.lists('show-types'),
+      queryKey: ['show-types'],
     });
   };
 

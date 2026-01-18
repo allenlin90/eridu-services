@@ -15,9 +15,9 @@ vi.mock('@eridu/ui', () => ({
   })),
 }));
 
-// Mock the admin CRUD hooks
-vi.mock('@/lib/hooks/use-admin-crud', () => ({
-  useAdminList: vi.fn(() => ({
+// Mock the explicit API hooks
+vi.mock('@/features/show-types/api/get-show-types', () => ({
+  useShowTypesQuery: vi.fn(() => ({
     data: {
       data: [],
       meta: { page: 1, limit: 10, total: 0, totalPages: 1 },
@@ -25,15 +25,24 @@ vi.mock('@/lib/hooks/use-admin-crud', () => ({
     isLoading: false,
     isFetching: false,
   })),
-  useAdminCreate: vi.fn(() => ({
+}));
+
+vi.mock('@/features/show-types/api/create-show-type', () => ({
+  useCreateShowType: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
-  useAdminUpdate: vi.fn(() => ({
+}));
+
+vi.mock('@/features/show-types/api/update-show-type', () => ({
+  useUpdateShowType: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
-  useAdminDelete: vi.fn(() => ({
+}));
+
+vi.mock('@/features/show-types/api/delete-show-type', () => ({
+  useDeleteShowType: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
