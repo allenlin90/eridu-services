@@ -1,26 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type { z } from 'zod';
 
-import type {
-  createMembershipInputSchema,
-  MembershipApiResponse,
-  updateMembershipInputSchema,
-} from '@eridu/api-types/memberships';
-import type { StudioApiResponse } from '@eridu/api-types/studios';
 import { useTableUrlState } from '@eridu/ui';
 
-import { queryKeys } from '@/lib/api/query-keys';
-import {
-  useAdminCreate,
-  useAdminDelete,
-  useAdminList,
-  useAdminUpdate,
-} from '@/lib/hooks/use-admin-crud';
-
-type Membership = MembershipApiResponse;
-type MembershipFormData = z.infer<typeof createMembershipInputSchema>;
-type UpdateMembershipFormData = z.infer<typeof updateMembershipInputSchema>;
+import { useCreateMembership } from '@/features/memberships/api/create-membership';
+import { useDeleteMembership } from '@/features/memberships/api/delete-membership';
+import { useMembershipsQuery } from '@/features/memberships/api/get-memberships';
+import { useUpdateMembership } from '@/features/memberships/api/update-membership';
+import { useStudiosQuery } from '@/features/studios/api/get-studios';
 
 export function useMemberships() {
   const queryClient = useQueryClient();
@@ -45,7 +32,7 @@ export function useMemberships() {
   const studioIdFilter = columnFilters.find((filter) => filter.id === 'studio_id')
     ?.value as string | undefined;
 
-  const { data, isLoading } = useAdminList<Membership>('studio-memberships', {
+  const { data, isLoading } = useMembershipsQuery({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     name: nameFilter,
@@ -54,7 +41,7 @@ export function useMemberships() {
   });
 
   // Fetch studios for dropdown
-  const { data: studiosData, isLoading: isLoadingStudios } = useAdminList<StudioApiResponse>('studios', {
+  const { data: studiosData, isLoading: isLoadingStudios } = useStudiosQuery({
     page: 1,
     limit: 100, // Fetch first 100 studios for now
   });
@@ -66,13 +53,13 @@ export function useMemberships() {
     }
   }, [data?.meta?.totalPages, setPageCount]);
 
-  const createMutation = useAdminCreate<Membership, MembershipFormData>('studio-memberships');
-  const updateMutation = useAdminUpdate<Membership, UpdateMembershipFormData>('studio-memberships');
-  const deleteMutation = useAdminDelete('studio-memberships');
+  const createMutation = useCreateMembership();
+  const updateMutation = useUpdateMembership();
+  const deleteMutation = useDeleteMembership();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({
-      queryKey: queryKeys.admin.lists('studio-memberships'),
+      queryKey: ['memberships'],
     });
   };
 

@@ -15,24 +15,43 @@ vi.mock('@eridu/ui', () => ({
   })),
 }));
 
-// Mock the admin CRUD hooks
-vi.mock('@/lib/hooks/use-admin-crud', () => ({
-  useAdminList: vi.fn(() => ({
+// Mock the explicit API hooks
+vi.mock('@/features/memberships/api/get-memberships', () => ({
+  useMembershipsQuery: vi.fn(() => ({
     data: {
       data: [],
       meta: { page: 1, limit: 10, total: 0, totalPages: 1 },
     },
     isLoading: false,
   })),
-  useAdminCreate: vi.fn(() => ({
+}));
+
+vi.mock('@/features/studios/api/get-studios', () => ({
+  useStudiosQuery: vi.fn(() => ({
+    data: {
+      data: [],
+      meta: { page: 1, limit: 10, total: 0, totalPages: 1 },
+    },
+    isLoading: false,
+  })),
+}));
+
+vi.mock('@/features/memberships/api/create-membership', () => ({
+  useCreateMembership: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
-  useAdminUpdate: vi.fn(() => ({
+}));
+
+vi.mock('@/features/memberships/api/update-membership', () => ({
+  useUpdateMembership: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
-  useAdminDelete: vi.fn(() => ({
+}));
+
+vi.mock('@/features/memberships/api/delete-membership', () => ({
+  useDeleteMembership: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
