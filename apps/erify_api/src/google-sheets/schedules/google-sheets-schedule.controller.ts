@@ -10,6 +10,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiOperation } from '@nestjs/swagger';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { z } from 'zod';
 
@@ -59,6 +60,11 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   }
 
   @Post('bulk')
+  @ApiOperation({
+    summary: 'Bulk create schedules',
+    description:
+      'Create multiple schedules for different clients in a single operation. Used by Apps Script to initialize planning for multiple clients.',
+  })
   @HttpCode(HttpStatus.CREATED)
   @ApiZodResponse(
     bulkCreateScheduleResultSchema,
@@ -83,6 +89,11 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   }
 
   @Patch('bulk')
+  @ApiOperation({
+    summary: 'Bulk update schedules',
+    description:
+      'Update multiple schedules in a single operation. Used by Apps Script to batch updates.',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiZodResponse(
     bulkUpdateScheduleResultSchema,
@@ -107,6 +118,11 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   }
 
   @Post()
+  @ApiOperation({
+    summary: 'Create schedule',
+    description:
+      'Create a single schedule with initial plan document. Returns schedule ID and initial version (1).',
+  })
   @HttpCode(HttpStatus.CREATED)
   @ApiZodResponse(scheduleDto, 'Schedule created successfully')
   @ZodSerializerDto(ScheduleDto)
@@ -120,6 +136,11 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   }
 
   @Get()
+  @ApiOperation({
+    summary: 'List schedules',
+    description:
+      'List schedules with filtering and pagination. Supports filtering by client, date range, and status.',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiZodResponse(
     createPaginatedResponseSchema(scheduleDto),
@@ -144,6 +165,11 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   }
 
   @Get(':id')
+  @ApiOperation({
+    summary: 'Get schedule details',
+    description:
+      'Get detailed schedule information including current plan document and version.',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiZodResponse(scheduleDto, 'Schedule details')
   @ZodSerializerDto(ScheduleDto)
@@ -159,6 +185,11 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   }
 
   @Patch(':id')
+  @ApiOperation({
+    summary: 'Update schedule',
+    description:
+      'Update schedule plan document. Updates JSON \'planDocument\' column only. Auto-creates \'auto_save\' snapshot before update. Increments version on success. Requires current version for optimistic locking.',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiZodResponse(scheduleDto, 'Schedule updated successfully')
   @ZodSerializerDto(ScheduleDto)
@@ -203,6 +234,10 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   }
 
   @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete schedule',
+    description: 'Soft delete a schedule.',
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteSchedule(
     @Param('id', new UidValidationPipe(ScheduleService.UID_PREFIX, 'Schedule'))
@@ -212,6 +247,11 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   }
 
   @Post(':id/validate')
+  @ApiOperation({
+    summary: 'Validate schedule',
+    description:
+      'Validate schedule before publishing. Checks for room conflicts, MC double-bookings, invalid UIDs, and time range constraints.',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiZodResponse(
     validationResultSchema,
@@ -225,6 +265,11 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   }
 
   @Post(':id/publish')
+  @ApiOperation({
+    summary: 'Publish schedule',
+    description:
+      'Publish schedule to create actual shows. Expensive operation: Deletes existing shows and creates new ones from plan document. Creates snapshot, marks as published, and increments version. Requires current version for optimistic locking.',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiZodResponse(scheduleDto, 'Schedule published successfully')
   @ZodSerializerDto(ScheduleDto)
@@ -264,6 +309,10 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   }
 
   @Post(':id/duplicate')
+  @ApiOperation({
+    summary: 'Duplicate schedule',
+    description: 'Duplicate an existing schedule to a new one with a new name.',
+  })
   @HttpCode(HttpStatus.CREATED)
   @ApiZodResponse(scheduleDto, 'Schedule duplicated successfully')
   @ZodSerializerDto(ScheduleDto)
@@ -294,6 +343,11 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   }
 
   @Get(':id/snapshots')
+  @ApiOperation({
+    summary: 'Get snapshots',
+    description:
+      'Get history of schedule snapshots (auto-saves and publish checkpoints).',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiZodResponse(z.array(scheduleSnapshotDto), 'List of schedule snapshots')
   async getScheduleSnapshots(
@@ -308,6 +362,11 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   }
 
   @Get('overview/monthly')
+  @ApiOperation({
+    summary: 'Monthly overview',
+    description:
+      'View all schedules grouped by client for a specific month. Useful for high-level planning overview.',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiZodResponse(
     monthlyOverviewResponseSchema,
