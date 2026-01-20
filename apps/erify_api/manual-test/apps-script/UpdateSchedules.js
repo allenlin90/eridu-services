@@ -314,6 +314,16 @@ function parseShowFromRow(row, platformMap) {
     ids: { tiktok: tiktok_ticket_id, shopee: shopee_ticket_id, lazada: lazada_ticket_id }
   });
 
+  // Parse Lists (MC)
+  const parseList = (str) => {
+    if (!str) return [];
+    return str.toString().split(',').map(s => s.trim()).filter(Boolean);
+  };
+
+  const mcList = parseList(mcs).map(uid => ({ mcUid: uid }));
+  // Studio room is single relation
+  const studioRoomUid = studio_rooms ? studio_rooms.toString().trim() : null;
+
   // Defaults
   const showItem = {
       ...(show_id && { tempId: show_id }),
@@ -326,6 +336,8 @@ function parseShowFromRow(row, platformMap) {
       showStandardUid: show_standard || DEFAULTS.SHOW_STANDARD_UID,
       note: note || '',
       ...(platformList.length && { platforms: platformList }),
+      ...(mcList.length && { mcs: mcList }),
+      ...(studioRoomUid && { studioRoomUid: studioRoomUid }),
   };
 
   return {
