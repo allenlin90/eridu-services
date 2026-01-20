@@ -33,6 +33,9 @@ describe('validationService', () => {
     mC: {
       findMany: jest.Mock;
     };
+    show: {
+      findMany: jest.Mock;
+    };
     platform: {
       findMany: jest.Mock;
     };
@@ -58,6 +61,9 @@ describe('validationService', () => {
     mC: {
       findMany: jest.Mock;
     };
+    show: {
+      findMany: jest.Mock;
+    };
     platform: {
       findMany: jest.Mock;
     };
@@ -81,20 +87,20 @@ describe('validationService', () => {
         name: 'Test Show 1',
         startTime: '2024-01-01T10:00:00Z',
         endTime: '2024-01-01T12:00:00Z',
-        clientUid: 'client_test123',
-        studioRoomUid: 'room_test123',
-        showTypeUid: 'sht_test123',
-        showStatusUid: 'shst_test123',
-        showStandardUid: 'shsd_test123',
+        clientId: 'client_test123',
+        studioRoomId: 'room_test123',
+        showTypeId: 'sht_test123',
+        showStatusId: 'shst_test123',
+        showStandardId: 'shsd_test123',
         mcs: [
           {
-            mcUid: 'mc_test123',
+            mcId: 'mc_test123',
             note: 'MC Note 1',
           },
         ],
         platforms: [
           {
-            platformUid: 'platform_test123',
+            platformId: 'platform_test123',
             liveStreamLink: 'https://example.com/stream1',
             platformShowId: 'platform_show_1',
           },
@@ -106,11 +112,11 @@ describe('validationService', () => {
         name: 'Test Show 2',
         startTime: '2024-01-02T10:00:00Z',
         endTime: '2024-01-02T12:00:00Z',
-        clientUid: 'client_test123',
-        studioRoomUid: undefined, // No room for show 2
-        showTypeUid: 'sht_test123',
-        showStatusUid: 'shst_test123',
-        showStandardUid: 'shsd_test123',
+        clientId: 'client_test123',
+        studioRoomId: undefined, // No room for show 2
+        showTypeId: 'sht_test123',
+        showStatusId: 'shst_test123',
+        showStandardId: 'shsd_test123',
         mcs: [],
         platforms: [],
       },
@@ -146,6 +152,9 @@ describe('validationService', () => {
       mC: {
         findMany: jest.fn(),
       },
+      show: {
+        findMany: jest.fn(),
+      },
       platform: {
         findMany: jest.fn(),
       },
@@ -168,6 +177,9 @@ describe('validationService', () => {
         findMany: jest.fn(),
       },
       mC: {
+        findMany: jest.fn(),
+      },
+      show: {
         findMany: jest.fn(),
       },
       platform: {
@@ -193,6 +205,7 @@ describe('validationService', () => {
             showType: mockPrismaClient.showType,
             showStatus: mockPrismaClient.showStatus,
             showStandard: mockPrismaClient.showStandard,
+            show: mockPrismaClient.show,
             mC: mockPrismaClient.mC,
             platform: mockPrismaClient.platform,
           },
@@ -249,6 +262,7 @@ describe('validationService', () => {
       mockTransactionClient.showStandard.findMany.mockResolvedValue(
         defaultShowStandardMock,
       );
+      mockTransactionClient.show.findMany.mockResolvedValue([]);
       mockTransactionClient.mC.findMany.mockResolvedValue(defaultMcMock);
       mockTransactionClient.platform.findMany.mockResolvedValue(
         defaultPlatformMock,
@@ -265,6 +279,7 @@ describe('validationService', () => {
       mockPrismaClient.showStandard.findMany.mockResolvedValue(
         defaultShowStandardMock,
       );
+      mockPrismaClient.show.findMany.mockResolvedValue([]);
       mockPrismaClient.mC.findMany.mockResolvedValue(defaultMcMock);
       mockPrismaClient.platform.findMany.mockResolvedValue(defaultPlatformMock);
     });
@@ -272,6 +287,45 @@ describe('validationService', () => {
     it('should validate a valid schedule successfully', async () => {
       const result = await service.validateSchedule(mockScheduleData);
 
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should handle undefined values in UID lookups gracefully', async () => {
+      // Clone the mock data to avoid mutating shared state
+      // Clone the mock data using spread to avoid BigInt serialization issues and mutation
+      const schedule = {
+        ...mockScheduleData,
+        planDocument: {
+          ...mockScheduleData.planDocument,
+          shows: mockScheduleData.planDocument.shows.map((s) => ({ ...s })),
+        },
+      };
+      const show = schedule.planDocument.shows[0];
+
+      // Simulate partial objects that might cause undefined values in collection
+      // specifically for mcs array items where mcId might be missing/undefined if malformed
+      show.mcs = [{ mcId: undefined }, { mcId: 'mc_valid' }] as any;
+
+      // Setup successful mocks for everything else
+      const validClient = [{ id: 1n, uid: show.clientId }];
+      mockPrismaClient.client.findMany.mockResolvedValue(validClient as any);
+      mockPrismaClient.studioRoom.findMany.mockResolvedValue([{ id: 1n, uid: show.studioRoomId }] as any);
+      mockPrismaClient.showType.findMany.mockResolvedValue([{ id: 1n, uid: show.showTypeId }] as any);
+      mockPrismaClient.showStatus.findMany.mockResolvedValue([{ id: 1n, uid: show.showStatusId }] as any);
+      mockPrismaClient.showStandard.findMany.mockResolvedValue([{ id: 1n, uid: show.showStandardId }] as any);
+      mockPrismaClient.platform.findMany.mockResolvedValue([]);
+
+      // Should query only for 'mc_valid', filtering out undefined
+      mockPrismaClient.mC.findMany.mockResolvedValue([{ id: 2n, uid: 'mc_valid' }] as any);
+
+      // Clear platforms to avoid unrelated errors
+      show.platforms = [];
+
+      const result = await service.validateSchedule(schedule);
+
+      // The undefined MC should be ignored, and since 'mc_valid' is found and other fields are valid,
+      // validation should pass.
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
@@ -379,7 +433,7 @@ describe('validationService', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'reference_not_found',
-          message: 'Client with UID client_test123 not found',
+          message: 'Client with ID client_test123 not found',
           showIndex: 0,
           showTempId: 'temp_1',
         }),
@@ -387,7 +441,7 @@ describe('validationService', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'reference_not_found',
-          message: 'Client with UID client_test123 not found',
+          message: 'Client with ID client_test123 not found',
           showIndex: 1,
           showTempId: 'temp_2',
         }),
@@ -403,14 +457,14 @@ describe('validationService', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'reference_not_found',
-          message: 'Studio room with UID room_test123 not found',
+          message: 'Studio Room with ID room_test123 not found',
           showIndex: 0,
           showTempId: 'temp_1',
         }),
       );
     });
 
-    it('should validate successfully when studioRoomUid is missing', async () => {
+    it('should validate successfully when studioRoomId is missing', async () => {
       const scheduleWithMissingRoom = {
         ...mockScheduleData,
         planDocument: {
@@ -418,7 +472,7 @@ describe('validationService', () => {
           shows: [
             {
               ...mockValidPlanDocument.shows[0],
-              studioRoomUid: undefined,
+              studioRoomId: undefined,
             },
           ],
         },
@@ -439,7 +493,7 @@ describe('validationService', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'reference_not_found',
-          message: 'Show type with UID sht_test123 not found',
+          message: 'Show type with ID sht_test123 not found',
         }),
       );
     });
@@ -453,7 +507,7 @@ describe('validationService', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'reference_not_found',
-          message: 'Show status with UID shst_test123 not found',
+          message: 'Show status with ID shst_test123 not found',
         }),
       );
     });
@@ -467,7 +521,7 @@ describe('validationService', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'reference_not_found',
-          message: 'Show standard with UID shsd_test123 not found',
+          message: 'Show standard with ID shsd_test123 not found',
         }),
       );
     });
@@ -481,7 +535,7 @@ describe('validationService', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'reference_not_found',
-          message: 'MC with UID mc_test123 not found',
+          message: 'MC with ID mc_test123 not found',
           showIndex: 0,
           showTempId: 'temp_1',
         }),
@@ -497,7 +551,7 @@ describe('validationService', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'reference_not_found',
-          message: 'Platform with UID platform_test123 not found',
+          message: 'Platform with ID platform_test123 not found',
           showIndex: 0,
           showTempId: 'temp_1',
         }),
@@ -521,7 +575,7 @@ describe('validationService', () => {
       expect(result.errors).toHaveLength(2); // One for each show
       expect(result.errors).toContainEqual(
         expect.objectContaining({
-          type: 'reference_not_found',
+          type: 'invalid_relationship',
           message: expect.stringContaining(
             'belongs to a different client than the schedule',
           ) as string,
@@ -540,13 +594,13 @@ describe('validationService', () => {
           shows: [
             {
               ...mockValidPlanDocument.shows[0],
-              studioRoomUid: 'room_test123',
+              studioRoomId: 'room_test123',
               startTime: '2024-01-01T10:00:00Z',
               endTime: '2024-01-01T12:00:00Z',
             },
             {
               ...mockValidPlanDocument.shows[1],
-              studioRoomUid: 'room_test123', // Same room
+              studioRoomId: 'room_test123', // Same room
               startTime: '2024-01-01T11:00:00Z', // Overlapping time
               endTime: '2024-01-01T13:00:00Z',
             },
@@ -579,13 +633,13 @@ describe('validationService', () => {
           shows: [
             {
               ...mockValidPlanDocument.shows[0],
-              studioRoomUid: undefined, // No room
+              studioRoomId: undefined, // No room
               startTime: '2024-01-01T10:00:00Z',
               endTime: '2024-01-01T12:00:00Z',
             },
             {
               ...mockValidPlanDocument.shows[1],
-              studioRoomUid: undefined, // No room
+              studioRoomId: undefined, // No room
               startTime: '2024-01-01T11:00:00Z', // Overlapping time
               endTime: '2024-01-01T13:00:00Z',
             },
@@ -610,13 +664,13 @@ describe('validationService', () => {
           shows: [
             {
               ...mockValidPlanDocument.shows[0],
-              mcs: [{ mcUid: 'mc_test123', note: 'MC 1' }],
+              mcs: [{ mcId: 'mc_test123', note: 'MC 1' }],
               startTime: '2024-01-01T10:00:00Z',
               endTime: '2024-01-01T12:00:00Z',
             },
             {
               ...mockValidPlanDocument.shows[1],
-              mcs: [{ mcUid: 'mc_test123', note: 'MC 2' }], // Same MC
+              mcs: [{ mcId: 'mc_test123', note: 'MC 2' }], // Same MC
               startTime: '2024-01-01T11:00:00Z', // Overlapping time
               endTime: '2024-01-01T13:00:00Z',
             },
@@ -654,7 +708,7 @@ describe('validationService', () => {
               ...mockValidPlanDocument.shows[0],
               startTime: '2024-01-01T12:00:00Z',
               endTime: '2024-01-01T10:00:00Z', // Invalid time range
-              clientUid: 'nonexistent_client', // Invalid reference
+              clientId: 'nonexistent_client', // Invalid reference
             },
           ],
         },
@@ -694,11 +748,11 @@ describe('validationService', () => {
               name: 'Minimal Show',
               startTime: '2024-01-01T10:00:00Z',
               endTime: '2024-01-01T12:00:00Z',
-              clientUid: 'client_test123',
-              studioRoomUid: 'room_test123',
-              showTypeUid: 'sht_test123',
-              showStatusUid: 'shst_test123',
-              showStandardUid: 'shsd_test123',
+              clientId: 'client_test123',
+              studioRoomId: 'room_test123',
+              showTypeId: 'sht_test123',
+              showStatusId: 'shst_test123',
+              showStandardId: 'shsd_test123',
               mcs: [],
               platforms: [],
             },
@@ -783,11 +837,11 @@ describe('validationService', () => {
               name: 'Overnight Show',
               startTime: '2024-01-31T23:00:00Z', // Starts before end
               endTime: '2024-02-01T02:00:00Z', // Ends after end (Next day)
-              clientUid: 'client_test123',
-              studioRoomUid: 'room_test123',
-              showTypeUid: 'sht_test123',
-              showStatusUid: 'shst_test123',
-              showStandardUid: 'shsd_test123',
+              clientId: 'client_test123',
+              studioRoomId: 'room_test123',
+              showTypeId: 'sht_test123',
+              showStatusId: 'shst_test123',
+              showStandardId: 'shsd_test123',
               mcs: [],
               platforms: [],
             },
@@ -942,6 +996,7 @@ describe('validationService', () => {
       mockTransactionClient.showStandard.findMany.mockResolvedValue(
         defaultShowStandardMock,
       );
+      mockTransactionClient.show.findMany.mockResolvedValue([]);
       mockTransactionClient.mC.findMany.mockResolvedValue(defaultMcMock);
       mockTransactionClient.platform.findMany.mockResolvedValue(
         defaultPlatformMock,
@@ -958,6 +1013,7 @@ describe('validationService', () => {
       mockPrismaClient.showStandard.findMany.mockResolvedValue(
         defaultShowStandardMock,
       );
+      mockPrismaClient.show.findMany.mockResolvedValue([]);
       mockPrismaClient.mC.findMany.mockResolvedValue(defaultMcMock);
       mockPrismaClient.platform.findMany.mockResolvedValue(defaultPlatformMock);
     });
@@ -996,11 +1052,11 @@ describe('validationService', () => {
               name: 'Boundary Show',
               startTime: '2024-01-01T00:00:00Z', // Exactly at start
               endTime: '2024-01-31T00:00:00Z', // Exactly at schedule end boundary
-              clientUid: 'client_test123',
-              studioRoomUid: 'room_test123',
-              showTypeUid: 'sht_test123',
-              showStatusUid: 'shst_test123',
-              showStandardUid: 'shsd_test123',
+              clientId: 'client_test123',
+              studioRoomId: 'room_test123',
+              showTypeId: 'sht_test123',
+              showStatusId: 'shst_test123',
+              showStandardId: 'shsd_test123',
               mcs: [],
               platforms: [],
             },
@@ -1023,8 +1079,8 @@ describe('validationService', () => {
             {
               ...mockValidPlanDocument.shows[0],
               mcs: [
-                { mcUid: 'mc_test123', note: 'MC 1' },
-                { mcUid: 'mc_test456', note: 'MC 2' },
+                { mcId: 'mc_test123', note: 'MC 1' },
+                { mcId: 'mc_test456', note: 'MC 2' },
               ],
             },
           ],
@@ -1056,12 +1112,12 @@ describe('validationService', () => {
               name: 'Show 1',
               startTime: '2024-01-01T10:00:00Z',
               endTime: '2024-01-01T12:00:00Z',
-              clientUid: 'client_test123',
-              studioRoomUid: 'room_test123',
-              showTypeUid: 'sht_test123',
-              showStatusUid: 'shst_test123',
-              showStandardUid: 'shsd_test123',
-              mcs: [{ mcUid: 'mc_test123', note: 'MC 1' }],
+              clientId: 'client_test123',
+              studioRoomId: 'room_test123',
+              showTypeId: 'sht_test123',
+              showStatusId: 'shst_test123',
+              showStandardId: 'shsd_test123',
+              mcs: [{ mcId: 'mc_test123', note: 'MC 1' }],
               platforms: [],
             },
             {
@@ -1069,12 +1125,12 @@ describe('validationService', () => {
               name: 'Show 2',
               startTime: '2024-01-01T11:00:00Z',
               endTime: '2024-01-01T13:00:00Z',
-              clientUid: 'client_test123',
-              studioRoomUid: 'room_test456',
-              showTypeUid: 'sht_test123',
-              showStatusUid: 'shst_test123',
-              showStandardUid: 'shsd_test123',
-              mcs: [{ mcUid: 'mc_test123', note: 'MC 1' }], // Same MC
+              clientId: 'client_test123',
+              studioRoomId: 'room_test456',
+              showTypeId: 'sht_test123',
+              showStatusId: 'shst_test123',
+              showStandardId: 'shsd_test123',
+              mcs: [{ mcId: 'mc_test123', note: 'MC 1' }], // Same MC
               platforms: [],
             },
           ],

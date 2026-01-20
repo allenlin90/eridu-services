@@ -76,16 +76,24 @@ export class ValidationService {
         prismaClient,
       );
       errors.push(...showErrors);
-    }
 
-    // Validate all shows belong to the same client (Phase 1: one schedule per client)
-    if (schedule.clientId !== null) {
-      const clientValidationErrors = this.validateClientConsistency(
-        shows,
-        schedule.clientId,
-        uidMaps.clients,
-      );
-      errors.push(...clientValidationErrors);
+      // Check Client Consistency
+      if (schedule.clientId) {
+        const consistencyErrors = this.validateClientConsistency(
+          show.clientId,
+          schedule.clientId,
+          uidMaps,
+          i,
+        );
+        errors.push(...consistencyErrors);
+      }
+
+      // If it's an existing show update, check if we're changing immutable fields
+      if (show.existingShowId) {
+        const _existingShow = uidMaps.existingShows.get(show.existingShowId);
+        // Logic to check immutable fields could go here if needed.
+        // For now we assume the spreadsheet is the source of truth for mutable fields.
+      }
     }
 
     // Check for internal conflicts (room and MC double-booking within schedule)
@@ -137,47 +145,55 @@ export class ValidationService {
       });
     }
 
-    // Validate reference existence
-    if (!uidMaps.clients.has(show.clientUid)) {
+    // Check for clients
+    if (!show.clientId) {
+      errors.push({
+        type: 'missing_field',
+        message: 'Client ID is missing',
+        showIndex,
+        showTempId: show.tempId,
+      });
+    } else if (!uidMaps.clients.has(show.clientId)) {
       errors.push({
         type: 'reference_not_found',
-        message: `Client with UID ${show.clientUid} not found`,
+        message: `Client with ID ${show.clientId} not found`,
         showIndex,
         showTempId: show.tempId,
       });
     }
 
-    if (show.studioRoomUid && !uidMaps.studioRooms.has(show.studioRoomUid)) {
+    // Check for studioRoom
+    if (show.studioRoomId && !uidMaps.studioRooms.has(show.studioRoomId)) {
       errors.push({
         type: 'reference_not_found',
-        message: `Studio room with UID ${show.studioRoomUid} not found`,
+        message: `Studio Room with ID ${show.studioRoomId} not found`,
         showIndex,
         showTempId: show.tempId,
       });
     }
 
-    if (!uidMaps.showTypes.has(show.showTypeUid)) {
+    if (!uidMaps.showTypes.has(show.showTypeId)) {
       errors.push({
         type: 'reference_not_found',
-        message: `Show type with UID ${show.showTypeUid} not found`,
+        message: `Show type with ID ${show.showTypeId} not found`,
         showIndex,
         showTempId: show.tempId,
       });
     }
 
-    if (!uidMaps.showStatuses.has(show.showStatusUid)) {
+    if (!uidMaps.showStatuses.has(show.showStatusId)) {
       errors.push({
         type: 'reference_not_found',
-        message: `Show status with UID ${show.showStatusUid} not found`,
+        message: `Show status with ID ${show.showStatusId} not found`,
         showIndex,
         showTempId: show.tempId,
       });
     }
 
-    if (!uidMaps.showStandards.has(show.showStandardUid)) {
+    if (!uidMaps.showStandards.has(show.showStandardId)) {
       errors.push({
         type: 'reference_not_found',
-        message: `Show standard with UID ${show.showStandardUid} not found`,
+        message: `Show standard with ID ${show.showStandardId} not found`,
         showIndex,
         showTempId: show.tempId,
       });
@@ -185,10 +201,10 @@ export class ValidationService {
 
     // Validate MCs
     for (const mc of show.mcs || []) {
-      if (!uidMaps.mcs.has(mc.mcUid)) {
+      if (mc.mcId && !uidMaps.mcs.has(mc.mcId)) {
         errors.push({
           type: 'reference_not_found',
-          message: `MC with UID ${mc.mcUid} not found`,
+          message: `MC with ID ${mc.mcId} not found`,
           showIndex,
           showTempId: show.tempId,
         });
@@ -197,10 +213,10 @@ export class ValidationService {
 
     // Validate platforms
     for (const platform of show.platforms || []) {
-      if (!uidMaps.platforms.has(platform.platformUid)) {
+      if (platform.platformId && !uidMaps.platforms.has(platform.platformId)) {
         errors.push({
           type: 'reference_not_found',
-          message: `Platform with UID ${platform.platformUid} not found`,
+          message: `Platform with ID ${platform.platformId} not found`,
           showIndex,
           showTempId: show.tempId,
         });
@@ -220,31 +236,30 @@ export class ValidationService {
    * Validates that all shows in a schedule belong to the same client.
    * Phase 1 requirement: one schedule per client.
    *
-   * @param shows - Array of show plan items
+   * @param showClientUid - The client UID from the show item
    * @param scheduleClientId - The client ID of the schedule
-   * @param clientMap - Map of client UID to client ID
+   * @param uidMaps - UID lookup maps
+   * @param showIndex - Index of the show in the plan
    * @returns Array of validation errors if any shows belong to different clients
    */
   private validateClientConsistency(
-    shows: ShowPlanItem[],
+    showClientUid: string,
     scheduleClientId: bigint,
-    clientMap: Map<string, bigint>,
+    uidMaps: Awaited<ReturnType<typeof this.buildUidLookupMaps>>,
+    showIndex: number,
   ): ValidationError[] {
     const errors: ValidationError[] = [];
 
-    for (let i = 0; i < shows.length; i++) {
-      const show = shows[i];
-      const showClientId = clientMap.get(show.clientUid);
+    const showClientId = uidMaps.clients.get(showClientUid);
 
-      // If client UID doesn't exist, it will be caught by reference validation
-      if (showClientId !== undefined && showClientId !== scheduleClientId) {
-        errors.push({
-          type: 'reference_not_found',
-          message: `Show "${show.name}" belongs to a different client than the schedule. All shows in a schedule must belong to the same client (Phase 1 requirement).`,
-          showIndex: i,
-          showTempId: show.tempId,
-        });
-      }
+    // If client UID doesn't exist, it will be caught by reference validation earlier.
+    // We only check for consistency if we resolved the ID.
+    if (showClientId && showClientId !== scheduleClientId) {
+      errors.push({
+        type: 'invalid_relationship',
+        message: `Show belongs to a different client than the schedule. All shows in a schedule must belong to the same client.`,
+        showIndex,
+      });
     }
 
     return errors;
@@ -265,9 +280,9 @@ export class ValidationService {
         const show2 = shows[j];
 
         if (
-          show1.studioRoomUid
-          && show2.studioRoomUid
-          && show1.studioRoomUid === show2.studioRoomUid
+          show1.studioRoomId
+          && show2.studioRoomId
+          && show1.studioRoomId === show2.studioRoomId
           && this.utilityService.isTimeOverlapping(
             show1.startTime,
             show1.endTime,
@@ -291,9 +306,9 @@ export class ValidationService {
       for (let j = i + 1; j < shows.length; j++) {
         const show2 = shows[j];
         const commonMcUids = (show1.mcs || [])
-          .map((mc) => mc.mcUid)
-          .filter((mcUid) =>
-            (show2.mcs || []).some((mc) => mc.mcUid === mcUid),
+          .map((mc) => mc.mcId)
+          .filter((mcId) =>
+            (show2.mcs || []).some((mc) => mc.mcId === mcId),
           );
 
         for (const mcUid of commonMcUids) {
@@ -362,9 +377,9 @@ export class ValidationService {
           },
         ],
         // Exclude existing show if we're updating it
-        ...(show.existingShowUid
+        ...(show.existingShowId
           ? {
-              uid: { not: show.existingShowUid },
+              uid: { not: show.existingShowId },
             }
           : {}),
       },
@@ -427,9 +442,9 @@ export class ValidationService {
           },
         ],
         // Exclude existing show if we're updating it
-        ...(show.existingShowUid
+        ...(show.existingShowId
           ? {
-              uid: { not: show.existingShowUid },
+              uid: { not: show.existingShowId },
             }
           : {}),
       },
@@ -456,6 +471,7 @@ export class ValidationService {
       showStandards: Map<string, bigint>;
       mcs: Map<string, bigint>;
       platforms: Map<string, bigint>;
+      existingShows: Map<string, bigint>;
     }> {
     // Collect all unique UIDs
     const clientUids = new Set<string>();
@@ -465,17 +481,19 @@ export class ValidationService {
     const showStandardUids = new Set<string>();
     const mcUids = new Set<string>();
     const platformUids = new Set<string>();
+    const existingShowIds = new Set<string>();
 
     shows.forEach((show) => {
-      clientUids.add(show.clientUid);
-      show.studioRoomUid && studioRoomUids.add(show.studioRoomUid);
-      showTypeUids.add(show.showTypeUid);
-      showStatusUids.add(show.showStatusUid);
-      showStandardUids.add(show.showStandardUid);
-      (show.mcs || []).forEach((mc) => mcUids.add(mc.mcUid));
+      show.clientId && clientUids.add(show.clientId);
+      show.studioRoomId && studioRoomUids.add(show.studioRoomId);
+      show.showTypeId && showTypeUids.add(show.showTypeId);
+      show.showStatusId && showStatusUids.add(show.showStatusId);
+      show.showStandardId && showStandardUids.add(show.showStandardId);
+      (show.mcs || []).forEach((mc) => mc.mcId && mcUids.add(mc.mcId));
       (show.platforms || []).forEach((platform) =>
-        platformUids.add(platform.platformUid),
+        platform.platformId && platformUids.add(platform.platformId),
       );
+      show.existingShowId && existingShowIds.add(show.existingShowId);
     });
 
     // Fetch all entities
@@ -487,6 +505,7 @@ export class ValidationService {
       showStandards,
       mcs,
       platforms,
+      existingShows,
     ] = await Promise.all([
       prismaClient.client.findMany({
         where: { uid: { in: Array.from(clientUids) }, deletedAt: null },
@@ -516,6 +535,10 @@ export class ValidationService {
         where: { uid: { in: Array.from(platformUids) }, deletedAt: null },
         select: { id: true, uid: true },
       }),
+      prismaClient.show.findMany({
+        where: { uid: { in: Array.from(existingShowIds) }, deletedAt: null },
+        select: { id: true, uid: true },
+      }),
     ]);
 
     // Build maps with explicit types
@@ -538,6 +561,9 @@ export class ValidationService {
     const platformMap = new Map<string, bigint>(
       platforms.map((p) => [p.uid, p.id]),
     );
+    const existingShowMap = new Map<string, bigint>(
+      existingShows.map((s) => [s.uid, s.id]),
+    );
 
     return {
       clients: clientMap,
@@ -547,6 +573,7 @@ export class ValidationService {
       showStandards: showStandardMap,
       mcs: mcMap,
       platforms: platformMap,
+      existingShows: existingShowMap,
     };
   }
 }

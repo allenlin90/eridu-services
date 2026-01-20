@@ -9,12 +9,12 @@ import { StudioService } from '@/models/studio/studio.service';
 
 // ShowPlanItem schema for plan document
 export const showPlanItemMcSchema = z.object({
-  mcUid: z.string(),
+  mcId: z.string(),
   note: z.string().optional(),
 });
 
 export const showPlanItemPlatformSchema = z.object({
-  platformUid: z.string(),
+  platformId: z.string(),
   liveStreamLink: z.string().optional(),
   platformShowId: z.string().optional(),
 });
@@ -22,15 +22,15 @@ export const showPlanItemPlatformSchema = z.object({
 export const showPlanItemSchema = z
   .object({
     tempId: z.string().optional(),
-    existingShowUid: z.string().optional(),
+    existingShowId: z.string().optional(),
     name: z.string().min(1).max(255),
     startTime: z.iso.datetime(),
     endTime: z.iso.datetime(),
-    clientUid: z.string().startsWith(ClientService.UID_PREFIX),
-    studioRoomUid: z.string().startsWith(StudioService.UID_PREFIX).optional(),
-    showTypeUid: z.string().startsWith(ShowTypeService.UID_PREFIX),
-    showStatusUid: z.string().startsWith(ShowStatusService.UID_PREFIX),
-    showStandardUid: z.string().startsWith(ShowStandardService.UID_PREFIX),
+    clientId: z.string().startsWith(ClientService.UID_PREFIX),
+    studioRoomId: z.string().startsWith(StudioService.UID_PREFIX).optional(),
+    showTypeId: z.string().startsWith(ShowTypeService.UID_PREFIX),
+    showStatusId: z.string().startsWith(ShowStatusService.UID_PREFIX),
+    showStandardId: z.string().startsWith(ShowStandardService.UID_PREFIX),
     mcs: z.array(showPlanItemMcSchema).optional().default([]),
     platforms: z.array(showPlanItemPlatformSchema).optional().default([]),
     metadata: z.record(z.string(), z.any()).optional(),
@@ -80,6 +80,8 @@ export const validationResultSchema = z.object({
         'mc_double_booking',
         'reference_not_found',
         'internal_conflict',
+        'missing_field',
+        'invalid_relationship',
       ]),
       message: z.string(),
       showIndex: z.number().optional(),

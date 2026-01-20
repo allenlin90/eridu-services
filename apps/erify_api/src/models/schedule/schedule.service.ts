@@ -380,7 +380,7 @@ export class ScheduleService extends BaseModelService {
           return {
             ...showItem,
             tempId: this.generateUid(),
-            existingShowUid: undefined, // Don't link to existing shows
+            existingShowId: undefined, // Don't link to existing shows
           };
         },
       );

@@ -124,13 +124,13 @@ export class PublishingService {
           startTime: new Date(showItem.startTime),
           endTime: new Date(showItem.endTime),
           metadata: showItem.metadata || {},
-          clientId: uidMaps.clients.get(showItem.clientUid)!,
-          studioRoomId: showItem.studioRoomUid
-            ? uidMaps.studioRooms.get(showItem.studioRoomUid)!
+          clientId: uidMaps.clients.get(showItem.clientId)!,
+          studioRoomId: showItem.studioRoomId
+            ? uidMaps.studioRooms.get(showItem.studioRoomId)!
             : null,
-          showTypeId: uidMaps.showTypes.get(showItem.showTypeUid)!,
-          showStatusId: uidMaps.showStatuses.get(showItem.showStatusUid)!,
-          showStandardId: uidMaps.showStandards.get(showItem.showStandardUid)!,
+          showTypeId: uidMaps.showTypes.get(showItem.showTypeId)!,
+          showStatusId: uidMaps.showStatuses.get(showItem.showStatusId)!,
+          showStandardId: uidMaps.showStandards.get(showItem.showStandardId)!,
           scheduleId: schedule.id,
         }));
 
@@ -157,13 +157,15 @@ export class PublishingService {
         const showMCsToCreate = planDocument.shows.flatMap(
           (showItem, index) => {
             const showId = showIdMap.get(showUids[index])!;
-            return (showItem.mcs || []).map((mc) => ({
-              uid: this.showMcService.generateShowMcUid(),
-              showId,
-              mcId: uidMaps.mcs.get(mc.mcUid)!,
-              note: mc.note,
-              metadata: {},
-            }));
+            return (showItem.mcs || [])
+              .filter((mc) => mc.mcId && uidMaps.mcs.has(mc.mcId))
+              .map((mc) => ({
+                uid: this.showMcService.generateShowMcUid(),
+                showId,
+                mcId: uidMaps.mcs.get(mc.mcId)!,
+                note: mc.note,
+                metadata: {},
+              }));
           },
         );
 
@@ -178,15 +180,21 @@ export class PublishingService {
         const showPlatformsToCreate = planDocument.shows.flatMap(
           (showItem, index) => {
             const showId = showIdMap.get(showUids[index])!;
-            return (showItem.platforms || []).map((platform) => ({
-              uid: this.showPlatformService.generateShowPlatformUid(),
-              showId,
-              platformId: uidMaps.platforms.get(platform.platformUid)!,
-              liveStreamLink: platform.liveStreamLink,
-              platformShowId: platform.platformShowId,
-              viewerCount: 0,
-              metadata: {},
-            }));
+            return (showItem.platforms || [])
+              .filter(
+                (platform) =>
+                  platform.platformId
+                  && uidMaps.platforms.has(platform.platformId),
+              )
+              .map((platform) => ({
+                uid: this.showPlatformService.generateShowPlatformUid(),
+                showId,
+                platformId: uidMaps.platforms.get(platform.platformId)!,
+                liveStreamLink: platform.liveStreamLink,
+                platformShowId: platform.platformShowId,
+                viewerCount: 0,
+                metadata: {},
+              }));
           },
         );
 
@@ -241,14 +249,14 @@ export class PublishingService {
     const platformUids = new Set<string>();
 
     shows.forEach((show) => {
-      clientUids.add(show.clientUid);
-      show.studioRoomUid && studioRoomUids.add(show.studioRoomUid);
-      showTypeUids.add(show.showTypeUid);
-      showStatusUids.add(show.showStatusUid);
-      showStandardUids.add(show.showStandardUid);
-      (show.mcs || []).forEach((mc) => mcUids.add(mc.mcUid));
+      show.clientId && clientUids.add(show.clientId);
+      show.studioRoomId && studioRoomUids.add(show.studioRoomId);
+      show.showTypeId && showTypeUids.add(show.showTypeId);
+      show.showStatusId && showStatusUids.add(show.showStatusId);
+      show.showStandardId && showStandardUids.add(show.showStandardId);
+      (show.mcs || []).forEach((mc) => mc.mcId && mcUids.add(mc.mcId));
       (show.platforms || []).forEach((platform) =>
-        platformUids.add(platform.platformUid),
+        platform.platformId && platformUids.add(platform.platformId),
       );
     });
 

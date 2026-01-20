@@ -144,20 +144,20 @@ describe('publishingService', () => {
         name: 'Test Show 1',
         startTime: '2024-01-01T10:00:00Z',
         endTime: '2024-01-01T12:00:00Z',
-        clientUid: 'client_test123',
-        studioRoomUid: 'room_test123',
-        showTypeUid: 'sht_test123',
-        showStatusUid: 'shst_test123',
-        showStandardUid: 'shsd_test123',
+        clientId: 'client_test123',
+        studioRoomId: 'room_test123',
+        showTypeId: 'sht_test123',
+        showStatusId: 'shst_test123',
+        showStandardId: 'shsd_test123',
         mcs: [
           {
-            mcUid: 'mc_test123',
+            mcId: 'mc_test123',
             note: 'MC Note 1',
           },
         ],
         platforms: [
           {
-            platformUid: 'platform_test123',
+            platformId: 'platform_test123',
             liveStreamLink: 'https://example.com/stream1',
             platformShowId: 'platform_show_1',
           },
@@ -169,11 +169,11 @@ describe('publishingService', () => {
         name: 'Test Show 2',
         startTime: '2024-01-02T10:00:00Z',
         endTime: '2024-01-02T12:00:00Z',
-        clientUid: 'client_test123',
-        studioRoomUid: 'room_test123',
-        showTypeUid: 'sht_test123',
-        showStatusUid: 'shst_test123',
-        showStandardUid: 'shsd_test123',
+        clientId: 'client_test123',
+        studioRoomId: 'room_test123',
+        showTypeId: 'sht_test123',
+        showStatusId: 'shst_test123',
+        showStandardId: 'shsd_test123',
         mcs: [],
         platforms: [],
       },
@@ -687,17 +687,17 @@ describe('publishingService', () => {
             {
               ...mockPlanDocument.shows[0],
               mcs: [
-                { mcUid: 'mc_test123', note: 'MC 1' },
-                { mcUid: 'mc_test456', note: 'MC 2' },
+                { mcId: 'mc_test123', note: 'MC 1' },
+                { mcId: 'mc_test456', note: 'MC 2' },
               ],
               platforms: [
                 {
-                  platformUid: 'platform_test123',
+                  platformId: 'platform_test123',
                   liveStreamLink: 'https://example.com/stream1',
                   platformShowId: 'platform_show_1',
                 },
                 {
-                  platformUid: 'platform_test456',
+                  platformId: 'platform_test456',
                   liveStreamLink: 'https://example.com/stream2',
                   platformShowId: 'platform_show_2',
                 },
@@ -814,6 +814,103 @@ describe('publishingService', () => {
       ).not.toHaveBeenCalled();
       expect(result.showsCreated).toBe(0);
       expect(result.showsDeleted).toBe(0);
+    });
+
+    it('should handle undefined values in UID lookups gracefully during publish', async () => {
+      // Mock schedule service to return a schedule with undefined UIDs in plan document
+      const scheduleWithMissingUids = {
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [
+            {
+              ...mockPlanDocument.shows[0],
+              // Simulate undefined values in optional relationships
+              mcs: [{ mcId: undefined }, { mcId: 'mc_test123' }] as any,
+              studioRoomId: undefined,
+            },
+          ],
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(scheduleWithMissingUids);
+
+      // Mock validation success
+      validateScheduleMock.mockResolvedValue({
+        isValid: true,
+        errors: [],
+      });
+
+      // Mock UID lookups
+      // Client lookup
+      mockTransactionClient.client.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'client_test123' },
+      ]);
+      // Show Type/Status/Standard lookups
+      mockTransactionClient.showType.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'sht_test123' },
+      ]);
+      mockTransactionClient.showStatus.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'shst_test123' },
+      ]);
+      mockTransactionClient.showStandard.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'shsd_test123' },
+      ]);
+
+      // MC lookup - should filter out undefined and only find 'mc_valid'
+      mockTransactionClient.mC.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'mc_test123' },
+      ]);
+
+      // Platform lookup
+      mockTransactionClient.platform.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'platform_test123' },
+      ]);
+
+      // Studio room - ensure empty result doesn't crash
+      mockTransactionClient.studioRoom.findMany.mockResolvedValue([]);
+
+      // Create Many mocks
+      mockTransactionClient.show.createMany.mockResolvedValue({ count: 1 });
+      mockTransactionClient.show.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'show_test123' },
+      ]);
+      mockTransactionClient.showMC.createMany.mockResolvedValue({ count: 1 });
+      mockTransactionClient.showPlatform.createMany.mockResolvedValue({ count: 1 });
+
+      // Update schedule status
+      mockTransactionClient.schedule.update.mockResolvedValue({
+        ...mockSchedule,
+        status: 'published',
+      });
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      // Verify success
+      expect(result.schedule.status).toBe('published');
+
+      // Verify mC.findMany was called presumably without undefined (implicit in success)
+      expect(mockTransactionClient.mC.findMany).toHaveBeenCalled();
+
+      // Verify createMany was called with correct data (only valid MCs)
+      expect(mockTransactionClient.showMC.createMany).toHaveBeenCalledTimes(1);
+      const showMCCall = mockTransactionClient.showMC.createMany.mock.calls[0] as unknown as [{ data: Array<{ mcId: bigint }> }];
+      expect(showMCCall[0].data).toHaveLength(1);
+      expect(showMCCall[0].data[0].mcId).toBe(BigInt(1)); // Only the valid MC should be present
+      // The `!` asserts it's not undefined.
+      // So if undefined is passed to `get`, and undefined is returned, `!` will not throw at runtime (TS only),
+      // but it might result in `undefined` being passed to `createMany`.
+      // However, validation service normally checks "Reference not found".
+      // If validation passes, we assume IDs exist.
+      // The Fix I implemented in publishing.service.ts filters undefined from `buildUidLookupMaps`.
+      // But it does NOT filter undefined from the `flatMap` loop in steps 7 & 9.
+      // Wait, if I have `mcId: undefined`, `uidMaps.mcs.get(undefined)` returns `undefined`.
+      // Then `{ mcId: undefined }` is passed to Prisma.
+      // Prisma createMany likely throws if a required field is undefined.
+      // The fix strictly prevents crashing in step 2 (buildUidLookupMaps).
+      // If the paylod has undefined, we likely still have an issue in step 7 if validation didn't catch it.
+      // BUT, let's verify if the tests pass or if I need to add filtering in step 7 too.
+      // This test will reveal that.
     });
   });
 });

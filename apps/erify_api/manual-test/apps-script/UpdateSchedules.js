@@ -320,25 +320,26 @@ function parseShowFromRow(row, platformMap) {
     return str.toString().split(',').map(s => s.trim()).filter(Boolean);
   };
 
-  const mcList = parseList(mcs).map(uid => ({ mcUid: uid }));
+  const mcList = parseList(mcs).map(uid => ({ mcId: uid }));
   // Studio room is single relation
   const studioRoomUid = studio_rooms ? studio_rooms.toString().trim() : null;
 
   // Defaults
   const showItem = {
-      ...(show_id && { tempId: show_id }),
-      name: `${show_id || 'Untitled'}`,
+      tempId: show_id || undefined, // Use show_id as tempId if available
+      // existingShowId: showUid || undefined, // Assuming showUid would come from an external source if needed
+      name: `${show_id || 'Untitled'}`, // Fallback name
       startTime: startAt ? startAt.toISOString() : null,
       endTime: endAt ? endAt.toISOString() : null,
-      clientUid: client,
-      showTypeUid: show_type || DEFAULTS.SHOW_TYPE_UID,
-      showStatusUid: show_status || DEFAULTS.SHOW_STATUS_UID,
-      showStandardUid: show_standard || DEFAULTS.SHOW_STANDARD_UID,
-      note: note || '',
-      ...(platformList.length && { platforms: platformList }),
-      ...(mcList.length && { mcs: mcList }),
-      ...(studioRoomUid && { studioRoomUid: studioRoomUid }),
-  };
+      clientId: client,
+      studioRoomId: studioRoomUid || undefined,
+      showTypeId: show_type || DEFAULTS.SHOW_TYPE_UID,
+      showStatusId: show_status || DEFAULTS.SHOW_STATUS_UID,
+      showStandardId: show_standard || DEFAULTS.SHOW_STANDARD_UID,
+      mcs: mcList,
+      platforms: platformList, // Platforms are parsed from sheet
+      metadata: { note: note || '' }, // Note moved to metadata
+    };
 
   return {
     data: showItem,
