@@ -334,7 +334,7 @@ describe('validationService', () => {
         expect.objectContaining({
           type: 'time_range',
           message: expect.stringContaining(
-            'Show time range must be within schedule date range',
+            'Show start time must be within schedule date range',
           ) as string,
           showIndex: 0,
           showTempId: 'temp_1',
@@ -768,6 +768,37 @@ describe('validationService', () => {
         },
         select: { id: true, uid: true },
       });
+    });
+
+    it('should validate overnight shows starting on schedule end date', async () => {
+      // Schedule covering Jan 1 to Jan 31 (inclusive of Jan 31 if endDate is Feb 1 00:00)
+      const overnightSchedule = {
+        ...mockScheduleData,
+        endDate: new Date('2024-02-01T00:00:00Z'), // Ends at start of Feb 1
+        planDocument: {
+          ...mockValidPlanDocument,
+          shows: [
+            {
+              tempId: 'temp_overnight',
+              name: 'Overnight Show',
+              startTime: '2024-01-31T23:00:00Z', // Starts before end
+              endTime: '2024-02-01T02:00:00Z', // Ends after end (Next day)
+              clientUid: 'client_test123',
+              studioRoomUid: 'room_test123',
+              showTypeUid: 'sht_test123',
+              showStatusUid: 'shst_test123',
+              showStandardUid: 'shsd_test123',
+              mcs: [],
+              platforms: [],
+            },
+          ],
+        },
+      };
+
+      const result = await service.validateSchedule(overnightSchedule);
+
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
     });
   });
 

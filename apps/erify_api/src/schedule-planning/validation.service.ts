@@ -126,10 +126,12 @@ export class ValidationService {
     }
 
     // Validate show is within schedule date range
-    if (startTime < scheduleStart || endTime > scheduleEnd) {
+    // Allow shows to start on the end date but finish overnight (next day)
+    // So check startTime against scheduleEnd instead of checking endTime
+    if (startTime < scheduleStart || startTime > scheduleEnd) {
       errors.push({
         type: 'time_range',
-        message: `Show time range must be within schedule date range (${scheduleStart.toISOString()} to ${scheduleEnd.toISOString()})`,
+        message: `Show start time must be within schedule date range (${scheduleStart.toISOString()} to ${scheduleEnd.toISOString()})`,
         showIndex,
         showTempId: show.tempId,
       });
