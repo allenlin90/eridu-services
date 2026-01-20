@@ -1,3 +1,4 @@
+import { format } from 'date-fns';
 import type { z } from 'zod';
 
 import type { ScheduleApiResponse } from '@eridu/api-types/schedules';
@@ -99,7 +100,11 @@ export function ScheduleUpdateDialog({
             <Input
               type="datetime-local"
               {...field}
-              value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
+              value={field.value ? format(new Date(field.value), 'yyyy-MM-dd\'T\'HH:mm') : ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                field.onChange(value ? new Date(value).toISOString() : undefined);
+              }}
             />
           ),
         },
@@ -110,7 +115,11 @@ export function ScheduleUpdateDialog({
             <Input
               type="datetime-local"
               {...field}
-              value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
+              value={field.value ? format(new Date(field.value), 'yyyy-MM-dd\'T\'HH:mm') : ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                field.onChange(value ? new Date(value).toISOString() : undefined);
+              }}
             />
           ),
         },

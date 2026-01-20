@@ -17,16 +17,28 @@ vi.mock('@eridu/ui', () => ({
 }));
 
 vi.mock('@/features/admin/components', () => ({
-  AdminFormDialog: ({ title, description, open }: any) => (
-    open
-      ? (
-          <div data-testid="admin-form-dialog">
-            <h1>{title}</h1>
-            <p>{description}</p>
-          </div>
-        )
-      : null
-  ),
+  AdminFormDialog: ({ title, description, open, fields }: any) => {
+    if (!open)
+      return null;
+    return (
+      <div data-testid="admin-form-dialog">
+        <h1>{title}</h1>
+        <p>{description}</p>
+        <div data-testid="fields">
+          {fields?.map((field: any) => (
+            <div key={field.name} data-testid={`field-${field.name}`}>
+              {field.render
+                ? field.render({
+                    value: field.name.includes('date') ? '2024-01-01T10:00:00Z' : 'some-value',
+                    onChange: vi.fn(),
+                  })
+                : null}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  },
   DeleteConfirmDialog: ({ title, description, open }: any) => (
     open
       ? (
@@ -52,6 +64,12 @@ describe('scheduleUpdateDialog', () => {
       metadata: {},
       created_at: '2024-01-01',
       updated_at: '2024-01-01',
+      published_at: null,
+      client_id: 'client-1',
+      created_by: 'user-1',
+      created_by_name: 'Test User',
+      published_by: null,
+      published_by_name: null,
     },
     onOpenChange: vi.fn(),
     onSubmit: vi.fn(),
@@ -69,6 +87,16 @@ describe('scheduleUpdateDialog', () => {
     render(<ScheduleUpdateDialog {...mockProps} schedule={null} />);
 
     expect(screen.queryByTestId('admin-form-dialog')).not.toBeInTheDocument();
+  });
+  it('should render start_date formatted as local string', () => {
+    render(<ScheduleUpdateDialog {...mockProps} />);
+
+    const startDateInput = screen.getByTestId('field-start_date').querySelector('input');
+    expect(startDateInput).toBeInTheDocument();
+
+    // Check format matches local datetime string yyyy-MM-ddTHH:mm
+    expect(startDateInput).toBeInTheDocument();
+    expect(startDateInput?.getAttribute('value')).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
   });
 });
 

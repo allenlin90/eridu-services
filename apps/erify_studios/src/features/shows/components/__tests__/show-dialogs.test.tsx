@@ -12,16 +12,28 @@ vi.mock('@eridu/ui', () => ({
 }));
 
 vi.mock('@/features/admin/components', () => ({
-  AdminFormDialog: ({ title, description, open }: any) => (
-    open
-      ? (
-          <div data-testid="admin-form-dialog">
-            <h1>{title}</h1>
-            <p>{description}</p>
-          </div>
-        )
-      : null
-  ),
+  AdminFormDialog: ({ title, description, open, fields }: any) => {
+    if (!open)
+      return null;
+    return (
+      <div data-testid="admin-form-dialog">
+        <h1>{title}</h1>
+        <p>{description}</p>
+        <div data-testid="fields">
+          {fields?.map((field: any) => (
+            <div key={field.name} data-testid={`field-${field.name}`}>
+              {field.render
+                ? field.render({
+                    value: field.name.includes('time') ? '2024-01-01T10:00:00Z' : 'some-value',
+                    onChange: vi.fn(),
+                  })
+                : null}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  },
   DeleteConfirmDialog: ({ title, description, open }: any) => (
     open
       ? (
@@ -73,6 +85,16 @@ describe('showUpdateDialog', () => {
     render(<ShowUpdateDialog {...mockProps} show={null} />);
 
     expect(screen.queryByTestId('admin-form-dialog')).not.toBeInTheDocument();
+  });
+  it('should render start_time formatted as local string', () => {
+    render(<ShowUpdateDialog {...mockProps} />);
+
+    const startTimeInput = screen.getByTestId('field-start_time').querySelector('input');
+    expect(startTimeInput).toBeInTheDocument();
+
+    // Check format
+    expect(startTimeInput).toBeInTheDocument();
+    expect(startTimeInput?.getAttribute('value')).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
   });
 });
 
