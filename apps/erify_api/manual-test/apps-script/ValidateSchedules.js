@@ -22,19 +22,40 @@ function validateSchedules() {
   rows.forEach((row, index) => {
     const scheduleId = row[1]; // Col B
     const status = row[3];     // Col D (Status)
+    const sheetVersion = row[6]; // Col G (Version)
     
     if (!scheduleId) return;
 
-    // Only validate 'draft' schedules (or maybe 'synced'? user said change 'draft' to 'review')
-    // We'll check if it's NOT 'review' and NOT 'published'.
-    if (status && (status.toLowerCase() === 'review' || status.toLowerCase() === 'published')) {
-      Logger.log(`Skipping ${scheduleId} (Status: ${status})`);
+    // Strict filter: Only process 'draft' schedules.
+    // If status is missing or not 'draft', skip it.
+    if (!status || status.toLowerCase() !== 'draft') {
+      Logger.log(`Skipping ${scheduleId} (Status: ${status || 'empty'}) - Only 'draft' schedules are validated.`);
       stats.skipped++;
       return;
     }
 
     stats.total++;
+    const sheetRow = startRowOffset + index;
+    const noteCell = schedulesSheet.getRange(sheetRow, 10);   // Col J
+
     try {
+      // Version Check: Stop execution if version mismatch
+      const serverSchedule = getSchedule(scheduleId);
+      if (!serverSchedule || typeof serverSchedule.version === 'undefined') {
+         throw new Error("Could not fetch schedule version from server.");
+      }
+
+      // Allow loose comparison (string vs number)
+      if (serverSchedule.version != sheetVersion) {
+        const msg = `Version Mismatch! Sheet: ${sheetVersion}, Server: ${serverSchedule.version}. Sync required.`;
+        Logger.log(msg);
+        noteCell.setValue(msg);
+        
+        const e = new Error(msg);
+        e.name = 'FatalError';
+        throw e;
+      }
+
       const result = validateSchedule(scheduleId);
 
       // CRITICAL: Check for API error response (e.g. 500 or 404)
@@ -42,9 +63,7 @@ function validateSchedules() {
         throw new Error(result.message || `API Error ${result.statusCode}`);
       }
       
-      const sheetRow = startRowOffset + index;
       const statusCell = schedulesSheet.getRange(sheetRow, 4);  // Col D
-      const noteCell = schedulesSheet.getRange(sheetRow, 10);   // Col J
 
       if (result.isValid) {
         Logger.log(`Schedule ${scheduleId} is VALID.`);
@@ -53,7 +72,6 @@ function validateSchedules() {
         stats.success++;
       } else {
         Logger.log(`Schedule ${scheduleId} is INVALID.`);
-        // statusCell.setValue('draft'); // Keep as draft or mark error? User didn't specify, keep as is.
         
         // Format errors
         const errorMsg = result.errors.map(e => e.message).join('; ');
@@ -61,8 +79,12 @@ function validateSchedules() {
         stats.failed++;
       }
     } catch (e) {
+      if (e.name === 'FatalError') {
+         // Stop the entire process
+         throw new Error(`Execution Stopped: ${e.message}`);
+      }
+      
       Logger.log(`Error validating ${scheduleId}: ${e.message}`);
-      const sheetRow = startRowOffset + index;
       schedulesSheet.getRange(sheetRow, 10).setValue(`System Error: ${e.message}`);
       stats.failed++;
     }
@@ -75,3 +97,4 @@ function validateSchedules() {
   Logger.log(`Skipped: ${stats.skipped}`);
   Logger.log('--------------------------');
 }
+

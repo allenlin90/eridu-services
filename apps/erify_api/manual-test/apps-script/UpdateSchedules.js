@@ -60,9 +60,9 @@ function updateShowBySchedules() {
   // 2. Parse & Group Data
   Logger.log('Validation passed. Processing schedules...');
   
-  // Read current versions from Schedules Sheet (Source of Truth for initial attempt)
-  const currentVersions = getScheduleVersionsMap(schedulesSheet);
-  const schedules = processSchedulesFromRows(rawData, currentVersions);
+  // Read current versions and metadata from Schedules Sheet (Source of Truth)
+  const scheduleDefinitions = getScheduleDefinitions(schedulesSheet);
+  const schedules = processSchedulesFromRows(rawData, scheduleDefinitions);
 
   // 3. Process each schedule
   const processedIds = new Set();
@@ -178,7 +178,7 @@ function processSingleSchedule(schedule, { targetSheet, schedulesSheet }) {
 
 // --- Data Processing Implementations ---
 
-function processSchedulesFromRows(rows, versionMap) {
+function processSchedulesFromRows(rows, scheduleDefinitions) {
   const groups = {};
   const platformMap = getPlatformMap();
 
@@ -187,7 +187,8 @@ function processSchedulesFromRows(rows, versionMap) {
     const scheduleId = row[1] ? row[1].toString().trim() : '';
     
     // Version Lookup
-    const sheetVersion = versionMap ? versionMap[scheduleId] : null;
+    const def = scheduleDefinitions[scheduleId];
+    const sheetVersion = def ? def.version : null;
     
     // Check Status (Col S / Index 18)
     const status = row[18];
@@ -209,15 +210,24 @@ function processSchedulesFromRows(rows, versionMap) {
     }
   });
 
-  return Object.values(groups).map(group => buildSchedulePayload(group, platformMap));
+  return Object.values(groups).map(group => buildSchedulePayload(group, platformMap, scheduleDefinitions));
 }
 
-function buildSchedulePayload(group, platformMap) {
+function buildSchedulePayload(group, platformMap, scheduleDefinitions) {
   const { scheduleId, rows, rawVersion, client, rawDate, allSynced } = group;
 
-  // 1. Determine Version
+  // 1. Determine Version & Metadata from Source of Truth
   let version = 1;
-  if (rawVersion !== '' && rawVersion != null) {
+  let definedStart = null;
+  let definedEnd = null;
+  
+  const def = scheduleDefinitions[scheduleId];
+  if (def) {
+     version = def.version;
+     definedStart = def.startDate;
+     definedEnd = def.endDate;
+  } else if (rawVersion !== '' && rawVersion != null) {
+      // Fallback if not in sheet but in row (unlikely for valid flow)
       const parsed = parseInt(rawVersion, 10);
       if (!isNaN(parsed)) version = parsed;
   }
@@ -229,6 +239,7 @@ function buildSchedulePayload(group, platformMap) {
   const scheduleName = `${client} - ${monthName} ${year}`;
   
   // 3. Process Shows & Date Ranges
+  // Note: We still calculate min/max of shows just in case, or if we want to fallback (though we prefer defined dates)
   let minDate = d;
   let maxDate = d;
   const shows = [];
@@ -258,6 +269,12 @@ function buildSchedulePayload(group, platformMap) {
     }
   });
 
+  // Determine final Start/End Dates
+  // Priority: Schedules Sheet Definition > Calculated from Shows
+  // Ensure we format as ISOString
+  const finalStartDate = (definedStart && isValidDate(definedStart)) ? definedStart : minDate;
+  const finalEndDate = (definedEnd && isValidDate(definedEnd)) ? definedEnd : maxDate;
+
   return {
     scheduleId,
     version,
@@ -265,14 +282,18 @@ function buildSchedulePayload(group, platformMap) {
     allSynced,
     payload: {
       name: scheduleName,
-      start_date: minDate.toISOString(),
-      end_date: maxDate.toISOString(),
+      start_date: finalStartDate.toISOString(),
+      end_date: finalEndDate.toISOString(),
       status: 'draft',
       client_id: client,
       created_by: GOOGLE_SHEET_USER_ID,
       plan_document: { shows }
     }
   };
+}
+
+function isValidDate(d) {
+  return d && Object.prototype.toString.call(d) === "[object Date]" && !isNaN(d.getTime());
 }
 
 function parseShowFromRow(row, platformMap) {
@@ -536,21 +557,27 @@ function getStartRowOffset() {
    return 2;
 }
 
-function getScheduleVersionsMap(sheet) {
+function getScheduleDefinitions(sheet) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return {};
 
-  // Col B: ID, Col G: Version
-  // B2:B, G2:G
-  const ids = sheet.getRange(2, 2, lastRow - 1, 1).getValues().flat();
-  const versions = sheet.getRange(2, 7, lastRow - 1, 1).getValues().flat();
+  // We need ID (B), Start (E), End (F), Version (G).
+  // B is col 2. G is col 7.
+  // Range: Row 2, Col 2, (lastRow-1), 6  => Covers B, C, D, E, F, G
+  // array indices: 0=B, 1=C, 2=D, 3=E, 4=F, 5=G
+  const data = sheet.getRange(2, 2, lastRow - 1, 6).getValues(); 
 
   const map = {};
-  ids.forEach((id, idx) => {
+  data.forEach(row => {
+    const id = row[0];
     if (id) {
-      const cleanId = id.toString().trim();
-      const v = parseInt(versions[idx], 10);
-      map[cleanId] = isNaN(v) ? 1 : v;
+       const cleanId = id.toString().trim();
+       const v = parseInt(row[5], 10);
+       map[cleanId] = {
+         version: isNaN(v) ? 1 : v,
+         startDate: row[3], // Col E
+         endDate: row[4]    // Col F
+       };
     }
   });
   return map;

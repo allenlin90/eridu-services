@@ -19,25 +19,72 @@ function publishSchedules() {
 
   Logger.log('--- Starting Publish Process ---');
 
+  // --- Pre-flight Strict Validation ---
+  Logger.log('Processing Pre-flight Validation...');
+  
+  // 1. Check consistency of ALL rows in the active range first.
+  // If ANY row is not ready ('review') or has version mismatch, we abort EVERYTHING.
+  // This prevents partial publishing where some are published and others are left behind.
+  
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const scheduleId = row[1];
+    const status = row[3];
+    const sheetVersion = row[6];
+    
+    if (!scheduleId) continue; // Skip empty rows
+
+    // Check Status
+    if (!status || status.toLowerCase() !== 'review') {
+      const msg = `Pre-flight Failed: Schedule ${scheduleId} is in status '${status}' (expected 'review'). Aborting all.`;
+      Logger.log(msg);
+      // Write error to the specific row so user knows which one blocked it
+      const sheetRow = startRowOffset + i;
+      schedulesSheet.getRange(sheetRow, 10).setValue(msg);
+      
+      const e = new Error(msg);
+      e.name = 'FatalError';
+      throw e;
+    }
+
+    // Check Version Mismatch
+    try {
+      const serverSchedule = getSchedule(scheduleId);
+      if (!serverSchedule || typeof serverSchedule.version === 'undefined') {
+         throw new Error(`Could not fetch version for ${scheduleId}`);
+      }
+      if (serverSchedule.version != sheetVersion) {
+        const msg = `Pre-flight Failed: Version mismatch for ${scheduleId} (Sheet: ${sheetVersion}, Server: ${serverSchedule.version}). Sync required.`;
+        Logger.log(msg);
+        const sheetRow = startRowOffset + i;
+        schedulesSheet.getRange(sheetRow, 10).setValue(msg);
+        
+        const e = new Error(msg);
+        e.name = 'FatalError';
+        throw e;
+      }
+    } catch (e) {
+      if (e.name === 'FatalError') throw e;
+      const msg = `Pre-flight Check Error for ${scheduleId}: ${e.message}`;
+      Logger.log(msg);
+      const err = new Error(msg);
+      err.name = 'FatalError';
+      throw err;
+    }
+  }
+
+  Logger.log('Pre-flight Validation Passed. Proceeding to Publish...');
+
+  // --- Execution Loop ---
+
   rows.forEach((row, index) => {
     const scheduleId = row[1]; // Col B
-    const status = row[3];     // Col D (Status)
     const rawVersion = row[6]; // Col G (Version)
 
     if (!scheduleId) return;
 
-    // Filter: Only publish schedules in 'review' status
-    if (!status || status.toLowerCase() !== 'review') {
-      Logger.log(`Skipping ${scheduleId} (Status: ${status || 'empty'}). Must be 'review' to publish.`);
-      stats.skipped++;
-      return;
-    }
-
-    // Version Check
+    // determine version
     let version = 1; 
-    // If sheet has a version, use it. But publish usually requires confirming the CURRENT version.
-    // However, the `publish` endpoint typically verifies that the version matches the DB version (optimistic locking).
-    // So we should pass the VERSION we believe it is (from the sheet).
     if (rawVersion !== '' && rawVersion != null) {
       const parsed = parseInt(rawVersion, 10);
       if (!isNaN(parsed)) version = parsed;
@@ -59,9 +106,6 @@ function publishSchedules() {
       const sheetRow = startRowOffset + index;
       const statusCell = schedulesSheet.getRange(sheetRow, 4);  // Col D
       const noteCell = schedulesSheet.getRange(sheetRow, 10);   // Col J
-
-      // Result typically implies success if no error thrown, but check structure if needed (e.g. published: true)
-      // Assuming result is success payload or simplified response.
       
       Logger.log(`Schedule ${scheduleId} PUBLISHED.`);
       statusCell.setValue('published');
@@ -80,6 +124,6 @@ function publishSchedules() {
   Logger.log(`Total Processed: ${stats.total}`);
   Logger.log(`Success: ${stats.success}`);
   Logger.log(`Failed: ${stats.failed}`);
-  Logger.log(`Skipped: ${stats.skipped}`);
   Logger.log('-----------------------');
 }
+
