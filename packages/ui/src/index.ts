@@ -36,6 +36,23 @@ export {
   DialogTrigger,
 } from './components/ui/dialog';
 export {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from './components/ui/dropdown-menu';
+export {
   Form,
   FormControl,
   FormDescription,
@@ -64,6 +81,7 @@ export {
   SelectTrigger,
   SelectValue,
 } from './components/ui/select';
+export { Skeleton } from './components/ui/skeleton';
 export { Spinner } from './components/ui/spinner';
 export {
   Table,
@@ -75,7 +93,14 @@ export {
   TableHeader,
   TableRow,
 } from './components/ui/table';
+export { TableSkeleton } from './components/ui/table-skeleton';
 export { Textarea } from './components/ui/textarea';
+export {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './components/ui/tooltip';
 
 // Sidebar components and types
 export type {

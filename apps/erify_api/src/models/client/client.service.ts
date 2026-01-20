@@ -37,6 +37,7 @@ export class ClientService extends BaseModelService {
     skip?: number;
     take?: number;
     name?: string;
+    uid?: string;
     include_deleted?: boolean;
   }): Promise<Client[]> {
     const where: Prisma.ClientWhereInput = {};
@@ -52,6 +53,13 @@ export class ClientService extends BaseModelService {
       };
     }
 
+    if (query.uid) {
+      where.uid = {
+        contains: query.uid,
+        mode: 'insensitive',
+      };
+    }
+
     return this.clientRepository.findMany({
       skip: query.skip,
       take: query.take,
@@ -63,6 +71,7 @@ export class ClientService extends BaseModelService {
     skip?: number;
     take?: number;
     name?: string;
+    uid?: string;
     include_deleted?: boolean;
   }): Promise<{ data: Client[]; total: number }> {
     const where: Prisma.ClientWhereInput = {};
@@ -74,6 +83,13 @@ export class ClientService extends BaseModelService {
     if (query.name) {
       where.name = {
         contains: query.name,
+        mode: 'insensitive',
+      };
+    }
+
+    if (query.uid) {
+      where.uid = {
+        contains: query.uid,
         mode: 'insensitive',
       };
     }

@@ -3,9 +3,12 @@ import { Test } from '@nestjs/testing';
 
 import { AdminMcController } from './admin-mc.controller';
 
-import type { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { McService } from '@/models/mc/mc.service';
-import type { CreateMcDto, UpdateMcDto } from '@/models/mc/schemas/mc.schema';
+import type {
+  CreateMcDto,
+  ListMcsQueryDto,
+  UpdateMcDto,
+} from '@/models/mc/schemas/mc.schema';
 
 describe('adminMcController', () => {
   let controller: AdminMcController;
@@ -52,12 +55,13 @@ describe('adminMcController', () => {
 
   describe('getMcs', () => {
     it('should return paginated list of MCs', async () => {
-      const query: PaginationQueryDto = {
+      const query: ListMcsQueryDto = {
         page: 1,
         limit: 10,
         skip: 0,
         take: 10,
-      };
+        include_deleted: false,
+      } as ListMcsQueryDto;
       const mcs = [
         { uid: 'mc_1', userId: 'user_1' },
         { uid: 'mc_2', userId: 'user_2' },
@@ -76,13 +80,47 @@ describe('adminMcController', () => {
 
       const result = await controller.getMcs(query);
       expect(mockMcService.listMcs).toHaveBeenCalledWith(
-        { skip: query.skip, take: query.take },
+        {
+          skip: query.skip,
+          take: query.take,
+          name: undefined,
+          aliasName: undefined,
+          include_deleted: false,
+        },
         { user: true },
       );
       expect(result).toEqual({
         data: mcs,
         meta: paginationMeta,
       });
+    });
+
+    it('should filter MCs by name and aliasName', async () => {
+      const query: ListMcsQueryDto = {
+        page: 1,
+        limit: 10,
+        skip: 0,
+        take: 10,
+        name: 'test',
+        aliasName: 'alias',
+        include_deleted: false,
+      } as ListMcsQueryDto;
+      const mcs = [{ uid: 'mc_1', userId: 'user_1', name: 'test', aliasName: 'alias' }];
+      const total = 1;
+
+      mockMcService.listMcs.mockResolvedValue({ data: mcs, total } as any);
+
+      await controller.getMcs(query);
+      expect(mockMcService.listMcs).toHaveBeenCalledWith(
+        {
+          skip: query.skip,
+          take: query.take,
+          name: 'test',
+          aliasName: 'alias',
+          include_deleted: false,
+        },
+        { user: true },
+      );
     });
   });
 

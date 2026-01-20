@@ -42,14 +42,40 @@ export class ShowTypeService extends BaseModelService {
     return this.showTypeRepository.count({});
   }
 
-  async listShowTypes(params: {
+  async listShowTypes(query: {
     skip?: number;
     take?: number;
-    where?: Prisma.ShowTypeWhereInput;
+    name?: string;
+    uid?: string;
+    include_deleted?: boolean;
   }): Promise<{ data: ShowType[]; total: number }> {
+    const where: Prisma.ShowTypeWhereInput = {};
+
+    if (!query.include_deleted) {
+      where.deletedAt = null;
+    }
+
+    if (query.name) {
+      where.name = {
+        contains: query.name,
+        mode: 'insensitive',
+      };
+    }
+
+    if (query.uid) {
+      where.uid = {
+        contains: query.uid,
+        mode: 'insensitive',
+      };
+    }
+
     const [data, total] = await Promise.all([
-      this.showTypeRepository.findMany(params),
-      this.showTypeRepository.count(params.where ?? {}),
+      this.showTypeRepository.findMany({
+        skip: query.skip,
+        take: query.take,
+        where,
+      }),
+      this.showTypeRepository.count(where),
     ]);
 
     return { data, total };

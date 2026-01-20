@@ -1,108 +1,70 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import type { ColumnDef } from '@tanstack/react-table';
-import { useEffect, useState } from 'react';
-import { z } from 'zod';
+import { useState } from 'react';
+import type { z } from 'zod';
 
-import type { ShowApiResponse } from '@eridu/api-types/shows';
-import { useTableUrlState } from '@eridu/ui';
+import type { updateShowInputSchema } from '@eridu/api-types/shows';
 
+import { AdminLayout, AdminTable } from '@/features/admin/components';
+import type { Show } from '@/features/shows/api/get-shows';
 import {
-  AdminLayout,
-  AdminTable,
-  DeleteConfirmDialog,
-} from '@/features/admin/components';
-import { queryKeys } from '@/lib/api/query-keys';
+  ShowDeleteDialog,
+  ShowUpdateDialog,
+} from '@/features/shows/components/show-dialogs';
 import {
-  useAdminDelete,
-  useAdminList,
-} from '@/lib/hooks/use-admin-crud';
-
-const showsSearchSchema = z.object({
-  page: z.number().int().min(1).catch(1),
-  pageSize: z.number().int().min(10).max(100).catch(10),
-  search: z.string().optional().catch(undefined),
-});
+  showColumns,
+  showSearchableColumns,
+} from '@/features/shows/config/show-columns';
+import { showsSearchSchema } from '@/features/shows/config/show-search-schema';
+import { useShows } from '@/features/shows/hooks/use-shows';
 
 export const Route = createFileRoute('/admin/shows/')({
   component: ShowsList,
   validateSearch: (search) => showsSearchSchema.parse(search),
 });
 
-// Basic show type matching API response
-type Show = ShowApiResponse;
+type UpdateShowFormData = z.infer<typeof updateShowInputSchema>;
 
 function ShowsList() {
+  const search = Route.useSearch();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editingShow, setEditingShow] = useState<Show | null>(null);
 
-  const queryClient = useQueryClient();
-
-  // URL state
-  const { pagination, onPaginationChange, setPageCount } = useTableUrlState({
-    from: '/admin/shows/',
+  const {
+    data,
+    isLoading,
+    isFetching,
+    onPaginationChange,
+    columnFilters,
+    onColumnFiltersChange,
+    sorting,
+    onSortingChange,
+    updateMutation,
+    deleteMutation,
+    handleRefresh,
+  } = useShows({
+    name: search.name,
+    client_name: search.client_name,
+    mc_name: search.mc_name,
+    start_date_from: search.start_date_from,
+    start_date_to: search.start_date_to,
+    sortBy: search.sortBy,
+    sortOrder: search.sortOrder,
+    id: search.id,
   });
-
-  // Fetch shows list
-  const { data, isLoading, isFetching } = useAdminList<Show>('shows', {
-    page: pagination.pageIndex + 1,
-    limit: pagination.pageSize,
-  });
-
-  // Sync page count for auto-correction
-  useEffect(() => {
-    if (data?.meta?.totalPages !== undefined) {
-      setPageCount(data.meta.totalPages);
-    }
-  }, [data?.meta?.totalPages, setPageCount]);
-
-  // Mutations
-  const deleteMutation = useAdminDelete('shows');
-
-  // Table columns
-  const columns: ColumnDef<Show>[] = [
-    {
-      accessorKey: 'id',
-      header: 'ID',
-    },
-    {
-      accessorKey: 'name',
-      header: 'Name',
-    },
-    {
-      accessorKey: 'client_name',
-      header: 'Client',
-    },
-    {
-      accessorKey: 'studio_room_name',
-      header: 'Room',
-    },
-    {
-      accessorKey: 'show_status_name',
-      header: 'Status',
-    },
-    {
-      accessorKey: 'start_time',
-      header: 'Start Time',
-      cell: ({ row }) => new Date(row.original.start_time).toLocaleString(),
-    },
-  ];
 
   const handleDelete = async () => {
     if (!deleteId)
       return;
 
-    try {
-      await deleteMutation.mutateAsync(deleteId);
-      setDeleteId(null);
-    } catch (error) {
-      console.error('Failed to delete show:', error);
-    }
+    await deleteMutation.mutateAsync(deleteId);
+    setDeleteId(null);
   };
 
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.admin.lists('shows'),
-    });
+  const handleUpdate = async (data: UpdateShowFormData) => {
+    if (!editingShow)
+      return;
+    await updateMutation.mutateAsync({ id: editingShow.id, data });
+    setEditingShow(null);
   };
 
   return (
@@ -110,15 +72,19 @@ function ShowsList() {
       title="Shows"
       description="Manage shows"
       onRefresh={handleRefresh}
-      refreshQueryKey={queryKeys.admin.lists('shows')}
+      refreshQueryKey={['shows']}
     >
       <AdminTable
         data={data?.data || []}
-        columns={columns}
+        columns={showColumns}
         isLoading={isLoading}
         isFetching={isFetching}
+        onEdit={(show) => setEditingShow(show)}
         onDelete={(show) => setDeleteId(show.id)}
         emptyMessage="No shows found."
+        searchColumn="name"
+        searchableColumns={showSearchableColumns}
+        searchPlaceholder="Search shows..."
         pagination={
           data?.meta
             ? {
@@ -129,15 +95,24 @@ function ShowsList() {
               }
             : undefined
         }
+        columnFilters={columnFilters}
+        onColumnFiltersChange={onColumnFiltersChange}
         onPaginationChange={onPaginationChange}
+        sorting={sorting}
+        onSortingChange={onSortingChange}
       />
 
-      <DeleteConfirmDialog
+      <ShowUpdateDialog
+        show={editingShow}
+        onOpenChange={(open) => !open && setEditingShow(null)}
+        onSubmit={handleUpdate}
+        isLoading={updateMutation.isPending}
+      />
+
+      <ShowDeleteDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
         onConfirm={handleDelete}
-        title="Delete Show"
-        description="Are you sure you want to delete this show? This action cannot be undone."
         isLoading={deleteMutation.isPending}
       />
     </AdminLayout>

@@ -1,14 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { z } from 'zod';
+
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@eridu/ui';
 
 import { AdminLayout, AdminTable } from '@/features/admin/components';
 import { adminApi } from '@/lib/api/admin';
 
 const snapshotsSearchSchema = z.object({
-  page: z.number().int().min(1).catch(1),
-  pageSize: z.number().int().min(10).max(100).catch(10),
+  page: z.coerce.number().int().min(1).catch(1),
+  pageSize: z.coerce.number().int().min(10).max(100).catch(10),
 });
 
 export const Route = createFileRoute('/admin/schedules/$scheduleId/snapshots/')({
@@ -25,7 +33,7 @@ type Snapshot = {
   created_at: string;
 };
 
-function ScheduleSnapshotsList() {
+export function ScheduleSnapshotsList() {
   const { scheduleId } = Route.useParams();
 
   // Fetch snapshots using custom GET since it's a sub-resource
@@ -68,6 +76,35 @@ function ScheduleSnapshotsList() {
       description={`Viewing snapshots for schedule ${scheduleId}`}
       onRefresh={() => refetch()}
       refreshQueryKey={['admin', 'schedules', scheduleId, 'snapshots']}
+      breadcrumbs={(
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <Link
+                to="/admin/schedules"
+                search={{ page: 1, pageSize: 10 }}
+                className="hover:text-foreground transition-colors"
+              >
+                Schedules
+              </Link>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <Link
+                to="/admin/schedules"
+                search={{ page: 1, pageSize: 10 }}
+                className="hover:text-foreground transition-colors"
+              >
+                Schedule Details
+              </Link>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Snapshots</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      )}
     >
       <AdminTable
         data={snapshots || []}

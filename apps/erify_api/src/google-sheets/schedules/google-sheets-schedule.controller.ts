@@ -11,6 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { z } from 'zod';
 
@@ -50,6 +51,7 @@ import {
 } from '@/schedule-planning/schemas/schedule-planning.schema';
 
 @Controller('google-sheets/schedules')
+@SkipThrottle()
 export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   constructor(
     private readonly scheduleService: ScheduleService,

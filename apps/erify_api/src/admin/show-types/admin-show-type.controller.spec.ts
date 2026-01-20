@@ -3,9 +3,9 @@ import { Test } from '@nestjs/testing';
 
 import { AdminShowTypeController } from './admin-show-type.controller';
 
-import type { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import type {
   CreateShowTypeDto,
+  ListShowTypesQueryDto,
   UpdateShowTypeDto,
 } from '@/models/show-type/schemas/show-type.schema';
 import { ShowTypeService } from '@/models/show-type/show-type.service';
@@ -55,11 +55,14 @@ describe('adminShowTypeController', () => {
 
   describe('getShowTypes', () => {
     it('should return paginated list of show types', async () => {
-      const query: PaginationQueryDto = {
+      const query: ListShowTypesQueryDto = {
         page: 1,
         limit: 10,
         skip: 0,
         take: 10,
+        uid: undefined,
+        name: undefined,
+        include_deleted: false,
       };
       const types = [
         { uid: 'show_type_1', name: 'Live' },
@@ -84,6 +87,9 @@ describe('adminShowTypeController', () => {
       expect(mockShowTypeService.listShowTypes).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
+        uid: query.uid,
+        name: query.name,
+        include_deleted: query.include_deleted,
       });
       expect(result).toEqual({
         data: types,

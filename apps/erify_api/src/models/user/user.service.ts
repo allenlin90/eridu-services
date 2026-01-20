@@ -121,11 +121,49 @@ export class UserService extends BaseModelService {
   async listUsers(params: {
     skip?: number;
     take?: number;
+    name?: string;
+    email?: string;
+    uid?: string;
+    extId?: string;
     where?: Prisma.UserWhereInput;
   }): Promise<{ data: User[]; total: number }> {
+    const where: Prisma.UserWhereInput = { ...params.where };
+
+    if (params.name) {
+      where.name = {
+        contains: params.name,
+        mode: 'insensitive',
+      };
+    }
+
+    if (params.email) {
+      where.email = {
+        contains: params.email,
+        mode: 'insensitive',
+      };
+    }
+
+    if (params.uid) {
+      where.uid = {
+        contains: params.uid,
+        mode: 'insensitive',
+      };
+    }
+
+    if (params.extId) {
+      where.extId = {
+        contains: params.extId,
+        mode: 'insensitive',
+      };
+    }
+
     const [data, total] = await Promise.all([
-      this.userRepository.findMany(params),
-      this.userRepository.count(params.where ?? {}),
+      this.userRepository.findMany({
+        skip: params.skip,
+        take: params.take,
+        where,
+      }),
+      this.userRepository.count(where),
     ]);
 
     return { data, total };

@@ -1,131 +1,66 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import type { ColumnDef } from '@tanstack/react-table';
-import { ArrowRight, History } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { z } from 'zod';
+import { History } from 'lucide-react';
+import { useState } from 'react';
+import type { z } from 'zod';
 
-import type { ScheduleApiResponse } from '@eridu/api-types/schedules';
-import { Button, useTableUrlState } from '@eridu/ui';
+import type { ScheduleApiResponse, updateScheduleInputSchema } from '@eridu/api-types/schedules';
+import { DropdownMenuItem } from '@eridu/ui';
 
+import { AdminLayout, AdminTable } from '@/features/admin/components';
 import {
-  AdminLayout,
-  AdminTable,
-  DeleteConfirmDialog,
-} from '@/features/admin/components';
-import { queryKeys } from '@/lib/api/query-keys';
+  ScheduleDeleteDialog,
+  ScheduleUpdateDialog,
+} from '@/features/schedules/components/schedule-dialogs';
 import {
-  useAdminDelete,
-  useAdminList,
-} from '@/lib/hooks/use-admin-crud';
-
-const schedulesSearchSchema = z.object({
-  page: z.number().int().min(1).catch(1),
-  pageSize: z.number().int().min(10).max(100).catch(10),
-  search: z.string().optional().catch(undefined),
-});
+  scheduleColumns,
+  scheduleSearchableColumns,
+} from '@/features/schedules/config/schedule-columns';
+import { schedulesSearchSchema } from '@/features/schedules/config/schedule-search-schema';
+import { useSchedules } from '@/features/schedules/hooks/use-schedules';
 
 export const Route = createFileRoute('/admin/schedules/')({
   component: SchedulesList,
   validateSearch: (search) => schedulesSearchSchema.parse(search),
 });
 
-// Basic schedule type matching API response
 type Schedule = ScheduleApiResponse;
+type UpdateScheduleFormData = z.infer<typeof updateScheduleInputSchema>;
 
 function SchedulesList() {
   const navigate = useNavigate();
+  const search = Route.useSearch();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
 
-  const queryClient = useQueryClient();
-
-  // URL state
-  const { pagination, onPaginationChange, setPageCount } = useTableUrlState({
-    from: '/admin/schedules/',
+  const {
+    data,
+    isLoading,
+    isFetching,
+    onPaginationChange,
+    columnFilters,
+    onColumnFiltersChange,
+    updateMutation,
+    deleteMutation,
+    handleRefresh,
+  } = useSchedules({
+    name: search.name,
+    client_name: search.client_name,
+    id: search.id,
   });
-
-  // Fetch schedules list
-  const { data, isLoading } = useAdminList<Schedule>('schedules', {
-    page: pagination.pageIndex + 1,
-    limit: pagination.pageSize,
-  });
-
-  // Sync page count for auto-correction
-  useEffect(() => {
-    if (data?.meta?.totalPages !== undefined) {
-      setPageCount(data.meta.totalPages);
-    }
-  }, [data?.meta?.totalPages, setPageCount]);
-
-  // Mutations
-  const deleteMutation = useAdminDelete('schedules');
-
-  // Table columns
-  const columns: ColumnDef<Schedule>[] = [
-    {
-      accessorKey: 'id',
-      header: 'ID',
-    },
-    {
-      accessorKey: 'name',
-      header: 'Name',
-    },
-    {
-      accessorKey: 'client_name',
-      header: 'Client',
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-    },
-    {
-      accessorKey: 'version',
-      header: 'Version',
-    },
-    {
-      accessorKey: 'start_date',
-      header: 'Start Date',
-      cell: ({ row }) => new Date(row.original.start_date).toLocaleString(),
-    },
-    {
-      id: 'actions-snapshots',
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate({
-              to: '/admin/schedules/$scheduleId/snapshots',
-              params: { scheduleId: row.original.id },
-              search: { page: 1, pageSize: 10 },
-            });
-          }}
-        >
-          <History className="mr-2 h-4 w-4" />
-          Snapshots
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-    },
-  ];
 
   const handleDelete = async () => {
     if (!deleteId)
       return;
 
-    try {
-      await deleteMutation.mutateAsync(deleteId);
-      setDeleteId(null);
-    } catch (error) {
-      console.error('Failed to delete schedule:', error);
-    }
+    await deleteMutation.mutateAsync(deleteId);
+    setDeleteId(null);
   };
 
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.admin.lists('schedules'),
-    });
+  const handleUpdate = async (data: UpdateScheduleFormData) => {
+    if (!editingSchedule)
+      return;
+    await updateMutation.mutateAsync({ id: editingSchedule.id, data });
+    setEditingSchedule(null);
   };
 
   return (
@@ -133,14 +68,33 @@ function SchedulesList() {
       title="Schedules"
       description="Manage schedules"
       onRefresh={handleRefresh}
-      refreshQueryKey={queryKeys.admin.lists('schedules')}
+      refreshQueryKey={['schedules']}
     >
       <AdminTable
         data={data?.data || []}
-        columns={columns}
+        columns={scheduleColumns}
         isLoading={isLoading}
+        isFetching={isFetching}
+        onEdit={(schedule) => setEditingSchedule(schedule)}
         onDelete={(schedule) => setDeleteId(schedule.id)}
+        renderExtraActions={(schedule) => (
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate({
+                to: '/admin/schedules/$scheduleId/snapshots',
+                params: { scheduleId: schedule.id },
+                search: { page: 1, pageSize: 10 },
+              });
+            }}
+          >
+            <History className="mr-2 h-4 w-4" />
+            View Snapshots
+          </DropdownMenuItem>
+        )}
         emptyMessage="No schedules found."
+        searchColumn="name"
+        searchableColumns={scheduleSearchableColumns}
         pagination={
           data?.meta
             ? {
@@ -152,14 +106,21 @@ function SchedulesList() {
             : undefined
         }
         onPaginationChange={onPaginationChange}
+        columnFilters={columnFilters}
+        onColumnFiltersChange={onColumnFiltersChange}
       />
 
-      <DeleteConfirmDialog
+      <ScheduleUpdateDialog
+        schedule={editingSchedule}
+        onOpenChange={(open) => !open && setEditingSchedule(null)}
+        onSubmit={handleUpdate}
+        isLoading={updateMutation.isPending}
+      />
+
+      <ScheduleDeleteDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
         onConfirm={handleDelete}
-        title="Delete Schedule"
-        description="Are you sure you want to delete this schedule? This action cannot be undone."
         isLoading={deleteMutation.isPending}
       />
     </AdminLayout>

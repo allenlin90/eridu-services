@@ -70,3 +70,36 @@ export class UpdateShowStandardCoreDto extends createZodDto(
   updateShowStandardCoreSchema,
 ) {}
 export class ShowStandardDto extends createZodDto(showStandardDto) {}
+
+// Show Standard list filter schema
+export const listShowStandardsFilterSchema = z.object({
+  name: z.string().optional(),
+  id: z.string().optional(),
+  include_deleted: z.coerce.boolean().default(false),
+});
+
+export const listShowStandardsQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).optional().default(1),
+    limit: z.coerce.number().int().min(1).optional().default(10),
+  })
+  .and(listShowStandardsFilterSchema)
+  .transform((data) => ({
+    page: data.page,
+    limit: data.limit,
+    take: data.limit,
+    skip: (data.page - 1) * data.limit,
+    name: data.name,
+    include_deleted: data.include_deleted,
+    uid: data.id,
+  }));
+
+export class ListShowStandardsQueryDto extends createZodDto(listShowStandardsQuerySchema) {
+  declare page: number;
+  declare limit: number;
+  declare take: number;
+  declare skip: number;
+  declare name: string | undefined;
+  declare include_deleted: boolean;
+  declare uid: string | undefined;
+}

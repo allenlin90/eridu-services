@@ -11,29 +11,26 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ZodSerializerDto } from 'nestjs-zod';
 import { z } from 'zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
+import {
+  AdminPaginatedResponse,
+  AdminResponse,
+} from '@/admin/decorators/admin-response.decorator';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { GoogleSheetsApiKeyGuard } from '@/lib/guards/google-sheets-api-key.guard';
-import { ApiZodResponse } from '@/lib/openapi/decorators';
-import { createPaginatedResponseSchema } from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import {
   BulkCreateScheduleDto,
-  BulkCreateScheduleResultDto,
   bulkCreateScheduleResultSchema,
   BulkUpdateScheduleDto,
-  BulkUpdateScheduleResultDto,
   bulkUpdateScheduleResultSchema,
   CreateScheduleDto,
   ListSchedulesQueryDto,
   MonthlyOverviewQueryDto,
-  MonthlyOverviewResponseDto,
   monthlyOverviewResponseSchema,
-  ScheduleDto,
   scheduleDto,
   UpdateScheduleDto,
 } from '@/models/schedule/schemas/schedule.schema';
@@ -62,9 +59,7 @@ export class AdminScheduleController extends BaseAdminController {
   }
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiZodResponse(scheduleDto, 'Schedule created successfully')
-  @ZodSerializerDto(ScheduleDto)
+  @AdminResponse(scheduleDto, HttpStatus.CREATED, 'Schedule created successfully')
   async createSchedule(@Body() body: CreateScheduleDto) {
     const schedule = await this.scheduleService.createScheduleFromDto(body, {
       client: true,
@@ -75,12 +70,7 @@ export class AdminScheduleController extends BaseAdminController {
   }
 
   @Get()
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(
-    createPaginatedResponseSchema(scheduleDto),
-    'List of schedules with pagination and filtering',
-  )
-  @ZodSerializerDto(createPaginatedResponseSchema(scheduleDto))
+  @AdminPaginatedResponse(scheduleDto, 'List of schedules with pagination and filtering')
   async getSchedules(@Query() query: ListSchedulesQueryDto) {
     // Zod validates and transforms at runtime, so all required properties exist
     const { schedules, total }
@@ -88,20 +78,15 @@ export class AdminScheduleController extends BaseAdminController {
 
     // Conditionally exclude plan_document from serialization
     // Set to undefined when not requested - the Zod transform will omit it
-    const transformedSchedules = schedules.map((schedule) => ({
-      ...schedule,
-      planDocument: query.include_plan_document
-        ? schedule.planDocument
-        : undefined,
-    }));
+    const data = query.include_plan_document
+      ? schedules
+      : schedules.map((s) => ({ ...s, plan_document: undefined as any }));
 
-    return this.createPaginatedResponse(transformedSchedules, total, query);
+    return this.createPaginatedResponse(data, total, query);
   }
 
   @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(scheduleDto, 'Schedule details')
-  @ZodSerializerDto(ScheduleDto)
+  @AdminResponse(scheduleDto, HttpStatus.OK, 'Schedule details')
   async getSchedule(
     @Param('id', new UidValidationPipe(ScheduleService.UID_PREFIX, 'Schedule'))
     id: string,
@@ -114,9 +99,7 @@ export class AdminScheduleController extends BaseAdminController {
   }
 
   @Patch(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(scheduleDto, 'Schedule updated successfully')
-  @ZodSerializerDto(ScheduleDto)
+  @AdminResponse(scheduleDto, HttpStatus.OK, 'Schedule updated successfully')
   async updateSchedule(
     @Param('id', new UidValidationPipe(ScheduleService.UID_PREFIX, 'Schedule'))
     id: string,
@@ -152,7 +135,7 @@ export class AdminScheduleController extends BaseAdminController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @AdminResponse(undefined, HttpStatus.NO_CONTENT, 'Schedule deleted successfully')
   async deleteSchedule(
     @Param('id', new UidValidationPipe(ScheduleService.UID_PREFIX, 'Schedule'))
     id: string,
@@ -162,8 +145,9 @@ export class AdminScheduleController extends BaseAdminController {
 
   @Post(':id/validate')
   @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(
+  @AdminResponse(
     validationResultSchema,
+    HttpStatus.OK,
     'Schedule validation result with errors and warnings',
   )
   async validateSchedule(
@@ -174,9 +158,7 @@ export class AdminScheduleController extends BaseAdminController {
   }
 
   @Post(':id/publish')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(scheduleDto, 'Schedule published successfully')
-  @ZodSerializerDto(ScheduleDto)
+  @AdminResponse(scheduleDto, HttpStatus.OK, 'Schedule published successfully')
   async publishSchedule(
     @Param('id', new UidValidationPipe(ScheduleService.UID_PREFIX, 'Schedule'))
     id: string,
@@ -215,9 +197,7 @@ export class AdminScheduleController extends BaseAdminController {
   }
 
   @Post(':id/duplicate')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiZodResponse(scheduleDto, 'Schedule duplicated successfully')
-  @ZodSerializerDto(ScheduleDto)
+  @AdminResponse(scheduleDto, HttpStatus.CREATED, 'Schedule duplicated successfully')
   async duplicateSchedule(
     @Param('id', new UidValidationPipe(ScheduleService.UID_PREFIX, 'Schedule'))
     id: string,
@@ -245,9 +225,7 @@ export class AdminScheduleController extends BaseAdminController {
   }
 
   @Get(':id/snapshots')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(z.array(scheduleSnapshotDto), 'List of schedule snapshots')
-  @ZodSerializerDto(z.array(scheduleSnapshotDto))
+  @AdminResponse(z.array(scheduleSnapshotDto), HttpStatus.OK, 'List of schedule snapshots')
   async getScheduleSnapshots(
     @Param('id', new UidValidationPipe(ScheduleService.UID_PREFIX, 'Schedule'))
     id: string,
@@ -260,12 +238,7 @@ export class AdminScheduleController extends BaseAdminController {
   }
 
   @Post('bulk')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiZodResponse(
-    bulkCreateScheduleResultSchema,
-    'Bulk create schedules result',
-  )
-  @ZodSerializerDto(BulkCreateScheduleResultDto)
+  @AdminResponse(bulkCreateScheduleResultSchema, HttpStatus.CREATED, 'Bulk create schedules result')
   async bulkCreateSchedules(@Body() body: BulkCreateScheduleDto) {
     const result = await this.scheduleService.bulkCreateSchedules(body, {
       client: true,
@@ -284,12 +257,7 @@ export class AdminScheduleController extends BaseAdminController {
   }
 
   @Patch('bulk')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(
-    bulkUpdateScheduleResultSchema,
-    'Bulk update schedules result',
-  )
-  @ZodSerializerDto(BulkUpdateScheduleResultDto)
+  @AdminResponse(bulkUpdateScheduleResultSchema, HttpStatus.OK, 'Bulk update schedules result')
   async bulkUpdateSchedules(@Body() body: BulkUpdateScheduleDto) {
     const result = await this.scheduleService.bulkUpdateSchedules(body, {
       client: true,
@@ -308,12 +276,7 @@ export class AdminScheduleController extends BaseAdminController {
   }
 
   @Get('overview/monthly')
-  @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(
-    monthlyOverviewResponseSchema,
-    'Monthly overview with schedules grouped by client',
-  )
-  @ZodSerializerDto(MonthlyOverviewResponseDto)
+  @AdminResponse(monthlyOverviewResponseSchema, HttpStatus.OK, 'Monthly overview with schedules grouped by client')
   async getMonthlyOverview(@Query() query: MonthlyOverviewQueryDto) {
     const result = await this.scheduleService.getMonthlyOverview(
       {

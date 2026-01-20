@@ -50,15 +50,10 @@ describe('showsController', () => {
       const userIdentifier = 'user_test123';
       const query: ListShowsQueryDto = {
         ...paginationMockFactory.query(),
-        name: undefined,
-        client_id: undefined,
-        start_date_from: undefined,
-        start_date_to: undefined,
-        end_date_from: undefined,
-        end_date_to: undefined,
         order_by: 'start_time',
         order_direction: 'desc',
         include_deleted: false,
+        uid: undefined,
       };
 
       const user = createControllerUser({
@@ -97,15 +92,10 @@ describe('showsController', () => {
           skip: 20,
           take: 20,
         }),
-        name: undefined,
-        client_id: undefined,
-        start_date_from: undefined,
-        start_date_to: undefined,
-        end_date_from: undefined,
-        end_date_to: undefined,
         order_by: 'start_time',
         order_direction: 'desc',
         include_deleted: false,
+        uid: undefined,
       };
 
       const user = createControllerUser({
@@ -141,15 +131,10 @@ describe('showsController', () => {
       const userIdentifier = 'user_test123';
       const query: ListShowsQueryDto = {
         ...paginationMockFactory.query(),
-        name: undefined,
-        client_id: undefined,
-        start_date_from: undefined,
-        start_date_to: undefined,
-        end_date_from: undefined,
-        end_date_to: undefined,
         order_by: 'start_time',
         order_direction: 'desc',
         include_deleted: false,
+        uid: undefined,
       };
 
       const user = createControllerUser({

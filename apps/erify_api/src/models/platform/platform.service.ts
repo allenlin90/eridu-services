@@ -49,14 +49,40 @@ export class PlatformService extends BaseModelService {
     return this.platformRepository.count({});
   }
 
-  async listPlatforms(params: {
+  async listPlatforms(query: {
     skip?: number;
     take?: number;
-    where?: Prisma.PlatformWhereInput;
+    name?: string;
+    uid?: string;
+    include_deleted?: boolean;
   }): Promise<{ data: Platform[]; total: number }> {
+    const where: Prisma.PlatformWhereInput = {};
+
+    if (!query.include_deleted) {
+      where.deletedAt = null;
+    }
+
+    if (query.name) {
+      where.name = {
+        contains: query.name,
+        mode: 'insensitive',
+      };
+    }
+
+    if (query.uid) {
+      where.uid = {
+        contains: query.uid,
+        mode: 'insensitive',
+      };
+    }
+
     const [data, total] = await Promise.all([
-      this.platformRepository.findMany(params),
-      this.platformRepository.count(params.where ?? {}),
+      this.platformRepository.findMany({
+        skip: query.skip,
+        take: query.take,
+        where,
+      }),
+      this.platformRepository.count(where),
     ]);
 
     return { data, total };

@@ -89,6 +89,7 @@ export class ShowService extends BaseModelService {
   async getActiveShows(params: {
     skip?: number;
     take?: number;
+    where?: Prisma.ShowWhereInput;
     orderBy?: Prisma.ShowOrderByWithRelationInput;
     include?: Prisma.ShowInclude;
   }): Promise<Show[]> {

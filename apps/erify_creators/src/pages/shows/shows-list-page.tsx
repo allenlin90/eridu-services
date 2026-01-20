@@ -35,12 +35,20 @@ export function ShowsListPage() {
   const nameFilter = columnFilters.find((filter: { id: string; value: unknown }) => filter.id === 'name')
     ?.value as string | undefined;
 
+  // Helper to convert date values (which may be strings from URL) to ISO strings
+  const toISOStringOrUndefined = (date: Date | string | undefined): string | undefined => {
+    if (!date)
+      return undefined;
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toISOString();
+  };
+
   const { data, isLoading, error } = useShows({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     name: nameFilter,
-    start_date_from: dateRange?.from?.toISOString(),
-    start_date_to: dateRange?.to?.toISOString(),
+    start_date_from: toISOStringOrUndefined(dateRange?.from),
+    start_date_to: toISOStringOrUndefined(dateRange?.to),
     order_by: sorting.length > 0 && sorting[0]?.id
       ? (sorting[0].id as 'created_at' | 'updated_at' | 'start_time' | 'end_time')
       : 'start_time',

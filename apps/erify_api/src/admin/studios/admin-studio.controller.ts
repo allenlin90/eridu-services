@@ -19,6 +19,7 @@ import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateStudioDto,
+  ListStudiosQueryDto,
   studioDto,
   UpdateStudioDto,
 } from '@/models/studio/schemas/studio.schema';
@@ -63,10 +64,13 @@ export class AdminStudioController extends BaseAdminController {
 
   @Get()
   @AdminPaginatedResponse(studioDto, 'List of studios with pagination')
-  async getStudios(@Query() query: PaginationQueryDto) {
+  async getStudios(@Query() query: ListStudiosQueryDto) {
     const { data, total } = await this.studioService.listStudios({
       skip: query.skip,
       take: query.take,
+      name: query.name,
+      uid: query.uid,
+      include_deleted: query.include_deleted,
     });
 
     return this.createPaginatedResponse(data, total, query);

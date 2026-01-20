@@ -109,7 +109,7 @@ describe('authenticatedLayout', () => {
     vi.clearAllMocks();
   });
 
-  it('shows loading spinner when session is loading', () => {
+  it('shows loading spinner when session is loading', async () => {
     mockUseSession.mockReturnValue({
       session: null,
       isLoading: true,
@@ -118,10 +118,12 @@ describe('authenticatedLayout', () => {
 
     render(<AuthenticatedLayout />);
 
-    expect(screen.getByTestId('spinner')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('spinner')).toBeInTheDocument();
+    });
   });
 
-  it('shows loading spinner when session check has not completed', () => {
+  it('shows loading spinner when session check has not completed', async () => {
     mockUseSession.mockReturnValue({
       session: null,
       isLoading: false,
@@ -130,7 +132,9 @@ describe('authenticatedLayout', () => {
 
     render(<AuthenticatedLayout />);
 
-    expect(screen.getByTestId('spinner')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('spinner')).toBeInTheDocument();
+    });
   });
 
   it.skip('redirects to login when no session after check', async () => {

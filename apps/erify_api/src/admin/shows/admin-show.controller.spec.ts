@@ -95,6 +95,8 @@ describe('adminShowController', () => {
         limit: 10,
         skip: 0,
         take: 10,
+        order_by: 'start_time',
+        order_direction: 'asc',
       } as ListShowsQueryDto;
       const shows = [
         { uid: 'show_1', name: 'Show 1' },

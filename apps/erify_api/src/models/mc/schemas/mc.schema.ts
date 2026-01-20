@@ -7,6 +7,7 @@ import {
   updateMcInputSchema,
 } from '@eridu/api-types/mcs';
 
+import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { McService } from '@/models/mc/mc.service';
 import { userDto, userSchema } from '@/models/user/schemas/user.schema';
 
@@ -105,3 +106,33 @@ export class CreateMcDto extends createZodDto(createMcSchema) {}
 export class UpdateMcDto extends createZodDto(updateMcSchema) {}
 export class McDto extends createZodDto(mcDto) {}
 export class McWithUserDto extends createZodDto(mcWithUserDto) {}
+
+// MC list filter schema
+export const listMcsFilterSchema = z.object({
+  name: z.string().optional(),
+  alias_name: z.string().optional(),
+  id: z.string().optional(),
+  include_deleted: z.coerce.boolean().default(false),
+});
+
+export const listMcsQuerySchema = paginationQuerySchema
+  .and(listMcsFilterSchema)
+  .transform((data) => {
+    const { id, alias_name, ...rest } = data;
+    return {
+      ...rest,
+      uid: id,
+      aliasName: alias_name,
+    };
+  });
+
+export class ListMcsQueryDto extends createZodDto(listMcsQuerySchema) {
+  declare page: number;
+  declare limit: number;
+  declare take: number;
+  declare skip: number;
+  declare name?: string;
+  declare aliasName: string | undefined;
+  declare include_deleted: boolean;
+  declare uid: string | undefined;
+}

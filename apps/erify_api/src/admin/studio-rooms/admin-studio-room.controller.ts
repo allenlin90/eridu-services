@@ -9,13 +9,17 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { createZodDto } from 'nestjs-zod';
+import { z } from 'zod';
 
 import { BaseAdminController } from '@/admin/base-admin.controller';
 import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+import {
+  createPaginatedQuerySchema,
+} from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateStudioRoomDto,
@@ -23,6 +27,20 @@ import {
   UpdateStudioRoomDto,
 } from '@/models/studio-room/schemas/studio-room.schema';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
+
+const studioRoomListQuerySchema = createPaginatedQuerySchema(
+  z.object({
+    name: z.string().optional(),
+    studioId: z.string().optional(),
+    studio_id: z.string().optional(),
+    id: z.string().optional(),
+  }),
+).transform((data) => ({
+  ...data,
+  studioId: data.studioId || data.studio_id,
+}));
+
+class StudioRoomListQueryDto extends createZodDto(studioRoomListQuerySchema) {}
 
 @Controller('admin/studio-rooms')
 export class AdminStudioRoomController extends BaseAdminController {
@@ -48,12 +66,29 @@ export class AdminStudioRoomController extends BaseAdminController {
     studioRoomWithStudioDto,
     'List of studio rooms with pagination',
   )
-  async getStudioRooms(@Query() query: PaginationQueryDto) {
-    const data = await this.studioRoomService.getStudioRooms(
-      { skip: query.skip, take: query.take },
+  async getStudioRooms(@Query() query: StudioRoomListQueryDto) {
+    const where: any = {};
+
+    if (query.name) {
+      where.name = { contains: query.name, mode: 'insensitive' };
+    }
+
+    if (query.studioId) {
+      where.studio = { uid: query.studioId };
+    }
+
+    if (query.id) {
+      where.uid = query.id;
+    }
+
+    const { data, total } = await this.studioRoomService.listStudioRooms(
+      {
+        skip: query.skip,
+        take: query.take,
+        where,
+      },
       { studio: true },
     );
-    const total = await this.studioRoomService.countStudioRooms();
 
     return this.createPaginatedResponse(data, total, query);
   }

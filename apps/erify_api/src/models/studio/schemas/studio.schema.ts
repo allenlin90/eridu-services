@@ -64,3 +64,36 @@ export class CreateStudioCoreDto extends createZodDto(createStudioCoreSchema) {}
 export class UpdateStudioDto extends createZodDto(updateStudioSchema) {}
 export class UpdateStudioCoreDto extends createZodDto(updateStudioCoreSchema) {}
 export class StudioDto extends createZodDto(studioDto) {}
+
+// Studio list filter schema
+export const listStudiosFilterSchema = z.object({
+  name: z.string().optional(),
+  id: z.string().optional(),
+  include_deleted: z.coerce.boolean().default(false),
+});
+
+export const listStudiosQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).optional().default(1),
+    limit: z.coerce.number().int().min(1).optional().default(10),
+  })
+  .and(listStudiosFilterSchema)
+  .transform((data) => ({
+    page: data.page,
+    limit: data.limit,
+    take: data.limit,
+    skip: (data.page - 1) * data.limit,
+    name: data.name,
+    include_deleted: data.include_deleted,
+    uid: data.id,
+  }));
+
+export class ListStudiosQueryDto extends createZodDto(listStudiosQuerySchema) {
+  declare page: number;
+  declare limit: number;
+  declare take: number;
+  declare skip: number;
+  declare name: string | undefined;
+  declare include_deleted: boolean;
+  declare uid: string | undefined;
+}

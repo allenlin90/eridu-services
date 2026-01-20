@@ -55,6 +55,7 @@ export class ClientDto extends createZodDto(clientDto) {}
 // Client list filter schema
 export const listClientsFilterSchema = z.object({
   name: z.string().optional(),
+  id: z.string().optional(),
   include_deleted: z.coerce.boolean().default(false),
 });
 
@@ -71,6 +72,7 @@ export const listClientsQuerySchema = z
     skip: (data.page - 1) * data.limit,
     name: data.name,
     include_deleted: data.include_deleted,
+    uid: data.id,
   }));
 
 export class ListClientsQueryDto extends createZodDto(listClientsQuerySchema) {
@@ -80,4 +82,5 @@ export class ListClientsQueryDto extends createZodDto(listClientsQuerySchema) {
   declare skip: number;
   declare name: string | undefined;
   declare include_deleted: boolean;
+  declare uid: string | undefined;
 }

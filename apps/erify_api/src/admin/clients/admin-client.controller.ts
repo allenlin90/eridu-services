@@ -43,6 +43,7 @@ export class AdminClientController extends BaseAdminController {
       skip: query.skip,
       take: query.take,
       name: query.name,
+      uid: query.uid,
       include_deleted: query.include_deleted,
     });
 
