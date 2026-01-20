@@ -217,7 +217,7 @@ describe('publishingService', () => {
     status: 'published',
     publishedAt: new Date(),
     publishedBy: BigInt(1),
-    version: 2,
+    version: 1,
     publishedByUser: {
       uid: 'user_test123',
       name: 'Test User',
@@ -497,7 +497,7 @@ describe('publishingService', () => {
           status: 'published',
           publishedAt: expect.any(Date) as Date,
           publishedBy: userId,
-          version: mockSchedule.version + 1,
+
         },
         include: {
           client: true,

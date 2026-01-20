@@ -204,7 +204,6 @@ export class PublishingService {
             status: 'published',
             publishedAt: new Date(),
             publishedBy: userId,
-            version: schedule.version + 1,
           },
           include: {
             client: true,
