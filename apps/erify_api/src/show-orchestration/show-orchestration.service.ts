@@ -445,8 +445,8 @@ export class ShowOrchestrationService {
     uid: string,
     platforms: Array<{
       platformId: string;
-      liveStreamLink?: string;
-      platformShowId?: string;
+      liveStreamLink?: string | null;
+      platformShowId?: string | null;
       viewerCount?: number;
       metadata?: object;
     }>,
@@ -485,8 +485,8 @@ export class ShowOrchestrationService {
                 uid: this.showPlatformService.generateShowPlatformUid(),
                 showId,
                 platformId,
-                liveStreamLink: platform.liveStreamLink ?? '',
-                platformShowId: platform.platformShowId ?? '',
+                liveStreamLink: platform.liveStreamLink ?? null,
+                platformShowId: platform.platformShowId ?? null,
                 viewerCount: platform.viewerCount ?? 0,
                 metadata: platform.metadata ?? {},
               },
@@ -515,7 +515,9 @@ export class ShowOrchestrationService {
       endTime: data.endTime,
       metadata: data.metadata,
       client: { connect: { uid: data.clientId } },
-      studioRoom: { connect: { uid: data.studioRoomId } },
+      studioRoom: data.studioRoomId
+        ? { connect: { uid: data.studioRoomId } }
+        : undefined,
       showType: { connect: { uid: data.showTypeId } },
       showStatus: { connect: { uid: data.showStatusId } },
       showStandard: { connect: { uid: data.showStandardId } },
@@ -531,8 +533,8 @@ export class ShowOrchestrationService {
         create: data.platforms?.map((platform) => ({
           uid: this.showPlatformService.generateShowPlatformUid(),
           platform: { connect: { uid: platform.platformId } },
-          liveStreamLink: platform.liveStreamLink ?? '',
-          platformShowId: platform.platformShowId ?? '',
+          liveStreamLink: platform.liveStreamLink ?? null,
+          platformShowId: platform.platformShowId ?? null,
           viewerCount: platform.viewerCount ?? 0,
           metadata: platform.metadata ?? {},
         })),
@@ -664,8 +666,8 @@ export class ShowOrchestrationService {
     showId: bigint,
     platforms: Array<{
       platformId: string;
-      liveStreamLink?: string;
-      platformShowId?: string;
+      liveStreamLink?: string | null;
+      platformShowId?: string | null;
       viewerCount?: number;
       metadata?: object;
     }>,
@@ -719,8 +721,8 @@ export class ShowOrchestrationService {
             uid: this.showPlatformService.generateShowPlatformUid(),
             showId,
             platformId,
-            liveStreamLink: platformAssignment.liveStreamLink ?? '',
-            platformShowId: platformAssignment.platformShowId ?? '',
+            liveStreamLink: platformAssignment.liveStreamLink ?? null,
+            platformShowId: platformAssignment.platformShowId ?? null,
             viewerCount: platformAssignment.viewerCount ?? 0,
             metadata: platformAssignment.metadata ?? {},
           },

@@ -116,7 +116,7 @@ model Show {
   showStandardId BigInt         @map("show_standard_id")
   showStandard   ShowStandard   @relation(fields: [showStandardId], references: [id])
   scheduleId     BigInt?        @map("schedule_id")
-  Schedule       Schedule?      @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  Schedule       Schedule?      @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
   showMCs        ShowMC[]
   showPlatforms  ShowPlatform[]
   createdAt      DateTime       @default(now()) @map("created_at")

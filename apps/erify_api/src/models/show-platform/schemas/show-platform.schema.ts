@@ -13,8 +13,8 @@ export const showPlatformSchema = z.object({
   uid: z.string().startsWith(ShowPlatformService.UID_PREFIX),
   showId: z.bigint(),
   platformId: z.bigint(),
-  liveStreamLink: z.string(),
-  platformShowId: z.string(),
+  liveStreamLink: z.string().nullable(),
+  platformShowId: z.string().nullable(),
   viewerCount: z.number().int(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
@@ -26,8 +26,12 @@ export const showPlatformSchema = z.object({
 export const createShowPlatformSchema = z.object({
   show_id: z.string().startsWith(ShowService.UID_PREFIX), // UID
   platform_id: z.string().startsWith(PlatformService.UID_PREFIX), // UID
-  live_stream_link: z.string().url('Live stream link must be a valid URL'),
-  platform_show_id: z.string().min(1, 'Platform show ID is required'),
+  live_stream_link: z
+    .string()
+    .url('Live stream link must be a valid URL')
+    .nullable()
+    .optional(),
+  platform_show_id: z.string().nullable().optional(),
   viewer_count: z
     .number()
     .int()
@@ -55,11 +59,9 @@ export const updateShowPlatformSchema = z
     live_stream_link: z
       .string()
       .url('Live stream link must be a valid URL')
+      .nullable()
       .optional(),
-    platform_show_id: z
-      .string()
-      .min(1, 'Platform show ID is required')
-      .optional(),
+    platform_show_id: z.string().nullable().optional(),
     viewer_count: z
       .number()
       .int()
@@ -104,8 +106,8 @@ export const showPlatformDto = showPlatformWithRelationsSchema
       show_name: z.string().nullable(),
       platform_id: z.string().nullable(),
       platform_name: z.string().nullable(),
-      live_stream_link: z.string(),
-      platform_show_id: z.string(),
+      live_stream_link: z.string().nullable(),
+      platform_show_id: z.string().nullable(),
       viewer_count: z.number().int(),
       metadata: z.record(z.string(), z.any()),
       created_at: z.iso.datetime(),

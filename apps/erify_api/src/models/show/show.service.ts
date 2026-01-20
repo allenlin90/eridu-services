@@ -281,7 +281,9 @@ export class ShowService extends BaseModelService {
       endTime: dto.endTime,
       metadata: dto.metadata ?? {},
       client: { connect: { uid: dto.clientId } },
-      studioRoom: { connect: { uid: dto.studioRoomId } },
+      studioRoom: dto.studioRoomId
+        ? { connect: { uid: dto.studioRoomId } }
+        : undefined,
       showType: { connect: { uid: dto.showTypeId } },
       showStatus: { connect: { uid: dto.showStatusId } },
       showStandard: { connect: { uid: dto.showStandardId } },
@@ -305,7 +307,9 @@ export class ShowService extends BaseModelService {
     }
 
     if (dto.studioRoomId !== undefined) {
-      payload.studioRoom = { connect: { uid: dto.studioRoomId } };
+      payload.studioRoom = dto.studioRoomId
+        ? { connect: { uid: dto.studioRoomId } }
+        : { disconnect: true };
     }
 
     if (dto.showTypeId !== undefined) {

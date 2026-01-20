@@ -21,7 +21,7 @@ export const showSchema = z.object({
   id: z.bigint(),
   uid: z.string().startsWith(ShowService.UID_PREFIX),
   clientId: z.bigint(),
-  studioRoomId: z.bigint(),
+  studioRoomId: z.bigint().nullable(),
   showTypeId: z.bigint(),
   showStatusId: z.bigint(),
   showStandardId: z.bigint(),
@@ -31,13 +31,18 @@ export const showSchema = z.object({
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
+  deletedAt: z.date().nullable(),
 });
 
 // API input schema (snake_case input, transforms to camelCase)
 export const createShowSchema = z
   .object({
     client_id: z.string().startsWith(ClientService.UID_PREFIX), // UID
-    studio_room_id: z.string().startsWith(StudioRoomService.UID_PREFIX), // UID
+    studio_room_id: z
+      .string()
+      .startsWith(StudioRoomService.UID_PREFIX)
+      .nullable()
+      .optional(), // UID
     show_type_id: z.string().startsWith(ShowTypeService.UID_PREFIX), // UID
     show_status_id: z.string().startsWith(ShowStatusService.UID_PREFIX), // UID
     show_standard_id: z.string().startsWith(ShowStandardService.UID_PREFIX), // UID
@@ -70,6 +75,7 @@ export const updateShowSchema = z
     studio_room_id: z
       .string()
       .startsWith(StudioRoomService.UID_PREFIX)
+      .nullable()
       .optional(), // UID
     show_type_id: z.string().startsWith(ShowTypeService.UID_PREFIX).optional(), // UID
     show_status_id: z
@@ -113,7 +119,7 @@ export const updateShowSchema = z
 // Schema for Show with relations (used in admin endpoints)
 export const showWithRelationsSchema = showSchema.extend({
   client: clientSchema.optional(),
-  studioRoom: studioRoomSchema.optional(),
+  studioRoom: studioRoomSchema.nullable().optional(),
   showType: showTypeSchema.optional(),
   showStatus: showStatusSchema.optional(),
   showStandard: showStandardSchema.optional(),

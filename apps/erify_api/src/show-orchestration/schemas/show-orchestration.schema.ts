@@ -155,8 +155,8 @@ export const replacePlatformsOnShowSchema = z.object({
   platforms: z.array(
     z.object({
       platform_id: z.string(),
-      live_stream_link: z.string().optional(),
-      platform_show_id: z.string().optional(),
+      live_stream_link: z.string().nullable().optional(),
+      platform_show_id: z.string().nullable().optional(),
       viewer_count: z.number().int().min(0).optional(),
       metadata: z.record(z.string(), z.any()).optional(),
     }),
@@ -184,8 +184,8 @@ export type ReplaceMcsOnShowTransformed = {
 
 export type ReplacePlatformItem = {
   platformId: string;
-  liveStreamLink?: string;
-  platformShowId?: string;
+  liveStreamLink?: string | null;
+  platformShowId?: string | null;
   viewerCount?: number;
   metadata?: object;
 };
@@ -231,8 +231,8 @@ export class ReplacePlatformsOnShowDto extends createZodDto(
   replacePlatformsOnShowSchema.transform((data) => ({
     platforms: data.platforms.map((platform) => ({
       platformId: platform.platform_id,
-      liveStreamLink: platform.live_stream_link ?? '',
-      platformShowId: platform.platform_show_id ?? '',
+      liveStreamLink: platform.live_stream_link ?? null,
+      platformShowId: platform.platform_show_id ?? null,
       viewerCount: platform.viewer_count ?? 0,
       metadata: platform.metadata ?? {},
     })),
@@ -240,8 +240,8 @@ export class ReplacePlatformsOnShowDto extends createZodDto(
 ) {
   declare platforms: Array<{
     platformId: string;
-    liveStreamLink: string;
-    platformShowId: string;
+    liveStreamLink: string | null;
+    platformShowId: string | null;
     viewerCount: number;
     metadata: Record<string, any>;
   }>;
