@@ -296,6 +296,7 @@ function isValidDate(d) {
   return d && Object.prototype.toString.call(d) === "[object Date]" && !isNaN(d.getTime());
 }
 
+
 function parseShowFromRow(row, platformMap) {
   const [
     master_plan_id, schedule_id, show_id, date, start_time, end_time,
@@ -321,24 +322,52 @@ function parseShowFromRow(row, platformMap) {
   };
 
   const mcList = parseList(mcs).map(uid => ({ mcId: uid }));
-  // Studio room is single relation
-  const studioRoomUid = studio_rooms ? studio_rooms.toString().trim() : null;
+  
+  // Helper to resolve UID from Map (Name -> UID) or use raw if it looks like a UID
+  const resolveValue = (raw, map, defaultUid) => {
+    if (!raw) return defaultUid;
+    const str = raw.toString().trim();
+    // Invert the map: Key=UID, Value=Name (from Constants) -> we need Name -> UID
+    // Actually Constants are UID -> Name. 
+    // If input is Name (e.g. "bau"), we need to find key where value == "bau".
+    // If input is UID, we return it.
+    
+    // Check if it's already a UID (starts with prefix or matches key)
+    if (map[str] !== undefined) return str; // It's a UID in the keys
+    
+    // Try to find by Value (Name)
+    const lowerInput = str.toLowerCase();
+    const foundEntry = Object.entries(map).find(([key, name]) => name.toLowerCase() === lowerInput);
+    if (foundEntry) return foundEntry[0]; // Return UID
+    
+    return defaultUid;
+  };
+
+  const showTypeId = resolveValue(show_type, SHOW_TYPES, DEFAULTS.SHOW_TYPE_UID);
+  const showStatusId = resolveValue(show_status, SHOW_STATUSES, DEFAULTS.SHOW_STATUS_UID);
+  const showStandardId = resolveValue(show_standard, SHOW_STANDARDS, DEFAULTS.SHOW_STANDARD_UID);
+  
+  // Studio Room: Nullable
+  let studioRoomId = undefined;
+  if (studio_rooms) {
+     studioRoomId = resolveValue(studio_rooms, STUDIO_ROOMS, undefined);
+     // If resolveValue returns undefined (no match/default), ensure it stays undefined
+  }
 
   // Defaults
   const showItem = {
-      tempId: show_id || undefined, // Use show_id as tempId if available
-      // existingShowId: showUid || undefined, // Assuming showUid would come from an external source if needed
-      name: `${show_id || 'Untitled'}`, // Fallback name
+      tempId: show_id || undefined, 
+      name: `${show_id || 'Untitled'}`, 
       startTime: startAt ? startAt.toISOString() : null,
       endTime: endAt ? endAt.toISOString() : null,
       clientId: client,
-      studioRoomId: studioRoomUid || undefined,
-      showTypeId: show_type || DEFAULTS.SHOW_TYPE_UID,
-      showStatusId: show_status || DEFAULTS.SHOW_STATUS_UID,
-      showStandardId: show_standard || DEFAULTS.SHOW_STANDARD_UID,
+      studioRoomId: studioRoomId,
+      showTypeId: showTypeId,
+      showStatusId: showStatusId,
+      showStandardId: showStandardId,
       mcs: mcList,
-      platforms: platformList, // Platforms are parsed from sheet
-      metadata: { note: note || '' }, // Note moved to metadata
+      platforms: platformList, 
+      metadata: { note: note || '' }, 
     };
 
   return {
@@ -396,14 +425,30 @@ function parsePlatforms({ platformsStr, platformMap, ids }) {
       const lower = pName.toLowerCase();
       const uid = platformMap[lower];
       
-      // Determine Ticket ID based on platform name
+      // Determine Ticket ID based on platform name OR UID
       let platformShowId = '';
-      if (lower === 'tiktok' && ids.tiktok) platformShowId = ids.tiktok;
-      if (lower === 'shopee' && ids.shopee) platformShowId = ids.shopee;
-      if (lower === 'lazada' && ids.lazada) platformShowId = ids.lazada;
 
+      // Reverse lookup to find name from UID if possible (e.g. if input is 'plt_...')
+      // platformMap has name->uid. We need uid->name.
+      // Or just check if the UID belongs to a known platform type.
+      
+      // 1. Resolve effective UID
       const effectiveUid = uid || (pName.startsWith('plt_') ? pName : null);
       if (!effectiveUid) return null;
+
+      // 2. Identify Platform Type (Name)
+      // If we found it via name map, we know the name (pName).
+      // If we found it via UID, we need to see which platform name maps to this UID.
+      const resolvedName = Object.keys(platformMap).find(key => platformMap[key] === effectiveUid) || lower;
+      
+      // 3. Check types
+      const isTiktok = resolvedName.includes('tiktok');
+      const isShopee = resolvedName.includes('shopee');
+      const isLazada = resolvedName.includes('lazada');
+
+      if (isTiktok && ids.tiktok) platformShowId = ids.tiktok.toString();
+      if (isShopee && ids.shopee) platformShowId = ids.shopee.toString();
+      if (isLazada && ids.lazada) platformShowId = ids.lazada.toString();
 
       return {
         platformId: effectiveUid,
@@ -429,7 +474,15 @@ function validateRows(rows) {
     // 5: end_time
     // 6: client
     // 7: platforms
-    // ...
+    // 8: show_standard
+    // 9: show_type
+    // 10: shopee_ticket_id
+    // 11: lazada_ticket_id
+    // 12: tiktok_ticket_id
+    // 13: show_status
+    // 14: studio_room
+    // 15: mcs
+    // 16: note
     
     const scheduleId = row[1] ? row[1].toString().trim() : '';
     const showId = row[2] ? row[2].toString().trim() : '';
@@ -438,6 +491,15 @@ function validateRows(rows) {
     const start = row[4];
     const end = row[5];
     const platforms = row[7];
+    const showStandard = row[8];
+    const showType = row[9];
+    const shopeeTicketId = row[10];
+    const lazadaTicketId = row[11];
+    const tiktokTicketId = row[12];
+    const showStatus = row[13];
+    const studioRoom = row[14];
+    // const mcs = row[15];
+    // const note = row[16];
 
     const isEmptyRow = !scheduleId && !showId && !client && !platforms && !date;
     if (isEmptyRow) return;
