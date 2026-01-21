@@ -406,7 +406,7 @@ function parsePlatforms({ platformsStr, platformMap, ids }) {
       if (!effectiveUid) return null;
 
       return {
-        platformUid: effectiveUid,
+        platformId: effectiveUid,
         ...(platformShowId && { platformShowId }),
       };
     })
