@@ -3,7 +3,12 @@ import { useState } from 'react';
 
 import { Button } from '@eridu/ui';
 
-import { authClient } from '../../auth/api/auth-client';
+import { AdminUserManagement } from './admin-user-management';
+
+import { authClient } from '@/frontend/features/auth/api/auth-client';
+import { ChangePasswordDialog } from '@/frontend/features/auth/components/change-password-dialog';
+import type { ExtendedUser } from '@/lib/types';
+import { hasRole } from '@/lib/types';
 
 export function Dashboard() {
   const router = useRouter();
@@ -129,6 +134,12 @@ export function Dashboard() {
                 </div>
               )}
             </dl>
+            <div className="mt-6 border-t border-gray-200 pt-6">
+              <h3 className="text-sm font-medium text-gray-900">Security</h3>
+              <div className="mt-3">
+                <ChangePasswordDialog />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -162,8 +173,13 @@ export function Dashboard() {
           </div>
         </div>
 
+        {/* Admin Tools Section - Only visible to admins */}
+        {hasRole(user as ExtendedUser, 'admin') && (
+          <AdminUserManagement currentUser={user as ExtendedUser} />
+        )}
+
         {/* Actions */}
-        <div className="flex justify-center">
+        <div className="flex justify-center mt-8">
           <Button
             onClick={handleLogout}
             disabled={loggingOut}

@@ -93,6 +93,7 @@ export {
   TableHeader,
   TableRow,
 } from './components/ui/table';
+export { TablePagination } from './components/ui/table-pagination';
 export { TableSkeleton } from './components/ui/table-skeleton';
 export { Textarea } from './components/ui/textarea';
 export {
