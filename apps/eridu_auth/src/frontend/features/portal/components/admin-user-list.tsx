@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@eridu/ui';
 
+import { CopyIdCell } from '@/frontend/features/portal/components/copy-id-cell';
 import { UserUpdateDialog } from '@/frontend/features/portal/components/user-update-dialog';
 import { useAdminUsers } from '@/frontend/features/portal/hooks/use-admin-users';
 import type { ExtendedUser } from '@/lib/types';
@@ -100,7 +101,8 @@ export function AdminUserList() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[40%]">User</TableHead>
+              <TableHead className="w-[15%]">ID</TableHead>
+              <TableHead className="w-[30%]">User</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Email</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -110,7 +112,7 @@ export function AdminUserList() {
             {loading && users.length === 0
               ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-32 text-center">
+                    <TableCell colSpan={5} className="h-32 text-center">
                       <div className="flex flex-col items-center justify-center gap-2 text-gray-400">
                         <RefreshCw className="h-6 w-6 animate-spin" />
                         <span className="text-sm">Loading users...</span>
@@ -121,7 +123,7 @@ export function AdminUserList() {
               : users.length === 0
                 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="h-32 text-center text-gray-400">
+                      <TableCell colSpan={5} className="h-32 text-center text-gray-400">
                         No users found.
                       </TableCell>
                     </TableRow>
@@ -129,6 +131,9 @@ export function AdminUserList() {
                 : (
                     users.map((user) => (
                       <TableRow key={user.id} className="hover:bg-gray-50/50">
+                        <TableCell>
+                          <CopyIdCell id={user.id} />
+                        </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-medium text-gray-900">{user.name || 'No name'}</span>
