@@ -1,4 +1,4 @@
-import { Briefcase, Megaphone } from 'lucide-react';
+import { Briefcase, Crown, Megaphone, Star } from 'lucide-react';
 
 import {
   Badge,
@@ -139,6 +139,29 @@ export function ShowTypeBadge({ type }: { type?: string }) {
     <Badge variant="outline" className="font-normal flex items-center text-muted-foreground">
       <Briefcase className="h-3 w-3 mr-1" />
       {type || 'BAU'}
+    </Badge>
+  );
+}
+
+export function ShowStandardBadge({ standard }: { standard?: string }) {
+  const normalizedStandard = standard?.toLowerCase() || 'standard';
+
+  if (normalizedStandard === 'premium') {
+    return (
+      <Badge
+        variant="secondary"
+        className="font-normal flex items-center bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200"
+      >
+        <Crown className="h-3 w-3 mr-1" />
+        Premium
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge variant="outline" className="font-normal flex items-center text-muted-foreground">
+      <Star className="h-3 w-3 mr-1" />
+      {standard || 'Standard'}
     </Badge>
   );
 }

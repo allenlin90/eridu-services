@@ -6,6 +6,7 @@ import {
   DateCell,
   ItemsList,
   PlatformList,
+  ShowStandardBadge,
   ShowStatusBadge,
   ShowTypeBadge,
 } from '@/features/admin/components/show-table-cells';
@@ -29,6 +30,11 @@ export const showColumns: ColumnDef<Show>[] = [
         </div>
       </div>
     ),
+  },
+  {
+    accessorKey: 'show_standard_name',
+    header: 'Standard',
+    cell: ({ row }) => <ShowStandardBadge standard={row.original.show_standard_name || undefined} />,
   },
   {
     id: 'client_name',
@@ -70,6 +76,11 @@ export const showColumns: ColumnDef<Show>[] = [
     accessorKey: 'start_time',
     header: 'Start Time',
     cell: ({ row }) => <DateCell date={row.original.start_time} />,
+  },
+  {
+    accessorKey: 'end_time',
+    header: 'End Time',
+    cell: ({ row }) => <DateCell date={row.original.end_time} />,
   },
 ];
 
