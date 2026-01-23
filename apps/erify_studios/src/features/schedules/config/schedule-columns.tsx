@@ -1,14 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
 import type { ScheduleApiResponse } from '@eridu/api-types/schedules';
-
-import { CopyIdCell } from '@/features/admin/components/copy-id-cell';
+import { CopyableText } from '@eridu/ui';
 
 export const scheduleColumns: ColumnDef<ScheduleApiResponse>[] = [
   {
     accessorKey: 'id',
     header: 'ID',
-    cell: ({ row }) => <CopyIdCell id={row.original.id} />,
+    cell: ({ row }) => <CopyableText value={row.original.id} />,
     meta: {
       className: 'hidden xl:table-cell',
     },

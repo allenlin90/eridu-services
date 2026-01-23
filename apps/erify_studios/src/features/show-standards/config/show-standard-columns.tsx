@@ -1,14 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
 import type { ShowStandardApiResponse } from '@eridu/api-types/show-standards';
-
-import { CopyIdCell } from '@/features/admin/components/copy-id-cell';
+import { CopyableText } from '@eridu/ui';
 
 export const showStandardColumns: ColumnDef<ShowStandardApiResponse>[] = [
   {
     accessorKey: 'id',
     header: 'ID',
-    cell: ({ row }) => <CopyIdCell id={row.original.id} />,
+    cell: ({ row }) => <CopyableText value={row.original.id} />,
   },
   {
     accessorKey: 'name',

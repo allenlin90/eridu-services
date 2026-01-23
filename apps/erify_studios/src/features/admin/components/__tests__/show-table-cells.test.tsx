@@ -26,11 +26,6 @@ vi.mock('../platform-icons', () => ({
   PlatformIcon: ({ platform }: any) => <span data-testid="platform-icon">{platform}</span>,
 }));
 
-// Mock CopyIdCell
-vi.mock('../copy-id-cell', () => ({
-  CopyIdCell: ({ id }: any) => <span data-testid="copy-id-cell">{id}</span>,
-}));
-
 describe('itemsList', () => {
   it('displays all items when count is less than or equal to limit', () => {
     render(<ItemsList items={['Item 1', 'Item 2']} limit={3} />);

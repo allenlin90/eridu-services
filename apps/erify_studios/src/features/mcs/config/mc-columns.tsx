@@ -1,14 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
 import type { McApiResponse } from '@eridu/api-types/mcs';
-
-import { CopyIdCell } from '@/features/admin/components/copy-id-cell';
+import { CopyableText } from '@eridu/ui';
 
 export const mcColumns: ColumnDef<McApiResponse>[] = [
   {
     accessorKey: 'id',
     header: 'ID',
-    cell: ({ row }) => <CopyIdCell id={row.original.id} />,
+    cell: ({ row }) => <CopyableText value={row.original.id} />,
   },
   {
     accessorKey: 'name',

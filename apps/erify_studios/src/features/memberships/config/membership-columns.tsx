@@ -1,14 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
 import type { MembershipApiResponse } from '@eridu/api-types/memberships';
-
-import { CopyIdCell } from '@/features/admin/components/copy-id-cell';
+import { CopyableText } from '@eridu/ui';
 
 export const membershipColumns: ColumnDef<MembershipApiResponse>[] = [
   {
     accessorKey: 'id',
     header: 'ID',
-    cell: ({ row }) => <CopyIdCell id={row.original.id} />,
+    cell: ({ row }) => <CopyableText value={row.original.id} />,
   },
   {
     accessorKey: 'user_id',

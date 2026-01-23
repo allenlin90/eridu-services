@@ -1,7 +1,8 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
+import { CopyableText } from '@eridu/ui';
+
 import {
-  CopyIdCell,
   DateCell,
   ItemsList,
   PlatformList,
@@ -14,7 +15,7 @@ export const showColumns: ColumnDef<Show>[] = [
   {
     accessorKey: 'id',
     header: 'ID',
-    cell: ({ row }) => <CopyIdCell id={row.original.id} />,
+    cell: ({ row }) => <CopyableText value={row.original.id} />,
     enableSorting: false,
   },
   {

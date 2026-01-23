@@ -1,15 +1,14 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
 import type { StudioApiResponse } from '@eridu/api-types/studios';
-
-import { CopyIdCell } from '@/features/admin/components/copy-id-cell';
+import { CopyableText } from '@eridu/ui';
 
 export function useStudioColumns() {
   const studioColumns: ColumnDef<StudioApiResponse>[] = [
     {
       accessorKey: 'id',
       header: 'ID',
-      cell: ({ row }) => <CopyIdCell id={row.original.id} />,
+      cell: ({ row }) => <CopyableText value={row.original.id} />,
     },
     {
       accessorKey: 'name',

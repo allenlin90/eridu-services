@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import {
   Badge,
   Button,
+  CopyableText,
   Input,
   Table,
   TableBody,
@@ -14,7 +15,6 @@ import {
   TableRow,
 } from '@eridu/ui';
 
-import { CopyIdCell } from '@/frontend/features/portal/components/copy-id-cell';
 import { UserUpdateDialog } from '@/frontend/features/portal/components/user-update-dialog';
 import { useAdminUsers } from '@/frontend/features/portal/hooks/use-admin-users';
 import type { ExtendedUser } from '@/lib/types';
@@ -132,7 +132,7 @@ export function AdminUserList() {
                     users.map((user) => (
                       <TableRow key={user.id} className="hover:bg-gray-50/50">
                         <TableCell>
-                          <CopyIdCell id={user.id} />
+                          <CopyableText value={user.id} />
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">

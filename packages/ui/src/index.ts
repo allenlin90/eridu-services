@@ -1,3 +1,4 @@
+export { CopyableText, type CopyableTextProps } from './components/copyable-text';
 export { LoadingPage, LoadingSpinner } from './components/loading';
 export {
   AlertDialog,

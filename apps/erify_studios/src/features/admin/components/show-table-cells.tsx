@@ -7,10 +7,7 @@ import {
   PopoverTrigger,
 } from '@eridu/ui';
 
-import { CopyIdCell } from './copy-id-cell';
 import { PlatformIcon } from './platform-icons';
-
-export { CopyIdCell };
 
 export function ItemsList({
   items,
