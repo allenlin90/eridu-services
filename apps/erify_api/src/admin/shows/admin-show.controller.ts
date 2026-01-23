@@ -16,10 +16,7 @@ import {
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
-import {
-  ListShowsQueryDto,
-  UpdateShowDto,
-} from '@/models/show/schemas/show.schema';
+import { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import {
   CreateShowWithAssignmentsDto,
@@ -28,6 +25,7 @@ import {
   ReplaceMcsOnShowDto,
   ReplacePlatformsOnShowDto,
   showWithAssignmentsDto,
+  UpdateShowWithAssignmentsDto,
 } from '@/show-orchestration/schemas/show-orchestration.schema';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 
@@ -88,18 +86,11 @@ export class AdminShowController extends BaseAdminController {
   async updateShow(
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show'))
     id: string,
-    @Body() body: UpdateShowDto,
+    @Body() body: UpdateShowWithAssignmentsDto,
   ) {
-    // Convert basic DTO to orchestration DTO with empty assignments
-    // This allows updating core show attributes without affecting MC/platform assignments
-    const orchestrationDto = {
-      ...body,
-      showMcs: undefined,
-      showPlatforms: undefined,
-    };
     const show = await this.showOrchestrationService.updateShowWithAssignments(
       id,
-      orchestrationDto,
+      body,
     );
     // Service already returns show with relations
     return show;

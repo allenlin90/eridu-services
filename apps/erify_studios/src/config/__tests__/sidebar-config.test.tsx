@@ -97,8 +97,10 @@ describe('useSidebarConfig', () => {
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
     // Header should be a TeamSwitcher component
-    expect(result.current.header.type.name).toBe('TeamSwitcher');
-    expect(result.current.header.props.teams).toHaveLength(3);
+    const header = result.current.header as React.ReactElement;
+
+    expect((header.type as any).name).toBe('TeamSwitcher');
+    expect((header as any).props.teams).toHaveLength(3);
   });
 
   it('returns sidebar config with navigation items', () => {
@@ -186,7 +188,7 @@ describe('useSidebarConfig', () => {
     const { clearAllCaches } = await import('@/lib/api');
     const { authClient } = await import('@/lib/auth');
 
-    await result.current.onLogout();
+    await result.current.onLogout?.();
 
     expect(clearAllCaches).toHaveBeenCalled();
     expect(authClient.client.signOut).toHaveBeenCalled();

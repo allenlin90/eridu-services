@@ -6,8 +6,8 @@ import type { PaginatedResponse } from '@/lib/api/admin';
 import { apiClient } from '@/lib/api/client';
 
 export type Show = ShowApiResponse & {
-  mcs: { mc_name: string }[];
-  platforms: { platform_name: string }[];
+  mcs: { id: string; mc_id: string; mc_name: string }[];
+  platforms: { id: string; platform_id: string; platform_name: string }[];
 };
 
 export type ShowsResponse = PaginatedResponse<Show>;

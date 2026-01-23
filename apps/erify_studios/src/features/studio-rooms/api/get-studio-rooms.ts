@@ -11,7 +11,7 @@ export type StudioRoomsResponse = PaginatedResponse<StudioRoom>;
 export type GetStudioRoomsParams = {
   page?: number;
   limit?: number;
-  studio_id: string;
+  studio_id?: string;
   name?: string;
   id?: string;
 };

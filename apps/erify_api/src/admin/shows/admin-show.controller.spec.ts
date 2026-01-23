@@ -5,7 +5,6 @@ import { AdminShowController } from './admin-show.controller';
 
 import type {
   ListShowsQueryDto,
-  UpdateShowDto,
 } from '@/models/show/schemas/show.schema';
 import type {
   CreateShowWithAssignmentsDto,
@@ -13,6 +12,7 @@ import type {
   RemovePlatformsFromShowDto,
   ReplaceMcsOnShowDto,
   ReplacePlatformsOnShowDto,
+  UpdateShowWithAssignmentsDto,
 } from '@/show-orchestration/schemas/show-orchestration.schema';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 
@@ -155,14 +155,22 @@ describe('adminShowController', () => {
   describe('updateShow', () => {
     it('should update a show', async () => {
       const showId = 'show_123';
-      const updateDto: UpdateShowDto = {
+      const updateDto = {
         name: 'Updated Show',
-      } as UpdateShowDto;
+        showMcs: [{ mcId: 'mc_1', note: null, metadata: {} }],
+        showPlatforms: [
+          {
+            platformId: 'p_1',
+            liveStreamLink: null,
+            platformShowId: null,
+            viewerCount: 0,
+            metadata: {},
+          },
+        ],
+      } as unknown as UpdateShowWithAssignmentsDto;
       const updatedShow = {
         uid: showId,
         ...updateDto,
-        showMcs: [],
-        showPlatforms: [],
       };
 
       mockShowOrchestrationService.updateShowWithAssignments.mockResolvedValue(
@@ -172,11 +180,7 @@ describe('adminShowController', () => {
       const result = await controller.updateShow(showId, updateDto);
       expect(
         mockShowOrchestrationService.updateShowWithAssignments,
-      ).toHaveBeenCalledWith(showId, {
-        ...updateDto,
-        showMcs: undefined,
-        showPlatforms: undefined,
-      });
+      ).toHaveBeenCalledWith(showId, updateDto);
       expect(result).toEqual(updatedShow);
     });
   });

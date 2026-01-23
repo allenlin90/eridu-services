@@ -117,8 +117,21 @@ export { NavSecondary } from './components/nav-secondary';
 export { NavUser } from './components/nav-user';
 export * from './components/page-transition';
 export { type Team, TeamSwitcher } from './components/team-switcher';
+export { AsyncCombobox, AsyncMultiCombobox } from './components/ui/async-combobox';
+export {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from './components/ui/command';
 
 // Hooks
+
 export type {
   TableUrlState,
   TableUrlStateOptions,

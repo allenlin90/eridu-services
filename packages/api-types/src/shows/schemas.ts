@@ -98,6 +98,26 @@ export const updateShowInputSchema = z
     start_time: z.iso.datetime().optional(), // ISO 8601 datetime string
     end_time: z.iso.datetime().optional(), // ISO 8601 datetime string
     metadata: z.record(z.string(), z.any()).optional(),
+    mcs: z
+      .array(
+        z.object({
+          mc_id: z.string(),
+          note: z.string().optional(),
+          metadata: z.record(z.string(), z.any()).optional(),
+        }),
+      )
+      .optional(),
+    platforms: z
+      .array(
+        z.object({
+          platform_id: z.string(),
+          live_stream_link: z.string().nullable().optional(),
+          platform_show_id: z.string().nullable().optional(),
+          viewer_count: z.number().int().min(0).optional(),
+          metadata: z.record(z.string(), z.any()).optional(),
+        }),
+      )
+      .optional(),
   })
   .refine(
     (data) => {
