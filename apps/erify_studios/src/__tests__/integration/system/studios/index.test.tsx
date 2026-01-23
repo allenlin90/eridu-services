@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { StudiosList } from '../index';
+import { StudiosList } from '@/routes/system/studios/index';
 
 // Mock dependencies
 vi.mock('@tanstack/react-router', () => ({
@@ -49,7 +49,7 @@ vi.mock('@/features/admin/components', () => ({
   AdminLayout: ({ children, action }: any) => (
     <div>
       <h1>Studios</h1>
-      {action && <button onClick={action.onClick}>{action.label}</button>}
+      {action && <button type="button" onClick={action.onClick}>{action.label}</button>}
       {children}
     </div>
   ),
@@ -61,7 +61,7 @@ vi.mock('@/features/admin/components', () => ({
             <td>{row.name}</td>
             <td>
               {/* Render actions dropdown trigger */}
-              <button aria-label="Actions">Actions</button>
+              <button type="button" aria-label="Actions">Actions</button>
               {/* Force render the extra action for assertion */}
               <div data-testid={`actions-${row.id}`}>
                 {renderExtraActions(row)}
@@ -77,17 +77,17 @@ vi.mock('@/features/admin/components', () => ({
 // Mock UI components
 vi.mock('@eridu/ui', () => ({
   DropdownMenuItem: ({ children, onClick }: any) => (
-    <button onClick={onClick}>{children}</button>
+    <button type="button" onClick={onClick}>{children}</button>
   ),
   Button: ({ children, onClick }: any) => (
-    <button onClick={onClick}>{children}</button>
+    <button type="button" onClick={onClick}>{children}</button>
   ),
   Badge: ({ children }: any) => <span>{children}</span>,
   Input: ({ ...props }: any) => <input {...props} />,
   Select: ({ ...props }: any) => <select {...props} />,
   SelectContent: ({ children }: any) => <>{children}</>,
   SelectItem: ({ children }: any) => <option>{children}</option>,
-  SelectTrigger: ({ children }: any) => <button>{children}</button>,
+  SelectTrigger: ({ children }: any) => <button type="button">{children}</button>,
   SelectValue: ({ children }: any) => <span>{children}</span>,
 }));
 
