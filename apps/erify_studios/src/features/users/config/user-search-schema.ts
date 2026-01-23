@@ -7,4 +7,5 @@ export const usersSearchSchema = z.object({
   email: z.string().optional().catch(undefined),
   id: z.string().optional().catch(undefined),
   ext_id: z.string().optional().catch(undefined),
+  is_system_admin: z.string().optional().catch(undefined),
 });

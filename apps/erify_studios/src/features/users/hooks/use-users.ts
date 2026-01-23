@@ -32,6 +32,16 @@ export function useUsers() {
     ?.value as string | undefined;
   const extIdFilter = columnFilters.find((filter) => filter.id === 'ext_id')
     ?.value as string | undefined;
+  const isSystemAdminFilterValue = columnFilters.find(
+    (filter) => filter.id === 'is_system_admin',
+  )?.value as string | undefined;
+
+  // Convert string 'true'/'false' to boolean
+  const isSystemAdminFilter = isSystemAdminFilterValue === 'true'
+    ? true
+    : isSystemAdminFilterValue === 'false'
+      ? false
+      : undefined;
 
   const { data, isLoading, isFetching } = useUsersQuery({
     page: pagination.pageIndex + 1,
@@ -40,6 +50,7 @@ export function useUsers() {
     email: emailFilter,
     id: idFilter,
     ext_id: extIdFilter,
+    is_system_admin: isSystemAdminFilter,
   });
 
   useEffect(() => {

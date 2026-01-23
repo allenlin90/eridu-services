@@ -87,4 +87,67 @@ describe('userService', () => {
       service.updateUser('user_1', { email: 'a@b.com' } as UpdateUserDto),
     ).rejects.toThrow(error);
   });
+
+  describe('listUsers', () => {
+    it('should list users with default params', async () => {
+      const users = [{ uid: 'user_1' }];
+      const total = 1;
+      (userRepositoryMock.findMany as jest.Mock).mockResolvedValue(users);
+      (userRepositoryMock.count as jest.Mock).mockResolvedValue(total);
+
+      const result = await service.listUsers({});
+
+      expect(userRepositoryMock.findMany).toHaveBeenCalledWith({
+        skip: undefined,
+        take: undefined,
+        where: {},
+      });
+      expect(result).toEqual({ data: users, total });
+    });
+
+    it('should filter by isSystemAdmin: true', async () => {
+      (userRepositoryMock.findMany as jest.Mock).mockResolvedValue([]);
+      (userRepositoryMock.count as jest.Mock).mockResolvedValue(0);
+
+      await service.listUsers({ isSystemAdmin: true });
+
+      expect(userRepositoryMock.findMany).toHaveBeenCalledWith({
+        skip: undefined,
+        take: undefined,
+        where: { isSystemAdmin: true },
+      });
+    });
+
+    it('should filter by isSystemAdmin: false', async () => {
+      (userRepositoryMock.findMany as jest.Mock).mockResolvedValue([]);
+      (userRepositoryMock.count as jest.Mock).mockResolvedValue(0);
+
+      await service.listUsers({ isSystemAdmin: false });
+
+      expect(userRepositoryMock.findMany).toHaveBeenCalledWith({
+        skip: undefined,
+        take: undefined,
+        where: { isSystemAdmin: false },
+      });
+    });
+
+    it('should combine multiple filters', async () => {
+      (userRepositoryMock.findMany as jest.Mock).mockResolvedValue([]);
+      (userRepositoryMock.count as jest.Mock).mockResolvedValue(0);
+
+      await service.listUsers({
+        name: 'test',
+        isSystemAdmin: false,
+      });
+
+      expect(userRepositoryMock.findMany).toHaveBeenCalledWith({
+        skip: undefined,
+        take: undefined,
+        where: {
+          name: { contains: 'test', mode: 'insensitive' },
+          isSystemAdmin: false,
+        },
+      });
+    });
+  });
 });

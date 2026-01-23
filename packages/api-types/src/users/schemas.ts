@@ -26,15 +26,24 @@ export type ProfileResponse = z.infer<typeof profileResponseSchema>;
 
 /**
  * User API Response Schema (snake_case - matches backend API output)
+ * PUBLIC VERSION: Excludes sensitive attributes like is_system_admin
  */
 export const userApiResponseSchema = z.object({
   id: z.string(),
   ext_id: z.string().nullable(),
-  email: z.email(),
+  email: z.string().email(),
   name: z.string(),
   profile_url: z.string().nullable(),
   created_at: z.string(), // ISO 8601 datetime string
   updated_at: z.string(), // ISO 8601 datetime string
+});
+
+/**
+ * Admin User API Response Schema (snake_case)
+ * INCLUDES sensitive attributes like is_system_admin
+ */
+export const adminUserApiResponseSchema = userApiResponseSchema.extend({
+  is_system_admin: z.boolean(),
 });
 
 /**
@@ -56,9 +65,11 @@ export const updateUserInputSchema = z.object({
   email: z.string().email().optional(),
   ext_id: z.string().optional(),
   profile_url: z.string().url().optional(),
+  is_system_admin: z.boolean().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export type UserApiResponse = z.infer<typeof userApiResponseSchema>;
+export type AdminUserApiResponse = z.infer<typeof adminUserApiResponseSchema>;
 export type CreateUserInput = z.infer<typeof createUserInputSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserInputSchema>;

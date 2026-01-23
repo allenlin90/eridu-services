@@ -125,6 +125,7 @@ export class UserService extends BaseModelService {
     email?: string;
     uid?: string;
     extId?: string;
+    isSystemAdmin?: boolean;
     where?: Prisma.UserWhereInput;
   }): Promise<{ data: User[]; total: number }> {
     const where: Prisma.UserWhereInput = { ...params.where };
@@ -155,6 +156,10 @@ export class UserService extends BaseModelService {
         contains: params.extId,
         mode: 'insensitive',
       };
+    }
+
+    if (params.isSystemAdmin !== undefined) {
+      where.isSystemAdmin = params.isSystemAdmin;
     }
 
     const [data, total] = await Promise.all([

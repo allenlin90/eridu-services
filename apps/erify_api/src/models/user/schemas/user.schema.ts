@@ -1,6 +1,11 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import {
+  adminUserApiResponseSchema,
+  userApiResponseSchema,
+} from '@eridu/api-types/users';
+
 import { McService } from '@/models/mc/mc.service';
 import { UserService } from '@/models/user/user.service';
 
@@ -11,6 +16,7 @@ export const userSchema = z.object({
   email: z.email(),
   name: z.string(),
   profileUrl: z.url().nullable(),
+  isSystemAdmin: z.boolean(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -88,6 +94,7 @@ export const updateUserSchema = z
     name: z.string().min(1, 'User name is required').optional(),
     // Allow null or empty string to clear the value
     profile_url: z.union([z.string().url(), z.literal(''), z.null()]).optional(),
+    is_system_admin: z.boolean().optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => {
@@ -112,6 +119,8 @@ export const updateUserSchema = z
 
     if (data.metadata !== undefined)
       result.metadata = data.metadata;
+    if (data.is_system_admin !== undefined)
+      result.isSystemAdmin = data.is_system_admin;
     return result;
   });
 
@@ -125,17 +134,21 @@ export const userDto = userSchema
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
   }))
-  .pipe(
-    z.object({
-      id: z.string(),
-      ext_id: z.string().nullable(),
-      email: z.email(),
-      name: z.string(),
-      profile_url: z.url().nullable(),
-      created_at: z.iso.datetime(),
-      updated_at: z.iso.datetime(),
-    }),
-  );
+  .pipe(userApiResponseSchema);
+
+// Admin User DTO (includes is_system_admin)
+export const adminUserDto = userSchema
+  .transform((obj) => ({
+    id: obj.uid,
+    ext_id: obj.extId,
+    email: obj.email,
+    name: obj.name,
+    profile_url: obj.profileUrl,
+    is_system_admin: obj.isSystemAdmin,
+    created_at: obj.createdAt.toISOString(),
+    updated_at: obj.updatedAt.toISOString(),
+  }))
+  .pipe(adminUserApiResponseSchema);
 
 // User DTO with MC data when available
 export const userWithMcDto = userWithMcSchema
@@ -191,6 +204,8 @@ export type UserSchema = z.infer<typeof userSchema>;
 
 export class UserDto extends createZodDto(userDto) {}
 
+export class AdminUserDto extends createZodDto(adminUserDto) {}
+
 export class UserWithMcDto extends createZodDto(userWithMcDto) {}
 
 export class UpdateUserDto extends createZodDto(updateUserSchema) {}
@@ -201,6 +216,16 @@ export const listUsersFilterSchema = z.object({
   email: z.string().optional(),
   id: z.string().optional(),
   ext_id: z.string().optional(),
+  is_system_admin: z.preprocess(
+    (val) => {
+      if (val === 'true' || val === true)
+        return true;
+      if (val === 'false' || val === false)
+        return false;
+      return undefined;
+    },
+    z.boolean().optional(),
+  ),
 });
 
 export const listUsersQuerySchema = z
@@ -208,7 +233,7 @@ export const listUsersQuerySchema = z
     page: z.coerce.number().int().min(1).optional().default(1),
     limit: z.coerce.number().int().min(1).optional().default(10),
   })
-  .and(listUsersFilterSchema)
+  .merge(listUsersFilterSchema)
   .transform((data) => ({
     page: data.page,
     limit: data.limit,
@@ -218,6 +243,7 @@ export const listUsersQuerySchema = z
     email: data.email,
     uid: data.id,
     extId: data.ext_id,
+    isSystemAdmin: data.is_system_admin,
   }));
 
 export class ListUsersQueryDto extends createZodDto(listUsersQuerySchema) {
@@ -229,4 +255,5 @@ export class ListUsersQueryDto extends createZodDto(listUsersQuerySchema) {
   declare email: string | undefined;
   declare uid: string | undefined;
   declare extId: string | undefined;
+  declare isSystemAdmin: boolean | undefined;
 }

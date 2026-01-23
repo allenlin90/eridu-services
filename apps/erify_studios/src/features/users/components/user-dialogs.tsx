@@ -91,6 +91,7 @@ export function UserUpdateDialog({
               email: user.email,
               ext_id: user.ext_id || undefined,
               profile_url: user.profile_url || undefined,
+              is_system_admin: user.is_system_admin,
             }
           : undefined
       }
@@ -135,6 +136,23 @@ export function UserUpdateDialog({
           name: 'profile_url',
           label: 'Profile URL',
           placeholder: 'https://example.com/profile.jpg',
+        },
+        {
+          name: 'is_system_admin' as any,
+          label: 'System Admin',
+          render: (field) => (
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={field.value ?? false}
+                onChange={(e) => field.onChange(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <span className="text-sm text-muted-foreground">
+                Grant system administrator privileges
+              </span>
+            </div>
+          ),
         },
       ]}
     />

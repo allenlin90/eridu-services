@@ -114,7 +114,7 @@ export const studioMembershipWithRelationsDto = studioMembershipWithRelationsSch
         ext_id: z.string().nullable(),
         email: z.string().email(),
         name: z.string(),
-        profile_url: z.string().url().nullable(),
+        profile_url: z.url().nullable(),
         created_at: z.iso.datetime(),
         updated_at: z.iso.datetime(),
       }),

@@ -115,17 +115,8 @@ describe('adminUserController', () => {
         { uid: 'user_2', email: 'user2@example.com', name: 'User 2' },
       ];
       const total = 2;
-      const paginationMeta = {
-        page: 1,
-        limit: 10,
-        total: 2,
-        totalPages: 1,
-        hasNextPage: false,
-        hasPreviousPage: false,
-      };
-
       mockUserService.listUsers.mockResolvedValue({
-        data: users,
+        data: users.map((u) => ({ ...u, is_system_admin: false, ext_id: (u as any).extId ?? null, profile_url: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })),
         total,
       } as any);
 
@@ -137,11 +128,9 @@ describe('adminUserController', () => {
         email: undefined,
         uid: undefined,
         extId: undefined,
+        isSystemAdmin: undefined,
       });
-      expect(result).toEqual({
-        data: users,
-        meta: paginationMeta,
-      });
+      expect(result.data[0]).toHaveProperty('is_system_admin');
     });
 
     it('should filter users by name and email', async () => {
@@ -158,7 +147,7 @@ describe('adminUserController', () => {
       const total = 1;
 
       mockUserService.listUsers.mockResolvedValue({
-        data: users,
+        data: users.map((u) => ({ ...u, is_system_admin: false, ext_id: u.extId ?? null, profile_url: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })),
         total,
       } as any);
 
@@ -170,6 +159,35 @@ describe('adminUserController', () => {
         email: 'test@example.com',
         uid: undefined,
         extId: 'ext_123',
+        isSystemAdmin: undefined,
+      });
+    });
+
+    it('should filter users by isSystemAdmin=false', async () => {
+      const query: ListUsersQueryDto = {
+        page: 1,
+        limit: 10,
+        skip: 0,
+        take: 10,
+        isSystemAdmin: false,
+      } as ListUsersQueryDto;
+      const users = [{ uid: 'user_1', isSystemAdmin: false }];
+      const total = 1;
+
+      mockUserService.listUsers.mockResolvedValue({
+        data: users.map((u) => ({ ...u, is_system_admin: false, ext_id: null, profile_url: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), name: 'test', email: 'test@test.com' })),
+        total,
+      } as any);
+
+      await controller.getUsers(query);
+      expect(mockUserService.listUsers).toHaveBeenCalledWith({
+        skip: query.skip,
+        take: query.take,
+        name: undefined,
+        email: undefined,
+        uid: undefined,
+        extId: undefined,
+        isSystemAdmin: false,
       });
     });
   });

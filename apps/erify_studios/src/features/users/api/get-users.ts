@@ -1,11 +1,11 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
-import type { UserApiResponse } from '@eridu/api-types/users';
+import type { AdminUserApiResponse } from '@eridu/api-types/users';
 
 import type { PaginatedResponse } from '@/lib/api/admin';
 import { apiClient } from '@/lib/api/client';
 
-export type User = UserApiResponse;
+export type User = AdminUserApiResponse;
 export type UsersResponse = PaginatedResponse<User>;
 
 export type GetUsersParams = {
@@ -15,6 +15,7 @@ export type GetUsersParams = {
   email?: string;
   id?: string;
   ext_id?: string;
+  is_system_admin?: boolean;
 };
 
 export async function getUsers(params: GetUsersParams): Promise<UsersResponse> {

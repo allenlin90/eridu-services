@@ -13,6 +13,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@eridu/ui';
 
 import * as m from '@/paraglide/messages.js';
@@ -20,7 +25,8 @@ import * as m from '@/paraglide/messages.js';
 export type SearchableColumn = {
   id: string;
   title: string;
-  type?: 'text' | 'date-range';
+  type?: 'text' | 'date-range' | 'select';
+  options?: Array<{ label: string; value: string }>;
 };
 
 type AdminTableToolbarProps<TData> = {
@@ -89,6 +95,22 @@ export function AdminTableToolbar<TData>({
             return (
               <div key={filterId} className="flex items-center gap-1 group">
                 <DateRangeFilter column={column} />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={handleRemove}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            );
+          }
+
+          if (colDef.type === 'select' && colDef.options) {
+            return (
+              <div key={filterId} className="flex items-center gap-1 group">
+                <SelectFilter column={column} options={colDef.options} placeholder={colDef.title} />
                 <Button
                   variant="ghost"
                   size="sm"
@@ -244,5 +266,37 @@ function DateRangeFilter<TData>({ column }: { column: Column<TData, unknown> }) 
         onOpenChange={handleOpenChange}
       />
     </div>
+  );
+}
+
+function SelectFilter<TData>({
+  column,
+  options,
+  placeholder,
+}: {
+  column: Column<TData, unknown>;
+  options: Array<{ label: string; value: string }>;
+  placeholder?: string;
+}) {
+  const filterValue = column.getFilterValue() as string | undefined;
+
+  return (
+    <Select
+      value={filterValue || ''}
+      onValueChange={(value) => {
+        column.setFilterValue(value || undefined);
+      }}
+    >
+      <SelectTrigger className="h-9 w-full sm:w-[200px]">
+        <SelectValue placeholder={placeholder || 'Select...'} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

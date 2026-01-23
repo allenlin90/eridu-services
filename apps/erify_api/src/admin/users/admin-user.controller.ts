@@ -17,10 +17,10 @@ import {
 } from '@/admin/decorators/admin-response.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
+  adminUserDto,
   CreateUserDto,
   ListUsersQueryDto,
   UpdateUserDto,
-  userDto,
 } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
 
@@ -31,13 +31,13 @@ export class AdminUserController extends BaseAdminController {
   }
 
   @Post()
-  @AdminResponse(userDto, HttpStatus.CREATED, 'User created successfully')
+  @AdminResponse(adminUserDto, HttpStatus.CREATED, 'User created successfully')
   createUser(@Body() body: CreateUserDto) {
     return this.userService.createUser(body);
   }
 
   @Get()
-  @AdminPaginatedResponse(userDto, 'List of users with pagination')
+  @AdminPaginatedResponse(adminUserDto, 'List of users with pagination')
   async getUsers(@Query() query: ListUsersQueryDto) {
     const { data, total } = await this.userService.listUsers({
       skip: query.skip,
@@ -46,13 +46,14 @@ export class AdminUserController extends BaseAdminController {
       email: query.email,
       uid: query.uid,
       extId: query.extId,
+      isSystemAdmin: query.isSystemAdmin,
     });
 
     return this.createPaginatedResponse(data, total, query);
   }
 
   @Get(':id')
-  @AdminResponse(userDto, HttpStatus.OK, 'User details')
+  @AdminResponse(adminUserDto, HttpStatus.OK, 'User details')
   getUser(
     @Param('id', new UidValidationPipe(UserService.UID_PREFIX, 'User'))
     id: string,
@@ -61,7 +62,7 @@ export class AdminUserController extends BaseAdminController {
   }
 
   @Patch(':id')
-  @AdminResponse(userDto, HttpStatus.OK, 'User updated successfully')
+  @AdminResponse(adminUserDto, HttpStatus.OK, 'User updated successfully')
   updateUser(
     @Param('id', new UidValidationPipe(UserService.UID_PREFIX, 'User'))
     id: string,
