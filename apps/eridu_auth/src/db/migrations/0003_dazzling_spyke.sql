@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "organization_slug_uidx" ON "organization" USING btree ("slug");
