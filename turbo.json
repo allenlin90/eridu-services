@@ -8,6 +8,12 @@
       "inputs": [".env*"],
       "outputs": ["dist/**"]
     },
+    "@eridu/eslint-config#build": {
+      "outputs": []
+    },
+    "@eridu/typescript-config#build": {
+      "outputs": []
+    },
     "typecheck": {
       "dependsOn": ["^build"]
     },
