@@ -11,4 +11,7 @@ export const showsSearchSchema = z.object({
   sortBy: z.string().default('start_time').catch('start_time'),
   sortOrder: z.enum(['asc', 'desc']).default('desc').catch('desc'),
   id: z.string().optional().catch(undefined),
+  show_standard_name: z.string().optional().catch(undefined),
+  show_status_name: z.string().optional().catch(undefined),
+  platform_name: z.string().optional().catch(undefined),
 });

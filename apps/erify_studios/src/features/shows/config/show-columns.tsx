@@ -63,7 +63,7 @@ export const showColumns: ColumnDef<Show>[] = [
     enableSorting: false,
   },
   {
-    id: 'platforms',
+    id: 'platform_name',
     header: 'Platforms',
     cell: ({ row }) => (
       <PlatformList
@@ -86,6 +86,24 @@ export const showColumns: ColumnDef<Show>[] = [
 
 export const showSearchableColumns = [
   { id: 'name', title: 'Name', type: 'text' as const },
+  {
+    id: 'show_standard_name',
+    title: 'Standard',
+    type: 'select' as const,
+    options: [],
+  },
+  {
+    id: 'show_status_name',
+    title: 'Status',
+    type: 'select' as const,
+    options: [],
+  },
+  {
+    id: 'platform_name',
+    title: 'Platform',
+    type: 'select' as const,
+    options: [],
+  },
   { id: 'client_name', title: 'Client', type: 'text' as const },
   { id: 'mc_name', title: 'MC', type: 'text' as const },
   { id: 'start_time', title: 'Date', type: 'date-range' as const },

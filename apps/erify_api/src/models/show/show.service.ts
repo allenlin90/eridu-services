@@ -21,6 +21,9 @@ type ListShowsQuery = {
   order_by: 'created_at' | 'updated_at' | 'start_time' | 'end_time';
   order_direction: 'asc' | 'desc';
   include_deleted: boolean;
+  show_standard_name?: string;
+  show_status_name?: string;
+  platform_name?: string;
 };
 
 type ShowWithIncludes<T extends Prisma.ShowInclude> = Prisma.ShowGetPayload<{
@@ -175,6 +178,9 @@ export class ShowService extends BaseModelService {
     end_date_from?: string;
     end_date_to?: string;
     include_deleted: boolean;
+    show_standard_name?: string;
+    show_status_name?: string;
+    platform_name?: string;
   }): Prisma.ShowWhereInput {
     const where: Prisma.ShowWhereInput = {};
 
@@ -214,6 +220,37 @@ export class ShowService extends BaseModelService {
       if (filters.end_date_to) {
         where.endTime.lte = new Date(filters.end_date_to);
       }
+    }
+
+    if (filters.show_standard_name) {
+      where.showStandard = {
+        name: {
+          contains: filters.show_standard_name,
+          mode: 'insensitive',
+        },
+      };
+    }
+
+    if (filters.show_status_name) {
+      where.showStatus = {
+        name: {
+          contains: filters.show_status_name,
+          mode: 'insensitive',
+        },
+      };
+    }
+
+    if (filters.platform_name) {
+      where.showPlatforms = {
+        some: {
+          platform: {
+            name: {
+              contains: filters.platform_name,
+              mode: 'insensitive',
+            },
+          },
+        },
+      };
     }
 
     return where;

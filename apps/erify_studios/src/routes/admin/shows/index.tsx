@@ -1,11 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 
 import type { updateShowInputSchema } from '@eridu/api-types/shows';
 
 import { AdminLayout, AdminTable } from '@/features/admin/components';
 import type { Show } from '@/features/shows/api/get-shows';
+import { usePlatformsFieldData } from '@/features/shows/components/hooks/use-platforms-field-data';
+import { useShowStandardFieldData } from '@/features/shows/components/hooks/use-show-standard-field-data';
+import { useShowStatusFieldData } from '@/features/shows/components/hooks/use-show-status-field-data';
 import {
   ShowDeleteDialog,
   ShowUpdateDialog,
@@ -50,7 +53,32 @@ function ShowsList() {
     sortBy: search.sortBy,
     sortOrder: search.sortOrder,
     id: search.id,
+    show_standard_name: search.show_standard_name,
+    show_status_name: search.show_status_name,
+    platform_name: search.platform_name,
   });
+
+  // Fetch filter options using existing hooks
+  // Pass null as show because we just want the list, not specific to an editing show
+  const { options: standardOptions } = useShowStandardFieldData(null);
+  const { options: statusOptions } = useShowStatusFieldData(null);
+  const { options: platformOptions } = usePlatformsFieldData(null);
+
+  // Construct dynamic searchableColumns
+  const searchableColumns = useMemo(() => {
+    return showSearchableColumns.map((col) => {
+      switch (col.id) {
+        case 'show_standard_name':
+          return { ...col, options: standardOptions.map((o) => ({ value: o.label, label: o.label })) };
+        case 'show_status_name':
+          return { ...col, options: statusOptions.map((o) => ({ value: o.label, label: o.label })) };
+        case 'platform_name':
+          return { ...col, options: platformOptions.map((o) => ({ value: o.label, label: o.label })) };
+        default:
+          return col;
+      }
+    });
+  }, [standardOptions, statusOptions, platformOptions]);
 
   const handleDelete = async () => {
     if (!deleteId)
@@ -83,8 +111,9 @@ function ShowsList() {
         onDelete={(show) => setDeleteId(show.id)}
         emptyMessage="No shows found."
         searchColumn="name"
-        searchableColumns={showSearchableColumns}
+        searchableColumns={searchableColumns}
         searchPlaceholder="Search shows..."
+
         pagination={
           data?.meta
             ? {

@@ -424,6 +424,59 @@ describe('showOrchestrationService', () => {
     });
   });
 
+  describe('getPaginatedShowsWithRelations', () => {
+    it('should retrieve paginated shows with name-based filters', async () => {
+      const query = {
+        page: 1,
+        limit: 10,
+        take: 10,
+        skip: 0,
+        order_by: 'created_at' as const,
+        order_direction: 'desc' as const,
+        include_deleted: false,
+        name: 'Test',
+        show_standard_name: 'Standard',
+        show_status_name: 'Status',
+        platform_name: 'Platform',
+        uid: undefined,
+      };
+
+      const mockShows: Show[] = [mockShow];
+      showService.getActiveShows.mockResolvedValue(mockShows);
+      showService.countShows.mockResolvedValue(1);
+
+      const result = await service.getPaginatedShowsWithRelations(query);
+
+      const expectedWhere = expect.objectContaining({
+        deletedAt: null,
+        name: { contains: 'Test', mode: 'insensitive' },
+        showStandard: {
+          name: { contains: 'Standard', mode: 'insensitive' },
+        },
+        showStatus: {
+          name: { contains: 'Status', mode: 'insensitive' },
+        },
+        showPlatforms: {
+          some: {
+            platform: {
+              name: { contains: 'Platform', mode: 'insensitive' },
+            },
+          },
+        },
+      });
+
+      expect(showService.getActiveShows).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 0,
+          take: 10,
+          where: expectedWhere,
+        }),
+      );
+      expect(showService.countShows).toHaveBeenCalledWith(expectedWhere);
+      expect(result).toEqual({ shows: mockShows, total: 1 });
+    });
+  });
+
   describe('getShowWithRelations', () => {
     it('should retrieve a show with all relations', async () => {
       const uid = 'show_test123';

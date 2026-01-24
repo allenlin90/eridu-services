@@ -107,7 +107,11 @@ export class ShowOrchestrationService {
       | 'end_date_from'
       | 'end_date_to'
       | 'include_deleted'
+      | 'include_deleted'
       | 'uid'
+      | 'show_standard_name'
+      | 'show_status_name'
+      | 'platform_name'
     >,
   ): Prisma.ShowWhereInput {
     const where: Prisma.ShowWhereInput = {};
@@ -194,6 +198,37 @@ export class ShowOrchestrationService {
         endDate.setHours(23, 59, 59, 999);
         where.endTime.lte = endDate;
       }
+    }
+
+    if (filters.show_standard_name) {
+      where.showStandard = {
+        name: {
+          contains: filters.show_standard_name,
+          mode: 'insensitive',
+        },
+      };
+    }
+
+    if (filters.show_status_name) {
+      where.showStatus = {
+        name: {
+          contains: filters.show_status_name,
+          mode: 'insensitive',
+        },
+      };
+    }
+
+    if (filters.platform_name) {
+      where.showPlatforms = {
+        some: {
+          platform: {
+            name: {
+              contains: filters.platform_name,
+              mode: 'insensitive',
+            },
+          },
+        },
+      };
     }
 
     return where;

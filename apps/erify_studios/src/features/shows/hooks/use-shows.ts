@@ -16,6 +16,9 @@ type UseShowsParams = {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   id?: string;
+  show_standard_name?: string;
+  show_status_name?: string;
+  platform_name?: string;
 };
 
 const TABLE_OPTIONS = {
@@ -25,6 +28,8 @@ const TABLE_OPTIONS = {
     search: 'name',
     startDate: 'start_date_from',
     endDate: 'start_date_to',
+    // We don't map the new filters here because they are not managed by `useTableUrlState`'s internal simple mapping logic
+    // but rather via manual column filters passed into the hook or handled via the extra params spread.
   },
   defaultSorting: [{ id: 'start_time', desc: true }],
 };

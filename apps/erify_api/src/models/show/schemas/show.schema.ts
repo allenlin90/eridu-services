@@ -169,6 +169,9 @@ export const listShowsFilterSchema = z.object({
   order_direction: z.enum(['asc', 'desc']).default('desc'),
   include_deleted: z.coerce.boolean().default(false),
   id: z.string().optional(),
+  show_standard_name: z.string().optional(),
+  show_status_name: z.string().optional(),
+  platform_name: z.string().optional(),
 });
 
 export const listShowsQuerySchema = paginationQuerySchema
@@ -195,6 +198,9 @@ export class ListShowsQueryDto extends createZodDto(listShowsQuerySchema) {
   declare order_direction: 'asc' | 'desc';
   declare include_deleted: boolean;
   declare uid: string | undefined;
+  declare show_standard_name?: string;
+  declare show_status_name?: string;
+  declare platform_name?: string;
 }
 
 // DTOs for input/output

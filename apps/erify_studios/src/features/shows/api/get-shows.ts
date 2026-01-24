@@ -23,6 +23,9 @@ export type GetShowsParams = {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   id?: string;
+  show_standard_name?: string;
+  show_status_name?: string;
+  platform_name?: string;
 };
 
 export async function getShows(params: GetShowsParams): Promise<ShowsResponse> {
@@ -38,6 +41,9 @@ export async function getShows(params: GetShowsParams): Promise<ShowsResponse> {
       order_by: params.sortBy,
       order_direction: params.sortOrder,
       id: params.id,
+      show_standard_name: params.show_standard_name,
+      show_status_name: params.show_status_name,
+      platform_name: params.platform_name,
     },
   });
   return response.data;
