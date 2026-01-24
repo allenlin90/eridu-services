@@ -23,7 +23,7 @@ export function useSchedules(params: UseSchedulesParams) {
     columnFilters,
     onColumnFiltersChange,
   } = useTableUrlState({
-    from: '/admin/schedules/',
+    from: '/system/schedules/',
     paramNames: {
       search: 'name',
     },

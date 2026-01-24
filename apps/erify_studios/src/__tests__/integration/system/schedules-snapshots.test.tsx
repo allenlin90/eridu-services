@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { Route, ScheduleSnapshotsList } from '@/routes/admin/schedules/$scheduleId/snapshots';
+import { Route, ScheduleSnapshotsList } from '@/routes/system/schedules/$scheduleId/snapshots';
 
 // Mock dependencies
 vi.mock('@tanstack/react-query', () => ({
@@ -64,12 +64,12 @@ describe('scheduleSnapshotsList', () => {
     // Check for "Schedules" link
     const schedulesLink = screen.getByText('Schedules');
     expect(schedulesLink).toBeInTheDocument();
-    expect(schedulesLink.closest('a')).toHaveAttribute('href', '/admin/schedules');
+    expect(schedulesLink.closest('a')).toHaveAttribute('href', '/system/schedules');
 
     // Check for "Schedule Details" link
     const detailsLink = screen.getByText('Schedule Details');
     expect(detailsLink).toBeInTheDocument();
-    expect(detailsLink.closest('a')).toHaveAttribute('href', '/admin/schedules');
+    expect(detailsLink.closest('a')).toHaveAttribute('href', '/system/schedules');
 
     // Check for "Snapshots" page indicator
     const snapshotsPage = screen.getByText('Snapshots');

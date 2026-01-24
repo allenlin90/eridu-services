@@ -19,7 +19,7 @@ const snapshotsSearchSchema = z.object({
   pageSize: z.coerce.number().int().min(10).max(100).catch(10),
 });
 
-export const Route = createFileRoute('/admin/schedules/$scheduleId/snapshots/')({
+export const Route = createFileRoute('/system/schedules/$scheduleId/snapshots/')({
   component: ScheduleSnapshotsList,
   validateSearch: (search) => snapshotsSearchSchema.parse(search),
 });
@@ -81,7 +81,7 @@ export function ScheduleSnapshotsList() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <Link
-                to="/admin/schedules"
+                to="/system/schedules"
                 search={{ page: 1, pageSize: 10 }}
                 className="hover:text-foreground transition-colors"
               >
@@ -91,7 +91,7 @@ export function ScheduleSnapshotsList() {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <Link
-                to="/admin/schedules"
+                to="/system/schedules"
                 search={{ page: 1, pageSize: 10 }}
                 className="hover:text-foreground transition-colors"
               >

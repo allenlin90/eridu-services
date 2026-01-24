@@ -108,7 +108,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
-    expect(result.current.navMain).toHaveLength(3); // Dashboard + System + Admin
+    expect(result.current.navMain).toHaveLength(2); // Dashboard + System
     expect(result.current.navMain[0]).toEqual({
       title: 'Dashboard',
       url: '/dashboard',
@@ -130,6 +130,8 @@ describe('useSidebarConfig', () => {
         { title: 'Platforms', url: '/system/platforms', icon: expect.any(Function) },
         { title: 'Show Standards', url: '/system/show-standards', icon: expect.any(Function) },
         { title: 'Show Types', url: '/system/show-types', icon: expect.any(Function) },
+        { title: 'Schedules', url: '/system/schedules', icon: expect.any(Function) },
+        { title: 'Shows', url: '/system/shows', icon: expect.any(Function) },
       ]),
     });
   });

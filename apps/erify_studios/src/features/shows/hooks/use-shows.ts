@@ -22,7 +22,7 @@ type UseShowsParams = {
 };
 
 const TABLE_OPTIONS = {
-  from: '/admin/shows/',
+  from: '/system/shows/',
   dateColumnId: 'start_time',
   paramNames: {
     search: 'name',

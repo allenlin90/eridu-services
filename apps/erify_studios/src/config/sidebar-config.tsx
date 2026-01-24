@@ -88,20 +88,14 @@ const SYSTEM_NAV_ITEMS: SidebarNavItem[] = [
     url: '/system/show-types',
     icon: Settings,
   },
-];
-
-/**
- * Admin navigation configuration
- */
-const ADMIN_NAV_ITEMS: SidebarNavItem[] = [
   {
     title: 'Schedules',
-    url: '/admin/schedules',
+    url: '/system/schedules',
     icon: CalendarDays,
   },
   {
     title: 'Shows',
-    url: '/admin/shows',
+    url: '/system/shows',
     icon: Tv,
   },
 ];
@@ -133,14 +127,6 @@ export function useSidebarConfig(
         icon: Settings,
         isActive: currentPath.startsWith('/system'),
         items: SYSTEM_NAV_ITEMS,
-      });
-
-      baseItems.push({
-        title: 'Admin',
-        url: '/admin',
-        icon: Settings,
-        isActive: currentPath.startsWith('/admin'),
-        items: ADMIN_NAV_ITEMS,
       });
     }
 

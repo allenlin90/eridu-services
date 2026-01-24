@@ -18,7 +18,7 @@ import {
 import { schedulesSearchSchema } from '@/features/schedules/config/schedule-search-schema';
 import { useSchedules } from '@/features/schedules/hooks/use-schedules';
 
-export const Route = createFileRoute('/admin/schedules/')({
+export const Route = createFileRoute('/system/schedules/')({
   component: SchedulesList,
   validateSearch: (search) => schedulesSearchSchema.parse(search),
 });
@@ -82,7 +82,7 @@ function SchedulesList() {
             onClick={(e) => {
               e.stopPropagation();
               navigate({
-                to: '/admin/schedules/$scheduleId/snapshots',
+                to: '/system/schedules/$scheduleId/snapshots',
                 params: { scheduleId: schedule.id },
                 search: { page: 1, pageSize: 10 },
               });

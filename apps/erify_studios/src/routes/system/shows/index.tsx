@@ -20,7 +20,7 @@ import {
 import { showsSearchSchema } from '@/features/shows/config/show-search-schema';
 import { useShows } from '@/features/shows/hooks/use-shows';
 
-export const Route = createFileRoute('/admin/shows/')({
+export const Route = createFileRoute('/system/shows/')({
   component: ShowsList,
   validateSearch: (search) => showsSearchSchema.parse(search),
 });

@@ -7,8 +7,10 @@ import { Route as MembershipsRoute } from '../../routes/system/memberships';
 import { Route as PlatformsRoute } from '../../routes/system/platforms';
 // Import routes after mocking
 import { Route as AdminRoute } from '../../routes/system/route';
+import { Route as SchedulesRoute } from '../../routes/system/schedules';
 import { Route as ShowStandardsRoute } from '../../routes/system/show-standards';
 import { Route as ShowTypesRoute } from '../../routes/system/show-types';
+import { Route as ShowsRoute } from '../../routes/system/shows';
 import { Route as StudioRoomsRoute } from '../../routes/system/studios/$studioId/studio-rooms';
 
 // Mock the TanStack Router
@@ -26,8 +28,10 @@ describe('admin routes', () => {
     expect(McsRoute).toBeDefined();
     expect(MembershipsRoute).toBeDefined();
     expect(PlatformsRoute).toBeDefined();
+    expect(SchedulesRoute).toBeDefined();
     expect(ShowStandardsRoute).toBeDefined();
     expect(ShowTypesRoute).toBeDefined();
+    expect(ShowsRoute).toBeDefined();
     expect(StudioRoomsRoute).toBeDefined();
   });
 });
