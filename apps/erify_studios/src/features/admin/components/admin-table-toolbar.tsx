@@ -1,302 +1,144 @@
 'use client';
 
-import type { Column, Table } from '@tanstack/react-table';
-import { Plus, X } from 'lucide-react';
+import type { Table } from '@tanstack/react-table';
 import * as React from 'react';
-import type { DateRange } from 'react-day-picker';
 
-import {
-  Button,
-  DatePickerWithRange,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@eridu/ui';
+import { cn } from '@eridu/ui/lib/utils';
+
+import { FilterChips } from './admin-table-toolbar/filter-chips';
+import { FilterPopover } from './admin-table-toolbar/filter-popover';
+import { QuickFilters } from './admin-table-toolbar/quick-filters';
+import { SearchInput } from './admin-table-toolbar/search-input';
+import type { SearchableColumn } from './admin-table-toolbar/types';
 
 import * as m from '@/paraglide/messages.js';
 
-export type SearchableColumn = {
-  id: string;
-  title: string;
-  type?: 'text' | 'date-range' | 'select';
-  options?: Array<{ label: string; value: string }>;
-};
+// Stable empty array reference to avoid re-renders
+const EMPTY_ARRAY: string[] = [];
+
+// Re-export for backward compatibility
+export type { SearchableColumn };
 
 type AdminTableToolbarProps<TData> = {
   table: Table<TData>;
   searchColumn?: string;
   searchableColumns?: SearchableColumn[];
   searchPlaceholder?: string;
+  /** Column IDs to show as quick filters inline (e.g., ['show_standard_name', 'start_time']) */
+  /** Column IDs to show as quick filters inline (e.g., ['show_standard_name', 'start_time']) */
+  quickFilterColumns?: string[];
+  /** Column IDs to show at the top of the filter popover in a 'Featured' section */
+  featuredFilterColumns?: string[];
 };
 
+/**
+ * Admin table toolbar with unified search, filter popover, and active filter chips
+ */
 export function AdminTableToolbar<TData>({
   table,
   searchColumn,
   searchableColumns,
   searchPlaceholder,
+  quickFilterColumns = EMPTY_ARRAY,
+  featuredFilterColumns = EMPTY_ARRAY,
 }: AdminTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0;
-
-  // Use either the single searchColumn (legacy) or the first of searchableColumns as primary
+  // Primary search column (first of searchableColumns or explicit searchColumn)
   const primaryColumnId = searchColumn ?? searchableColumns?.[0]?.id;
   const primaryColumn = primaryColumnId ? table.getColumn(primaryColumnId) : null;
+  const primaryFilterValue = (primaryColumn?.getFilterValue() as string) ?? '';
 
-  // Sync active filters from table state (including primary and dynamic)
-  const activeFilterIds = React.useMemo(() => {
-    return table.getState().columnFilters.map((f) => f.id).filter((id) => id !== primaryColumnId && searchableColumns?.some((c) => c.id === id));
-  }, [table, primaryColumnId, searchableColumns]);
+  // Get quick filter configurations
+  const quickFilterConfigs = React.useMemo(() => {
+    if (!searchableColumns)
+      return [];
+    return searchableColumns.filter((col) => quickFilterColumns.includes(col.id));
+  }, [searchableColumns, quickFilterColumns]);
 
-  // Track filters that were manually added by user via "Add Filter" but don't have a value yet
-  const [manuallyAddedIds, setManuallyAddedIds] = React.useState<string[]>([]);
+  // Calculate active filter count (excluding primary for the popover badge)
+  const activeFilterCount = React.useMemo(() => {
+    const filters = table.getState().columnFilters;
+    // Exclude primary column and quick filter columns from count
+    const excludeIds = [primaryColumnId, ...quickFilterColumns].filter(Boolean);
+    return filters.filter(
+      (f) => !excludeIds.includes(f.id) && f.value !== undefined && f.value !== '',
+    ).length;
+  }, [table, primaryColumnId, quickFilterColumns]);
 
-  // Clear manually added IDs when filters are changed (if they got values, they are now in activeFilterIds)
-  React.useEffect(() => {
-    const currentFilters = table.getState().columnFilters;
-    setManuallyAddedIds((prev) => prev.filter((id) => !currentFilters.some((f) => f.id === id)));
+  // Columns to exclude from popover (primary + quick filters)
+  const popoverExcludeColumns = React.useMemo(() => {
+    return [primaryColumnId, ...quickFilterColumns].filter(Boolean) as string[];
+  }, [primaryColumnId, quickFilterColumns]);
+
+  // Handle primary search change
+  const handleSearchChange = React.useCallback(
+    (value: string) => {
+      primaryColumn?.setFilterValue(value || undefined);
+    },
+    [primaryColumn],
+  );
+
+  // Handle reset all filters
+  const handleResetAll = React.useCallback(() => {
+    table.resetColumnFilters();
   }, [table]);
 
-  // All visible secondary filter IDs
-  const visibleSecondaryIds = Array.from(new Set([...activeFilterIds, ...manuallyAddedIds]));
+  // Handle reset non-primary filters (for popover reset)
+  const handleResetPopoverFilters = React.useCallback(() => {
+    const filters = table.getState().columnFilters;
+    const excludeIds = [primaryColumnId, ...quickFilterColumns].filter(Boolean);
+
+    // Clear each filter that's not in excludeIds
+    filters.forEach((f) => {
+      if (!excludeIds.includes(f.id)) {
+        table.getColumn(f.id)?.setFilterValue(undefined);
+      }
+    });
+  }, [table, primaryColumnId, quickFilterColumns]);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-start sm:flex-wrap">
+    <div className="space-y-3">
+      {/* Main toolbar row */}
+      <div
+        className={cn(
+          'flex flex-col gap-3',
+          'sm:flex-row sm:items-center sm:flex-wrap',
+        )}
+      >
         {/* Primary Search Input */}
         {primaryColumn && (
-          <div className="flex items-center gap-2">
-            <FilterInput
-              column={primaryColumn}
-              placeholder={searchPlaceholder ?? m['admin.searchPlaceholder']()}
-              className="h-9 w-full sm:w-[200px] lg:w-[300px]"
-            />
-          </div>
+          <SearchInput
+            value={primaryFilterValue}
+            onChange={handleSearchChange}
+            placeholder={searchPlaceholder ?? m['admin.searchPlaceholder']()}
+            className="w-full sm:w-64 lg:w-80"
+          />
         )}
 
-        {/* Additional Filter Inputs */}
-        {visibleSecondaryIds.map((filterId) => {
-          const column = table.getColumn(filterId);
-          const colDef = searchableColumns?.find((c) => c.id === filterId);
-          if (!column || !colDef)
-            return null;
+        {/* Quick Filters (inline) */}
+        <QuickFilters table={table} columns={quickFilterConfigs} />
 
-          const handleRemove = () => {
-            column.setFilterValue(undefined);
-            setManuallyAddedIds((prev) => prev.filter((id) => id !== filterId));
-          };
-
-          if (colDef.type === 'date-range') {
-            return (
-              <div key={filterId} className="flex items-center gap-1 group">
-                <DateRangeFilter column={column} />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={handleRemove}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            );
-          }
-
-          if (colDef.type === 'select' && colDef.options) {
-            return (
-              <div key={filterId} className="flex items-center gap-1 group">
-                <SelectFilter column={column} options={colDef.options} placeholder={colDef.title} />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={handleRemove}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            );
-          }
-
-          return (
-            <div key={filterId} className="flex items-center gap-1 group">
-              <FilterInput
-                column={column}
-                placeholder={`Filter by ${colDef.title}...`}
-                className="h-9 w-full sm:w-[200px]"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={handleRemove}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          );
-        })}
-
-        {/* Add Filter Button */}
-        {searchableColumns && searchableColumns.length > visibleSecondaryIds.length + (primaryColumnId ? 1 : 0) && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 border-dashed">
-                <Plus className="mr-2 h-4 w-4" />
-                Filter
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-[150px]">
-              {searchableColumns
-                .filter((col) => col.id !== primaryColumnId && !visibleSecondaryIds.includes(col.id))
-                .map((col) => (
-                  <DropdownMenuItem
-                    key={col.id}
-                    onClick={() => {
-                      setManuallyAddedIds((prev) => [...prev, col.id]);
-                    }}
-                  >
-                    {col.title}
-                  </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-
-        {/* Reset Button */}
-        {isFiltered && (
-          <Button
-            variant="ghost"
-            onClick={() => {
-              table.resetColumnFilters();
-              setManuallyAddedIds([]);
-            }}
-            className="h-9 px-2 lg:px-3 text-muted-foreground"
-          >
-            {m['admin.resetButton']()}
-            <X className="ml-2 h-4 w-4" />
-          </Button>
+        {/* Filter Popover */}
+        {searchableColumns && searchableColumns.length > popoverExcludeColumns.length && (
+          <FilterPopover
+            table={table}
+            searchableColumns={searchableColumns}
+            excludeColumns={popoverExcludeColumns}
+            featuredColumns={featuredFilterColumns}
+            onReset={handleResetPopoverFilters}
+            activeFilterCount={activeFilterCount}
+          />
         )}
       </div>
+
+      {/* Active Filter Chips */}
+      {searchableColumns && (
+        <FilterChips
+          table={table}
+          searchableColumns={searchableColumns}
+          primaryColumnId={primaryColumnId}
+          onClearAll={handleResetAll}
+        />
+      )}
     </div>
-  );
-}
-
-function FilterInput<TData>({
-  column,
-  placeholder,
-  className,
-}: {
-  column: Column<TData, unknown>;
-  placeholder?: string;
-  className?: string;
-}) {
-  const columnFilterValue = column.getFilterValue();
-  const filterValue = typeof columnFilterValue === 'string' ? columnFilterValue : '';
-
-  const [value, setValue] = React.useState<string>(filterValue);
-  const [prevFilterValue, setPrevFilterValue] = React.useState<string>(filterValue);
-
-  // Derived state pattern: Sync with external filter changes immediately
-  if (filterValue !== prevFilterValue) {
-    setValue(filterValue);
-    setPrevFilterValue(filterValue);
-  }
-
-  // Debounce the filter value update
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      // Only update if value actually differs from current column filter
-      if (value !== column.getFilterValue()) {
-        column.setFilterValue(value || undefined);
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [value, column]);
-
-  return (
-    <Input
-      placeholder={placeholder}
-      value={value}
-      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.value)}
-      className={className}
-    />
-  );
-}
-
-function DateRangeFilter<TData>({ column }: { column: Column<TData, unknown> }) {
-  const filterValue = column.getFilterValue() as DateRange | undefined;
-  const [date, setDate] = React.useState<DateRange | undefined>(filterValue);
-  const [isOpen, setIsOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    if (!isOpen) {
-      setDate(filterValue);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterValue]);
-
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    if (!open) {
-      column.setFilterValue(date);
-    }
-  };
-
-  return (
-    <div className="w-full sm:w-auto">
-      <DatePickerWithRange
-        date={date}
-        setDate={(newDate: DateRange | undefined) => {
-          if (newDate?.to) {
-            const newTo = new Date(newDate.to);
-            newTo.setHours(23, 59, 59, 999);
-            setDate({ ...newDate, to: newTo });
-          } else {
-            setDate(newDate);
-          }
-        }}
-        open={isOpen}
-        onOpenChange={handleOpenChange}
-      />
-    </div>
-  );
-}
-
-function SelectFilter<TData>({
-  column,
-  options,
-  placeholder,
-}: {
-  column: Column<TData, unknown>;
-  options: Array<{ label: string; value: string }>;
-  placeholder?: string;
-}) {
-  const filterValue = column.getFilterValue() as string | undefined;
-
-  return (
-    <Select
-      value={filterValue || ''}
-      onValueChange={(value) => {
-        column.setFilterValue(value || undefined);
-      }}
-    >
-      <SelectTrigger className="h-9 w-full sm:w-[200px]">
-        <SelectValue placeholder={placeholder || 'Select...'} />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   );
 }

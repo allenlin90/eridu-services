@@ -113,6 +113,7 @@ function ShowsList() {
         searchColumn="name"
         searchableColumns={searchableColumns}
         searchPlaceholder="Search shows..."
+        featuredFilterColumns={['show_standard_name', 'start_time']}
 
         pagination={
           data?.meta

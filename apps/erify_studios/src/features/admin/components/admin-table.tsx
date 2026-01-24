@@ -42,6 +42,10 @@ type AdminTableProps<TData> = {
   searchColumn?: string;
   searchableColumns?: SearchableColumn[];
   searchPlaceholder?: string;
+  /** Column IDs to show as quick filters inline */
+  quickFilterColumns?: string[];
+  /** Column IDs to show at the top of the filter popover */
+  featuredFilterColumns?: string[];
   // Sorting props
   sorting?: SortingState;
   onSortingChange?: (sorting: SortingState) => void;
@@ -64,6 +68,8 @@ export function AdminTable<TData>({
   searchColumn,
   searchableColumns,
   searchPlaceholder,
+  quickFilterColumns,
+  featuredFilterColumns,
   sorting,
   onSortingChange,
   renderExtraActions,
@@ -150,6 +156,8 @@ export function AdminTable<TData>({
         searchColumn={searchColumn}
         searchableColumns={searchableColumns}
         searchPlaceholder={searchPlaceholder}
+        quickFilterColumns={quickFilterColumns}
+        featuredFilterColumns={featuredFilterColumns}
       />
       <div className="rounded-md border overflow-x-auto relative">
         <div className="relative">

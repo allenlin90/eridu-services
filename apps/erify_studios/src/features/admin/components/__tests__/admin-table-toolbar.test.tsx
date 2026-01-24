@@ -12,8 +12,9 @@ vi.mock('@eridu/ui', () => ({
       {children}
     </button>
   ),
-  Input: ({ value, onChange, placeholder, ...props }: any) => (
+  Input: ({ value, onChange, placeholder, type, ...props }: any) => (
     <input
+      type={type || 'text'}
       value={value}
       onChange={onChange}
       placeholder={placeholder}
@@ -21,13 +22,37 @@ vi.mock('@eridu/ui', () => ({
       {...props}
     />
   ),
-  DropdownMenu: ({ children }: any) => <div>{children}</div>,
-  DropdownMenuTrigger: ({ children }: any) => <div>{children}</div>,
-  DropdownMenuContent: ({ children }: any) => <div data-testid="dropdown-content">{children}</div>,
-  DropdownMenuItem: ({ children, onClick }: any) => (
-    <button type="button" onClick={onClick} data-testid="dropdown-item">
+  Badge: ({ children, ...props }: any) => (
+    <span data-testid="badge" {...props}>
       {children}
-    </button>
+    </span>
+  ),
+  Label: ({ children, ...props }: any) => <label {...props}>{children}</label>,
+  Popover: ({ children }: any) => <div data-testid="popover">{children}</div>,
+  PopoverTrigger: ({ children }: any) => (
+    <div data-testid="popover-trigger">{children}</div>
+  ),
+  PopoverContent: ({ children }: any) => (
+    <div data-testid="popover-content">{children}</div>
+  ),
+  Select: ({ children, value, onValueChange: _onValueChange }: any) => (
+    <div data-testid="select" data-value={value}>
+      {children}
+    </div>
+  ),
+  SelectTrigger: ({ children }: any) => (
+    <div data-testid="select-trigger">{children}</div>
+  ),
+  SelectContent: ({ children }: any) => (
+    <div data-testid="select-content">{children}</div>
+  ),
+  SelectItem: ({ children, value }: any) => (
+    <div data-testid="select-item" data-value={value}>
+      {children}
+    </div>
+  ),
+  SelectValue: ({ placeholder }: any) => (
+    <span data-testid="select-value">{placeholder}</span>
   ),
   DatePickerWithRange: ({ date, open, onOpenChange }: any) => (
     <div data-testid="date-picker">
@@ -38,10 +63,23 @@ vi.mock('@eridu/ui', () => ({
   ),
 }));
 
+// Mock @eridu/ui/lib/utils
+vi.mock('@eridu/ui/lib/utils', () => ({
+  cn: (...args: any[]) => args.filter(Boolean).join(' '),
+}));
+
 // Mock lucide-react
 vi.mock('lucide-react', () => ({
   Plus: () => <span>+</span>,
-  X: () => <span>×</span>,
+  X: () => <span data-testid="x-icon">×</span>,
+  Search: () => <span data-testid="search-icon">🔍</span>,
+  Filter: () => <span data-testid="filter-icon">⚙️</span>,
+  RotateCcw: () => <span data-testid="rotate-icon">↺</span>,
+}));
+
+// Mock date-fns
+vi.mock('date-fns', () => ({
+  format: (_date: Date, _formatStr: string) => 'Jan 1',
 }));
 
 // Mock i18n
@@ -85,16 +123,13 @@ describe('adminTableToolbar', () => {
 
   it('uses default search placeholder from i18n', () => {
     render(
-      <AdminTableToolbar
-        table={mockTable as Table<any>}
-        searchColumn="name"
-      />,
+      <AdminTableToolbar table={mockTable as Table<any>} searchColumn="name" />,
     );
 
     expect(screen.getByPlaceholderText('Search...')).toBeInTheDocument();
   });
 
-  it('renders add filter button when searchableColumns provided', () => {
+  it('renders filter button when searchableColumns provided', () => {
     const searchableColumns: SearchableColumn[] = [
       { id: 'name', title: 'Name' },
       { id: 'email', title: 'Email' },
@@ -107,14 +142,16 @@ describe('adminTableToolbar', () => {
       />,
     );
 
-    expect(screen.getByText('Filter')).toBeInTheDocument();
+    // Filter button should be rendered (text appears in button and popover header)
+    const filterElements = screen.getAllByText('Filters');
+    expect(filterElements.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('shows available filters in dropdown', () => {
+  it('renders filter popover with available filters', () => {
     const searchableColumns: SearchableColumn[] = [
-      { id: 'name', title: 'Name' },
-      { id: 'email', title: 'Email' },
-      { id: 'status', title: 'Status' },
+      { id: 'name', title: 'Name', type: 'text' },
+      { id: 'email', title: 'Email', type: 'text' },
+      { id: 'status', title: 'Status', type: 'select', options: [{ label: 'Active', value: 'active' }] },
     ];
 
     render(
@@ -124,33 +161,14 @@ describe('adminTableToolbar', () => {
       />,
     );
 
-    expect(screen.getByTestId('dropdown-content')).toBeInTheDocument();
+    // Popover content should contain filter sections
+    expect(screen.getByTestId('popover-content')).toBeInTheDocument();
   });
 
-  it('adds secondary filter when dropdown item clicked', () => {
+  it('renders filter chips when filters are active', () => {
     const searchableColumns: SearchableColumn[] = [
-      { id: 'name', title: 'Name' },
-      { id: 'email', title: 'Email' },
-    ];
-
-    render(
-      <AdminTableToolbar
-        table={mockTable as Table<any>}
-        searchableColumns={searchableColumns}
-      />,
-    );
-
-    const dropdownItems = screen.getAllByTestId('dropdown-item');
-    fireEvent.click(dropdownItems[0]); // Click "Email" filter
-
-    // Should render the new filter input
-    expect(screen.getByPlaceholderText('Filter by Email...')).toBeInTheDocument();
-  });
-
-  it('removes filter when X button clicked', () => {
-    const searchableColumns: SearchableColumn[] = [
-      { id: 'name', title: 'Name' },
-      { id: 'email', title: 'Email' },
+      { id: 'name', title: 'Name', type: 'text' },
+      { id: 'email', title: 'Email', type: 'text' },
     ];
 
     // Mock table with active filter
@@ -165,66 +183,20 @@ describe('adminTableToolbar', () => {
       />,
     );
 
-    // Find and click the X button
-    const removeButtons = screen.getAllByText('×');
-    fireEvent.click(removeButtons[0]);
-
-    expect(mockColumn.setFilterValue).toHaveBeenCalledWith(undefined);
+    // Should show active filter indicator
+    expect(screen.getByText('Active:')).toBeInTheDocument();
+    expect(screen.getByText('Email:')).toBeInTheDocument();
+    expect(screen.getByText('test@example.com')).toBeInTheDocument();
   });
 
-  it('renders reset button when filters are active', () => {
-    mockTable.getState = vi.fn(() => ({
-      columnFilters: [{ id: 'name', value: 'test' }],
-    })) as any;
-
-    render(
-      <AdminTableToolbar
-        table={mockTable as Table<any>}
-        searchColumn="name"
-      />,
-    );
-
-    expect(screen.getByText('Reset')).toBeInTheDocument();
-  });
-
-  it('does not render reset button when no filters are active', () => {
-    render(
-      <AdminTableToolbar
-        table={mockTable as Table<any>}
-        searchColumn="name"
-      />,
-    );
-
-    expect(screen.queryByText('Reset')).not.toBeInTheDocument();
-  });
-
-  it('resets all filters when reset button clicked', () => {
-    mockTable.getState = vi.fn(() => ({
-      columnFilters: [{ id: 'name', value: 'test' }],
-    })) as any;
-
-    render(
-      <AdminTableToolbar
-        table={mockTable as Table<any>}
-        searchColumn="name"
-      />,
-    );
-
-    const resetButton = screen.getByText('Reset');
-    fireEvent.click(resetButton);
-
-    expect(mockTable.resetColumnFilters).toHaveBeenCalled();
-  });
-
-  it('renders date range filter for date-range type', () => {
+  it('removes filter when X button clicked on filter chip', () => {
     const searchableColumns: SearchableColumn[] = [
-      { id: 'name', title: 'Name' },
-      { id: 'createdAt', title: 'Created At', type: 'date-range' },
+      { id: 'name', title: 'Name', type: 'text' },
+      { id: 'email', title: 'Email', type: 'text' },
     ];
 
-    // Mock table with active date filter
     mockTable.getState = vi.fn(() => ({
-      columnFilters: [{ id: 'createdAt', value: { from: new Date(), to: new Date() } }],
+      columnFilters: [{ id: 'email', value: 'test@example.com' }],
     })) as any;
 
     render(
@@ -234,15 +206,95 @@ describe('adminTableToolbar', () => {
       />,
     );
 
+    // Find and click the X button on the filter chip
+    const xButtons = screen.getAllByTestId('x-icon');
+    fireEvent.click(xButtons[0].closest('button')!);
+
+    expect(mockColumn.setFilterValue).toHaveBeenCalledWith(undefined);
+  });
+
+  it('shows filter count badge when filters are active', () => {
+    const searchableColumns: SearchableColumn[] = [
+      { id: 'name', title: 'Name', type: 'text' },
+      { id: 'email', title: 'Email', type: 'text' },
+      { id: 'phone', title: 'Phone', type: 'text' },
+    ];
+
+    mockTable.getState = vi.fn(() => ({
+      columnFilters: [
+        { id: 'email', value: 'test@example.com' },
+        { id: 'phone', value: '123456' },
+      ],
+    })) as any;
+
+    render(
+      <AdminTableToolbar
+        table={mockTable as Table<any>}
+        searchableColumns={searchableColumns}
+      />,
+    );
+
+    // Badge should show count
+    const badges = screen.getAllByTestId('badge');
+    expect(badges.length).toBeGreaterThan(0);
+  });
+
+  it('does not render filter popover when no searchable columns', () => {
+    render(
+      <AdminTableToolbar table={mockTable as Table<any>} searchColumn="name" />,
+    );
+
+    // Should not show filter button
+    expect(screen.queryByText('Filters')).not.toBeInTheDocument();
+  });
+
+  it('resets all filters when clear all is clicked', () => {
+    const searchableColumns: SearchableColumn[] = [
+      { id: 'name', title: 'Name', type: 'text' },
+      { id: 'email', title: 'Email', type: 'text' },
+      { id: 'phone', title: 'Phone', type: 'text' },
+    ];
+
+    mockTable.getState = vi.fn(() => ({
+      columnFilters: [
+        { id: 'email', value: 'test@example.com' },
+        { id: 'phone', value: '123456' },
+      ],
+    })) as any;
+
+    render(
+      <AdminTableToolbar
+        table={mockTable as Table<any>}
+        searchableColumns={searchableColumns}
+      />,
+    );
+
+    // Click Reset button in filter chips area (only shows when >1 filter)
+    const resetButtons = screen.getAllByText('Reset');
+    fireEvent.click(resetButtons[resetButtons.length - 1]);
+
+    expect(mockTable.resetColumnFilters).toHaveBeenCalled();
+  });
+
+  it('renders date range filter for date-range type', () => {
+    const searchableColumns: SearchableColumn[] = [
+      { id: 'name', title: 'Name', type: 'text' },
+      { id: 'createdAt', title: 'Created At', type: 'date-range' },
+    ];
+
+    render(
+      <AdminTableToolbar
+        table={mockTable as Table<any>}
+        searchableColumns={searchableColumns}
+      />,
+    );
+
+    // Date picker should be in popover content
     expect(screen.getByTestId('date-picker')).toBeInTheDocument();
   });
 
   it('handles no searchable columns gracefully', () => {
-    render(
-      <AdminTableToolbar
-        table={mockTable as Table<any>}
-      />,
-    );
+    render(<AdminTableToolbar table={mockTable as Table<any>} />);
 
     // Should not crash, just render empty toolbar
     expect(screen.queryByPlaceholderText('Search...')).not.toBeInTheDocument();
@@ -250,8 +302,8 @@ describe('adminTableToolbar', () => {
 
   it('uses first searchableColumn as primary when searchColumn not provided', () => {
     const searchableColumns: SearchableColumn[] = [
-      { id: 'title', title: 'Title' },
-      { id: 'description', title: 'Description' },
+      { id: 'title', title: 'Title', type: 'text' },
+      { id: 'description', title: 'Description', type: 'text' },
     ];
 
     render(
@@ -263,5 +315,83 @@ describe('adminTableToolbar', () => {
 
     // Should use "title" as primary search
     expect(mockTable.getColumn).toHaveBeenCalledWith('title');
+  });
+
+  it('renders quick filters inline when quickFilterColumns provided', () => {
+    const searchableColumns: SearchableColumn[] = [
+      { id: 'name', title: 'Name', type: 'text' },
+      {
+        id: 'status',
+        title: 'Status',
+        type: 'select',
+        options: [
+          { label: 'Active', value: 'active' },
+          { label: 'Inactive', value: 'inactive' },
+        ],
+      },
+    ];
+
+    render(
+      <AdminTableToolbar
+        table={mockTable as Table<any>}
+        searchableColumns={searchableColumns}
+        quickFilterColumns={['status']}
+      />,
+    );
+
+    // Quick filter select should be rendered inline
+    const selectTriggers = screen.getAllByTestId('select-trigger');
+    expect(selectTriggers.length).toBeGreaterThan(0);
+  });
+
+  it('renders featured filters in a separate Featured section at the top', () => {
+    const searchableColumns: SearchableColumn[] = [
+      { id: 'name', title: 'Name', type: 'text' },
+      { id: 'status', title: 'Status', type: 'select', options: [{ label: 'Active', value: 'active' }] },
+      { id: 'created_at', title: 'Created At', type: 'date-range' },
+    ];
+
+    render(
+      <AdminTableToolbar
+        table={mockTable as Table<any>}
+        searchableColumns={searchableColumns}
+        featuredFilterColumns={['status', 'created_at']}
+      />,
+    );
+
+    const popoverContent = screen.getByTestId('popover-content');
+
+    // Featured section should be present
+    expect(popoverContent).toHaveTextContent('Featured');
+
+    // Status and Created At should be in the featured section (we check existence first)
+    expect(screen.getByText('Status')).toBeInTheDocument();
+    expect(screen.getByText('Created At')).toBeInTheDocument();
+  });
+
+  it('excludes featured filters from their original type sections to avoid duplicates', () => {
+    const searchableColumns: SearchableColumn[] = [
+      { id: 'name', title: 'Name', type: 'text' },
+      { id: 'status', title: 'Status', type: 'select', options: [{ label: 'Active', value: 'active' }] },
+      { id: 'priority', title: 'Priority', type: 'select', options: [{ label: 'High', value: 'high' }] },
+    ];
+
+    render(
+      <AdminTableToolbar
+        table={mockTable as Table<any>}
+        searchableColumns={searchableColumns}
+        featuredFilterColumns={['status']}
+      />,
+    );
+
+    // Status should be present (in Featured)
+    const statusLabels = screen.getAllByText('Status');
+    expect(statusLabels.length).toBe(1);
+
+    // Priority should be present (in Select Filters)
+    const priorityLabels = screen.getAllByText('Priority');
+    expect(priorityLabels.length).toBe(1);
+
+    // Verify structure implies separation if possible, but count check is good for de-duplication
   });
 });
