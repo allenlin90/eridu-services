@@ -24,12 +24,14 @@ Organize by **Domain Resource**:
 ```
 packages/api-types/src/
 ├── shows/
-│   ├── index.ts      # Exports
-│   ├── schemas.ts    # Zod definitions
-│   └── types.ts      # Inferred TS types
 ├── users/
+│   ├── index.ts      # Exports
+│   └── schemas.ts    # Zod definitions and inferred TS types
 └── pagination/       # Shared utilities
 ```
+
+> [!NOTE]
+> While it's possible to split `schemas.ts` and `types.ts`, current practice in this monorepo is to consolidate them into `schemas.ts` for simplicity and easier maintenance.
 
 ## Implementation Pattern
 

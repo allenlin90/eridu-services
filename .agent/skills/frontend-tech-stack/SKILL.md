@@ -12,7 +12,7 @@ This skill defines the standard technology stack for all frontend applications (
 | Category        | Technology          | Version  | Notes                                     |
 | :-------------- | :------------------ | :------- | :---------------------------------------- |
 | **Framework**   | **React**           | **19.x** | Use functional components and hooks.      |
-| **Build Tool**  | **Vite**            | **6.x**  | Fast HMR, uses `@vitejs/plugin-react`.    |
+| **Build Tool**  | **Vite**            | **7.x**  | Fast HMR, uses `@vitejs/plugin-react`.    |
 | **Styling**     | **Tailwind CSS**    | **4.x**  | Use the `@tailwindcss/vite` plugin.       |
 | **Routing**     | **TanStack Router** | **1.x**  | File-based routing, type-safe navigation. |
 | **State/Query** | **TanStack Query**  | **5.x**  | For async server state management.        |
