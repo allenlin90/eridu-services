@@ -95,6 +95,7 @@ export function UsersList() {
         onColumnFiltersChange={onColumnFiltersChange}
         searchableColumns={userSearchableColumns}
         searchPlaceholder="Search by name..."
+        featuredFilterColumns={['is_system_admin']}
         pagination={
           data?.meta
             ? {
