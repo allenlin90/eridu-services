@@ -25,7 +25,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
   return (
     <SidebarProvider>
       <AppSidebar {...sidebarConfig} linkComponent={RouterLink} />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <SidebarLayoutHeader />
         {children}
       </SidebarInset>

@@ -33,8 +33,8 @@ vi.mock('@eridu/ui', () => ({
 
 // Mock the sidebar components
 vi.mock('@eridu/ui/components/ui/sidebar', () => ({
-  SidebarInset: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="sidebar-inset">{children}</div>
+  SidebarInset: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="sidebar-inset" className={className}>{children}</div>
   ),
   SidebarProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="sidebar-provider">{children}</div>
@@ -145,7 +145,11 @@ describe('sidebarLayout', () => {
     );
 
     expect(screen.getByTestId('sidebar-provider')).toBeInTheDocument();
-    expect(screen.getByTestId('sidebar-inset')).toBeInTheDocument();
+
+    const inset = screen.getByTestId('sidebar-inset');
+    expect(inset).toBeInTheDocument();
+    expect(inset).toHaveClass('min-w-0');
+
     expect(screen.getByTestId('app-sidebar')).toBeInTheDocument();
     expect(screen.getByText('Test Content')).toBeInTheDocument();
   });
