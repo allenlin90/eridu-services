@@ -9,7 +9,6 @@ import { UtilityModule } from '@/utility/utility.module';
  * Admin User Module
  *
  * Manages admin endpoints for user management.
- * Uses AdminAccessModule for authentication and authorization.
  */
 @Module({
   imports: [UserModule, UtilityModule],
