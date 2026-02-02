@@ -47,6 +47,8 @@ export type Show = {
   name: string;
   client_id: string | null;
   client_name: string | null;
+  studio_id: string | null;
+  studio_name: string | null;
   studio_room_id: string | null;
   studio_room_name: string | null;
   show_type_id: string | null;
@@ -72,6 +74,8 @@ export function showApiResponseToShow(apiResponse: ShowApiResponse): Show {
     name: apiResponse.name,
     client_id: apiResponse.client_id,
     client_name: apiResponse.client_name,
+    studio_id: apiResponse.studio_id,
+    studio_name: apiResponse.studio_name,
     studio_room_id: apiResponse.studio_room_id,
     studio_room_name: apiResponse.studio_room_name,
     show_type_id: apiResponse.show_type_id,
@@ -96,6 +100,8 @@ export function showToCreateShowInput(show: Partial<Show>): Partial<CreateShowIn
 
   if (show.client_id !== undefined && show.client_id !== null)
     input.client_id = show.client_id;
+  if (show.studio_id !== undefined && show.studio_id !== null)
+    input.studio_id = show.studio_id;
   if (show.studio_room_id !== undefined && show.studio_room_id !== null)
     input.studio_room_id = show.studio_room_id;
   if (show.show_type_id !== undefined && show.show_type_id !== null)

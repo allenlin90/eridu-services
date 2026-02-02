@@ -149,6 +149,7 @@ export class ShowService extends BaseModelService {
 
     const include: Prisma.ShowInclude = {
       client: true,
+      studio: true,
       studioRoom: true,
       showType: true,
       showStatus: true,
@@ -321,6 +322,9 @@ export class ShowService extends BaseModelService {
       studioRoom: dto.studioRoomId
         ? { connect: { uid: dto.studioRoomId } }
         : undefined,
+      studio: dto.studioId
+        ? { connect: { uid: dto.studioId } }
+        : undefined,
       showType: { connect: { uid: dto.showTypeId } },
       showStatus: { connect: { uid: dto.showStatusId } },
       showStandard: { connect: { uid: dto.showStandardId } },
@@ -346,6 +350,12 @@ export class ShowService extends BaseModelService {
     if (dto.studioRoomId !== undefined) {
       payload.studioRoom = dto.studioRoomId
         ? { connect: { uid: dto.studioRoomId } }
+        : { disconnect: true };
+    }
+
+    if (dto.studioId !== undefined) {
+      payload.studio = dto.studioId
+        ? { connect: { uid: dto.studioId } }
         : { disconnect: true };
     }
 

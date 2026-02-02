@@ -43,6 +43,7 @@ describe('showsService', () => {
     id: BigInt(1),
     uid: 'show_test123',
     clientId: BigInt(1),
+    studioId: null,
     studioRoomId: BigInt(1),
     showTypeId: BigInt(1),
     showStatusId: BigInt(1),

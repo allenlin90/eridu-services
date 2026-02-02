@@ -21,6 +21,7 @@ import {
 type ScheduleWithRelations = Prisma.ScheduleGetPayload<{
   include: {
     client: true;
+    studio: true;
     createdByUser: true;
     publishedByUser: true;
   };
@@ -78,6 +79,7 @@ describe('scheduleService', () => {
     status: 'draft',
     version: 1,
     clientId: mockClient1.id,
+    studioId: null,
     createdBy: mockUser.id,
     publishedBy: null,
     publishedAt: null,
@@ -87,6 +89,7 @@ describe('scheduleService', () => {
     updatedAt: new Date(),
     deletedAt: null,
     client: mockClient1,
+    studio: null,
     createdByUser: mockUser,
     publishedByUser: null,
   } as ScheduleWithRelations;
@@ -100,6 +103,7 @@ describe('scheduleService', () => {
     status: 'draft',
     version: 1,
     clientId: mockClient2.id,
+    studioId: null,
     createdBy: mockUser.id,
     publishedBy: null,
     publishedAt: null,
@@ -109,6 +113,7 @@ describe('scheduleService', () => {
     updatedAt: new Date(),
     deletedAt: null,
     client: mockClient2,
+    studio: null,
     createdByUser: mockUser,
     publishedByUser: null,
   } as ScheduleWithRelations;
@@ -610,6 +615,7 @@ describe('scheduleService', () => {
         },
         include: {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },
@@ -658,6 +664,7 @@ describe('scheduleService', () => {
         },
         include: {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },
@@ -698,6 +705,7 @@ describe('scheduleService', () => {
         },
         include: {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },
@@ -741,6 +749,7 @@ describe('scheduleService', () => {
         },
         include: {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },
@@ -784,6 +793,7 @@ describe('scheduleService', () => {
         },
         include: {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },
@@ -823,6 +833,7 @@ describe('scheduleService', () => {
         },
         include: {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },
@@ -860,6 +871,7 @@ describe('scheduleService', () => {
         where: {}, // No deletedAt filter
         include: {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },
@@ -918,6 +930,7 @@ describe('scheduleService', () => {
         },
         include: {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },

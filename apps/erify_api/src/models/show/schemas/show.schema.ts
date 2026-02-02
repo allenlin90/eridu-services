@@ -13,6 +13,8 @@ import { showStatusSchema } from '@/models/show-status/schemas/show-status.schem
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { showTypeSchema } from '@/models/show-type/schemas/show-type.schema';
 import { ShowTypeService } from '@/models/show-type/show-type.service';
+import { studioSchema } from '@/models/studio/schemas/studio.schema';
+import { StudioService } from '@/models/studio/studio.service';
 import { studioRoomSchema } from '@/models/studio-room/schemas/studio-room.schema';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 
@@ -21,6 +23,7 @@ export const showSchema = z.object({
   id: z.bigint(),
   uid: z.string().startsWith(ShowService.UID_PREFIX),
   clientId: z.bigint(),
+  studioId: z.bigint().nullable(),
   studioRoomId: z.bigint().nullable(),
   showTypeId: z.bigint(),
   showStatusId: z.bigint(),
@@ -43,6 +46,11 @@ export const createShowSchema = z
       .startsWith(StudioRoomService.UID_PREFIX)
       .nullable()
       .optional(), // UID
+    studio_id: z
+      .string()
+      .startsWith(StudioService.UID_PREFIX)
+      .nullable()
+      .optional(), // UID
     show_type_id: z.string().startsWith(ShowTypeService.UID_PREFIX), // UID
     show_status_id: z.string().startsWith(ShowStatusService.UID_PREFIX), // UID
     show_standard_id: z.string().startsWith(ShowStandardService.UID_PREFIX), // UID
@@ -59,6 +67,7 @@ export const createShowSchema = z
 const transformCreateShowSchema = createShowSchema.transform((data) => ({
   clientId: data.client_id,
   studioRoomId: data.studio_room_id,
+  studioId: data.studio_id,
   showTypeId: data.show_type_id,
   showStatusId: data.show_status_id,
   showStandardId: data.show_standard_id,
@@ -75,6 +84,11 @@ export const updateShowSchema = z
     studio_room_id: z
       .string()
       .startsWith(StudioRoomService.UID_PREFIX)
+      .nullable()
+      .optional(), // UID
+    studio_id: z
+      .string()
+      .startsWith(StudioService.UID_PREFIX)
       .nullable()
       .optional(), // UID
     show_type_id: z.string().startsWith(ShowTypeService.UID_PREFIX).optional(), // UID
@@ -107,6 +121,7 @@ export const updateShowSchema = z
   .transform((data) => ({
     clientId: data.client_id,
     studioRoomId: data.studio_room_id,
+    studioId: data.studio_id,
     showTypeId: data.show_type_id,
     showStatusId: data.show_status_id,
     showStandardId: data.show_standard_id,
@@ -119,6 +134,7 @@ export const updateShowSchema = z
 // Schema for Show with relations (used in admin endpoints)
 export const showWithRelationsSchema = showSchema.extend({
   client: clientSchema.optional(),
+  studio: studioSchema.nullable().optional(),
   studioRoom: studioRoomSchema.nullable().optional(),
   showType: showTypeSchema.optional(),
   showStatus: showStatusSchema.optional(),
@@ -133,6 +149,8 @@ export const showDto = showWithRelationsSchema
     name: obj.name,
     client_id: obj.client?.uid ?? null,
     client_name: obj.client?.name ?? null,
+    studio_id: obj.studio?.uid ?? null,
+    studio_name: obj.studio?.name ?? null,
     studio_room_id: obj.studioRoom?.uid ?? null,
     studio_room_name: obj.studioRoom?.name ?? null,
     show_type_id: obj.showType?.uid ?? null,

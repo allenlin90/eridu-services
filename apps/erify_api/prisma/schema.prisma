@@ -107,6 +107,8 @@ model Show {
   metadata       Json           @default("{}")
   clientId       BigInt         @map("client_id")
   client         Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  studioId       BigInt?        @map("studio_id")
+  studio         Studio?        @relation(fields: [studioId], references: [id], onDelete: SetNull)
   studioRoomId   BigInt?        @map("studio_room_id")
   studioRoom     StudioRoom?    @relation(fields: [studioRoomId], references: [id], onDelete: SetNull)
   showTypeId     BigInt         @map("show_type_id")
@@ -126,6 +128,7 @@ model Show {
   @@index([uid])
   @@index([name])
   @@index([clientId])
+  @@index([studioId])
   @@index([studioRoomId])
   @@index([showTypeId])
   @@index([showStatusId])
@@ -136,6 +139,7 @@ model Show {
   @@index([endTime])
   @@index([deletedAt])
   @@index([clientId, deletedAt])
+  @@index([studioId, deletedAt])
   @@index([studioRoomId, deletedAt])
   @@index([scheduleId, deletedAt])
   @@index([showStatusId, deletedAt])
@@ -206,6 +210,8 @@ model Studio {
   name              String             @unique
   address           String
   metadata          Json               @default("{}")
+  shows             Show[]
+  schedules         Schedule[]
   studioRooms       StudioRoom[]
   studioMemberships StudioMembership[]
   createdAt         DateTime           @default(now()) @map("created_at")
@@ -230,7 +236,7 @@ model StudioRoom {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
-
+ 
   @@unique([studioId, name])
   @@index([uid])
   @@index([studioId])
@@ -325,6 +331,8 @@ model Schedule {
   metadata        Json               @default("{}")
   clientId        BigInt?            @map("client_id")
   client          Client?            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  studioId        BigInt?            @map("studio_id")
+  studio          Studio?            @relation(fields: [studioId], references: [id], onDelete: SetNull)
   createdBy       BigInt?            @map("created_by")
   createdByUser   User?              @relation("ScheduleCreator", fields: [createdBy], references: [id], onDelete: SetNull)
   publishedBy     BigInt?            @map("published_by")
@@ -337,6 +345,7 @@ model Schedule {
 
   @@index([uid])
   @@index([clientId])
+  @@index([studioId])
   @@index([status])
   @@index([publishedAt])
   @@index([startDate, endDate])
@@ -348,6 +357,7 @@ model Schedule {
   @@index([deletedAt])
   @@index([status, deletedAt])
   @@index([clientId, deletedAt])
+  @@index([studioId, deletedAt])
   @@index([clientId, status, deletedAt])
   @@index([clientId, status, startDate, deletedAt])
   @@index([createdBy, deletedAt])

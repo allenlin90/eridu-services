@@ -246,6 +246,7 @@ export class ScheduleService extends BaseModelService {
         where,
         include: {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },
@@ -429,6 +430,7 @@ export class ScheduleService extends BaseModelService {
       version: dto.version || 1,
       metadata: dto.metadata || {},
       client: dto.client,
+      studio: dto.studio,
       createdByUser: dto.createdByUser,
     };
   }
@@ -453,6 +455,8 @@ export class ScheduleService extends BaseModelService {
     }
     if (dto.metadata)
       payload.metadata = dto.metadata;
+    if (dto.studio !== undefined)
+      payload.studio = dto.studio;
     if (dto.publishedByUser)
       payload.publishedByUser = dto.publishedByUser;
 

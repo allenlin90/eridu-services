@@ -23,6 +23,7 @@ import type { PublishScheduleDto } from '@/schedule-planning/schemas/schedule-pl
 type ScheduleWithRelations = Prisma.ScheduleGetPayload<{
   include: {
     client: true;
+    studio: true;
     createdByUser: true;
     publishedByUser: true;
   };
@@ -118,6 +119,7 @@ describe('adminScheduleController', () => {
       const createDto: CreateScheduleDto = {
         name: 'Test Schedule',
         client: { connect: { uid: 'client_123' } },
+        studio: undefined,
         createdByUser: { connect: { uid: 'user_123' } },
         startDate: new Date('2024-01-01'),
         endDate: new Date('2024-01-31'),
@@ -137,6 +139,7 @@ describe('adminScheduleController', () => {
         planDocument: createDto.planDocument as Prisma.JsonObject,
         metadata: createDto.metadata as Prisma.JsonObject,
         clientId: mockClient.id,
+        studioId: null,
         createdBy: mockUser.id,
         publishedBy: null,
         publishedAt: null,
@@ -144,6 +147,7 @@ describe('adminScheduleController', () => {
         updatedAt: new Date(),
         deletedAt: null,
         client: mockClient,
+        studio: null,
         createdByUser: mockUser,
         publishedByUser: null,
       };
@@ -157,6 +161,7 @@ describe('adminScheduleController', () => {
         createDto,
         {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },
@@ -244,6 +249,7 @@ describe('adminScheduleController', () => {
         planDocument: { shows: [] },
         metadata: {},
         clientId: mockClient.id,
+        studioId: null,
         createdBy: mockUser.id,
         publishedBy: null,
         publishedAt: null,
@@ -251,6 +257,7 @@ describe('adminScheduleController', () => {
         updatedAt: new Date(),
         deletedAt: null,
         client: mockClient,
+        studio: null,
         createdByUser: mockUser,
         publishedByUser: null,
       };
@@ -262,6 +269,7 @@ describe('adminScheduleController', () => {
         scheduleId,
         {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },
@@ -281,6 +289,7 @@ describe('adminScheduleController', () => {
         planDocument: undefined,
         version: 1,
         metadata: undefined,
+        studio: undefined,
         publishedByUser: undefined,
       };
       const currentSchedule: Partial<ScheduleWithRelations> = {
@@ -298,6 +307,7 @@ describe('adminScheduleController', () => {
         planDocument: (updateDto.planDocument as Prisma.JsonObject) || { shows: [] },
         metadata: (updateDto.metadata as Prisma.JsonObject) || {},
         clientId: mockClient.id,
+        studioId: null,
         createdBy: mockUser.id,
         publishedBy: null,
         publishedAt: null,
@@ -305,6 +315,7 @@ describe('adminScheduleController', () => {
         updatedAt: new Date(),
         deletedAt: null,
         client: mockClient,
+        studio: null,
         createdByUser: mockUser,
         publishedByUser: null,
       };
@@ -325,6 +336,7 @@ describe('adminScheduleController', () => {
         updateDto,
         {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },
@@ -342,6 +354,7 @@ describe('adminScheduleController', () => {
         status: undefined,
         version: 1,
         metadata: undefined,
+        studio: undefined,
         publishedByUser: undefined,
       };
       const currentSchedule: Partial<ScheduleWithRelations> = {
@@ -359,6 +372,7 @@ describe('adminScheduleController', () => {
         planDocument: updateDto.planDocument as Prisma.JsonObject,
         metadata: {},
         clientId: mockClient.id,
+        studioId: null,
         createdBy: mockUser.id,
         publishedBy: null,
         publishedAt: null,
@@ -366,6 +380,7 @@ describe('adminScheduleController', () => {
         updatedAt: new Date(),
         deletedAt: null,
         client: mockClient,
+        studio: null,
         createdByUser: mockUser,
         publishedByUser: null,
       };
@@ -454,6 +469,7 @@ describe('adminScheduleController', () => {
         planDocument: { shows: [] },
         metadata: {},
         clientId: mockClient.id,
+        studioId: null,
         createdBy: mockUser.id,
         publishedBy: mockUser.id,
         publishedAt: new Date(),
@@ -461,6 +477,7 @@ describe('adminScheduleController', () => {
         updatedAt: new Date(),
         deletedAt: null,
         client: mockClient,
+        studio: null,
         createdByUser: mockUser,
         publishedByUser: mockUser,
       };
@@ -483,6 +500,7 @@ describe('adminScheduleController', () => {
         scheduleId,
         {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },
@@ -514,6 +532,7 @@ describe('adminScheduleController', () => {
         planDocument: { shows: [] },
         metadata: {},
         clientId: mockClient.id,
+        studioId: null,
         createdBy: user.id,
         publishedBy: null,
         publishedAt: null,
@@ -521,6 +540,7 @@ describe('adminScheduleController', () => {
         updatedAt: new Date(),
         deletedAt: null,
         client: mockClient,
+        studio: null,
         createdByUser: user,
         publishedByUser: null,
       };
@@ -549,6 +569,7 @@ describe('adminScheduleController', () => {
         duplicatedSchedule.uid,
         {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },
@@ -608,6 +629,7 @@ describe('adminScheduleController', () => {
           {
             name: 'Schedule 1',
             client: { connect: { uid: 'client_123' } },
+            studio: undefined,
             createdByUser: { connect: { uid: 'user_123' } },
             startDate: new Date('2024-01-01'),
             endDate: new Date('2024-01-31'),
@@ -635,6 +657,7 @@ describe('adminScheduleController', () => {
         bulkDto,
         {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },
@@ -662,6 +685,7 @@ describe('adminScheduleController', () => {
             planDocument: undefined,
             version: 1,
             metadata: undefined,
+            studio: undefined,
             publishedByUser: undefined,
           },
         ],
@@ -683,6 +707,7 @@ describe('adminScheduleController', () => {
         bulkDto,
         {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },
@@ -734,6 +759,7 @@ describe('adminScheduleController', () => {
         },
         {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },

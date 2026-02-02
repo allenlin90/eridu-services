@@ -27,6 +27,7 @@ export const showPlanItemSchema = z
     startTime: z.iso.datetime(),
     endTime: z.iso.datetime(),
     clientId: z.string().startsWith(ClientService.UID_PREFIX),
+    studioId: z.string().startsWith(StudioService.UID_PREFIX).optional(),
     studioRoomId: z.string().startsWith(StudioService.UID_PREFIX).optional(),
     showTypeId: z.string().startsWith(ShowTypeService.UID_PREFIX),
     showStatusId: z.string().startsWith(ShowStatusService.UID_PREFIX),

@@ -47,6 +47,7 @@ describe('showOrchestrationService', () => {
     id: BigInt(1),
     uid: 'show_test123',
     clientId: BigInt(1),
+    studioId: null,
     studioRoomId: BigInt(1),
     showTypeId: BigInt(1),
     showStatusId: BigInt(1),
@@ -157,6 +158,7 @@ describe('showOrchestrationService', () => {
     it('should create a simple show without assignments', async () => {
       const dto: CreateShowWithAssignmentsDto = {
         clientId: 'client_test123',
+        studioId: undefined,
         studioRoomId: 'room_test123',
         showTypeId: 'sht_test123',
         showStatusId: 'shst_test123',
@@ -196,6 +198,7 @@ describe('showOrchestrationService', () => {
     it('should create a show with MC assignments', async () => {
       const dto: CreateShowWithAssignmentsDto = {
         clientId: 'client_test123',
+        studioId: undefined,
         studioRoomId: 'room_test123',
         showTypeId: 'sht_test123',
         showStatusId: 'shst_test123',
@@ -245,6 +248,7 @@ describe('showOrchestrationService', () => {
     it('should create a show with platform assignments', async () => {
       const dto: CreateShowWithAssignmentsDto = {
         clientId: 'client_test123',
+        studioId: undefined,
         studioRoomId: 'room_test123',
         showTypeId: 'sht_test123',
         showStatusId: 'shst_test123',
@@ -300,6 +304,7 @@ describe('showOrchestrationService', () => {
     it('should create a show with both MC and platform assignments', async () => {
       const dto: CreateShowWithAssignmentsDto = {
         clientId: 'client_test123',
+        studioId: undefined,
         studioRoomId: 'room_test123',
         showTypeId: 'sht_test123',
         showStatusId: 'shst_test123',

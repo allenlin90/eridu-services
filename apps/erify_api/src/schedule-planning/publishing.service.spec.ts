@@ -42,6 +42,9 @@ type PublishingMockTransactionClientStructure = {
   client: {
     findMany: jest.Mock;
   };
+  studio: {
+    findMany: jest.Mock;
+  };
   studioRoom: {
     findMany: jest.Mock;
   };
@@ -105,6 +108,9 @@ describe('publishingService', () => {
       update: jest.Mock;
     };
     client: {
+      findMany: jest.Mock;
+    };
+    studio: {
       findMany: jest.Mock;
     };
     studioRoom: {
@@ -182,6 +188,7 @@ describe('publishingService', () => {
 
   const mockSchedule: Schedule & {
     client: { uid: string; name: string } | null;
+    studio: { uid: string; name: string } | null;
     createdByUser: { uid: string; name: string; email: string } | null;
     planDocument: PlanDocument;
   } = {
@@ -193,6 +200,7 @@ describe('publishingService', () => {
     status: 'draft',
     version: 1,
     clientId: BigInt(1),
+    studioId: null,
     createdBy: BigInt(1),
     publishedBy: null,
     publishedAt: null,
@@ -205,6 +213,7 @@ describe('publishingService', () => {
       uid: 'client_test123',
       name: 'Test Client',
     },
+    studio: null,
     createdByUser: {
       uid: 'user_test123',
       name: 'Test User',
@@ -242,6 +251,9 @@ describe('publishingService', () => {
         update: jest.fn(),
       },
       client: {
+        findMany: jest.fn(),
+      },
+      studio: {
         findMany: jest.fn(),
       },
       studioRoom: {
@@ -383,6 +395,7 @@ describe('publishingService', () => {
       mockTransactionClient.client.findMany.mockResolvedValue([
         { id: BigInt(1), uid: 'client_test123' },
       ]);
+      mockTransactionClient.studio.findMany.mockResolvedValue([]);
       mockTransactionClient.studioRoom.findMany.mockResolvedValue([
         { id: BigInt(1), uid: 'room_test123' },
       ]);
@@ -415,6 +428,7 @@ describe('publishingService', () => {
 
       expect(getScheduleByIdMock).toHaveBeenCalledWith(scheduleUid, {
         client: true,
+        studio: true,
         createdByUser: true,
       });
       expect(validateScheduleMock).toHaveBeenCalledWith({
@@ -501,6 +515,7 @@ describe('publishingService', () => {
         },
         include: {
           client: true,
+          studio: true,
           createdByUser: true,
           publishedByUser: true,
         },

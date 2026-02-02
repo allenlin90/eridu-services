@@ -28,34 +28,35 @@
  *   - chunked/ directory (for POST /admin/schedules/:id/shows/append - multi-client only)
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 import { fixtures } from '../../../prisma/fixtures';
 
-interface ShowPlanItem {
+type ShowPlanItem = {
   tempId: string;
   name: string;
   startTime: string;
   endTime: string;
-  clientUid: string;
-  studioRoomUid: string;
-  showTypeUid: string;
-  showStatusUid: string;
-  showStandardUid: string;
+  clientId: string;
+  studioId?: string;
+  studioRoomId: string;
+  showTypeId: string;
+  showStatusId: string;
+  showStandardId: string;
   mcs: Array<{
-    mcUid: string;
+    mcId: string;
     note?: string;
   }>;
   platforms: Array<{
-    platformUid: string;
+    platformId: string;
     liveStreamLink: string;
     platformShowId: string;
   }>;
   metadata?: Record<string, any>;
-}
+};
 
-interface PlanDocument {
+type PlanDocument = {
   metadata: {
     lastEditedBy: string;
     lastEditedAt: string;
@@ -67,27 +68,28 @@ interface PlanDocument {
     };
   };
   shows: ShowPlanItem[];
-}
+};
 
-interface CreateSchedulePayload {
+type CreateSchedulePayload = {
   name: string;
   start_date: string;
   end_date: string;
   status: string;
+  studio_id?: string;
   plan_document: PlanDocument;
   version: number;
   client_id: string;
   created_by: string;
-}
+};
 
-interface UpdateSchedulePayload {
+type UpdateSchedulePayload = {
   plan_document: PlanDocument;
   version: number;
-}
+};
 
-interface PublishSchedulePayload {
+type PublishSchedulePayload = {
   version: number;
-}
+};
 
 // Parse command line arguments
 function parseArgs(): { shows: number; clients: number; chunkSize: number } {
@@ -99,21 +101,21 @@ function parseArgs(): { shows: number; clients: number; chunkSize: number } {
 
   for (const arg of args) {
     if (arg.startsWith('--shows=')) {
-      const value = parseInt(arg.split('=')[1], 10);
-      if (!isNaN(value) && value > 0) {
+      const value = Number.parseInt(arg.split('=')[1], 10);
+      if (!Number.isNaN(value) && value > 0) {
         shows = value;
         showsSpecified = true;
       }
     }
     if (arg.startsWith('--clients=')) {
-      const value = parseInt(arg.split('=')[1], 10);
-      if (!isNaN(value) && value > 0) {
+      const value = Number.parseInt(arg.split('=')[1], 10);
+      if (!Number.isNaN(value) && value > 0) {
         clients = value;
       }
     }
     if (arg.startsWith('--chunk-size=')) {
-      const value = parseInt(arg.split('=')[1], 10);
-      if (!isNaN(value) && value > 0) {
+      const value = Number.parseInt(arg.split('=')[1], 10);
+      if (!Number.isNaN(value) && value > 0) {
         chunkSize = value;
       }
     }
@@ -131,6 +133,11 @@ function parseArgs(): { shows: number; clients: number; chunkSize: number } {
 // Get all client UIDs
 function getClientUids(): string[] {
   return Object.values(fixtures.clients);
+}
+
+// Get all studio UIDs
+function getStudioUids(): string[] {
+  return Object.values(fixtures.studios);
 }
 
 // Get all studio room UIDs
@@ -177,6 +184,7 @@ function generateShows(
 ): ShowPlanItem[] {
   const shows: ShowPlanItem[] = [];
   const clientUids = getClientUids();
+  const studioUids = getStudioUids();
   const roomUids = getStudioRoomUids();
   const mcUids = getMcUids();
   const platformUids = getPlatformUids();
@@ -254,8 +262,8 @@ function generateShows(
     maxAttempts: number = 100,
   ): { start: Date; end: Date } | null {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const startTime =
-        startDate.getTime() + Math.random() * (dateRange - duration);
+      const startTime
+        = startDate.getTime() + Math.random() * (dateRange - duration);
       const start = new Date(startTime);
       const end = new Date(startTime + duration);
 
@@ -264,8 +272,8 @@ function generateShows(
       }
 
       if (
-        isRoomAvailable(roomUid, start, end) &&
-        areMcAvailable(mcUids, start, end)
+        isRoomAvailable(roomUid, start, end)
+        && areMcAvailable(mcUids, start, end)
       ) {
         return { start, end };
       }
@@ -282,14 +290,14 @@ function generateShows(
 
     // Distribute shows across clients
     const clientUid = clientUids[showIndex % clientUids.length];
-    const clientKey =
-      Object.keys(fixtures.clients).find(
+    const clientKey
+      = Object.keys(fixtures.clients).find(
         (key) =>
           fixtures.clients[key as keyof typeof fixtures.clients] === clientUid,
       ) || 'nike';
     // Convert camelCase to Title Case for display
-    const clientName =
-      clientKey
+    const clientName
+      = clientKey
         .replace(/([A-Z])/g, ' $1')
         .replace(/^./, (str) => str.toUpperCase())
         .trim() || 'Nike';
@@ -302,8 +310,8 @@ function generateShows(
     const selectedPlatformUids = randomElements(platformUids, numPlatforms);
 
     // Generate show duration
-    const duration =
-      minShowDuration + Math.random() * (maxShowDuration - minShowDuration);
+    const duration
+      = minShowDuration + Math.random() * (maxShowDuration - minShowDuration);
 
     // Find available time slot
     const timeSlot = findAvailableTimeSlot(roomUid, selectedMcUids, duration);
@@ -330,17 +338,19 @@ function generateShows(
       name: `${clientName} Show ${showIndex + 1}`,
       startTime: timeSlot.start.toISOString(),
       endTime: timeSlot.end.toISOString(),
-      clientUid,
-      studioRoomUid: roomUid,
-      showTypeUid: weightedRandom(showTypeWeights).uid,
-      showStatusUid: weightedRandom(showStatusWeights).uid,
-      showStandardUid: weightedRandom(showStandardWeights).uid,
+      clientId: clientUid,
+      studioRoomId: roomUid,
+      showTypeId: weightedRandom(showTypeWeights).uid,
+      showStatusId: weightedRandom(showStatusWeights).uid,
+      showStandardId: weightedRandom(showStandardWeights).uid,
+      // 50% of shows will have explicit studio assignment, 50% will inherit from schedule
+      studioId: Math.random() > 0.5 ? randomElement(studioUids) : undefined,
       mcs: selectedMcUids.map((mcUid) => ({
-        mcUid,
+        mcId: mcUid,
         note: `MC assignment for ${clientName} Show ${showIndex + 1}`,
       })),
       platforms: selectedPlatformUids.map((platformUid, idx) => ({
-        platformUid,
+        platformId: platformUid,
         liveStreamLink: `https://${platformUid}.com/live/show-${showIndex + 1}`,
         platformShowId: `platform_show_${showIndex + 1}_${idx + 1}`,
       })),
@@ -452,8 +462,8 @@ function generateShowsForClient(
     maxAttempts: number = 100,
   ): { start: Date; end: Date } | null {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const startTime =
-        startDate.getTime() + Math.random() * (dateRange - duration);
+      const startTime
+        = startDate.getTime() + Math.random() * (dateRange - duration);
       const start = new Date(startTime);
       const end = new Date(startTime + duration);
 
@@ -462,8 +472,8 @@ function generateShowsForClient(
       }
 
       if (
-        isRoomAvailable(roomUid, start, end) &&
-        areMcAvailable(mcUids, start, end)
+        isRoomAvailable(roomUid, start, end)
+        && areMcAvailable(mcUids, start, end)
       ) {
         return { start, end };
       }
@@ -486,8 +496,8 @@ function generateShowsForClient(
     const selectedPlatformUids = randomElements(platformUids, numPlatforms);
 
     // Generate show duration
-    const duration =
-      minShowDuration + Math.random() * (maxShowDuration - minShowDuration);
+    const duration
+      = minShowDuration + Math.random() * (maxShowDuration - minShowDuration);
 
     // Find available time slot
     const timeSlot = findAvailableTimeSlot(roomUid, selectedMcUids, duration);
@@ -514,17 +524,17 @@ function generateShowsForClient(
       name: `${clientName} Show ${showIndex + 1}`,
       startTime: timeSlot.start.toISOString(),
       endTime: timeSlot.end.toISOString(),
-      clientUid, // Use the specified client UID
-      studioRoomUid: roomUid,
-      showTypeUid: weightedRandom(showTypeWeights).uid,
-      showStatusUid: weightedRandom(showStatusWeights).uid,
-      showStandardUid: weightedRandom(showStandardWeights).uid,
+      clientId: clientUid, // Use the specified client UID
+      studioRoomId: roomUid,
+      showTypeId: weightedRandom(showTypeWeights).uid,
+      showStatusId: weightedRandom(showStatusWeights).uid,
+      showStandardId: weightedRandom(showStandardWeights).uid,
       mcs: selectedMcUids.map((mcUid) => ({
-        mcUid,
+        mcId: mcUid,
         note: `MC assignment for ${clientName} Show ${showIndex + 1}`,
       })),
       platforms: selectedPlatformUids.map((platformUid, idx) => ({
-        platformUid,
+        platformId: platformUid,
         liveStreamLink: `https://${platformUid}.com/live/show-${showIndex + 1}`,
         platformShowId: `platform_show_${showIndex + 1}_${idx + 1}`,
       })),
@@ -559,15 +569,15 @@ function generatePlanDocument(
   const shows = generateShows(numShows, startDate, endDate);
   const clientUids = getClientUids();
   const primaryClientUid = clientUids[0];
-  const clientKey =
-    Object.keys(fixtures.clients).find(
+  const clientKey
+    = Object.keys(fixtures.clients).find(
       (key) =>
-        fixtures.clients[key as keyof typeof fixtures.clients] ===
-        primaryClientUid,
+        fixtures.clients[key as keyof typeof fixtures.clients]
+        === primaryClientUid,
     ) || 'nike';
   // Convert camelCase to Title Case for display
-  const clientName =
-    clientKey
+  const clientName
+    = clientKey
       .replace(/([A-Z])/g, ' $1')
       .replace(/^./, (str) => str.toUpperCase())
       .trim() || 'Nike';
@@ -646,6 +656,7 @@ function generateCreateSchedulePayload(
     plan_document: planDocument,
     version: 1,
     client_id: clientUids[0],
+    studio_id: randomElement(getStudioUids()), // Assign a studio to the schedule
     created_by: fixtures.users.admin,
   };
 }
@@ -693,14 +704,14 @@ function generateBulkCreateSchedulePayload(): {
   // Generate one empty schedule for each client
   for (const clientUid of clientUids) {
     // Get client name from UID
-    const clientKey =
-      Object.keys(fixtures.clients).find(
+    const clientKey
+      = Object.keys(fixtures.clients).find(
         (key) =>
           fixtures.clients[key as keyof typeof fixtures.clients] === clientUid,
       ) || 'nike';
     // Convert camelCase to Title Case for display
-    const clientName =
-      clientKey
+    const clientName
+      = clientKey
         .replace(/([A-Z])/g, ' $1')
         .replace(/^./, (str) => str.toUpperCase())
         .trim() || 'Nike';
@@ -720,6 +731,7 @@ function generateBulkCreateSchedulePayload(): {
       plan_document: planDocument,
       version: 1,
       client_id: clientUid,
+      studio_id: randomElement(getStudioUids()), // Assign a studio to each schedule
       created_by: fixtures.users.admin,
     };
 
@@ -736,9 +748,9 @@ function generateMultiClientMonthlyOverview(
   numClients: number,
   chunkSize: number,
 ): {
-  schedule: CreateSchedulePayload;
-  chunkedShows: ShowPlanItem[][];
-} {
+    schedule: CreateSchedulePayload;
+    chunkedShows: ShowPlanItem[][];
+  } {
   const now = new Date();
   const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
   const endDate = new Date(
@@ -758,13 +770,13 @@ function generateMultiClientMonthlyOverview(
   // Generate shows for each client and combine into single schedule
   for (let clientIndex = 0; clientIndex < numClients; clientIndex++) {
     const clientUid = clientUids[clientIndex];
-    const clientKey =
-      Object.keys(fixtures.clients).find(
+    const clientKey
+      = Object.keys(fixtures.clients).find(
         (key) =>
           fixtures.clients[key as keyof typeof fixtures.clients] === clientUid,
       ) || 'nike';
-    const clientName =
-      clientKey
+    const clientName
+      = clientKey
         .replace(/([A-Z])/g, ' $1')
         .replace(/^./, (str) => str.toUpperCase())
         .trim() || 'Nike';
@@ -774,7 +786,7 @@ function generateMultiClientMonthlyOverview(
 
     // Update client UID for all shows
     clientShows.forEach((show) => {
-      show.clientUid = clientUid;
+      show.clientId = clientUid;
       show.name = `${clientName} Show ${show.name.split(' ').pop()}`;
     });
 
@@ -813,6 +825,7 @@ function generateMultiClientMonthlyOverview(
     plan_document: planDocument,
     version: 1,
     client_id: primaryClientUid,
+    studio_id: randomElement(getStudioUids()), // Assign a studio to the schedule
     created_by: fixtures.users.admin,
   };
 
@@ -876,14 +889,14 @@ function generateUpdateSchedulePayloadsForAllClients(numShows: number): Array<{
 
   for (const clientUid of clientUids) {
     // Get client name from UID
-    const clientKey =
-      Object.keys(fixtures.clients).find(
+    const clientKey
+      = Object.keys(fixtures.clients).find(
         (key) =>
           fixtures.clients[key as keyof typeof fixtures.clients] === clientUid,
       ) || 'nike';
     // Convert camelCase to Title Case for display
-    const clientName =
-      clientKey
+    const clientName
+      = clientKey
         .replace(/([A-Z])/g, ' $1')
         .replace(/^./, (str) => str.toUpperCase())
         .trim() || 'Nike';
@@ -979,8 +992,8 @@ function main() {
       fs.mkdirSync(updatePayloadsDir, { recursive: true });
     }
 
-    const updatePayloads =
-      generateUpdateSchedulePayloadsForAllClients(showsPerClient);
+    const updatePayloads
+      = generateUpdateSchedulePayloadsForAllClients(showsPerClient);
     for (const { clientUid, clientName, payload } of updatePayloads) {
       // Extract client number from UID (e.g., client_00000000000000000001 -> 01)
       const clientNumber = clientUid.split('_').pop()?.slice(-2) || '00';

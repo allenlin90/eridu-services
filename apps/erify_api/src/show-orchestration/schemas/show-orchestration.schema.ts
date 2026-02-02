@@ -24,6 +24,7 @@ const transformCreateShowWithAssignmentsSchema
     // Base show data
     clientId: data.client_id,
     studioRoomId: data.studio_room_id,
+    studioId: data.studio_id,
     showTypeId: data.show_type_id,
     showStatusId: data.show_status_id,
     showStandardId: data.show_standard_id,
@@ -55,6 +56,7 @@ const transformUpdateShowWithAssignmentsSchema
     // Base show data
     clientId: data.client_id,
     studioRoomId: data.studio_room_id,
+    studioId: data.studio_id,
     showTypeId: data.show_type_id,
     showStatusId: data.show_status_id,
     showStandardId: data.show_standard_id,

@@ -63,6 +63,7 @@ export class AdminScheduleController extends BaseAdminController {
   async createSchedule(@Body() body: CreateScheduleDto) {
     const schedule = await this.scheduleService.createScheduleFromDto(body, {
       client: true,
+      studio: true,
       createdByUser: true,
       publishedByUser: true,
     });
@@ -93,6 +94,7 @@ export class AdminScheduleController extends BaseAdminController {
   ) {
     return this.scheduleService.getScheduleById(id, {
       client: true,
+      studio: true,
       createdByUser: true,
       publishedByUser: true,
     });
@@ -127,6 +129,7 @@ export class AdminScheduleController extends BaseAdminController {
       body,
       {
         client: true,
+        studio: true,
         createdByUser: true,
         publishedByUser: true,
       },
@@ -191,6 +194,7 @@ export class AdminScheduleController extends BaseAdminController {
     const scheduleUid: string = publishedSchedule.uid;
     return this.scheduleService.getScheduleById(scheduleUid, {
       client: true,
+      studio: true,
       createdByUser: true,
       publishedByUser: true,
     });
@@ -219,6 +223,7 @@ export class AdminScheduleController extends BaseAdminController {
     const scheduleUid: string = duplicatedSchedule.uid;
     return this.scheduleService.getScheduleById(scheduleUid, {
       client: true,
+      studio: true,
       createdByUser: true,
       publishedByUser: true,
     });
@@ -242,6 +247,7 @@ export class AdminScheduleController extends BaseAdminController {
   async bulkCreateSchedules(@Body() body: BulkCreateScheduleDto) {
     const result = await this.scheduleService.bulkCreateSchedules(body, {
       client: true,
+      studio: true,
       createdByUser: true,
       publishedByUser: true,
     });
@@ -261,6 +267,7 @@ export class AdminScheduleController extends BaseAdminController {
   async bulkUpdateSchedules(@Body() body: BulkUpdateScheduleDto) {
     const result = await this.scheduleService.bulkUpdateSchedules(body, {
       client: true,
+      studio: true,
       createdByUser: true,
       publishedByUser: true,
     });
@@ -288,6 +295,7 @@ export class AdminScheduleController extends BaseAdminController {
       },
       {
         client: true,
+        studio: true,
         createdByUser: true,
         publishedByUser: true,
       },

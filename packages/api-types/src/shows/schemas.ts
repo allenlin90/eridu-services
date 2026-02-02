@@ -12,6 +12,8 @@ export const showApiResponseSchema = z.object({
   name: z.string(),
   client_id: z.string().nullable(),
   client_name: z.string().nullable(),
+  studio_id: z.string().nullable(),
+  studio_name: z.string().nullable(),
   studio_room_id: z.string().nullable(),
   studio_room_name: z.string().nullable(),
   show_type_id: z.string().nullable(),
@@ -64,6 +66,7 @@ export const listShowsQuerySchema = z.object({
 export const createShowInputSchema = z
   .object({
     client_id: z.string().startsWith(UID_PREFIXES.CLIENT),
+    studio_id: z.string().startsWith(UID_PREFIXES.STUDIO).optional(),
     studio_room_id: z.string().startsWith(UID_PREFIXES.STUDIO_ROOM),
     show_type_id: z.string().startsWith(UID_PREFIXES.SHOW_TYPE),
     show_status_id: z.string().startsWith(UID_PREFIXES.SHOW_STATUS),
@@ -84,9 +87,11 @@ export const createShowInputSchema = z
 export const updateShowInputSchema = z
   .object({
     client_id: z.string().startsWith(UID_PREFIXES.CLIENT).optional(),
+    studio_id: z.string().startsWith(UID_PREFIXES.STUDIO).nullable().optional(),
     studio_room_id: z
       .string()
       .startsWith(UID_PREFIXES.STUDIO_ROOM)
+      .nullable()
       .optional(),
     show_type_id: z.string().startsWith(UID_PREFIXES.SHOW_TYPE).optional(),
     show_status_id: z.string().startsWith(UID_PREFIXES.SHOW_STATUS).optional(),

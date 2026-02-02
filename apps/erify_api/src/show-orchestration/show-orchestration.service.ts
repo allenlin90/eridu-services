@@ -553,6 +553,9 @@ export class ShowOrchestrationService {
       studioRoom: data.studioRoomId
         ? { connect: { uid: data.studioRoomId } }
         : undefined,
+      studio: data.studioId
+        ? { connect: { uid: data.studioId } }
+        : undefined,
       showType: { connect: { uid: data.showTypeId } },
       showStatus: { connect: { uid: data.showStatusId } },
       showStandard: { connect: { uid: data.showStandardId } },
@@ -599,6 +602,9 @@ export class ShowOrchestrationService {
     }
     if (dto.studioRoomId) {
       payload.studioRoom = { connect: { uid: dto.studioRoomId } };
+    }
+    if (dto.studioId) {
+      payload.studio = { connect: { uid: dto.studioId } };
     }
     if (dto.showTypeId) {
       payload.showType = { connect: { uid: dto.showTypeId } };
@@ -788,6 +794,7 @@ export class ShowOrchestrationService {
   private getDefaultIncludes(): Prisma.ShowInclude {
     return {
       client: true,
+      studio: true,
       studioRoom: true,
       showType: true,
       showStatus: true,

@@ -65,6 +65,7 @@ describe('schedulePlanningService', () => {
     status: 'draft',
     version: 1,
     clientId: BigInt(1),
+    studioId: null,
     createdBy: BigInt(1),
     publishedBy: null,
     publishedAt: null,
@@ -352,6 +353,7 @@ describe('schedulePlanningService', () => {
             uid: 'client_test123',
             name: 'Test Client',
           },
+          studio: null,
           createdByUser: {
             uid: 'user_test123',
             name: 'Test User',

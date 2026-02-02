@@ -76,6 +76,7 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   async bulkCreateSchedules(@Body() body: BulkCreateScheduleDto) {
     const result = await this.scheduleService.bulkCreateSchedules(body, {
       client: true,
+      studio: true,
       createdByUser: true,
       publishedByUser: true,
     });
@@ -105,6 +106,7 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   async bulkUpdateSchedules(@Body() body: BulkUpdateScheduleDto) {
     const result = await this.scheduleService.bulkUpdateSchedules(body, {
       client: true,
+      studio: true,
       createdByUser: true,
       publishedByUser: true,
     });
@@ -131,6 +133,7 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   async createSchedule(@Body() body: CreateScheduleDto) {
     const schedule = await this.scheduleService.createScheduleFromDto(body, {
       client: true,
+      studio: true,
       createdByUser: true,
       publishedByUser: true,
     });
@@ -181,6 +184,7 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   ) {
     return this.scheduleService.getScheduleById(id, {
       client: true,
+      studio: true,
       createdByUser: true,
       publishedByUser: true,
     });
@@ -228,6 +232,7 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
       body,
       {
         client: true,
+        studio: true,
         createdByUser: true,
         publishedByUser: true,
       },
@@ -305,6 +310,7 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
     const scheduleUid: string = publishedSchedule.uid;
     return this.scheduleService.getScheduleById(scheduleUid, {
       client: true,
+      studio: true,
       createdByUser: true,
       publishedByUser: true,
     });
@@ -339,6 +345,7 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
     const scheduleUid: string = duplicatedSchedule.uid;
     return this.scheduleService.getScheduleById(scheduleUid, {
       client: true,
+      studio: true,
       createdByUser: true,
       publishedByUser: true,
     });
@@ -386,6 +393,7 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
       },
       {
         client: true,
+        studio: true,
         createdByUser: true,
         publishedByUser: true,
       },

@@ -18,6 +18,8 @@ export const scheduleApiResponseSchema = z.object({
   metadata: z.record(z.string(), z.any()),
   client_id: z.string().nullable(),
   client_name: z.string().nullable(),
+  studio_id: z.string().nullable(),
+  studio_name: z.string().nullable(),
   created_by: z.string().nullable(),
   created_by_name: z.string().nullable(),
   published_by: z.string().nullable(),
@@ -47,6 +49,7 @@ export const createScheduleInputSchema = z
     version: z.number().int().default(1),
     metadata: z.record(z.string(), z.any()).optional(),
     client_id: z.string().startsWith(UID_PREFIXES.CLIENT),
+    studio_id: z.string().startsWith(UID_PREFIXES.STUDIO).optional(),
     created_by: z.string().startsWith('user'), // USER UID prefix
   })
   .refine((data) => new Date(data.end_date) > new Date(data.start_date), {
@@ -68,6 +71,7 @@ export const updateScheduleInputSchema = z
     plan_document: z.record(z.string(), z.any()).optional(),
     version: z.number().int().positive(), // Required for optimistic locking
     metadata: z.record(z.string(), z.any()).optional(),
+    studio_id: z.string().startsWith(UID_PREFIXES.STUDIO).nullable().optional(),
     published_by: z.string().startsWith('user').optional(), // USER UID prefix
   })
   .refine(

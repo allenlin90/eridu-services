@@ -620,6 +620,7 @@ describe('showService', () => {
         where: { deletedAt: null },
         include: {
           client: true,
+          studio: true,
           studioRoom: true,
           showType: true,
           showStatus: true,
@@ -662,6 +663,7 @@ describe('showService', () => {
         },
         include: {
           client: true,
+          studio: true,
           studioRoom: true,
           showType: true,
           showStatus: true,
@@ -701,6 +703,7 @@ describe('showService', () => {
         },
         include: {
           client: true,
+          studio: true,
           studioRoom: true,
           showType: true,
           showStatus: true,
@@ -740,6 +743,7 @@ describe('showService', () => {
         },
         include: {
           client: true,
+          studio: true,
           studioRoom: true,
           showType: true,
           showStatus: true,
@@ -773,6 +777,7 @@ describe('showService', () => {
         where: { deletedAt: null },
         include: {
           client: true,
+          studio: true,
           studioRoom: true,
           showType: true,
           showStatus: true,
@@ -806,6 +811,7 @@ describe('showService', () => {
         where: {}, // No deletedAt filter
         include: {
           client: true,
+          studio: true,
           studioRoom: true,
           showType: true,
           showStatus: true,
@@ -851,6 +857,7 @@ describe('showService', () => {
         },
         include: {
           client: true,
+          studio: true,
           studioRoom: true,
           showType: true,
           showStatus: true,

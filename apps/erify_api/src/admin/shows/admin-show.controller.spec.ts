@@ -53,6 +53,7 @@ describe('adminShowController', () => {
       const createDto: CreateShowWithAssignmentsDto = {
         name: 'Test Show',
         clientId: 'client_123',
+        studioId: undefined,
         studioRoomId: 'srm_123',
         showTypeId: 'sht_123',
         showStatusId: 'shst_123',

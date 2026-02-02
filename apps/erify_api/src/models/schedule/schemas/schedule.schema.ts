@@ -15,6 +15,7 @@ import {
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { ClientService } from '@/models/client/client.service';
 import { clientSchema } from '@/models/client/schemas/client.schema';
+import { studioSchema } from '@/models/studio/schemas/studio.schema';
 import { userSchema } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
 
@@ -31,6 +32,7 @@ export const scheduleSchema = z.object({
   version: z.number().int(),
   metadata: z.record(z.string(), z.any()),
   clientId: z.bigint().nullable(),
+  studioId: z.bigint().nullable(),
   createdBy: z.bigint().nullable(),
   publishedBy: z.bigint().nullable(),
   createdAt: z.date(),
@@ -41,6 +43,7 @@ export const scheduleSchema = z.object({
 // Schema for Schedule with relations (used in admin endpoints)
 export const scheduleWithRelationsSchema = scheduleSchema.extend({
   client: clientSchema.optional(),
+  studio: studioSchema.nullable().optional(),
   createdByUser: userSchema.optional(),
   publishedByUser: userSchema.nullable().optional(),
   planDocument: z.record(z.string(), z.any()).optional(), // Override to make optional for conditional inclusion
@@ -57,6 +60,7 @@ export const createScheduleSchema = createScheduleInputSchema.transform(
     version: data.version,
     metadata: data.metadata,
     client: { connect: { uid: data.client_id } },
+    studio: data.studio_id ? { connect: { uid: data.studio_id } } : undefined,
     createdByUser: { connect: { uid: data.created_by } },
   }),
 );
@@ -77,6 +81,7 @@ export const createScheduleCoreSchema = z.object({
   version: z.number().int().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
   clientId: z.bigint(),
+  studioId: z.bigint().nullable().optional(),
   createdBy: z.bigint(),
 });
 
@@ -90,6 +95,12 @@ export const updateScheduleSchema = updateScheduleInputSchema.transform(
     planDocument: data.plan_document,
     version: data.version, // This will be used for optimistic locking validation
     metadata: data.metadata,
+    studio:
+      data.studio_id !== undefined
+        ? data.studio_id
+          ? { connect: { uid: data.studio_id } }
+          : { disconnect: true }
+        : undefined,
     publishedByUser: data.published_by
       ? { connect: { uid: data.published_by } }
       : undefined,
@@ -104,6 +115,7 @@ export const updateScheduleCoreSchema = z.object({
   planDocument: z.record(z.string(), z.any()).optional(),
   version: z.number().int().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
+  studioId: z.bigint().nullable().optional(),
   publishedAt: z.date().nullable().optional(),
   publishedBy: z.bigint().nullable().optional(),
 });
@@ -122,6 +134,8 @@ export const scheduleDto = scheduleWithRelationsSchema
     metadata: obj.metadata,
     client_id: obj.client?.uid ?? null,
     client_name: obj.client?.name ?? null,
+    studio_id: obj.studio?.uid ?? null,
+    studio_name: obj.studio?.name ?? null,
     created_by: obj.createdByUser?.uid ?? null,
     created_by_name: obj.createdByUser?.name ?? null,
     published_by: obj.publishedByUser?.uid ?? null,
@@ -149,6 +163,11 @@ export const bulkUpdateScheduleItemSchema = updateScheduleInputSchema
     planDocument: data.plan_document,
     version: data.version,
     metadata: data.metadata,
+    studio: data.studio_id !== undefined
+      ? (data.studio_id
+          ? { connect: { uid: data.studio_id } }
+          : { disconnect: true })
+      : undefined,
     publishedByUser: data.published_by
       ? { connect: { uid: data.published_by } }
       : undefined,

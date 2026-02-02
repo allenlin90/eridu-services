@@ -14,6 +14,7 @@ import { PrismaService, TransactionClient } from '@/prisma/prisma.service';
 // Type for Schedule with relations from publish
 export type ScheduleWithRelations = Schedule & {
   client: { uid: string; name: string } | null;
+  studio: { uid: string; name: string } | null;
   createdByUser: { uid: string; name: string; email: string } | null;
   publishedByUser: { uid: string; name: string; email: string } | null;
 };
@@ -50,6 +51,7 @@ export class PublishingService {
     // Get schedule with plan document
     const schedule = await this.scheduleService.getScheduleById(scheduleUid, {
       client: true,
+      studio: true,
       createdByUser: true,
     });
 
@@ -112,7 +114,11 @@ export class PublishingService {
         });
 
         // 2. Build UID lookup maps for all references
-        const uidMaps = await this.buildUidLookupMaps(planDocument.shows, tx);
+        const uidMaps = await this.buildUidLookupMaps(
+          planDocument.shows,
+          schedule as ScheduleWithRelations,
+          tx,
+        );
 
         // 3. Generate UIDs and prepare show data (without relationships)
         const showUids = planDocument.shows.map(() =>
@@ -125,6 +131,9 @@ export class PublishingService {
           endTime: new Date(showItem.endTime),
           metadata: showItem.metadata || {},
           clientId: uidMaps.clients.get(showItem.clientId)!,
+          studioId: showItem.studioId
+            ? uidMaps.studios.get(showItem.studioId)! // Explicit override
+            : schedule.studioId || null, // Inherit from schedule or null
           studioRoomId: showItem.studioRoomId
             ? uidMaps.studioRooms.get(showItem.studioRoomId)!
             : null,
@@ -215,6 +224,7 @@ export class PublishingService {
           },
           include: {
             client: true,
+            studio: true,
             createdByUser: true,
             publishedByUser: true,
           },
@@ -237,10 +247,12 @@ export class PublishingService {
    */
   private async buildUidLookupMaps(
     shows: ShowPlanItem[],
+    schedule: ScheduleWithRelations,
     tx: TransactionClient,
   ) {
     // Collect all unique UIDs
     const clientUids = new Set<string>();
+    const studioUids = new Set<string>();
     const studioRoomUids = new Set<string>();
     const showTypeUids = new Set<string>();
     const showStatusUids = new Set<string>();
@@ -248,8 +260,14 @@ export class PublishingService {
     const mcUids = new Set<string>();
     const platformUids = new Set<string>();
 
+    // Add schedule's studio if present (for inheritance)
+    if (schedule.studio?.uid) {
+      studioUids.add(schedule.studio.uid);
+    }
+
     shows.forEach((show) => {
       show.clientId && clientUids.add(show.clientId);
+      show.studioId && studioUids.add(show.studioId);
       show.studioRoomId && studioRoomUids.add(show.studioRoomId);
       show.showTypeId && showTypeUids.add(show.showTypeId);
       show.showStatusId && showStatusUids.add(show.showStatusId);
@@ -263,6 +281,7 @@ export class PublishingService {
     // Fetch all entities
     const [
       clients,
+      studios,
       studioRooms,
       showTypes,
       showStatuses,
@@ -272,6 +291,10 @@ export class PublishingService {
     ] = await Promise.all([
       tx.client.findMany({
         where: { uid: { in: Array.from(clientUids) }, deletedAt: null },
+        select: { id: true, uid: true },
+      }),
+      tx.studio.findMany({
+        where: { uid: { in: Array.from(studioUids) }, deletedAt: null },
         select: { id: true, uid: true },
       }),
       tx.studioRoom.findMany({
@@ -303,6 +326,7 @@ export class PublishingService {
     // Build maps
     return {
       clients: new Map(clients.map((c) => [c.uid, c.id])),
+      studios: new Map(studios.map((s) => [s.uid, s.id])),
       studioRooms: new Map(studioRooms.map((r) => [r.uid, r.id])),
       showTypes: new Map(showTypes.map((t) => [t.uid, t.id])),
       showStatuses: new Map(showStatuses.map((s) => [s.uid, s.id])),
