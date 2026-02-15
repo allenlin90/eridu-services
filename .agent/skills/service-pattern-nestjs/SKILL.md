@@ -1,9 +1,10 @@
 ---
 name: service-pattern-nestjs
 description: Comprehensive NestJS service implementation patterns. This skill should be used when implementing Model Services, Orchestration Services, or business logic with NestJS decorators.
-priority: 3
-applies_to: [backend, nestjs, services]
-supersedes: [service-pattern]
+metadata:
+  priority: 3
+  applies_to: [backend, nestjs, services]
+  supersedes: [service-pattern]
 ---
 
 # Service Pattern - NestJS
@@ -13,9 +14,9 @@ supersedes: [service-pattern]
 ## Canonical Examples
 
 Study these real implementations as the source of truth:
-- **Model Service**: [task-template.service.ts](file:///Users/allenlin/Desktop/projects/eridu-services/apps/erify_api/src/models/task-template/task-template.service.ts)
-- **Schema File**: [task-template.schema.ts](file:///Users/allenlin/Desktop/projects/eridu-services/apps/erify_api/src/models/task-template/schemas/task-template.schema.ts)
-- **Base Service**: [base-model.service.ts](file:///Users/allenlin/Desktop/projects/eridu-services/apps/erify_api/src/lib/services/base-model.service.ts)
+- **Model Service**: [task-template.service.ts](../../../apps/erify_api/src/models/task-template/task-template.service.ts)
+- **Schema File**: [task-template.schema.ts](../../../apps/erify_api/src/models/task-template/schemas/task-template.schema.ts)
+- **Base Service**: [base-model.service.ts](../../../apps/erify_api/src/lib/services/base-model.service.ts)
 
 **Detailed code examples**: See [references/service-examples.md](references/service-examples.md)
 

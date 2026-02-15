@@ -1,9 +1,10 @@
 ---
 name: backend-controller-pattern-nestjs
 description: Comprehensive NestJS Controller patterns for all controller types. This skill should be used when implementing any controller in NestJS to ensure consistency and use of shared utilities.
-priority: 3
-applies_to: [backend, nestjs, controllers]
-supersedes: [backend-controller-pattern, backend-controller-pattern-admin, backend-controller-pattern-me, backend-controller-pattern-studio, backend-controller-pattern-backdoor, backend-controller-pattern-integration]
+metadata:
+  priority: 3
+  applies_to: [backend, nestjs, controllers]
+  supersedes: [backend-controller-pattern, backend-controller-pattern-admin, backend-controller-pattern-me, backend-controller-pattern-studio, backend-controller-pattern-backdoor, backend-controller-pattern-integration]
 ---
 
 # NestJS Controller Patterns
@@ -13,9 +14,9 @@ This skill covers **all controller patterns** in `erify_api`, from general princ
 ## Canonical Examples
 
 Study these real implementations as the source of truth:
-- **Admin**: [admin-client.controller.ts](file:///Users/allenlin/Desktop/projects/eridu-services/apps/erify_api/src/admin/clients/admin-client.controller.ts)
-- **Studio**: [studio-task-template.controller.ts](file:///Users/allenlin/Desktop/projects/eridu-services/apps/erify_api/src/studios/studio-task-template/studio-task-template.controller.ts)
-- **Base Controllers**: [base-admin.controller.ts](file:///Users/allenlin/Desktop/projects/eridu-services/apps/erify_api/src/admin/base-admin.controller.ts), [base-studio.controller.ts](file:///Users/allenlin/Desktop/projects/eridu-services/apps/erify_api/src/studios/base-studio.controller.ts), [base.controller.ts](file:///Users/allenlin/Desktop/projects/eridu-services/apps/erify_api/src/lib/controllers/base.controller.ts)
+- **Admin**: [admin-client.controller.ts](../../../apps/erify_api/src/admin/clients/admin-client.controller.ts)
+- **Studio**: [studio-task-template.controller.ts](../../../apps/erify_api/src/studios/studio-task-template/studio-task-template.controller.ts)
+- **Base Controllers**: [base-admin.controller.ts](../../../apps/erify_api/src/admin/base-admin.controller.ts), [base-studio.controller.ts](../../../apps/erify_api/src/studios/base-studio.controller.ts), [base.controller.ts](../../../apps/erify_api/src/lib/controllers/base.controller.ts)
 
 **Detailed code examples**: See [references/controller-examples.md](references/controller-examples.md)
 

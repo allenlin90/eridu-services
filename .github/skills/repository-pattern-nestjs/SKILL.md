@@ -1,18 +1,51 @@
 ---
 name: repository-pattern-nestjs
-description: Provides Prisma-specific repository implementation patterns for NestJS. This skill should be used when implementing repositories that extend BaseRepository or use Prisma delegates.
+description: Comprehensive Prisma repository implementation patterns for NestJS. This skill should be used when implementing repositories that extend BaseRepository or use Prisma delegates.
+metadata:
+  priority: 3
+  applies_to: [backend, nestjs, repositories, prisma]
+  supersedes: [repository-pattern]
 ---
 
-# Repository Pattern - Prisma/NestJS Implementation
+# Repository Pattern - Prisma/NestJS
 
-**Implementation guide for NestJS Repositories using Prisma.**
+**Complete implementation guide for NestJS Repositories using Prisma.**
 
-For core database concepts (Soft Delete, Bulk Ops, Transactions), see **[Database Patterns](database-patterns/SKILL.md)**.
-For general repository theory, see **[Repository Pattern](repository-pattern/SKILL.md)**.
+## Canonical Examples
+
+Study these real implementations as the source of truth:
+- **Model Repository**: [task-template.repository.ts](../../../apps/erify_api/src/models/task-template/task-template.repository.ts)
+- **Base Repository**: [base.repository.ts](../../../apps/erify_api/src/lib/repositories/base.repository.ts)
+
+**Detailed code examples**: See [references/repository-examples.md](references/repository-examples.md)
+
+---
+
+## Core Responsibilities
+
+Repositories act as data access abstraction. They should:
+
+1. **Encapsulate queries** - All database operations go through repositories
+2. **Hide database details** - Services don't know SQL or ORM specifics
+3. **Provide typed interfaces** - Strong typing for queries and results
+4. **Handle errors** - Low-level errors are handled here
+5. **Implement soft deletes** - Consistent deletion strategy
+6. **Support common patterns** - Find, create, update, delete operations
+7. **Optimize queries** - Eager loading, indexes, pagination
+
+---
 
 ## BaseRepository Extension
 
-**All repositories MUST extend `BaseRepository<T, C, U, W>`**.
+🔴 **Critical**: All repositories MUST extend `BaseRepository<T, C, U, W>`.
+
+> [!IMPORTANT]
+> **Why Extend BaseRepository?**
+> - **Standardization**: Consistent CRUD interface across all repositories
+> - **Soft Delete**: Automatic `deletedAt: null` filtering in base methods
+> - **Type Safety**: Generic types ensure compile-time correctness
+> - **Reusability**: Inherit common methods (create, findOne, update, etc.)
+> - **Maintainability**: Bug fixes in BaseRepository benefit all repositories
 
 ```typescript
 import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
@@ -42,9 +75,11 @@ export class UserRepository extends BaseRepository<
 }
 ```
 
+---
+
 ## Specialized Find Methods
 
-**Implement domain-specific queries here (not in Service).**
+🟡 **Recommended**: Implement domain-specific queries here (not in Service).
 
 ```typescript
 // Find by UID (Standard)
@@ -60,67 +95,21 @@ async findByUidOrThrow(uid: string): Promise<User> {
     where: { uid, deletedAt: null },
   });
 }
-```
 
-## Type-Safe Includes
-
-**Return typed payloads based on includes.**
-
-```typescript
-async findWithRelations<T extends Prisma.UserInclude>(
-  include: T,
-): Promise<Prisma.UserGetPayload<{ include: T }>[]> {
-  return this.model.findMany({
-    where: { deletedAt: null },
-    include,
+// Find with Relations (Type-safe)
+async findByUidWithProfile(uid: string): Promise<User & { profile: Profile } | null> {
+  return this.model.findFirst({
+    where: { uid, deletedAt: null },
+    include: { profile: true },
   });
 }
 ```
 
-## Implementation of Database Patterns
+---
 
-**Refer to [Database Patterns](database-patterns/SKILL.md) for the "Why". Here is the "How".**
+## Advanced Filtering with Pagination
 
-### Soft Delete
-**The BaseRepository handles this for standard methods.** If bypassing base methods:
-
-```typescript
-async softDelete(where: Prisma.UserWhereInput): Promise<void> {
-  await this.model.updateMany({
-    where: { ...where, deletedAt: null },
-    data: { deletedAt: new Date() },
-  });
-}
-```
-
-### Bulk Create
-```typescript
-async createMany(data: Prisma.UserCreateInput[]): Promise<Prisma.BatchPayload> {
-  return this.model.createMany({
-    data,
-    skipDuplicates: true,
-  });
-}
-```
-
-### Pagination
-```typescript
-async findPaginated(params: PaginationParams): Promise<PaginatedResult<User>> {
-  const [data, total] = await Promise.all([
-    this.model.findMany({ 
-      where: { ...params.where, deletedAt: null },
-      skip: params.skip,
-      take: params.take 
-    }),
-    this.model.count({ where: { ...params.where, deletedAt: null } }),
-  ]);
-  return { data, total, page: params.page, limit: params.limit };
-}
-```
-
-### Advanced Filtering with Pagination
-
-**For complex search/filter scenarios, implement a dedicated `findPaginated` method that accepts domain parameters.**
+🔴 **Critical**: Repositories should accept domain-level parameters and build Prisma where clauses internally.
 
 ```typescript
 async findPaginated(params: {
@@ -134,7 +123,7 @@ async findPaginated(params: {
 }): Promise<{ data: TaskTemplate[]; total: number }> {
   const { skip, take, name, uid, includeDeleted, studioUid, orderBy } = params;
 
-  // Build where clause from domain parameters
+  // Repository builds Prisma where clause
   const where: Prisma.TaskTemplateWhereInput = {};
 
   if (!includeDeleted) {
@@ -142,17 +131,11 @@ async findPaginated(params: {
   }
 
   if (name) {
-    where.name = {
-      contains: name,
-      mode: 'insensitive',
-    };
+    where.name = { contains: name, mode: 'insensitive' };
   }
 
   if (uid) {
-    where.uid = {
-      contains: uid,
-      mode: 'insensitive',
-    };
+    where.uid = { contains: uid, mode: 'insensitive' };
   }
 
   if (studioUid) {
@@ -179,9 +162,11 @@ async findPaginated(params: {
 - Easy to add new filters without changing service
 - Testable without mocking Prisma types
 
-## Optimistic Locking with Version Conflict
+---
 
-**Implement `updateWithVersionCheck()` for versioned entities.**
+## Optimistic Locking
+
+🟡 **Recommended**: Implement `updateWithVersionCheck()` for versioned entities.
 
 ```typescript
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
@@ -219,40 +204,30 @@ async updateWithVersionCheck(
 }
 ```
 
-## Module Registration
-
-```typescript
-@Module({
-  imports: [PrismaModule],
-  providers: [UserRepository],
-  exports: [UserRepository], // Export for Services to use!
-})
-export class UserModule {}
-```
-
-## Testing
-
-**Integration Tests with Real Database (Recommended)**
-
-```typescript
-it('should not find soft-deleted user', async () => {
-  await prisma.user.create({ data: { uid: 'u_del', deletedAt: new Date() } });
-  const user = await repository.findByUid('u_del');
-  expect(user).toBeNull();
-});
-```
+---
 
 ## Best Practices Checklist
 
-- [ ] Extend `BaseRepository`
-- [ ] Implement `findByUid` and `findByUidOrThrow`
-- [ ] **Always** filter `deletedAt: null` in custom queries
+- [ ] 🔴 **Critical**: Extend `BaseRepository` (never implement repositories from scratch)
+- [ ] Create proper ModelWrapper implementing `IBaseModel`
+- [ ] Implement `findByUid` using `findFirst` (not `findUnique`)
+- [ ] Implement `findByUidOrThrow` for error handling
+- [ ] 🔴 **Critical**: Always filter `deletedAt: null` in custom queries
 - [ ] Use `Promise.all` for pagination (count + data)
 - [ ] Return `null` for not found (unless `OrThrow`)
-- [ ] **Never** throw HTTP Exceptions (leave that to Service/Controller)
+- [ ] 🔴 **Critical**: Never throw HTTP Exceptions (leave that to Service/Controller)
 - [ ] Use `Prisma.GetPayload` for typed relations
 - [ ] Implement `updateWithVersionCheck` for versioned entities
 - [ ] Throw `VersionConflictError` (not HTTP exceptions)
 - [ ] Disambiguate P2025: 404 (not found) vs 409 (version conflict)
 - [ ] Implement `findPaginated` for complex filtering scenarios
 - [ ] Accept domain-level parameters (not Prisma types) in public methods
+- [ ] Use `findFirst` when filtering by non-unique fields like `deletedAt`
+
+---
+
+## Related Skills
+
+- **[Service Pattern NestJS](service-pattern-nestjs/SKILL.md)** - Service layer using repositories
+- **[Database Patterns](database-patterns/SKILL.md)** - Soft delete, transactions, optimistic locking
+- **[Backend Controller Pattern NestJS](backend-controller-pattern-nestjs/SKILL.md)** - Controller patterns

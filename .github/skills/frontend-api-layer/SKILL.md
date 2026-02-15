@@ -5,288 +5,180 @@ description: Provides patterns for structuring the API layer in React applicatio
 
 # Frontend API Layer
 
-This skill provides patterns for structuring the API layer in React applications, based on Bulletproof React best practices.
+This skill provides patterns for structuring the API layer in React applications using TanStack Query and type-safe API clients.
+
+## Canonical Examples
+
+Study these real implementations:
+- **API Client with Better Auth**: [client.ts](../../../apps/erify_studios/src/lib/api/client.ts)
+- **Token Store**: [token-store.ts](../../../apps/erify_studios/src/lib/api/token-store.ts)
+- **API Declarations**: [task-templates.api.ts](../../../apps/erify_studios/src/features/task-templates/api/task-templates.api.ts)
+
+**Detailed Code Examples**: See [references/api-layer-examples.md](references/api-layer-examples.md)
+
+---
+
+## Architecture
+
+```
+Component
+  ↓
+TanStack Query Hook (useQuery/useMutation)
+  ↓
+API Declaration (getTaskTemplates, createTaskTemplate)
+  ↓
+API Client (apiClient.get/post/put/delete)
+  ↓
+Backend API
+```
+
+---
 
 ## Core Principles
 
-### Single API Client Instance
+1. **API Declarations**: Define all API requests in `{feature}/api/*.api.ts` files
+2. **Type Safety**: Use shared types from `@eridu/api-types`
+3. **Error Handling**: API client handles auth errors, API declarations handle business errors
+4. **Query Keys**: Centralize query keys in API declaration files
 
-Create a single, pre-configured API client instance that can be reused throughout the application.
+---
 
-**Benefits**:
-- Centralized configuration (base URL, headers, interceptors)
-- Consistent error handling
-- Easier to mock for testing
-- Single source of truth for API communication
+## API Client Setup
 
-**Example** (`src/lib/api-client.ts`):
+**⚠️ Important**: This project uses **Better Auth** for authentication with sophisticated token management. See [references/api-layer-examples.md](references/api-layer-examples.md) for the full implementation.
+
+**Key Features**:
+- Token caching with JWT expiration checking (`jose` library)
+- Automatic token refresh on 401 with retry logic
+- Better Auth integration via `authClient.client.token()`
+- Distinguishes expired tokens (refresh) vs insufficient permissions (no redirect)
+- In-memory token store (no localStorage for security)
+
+**Simplified Overview**:
 
 ```typescript
+// lib/api/client.ts
 import axios from 'axios';
+import { decodeJwt } from 'jose';
+import { getCachedToken, setCachedToken } from '@/lib/api/token-store';
+import { authClient } from '@/lib/auth';
 
-// Create axios instance with default config
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  withCredentials: true,
 });
 
-// Request interceptor - attach auth token
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Request: Check cached token, fetch if expired
+apiClient.interceptors.request.use(async (config) => {
+  let token = getCachedToken();
+  if (!token || isTokenExpired(token)) {
+    const session = await authClient.client.token();
+    token = session?.data?.token;
+    setCachedToken(token);
   }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// Response interceptor - handle errors globally
+// Response: Refresh on 401 if expired, retry once
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized - redirect to login
-      window.location.href = '/login';
+  async (error) => {
+    if (error.response?.status === 401 && !error.config._retry) {
+      // Refresh token and retry (see references for full logic)
     }
     return Promise.reject(error);
   }
 );
 ```
 
-### API Request Declaration Structure
+**📖 See [references/api-layer-examples.md](references/api-layer-examples.md) for the complete implementation with step-by-step code.**
 
-Define API requests in a structured, colocated manner. Each API request declaration should include:
+---
 
-1. **Types and validation schemas** - Request/response data types
-2. **Fetcher function** - Function that calls the endpoint
-3. **Hook** - React hook that uses TanStack Query to manage data fetching
+## API Declarations Pattern
 
-**Benefits**:
-- All API-related code is colocated
-- Type-safe requests and responses
-- Easy to track available endpoints
-- Consistent data fetching patterns
-
-## Implementation Patterns
-
-### Query (GET) Request
-
-**File**: `src/features/discussions/api/get-discussions.ts`
+**Pattern**: `features/{feature}/api/{feature}.api.ts`
 
 ```typescript
-import { useQuery } from '@tanstack/react-query';
-import { z } from 'zod';
 import { apiClient } from '@/lib/api-client';
+import type { TaskTemplateDto, CreateTaskTemplateDto } from '@eridu/api-types';
 
-// 1. Define response schema and type
-export const discussionSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  body: z.string(),
-  created_at: z.string(),
-  author: z.object({
-    id: z.string(),
-    name: z.string(),
-  }),
-});
+// Query Keys
+export const taskTemplateKeys = {
+  all: ['task-templates'] as const,
+  lists: () => [...taskTemplateKeys.all, 'list'] as const,
+  list: (studioId: string, filters: string) => [...taskTemplateKeys.lists(), studioId, filters] as const,
+  details: () => [...taskTemplateKeys.all, 'detail'] as const,
+  detail: (id: string) => [...taskTemplateKeys.details(), id] as const,
+};
 
-export type Discussion = z.infer<typeof discussionSchema>;
-
-const discussionsResponseSchema = z.object({
-  data: z.array(discussionSchema),
-  total: z.number(),
-});
-
-export type DiscussionsResponse = z.infer<typeof discussionsResponseSchema>;
-
-// 2. Define fetcher function
-export async function getDiscussions(page = 1, limit = 10): Promise<DiscussionsResponse> {
-  const response = await apiClient.get('/discussions', {
-    params: { page, limit },
-  });
-  
-  // Validate response
-  return discussionsResponseSchema.parse(response.data);
-}
-
-// 3. Define React Query hook
-export function useDiscussions(page = 1, limit = 10) {
-  return useQuery({
-    queryKey: ['discussions', page, limit],
-    queryFn: () => getDiscussions(page, limit),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-}
-```
-
-**Usage in component**:
-
-```typescript
-import { useDiscussions } from '@/features/discussions/api/get-discussions';
-
-function DiscussionsList() {
-  const { data, isLoading, error } = useDiscussions(1, 20);
-
-  if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage error={error} />;
-
-  return (
-    <ul>
-      {data.data.map((discussion) => (
-        <li key={discussion.id}>{discussion.title}</li>
-      ))}
-    </ul>
+// API Functions
+export async function getTaskTemplates(studioId: string, params?: { name?: string; cursor?: string; limit?: number }) {
+  const { data } = await apiClient.get<{ data: TaskTemplateDto[]; meta: { total: number; nextCursor?: string } }>(
+    `/studios/${studioId}/task-templates`,
+    { params }
   );
+  return data;
+}
+
+export async function createTaskTemplate(studioId: string, payload: CreateTaskTemplateDto) {
+  const { data } = await apiClient.post<TaskTemplateDto>(`/studios/${studioId}/task-templates`, payload);
+  return data;
 }
 ```
 
-### Mutation (POST/PUT/DELETE) Request
+**Key Points**:
+- ✅ Centralize query keys using factory pattern
+- ✅ Use shared types from `@eridu/api-types`
+- ✅ Return typed responses
+- ✅ Handle params and payload transformation
 
-**File**: `src/features/discussions/api/create-discussion.ts`
+---
+
+## TanStack Query Integration
 
 ```typescript
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { z } from 'zod';
-import { apiClient } from '@/lib/api-client';
-import { discussionSchema, type Discussion } from './get-discussions';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getTaskTemplates, createTaskTemplate, taskTemplateKeys } from '../api/task-templates.api';
 
-// 1. Define request schema and type
-export const createDiscussionSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  body: z.string().min(10, 'Body must be at least 10 characters'),
-});
-
-export type CreateDiscussionDto = z.infer<typeof createDiscussionSchema>;
-
-// 2. Define fetcher function
-export async function createDiscussion(data: CreateDiscussionDto): Promise<Discussion> {
-  const response = await apiClient.post('/discussions', data);
-  return discussionSchema.parse(response.data);
+export function useTaskTemplates(studioId: string, filters: { name?: string }) {
+  return useQuery({
+    queryKey: taskTemplateKeys.list(studioId, JSON.stringify(filters)),
+    queryFn: () => getTaskTemplates(studioId, filters),
+  });
 }
 
-// 3. Define React Query mutation hook
-export function useCreateDiscussion() {
+export function useCreateTaskTemplate(studioId: string) {
   const queryClient = useQueryClient();
-
+  
   return useMutation({
-    mutationFn: createDiscussion,
+    mutationFn: (payload: CreateTaskTemplateDto) => createTaskTemplate(studioId, payload),
     onSuccess: () => {
-      // Invalidate and refetch discussions list
-      queryClient.invalidateQueries({ queryKey: ['discussions'] });
+      queryClient.invalidateQueries({ queryKey: taskTemplateKeys.lists() });
     },
   });
 }
 ```
 
-**Usage in component**:
+---
 
-```typescript
-import { useCreateDiscussion, createDiscussionSchema } from '@/features/discussions/api/create-discussion';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+## Best Practices Checklist
 
-function CreateDiscussionForm() {
-  const createDiscussion = useCreateDiscussion();
-  
-  const form = useForm({
-    resolver: zodResolver(createDiscussionSchema),
-  });
+- [ ] API client configured with Better Auth token management (see references)
+- [ ] Token caching with JWT expiration checking implemented
+- [ ] Automatic token refresh on 401 with retry logic
+- [ ] All API requests defined in `{feature}/api/*.api.ts` files
+- [ ] Query keys centralized using factory pattern
+- [ ] Shared types from `@eridu/api-types` used for requests/responses
+- [ ] TanStack Query hooks use query keys from API declarations
+- [ ] Mutations invalidate relevant queries on success
+- [ ] Error handling: API client (auth), components (business logic)
 
-  const onSubmit = form.handleSubmit((data) => {
-    createDiscussion.mutate(data, {
-      onSuccess: () => {
-        form.reset();
-        // Show success message
-      },
-    });
-  });
+---
 
-  return (
-    <form onSubmit={onSubmit}>
-      <input {...form.register('title')} />
-      <textarea {...form.register('body')} />
-      <button type="submit" disabled={createDiscussion.isPending}>
-        {createDiscussion.isPending ? 'Creating...' : 'Create'}
-      </button>
-    </form>
-  );
-}
-```
+## Related Skills
 
-## File Organization
-
-### Colocation with Features
-
-API declarations should be colocated with the features that use them:
-
-```
-src/features/discussions/
-├── api/
-│   ├── get-discussions.ts      # Query
-│   ├── get-discussion.ts       # Single item query
-│   ├── create-discussion.ts    # Mutation
-│   ├── update-discussion.ts    # Mutation
-│   └── delete-discussion.ts    # Mutation
-├── components/
-│   ├── DiscussionsList.tsx
-│   └── DiscussionForm.tsx
-└── routes/
-    ├── discussions.tsx
-    └── discussion.$id.tsx
-```
-
-### Shared API Folder (Alternative)
-
-For applications with many shared API calls, you can use a dedicated `api` folder:
-
-```
-src/api/
-├── discussions/
-│   ├── get-discussions.ts
-│   └── create-discussion.ts
-├── users/
-│   ├── get-users.ts
-│   └── update-user.ts
-└── index.ts  # Re-export all API functions
-```
-
-**When to use**:
-- Many API calls shared across features
-- Centralized API documentation needed
-- API calls don't map cleanly to features
-
-## Integration with Shared Types
-
-Use types from `@eridu/api-types` for API contracts:
-
-```typescript
-import { type UserApiResponse, userApiResponseSchema } from '@eridu/api-types/users';
-import { apiClient } from '@/lib/api-client';
-
-export async function getUser(id: string): Promise<UserApiResponse> {
-  const response = await apiClient.get(`/users/${id}`);
-  return userApiResponseSchema.parse(response.data);
-}
-```
-
-## Best Practices
-
-1. **Always validate responses** - Use Zod schemas to validate API responses at runtime
-2. **Type everything** - Infer TypeScript types from Zod schemas
-3. **Colocate API calls** - Keep API declarations close to where they're used
-4. **Use query keys consistently** - Follow a consistent pattern for query keys
-5. **Handle loading and error states** - Always handle loading, error, and success states in components
-6. **Invalidate queries on mutations** - Update cache after mutations to keep UI in sync
-7. **Set appropriate stale times** - Configure stale times based on data freshness requirements
-
-## Checklist
-
-- [ ] Single API client instance configured with interceptors
-- [ ] API requests follow the structure: schema → fetcher → hook
-- [ ] All responses are validated with Zod schemas
-- [ ] Types are inferred from schemas (not manually duplicated)
-- [ ] API declarations are colocated with features
-- [ ] Query keys follow a consistent pattern
-- [ ] Mutations invalidate relevant queries
-- [ ] Loading and error states are handled in components
+- [frontend-state-management](../frontend-state-management/SKILL.md) - State management patterns
+- [frontend-error-handling](../frontend-error-handling/SKILL.md) - Error handling patterns
+- [shared-api-types](../shared-api-types/SKILL.md) - Shared API types
