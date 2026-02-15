@@ -7,6 +7,12 @@ description: Provides full-stack patterns for implementing searchable, paginated
 
 This skill outlines the standard pattern for implementing searchable, paginated lists in the `erify_studios` (frontend) and `erify_api` (backend) applications.
 
+## Canonical Examples
+
+Study these real implementations:
+- **Backend**: [admin-client.controller.ts](file:///Users/allenlin/Desktop/projects/eridu-services/apps/erify_api/src/admin/clients/admin-client.controller.ts)
+- **Repository**: [client.repository.ts](file:///Users/allenlin/Desktop/projects/eridu-services/apps/erify_api/src/models/client/client.repository.ts)
+
 ## Integration Overview
 
 The pattern relies on synchronized parameter names and behaviors across the stack:
@@ -43,35 +49,52 @@ export const listResourceQuerySchema = z
 export class ListResourceQueryDto extends createZodDto(listResourceQuerySchema) {}
 ```
 
-### 2. Service Logic (`service.ts`)
+### 2. Repository Logic (`repository.ts`)
 
-Build the `where` clause in the service. Ensure case-insensitive partial matching for strings.
+Build the `where` clause in the repository. Ensure case-insensitive partial matching for strings.
 
 ```typescript
-async getResources(query: {
+async findPaginated(params: {
   skip?: number;
   take?: number;
   name?: string;
-  include_deleted?: boolean;
-}): Promise<Resource[]> {
+  includeDeleted?: boolean;
+}): Promise<{ data: Resource[]; total: number }> {
   const where: Prisma.ResourceWhereInput = {};
 
-  if (!query.include_deleted) {
+  if (!params.includeDeleted) {
     where.deletedAt = null;
   }
 
-  if (query.name) {
+  if (params.name) {
     where.name = {
-      contains: query.name,
+      contains: params.name,
       mode: 'insensitive',
     };
   }
 
-  return this.repository.findMany({ skip: query.skip, take: query.take, where });
+  const [data, total] = await Promise.all([
+    this.model.findMany({ skip: params.skip, take: params.take, where }),
+    this.model.count({ where }),
+  ]);
+
+  return { data, total };
 }
 ```
 
-### 3. Controller Integration (`controller.ts`)
+### 3. Service Logic (`service.ts`)
+
+Service passes parameters to repository without building Prisma where clauses.
+
+```typescript
+async getResources(
+  ...args: Parameters<ResourceRepository['findPaginated']>
+): Promise<{ data: Resource[]; total: number }> {
+  return this.repository.findPaginated(...args);
+}
+```
+
+### 4. Controller Integration (`controller.ts`)
 
 Pass the query DTO to the service and use `@AdminPaginatedResponse`.
 
@@ -79,11 +102,7 @@ Pass the query DTO to the service and use `@AdminPaginatedResponse`.
 @Get()
 @AdminPaginatedResponse(ResourceDto, 'List resources')
 async getResources(@Query() query: ListResourceQueryDto) {
-  const data = await this.service.getResources(query);
-  const total = await this.service.countResources({
-    name: query.name ? { contains: query.name, mode: 'insensitive' } : undefined,
-    deletedAt: query.include_deleted ? undefined : null,
-  });
+  const { data, total } = await this.service.getResources(query);
   return this.createPaginatedResponse(data, total, query);
 }
 ```

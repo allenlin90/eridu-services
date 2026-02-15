@@ -46,7 +46,7 @@ export function AdminTablePagination({
             onChange={(e) => {
               onPaginationChange({ pageIndex: 0, pageSize: Number(e.target.value) });
             }}
-            className="h-8 w-[70px] rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="h-8 w-17.5 rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {[10, 20, 30, 40, 50].map((pageSize) => (
               <option key={pageSize} value={pageSize}>
@@ -56,14 +56,8 @@ export function AdminTablePagination({
           </select>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Page
-            {' '}
-            {pagination.pageIndex + 1}
-            {' '}
-            of
-            {' '}
-            {pagination.pageCount}
+          <div className="flex w-25 items-center justify-center text-sm font-medium">
+            {`Page ${pagination.pageIndex + 1} of ${pagination.pageCount}`}
           </div>
           <div className="flex items-center space-x-2">
             <Button

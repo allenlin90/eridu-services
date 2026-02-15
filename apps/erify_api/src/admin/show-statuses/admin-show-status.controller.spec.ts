@@ -66,6 +66,7 @@ describe('adminShowStatusController', () => {
         limit: 10,
         skip: 0,
         take: 10,
+        sort: 'desc',
       };
       const statuses = [
         { uid: 'show_status_1', name: 'Active' },

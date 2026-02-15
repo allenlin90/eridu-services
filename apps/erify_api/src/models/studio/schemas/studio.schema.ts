@@ -7,6 +7,7 @@ import {
   updateStudioInputSchema,
 } from '@eridu/api-types/studios';
 
+import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { StudioService } from '@/models/studio/studio.service';
 
 export const studioSchema = z.object({
@@ -72,19 +73,10 @@ export const listStudiosFilterSchema = z.object({
   include_deleted: z.coerce.boolean().default(false),
 });
 
-export const listStudiosQuerySchema = z
-  .object({
-    page: z.coerce.number().int().min(1).optional().default(1),
-    limit: z.coerce.number().int().min(1).optional().default(10),
-  })
+export const listStudiosQuerySchema = paginationQuerySchema
   .and(listStudiosFilterSchema)
   .transform((data) => ({
-    page: data.page,
-    limit: data.limit,
-    take: data.limit,
-    skip: (data.page - 1) * data.limit,
-    name: data.name,
-    include_deleted: data.include_deleted,
+    ...data,
     uid: data.id,
   }));
 
@@ -93,6 +85,7 @@ export class ListStudiosQueryDto extends createZodDto(listStudiosQuerySchema) {
   declare limit: number;
   declare take: number;
   declare skip: number;
+  declare sort: 'asc' | 'desc';
   declare name: string | undefined;
   declare include_deleted: boolean;
   declare uid: string | undefined;

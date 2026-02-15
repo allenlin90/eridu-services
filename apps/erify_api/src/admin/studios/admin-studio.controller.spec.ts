@@ -71,6 +71,7 @@ describe('adminStudioController', () => {
         uid: undefined,
         name: undefined,
         include_deleted: false,
+        sort: 'desc',
       };
       const studios = [
         { uid: 'studio_1', name: 'Studio 1' },
@@ -154,6 +155,7 @@ describe('adminStudioController', () => {
         limit: 10,
         skip: 0,
         take: 10,
+        sort: 'desc',
       };
       const studioRooms = [
         {

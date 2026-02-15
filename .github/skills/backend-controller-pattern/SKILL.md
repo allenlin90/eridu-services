@@ -20,6 +20,24 @@ For validation/serialization rules, see:
 3. **Call Service Layer** (Delegate business logic)
 4. **Serialize Response** (Transform/Filter data)
 5. **Handle Errors** (Map exceptions to HTTP Status codes)
+6. **Payload Translation** (Convert DTO -> Service/Prisma Payload)
+
+## Payload Translation
+
+**Principle: Controllers adapt External to Internal.**
+
+The Service layer should define its input as a generic payload (defaulting to Prisma inputs). The Controller is responsible for reshaping the request DTO into that payload structure.
+
+```typescript
+  @Post()
+  async create(@Body() dto: CreateUserDto, @Param('orgId') orgId: string) {
+    // Controller knows how to combine params + body into Service Payload
+    return this.userService.create({
+      ...dto,
+      org: { connect: { id: orgId } } // Connect relations here
+    });
+  }
+```
 
 ## HTTP Status Codes
 

@@ -63,6 +63,7 @@ describe('adminShowTypeController', () => {
         uid: undefined,
         name: undefined,
         include_deleted: false,
+        sort: 'desc',
       };
       const types = [
         { uid: 'show_type_1', name: 'Live' },

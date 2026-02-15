@@ -9,8 +9,8 @@ This document provides comprehensive business domain information for the Eridu S
 The system is being developed in structured phases:
 
 - **Phase 1** ✅ (Current): Core Functions with Hybrid Authentication - Essential CRUD operations, basic show management, Schedule Planning Management System, JWT validation from eridu_auth service, and simple StudioMembership-based authorization
-- **Phase 2** (Planned): Material Management System - Material versioning, platform targeting, and show-material associations
-- **Phase 3** (Planned): Advanced Authorization Control & Tracking Features - Role-based access control, audit trails, task management, tagging, and collaboration features
+- **Phase 2** (Planned): Task Management System - Generic, extensible task management suitable for Shows and future entities.
+- **Phase 3** (Planned): Material Management System & Advanced Collaboration - Material versioning, platform targeting, tagging, comments, and audit trails
 
 For detailed implementation plans, see:
 
@@ -91,7 +91,7 @@ Features:
 
 Purpose: Manages content assets used in show production.
 
-**Phase 2 Feature** - Materials represent all content assets used in shows, including scripts, briefs, graphics, and platform-specific content. Each material is owned by a client and can be associated with multiple shows.
+**Phase 3 Feature** - Materials represent all content assets used in shows, including scripts, briefs, graphics, and platform-specific content. Each material is owned by a client and can be associated with multiple shows.
 
 Key Models: `materials`, `show_materials`
 
@@ -323,56 +323,79 @@ Business Rules:
 
 Purpose: Ensures systematic execution of production workflows.
 
-The task system automates workflow management by generating checklists from templates when shows are confirmed. Tasks are polymorphically linked to relevant production entities.
+**Phase 2 Feature** - The task system manages production workflows by generating checklists from templates manually (Just-In-Time) before shows become active. Tasks use a generic architecture with a `TaskTarget` association table for polymorphic linking to relevant production entities.
 
-Key Models: `task_templates`, `task_template_items`, `tasks`
-
-### Task
-
-Tasks represent individual action items assigned to users for show production. They're generated from templates and linked to specific production entities (`Show`, `ShowPlatform`, `ShowMC`).
-
-Features:
-
-- Polymorphic linking to production entities
-- Status tracking with due dates
-- Assignment and reassignment capabilities
-- Completion tracking with timestamps
-
-Business Rules:
-
-- Tasks auto-generated when shows move to CONFIRMED status
-- Different task types target different production phases
-- Required tasks block show progression
+Key Models: `task_templates`, `tasks`, `task_targets`
 
 ### Task Template
 
-Templates define reusable checklists for consistent show production. Each template contains multiple items that become individual tasks when instantiated.
+Templates define reusable checklists for consistent show production. Each template contains a `schema` JSONB column defining the form structure (fields, validation rules).
 
-Key Models: `task_templates`, `task_template_items`
+Key Models: `task_templates`
 
 Features:
 
 - Studio-specific template libraries
-- Multiple task types (pre/during/post production)
-- Various input types for data collection
-- Required vs. optional task designation
-- Template versioning and activation control
+- Multiple task types (SETUP, ACTIVE, CLOSURE, etc.)
+- JSON schema defining form fields and validation
+- **Snapshot Versioning**: Changes create immutable snapshots to preserve history
+- Required vs. optional field designation within schema
+- Template activation control
 
 Task Types:
 
-- pre_production: Setup and preparation tasks
-- production: Live show execution tasks
-- post_production: Cleanup and follow-up tasks
-- show_mc_review: MC performance evaluation
-- show_platform_review: Platform-specific analytics
-- other: Custom task categories
+- SETUP: Initial preparation and configuration
+- ACTIVE: Ongoing operational tasks
+- CLOSURE: Finalization and cleanup
+- ADMIN: Administrative and management tasks
+- ROUTINE: Regular, recurring maintenance tasks
+- OTHER: Custom task categories
 
 Input Types:
 
-- string: Text input for notes and descriptions
+- checkbox: Simple completion toggle (default)
+- text: Text input for notes and descriptions
 - number: Numeric data for metrics
-- datetime: Time-based data for scheduling
-- percentage: Performance and completion metrics
+- select: Dropdown selection from predefined options
+- date: Time-based data for scheduling
+- file: File upload (Phase 3)
+- textarea: Multi-line text input
+
+### Task Template Snapshot
+
+To ensure historical data integrity, templates are versioned using snapshots. When a template is updated, existing tasks continue to reference the snapshot they were created with, ensuring their data remains valid against the original schema.
+
+Key Models: `task_template_snapshots`
+
+Features:
+
+- Immutable record of template schema at a point in time
+- Version numbering (v1, v2, v3)
+- referenced by Tasks instead of live Template
+- Preserves validation rules even if Template is deleted
+
+### Task
+
+Tasks represent individual action items (Forms/Checklists) assigned to users for show production. They're generated from templates and linked to specific production entities via the `TaskTarget` association table.
+
+Features:
+
+- Generic task model decoupled from specific entities
+- `TaskTarget` association table for flexible entity linking
+- **Task as Form**: Each task is a complete form instance, storing answers in `content` JSONB.
+- Reference to `TaskTemplateSnapshot` ensures schema validity
+- Status tracking with due dates
+- Assignment and reassignment capabilities
+- Optimistic locking for concurrent updates
+- Completion tracking with timestamps
+
+Business Rules:
+
+- Tasks are generated Manually/Just-In-Time (approx. 1 week before show) to ensure accuracy.
+- Different task types target different production phases (SETUP, ACTIVE, CLOSURE).
+- Managers handle generation and assignment; Operators update content and status.
+- Tasks are studio-scoped for proper authorization.
+- Polymorphic linking via `TaskTarget` enables future extensibility.
 
 ## User
 
@@ -431,17 +454,13 @@ erDiagram
     materials }o--|| material_types: is
     shows }o--o{ show_platforms: has_many
     show_platforms }o--o{ platforms: has_many
-    studios |o--o{ task_templates: has_many
-    tags ||--o{ taggables: has_many
-    task_templates ||--o{ task_template_items: has_many
-    task_template_items }o--|| task_type: is
-    task_template_items }o--|| task_input_type: is
+    studios ||--o{ task_templates: has_many
+    task_templates ||--o{ task_template_snapshots: has_many
+    task_template_snapshots ||--o{ tasks: defines_schema
     tasks }o--|| task_status: is
-    users ||--o{ comments : has_many
-    users ||--o{ studio_memberships : has_many
-    studios ||--o{ studio_memberships : has_many
-    users ||--o{ tasks : has_many
-    users ||--o{ audits : has_many
+    tasks ||--o{ task_targets: has_many
+    task_targets }o--o| shows: links_to
+    users ||--o{ tasks : assigned_to
 
     audits {
       int id PK
@@ -716,39 +735,32 @@ erDiagram
       datetime deleted_at
     }
 
-    task_type {
+
+    task_targets {
       int id PK
-      string uid
-      string name "pre_production, production, post_production, show_mc_review, show_platform_review, other"
-      jsonb metadata
+      int task_id FK
+      int show_id FK "nullable"
+      int studio_id FK "nullable"
+      string target_type "SHOW, STUDIO"
       datetime created_at
       datetime updated_at
-      datetime deleted_at
     }
 
-    task_input_type {
-      int id PK
-      string uid
-      string name "text, number, date, percentage, file, url"
-      jsonb metadata
-      datetime created_at
-      datetime updated_at
-      datetime deleted_at
-    }
 
     tasks {
       int id PK
       string uid
+      int snapshot_id FK "FK to task_template_snapshots"
+      int template_id FK "FK to task_templates (optional)"
       int assignee_id FK "FK to users"
-      int taskable_id FK
-      string taskable_type "polymorphic"
-      int task_template_item_id FK
-      int task_status_id FK
-      string name
+      string status "enum"
+      string type "SETUP, ACTIVE, CLOSURE, ADMIN, ROUTINE, OTHER"
       string description
-      datetime due_date
-      datetime completed_at
+      datetime due_date "nullable"
+      datetime completed_at "nullable"
+      jsonb content "Stores form data matching snapshot schema"
       jsonb metadata
+      int version "optimistic locking"
       datetime created_at
       datetime updated_at
       datetime deleted_at
@@ -761,24 +773,21 @@ erDiagram
       string name
       string description
       bool is_active
+      jsonb current_schema "Current form definition"
+      int version "Current version number"
       jsonb metadata
       datetime created_at
       datetime updated_at
       datetime deleted_at
     }
 
-    task_template_items {
+    task_template_snapshots {
       int id PK
-      string uid
-      int task_template_id FK
-      int task_type_id FK
-      int input_type_id FK
-      bool is_required
-      string name
-      string description
+      int template_id FK
+      int version
+      jsonb schema "Immutable form definition"
+      jsonb metadata
       datetime created_at
-      datetime updated_at
-      datetime deleted_at
     }
 
     users {

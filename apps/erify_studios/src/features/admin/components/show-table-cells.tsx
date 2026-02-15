@@ -48,7 +48,7 @@ export function ItemsList({
               {remainingCount}
             </Badge>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-3 max-w-[300px]">
+          <PopoverContent className="w-auto p-3 max-w-75">
             <div className="space-y-2">
               <h4 className="font-medium text-sm text-muted-foreground border-b pb-1 mb-2">
                 {label}

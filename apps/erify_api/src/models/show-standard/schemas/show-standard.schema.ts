@@ -7,6 +7,7 @@ import {
   updateShowStandardInputSchema,
 } from '@eridu/api-types/show-standards';
 
+import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { ShowStandardService } from '@/models/show-standard/show-standard.service';
 
 export const showStandardSchema = z.object({
@@ -78,19 +79,10 @@ export const listShowStandardsFilterSchema = z.object({
   include_deleted: z.coerce.boolean().default(false),
 });
 
-export const listShowStandardsQuerySchema = z
-  .object({
-    page: z.coerce.number().int().min(1).optional().default(1),
-    limit: z.coerce.number().int().min(1).optional().default(10),
-  })
+export const listShowStandardsQuerySchema = paginationQuerySchema
   .and(listShowStandardsFilterSchema)
   .transform((data) => ({
-    page: data.page,
-    limit: data.limit,
-    take: data.limit,
-    skip: (data.page - 1) * data.limit,
-    name: data.name,
-    include_deleted: data.include_deleted,
+    ...data,
     uid: data.id,
   }));
 
@@ -99,6 +91,7 @@ export class ListShowStandardsQueryDto extends createZodDto(listShowStandardsQue
   declare limit: number;
   declare take: number;
   declare skip: number;
+  declare sort: 'asc' | 'desc';
   declare name: string | undefined;
   declare include_deleted: boolean;
   declare uid: string | undefined;

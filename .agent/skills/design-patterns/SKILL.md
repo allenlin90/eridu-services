@@ -106,8 +106,9 @@ Address performance at the correct layer:
 
 ## Related Skills
 
-- **backend-controller-pattern/SKILL.md**
-- **service-pattern/SKILL.md**
-- **repository-pattern/SKILL.md**
-- **database-patterns/SKILL.md**
+For architecture-specific patterns (N+1 queries, Soft Deletes, etc.), refer to:
+- **[Backend Controller Patterns](backend-controller-pattern-nestjs/SKILL.md)**
+- **[Service Patterns](service-pattern-nestjs/SKILL.md)**
+- **[Repository Patterns](repository-pattern-nestjs/SKILL.md)**
+- **[Database Patterns](database-patterns/SKILL.md)**
 - **code-quality/SKILL.md**

@@ -76,13 +76,17 @@ export class UserRepository extends BaseRepository<
     });
   }
 
-  async findByExtId(extId: string): Promise<User | null> {
+  async findByExtId<T extends Prisma.UserInclude = Record<string, never>>(
+    extId: string,
+    include?: T,
+  ): Promise<Prisma.UserGetPayload<{ include: T }> | null> {
     return this.model.findFirst({
       where: {
         extId,
         deletedAt: null,
       },
-    });
+      include,
+    }) as Promise<Prisma.UserGetPayload<{ include: T }> | null>;
   }
 
   async findById(id: number): Promise<User | null> {

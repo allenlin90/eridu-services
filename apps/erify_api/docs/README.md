@@ -17,8 +17,8 @@ This directory contains comprehensive documentation for the Eridu Services API (
 ### Features & Roadmap
 
 - **[Phase 1 Roadmap](./roadmap/PHASE_1.md)** - Core Functions with Simplified Auth (current phase)
-- **[Phase 2 Roadmap](./roadmap/PHASE_2.md)** - Material Management System (planned)
-- **[Phase 3 Roadmap](./roadmap/PHASE_3.md)** - Advanced Authorization & Tracking (planned)
+- **[Phase 2 Roadmap](./roadmap/PHASE_2.md)** - Task Management & Assignments (planned)
+- **[Phase 3 Roadmap](./roadmap/PHASE_3.md)** - Material Management & File Uploads (planned)
 - **[Schedule Upload API Design](./SCHEDULE_UPLOAD_API_DESIGN.md)** - Schedule upload system design with JSON-based planning and snapshot versioning
 
 ### API Reference

@@ -11,10 +11,11 @@ This skill covers the **shared principles and common utilities** applicable to A
 
 For module-specific controller implementation, refer to:
 
-- **[Admin Controllers](backend-controller-pattern-admin/SKILL.md)**: For `admin/*` endpoints (System Admins).
-- **[User (Me) Controllers](backend-controller-pattern-me/SKILL.md)**: For `me/*` endpoints (Authenticated Users).
-- **[Backdoor Controllers](backend-controller-pattern-backdoor/SKILL.md)**: For `backdoor/*` endpoints (Service-to-Service).
-- **[Integration Controllers](backend-controller-pattern-integration/SKILL.md)**: For `google-sheets/*`, webhooks, etc.
+- [Admin Controllers](backend-controller-pattern-admin/SKILL.md): For `admin/*` endpoints (System Admins).
+- [User (Me) Controllers](backend-controller-pattern-me/SKILL.md): For `me/*` endpoints (Authenticated Users).
+- [Studio Controllers](backend-controller-pattern-studio/SKILL.md): For `studios/:studioId/*` endpoints (Studio-scoped resources).
+- [Backdoor Controllers](backend-controller-pattern-backdoor/SKILL.md): For `backdoor/*` endpoints (Service-to-Service).
+- [Integration Controllers](backend-controller-pattern-integration/SKILL.md): For `google-sheets/*`, webhooks, etc.
 
 ## Shared Principles
 
@@ -57,9 +58,34 @@ id: string
 | `PATCH`  | 200 OK         | `@ZodResponse(S, HttpStatus.OK)`                 |
 | `DELETE` | 204 No Content | `@ZodResponse(undefined, HttpStatus.NO_CONTENT)` |
 
+### 5. Payload Translation
+
+**Controllers MUST adapt external DTOs to internal Service Payloads.**
+
+Do NOT pass raw DTOs to services. Instead, extract and reshape data into the `Create*Payload` type defined in the model's schema file.
+
+```typescript
+@Post()
+@ZodResponse(UserDto, HttpStatus.CREATED)
+async create(
+  @Param('orgId') orgId: string,
+  @Body() dto: CreateUserDto
+) {
+  // Translate DTO + Params -> Service Payload
+  const { name, email } = dto;
+
+  return this.userService.create({
+    name,
+    email,
+    org: { connect: { uid: orgId } } // Explicitly connect relations
+  });
+}
+```
+
 ## Checklist
 
-- [ ] Choose the correct specialized pattern (`Admin`, `Me`, `Backdoor`, `Integration`).
-- [ ] Use Zod serialization for ALL outputs.
+- [ ] Choose the correct specialized pattern (`Admin`, `Me`, `Studio`, `Backdoor`, `Integration`).
+- [ ] Use Zod serialization for ALL outputs with `@ZodResponse`.
 - [ ] Use `UidValidationPipe` for all UIDs.
-- [ ] Document all endpoints with Swagger/OpenAPI decorators (handled via `@ZodResponse` automatically where possible).
+- [ ] **Translate DTOs** into typed Service Payloads (never pass DTOs directly).
+- [ ] Document all endpoints via decorators.

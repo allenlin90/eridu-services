@@ -69,6 +69,7 @@ describe('adminShowStandardController', () => {
         uid: undefined,
         name: undefined,
         include_deleted: false,
+        sort: 'desc',
       };
       const standards = [
         { uid: 'show_standard_1', name: 'HD' },

@@ -7,6 +7,7 @@ import {
   updateClientInputSchema,
 } from '@eridu/api-types/clients';
 
+import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { ClientService } from '@/models/client/client.service';
 
 export const clientSchema = z.object({
@@ -59,19 +60,10 @@ export const listClientsFilterSchema = z.object({
   include_deleted: z.coerce.boolean().default(false),
 });
 
-export const listClientsQuerySchema = z
-  .object({
-    page: z.coerce.number().int().min(1).optional().default(1),
-    limit: z.coerce.number().int().min(1).optional().default(10),
-  })
+export const listClientsQuerySchema = paginationQuerySchema
   .and(listClientsFilterSchema)
   .transform((data) => ({
-    page: data.page,
-    limit: data.limit,
-    take: data.limit,
-    skip: (data.page - 1) * data.limit,
-    name: data.name,
-    include_deleted: data.include_deleted,
+    ...data,
     uid: data.id,
   }));
 
@@ -80,6 +72,7 @@ export class ListClientsQueryDto extends createZodDto(listClientsQuerySchema) {
   declare limit: number;
   declare take: number;
   declare skip: number;
+  declare sort: 'asc' | 'desc';
   declare name: string | undefined;
   declare include_deleted: boolean;
   declare uid: string | undefined;

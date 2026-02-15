@@ -81,6 +81,7 @@ describe('adminShowPlatformController', () => {
         limit: 10,
         skip: 0,
         take: 10,
+        sort: 'desc',
       };
       const showPlatforms = [
         { uid: 'show_platform_1', showId: 'show_1', platformId: 'platform_1' },

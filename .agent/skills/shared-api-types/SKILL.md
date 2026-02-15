@@ -9,13 +9,13 @@ This skill outlines the standards for using the `@eridu/api-types` package. This
 
 ## When to Use
 
-| Use Case | Location | Reason |
-| :--- | :--- | :--- |
-| **API Responses** | `packages/api-types` | Ensures FE and BE agree on response shape |
-| **API Requests** | `packages/api-types` | Ensures inputs are validated consistently |
-| **Shared Enums** | `packages/api-types` | Consistency (e.g., `ShowStatus`, `UserRole`) |
-| **Internal Service Logic** | `apps/erify_api/...` | Keep implementation details private |
-| **DB Models** | `prisma/schema.prisma` | DB layer should be separate from API layer |
+| Use Case                   | Location               | Reason                                       |
+| :------------------------- | :--------------------- | :------------------------------------------- |
+| **API Responses**          | `packages/api-types`   | Ensures FE and BE agree on response shape    |
+| **API Requests**           | `packages/api-types`   | Ensures inputs are validated consistently    |
+| **Shared Enums**           | `packages/api-types`   | Consistency (e.g., `ShowStatus`, `UserRole`) |
+| **Internal Service Logic** | `apps/erify_api/...`   | Keep implementation details private          |
+| **DB Models**              | `prisma/schema.prisma` | DB layer should be separate from API layer   |
 
 ## Directory Structure
 
@@ -23,11 +23,26 @@ Organize by **Domain Resource**:
 
 ```
 packages/api-types/src/
-├── shows/
-├── users/
+├── shows/        # Domain: Shows
+├── users/        # Domain: Users
+├── task-management/ # Domain: Task Management
 │   ├── index.ts      # Exports
-│   └── schemas.ts    # Zod definitions and inferred TS types
+│   ├── task-template.schema.ts
+│   └── template-definition.schema.ts
 └── pagination/       # Shared utilities
+```
+
+## Import Strategy (Subpath Exports)
+
+Always use subpath imports to keep domains separated.
+
+```typescript
+// ✅ Correct
+import { TaskTemplate } from '@eridu/api-types/task-management';
+import { User } from '@eridu/api-types/users';
+
+// ❌ Avoid (if root export exists)
+import { TaskTemplate } from '@eridu/api-types'; 
 ```
 
 > [!NOTE]

@@ -599,6 +599,7 @@ describe('scheduleService', () => {
         order_direction: 'desc' as const,
         include_plan_document: false,
         include_deleted: false,
+        sort: 'desc' as const,
         uid: undefined,
       };
 
@@ -644,6 +645,7 @@ describe('scheduleService', () => {
         order_direction: 'desc' as const,
         include_plan_document: false,
         include_deleted: false,
+        sort: 'desc' as const,
         uid: undefined,
       };
 
@@ -690,6 +692,7 @@ describe('scheduleService', () => {
         order_direction: 'desc' as const,
         include_plan_document: false,
         include_deleted: false,
+        sort: 'desc' as const,
         uid: undefined,
       };
 
@@ -731,6 +734,7 @@ describe('scheduleService', () => {
         order_direction: 'desc' as const,
         include_plan_document: false,
         include_deleted: false,
+        sort: 'desc' as const,
         uid: undefined,
       };
 
@@ -775,6 +779,7 @@ describe('scheduleService', () => {
         order_direction: 'desc' as const,
         include_plan_document: false,
         include_deleted: false,
+        sort: 'desc' as const,
         uid: undefined,
       };
 
@@ -819,6 +824,7 @@ describe('scheduleService', () => {
         order_direction: 'asc' as const,
         include_plan_document: false,
         include_deleted: false,
+        sort: 'desc' as const,
         uid: undefined,
       };
 
@@ -859,6 +865,7 @@ describe('scheduleService', () => {
         order_direction: 'desc' as const,
         include_plan_document: false,
         include_deleted: true,
+        sort: 'desc' as const,
         uid: undefined,
       };
 
@@ -897,6 +904,7 @@ describe('scheduleService', () => {
         order_direction: 'asc' as const,
         include_plan_document: false,
         include_deleted: false,
+        sort: 'desc' as const,
         uid: undefined,
       };
 

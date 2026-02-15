@@ -18,9 +18,11 @@ import { ZodExceptionFilter } from '@/lib/filters/zod-exception.filter';
 import { AdminGuard } from '@/lib/guards/admin.guard';
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 import { GoogleSheetsApiKeyGuard } from '@/lib/guards/google-sheets-api-key.guard';
+import { StudioGuard } from '@/lib/guards/studio.guard';
 import { OpenAPIModule } from '@/lib/openapi/openapi.module';
 import { MeModule } from '@/me/me.module';
 import { UserModule } from '@/models/user/user.module';
+import { StudiosModule } from '@/studios/studios.module';
 
 @Module({
   imports: [
@@ -79,6 +81,7 @@ import { UserModule } from '@/models/user/user.module';
     HealthModule,
     UserModule,
     MeModule,
+    StudiosModule,
     OpenAPIModule.forRoot(),
   ],
   providers: [
@@ -101,6 +104,10 @@ import { UserModule } from '@/models/user/user.module';
     {
       provide: APP_GUARD,
       useClass: AdminGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: StudioGuard,
     },
     {
       provide: APP_PIPE,

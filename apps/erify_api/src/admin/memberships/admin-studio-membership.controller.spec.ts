@@ -73,6 +73,7 @@ describe('adminStudioMembershipController', () => {
         studioUid: undefined,
         name: undefined,
         include_deleted: false,
+        sort: 'desc',
       };
       const memberships = [
         { uid: 'membership_1', userId: 'user_1', studioId: 'studio_1' },

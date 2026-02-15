@@ -72,6 +72,7 @@ describe('profileController', () => {
     id: BigInt(1),
     extId: 'HHHFNPNWDbKmElNBF2Y1yCfo0kqtbB7B',
     isSystemAdmin: false,
+    studioMemberships: [],
   };
 
   beforeEach(async () => {
@@ -109,6 +110,13 @@ describe('profileController', () => {
       expect(result.payload).toEqual(mockJwtPayload);
       expect(getUserByExtIdSpy).toHaveBeenCalledWith(
         mockAuthenticatedUser.ext_id,
+        {
+          studioMemberships: {
+            include: {
+              studio: true,
+            },
+          },
+        },
       );
     });
 

@@ -27,10 +27,152 @@ export class UserService extends BaseModelService {
 
   constructor(
     private readonly userRepository: UserRepository,
-    utilityService: UtilityService,
+    protected readonly utilityService: UtilityService,
   ) {
     super(utilityService);
   }
+}
+```
+
+## Generic Service Payload Pattern
+
+**Define the Service Payload type in your schema file.**
+
+This ensures the type is reused across Controllers and the Service, and decouples the Service from specific Prisma Input types.
+
+**1. Define Payload in `schemas/model.schema.ts`**
+
+```typescript
+// apps/erify_api/src/models/user/schemas/user.schema.ts
+import type { Prisma } from '@prisma/client';
+
+// Define the payload type relative to Prisma's CreateInput
+// Make fields optional that the Service handles (uid, version, timestamps)
+export type CreateUserPayload = Omit<Prisma.UserCreateInput, 'uid'> & { 
+  uid?: string; 
+};
+```
+
+**2. Implement Service with Payload**
+
+```typescript
+// apps/erify_api/src/models/user/user.service.ts
+import type { CreateUserPayload } from './schemas/user.schema';
+
+@Injectable()
+export class UserService extends BaseModelService {
+  // ...
+
+  // Base Create Method: Accept the Payload
+  async create(payload: CreateUserPayload): Promise<User> {
+    return this.userRepository.create({
+      ...payload,
+      // Provide defaults for omitted/optional fields
+      uid: payload.uid ?? this.generateUid(),
+    });
+  }
+}
+```
+
+**3. Controller Translates DTO → Payload**
+
+```typescript
+// apps/erify_api/src/studios/studio-task-template/studio-task-template.controller.ts
+
+@Post()
+@ZodResponse(taskTemplateDto, HttpStatus.CREATED)
+async create(
+  @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+  @Body() createStudioTaskTemplateDto: CreateStudioTaskTemplateDto,
+) {
+  const { name, description, schema } = createStudioTaskTemplateDto;
+
+  // Controller translates DTO → Service Payload
+  return this.taskTemplateService.createTemplateWithSnapshot({
+    name,
+    description,
+    currentSchema: schema,
+    studio: { connect: { uid: studioId } }, // Connect relation from route param
+  });
+}
+```
+
+## Avoiding ORM Coupling in Services
+
+**Critical Rule**: Services MUST NOT import or use ORM-specific types (e.g., `Prisma.*`).
+
+### Anti-Pattern: Service Coupled to Prisma
+
+```typescript
+// ❌ BAD: Service method uses Prisma types
+import { Prisma } from '@prisma/client';
+
+async getTaskTemplates(params: {
+  where?: Prisma.TaskTemplateWhereInput;  // ❌ ORM coupling
+  orderBy?: Prisma.TaskTemplateOrderByWithRelationInput;  // ❌ ORM coupling
+}): Promise<{ data: TaskTemplate[]; total: number }> {
+  // Service builds Prisma where clause
+  const where: Prisma.TaskTemplateWhereInput = { ...params.where };
+  // ... filter building logic
+}
+```
+
+### Correct Pattern: Service Uses Domain Types
+
+```typescript
+// ✅ GOOD: Service method uses domain-level parameters
+async getTaskTemplates(...args: Parameters<TaskTemplateRepository['findPaginated']>): Promise<{ data: TaskTemplate[]; total: number }> {
+  return this.taskTemplateRepository.findPaginated(...args);
+}
+```
+
+**Benefits**:
+- Service has zero ORM imports
+- Service signature matches repository signature
+- Changing ORM only requires updating repository
+- Service tests don't need to mock Prisma types
+
+### Repository Handles ORM Logic
+
+```typescript
+// Repository accepts domain parameters and builds ORM queries
+async findPaginated(params: {
+  skip?: number;
+  take?: number;
+  name?: string;
+  uid?: string;
+  includeDeleted?: boolean;
+  studioUid?: string;
+  orderBy?: 'asc' | 'desc';
+}): Promise<{ data: TaskTemplate[]; total: number }> {
+  const { skip, take, name, uid, includeDeleted, studioUid, orderBy } = params;
+
+  // Repository builds Prisma where clause
+  const where: Prisma.TaskTemplateWhereInput = {};
+
+  if (!includeDeleted) {
+    where.deletedAt = null;
+  }
+
+  if (name) {
+    where.name = { contains: name, mode: 'insensitive' };
+  }
+
+  if (studioUid) {
+    where.studio = { uid: studioUid };
+  }
+
+  const [data, total] = await Promise.all([
+    this.model.findMany({
+      skip,
+      take,
+      where,
+      orderBy: orderBy ? { createdAt: orderBy } : undefined,
+    }),
+    this.model.count({ where }),
+  ]);
+
+  return { data, total };
 }
 ```
 
@@ -62,25 +204,52 @@ async updateUser(uid: string, data: UpdateUserDto): Promise<User> {
 }
 ```
 
-## Error Handling
+## Optimistic Locking Pattern
 
-**Use `HttpError` utility, NEVER NestJS exceptions directly.**
-This ensures consistent error responses and logging.
+**For versioned entities, use version checks to prevent concurrent update conflicts.**
 
 ```typescript
-import { HttpError } from '@/common/errors/http-error.util';
+async updateTemplateWithSnapshot(
+  where: Prisma.TaskTemplateWhereUniqueInput & { version?: number },
+  payload: Prisma.TaskTemplateUpdateInput & { version?: number; currentSchema?: any },
+): Promise<TaskTemplate> {
+  if (payload.currentSchema && !this.validateSchema(payload.currentSchema)) {
+    throw HttpError.badRequest('Invalid schema');
+  }
 
-// 404 Not Found
-if (!user) throw HttpError.notFound('User', uid);
+  try {
+    if (payload.currentSchema) {
+      const newVersion = (payload.version as number) + 1;
+      return await this.repository.updateWithVersionCheck(
+        where,
+        {
+          name: payload.name,
+          description: payload.description,
+          currentSchema: payload.currentSchema,
+          version: newVersion,
+          snapshots: {
+            create: {
+              version: newVersion,
+              schema: payload.currentSchema,
+            },
+          },
+        },
+      );
+    }
 
-// 400 Bad Request
-if (invalid) throw HttpError.badRequest('Invalid state');
-
-// 409 Conflict
-if (exists) throw HttpError.conflict('User already exists');
-
-// 403 Forbidden
-if (!allowed) throw HttpError.forbidden('Access denied');
+    return await this.repository.update(where, {
+      name: payload.name,
+      description: payload.description,
+    });
+  } catch (error) {
+    if (error instanceof VersionConflictError) {
+      throw HttpError.conflict(
+        `Record is out of date. Please refresh your record and try again.`,
+      );
+    }
+    throw error;
+  }
+}
 ```
 
 ## Orchestration Services
@@ -117,16 +286,52 @@ async deleteUser(uid: string): Promise<void> {
 }
 ```
 
-## Pagination
+## Pagination and Advanced Filtering
 
-**Execute Count and Data queries in parallel.**
+**Execute Count and Data queries in parallel and build complex filters.**
 
 ```typescript
-async listUsers(params: PaginationParams) {
+async getTaskTemplates(params: {
+  skip?: number;
+  take?: number;
+  name?: string;
+  uid?: string;
+  includeDeleted?: boolean;
+  where?: Prisma.TaskTemplateWhereInput;
+  orderBy?: Prisma.TaskTemplateOrderByWithRelationInput;
+}): Promise<{ data: TaskTemplate[]; total: number }> {
+  const { skip, take, name, uid, includeDeleted, where: extraWhere, orderBy } = params;
+
+  const where: Prisma.TaskTemplateWhereInput = { ...extraWhere };
+
+  if (!includeDeleted) {
+    where.deletedAt = null;
+  }
+
+  if (name) {
+    where.name = {
+      contains: name,
+      mode: 'insensitive',
+    };
+  }
+
+  if (uid) {
+    where.uid = {
+      contains: uid,
+      mode: 'insensitive',
+    };
+  }
+
   const [data, total] = await Promise.all([
-    this.userRepository.findMany({ ...params }),
-    this.userRepository.count({ ...params }),
+    this.repository.findMany({
+      skip,
+      take,
+      where,
+      orderBy,
+    }),
+    this.repository.count(where),
   ]);
+
   return { data, total };
 }
 ```
@@ -159,3 +364,7 @@ async createManyUsers(users: CreateUserDto[]) {
 - [ ] Use `Promise.all` for independent async tasks
 - [ ] Use `PrismaService.$transaction` for multi-step workflows
 - [ ] **Never** throw `NotFoundException` directly (use `HttpError.notFound`)
+- [ ] Catch `VersionConflictError` and rethrow as `HttpError.conflict()`
+- [ ] **Never** import or use `Prisma.*` types in service methods
+- [ ] Use `Parameters<Repository['methodName']>` to match repository signatures
+- [ ] Delegate filter building to repository layer

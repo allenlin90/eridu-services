@@ -6,6 +6,7 @@ import {
   userApiResponseSchema,
 } from '@eridu/api-types/users';
 
+import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { McService } from '@/models/mc/mc.service';
 import { UserService } from '@/models/user/user.service';
 
@@ -228,19 +229,10 @@ export const listUsersFilterSchema = z.object({
   ),
 });
 
-export const listUsersQuerySchema = z
-  .object({
-    page: z.coerce.number().int().min(1).optional().default(1),
-    limit: z.coerce.number().int().min(1).optional().default(10),
-  })
-  .merge(listUsersFilterSchema)
+export const listUsersQuerySchema = paginationQuerySchema
+  .and(listUsersFilterSchema)
   .transform((data) => ({
-    page: data.page,
-    limit: data.limit,
-    take: data.limit,
-    skip: (data.page - 1) * data.limit,
-    name: data.name,
-    email: data.email,
+    ...data,
     uid: data.id,
     extId: data.ext_id,
     isSystemAdmin: data.is_system_admin,
@@ -251,6 +243,7 @@ export class ListUsersQueryDto extends createZodDto(listUsersQuerySchema) {
   declare limit: number;
   declare take: number;
   declare skip: number;
+  declare sort: 'asc' | 'desc';
   declare name: string | undefined;
   declare email: string | undefined;
   declare uid: string | undefined;

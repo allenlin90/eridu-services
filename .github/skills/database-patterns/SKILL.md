@@ -158,17 +158,151 @@ await prisma.show.create({
 
 **Rule**: Use a `version` integer to prevent overwriting concurrent updates.
 
-```typescript
-// 1. Check version in WHERE clause
-const updated = await prisma.schedule.update({
-  where: { uid: 's_1', version: 5 }, // Must match current version
-  data: {
-    ...data,
-    version: { increment: 1 }
-  }
-});
-// 2. Handle known error (P2025: Record not found) as a Version Conflict.
+### Schema Support
+```prisma
+model TaskTemplate {
+  id      BigInt @id @default(autoincrement())
+  uid     String @unique
+  version Int    @default(1)
+  // ... other fields
+}
 ```
+
+### Implementation Pattern
+
+**Repository Layer**: Implement version check and throw domain error
+
+```typescript
+async updateWithVersionCheck(
+  where: Prisma.TaskTemplateWhereUniqueInput & { version?: number },
+  data: Prisma.TaskTemplateUpdateInput,
+): Promise<TaskTemplate> {
+  try {
+    return await this.prisma.taskTemplate.update({
+      where: { ...where, deletedAt: null },
+      data,
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === PRISMA_ERROR.RecordNotFound && where.version) {
+        const existing = await this.findOne({ uid: where.uid, deletedAt: null });
+        
+        if (!existing) {
+          throw error; // Actually not found
+        }
+        
+        // Version conflict - throw domain error
+        throw new VersionConflictError(
+          'Task template version is outdated',
+          where.version,
+          existing.version,
+        );
+      }
+    }
+    throw error;
+  }
+}
+```
+
+**Service Layer**: Catch and convert to HTTP error
+
+```typescript
+try {
+  const newVersion = (payload.version as number) + 1;
+  return await this.repository.updateWithVersionCheck(
+    where,
+    {
+      ...data,
+      version: newVersion,
+    },
+  );
+} catch (error) {
+  if (error instanceof VersionConflictError) {
+    throw HttpError.conflict(
+      `Record is out of date. Please refresh and try again.`,
+    );
+  }
+  throw error;
+}
+```
+
+### Why Use Domain Error?
+
+- **Layer Separation**: Repository doesn't know about HTTP
+- **Testability**: Can test version conflicts without HTTP context
+- **Reusability**: Same error handling across different transport layers
+
+---
+
+## 7. Relationships vs Polymorphism
+
+**Rule**: PREFER Explicit Foreign Keys over Polymorphic IDs (`entity_id` + `entity_type`).
+
+**Why?**
+1.  **Strict Integrity**: Polymorphism bypasses Foreign Key constraints, leading to "orphan data" (e.g., a Task pointing to a deleted Show).
+2.  **Performance (N+1)**: Prisma cannot `include` polymorphic relations natively. You are forced to loop and fetch manually, killing performance.
+3.  **Type Safety**: Explicit relations (`show: Show?`) are fully typed. Polymorphic IDs needs manual type narrowing.
+
+```typescript
+// ✅ CORRECT: Explicit Nullable FKs ("Exclusive Arc" Pattern)
+model Task {
+  id       BigInt @id
+  showId   BigInt?
+  show     Show?   @relation(fields: [showId], references: [id])
+  // If we ever need Client tasks:
+  clientId BigInt?
+  client   Client? @relation(fields: [clientId], references: [id])
+}
+
+// ❌ WRONG: Polymorphic Anti-Pattern
+model Task {
+  id           BigInt @id
+  taskableId   BigInt // No FK constraint!
+  taskableType String // "show", "client"
+}
+```
+
+---
+
+## 8. Nested Writes Pattern
+
+**Rule**: Use Prisma's nested writes for atomic parent + child creation.
+
+### When to Use
+
+- Creating a parent record with related children in one transaction
+- Simpler than manual transactions for single-parent scenarios
+- Prisma handles the transaction automatically
+
+### Implementation
+
+```typescript
+// Service method
+async createTemplateWithSnapshot(payload: CreateTaskTemplatePayload): Promise<TaskTemplate> {
+  const version = payload.version ?? 1;
+
+  return this.repository.create({
+    ...payload,
+    uid: payload.uid ?? this.generateUid(),
+    version,
+    snapshots: {
+      create: {
+        version,
+        schema: payload.currentSchema ?? {},
+      },
+    },
+  });
+}
+```
+
+### Nested Writes vs Transactions
+
+| Pattern | Use When |
+|---------|----------|
+| **Nested Writes** | Single parent + direct children, simple relation |
+| **Transactions** | Multiple parents, complex orchestration, external API calls |
+
+---
 
 ## Related Skills
 

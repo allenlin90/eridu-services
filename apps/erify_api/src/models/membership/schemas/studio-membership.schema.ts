@@ -8,6 +8,7 @@ import {
   updateMembershipInputSchema,
 } from '@eridu/api-types/memberships';
 
+import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { studioSchema } from '@/models/studio/schemas/studio.schema';
 import { StudioService } from '@/models/studio/studio.service';
@@ -207,21 +208,12 @@ export const listStudioMembershipsFilterSchema = z.object({
   include_deleted: z.coerce.boolean().default(false),
 });
 
-export const listStudioMembershipsQuerySchema = z
-  .object({
-    page: z.coerce.number().int().min(1).optional().default(1),
-    limit: z.coerce.number().int().min(1).optional().default(10),
-  })
+export const listStudioMembershipsQuerySchema = paginationQuerySchema
   .and(listStudioMembershipsFilterSchema)
   .transform((data) => ({
-    page: data.page,
-    limit: data.limit,
-    take: data.limit,
-    skip: (data.page - 1) * data.limit,
+    ...data,
     name: data.name,
-    include_deleted: data.include_deleted,
     uid: data.id,
-    studioUid: data.studio_id,
   }));
 
 export class ListStudioMembershipsQueryDto extends createZodDto(listStudioMembershipsQuerySchema) {
@@ -229,6 +221,7 @@ export class ListStudioMembershipsQueryDto extends createZodDto(listStudioMember
   declare limit: number;
   declare take: number;
   declare skip: number;
+  declare sort: 'asc' | 'desc';
   declare name: string | undefined;
   declare include_deleted: boolean;
   declare uid: string | undefined;

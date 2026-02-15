@@ -94,8 +94,11 @@ export class UserService extends BaseModelService {
     return this.userRepository.findByUid(uid);
   }
 
-  async getUserByExtId(extId: string): Promise<User | null> {
-    return this.userRepository.findByExtId(extId);
+  async getUserByExtId<T extends Prisma.UserInclude = Record<string, never>>(
+    extId: string,
+    include?: T,
+  ): Promise<Prisma.UserGetPayload<{ include: T }> | null> {
+    return this.userRepository.findByExtId(extId, include);
   }
 
   async getUsers(params: {

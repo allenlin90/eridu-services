@@ -63,6 +63,7 @@ describe('adminClientController', () => {
         name: 'test',
         include_deleted: false,
         uid: undefined,
+        sort: 'desc',
       };
       const clients = [
         { uid: 'client_1', name: 'Client 1' },

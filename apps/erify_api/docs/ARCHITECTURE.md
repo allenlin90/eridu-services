@@ -27,17 +27,16 @@ The Eridu Services API is built using NestJS with a modular architecture that se
 
 **Phase 2 Planned Features:**
 
-- **Material Management System**: Complete material versioning and platform targeting
-- **Material CRUD Operations**: Material, MaterialType, and ShowMaterial entities
-- **Show-Material Associations**: Associate materials with shows for production planning
-- **Platform-Specific Materials**: Materials can be targeted to specific platforms
+- **Task Management**: Complete workflow automation and task templates (`Task` generic system)
+- **Show Association**: Direct Show-Studio linking
+- **Role-Based Access**: Studio-scoped task assignments
 
 **Phase 3 Planned Features:**
 
-- **Advanced Authorization**: Role-based access control with granular permissions
-- **Audit Trail**: Comprehensive change tracking and compliance
-- **Task Management**: Complete workflow automation and task templates
+- **Material Management System**: Material versioning and platform targeting
+- **File Uploads**: S3/GCS integration
 - **Advanced Collaboration**: Tagging, enhanced comments, and notifications
+- **Audit Trail**: Comprehensive change tracking
 
 ## Module Architecture
 
@@ -65,6 +64,8 @@ graph TB
     Admin --> AdminShowPlatform[AdminShowPlatformModule]
     Admin --> AdminSchedule[AdminScheduleModule]
     Admin --> AdminSnapshot[AdminSnapshotModule]
+    Admin --> AdminTask[AdminTaskModule]
+    Admin --> AdminTaskTemplate[AdminTaskTemplateModule]
 
     AdminUser --> User[UserModule]
     AdminClient --> Client[ClientModule]
@@ -140,6 +141,19 @@ graph TB
     SchedulePlanning --> Schedule
     SchedulePlanning --> ScheduleSnapshot
 
+    AdminTask --> Task[TaskModule]
+    AdminTaskTemplate --> TaskTemplate[TaskTemplateModule]
+    
+    Task --> Prisma
+    Task --> Utility
+    Task --> TaskTemplate
+    Task --> Studio
+    Task --> User
+
+    TaskTemplate --> Prisma
+    TaskTemplate --> Utility
+    TaskTemplate --> Studio
+
     StudioMembership[StudioMembershipModule] --> Prisma
 
     Prisma --> DB[(PostgreSQL Database)]
@@ -170,6 +184,8 @@ graph LR
         AdminShowPlatformModule
         AdminScheduleModule
         AdminSnapshotModule
+        AdminTaskModule
+        AdminTaskTemplateModule
     end
 
     subgraph "Domain Layer"
@@ -188,7 +204,10 @@ graph LR
         ShowPlatformModule
         ScheduleModule
         ScheduleSnapshotModule
+        ScheduleSnapshotModule
         SchedulePlanningModule
+        TaskModule
+        TaskTemplateModule
     end
 
     subgraph "Infrastructure Layer"
@@ -244,6 +263,12 @@ graph LR
 
     UserModule --> PrismaModule
     UserModule --> UtilityModule
+
+    TaskModule --> PrismaModule
+    TaskModule --> UtilityModule
+    
+    TaskTemplateModule --> PrismaModule
+    TaskTemplateModule --> UtilityModule
 
     ClientModule --> PrismaModule
     ClientModule --> UtilityModule
@@ -319,6 +344,8 @@ graph LR
   - `AdminShowPlatformModule`
   - `AdminScheduleModule` ⭐
   - `AdminSnapshotModule` ⭐
+  - `AdminTaskModule`
+  - `AdminTaskTemplateModule`
 - **Note**: Admin modules contain only controllers; they directly use domain services and leverage Prisma's native features
 
 ### 3. Domain Modules
@@ -1066,7 +1093,7 @@ All core entity services extend `BaseModelService` which provides:
 | `ClientService`           | Client CRUD operations                    | `ClientRepository`, `UtilityService`                            |
 | `McService`               | MC CRUD operations                        | `McRepository`, `UtilityService`                                |
 | `PlatformService`         | Platform CRUD operations                  | `PlatformRepository`, `UtilityService`                          |
-| `ShowService` ⭐          | Show CRUD with DTO transformation pattern | `ShowRepository`, `UtilityService`                              |
+| `ShowService` ⭐           | Show CRUD with DTO transformation pattern | `ShowRepository`, `UtilityService`                              |
 | `ShowTypeService`         | ShowType CRUD operations                  | `ShowTypeRepository`, `UtilityService`                          |
 | `ShowStatusService`       | ShowStatus CRUD operations                | `ShowStatusRepository`, `UtilityService`                        |
 | `ShowStandardService`     | ShowStandard CRUD operations              | `ShowStandardRepository`, `UtilityService`                      |
@@ -1078,12 +1105,12 @@ All core entity services extend `BaseModelService` which provides:
 
 **Orchestration Services** (Cross-Module Coordination)
 
-| Service                       | Purpose                                                            | Dependencies                                                                                           |
-| ----------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Service                      | Purpose                                                            | Dependencies                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
 | `ShowOrchestrationService` ⭐ | Atomic show creation with MC/platform assignments                  | `ShowService`, `McService`, `PlatformService`, `ShowMcService`, `ShowPlatformService`, `PrismaService` |
-|                               | Single show relationship operations (add/remove/replace)           |                                                                                                        |
-|                               | Sync logic for updating assignments while preserving existing ones |                                                                                                        |
-|                               | Complete relationship management (remove, replace operations)      |                                                                                                        |
+|                              | Single show relationship operations (add/remove/replace)           |                                                                                                        |
+|                              | Sync logic for updating assignments while preserving existing ones |                                                                                                        |
+|                              | Complete relationship management (remove, replace operations)      |                                                                                                        |
 
 **Phase 1 Scope**: Single show operations with atomic assignment creation and relationship management
 **Future Enhancements** (Phase 4+ if needed): ShowBulkService, ShowReconciliationService for bulk operations and external data sync engine
@@ -1105,14 +1132,14 @@ All core entity services extend `BaseModelService` which provides:
 
 ### Utilities
 
-| Utility                    | Purpose                                     |
-| -------------------------- | ------------------------------------------- |
-| `UtilityService`           | ID generation, common utilities             |
-| `HttpExceptionFilter`      | Global error handling                       |
-| `ZodValidationPipe`        | Request validation                          |
-| `UidValidationPipe`        | Path parameter UID format validation        |
-| `ZodSerializerInterceptor` | Response serialization                      |
-| `BaseRepository`           | Generic repository pattern with soft delete |
+| Utility                    | Purpose                                                                                |
+| -------------------------- | -------------------------------------------------------------------------------------- |
+| `UtilityService`           | ID generation, common utilities                                                        |
+| `HttpExceptionFilter`      | Global error handling                                                                  |
+| `ZodValidationPipe`        | Request validation                                                                     |
+| `UidValidationPipe`        | Path parameter UID format validation                                                   |
+| `ZodSerializerInterceptor` | Response serialization                                                                 |
+| `BaseRepository`           | Generic repository pattern with soft delete                                            |
 | `PaginationSchema`         | Pagination query and response schemas (deprecated - use `@eridu/api-types/pagination`) |
 
 **Note on BaseRepository Types**: The `findMany` method uses `orderBy?: any` to support Prisma's complex `OrderByWithRelationInput` types, which include nested relation ordering and multiple sort orders. Type safety is maintained at the service layer where Prisma types are used.

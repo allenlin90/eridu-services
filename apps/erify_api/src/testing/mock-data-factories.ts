@@ -231,12 +231,14 @@ export const paginationMockFactory = {
       limit: number;
       skip: number;
       take: number;
+      sort: 'asc' | 'desc';
     }> = {},
   ) => ({
     page: 1,
     limit: 10,
     skip: 0,
     take: 10,
+    sort: 'desc' as const,
     ...overrides,
   }),
 

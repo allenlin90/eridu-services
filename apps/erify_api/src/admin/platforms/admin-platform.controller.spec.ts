@@ -65,6 +65,7 @@ describe('adminPlatformController', () => {
         uid: undefined,
         name: undefined,
         include_deleted: false,
+        sort: 'desc',
       };
       const platforms = [
         { uid: 'platform_1', name: 'Platform 1' },

@@ -14,6 +14,7 @@ vi.mock('lucide-react', () => ({
   Users: vi.fn(),
   CalendarDays: vi.fn(),
   Tv: vi.fn(),
+  Videotape: vi.fn(),
 }));
 
 // Mock auth client
@@ -33,8 +34,10 @@ vi.mock('@/lib/api', () => ({
 
 // Mock useLocation hook
 const mockUseLocation = vi.fn();
+const mockNavigate = vi.fn();
 vi.mock('@tanstack/react-router', () => ({
   useLocation: () => mockUseLocation(),
+  useNavigate: () => mockNavigate,
 }));
 
 // Mock useSession hook
@@ -78,6 +81,21 @@ describe('useSidebarConfig', () => {
         email: 'john@example.com',
         image: '/avatars/john.jpg',
         is_system_admin: true, // Mock as system admin for tests
+        // Add studio memberships to mock data
+        studio_memberships: [
+          {
+            studio: { uid: 'studio-1', name: 'Studio 1' },
+            role: 'owner',
+          },
+          {
+            studio: { uid: 'studio-2', name: 'Studio 2' },
+            role: 'member',
+          },
+          {
+            studio: { uid: 'studio-3', name: 'Studio 3' },
+            role: 'admin',
+          },
+        ],
         payload: {
           sub: 'user-123',
           email: 'john@example.com',
@@ -108,13 +126,13 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
-    expect(result.current.navMain).toHaveLength(2); // Dashboard + System
+    expect(result.current.navMain).toHaveLength(3); // Dashboard + System + Studio
     expect(result.current.navMain[0]).toEqual({
       title: 'Dashboard',
       url: '/dashboard',
       icon: expect.any(Function),
       isActive: true,
-      items: [],
+      // items removed as it's not present in the implementation
     });
 
     expect(result.current.navMain[1]).toEqual({
@@ -123,16 +141,34 @@ describe('useSidebarConfig', () => {
       icon: expect.any(Function),
       isActive: false,
       items: expect.arrayContaining([
-        { title: 'Clients', url: '/system/clients', icon: expect.any(Function) },
-        { title: 'Studios', url: '/system/studios', icon: expect.any(Function) },
-        { title: 'MCs', url: '/system/mcs', icon: expect.any(Function) },
-        { title: 'Memberships', url: '/system/memberships', icon: expect.any(Function) },
-        { title: 'Platforms', url: '/system/platforms', icon: expect.any(Function) },
-        { title: 'Show Standards', url: '/system/show-standards', icon: expect.any(Function) },
-        { title: 'Show Types', url: '/system/show-types', icon: expect.any(Function) },
-        { title: 'Schedules', url: '/system/schedules', icon: expect.any(Function) },
-        { title: 'Shows', url: '/system/shows', icon: expect.any(Function) },
+        { title: 'Clients', url: '/system/clients' },
+        { title: 'Studios', url: '/system/studios' },
+        { title: 'MCs', url: '/system/mcs' },
+        { title: 'Memberships', url: '/system/memberships' },
+        { title: 'Users', url: '/system/users' },
+        { title: 'Platforms', url: '/system/platforms' },
+        { title: 'Show Standards', url: '/system/show-standards' },
+        { title: 'Show Types', url: '/system/show-types' },
+        { title: 'Schedules', url: '/system/schedules' },
+        { title: 'Shows', url: '/system/shows' },
       ]),
+    });
+
+    expect(result.current.navMain[2]).toEqual({
+      title: 'Studio',
+      url: '/studios',
+      icon: expect.any(Function),
+      isActive: false,
+      items: [
+        {
+          title: 'Dashboard',
+          url: '/studios/studio-1/dashboard',
+        },
+        {
+          title: 'My Tasks',
+          url: '/studios/studio-1/my-tasks',
+        },
+      ],
     });
   });
 

@@ -309,6 +309,7 @@ export class ListSchedulesQueryDto extends createZodDto(
   declare limit: number;
   declare take: number;
   declare skip: number;
+  declare sort: 'asc' | 'desc';
   declare name?: string;
   declare client_id?: string | string[];
   declare status?: string | string[];

@@ -6,12 +6,14 @@ export const paginationQuerySchema = z
   .object({
     page: z.coerce.number().int().min(1).optional().default(1),
     limit: z.coerce.number().int().min(1).optional().default(10),
+    sort: z.enum(['asc', 'desc']).optional().default('desc'),
   })
   .transform((data) => ({
     page: data.page,
     limit: data.limit,
     take: data.limit,
     skip: (data.page - 1) * data.limit,
+    sort: data.sort,
   }));
 
 // Pagination metadata schema
@@ -42,6 +44,7 @@ export class PaginationQueryDto
   declare limit: number;
   declare take: number;
   declare skip: number;
+  declare sort: 'asc' | 'desc';
 }
 
 export type PaginationMeta = z.infer<typeof paginationMetaSchema>;

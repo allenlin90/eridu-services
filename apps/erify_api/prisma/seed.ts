@@ -31,6 +31,7 @@ async function isDatabaseSeeded(): Promise<boolean> {
       users,
       mcs,
       studios,
+      taskTemplateCount,
     ] = await Promise.all([
       prisma.showType.findMany({
         where: {
@@ -70,6 +71,7 @@ async function isDatabaseSeeded(): Promise<boolean> {
           },
         },
       }),
+      prisma.taskTemplate.count(),
     ]);
 
     // Check if studio has all 10 rooms
@@ -92,6 +94,8 @@ async function isDatabaseSeeded(): Promise<boolean> {
     const hasAllMCs = mcs >= 30;
     const hasAllStudios = studios.length === 1;
 
+    const hasAllTaskTemplates = taskTemplateCount >= 50;
+
     const isComplete
       = hasAllShowTypes
       && hasAllShowStatuses
@@ -101,7 +105,8 @@ async function isDatabaseSeeded(): Promise<boolean> {
       && hasAllUsers
       && hasAllMCs
       && hasAllStudios
-      && hasAllRooms;
+      && hasAllRooms
+      && hasAllTaskTemplates;
 
     if (!isComplete) {
       console.log('🔍 Incomplete seeding detected:');
@@ -126,6 +131,9 @@ async function isDatabaseSeeded(): Promise<boolean> {
         `  - Studios: ${studios.length}/1 (${hasAllStudios ? '✅' : '❌'})`,
       );
       console.log(`  - Studio Rooms: ${hasAllRooms ? '10/10 ✅' : '❌'}`);
+      console.log(
+        `  - TaskTemplates: ${taskTemplateCount}/50 (${hasAllTaskTemplates ? '✅' : '❌'})`,
+      );
     }
 
     return isComplete;
@@ -792,6 +800,74 @@ async function main() {
           `⏭️  StudioMembership already exists: ${adminUser.name} -> ${studio.name}`,
         );
       }
+      // Seed TaskTemplate data
+      console.log('📝 Seeding TaskTemplate data...');
+
+      const taskTemplateCount = 50;
+
+      for (let i = 1; i <= taskTemplateCount; i++) {
+        const uidKey = `template${i}`;
+        const uid
+          = fixtures.taskTemplates[
+            uidKey as keyof typeof fixtures.taskTemplates
+          ];
+        const name = `Task Template ${i}`;
+
+        // Define a simple schema for the template
+        const schema = {
+          steps: [
+            {
+              id: 'step1',
+              title: 'Initial Review',
+              type: 'checkbox',
+              required: true,
+            },
+            {
+              id: 'step2',
+              title: 'Asset Collection',
+              type: 'upload',
+              required: false,
+            },
+          ],
+        };
+
+        const existingTemplate = await tx.taskTemplate.findFirst({
+          where: { uid },
+        });
+
+        if (!existingTemplate) {
+          const template = await tx.taskTemplate.create({
+            data: {
+              uid,
+              studioId: studio.id,
+              name,
+              description: `Automated task template #${i} for studio workflows`,
+              isActive: true,
+              currentSchema: schema,
+              version: 1,
+            },
+          });
+
+          // Create initial snapshot
+          await tx.taskTemplateSnapshot.create({
+            data: {
+              templateId: template.id,
+              version: 1,
+              schema,
+              metadata: {
+                createdReason: 'Initial seed',
+              },
+            },
+          });
+
+          if (i % 10 === 0)
+            console.log(`✅ Created ${i} Task Templates...`);
+        } else {
+          if (i % 10 === 0)
+            console.log(`⏭️  Task Template ${i} already exists...`);
+        }
+      }
+      console.log(`✅ Completed seeding ${taskTemplateCount} Task Templates`);
     });
 
     console.log('🎉 Seed process completed successfully!');

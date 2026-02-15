@@ -30,4 +30,5 @@ export * from './show-types/index.js';
 export * from './shows/index.js';
 export * from './studio-rooms/index.js';
 export * from './studios/index.js';
+export * from './task-management/index.js';
 export * from './users/index.js';

@@ -9,8 +9,8 @@ Provides general code quality and best practices guidance applicable across lang
 
 For architecture-specific patterns (N+1 queries, Soft Deletes, etc.), refer to:
 - **[Database Patterns](database-patterns/SKILL.md)**
-- **[Service Patterns](service-pattern/SKILL.md)**
-- **[Repository Patterns](repository-pattern/SKILL.md)**
+- **[Service Patterns](service-pattern-nestjs/SKILL.md)**
+- **[Repository Patterns](repository-pattern-nestjs/SKILL.md)**
 
 ## Pre-Submission Checklist
 
@@ -87,7 +87,7 @@ describe('UserService', () => {
 ## Related Skills
 
 - **database-patterns/SKILL.md**: N+1 queries, Soft Deletes, Bulk Operations.
-- **service-pattern/SKILL.md**: Business logic errors, Transactions.
-- **repository-pattern/SKILL.md**: Data access rules.
+- **service-pattern-nestjs/SKILL.md**: Business logic errors, Transactions.
+- **repository-pattern-nestjs/SKILL.md**: Data access rules.
 - **backend-controller-pattern-nestjs/SKILL.md**: NestJS-specific controller rules.
 - **frontend-code-quality/SKILL.md**: React/Frontend specific patterns.

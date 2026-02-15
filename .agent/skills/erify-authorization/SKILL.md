@@ -8,9 +8,8 @@ description: Patterns for implementing role-based authorization in erify_api wit
 This skill provides **erify_api-specific** authorization implementation patterns, including role-based access control with JSONB storage, AdminGuard implementation, and multi-scope permissions.
 
 **For general authentication/authorization principles, see**:
-- `eridu-authentication-authorization` - General auth principles
-- `eridu-authentication-authorization-backend` - Backend auth patterns (JWT validation, guards)
-- `backend-controller-pattern-admin` - Admin controller patterns
+- `authentication-authorization-nestjs` - Comprehensive auth patterns
+- `backend-controller-pattern-nestjs` - Controller patterns with auth decorators
 
 ## When to Use This Skill
 
@@ -310,8 +309,8 @@ await prisma.user.update({
 
 ## Related Skills
 
-- `eridu-authentication-authorization` - General auth principles
-- `eridu-authentication-authorization-backend` - Backend auth patterns
+- `authentication-authorization-nestjs` - Comprehensive auth patterns
+- `backend-controller-pattern-nestjs` - Controller patterns with auth decorators
 - `backend-controller-pattern-admin` - Admin controller patterns
 - `data-validation` - Input validation and serialization
 

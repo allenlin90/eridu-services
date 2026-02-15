@@ -61,6 +61,10 @@
       "types": "./dist/studios/index.d.ts",
       "default": "./dist/studios/index.js"
     },
+    "./task-management": {
+      "types": "./dist/task-management/index.d.ts",
+      "default": "./dist/task-management/index.js"
+    },
     "./users": {
       "types": "./dist/users/index.d.ts",
       "default": "./dist/users/index.js"

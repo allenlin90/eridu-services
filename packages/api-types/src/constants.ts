@@ -15,4 +15,5 @@ export const UID_PREFIXES = {
   SHOW_STATUS: 'shst',
   SHOW_STANDARD: 'shsd',
   SCHEDULE: 'schedule',
+  TASK_TEMPLATE: 'ttpl',
 } as const;

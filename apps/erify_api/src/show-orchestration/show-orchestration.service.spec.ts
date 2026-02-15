@@ -443,6 +443,7 @@ describe('showOrchestrationService', () => {
         show_standard_name: 'Standard',
         show_status_name: 'Status',
         platform_name: 'Platform',
+        sort: 'desc' as const,
         uid: undefined,
       };
 

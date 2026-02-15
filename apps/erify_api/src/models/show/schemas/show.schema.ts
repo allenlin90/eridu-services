@@ -204,6 +204,7 @@ export class ListShowsQueryDto extends createZodDto(listShowsQuerySchema) {
   declare limit: number;
   declare take: number;
   declare skip: number;
+  declare sort: 'asc' | 'desc';
   declare name?: string;
   declare client_name?: string;
   declare mc_name?: string;

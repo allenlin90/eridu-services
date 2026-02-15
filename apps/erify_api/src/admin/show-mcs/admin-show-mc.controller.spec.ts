@@ -77,6 +77,7 @@ describe('adminShowMcController', () => {
         limit: 10,
         skip: 0,
         take: 10,
+        sort: 'desc',
       };
       const showMcs = [
         { uid: 'show_mc_1', showId: 'show_1', mcId: 'mc_1' },

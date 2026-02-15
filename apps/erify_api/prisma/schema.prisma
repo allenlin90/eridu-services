@@ -23,6 +23,7 @@ model User {
   schedules          Schedule[]         @relation("ScheduleCreator")
   publishedSchedules Schedule[]         @relation("SchedulePublisher")
   scheduleSnapshots  ScheduleSnapshot[]
+  assignedTasks      Task[]
   createdAt          DateTime           @default(now()) @map("created_at")
   updatedAt          DateTime           @updatedAt @map("updated_at")
   deletedAt          DateTime?          @map("deleted_at")
@@ -121,6 +122,7 @@ model Show {
   Schedule       Schedule?      @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
   showMCs        ShowMC[]
   showPlatforms  ShowPlatform[]
+  taskTargets    TaskTarget[]
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @updatedAt @map("updated_at")
   deletedAt      DateTime?      @map("deleted_at")
@@ -214,6 +216,9 @@ model Studio {
   schedules         Schedule[]
   studioRooms       StudioRoom[]
   studioMemberships StudioMembership[]
+  taskTemplates     TaskTemplate[]
+  tasks             Task[]
+  taskTargets       TaskTarget[]
   createdAt         DateTime           @default(now()) @map("created_at")
   updatedAt         DateTime           @updatedAt @map("updated_at")
   deletedAt         DateTime?          @map("deleted_at")
@@ -236,7 +241,7 @@ model StudioRoom {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
- 
+
   @@unique([studioId, name])
   @@index([uid])
   @@index([studioId])
@@ -390,4 +395,145 @@ model ScheduleSnapshot {
   @@index([createdBy, createdAt])
   @@index([scheduleId, snapshotReason, createdAt]) // Snapshot reason filtering
   @@map("schedule_snapshots")
+}
+
+// ============================================
+// TASK TEMPLATES & SNAPSHOTS
+// ============================================
+
+model TaskTemplate {
+  id            BigInt                 @id @default(autoincrement())
+  uid           String                 @unique
+  studioId      BigInt                 @map("studio_id")
+  name          String
+  description   String?
+  isActive      Boolean                @default(true) @map("is_active")
+  // Current version (denormalized for convenience)
+  currentSchema Json                   @map("current_schema")
+  version       Int                    @default(1)
+  // Relations
+  studio        Studio                 @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  snapshots     TaskTemplateSnapshot[]
+  tasks         Task[]
+  createdAt     DateTime               @default(now()) @map("created_at")
+  updatedAt     DateTime               @updatedAt @map("updated_at")
+  deletedAt     DateTime?              @map("deleted_at")
+
+  @@index([uid])
+  @@index([studioId])
+  @@index([isActive])
+  @@index([studioId, updatedAt]) // Optimization for template listing
+  @@map("task_templates")
+}
+
+model TaskTemplateSnapshot {
+  id         BigInt       @id @default(autoincrement())
+  templateId BigInt       @map("template_id")
+  template   TaskTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  version    Int // 1, 2, 3, etc.
+  schema     Json // Immutable schema at this version
+  metadata   Json         @default("{}") // Change notes, author, etc.
+  tasks      Task[]
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  @@unique([templateId, version])
+  @@index([templateId, version])
+  @@map("task_template_snapshots")
+}
+
+// ============================================
+// TASKS
+// ============================================
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  REVIEW
+  COMPLETED
+  BLOCKED
+  CLOSED
+}
+
+enum TaskType {
+  SETUP // Pre-production
+  ACTIVE // During show
+  CLOSURE // Post-production
+  ADMIN // Administrative
+  ROUTINE // Regular maintenance
+  OTHER
+}
+
+model Task {
+  id          BigInt                @id @default(autoincrement())
+  uid         String                @unique
+  description String
+  status      TaskStatus            @default(PENDING)
+  type        TaskType
+  dueDate     DateTime?             @map("due_date")
+  completedAt DateTime?             @map("completed_at")
+  // Schema reference (immutable snapshot)
+  snapshotId  BigInt?               @map("snapshot_id")
+  snapshot    TaskTemplateSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: SetNull)
+  // Optional template reference (for convenience queries)
+  templateId  BigInt?               @map("template_id")
+  template    TaskTemplate?         @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  // Form data (dynamic based on snapshot schema)
+  content     Json                  @default("{}")
+  metadata    Json                  @default("{}")
+  // Optimistic locking
+  version     Int                   @default(1)
+  // Scoping
+  studioId    BigInt?               @map("studio_id")
+  studio      Studio?               @relation(fields: [studioId], references: [id], onDelete: SetNull)
+  // Assignment
+  assigneeId  BigInt?               @map("assignee_id")
+  assignee    User?                 @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+  // Associations
+  targets     TaskTarget[]
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+  deletedAt   DateTime?             @map("deleted_at")
+
+  @@index([uid])
+  @@index([snapshotId])
+  @@index([templateId])
+  @@index([templateId, deletedAt])
+  @@index([studioId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([deletedAt])
+  @@index([assigneeId, status, deletedAt]) // My Tasks (base)
+  @@index([assigneeId, status, dueDate]) // My Tasks (sorted by due date)
+  @@index([studioId, status, deletedAt]) // Studio Dashboard
+  @@index([studioId, assigneeId, deletedAt]) // Studio Assignment
+  @@map("tasks")
+}
+
+// ============================================
+// TASK TARGETS (POLYMORPHIC ASSOCIATION)
+// ============================================
+
+model TaskTarget {
+  id         BigInt    @id @default(autoincrement())
+  taskId     BigInt    @map("task_id")
+  task       Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  // Generic polymorphic reference
+  targetType String    @map("target_type") // "SHOW", "STUDIO", "PROJECT", etc.
+  targetId   BigInt    @map("target_id")
+  // Optional: Keep FK columns for referential integrity
+  showId     BigInt?   @map("show_id")
+  show       Show?     @relation(fields: [showId], references: [id], onDelete: Cascade)
+  studioId   BigInt?   @map("studio_id")
+  studio     Studio?   @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  deletedAt  DateTime? @map("deleted_at")
+
+  @@unique([taskId, targetType, targetId])
+  @@index([taskId])
+  @@index([showId])
+  @@index([showId, deletedAt])
+  @@index([studioId])
+  @@index([studioId, deletedAt])
+  @@index([targetType, targetId])
+  @@index([deletedAt])
+  @@map("task_targets")
 }

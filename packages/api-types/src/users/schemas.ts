@@ -20,6 +20,18 @@ export const profileResponseSchema = z.object({
   payload: jwtPayloadSchema.describe(
     'Full JWT payload including activeOrganizationId, activeTeamId, etc.',
   ),
+  studio_memberships: z
+    .array(
+      z.object({
+        studio: z.object({
+          uid: z.string(),
+          name: z.string(),
+        }),
+        role: z.string(),
+      }),
+    )
+    .optional()
+    .describe('List of studios the user is a member of'),
 });
 
 export type ProfileResponse = z.infer<typeof profileResponseSchema>;
