@@ -75,6 +75,43 @@ export class UserRepository extends BaseRepository<
 }
 ```
 
+### Inherited Methods — Do NOT Override
+
+🔴 **Critical**: `BaseRepository` already provides these methods with built-in `deletedAt: null` filtering. Do NOT re-implement them in child repositories unless you need **custom behavior beyond what the base provides** (e.g., version checking, additional joins).
+
+| Method | Provided by `BaseRepository` | Override only if… |
+|--------|------------------------------|-------------------|
+| `create` | ✅ | Never — use as-is |
+| `findOne` | ✅ | Never — use as-is |
+| `findMany` | ✅ | Never — use as-is |
+| `update` | ✅ | You need custom where-clause logic (e.g., `studioUid` scoping, version checks) |
+| `softDelete` | ✅ | You need additional side effects |
+| `delete` | ✅ | Never — use as-is |
+| `restore` | ✅ | Never — use as-is |
+| `count` | ✅ | Never — use as-is |
+
+```typescript
+// ❌ BAD: Redundant override — BaseRepository already does this
+async update(
+  where: Prisma.PlatformWhereUniqueInput,
+  data: Prisma.PlatformUpdateInput,
+): Promise<Platform> {
+  return this.prisma.platform.update({ where, data });
+}
+
+async softDelete(where: Prisma.PlatformWhereUniqueInput): Promise<Platform> {
+  return this.prisma.platform.update({
+    where,
+    data: { deletedAt: new Date() },
+  });
+}
+
+// ✅ GOOD: Only add specialized methods
+async findPaginated(params: { ... }): Promise<{ data: Platform[]; total: number }> {
+  // Custom filtering logic that BaseRepository doesn't provide
+}
+```
+
 ---
 
 ## Specialized Find Methods

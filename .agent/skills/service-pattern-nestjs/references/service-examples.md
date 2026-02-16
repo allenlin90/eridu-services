@@ -8,7 +8,6 @@ This file contains detailed code examples for service implementation patterns. R
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { TaskTemplate } from '@prisma/client';
 
 import { TemplateSchemaValidator } from '@eridu/api-types/task-management';
 
@@ -32,24 +31,24 @@ export class TaskTemplateService extends BaseModelService {
     super(utilityService);
   }
 
-  // Pass-through method using Parameters<Repo['method']>
+  // Pass-through method using Parameters<Repo['method']> + ReturnType<Repo['method']>
   async getTaskTemplates(
     ...args: Parameters<TaskTemplateRepository['findPaginated']>
-  ): Promise<{ data: TaskTemplate[]; total: number }> {
+  ): ReturnType<TaskTemplateRepository['findPaginated']> {
     return this.repository.findPaginated(...args);
   }
 
   // Pass-through method
   async findOne(
     ...args: Parameters<TaskTemplateRepository['findOne']>
-  ): Promise<TaskTemplate | null> {
+  ): ReturnType<TaskTemplateRepository['findOne']> {
     return this.repository.findOne(...args);
   }
 
   // Create method using payload type from schema file
   async createTemplateWithSnapshot(
     payload: CreateTaskTemplatePayload,
-  ): Promise<TaskTemplate> {
+  ): ReturnType<TaskTemplateRepository['create']> {
     if (!this.validateSchema(payload.currentSchema)) {
       throw HttpError.badRequest('Invalid schema');
     }
@@ -71,7 +70,7 @@ export class TaskTemplateService extends BaseModelService {
   async updateTemplateWithSnapshot(
     where: Parameters<TaskTemplateRepository['updateWithVersionCheck']>[0],
     payload: Parameters<TaskTemplateRepository['updateWithVersionCheck']>[1],
-  ): Promise<TaskTemplate> {
+  ): ReturnType<TaskTemplateRepository['updateWithVersionCheck']> {
     if (payload.currentSchema && !this.validateSchema(payload.currentSchema)) {
       throw HttpError.badRequest('Invalid schema');
     }

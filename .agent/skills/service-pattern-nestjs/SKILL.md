@@ -89,9 +89,12 @@ export class UserService extends BaseModelService {
 
 ## Avoiding ORM Coupling in Services
 
-🔴 **Critical**: Services MUST NEVER import or use Prisma types in method signatures or business logic.
+🔴 **Critical**: Services MUST NEVER import or use `Prisma.*` namespace types (e.g., `Prisma.UserCreateInput`, `Prisma.UserWhereInput`) in method signatures or business logic.
 
-**Why**: We use the repository pattern to encapsulate all database concerns. Services should be completely decoupled from the ORM to allow changing the database layer without touching business logic.
+> [!NOTE]
+> Importing **entity model types** (e.g., `import { Platform } from '@prisma/client'`) for return type annotations IS acceptable — these are plain TypeScript types representing the data shape, not ORM-specific query builders.
+
+**Why**: We use the repository pattern to encapsulate all database concerns. Services should be completely decoupled from ORM query construction to allow changing the database layer without touching business logic.
 
 ### Rule 1: Define Payload Types in Schema Files
 
@@ -143,19 +146,35 @@ For methods that simply pass arguments to the repository, use `Parameters<>` to 
 // ✅ GOOD: Service signature matches repository
 async getTaskTemplates(
   ...args: Parameters<TaskTemplateRepository['findPaginated']>
-): Promise<{ data: TaskTemplate[]; total: number }> {
+): ReturnType<TaskTemplateRepository['findPaginated']> {
   return this.repository.findPaginated(...args);
 }
 
 async findOne(
   ...args: Parameters<TaskTemplateRepository['findOne']>
-): Promise<TaskTemplate | null> {
+): ReturnType<TaskTemplateRepository['findOne']> {
   return this.repository.findOne(...args);
 }
 ```
 
+### Rule 4: Use ReturnType<Repo['method']> for Return Types
+
+🔴 **Critical**: For pass-through methods, use `ReturnType<Repo['method']>` instead of manually typing the return. This keeps the service fully synchronized with the repository.
+
+```typescript
+// ✅ GOOD: Return type derived from repository
+async create(payload: CreatePlatformPayload): ReturnType<PlatformRepository['create']> {
+  return this.repository.create({ ...payload, uid: this.generateUid() });
+}
+
+// ❌ BAD: Manually typed return (drifts if repository changes)
+async create(payload: CreatePlatformPayload): Promise<Platform> {
+  return this.repository.create({ ...payload, uid: this.generateUid() });
+}
+```
+
 **Benefits**:
-- Service has zero Prisma imports
+- Service has zero `Prisma.*` namespace imports
 - Service signature automatically matches repository
 - Changing ORM only requires updating repository
 - Service tests don't need to mock Prisma types
@@ -407,8 +426,9 @@ async createShowWithAssignments(data: CreateShowDto) {
 - [ ] Inject `UtilityService`
 - [ ] Use `this.generateUid()`
 - [ ] 🔴 **Critical**: Define Payload types in schema files (not in service)
-- [ ] 🔴 **Critical**: NEVER import or use `Prisma.*` types in service method signatures
-- [ ] 🔴 **Critical**: Use `Parameters<Repository['methodName']>` for pass-through methods
+- [ ] 🔴 **Critical**: NEVER import or use `Prisma.*` namespace types in service method signatures (entity model imports like `Platform` are fine)
+- [ ] 🔴 **Critical**: Use `Parameters<Repository['methodName']>` for pass-through method arguments
+- [ ] 🔴 **Critical**: Use `ReturnType<Repository['methodName']>` for pass-through method return types
 - [ ] 🔴 **Critical**: Delegate filter building to repository layer (not service)
 - [ ] 🔴 **Critical**: Return `null` (don't throw) if record missing in Read operations
 - [ ] 🔴 **Critical**: Let Controller handle 404 checks (using `ensureResourceExists`)
