@@ -160,7 +160,7 @@ graph TB
 
     %% Future modules (planned)
     classDef planned fill:#f9f9f9,stroke:#999,stroke-dasharray: 5 5
-    class ShowModule,StudioModule,MaterialModule,TaskModule planned
+    class MaterialModule planned
 ```
 
 ### Detailed Module Dependencies
@@ -321,6 +321,7 @@ graph LR
   - `MeModule` (User-scoped operations)
   - `BackdoorModule` (Service-to-service operations)
   - `GoogleSheetsModule` (Google Sheets integration endpoints)
+  - `StudiosModule` (Studio-scoped operations)
   - `OpenAPIModule` (API documentation)
 - **Providers**: Global pipes, interceptors, and filters
 
@@ -748,7 +749,31 @@ graph LR
   - Returns 404 if MC not found or show not assigned to user's MC
 - **Testing Requirements**: Tests should cover controller endpoints (authentication, pagination, error handling) and service logic (MC resolution, show filtering, include patterns). See `shows.controller.spec.ts` and `shows.service.spec.ts` for test implementation details.
 
-### 7. Service-to-Service Modules
+### 7. Studio-Scoped Modules
+
+#### StudiosModule
+
+- **Purpose**: Studio-scoped API endpoints requiring studio membership authorization
+- **Imports**: `StudioTaskTemplateModule`
+- **Exports**: `StudioTaskTemplateModule`
+- **Features**: Endpoints prefixed with `/studios/:studioId` for studio-scoped resources
+- **Authorization**: Uses `@StudioProtected()` decorator and `StudioGuard` for studio membership verification
+
+#### StudioTaskTemplateModule
+
+- **Purpose**: Studio-scoped task template management (CRUD)
+- **Imports**: `TaskTemplateModule`
+- **Controllers**: `StudioTaskTemplateController`
+- **Features**:
+  - `GET /studios/:studioId/task-templates` - List task templates for a studio
+  - `GET /studios/:studioId/task-templates/:id` - Get task template details
+  - `POST /studios/:studioId/task-templates` - Create task template with initial snapshot
+  - `PATCH /studios/:studioId/task-templates/:id` - Update task template (creates snapshot on schema change)
+  - `DELETE /studios/:studioId/task-templates/:id` - Soft delete task template
+- **Authorization**: `@StudioProtected([STUDIO_ROLE.ADMIN])` - Requires studio admin role
+- **Status**: ✅ IMPLEMENTED
+
+### 8. Service-to-Service Modules
 
 #### BackdoorModule
 

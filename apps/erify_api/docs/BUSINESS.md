@@ -457,7 +457,6 @@ erDiagram
     studios ||--o{ task_templates: has_many
     task_templates ||--o{ task_template_snapshots: has_many
     task_template_snapshots ||--o{ tasks: defines_schema
-    tasks }o--|| task_status: is
     tasks ||--o{ task_targets: has_many
     task_targets }o--o| shows: links_to
     users ||--o{ tasks : assigned_to
@@ -725,17 +724,6 @@ erDiagram
       datetime deleted_at
     }
 
-    task_status {
-      int id PK
-      string uid
-      string name "pending, assigned, in_progress, review, completed, blocked"
-      jsonb metadata
-      datetime created_at
-      datetime updated_at
-      datetime deleted_at
-    }
-
-
     task_targets {
       int id PK
       int task_id FK
@@ -753,7 +741,7 @@ erDiagram
       int snapshot_id FK "FK to task_template_snapshots"
       int template_id FK "FK to task_templates (optional)"
       int assignee_id FK "FK to users"
-      string status "enum"
+      string status "enum: PENDING, IN_PROGRESS, REVIEW, COMPLETED, BLOCKED"
       string type "SETUP, ACTIVE, CLOSURE, ADMIN, ROUTINE, OTHER"
       string description
       datetime due_date "nullable"

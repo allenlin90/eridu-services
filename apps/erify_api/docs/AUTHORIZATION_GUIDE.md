@@ -1,8 +1,14 @@
-# Authorization Guide
+# Authorization Guide (Design Proposal)
+
+> **STATUS: NOT IMPLEMENTED — Design Proposal Only**
+>
+> This document describes a **planned** JSONB-based roles/permissions authorization system that has **not been implemented**. The User model does not currently have `roles` or `permissions` fields, and `AdminGuard` does not perform role-to-permission expansion.
+>
+> **For the current authorization implementation**, see [Authentication & Authorization Guide](./AUTHENTICATION_GUIDE.md), which documents the actual `isSystemAdmin` flag + `StudioGuard` system.
 
 ## Overview
 
-This guide documents the authorization system in `erify_api`, which provides granular, role-based access control for admin endpoints and multi-scope access patterns for different user types.
+This guide documents a **proposed** authorization system for `erify_api`, which would provide granular, role-based access control for admin endpoints and multi-scope access patterns for different user types.
 
 ## Architecture Principles
 

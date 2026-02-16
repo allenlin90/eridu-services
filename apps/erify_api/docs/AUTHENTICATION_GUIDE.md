@@ -124,7 +124,7 @@ Both `JwtAuthGuard` and `AdminGuard` are registered as **global guards** in `app
    - Runs on all endpoints by default
    - Checks for `@AdminProtected()` decorator - if present, enforces admin authorization
    - If decorator not present, allows access (returns `true`)
-   - Verifies user has admin role in ANY studio via `StudioMembershipService`
+   - Verifies user has `isSystemAdmin=true` via `UserService.getUserByExtId()`
 
 ## Controller Protection Patterns
 
@@ -346,11 +346,12 @@ model StudioMembership {
 **Functionality:**
 
 - Registered as global guard in `app.module.ts`
-- Checks for `@AdminProtected()` decorator - only enforces admin check if present
-- Verifies user has `isSystemAdmin=true` via `UserService.getUserByExtId()`
+- Checks for `@AdminProtected()` decorator — only enforces admin check if present
+- Calls `UserService.getUserByExtId(ext_id)` to look up the user record
+- Checks `user.isSystemAdmin` flag for authorization
 - Throws `UnauthorizedException` if user is not authenticated
 - Throws `ForbiddenException` if user is not a system admin
-- Uses `ext_id` from authenticated user for database lookup
+- Uses `ext_id` from authenticated user (JWT payload) for database lookup
 
 **Behavior:**
 
@@ -359,15 +360,27 @@ model StudioMembership {
 
 **Status**: ✅ Implemented and registered as global guard
 
+### StudioGuard (Studio-Scoped Authorization)
+
+**Reference**: `src/lib/guards/studio.guard.ts` ✅ (Implemented)
+
+**Functionality:**
+
+- Used with `@StudioProtected()` decorator for studio-scoped endpoints (`/studios/:studioId/*`)
+- Validates user has required role in the specific studio via `StudioMembershipService`
+- Attaches `studioMembership` to request for downstream use
+
 ### StudioMembership Service
 
 **Reference**: `src/models/membership/studio-membership.service.ts`
 
 **Key Methods:**
 
-- `findAdminMembershipByExtId(extId: string)`: Finds admin studio membership by user's ext_id (used by AdminGuard)
+- `findAdminMembershipByExtId(extId: string)`: Finds admin studio membership by user's ext_id
 - `isUserAdmin(userId: UserId)`: Checks if user has admin role in ANY studio (Phase 1 simple check)
 - `getUserStudioMemberships(userId: UserId)`: Gets user's studio memberships
+
+**Note**: These methods are used by `StudioGuard` for studio-scoped authorization. `AdminGuard` uses `UserService.getUserByExtId()` and checks the `isSystemAdmin` flag instead.
 
 ### JWKS Management Endpoints
 

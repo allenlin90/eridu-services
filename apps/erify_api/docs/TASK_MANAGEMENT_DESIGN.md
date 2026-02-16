@@ -2,7 +2,7 @@
 
 **Version**: 3.0  
 **Last Updated**: February 14, 2026  
-**Status**: Ready for Implementation
+**Status**: Partially Implemented (TaskTemplate CRUD + Snapshots at `/studios/:studioId/task-templates`; Task CRUD, generation, assignment, and `/me/tasks` remain pending)
 
 > **Related Documentation**  
 > For UI/UX specifications and user workflows, see [`apps/erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md`](../../erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md)

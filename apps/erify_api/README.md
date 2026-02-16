@@ -206,105 +206,105 @@ See [Authentication Guide](docs/AUTHENTICATION_GUIDE.md) for details.
 
 - `GET /admin/users` - List users with pagination
 - `POST /admin/users` - Create a new user
-- `GET /admin/users/:uid` - Get user by UID
-- `PATCH /admin/users/:uid` - Update user
-- `DELETE /admin/users/:uid` - Soft delete user
+- `GET /admin/users/:id` - Get user by ID
+- `PATCH /admin/users/:id` - Update user
+- `DELETE /admin/users/:id` - Soft delete user
 
 #### 🏢 Clients (`/admin/clients`)
 
 - `GET /admin/clients` - List clients with pagination
 - `POST /admin/clients` - Create a new client
-- `GET /admin/clients/:uid` - Get client by UID
-- `PATCH /admin/clients/:uid` - Update client
-- `DELETE /admin/clients/:uid` - Soft delete client
+- `GET /admin/clients/:id` - Get client by ID
+- `PATCH /admin/clients/:id` - Update client
+- `DELETE /admin/clients/:id` - Soft delete client
 
 #### 🎤 MCs (`/admin/mcs`)
 
 - `GET /admin/mcs` - List MCs with pagination
 - `POST /admin/mcs` - Create a new MC
-- `GET /admin/mcs/:uid` - Get MC by UID
-- `PATCH /admin/mcs/:uid` - Update MC
-- `DELETE /admin/mcs/:uid` - Soft delete MC
+- `GET /admin/mcs/:id` - Get MC by ID
+- `PATCH /admin/mcs/:id` - Update MC
+- `DELETE /admin/mcs/:id` - Soft delete MC
 
 #### 📺 Platforms (`/admin/platforms`)
 
 - `GET /admin/platforms` - List platforms with pagination
 - `POST /admin/platforms` - Create a new platform
-- `GET /admin/platforms/:uid` - Get platform by UID
-- `PATCH /admin/platforms/:uid` - Update platform
-- `DELETE /admin/platforms/:uid` - Soft delete platform
+- `GET /admin/platforms/:id` - Get platform by ID
+- `PATCH /admin/platforms/:id` - Update platform
+- `DELETE /admin/platforms/:id` - Soft delete platform
 
 #### 🎭 Show Types (`/admin/show-types`)
 
 - `GET /admin/show-types` - List show types with pagination
 - `POST /admin/show-types` - Create a new show type
-- `GET /admin/show-types/:uid` - Get show type by UID
-- `PATCH /admin/show-types/:uid` - Update show type
-- `DELETE /admin/show-types/:uid` - Soft delete show type
+- `GET /admin/show-types/:id` - Get show type by ID
+- `PATCH /admin/show-types/:id` - Update show type
+- `DELETE /admin/show-types/:id` - Soft delete show type
 
 #### 📊 Show Statuses (`/admin/show-statuses`)
 
 - `GET /admin/show-statuses` - List show statuses with pagination
 - `POST /admin/show-statuses` - Create a new show status
-- `GET /admin/show-statuses/:uid` - Get show status by UID
-- `PATCH /admin/show-statuses/:uid` - Update show status
-- `DELETE /admin/show-statuses/:uid` - Soft delete show status
+- `GET /admin/show-statuses/:id` - Get show status by ID
+- `PATCH /admin/show-statuses/:id` - Update show status
+- `DELETE /admin/show-statuses/:id` - Soft delete show status
 
 #### ⭐ Show Standards (`/admin/show-standards`)
 
 - `GET /admin/show-standards` - List show standards with pagination
 - `POST /admin/show-standards` - Create a new show standard
-- `GET /admin/show-standards/:uid` - Get show standard by UID
-- `PATCH /admin/show-standards/:uid` - Update show standard
-- `DELETE /admin/show-standards/:uid` - Soft delete show standard
+- `GET /admin/show-standards/:id` - Get show standard by ID
+- `PATCH /admin/show-standards/:id` - Update show standard
+- `DELETE /admin/show-standards/:id` - Soft delete show standard
 
 #### 🏢 Studios (`/admin/studios`)
 
 - `GET /admin/studios` - List studios with pagination
 - `POST /admin/studios` - Create a new studio
-- `GET /admin/studios/:uid` - Get studio by UID
-- `PATCH /admin/studios/:uid` - Update studio
-- `DELETE /admin/studios/:uid` - Soft delete studio
+- `GET /admin/studios/:id` - Get studio by ID
+- `PATCH /admin/studios/:id` - Update studio
+- `DELETE /admin/studios/:id` - Soft delete studio
 
 #### 🚪 Studio Rooms (`/admin/studio-rooms`)
 
 - `GET /admin/studio-rooms` - List studio rooms with pagination
 - `POST /admin/studio-rooms` - Create a new studio room
-- `GET /admin/studio-rooms/:uid` - Get studio room by UID
-- `PATCH /admin/studio-rooms/:uid` - Update studio room
-- `DELETE /admin/studio-rooms/:uid` - Soft delete studio room
+- `GET /admin/studio-rooms/:id` - Get studio room by ID
+- `PATCH /admin/studio-rooms/:id` - Update studio room
+- `DELETE /admin/studio-rooms/:id` - Soft delete studio room
 
 #### 📺 Shows (`/admin/shows`)
 
 - `GET /admin/shows` - List shows with pagination and relations
 - `POST /admin/shows` - Create a new show
-- `GET /admin/shows/:uid` - Get show by UID
-- `PATCH /admin/shows/:uid` - Update show
-- `DELETE /admin/shows/:uid` - Soft delete show
+- `GET /admin/shows/:id` - Get show by ID
+- `PATCH /admin/shows/:id` - Update show
+- `DELETE /admin/shows/:id` - Soft delete show
 
 #### 🎬 Show MCs (`/admin/show-mcs`)
 
 - `GET /admin/show-mcs` - List show-MC relationships with pagination
 - `POST /admin/show-mcs` - Create show-MC assignment
-- `GET /admin/show-mcs/:uid` - Get show-MC by UID
-- `PATCH /admin/show-mcs/:uid` - Update show-MC assignment
-- `DELETE /admin/show-mcs/:uid` - Soft delete show-MC assignment
+- `GET /admin/show-mcs/:id` - Get show-MC by ID
+- `PATCH /admin/show-mcs/:id` - Update show-MC assignment
+- `DELETE /admin/show-mcs/:id` - Soft delete show-MC assignment
 
 #### 🌐 Show Platforms (`/admin/show-platforms`)
 
 - `GET /admin/show-platforms` - List show-platform integrations with pagination
 - `POST /admin/show-platforms` - Create show-platform integration
-- `GET /admin/show-platforms/:uid` - Get show-platform by UID
-- `PATCH /admin/show-platforms/:uid` - Update show-platform integration
-- `DELETE /admin/show-platforms/:uid` - Soft delete show-platform integration
+- `GET /admin/show-platforms/:id` - Get show-platform by ID
+- `PATCH /admin/show-platforms/:id` - Update show-platform integration
+- `DELETE /admin/show-platforms/:id` - Soft delete show-platform integration
 
 #### 👥 Studio Memberships (`/admin/studio-memberships`)
 
 - `GET /admin/studio-memberships` - List studio memberships with pagination
 - `POST /admin/studio-memberships` - Create studio membership
-- `GET /admin/studio-memberships/:uid` - Get studio membership by UID
-- `PATCH /admin/studio-memberships/:uid` - Update studio membership
-- `DELETE /admin/studio-memberships/:uid` - Soft delete studio membership
+- `GET /admin/studio-memberships/:id` - Get studio membership by ID
+- `PATCH /admin/studio-memberships/:id` - Update studio membership
+- `DELETE /admin/studio-memberships/:id` - Soft delete studio membership
 
 #### 📅 Schedules (`/admin/schedules`)
 

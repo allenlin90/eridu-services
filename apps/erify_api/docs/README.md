@@ -12,6 +12,7 @@ This directory contains comprehensive documentation for the Eridu Services API (
 ### Authentication & Security
 
 - **[Authentication & Authorization Guide](./AUTHENTICATION_GUIDE.md)** - JWT validation, authorization patterns, and SDK implementation strategy
+- **[Authorization Guide (Design Proposal)](./AUTHORIZATION_GUIDE.md)** - Planned JSONB-based roles/permissions system (NOT YET IMPLEMENTED)
 - **[Server-to-Server Authentication Guide](./SERVER_TO_SERVER_AUTH.md)** - API key guard usage for service-to-service communication
 
 ### Features & Roadmap
@@ -20,6 +21,7 @@ This directory contains comprehensive documentation for the Eridu Services API (
 - **[Phase 2 Roadmap](./roadmap/PHASE_2.md)** - Task Management & Assignments (planned)
 - **[Phase 3 Roadmap](./roadmap/PHASE_3.md)** - Material Management & File Uploads (planned)
 - **[Schedule Upload API Design](./SCHEDULE_UPLOAD_API_DESIGN.md)** - Schedule upload system design with JSON-based planning and snapshot versioning
+- **[Task Management Design](./TASK_MANAGEMENT_DESIGN.md)** - Task management system design, ERD, and implementation checklist (partially implemented)
 
 ### API Reference
 
@@ -54,9 +56,11 @@ This directory contains comprehensive documentation for the Eridu Services API (
 docs/
 ├── ARCHITECTURE.md              # System architecture and module design
 ├── AUTHENTICATION_GUIDE.md      # Authentication, authorization, and SDK implementation
+├── AUTHORIZATION_GUIDE.md       # Authorization design proposal (not yet implemented)
 ├── BUSINESS.md                  # Business domain concepts and entity relationships
 ├── SERVER_TO_SERVER_AUTH.md     # API key authentication guide
 ├── SCHEDULE_UPLOAD_API_DESIGN.md # Schedule planning system design
+├── TASK_MANAGEMENT_DESIGN.md    # Task management system design (partially implemented)
 ├── README.md                    # This file
 ├── roadmap/
 │   ├── PHASE_1.md              # Phase 1 implementation roadmap

@@ -365,6 +365,7 @@ model User {
   extId              String?            @unique @map("ext_id") // For SSO integration
   email              String             @unique
   name               String
+  isSystemAdmin      Boolean            @default(false) @map("is_system_admin")
   isBanned           Boolean            @default(false) @map("is_banned")
   profileUrl         String?            @map("profile_url")
   metadata           Json               @default("{}")
@@ -381,6 +382,7 @@ model User {
   @@index([email])
   @@index([name])
   @@index([extId])
+  @@index([isSystemAdmin])
   @@index([isBanned])
   @@index([deletedAt])
   @@map("users")

@@ -1,6 +1,6 @@
 # Phase 2: Show Task Management & Assignments
 
-**Status**: ⏳ Planning phase
+**Status**: ⏳ Partially Implemented
 
 ## Overview
 
@@ -46,7 +46,8 @@ Phase 2 focuses on "**generic Task Management**" to enable extensible workflow m
 
 ### CRUD Entities
 
-- [ ] `TaskTemplate` (Schema Definition)
+- [x] `TaskTemplate` (Schema Definition) ✅ Implemented at `/studios/:studioId/task-templates`
+- [x] `TaskTemplateSnapshot` (Immutable version history) ✅ Auto-created on schema changes
 - [ ] Application constants: `TaskStatus` (Enum)
 - [ ] `Task` (Form Instance) & `TaskTarget` (Association)
 
@@ -69,7 +70,7 @@ Phase 2 focuses on "**generic Task Management**" to enable extensible workflow m
 
 ### API Design
 
-- RESTful endpoints: `/admin/tasks`, `/admin/task-templates`.
+- RESTful endpoints: `/admin/tasks`, `/studios/:studioId/task-templates` (✅ implemented).
 
 ## Success Criteria
 

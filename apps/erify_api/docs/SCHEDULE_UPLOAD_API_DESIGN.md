@@ -874,11 +874,11 @@ sequenceDiagram
 - Single schedule validation and publishing
 - Snapshots and restore
 - Monthly overview
-- **Bulk publish endpoint** ⭐ **NEW**
-- **Job status tracking** ⭐ **NEW**
 
-**Phase 2** (⚠️ Deferred):
+**Phase 2** (⏳ Deferred):
 
+- **Bulk publish endpoint** (`POST /admin/schedules/bulk-publish`)
+- **Job status tracking** (`GET /admin/jobs/:job_id`)
 - Cross-client validation endpoint
 - Chunked upload (for edge cases with very large clients)
 - Enhanced error reporting with row numbers
