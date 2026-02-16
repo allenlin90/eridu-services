@@ -24,7 +24,7 @@ Study these real implementations as the source of truth:
 
 ## Core Responsibilities
 
-Services act as the business logic layer:
+Services act as the business logic layer. They should:
 
 1. **Implement business logic** - Handle domain rules and operations
 2. **Coordinate data access** - Call repositories to fetch/persist data
@@ -37,23 +37,33 @@ Services act as the business logic layer:
 
 ## Service Architecture
 
+**Layered Pattern**:
+
 ```
 Controller (HTTP boundary)
     ↓
 Service (Business logic)
-    ├─ Model Services (single entity CRUD)
-    └─ Orchestration Services (multi-entity workflows)
+    ├─ Model Services (single entity)
+    └─ Orchestration Services (multiple entities)
     ↓
 Repository (Data access)
     ↓
 Database
 ```
 
+### Model Services
+
+Handle CRUD operations for a single entity. Focused on single entity, simple CRUD operations, dependency on one or more repositories.
+
+### Orchestration Services
+
+Coordinate multiple entities for complex workflows. Handle complex business workflows, use transactions for atomicity.
+
 ---
 
 ## Model Service Structure
 
-🔴 **Critical**: Extend `BaseModelService` for standard CRUD.
+🔴 **Critical**: Extend `BaseModelService<T>` for standard CRUD.
 
 ```typescript
 import { Injectable } from '@nestjs/common';
@@ -62,7 +72,8 @@ import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
 export class UserService extends BaseModelService {
-  static readonly UID_PREFIX = 'user';  // NO trailing underscore
+  // UID_PREFIX has NO trailing underscore (e.g., 'user', not 'user_')
+  static readonly UID_PREFIX = 'user';
   protected readonly uidPrefix = UserService.UID_PREFIX;
 
   constructor(
@@ -71,146 +82,346 @@ export class UserService extends BaseModelService {
   ) {
     super(utilityService);
   }
-
-  // Example CRUD methods...
 }
 ```
 
 ---
 
-## Context-Agnostic Design
+## Avoiding ORM Coupling in Services
 
-🔴 **Critical**: Services MUST be context-agnostic and callable from **any context**:
-- HTTP Controllers, GraphQL Resolvers, CLI Commands, Background Jobs, Other Services
+🔴 **Critical**: Services MUST NEVER import or use Prisma types in method signatures or business logic.
 
-### Design Principles
+**Why**: We use the repository pattern to encapsulate all database concerns. Services should be completely decoupled from the ORM to allow changing the database layer without touching business logic.
 
-1. ✅ **Clean contracts** - Domain payloads in, domain entities out
-2. ✅ **No caller awareness** - Services don't know who calls them
-3. ✅ **No context coupling** - No HTTP, CLI, or job-specific logic
-4. ✅ **Fully reusable** - Same method works in all contexts
-5. ✅ **Domain exceptions** - Not transport-specific errors
+### Rule 1: Define Payload Types in Schema Files
 
-**Key Test**: _"Can this service be called from a CLI script without changes?"_
+Schema files MAY use `Prisma.*` types to **define** payload types:
 
-**Example**:
 ```typescript
-// ✅ GOOD: Context-agnostic
-async create(payload: CreateTaskPayload): Promise<Task> {
-  const task = await this.taskRepository.create({
+// ✅ ALLOWED: In schema file
+import type { Prisma } from '@prisma/client';
+
+export type CreateTaskTemplatePayload = Omit<
+  Prisma.TaskTemplateCreateInput,
+  'uid' | 'version'
+> & {
+  uid?: string;
+  currentSchema: any;
+};
+```
+
+### Rule 2: Services Import Payload Types, NOT Prisma Types
+
+```typescript
+// ✅ GOOD: Service imports payload type from schema
+import type { CreateTaskTemplatePayload } from './schemas/task-template.schema';
+
+async createTemplateWithSnapshot(
+  payload: CreateTaskTemplatePayload,
+): Promise<TaskTemplate> {
+  return this.repository.create({
     ...payload,
     uid: this.generateUid(),
   });
-  return task;
+}
+```
+
+```typescript
+// ❌ BAD: Service imports Prisma types
+import { Prisma } from '@prisma/client';
+
+async create(payload: Prisma.TaskTemplateCreateInput): Promise<TaskTemplate> {
+  // ...
+}
+```
+
+### Rule 3: Use Parameters<Repo['method']> for Pass-Through
+
+For methods that simply pass arguments to the repository, use `Parameters<>` to match the repository signature:
+
+```typescript
+// ✅ GOOD: Service signature matches repository
+async getTaskTemplates(
+  ...args: Parameters<TaskTemplateRepository['findPaginated']>
+): Promise<{ data: TaskTemplate[]; total: number }> {
+  return this.repository.findPaginated(...args);
 }
 
-// ❌ BAD: HTTP-coupled
-async create(req: Request, res: Response) { ... }
-
-// ❌ BAD: DTO-coupled
-async create(dto: CreateTaskDto) { ... }
+async findOne(
+  ...args: Parameters<TaskTemplateRepository['findOne']>
+): Promise<TaskTemplate | null> {
+  return this.repository.findOne(...args);
+}
 ```
 
-**📖 See [references/service-examples.md#context-agnostic-examples](references/service-examples.md#context-agnostic-examples) for detailed examples.**
+**Benefits**:
+- Service has zero Prisma imports
+- Service signature automatically matches repository
+- Changing ORM only requires updating repository
+- Service tests don't need to mock Prisma types
+
+### Rule 4: Repository Owns Where-Clause Building
+
+The repository layer is responsible for building ORM-specific where clauses. Services pass domain-level parameters:
+
+```typescript
+// ✅ GOOD: Repository accepts domain parameters
+// Repository method signature:
+async findPaginated(params: {
+  skip?: number;
+  take?: number;
+  name?: string;
+  uid?: string;
+  includeDeleted?: boolean;
+  studioUid?: string;
+  orderBy?: 'asc' | 'desc';
+}): Promise<{ data: TaskTemplate[]; total: number }>
+```
+
+The repository then builds the Prisma where clause internally:
+
+```typescript
+// Inside repository:
+const where: Prisma.TaskTemplateWhereInput = {};
+
+if (!includeDeleted) {
+  where.deletedAt = null;
+}
+
+if (name) {
+  where.name = { contains: name, mode: 'insensitive' };
+}
+
+if (studioUid) {
+  where.studio = { uid: studioUid };
+}
+```
 
 ---
 
-## Error Handling Trade-Off
+## CRUD Operations
 
-⚠️ **Note**: This project uses `HttpError` (couples to HTTP) for **pragmatic simplicity**:
+### Create with ID Generation
 
 ```typescript
-// Current Pattern (pragmatic)
-if (!user) throw HttpError.notFound('User', uid);
-
-// Trade-offs: ✅ Simpler, fewer classes | ❌ HTTP-coupled
+async createUser(data: CreateUserDto): Promise<User> {
+  return this.userRepository.create({
+    uid: this.generateUid(), // Helper from BaseModelService
+    email: data.email,
+    name: data.name,
+  });
+}
 ```
 
-**Ideal Pattern**: Domain exceptions + controller mapping (more complex, fully context-agnostic).
+### Read with Verification
 
-**📖 See [references/service-examples.md#error-handling-patterns](references/service-examples.md#error-handling-patterns) for comparison.**
+```typescript
+async getUserById(uid: string): Promise<User> {
+  const user = await this.userRepository.findByUid(uid);
+  if (!user) throw HttpError.notFound('User', uid);
+  return user;
+}
+```
+
+### Controller-Checks Pattern (RoR Style)
+
+🟡 **Recommended**: Service returns `null` or result. Controller handles existence checks and 404s.
+
+**Why**: This keeps services transport-agnostic (returning `null` is a data fact, throwing 404 is an HTTP response).
+
+#### 1. Read Operations
+Service returns `null`, Controller throws 404.
+
+```typescript
+// Service
+async getUserById(uid: string): Promise<User | null> {
+  return this.userRepository.findByUid(uid);
+}
+
+// Controller
+@Get(':id')
+async getUser(@Param('id') id: string) {
+  const user = await this.userService.getUserById(id);
+  // Helper from BaseAdminController / BaseStudioController
+  this.ensureResourceExists(user, 'User', id);
+  return user;
+}
+```
+
+#### 2. Update/Delete Operations
+Controller verifies existence BEFORE calling the mutation service.
+
+```typescript
+// Controller
+@Patch(':id')
+async updateUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+  // 1. Verify existence
+  const user = await this.userService.getUserById(id);
+  this.ensureResourceExists(user, 'User', id);
+  
+  // 2. Perform operation
+  return this.userService.updateUser(id, dto);
+}
+
+@Delete(':id')
+async deleteUser(@Param('id') id: string) {
+  // 1. Verify existence
+  const user = await this.userService.getUserById(id);
+  this.ensureResourceExists(user, 'User', id);
+  
+  // 2. Perform operation
+  await this.userService.deleteUser(id);
+}
+```
+
+### Bulk Operations
+
+🟡 **Recommended**: Use Repository bulk methods, DO NOT loop in Service.
+
+```typescript
+async createManyUsers(users: CreateUserDto[]) {
+  // Map DTOs to internal structure (e.g. add UIDs)
+  const data = users.map(u => ({
+    ...u,
+    uid: this.generateUid()
+  }));
+  
+  // Single DB Call
+  return this.userRepository.createMany(data);
+}
+```
 
 ---
 
-## Strict ORM Decoupling
+## Optimistic Locking Pattern
 
-🔴 **STRICT**: Services are **FORBIDDEN** from ANY Prisma imports. **NO EXCEPTIONS**.
+🟡 **Recommended**: For versioned entities, use version checks to prevent concurrent update conflicts.
 
-### 4 Rules
-
-1. **Schema files define payloads** - MAY use `Prisma.*` to define types
-2. **Services import payloads** - NOT `Prisma.*` types
-3. **Use `Parameters<Repo['method']>`** - For pass-through methods
-4. **Repository builds queries** - Services pass domain parameters
-
-**Examples**:
 ```typescript
-// ✅ GOOD: Schema defines payload (allowed Prisma here)
-// In schema file:
-export type CreateTaskPayload = Omit<Prisma.TaskCreateInput, 'uid'>;
+async updateTemplateWithSnapshot(
+  where: Parameters<TaskTemplateRepository['updateWithVersionCheck']>[0],
+  payload: Parameters<TaskTemplateRepository['updateWithVersionCheck']>[1],
+): Promise<TaskTemplate> {
+  if (payload.currentSchema && !this.validateSchema(payload.currentSchema)) {
+    throw HttpError.badRequest('Invalid schema');
+  }
 
-// ✅ GOOD: Service imports payload
-import type { CreateTaskPayload } from './schemas';
-async create(payload: CreateTaskPayload): Promise<Task>
+  try {
+    if (payload.currentSchema) {
+      const newVersion = (payload.version as number) + 1;
+      return await this.repository.updateWithVersionCheck(where, {
+        name: payload.name,
+        description: payload.description,
+        currentSchema: payload.currentSchema,
+        version: newVersion,
+        snapshots: {
+          create: {
+            version: newVersion,
+            schema: payload.currentSchema,
+          },
+        },
+      });
+    }
 
-// ✅ GOOD: Pass-through with Parameters<>
-async findOne(...args: Parameters<TaskRepository['findOne']>)
-
-// ❌ BAD: Direct Prisma import in service
-import { Prisma } from '@prisma/client';
-async create(data: Prisma.TaskCreateInput)
+    return await this.repository.update(where, {
+      name: payload.name,
+      description: payload.description,
+    });
+  } catch (error) {
+    if (error instanceof VersionConflictError) {
+      throw HttpError.conflict(
+        `Record is out of date. Please refresh your record and try again.`,
+      );
+    }
+    throw error;
+  }
+}
 ```
 
-**📖 See [references/service-examples.md#orm-decoupling-examples](references/service-examples.md#orm-decoupling-examples) for detailed examples.**
+---
+
+## Including Relations
+
+**Question**: Should services expose `include` parameters?
+
+**Short Answer**: Avoid it when possible, but it's acceptable for internal orchestration APIs.
+
+### Recommended Pattern: Dedicated Methods
+
+```typescript
+// ✅ GOOD: Dedicated methods for different data shapes
+async getTaskById(uid: string): Promise<Task>
+async getTaskWithAssignee(uid: string): Promise<Task & { assignee: User }>
+async getTaskWithTemplate(uid: string): Promise<Task & { template: TaskTemplate }>
+```
+
+### Acceptable Pattern: Internal Orchestration API
+
+```typescript
+// ✅ ACCEPTABLE: For orchestration services that need flexibility
+/**
+ * @internal
+ * Internal method for orchestration services.
+ * Controllers should use dedicated methods like getTaskWithAssignee().
+ */
+async findOne(
+  ...args: Parameters<TaskRepository['findOne']>
+): Promise<Task | null> {
+  return this.taskRepository.findOne(...args);
+}
+```
+
+**When to use each**:
+- **Dedicated methods**: For controller-facing APIs (preferred)
+- **Parameters spread**: For internal flexibility (acceptable, mark as @internal)
+
+---
+
+## Orchestration Services
+
+🔴 **Critical**: Coordinate multiple services/repositories using Transactions.
+
+See **[Database Patterns](database-patterns/SKILL.md)** for transaction rules.
+
+```typescript
+// Example: Creating a Show implies creating Assignments
+async createShowWithAssignments(data: CreateShowDto) {
+  return this.prismaService.$transaction(async (tx) => {
+    // 1. Create Parent
+    const show = await this.showService.createShow({ ...data, tx });
+    
+    // 2. Create Children
+    await this.assignmentService.createAssignments(show.id, data.assignments, tx);
+    
+    return show;
+  });
+}
+```
 
 ---
 
 ## Best Practices Checklist
 
-### Context-Agnostic Design
-- [ ] 🔴 **STRICT**: Services accept domain payloads, NOT DTOs or HTTP objects
-- [ ] 🔴 **STRICT**: Services return domain entities, NOT HTTP responses
-- [ ] 🔴 **STRICT**: Services don't know caller context (HTTP, CLI, job)
-- [ ] 🔴 **STRICT**: Methods callable from any context without modification
-- [ ] Use `HttpError` for exceptions (pragmatic trade-off)
-
-### ORM Decoupling (STRICT)
-- [ ] 🔴 **STRICT**: ZERO `import { Prisma }` in service files
-- [ ] 🔴 **STRICT**: ZERO `Prisma.*` types in method signatures
-- [ ] 🔴 **STRICT**: Payload types defined in schema files ONLY
-- [ ] 🔴 **STRICT**: Use `Parameters<Repository['method']>` for pass-through
-- [ ] 🔴 **STRICT**: ALL query building in repository layer
-
-### Standard Patterns
 - [ ] Extend `BaseModelService`
 - [ ] Define `UID_PREFIX` static constant (no trailing underscore)
 - [ ] Inject `UtilityService`
-- [ ] Use `this.generateUid()` for ID generation
-- [ ] 🔴 **Critical**: Verify resource exists before Update/Delete
-- [ ] Never throw `NotFoundException` (use `HttpError.notFound`)
-- [ ] Catch `VersionConflictError` → rethrow as `HttpError.conflict()`
-- [ ] Use `Promise.all` for independent async operations
-- [ ] Use `PrismaService.$transaction` for multi-step workflows
-- [ ] Prefer dedicated methods over exposing `include` parameters
-- [ ] Mark orchestration methods with `@internal` JSDoc
-
----
-
-## Common Patterns
-
-📖 **See [references/service-examples.md](references/service-examples.md) for detailed examples of**:
-- CRUD operations (Create, Read, Update, Delete, Bulk)
-- Optimistic locking with version checks
-- Including relations (dedicated methods vs flexibility)
-- Orchestration services with transactions
-- Context-agnostic design patterns
-- ORM decoupling strategies
+- [ ] Use `this.generateUid()`
+- [ ] 🔴 **Critical**: Define Payload types in schema files (not in service)
+- [ ] 🔴 **Critical**: NEVER import or use `Prisma.*` types in service method signatures
+- [ ] 🔴 **Critical**: Use `Parameters<Repository['methodName']>` for pass-through methods
+- [ ] 🔴 **Critical**: Delegate filter building to repository layer (not service)
+- [ ] 🔴 **Critical**: Return `null` (don't throw) if record missing in Read operations
+- [ ] 🔴 **Critical**: Let Controller handle 404 checks (using `ensureResourceExists`)
+- [ ] 🔴 **Critical**: Never throw `NotFoundException` in Service (business logic only)
+- [ ] Catch `VersionConflictError` and rethrow as `HttpError.conflict()`
+- [ ] 🟡 **Recommended**: Prefer dedicated methods over exposing `include` parameters
+- [ ] Mark methods with `@internal` JSDoc if they're for orchestration only
 
 ---
 
 ## Related Skills
 
-- **[Repository Pattern NestJS](../repository-pattern-nestjs/SKILL.md)** - Data access patterns
-- **[Backend Controller Pattern NestJS](../backend-controller-pattern-nestjs/SKILL.md)** - Controller patterns
-- **[Database Patterns](../database-patterns/SKILL.md)** - Transactions, soft delete, locking
-- **[Data Validation](../data-validation/SKILL.md)** - Input validation patterns
+- **[Repository Pattern NestJS](repository-pattern-nestjs/SKILL.md)** - Data access patterns
+- **[Backend Controller Pattern NestJS](backend-controller-pattern-nestjs/SKILL.md)** - Controller patterns
+- **[Database Patterns](database-patterns/SKILL.md)** - Transactions, soft delete, locking
+- **[Data Validation](data-validation/SKILL.md)** - Input validation patterns

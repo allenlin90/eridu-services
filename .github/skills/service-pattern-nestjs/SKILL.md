@@ -223,26 +223,54 @@ async getUserById(uid: string): Promise<User> {
 }
 ```
 
-### Update - Verify Before Modify Pattern
+### Controller-Checks Pattern (RoR Style)
 
-🔴 **Critical**: Always check existence before mutating.
+🟡 **Recommended**: Service returns `null` or result. Controller handles existence checks and 404s.
+
+**Why**: This keeps services transport-agnostic (returning `null` is a data fact, throwing 404 is an HTTP response).
+
+#### 1. Read Operations
+Service returns `null`, Controller throws 404.
 
 ```typescript
-async updateUser(uid: string, data: UpdateUserDto): Promise<User> {
-  await this.getUserById(uid); // Ensure exists
-  return this.userRepository.update({ uid }, data);
+// Service
+async getUserById(uid: string): Promise<User | null> {
+  return this.userRepository.findByUid(uid);
+}
+
+// Controller
+@Get(':id')
+async getUser(@Param('id') id: string) {
+  const user = await this.userService.getUserById(id);
+  // Helper from BaseAdminController / BaseStudioController
+  this.ensureResourceExists(user, 'User', id);
+  return user;
 }
 ```
 
-### Delete with Verification
+#### 2. Update/Delete Operations
+Controller verifies existence BEFORE calling the mutation service.
 
 ```typescript
-async deleteUser(uid: string): Promise<void> {
-  // 1. Verify existence (throws 404 if missing)
-  await this.getUserById(uid);
-
+// Controller
+@Patch(':id')
+async updateUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+  // 1. Verify existence
+  const user = await this.userService.getUserById(id);
+  this.ensureResourceExists(user, 'User', id);
+  
   // 2. Perform operation
-  await this.userRepository.softDelete({ uid });
+  return this.userService.updateUser(id, dto);
+}
+
+@Delete(':id')
+async deleteUser(@Param('id') id: string) {
+  // 1. Verify existence
+  const user = await this.userService.getUserById(id);
+  this.ensureResourceExists(user, 'User', id);
+  
+  // 2. Perform operation
+  await this.userService.deleteUser(id);
 }
 ```
 
@@ -382,11 +410,9 @@ async createShowWithAssignments(data: CreateShowDto) {
 - [ ] 🔴 **Critical**: NEVER import or use `Prisma.*` types in service method signatures
 - [ ] 🔴 **Critical**: Use `Parameters<Repository['methodName']>` for pass-through methods
 - [ ] 🔴 **Critical**: Delegate filter building to repository layer (not service)
-- [ ] 🔴 **Critical**: Verify resource exists before Update/Delete
-- [ ] Use `HttpError` for all exceptions
-- [ ] Use `Promise.all` for independent async tasks
-- [ ] Use `PrismaService.$transaction` for multi-step workflows
-- [ ] 🔴 **Critical**: Never throw `NotFoundException` directly (use `HttpError.notFound`)
+- [ ] 🔴 **Critical**: Return `null` (don't throw) if record missing in Read operations
+- [ ] 🔴 **Critical**: Let Controller handle 404 checks (using `ensureResourceExists`)
+- [ ] 🔴 **Critical**: Never throw `NotFoundException` in Service (business logic only)
 - [ ] Catch `VersionConflictError` and rethrow as `HttpError.conflict()`
 - [ ] 🟡 **Recommended**: Prefer dedicated methods over exposing `include` parameters
 - [ ] Mark methods with `@internal` JSDoc if they're for orchestration only
