@@ -90,3 +90,21 @@ export class ListStudiosQueryDto extends createZodDto(listStudiosQuerySchema) {
   declare include_deleted: boolean;
   declare uid: string | undefined;
 }
+
+/**
+ * Payload for creating a studio (service layer).
+ */
+export type CreateStudioPayload = {
+  name: string;
+  address: string;
+  metadata?: Record<string, any>;
+};
+
+/**
+ * Payload for updating a studio (service layer).
+ */
+export type UpdateStudioPayload = {
+  name?: string;
+  address?: string;
+  metadata?: Record<string, any>;
+};

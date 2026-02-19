@@ -15,7 +15,7 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-// import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+// import { HttpError } from '@/lib/errors/http-error.util';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateShowTypeDto,
@@ -38,7 +38,8 @@ export class AdminShowTypeController extends BaseAdminController {
     'Show type created successfully',
   )
   createShowType(@Body() body: CreateShowTypeDto) {
-    return this.showTypeService.createShowType(body);
+    const { name, metadata } = body;
+    return this.showTypeService.createShowType({ name, metadata });
   }
 
   @Get()
@@ -57,21 +58,27 @@ export class AdminShowTypeController extends BaseAdminController {
 
   @Get(':id')
   @AdminResponse(showTypeDto, HttpStatus.OK, 'Show type details')
-  getShowType(
+  async getShowType(
     @Param('id', new UidValidationPipe(ShowTypeService.UID_PREFIX, 'Show Type'))
     id: string,
   ) {
-    return this.showTypeService.getShowTypeById(id);
+    const showType = await this.showTypeService.getShowTypeById(id);
+    this.ensureResourceExists(showType, 'Show Type', id);
+    return showType;
   }
 
   @Patch(':id')
   @AdminResponse(showTypeDto, HttpStatus.OK, 'Show type updated successfully')
-  updateShowType(
+  async updateShowType(
     @Param('id', new UidValidationPipe(ShowTypeService.UID_PREFIX, 'Show Type'))
     id: string,
     @Body() body: UpdateShowTypeDto,
   ) {
-    return this.showTypeService.updateShowType(id, body);
+    const showType = await this.showTypeService.getShowTypeById(id);
+    this.ensureResourceExists(showType, 'Show Type', id);
+
+    const { name, metadata } = body;
+    return this.showTypeService.updateShowType(id, { name, metadata });
   }
 
   @Delete(':id')
@@ -80,6 +87,9 @@ export class AdminShowTypeController extends BaseAdminController {
     @Param('id', new UidValidationPipe(ShowTypeService.UID_PREFIX, 'Show Type'))
     id: string,
   ) {
-    await this.showTypeService.deleteShowType(id);
+    const showType = await this.showTypeService.getShowTypeById(id);
+    this.ensureResourceExists(showType, 'Show Type', id);
+
+    await this.showTypeService.deleteShowType({ uid: id });
   }
 }

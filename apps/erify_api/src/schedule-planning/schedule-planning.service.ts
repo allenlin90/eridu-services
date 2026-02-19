@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma } from '@prisma/client';
 
 import {
@@ -11,7 +13,6 @@ import { ValidationService } from './validation.service';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
-import { PrismaService } from '@/prisma/prisma.service';
 
 type SnapshotWithScheduleInclude = Prisma.ScheduleSnapshotGetPayload<{
   include: {
@@ -32,7 +33,7 @@ export class SchedulePlanningService {
     private readonly scheduleSnapshotService: ScheduleSnapshotService,
     private readonly validationService: ValidationService,
     private readonly publishingService: PublishingService,
-    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {}
 
   /**
@@ -123,33 +124,38 @@ export class SchedulePlanningService {
     }
 
     // Execute restore in a transaction
-    return this.prisma.executeTransaction(async (tx) => {
-      // 1. Create a snapshot of current state before restore (for rollback)
-      await this.scheduleSnapshotService.createScheduleSnapshot({
-        schedule: { connect: { id: schedule.id } },
-        planDocument: schedule.planDocument as Prisma.InputJsonValue,
-        version: schedule.version,
-        status: schedule.status,
-        snapshotReason: 'before_restore',
-        user: { connect: { id: userId } },
-      });
+    return this.doRestore(schedule, snapshot, userId);
+  }
 
-      // 2. Restore plan document from snapshot
-      const restoredSchedule = await tx.schedule.update({
-        where: { id: schedule.id },
-        data: {
-          planDocument: snapshot.planDocument as Prisma.InputJsonValue,
-          version: schedule.version + 1,
-          updatedAt: new Date(),
-        },
-        include: {
-          client: true,
-          createdByUser: true,
-          publishedByUser: true,
-        },
-      });
+  @Transactional()
+  private async doRestore(
+    schedule: { id: bigint; planDocument: Prisma.JsonValue; version: number; status: string },
+    snapshot: { planDocument: Prisma.JsonValue },
+    userId: bigint,
+  ) {
+    // 1. Create a snapshot of current state before restore (for rollback)
+    await this.scheduleSnapshotService.createScheduleSnapshot({
+      schedule: { connect: { id: schedule.id } },
+      planDocument: schedule.planDocument as Prisma.InputJsonValue,
+      version: schedule.version,
+      status: schedule.status,
+      snapshotReason: 'before_restore',
+      user: { connect: { id: userId } },
+    });
 
-      return restoredSchedule;
+    // 2. Restore plan document from snapshot
+    return this.txHost.tx.schedule.update({
+      where: { id: schedule.id },
+      data: {
+        planDocument: snapshot.planDocument as Prisma.InputJsonValue,
+        version: schedule.version + 1,
+        updatedAt: new Date(),
+      },
+      include: {
+        client: true,
+        createdByUser: true,
+        publishedByUser: true,
+      },
     });
   }
 

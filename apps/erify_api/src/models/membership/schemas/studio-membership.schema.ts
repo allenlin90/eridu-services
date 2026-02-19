@@ -212,8 +212,8 @@ export const listStudioMembershipsQuerySchema = paginationQuerySchema
   .and(listStudioMembershipsFilterSchema)
   .transform((data) => ({
     ...data,
-    name: data.name,
     uid: data.id,
+    studioId: data.studio_id,
   }));
 
 export class ListStudioMembershipsQueryDto extends createZodDto(listStudioMembershipsQuerySchema) {
@@ -225,5 +225,47 @@ export class ListStudioMembershipsQueryDto extends createZodDto(listStudioMember
   declare name: string | undefined;
   declare include_deleted: boolean;
   declare uid: string | undefined;
-  declare studioUid: string | undefined;
+  declare studioId: string | undefined;
 }
+
+/**
+ * Payload for creating a studio membership (service layer).
+ */
+export type CreateStudioMembershipPayload = {
+  userId: string;
+  studioId: string;
+  role: string;
+  metadata?: Record<string, any>;
+};
+
+/**
+ * Payload for updating a studio membership (service layer).
+ */
+export type UpdateStudioMembershipPayload = {
+  userId?: string;
+  studioId?: string;
+  role?: string;
+  metadata?: Record<string, any>;
+};
+
+/**
+ * Type-safe filter options for studio memberships.
+ */
+export type StudioMembershipFilters = {
+  uid?: string | { contains: string; mode: 'insensitive' };
+  userId?: bigint;
+  studioId?: bigint;
+  role?: string;
+  user?: { uid: string } | { ext_id: string };
+  studio?: { uid: string | { contains: string; mode: 'insensitive' } };
+  deletedAt?: Date | null;
+};
+
+/**
+ * Type-safe order by options for studio memberships.
+ */
+export type StudioMembershipOrderBy = {
+  createdAt?: 'asc' | 'desc';
+  updatedAt?: 'asc' | 'desc';
+  role?: 'asc' | 'desc';
+};

@@ -1,3 +1,8 @@
+// ============================================================================
+// Service Layer Payload Types
+// ============================================================================
+// NOTE: These types CAN use Prisma types to define the payload shape.
+// Services import these payload types, NOT Prisma types directly.
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
@@ -91,3 +96,43 @@ export class CreateShowMcDto extends createZodDto(
 ) {}
 export class UpdateShowMcDto extends createZodDto(updateShowMcSchema) {}
 export class ShowMcDto extends createZodDto(showMcDto) {}
+
+/**
+ * Payload for creating a show MC (service layer).
+ */
+export type CreateShowMcPayload = {
+  showId: string;
+  mcId: string;
+  note?: string | null;
+  metadata?: Record<string, any>;
+};
+
+/**
+ * Payload for updating a show MC (service layer).
+ */
+export type UpdateShowMcPayload = {
+  showId?: string;
+  mcId?: string;
+  note?: string | null;
+  metadata?: Record<string, any>;
+};
+
+/**
+ * Type-safe filter options for show MCs.
+ */
+export type ShowMcFilters = {
+  uid?: string;
+  showId?: bigint;
+  mcId?: bigint;
+  show?: { uid: string };
+  mc?: { uid: string };
+  deletedAt?: Date | null;
+};
+
+/**
+ * Type-safe order by options for show MCs.
+ */
+export type ShowMcOrderBy = {
+  createdAt?: 'asc' | 'desc';
+  updatedAt?: 'asc' | 'desc';
+};

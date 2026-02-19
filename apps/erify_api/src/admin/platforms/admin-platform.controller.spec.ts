@@ -64,6 +64,7 @@ describe('adminPlatformController', () => {
         take: 10,
         uid: undefined,
         name: undefined,
+        includeDeleted: false,
         include_deleted: false,
         sort: 'desc',
       };
@@ -89,7 +90,7 @@ describe('adminPlatformController', () => {
         take: query.take,
         uid: query.uid,
         name: query.name,
-        include_deleted: query.include_deleted,
+        includeDeleted: query.includeDeleted,
       });
       expect(result).toEqual({
         data: platforms,
@@ -107,7 +108,7 @@ describe('adminPlatformController', () => {
 
       const result = await controller.getPlatform(platformId);
       expect(mockPlatformService.getPlatformById).toHaveBeenCalledWith(
-        platformId,
+        { uid: platformId },
       );
       expect(result).toEqual(platform);
     });
@@ -121,11 +122,13 @@ describe('adminPlatformController', () => {
       } as UpdatePlatformDto;
       const updatedPlatform = { uid: platformId, ...updateDto };
 
+      mockPlatformService.getPlatformById.mockResolvedValue(updatedPlatform);
       mockPlatformService.updatePlatform.mockResolvedValue(
         updatedPlatform as any,
       );
 
       const result = await controller.updatePlatform(platformId, updateDto);
+      expect(mockPlatformService.getPlatformById).toHaveBeenCalledWith({ uid: platformId });
       expect(mockPlatformService.updatePlatform).toHaveBeenCalledWith(
         platformId,
         updateDto,
@@ -138,9 +141,11 @@ describe('adminPlatformController', () => {
     it('should delete a platform', async () => {
       const platformId = 'platform_123';
 
+      mockPlatformService.getPlatformById.mockResolvedValue({ uid: platformId });
       mockPlatformService.deletePlatform.mockResolvedValue(undefined);
 
       await controller.deletePlatform(platformId);
+      expect(mockPlatformService.getPlatformById).toHaveBeenCalledWith({ uid: platformId });
       expect(mockPlatformService.deletePlatform).toHaveBeenCalledWith(
         platformId,
       );

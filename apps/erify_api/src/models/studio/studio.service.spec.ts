@@ -84,46 +84,22 @@ describe('studioService', () => {
         deletedAt: null,
       };
 
-      jest.spyOn(studioRepository, 'findOne').mockResolvedValue(expectedResult);
+      jest.spyOn(studioRepository, 'findByUid').mockResolvedValue(expectedResult as any);
 
       const result = await service.getStudioById(uid);
 
-      expect(studioRepository.findOne).toHaveBeenCalledWith({ uid }, undefined);
+      expect(studioRepository.findByUid).toHaveBeenCalledWith(uid);
       expect(result).toEqual(expectedResult);
     });
-  });
 
-  describe('getStudios', () => {
-    it('should return studios with pagination', async () => {
-      const params = {
-        skip: 0,
-        take: 10,
-        orderBy: { createdAt: 'desc' as const },
-      };
+    it('should throw NotFound if studio not found by uid', async () => {
+      const uid = 'std_00000001';
 
-      const studios = [
-        {
-          id: 1n,
-          uid: 'std_00000001',
-          name: 'Studio 1',
-          address: '123 Test Street',
-          metadata: {},
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          deletedAt: null,
-        },
-      ];
+      jest.spyOn(studioRepository, 'findByUid').mockResolvedValue(null);
 
-      jest.spyOn(studioRepository, 'findMany').mockResolvedValue(studios);
+      await expect(service.getStudioById(uid)).rejects.toThrow();
 
-      const result = await service.getStudios(params);
-
-      expect(studioRepository.findMany).toHaveBeenCalledWith({
-        skip: 0,
-        take: 10,
-        orderBy: { createdAt: 'desc' },
-      });
-      expect(result).toEqual(studios);
+      expect(studioRepository.findByUid).toHaveBeenCalledWith(uid);
     });
   });
 
@@ -146,12 +122,27 @@ describe('studioService', () => {
         deletedAt: null,
       };
 
-      jest.spyOn(studioRepository, 'update').mockResolvedValue(expectedResult);
+      jest.spyOn(studioRepository, 'update').mockResolvedValue(expectedResult as any);
 
       const result = await service.updateStudio(uid, updateData);
 
-      expect(studioRepository.update).toHaveBeenCalledWith({ uid }, updateData);
+      expect(studioRepository.update).toHaveBeenCalledWith(
+        { uid },
+        updateData,
+      );
       expect(result).toEqual(expectedResult);
+    });
+
+    it('should throw if repo update fails', async () => {
+      const uid = 'std_00000001';
+      const updateData = {
+        name: 'Updated Studio',
+        address: '456 Updated Street',
+      };
+
+      jest.spyOn(studioRepository, 'update').mockRejectedValue(new Error('Update failed'));
+
+      await expect(service.updateStudio(uid, updateData)).rejects.toThrow();
     });
   });
 
@@ -171,7 +162,7 @@ describe('studioService', () => {
 
       jest
         .spyOn(studioRepository, 'softDelete')
-        .mockResolvedValue(expectedResult);
+        .mockResolvedValue(expectedResult as any);
 
       const result = await service.deleteStudio(uid);
 
@@ -180,14 +171,41 @@ describe('studioService', () => {
     });
   });
 
-  describe('countStudios', () => {
-    it('should return count of studios', async () => {
-      jest.spyOn(studioRepository, 'count').mockResolvedValue(5);
+  describe('listStudios', () => {
+    it('should return paginated studios', async () => {
+      const query = {
+        skip: 0,
+        take: 10,
+        name: undefined,
+        uid: undefined,
+        include_deleted: false,
+        sort: 'desc' as const,
+      };
 
-      const result = await service.countStudios();
+      const expectedResult = {
+        data: [
+          {
+            id: 1n,
+            uid: 'std_00000001',
+            name: 'Studio 1',
+            address: '123 Test Street',
+            metadata: {},
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            deletedAt: null,
+          } as any,
+        ],
+        total: 1,
+      };
 
-      expect(studioRepository.count).toHaveBeenCalledWith({});
-      expect(result).toBe(5);
+      studioRepository.findPaginated = jest
+        .fn()
+        .mockResolvedValue(expectedResult);
+
+      const result = await service.listStudios(query);
+
+      expect(studioRepository.findPaginated).toHaveBeenCalledWith(query);
+      expect(result).toEqual(expectedResult);
     });
   });
 });

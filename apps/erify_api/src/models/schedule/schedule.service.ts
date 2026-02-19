@@ -4,13 +4,18 @@ import {
   HttpException,
   Injectable,
 } from '@nestjs/common';
-import { Prisma, Schedule } from '@prisma/client';
+import { Schedule } from '@prisma/client';
 
 import {
   BulkCreateScheduleDto,
   BulkUpdateScheduleDto,
   CreateScheduleDto,
   ListSchedulesQuery,
+  ScheduleCreatePayload,
+  ScheduleInclude,
+  ScheduleJsonValue,
+  ScheduleUpdatePayload,
+  ScheduleWithRelations,
   UpdateScheduleDto,
 } from './schemas/schedule.schema';
 import {
@@ -21,14 +26,8 @@ import { ScheduleRepository } from './schedule.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { PrismaService } from '@/prisma/prisma.service';
 import { ShowPlanItem } from '@/schedule-planning/schemas/schedule-planning.schema';
 import { UtilityService } from '@/utility/utility.service';
-
-type ScheduleWithIncludes<T extends Prisma.ScheduleInclude> =
-  Prisma.ScheduleGetPayload<{
-    include: T;
-  }>;
 
 @Injectable()
 export class ScheduleService extends BaseModelService {
@@ -38,191 +37,39 @@ export class ScheduleService extends BaseModelService {
   constructor(
     private readonly scheduleRepository: ScheduleRepository,
     protected readonly utilityService: UtilityService,
-    private readonly prisma: PrismaService,
   ) {
     super(utilityService);
   }
 
-  async createScheduleFromDto<
-    T extends Prisma.ScheduleInclude = Record<string, never>,
-  >(
+  async createScheduleFromDto<T extends ScheduleInclude = Record<string, never>>(
     dto: CreateScheduleDto,
     include?: T,
-  ): Promise<Schedule | ScheduleWithIncludes<T>> {
+  ): Promise<Schedule | ScheduleWithRelations<T>> {
     const data = this.buildCreatePayload(dto);
     return this.createSchedule(data, include);
   }
 
-  async createSchedule<
-    T extends Prisma.ScheduleInclude = Record<string, never>,
-  >(
-    data: Omit<Prisma.ScheduleCreateInput, 'uid'>,
+  async createSchedule<T extends ScheduleInclude = Record<string, never>>(
+    data: ScheduleCreatePayload,
     include?: T,
-  ): Promise<Schedule | ScheduleWithIncludes<T>> {
+  ): Promise<Schedule | ScheduleWithRelations<T>> {
     const uid = this.generateUid();
     const result = await this.scheduleRepository.create(
       { ...data, uid },
       include,
     );
-    return result as Schedule | ScheduleWithIncludes<T>;
+    return result as Schedule | ScheduleWithRelations<T>;
   }
 
-  async getScheduleById<
-    T extends Prisma.ScheduleInclude = Record<string, never>,
-  >(uid: string,
+  async getScheduleById<T extends ScheduleInclude = Record<string, never>>(
+    uid: string,
     include?: T,
-  ): Promise<Schedule | ScheduleWithIncludes<T>> {
+  ): Promise<Schedule | ScheduleWithRelations<T>> {
     return this.findScheduleOrThrow(uid, include);
   }
 
   async findScheduleById(id: bigint): Promise<Schedule | null> {
     return this.scheduleRepository.findOne({ id });
-  }
-
-  async getSchedules(params: {
-    skip?: number;
-    take?: number;
-    where?: Prisma.ScheduleWhereInput;
-    orderBy?: Record<string, 'asc' | 'desc'>;
-    include?: Prisma.ScheduleInclude;
-  }): Promise<Schedule[]> {
-    return this.scheduleRepository.findMany(params);
-  }
-
-  async countSchedules(where?: Prisma.ScheduleWhereInput): Promise<number> {
-    return this.scheduleRepository.count(where ?? {});
-  }
-
-  /**
-   * Builds Prisma where clause from filter parameters.
-   *
-   * @param filters - Filter parameters from query
-   * @param filters.client_id - Optional client ID filter
-   * @param filters.status - Optional status filter
-   * @param filters.created_by - Optional created by filter
-   * @param filters.published_by - Optional published by filter
-   * @param filters.start_date_from - Optional start date from filter
-   * @param filters.start_date_to - Optional start date to filter
-   * @param filters.end_date_from - Optional end date from filter
-   * @param filters.end_date_to - Optional end date to filter
-   * @param filters.name - Optional name filter
-   * @param filters.client_name - Optional client name filter
-   * @param filters.uid - Optional uid filter
-   * @param filters.include_deleted - Whether to include deleted records
-   * @returns Prisma where clause for schedule filtering
-   */
-  private buildScheduleWhereClause(filters: {
-    client_id?: string | string[];
-    status?: string | string[];
-    created_by?: string | string[];
-    published_by?: string | string[];
-    start_date_from?: string;
-    start_date_to?: string;
-    end_date_from?: string;
-    end_date_to?: string;
-    name?: string;
-    client_name?: string;
-    uid?: string;
-    include_deleted: boolean;
-  }): Prisma.ScheduleWhereInput {
-    const where: Prisma.ScheduleWhereInput = {};
-
-    // Handle deleted filter
-    if (!filters.include_deleted) {
-      where.deletedAt = null;
-    }
-
-    // Handle client_id filter (supports single or array)
-    if (filters.client_id) {
-      const clientIds = Array.isArray(filters.client_id)
-        ? filters.client_id
-        : [filters.client_id];
-      where.client = {
-        uid: { in: clientIds },
-        ...(filters.include_deleted ? {} : { deletedAt: null }),
-      };
-    }
-
-    // Handle status filter (supports single or array)
-    if (filters.status) {
-      const statuses = Array.isArray(filters.status)
-        ? filters.status
-        : [filters.status];
-      where.status = { in: statuses };
-    }
-
-    // Handle created_by filter (supports single or array)
-    if (filters.created_by) {
-      const createdByUids = Array.isArray(filters.created_by)
-        ? filters.created_by
-        : [filters.created_by];
-      where.createdByUser = {
-        uid: { in: createdByUids },
-        ...(filters.include_deleted ? {} : { deletedAt: null }),
-      };
-    }
-
-    // Handle published_by filter (supports single or array)
-    if (filters.published_by) {
-      const publishedByUids = Array.isArray(filters.published_by)
-        ? filters.published_by
-        : [filters.published_by];
-      where.publishedByUser = {
-        uid: { in: publishedByUids },
-        ...(filters.include_deleted ? {} : { deletedAt: null }),
-      };
-    }
-
-    // Handle start_date range filter
-    if (filters.start_date_from || filters.start_date_to) {
-      where.startDate = {};
-      if (filters.start_date_from) {
-        where.startDate.gte = new Date(filters.start_date_from);
-      }
-      if (filters.start_date_to) {
-        where.startDate.lte = new Date(filters.start_date_to);
-      }
-    }
-
-    // Handle end_date range filter
-    if (filters.end_date_from || filters.end_date_to) {
-      where.endDate = {};
-      if (filters.end_date_from) {
-        where.endDate.gte = new Date(filters.end_date_from);
-      }
-      if (filters.end_date_to) {
-        where.endDate.lte = new Date(filters.end_date_to);
-      }
-    }
-
-    // Handle name search filter (case-insensitive partial match)
-    if (filters.name) {
-      where.name = {
-        contains: filters.name,
-        mode: 'insensitive',
-      };
-    }
-
-    // Handle client_name search filter
-    if (filters.client_name) {
-      where.client = {
-        name: {
-          contains: filters.client_name,
-          mode: 'insensitive',
-        },
-        ...(filters.include_deleted ? {} : { deletedAt: null }),
-      };
-    }
-
-    // Handle uid filter
-    if (filters.uid) {
-      where.uid = {
-        contains: filters.uid,
-        mode: 'insensitive',
-      };
-    }
-
-    return where;
   }
 
   /**
@@ -235,55 +82,14 @@ export class ScheduleService extends BaseModelService {
     schedules: Schedule[];
     total: number;
   }> {
-    const where = this.buildScheduleWhereClause(query);
-    const orderBy = this.buildOrderByClause(query);
-
-    const [schedules, total] = await Promise.all([
-      this.getSchedules({
-        skip: query.skip,
-        take: query.take,
-        orderBy,
-        where,
-        include: {
-          client: true,
-          studio: true,
-          createdByUser: true,
-          publishedByUser: true,
-        },
-      }),
-      this.countSchedules(where),
-    ]);
-
-    return { schedules, total };
+    return this.scheduleRepository.findPaginated(query);
   }
 
-  /**
-   * Builds Prisma orderBy clause from query parameters.
-   *
-   * @param query - Query parameters with order_by and order_direction
-   * @returns Prisma orderBy clause
-   */
-  private buildOrderByClause(
-    query: Pick<ListSchedulesQuery, 'order_by' | 'order_direction'>,
-  ): Record<string, 'asc' | 'desc'> {
-    const fieldMap: Record<string, string> = {
-      created_at: 'createdAt',
-      updated_at: 'updatedAt',
-      start_date: 'startDate',
-      end_date: 'endDate',
-    };
-
-    const field = fieldMap[query.order_by] || 'createdAt';
-    return { [field]: query.order_direction };
-  }
-
-  async updateScheduleFromDto<
-    T extends Prisma.ScheduleInclude = Record<string, never>,
-  >(
+  async updateScheduleFromDto<T extends ScheduleInclude = Record<string, never>>(
     uid: string,
     dto: UpdateScheduleDto,
     include?: T,
-  ): Promise<Schedule | ScheduleWithIncludes<T>> {
+  ): Promise<Schedule | ScheduleWithRelations<T>> {
     const data = this.buildUpdatePayload(dto);
     return this.updateSchedule(uid, data, dto.version, include);
   }
@@ -297,14 +103,12 @@ export class ScheduleService extends BaseModelService {
    * @param include - Optional relations to include
    * @returns Updated schedule
    */
-  async updateSchedule<
-    T extends Prisma.ScheduleInclude = Record<string, never>,
-  >(
+  async updateSchedule<T extends ScheduleInclude = Record<string, never>>(
     uid: string,
-    data: Prisma.ScheduleUpdateInput,
+    data: ScheduleUpdatePayload,
     clientVersion?: number,
     include?: T,
-  ): Promise<Schedule | ScheduleWithIncludes<T>> {
+  ): Promise<Schedule | ScheduleWithRelations<T>> {
     const schedule = await this.findScheduleOrThrow(uid);
 
     // If published, move back to draft on update to require re-publishing
@@ -324,7 +128,7 @@ export class ScheduleService extends BaseModelService {
     }
 
     const result = await this.scheduleRepository.update({ uid }, data, include);
-    return result as Schedule | ScheduleWithIncludes<T>;
+    return result as Schedule | ScheduleWithRelations<T>;
   }
 
   async deleteSchedule(uid: string): Promise<Schedule> {
@@ -394,18 +198,17 @@ export class ScheduleService extends BaseModelService {
       startDate: source.startDate,
       endDate: source.endDate,
       status: 'draft',
-      planDocument: clonedPlanDocument as Prisma.InputJsonValue,
+      planDocument: clonedPlanDocument as ScheduleJsonValue,
       version: 1,
       ...(source.clientId && { client: { connect: { id: source.clientId } } }),
       createdByUser: { connect: { id: userId } },
     });
   }
 
-  private async findScheduleOrThrow<
-    T extends Prisma.ScheduleInclude = Record<string, never>,
-  >(uid: string,
+  private async findScheduleOrThrow<T extends ScheduleInclude = Record<string, never>>(
+    uid: string,
     include?: T,
-  ): Promise<Schedule | ScheduleWithIncludes<T>> {
+  ): Promise<Schedule | ScheduleWithRelations<T>> {
     const schedule = await this.scheduleRepository.findByUid(uid, include);
     if (!schedule) {
       throw HttpError.notFound('Schedule', uid);
@@ -415,7 +218,7 @@ export class ScheduleService extends BaseModelService {
 
   private buildCreatePayload(
     dto: CreateScheduleDto,
-  ): Omit<Prisma.ScheduleCreateInput, 'uid'> {
+  ): ScheduleCreatePayload {
     // Validate date range
     if (dto.endDate <= dto.startDate) {
       throw HttpError.badRequest('End date must be after start date');
@@ -437,8 +240,8 @@ export class ScheduleService extends BaseModelService {
 
   private buildUpdatePayload(
     dto: UpdateScheduleDto,
-  ): Prisma.ScheduleUpdateInput {
-    const payload: Prisma.ScheduleUpdateInput = {};
+  ): ScheduleUpdatePayload {
+    const payload: ScheduleUpdatePayload = {};
 
     if (dto.name)
       payload.name = dto.name;
@@ -480,7 +283,7 @@ export class ScheduleService extends BaseModelService {
    */
   async bulkCreateSchedules(
     dto: BulkCreateScheduleDto,
-    include?: Prisma.ScheduleInclude,
+    include?: ScheduleInclude,
   ): Promise<{
       total: number;
       successful: number;
@@ -494,9 +297,7 @@ export class ScheduleService extends BaseModelService {
         error?: string | null;
         error_code?: string | null;
       }>;
-      successfulSchedules?: Array<
-      Schedule | Prisma.ScheduleGetPayload<{ include: Prisma.ScheduleInclude }>
-      >;
+      successfulSchedules?: Array<Schedule | ScheduleWithRelations<ScheduleInclude>>;
     }> {
     const results: Array<{
       index?: number;
@@ -507,9 +308,7 @@ export class ScheduleService extends BaseModelService {
       error?: string | null;
       error_code?: string | null;
     }> = [];
-    const successfulSchedules: Array<
-      Schedule | Prisma.ScheduleGetPayload<{ include: Prisma.ScheduleInclude }>
-    > = [];
+    const successfulSchedules: Array<Schedule | ScheduleWithRelations<ScheduleInclude>> = [];
 
     // Process each schedule individually to allow partial success
     for (let index = 0; index < dto.schedules.length; index++) {
@@ -585,7 +384,7 @@ export class ScheduleService extends BaseModelService {
    */
   async bulkUpdateSchedules(
     dto: BulkUpdateScheduleDto,
-    include?: Prisma.ScheduleInclude,
+    include?: ScheduleInclude,
   ): Promise<{
       total: number;
       successful: number;
@@ -599,9 +398,7 @@ export class ScheduleService extends BaseModelService {
         error?: string | null;
         error_code?: string | null;
       }>;
-      successfulSchedules?: Array<
-      Schedule | Prisma.ScheduleGetPayload<{ include: Prisma.ScheduleInclude }>
-      >;
+      successfulSchedules?: Array<Schedule | ScheduleWithRelations<ScheduleInclude>>;
     }> {
     const results: Array<{
       index?: number;
@@ -612,9 +409,7 @@ export class ScheduleService extends BaseModelService {
       error?: string | null;
       error_code?: string | null;
     }> = [];
-    const successfulSchedules: Array<
-      Schedule | Prisma.ScheduleGetPayload<{ include: Prisma.ScheduleInclude }>
-    > = [];
+    const successfulSchedules: Array<Schedule | ScheduleWithRelations<ScheduleInclude>> = [];
 
     // Process each schedule update individually to allow partial success
     for (let index = 0; index < dto.schedules.length; index++) {
@@ -623,7 +418,7 @@ export class ScheduleService extends BaseModelService {
 
       try {
         // Build update payload from the bulk update item
-        const updatePayload: Prisma.ScheduleUpdateInput = {};
+        const updatePayload: ScheduleUpdatePayload = {};
         if (updateItem.name !== undefined)
           updatePayload.name = updateItem.name;
         if (updateItem.startDate)
@@ -731,7 +526,7 @@ export class ScheduleService extends BaseModelService {
       status?: string;
       includeDeleted?: boolean;
     },
-    include?: Prisma.ScheduleInclude,
+    include?: ScheduleInclude,
   ): Promise<{
       startDate: Date;
       endDate: Date;
@@ -742,61 +537,26 @@ export class ScheduleService extends BaseModelService {
           clientId: string;
           clientName: string;
           count: number;
-          schedules: Array<
-            | Schedule
-            | Prisma.ScheduleGetPayload<{ include: Prisma.ScheduleInclude }>
-          >;
+          schedules: Array<Schedule | ScheduleWithRelations<ScheduleInclude>>;
         }
       >;
       schedulesByStatus: Record<string, number>;
-      schedules: Array<
-      Schedule | Prisma.ScheduleGetPayload<{ include: Prisma.ScheduleInclude }>
-      >;
+      schedules: Array<Schedule | ScheduleWithRelations<ScheduleInclude>>;
     }> {
-    // Build where clause
-    const where: Prisma.ScheduleWhereInput = {
-      startDate: { lte: params.endDate },
-      endDate: { gte: params.startDate },
-      ...(params.status && { status: params.status }),
-      ...(params.includeDeleted ? {} : { deletedAt: null }),
-    };
+    const schedules = await this.scheduleRepository.findByDateRange(params, include);
 
-    // Add client filter if provided
-    if (params.clientIds && params.clientIds.length > 0) {
-      where.client = {
-        uid: { in: params.clientIds },
-        ...(params.includeDeleted ? {} : { deletedAt: null }),
-      };
-    }
-
-    // Fetch all schedules in the date range
-    const schedules = (await this.scheduleRepository.findMany({
-      where,
-      orderBy: { startDate: 'asc' },
-      ...(include && { include }),
-    })) as Array<
-      Schedule | Prisma.ScheduleGetPayload<{ include: Prisma.ScheduleInclude }>
-    >;
-
-    // Group by client
     const schedulesByClient: Record<
       string,
       {
         clientId: string;
         clientName: string;
         count: number;
-        schedules: Array<
-          | Schedule
-          | Prisma.ScheduleGetPayload<{ include: Prisma.ScheduleInclude }>
-        >;
+        schedules: Array<Schedule | ScheduleWithRelations<ScheduleInclude>>;
       }
     > = {};
-
-    // Group by status
     const schedulesByStatus: Record<string, number> = {};
 
     for (const schedule of schedules) {
-      // Extract client info
       const clientId
         = 'client' in schedule && schedule.client
           ? (schedule.client as { uid: string }).uid
@@ -808,18 +568,12 @@ export class ScheduleService extends BaseModelService {
 
       if (clientId) {
         if (!schedulesByClient[clientId]) {
-          schedulesByClient[clientId] = {
-            clientId,
-            clientName,
-            count: 0,
-            schedules: [],
-          };
+          schedulesByClient[clientId] = { clientId, clientName, count: 0, schedules: [] };
         }
         schedulesByClient[clientId].schedules.push(schedule);
         schedulesByClient[clientId].count++;
       }
 
-      // Count by status
       const status = schedule.status;
       schedulesByStatus[status] = (schedulesByStatus[status] || 0) + 1;
     }
@@ -844,13 +598,13 @@ export class ScheduleService extends BaseModelService {
    * @param include - Optional relations to include
    * @returns Updated schedule
    */
-  async appendShows<T extends Prisma.ScheduleInclude = Record<string, never>>(
+  async appendShows<T extends ScheduleInclude = Record<string, never>>(
     scheduleUid: string,
     shows: ShowPlanItem[],
     chunkIndex: number,
     version: number,
     include?: T,
-  ): Promise<Schedule | ScheduleWithIncludes<T>> {
+  ): Promise<Schedule | ScheduleWithRelations<T>> {
     const schedule = await this.findScheduleOrThrow(scheduleUid);
 
     // If published, move back to draft to require re-publishing
@@ -973,12 +727,12 @@ export class ScheduleService extends BaseModelService {
     const updatedSchedule = await this.scheduleRepository.update(
       { uid: scheduleUid },
       {
-        planDocument: updatedPlanDocument as Prisma.InputJsonValue,
+        planDocument: updatedPlanDocument as ScheduleJsonValue,
         version: schedule.version + 1,
       },
       include,
     );
 
-    return updatedSchedule as Schedule | ScheduleWithIncludes<T>;
+    return updatedSchedule as Schedule | ScheduleWithRelations<T>;
   }
 }

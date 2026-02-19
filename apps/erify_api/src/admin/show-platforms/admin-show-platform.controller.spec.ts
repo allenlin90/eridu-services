@@ -14,13 +14,13 @@ describe('adminShowPlatformController', () => {
   let controller: AdminShowPlatformController;
 
   const mockShowPlatformService = {
-    createShowPlatformFromDto: jest.fn(),
-    getShowPlatformById: jest.fn(),
-    getActiveShowPlatforms: jest.fn(),
-    countShowPlatforms: jest.fn(),
-    updateShowPlatformFromDto: jest.fn(),
-    deleteShowPlatform: jest.fn(),
+    create: jest.fn(),
+    findOne: jest.fn(),
+    getShowPlatforms: jest.fn(),
+    update: jest.fn(),
+    softDelete: jest.fn(),
   };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminShowPlatformController],
@@ -52,18 +52,18 @@ describe('adminShowPlatformController', () => {
         platform: { uid: 'platform_123' },
       };
 
-      mockShowPlatformService.createShowPlatformFromDto.mockResolvedValue(
+      mockShowPlatformService.create.mockResolvedValue(
         createdShowPlatform as any,
       );
-      mockShowPlatformService.getShowPlatformById.mockResolvedValue(
+      mockShowPlatformService.findOne.mockResolvedValue(
         showPlatformWithRelations as any,
       );
 
       const result = await controller.createShowPlatform(createDto);
       expect(
-        mockShowPlatformService.createShowPlatformFromDto,
+        mockShowPlatformService.create,
       ).toHaveBeenCalledWith(createDto);
-      expect(mockShowPlatformService.getShowPlatformById).toHaveBeenCalledWith(
+      expect(mockShowPlatformService.findOne).toHaveBeenCalledWith(
         createdShowPlatform.uid,
         {
           show: true,
@@ -97,14 +97,14 @@ describe('adminShowPlatformController', () => {
         hasPreviousPage: false,
       };
 
-      mockShowPlatformService.getActiveShowPlatforms.mockResolvedValue(
-        showPlatforms as any,
-      );
-      mockShowPlatformService.countShowPlatforms.mockResolvedValue(total);
+      mockShowPlatformService.getShowPlatforms.mockResolvedValue({
+        data: showPlatforms,
+        total,
+      } as any);
 
       const result = await controller.getShowPlatforms(query);
       expect(
-        mockShowPlatformService.getActiveShowPlatforms,
+        mockShowPlatformService.getShowPlatforms,
       ).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
@@ -114,7 +114,6 @@ describe('adminShowPlatformController', () => {
           platform: true,
         },
       });
-      expect(mockShowPlatformService.countShowPlatforms).toHaveBeenCalled();
       expect(result).toEqual({
         data: showPlatforms,
         meta: paginationMeta,
@@ -133,12 +132,12 @@ describe('adminShowPlatformController', () => {
         platform: { uid: 'platform_123' },
       };
 
-      mockShowPlatformService.getShowPlatformById.mockResolvedValue(
+      mockShowPlatformService.findOne.mockResolvedValue(
         showPlatform as any,
       );
 
       const result = await controller.getShowPlatform(showPlatformId);
-      expect(mockShowPlatformService.getShowPlatformById).toHaveBeenCalledWith(
+      expect(mockShowPlatformService.findOne).toHaveBeenCalledWith(
         showPlatformId,
         {
           show: true,
@@ -162,10 +161,10 @@ describe('adminShowPlatformController', () => {
         platform: { uid: 'platform_123' },
       };
 
-      mockShowPlatformService.updateShowPlatformFromDto.mockResolvedValue(
+      mockShowPlatformService.update.mockResolvedValue(
         updatedShowPlatform as any,
       );
-      mockShowPlatformService.getShowPlatformById.mockResolvedValue(
+      mockShowPlatformService.findOne.mockResolvedValue(
         showPlatformWithRelations as any,
       );
 
@@ -173,10 +172,20 @@ describe('adminShowPlatformController', () => {
         showPlatformId,
         updateDto,
       );
+
+      // First findOne call to check existence
+      expect(mockShowPlatformService.findOne).toHaveBeenNthCalledWith(
+        1,
+        showPlatformId,
+      );
+
       expect(
-        mockShowPlatformService.updateShowPlatformFromDto,
+        mockShowPlatformService.update,
       ).toHaveBeenCalledWith(showPlatformId, updateDto);
-      expect(mockShowPlatformService.getShowPlatformById).toHaveBeenCalledWith(
+
+      // Second findOne call to get result
+      expect(mockShowPlatformService.findOne).toHaveBeenNthCalledWith(
+        2,
         updatedShowPlatform.uid,
         {
           show: true,
@@ -190,11 +199,15 @@ describe('adminShowPlatformController', () => {
   describe('deleteShowPlatform', () => {
     it('should delete a show platform', async () => {
       const showPlatformId = 'show_platform_123';
+      const showPlatform = { uid: showPlatformId };
 
-      mockShowPlatformService.deleteShowPlatform.mockResolvedValue(undefined);
+      mockShowPlatformService.findOne.mockResolvedValue(showPlatform as any);
+      mockShowPlatformService.softDelete.mockResolvedValue(undefined);
 
       await controller.deleteShowPlatform(showPlatformId);
-      expect(mockShowPlatformService.deleteShowPlatform).toHaveBeenCalledWith(
+
+      expect(mockShowPlatformService.findOne).toHaveBeenCalledWith(showPlatformId);
+      expect(mockShowPlatformService.softDelete).toHaveBeenCalledWith(
         showPlatformId,
       );
     });

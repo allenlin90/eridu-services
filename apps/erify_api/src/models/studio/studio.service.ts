@@ -1,12 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, Studio } from '@prisma/client';
+import type { Studio } from '@prisma/client';
 
+import type {
+  CreateStudioPayload,
+  UpdateStudioPayload,
+} from './schemas/studio.schema';
 import { StudioRepository } from './studio.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
+/**
+ * Service for managing Studio entities.
+ */
 @Injectable()
 export class StudioService extends BaseModelService {
   static readonly UID_PREFIX = 'std';
@@ -19,91 +26,69 @@ export class StudioService extends BaseModelService {
     super(utilityService);
   }
 
+  /**
+   * Creates a new studio.
+   */
   async createStudio(
-    data: Omit<Prisma.StudioCreateInput, 'uid'>,
+    payload: CreateStudioPayload,
   ): Promise<Studio> {
     const uid = this.generateUid();
-    return this.studioRepository.create({ ...data, uid });
+    return this.studioRepository.create({ ...payload, uid });
   }
 
-  getStudioById(uid: string, include?: Prisma.StudioInclude): Promise<Studio> {
-    return this.findStudioOrThrow(uid, include);
+  /**
+   * Retrieves a studio by UID.
+   */
+  async getStudioById(
+    uid: string,
+    ...args: Parameters<StudioRepository['findByUid']> extends [string, ...infer R] ? R : never
+  ): Promise<Awaited<ReturnType<StudioRepository['findByUid']>>> {
+    return this.findStudioOrThrow(uid, ...args);
   }
 
-  async findStudioById(id: bigint): Promise<Studio | null> {
-    return this.studioRepository.findOne({ id });
+  /**
+   * Retrieves a studio by internal ID.
+   */
+  async findStudioById(
+    ...args: Parameters<StudioRepository['findOne']>
+  ): Promise<Awaited<ReturnType<StudioRepository['findOne']>>> {
+    return this.studioRepository.findOne(...args);
   }
 
-  async getStudios(params: {
-    skip?: number;
-    take?: number;
-    orderBy?: Record<string, 'asc' | 'desc'>;
-  }): Promise<Studio[]> {
-    return this.studioRepository.findMany(params);
+  /**
+   * Lists studios with pagination and filtering.
+   */
+  async listStudios(
+    ...args: Parameters<StudioRepository['findPaginated']>
+  ): Promise<Awaited<ReturnType<StudioRepository['findPaginated']>>> {
+    return this.studioRepository.findPaginated(...args);
   }
 
-  async countStudios(): Promise<number> {
-    return this.studioRepository.count({});
-  }
-
-  async listStudios(query: {
-    skip?: number;
-    take?: number;
-    name?: string;
-    uid?: string;
-    include_deleted?: boolean;
-  }): Promise<{ data: Studio[]; total: number }> {
-    const where: Prisma.StudioWhereInput = {};
-
-    if (!query.include_deleted) {
-      where.deletedAt = null;
-    }
-
-    if (query.name) {
-      where.name = {
-        contains: query.name,
-        mode: 'insensitive',
-      };
-    }
-
-    if (query.uid) {
-      where.uid = {
-        contains: query.uid,
-        mode: 'insensitive',
-      };
-    }
-
-    const [data, total] = await Promise.all([
-      this.studioRepository.findMany({
-        skip: query.skip,
-        take: query.take,
-        where,
-      }),
-      this.studioRepository.count(where),
-    ]);
-
-    return { data, total };
-  }
-
+  /**
+   * Updates a studio.
+   */
   async updateStudio(
     uid: string,
-    data: Prisma.StudioUpdateInput,
+    payload: UpdateStudioPayload,
   ): Promise<Studio> {
-    return this.studioRepository.update({ uid }, data);
+    return this.studioRepository.update({ uid }, payload);
   }
 
+  /**
+   * Soft deletes a studio.
+   */
   async deleteStudio(uid: string): Promise<Studio> {
     return this.studioRepository.softDelete({ uid });
   }
 
   private async findStudioOrThrow(
     uid: string,
-    include?: Prisma.StudioInclude,
-  ): Promise<Studio> {
-    const studio = await this.studioRepository.findOne({ uid }, include);
+    ...args: Parameters<StudioRepository['findByUid']> extends [string, ...infer R] ? R : never
+  ): Promise<NonNullable<Awaited<ReturnType<StudioRepository['findByUid']>>>> {
+    const studio = await this.studioRepository.findByUid(uid, ...args);
     if (!studio) {
       throw HttpError.notFound('Studio', uid);
     }
-    return studio;
+    return studio as NonNullable<Awaited<ReturnType<StudioRepository['findByUid']>>>;
   }
 }

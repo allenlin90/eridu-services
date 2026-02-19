@@ -1,16 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { MC, Prisma } from '@prisma/client';
+import type { MC } from '@prisma/client';
 
-import { CreateMcDto, UpdateMcDto } from './schemas/mc.schema';
+import type {
+  CreateMcPayload,
+  UpdateMcPayload,
+} from './schemas/mc.schema';
 import { McRepository } from './mc.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
-
-type MCWithIncludes<T extends Prisma.MCInclude> = Prisma.MCGetPayload<{
-  include: T;
-}>;
 
 @Injectable()
 export class McService extends BaseModelService {
@@ -24,189 +23,69 @@ export class McService extends BaseModelService {
     super(utilityService);
   }
 
-  async createMcFromDto<T extends Prisma.MCInclude = Record<string, never>>(
-    dto: CreateMcDto,
-    include?: T,
-  ): Promise<MC | MCWithIncludes<T>> {
-    const data = this.buildCreatePayload(dto);
-    return this.createMc(data, include);
-  }
-
-  async createMc<T extends Prisma.MCInclude = Record<string, never>>(
-    data: Omit<Prisma.MCCreateInput, 'uid'>,
-    include?: T,
-  ): Promise<MC | MCWithIncludes<T>> {
-    if (data.user?.connect?.uid) {
-      const [mc] = await this.mcRepository.findMany({
-        where: { user: { uid: data.user.connect.uid } },
-        take: 1,
-      });
-
-      if (mc) {
+  async createMc(
+    payload: CreateMcPayload,
+  ): ReturnType<McRepository['createMc']> {
+    // Check if user is already assigned to an MC
+    if (payload.userId) {
+      const existing = await this.mcRepository.findByUserUid(payload.userId);
+      if (existing) {
         throw HttpError.badRequest('user is already a mc');
       }
     }
 
     const uid = this.generateUid();
-    return this.mcRepository.create({ ...data, uid }, include);
+    return this.mcRepository.createMc({ ...payload, uid });
   }
 
-  async getMcById<T extends Prisma.MCInclude = Record<string, never>>(
+  async getMcById(uid: string): Promise<MC | null> {
+    return this.mcRepository.findByUid(uid);
+  }
+
+  async getMcByIdWithUser(uid: string) {
+    return this.mcRepository.findByUid(uid, { user: true });
+  }
+
+  /**
+   * Internal findOne for flexibility if needed.
+   */
+  async findOne(
+    ...args: Parameters<McRepository['findOne']>
+  ): ReturnType<McRepository['findOne']> {
+    return this.mcRepository.findOne(...args);
+  }
+
+  async getMcByUserIdentifier(identifier: string): Promise<MC | null> {
+    return this.mcRepository.findByUserIdentifier(identifier);
+  }
+
+  /**
+   * Lists MCs with pagination and filtering.
+   */
+  listMcs(
+    ...args: Parameters<McRepository['findPaginated']>
+  ): ReturnType<McRepository['findPaginated']> {
+    return this.mcRepository.findPaginated(...args);
+  }
+
+  async updateMc(
     uid: string,
-    include?: T,
-  ): Promise<MC | MCWithIncludes<T>> {
-    return this.findMcOrThrow(uid, include);
-  }
-
-  async getMcs<T extends Prisma.MCInclude = Record<string, never>>(
-    params: {
-      skip?: number;
-      take?: number;
-      where?: Prisma.MCWhereInput;
-    },
-    include?: T,
-  ): Promise<MC[] | MCWithIncludes<T>[]> {
-    return this.mcRepository.findMany({ ...params, include });
-  }
-
-  async getActiveMcs(params: {
-    skip?: number;
-    take?: number;
-    orderBy?: Prisma.MCOrderByWithRelationInput;
-  }): Promise<MC[]> {
-    return this.mcRepository.findActiveMCs(params);
-  }
-
-  async countMcs(where?: Prisma.MCWhereInput): Promise<number> {
-    return this.mcRepository.count(where ?? {});
-  }
-
-  async listMcs<T extends Prisma.MCInclude = Record<string, never>>(
-    params: {
-      skip?: number;
-      take?: number;
-      name?: string;
-      aliasName?: string;
-      uid?: string;
-      include_deleted?: boolean;
-      where?: Prisma.MCWhereInput;
-    },
-    include?: T,
-  ): Promise<{ data: MC[] | MCWithIncludes<T>[]; total: number }> {
-    const where: Prisma.MCWhereInput = { ...params.where };
-
-    if (!params.include_deleted) {
-      where.deletedAt = null;
-    }
-
-    if (params.name) {
-      where.name = {
-        contains: params.name,
-        mode: 'insensitive',
-      };
-    }
-
-    if (params.uid) {
-      where.uid = {
-        contains: params.uid,
-        mode: 'insensitive',
-      };
-    }
-
-    if (params.aliasName) {
-      where.aliasName = {
-        contains: params.aliasName,
-        mode: 'insensitive',
-      };
-    }
-
-    const [data, total] = await Promise.all([
-      this.mcRepository.findMany({
-        skip: params.skip,
-        take: params.take,
-        where,
-        include,
-      }),
-      this.mcRepository.count(where),
-    ]);
-
-    return { data, total };
-  }
-
-  async updateMcFromDto<T extends Prisma.MCInclude = Record<string, never>>(
-    uid: string,
-    dto: UpdateMcDto,
-    include?: T,
-  ): Promise<MC | MCWithIncludes<T>> {
-    const data = this.buildUpdatePayload(dto);
-    return this.updateMc(uid, data, include);
-  }
-
-  async updateMc<T extends Prisma.MCInclude = Record<string, never>>(
-    uid: string,
-    data: Prisma.MCUpdateInput,
-    include?: T,
-  ): Promise<MC | MCWithIncludes<T>> {
-    if (data.user?.connect?.uid) {
-      const [mc] = await this.mcRepository.findMany({
-        where: { user: { uid: data.user.connect.uid } },
-        take: 1,
-      });
-
-      if (mc && mc.uid !== uid) {
+    payload: UpdateMcPayload,
+  ): ReturnType<McRepository['updateByUid']> {
+    // Check if user is already assigned to another MC
+    if (payload.userId) {
+      const existing = await this.mcRepository.findByUserUid(payload.userId);
+      if (existing && existing.uid !== uid) {
         throw HttpError.badRequest('user is already a mc');
       }
     }
 
-    return this.mcRepository.update({ uid }, data, include);
+    return this.mcRepository.updateByUid(uid, payload);
   }
 
-  async deleteMc(uid: string): Promise<MC> {
-    await this.findMcOrThrow(uid);
+  deleteMc(
+    uid: string,
+  ): ReturnType<McRepository['softDelete']> {
     return this.mcRepository.softDelete({ uid });
-  }
-
-  private async findMcOrThrow<
-    T extends Prisma.MCInclude = Record<string, never>,
-  >(uid: string,
-    include?: T,
-  ): Promise<MC | MCWithIncludes<T>> {
-    const mc = await this.mcRepository.findByUid(uid, include);
-    if (!mc) {
-      throw HttpError.notFound('MC', uid);
-    }
-    return mc;
-  }
-
-  private buildCreatePayload(
-    dto: CreateMcDto,
-  ): Omit<Prisma.MCCreateInput, 'uid'> {
-    return {
-      name: dto.name,
-      aliasName: dto.aliasName,
-      metadata: dto.metadata ?? {},
-      ...(dto.userId && { user: { connect: { uid: dto.userId } } }),
-    };
-  }
-
-  private buildUpdatePayload(dto: UpdateMcDto): Prisma.MCUpdateInput {
-    const payload: Prisma.MCUpdateInput = {};
-
-    if (dto.name !== undefined)
-      payload.name = dto.name;
-    if (dto.aliasName !== undefined)
-      payload.aliasName = dto.aliasName;
-    if (dto.isBanned !== undefined)
-      payload.isBanned = dto.isBanned;
-    if (dto.metadata !== undefined)
-      payload.metadata = dto.metadata;
-
-    if (dto.userId !== undefined) {
-      payload.user = dto.userId
-        ? { connect: { uid: dto.userId } }
-        : { disconnect: true };
-    }
-
-    return payload;
   }
 }

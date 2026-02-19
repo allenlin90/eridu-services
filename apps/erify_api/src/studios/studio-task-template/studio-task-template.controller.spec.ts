@@ -103,7 +103,8 @@ describe('studioTaskTemplateController', () => {
       expect(await controller.update(studioId, id, updateDto)).toEqual(result);
 
       expect(taskTemplateService.updateTemplateWithSnapshot).toHaveBeenCalledWith(
-        { uid: id, version: 1, studio: { uid: studioId } },
+        id,
+        studioId,
         {
           name: updateDto.name,
           description: updateDto.description,
@@ -127,7 +128,8 @@ describe('studioTaskTemplateController', () => {
       expect(await controller.update(studioId, id, updateDto)).toEqual(result);
 
       expect(taskTemplateService.updateTemplateWithSnapshot).toHaveBeenCalledWith(
-        { uid: id, version: 1, studio: { uid: studioId } },
+        id,
+        studioId,
         {
           name: updateDto.name,
           description: undefined,

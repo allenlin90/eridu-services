@@ -15,6 +15,7 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
+// import { HttpError } from '@/lib/errors/http-error.util';
 import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
@@ -37,7 +38,8 @@ export class AdminShowStatusController extends BaseAdminController {
     'Show status created successfully',
   )
   createShowStatus(@Body() body: CreateShowStatusDto) {
-    return this.showStatusService.createShowStatus(body);
+    const { name, metadata } = body;
+    return this.showStatusService.createShowStatus({ name, metadata });
   }
 
   @Get()
@@ -46,7 +48,7 @@ export class AdminShowStatusController extends BaseAdminController {
     'List of show statuses with pagination',
   )
   async getShowStatuses(@Query() query: PaginationQueryDto) {
-    const { data, total } = await this.showStatusService.listShowStatuses({
+    const { data, total } = await this.showStatusService.getShowStatuses({
       skip: query.skip,
       take: query.take,
     });
@@ -56,14 +58,16 @@ export class AdminShowStatusController extends BaseAdminController {
 
   @Get(':id')
   @AdminResponse(showStatusDto, HttpStatus.OK, 'Show status details')
-  getShowStatus(
+  async getShowStatus(
     @Param(
       'id',
       new UidValidationPipe(ShowStatusService.UID_PREFIX, 'Show Status'),
     )
     id: string,
   ) {
-    return this.showStatusService.getShowStatusById(id);
+    const showStatus = await this.showStatusService.getShowStatusById(id);
+    this.ensureResourceExists(showStatus, 'Show Status', id);
+    return showStatus;
   }
 
   @Patch(':id')
@@ -72,7 +76,7 @@ export class AdminShowStatusController extends BaseAdminController {
     HttpStatus.OK,
     'Show status updated successfully',
   )
-  updateShowStatus(
+  async updateShowStatus(
     @Param(
       'id',
       new UidValidationPipe(ShowStatusService.UID_PREFIX, 'Show Status'),
@@ -80,7 +84,11 @@ export class AdminShowStatusController extends BaseAdminController {
     id: string,
     @Body() body: UpdateShowStatusDto,
   ) {
-    return this.showStatusService.updateShowStatus(id, body);
+    const showStatus = await this.showStatusService.getShowStatusById(id);
+    this.ensureResourceExists(showStatus, 'Show Status', id);
+
+    const { name, metadata } = body;
+    return this.showStatusService.updateShowStatus(id, { name, metadata });
   }
 
   @Delete(':id')
@@ -92,6 +100,9 @@ export class AdminShowStatusController extends BaseAdminController {
     )
     id: string,
   ) {
-    await this.showStatusService.deleteShowStatus(id);
+    const showStatus = await this.showStatusService.getShowStatusById(id);
+    this.ensureResourceExists(showStatus, 'Show Status', id);
+
+    await this.showStatusService.deleteShowStatus({ uid: id });
   }
 }

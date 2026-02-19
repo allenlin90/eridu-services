@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Schedule } from '@prisma/client';
 
 import { PlanDocument, ShowPlanItem } from './schemas/schedule-planning.schema';
@@ -9,7 +11,6 @@ import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ShowService } from '@/models/show/show.service';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
-import { PrismaService, TransactionClient } from '@/prisma/prisma.service';
 
 // Type for Schedule with relations from publish
 export type ScheduleWithRelations = Schedule & {
@@ -22,7 +23,7 @@ export type ScheduleWithRelations = Schedule & {
 @Injectable()
 export class PublishingService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
     private readonly scheduleService: ScheduleService,
     private readonly showService: ShowService,
     private readonly showMcService: ShowMcService,
@@ -39,6 +40,7 @@ export class PublishingService {
    * @param userId - The user ID publishing the schedule
    * @returns The published schedule
    */
+  @Transactional<TransactionalAdapterPrisma>({ timeout: 30_000 })
   async publish(
     scheduleUid: string,
     version: number,
@@ -93,153 +95,145 @@ export class PublishingService {
       });
     }
 
-    // Execute publish workflow in a transaction
-    // Use longer timeout for complex publish operations that may involve many shows
-    return this.prisma.executeTransaction(
-      async (tx) => {
-        // Note: We don't create a before_publish snapshot because:
-        // 1. The schedule's planDocument remains unchanged if publish fails
-        // 2. We can only publish the latest version (optimistic locking ensures this)
-        // 3. If we want to publish an old version, we restore from snapshot first (creates new version)
-        // 4. The schedule's planDocument is the source of truth and doesn't change during publish
-        // 5. If publish fails, we can simply retry - no rollback needed
+    // Note: We don't create a before_publish snapshot because:
+    // 1. The schedule's planDocument remains unchanged if publish fails
+    // 2. We can only publish the latest version (optimistic locking ensures this)
+    // 3. If we want to publish an old version, we restore from snapshot first (creates new version)
+    // 4. The schedule's planDocument is the source of truth and doesn't change during publish
+    // 5. If publish fails, we can simply retry - no rollback needed
 
-        // 1. Delete existing shows associated with this schedule
-        // cascade deletes ShowMC and ShowPlatform relationships
-        const deletedShows = await tx.show.deleteMany({
-          where: {
-            scheduleId: schedule.id,
-            deletedAt: null,
-          },
-        });
+    const tx = this.txHost.tx;
 
-        // 2. Build UID lookup maps for all references
-        const uidMaps = await this.buildUidLookupMaps(
-          planDocument.shows,
-          schedule as ScheduleWithRelations,
-          tx,
-        );
-
-        // 3. Generate UIDs and prepare show data (without relationships)
-        const showUids = planDocument.shows.map(() =>
-          this.showService.generateShowUid(),
-        );
-        const showsToCreate = planDocument.shows.map((showItem, index) => ({
-          uid: showUids[index],
-          name: showItem.name,
-          startTime: new Date(showItem.startTime),
-          endTime: new Date(showItem.endTime),
-          metadata: showItem.metadata || {},
-          clientId: uidMaps.clients.get(showItem.clientId)!,
-          studioId: showItem.studioId
-            ? uidMaps.studios.get(showItem.studioId)! // Explicit override
-            : schedule.studioId || null, // Inherit from schedule or null
-          studioRoomId: showItem.studioRoomId
-            ? uidMaps.studioRooms.get(showItem.studioRoomId)!
-            : null,
-          showTypeId: uidMaps.showTypes.get(showItem.showTypeId)!,
-          showStatusId: uidMaps.showStatuses.get(showItem.showStatusId)!,
-          showStandardId: uidMaps.showStandards.get(showItem.showStandardId)!,
-          scheduleId: schedule.id,
-        }));
-
-        // 4. Bulk create all shows at once (no relationships)
-        await tx.show.createMany({
-          data: showsToCreate,
-        });
-
-        // 5. Query back created shows to get their IDs (needed for relationships)
-        const createdShows = await tx.show.findMany({
-          where: {
-            uid: { in: showUids },
-            scheduleId: schedule.id,
-          },
-          select: { id: true, uid: true },
-        });
-
-        // 6. Build a map of show UID -> show ID for relationship creation
-        const showIdMap = new Map(
-          createdShows.map((show) => [show.uid, show.id]),
-        );
-
-        // 7. Prepare ShowMC data for bulk insert
-        const showMCsToCreate = planDocument.shows.flatMap(
-          (showItem, index) => {
-            const showId = showIdMap.get(showUids[index])!;
-            return (showItem.mcs || [])
-              .filter((mc) => mc.mcId && uidMaps.mcs.has(mc.mcId))
-              .map((mc) => ({
-                uid: this.showMcService.generateShowMcUid(),
-                showId,
-                mcId: uidMaps.mcs.get(mc.mcId)!,
-                note: mc.note,
-                metadata: {},
-              }));
-          },
-        );
-
-        // 8. Bulk create all ShowMCs at once
-        if (showMCsToCreate.length > 0) {
-          await tx.showMC.createMany({
-            data: showMCsToCreate,
-          });
-        }
-
-        // 9. Prepare ShowPlatform data for bulk insert
-        const showPlatformsToCreate = planDocument.shows.flatMap(
-          (showItem, index) => {
-            const showId = showIdMap.get(showUids[index])!;
-            return (showItem.platforms || [])
-              .filter(
-                (platform) =>
-                  platform.platformId
-                  && uidMaps.platforms.has(platform.platformId),
-              )
-              .map((platform) => ({
-                uid: this.showPlatformService.generateShowPlatformUid(),
-                showId,
-                platformId: uidMaps.platforms.get(platform.platformId)!,
-                liveStreamLink: platform.liveStreamLink,
-                platformShowId: platform.platformShowId,
-                viewerCount: 0,
-                metadata: {},
-              }));
-          },
-        );
-
-        // 10. Bulk create all ShowPlatforms at once
-        if (showPlatformsToCreate.length > 0) {
-          await tx.showPlatform.createMany({
-            data: showPlatformsToCreate,
-          });
-        }
-
-        // 11. Mark schedule as published
-        const updatedSchedule = await tx.schedule.update({
-          where: { id: schedule.id },
-          data: {
-            status: 'published',
-            publishedAt: new Date(),
-            publishedBy: userId,
-          },
-          include: {
-            client: true,
-            studio: true,
-            createdByUser: true,
-            publishedByUser: true,
-          },
-        });
-
-        return {
-          schedule: updatedSchedule,
-          showsCreated: createdShows.length,
-          showsDeleted: deletedShows.count,
-        };
+    // 1. Delete existing shows associated with this schedule
+    // cascade deletes ShowMC and ShowPlatform relationships
+    const deletedShows = await tx.show.deleteMany({
+      where: {
+        scheduleId: schedule.id,
+        deletedAt: null,
       },
-      {
-        timeout: 30000, // 30 seconds for complex publish operations
+    });
+
+    // 2. Build UID lookup maps for all references
+    const uidMaps = await this.buildUidLookupMaps(
+      planDocument.shows,
+      schedule as ScheduleWithRelations,
+    );
+
+    // 3. Generate UIDs and prepare show data (without relationships)
+    const showUids = planDocument.shows.map(() =>
+      this.showService.generateShowUid(),
+    );
+    const showsToCreate = planDocument.shows.map((showItem, index) => ({
+      uid: showUids[index],
+      name: showItem.name,
+      startTime: new Date(showItem.startTime),
+      endTime: new Date(showItem.endTime),
+      metadata: showItem.metadata || {},
+      clientId: uidMaps.clients.get(showItem.clientId)!,
+      studioId: showItem.studioId
+        ? uidMaps.studios.get(showItem.studioId)! // Explicit override
+        : schedule.studioId || null, // Inherit from schedule or null
+      studioRoomId: showItem.studioRoomId
+        ? uidMaps.studioRooms.get(showItem.studioRoomId)!
+        : null,
+      showTypeId: uidMaps.showTypes.get(showItem.showTypeId)!,
+      showStatusId: uidMaps.showStatuses.get(showItem.showStatusId)!,
+      showStandardId: uidMaps.showStandards.get(showItem.showStandardId)!,
+      scheduleId: schedule.id,
+    }));
+
+    // 4. Bulk create all shows at once (no relationships)
+    await tx.show.createMany({
+      data: showsToCreate,
+    });
+
+    // 5. Query back created shows to get their IDs (needed for relationships)
+    const createdShows = await tx.show.findMany({
+      where: {
+        uid: { in: showUids },
+        scheduleId: schedule.id,
+      },
+      select: { id: true, uid: true },
+    });
+
+    // 6. Build a map of show UID -> show ID for relationship creation
+    const showIdMap = new Map(
+      createdShows.map((show) => [show.uid, show.id]),
+    );
+
+    // 7. Prepare ShowMC data for bulk insert
+    const showMCsToCreate = planDocument.shows.flatMap(
+      (showItem, index) => {
+        const showId = showIdMap.get(showUids[index])!;
+        return (showItem.mcs || [])
+          .filter((mc) => mc.mcId && uidMaps.mcs.has(mc.mcId))
+          .map((mc) => ({
+            uid: this.showMcService.generateShowMcUid(),
+            showId,
+            mcId: uidMaps.mcs.get(mc.mcId)!,
+            note: mc.note,
+            metadata: {},
+          }));
       },
     );
+
+    // 8. Bulk create all ShowMCs at once
+    if (showMCsToCreate.length > 0) {
+      await tx.showMC.createMany({
+        data: showMCsToCreate,
+      });
+    }
+
+    // 9. Prepare ShowPlatform data for bulk insert
+    const showPlatformsToCreate = planDocument.shows.flatMap(
+      (showItem, index) => {
+        const showId = showIdMap.get(showUids[index])!;
+        return (showItem.platforms || [])
+          .filter(
+            (platform) =>
+              platform.platformId
+              && uidMaps.platforms.has(platform.platformId),
+          )
+          .map((platform) => ({
+            uid: this.showPlatformService.generateShowPlatformUid(),
+            showId,
+            platformId: uidMaps.platforms.get(platform.platformId)!,
+            liveStreamLink: platform.liveStreamLink,
+            platformShowId: platform.platformShowId,
+            viewerCount: 0,
+            metadata: {},
+          }));
+      },
+    );
+
+    // 10. Bulk create all ShowPlatforms at once
+    if (showPlatformsToCreate.length > 0) {
+      await tx.showPlatform.createMany({
+        data: showPlatformsToCreate,
+      });
+    }
+
+    // 11. Mark schedule as published
+    const updatedSchedule = await tx.schedule.update({
+      where: { id: schedule.id },
+      data: {
+        status: 'published',
+        publishedAt: new Date(),
+        publishedBy: userId,
+      },
+      include: {
+        client: true,
+        studio: true,
+        createdByUser: true,
+        publishedByUser: true,
+      },
+    });
+
+    return {
+      schedule: updatedSchedule,
+      showsCreated: createdShows.length,
+      showsDeleted: deletedShows.count,
+    };
   }
 
   /**
@@ -248,8 +242,8 @@ export class PublishingService {
   private async buildUidLookupMaps(
     shows: ShowPlanItem[],
     schedule: ScheduleWithRelations,
-    tx: TransactionClient,
   ) {
+    const tx = this.txHost.tx;
     // Collect all unique UIDs
     const clientUids = new Set<string>();
     const studioUids = new Set<string>();

@@ -1,25 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, StudioMembership } from '@prisma/client';
+import { StudioMembership } from '@prisma/client';
 
-import {
-  CreateStudioMembershipDto,
-  UpdateStudioMembershipDto,
+import type {
+  CreateStudioMembershipPayload,
+  UpdateStudioMembershipPayload,
 } from './schemas/studio-membership.schema';
 import { StudioMembershipRepository } from './studio-membership.repository';
 
-import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
 // Type aliases for better readability and type safety
-type UserId = Prisma.UserWhereUniqueInput['id'];
+type UserId = bigint;
 type StudioId = bigint;
-type StudioMembershipId = Prisma.StudioMembershipWhereUniqueInput['id'];
-
-type StudioMembershipWithIncludes<T extends Prisma.StudioMembershipInclude> =
-  Prisma.StudioMembershipGetPayload<{
-    include: T;
-  }>;
+type StudioMembershipId = bigint;
 
 @Injectable()
 export class StudioMembershipService extends BaseModelService {
@@ -33,36 +27,30 @@ export class StudioMembershipService extends BaseModelService {
     super(utilityService);
   }
 
-  async createStudioMembershipFromDto<
-    T extends Prisma.StudioMembershipInclude = Record<string, never>,
-  >(
-    dto: CreateStudioMembershipDto,
+  async createStudioMembership<T extends Parameters<StudioMembershipRepository['createStudioMembership']>[1]>(
+    payload: CreateStudioMembershipPayload,
     include?: T,
-  ): Promise<StudioMembership | StudioMembershipWithIncludes<T>> {
-    const data = this.buildCreatePayload(dto);
-    return this.createStudioMembership(data, include);
-  }
-
-  async createStudioMembership<
-    T extends Prisma.StudioMembershipInclude = Record<string, never>,
-  >(
-    data: Omit<Prisma.StudioMembershipCreateInput, 'uid'>,
-    include?: T,
-  ): Promise<StudioMembership | StudioMembershipWithIncludes<T>> {
+  ): ReturnType<StudioMembershipRepository['createStudioMembership']> {
     const uid = this.generateUid();
+
+    const data = {
+      user: { connect: { uid: payload.userId } },
+      studio: { connect: { uid: payload.studioId } },
+      role: payload.role,
+      metadata: payload.metadata ?? {},
+    };
+
     return this.studioMembershipRepository.createStudioMembership(
       { ...data, uid },
       include,
     );
   }
 
-  async getStudioMembershipById<
-    T extends Prisma.StudioMembershipInclude = Record<string, never>,
-  >(
+  getStudioMembershipById<T extends Parameters<StudioMembershipRepository['findByUid']>[1]>(
     uid: string,
     include?: T,
-  ): Promise<StudioMembership | StudioMembershipWithIncludes<T>> {
-    return this.findStudioMembershipOrThrow(uid, include);
+  ): ReturnType<StudioMembershipRepository['findByUid']> {
+    return this.studioMembershipRepository.findByUid(uid, include);
   }
 
   async getStudioMembershipsByStudio(
@@ -73,27 +61,23 @@ export class StudioMembershipService extends BaseModelService {
     });
   }
 
-  async getUserStudioMemberships<
-    T extends Prisma.StudioMembershipInclude = Record<string, never>,
-  >(
+  async getUserStudioMemberships<T extends Parameters<StudioMembershipRepository['findUserStudioMemberships']>[1]>(
     userId: UserId,
     include?: T,
-  ): Promise<StudioMembership[] | StudioMembershipWithIncludes<T>[]> {
+  ): ReturnType<StudioMembershipRepository['findUserStudioMemberships']> {
     return this.studioMembershipRepository.findUserStudioMemberships(
       userId,
       include,
     );
   }
 
-  async getStudioMemberships<
-    T extends Prisma.StudioMembershipInclude = Record<string, never>,
-  >(
+  async getStudioMemberships<T extends Parameters<StudioMembershipRepository['findMany']>[0]['include']>(
     params: {
       skip: number;
       take: number;
     },
     include?: T,
-  ): Promise<StudioMembership[] | StudioMembershipWithIncludes<T>[]> {
+  ): ReturnType<StudioMembershipRepository['findMany']> {
     return this.studioMembershipRepository.findMany({
       skip: params.skip,
       take: params.take,
@@ -102,55 +86,16 @@ export class StudioMembershipService extends BaseModelService {
   }
 
   async countStudioMemberships(
-    where: Prisma.StudioMembershipWhereInput = {},
+    where: Parameters<StudioMembershipRepository['count']>[0],
   ): Promise<number> {
     return this.studioMembershipRepository.count(where);
   }
 
-  async listStudioMemberships<
-    T extends Prisma.StudioMembershipInclude = Record<string, never>,
-  >(
-    params: {
-      skip?: number;
-      take?: number;
-      uid?: string;
-      studioUid?: string;
-      where?: Prisma.StudioMembershipWhereInput;
-    },
+  async listStudioMemberships<T extends Parameters<StudioMembershipRepository['listStudioMemberships']>[1]>(
+    params: Parameters<StudioMembershipRepository['listStudioMemberships']>[0],
     include?: T,
-  ): Promise<{
-      data: StudioMembership[] | StudioMembershipWithIncludes<T>[];
-      total: number;
-    }> {
-    const where: Prisma.StudioMembershipWhereInput = { ...params.where };
-
-    if (params.uid) {
-      where.uid = {
-        contains: params.uid,
-        mode: 'insensitive',
-      };
-    }
-
-    if (params.studioUid) {
-      where.studio = {
-        uid: {
-          contains: params.studioUid,
-          mode: 'insensitive',
-        },
-      };
-    }
-
-    const [data, total] = await Promise.all([
-      this.studioMembershipRepository.findMany({
-        skip: params.skip,
-        take: params.take,
-        where,
-        include,
-      }),
-      this.studioMembershipRepository.count(where),
-    ]);
-
-    return { data, total };
+  ): ReturnType<StudioMembershipRepository['listStudioMemberships']> {
+    return this.studioMembershipRepository.listStudioMemberships(params, include);
   }
 
   async isUserAdmin(userId: UserId): Promise<boolean> {
@@ -177,12 +122,10 @@ export class StudioMembershipService extends BaseModelService {
    * @param include - Optional Prisma include to load relations (e.g., { user: true, studio: true })
    * @returns StudioMembership with optional relations, or null if user is not admin
    */
-  async findAdminMembershipByExtId<
-    T extends Prisma.StudioMembershipInclude = Record<string, never>,
-  >(
+  async findAdminMembershipByExtId<T extends Parameters<StudioMembershipRepository['findAdminMembershipByExtId']>[1]>(
     extId: string,
     include?: T,
-  ): Promise<StudioMembership | StudioMembershipWithIncludes<T> | null> {
+  ): ReturnType<StudioMembershipRepository['findAdminMembershipByExtId']> {
     return this.studioMembershipRepository.findAdminMembershipByExtId(
       extId,
       include,
@@ -203,25 +146,26 @@ export class StudioMembershipService extends BaseModelService {
     return membership !== null;
   }
 
-  async updateStudioMembershipFromDto<
-    T extends Prisma.StudioMembershipInclude = Record<string, never>,
-  >(
+  async updateStudioMembership<T extends Parameters<StudioMembershipRepository['updateByUnique']>[2]>(
     uid: string,
-    dto: UpdateStudioMembershipDto,
+    payload: UpdateStudioMembershipPayload,
     include?: T,
-  ): Promise<StudioMembership | StudioMembershipWithIncludes<T>> {
-    const data = this.buildUpdatePayload(dto);
-    return this.updateStudioMembership(uid, data, include);
-  }
+  ): ReturnType<StudioMembershipRepository['updateByUnique']> {
+    const data: Record<string, any> = {};
 
-  async updateStudioMembership<
-    T extends Prisma.StudioMembershipInclude = Record<string, never>,
-  >(
-    uid: string,
-    data: Prisma.StudioMembershipUpdateInput,
-    include?: T,
-  ): Promise<StudioMembership | StudioMembershipWithIncludes<T>> {
-    await this.findStudioMembershipOrThrow(uid);
+    if (payload.role !== undefined)
+      data.role = payload.role;
+    if (payload.metadata !== undefined)
+      data.metadata = payload.metadata;
+
+    if (payload.userId !== undefined) {
+      data.user = { connect: { uid: payload.userId } };
+    }
+
+    if (payload.studioId !== undefined) {
+      data.studio = { connect: { uid: payload.studioId } };
+    }
+
     return this.studioMembershipRepository.updateByUnique(
       { uid },
       data,
@@ -230,7 +174,6 @@ export class StudioMembershipService extends BaseModelService {
   }
 
   async deleteStudioMembership(uid: string): Promise<StudioMembership> {
-    await this.findStudioMembershipOrThrow(uid);
     return this.studioMembershipRepository.softDeleteByUnique({ uid });
   }
 
@@ -238,53 +181,5 @@ export class StudioMembershipService extends BaseModelService {
     id: StudioMembershipId,
   ): Promise<StudioMembership> {
     return this.studioMembershipRepository.restoreByUnique({ id });
-  }
-
-  private async findStudioMembershipOrThrow<
-    T extends Prisma.StudioMembershipInclude = Record<string, never>,
-  >(
-    uid: string,
-    include?: T,
-  ): Promise<StudioMembership | StudioMembershipWithIncludes<T>> {
-    const membership = await this.studioMembershipRepository.findByUid(
-      uid,
-      include,
-    );
-    if (!membership) {
-      throw HttpError.notFound('Studio membership', uid);
-    }
-    return membership;
-  }
-
-  private buildCreatePayload(
-    dto: CreateStudioMembershipDto,
-  ): Omit<Prisma.StudioMembershipCreateInput, 'uid'> {
-    return {
-      user: { connect: { uid: dto.userId } },
-      studio: { connect: { uid: dto.studioId } },
-      role: dto.role,
-      metadata: dto.metadata ?? {},
-    };
-  }
-
-  private buildUpdatePayload(
-    dto: UpdateStudioMembershipDto,
-  ): Prisma.StudioMembershipUpdateInput {
-    const payload: Prisma.StudioMembershipUpdateInput = {};
-
-    if (dto.role !== undefined)
-      payload.role = dto.role;
-    if (dto.metadata !== undefined)
-      payload.metadata = dto.metadata;
-
-    if (dto.userId !== undefined) {
-      payload.user = { connect: { uid: dto.userId } };
-    }
-
-    if (dto.studioId !== undefined) {
-      payload.studio = { connect: { uid: dto.studioId } };
-    }
-
-    return payload;
   }
 }

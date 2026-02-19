@@ -14,13 +14,13 @@ describe('adminShowMcController', () => {
   let controller: AdminShowMcController;
 
   const mockShowMcService = {
-    createShowMcFromDto: jest.fn(),
-    getShowMcById: jest.fn(),
-    getActiveShowMcs: jest.fn(),
-    countShowMcs: jest.fn(),
-    updateShowMcFromDto: jest.fn(),
-    deleteShowMc: jest.fn(),
+    create: jest.fn(),
+    findOne: jest.fn(),
+    findPaginated: jest.fn(),
+    update: jest.fn(),
+    softDelete: jest.fn(),
   };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminShowMcController],
@@ -48,18 +48,12 @@ describe('adminShowMcController', () => {
         mc: { uid: 'mc_123' },
       };
 
-      mockShowMcService.createShowMcFromDto.mockResolvedValue(
-        createdShowMc as any,
-      );
-      mockShowMcService.getShowMcById.mockResolvedValue(
-        showMcWithRelations as any,
-      );
+      mockShowMcService.create.mockResolvedValue(createdShowMc as any);
+      mockShowMcService.findOne.mockResolvedValue(showMcWithRelations as any);
 
       const result = await controller.createShowMc(createDto);
-      expect(mockShowMcService.createShowMcFromDto).toHaveBeenCalledWith(
-        createDto,
-      );
-      expect(mockShowMcService.getShowMcById).toHaveBeenCalledWith(
+      expect(mockShowMcService.create).toHaveBeenCalledWith(createDto);
+      expect(mockShowMcService.findOne).toHaveBeenCalledWith(
         createdShowMc.uid,
         {
           show: true,
@@ -93,20 +87,17 @@ describe('adminShowMcController', () => {
         hasPreviousPage: false,
       };
 
-      mockShowMcService.getActiveShowMcs.mockResolvedValue(showMcs as any);
-      mockShowMcService.countShowMcs.mockResolvedValue(total);
+      mockShowMcService.findPaginated.mockResolvedValue({
+        data: showMcs,
+        total,
+      });
 
       const result = await controller.getShowMcs(query);
-      expect(mockShowMcService.getActiveShowMcs).toHaveBeenCalledWith({
+      expect(mockShowMcService.findPaginated).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
         orderBy: { createdAt: 'desc' },
-        include: {
-          show: true,
-          mc: true,
-        },
       });
-      expect(mockShowMcService.countShowMcs).toHaveBeenCalled();
       expect(result).toEqual({
         data: showMcs,
         meta: paginationMeta,
@@ -125,14 +116,19 @@ describe('adminShowMcController', () => {
         mc: { uid: 'mc_123' },
       };
 
-      mockShowMcService.getShowMcById.mockResolvedValue(showMc as any);
+      mockShowMcService.findOne.mockResolvedValue(showMc as any);
 
       const result = await controller.getShowMc(showMcId);
-      expect(mockShowMcService.getShowMcById).toHaveBeenCalledWith(showMcId, {
+      expect(mockShowMcService.findOne).toHaveBeenCalledWith(showMcId, {
         show: true,
         mc: true,
       });
       expect(result).toEqual(showMc);
+    });
+
+    it('should throw if show MC not found', async () => {
+      mockShowMcService.findOne.mockResolvedValue(null);
+      await expect(controller.getShowMc('show_mc_404')).rejects.toThrow();
     });
   });
 
@@ -147,19 +143,21 @@ describe('adminShowMcController', () => {
         mc: { uid: 'mc_123' },
       };
 
-      mockShowMcService.updateShowMcFromDto.mockResolvedValue(
-        updatedShowMc as any,
-      );
-      mockShowMcService.getShowMcById.mockResolvedValue(
-        showMcWithRelations as any,
-      );
+      // First call check existence
+      mockShowMcService.findOne
+        .mockResolvedValueOnce({ uid: showMcId } as any)
+        // Second call for return value
+        .mockResolvedValueOnce(showMcWithRelations as any);
+
+      mockShowMcService.update.mockResolvedValue(updatedShowMc as any);
 
       const result = await controller.updateShowMc(showMcId, updateDto);
-      expect(mockShowMcService.updateShowMcFromDto).toHaveBeenCalledWith(
+
+      expect(mockShowMcService.update).toHaveBeenCalledWith(
         showMcId,
         updateDto,
       );
-      expect(mockShowMcService.getShowMcById).toHaveBeenCalledWith(
+      expect(mockShowMcService.findOne).toHaveBeenCalledWith(
         updatedShowMc.uid,
         {
           show: true,
@@ -174,10 +172,11 @@ describe('adminShowMcController', () => {
     it('should delete a show MC', async () => {
       const showMcId = 'show_mc_123';
 
-      mockShowMcService.deleteShowMc.mockResolvedValue(undefined);
+      mockShowMcService.findOne.mockResolvedValue({ uid: showMcId } as any);
+      mockShowMcService.softDelete.mockResolvedValue(undefined);
 
       await controller.deleteShowMc(showMcId);
-      expect(mockShowMcService.deleteShowMc).toHaveBeenCalledWith(showMcId);
+      expect(mockShowMcService.softDelete).toHaveBeenCalledWith(showMcId);
     });
   });
 });

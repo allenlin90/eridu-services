@@ -8,11 +8,11 @@ describe('adminStudioRoomController', () => {
   let controller: AdminStudioRoomController;
 
   const mockStudioRoomService = {
-    createStudioRoomFromDto: jest.fn(),
-    listStudioRooms: jest.fn(),
-    getStudioRoomById: jest.fn(),
-    updateStudioRoomFromDto: jest.fn(),
-    deleteStudioRoom: jest.fn(),
+    create: jest.fn(),
+    getStudioRooms: jest.fn(),
+    findOne: jest.fn(),
+    update: jest.fn(),
+    softDelete: jest.fn(),
   };
 
   beforeEach(() => {
@@ -41,15 +41,21 @@ describe('adminStudioRoomController', () => {
         hasPreviousPage: false,
       };
 
-      mockStudioRoomService.listStudioRooms.mockResolvedValue({
+      mockStudioRoomService.getStudioRooms.mockResolvedValue({
         data: rooms,
         total,
       });
 
       const result = await controller.getStudioRooms(query as any);
-      expect(mockStudioRoomService.listStudioRooms).toHaveBeenCalledWith(
-        { skip: query.skip, take: query.take, where: {} },
-        { studio: true },
+      expect(mockStudioRoomService.getStudioRooms).toHaveBeenCalledWith(
+        {
+          skip: query.skip,
+          take: query.take,
+          studioUid: undefined,
+          name: undefined,
+          uid: undefined,
+          includeStudio: true,
+        },
       );
       expect(result).toEqual({
         data: rooms,
@@ -71,22 +77,20 @@ describe('adminStudioRoomController', () => {
       ];
       const total = 1;
 
-      mockStudioRoomService.listStudioRooms.mockResolvedValue({
+      mockStudioRoomService.getStudioRooms.mockResolvedValue({
         data: rooms,
         total,
       });
 
       await controller.getStudioRooms(query as any);
-      expect(mockStudioRoomService.listStudioRooms).toHaveBeenCalledWith(
+      expect(mockStudioRoomService.getStudioRooms).toHaveBeenCalledWith(
         {
           skip: query.skip,
           take: query.take,
-          where: {
-            name: { contains: 'test', mode: 'insensitive' },
-            uid: 'srm_123',
-          },
+          name: 'test',
+          uid: 'srm_123',
+          includeStudio: true,
         },
-        { studio: true },
       );
     });
   });
@@ -101,14 +105,12 @@ describe('adminStudioRoomController', () => {
         studio: { uid: 'studio_123' },
       };
 
-      mockStudioRoomService.getStudioRoomById.mockResolvedValue(room as any);
+      mockStudioRoomService.findOne.mockResolvedValue(room as any);
 
       const result = await controller.getStudioRoom(roomId);
-      expect(mockStudioRoomService.getStudioRoomById).toHaveBeenCalledWith(
-        roomId,
-        {
-          studio: true,
-        },
+      expect(mockStudioRoomService.findOne).toHaveBeenCalledWith(
+        { uid: roomId },
+        { studio: true },
       );
       expect(result).toEqual(room);
     });
@@ -122,14 +124,14 @@ describe('adminStudioRoomController', () => {
       } as UpdateStudioRoomDto;
       const updatedRoom = { uid: roomId, ...updateDto };
 
-      mockStudioRoomService.updateStudioRoomFromDto.mockResolvedValue(
+      mockStudioRoomService.update.mockResolvedValue(
         updatedRoom as any,
       );
 
       const result = await controller.updateStudioRoom(roomId, updateDto);
       expect(
-        mockStudioRoomService.updateStudioRoomFromDto,
-      ).toHaveBeenCalledWith(roomId, updateDto, { studio: true });
+        mockStudioRoomService.update,
+      ).toHaveBeenCalledWith(roomId, { ...updateDto, includeStudio: true });
       expect(result).toEqual(updatedRoom);
     });
   });
@@ -138,12 +140,14 @@ describe('adminStudioRoomController', () => {
     it('should delete a studio room', async () => {
       const roomId = 'studio_room_123';
 
-      mockStudioRoomService.deleteStudioRoom.mockResolvedValue(undefined);
+      mockStudioRoomService.findOne.mockResolvedValue({ uid: roomId } as any);
+      mockStudioRoomService.softDelete.mockResolvedValue(undefined);
 
       await controller.deleteStudioRoom(roomId);
-      expect(mockStudioRoomService.deleteStudioRoom).toHaveBeenCalledWith(
-        roomId,
-      );
+      expect(mockStudioRoomService.findOne).toHaveBeenCalledWith({ uid: roomId });
+      expect(mockStudioRoomService.softDelete).toHaveBeenCalledWith({
+        uid: roomId,
+      });
     });
   });
 });

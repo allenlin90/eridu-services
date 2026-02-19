@@ -74,19 +74,24 @@ id: string
 | `PATCH`  | 200 OK         | `@ZodResponse(S, HttpStatus.OK)`                 |
 | `DELETE` | 204 No Content | `@ZodResponse(undefined, HttpStatus.NO_CONTENT)` |
 
-### 5. Payload Translation
+### 5. Payload Translation & Property Filtering
 
-🔴 **Critical**: Controllers MUST adapt external DTOs to internal Service Payloads.
+🔴 **Critical**: Controllers MUST adapt external DTOs to internal Service Payloads and filter unnecessary properties.
 
-**Why:** Services should be decoupled from HTTP layer. They accept domain payloads, not API DTOs.
+**Why:**
+1. Services should be decoupled from HTTP layer and context-agnostic
+2. Services define clean contracts for exactly what they need
+3. DTOs may contain extra fields (pagination, UI state, metadata) that services don't need
+4. Passing entire DTOs couples services to API structure changes
 
-Do NOT pass raw DTOs to services. Instead, extract and reshape data into the `Create*Payload` type defined in the model's schema file.
+**Rule**: ALWAYS extract only the properties the service contract requires. NEVER pass entire DTO objects.
 
 ```typescript
 @Post()
 async create(@Param('orgId') orgId: string, @Body() dto: CreateUserDto) {
-  // ✅ GOOD: Translate DTO + Params → Service Payload
+  // ✅ GOOD: Extract ONLY what service needs
   const { name, email } = dto;
+  // Filtered out: dto.pageSize, dto.sortOrder, etc.
   return this.userService.create({
     name,
     email,
@@ -94,7 +99,54 @@ async create(@Param('orgId') orgId: string, @Body() dto: CreateUserDto) {
   });
 }
 
-// ❌ Wrong: return this.userService.create(dto);
+// ❌ BAD: Pass entire DTO
+async create(@Body() dto: CreateUserDto) {
+  return this.userService.create(dto); // Service now knows about ALL DTO fields
+}
+
+// ❌ BAD: Spread operator without explicit filtering
+async create(@Body() dto: CreateUserDto) {
+  return this.userService.create({ ...dto }); // Same problem
+}
+
+// ❌ BAD: Deleting properties
+async create(@Body() dto: CreateUserDto) {
+  delete dto.pageSize; // Mutating DTO, not explicit about what service needs
+  return this.userService.create(dto);
+}
+```
+
+**Pattern for complex DTOs**:
+
+```typescript
+// DTO may have many fields for validation/UI purposes
+interface CreateTaskDto {
+  name: string;
+  description: string;
+  assigneeId?: string;
+  // Extra fields controllers use but services don't need:
+  returnUrl?: string;      // UI navigation
+  skipNotification?: boolean; // HTTP-specific flag
+}
+
+@Post()
+async create(@Body() dto: CreateTaskDto) {
+  // ✅ Extract only service contract fields
+  const { name, description, assigneeId } = dto;
+
+  const task = await this.taskService.create({
+    name,
+    description,
+    assigneeId,
+  });
+
+  // Controller handles HTTP-specific logic
+  if (dto.skipNotification) {
+    // Controller decision, not service concern
+  }
+
+  return task;
+}
 ```
 
 ### 6. Layer Boundaries

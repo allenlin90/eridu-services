@@ -13,7 +13,6 @@ import { UserService } from '@/models/user/user.service';
 describe('studioGuard', () => {
   let guard: StudioGuard;
   let reflector: Reflector;
-  let userService: UserService;
 
   const mockUser = {
     ext_id: 'user-123',
@@ -31,7 +30,7 @@ describe('studioGuard', () => {
   } as unknown as ExecutionContext;
 
   const mockUserService = {
-    getUserByExtId: jest.fn(),
+    getStudioMembership: jest.fn(),
   };
 
   const mockReflector = {
@@ -55,7 +54,7 @@ describe('studioGuard', () => {
 
     guard = module.get<StudioGuard>(StudioGuard);
     reflector = module.get<Reflector>(Reflector);
-    userService = module.get<UserService>(UserService);
+    // userService = module.get<UserService>(UserService);
   });
 
   afterEach(() => {
@@ -69,7 +68,7 @@ describe('studioGuard', () => {
       const result = await guard.canActivate(mockExecutionContext);
 
       expect(result).toBe(true);
-      expect(userService.getUserByExtId).not.toHaveBeenCalled();
+      expect(mockUserService.getStudioMembership).not.toHaveBeenCalled();
     });
 
     it('should throw Unauthorized if user is not in request', async () => {
@@ -112,9 +111,7 @@ describe('studioGuard', () => {
 
     it('should throw Forbidden if user has no membership in studio', async () => {
       jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([]);
-      jest.spyOn(userService, 'getUserByExtId').mockResolvedValue({
-        studioMemberships: [],
-      } as any);
+      jest.spyOn(mockUserService, 'getStudioMembership').mockResolvedValue(null);
 
       (mockExecutionContext.switchToHttp().getRequest as jest.Mock).mockReturnValue({
         user: mockUser,
@@ -125,22 +122,9 @@ describe('studioGuard', () => {
         HttpError.forbidden('Studio membership required'),
       );
 
-      expect(userService.getUserByExtId).toHaveBeenCalledWith(
+      expect(mockUserService.getStudioMembership).toHaveBeenCalledWith(
         mockUser.ext_id,
-        expect.objectContaining({
-          studioMemberships: expect.objectContaining({
-            where: expect.objectContaining({
-              studio: { uid: mockStudioId },
-            }),
-            include: {
-              studio: {
-                select: {
-                  uid: true,
-                },
-              },
-            },
-          }),
-        }),
+        mockStudioId,
       );
     });
 
@@ -148,9 +132,7 @@ describe('studioGuard', () => {
       jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([]);
       const mockMembership = { role: STUDIO_ROLE.MEMBER, uid: 'mem-1' };
 
-      jest.spyOn(userService, 'getUserByExtId').mockResolvedValue({
-        studioMemberships: [mockMembership],
-      } as any);
+      jest.spyOn(mockUserService, 'getStudioMembership').mockResolvedValue(mockMembership);
 
       const request = {
         user: mockUser,
@@ -169,9 +151,7 @@ describe('studioGuard', () => {
       jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([STUDIO_ROLE.ADMIN]);
       const mockMembership = { role: STUDIO_ROLE.MEMBER, uid: 'mem-1' };
 
-      jest.spyOn(userService, 'getUserByExtId').mockResolvedValue({
-        studioMemberships: [mockMembership],
-      } as any);
+      jest.spyOn(mockUserService, 'getStudioMembership').mockResolvedValue(mockMembership);
 
       (mockExecutionContext.switchToHttp().getRequest as jest.Mock).mockReturnValue({
         user: mockUser,
@@ -187,9 +167,7 @@ describe('studioGuard', () => {
       jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([STUDIO_ROLE.ADMIN]);
       const mockMembership = { role: STUDIO_ROLE.ADMIN, uid: 'mem-1' };
 
-      jest.spyOn(userService, 'getUserByExtId').mockResolvedValue({
-        studioMemberships: [mockMembership],
-      } as any);
+      jest.spyOn(mockUserService, 'getStudioMembership').mockResolvedValue(mockMembership);
 
       const request = {
         user: mockUser,

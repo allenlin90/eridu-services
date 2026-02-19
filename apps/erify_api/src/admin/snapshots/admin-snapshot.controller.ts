@@ -66,11 +66,12 @@ export class AdminSnapshotController extends BaseAdminController {
   ) {
     // Get user by UID
     const user = await this.userService.getUserById(body.user_id);
+    this.ensureResourceExists(user, 'User', body.user_id);
 
     // Restore from snapshot
     const restored = await this.schedulePlanningService.restoreFromSnapshot(
       id,
-      user.id,
+      user!.id,
     );
 
     // Return schedule with relations

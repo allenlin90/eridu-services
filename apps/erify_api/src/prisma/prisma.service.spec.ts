@@ -1,9 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
-import { Prisma } from '@prisma/client';
 
-import type { TransactionClient } from './prisma.service';
 import { PrismaService } from './prisma.service';
 
 // Mock the pg module
@@ -35,7 +33,7 @@ describe('prismaService', () => {
   let service: PrismaService;
   let connectSpy: jest.SpyInstance;
   let disconnectSpy: jest.SpyInstance;
-  let transactionSpy: jest.SpyInstance;
+
   let queryRawSpy: jest.SpyInstance;
 
   const mockConfigService = {
@@ -68,19 +66,7 @@ describe('prismaService', () => {
     disconnectSpy = jest
       .spyOn(service, '$disconnect')
       .mockResolvedValue(undefined);
-    transactionSpy = jest
-      .spyOn(service, '$transaction')
-      .mockImplementation(
-        <T>(callback: (tx: TransactionClient) => Promise<T>) => {
-          // Create a mock transaction client
-          const mockTx = {
-            user: service.user,
-            show: service.show,
-            schedule: service.schedule,
-          } as TransactionClient;
-          return Promise.resolve(callback(mockTx));
-        },
-      );
+
     queryRawSpy = jest
       .spyOn(service, '$queryRaw')
       .mockResolvedValue([{ '?column?': 1 }]);
@@ -145,58 +131,6 @@ describe('prismaService', () => {
         'Error disconnecting from database',
         error,
       );
-    });
-  });
-
-  describe('executeTransaction', () => {
-    it('should execute transaction with callback', async () => {
-      const callback = jest.fn().mockResolvedValue('result');
-      const result = await service.executeTransaction(callback);
-
-      expect(transactionSpy).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(result).toBe('result');
-    });
-
-    it('should use default transaction options', async () => {
-      transactionSpy.mockClear();
-      const callback = jest.fn().mockResolvedValue('result');
-      await service.executeTransaction(callback);
-
-      expect(transactionSpy).toHaveBeenCalledWith(expect.any(Function), {
-        maxWait: 5000,
-        timeout: 10000,
-      });
-    });
-
-    it('should use custom transaction options', async () => {
-      transactionSpy.mockClear();
-      const callback = jest.fn().mockResolvedValue('result');
-      const options = {
-        maxWait: 10000,
-        timeout: 30000,
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      };
-
-      await service.executeTransaction(callback, options);
-
-      expect(transactionSpy).toHaveBeenCalledWith(expect.any(Function), {
-        maxWait: 10000,
-        timeout: 30000,
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      });
-    });
-
-    it('should handle transaction errors', async () => {
-      const error = new Error('Transaction failed');
-      transactionSpy.mockRejectedValueOnce(error);
-      const loggerSpy = jest.spyOn(service.logger, 'error');
-      const callback = jest.fn().mockResolvedValue('result');
-
-      await expect(service.executeTransaction(callback)).rejects.toThrow(
-        'Transaction failed',
-      );
-      expect(loggerSpy).toHaveBeenCalledWith('Transaction failed', error);
     });
   });
 

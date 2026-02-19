@@ -84,7 +84,7 @@ export class StudioTaskTemplateController extends BaseStudioController {
       name,
       description,
       currentSchema: schema,
-      studio: { connect: { uid: studioId } },
+      studioId,
     });
   }
 
@@ -98,7 +98,8 @@ export class StudioTaskTemplateController extends BaseStudioController {
     const { name, description, schema, version } = updateStudioTaskTemplateDto;
 
     return this.taskTemplateService.updateTemplateWithSnapshot(
-      { uid: id, version, studio: { uid: studioId } },
+      id,
+      studioId,
       {
         name,
         description,

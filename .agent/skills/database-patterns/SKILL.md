@@ -74,27 +74,41 @@ await prisma.show.updateMany({
 
 ## 3. Transaction Pattern
 
-**Rule**: Use `prisma.$transaction` for **Atomic Multi-Entity Operations**.
+**Rule**: Use the `@Transactional()` decorator via CLS (Continuation-Local Storage) for **Atomic Multi-Entity Operations**.
+
+Transactions are propagated automatically through the async context — no `tx` parameter passing between methods.
 
 **Scenario**: Creating a Show requires creating ShowMCs and ShowPlatforms simultaneously.
 
 ```typescript
-return prisma.$transaction(async (tx) => {
-  // 1. Create Parent
-  const show = await tx.show.create({ ... });
+import { Transactional } from '@nestjs-cls/transactional';
 
-  // 2. Create Children (using tx, NOT prisma)
-  await tx.showMC.createMany({
-    data: mcs.map(mc => ({ showId: show.id, ... }))
-  });
+@Injectable()
+export class ShowOrchestrationService {
+  constructor(
+    private readonly showService: ShowService,
+    private readonly showMcService: ShowMcService,
+  ) {}
 
-  return show;
-});
+  @Transactional()
+  async createShowWithMcs(data: CreateShowWithMcsPayload) {
+    // No `tx` passed — CLS propagates it to all repository calls automatically
+    const show = await this.showService.createShow(data);
+    await this.showMcService.createMany(show.id, data.mcs);
+    return show;
+  }
+}
 ```
 
 **Critical Rules**:
-1.  Always use `tx` inside the callback. Using `prisma` bypasses the transaction lock.
-2.  Keep transactions **short**. Do not await external API calls inside a transaction.
+1.  Apply `@Transactional()` on the **Orchestration Service** method, not on individual repository/model-service calls.
+2.  Keep transactions **short**. Do not await external API calls (HTTP, email) inside a transaction.
+3.  Never pass `tx` as a method parameter — CLS handles propagation transparently.
+4.  Repositories access the active transaction via `TransactionHost` (injected by the CLS adapter).
+
+> [!NOTE]
+> **Legacy `$transaction` calls**: Some existing code may still use `prisma.$transaction(async (tx) => {...})` with explicit `tx` passing.
+> This is the **old pattern** and will be migrated to `@Transactional()` in Phase 2. Do NOT write new code using the old pattern.
 
 ---
 
@@ -306,5 +320,5 @@ async createTemplateWithSnapshot(payload: CreateTaskTemplatePayload): Promise<Ta
 
 ## Related Skills
 
-- **[Repository Pattern](repository-pattern-nestjs/SKILL.md)**: How to wrap these patterns in a reusable class.
-- **[Service Pattern](service-pattern-nestjs/SKILL.md)**: Where to use Transactions and business logic.
+- **[Repository Pattern](../repository-pattern-nestjs/SKILL.md)**: How to wrap these patterns in a reusable class.
+- **[Service Pattern](../service-pattern-nestjs/SKILL.md)**: Where to use Transactions and business logic.

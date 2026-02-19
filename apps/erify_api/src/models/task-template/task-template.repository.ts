@@ -3,67 +3,8 @@ import { Prisma, TaskTemplate } from '@prisma/client';
 
 import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
-import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
+import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
-
-// Custom model wrapper that implements IBaseModel with TaskTemplateWhereInput
-class TaskTemplateModelWrapper
-implements
-    IBaseModel<
-      TaskTemplate,
-      Prisma.TaskTemplateCreateInput,
-      Prisma.TaskTemplateUpdateInput,
-      Prisma.TaskTemplateWhereInput
-    > {
-  constructor(private readonly prismaModel: Prisma.TaskTemplateDelegate) {}
-
-  async create(args: {
-    data: Prisma.TaskTemplateCreateInput;
-    include?: Record<string, any>;
-  }): Promise<TaskTemplate> {
-    return this.prismaModel.create(args);
-  }
-
-  async findFirst(args: {
-    where: Prisma.TaskTemplateWhereInput;
-    include?: Record<string, any>;
-  }): Promise<TaskTemplate | null> {
-    return this.prismaModel.findFirst(args);
-  }
-
-  async findFirstOrThrow(args: {
-    where: Prisma.TaskTemplateWhereInput;
-    include?: Record<string, any>;
-  }): Promise<TaskTemplate> {
-    return this.prismaModel.findFirstOrThrow(args);
-  }
-
-  async findMany(args: {
-    where?: Prisma.TaskTemplateWhereInput;
-    skip?: number;
-    take?: number;
-    orderBy?: any;
-    include?: Record<string, any>;
-  }): Promise<TaskTemplate[]> {
-    return this.prismaModel.findMany(args);
-  }
-
-  async update(args: {
-    where: Prisma.TaskTemplateWhereUniqueInput;
-    data: Prisma.TaskTemplateUpdateInput;
-    include?: Record<string, any>;
-  }): Promise<TaskTemplate> {
-    return this.prismaModel.update(args);
-  }
-
-  async delete(args: { where: Prisma.TaskTemplateWhereUniqueInput }): Promise<TaskTemplate> {
-    return this.prismaModel.delete(args);
-  }
-
-  async count(args: { where: Prisma.TaskTemplateWhereInput }): Promise<number> {
-    return this.prismaModel.count({ where: args.where });
-  }
-}
 
 @Injectable()
 export class TaskTemplateRepository extends BaseRepository<
@@ -73,7 +14,7 @@ export class TaskTemplateRepository extends BaseRepository<
   Prisma.TaskTemplateWhereInput
 > {
   constructor(private readonly prisma: PrismaService) {
-    super(new TaskTemplateModelWrapper(prisma.taskTemplate));
+    super(new PrismaModelWrapper(prisma.taskTemplate));
   }
 
   async findByUid(
@@ -104,10 +45,16 @@ export class TaskTemplateRepository extends BaseRepository<
   }
 
   async update(
-    where: Prisma.TaskTemplateWhereUniqueInput,
+    params: { uid: string; studioUid?: string },
     data: Prisma.TaskTemplateUpdateInput,
     include?: Prisma.TaskTemplateInclude,
   ): Promise<TaskTemplate> {
+    const { uid, studioUid } = params;
+    const where: Prisma.TaskTemplateWhereUniqueInput = {
+      uid,
+      ...(studioUid && { studio: { uid: studioUid } }),
+    };
+
     return this.prisma.taskTemplate.update({
       where: { ...where, deletedAt: null },
       data,
@@ -116,10 +63,18 @@ export class TaskTemplateRepository extends BaseRepository<
   }
 
   async updateWithVersionCheck(
-    where: Prisma.TaskTemplateWhereUniqueInput & { version?: number },
+    params: { uid: string; studioUid?: string; version?: number },
     data: Prisma.TaskTemplateUpdateInput,
     include?: Prisma.TaskTemplateInclude,
   ): Promise<TaskTemplate> {
+    const { uid, studioUid, version } = params;
+
+    const where: Prisma.TaskTemplateWhereUniqueInput & { version?: number } = {
+      uid,
+      ...(version !== undefined && { version }),
+      ...(studioUid && { studio: { uid: studioUid } }),
+    };
+
     try {
       return await this.prisma.taskTemplate.update({
         where: { ...where, deletedAt: null },
@@ -128,8 +83,8 @@ export class TaskTemplateRepository extends BaseRepository<
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === PRISMA_ERROR.RecordNotFound && where.version) {
-          const existing = await this.findOne({ uid: where.uid, deletedAt: null });
+        if (error.code === PRISMA_ERROR.RecordNotFound && version) {
+          const existing = await this.findOne({ uid, deletedAt: null });
 
           if (!existing) {
             throw error;
@@ -137,7 +92,7 @@ export class TaskTemplateRepository extends BaseRepository<
 
           throw new VersionConflictError(
             'Task template version is outdated',
-            where.version,
+            version,
             existing.version,
           );
         }

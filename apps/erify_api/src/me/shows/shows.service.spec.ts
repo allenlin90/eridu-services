@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
-import type { MC, Prisma, Show } from '@prisma/client';
+import type { MC, Show } from '@prisma/client';
 
 import { ShowsService } from './shows.service';
 
@@ -112,8 +112,11 @@ describe('showsService', () => {
   };
 
   const mockMcService = {
-    getMcs: jest.fn() as jest.MockedFunction<McService['getMcs']>,
-  } as jest.Mocked<Pick<McService, 'getMcs'>>;
+    listMcs: jest.fn() as jest.MockedFunction<McService['listMcs']>,
+    getMcByUserIdentifier: jest.fn() as jest.MockedFunction<
+      McService['getMcByUserIdentifier']
+    >,
+  } as jest.Mocked<Pick<McService, 'listMcs' | 'getMcByUserIdentifier'>>;
 
   const mockShowService = {
     getShows: jest.fn() as jest.MockedFunction<ShowService['getShows']>,
@@ -161,38 +164,15 @@ describe('showsService', () => {
         uid: undefined,
       };
 
-      mockMcService.getMcs.mockResolvedValue([mockMc]);
+      mockMcService.getMcByUserIdentifier.mockResolvedValue(mockMc);
       mockShowService.getShows.mockResolvedValue([mockShowWithRelations]);
       mockShowService.countShows.mockResolvedValue(1);
 
       const result = await service.getShowsForMcUser(userIdentifier, params);
 
-      expect(mockMcService.getMcs).toHaveBeenCalledWith({
-        where: {
-          deletedAt: null,
-          user: {
-            OR: [{ uid: userIdentifier }, { extId: userIdentifier }],
-            deletedAt: null,
-          },
-        },
-        take: 1,
-      });
-      const expectedInclude: Prisma.ShowInclude = {
-        client: true,
-        studioRoom: true,
-        showType: true,
-        showStatus: true,
-        showStandard: true,
-        showPlatforms: {
-          include: {
-            platform: true,
-          },
-          where: {
-            deletedAt: null,
-          },
-        },
-      };
-
+      expect(mockMcService.getMcByUserIdentifier).toHaveBeenCalledWith(
+        userIdentifier,
+      );
       expect(mockShowService.getShows).toHaveBeenCalledWith(
         {
           where: {
@@ -208,7 +188,13 @@ describe('showsService', () => {
           take: params.take,
           orderBy: { startTime: 'asc' },
         },
-        expectedInclude,
+        expect.objectContaining({
+          client: true,
+          studioRoom: true,
+          showType: true,
+          showStatus: true,
+          showStandard: true,
+        }),
       );
       expect(mockShowService.countShows).toHaveBeenCalledWith({
         deletedAt: null,
@@ -239,22 +225,15 @@ describe('showsService', () => {
         uid: undefined,
       };
 
-      mockMcService.getMcs.mockResolvedValue([mockMc]);
+      mockMcService.getMcByUserIdentifier.mockResolvedValue(mockMc);
       mockShowService.getShows.mockResolvedValue([mockShowWithRelations]);
       mockShowService.countShows.mockResolvedValue(1);
 
       const result = await service.getShowsForMcUser(userIdentifier, params);
 
-      expect(mockMcService.getMcs).toHaveBeenCalledWith({
-        where: {
-          deletedAt: null,
-          user: {
-            OR: [{ uid: userIdentifier }, { extId: userIdentifier }],
-            deletedAt: null,
-          },
-        },
-        take: 1,
-      });
+      expect(mockMcService.getMcByUserIdentifier).toHaveBeenCalledWith(
+        userIdentifier,
+      );
       expect(result).toEqual({
         shows: [mockShowWithRelations],
         total: 1,
@@ -275,7 +254,7 @@ describe('showsService', () => {
         uid: undefined,
       };
 
-      mockMcService.getMcs.mockResolvedValue([mockMc]);
+      mockMcService.getMcByUserIdentifier.mockResolvedValue(mockMc);
       mockShowService.getShows.mockResolvedValue([mockShowWithRelations]);
       mockShowService.countShows.mockResolvedValue(1);
 
@@ -284,7 +263,7 @@ describe('showsService', () => {
       expect(mockShowService.getShows).toHaveBeenCalled();
       const callArgs = mockShowService.getShows.mock.calls[0] as [
         { orderBy: { startTime: string } },
-        Prisma.ShowInclude,
+        Record<string, unknown>,
       ];
       expect(callArgs[0].orderBy).toEqual({ createdAt: 'desc' });
     });
@@ -303,7 +282,7 @@ describe('showsService', () => {
         uid: undefined,
       };
 
-      mockMcService.getMcs.mockResolvedValue([mockMc]);
+      mockMcService.getMcByUserIdentifier.mockResolvedValue(mockMc);
       mockShowService.getShows.mockResolvedValue([]);
       mockShowService.countShows.mockResolvedValue(0);
 
@@ -316,7 +295,7 @@ describe('showsService', () => {
           take: number;
           orderBy: { startTime: string };
         },
-        Prisma.ShowInclude,
+        Record<string, unknown>,
       ];
       expect(callArgs[0].skip).toBe(10);
       expect(callArgs[0].take).toBe(20);
@@ -341,7 +320,7 @@ describe('showsService', () => {
         uid: undefined,
       };
 
-      mockMcService.getMcs.mockResolvedValue([]);
+      mockMcService.getMcByUserIdentifier.mockResolvedValue(null);
 
       await expect(
         service.getShowsForMcUser(userIdentifier, params),
@@ -357,37 +336,14 @@ describe('showsService', () => {
       const userIdentifier = 'user_test123';
       const showId = 'show_test123';
 
-      mockMcService.getMcs.mockResolvedValue([mockMc]);
+      mockMcService.getMcByUserIdentifier.mockResolvedValue(mockMc);
       mockShowService.getShows.mockResolvedValue([mockShowWithRelations]);
 
       const result = await service.getShowForMcUser(userIdentifier, showId);
 
-      expect(mockMcService.getMcs).toHaveBeenCalledWith({
-        where: {
-          deletedAt: null,
-          user: {
-            OR: [{ uid: userIdentifier }, { extId: userIdentifier }],
-            deletedAt: null,
-          },
-        },
-        take: 1,
-      });
-      const expectedInclude: Prisma.ShowInclude = {
-        client: true,
-        studioRoom: true,
-        showType: true,
-        showStatus: true,
-        showStandard: true,
-        showPlatforms: {
-          include: {
-            platform: true,
-          },
-          where: {
-            deletedAt: null,
-          },
-        },
-      };
-
+      expect(mockMcService.getMcByUserIdentifier).toHaveBeenCalledWith(
+        userIdentifier,
+      );
       expect(mockShowService.getShows).toHaveBeenCalledWith(
         {
           where: {
@@ -402,7 +358,13 @@ describe('showsService', () => {
           },
           take: 1,
         },
-        expectedInclude,
+        expect.objectContaining({
+          client: true,
+          studioRoom: true,
+          showType: true,
+          showStatus: true,
+          showStandard: true,
+        }),
       );
       expect(result).toEqual(mockShowWithRelations);
     });
@@ -411,7 +373,7 @@ describe('showsService', () => {
       const userIdentifier = 'user_test123';
       const showId = 'show_notfound';
 
-      mockMcService.getMcs.mockResolvedValue([mockMc]);
+      mockMcService.getMcByUserIdentifier.mockResolvedValue(mockMc);
       mockShowService.getShows.mockResolvedValue([]);
 
       await expect(
@@ -426,7 +388,7 @@ describe('showsService', () => {
       const userIdentifier = 'user_test123';
       const showId = 'show_test123';
 
-      mockMcService.getMcs.mockResolvedValue([mockMc]);
+      mockMcService.getMcByUserIdentifier.mockResolvedValue(mockMc);
       // Show exists but not assigned to this MC (empty result due to showMCs filter)
       mockShowService.getShows.mockResolvedValue([]);
 
@@ -439,7 +401,7 @@ describe('showsService', () => {
       const userIdentifier = 'user_notfound';
       const showId = 'show_test123';
 
-      mockMcService.getMcs.mockResolvedValue([]);
+      mockMcService.getMcByUserIdentifier.mockResolvedValue(null);
 
       await expect(
         service.getShowForMcUser(userIdentifier, showId),

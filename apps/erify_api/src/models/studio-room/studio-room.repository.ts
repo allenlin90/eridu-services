@@ -1,61 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma, StudioRoom } from '@prisma/client';
 
-import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
+import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
-
-class StudioRoomModelWrapper
-implements
-    IBaseModel<
-      StudioRoom,
-      Prisma.StudioRoomCreateInput,
-      Prisma.StudioRoomUpdateInput,
-      Prisma.StudioRoomWhereInput
-    > {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async create(args: {
-    data: Prisma.StudioRoomCreateInput;
-    include?: Record<string, any>;
-  }): Promise<StudioRoom> {
-    return this.prisma.studioRoom.create(args);
-  }
-
-  async findFirst(args: {
-    where: Prisma.StudioRoomWhereInput;
-    include?: Record<string, any>;
-  }): Promise<StudioRoom | null> {
-    return this.prisma.studioRoom.findFirst(args);
-  }
-
-  async findMany(args: {
-    where?: Prisma.StudioRoomWhereInput;
-    skip?: number;
-    take?: number;
-    orderBy?: any;
-    include?: Record<string, any>;
-  }): Promise<StudioRoom[]> {
-    return this.prisma.studioRoom.findMany(args);
-  }
-
-  async update(args: {
-    where: Prisma.StudioRoomWhereUniqueInput;
-    data: Prisma.StudioRoomUpdateInput;
-    include?: Record<string, any>;
-  }): Promise<StudioRoom> {
-    return this.prisma.studioRoom.update(args);
-  }
-
-  async delete(args: {
-    where: Prisma.StudioRoomWhereUniqueInput;
-  }): Promise<StudioRoom> {
-    return this.prisma.studioRoom.delete(args);
-  }
-
-  async count(args: { where: Prisma.StudioRoomWhereInput }): Promise<number> {
-    return this.prisma.studioRoom.count(args);
-  }
-}
 
 @Injectable()
 export class StudioRoomRepository extends BaseRepository<
@@ -65,22 +12,16 @@ export class StudioRoomRepository extends BaseRepository<
   Prisma.StudioRoomWhereInput
 > {
   constructor(private readonly prisma: PrismaService) {
-    super(new StudioRoomModelWrapper(prisma));
+    super(new PrismaModelWrapper(prisma.studioRoom));
   }
 
-  async findByUid<T extends Prisma.StudioRoomInclude = Record<string, never>>(
+  async findByUid(
     uid: string,
-    include?: T,
-  ): Promise<StudioRoom | Prisma.StudioRoomGetPayload<{ include: T }> | null> {
+    include?: Prisma.StudioRoomInclude,
+  ): Promise<StudioRoom | null> {
     return this.model.findFirst({
       where: { uid, deletedAt: null },
       ...(include && { include }),
-    });
-  }
-
-  async findByStudioId(studioId: bigint): Promise<StudioRoom[]> {
-    return this.model.findMany({
-      where: { studioId, deletedAt: null },
     });
   }
 
@@ -93,27 +34,53 @@ export class StudioRoomRepository extends BaseRepository<
     });
   }
 
-  async findActiveStudioRooms<
-    T extends Prisma.StudioRoomInclude = Record<string, never>,
-  >(
-    params: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.StudioRoomOrderByWithRelationInput;
-      studioUid?: string;
-    },
-    include?: T,
-  ): Promise<StudioRoom[] | Prisma.StudioRoomGetPayload<{ include: T }>[]> {
-    const { skip, take, orderBy, studioUid } = params;
-    return this.model.findMany({
-      where: {
-        deletedAt: null,
-        ...(studioUid && { studio: { uid: studioUid } }),
-      },
-      skip,
-      take,
-      orderBy,
-      ...(include && { include }),
-    });
+  async findPaginated(params: {
+    skip?: number;
+    take?: number;
+    name?: string;
+    uid?: string;
+    includeDeleted?: boolean;
+    studioUid?: string;
+    orderBy?: 'asc' | 'desc';
+    includeStudio?: boolean;
+  }): Promise<{ data: StudioRoom[]; total: number }> {
+    const { skip, take, name, uid, includeDeleted, studioUid, orderBy, includeStudio } = params;
+
+    const where: Prisma.StudioRoomWhereInput = {};
+
+    if (!includeDeleted) {
+      where.deletedAt = null;
+    }
+
+    if (name) {
+      where.name = {
+        contains: name,
+        mode: 'insensitive',
+      };
+    }
+
+    if (uid) {
+      where.uid = {
+        contains: uid,
+        mode: 'insensitive',
+      };
+    }
+
+    if (studioUid) {
+      where.studio = { uid: studioUid };
+    }
+
+    const [data, total] = await Promise.all([
+      this.model.findMany({
+        skip,
+        take,
+        where,
+        orderBy: orderBy ? { createdAt: orderBy } : undefined,
+        include: includeStudio ? { studio: true } : undefined,
+      }),
+      this.model.count({ where }),
+    ]);
+
+    return { data, total };
   }
 }

@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { MC, Prisma } from '@prisma/client';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { McService } from '@/models/mc/mc.service';
@@ -56,7 +55,7 @@ export class ShowsService {
     const mc = await this.findMcByUserIdentifier(userIdentifier);
 
     // Build where clause with MC filter and specific show ID
-    const where: Prisma.ShowWhereInput = {
+    const where = {
       uid: showId,
       deletedAt: null,
       showMCs: {
@@ -91,18 +90,9 @@ export class ShowsService {
    * @returns MC entity
    * @throws HttpError.notFound if MC is not found
    */
-  private async findMcByUserIdentifier(userIdentifier: string): Promise<MC> {
+  private async findMcByUserIdentifier(userIdentifier: string) {
     // The JWT guard sets request.user.id as a string (uid or extId), not the bigint id
-    const [mc] = await this.mcService.getMcs({
-      where: {
-        deletedAt: null,
-        user: {
-          OR: [{ uid: userIdentifier }, { extId: userIdentifier }],
-          deletedAt: null,
-        },
-      },
-      take: 1,
-    });
+    const mc = await this.mcService.getMcByUserIdentifier(userIdentifier);
 
     if (!mc) {
       throw HttpError.notFound('MC', `for user ${userIdentifier}`);
@@ -115,7 +105,6 @@ export class ShowsService {
    * Builds the where clause for querying shows assigned to a specific MC.
    * @param mcId - The MC's bigint ID
    * @param query - Query parameters with filters
-   * @returns Prisma ShowWhereInput
    */
   private buildShowWhereClause(
     mcId: bigint,
@@ -123,8 +112,8 @@ export class ShowsService {
       ListShowsQueryDto,
       'name' | 'start_date_from' | 'start_date_to' | 'end_date_from' | 'end_date_to' | 'include_deleted'
     >,
-  ): Prisma.ShowWhereInput {
-    const where: Prisma.ShowWhereInput = {
+  ) {
+    const where: Parameters<ShowService['getShows']>[0]['where'] = {
       showMCs: {
         some: {
           mcId,
@@ -135,12 +124,12 @@ export class ShowsService {
 
     // Filter out soft deleted records by default
     if (!query.include_deleted) {
-      where.deletedAt = null;
+      where!.deletedAt = null;
     }
 
     // Name filtering (case-insensitive partial match)
     if (query.name) {
-      where.name = {
+      where!.name = {
         contains: query.name,
         mode: 'insensitive',
       };
@@ -148,37 +137,36 @@ export class ShowsService {
 
     // Date range filtering for start time
     if (query.start_date_from || query.start_date_to) {
-      where.startTime = {};
+      where!.startTime = {};
       if (query.start_date_from) {
-        where.startTime.gte = new Date(query.start_date_from);
+        (where!.startTime as Record<string, Date>).gte = new Date(query.start_date_from);
       }
       if (query.start_date_to) {
-        where.startTime.lte = new Date(query.start_date_to);
+        (where!.startTime as Record<string, Date>).lte = new Date(query.start_date_to);
       }
     }
 
     // Date range filtering for end time
     if (query.end_date_from || query.end_date_to) {
-      where.endTime = {};
+      where!.endTime = {};
       if (query.end_date_from) {
-        where.endTime.gte = new Date(query.end_date_from);
+        (where!.endTime as Record<string, Date>).gte = new Date(query.end_date_from);
       }
       if (query.end_date_to) {
-        where.endTime.lte = new Date(query.end_date_to);
+        (where!.endTime as Record<string, Date>).lte = new Date(query.end_date_to);
       }
     }
 
-    return where;
+    return where!;
   }
 
   /**
    * Builds the order by clause for sorting shows.
    * @param query - Query parameters with sorting options
-   * @returns Prisma ShowOrderByWithRelationInput
    */
   private buildOrderByClause(
     query: Pick<ListShowsQueryDto, 'order_by' | 'order_direction'>,
-  ): Prisma.ShowOrderByWithRelationInput {
+  ) {
     const fieldMap: Record<string, string> = {
       created_at: 'createdAt',
       updated_at: 'updatedAt',
@@ -193,9 +181,8 @@ export class ShowsService {
 
   /**
    * Builds the include clause for show queries with all related entities.
-   * @returns Prisma ShowInclude with client, studioRoom, showType, showStatus, showStandard, and showPlatforms
    */
-  private buildShowInclude(): Prisma.ShowInclude {
+  private buildShowInclude() {
     return {
       client: true,
       studioRoom: true,
@@ -210,6 +197,6 @@ export class ShowsService {
           deletedAt: null,
         },
       },
-    };
+    } as const;
   }
 }

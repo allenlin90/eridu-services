@@ -1,34 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, Show } from '@prisma/client';
 
-import { CreateShowDto, UpdateShowDto } from './schemas/show.schema';
+import type { ShowInclude, ShowWithPayload } from './schemas/show.schema';
+import {
+  CreateShowDto,
+  ListShowsQueryDto,
+  UpdateShowDto,
+} from './schemas/show.schema';
 import { ShowRepository } from './show.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
-
-type ListShowsQuery = {
-  page: number;
-  limit: number;
-  take: number;
-  skip: number;
-  client_id?: string | string[];
-  start_date_from?: string;
-  start_date_to?: string;
-  end_date_from?: string;
-  end_date_to?: string;
-  order_by: 'created_at' | 'updated_at' | 'start_time' | 'end_time';
-  order_direction: 'asc' | 'desc';
-  include_deleted: boolean;
-  show_standard_name?: string;
-  show_status_name?: string;
-  platform_name?: string;
-};
-
-type ShowWithIncludes<T extends Prisma.ShowInclude> = Prisma.ShowGetPayload<{
-  include: T;
-}>;
 
 @Injectable()
 export class ShowService extends BaseModelService {
@@ -50,104 +32,91 @@ export class ShowService extends BaseModelService {
     return this.generateUid();
   }
 
-  async createShowFromDto<T extends Prisma.ShowInclude = Record<string, never>>(
+  async createShowFromDto<T extends Parameters<ShowRepository['create']>[1]>(
     dto: CreateShowDto,
     include?: T,
-  ): Promise<Show | ShowWithIncludes<T>> {
+  ): ReturnType<ShowRepository['create']> {
     const data = this.buildCreatePayload(dto);
     return this.createShow(data, include);
   }
 
-  async createShow<T extends Prisma.ShowInclude = Record<string, never>>(
-    data: Omit<Prisma.ShowCreateInput, 'uid'>,
+  async createShow<T extends Parameters<ShowRepository['create']>[1]>(
+    data: Omit<Parameters<ShowRepository['create']>[0], 'uid'>,
     include?: T,
-  ): Promise<Show | ShowWithIncludes<T>> {
+  ): ReturnType<ShowRepository['create']> {
     const uid = this.generateUid();
     return this.showRepository.create({ ...data, uid }, include);
   }
 
-  async getShowById<T extends Prisma.ShowInclude = Record<string, never>>(
+  async getShowById<T extends ShowInclude>(
     uid: string,
     include?: T,
-  ): Promise<Show | ShowWithIncludes<T>> {
+  ): Promise<ShowWithPayload<T>> {
     return this.findShowOrThrow(uid, include);
   }
 
-  async findShowById(id: bigint): Promise<Show | null> {
-    return this.showRepository.findOne({ id });
-  }
-
-  async getShows<T extends Prisma.ShowInclude = Record<string, never>>(
-    params: {
-      skip?: number;
-      take?: number;
-      where?: Prisma.ShowWhereInput;
-      orderBy?: Prisma.ShowOrderByWithRelationInput;
-    },
+  /**
+   * @internal
+   */
+  async getShows<T extends Parameters<ShowRepository['findMany']>[0]['include']>(
+    params: Parameters<ShowRepository['findMany']>[0],
     include?: T,
-  ): Promise<Show[] | ShowWithIncludes<T>[]> {
+  ): ReturnType<ShowRepository['findMany']> {
     return this.showRepository.findMany({ ...params, include });
   }
 
-  async getActiveShows(params: {
-    skip?: number;
-    take?: number;
-    where?: Prisma.ShowWhereInput;
-    orderBy?: Prisma.ShowOrderByWithRelationInput;
-    include?: Prisma.ShowInclude;
-  }): Promise<Show[]> {
+  /**
+   * @internal
+   */
+  async getActiveShows(
+    params: Parameters<ShowRepository['findActiveShows']>[0],
+  ): ReturnType<ShowRepository['findActiveShows']> {
     return this.showRepository.findActiveShows(params);
   }
 
+  /**
+   * @internal
+   */
   async getShowsByClient(
     clientId: bigint,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowOrderByWithRelationInput;
-      include?: Prisma.ShowInclude;
-    },
-  ): Promise<Show[]> {
+    params?: Parameters<ShowRepository['findShowsByClient']>[1],
+  ): ReturnType<ShowRepository['findShowsByClient']> {
     return this.showRepository.findShowsByClient(clientId, params);
   }
 
+  /**
+   * @internal
+   */
   async getShowsByStudioRoom(
     studioRoomId: bigint,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowOrderByWithRelationInput;
-      include?: Prisma.ShowInclude;
-    },
-  ): Promise<Show[]> {
+    params?: Parameters<ShowRepository['findShowsByStudioRoom']>[1],
+  ): ReturnType<ShowRepository['findShowsByStudioRoom']> {
     return this.showRepository.findShowsByStudioRoom(studioRoomId, params);
   }
 
+  /**
+   * @internal
+   */
   async getShowsByDateRange(
     startDate: Date,
     endDate: Date,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowOrderByWithRelationInput;
-      include?: Prisma.ShowInclude;
-    },
-  ): Promise<Show[]> {
+    params?: Parameters<ShowRepository['findShowsByDateRange']>[2],
+  ): ReturnType<ShowRepository['findShowsByDateRange']> {
     return this.showRepository.findShowsByDateRange(startDate, endDate, params);
   }
 
-  async countShows(where?: Prisma.ShowWhereInput): Promise<number> {
+  /**
+   * @internal
+   */
+  async countShows(where?: Parameters<ShowRepository['count']>[0]): Promise<number> {
     return this.showRepository.count(where ?? {});
   }
 
-  async getPaginatedShows(query: ListShowsQuery): Promise<{
-    shows: Show[];
-    total: number;
-  }> {
-    const where = this.buildShowWhereClause(query);
-    const orderBy = this.buildOrderByClause(query);
-
-    const include: Prisma.ShowInclude = {
+  async getPaginatedShows(
+    query: ListShowsQueryDto,
+    include?: Parameters<ShowRepository['findPaginated']>[1],
+  ): ReturnType<ShowRepository['findPaginated']> {
+    const defaultInclude = {
       client: true,
       studio: true,
       studioRoom: true,
@@ -156,158 +125,46 @@ export class ShowService extends BaseModelService {
       showStandard: true,
     };
 
-    const [shows, total] = await Promise.all([
-      this.getShows(
-        {
-          skip: query.skip,
-          take: query.take,
-          where,
-          orderBy,
-        },
-        include,
-      ),
-      this.countShows(where),
-    ]);
-
-    return { shows, total };
+    return this.showRepository.findPaginated(query, include ?? defaultInclude);
   }
 
-  private buildShowWhereClause(filters: {
-    client_id?: string | string[];
-    start_date_from?: string;
-    start_date_to?: string;
-    end_date_from?: string;
-    end_date_to?: string;
-    include_deleted: boolean;
-    show_standard_name?: string;
-    show_status_name?: string;
-    platform_name?: string;
-  }): Prisma.ShowWhereInput {
-    const where: Prisma.ShowWhereInput = {};
-
-    // Filter out soft deleted records by default
-    if (!filters.include_deleted) {
-      where.deletedAt = null;
-    }
-
-    // Client filtering
-    if (filters.client_id) {
-      const clientIds = Array.isArray(filters.client_id)
-        ? filters.client_id
-        : [filters.client_id];
-      where.client = {
-        uid: { in: clientIds },
-        deletedAt: null,
-      };
-    }
-
-    // Date range filtering for start time
-    if (filters.start_date_from || filters.start_date_to) {
-      where.startTime = {};
-      if (filters.start_date_from) {
-        where.startTime.gte = new Date(filters.start_date_from);
-      }
-      if (filters.start_date_to) {
-        where.startTime.lte = new Date(filters.start_date_to);
-      }
-    }
-
-    // Date range filtering for end time
-    if (filters.end_date_from || filters.end_date_to) {
-      where.endTime = {};
-      if (filters.end_date_from) {
-        where.endTime.gte = new Date(filters.end_date_from);
-      }
-      if (filters.end_date_to) {
-        where.endTime.lte = new Date(filters.end_date_to);
-      }
-    }
-
-    if (filters.show_standard_name) {
-      where.showStandard = {
-        name: {
-          contains: filters.show_standard_name,
-          mode: 'insensitive',
-        },
-      };
-    }
-
-    if (filters.show_status_name) {
-      where.showStatus = {
-        name: {
-          contains: filters.show_status_name,
-          mode: 'insensitive',
-        },
-      };
-    }
-
-    if (filters.platform_name) {
-      where.showPlatforms = {
-        some: {
-          platform: {
-            name: {
-              contains: filters.platform_name,
-              mode: 'insensitive',
-            },
-          },
-        },
-      };
-    }
-
-    return where;
-  }
-
-  private buildOrderByClause(
-    query: Pick<ListShowsQuery, 'order_by' | 'order_direction'>,
-  ): Record<string, 'asc' | 'desc'> {
-    const fieldMap: Record<string, string> = {
-      created_at: 'createdAt',
-      updated_at: 'updatedAt',
-      start_time: 'startTime',
-      end_time: 'endTime',
-    };
-    const field = fieldMap[query.order_by] || 'createdAt';
-    return { [field]: query.order_direction };
-  }
-
-  async updateShowFromDto<T extends Prisma.ShowInclude = Record<string, never>>(
+  async updateShowFromDto<T extends Parameters<ShowRepository['update']>[2]>(
     uid: string,
     dto: UpdateShowDto,
     include?: T,
-  ): Promise<Show | ShowWithIncludes<T>> {
+  ): ReturnType<ShowRepository['update']> {
     const data = this.buildUpdatePayload(dto);
     return this.updateShow(uid, data, include);
   }
 
-  async updateShow<T extends Prisma.ShowInclude = Record<string, never>>(
+  async updateShow<T extends ShowInclude>(
     uid: string,
-    data: Prisma.ShowUpdateInput,
+    data: Parameters<ShowRepository['update']>[1],
     include?: T,
-  ): Promise<Show | ShowWithIncludes<T>> {
+  ): ReturnType<ShowRepository['update']> {
     await this.findShowOrThrow(uid);
     return this.showRepository.update({ uid }, data, include);
   }
 
-  async deleteShow(uid: string): Promise<Show> {
+  async deleteShow(uid: string): ReturnType<ShowRepository['softDelete']> {
     await this.findShowOrThrow(uid);
     return this.showRepository.softDelete({ uid });
   }
 
-  private async findShowOrThrow<
-    T extends Prisma.ShowInclude = Record<string, never>,
-  >(uid: string,
+  private async findShowOrThrow<T extends ShowInclude>(
+    uid: string,
     include?: T,
-  ): Promise<Show | ShowWithIncludes<T>> {
+  ): Promise<ShowWithPayload<T>> {
     const show = await this.showRepository.findByUid(uid, include);
     if (!show) {
       throw HttpError.notFound('Show', uid);
     }
-    return show;
+    return show as ShowWithPayload<T>;
   }
 
   private buildCreatePayload(
     dto: CreateShowDto,
-  ): Omit<Prisma.ShowCreateInput, 'uid'> {
+  ): Omit<Parameters<ShowRepository['create']>[0], 'uid'> {
     // Validate time range
     if (dto.endTime <= dto.startTime) {
       throw HttpError.badRequest('End time must be after start time');
@@ -331,8 +188,8 @@ export class ShowService extends BaseModelService {
     };
   }
 
-  private buildUpdatePayload(dto: UpdateShowDto): Prisma.ShowUpdateInput {
-    const payload: Prisma.ShowUpdateInput = {};
+  buildUpdatePayload(dto: UpdateShowDto): Parameters<ShowRepository['update']>[1] {
+    const payload: Parameters<ShowRepository['update']>[1] = {};
 
     if (dto.name !== undefined)
       payload.name = dto.name;

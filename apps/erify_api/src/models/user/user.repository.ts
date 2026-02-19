@@ -1,60 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 
-import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
+import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
+import { ListUsersQueryDto } from '@/models/user/schemas/user.schema';
 import { PrismaService } from '@/prisma/prisma.service';
-
-// Custom model wrapper that implements IBaseModel with UserWhereInput
-class UserModelWrapper
-implements
-    IBaseModel<
-      User,
-      Prisma.UserCreateInput,
-      Prisma.UserUpdateInput,
-      Prisma.UserWhereInput
-    > {
-  constructor(private readonly prismaModel: Prisma.UserDelegate) {}
-
-  async create(args: {
-    data: Prisma.UserCreateInput;
-    include?: Record<string, any>;
-  }): Promise<User> {
-    return this.prismaModel.create(args);
-  }
-
-  async findFirst(args: {
-    where: Prisma.UserWhereInput;
-    include?: Record<string, any>;
-  }): Promise<User | null> {
-    return this.prismaModel.findFirst(args);
-  }
-
-  async findMany(args: {
-    where?: Prisma.UserWhereInput;
-    skip?: number;
-    take?: number;
-    orderBy?: any;
-    include?: Record<string, any>;
-  }): Promise<User[]> {
-    return this.prismaModel.findMany(args);
-  }
-
-  async update(args: {
-    where: Prisma.UserWhereUniqueInput;
-    data: Prisma.UserUpdateInput;
-    include?: Record<string, any>;
-  }): Promise<User> {
-    return this.prismaModel.update(args);
-  }
-
-  async delete(args: { where: Prisma.UserWhereUniqueInput }): Promise<User> {
-    return this.prismaModel.delete(args);
-  }
-
-  async count(args: { where: Prisma.UserWhereInput }): Promise<number> {
-    return this.prismaModel.count({ where: args.where });
-  }
-}
 
 @Injectable()
 export class UserRepository extends BaseRepository<
@@ -64,7 +13,7 @@ export class UserRepository extends BaseRepository<
   Prisma.UserWhereInput
 > {
   constructor(private readonly prisma: PrismaService) {
-    super(new UserModelWrapper(prisma.user));
+    super(new PrismaModelWrapper(prisma.user));
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -89,21 +38,29 @@ export class UserRepository extends BaseRepository<
     }) as Promise<Prisma.UserGetPayload<{ include: T }> | null>;
   }
 
-  async findById(id: number): Promise<User | null> {
+  // Specialized findByUid with typed include support
+  async findByUid<T extends Prisma.UserInclude>(
+    uid: string,
+    include?: T,
+  ): Promise<Prisma.UserGetPayload<{ include: T }> | null> {
     return this.model.findFirst({
-      where: {
-        id,
-        deletedAt: null,
-      },
-    });
+      where: { uid, deletedAt: null },
+      include,
+    }) as Promise<Prisma.UserGetPayload<{ include: T }> | null>;
   }
 
-  async findByUid(uid: string): Promise<User | null> {
-    return this.model.findFirst({
-      where: {
-        uid,
-        deletedAt: null,
-      },
+  async createManyAndReturn(
+    data: Prisma.UserCreateManyInput[],
+  ): Promise<User[]> {
+    // createManyAndReturn is available in newer Prisma versions
+    // If it's not available in the generated client, we might need a fallback or upgrade
+    // Assuming it's available as per user code attempt.
+    // However, BaseRepository/IBaseModel doesn't expose it.
+    // We access prisma directly.
+    // If strict mode prevents accessing implicit methods, we might need to cast or just use it.
+    // Note: createManyAndReturn is not on IBaseModel, so we use this.prisma.user
+    return this.prisma.user.createManyAndReturn({
+      data,
     });
   }
 
@@ -112,28 +69,71 @@ export class UserRepository extends BaseRepository<
     take?: number;
     orderBy?: Prisma.UserOrderByWithRelationInput;
   }): Promise<User[]> {
-    const { skip, take, orderBy } = params;
-
-    return this.model.findMany({
-      where: {
-        deletedAt: null,
-      },
-      skip,
-      take,
-      orderBy,
+    return this.prisma.user.findMany({
+      where: { deletedAt: null, isBanned: false },
+      skip: params.skip,
+      take: params.take,
+      orderBy: params.orderBy,
     });
   }
 
-  async createManyAndReturn(data: Prisma.UserCreateInput[]): Promise<User[]> {
-    return this.prisma.user.createManyAndReturn({ data });
+  // Implementation of findPaginated matching the pattern
+  async findPaginated(
+    query: ListUsersQueryDto,
+  ): Promise<{ data: User[]; total: number }> {
+    const where = this.buildWhereClause(query);
+    const orderBy = this.buildOrderByClause(query);
+
+    const [data, total] = await Promise.all([
+      this.model.findMany({
+        skip: query.skip,
+        take: query.take,
+        where,
+        orderBy,
+      }),
+      this.model.count({ where }),
+    ]);
+
+    return { data, total };
   }
 
-  async findByUids(uids: string[]): Promise<User[]> {
-    return this.model.findMany({
-      where: {
-        uid: { in: uids },
-        deletedAt: null,
-      },
-    });
+  private buildWhereClause(query: ListUsersQueryDto): Prisma.UserWhereInput {
+    const where: Prisma.UserWhereInput = {};
+
+    // Standard soft-delete filtering
+    where.deletedAt = null;
+
+    if (query.name) {
+      where.name = { contains: query.name, mode: 'insensitive' };
+    }
+
+    if (query.email) {
+      where.email = { contains: query.email, mode: 'insensitive' };
+    }
+
+    if (query.uid) {
+      where.uid = { contains: query.uid, mode: 'insensitive' };
+    }
+
+    if (query.extId) {
+      where.extId = { contains: query.extId, mode: 'insensitive' };
+    }
+
+    if (query.isSystemAdmin !== undefined) {
+      where.isSystemAdmin = query.isSystemAdmin;
+    }
+
+    return where;
+  }
+
+  private buildOrderByClause(
+    query: ListUsersQueryDto,
+  ): Prisma.UserOrderByWithRelationInput {
+    // Correctly map string sort to object
+    // Assuming query.sort is 'asc' | 'desc'
+    const sortOrder = (query.sort === 'asc' ? 'asc' : 'desc') as Prisma.SortOrder;
+    return {
+      createdAt: sortOrder,
+    };
   }
 }

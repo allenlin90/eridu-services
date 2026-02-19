@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma } from '@prisma/client';
 
 import {
@@ -15,6 +17,7 @@ import { UtilityService } from '@/utility/utility.service';
 export class ValidationService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
     public readonly utilityService: UtilityService,
   ) {}
 
@@ -28,7 +31,6 @@ export class ValidationService {
    * @param schedule.endDate - Schedule end date
    * @param schedule.planDocument - Plan document containing shows
    * @param schedule.clientId - Client ID (nullable)
-   * @param tx - Optional transaction context
    * @returns Validation result with errors if any
    */
   async validateSchedule(
@@ -40,9 +42,8 @@ export class ValidationService {
       planDocument: PlanDocument;
       clientId: bigint | null;
     },
-    tx?: Prisma.TransactionClient,
   ): Promise<ValidationResult> {
-    const prismaClient = tx || this.prisma;
+    const prismaClient = this.txHost.tx;
     const errors: ValidationError[] = [];
 
     // Validate plan document structure

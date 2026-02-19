@@ -90,47 +90,10 @@ describe('platformService', () => {
         .spyOn(platformRepository, 'findOne')
         .mockResolvedValue(expectedResult);
 
-      const result = await service.getPlatformById(uid);
+      const result = await service.getPlatformById({ uid });
 
-      expect(platformRepository.findOne).toHaveBeenCalledWith(
-        { uid },
-        undefined,
-      );
+      expect(platformRepository.findOne).toHaveBeenCalledWith({ uid });
       expect(result).toEqual(expectedResult);
-    });
-  });
-
-  describe('getPlatforms', () => {
-    it('should return platforms with pagination', async () => {
-      const params = {
-        skip: 0,
-        take: 10,
-        orderBy: { createdAt: 'desc' as const },
-      };
-
-      const platforms = [
-        {
-          id: 1n,
-          uid: 'plt_00000001',
-          name: 'Platform 1',
-          apiConfig: { key: 'value1' },
-          metadata: {},
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          deletedAt: null,
-        },
-      ];
-
-      jest.spyOn(platformRepository, 'findMany').mockResolvedValue(platforms);
-
-      const result = await service.getPlatforms(params);
-
-      expect(platformRepository.findMany).toHaveBeenCalledWith({
-        skip: 0,
-        take: 10,
-        orderBy: { createdAt: 'desc' },
-      });
-      expect(result).toEqual(platforms);
     });
   });
 
@@ -189,17 +152,6 @@ describe('platformService', () => {
 
       expect(platformRepository.softDelete).toHaveBeenCalledWith({ uid });
       expect(result).toEqual(expectedResult);
-    });
-  });
-
-  describe('countPlatforms', () => {
-    it('should return count of platforms', async () => {
-      jest.spyOn(platformRepository, 'count').mockResolvedValue(5);
-
-      const result = await service.countPlatforms();
-
-      expect(platformRepository.count).toHaveBeenCalledWith({});
-      expect(result).toBe(5);
     });
   });
 });

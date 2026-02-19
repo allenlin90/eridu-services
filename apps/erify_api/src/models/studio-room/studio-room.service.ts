@@ -1,20 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, StudioRoom } from '@prisma/client';
 
-import {
-  CreateStudioRoomDto,
-  UpdateStudioRoomDto,
+import type {
+  CreateStudioRoomPayload,
+  UpdateStudioRoomPayload,
 } from './schemas/studio-room.schema';
 import { StudioRoomRepository } from './studio-room.repository';
 
-import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
-
-type StudioRoomWithIncludes<T extends Prisma.StudioRoomInclude> =
-  Prisma.StudioRoomGetPayload<{
-    include: T;
-  }>;
 
 @Injectable()
 export class StudioRoomService extends BaseModelService {
@@ -28,168 +21,62 @@ export class StudioRoomService extends BaseModelService {
     super(utilityService);
   }
 
-  async createStudioRoomFromDto<
-    T extends Prisma.StudioRoomInclude = Record<string, never>,
-  >(
-    dto: CreateStudioRoomDto,
-    include?: T,
-  ): Promise<StudioRoom | StudioRoomWithIncludes<T>> {
-    const data = this.buildCreatePayload(dto);
-    return this.createStudioRoom(data, include);
-  }
-
-  async createStudioRoom<
-    T extends Prisma.StudioRoomInclude = Record<string, never>,
-  >(
-    data: Omit<Prisma.StudioRoomCreateInput, 'uid'>,
-    include?: T,
-  ): Promise<StudioRoom | StudioRoomWithIncludes<T>> {
-    const uid = this.generateUid();
-    return this.studioRoomRepository.create({ ...data, uid }, include);
-  }
-
-  async getStudioRoomById<
-    T extends Prisma.StudioRoomInclude = Record<string, never>,
-  >(uid: string,
-    include?: T,
-  ): Promise<StudioRoom | StudioRoomWithIncludes<T>> {
-    return this.findStudioRoomOrThrow(uid, include);
-  }
-
-  async getStudioRooms<
-    T extends Prisma.StudioRoomInclude = Record<string, never>,
-  >(
-    params: {
-      skip?: number;
-      take?: number;
-      orderBy?: Record<string, 'asc' | 'desc'>;
-      studioId?: string;
-    },
-    include?: T,
-  ): Promise<StudioRoom[] | StudioRoomWithIncludes<T>[]> {
-    const { studioId, ...rest } = params;
-    return this.studioRoomRepository.findActiveStudioRooms(
-      {
-        ...rest,
-        studioUid: studioId,
-      },
-      include,
-    );
-  }
-
-  async getStudioRoomsByStudioId(studioId: bigint): Promise<StudioRoom[]> {
-    return this.studioRoomRepository.findByStudioId(studioId);
-  }
-
-  async countStudioRooms(params?: { studioId?: string }): Promise<number> {
-    return this.studioRoomRepository.count({
-      ...(params?.studioId && { studio: { uid: params.studioId } }),
-    });
-  }
-
-  async countStudioRoomsByStudioId(studioId: bigint): Promise<number> {
-    return this.studioRoomRepository.count({ studioId });
-  }
-
-  async listStudioRooms<
-    T extends Prisma.StudioRoomInclude = Record<string, never>,
-  >(
-    params: {
-      skip?: number;
-      take?: number;
-      studioId?: string;
-      where?: Prisma.StudioRoomWhereInput;
-    },
-    include?: T,
-  ): Promise<{
-      data: StudioRoom[] | StudioRoomWithIncludes<T>[];
-      total: number;
-    }> {
-    const where: Prisma.StudioRoomWhereInput = {
-      ...params.where,
-      ...(params.studioId && { studio: { uid: params.studioId } }),
+  async create(payload: CreateStudioRoomPayload): ReturnType<StudioRoomRepository['create']> {
+    const data = {
+      name: payload.name,
+      capacity: payload.capacity,
+      metadata: payload.metadata ?? {},
+      studio: { connect: { uid: payload.studioId } },
+      uid: payload.uid ?? this.generateUid(),
     };
 
-    const [data, total] = await Promise.all([
-      this.studioRoomRepository.findMany({
-        skip: params.skip,
-        take: params.take,
-        where,
-        include,
-      }),
-      this.studioRoomRepository.count(where),
-    ]);
-
-    return { data, total };
-  }
-
-  async updateStudioRoomFromDto<
-    T extends Prisma.StudioRoomInclude = Record<string, never>,
-  >(
-    uid: string,
-    dto: UpdateStudioRoomDto,
-    include?: T,
-  ): Promise<StudioRoom | StudioRoomWithIncludes<T>> {
-    const data = this.buildUpdatePayload(dto);
-    await this.findStudioRoomOrThrow(uid, include);
-    return this.studioRoomRepository.update({ uid }, data, include);
-  }
-
-  async updateStudioRoom<
-    T extends Prisma.StudioRoomInclude = Record<string, never>,
-  >(
-    uid: string,
-    data: Prisma.StudioRoomUpdateInput,
-    include?: T,
-  ): Promise<StudioRoom | StudioRoomWithIncludes<T>> {
-    await this.findStudioRoomOrThrow(uid, include);
-    return this.studioRoomRepository.update({ uid }, data, include);
-  }
-
-  async deleteStudioRoom(uid: string): Promise<StudioRoom> {
-    await this.findStudioRoomOrThrow(uid);
-    return this.studioRoomRepository.softDelete({ uid });
-  }
-
-  private buildCreatePayload(
-    dto: CreateStudioRoomDto,
-  ): Omit<Prisma.StudioRoomCreateInput, 'uid'> {
-    return {
-      name: dto.name,
-      capacity: dto.capacity,
-      metadata: dto.metadata ?? {},
-      studio: { connect: { uid: dto.studioId } },
-    };
-  }
-
-  private buildUpdatePayload(
-    dto: UpdateStudioRoomDto,
-  ): Prisma.StudioRoomUpdateInput {
-    const payload: Prisma.StudioRoomUpdateInput = {};
-
-    if (dto.name !== undefined)
-      payload.name = dto.name;
-    if (dto.capacity !== undefined)
-      payload.capacity = dto.capacity;
-    if (dto.metadata !== undefined)
-      payload.metadata = dto.metadata;
-
-    if (dto.studioId !== undefined) {
-      payload.studio = { connect: { uid: dto.studioId } };
+    if (payload.includeStudio) {
+      return this.studioRoomRepository.create(data, {
+        studio: true,
+      });
     }
 
-    return payload;
+    return this.studioRoomRepository.create(data);
   }
 
-  private async findStudioRoomOrThrow<
-    T extends Prisma.StudioRoomInclude = Record<string, never>,
-  >(uid: string,
-    include?: T,
-  ): Promise<StudioRoom | StudioRoomWithIncludes<T>> {
-    const studioRoom = await this.studioRoomRepository.findByUid(uid, include);
-    if (!studioRoom) {
-      throw HttpError.notFound('Studio Room', uid);
+  async findOne(...args: Parameters<StudioRoomRepository['findOne']>): ReturnType<StudioRoomRepository['findOne']> {
+    return this.studioRoomRepository.findOne(...args);
+  }
+
+  async getStudioRooms(...args: Parameters<StudioRoomRepository['findPaginated']>): ReturnType<StudioRoomRepository['findPaginated']> {
+    return this.studioRoomRepository.findPaginated(...args);
+  }
+
+  async softDelete(...args: Parameters<StudioRoomRepository['softDelete']>): ReturnType<StudioRoomRepository['softDelete']> {
+    return this.studioRoomRepository.softDelete(...args);
+  }
+
+  async update(
+    uid: string,
+    payload: UpdateStudioRoomPayload,
+  ): ReturnType<StudioRoomRepository['update']> {
+    // Build repository data with relationship syntax
+    const data: Record<string, any> = {};
+
+    if (payload.name !== undefined)
+      data.name = payload.name;
+    if (payload.capacity !== undefined)
+      data.capacity = payload.capacity;
+    if (payload.metadata !== undefined)
+      data.metadata = payload.metadata;
+
+    if (payload.studioId !== undefined) {
+      data.studio = { connect: { uid: payload.studioId } };
     }
-    return studioRoom;
+
+    if (payload.includeStudio) {
+      return this.studioRoomRepository.update(
+        { uid },
+        data,
+        { studio: true },
+      );
+    }
+
+    return this.studioRoomRepository.update({ uid }, data);
   }
 }

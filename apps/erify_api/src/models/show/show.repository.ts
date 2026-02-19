@@ -1,67 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, Show } from '@prisma/client';
 
-import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
+import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
+import { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
 import { PrismaService } from '@/prisma/prisma.service';
 
 // Custom model wrapper that implements IBaseModel with ShowWhereInput
-class ShowModelWrapper
-implements
-    IBaseModel<
-      Show,
-      Prisma.ShowCreateInput,
-      Prisma.ShowUpdateInput,
-      Prisma.ShowWhereInput
-    > {
-  constructor(private readonly prismaModel: Prisma.ShowDelegate) {}
-
-  async create(args: {
-    data: Prisma.ShowCreateInput;
-    include?: Record<string, any>;
-  }): Promise<Show> {
-    return this.prismaModel.create(args);
-  }
-
-  async findFirst(args: {
-    where: Prisma.ShowWhereInput;
-    include?: Record<string, any>;
-  }): Promise<Show | null> {
-    return this.prismaModel.findFirst(args);
-  }
-
-  async findFirstOrThrow(args: {
-    where: Prisma.ShowWhereInput;
-    include?: Record<string, any>;
-  }): Promise<Show> {
-    return this.prismaModel.findFirstOrThrow(args);
-  }
-
-  async findMany(args: {
-    where?: Prisma.ShowWhereInput;
-    skip?: number;
-    take?: number;
-    orderBy?: any;
-    include?: Record<string, any>;
-  }): Promise<Show[]> {
-    return this.prismaModel.findMany(args);
-  }
-
-  async update(args: {
-    where: Prisma.ShowWhereUniqueInput;
-    data: Prisma.ShowUpdateInput;
-    include?: Record<string, any>;
-  }): Promise<Show> {
-    return this.prismaModel.update(args);
-  }
-
-  async delete(args: { where: Prisma.ShowWhereUniqueInput }): Promise<Show> {
-    return this.prismaModel.delete(args);
-  }
-
-  async count(args: { where: Prisma.ShowWhereInput }): Promise<number> {
-    return this.prismaModel.count({ where: args.where });
-  }
-}
 
 @Injectable()
 export class ShowRepository extends BaseRepository<
@@ -70,22 +16,29 @@ export class ShowRepository extends BaseRepository<
   Prisma.ShowUpdateInput,
   Prisma.ShowWhereInput
 > {
-  constructor(private readonly prisma: PrismaService) {
-    super(new ShowModelWrapper(prisma.show));
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {
+    super(new PrismaModelWrapper(prisma.show));
   }
 
-  async findByUid(
+  private get delegate() {
+    return this.txHost.tx.show;
+  }
+
+  async findByUid<T extends Prisma.ShowInclude = Record<string, never>>(
     uid: string,
-    include?: Prisma.ShowInclude,
-  ): Promise<Show | null> {
-    return this.model.findFirst({
+    include?: T,
+  ): Promise<Prisma.ShowGetPayload<{ include: T }> | null> {
+    return this.delegate.findFirst({
       where: { uid, deletedAt: null },
       ...(include && { include }),
-    });
+    }) as Promise<Prisma.ShowGetPayload<{ include: T }> | null>;
   }
 
   async findByName(name: string): Promise<Show | null> {
-    return this.model.findFirst({
+    return this.delegate.findFirst({
       where: { name, deletedAt: null },
     });
   }
@@ -98,7 +51,7 @@ export class ShowRepository extends BaseRepository<
     include?: Prisma.ShowInclude;
   }): Promise<Show[]> {
     const { skip, take, where, orderBy, include } = params;
-    return this.model.findMany({
+    return this.delegate.findMany({
       where: { ...where, deletedAt: null },
       skip,
       take,
@@ -117,7 +70,7 @@ export class ShowRepository extends BaseRepository<
     },
   ): Promise<Show[]> {
     const { skip, take, orderBy, include } = params || {};
-    return this.model.findMany({
+    return this.delegate.findMany({
       where: { clientId, deletedAt: null },
       skip,
       take,
@@ -136,7 +89,7 @@ export class ShowRepository extends BaseRepository<
     },
   ): Promise<Show[]> {
     const { skip, take, orderBy, include } = params || {};
-    return this.model.findMany({
+    return this.delegate.findMany({
       where: { studioRoomId, deletedAt: null },
       skip,
       take,
@@ -156,7 +109,7 @@ export class ShowRepository extends BaseRepository<
     },
   ): Promise<Show[]> {
     const { skip, take, orderBy, include } = params || {};
-    return this.model.findMany({
+    return this.delegate.findMany({
       where: {
         deletedAt: null,
         startTime: {
@@ -171,12 +124,183 @@ export class ShowRepository extends BaseRepository<
     });
   }
 
+  async findPaginated(
+    query: ListShowsQueryDto,
+    include?: Prisma.ShowInclude,
+  ): Promise<{ data: Show[]; total: number }> {
+    const where = this.buildWhereClause(query);
+    const orderBy = this.buildOrderByClause(query);
+    const delegate = this.delegate;
+
+    const [data, total] = await Promise.all([
+      delegate.findMany({
+        skip: query.skip,
+        take: query.take,
+        where,
+        orderBy,
+        include,
+      }),
+      delegate.count({ where }),
+    ]);
+
+    return { data, total };
+  }
+
+  private buildWhereClause(query: ListShowsQueryDto): Prisma.ShowWhereInput {
+    const where: Prisma.ShowWhereInput = {};
+
+    // Filter out soft deleted records by default
+    if (!query.include_deleted) {
+      where.deletedAt = null;
+    }
+
+    // Name filtering
+    if (query.name) {
+      where.name = {
+        contains: query.name,
+        mode: 'insensitive',
+      };
+    }
+
+    // UID filtering
+    if (query.uid) {
+      where.uid = {
+        contains: query.uid,
+        mode: 'insensitive',
+      };
+    }
+
+    // Client filtering (ID)
+    if (query.client_id) {
+      const clientIds = Array.isArray(query.client_id)
+        ? query.client_id
+        : [query.client_id];
+      where.client = {
+        uid: { in: clientIds },
+        deletedAt: null,
+      };
+    }
+
+    // Client filtering (Name)
+    if (query.client_name) {
+      where.client = {
+        ...((where.client as Prisma.ClientWhereInput) || {}),
+        name: {
+          contains: query.client_name,
+          mode: 'insensitive',
+        },
+      };
+    }
+
+    // MC filtering (Name)
+    if (query.mc_name) {
+      where.showMCs = {
+        some: {
+          mc: {
+            name: {
+              contains: query.mc_name,
+              mode: 'insensitive',
+            },
+          },
+          deletedAt: null,
+        },
+      };
+    }
+
+    // Date range filtering for start time
+    if (query.start_date_from || query.start_date_to) {
+      where.startTime = {};
+      if (query.start_date_from) {
+        where.startTime.gte = new Date(query.start_date_from);
+      }
+      if (query.start_date_to) {
+        const endDate = new Date(query.start_date_to);
+        endDate.setHours(23, 59, 59, 999);
+        where.startTime.lte = endDate;
+      }
+    }
+
+    // Date range filtering for end time
+    if (query.end_date_from || query.end_date_to) {
+      where.endTime = {};
+      if (query.end_date_from) {
+        where.endTime.gte = new Date(query.end_date_from);
+      }
+      if (query.end_date_to) {
+        const endDate = new Date(query.end_date_to);
+        endDate.setHours(23, 59, 59, 999);
+        where.endTime.lte = endDate;
+      }
+    }
+
+    if (query.show_standard_name) {
+      where.showStandard = {
+        name: {
+          contains: query.show_standard_name,
+          mode: 'insensitive',
+        },
+      };
+    }
+
+    if (query.show_status_name) {
+      where.showStatus = {
+        name: {
+          contains: query.show_status_name,
+          mode: 'insensitive',
+        },
+      };
+    }
+
+    if (query.platform_name) {
+      where.showPlatforms = {
+        some: {
+          platform: {
+            name: {
+              contains: query.platform_name,
+              mode: 'insensitive',
+            },
+          },
+        },
+      };
+    }
+
+    return where;
+  }
+
+  async findMany(params: {
+    where?: Prisma.ShowWhereInput;
+    skip?: number;
+    take?: number;
+    orderBy?: any;
+    include?: Record<string, any>;
+  }): Promise<Show[]> {
+    return this.delegate.findMany(params);
+  }
+
+  private buildOrderByClause(
+    query: Pick<ListShowsQueryDto, 'order_by' | 'order_direction'>,
+  ): Prisma.ShowOrderByWithRelationInput {
+    const fieldMap: Record<string, keyof Prisma.ShowOrderByWithRelationInput>
+      = {
+        created_at: 'createdAt',
+        updated_at: 'updatedAt',
+        start_time: 'startTime',
+        end_time: 'endTime',
+      };
+    const field = fieldMap[query.order_by] || 'createdAt';
+    return { [field]: query.order_direction };
+  }
+
+  async create(data: Prisma.ShowCreateInput, include?: Record<string, any>): Promise<Show> {
+    return this.delegate.create({ data, ...(include && { include }) });
+  }
+
   async update(
     where: Prisma.ShowWhereUniqueInput,
     data: Prisma.ShowUpdateInput,
     include?: Prisma.ShowInclude,
   ): Promise<Show> {
-    return this.prisma.show.update({
+    return this.delegate.update({
       where,
       data,
       ...(include && { include }),
@@ -184,7 +308,7 @@ export class ShowRepository extends BaseRepository<
   }
 
   async softDelete(where: Prisma.ShowWhereUniqueInput): Promise<Show> {
-    return this.prisma.show.update({
+    return this.delegate.update({
       where,
       data: { deletedAt: new Date() },
     });

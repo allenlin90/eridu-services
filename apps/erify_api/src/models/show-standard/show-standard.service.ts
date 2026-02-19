@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, ShowStandard } from '@prisma/client';
 
+import type {
+  CreateShowStandardPayload,
+  UpdateShowStandardPayload,
+} from './schemas/show-standard.schema';
 import { ShowStandardRepository } from './show-standard.repository';
 
-import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
@@ -20,29 +22,28 @@ export class ShowStandardService extends BaseModelService {
   }
 
   async createShowStandard(
-    data: Omit<Prisma.ShowStandardCreateInput, 'uid'>,
-  ): Promise<ShowStandard> {
+    payload: CreateShowStandardPayload,
+  ): ReturnType<ShowStandardRepository['create']> {
     const uid = this.generateUid();
-    return this.showStandardRepository.create({ ...data, uid });
+    return this.showStandardRepository.create({ ...payload, uid });
   }
 
-  getShowStandardById(
-    uid: string,
-    include?: Prisma.ShowStandardInclude,
-  ): Promise<ShowStandard> {
-    return this.findShowStandardOrThrow(uid, include);
+  async getShowStandardById(
+    ...params: Parameters<ShowStandardRepository['findByUid']>
+  ): ReturnType<ShowStandardRepository['findByUid']> {
+    return this.showStandardRepository.findByUid(...params);
   }
 
-  async getShowStandards(params: {
-    skip?: number;
-    take?: number;
-    orderBy?: Record<string, 'asc' | 'desc'>;
-  }): Promise<ShowStandard[]> {
-    return this.showStandardRepository.findMany(params);
+  async getShowStandards(
+    ...params: Parameters<ShowStandardRepository['findPaginated']>
+  ): ReturnType<ShowStandardRepository['findPaginated']> {
+    return this.showStandardRepository.findPaginated(...params);
   }
 
-  async countShowStandards(): Promise<number> {
-    return this.showStandardRepository.count({});
+  async countShowStandards(
+    ...params: Parameters<ShowStandardRepository['count']>
+  ): ReturnType<ShowStandardRepository['count']> {
+    return this.showStandardRepository.count(...params);
   }
 
   async listShowStandards(params: {
@@ -51,62 +52,32 @@ export class ShowStandardService extends BaseModelService {
     name?: string;
     uid?: string;
     include_deleted?: boolean;
-    where?: Prisma.ShowStandardWhereInput;
-  }): Promise<{ data: ShowStandard[]; total: number }> {
-    const where: Prisma.ShowStandardWhereInput = { ...params.where };
+  }): ReturnType<ShowStandardRepository['findPaginated']> {
+    const { skip, take, name, uid, include_deleted } = params;
 
-    if (!params.include_deleted) {
-      where.deletedAt = null;
-    }
-
-    if (params.name) {
-      where.name = {
-        contains: params.name,
-        mode: 'insensitive',
-      };
-    }
-
-    if (params.uid) {
-      where.uid = {
-        contains: params.uid,
-        mode: 'insensitive',
-      };
-    }
-
-    const [data, total] = await Promise.all([
-      this.showStandardRepository.findMany({
-        skip: params.skip,
-        take: params.take,
-        where,
-      }),
-      this.showStandardRepository.count(where),
-    ]);
-
-    return { data, total };
+    return this.showStandardRepository.findPaginated({
+      skip,
+      take,
+      name,
+      uid,
+      includeDeleted: include_deleted,
+    });
   }
 
   async updateShowStandard(
     uid: string,
-    data: Prisma.ShowStandardUpdateInput,
-  ): Promise<ShowStandard> {
-    return this.showStandardRepository.update({ uid }, data);
+    payload: UpdateShowStandardPayload,
+  ): ReturnType<ShowStandardRepository['update']> {
+    return this.showStandardRepository.update({ uid }, payload);
   }
 
-  async deleteShowStandard(uid: string): Promise<ShowStandard> {
-    return this.showStandardRepository.softDelete({ uid });
-  }
-
-  private async findShowStandardOrThrow(
-    uid: string,
-    include?: Prisma.ShowStandardInclude,
-  ): Promise<ShowStandard> {
-    const showStandard = await this.showStandardRepository.findOne(
-      { uid },
-      include,
-    );
-    if (!showStandard) {
-      throw HttpError.notFound('Show Standard', uid);
+  async deleteShowStandard(
+    params: Parameters<ShowStandardRepository['softDelete']>[0],
+  ): ReturnType<ShowStandardRepository['softDelete']> {
+    const { uid } = params;
+    if (typeof uid !== 'string') {
+      throw new TypeError('UID must be a string for deletion');
     }
-    return showStandard;
+    return this.showStandardRepository.softDelete({ uid });
   }
 }

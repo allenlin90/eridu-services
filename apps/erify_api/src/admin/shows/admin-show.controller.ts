@@ -59,9 +59,9 @@ export class AdminShowController extends BaseAdminController {
     // Zod validates and transforms at runtime, so all required properties exist
     const result
       = await this.showOrchestrationService.getPaginatedShowsWithRelations(query);
-    const { shows, total } = result;
+    const { data, total } = result;
 
-    return this.createPaginatedResponse(shows, total, query);
+    return this.createPaginatedResponse(data, total, query);
   }
 
   @Get(':id')

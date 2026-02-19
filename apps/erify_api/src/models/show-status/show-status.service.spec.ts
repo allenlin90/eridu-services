@@ -17,8 +17,9 @@ describe('showStatusService', () => {
   let utilityService: UtilityService;
 
   beforeEach(async () => {
-    const showStatusRepositoryMock
-      = createMockRepository<ShowStatusRepository>();
+    const showStatusRepositoryMock = createMockRepository<ShowStatusRepository>({
+      findPaginated: jest.fn(),
+    });
     const utilityMock = createMockUtilityService('shst_test123');
 
     const module = await createModelServiceTestModule({
@@ -101,23 +102,23 @@ describe('showStatusService', () => {
       };
 
       jest
-        .spyOn(showStatusRepository, 'findOne')
+        .spyOn(showStatusRepository, 'findByUid')
         .mockResolvedValue(expectedResult);
 
       const result = await service.getShowStatusById(uid);
 
-      expect(showStatusRepository.findOne).toHaveBeenCalledWith({ uid });
+      expect(showStatusRepository.findByUid).toHaveBeenCalledWith(uid);
       expect(result).toEqual(expectedResult);
     });
 
     it('should return null when not found', async () => {
       const uid = 'shs_404';
 
-      jest.spyOn(showStatusRepository, 'findOne').mockResolvedValue(null);
+      jest.spyOn(showStatusRepository, 'findByUid').mockResolvedValue(null);
 
       const result = await service.getShowStatusById(uid);
 
-      expect(showStatusRepository.findOne).toHaveBeenCalledWith({ uid });
+      expect(showStatusRepository.findByUid).toHaveBeenCalledWith(uid);
       expect(result).toBeNull();
     });
   });
@@ -127,7 +128,7 @@ describe('showStatusService', () => {
       const params = {
         skip: 0,
         take: 10,
-        orderBy: { name: 'asc' as const },
+        orderBy: 'asc' as const,
       };
 
       const showStatuses = [
@@ -152,41 +153,13 @@ describe('showStatusService', () => {
       ];
 
       jest
-        .spyOn(showStatusRepository, 'findMany')
-        .mockResolvedValue(showStatuses);
+        .spyOn(showStatusRepository, 'findPaginated')
+        .mockResolvedValue({ data: showStatuses, total: 2 });
 
       const result = await service.getShowStatuses(params);
 
-      expect(showStatusRepository.findMany).toHaveBeenCalledWith(params);
-      expect(result).toEqual(showStatuses);
-    });
-
-    it('should return show statuses without orderBy', async () => {
-      const params = {
-        skip: 0,
-        take: 10,
-      };
-
-      const showStatuses = [
-        {
-          id: 1n,
-          uid: 'shs_00000001',
-          name: 'Draft',
-          metadata: {},
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          deletedAt: null,
-        },
-      ];
-
-      jest
-        .spyOn(showStatusRepository, 'findMany')
-        .mockResolvedValue(showStatuses);
-
-      const result = await service.getShowStatuses(params);
-
-      expect(showStatusRepository.findMany).toHaveBeenCalledWith(params);
-      expect(result).toEqual(showStatuses);
+      expect(showStatusRepository.findPaginated).toHaveBeenCalledWith(params);
+      expect(result).toEqual({ data: showStatuses, total: 2 });
     });
   });
 
@@ -253,7 +226,7 @@ describe('showStatusService', () => {
         .spyOn(showStatusRepository, 'softDelete')
         .mockResolvedValue(expectedResult);
 
-      const result = await service.deleteShowStatus(uid);
+      const result = await service.deleteShowStatus({ uid });
 
       expect(showStatusRepository.softDelete).toHaveBeenCalledWith({ uid });
       expect(result).toEqual(expectedResult);
@@ -268,7 +241,7 @@ describe('showStatusService', () => {
         .spyOn(showStatusRepository, 'count')
         .mockResolvedValue(expectedCount);
 
-      const result = await service.countShowStatuses();
+      const result = await service.countShowStatuses({});
 
       expect(showStatusRepository.count).toHaveBeenCalledWith({});
       expect(result).toEqual(expectedCount);

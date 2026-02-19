@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 
 import {
@@ -26,5 +25,24 @@ export class UpdateStudioTaskTemplateDto extends createZodDto(updateStudioTaskTe
 export class TaskTemplateDto extends createZodDto(taskTemplateDto) {}
 export class ListTaskTemplatesQueryDto extends createZodDto(listTaskTemplatesQuerySchema) {}
 
-// For Task Template Service
-export type CreateTaskTemplatePayload = Omit<Prisma.TaskTemplateCreateInput, 'uid' | 'version'> & { uid?: string; version?: number };
+/**
+ * Payload for creating a task template (service layer).
+ */
+export type CreateTaskTemplatePayload = {
+  name: string;
+  description?: string | null;
+  currentSchema: any;
+  studioId: string;
+  uid?: string;
+  version?: number;
+};
+
+/**
+ * Payload for updating a task template (service layer).
+ */
+export type UpdateTaskTemplatePayload = {
+  name?: string;
+  description?: string | null;
+  currentSchema?: any;
+  version?: number;
+};

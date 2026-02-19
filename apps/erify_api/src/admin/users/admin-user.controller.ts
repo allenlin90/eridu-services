@@ -32,43 +32,56 @@ export class AdminUserController extends BaseAdminController {
 
   @Post()
   @AdminResponse(adminUserDto, HttpStatus.CREATED, 'User created successfully')
-  createUser(@Body() body: CreateUserDto) {
-    return this.userService.createUser(body);
+  async createUser(@Body() body: CreateUserDto) {
+    const { extId, email, name, profileUrl, metadata, mc } = body;
+    return this.userService.createUser({
+      extId,
+      email,
+      name,
+      profileUrl,
+      metadata,
+      mc,
+    });
   }
 
   @Get()
   @AdminPaginatedResponse(adminUserDto, 'List of users with pagination')
   async getUsers(@Query() query: ListUsersQueryDto) {
-    const { data, total } = await this.userService.listUsers({
-      skip: query.skip,
-      take: query.take,
-      name: query.name,
-      email: query.email,
-      uid: query.uid,
-      extId: query.extId,
-      isSystemAdmin: query.isSystemAdmin,
-    });
+    const { data, total } = await this.userService.listUsers(query);
 
     return this.createPaginatedResponse(data, total, query);
   }
 
   @Get(':id')
   @AdminResponse(adminUserDto, HttpStatus.OK, 'User details')
-  getUser(
+  async getUser(
     @Param('id', new UidValidationPipe(UserService.UID_PREFIX, 'User'))
     id: string,
   ) {
-    return this.userService.getUserById(id);
+    const user = await this.userService.getUserById(id);
+    this.ensureResourceExists(user, 'User', id);
+    return user;
   }
 
   @Patch(':id')
   @AdminResponse(adminUserDto, HttpStatus.OK, 'User updated successfully')
-  updateUser(
+  async updateUser(
     @Param('id', new UidValidationPipe(UserService.UID_PREFIX, 'User'))
     id: string,
     @Body() body: UpdateUserDto,
   ) {
-    return this.userService.updateUser(id, body);
+    const user = await this.userService.getUserById(id);
+    this.ensureResourceExists(user, 'User', id);
+
+    const { extId, email, name, profileUrl, metadata, isSystemAdmin } = body;
+    return this.userService.updateUser(id, {
+      extId,
+      email,
+      name,
+      profileUrl,
+      metadata,
+      isSystemAdmin,
+    });
   }
 
   @Delete(':id')
@@ -77,6 +90,9 @@ export class AdminUserController extends BaseAdminController {
     @Param('id', new UidValidationPipe(UserService.UID_PREFIX, 'User'))
     id: string,
   ) {
+    const user = await this.userService.getUserById(id);
+    this.ensureResourceExists(user, 'User', id);
+
     await this.userService.deleteUser(id);
   }
 }

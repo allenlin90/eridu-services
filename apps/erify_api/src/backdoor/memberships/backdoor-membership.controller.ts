@@ -37,9 +37,13 @@ export class BackdoorMembershipController extends BaseBackdoorController {
     'Studio membership created successfully',
   )
   async createStudioMembership(@Body() body: CreateStudioMembershipDto) {
-    return this.studioMembershipService.createStudioMembershipFromDto(body, {
-      user: true,
-      studio: true,
-    });
+    const { userId, studioId, role, metadata } = body;
+    return this.studioMembershipService.createStudioMembership(
+      { userId, studioId, role, metadata },
+      {
+        user: true,
+        studio: true,
+      },
+    );
   }
 }

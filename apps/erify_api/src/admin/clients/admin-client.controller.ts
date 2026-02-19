@@ -32,49 +32,67 @@ export class AdminClientController extends BaseAdminController {
 
   @Post()
   @AdminResponse(clientDto, HttpStatus.CREATED, 'Client created successfully')
-  createClient(@Body() body: CreateClientDto) {
-    return this.clientService.createClient(body);
+  async createClient(@Body() body: CreateClientDto) {
+    const { name, contactPerson, contactEmail, metadata } = body;
+    return this.clientService.createClient({
+      name,
+      contactPerson,
+      contactEmail,
+      metadata,
+    });
   }
 
   @Get()
   @AdminPaginatedResponse(clientDto, 'List of clients with pagination')
   async getClients(@Query() query: ListClientsQueryDto) {
-    const { data, total } = await this.clientService.listClients({
-      skip: query.skip,
-      take: query.take,
-      name: query.name,
-      uid: query.uid,
-      include_deleted: query.include_deleted,
-    });
+    const { data, total } = await this.clientService.listClients(query);
 
     return this.createPaginatedResponse(data, total, query);
   }
 
-  @Get(':id')
+  @Get(':uid')
   @AdminResponse(clientDto, HttpStatus.OK, 'Client details')
-  getClient(
-    @Param('id', new UidValidationPipe(ClientService.UID_PREFIX, 'Client'))
-    id: string,
+  async getClient(
+    @Param('uid', new UidValidationPipe(ClientService.UID_PREFIX, 'Client'))
+    uid: string,
   ) {
-    return this.clientService.getClientById(id);
+    const client = await this.clientService.getClientByUid(uid);
+    this.ensureResourceExists(client, 'Client', uid);
+    return client;
   }
 
-  @Patch(':id')
+  @Patch(':uid')
   @AdminResponse(clientDto, HttpStatus.OK, 'Client updated successfully')
-  updateClient(
-    @Param('id', new UidValidationPipe(ClientService.UID_PREFIX, 'Client'))
-    id: string,
+  async updateClient(
+    @Param('uid', new UidValidationPipe(ClientService.UID_PREFIX, 'Client'))
+    uid: string,
     @Body() body: UpdateClientDto,
   ) {
-    return this.clientService.updateClient(id, body);
+    // 1. Verify existence
+    const client = await this.clientService.getClientByUid(uid);
+    this.ensureResourceExists(client, 'Client', uid);
+
+    // 2. Perform operation
+    const { name, contactPerson, contactEmail, metadata } = body;
+    return this.clientService.updateClient(uid, {
+      name,
+      contactPerson,
+      contactEmail,
+      metadata,
+    });
   }
 
-  @Delete(':id')
+  @Delete(':uid')
   @AdminResponse(undefined, HttpStatus.NO_CONTENT)
   async deleteClient(
-    @Param('id', new UidValidationPipe(ClientService.UID_PREFIX, 'Client'))
-    id: string,
+    @Param('uid', new UidValidationPipe(ClientService.UID_PREFIX, 'Client'))
+    uid: string,
   ) {
-    await this.clientService.deleteClient(id);
+    // 1. Verify existence
+    const client = await this.clientService.getClientByUid(uid);
+    this.ensureResourceExists(client, 'Client', uid);
+
+    // 2. Perform operation
+    await this.clientService.deleteClient(uid);
   }
 }

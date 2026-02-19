@@ -1,6 +1,9 @@
+import { Module } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
-import type { Prisma } from '@prisma/client';
+import { ClsPluginTransactional } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import { ClsModule } from 'nestjs-cls';
 
 import type { PlanDocument } from './schemas/schedule-planning.schema';
 import { ValidationService } from './validation.service';
@@ -8,66 +11,57 @@ import { ValidationService } from './validation.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UtilityService } from '@/utility/utility.service';
 
+// File-scope mock objects (reassigned per test via jest.clearAllMocks + mockResolvedValue)
+// mockTransactionClient: used when CLS transaction is active
+let mockTransactionClient: {
+  client: { findMany: jest.Mock };
+  studioRoom: { findMany: jest.Mock };
+  showType: { findMany: jest.Mock };
+  showStatus: { findMany: jest.Mock };
+  showStandard: { findMany: jest.Mock };
+  mC: { findMany: jest.Mock };
+  show: { findMany: jest.Mock };
+  platform: { findMany: jest.Mock };
+};
+
+// mockPrismaClient: the delegates exposed on mockPrismaServiceValue (used when no active CLS tx)
+const mockPrismaClient = {
+  client: { findMany: jest.fn() },
+  studioRoom: { findMany: jest.fn() },
+  showType: { findMany: jest.fn() },
+  showStatus: { findMany: jest.fn() },
+  showStandard: { findMany: jest.fn() },
+  mC: { findMany: jest.fn() },
+  show: { findMany: jest.fn() },
+  platform: { findMany: jest.fn() },
+};
+
+// File-scope mock PrismaService (getFallbackInstance() returns this when no CLS tx is active)
+const mockPrismaServiceValue = {
+  $transaction: jest.fn(
+    async (callback: (tx: typeof mockTransactionClient) => Promise<unknown>) =>
+      await callback(mockTransactionClient),
+  ),
+  client: mockPrismaClient.client,
+  studioRoom: mockPrismaClient.studioRoom,
+  showType: mockPrismaClient.showType,
+  showStatus: mockPrismaClient.showStatus,
+  showStandard: mockPrismaClient.showStandard,
+  show: mockPrismaClient.show,
+  mC: mockPrismaClient.mC,
+  platform: mockPrismaClient.platform,
+};
+
+// @Module-decorated class so ClsPluginTransactional.imports can resolve PrismaService via useExisting
+@Module({
+  providers: [{ provide: PrismaService, useValue: mockPrismaServiceValue }],
+  exports: [PrismaService],
+})
+class MockPrismaModule {}
+
 describe('validationService', () => {
   let service: ValidationService;
-  let _prismaService: jest.Mocked<PrismaService>;
   let _utilityService: jest.Mocked<UtilityService>;
-
-  // Mock transaction client
-  let mockTransactionClient: {
-    client: {
-      findMany: jest.Mock;
-    };
-    studioRoom: {
-      findMany: jest.Mock;
-    };
-    showType: {
-      findMany: jest.Mock;
-    };
-    showStatus: {
-      findMany: jest.Mock;
-    };
-    showStandard: {
-      findMany: jest.Mock;
-    };
-    mC: {
-      findMany: jest.Mock;
-    };
-    show: {
-      findMany: jest.Mock;
-    };
-    platform: {
-      findMany: jest.Mock;
-    };
-  };
-
-  // Mock direct prisma client methods
-  let mockPrismaClient: {
-    client: {
-      findMany: jest.Mock;
-    };
-    studioRoom: {
-      findMany: jest.Mock;
-    };
-    showType: {
-      findMany: jest.Mock;
-    };
-    showStatus: {
-      findMany: jest.Mock;
-    };
-    showStandard: {
-      findMany: jest.Mock;
-    };
-    mC: {
-      findMany: jest.Mock;
-    };
-    show: {
-      findMany: jest.Mock;
-    };
-    platform: {
-      findMany: jest.Mock;
-    };
-  };
 
   // Test data
   const mockValidPlanDocument: PlanDocument = {
@@ -132,83 +126,27 @@ describe('validationService', () => {
     clientId: BigInt(1),
   };
 
-  beforeEach(async () => {
-    mockTransactionClient = {
-      client: {
-        findMany: jest.fn(),
-      },
-      studioRoom: {
-        findMany: jest.fn(),
-      },
-      showType: {
-        findMany: jest.fn(),
-      },
-      showStatus: {
-        findMany: jest.fn(),
-      },
-      showStandard: {
-        findMany: jest.fn(),
-      },
-      mC: {
-        findMany: jest.fn(),
-      },
-      show: {
-        findMany: jest.fn(),
-      },
-      platform: {
-        findMany: jest.fn(),
-      },
-    };
-
-    mockPrismaClient = {
-      client: {
-        findMany: jest.fn(),
-      },
-      studioRoom: {
-        findMany: jest.fn(),
-      },
-      showType: {
-        findMany: jest.fn(),
-      },
-      showStatus: {
-        findMany: jest.fn(),
-      },
-      showStandard: {
-        findMany: jest.fn(),
-      },
-      mC: {
-        findMany: jest.fn(),
-      },
-      show: {
-        findMany: jest.fn(),
-      },
-      platform: {
-        findMany: jest.fn(),
-      },
-    };
-
+  beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ClsModule.forRoot({
+          global: true,
+          middleware: { mount: false },
+          plugins: [
+            new ClsPluginTransactional({
+              imports: [MockPrismaModule],
+              adapter: new TransactionalAdapterPrisma({
+                prismaInjectionToken: PrismaService,
+              }),
+            }),
+          ],
+        }),
+      ],
       providers: [
         ValidationService,
         {
           provide: PrismaService,
-          useValue: {
-            $transaction: jest.fn(
-              async (
-                callback: (
-                  tx: typeof mockTransactionClient,
-                ) => Promise<unknown>,
-              ) => await callback(mockTransactionClient),
-            ),
-            client: mockPrismaClient.client,
-            studioRoom: mockPrismaClient.studioRoom,
-            showType: mockPrismaClient.showType,
-            showStatus: mockPrismaClient.showStatus,
-            showStandard: mockPrismaClient.showStandard,
-            show: mockPrismaClient.show,
-            mC: mockPrismaClient.mC,
-            platform: mockPrismaClient.platform,
-          },
+          useValue: mockPrismaServiceValue,
         },
         {
           provide: UtilityService,
@@ -220,11 +158,23 @@ describe('validationService', () => {
     }).compile();
 
     service = module.get<ValidationService>(ValidationService);
-    _prismaService = module.get(PrismaService);
     _utilityService = module.get(UtilityService);
   });
 
   beforeEach(() => {
+    // Reassign mockTransactionClient with fresh mocks each test
+    // (closure in mockPrismaServiceValue.$transaction reads this variable at call time)
+    mockTransactionClient = {
+      client: { findMany: jest.fn() },
+      studioRoom: { findMany: jest.fn() },
+      showType: { findMany: jest.fn() },
+      showStatus: { findMany: jest.fn() },
+      showStandard: { findMany: jest.fn() },
+      mC: { findMany: jest.fn() },
+      show: { findMany: jest.fn() },
+      platform: { findMany: jest.fn() },
+    };
+    // Clear call history on file-scope mockPrismaClient delegates
     jest.clearAllMocks();
   });
 
@@ -766,25 +716,22 @@ describe('validationService', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should validate with transaction context', async () => {
-      const mockTx = mockTransactionClient;
-
-      const result = await service.validateSchedule(
-        mockScheduleData,
-        mockTx as unknown as Prisma.TransactionClient,
-      );
+    it('should validate using CLS txHost.tx (falls back to prisma when no active tx)', async () => {
+      // With CLS, txHost.tx returns the full PrismaService when no @Transactional() context is active.
+      // This verifies the service queries the database via txHost.tx during validation.
+      const result = await service.validateSchedule(mockScheduleData);
 
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
 
-      // Verify transaction client was used instead of prismaService
-      expect(mockTx.client.findMany).toHaveBeenCalled();
-      expect(mockTx.studioRoom.findMany).toHaveBeenCalled();
-      expect(mockTx.showType.findMany).toHaveBeenCalled();
-      expect(mockTx.showStatus.findMany).toHaveBeenCalled();
-      expect(mockTx.showStandard.findMany).toHaveBeenCalled();
-      expect(mockTx.mC.findMany).toHaveBeenCalled();
-      expect(mockTx.platform.findMany).toHaveBeenCalled();
+      // Verify prisma delegates were used (mockPrismaClient delegates are exposed on mockPrismaServiceValue)
+      expect(mockPrismaClient.client.findMany).toHaveBeenCalled();
+      expect(mockPrismaClient.studioRoom.findMany).toHaveBeenCalled();
+      expect(mockPrismaClient.showType.findMany).toHaveBeenCalled();
+      expect(mockPrismaClient.showStatus.findMany).toHaveBeenCalled();
+      expect(mockPrismaClient.showStandard.findMany).toHaveBeenCalled();
+      expect(mockPrismaClient.mC.findMany).toHaveBeenCalled();
+      expect(mockPrismaClient.platform.findMany).toHaveBeenCalled();
     });
 
     it('should build UID lookup maps correctly', async () => {

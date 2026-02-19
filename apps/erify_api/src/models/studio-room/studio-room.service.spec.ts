@@ -18,8 +18,11 @@ describe('studioRoomService', () => {
 
   beforeEach(async () => {
     studioRoomRepositoryMock = createMockRepository<StudioRoomRepository>({
-      findActiveStudioRooms: jest.fn(),
-      findByStudioId: jest.fn(),
+      create: jest.fn(),
+      findOne: jest.fn(),
+      findPaginated: jest.fn(),
+      update: jest.fn(),
+      softDelete: jest.fn(),
     });
 
     utilityServiceMock = createMockUtilityService('srm_test_id');
@@ -41,7 +44,7 @@ describe('studioRoomService', () => {
   describe('createStudioRoom', () => {
     it('creates studio room successfully', async () => {
       const data = {
-        studio: { connect: { id: 1n } },
+        studioId: 'studio_123',
         name: 'Room A',
         capacity: 50,
         metadata: { type: 'recording' },
@@ -60,27 +63,27 @@ describe('studioRoomService', () => {
 
       (studioRoomRepositoryMock.create as jest.Mock).mockResolvedValue(created);
 
-      const result = await service.createStudioRoom(data);
+      const result = await service.create(data);
 
-      expect(utilityServiceMock.generateBrandedId).toHaveBeenCalledWith(
-        'srm',
-        undefined,
-      );
+      const { studioId, ...dataWithoutStudioId } = data;
       expect(studioRoomRepositoryMock.create).toHaveBeenCalledWith(
-        { ...data, uid: 'srm_test_id' },
-        undefined,
+        {
+          ...dataWithoutStudioId,
+          studio: { connect: { uid: studioId } },
+          uid: 'srm_test_id',
+        },
       );
       expect(result).toEqual(created);
     });
 
     it('creates studio room with include parameter', async () => {
       const data = {
-        studio: { connect: { id: 1n } },
+        studioId: 'studio_123',
         name: 'Room A',
         capacity: 50,
         metadata: {},
+        includeStudio: true,
       };
-      const include = { studio: true };
       const created = {
         id: 1n,
         uid: 'srm_test_id',
@@ -100,11 +103,16 @@ describe('studioRoomService', () => {
 
       (studioRoomRepositoryMock.create as jest.Mock).mockResolvedValue(created);
 
-      const result = await service.createStudioRoom(data, include);
+      const result = await service.create(data);
 
+      const { studioId, includeStudio: _includeStudio, ...dataWithoutStudioId } = data;
       expect(studioRoomRepositoryMock.create).toHaveBeenCalledWith(
-        { ...data, uid: 'srm_test_id' },
-        include,
+        {
+          ...dataWithoutStudioId,
+          studio: { connect: { uid: studioId } },
+          uid: 'srm_test_id',
+        },
+        { studio: true },
       );
       expect(result).toEqual(created);
     });
@@ -125,33 +133,25 @@ describe('studioRoomService', () => {
         deletedAt: null,
       };
 
-      (studioRoomRepositoryMock.findByUid as jest.Mock).mockResolvedValue(
+      (studioRoomRepositoryMock.findOne as jest.Mock).mockResolvedValue(
         studioRoom,
       );
 
-      const result = await service.getStudioRoomById(uid);
+      const result = await service.findOne({ uid });
 
-      expect(studioRoomRepositoryMock.findByUid).toHaveBeenCalledWith(
-        uid,
-        undefined,
-      );
+      expect(studioRoomRepositoryMock.findOne).toHaveBeenCalledWith({ uid });
       expect(result).toEqual(studioRoom);
     });
 
-    it('throws NotFoundException when not found', async () => {
-      const uid = 'srm_nonexistent';
+    it('returns null when not found', async () => {
+      (studioRoomRepositoryMock.findOne as jest.Mock).mockResolvedValue(null);
 
-      (studioRoomRepositoryMock.findByUid as jest.Mock).mockResolvedValue(null);
+      const result = await service.findOne({ uid: 'srm_nonexistent' });
 
-      await expect(service.getStudioRoomById(uid)).rejects.toMatchObject({
-        status: 404,
-        message: 'Studio Room not found with id srm_nonexistent',
+      expect(result).toBeNull();
+      expect(studioRoomRepositoryMock.findOne).toHaveBeenCalledWith({
+        uid: 'srm_nonexistent',
       });
-
-      expect(studioRoomRepositoryMock.findByUid).toHaveBeenCalledWith(
-        uid,
-        undefined,
-      );
     });
 
     it('returns studio room with include parameter', async () => {
@@ -174,14 +174,17 @@ describe('studioRoomService', () => {
         deletedAt: null,
       };
 
-      (studioRoomRepositoryMock.findByUid as jest.Mock).mockResolvedValue(
+      (studioRoomRepositoryMock.findOne as jest.Mock).mockResolvedValue(
         studioRoom,
       );
 
-      const result = await service.getStudioRoomById(uid, include);
+      const result = await service.findOne(
+        { uid },
+        include,
+      );
 
-      expect(studioRoomRepositoryMock.findByUid).toHaveBeenCalledWith(
-        uid,
+      expect(studioRoomRepositoryMock.findOne).toHaveBeenCalledWith(
+        { uid },
         include,
       );
       expect(result).toEqual(studioRoom);
@@ -193,7 +196,7 @@ describe('studioRoomService', () => {
       const params = {
         skip: 0,
         take: 10,
-        orderBy: { name: 'asc' as const },
+        orderBy: 'asc' as const,
       };
       const studioRooms = [
         {
@@ -221,15 +224,13 @@ describe('studioRoomService', () => {
       ];
 
       (
-        studioRoomRepositoryMock.findActiveStudioRooms as jest.Mock
-      ).mockResolvedValue(studioRooms);
+        studioRoomRepositoryMock.findPaginated as jest.Mock
+      ).mockResolvedValue({ data: studioRooms, total: 2 });
 
       const result = await service.getStudioRooms(params);
 
-      expect(
-        studioRoomRepositoryMock.findActiveStudioRooms,
-      ).toHaveBeenCalledWith(params, undefined);
-      expect(result).toEqual(studioRooms);
+      expect(studioRoomRepositoryMock.findPaginated).toHaveBeenCalledWith(params);
+      expect(result).toEqual({ data: studioRooms, total: 2 });
     });
 
     it('returns studio rooms with include parameter', async () => {
@@ -237,7 +238,6 @@ describe('studioRoomService', () => {
         skip: 0,
         take: 10,
       };
-      const include = { studio: true };
       const studioRooms = [
         {
           id: 1n,
@@ -258,22 +258,23 @@ describe('studioRoomService', () => {
       ];
 
       (
-        studioRoomRepositoryMock.findActiveStudioRooms as jest.Mock
-      ).mockResolvedValue(studioRooms);
+        studioRoomRepositoryMock.findPaginated as jest.Mock
+      ).mockResolvedValue({ data: studioRooms, total: 1 });
 
-      const result = await service.getStudioRooms(params, include);
+      const result = await service.getStudioRooms({ ...params, includeStudio: true });
 
-      expect(
-        studioRoomRepositoryMock.findActiveStudioRooms,
-      ).toHaveBeenCalledWith(params, include);
-      expect(result).toEqual(studioRooms);
+      expect(studioRoomRepositoryMock.findPaginated).toHaveBeenCalledWith({
+        ...params,
+        includeStudio: true,
+      });
+      expect(result).toEqual({ data: studioRooms, total: 1 });
     });
 
     it('returns studio rooms filtered by studioId', async () => {
       const params = {
         skip: 0,
         take: 10,
-        studioId: 'studio_123',
+        studioUid: 'studio_123',
       };
       const studioRooms = [
         {
@@ -290,52 +291,17 @@ describe('studioRoomService', () => {
       ];
 
       (
-        studioRoomRepositoryMock.findActiveStudioRooms as jest.Mock
-      ).mockResolvedValue(studioRooms);
+        studioRoomRepositoryMock.findPaginated as jest.Mock
+      ).mockResolvedValue({ data: studioRooms, total: 1 });
 
       const result = await service.getStudioRooms(params);
 
-      expect(
-        studioRoomRepositoryMock.findActiveStudioRooms,
-      ).toHaveBeenCalledWith(
-        {
-          skip: 0,
-          take: 10,
-          studioUid: 'studio_123',
-        },
-        undefined,
-      );
-      expect(result).toEqual(studioRooms);
-    });
-  });
-
-  describe('getStudioRoomsByStudioId', () => {
-    it('returns studio rooms for specific studio', async () => {
-      const studioId = 1n;
-      const studioRooms = [
-        {
-          id: 1n,
-          uid: 'srm_1',
-          studioId: 1n,
-          name: 'Room A',
-          capacity: 50,
-          metadata: {},
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          deletedAt: null,
-        },
-      ];
-
-      (studioRoomRepositoryMock.findByStudioId as jest.Mock).mockResolvedValue(
-        studioRooms,
-      );
-
-      const result = await service.getStudioRoomsByStudioId(studioId);
-
-      expect(studioRoomRepositoryMock.findByStudioId).toHaveBeenCalledWith(
-        studioId,
-      );
-      expect(result).toEqual(studioRooms);
+      expect(studioRoomRepositoryMock.findPaginated).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        studioUid: 'studio_123',
+      });
+      expect(result).toEqual({ data: studioRooms, total: 1 });
     });
   });
 
@@ -346,17 +312,6 @@ describe('studioRoomService', () => {
         name: 'Updated Room',
         capacity: 60,
         metadata: { type: 'live' },
-      };
-      const existing = {
-        id: 1n,
-        uid: 'srm_123',
-        studioId: 1n,
-        name: 'Room A',
-        capacity: 50,
-        metadata: {},
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
       };
       const updated = {
         id: 1n,
@@ -370,21 +325,13 @@ describe('studioRoomService', () => {
         deletedAt: null,
       };
 
-      (studioRoomRepositoryMock.findByUid as jest.Mock).mockResolvedValue(
-        existing,
-      );
       (studioRoomRepositoryMock.update as jest.Mock).mockResolvedValue(updated);
 
-      const result = await service.updateStudioRoom(uid, data);
+      const result = await service.update(uid, data);
 
-      expect(studioRoomRepositoryMock.findByUid).toHaveBeenCalledWith(
-        uid,
-        undefined,
-      );
       expect(studioRoomRepositoryMock.update).toHaveBeenCalledWith(
         { uid },
-        data,
-        undefined,
+        expect.objectContaining(data),
       );
       expect(result).toEqual(updated);
     });
@@ -394,18 +341,6 @@ describe('studioRoomService', () => {
       const data = {
         name: 'Updated Room',
         capacity: 60,
-      };
-      const include = { studio: true };
-      const existing = {
-        id: 1n,
-        uid: 'srm_123',
-        studioId: 1n,
-        name: 'Room A',
-        capacity: 50,
-        metadata: {},
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
       };
       const updated = {
         id: 1n,
@@ -424,21 +359,14 @@ describe('studioRoomService', () => {
         deletedAt: null,
       };
 
-      (studioRoomRepositoryMock.findByUid as jest.Mock).mockResolvedValue(
-        existing,
-      );
       (studioRoomRepositoryMock.update as jest.Mock).mockResolvedValue(updated);
 
-      const result = await service.updateStudioRoom(uid, data, include);
+      const result = await service.update(uid, { ...data, includeStudio: true });
 
-      expect(studioRoomRepositoryMock.findByUid).toHaveBeenCalledWith(
-        uid,
-        include,
-      );
       expect(studioRoomRepositoryMock.update).toHaveBeenCalledWith(
         { uid },
-        data,
-        include,
+        expect.objectContaining(data),
+        { studio: true },
       );
       expect(result).toEqual(updated);
     });
@@ -447,17 +375,6 @@ describe('studioRoomService', () => {
   describe('deleteStudioRoom', () => {
     it('deletes studio room successfully', async () => {
       const uid = 'srm_123';
-      const existing = {
-        id: 1n,
-        uid: 'srm_123',
-        studioId: 1n,
-        name: 'Room A',
-        capacity: 50,
-        metadata: {},
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-      };
       const deleted = {
         id: 1n,
         uid: 'srm_123',
@@ -470,62 +387,14 @@ describe('studioRoomService', () => {
         deletedAt: new Date(),
       };
 
-      (studioRoomRepositoryMock.findByUid as jest.Mock).mockResolvedValue(
-        existing,
-      );
       (studioRoomRepositoryMock.softDelete as jest.Mock).mockResolvedValue(
         deleted,
       );
 
-      const result = await service.deleteStudioRoom(uid);
+      const result = await service.softDelete({ uid });
 
-      expect(studioRoomRepositoryMock.findByUid).toHaveBeenCalledWith(
-        uid,
-        undefined,
-      );
       expect(studioRoomRepositoryMock.softDelete).toHaveBeenCalledWith({ uid });
       expect(result).toEqual(deleted);
-    });
-  });
-
-  describe('countStudioRooms', () => {
-    it('returns total count of studio rooms', async () => {
-      const total = 5;
-
-      (studioRoomRepositoryMock.count as jest.Mock).mockResolvedValue(total);
-
-      const result = await service.countStudioRooms();
-
-      expect(studioRoomRepositoryMock.count).toHaveBeenCalledWith({});
-      expect(result).toBe(total);
-    });
-
-    it('returns count of studio rooms filtered by studioId', async () => {
-      const studioId = 'studio_123';
-      const count = 3;
-
-      (studioRoomRepositoryMock.count as jest.Mock).mockResolvedValue(count);
-
-      const result = await service.countStudioRooms({ studioId });
-
-      expect(studioRoomRepositoryMock.count).toHaveBeenCalledWith({
-        studio: { uid: studioId },
-      });
-      expect(result).toBe(count);
-    });
-  });
-
-  describe('countStudioRoomsByStudioId', () => {
-    it('returns count of studio rooms for specific studio', async () => {
-      const studioId = 1n;
-      const count = 3;
-
-      (studioRoomRepositoryMock.count as jest.Mock).mockResolvedValue(count);
-
-      const result = await service.countStudioRoomsByStudioId(studioId);
-
-      expect(studioRoomRepositoryMock.count).toHaveBeenCalledWith({ studioId });
-      expect(result).toBe(count);
     });
   });
 });

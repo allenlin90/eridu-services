@@ -40,13 +40,7 @@ export class ProfileController {
   @ZodSerializerDto(profileResponseSchema)
   async getProfile(@CurrentUser() user: AuthenticatedUser): Promise<ProfileResponseDto> {
     // Fetch full user to get isSystemAdmin status and studio memberships
-    const fullUser = await this.userService.getUserByExtId(user.ext_id, {
-      studioMemberships: {
-        include: {
-          studio: true,
-        },
-      },
-    });
+    const fullUser = await this.userService.getUserWithAllStudioMemberships(user.ext_id);
 
     if (!fullUser) {
       throw HttpError.notFound('User not found');

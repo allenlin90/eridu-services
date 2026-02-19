@@ -16,6 +16,7 @@ describe('backdoorStudioController', () => {
 
   const mockStudioService = {
     createStudio: jest.fn(),
+    getStudioById: jest.fn(),
     updateStudio: jest.fn(),
   };
 
@@ -69,22 +70,39 @@ describe('backdoorStudioController', () => {
       const studioId = 'std_123';
       const updateDto: UpdateStudioDto = {
         name: 'Updated Studio Name',
+        address: '123 New St',
+        metadata: { key: 'value' },
       } as UpdateStudioDto;
+      const studio = { uid: studioId, name: 'Old Name' };
       const updatedStudio = {
         uid: studioId,
-        name: 'Updated Studio Name',
-        address: '123 Test St',
+        ...updateDto,
       };
 
+      mockStudioService.getStudioById.mockResolvedValue(studio as any);
       mockStudioService.updateStudio.mockResolvedValue(updatedStudio as any);
 
       const result = await controller.updateStudio(studioId, updateDto);
 
+      expect(mockStudioService.getStudioById).toHaveBeenCalledWith(studioId);
       expect(mockStudioService.updateStudio).toHaveBeenCalledWith(
         studioId,
-        updateDto,
+        {
+          name: updateDto.name,
+          address: updateDto.address,
+          metadata: updateDto.metadata,
+        },
       );
       expect(result).toEqual(updatedStudio);
+    });
+
+    it('should throw NotFound if studio does not exist', async () => {
+      const studioId = 'std_123';
+      const updateDto: UpdateStudioDto = { name: 'New Name' } as UpdateStudioDto;
+
+      mockStudioService.getStudioById.mockResolvedValue(null);
+
+      await expect(controller.updateStudio(studioId, updateDto)).rejects.toThrow();
     });
   });
 });

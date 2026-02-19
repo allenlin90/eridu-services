@@ -116,54 +116,6 @@ export class PrismaService
   }
 
   /**
-   * Executes a transaction with a callback that receives a transaction client.
-   * This method should be used by services that need to perform multiple
-   * database operations atomically.
-   *
-   * @param callback - Function that receives a transaction client and returns a promise
-   * @param options - Optional transaction configuration
-   * @returns The result of the callback
-   *
-   * @example
-   * ```typescript
-   * await prismaService.executeTransaction(async (tx) => {
-   *   await tx.user.create({ data: { ... } });
-   *   await tx.post.create({ data: { ... } });
-   *   return result;
-   * });
-   * ```
-   *
-   * @example
-   * ```typescript
-   * await prismaService.executeTransaction(
-   *   async (tx) => {
-   *     // ... operations
-   *   },
-   *   { timeout: 30000, isolationLevel: 'Serializable' }
-   * );
-   * ```
-   */
-  async executeTransaction<T>(
-    callback: (tx: TransactionClient) => Promise<T>,
-    options?: TransactionOptions,
-  ): Promise<T> {
-    const transactionOptions = {
-      maxWait: options?.maxWait ?? 5000,
-      timeout: options?.timeout ?? 10000,
-      ...(options?.isolationLevel && {
-        isolationLevel: options.isolationLevel,
-      }),
-    };
-
-    try {
-      return await this.$transaction(callback, transactionOptions);
-    } catch (error) {
-      this.logger.error('Transaction failed', error);
-      throw error;
-    }
-  }
-
-  /**
    * Health check method to verify database connectivity.
    * Useful for health check endpoints and monitoring.
    *

@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, ShowPlatform } from '@prisma/client';
 
-import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
+import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
 type ShowPlatformWithIncludes<T extends Prisma.ShowPlatformInclude> =
@@ -10,58 +12,6 @@ type ShowPlatformWithIncludes<T extends Prisma.ShowPlatformInclude> =
   }>;
 
 // Custom model wrapper that implements IBaseModel with ShowPlatformWhereInput
-class ShowPlatformModelWrapper
-implements
-    IBaseModel<
-      ShowPlatform,
-      Prisma.ShowPlatformCreateInput,
-      Prisma.ShowPlatformUpdateInput,
-      Prisma.ShowPlatformWhereInput
-    > {
-  constructor(private readonly prismaModel: Prisma.ShowPlatformDelegate) {}
-
-  async create(args: {
-    data: Prisma.ShowPlatformCreateInput;
-    include?: Record<string, any>;
-  }): Promise<ShowPlatform> {
-    return this.prismaModel.create(args);
-  }
-
-  async findFirst(args: {
-    where: Prisma.ShowPlatformWhereInput;
-    include?: Record<string, any>;
-  }): Promise<ShowPlatform | null> {
-    return this.prismaModel.findFirst(args);
-  }
-
-  async findMany(args: {
-    where?: Prisma.ShowPlatformWhereInput;
-    skip?: number;
-    take?: number;
-    orderBy?: any;
-    include?: Record<string, any>;
-  }): Promise<ShowPlatform[]> {
-    return this.prismaModel.findMany(args);
-  }
-
-  async update(args: {
-    where: Prisma.ShowPlatformWhereUniqueInput;
-    data: Prisma.ShowPlatformUpdateInput;
-    include?: Record<string, any>;
-  }): Promise<ShowPlatform> {
-    return this.prismaModel.update(args);
-  }
-
-  async delete(args: {
-    where: Prisma.ShowPlatformWhereUniqueInput;
-  }): Promise<ShowPlatform> {
-    return this.prismaModel.delete(args);
-  }
-
-  async count(args: { where: Prisma.ShowPlatformWhereInput }): Promise<number> {
-    return this.prismaModel.count({ where: args.where });
-  }
-}
 
 @Injectable()
 export class ShowPlatformRepository extends BaseRepository<
@@ -70,15 +20,22 @@ export class ShowPlatformRepository extends BaseRepository<
   Prisma.ShowPlatformUpdateInput,
   Prisma.ShowPlatformWhereInput
 > {
-  constructor(private readonly prisma: PrismaService) {
-    super(new ShowPlatformModelWrapper(prisma.showPlatform));
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {
+    super(new PrismaModelWrapper(prisma.showPlatform));
+  }
+
+  private get delegate() {
+    return this.txHost.tx.showPlatform;
   }
 
   async findByUid<T extends Prisma.ShowPlatformInclude = Record<string, never>>(
     uid: string,
     include?: T,
   ): Promise<ShowPlatform | ShowPlatformWithIncludes<T> | null> {
-    return this.model.findFirst({
+    return this.delegate.findFirst({
       where: { uid, deletedAt: null },
       ...(include && { include }),
     });
@@ -88,7 +45,7 @@ export class ShowPlatformRepository extends BaseRepository<
     showId: bigint,
     platformId: bigint,
   ): Promise<ShowPlatform | null> {
-    return this.model.findFirst({
+    return this.delegate.findFirst({
       where: { showId, platformId, deletedAt: null },
     });
   }
@@ -103,7 +60,7 @@ export class ShowPlatformRepository extends BaseRepository<
     },
   ): Promise<ShowPlatform[]> {
     const { skip, take, orderBy, include } = params || {};
-    return this.model.findMany({
+    return this.delegate.findMany({
       where: { showId, deletedAt: null },
       skip,
       take,
@@ -122,7 +79,7 @@ export class ShowPlatformRepository extends BaseRepository<
     },
   ): Promise<ShowPlatform[]> {
     const { skip, take, orderBy, include } = params || {};
-    return this.model.findMany({
+    return this.delegate.findMany({
       where: { platformId, deletedAt: null },
       skip,
       take,
@@ -131,39 +88,131 @@ export class ShowPlatformRepository extends BaseRepository<
     });
   }
 
-  async findActiveShowPlatforms(params: {
+  async findPaginated(params: {
     skip?: number;
     take?: number;
     orderBy?: Prisma.ShowPlatformOrderByWithRelationInput;
     include?: Prisma.ShowPlatformInclude;
+    where?: Prisma.ShowPlatformWhereInput;
+  }): Promise<{ data: ShowPlatform[]; total: number }> {
+    const { skip, take, orderBy, include, where } = params;
+    const delegate = this.delegate;
+
+    const queryWhere: Prisma.ShowPlatformWhereInput = {
+      ...where,
+      deletedAt: null,
+    };
+
+    const [data, total] = await Promise.all([
+      delegate.findMany({
+        where: queryWhere,
+        skip,
+        take,
+        orderBy,
+        ...(include && { include }),
+      }),
+      delegate.count({ where: queryWhere }),
+    ]);
+
+    return { data, total };
+  }
+
+  async create(data: Prisma.ShowPlatformCreateInput, include?: Record<string, any>): Promise<ShowPlatform> {
+    return this.delegate.create({ data, ...(include && { include }) });
+  }
+
+  async update(where: Prisma.ShowPlatformWhereUniqueInput, data: Prisma.ShowPlatformUpdateInput, include?: Record<string, any>): Promise<ShowPlatform> {
+    return this.delegate.update({ where, data, ...(include && { include }) });
+  }
+
+  async updateMany(where: Prisma.ShowPlatformWhereInput, data: Prisma.ShowPlatformUpdateManyMutationInput): Promise<Prisma.BatchPayload> {
+    return this.delegate.updateMany({ where, data });
+  }
+
+  async softDelete(where: Prisma.ShowPlatformWhereUniqueInput): Promise<ShowPlatform> {
+    return this.delegate.update({
+      where,
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  async restore(where: Prisma.ShowPlatformWhereUniqueInput): Promise<ShowPlatform> {
+    return this.delegate.update({
+      where,
+      data: { deletedAt: null },
+    });
+  }
+
+  async findMany(params: {
+    where?: Prisma.ShowPlatformWhereInput;
+    include?: Prisma.ShowPlatformInclude;
   }): Promise<ShowPlatform[]> {
-    const { skip, take, orderBy, include } = params;
-    return this.model.findMany({
-      where: { deletedAt: null },
-      skip,
-      take,
-      orderBy,
-      ...(include && { include }),
+    return this.delegate.findMany(params);
+  }
+
+  /**
+   * Creates a ShowPlatform assignment by internal IDs (domain-level).
+   * Builds Prisma relation syntax internally.
+   */
+  async createAssignment(params: {
+    uid: string;
+    showId: bigint;
+    platformId: bigint;
+    liveStreamLink?: string | null;
+    platformShowId?: string | null;
+    viewerCount?: number;
+    metadata?: object;
+  }): Promise<ShowPlatform> {
+    return this.delegate.create({
+      data: {
+        uid: params.uid,
+        show: { connect: { id: params.showId } },
+        platform: { connect: { id: params.platformId } },
+        liveStreamLink: params.liveStreamLink ?? null,
+        platformShowId: params.platformShowId ?? null,
+        viewerCount: params.viewerCount ?? 0,
+        metadata: params.metadata ?? {},
+      },
     });
   }
 
-  async update(
-    where: Prisma.ShowPlatformWhereUniqueInput,
-    data: Prisma.ShowPlatformUpdateInput,
-    include?: Prisma.ShowPlatformInclude,
-  ): Promise<ShowPlatform> {
-    return this.prisma.showPlatform.update({
-      where,
-      data,
-      ...(include && { include }),
+  /**
+   * Restores a soft-deleted ShowPlatform assignment and updates its fields, identified by internal ID.
+   */
+  async restoreAndUpdateAssignment(id: bigint, params: {
+    liveStreamLink?: string | null;
+    platformShowId?: string | null;
+    viewerCount?: number;
+    metadata?: object;
+  }): Promise<ShowPlatform> {
+    return this.delegate.update({
+      where: { id },
+      data: {
+        liveStreamLink: params.liveStreamLink,
+        platformShowId: params.platformShowId,
+        viewerCount: params.viewerCount,
+        metadata: params.metadata,
+        deletedAt: null,
+      },
     });
   }
 
-  async softDelete(
-    where: Prisma.ShowPlatformWhereUniqueInput,
-  ): Promise<ShowPlatform> {
-    return this.prisma.showPlatform.update({
-      where,
+  /**
+   * Soft-deletes all ShowPlatform records for a given show (domain-level).
+   */
+  async softDeleteAllByShowId(showId: bigint): Promise<void> {
+    await this.delegate.updateMany({
+      where: { showId, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  /**
+   * Soft-deletes ShowPlatform records by internal Platform IDs for a given show (domain-level).
+   */
+  async softDeleteByPlatformIds(showId: bigint, platformIds: bigint[]): Promise<void> {
+    await this.delegate.updateMany({
+      where: { showId, platformId: { in: platformIds }, deletedAt: null },
       data: { deletedAt: new Date() },
     });
   }

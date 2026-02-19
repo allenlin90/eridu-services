@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ClsPluginTransactional } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import { ClsModule } from 'nestjs-cls';
 import { LoggerModule } from 'nestjs-pino';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
@@ -22,6 +25,8 @@ import { StudioGuard } from '@/lib/guards/studio.guard';
 import { OpenAPIModule } from '@/lib/openapi/openapi.module';
 import { MeModule } from '@/me/me.module';
 import { UserModule } from '@/models/user/user.module';
+import { PrismaModule } from '@/prisma/prisma.module';
+import { PrismaService } from '@/prisma/prisma.service';
 import { StudiosModule } from '@/studios/studios.module';
 
 @Module({
@@ -55,6 +60,18 @@ import { StudiosModule } from '@/studios/studios.module';
           },
         }),
       }),
+    }),
+    ClsModule.forRoot({
+      global: true,
+      middleware: { mount: true },
+      plugins: [
+        new ClsPluginTransactional({
+          imports: [PrismaModule],
+          adapter: new TransactionalAdapterPrisma({
+            prismaInjectionToken: PrismaService,
+          }),
+        }),
+      ],
     }),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],

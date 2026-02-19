@@ -3,7 +3,7 @@ import { Prisma, StudioMembership } from '@prisma/client';
 
 import {
   BaseRepository,
-  IBaseModel,
+  PrismaModelWrapper,
   WithSoftDelete,
 } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -17,61 +17,6 @@ type StudioMembershipWithIncludes<T extends Prisma.StudioMembershipInclude> =
     include: T;
   }>;
 
-class StudioMembershipModelWrapper
-implements
-    IBaseModel<
-      StudioMembership & WithSoftDelete,
-      Prisma.StudioMembershipCreateInput,
-      Prisma.StudioMembershipUpdateInput,
-      Prisma.StudioMembershipWhereInput
-    > {
-  constructor(private readonly prismaModel: Prisma.StudioMembershipDelegate) {}
-
-  async create(args: {
-    data: Prisma.StudioMembershipCreateInput;
-    include?: Record<string, any>;
-  }): Promise<StudioMembership & WithSoftDelete> {
-    return this.prismaModel.create(args);
-  }
-
-  async findFirst(args: {
-    where: Prisma.StudioMembershipWhereInput;
-    include?: Record<string, any>;
-  }): Promise<(StudioMembership & WithSoftDelete) | null> {
-    return this.prismaModel.findFirst(args);
-  }
-
-  async findMany(args: {
-    where?: Prisma.StudioMembershipWhereInput;
-    skip?: number;
-    take?: number;
-    orderBy?: any;
-    include?: Record<string, any>;
-  }): Promise<(StudioMembership & WithSoftDelete)[]> {
-    return this.prismaModel.findMany(args);
-  }
-
-  async update(args: {
-    where: Prisma.StudioMembershipWhereUniqueInput;
-    data: Prisma.StudioMembershipUpdateInput;
-    include?: Record<string, any>;
-  }): Promise<StudioMembership & WithSoftDelete> {
-    return this.prismaModel.update(args);
-  }
-
-  async delete(args: {
-    where: Prisma.StudioMembershipWhereUniqueInput;
-  }): Promise<StudioMembership & WithSoftDelete> {
-    return this.prismaModel.delete(args);
-  }
-
-  async count(args: {
-    where: Prisma.StudioMembershipWhereInput;
-  }): Promise<number> {
-    return this.prismaModel.count({ where: args.where });
-  }
-}
-
 @Injectable()
 export class StudioMembershipRepository extends BaseRepository<
   StudioMembership & WithSoftDelete,
@@ -80,7 +25,7 @@ export class StudioMembershipRepository extends BaseRepository<
   Prisma.StudioMembershipWhereInput
 > {
   constructor(private readonly prisma: PrismaService) {
-    super(new StudioMembershipModelWrapper(prisma.studioMembership));
+    super(new PrismaModelWrapper(prisma.studioMembership));
   }
 
   async createStudioMembership<
@@ -121,6 +66,67 @@ export class StudioMembershipRepository extends BaseRepository<
     }) as Promise<(StudioMembership | StudioMembershipWithIncludes<T>)[]>;
   }
 
+  async listStudioMemberships<
+    T extends Prisma.StudioMembershipInclude = Record<string, never>,
+  >(
+    params: {
+      skip?: number;
+      take?: number;
+      uid?: string;
+      studioId?: string;
+      role?: string;
+      userId?: UserId;
+    },
+    include?: T,
+  ): Promise<{
+      data: (StudioMembership | StudioMembershipWithIncludes<T>)[];
+      total: number;
+    }> {
+    const where: Prisma.StudioMembershipWhereInput = {
+      deletedAt: null,
+    };
+
+    if (params.uid) {
+      where.uid = {
+        contains: params.uid,
+        mode: 'insensitive',
+      };
+    }
+
+    if (params.studioId) {
+      where.studio = {
+        uid: {
+          contains: params.studioId,
+          mode: 'insensitive',
+        },
+      };
+    }
+
+    if (params.role) {
+      where.role = params.role;
+    }
+
+    if (params.userId) {
+      where.userId = params.userId;
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.studioMembership.findMany({
+        skip: params.skip,
+        take: params.take,
+        where,
+        ...(include && { include }),
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.studioMembership.count({ where }),
+    ]);
+
+    return {
+      data: data as (StudioMembership | StudioMembershipWithIncludes<T>)[],
+      total,
+    };
+  }
+
   /**
    * Find admin studio membership for user by ext_id
    * Returns the first admin membership found (user can have admin role in multiple studios)
@@ -147,20 +153,6 @@ export class StudioMembershipRepository extends BaseRepository<
       },
       ...(include && { include }),
     }) as Promise<StudioMembership | StudioMembershipWithIncludes<T> | null>;
-  }
-
-  async updateStudioMembership<
-    T extends Prisma.StudioMembershipInclude = Record<string, never>,
-  >(
-    where: Prisma.StudioMembershipWhereInput,
-    data: Prisma.StudioMembershipUpdateInput,
-    include?: T,
-  ): Promise<StudioMembership | StudioMembershipWithIncludes<T>> {
-    return this.model.update({
-      where: { ...where, deletedAt: null },
-      data,
-      ...(include && { include }),
-    });
   }
 
   async findByUid<

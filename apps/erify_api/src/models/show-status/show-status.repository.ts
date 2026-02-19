@@ -1,61 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma, ShowStatus } from '@prisma/client';
+import { Prisma, ShowStatus } from '@prisma/client';
 
-import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
+import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
-
-class ShowStatusModelWrapper
-implements
-    IBaseModel<
-      ShowStatus,
-      Prisma.ShowStatusCreateInput,
-      Prisma.ShowStatusUpdateInput,
-      Prisma.ShowStatusWhereInput
-    > {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async create(args: {
-    data: Prisma.ShowStatusCreateInput;
-    include?: Record<string, any>;
-  }): Promise<ShowStatus> {
-    return this.prisma.showStatus.create(args);
-  }
-
-  async findFirst(args: {
-    where: Prisma.ShowStatusWhereInput;
-    include?: Record<string, any>;
-  }): Promise<ShowStatus | null> {
-    return this.prisma.showStatus.findFirst(args);
-  }
-
-  async findMany(args: {
-    where?: Prisma.ShowStatusWhereInput;
-    skip?: number;
-    take?: number;
-    orderBy?: any;
-    include?: Record<string, any>;
-  }): Promise<ShowStatus[]> {
-    return this.prisma.showStatus.findMany(args);
-  }
-
-  async update(args: {
-    where: Prisma.ShowStatusWhereUniqueInput;
-    data: Prisma.ShowStatusUpdateInput;
-    include?: Record<string, any>;
-  }): Promise<ShowStatus> {
-    return this.prisma.showStatus.update(args);
-  }
-
-  async delete(args: {
-    where: Prisma.ShowStatusWhereUniqueInput;
-  }): Promise<ShowStatus> {
-    return this.prisma.showStatus.delete(args);
-  }
-
-  async count(args: { where: Prisma.ShowStatusWhereInput }): Promise<number> {
-    return this.prisma.showStatus.count({ where: args.where });
-  }
-}
 
 @Injectable()
 export class ShowStatusRepository extends BaseRepository<
@@ -65,12 +12,16 @@ export class ShowStatusRepository extends BaseRepository<
   Prisma.ShowStatusWhereInput
 > {
   constructor(private readonly prisma: PrismaService) {
-    super(new ShowStatusModelWrapper(prisma));
+    super(new PrismaModelWrapper(prisma.showStatus));
   }
 
-  async findByUid(uid: string): Promise<ShowStatus | null> {
+  async findByUid(
+    uid: string,
+    include?: Prisma.ShowStatusInclude,
+  ): Promise<ShowStatus | null> {
     return this.model.findFirst({
       where: { uid, deletedAt: null },
+      ...(include && { include }),
     });
   }
 
@@ -78,5 +29,46 @@ export class ShowStatusRepository extends BaseRepository<
     return this.model.findFirst({
       where: { name, deletedAt: null },
     });
+  }
+
+  async update(
+    params: { uid: string },
+    data: Prisma.ShowStatusUpdateInput,
+    include?: Prisma.ShowStatusInclude,
+  ): Promise<ShowStatus> {
+    const { uid } = params;
+    return this.prisma.showStatus.update({
+      where: { uid, deletedAt: null },
+      data,
+      ...(include && { include }),
+    });
+  }
+
+  async findPaginated(args: {
+    skip?: number;
+    take?: number;
+    orderBy?: 'asc' | 'desc';
+    include?: Prisma.ShowStatusInclude;
+    where?: Prisma.ShowStatusWhereInput;
+  }): Promise<{ data: ShowStatus[]; total: number }> {
+    const { skip, take, orderBy, include, where } = args;
+
+    const queryWhere: Prisma.ShowStatusWhereInput = {
+      ...where,
+      deletedAt: null,
+    };
+
+    const [data, total] = await Promise.all([
+      this.model.findMany({
+        skip,
+        take,
+        where: queryWhere,
+        orderBy: orderBy ? { createdAt: orderBy } : undefined,
+        include,
+      }),
+      this.model.count({ where: queryWhere }),
+    ]);
+
+    return { data, total };
   }
 }

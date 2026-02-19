@@ -384,19 +384,30 @@ async findOne(
 See **[Database Patterns](database-patterns/SKILL.md)** for transaction rules.
 
 ```typescript
-// Example: Creating a Show implies creating Assignments
-async createShowWithAssignments(data: CreateShowDto) {
-  return this.prismaService.$transaction(async (tx) => {
-    // 1. Create Parent
-    const show = await this.showService.createShow({ ...data, tx });
-    
-    // 2. Create Children
-    await this.assignmentService.createAssignments(show.id, data.assignments, tx);
-    
+import { Transactional } from '@nestjs-cls/transactional';
+
+@Injectable()
+export class ShowOrchestrationService {
+  constructor(
+    private readonly showService: ShowService,
+    private readonly assignmentService: AssignmentService,
+  ) {}
+
+  // Apply @Transactional() on the orchestration method — never pass `tx` as a parameter.
+  // CLS propagates the transaction automatically to all repository calls.
+  @Transactional()
+  async createShowWithAssignments(data: CreateShowDto) {
+    const show = await this.showService.createShow(data);
+    await this.assignmentService.createAssignments(show.id, data.assignments);
     return show;
-  });
+  }
 }
 ```
+
+> [!WARNING]
+> **Never use the old `$transaction(async (tx) => { ... })` pattern with `tx` parameter passing.**
+> This is the legacy pattern. All new orchestration must use `@Transactional()`.
+> Repositories access the active CLS transaction client via `TransactionHost` injected by the adapter.
 
 ---
 

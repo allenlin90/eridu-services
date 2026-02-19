@@ -1,3 +1,5 @@
+import { Prisma } from '@prisma/client';
+
 import { ShowStandardRepository } from './show-standard.repository';
 import { ShowStandardService } from './show-standard.service';
 
@@ -17,8 +19,12 @@ describe('showStandardService', () => {
   let utilityService: UtilityService;
 
   beforeEach(async () => {
-    const showStandardRepositoryMock
-      = createMockRepository<ShowStandardRepository>();
+    const showStandardRepositoryMock = createMockRepository<ShowStandardRepository>(
+      {
+        findPaginated: jest.fn(),
+      },
+    );
+
     const utilityMock = createMockUtilityService('shsd_test123');
 
     const module = await createModelServiceTestModule({
@@ -102,32 +108,24 @@ describe('showStandardService', () => {
       };
 
       jest
-        .spyOn(showStandardRepository, 'findOne')
+        .spyOn(showStandardRepository, 'findByUid')
         .mockResolvedValue(expectedResult);
 
       const result = await service.getShowStandardById(uid);
 
-      expect(showStandardRepository.findOne).toHaveBeenCalledWith(
-        { uid },
-        undefined,
-      );
+      expect(showStandardRepository.findByUid).toHaveBeenCalledWith(uid);
       expect(result).toEqual(expectedResult);
     });
 
-    it('should throw NotFoundException when not found', async () => {
+    it('should return null when not found', async () => {
       const uid = 'shs_404';
 
-      jest.spyOn(showStandardRepository, 'findOne').mockResolvedValue(null);
+      jest.spyOn(showStandardRepository, 'findByUid').mockResolvedValue(null);
 
-      await expect(service.getShowStandardById(uid)).rejects.toMatchObject({
-        status: 404,
-        message: 'Show Standard not found with id shs_404',
-      });
+      const result = await service.getShowStandardById(uid);
 
-      expect(showStandardRepository.findOne).toHaveBeenCalledWith(
-        { uid },
-        undefined,
-      );
+      expect(showStandardRepository.findByUid).toHaveBeenCalledWith(uid);
+      expect(result).toBeNull();
     });
   });
 
@@ -136,7 +134,7 @@ describe('showStandardService', () => {
       const params = {
         skip: 0,
         take: 10,
-        orderBy: { name: 'asc' as const },
+        orderBy: 'asc' as const,
       };
 
       const showStandards = [
@@ -161,19 +159,23 @@ describe('showStandardService', () => {
       ];
 
       jest
-        .spyOn(showStandardRepository, 'findMany')
-        .mockResolvedValue(showStandards);
+        .spyOn(showStandardRepository, 'findPaginated')
+        .mockResolvedValue({ data: showStandards, total: 2 });
 
       const result = await service.getShowStandards(params);
 
-      expect(showStandardRepository.findMany).toHaveBeenCalledWith(params);
-      expect(result).toEqual(showStandards);
+      expect(showStandardRepository.findPaginated).toHaveBeenCalledWith(params);
+      expect(result).toEqual({ data: showStandards, total: 2 });
     });
+  });
 
-    it('should return show standards without orderBy', async () => {
+  describe('listShowStandards', () => {
+    it('should filter show standards and return paginated result', async () => {
       const params = {
         skip: 0,
         take: 10,
+        name: 'Standard',
+        include_deleted: false,
       };
 
       const showStandards = [
@@ -189,13 +191,42 @@ describe('showStandardService', () => {
       ];
 
       jest
-        .spyOn(showStandardRepository, 'findMany')
-        .mockResolvedValue(showStandards);
+        .spyOn(showStandardRepository, 'findPaginated')
+        .mockResolvedValue({ data: showStandards, total: 1 });
 
-      const result = await service.getShowStandards(params);
+      const result = await service.listShowStandards(params);
 
-      expect(showStandardRepository.findMany).toHaveBeenCalledWith(params);
-      expect(result).toEqual(showStandards);
+      // Verify explicit filtering logic
+      expect(showStandardRepository.findPaginated).toHaveBeenCalledWith({
+        skip: params.skip,
+        take: params.take,
+        name: params.name,
+        uid: undefined,
+        includeDeleted: false,
+      });
+      expect(result).toEqual({ data: showStandards, total: 1 });
+    });
+
+    it('should handle include_deleted filter', async () => {
+      const params = {
+        skip: 0,
+        take: 10,
+        include_deleted: true,
+      };
+
+      jest
+        .spyOn(showStandardRepository, 'findPaginated')
+        .mockResolvedValue({ data: [], total: 0 });
+
+      await service.listShowStandards(params);
+
+      expect(showStandardRepository.findPaginated).toHaveBeenCalledWith({
+        skip: params.skip,
+        take: params.take,
+        name: undefined,
+        uid: undefined,
+        includeDeleted: true,
+      });
     });
   });
 
@@ -230,12 +261,29 @@ describe('showStandardService', () => {
       expect(result).toEqual(expectedResult);
     });
 
+    it('should throw P2025 when updating non-existent record', async () => {
+      const uid = 'shs_404';
+      const error = new Prisma.PrismaClientKnownRequestError(
+        'No ShowStandard found',
+        {
+          code: 'P2025',
+          clientVersion: '5.0.0',
+        },
+      );
+      jest
+        .spyOn(showStandardRepository, 'update')
+        .mockRejectedValue(error);
+
+      await expect(
+        service.updateShowStandard(uid, { name: 'New Name' }),
+      ).rejects.toThrow(Prisma.PrismaClientKnownRequestError);
+    });
+
     it('should map P2002 to Conflict', async () => {
       const uid = 'shs_00000001';
       const updateData = {
         name: 'Duplicate Standard',
       };
-
       const error = createMockUniqueConstraintError(['name']);
       jest.spyOn(showStandardRepository, 'update').mockRejectedValue(error);
 
@@ -262,10 +310,28 @@ describe('showStandardService', () => {
         .spyOn(showStandardRepository, 'softDelete')
         .mockResolvedValue(expectedResult);
 
-      const result = await service.deleteShowStandard(uid);
+      const result = await service.deleteShowStandard({ uid });
 
       expect(showStandardRepository.softDelete).toHaveBeenCalledWith({ uid });
       expect(result).toEqual(expectedResult);
+    });
+
+    it('should throw P2025 when deleting non-existent record', async () => {
+      const uid = 'shs_404';
+      const error = new Prisma.PrismaClientKnownRequestError(
+        'No ShowStandard found',
+        {
+          code: 'P2025',
+          clientVersion: '5.0.0',
+        },
+      );
+      jest
+        .spyOn(showStandardRepository, 'softDelete')
+        .mockRejectedValue(error);
+
+      await expect(service.deleteShowStandard({ uid })).rejects.toThrow(
+        Prisma.PrismaClientKnownRequestError,
+      );
     });
   });
 
@@ -277,7 +343,7 @@ describe('showStandardService', () => {
         .spyOn(showStandardRepository, 'count')
         .mockResolvedValue(expectedCount);
 
-      const result = await service.countShowStandards();
+      const result = await service.countShowStandards({});
 
       expect(showStandardRepository.count).toHaveBeenCalledWith({});
       expect(result).toEqual(expectedCount);

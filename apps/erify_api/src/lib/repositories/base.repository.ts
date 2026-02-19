@@ -48,6 +48,88 @@ export type IBaseRepository<T, C, U, W> = {
   count: (where: W) => Promise<number>;
 };
 
+// Generic type for Prisma Delegate
+export type PrismaDelegate<T, C, W> = {
+  create: (args: { data: C; include?: Record<string, any> }) => Promise<T>;
+  findFirst: (args: {
+    where: W;
+    include?: Record<string, any>;
+  }) => Promise<T | null>;
+  findFirstOrThrow?: (args: {
+    where: W;
+    include?: Record<string, any>;
+  }) => Promise<T>;
+  findMany: (args: {
+    where?: W;
+    skip?: number;
+    take?: number;
+    orderBy?: any;
+    include?: Record<string, any>;
+  }) => Promise<T[]>;
+  update: (args: any) => Promise<T>;
+  delete: (args: any) => Promise<T>;
+  count: (args: { where: W }) => Promise<number>;
+};
+
+// Generic wrapper implementation
+export class PrismaModelWrapper<T, C, U, W> implements IBaseModel<T, C, U, W> {
+  constructor(private readonly delegate: PrismaDelegate<T, C, W>) {}
+
+  async create(args: {
+    data: C;
+    include?: Record<string, any>;
+  }): Promise<T> {
+    return this.delegate.create(args);
+  }
+
+  async findFirst(args: {
+    where: W;
+    include?: Record<string, any>;
+  }): Promise<T | null> {
+    return this.delegate.findFirst(args);
+  }
+
+  async findFirstOrThrow(args: {
+    where: W;
+    include?: Record<string, any>;
+  }): Promise<T> {
+    if (this.delegate.findFirstOrThrow) {
+      return this.delegate.findFirstOrThrow(args);
+    }
+    const result = await this.delegate.findFirst(args);
+    if (!result) {
+      throw new Error('Record not found');
+    }
+    return result;
+  }
+
+  async findMany(args: {
+    where?: W;
+    skip?: number;
+    take?: number;
+    orderBy?: any;
+    include?: Record<string, any>;
+  }): Promise<T[]> {
+    return this.delegate.findMany(args);
+  }
+
+  async update(args: {
+    where: W;
+    data: U;
+    include?: Record<string, any>;
+  }): Promise<T> {
+    return this.delegate.update(args);
+  }
+
+  async delete(args: { where: W }): Promise<T> {
+    return this.delegate.delete(args);
+  }
+
+  async count(args: { where: W }): Promise<number> {
+    return this.delegate.count(args);
+  }
+}
+
 // Base repository implementation with generics
 export abstract class BaseRepository<T extends WithSoftDelete, C, U, W>
 implements IBaseRepository<T, C, U, W> {

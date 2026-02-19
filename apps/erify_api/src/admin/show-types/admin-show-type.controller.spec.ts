@@ -120,6 +120,10 @@ describe('adminShowTypeController', () => {
       } as UpdateShowTypeDto;
       const updatedType = { uid: typeId, ...updateDto };
 
+      mockShowTypeService.getShowTypeById.mockResolvedValue({
+        uid: typeId,
+        name: 'Old Name',
+      });
       mockShowTypeService.updateShowType.mockResolvedValue(updatedType as any);
 
       const result = await controller.updateShowType(typeId, updateDto);
@@ -135,10 +139,16 @@ describe('adminShowTypeController', () => {
     it('should delete a show type', async () => {
       const typeId = 'show_type_123';
 
+      mockShowTypeService.getShowTypeById.mockResolvedValue({
+        uid: typeId,
+        name: 'ToDelete',
+      });
       mockShowTypeService.deleteShowType.mockResolvedValue(undefined);
 
       await controller.deleteShowType(typeId);
-      expect(mockShowTypeService.deleteShowType).toHaveBeenCalledWith(typeId);
+      expect(mockShowTypeService.deleteShowType).toHaveBeenCalledWith({
+        uid: typeId,
+      });
     });
   });
 });

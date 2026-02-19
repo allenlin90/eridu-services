@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
@@ -17,6 +18,38 @@ import { studioSchema } from '@/models/studio/schemas/studio.schema';
 import { StudioService } from '@/models/studio/studio.service';
 import { studioRoomSchema } from '@/models/studio-room/schemas/studio-room.schema';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
+
+// Re-exported Prisma types for service consumption (schemas CAN import Prisma)
+export type ShowInclude = Prisma.ShowInclude;
+export type ShowWithPayload<T extends ShowInclude> = Prisma.ShowGetPayload<{ include: T }>;
+
+// Domain-level payload for creating a show
+export type CreateShowPayload = {
+  name: string;
+  startTime: Date;
+  endTime: Date;
+  metadata?: Record<string, any>;
+  clientId: string;
+  studioRoomId?: string | null;
+  studioId?: string | null;
+  showTypeId: string;
+  showStatusId: string;
+  showStandardId: string;
+};
+
+// Domain-level payload for updating a show
+export type UpdateShowPayload = {
+  name?: string;
+  startTime?: Date;
+  endTime?: Date;
+  metadata?: Record<string, any>;
+  clientId?: string;
+  studioRoomId?: string | null;
+  studioId?: string | null;
+  showTypeId?: string;
+  showStatusId?: string;
+  showStandardId?: string;
+};
 
 // Internal schema for database entity
 export const showSchema = z.object({

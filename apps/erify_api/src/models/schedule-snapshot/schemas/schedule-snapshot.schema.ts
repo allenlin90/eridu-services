@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
@@ -185,3 +186,13 @@ export class ScheduleSnapshotDto extends createZodDto(scheduleSnapshotDto) {}
 export class ListSnapshotsQueryDto extends createZodDto(
   listSnapshotsQuerySchema,
 ) {}
+
+// ─── Payload types for the service layer ────────────────────────────────────
+// Schema files are the only place allowed to import Prisma.* types.
+// Services import these named types instead of Prisma types directly.
+
+export type ScheduleSnapshotInclude = Prisma.ScheduleSnapshotInclude;
+export type ScheduleSnapshotWhereInput = Prisma.ScheduleSnapshotWhereInput;
+export type ScheduleSnapshotCreatePayload = Omit<Prisma.ScheduleSnapshotCreateInput, 'uid'>;
+export type ScheduleSnapshotWithRelations<T extends ScheduleSnapshotInclude> =
+  Prisma.ScheduleSnapshotGetPayload<{ include: T }>;

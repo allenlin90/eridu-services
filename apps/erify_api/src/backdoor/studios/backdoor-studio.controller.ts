@@ -10,6 +10,7 @@ import {
 
 import { BaseBackdoorController } from '@/backdoor/base-backdoor.controller';
 import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
+import { HttpError } from '@/lib/errors/http-error.util';
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
@@ -40,17 +41,24 @@ export class BackdoorStudioController extends BaseBackdoorController {
 
   @Post()
   @ZodResponse(studioDto, HttpStatus.CREATED, 'Studio created successfully')
-  createStudio(@Body() body: CreateStudioDto) {
-    return this.studioService.createStudio(body);
+  async createStudio(@Body() body: CreateStudioDto) {
+    const { name, address, metadata } = body;
+    return this.studioService.createStudio({ name, address, metadata });
   }
 
   @Patch(':id')
   @ZodResponse(studioDto, HttpStatus.OK, 'Studio updated successfully')
-  updateStudio(
+  async updateStudio(
     @Param('id', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio'))
     id: string,
     @Body() body: UpdateStudioDto,
   ) {
-    return this.studioService.updateStudio(id, body);
+    const studio = await this.studioService.getStudioById(id);
+    if (!studio) {
+      throw HttpError.notFound('Studio', id);
+    }
+
+    const { name, address, metadata } = body;
+    return this.studioService.updateStudio(id, { name, address, metadata });
   }
 }

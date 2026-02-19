@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, ShowType } from '@prisma/client';
 
+import type {
+  CreateShowTypePayload,
+  UpdateShowTypePayload,
+} from './schemas/show-type.schema';
 import { ShowTypeRepository } from './show-type.repository';
 
-import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
@@ -20,85 +22,62 @@ export class ShowTypeService extends BaseModelService {
   }
 
   async createShowType(
-    data: Omit<Prisma.ShowTypeCreateInput, 'uid'>,
-  ): Promise<ShowType> {
+    payload: CreateShowTypePayload,
+  ): ReturnType<ShowTypeRepository['create']> {
     const uid = this.generateUid();
-    return this.showTypeRepository.create({ ...data, uid });
+    return this.showTypeRepository.create({ ...payload, uid });
   }
 
-  async getShowTypeById(uid: string): Promise<ShowType> {
-    return this.findShowTypeOrThrow(uid);
+  async getShowTypeById(
+    ...params: Parameters<ShowTypeRepository['findByUid']>
+  ): ReturnType<ShowTypeRepository['findByUid']> {
+    return this.showTypeRepository.findByUid(...params);
   }
 
-  async getShowTypes(params: {
-    skip?: number;
-    take?: number;
-    orderBy?: Record<string, 'asc' | 'desc'>;
-  }): Promise<ShowType[]> {
-    return this.showTypeRepository.findMany(params);
+  async getShowTypes(
+    ...params: Parameters<ShowTypeRepository['findPaginated']>
+  ): ReturnType<ShowTypeRepository['findPaginated']> {
+    return this.showTypeRepository.findPaginated(...params);
   }
 
-  async countShowTypes(): Promise<number> {
-    return this.showTypeRepository.count({});
+  async countShowTypes(
+    ...params: Parameters<ShowTypeRepository['count']>
+  ): ReturnType<ShowTypeRepository['count']> {
+    return this.showTypeRepository.count(...params);
   }
 
-  async listShowTypes(query: {
+  async listShowTypes(params: {
     skip?: number;
     take?: number;
     name?: string;
     uid?: string;
     include_deleted?: boolean;
-  }): Promise<{ data: ShowType[]; total: number }> {
-    const where: Prisma.ShowTypeWhereInput = {};
+  }): ReturnType<ShowTypeRepository['findPaginated']> {
+    const { skip, take, name, uid, include_deleted } = params;
 
-    if (!query.include_deleted) {
-      where.deletedAt = null;
-    }
-
-    if (query.name) {
-      where.name = {
-        contains: query.name,
-        mode: 'insensitive',
-      };
-    }
-
-    if (query.uid) {
-      where.uid = {
-        contains: query.uid,
-        mode: 'insensitive',
-      };
-    }
-
-    const [data, total] = await Promise.all([
-      this.showTypeRepository.findMany({
-        skip: query.skip,
-        take: query.take,
-        where,
-      }),
-      this.showTypeRepository.count(where),
-    ]);
-
-    return { data, total };
+    return this.showTypeRepository.findPaginated({
+      skip,
+      take,
+      name,
+      uid,
+      includeDeleted: include_deleted,
+    });
   }
 
   async updateShowType(
     uid: string,
-    data: Prisma.ShowTypeUpdateInput,
-  ): Promise<ShowType> {
-    await this.findShowTypeOrThrow(uid);
-    return this.showTypeRepository.update({ uid }, data);
+    payload: UpdateShowTypePayload,
+  ): ReturnType<ShowTypeRepository['update']> {
+    return this.showTypeRepository.update({ uid }, payload);
   }
 
-  async deleteShowType(uid: string): Promise<ShowType> {
-    await this.findShowTypeOrThrow(uid);
-    return this.showTypeRepository.softDelete({ uid });
-  }
-
-  private async findShowTypeOrThrow(uid: string): Promise<ShowType> {
-    const showType = await this.showTypeRepository.findByUid(uid);
-    if (!showType) {
-      throw HttpError.notFound('Show Type', uid);
+  async deleteShowType(
+    params: Parameters<ShowTypeRepository['softDelete']>[0],
+  ): ReturnType<ShowTypeRepository['softDelete']> {
+    const { uid } = params;
+    if (typeof uid !== 'string') {
+      throw new TypeError('UID must be a string for deletion');
     }
-    return showType;
+    return this.showTypeRepository.softDelete({ uid });
   }
 }

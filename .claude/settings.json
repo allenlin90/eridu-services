@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pnpm test:*)"
+      "Bash(pnpm test:*)",
+      "Bash(npx jest:*)",
+      "Bash(pnpm exec jest:*)",
+      "Bash(pnpm --filter erify_api exec jest:*)",
+      "Bash(pnpm --filter erify_api test:*)",
+      "Bash(git add:*)"
     ]
   }
 }

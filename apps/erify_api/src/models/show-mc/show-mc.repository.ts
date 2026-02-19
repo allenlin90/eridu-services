@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, ShowMC } from '@prisma/client';
 
-import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
+import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
 type ShowMCWithIncludes<T extends Prisma.ShowMCInclude> =
@@ -10,65 +12,6 @@ type ShowMCWithIncludes<T extends Prisma.ShowMCInclude> =
   }>;
 
 // Custom model wrapper that implements IBaseModel with ShowMCWhereInput
-class ShowMCModelWrapper
-implements
-    IBaseModel<
-      ShowMC,
-      Prisma.ShowMCCreateInput,
-      Prisma.ShowMCUpdateInput,
-      Prisma.ShowMCWhereInput
-    > {
-  constructor(private readonly prismaModel: Prisma.ShowMCDelegate) {}
-
-  async create(args: {
-    data: Prisma.ShowMCCreateInput;
-    include?: Record<string, any>;
-  }): Promise<ShowMC> {
-    return this.prismaModel.create(args);
-  }
-
-  async findFirst(args: {
-    where: Prisma.ShowMCWhereInput;
-    include?: Record<string, any>;
-  }): Promise<ShowMC | null> {
-    return this.prismaModel.findFirst(args);
-  }
-
-  async findFirstOrThrow(args: {
-    where: Prisma.ShowMCWhereInput;
-    include?: Record<string, any>;
-  }): Promise<ShowMC> {
-    return this.prismaModel.findFirstOrThrow(args);
-  }
-
-  async findMany(args: {
-    where?: Prisma.ShowMCWhereInput;
-    skip?: number;
-    take?: number;
-    orderBy?: any;
-    include?: Record<string, any>;
-  }): Promise<ShowMC[]> {
-    return this.prismaModel.findMany(args);
-  }
-
-  async update(args: {
-    where: Prisma.ShowMCWhereUniqueInput;
-    data: Prisma.ShowMCUpdateInput;
-    include?: Record<string, any>;
-  }): Promise<ShowMC> {
-    return this.prismaModel.update(args);
-  }
-
-  async delete(args: {
-    where: Prisma.ShowMCWhereUniqueInput;
-  }): Promise<ShowMC> {
-    return this.prismaModel.delete(args);
-  }
-
-  async count(args: { where: Prisma.ShowMCWhereInput }): Promise<number> {
-    return this.prismaModel.count({ where: args.where });
-  }
-}
 
 @Injectable()
 export class ShowMcRepository extends BaseRepository<
@@ -77,95 +20,158 @@ export class ShowMcRepository extends BaseRepository<
   Prisma.ShowMCUpdateInput,
   Prisma.ShowMCWhereInput
 > {
-  constructor(private readonly prisma: PrismaService) {
-    super(new ShowMCModelWrapper(prisma.showMC));
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {
+    super(new PrismaModelWrapper(prisma.showMC));
+  }
+
+  private get delegate() {
+    return this.txHost.tx.showMC;
   }
 
   async findByUid<T extends Prisma.ShowMCInclude = Record<string, never>>(
     uid: string,
     include?: T,
   ): Promise<ShowMC | ShowMCWithIncludes<T> | null> {
-    return this.model.findFirst({
+    return this.delegate.findFirst({
       where: { uid, deletedAt: null },
       ...(include && { include }),
     });
   }
 
-  async findByShowAndMc(showId: bigint, mcId: bigint): Promise<ShowMC | null> {
-    return this.model.findFirst({
-      where: { showId, mcId, deletedAt: null },
-    });
-  }
-
-  async findByShow(
-    showId: bigint,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowMCOrderByWithRelationInput;
-      include?: Prisma.ShowMCInclude;
-    },
-  ): Promise<ShowMC[]> {
-    const { skip, take, orderBy, include } = params || {};
-    return this.model.findMany({
-      where: { showId, deletedAt: null },
-      skip,
-      take,
-      orderBy,
-      ...(include && { include }),
-    });
-  }
-
-  async findByMc(
-    mcId: bigint,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowMCOrderByWithRelationInput;
-      include?: Prisma.ShowMCInclude;
-    },
-  ): Promise<ShowMC[]> {
-    const { skip, take, orderBy, include } = params || {};
-    return this.model.findMany({
-      where: { mcId, deletedAt: null },
-      skip,
-      take,
-      orderBy,
-      ...(include && { include }),
-    });
-  }
-
-  async findActiveShowMcs(params: {
+  async findPaginated(params: {
     skip?: number;
     take?: number;
+    showId?: bigint;
+    mcId?: bigint;
+    includeDeleted?: boolean;
     orderBy?: Prisma.ShowMCOrderByWithRelationInput;
-    include?: Prisma.ShowMCInclude;
-  }): Promise<ShowMC[]> {
-    const { skip, take, orderBy, include } = params;
-    return this.model.findMany({
-      where: { deletedAt: null },
-      skip,
-      take,
-      orderBy,
-      ...(include && { include }),
-    });
+  }): Promise<{ data: ShowMC[]; total: number }> {
+    const { skip, take, showId, mcId, includeDeleted, orderBy } = params;
+
+    const where: Prisma.ShowMCWhereInput = {};
+
+    if (!includeDeleted) {
+      where.deletedAt = null;
+    }
+
+    if (showId) {
+      where.showId = showId;
+    }
+
+    if (mcId) {
+      where.mcId = mcId;
+    }
+
+    const delegate = this.delegate;
+
+    const [data, total] = await Promise.all([
+      delegate.findMany({
+        skip,
+        take,
+        where,
+        orderBy,
+        include: {
+          show: true,
+          mc: true,
+        },
+      }),
+      delegate.count({ where }),
+    ]);
+
+    return { data, total };
   }
 
-  async update(
-    where: Prisma.ShowMCWhereUniqueInput,
-    data: Prisma.ShowMCUpdateInput,
-    include?: Prisma.ShowMCInclude,
-  ): Promise<ShowMC> {
-    return this.prisma.showMC.update({
-      where,
-      data,
-      ...(include && { include }),
-    });
+  async create(data: Prisma.ShowMCCreateInput, include?: Record<string, any>): Promise<ShowMC> {
+    return this.delegate.create({ data, ...(include && { include }) });
+  }
+
+  async update(where: Prisma.ShowMCWhereUniqueInput, data: Prisma.ShowMCUpdateInput, include?: Record<string, any>): Promise<ShowMC> {
+    return this.delegate.update({ where, data, ...(include && { include }) });
+  }
+
+  async updateMany(where: Prisma.ShowMCWhereInput, data: Prisma.ShowMCUpdateManyMutationInput): Promise<Prisma.BatchPayload> {
+    return this.delegate.updateMany({ where, data });
   }
 
   async softDelete(where: Prisma.ShowMCWhereUniqueInput): Promise<ShowMC> {
-    return this.prisma.showMC.update({
+    return this.delegate.update({
       where,
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  async restore(where: Prisma.ShowMCWhereUniqueInput): Promise<ShowMC> {
+    return this.delegate.update({
+      where,
+      data: { deletedAt: null },
+    });
+  }
+
+  async findMany(params: {
+    where?: Prisma.ShowMCWhereInput;
+    include?: Prisma.ShowMCInclude;
+  }): Promise<ShowMC[]> {
+    return this.delegate.findMany(params);
+  }
+
+  /**
+   * Creates a ShowMC assignment by internal IDs (domain-level).
+   * Builds Prisma relation syntax internally.
+   */
+  async createAssignment(params: {
+    uid: string;
+    showId: bigint;
+    mcId: bigint;
+    note?: string | null;
+    metadata?: object;
+  }): Promise<ShowMC> {
+    return this.delegate.create({
+      data: {
+        uid: params.uid,
+        show: { connect: { id: params.showId } },
+        mc: { connect: { id: params.mcId } },
+        note: params.note ?? null,
+        metadata: params.metadata ?? {},
+      },
+    });
+  }
+
+  /**
+   * Restores a soft-deleted ShowMC assignment and updates its fields, identified by internal ID.
+   */
+  async restoreAndUpdateAssignment(id: bigint, params: {
+    note?: string | null;
+    metadata?: object;
+  }): Promise<ShowMC> {
+    return this.delegate.update({
+      where: { id },
+      data: {
+        note: params.note ?? null,
+        metadata: params.metadata ?? {},
+        deletedAt: null,
+      },
+    });
+  }
+
+  /**
+   * Soft-deletes all ShowMC records for a given show (domain-level).
+   */
+  async softDeleteAllByShowId(showId: bigint): Promise<void> {
+    await this.delegate.updateMany({
+      where: { showId, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  /**
+   * Soft-deletes ShowMC records by internal MC IDs for a given show (domain-level).
+   */
+  async softDeleteByMcIds(showId: bigint, mcIds: bigint[]): Promise<void> {
+    await this.delegate.updateMany({
+      where: { showId, mcId: { in: mcIds }, deletedAt: null },
       data: { deletedAt: new Date() },
     });
   }

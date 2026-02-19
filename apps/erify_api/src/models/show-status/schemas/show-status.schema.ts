@@ -66,3 +66,19 @@ export class UpdateShowStatusCoreDto extends createZodDto(
   updateShowStatusCoreSchema,
 ) {}
 export class ShowStatusDto extends createZodDto(showStatusDto) {}
+
+/**
+ * Payload for creating a show status (service layer).
+ */
+export type CreateShowStatusPayload = {
+  name: string;
+  metadata?: Record<string, any>;
+};
+
+/**
+ * Payload for updating a show status (service layer).
+ */
+export type UpdateShowStatusPayload = {
+  name?: string;
+  metadata?: Record<string, any>;
+};

@@ -14,11 +14,11 @@ describe('adminStudioMembershipController', () => {
   let controller: AdminStudioMembershipController;
 
   const mockStudioMembershipService = {
-    createStudioMembershipFromDto: jest.fn(),
+    createStudioMembership: jest.fn(),
     listStudioMemberships: jest.fn(),
     countStudioMemberships: jest.fn(),
     getStudioMembershipById: jest.fn(),
-    updateStudioMembershipFromDto: jest.fn(),
+    updateStudioMembership: jest.fn(),
     deleteStudioMembership: jest.fn(),
   };
   beforeEach(async () => {
@@ -48,16 +48,24 @@ describe('adminStudioMembershipController', () => {
         studioId: 'studio_123',
         metadata: {},
       } as CreateStudioMembershipDto;
-      const createdMembership = { uid: 'membership_123', ...createDto };
+      const createdMembership = { uid: 'smb_123', ...createDto };
 
-      mockStudioMembershipService.createStudioMembershipFromDto.mockResolvedValue(
+      mockStudioMembershipService.createStudioMembership.mockResolvedValue(
         createdMembership as any,
       );
 
       const result = await controller.createStudioMembership(createDto);
       expect(
-        mockStudioMembershipService.createStudioMembershipFromDto,
-      ).toHaveBeenCalledWith(createDto, { user: true, studio: true });
+        mockStudioMembershipService.createStudioMembership,
+      ).toHaveBeenCalledWith(
+        {
+          userId: createDto.userId,
+          studioId: createDto.studioId,
+          role: createDto.role,
+          metadata: createDto.metadata,
+        },
+        { user: true, studio: true },
+      );
       expect(result).toEqual(createdMembership);
     });
   });
@@ -70,7 +78,7 @@ describe('adminStudioMembershipController', () => {
         skip: 0,
         take: 10,
         uid: undefined,
-        studioUid: undefined,
+        studioId: undefined,
         name: undefined,
         include_deleted: false,
         sort: 'desc',
@@ -98,12 +106,7 @@ describe('adminStudioMembershipController', () => {
       expect(
         mockStudioMembershipService.listStudioMemberships,
       ).toHaveBeenCalledWith(
-        {
-          skip: query.skip,
-          take: query.take,
-          uid: query.uid,
-          studioUid: query.studioUid,
-        },
+        query,
         { user: true, studio: true },
       );
       expect(result).toEqual({
@@ -115,7 +118,7 @@ describe('adminStudioMembershipController', () => {
 
   describe('getStudioMembership', () => {
     it('should return a studio membership by id', async () => {
-      const membershipId = 'membership_123';
+      const membershipId = 'smb_123';
       const membership = {
         uid: membershipId,
         userId: 'user_123',
@@ -129,6 +132,7 @@ describe('adminStudioMembershipController', () => {
       );
 
       const result = await controller.getStudioMembership(membershipId);
+
       expect(
         mockStudioMembershipService.getStudioMembershipById,
       ).toHaveBeenCalledWith(membershipId, { user: true, studio: true });
@@ -138,13 +142,17 @@ describe('adminStudioMembershipController', () => {
 
   describe('updateStudioMembership', () => {
     it('should update a studio membership', async () => {
-      const membershipId = 'membership_123';
+      const membershipId = 'smb_123';
       const updateDto: UpdateStudioMembershipDto = {
         metadata: {},
       } as UpdateStudioMembershipDto;
       const updatedMembership = { uid: membershipId, ...updateDto };
 
-      mockStudioMembershipService.updateStudioMembershipFromDto.mockResolvedValue(
+      mockStudioMembershipService.updateStudioMembership.mockResolvedValue(
+        updatedMembership as any,
+      );
+
+      mockStudioMembershipService.getStudioMembershipById.mockResolvedValue(
         updatedMembership as any,
       );
 
@@ -153,24 +161,43 @@ describe('adminStudioMembershipController', () => {
         updateDto,
       );
       expect(
-        mockStudioMembershipService.updateStudioMembershipFromDto,
-      ).toHaveBeenCalledWith(membershipId, updateDto, {
-        user: true,
-        studio: true,
-      });
+        mockStudioMembershipService.getStudioMembershipById,
+      ).toHaveBeenCalledWith(membershipId);
+      expect(
+        mockStudioMembershipService.updateStudioMembership,
+      ).toHaveBeenCalledWith(
+        membershipId,
+        {
+          userId: undefined,
+          studioId: undefined,
+          role: undefined,
+          metadata: updateDto.metadata,
+        },
+        {
+          user: true,
+          studio: true,
+        },
+      );
       expect(result).toEqual(updatedMembership);
     });
   });
 
   describe('deleteStudioMembership', () => {
     it('should delete a studio membership', async () => {
-      const membershipId = 'membership_123';
+      const membershipId = 'smb_123';
 
       mockStudioMembershipService.deleteStudioMembership.mockResolvedValue(
         undefined,
       );
 
+      mockStudioMembershipService.getStudioMembershipById.mockResolvedValue({
+        uid: membershipId,
+      });
+
       await controller.deleteStudioMembership(membershipId);
+      expect(
+        mockStudioMembershipService.getStudioMembershipById,
+      ).toHaveBeenCalledWith(membershipId);
       expect(
         mockStudioMembershipService.deleteStudioMembership,
       ).toHaveBeenCalledWith(membershipId);

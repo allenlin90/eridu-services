@@ -18,7 +18,7 @@ Study these real implementations:
 The pattern relies on synchronized parameter names and behaviors across the stack:
 1.  **Frontend**: Uses `useTableUrlState` to sync URL params (e.g., `?name=...`) with the table's `columnFilters`.
 2.  **API Boundary**: A specialized `List<Resource>QueryDto` extends the base pagination schema.
-3.  **Service**: Dynamically builds a Prisma `where` clause to handle partial matches and other filters.
+3.  **Repository**: Builds a Prisma `where` clause to handle partial matches and other filters. The Service is a thin pass-through.
 
 ---
 
@@ -164,7 +164,8 @@ The `AdminTableToolbar` (generic component) should handle internal debouncing of
 ## Checklist
 
 - [ ] Backend: `QueryDto` extends pagination and includes filters.
-- [ ] Backend: Service builds `where` clause with `contains` and `insensitive`.
+- [ ] Backend: **Repository** builds `where` clause with `contains` and `insensitive` (NOT the service).
+- [ ] Backend: Service delegates directly to `repository.findPaginated()` using `Parameters<>` spread.
 - [ ] Frontend: `useTableUrlState` used for URL synchronization.
 - [ ] Frontend: `searchColumn` passed to `AdminTable`.
 - [ ] Frontend: Verification of debounced input behavior.

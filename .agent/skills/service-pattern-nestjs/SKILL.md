@@ -89,12 +89,9 @@ export class UserService extends BaseModelService {
 
 ## Avoiding ORM Coupling in Services
 
-🔴 **Critical**: Services MUST NEVER import or use `Prisma.*` namespace types (e.g., `Prisma.UserCreateInput`, `Prisma.UserWhereInput`) in method signatures or business logic.
+🔴 **Critical**: Services MUST NEVER import or use Prisma types in method signatures or business logic.
 
-> [!NOTE]
-> Importing **entity model types** (e.g., `import { Platform } from '@prisma/client'`) for return type annotations IS acceptable — these are plain TypeScript types representing the data shape, not ORM-specific query builders.
-
-**Why**: We use the repository pattern to encapsulate all database concerns. Services should be completely decoupled from ORM query construction to allow changing the database layer without touching business logic.
+**Why**: We use the repository pattern to encapsulate all database concerns. Services should be completely decoupled from the ORM to allow changing the database layer without touching business logic.
 
 ### Rule 1: Define Payload Types in Schema Files
 
@@ -146,35 +143,19 @@ For methods that simply pass arguments to the repository, use `Parameters<>` to 
 // ✅ GOOD: Service signature matches repository
 async getTaskTemplates(
   ...args: Parameters<TaskTemplateRepository['findPaginated']>
-): ReturnType<TaskTemplateRepository['findPaginated']> {
+): Promise<{ data: TaskTemplate[]; total: number }> {
   return this.repository.findPaginated(...args);
 }
 
 async findOne(
   ...args: Parameters<TaskTemplateRepository['findOne']>
-): ReturnType<TaskTemplateRepository['findOne']> {
+): Promise<TaskTemplate | null> {
   return this.repository.findOne(...args);
 }
 ```
 
-### Rule 4: Use ReturnType<Repo['method']> for Return Types
-
-🔴 **Critical**: For pass-through methods, use `ReturnType<Repo['method']>` instead of manually typing the return. This keeps the service fully synchronized with the repository.
-
-```typescript
-// ✅ GOOD: Return type derived from repository
-async create(payload: CreatePlatformPayload): ReturnType<PlatformRepository['create']> {
-  return this.repository.create({ ...payload, uid: this.generateUid() });
-}
-
-// ❌ BAD: Manually typed return (drifts if repository changes)
-async create(payload: CreatePlatformPayload): Promise<Platform> {
-  return this.repository.create({ ...payload, uid: this.generateUid() });
-}
-```
-
 **Benefits**:
-- Service has zero `Prisma.*` namespace imports
+- Service has zero Prisma imports
 - Service signature automatically matches repository
 - Changing ORM only requires updating repository
 - Service tests don't need to mock Prisma types
@@ -403,19 +384,30 @@ async findOne(
 See **[Database Patterns](database-patterns/SKILL.md)** for transaction rules.
 
 ```typescript
-// Example: Creating a Show implies creating Assignments
-async createShowWithAssignments(data: CreateShowDto) {
-  return this.prismaService.$transaction(async (tx) => {
-    // 1. Create Parent
-    const show = await this.showService.createShow({ ...data, tx });
-    
-    // 2. Create Children
-    await this.assignmentService.createAssignments(show.id, data.assignments, tx);
-    
+import { Transactional } from '@nestjs-cls/transactional';
+
+@Injectable()
+export class ShowOrchestrationService {
+  constructor(
+    private readonly showService: ShowService,
+    private readonly assignmentService: AssignmentService,
+  ) {}
+
+  // Apply @Transactional() on the orchestration method — never pass `tx` as a parameter.
+  // CLS propagates the transaction automatically to all repository calls.
+  @Transactional()
+  async createShowWithAssignments(data: CreateShowDto) {
+    const show = await this.showService.createShow(data);
+    await this.assignmentService.createAssignments(show.id, data.assignments);
     return show;
-  });
+  }
 }
 ```
+
+> [!WARNING]
+> **Never use the old `$transaction(async (tx) => { ... })` pattern with `tx` parameter passing.**
+> This is the legacy pattern. All new orchestration must use `@Transactional()`.
+> Repositories access the active CLS transaction client via `TransactionHost` injected by the adapter.
 
 ---
 
@@ -426,9 +418,8 @@ async createShowWithAssignments(data: CreateShowDto) {
 - [ ] Inject `UtilityService`
 - [ ] Use `this.generateUid()`
 - [ ] 🔴 **Critical**: Define Payload types in schema files (not in service)
-- [ ] 🔴 **Critical**: NEVER import or use `Prisma.*` namespace types in service method signatures (entity model imports like `Platform` are fine)
-- [ ] 🔴 **Critical**: Use `Parameters<Repository['methodName']>` for pass-through method arguments
-- [ ] 🔴 **Critical**: Use `ReturnType<Repository['methodName']>` for pass-through method return types
+- [ ] 🔴 **Critical**: NEVER import or use `Prisma.*` types in service method signatures
+- [ ] 🔴 **Critical**: Use `Parameters<Repository['methodName']>` for pass-through methods
 - [ ] 🔴 **Critical**: Delegate filter building to repository layer (not service)
 - [ ] 🔴 **Critical**: Return `null` (don't throw) if record missing in Read operations
 - [ ] 🔴 **Critical**: Let Controller handle 404 checks (using `ensureResourceExists`)

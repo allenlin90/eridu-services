@@ -86,6 +86,7 @@ export const listPlatformsQuerySchema = paginationQuerySchema
   .transform((data) => ({
     ...data,
     uid: data.id,
+    includeDeleted: data.include_deleted,
   }));
 
 export class ListPlatformsQueryDto extends createZodDto(listPlatformsQuerySchema) {
@@ -95,6 +96,33 @@ export class ListPlatformsQueryDto extends createZodDto(listPlatformsQuerySchema
   declare skip: number;
   declare sort: 'asc' | 'desc';
   declare name: string | undefined;
-  declare include_deleted: boolean;
+  declare includeDeleted: boolean;
   declare uid: string | undefined;
 }
+
+/**
+ * Payload for creating a platform (service layer).
+ */
+export type CreatePlatformPayload = {
+  name: string;
+  apiConfig: Record<string, any>;
+  metadata?: Record<string, any>;
+};
+
+/**
+ * Payload for updating a platform (service layer).
+ */
+export type UpdatePlatformPayload = {
+  name?: string;
+  apiConfig?: Record<string, any>;
+  metadata?: Record<string, any>;
+};
+
+/**
+ * Type-safe filter options for platforms.
+ */
+export type PlatformFilters = {
+  uid?: string | { contains: string; mode: 'insensitive' };
+  name?: string | { contains: string; mode: 'insensitive' };
+  deletedAt?: Date | null;
+};

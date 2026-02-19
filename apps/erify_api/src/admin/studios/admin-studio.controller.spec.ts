@@ -27,7 +27,6 @@ describe('adminStudioController', () => {
 
   const mockStudioRoomService = {
     getStudioRooms: jest.fn(),
-    countStudioRooms: jest.fn(),
   };
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -90,12 +89,14 @@ describe('adminStudioController', () => {
       mockStudioService.listStudios.mockResolvedValue({ data: studios, total } as any);
 
       const result = await controller.getStudios(query);
+      const { skip, take, name, uid, include_deleted, sort } = query;
       expect(mockStudioService.listStudios).toHaveBeenCalledWith({
-        skip: query.skip,
-        take: query.take,
-        uid: query.uid,
-        name: query.name,
-        include_deleted: query.include_deleted,
+        skip,
+        take,
+        name,
+        uid,
+        include_deleted,
+        sort,
       });
       expect(result).toEqual({
         data: studios,
@@ -181,19 +182,18 @@ describe('adminStudioController', () => {
         hasPreviousPage: false,
       };
 
-      mockStudioRoomService.getStudioRooms.mockResolvedValue(
-        studioRooms as any,
-      );
-      mockStudioRoomService.countStudioRooms.mockResolvedValue(total);
+      mockStudioRoomService.getStudioRooms.mockResolvedValue({
+        data: studioRooms,
+        total,
+      });
 
       const result = await controller.getStudioRooms(studioId, query);
 
-      expect(mockStudioRoomService.getStudioRooms).toHaveBeenCalledWith(
-        { skip: query.skip, take: query.take, studioId },
-        { studio: true },
-      );
-      expect(mockStudioRoomService.countStudioRooms).toHaveBeenCalledWith({
-        studioId,
+      expect(mockStudioRoomService.getStudioRooms).toHaveBeenCalledWith({
+        skip: query.skip,
+        take: query.take,
+        studioUid: studioId,
+        includeStudio: true,
       });
       expect(result).toEqual({
         data: studioRooms,

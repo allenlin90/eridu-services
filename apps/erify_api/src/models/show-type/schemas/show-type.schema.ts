@@ -1,3 +1,8 @@
+// ============================================================================
+// Service Layer Payload Types
+// ============================================================================
+// NOTE: These types CAN use Prisma types to define the payload shape.
+// Services import these payload types, NOT Prisma types directly.
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
@@ -92,3 +97,28 @@ export class ListShowTypesQueryDto extends createZodDto(listShowTypesQuerySchema
   declare include_deleted: boolean;
   declare uid: string | undefined;
 }
+
+/**
+ * Payload for creating a show type (service layer).
+ */
+export type CreateShowTypePayload = {
+  name: string;
+  metadata?: Record<string, any>;
+};
+
+/**
+ * Payload for updating a show type (service layer).
+ */
+export type UpdateShowTypePayload = {
+  name?: string;
+  metadata?: Record<string, any>;
+};
+
+/**
+ * Type-safe filter options for show types.
+ */
+export type ShowTypeFilters = {
+  uid?: string;
+  name?: string;
+  deletedAt?: Date | null;
+};

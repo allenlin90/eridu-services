@@ -96,3 +96,28 @@ export class ListShowStandardsQueryDto extends createZodDto(listShowStandardsQue
   declare include_deleted: boolean;
   declare uid: string | undefined;
 }
+
+/**
+ * Payload for creating a show standard (service layer).
+ */
+export type CreateShowStandardPayload = {
+  name: string;
+  metadata?: Record<string, any>;
+};
+
+/**
+ * Payload for updating a show standard (service layer).
+ */
+export type UpdateShowStandardPayload = {
+  name?: string;
+  metadata?: Record<string, any>;
+};
+
+/**
+ * Type-safe filter options for show standards.
+ */
+export type ShowStandardFilters = {
+  uid?: string;
+  name?: string;
+  deletedAt?: Date | null;
+};

@@ -47,6 +47,12 @@ Repositories act as data access abstraction. They should:
 > - **Reusability**: Inherit common methods (create, findOne, update, etc.)
 > - **Maintainability**: Bug fixes in BaseRepository benefit all repositories
 
+> [!NOTE]
+> **ModelWrapper — Current Implementation (Planned for Simplification)**
+> All existing repositories use a `ModelWrapper` class that bridges `BaseRepository` generics to Prisma delegates.
+> This wrapper adds no business value and will be simplified in a future phase (Phase 4) to inject PrismaService directly.
+> For now, follow this pattern to stay consistent with the existing codebase.
+
 ```typescript
 import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
 
@@ -75,43 +81,6 @@ export class UserRepository extends BaseRepository<
 }
 ```
 
-### Inherited Methods — Do NOT Override
-
-🔴 **Critical**: `BaseRepository` already provides these methods with built-in `deletedAt: null` filtering. Do NOT re-implement them in child repositories unless you need **custom behavior beyond what the base provides** (e.g., version checking, additional joins).
-
-| Method | Provided by `BaseRepository` | Override only if… |
-|--------|------------------------------|-------------------|
-| `create` | ✅ | Never — use as-is |
-| `findOne` | ✅ | Never — use as-is |
-| `findMany` | ✅ | Never — use as-is |
-| `update` | ✅ | You need custom where-clause logic (e.g., `studioUid` scoping, version checks) |
-| `softDelete` | ✅ | You need additional side effects |
-| `delete` | ✅ | Never — use as-is |
-| `restore` | ✅ | Never — use as-is |
-| `count` | ✅ | Never — use as-is |
-
-```typescript
-// ❌ BAD: Redundant override — BaseRepository already does this
-async update(
-  where: Prisma.PlatformWhereUniqueInput,
-  data: Prisma.PlatformUpdateInput,
-): Promise<Platform> {
-  return this.prisma.platform.update({ where, data });
-}
-
-async softDelete(where: Prisma.PlatformWhereUniqueInput): Promise<Platform> {
-  return this.prisma.platform.update({
-    where,
-    data: { deletedAt: new Date() },
-  });
-}
-
-// ✅ GOOD: Only add specialized methods
-async findPaginated(params: { ... }): Promise<{ data: Platform[]; total: number }> {
-  // Custom filtering logic that BaseRepository doesn't provide
-}
-```
-
 ---
 
 ## Specialized Find Methods
@@ -119,17 +88,13 @@ async findPaginated(params: { ... }): Promise<{ data: Platform[]; total: number 
 🟡 **Recommended**: Implement domain-specific queries here (not in Service).
 
 ```typescript
-// Find by UID (Standard)
-async findByUid(uid: string): Promise<User | null> {
+// Find by UID — use findOne({ uid, deletedAt: null }) from BaseRepository
+// instead of adding a redundant findByUid wrapper per repository.
+// Only add findByUid if it has additional logic (e.g., includes, scoping).
+async findByUid(uid: string, include?: Prisma.UserInclude): Promise<User | null> {
   return this.model.findFirst({
     where: { uid, deletedAt: null },
-  });
-}
-
-// Find or Throw (Let Prisma throw P2025 -> converted to 404 by Global Filter)
-async findByUidOrThrow(uid: string): Promise<User> {
-  return this.model.findFirstOrThrow({
-    where: { uid, deletedAt: null },
+    ...(include && { include }),
   });
 }
 
@@ -141,6 +106,12 @@ async findByUidWithProfile(uid: string): Promise<User & { profile: Profile } | n
   });
 }
 ```
+
+> [!WARNING]
+> **Do NOT implement `findByUidOrThrow`** in repositories.
+> The Controller-Checks Pattern requires services to return `null` and controllers to call `ensureResourceExists()`.
+> Throwing in the repository bypasses this pattern and couples the data layer to HTTP semantics.
+> Use `findOne({ uid, deletedAt: null })` and let the controller handle the 404.
 
 ---
 
@@ -246,13 +217,14 @@ async updateWithVersionCheck(
 ## Best Practices Checklist
 
 - [ ] 🔴 **Critical**: Extend `BaseRepository` (never implement repositories from scratch)
-- [ ] Create proper ModelWrapper implementing `IBaseModel`
-- [ ] Implement `findByUid` using `findFirst` (not `findUnique`)
-- [ ] Implement `findByUidOrThrow` for error handling
+- [ ] Create proper ModelWrapper implementing `IBaseModel` (current pattern, Phase 4 will simplify)
+- [ ] Use `findOne({ uid, deletedAt: null })` from BaseRepository instead of redundant `findByUid` wrappers
+- [ ] Only add `findByUid` if it has additional logic (relations, scoping)
+- [ ] 🔴 **Critical**: Never implement `findByUidOrThrow` — let Controller call `ensureResourceExists()`
 - [ ] 🔴 **Critical**: Always filter `deletedAt: null` in custom queries
 - [ ] Use `Promise.all` for pagination (count + data)
-- [ ] Return `null` for not found (unless `OrThrow`)
-- [ ] 🔴 **Critical**: Never throw HTTP Exceptions (leave that to Service/Controller)
+- [ ] Return `null` for not found (never throw from repository for "not found")
+- [ ] 🔴 **Critical**: Never throw HTTP Exceptions (leave that to Controller via `ensureResourceExists`)
 - [ ] Use `Prisma.GetPayload` for typed relations
 - [ ] Implement `updateWithVersionCheck` for versioned entities
 - [ ] Throw `VersionConflictError` (not HTTP exceptions)

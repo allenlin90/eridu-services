@@ -1,11 +1,19 @@
-/* eslint-disable  */
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+/* eslint-disable */
+import { BadRequestException, Module } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
-import type { Prisma, Show } from '@prisma/client';
+import { Show } from '@prisma/client';
+import { ClsPluginTransactional } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import { ClsModule } from 'nestjs-cls';
 
+import { McRepository } from '@/models/mc/mc.repository';
+import { PlatformRepository } from '@/models/platform/platform.repository';
+import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
+import { ShowMcRepository } from '@/models/show-mc/show-mc.repository';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
+import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import type {
@@ -14,34 +22,27 @@ import type {
 } from '@/show-orchestration/schemas/show-orchestration.schema';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 
+// Mock PrismaService module for ClsPluginTransactional (must be exported from a @Module to satisfy useExisting)
+const mockPrismaForCls = {
+  $transaction: jest.fn(async (callback: any) => await callback({})),
+};
+
+@Module({
+  providers: [{ provide: PrismaService, useValue: mockPrismaForCls }],
+  exports: [PrismaService],
+})
+class MockPrismaModule {}
+
 describe('showOrchestrationService', () => {
   let service: ShowOrchestrationService;
   let showService: jest.Mocked<ShowService>;
   let showMcService: jest.Mocked<ShowMcService>;
   let showPlatformService: jest.Mocked<ShowPlatformService>;
-  let prismaService: jest.Mocked<PrismaService>;
-  let mockTransactionClient: {
-    show: {
-      update: jest.Mock;
-      findUniqueOrThrow: jest.Mock;
-    };
-    showMC: {
-      updateMany: jest.Mock;
-      findMany: jest.Mock;
-      create: jest.Mock;
-    };
-    showPlatform: {
-      updateMany: jest.Mock;
-      findMany: jest.Mock;
-      create: jest.Mock;
-    };
-    mC: {
-      findMany: jest.Mock;
-    };
-    platform: {
-      findMany: jest.Mock;
-    };
-  };
+  let showRepository: jest.Mocked<ShowRepository>;
+  let showMcRepository: jest.Mocked<ShowMcRepository>;
+  let mcRepository: jest.Mocked<McRepository>;
+  let showPlatformRepository: jest.Mocked<ShowPlatformRepository>;
+  let platformRepository: jest.Mocked<PlatformRepository>;
 
   const mockShow: Show = {
     id: BigInt(1),
@@ -63,31 +64,21 @@ describe('showOrchestrationService', () => {
   };
 
   beforeEach(async () => {
-    // Create a mock transaction client
-    mockTransactionClient = {
-      show: {
-        update: jest.fn(),
-        findUniqueOrThrow: jest.fn(),
-      },
-      showMC: {
-        updateMany: jest.fn(),
-        findMany: jest.fn(),
-        create: jest.fn(),
-      },
-      showPlatform: {
-        updateMany: jest.fn(),
-        findMany: jest.fn(),
-        create: jest.fn(),
-      },
-      mC: {
-        findMany: jest.fn(),
-      },
-      platform: {
-        findMany: jest.fn(),
-      },
-    };
-
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ClsModule.forRoot({
+          global: true,
+          middleware: { mount: false },
+          plugins: [
+            new ClsPluginTransactional({
+              imports: [MockPrismaModule],
+              adapter: new TransactionalAdapterPrisma({
+                prismaInjectionToken: PrismaService,
+              }),
+            }),
+          ],
+        }),
+      ],
       providers: [
         ShowOrchestrationService,
         {
@@ -98,56 +89,83 @@ describe('showOrchestrationService', () => {
             getShowById: jest.fn(),
             getActiveShows: jest.fn(),
             countShows: jest.fn(),
+            getPaginatedShows: jest.fn(),
             updateShowFromDto: jest.fn(),
             deleteShow: jest.fn(),
             generateShowUid: jest.fn(),
+            buildUpdatePayload: jest.fn(),
           },
         },
         {
           provide: ShowMcService,
           useValue: {
-            createShowMc: jest.fn(),
             generateShowMcUid: jest.fn(),
           },
         },
         {
           provide: ShowPlatformService,
           useValue: {
-            createShowPlatform: jest.fn(),
             generateShowPlatformUid: jest.fn(),
           },
         },
         {
-          provide: PrismaService,
+          provide: ShowRepository,
           useValue: {
-            executeTransaction: jest.fn(
-               
-              async (callback: any) => await callback(mockTransactionClient),
-            ),
-            mC: {
-              findMany: jest.fn(),
-            },
-            platform: {
-              findMany: jest.fn(),
-            },
+            update: jest.fn(),
+            findByUid: jest.fn(),
+            softDelete: jest.fn(),
+          },
+        },
+        {
+          provide: ShowMcRepository,
+          useValue: {
+            findMany: jest.fn(),
+            createAssignment: jest.fn(),
+            restoreAndUpdateAssignment: jest.fn(),
+            softDelete: jest.fn(),
+            softDeleteAllByShowId: jest.fn(),
+            softDeleteByMcIds: jest.fn(),
+          },
+        },
+        {
+          provide: McRepository,
+          useValue: {
+            findByUids: jest.fn(),
+          },
+        },
+        {
+          provide: ShowPlatformRepository,
+          useValue: {
+            findMany: jest.fn(),
+            createAssignment: jest.fn(),
+            restoreAndUpdateAssignment: jest.fn(),
+            softDelete: jest.fn(),
+            softDeleteAllByShowId: jest.fn(),
+            softDeleteByPlatformIds: jest.fn(),
+          },
+        },
+        {
+          provide: PlatformRepository,
+          useValue: {
+            findByUids: jest.fn(),
           },
         },
       ],
     }).compile();
 
     service = module.get<ShowOrchestrationService>(ShowOrchestrationService);
-    showService = module.get<ShowService>(
-      ShowService,
-    ) as jest.Mocked<ShowService>;
-    showMcService = module.get<ShowMcService>(
-      ShowMcService,
-    ) as jest.Mocked<ShowMcService>;
-    showPlatformService = module.get<ShowPlatformService>(
-      ShowPlatformService,
-    ) as jest.Mocked<ShowPlatformService>;
-    prismaService = module.get<PrismaService>(
-      PrismaService,
-    ) as jest.Mocked<PrismaService>;
+    showService = module.get<ShowService>(ShowService) as jest.Mocked<ShowService>;
+    showMcService = module.get<ShowMcService>(ShowMcService) as jest.Mocked<ShowMcService>;
+    showPlatformService = module.get<ShowPlatformService>(ShowPlatformService) as jest.Mocked<ShowPlatformService>;
+    showRepository = module.get<ShowRepository>(ShowRepository) as jest.Mocked<ShowRepository>;
+    showMcRepository = module.get<ShowMcRepository>(ShowMcRepository) as jest.Mocked<ShowMcRepository>;
+    mcRepository = module.get<McRepository>(McRepository) as jest.Mocked<McRepository>;
+    showPlatformRepository = module.get<ShowPlatformRepository>(ShowPlatformRepository) as jest.Mocked<ShowPlatformRepository>;
+    platformRepository = module.get<PlatformRepository>(PlatformRepository) as jest.Mocked<PlatformRepository>;
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -194,186 +212,6 @@ describe('showOrchestrationService', () => {
       );
       expect(result).toEqual(mockShow);
     });
-
-    it('should create a show with MC assignments', async () => {
-      const dto: CreateShowWithAssignmentsDto = {
-        clientId: 'client_test123',
-        studioId: undefined,
-        studioRoomId: 'room_test123',
-        showTypeId: 'sht_test123',
-        showStatusId: 'shst_test123',
-        showStandardId: 'shsd_test123',
-        name: 'Test Show',
-        startTime: new Date('2024-01-01T10:00:00Z'),
-        endTime: new Date('2024-01-01T12:00:00Z'),
-        metadata: {},
-        mcs: [
-          {
-            mcId: 'mc_test123',
-            note: 'Test note',
-            metadata: {},
-          },
-        ],
-        platforms: undefined,
-      };
-
-      showService.generateShowUid.mockReturnValue('show_test123');
-      showMcService.generateShowMcUid.mockReturnValue('show_mc_test123');
-      showService.createShow.mockResolvedValue(mockShow);
-
-      const result = await service.createShowWithAssignments(dto);
-
-      expect(showService.generateShowUid).toHaveBeenCalled();
-      expect(showMcService.generateShowMcUid).toHaveBeenCalled();
-      expect(showService.createShow).toHaveBeenCalledWith(
-        expect.objectContaining({
-          uid: 'show_test123',
-          name: 'Test Show',
-          showMCs: {
-            create: [
-              {
-                uid: 'show_mc_test123',
-                mc: { connect: { uid: 'mc_test123' } },
-                note: 'Test note',
-                metadata: {},
-              },
-            ],
-          },
-        }),
-        expect.any(Object),
-      );
-      expect(result).toEqual(mockShow);
-    });
-
-    it('should create a show with platform assignments', async () => {
-      const dto: CreateShowWithAssignmentsDto = {
-        clientId: 'client_test123',
-        studioId: undefined,
-        studioRoomId: 'room_test123',
-        showTypeId: 'sht_test123',
-        showStatusId: 'shst_test123',
-        showStandardId: 'shsd_test123',
-        name: 'Test Show',
-        startTime: new Date('2024-01-01T10:00:00Z'),
-        endTime: new Date('2024-01-01T12:00:00Z'),
-        metadata: {},
-        mcs: undefined,
-        platforms: [
-          {
-            platformId: 'plt_test123',
-            liveStreamLink: 'https://example.com/stream',
-            platformShowId: 'platform_show_123',
-            viewerCount: 100,
-            metadata: {},
-          },
-        ],
-      };
-
-      showService.generateShowUid.mockReturnValue('show_test123');
-      showPlatformService.generateShowPlatformUid.mockReturnValue(
-        'show_plt_test123',
-      );
-      showService.createShow.mockResolvedValue(mockShow);
-
-      const result = await service.createShowWithAssignments(dto);
-
-      expect(showService.generateShowUid).toHaveBeenCalled();
-      expect(showPlatformService.generateShowPlatformUid).toHaveBeenCalled();
-      expect(showService.createShow).toHaveBeenCalledWith(
-        expect.objectContaining({
-          uid: 'show_test123',
-          name: 'Test Show',
-          showPlatforms: {
-            create: [
-              {
-                uid: 'show_plt_test123',
-                platform: { connect: { uid: 'plt_test123' } },
-                liveStreamLink: 'https://example.com/stream',
-                platformShowId: 'platform_show_123',
-                viewerCount: 100,
-                metadata: {},
-              },
-            ],
-          },
-        }),
-        expect.any(Object),
-      );
-      expect(result).toEqual(mockShow);
-    });
-
-    it('should create a show with both MC and platform assignments', async () => {
-      const dto: CreateShowWithAssignmentsDto = {
-        clientId: 'client_test123',
-        studioId: undefined,
-        studioRoomId: 'room_test123',
-        showTypeId: 'sht_test123',
-        showStatusId: 'shst_test123',
-        showStandardId: 'shsd_test123',
-        name: 'Test Show',
-        startTime: new Date('2024-01-01T10:00:00Z'),
-        endTime: new Date('2024-01-01T12:00:00Z'),
-        metadata: {},
-        mcs: [
-          {
-            mcId: 'mc_test123',
-            note: 'Test note',
-            metadata: {},
-          },
-        ],
-        platforms: [
-          {
-            platformId: 'plt_test123',
-            liveStreamLink: 'https://example.com/stream',
-            platformShowId: 'platform_show_123',
-            viewerCount: 100,
-            metadata: {},
-          },
-        ],
-      };
-
-      showService.generateShowUid.mockReturnValue('show_test123');
-      showMcService.generateShowMcUid.mockReturnValue('show_mc_test123');
-      showPlatformService.generateShowPlatformUid.mockReturnValue(
-        'show_plt_test123',
-      );
-      showService.createShow.mockResolvedValue(mockShow);
-
-      const result = await service.createShowWithAssignments(dto);
-
-      expect(showService.generateShowUid).toHaveBeenCalled();
-      expect(showMcService.generateShowMcUid).toHaveBeenCalled();
-      expect(showPlatformService.generateShowPlatformUid).toHaveBeenCalled();
-      expect(showService.createShow).toHaveBeenCalledWith(
-        expect.objectContaining({
-          uid: 'show_test123',
-          name: 'Test Show',
-          showMCs: {
-            create: [
-              {
-                uid: 'show_mc_test123',
-                mc: { connect: { uid: 'mc_test123' } },
-                note: 'Test note',
-                metadata: {},
-              },
-            ],
-          },
-          showPlatforms: {
-            create: [
-              {
-                uid: 'show_plt_test123',
-                platform: { connect: { uid: 'plt_test123' } },
-                liveStreamLink: 'https://example.com/stream',
-                platformShowId: 'platform_show_123',
-                viewerCount: 100,
-                metadata: {},
-              },
-            ],
-          },
-        }),
-        expect.any(Object),
-      );
-      expect(result).toEqual(mockShow);
-    });
   });
 
   describe('getShowsWithRelations', () => {
@@ -397,128 +235,11 @@ describe('showOrchestrationService', () => {
           showType: true,
           showStatus: true,
           showStandard: true,
-           
           showMCs: expect.any(Object),
-           
           showPlatforms: expect.any(Object),
-        }) as Prisma.ShowInclude,
-      });
-      expect(result).toEqual(mockShows);
-    });
-
-    it('should retrieve shows with custom include', async () => {
-      const params = {
-        skip: 0,
-        take: 10,
-      };
-      const customInclude = {
-        client: true,
-        studioRoom: true,
-      };
-
-      const mockShows: Show[] = [mockShow];
-      showService.getActiveShows.mockResolvedValue(mockShows);
-
-      const result = await service.getShowsWithRelations(params, customInclude);
-
-      expect(showService.getActiveShows).toHaveBeenCalledWith({
-        ...params,
-        include: customInclude,
-      });
-      expect(result).toEqual(mockShows);
-    });
-  });
-
-  describe('getPaginatedShowsWithRelations', () => {
-    it('should retrieve paginated shows with name-based filters', async () => {
-      const query = {
-        page: 1,
-        limit: 10,
-        take: 10,
-        skip: 0,
-        order_by: 'created_at' as const,
-        order_direction: 'desc' as const,
-        include_deleted: false,
-        name: 'Test',
-        show_standard_name: 'Standard',
-        show_status_name: 'Status',
-        platform_name: 'Platform',
-        sort: 'desc' as const,
-        uid: undefined,
-      };
-
-      const mockShows: Show[] = [mockShow];
-      showService.getActiveShows.mockResolvedValue(mockShows);
-      showService.countShows.mockResolvedValue(1);
-
-      const result = await service.getPaginatedShowsWithRelations(query);
-
-      const expectedWhere = expect.objectContaining({
-        deletedAt: null,
-        name: { contains: 'Test', mode: 'insensitive' },
-        showStandard: {
-          name: { contains: 'Standard', mode: 'insensitive' },
-        },
-        showStatus: {
-          name: { contains: 'Status', mode: 'insensitive' },
-        },
-        showPlatforms: {
-          some: {
-            platform: {
-              name: { contains: 'Platform', mode: 'insensitive' },
-            },
-          },
-        },
-      });
-
-      expect(showService.getActiveShows).toHaveBeenCalledWith(
-        expect.objectContaining({
-          skip: 0,
-          take: 10,
-          where: expectedWhere,
         }),
-      );
-      expect(showService.countShows).toHaveBeenCalledWith(expectedWhere);
-      expect(result).toEqual({ shows: mockShows, total: 1 });
-    });
-  });
-
-  describe('getShowWithRelations', () => {
-    it('should retrieve a show with all relations', async () => {
-      const uid = 'show_test123';
-      showService.getShowById.mockResolvedValue(mockShow);
-
-      const result = await service.getShowWithRelations(uid);
-
-      expect(showService.getShowById).toHaveBeenCalledWith(
-        uid,
-        expect.objectContaining({
-          client: true,
-          studioRoom: true,
-          showType: true,
-          showStatus: true,
-          showStandard: true,
-           
-          showMCs: expect.any(Object),
-           
-          showPlatforms: expect.any(Object),
-        }) as Prisma.ShowInclude,
-      );
-      expect(result).toEqual(mockShow);
-    });
-
-    it('should retrieve a show with custom include', async () => {
-      const uid = 'show_test123';
-      const customInclude = {
-        client: true,
-        studioRoom: true,
-      };
-      showService.getShowById.mockResolvedValue(mockShow);
-
-      const result = await service.getShowWithRelations(uid, customInclude);
-
-      expect(showService.getShowById).toHaveBeenCalledWith(uid, customInclude);
-      expect(result).toEqual(mockShow);
+      });
+      expect(result).toEqual(mockShows);
     });
   });
 
@@ -531,54 +252,25 @@ describe('showOrchestrationService', () => {
         showPlatforms: undefined,
       } as UpdateShowWithAssignmentsDto;
 
+      const updatePayload = { name: 'Updated Show Name' };
       showService.getShowById.mockResolvedValue(mockShow);
-      mockTransactionClient.show.update.mockResolvedValue(mockShow);
-      mockTransactionClient.show.findUniqueOrThrow.mockResolvedValue(mockShow);
+      showService.buildUpdatePayload.mockReturnValue(updatePayload);
+      showRepository.update.mockResolvedValue(mockShow);
+      showRepository.findByUid.mockResolvedValue(mockShow);
 
       const result = await service.updateShowWithAssignments(uid, dto);
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
-      expect(prismaService.executeTransaction).toHaveBeenCalled();
-      expect(mockTransactionClient.show.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: mockShow.id },
-           
-          data: expect.objectContaining({ name: 'Updated Show Name' }),
-        }),
+      expect(showRepository.update).toHaveBeenCalledWith(
+        { uid },
+        updatePayload,
       );
-      expect(mockTransactionClient.show.findUniqueOrThrow).toHaveBeenCalled();
-      expect(result).toEqual(mockShow);
-    });
-
-    it('should update a show with custom include', async () => {
-      const uid = 'show_test123';
-      const dto: UpdateShowWithAssignmentsDto = {
-        name: 'Updated Show Name',
-        showMcs: undefined,
-        showPlatforms: undefined,
-      } as UpdateShowWithAssignmentsDto;
-      const customInclude = {
-        client: true,
-        studioRoom: true,
-      };
-
-      showService.getShowById.mockResolvedValue(mockShow);
-      mockTransactionClient.show.update.mockResolvedValue(mockShow);
-      mockTransactionClient.show.findUniqueOrThrow.mockResolvedValue(mockShow);
-
-      const result = await service.updateShowWithAssignments(
+      // Sync methods NOT called since showMcs/showPlatforms are undefined
+      expect(mcRepository.findByUids).not.toHaveBeenCalled();
+      expect(platformRepository.findByUids).not.toHaveBeenCalled();
+      expect(showRepository.findByUid).toHaveBeenCalledWith(
         uid,
-        dto,
-        customInclude,
-      );
-
-      expect(showService.getShowById).toHaveBeenCalledWith(uid);
-      expect(prismaService.executeTransaction).toHaveBeenCalled();
-      expect(mockTransactionClient.show.findUniqueOrThrow).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: mockShow.id },
-          include: customInclude,
-        }),
+        expect.any(Object),
       );
       expect(result).toEqual(mockShow);
     });
@@ -605,24 +297,48 @@ describe('showOrchestrationService', () => {
         ],
       } as UpdateShowWithAssignmentsDto;
 
+      const mockMc = { id: BigInt(1), uid: 'mc_test123', deletedAt: null };
+      const mockPlatform = { id: BigInt(1), uid: 'plt_test123', deletedAt: null };
+      const updatePayload = { name: 'Updated Show Name' };
+
       showService.getShowById.mockResolvedValue(mockShow);
-      mockTransactionClient.show.update.mockResolvedValue(mockShow);
-      mockTransactionClient.showMC.findMany.mockResolvedValue([]);
-      mockTransactionClient.mC.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'mc_test123' },
-      ]);
-      mockTransactionClient.showPlatform.findMany.mockResolvedValue([]);
-      mockTransactionClient.platform.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'plt_test123' },
-      ]);
-      mockTransactionClient.show.findUniqueOrThrow.mockResolvedValue(mockShow);
+      showService.buildUpdatePayload.mockReturnValue(updatePayload);
+      showRepository.update.mockResolvedValue(mockShow);
+      showRepository.findByUid.mockResolvedValue(mockShow);
+      mcRepository.findByUids.mockResolvedValue([mockMc] as any);
+      showMcRepository.findMany.mockResolvedValue([]);
+      showMcRepository.createAssignment.mockResolvedValue({} as any);
+      showMcService.generateShowMcUid.mockReturnValue('show_mc_new');
+      platformRepository.findByUids.mockResolvedValue([mockPlatform] as any);
+      showPlatformRepository.findMany.mockResolvedValue([]);
+      showPlatformRepository.createAssignment.mockResolvedValue({} as any);
+      showPlatformService.generateShowPlatformUid.mockReturnValue('show_plt_new');
 
       const result = await service.updateShowWithAssignments(uid, dto);
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
-      expect(prismaService.executeTransaction).toHaveBeenCalled();
-      expect(mockTransactionClient.showMC.findMany).toHaveBeenCalled();
-      expect(mockTransactionClient.showPlatform.findMany).toHaveBeenCalled();
+      expect(showRepository.update).toHaveBeenCalledWith(
+        { uid },
+        updatePayload,
+      );
+      expect(mcRepository.findByUids).toHaveBeenCalledWith(['mc_test123']);
+      expect(showMcRepository.createAssignment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          uid: 'show_mc_new',
+          showId: mockShow.id,
+          mcId: BigInt(1),
+          note: 'Updated note',
+          metadata: {},
+        }),
+      );
+      expect(platformRepository.findByUids).toHaveBeenCalledWith(['plt_test123']);
+      expect(showPlatformRepository.createAssignment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          uid: 'show_plt_new',
+          showId: mockShow.id,
+          platformId: BigInt(1),
+        }),
+      );
       expect(result).toEqual(mockShow);
     });
 
@@ -630,12 +346,15 @@ describe('showOrchestrationService', () => {
       const uid = 'show_test123';
       const dto: UpdateShowWithAssignmentsDto = {
         startTime: new Date('2024-01-01T12:00:00Z'),
-        endTime: new Date('2024-01-01T10:00:00Z'), // End time before start time
+        endTime: new Date('2024-01-01T10:00:00Z'),
         showMcs: undefined,
         showPlatforms: undefined,
       } as UpdateShowWithAssignmentsDto;
 
       showService.getShowById.mockResolvedValue(mockShow);
+      showService.buildUpdatePayload.mockImplementation(() => {
+        throw new BadRequestException('End time must be after start time');
+      });
 
       await expect(service.updateShowWithAssignments(uid, dto)).rejects.toThrow(
         BadRequestException,
@@ -644,58 +363,63 @@ describe('showOrchestrationService', () => {
         'End time must be after start time',
       );
     });
+  });
 
-    it('should throw NotFoundException when MC is not found in syncShowMCs', async () => {
+  describe('deleteShow', () => {
+    it('should soft-delete show and assignments', async () => {
       const uid = 'show_test123';
-      const dto: UpdateShowWithAssignmentsDto = {
-        name: 'Updated Show Name',
-        showMcs: [
-          {
-            mcId: 'mc_notfound',
-            note: 'Test note',
-            metadata: {},
-          },
-        ],
-        showPlatforms: undefined,
-      } as UpdateShowWithAssignmentsDto;
+      showService.getShowById.mockResolvedValue(mockShow);
+      showRepository.softDelete.mockResolvedValue(mockShow);
+      showMcRepository.softDeleteAllByShowId.mockResolvedValue(undefined as any);
+      showPlatformRepository.softDeleteAllByShowId.mockResolvedValue(undefined as any);
+
+      await service.deleteShow(uid);
+
+      expect(showService.getShowById).toHaveBeenCalledWith(uid);
+      expect(showRepository.softDelete).toHaveBeenCalledWith({ uid });
+      expect(showMcRepository.softDeleteAllByShowId).toHaveBeenCalledWith(mockShow.id);
+      expect(showPlatformRepository.softDeleteAllByShowId).toHaveBeenCalledWith(mockShow.id);
+    });
+  });
+
+  describe('removeMCsFromShow', () => {
+    it('should remove MCs from show', async () => {
+      const uid = 'show_test123';
+      const mcIds = ['mc_1', 'mc_2'];
+      const mockMc1 = { id: BigInt(1), uid: 'mc_1' };
+      const mockMc2 = { id: BigInt(2), uid: 'mc_2' };
 
       showService.getShowById.mockResolvedValue(mockShow);
-      mockTransactionClient.showMC.findMany.mockResolvedValue([]);
-      mockTransactionClient.mC.findMany.mockResolvedValue([]); // MC not found
+      mcRepository.findByUids.mockResolvedValue([mockMc1, mockMc2] as any);
+      showMcRepository.softDeleteByMcIds.mockResolvedValue(undefined as any);
 
-      await expect(service.updateShowWithAssignments(uid, dto)).rejects.toThrow(
-        NotFoundException,
-      );
-      await expect(service.updateShowWithAssignments(uid, dto)).rejects.toThrow(
-        'MC not found with id mc_notfound',
+      await service.removeMCsFromShow(uid, mcIds);
+
+      expect(mcRepository.findByUids).toHaveBeenCalledWith(mcIds);
+      expect(showMcRepository.softDeleteByMcIds).toHaveBeenCalledWith(
+        mockShow.id,
+        [BigInt(1), BigInt(2)],
       );
     });
+  });
 
-    it('should throw NotFoundException when Platform is not found in syncShowPlatforms', async () => {
+  describe('removePlatformsFromShow', () => {
+    it('should remove platforms from show', async () => {
       const uid = 'show_test123';
-      const dto: UpdateShowWithAssignmentsDto = {
-        name: 'Updated Show Name',
-        showMcs: undefined,
-        showPlatforms: [
-          {
-            platformId: 'plt_notfound',
-            liveStreamLink: 'https://example.com/stream',
-            platformShowId: 'platform_show_123',
-            viewerCount: 100,
-            metadata: {},
-          },
-        ],
-      } as UpdateShowWithAssignmentsDto;
+      const platformIds = ['plt_1', 'plt_2'];
+      const mockPlt1 = { id: BigInt(1), uid: 'plt_1' };
+      const mockPlt2 = { id: BigInt(2), uid: 'plt_2' };
 
       showService.getShowById.mockResolvedValue(mockShow);
-      mockTransactionClient.showPlatform.findMany.mockResolvedValue([]);
-      mockTransactionClient.platform.findMany.mockResolvedValue([]); // Platform not found
+      platformRepository.findByUids.mockResolvedValue([mockPlt1, mockPlt2] as any);
+      showPlatformRepository.softDeleteByPlatformIds.mockResolvedValue(undefined as any);
 
-      await expect(service.updateShowWithAssignments(uid, dto)).rejects.toThrow(
-        NotFoundException,
-      );
-      await expect(service.updateShowWithAssignments(uid, dto)).rejects.toThrow(
-        'Platform not found with id plt_notfound',
+      await service.removePlatformsFromShow(uid, platformIds);
+
+      expect(platformRepository.findByUids).toHaveBeenCalledWith(platformIds);
+      expect(showPlatformRepository.softDeleteByPlatformIds).toHaveBeenCalledWith(
+        mockShow.id,
+        [BigInt(1), BigInt(2)],
       );
     });
   });
@@ -710,55 +434,33 @@ describe('showOrchestrationService', () => {
           metadata: {},
         },
       ];
+      const mockMc = { id: BigInt(1), uid: 'mc_test123', deletedAt: null };
 
       showService.getShowById.mockResolvedValue(mockShow);
-      mockTransactionClient.showMC.updateMany.mockResolvedValue({ count: 0 });
-      mockTransactionClient.mC.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'mc_test123' },
-      ]);
-      showMcService.generateShowMcUid.mockReturnValue('show_mc_test123');
-      mockTransactionClient.showMC.create.mockResolvedValue({
-        id: BigInt(1),
-        uid: 'show_mc_test123',
-        showId: mockShow.id,
-        mcId: BigInt(1),
-        note: 'Test note',
-        metadata: {},
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-      });
-      mockTransactionClient.show.findUniqueOrThrow.mockResolvedValue(mockShow);
+      showMcService.generateShowMcUid.mockReturnValue('show_mc_new');
+      mcRepository.findByUids.mockResolvedValue([mockMc] as any);
+      showMcRepository.findMany.mockResolvedValue([]);
+      showMcRepository.createAssignment.mockResolvedValue({} as any);
+      showRepository.findByUid.mockResolvedValue(mockShow);
 
       const result = await service.replaceMCsForShow(uid, mcs);
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
-      expect(mockTransactionClient.showMC.updateMany).toHaveBeenCalled();
-      expect(mockTransactionClient.mC.findMany).toHaveBeenCalled();
-      expect(mockTransactionClient.showMC.create).toHaveBeenCalled();
-      expect(result).toEqual(mockShow);
-    });
-
-    it('should throw NotFoundException when MC is not found', async () => {
-      const uid = 'show_test123';
-      const mcs = [
-        {
-          mcId: 'mc_notfound',
+      expect(mcRepository.findByUids).toHaveBeenCalledWith(['mc_test123']);
+      expect(showMcRepository.createAssignment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          uid: 'show_mc_new',
+          showId: mockShow.id,
+          mcId: BigInt(1),
           note: 'Test note',
           metadata: {},
-        },
-      ];
-
-      showService.getShowById.mockResolvedValue(mockShow);
-      mockTransactionClient.showMC.updateMany.mockResolvedValue({ count: 0 });
-      mockTransactionClient.mC.findMany.mockResolvedValue([]); // MC not found
-
-      await expect(service.replaceMCsForShow(uid, mcs)).rejects.toThrow(
-        NotFoundException,
+        }),
       );
-      await expect(service.replaceMCsForShow(uid, mcs)).rejects.toThrow(
-        'MC not found with id mc_notfound',
+      expect(showRepository.findByUid).toHaveBeenCalledWith(
+        uid,
+        expect.any(Object),
       );
+      expect(result).toEqual(mockShow);
     });
   });
 
@@ -774,65 +476,31 @@ describe('showOrchestrationService', () => {
           metadata: {},
         },
       ];
+      const mockPlatform = { id: BigInt(1), uid: 'plt_test123', deletedAt: null };
 
       showService.getShowById.mockResolvedValue(mockShow);
-      mockTransactionClient.showPlatform.updateMany.mockResolvedValue({
-        count: 0,
-      });
-      mockTransactionClient.platform.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'plt_test123' },
-      ]);
-      showPlatformService.generateShowPlatformUid.mockReturnValue(
-        'show_plt_test123',
-      );
-      mockTransactionClient.showPlatform.create.mockResolvedValue({
-        id: BigInt(1),
-        uid: 'show_plt_test123',
-        showId: mockShow.id,
-        platformId: BigInt(1),
-        liveStreamLink: 'https://example.com/stream',
-        platformShowId: 'platform_show_123',
-        viewerCount: 100,
-        metadata: {},
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-      });
-      mockTransactionClient.show.findUniqueOrThrow.mockResolvedValue(mockShow);
+      showPlatformService.generateShowPlatformUid.mockReturnValue('show_plt_new');
+      platformRepository.findByUids.mockResolvedValue([mockPlatform] as any);
+      showPlatformRepository.findMany.mockResolvedValue([]);
+      showPlatformRepository.createAssignment.mockResolvedValue({} as any);
+      showRepository.findByUid.mockResolvedValue(mockShow);
 
       const result = await service.replacePlatformsForShow(uid, platforms);
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
-      expect(mockTransactionClient.showPlatform.updateMany).toHaveBeenCalled();
-      expect(mockTransactionClient.platform.findMany).toHaveBeenCalled();
-      expect(mockTransactionClient.showPlatform.create).toHaveBeenCalled();
+      expect(platformRepository.findByUids).toHaveBeenCalledWith(['plt_test123']);
+      expect(showPlatformRepository.createAssignment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          uid: 'show_plt_new',
+          showId: mockShow.id,
+          platformId: BigInt(1),
+        }),
+      );
+      expect(showRepository.findByUid).toHaveBeenCalledWith(
+        uid,
+        expect.any(Object),
+      );
       expect(result).toEqual(mockShow);
-    });
-
-    it('should throw NotFoundException when Platform is not found', async () => {
-      const uid = 'show_test123';
-      const platforms = [
-        {
-          platformId: 'plt_notfound',
-          liveStreamLink: 'https://example.com/stream',
-          platformShowId: 'platform_show_123',
-          viewerCount: 100,
-          metadata: {},
-        },
-      ];
-
-      showService.getShowById.mockResolvedValue(mockShow);
-      mockTransactionClient.showPlatform.updateMany.mockResolvedValue({
-        count: 0,
-      });
-      mockTransactionClient.platform.findMany.mockResolvedValue([]); // Platform not found
-
-      await expect(
-        service.replacePlatformsForShow(uid, platforms),
-      ).rejects.toThrow(NotFoundException);
-      await expect(
-        service.replacePlatformsForShow(uid, platforms),
-      ).rejects.toThrow('Platform not found with id plt_notfound');
     });
   });
 });

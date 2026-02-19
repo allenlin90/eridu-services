@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, ScheduleSnapshot } from '@prisma/client';
+import { ScheduleSnapshot } from '@prisma/client';
 
+import {
+  ScheduleSnapshotCreatePayload,
+  ScheduleSnapshotInclude,
+  ScheduleSnapshotWhereInput,
+  ScheduleSnapshotWithRelations,
+} from './schemas/schedule-snapshot.schema';
 import { ScheduleSnapshotRepository } from './schedule-snapshot.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
-
-type ScheduleSnapshotWithIncludes<T extends Prisma.ScheduleSnapshotInclude> =
-  Prisma.ScheduleSnapshotGetPayload<{
-    include: T;
-  }>;
 
 @Injectable()
 export class ScheduleSnapshotService extends BaseModelService {
@@ -25,18 +26,16 @@ export class ScheduleSnapshotService extends BaseModelService {
   }
 
   async createScheduleSnapshot(
-    data: Omit<Prisma.ScheduleSnapshotCreateInput, 'uid'>,
+    data: ScheduleSnapshotCreatePayload,
   ): Promise<ScheduleSnapshot> {
     const uid = this.generateUid();
     return this.scheduleSnapshotRepository.create({ ...data, uid });
   }
 
-  getScheduleSnapshotById<
-    T extends Prisma.ScheduleSnapshotInclude = Record<string, never>,
-  >(
+  getScheduleSnapshotById<T extends ScheduleSnapshotInclude = Record<string, never>>(
     uid: string,
     include?: T,
-  ): Promise<ScheduleSnapshot | ScheduleSnapshotWithIncludes<T>> {
+  ): Promise<ScheduleSnapshot | ScheduleSnapshotWithRelations<T>> {
     return this.findScheduleSnapshotOrThrow(uid, include);
   }
 
@@ -47,27 +46,24 @@ export class ScheduleSnapshotService extends BaseModelService {
   async getScheduleSnapshots(params: {
     skip?: number;
     take?: number;
-    where?: Prisma.ScheduleSnapshotWhereInput;
+    where?: ScheduleSnapshotWhereInput;
     orderBy?: Record<string, 'asc' | 'desc'>;
-    include?: Prisma.ScheduleSnapshotInclude;
+    include?: ScheduleSnapshotInclude;
   }): Promise<ScheduleSnapshot[]> {
     return this.scheduleSnapshotRepository.findMany(params);
   }
 
   async getSnapshotsByScheduleId(
     scheduleId: bigint,
-    include?: Prisma.ScheduleSnapshotInclude,
+    include?: ScheduleSnapshotInclude,
   ): Promise<ScheduleSnapshot[]> {
-    return this.scheduleSnapshotRepository.findByScheduleId(
-      scheduleId,
-      include,
-    );
+    return this.scheduleSnapshotRepository.findByScheduleId(scheduleId, include);
   }
 
   async getSnapshotByScheduleIdAndVersion(
     scheduleId: bigint,
     version: number,
-    include?: Prisma.ScheduleSnapshotInclude,
+    include?: ScheduleSnapshotInclude,
   ): Promise<ScheduleSnapshot | null> {
     return this.scheduleSnapshotRepository.findByScheduleIdAndVersion(
       scheduleId,
@@ -76,18 +72,16 @@ export class ScheduleSnapshotService extends BaseModelService {
     );
   }
 
-  async countScheduleSnapshots(
-    where?: Prisma.ScheduleSnapshotWhereInput,
-  ): Promise<number> {
+  async countScheduleSnapshots(where?: ScheduleSnapshotWhereInput): Promise<number> {
     return this.scheduleSnapshotRepository.count(where ?? {});
   }
 
   async listScheduleSnapshots(params: {
     skip?: number;
     take?: number;
-    where?: Prisma.ScheduleSnapshotWhereInput;
+    where?: ScheduleSnapshotWhereInput;
     orderBy?: Record<string, 'asc' | 'desc'>;
-    include?: Prisma.ScheduleSnapshotInclude;
+    include?: ScheduleSnapshotInclude;
   }): Promise<{ data: ScheduleSnapshot[]; total: number }> {
     const [data, total] = await Promise.all([
       this.scheduleSnapshotRepository.findMany(params),
@@ -114,18 +108,15 @@ export class ScheduleSnapshotService extends BaseModelService {
   }
 
   private async findScheduleSnapshotOrThrow<
-    T extends Prisma.ScheduleSnapshotInclude = Record<string, never>,
+    T extends ScheduleSnapshotInclude = Record<string, never>,
   >(
     uid: string,
     include?: T,
-  ): Promise<ScheduleSnapshot | ScheduleSnapshotWithIncludes<T>> {
-    const snapshot = await this.scheduleSnapshotRepository.findByUid(
-      uid,
-      include,
-    );
+  ): Promise<ScheduleSnapshot | ScheduleSnapshotWithRelations<T>> {
+    const snapshot = await this.scheduleSnapshotRepository.findByUid(uid, include);
     if (!snapshot) {
       throw HttpError.notFound('ScheduleSnapshot', uid);
     }
-    return snapshot as ScheduleSnapshot | ScheduleSnapshotWithIncludes<T>;
+    return snapshot as ScheduleSnapshot | ScheduleSnapshotWithRelations<T>;
   }
 }

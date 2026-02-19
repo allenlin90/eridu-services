@@ -8,9 +8,9 @@ description: Provides comprehensive architectural patterns for building scalable
 Provides comprehensive architectural patterns for building scalable systems. This skill focuses on **High-Level Architecture**, **Layer Boundaries**, and **Package Organization**.
 
 For implementation details, refer to the specific layer skills:
-- **[Controllers](backend-controller-pattern/SKILL.md)**: HTTP Boundary & Input Validation
-- **[Services](service-pattern/SKILL.md)**: Business Logic & Orchestration
-- **[Repositories](repository-pattern/SKILL.md)**: Data Access & Persistence
+- **[Controllers](../backend-controller-pattern-nestjs/SKILL.md)**: HTTP Boundary & Input Validation
+- **[Services](../service-pattern-nestjs/SKILL.md)**: Business Logic & Orchestration
+- **[Repositories](../repository-pattern-nestjs/SKILL.md)**: Data Access & Persistence
 
 ## Architectural Layers
 
@@ -107,8 +107,8 @@ Address performance at the correct layer:
 ## Related Skills
 
 For architecture-specific patterns (N+1 queries, Soft Deletes, etc.), refer to:
-- **[Backend Controller Patterns](backend-controller-pattern-nestjs/SKILL.md)**
-- **[Service Patterns](service-pattern-nestjs/SKILL.md)**
-- **[Repository Patterns](repository-pattern-nestjs/SKILL.md)**
-- **[Database Patterns](database-patterns/SKILL.md)**
-- **code-quality/SKILL.md**
+- **[Backend Controller Patterns](../backend-controller-pattern-nestjs/SKILL.md)**
+- **[Service Patterns](../service-pattern-nestjs/SKILL.md)**
+- **[Repository Patterns](../repository-pattern-nestjs/SKILL.md)**
+- **[Database Patterns](../database-patterns/SKILL.md)**
+- **[Code Quality](../code-quality/SKILL.md)**

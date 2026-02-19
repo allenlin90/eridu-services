@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
@@ -332,3 +333,34 @@ export class MonthlyOverviewQueryDto extends createZodDto(
 export class MonthlyOverviewResponseDto extends createZodDto(
   monthlyOverviewResponseSchema,
 ) {}
+
+// ─── Payload types for the service layer ────────────────────────────────────
+// Schema files are the only place allowed to import Prisma.* types.
+// Services import these named types instead of Prisma types directly.
+
+export type ScheduleInclude = Prisma.ScheduleInclude;
+export type ScheduleCreatePayload = Omit<Prisma.ScheduleCreateInput, 'uid'>;
+export type ScheduleUpdatePayload = Prisma.ScheduleUpdateInput;
+export type ScheduleJsonValue = Prisma.InputJsonValue;
+export type ScheduleWithRelations<T extends ScheduleInclude> =
+  Prisma.ScheduleGetPayload<{ include: T }>;
+
+/** Domain-level params accepted by ScheduleRepository.findPaginated */
+export type ScheduleFindPaginatedParams = {
+  skip?: number;
+  take?: number;
+  client_id?: string | string[];
+  status?: string | string[];
+  created_by?: string | string[];
+  published_by?: string | string[];
+  start_date_from?: string;
+  start_date_to?: string;
+  end_date_from?: string;
+  end_date_to?: string;
+  name?: string;
+  client_name?: string;
+  uid?: string;
+  include_deleted?: boolean;
+  order_by?: 'created_at' | 'updated_at' | 'start_date' | 'end_date';
+  order_direction?: 'asc' | 'desc';
+};

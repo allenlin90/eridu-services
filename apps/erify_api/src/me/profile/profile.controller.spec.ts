@@ -30,7 +30,6 @@ jest.mock('@/lib/auth/jwt-auth.guard', () => ({
 describe('profileController', () => {
   let controller: ProfileController;
   let userService: jest.Mocked<UserService>;
-  let getUserByExtIdSpy: jest.Mock;
 
   const mockJwtPayload: JwtPayload = {
     id: 'HHHFNPNWDbKmElNBF2Y1yCfo0kqtbB7B',
@@ -76,9 +75,8 @@ describe('profileController', () => {
   };
 
   beforeEach(async () => {
-    getUserByExtIdSpy = jest.fn();
     userService = {
-      getUserByExtId: getUserByExtIdSpy,
+      getUserWithAllStudioMemberships: jest.fn(),
     } as unknown as jest.Mocked<UserService>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -96,7 +94,7 @@ describe('profileController', () => {
 
   describe('getProfile', () => {
     it('should return user profile with ext_id mapping', async () => {
-      getUserByExtIdSpy.mockResolvedValue(mockDbUser);
+      (userService.getUserWithAllStudioMemberships as jest.Mock).mockResolvedValue(mockDbUser);
 
       const result = await controller.getProfile(mockAuthenticatedUser);
 
@@ -108,20 +106,13 @@ describe('profileController', () => {
       expect(result.image).toBeNull();
       expect(result.is_system_admin).toBe(false);
       expect(result.payload).toEqual(mockJwtPayload);
-      expect(getUserByExtIdSpy).toHaveBeenCalledWith(
+      expect(userService.getUserWithAllStudioMemberships).toHaveBeenCalledWith(
         mockAuthenticatedUser.ext_id,
-        {
-          studioMemberships: {
-            include: {
-              studio: true,
-            },
-          },
-        },
       );
     });
 
     it('should return is_system_admin=true when user is admin', async () => {
-      getUserByExtIdSpy.mockResolvedValue({
+      (userService.getUserWithAllStudioMemberships as jest.Mock).mockResolvedValue({
         ...mockDbUser,
         isSystemAdmin: true,
       });
@@ -132,7 +123,7 @@ describe('profileController', () => {
     });
 
     it('should throw NotFound error when user not found in DB', async () => {
-      getUserByExtIdSpy.mockResolvedValue(null);
+      (userService.getUserWithAllStudioMemberships as jest.Mock).mockResolvedValue(null);
 
       await expect(controller.getProfile(mockAuthenticatedUser)).rejects.toThrow(
         'User not found',
@@ -140,7 +131,7 @@ describe('profileController', () => {
     });
 
     it('should map user.id to ext_id correctly', async () => {
-      getUserByExtIdSpy.mockResolvedValue(mockDbUser);
+      (userService.getUserWithAllStudioMemberships as jest.Mock).mockResolvedValue(mockDbUser);
 
       const result = await controller.getProfile(mockAuthenticatedUser);
 
@@ -149,7 +140,7 @@ describe('profileController', () => {
     });
 
     it('should return null for image when user.image is undefined', async () => {
-      getUserByExtIdSpy.mockResolvedValue(mockDbUser);
+      (userService.getUserWithAllStudioMemberships as jest.Mock).mockResolvedValue(mockDbUser);
 
       const result = await controller.getProfile(mockAuthenticatedUser);
 
@@ -157,7 +148,7 @@ describe('profileController', () => {
     });
 
     it('should return image URL when user has image', async () => {
-      getUserByExtIdSpy.mockResolvedValue(mockDbUser);
+      (userService.getUserWithAllStudioMemberships as jest.Mock).mockResolvedValue(mockDbUser);
 
       const result = await controller.getProfile(mockAuthenticatedUserWithImage);
 
@@ -165,7 +156,7 @@ describe('profileController', () => {
     });
 
     it('should include full JWT payload in response', async () => {
-      getUserByExtIdSpy.mockResolvedValue(mockDbUser);
+      (userService.getUserWithAllStudioMemberships as jest.Mock).mockResolvedValue(mockDbUser);
 
       const result = await controller.getProfile(mockAuthenticatedUser);
 
@@ -179,7 +170,7 @@ describe('profileController', () => {
     });
 
     it('should return all required fields in correct format', async () => {
-      getUserByExtIdSpy.mockResolvedValue(mockDbUser);
+      (userService.getUserWithAllStudioMemberships as jest.Mock).mockResolvedValue(mockDbUser);
 
       const result = await controller.getProfile(mockAuthenticatedUser);
 
@@ -203,7 +194,7 @@ describe('profileController', () => {
     });
 
     it('should handle user with organization and team IDs', async () => {
-      getUserByExtIdSpy.mockResolvedValue(mockDbUser);
+      (userService.getUserWithAllStudioMemberships as jest.Mock).mockResolvedValue(mockDbUser);
 
       const userWithOrg: AuthenticatedUser = {
         ...mockAuthenticatedUser,
@@ -221,7 +212,7 @@ describe('profileController', () => {
     });
 
     it('should handle impersonated user', async () => {
-      getUserByExtIdSpy.mockResolvedValue(mockDbUser);
+      (userService.getUserWithAllStudioMemberships as jest.Mock).mockResolvedValue(mockDbUser);
 
       const impersonatedUser: AuthenticatedUser = {
         ...mockAuthenticatedUser,
@@ -237,7 +228,7 @@ describe('profileController', () => {
     });
 
     it('should return id and ext_id as the same value', async () => {
-      getUserByExtIdSpy.mockResolvedValue(mockDbUser);
+      (userService.getUserWithAllStudioMemberships as jest.Mock).mockResolvedValue(mockDbUser);
 
       const result = await controller.getProfile(mockAuthenticatedUser);
 

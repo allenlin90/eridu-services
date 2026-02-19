@@ -1,4 +1,4 @@
-import type { CreateUserDto, UpdateUserDto } from './schemas/user.schema';
+import type { CreateUserDto, ListUsersQueryDto, UpdateUserDto } from './schemas/user.schema';
 import { UserRepository } from './user.repository';
 import { UserService } from './user.service';
 
@@ -8,7 +8,6 @@ import {
   createModelServiceTestModule,
   setupTestMocks,
 } from '@/testing/model-service-test.helper';
-import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
 import type { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
@@ -55,99 +54,77 @@ describe('userService', () => {
     expect(result).toEqual(created);
   });
 
-  it('createUser maps P2002 to Conflict', async () => {
-    const dto: CreateUserDto = {
-      email: 'a@b.com',
-      name: 'A',
-      metadata: {},
-    } as CreateUserDto;
-    const error = createMockUniqueConstraintError(['email']);
-    (userRepositoryMock.create as jest.Mock).mockRejectedValue(error);
-
-    await expect(service.createUser(dto)).rejects.toThrow(error);
-  });
-
-  it('getUserById throws not found', async () => {
+  it('getUserById returns null if not found', async () => {
     (userRepositoryMock.findByUid as jest.Mock).mockResolvedValue(null);
 
-    await expect(service.getUserById('user_404')).rejects.toMatchObject({
-      status: 404,
-    });
+    const result = await service.getUserById('user_404');
+    expect(result).toBeNull();
   });
 
-  it('updateUser maps P2002 to Conflict', async () => {
-    (userRepositoryMock.findByUid as jest.Mock).mockResolvedValue({
-      uid: 'user_1',
-      email: 'x@y.com',
-    });
-    const error = createMockUniqueConstraintError(['email']);
-    (userRepositoryMock.update as jest.Mock).mockRejectedValue(error);
+  it('updateUser delegates to repository', async () => {
+    const updated = { uid: 'user_1', email: 'a@b.com' };
+    (userRepositoryMock.update as jest.Mock).mockResolvedValue(updated);
 
-    await expect(
-      service.updateUser('user_1', { email: 'a@b.com' } as UpdateUserDto),
-    ).rejects.toThrow(error);
+    const result = await service.updateUser('user_1', { email: 'a@b.com' } as UpdateUserDto);
+    expect(userRepositoryMock.update).toHaveBeenCalledWith(
+      { uid: 'user_1' },
+      { email: 'a@b.com' },
+    );
+    expect(result).toEqual(updated);
   });
 
   describe('listUsers', () => {
     it('should list users with default params', async () => {
       const users = [{ uid: 'user_1' }];
       const total = 1;
-      (userRepositoryMock.findMany as jest.Mock).mockResolvedValue(users);
-      (userRepositoryMock.count as jest.Mock).mockResolvedValue(total);
 
-      const result = await service.listUsers({});
+      userRepositoryMock.findPaginated = jest
+        .fn()
+        .mockResolvedValue({ data: users, total });
 
-      expect(userRepositoryMock.findMany).toHaveBeenCalledWith({
-        skip: undefined,
-        take: undefined,
-        where: {},
-      });
+      const result = await service.listUsers({} as ListUsersQueryDto);
+
+      expect(userRepositoryMock.findPaginated).toHaveBeenCalledWith({});
       expect(result).toEqual({ data: users, total });
     });
 
     it('should filter by isSystemAdmin: true', async () => {
-      (userRepositoryMock.findMany as jest.Mock).mockResolvedValue([]);
-      (userRepositoryMock.count as jest.Mock).mockResolvedValue(0);
+      userRepositoryMock.findPaginated = jest
+        .fn()
+        .mockResolvedValue({ data: [], total: 0 });
 
-      await service.listUsers({ isSystemAdmin: true });
+      await service.listUsers({ isSystemAdmin: true } as ListUsersQueryDto);
 
-      expect(userRepositoryMock.findMany).toHaveBeenCalledWith({
-        skip: undefined,
-        take: undefined,
-        where: { isSystemAdmin: true },
+      expect(userRepositoryMock.findPaginated).toHaveBeenCalledWith({
+        isSystemAdmin: true,
       });
     });
 
     it('should filter by isSystemAdmin: false', async () => {
-      (userRepositoryMock.findMany as jest.Mock).mockResolvedValue([]);
-      (userRepositoryMock.count as jest.Mock).mockResolvedValue(0);
+      userRepositoryMock.findPaginated = jest
+        .fn()
+        .mockResolvedValue({ data: [], total: 0 });
 
-      await service.listUsers({ isSystemAdmin: false });
+      await service.listUsers({ isSystemAdmin: false } as ListUsersQueryDto);
 
-      expect(userRepositoryMock.findMany).toHaveBeenCalledWith({
-        skip: undefined,
-        take: undefined,
-        where: { isSystemAdmin: false },
+      expect(userRepositoryMock.findPaginated).toHaveBeenCalledWith({
+        isSystemAdmin: false,
       });
     });
 
     it('should combine multiple filters', async () => {
-      (userRepositoryMock.findMany as jest.Mock).mockResolvedValue([]);
-      (userRepositoryMock.count as jest.Mock).mockResolvedValue(0);
+      userRepositoryMock.findPaginated = jest
+        .fn()
+        .mockResolvedValue({ data: [], total: 0 });
 
-      await service.listUsers({
+      const query = {
         name: 'test',
         isSystemAdmin: false,
-      });
+      } as ListUsersQueryDto;
 
-      expect(userRepositoryMock.findMany).toHaveBeenCalledWith({
-        skip: undefined,
-        take: undefined,
-        where: {
-          name: { contains: 'test', mode: 'insensitive' },
-          isSystemAdmin: false,
-        },
-      });
+      await service.listUsers(query);
+
+      expect(userRepositoryMock.findPaginated).toHaveBeenCalledWith(query);
     });
   });
 });

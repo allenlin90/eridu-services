@@ -1,17 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, ShowMC } from '@prisma/client';
+import { ShowMC } from '@prisma/client';
 
-import { CreateShowMcDto, UpdateShowMcDto } from './schemas/show-mc.schema';
+import type {
+  CreateShowMcPayload,
+  UpdateShowMcPayload,
+} from './schemas/show-mc.schema';
 import { ShowMcRepository } from './show-mc.repository';
 
-import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
-
-type ShowMCWithIncludes<T extends Prisma.ShowMCInclude> =
-  Prisma.ShowMCGetPayload<{
-    include: T;
-  }>;
 
 @Injectable()
 export class ShowMcService extends BaseModelService {
@@ -33,168 +30,67 @@ export class ShowMcService extends BaseModelService {
     return this.generateUid();
   }
 
-  async createShowMcFromDto<
-    T extends Prisma.ShowMCInclude = Record<string, never>,
-  >(
-    dto: CreateShowMcDto,
-    include?: T,
-  ): Promise<ShowMC | ShowMCWithIncludes<T>> {
-    const data = this.buildCreatePayload(dto);
-    return this.createShowMc(data, include);
-  }
-
-  async createShowMc<T extends Prisma.ShowMCInclude = Record<string, never>>(
-    data: Omit<Prisma.ShowMCCreateInput, 'uid'>,
-    include?: T,
-  ): Promise<ShowMC | ShowMCWithIncludes<T>> {
+  async create(
+    payload: CreateShowMcPayload,
+  ): ReturnType<ShowMcRepository['create']> {
     const uid = this.generateUid();
-    return this.showMcRepository.create({ ...data, uid }, include);
+
+    const data = {
+      note: payload.note ?? null,
+      metadata: payload.metadata ?? {},
+      show: { connect: { uid: payload.showId } },
+      mc: { connect: { uid: payload.mcId } },
+      uid,
+    };
+
+    return this.showMcRepository.create(data);
   }
 
-  async getShowMcById<T extends Prisma.ShowMCInclude = Record<string, never>>(
-    uid: string,
-    include?: T,
-  ): Promise<ShowMC | ShowMCWithIncludes<T>> {
-    return this.findShowMcOrThrow(uid, include);
+  async findOne(
+    ...args: Parameters<ShowMcRepository['findByUid']>
+  ): ReturnType<ShowMcRepository['findByUid']> {
+    return this.showMcRepository.findByUid(...args);
   }
 
-  async getShowMcs<T extends Prisma.ShowMCInclude = Record<string, never>>(
-    params: {
-      skip?: number;
-      take?: number;
-      where?: Prisma.ShowMCWhereInput;
-      orderBy?: Prisma.ShowMCOrderByWithRelationInput;
-    },
-    include?: T,
-  ): Promise<ShowMC[] | ShowMCWithIncludes<T>[]> {
-    return this.showMcRepository.findMany({ ...params, include });
+  async findPaginated(
+    ...args: Parameters<ShowMcRepository['findPaginated']>
+  ): ReturnType<ShowMcRepository['findPaginated']> {
+    return this.showMcRepository.findPaginated(...args);
   }
 
-  async getActiveShowMcs(params: {
-    skip?: number;
-    take?: number;
-    orderBy?: Prisma.ShowMCOrderByWithRelationInput;
-    include?: Prisma.ShowMCInclude;
-  }): Promise<ShowMC[]> {
-    return this.showMcRepository.findActiveShowMcs(params);
-  }
-
-  async getShowMcsByShow(
-    showId: bigint,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowMCOrderByWithRelationInput;
-      include?: Prisma.ShowMCInclude;
-    },
-  ): Promise<ShowMC[]> {
-    return this.showMcRepository.findByShow(showId, params);
-  }
-
-  async getShowMcsByMc(
-    mcId: bigint,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowMCOrderByWithRelationInput;
-      include?: Prisma.ShowMCInclude;
-    },
-  ): Promise<ShowMC[]> {
-    return this.showMcRepository.findByMc(mcId, params);
-  }
-
-  async findShowMcByShowAndMc(
+  async findByShowAndMc(
     showId: bigint,
     mcId: bigint,
   ): Promise<ShowMC | null> {
-    return this.showMcRepository.findByShowAndMc(showId, mcId);
+    const records = await this.showMcRepository.findMany({
+      where: { showId, mcId, deletedAt: null },
+    });
+    return records[0] || null;
   }
 
-  async countShowMcs(where?: Prisma.ShowMCWhereInput): Promise<number> {
-    return this.showMcRepository.count(where ?? {});
-  }
-
-  async listShowMcs<T extends Prisma.ShowMCInclude = Record<string, never>>(
-    params: {
-      skip?: number;
-      take?: number;
-      where?: Prisma.ShowMCWhereInput;
-      orderBy?: Prisma.ShowMCOrderByWithRelationInput;
-    },
-    include?: T,
-  ): Promise<{ data: ShowMC[] | ShowMCWithIncludes<T>[]; total: number }> {
-    const [data, total] = await Promise.all([
-      this.showMcRepository.findMany({ ...params, include }),
-      this.showMcRepository.count(params.where ?? {}),
-    ]);
-
-    return { data, total };
-  }
-
-  async updateShowMcFromDto<
-    T extends Prisma.ShowMCInclude = Record<string, never>,
-  >(
+  async update(
     uid: string,
-    dto: UpdateShowMcDto,
-    include?: T,
-  ): Promise<ShowMC | ShowMCWithIncludes<T>> {
-    const data = this.buildUpdatePayload(dto);
-    return this.updateShowMc(uid, data, include);
+    payload: UpdateShowMcPayload,
+  ): ReturnType<ShowMcRepository['update']> {
+    const data: Record<string, any> = {};
+
+    if (payload.note !== undefined)
+      data.note = payload.note;
+    if (payload.metadata !== undefined)
+      data.metadata = payload.metadata;
+
+    if (payload.showId !== undefined) {
+      data.show = { connect: { uid: payload.showId } };
+    }
+
+    if (payload.mcId !== undefined) {
+      data.mc = { connect: { uid: payload.mcId } };
+    }
+
+    return this.showMcRepository.update({ uid }, data);
   }
 
-  async updateShowMc<T extends Prisma.ShowMCInclude = Record<string, never>>(
-    uid: string,
-    data: Prisma.ShowMCUpdateInput,
-    include?: T,
-  ): Promise<ShowMC | ShowMCWithIncludes<T>> {
-    await this.findShowMcOrThrow(uid);
-    return this.showMcRepository.update({ uid }, data, include);
-  }
-
-  async deleteShowMc(uid: string): Promise<ShowMC> {
-    await this.findShowMcOrThrow(uid);
+  async softDelete(uid: string): ReturnType<ShowMcRepository['softDelete']> {
     return this.showMcRepository.softDelete({ uid });
-  }
-
-  private async findShowMcOrThrow<
-    T extends Prisma.ShowMCInclude = Record<string, never>,
-  >(uid: string,
-    include?: T,
-  ): Promise<ShowMC | ShowMCWithIncludes<T>> {
-    const showMc = await this.showMcRepository.findByUid(uid, include);
-    if (!showMc) {
-      throw HttpError.notFound('ShowMC', uid);
-    }
-    return showMc;
-  }
-
-  private buildCreatePayload(
-    dto: CreateShowMcDto,
-  ): Omit<Prisma.ShowMCCreateInput, 'uid'> {
-    return {
-      note: dto.note ?? null,
-      metadata: dto.metadata ?? {},
-      show: { connect: { uid: dto.showId } },
-      mc: { connect: { uid: dto.mcId } },
-    };
-  }
-
-  private buildUpdatePayload(dto: UpdateShowMcDto): Prisma.ShowMCUpdateInput {
-    const payload: Prisma.ShowMCUpdateInput = {};
-
-    if (dto.note !== undefined)
-      payload.note = dto.note;
-    if (dto.metadata !== undefined)
-      payload.metadata = dto.metadata;
-
-    if (dto.showId !== undefined) {
-      payload.show = { connect: { uid: dto.showId } };
-    }
-
-    if (dto.mcId !== undefined) {
-      payload.mc = { connect: { uid: dto.mcId } };
-    }
-
-    return payload;
   }
 }

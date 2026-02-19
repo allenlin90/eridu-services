@@ -1,62 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Client, Prisma } from '@prisma/client';
 
-import { BaseRepository, IBaseModel } from '@/lib/repositories/base.repository';
+import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
+import { ListClientsQueryDto } from '@/models/client/schemas/client.schema';
 import { PrismaService } from '@/prisma/prisma.service';
-
-// Custom model wrapper that implements IBaseModel with ClientWhereInput
-class ClientModelWrapper
-implements
-    IBaseModel<
-      Client,
-      Prisma.ClientCreateInput,
-      Prisma.ClientUpdateInput,
-      Prisma.ClientWhereInput
-    > {
-  constructor(private readonly prismaModel: Prisma.ClientDelegate) {}
-
-  async create(args: {
-    data: Prisma.ClientCreateInput;
-    include?: Record<string, any>;
-  }): Promise<Client> {
-    return this.prismaModel.create(args);
-  }
-
-  async findFirst(args: {
-    where: Prisma.ClientWhereInput;
-    include?: Record<string, any>;
-  }): Promise<Client | null> {
-    return this.prismaModel.findFirst(args);
-  }
-
-  async findMany(args: {
-    where?: Prisma.ClientWhereInput;
-    skip?: number;
-    take?: number;
-    orderBy?: any;
-    include?: Record<string, any>;
-  }): Promise<Client[]> {
-    return this.prismaModel.findMany(args);
-  }
-
-  async update(args: {
-    where: Prisma.ClientWhereUniqueInput;
-    data: Prisma.ClientUpdateInput;
-    include?: Record<string, any>;
-  }): Promise<Client> {
-    return this.prismaModel.update(args);
-  }
-
-  async delete(args: {
-    where: Prisma.ClientWhereUniqueInput;
-  }): Promise<Client> {
-    return this.prismaModel.delete(args);
-  }
-
-  async count(args: { where: Prisma.ClientWhereInput }): Promise<number> {
-    return this.prismaModel.count({ where: args.where });
-  }
-}
 
 @Injectable()
 export class ClientRepository extends BaseRepository<
@@ -66,32 +13,81 @@ export class ClientRepository extends BaseRepository<
   Prisma.ClientWhereInput
 > {
   constructor(private readonly prisma: PrismaService) {
-    super(new ClientModelWrapper(prisma.client));
+    super(new PrismaModelWrapper(prisma.client));
   }
 
-  async findByUid(uid: string): Promise<Client | null> {
-    return this.model.findFirst({
-      where: { uid, deletedAt: null },
-    });
+  /**
+   * Finds a client by UID.
+   */
+  async findByUid<T extends Prisma.ClientInclude>(
+    uid: string,
+    include?: T,
+  ): Promise<Prisma.ClientGetPayload<{ include: T }> | null> {
+    return this.findOne({ uid }, include) as Promise<Prisma.ClientGetPayload<{
+      include: T;
+    }> | null>;
   }
 
+  /**
+   * Finds a client by name.
+   */
   async findByName(name: string): Promise<Client | null> {
-    return this.model.findFirst({
-      where: { name, deletedAt: null },
-    });
+    return this.findOne({ name });
   }
 
-  async findActiveClients(params: {
-    skip?: number;
-    take?: number;
-    orderBy?: Prisma.ClientOrderByWithRelationInput;
-  }): Promise<Client[]> {
-    const { skip, take, orderBy } = params;
-    return this.model.findMany({
-      where: { deletedAt: null },
-      skip,
-      take,
-      orderBy,
-    });
+  /**
+   * Lists clients with pagination and complex filtering.
+   */
+  async findPaginated(
+    query: ListClientsQueryDto,
+    include?: Prisma.ClientInclude,
+  ): Promise<{ data: Client[]; total: number }> {
+    const where = this.buildWhereClause(query);
+    const orderBy = this.buildOrderByClause(query);
+
+    const [data, total] = await Promise.all([
+      this.findMany({
+        skip: query.skip,
+        take: query.take,
+        where,
+        orderBy,
+        include,
+      }),
+      this.count(where),
+    ]);
+
+    return { data, total };
+  }
+
+  private buildWhereClause(query: ListClientsQueryDto): Prisma.ClientWhereInput {
+    const where: Prisma.ClientWhereInput = {};
+
+    if (!query.include_deleted) {
+      where.deletedAt = null;
+    }
+
+    if (query.name) {
+      where.name = {
+        contains: query.name,
+        mode: 'insensitive',
+      };
+    }
+
+    if (query.uid) {
+      where.uid = {
+        contains: query.uid,
+        mode: 'insensitive',
+      };
+    }
+
+    return where;
+  }
+
+  private buildOrderByClause(
+    query: ListClientsQueryDto,
+  ): Prisma.ClientOrderByWithRelationInput {
+    return {
+      createdAt: query.sort || 'desc',
+    };
   }
 }

@@ -8,6 +8,7 @@ This file contains detailed code examples for service implementation patterns. R
 
 ```typescript
 import { Injectable } from '@nestjs/common';
+import { TaskTemplate } from '@prisma/client';
 
 import { TemplateSchemaValidator } from '@eridu/api-types/task-management';
 
@@ -31,24 +32,24 @@ export class TaskTemplateService extends BaseModelService {
     super(utilityService);
   }
 
-  // Pass-through method using Parameters<Repo['method']> + ReturnType<Repo['method']>
+  // Pass-through method using Parameters<Repo['method']>
   async getTaskTemplates(
     ...args: Parameters<TaskTemplateRepository['findPaginated']>
-  ): ReturnType<TaskTemplateRepository['findPaginated']> {
+  ): Promise<{ data: TaskTemplate[]; total: number }> {
     return this.repository.findPaginated(...args);
   }
 
   // Pass-through method
   async findOne(
     ...args: Parameters<TaskTemplateRepository['findOne']>
-  ): ReturnType<TaskTemplateRepository['findOne']> {
+  ): Promise<TaskTemplate | null> {
     return this.repository.findOne(...args);
   }
 
   // Create method using payload type from schema file
   async createTemplateWithSnapshot(
     payload: CreateTaskTemplatePayload,
-  ): ReturnType<TaskTemplateRepository['create']> {
+  ): Promise<TaskTemplate> {
     if (!this.validateSchema(payload.currentSchema)) {
       throw HttpError.badRequest('Invalid schema');
     }
@@ -70,7 +71,7 @@ export class TaskTemplateService extends BaseModelService {
   async updateTemplateWithSnapshot(
     where: Parameters<TaskTemplateRepository['updateWithVersionCheck']>[0],
     payload: Parameters<TaskTemplateRepository['updateWithVersionCheck']>[1],
-  ): ReturnType<TaskTemplateRepository['updateWithVersionCheck']> {
+  ): Promise<TaskTemplate> {
     if (payload.currentSchema && !this.validateSchema(payload.currentSchema)) {
       throw HttpError.badRequest('Invalid schema');
     }
@@ -201,55 +202,40 @@ export class ListTaskTemplatesQueryDto extends createZodDto(
 
 ## Orchestration Service Example
 
+> **Note**: Transactions use the `@Transactional()` decorator via CLS (Continuation-Local Storage).
+> The `PrismaService` is auto-injected into the active transaction context — no `tx` parameter passing.
+> See `database-patterns/SKILL.md` for the full transaction pattern.
+
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
+import { Transactional } from '@nestjs-cls/transactional';
 import { ShowService } from '@/models/show/show.service';
 import { AssignmentService } from '@/models/assignment/assignment.service';
 
 @Injectable()
 export class ShowOrchestrationService {
   constructor(
-    private readonly prismaService: PrismaService,
     private readonly showService: ShowService,
     private readonly assignmentService: AssignmentService,
   ) {}
 
+  @Transactional()
   async createShowWithAssignments(data: CreateShowDto) {
-    return this.prismaService.$transaction(async (tx) => {
-      // 1. Create Parent
-      const show = await this.showService.createShow({ ...data, tx });
-      
-      // 2. Create Children
-      await this.assignmentService.createAssignments(
-        show.id,
-        data.assignments,
-        tx
-      );
-      
-      return show;
-    });
+    // No `tx` parameter — CLS propagates the transaction automatically
+    const show = await this.showService.createShow(data);
+    await this.assignmentService.createAssignments(show.id, data.assignments);
+    return show;
   }
 
+  @Transactional()
   async publishSchedule(scheduleId: string) {
-    return this.prismaService.$transaction(async (tx) => {
-      // 1. Validate schedule
-      const schedule = await this.scheduleService.getById(scheduleId);
-      
-      // 2. Delete old shows
-      await this.showService.deleteBySchedule(scheduleId, tx);
-      
-      // 3. Create new shows
-      const shows = await this.showService.createMany(
-        schedule.shows.map(s => ({ ...s, scheduleId })),
-        tx
-      );
-      
-      // 4. Update schedule status
-      await this.scheduleService.updateStatus(scheduleId, 'published', tx);
-      
-      return shows;
-    });
+    const schedule = await this.scheduleService.getById(scheduleId);
+    await this.showService.deleteBySchedule(scheduleId);
+    const shows = await this.showService.createMany(
+      schedule.shows.map(s => ({ ...s, scheduleId })),
+    );
+    await this.scheduleService.updateStatus(scheduleId, 'published');
+    return shows;
   }
 }
 ```
@@ -270,35 +256,48 @@ async createUser(data: CreateUserDto): Promise<User> {
 }
 ```
 
-### Read with Verification
+### Read — Return null, let Controller throw 404
 
 ```typescript
+// ✅ CORRECT: Service returns null, Controller calls ensureResourceExists()
+async getUserById(uid: string): Promise<User | null> {
+  return this.userRepository.findOne({ uid, deletedAt: null });
+}
+
+// ❌ WRONG: Service throws HTTP exception
 async getUserById(uid: string): Promise<User> {
   const user = await this.userRepository.findByUid(uid);
-  if (!user) throw HttpError.notFound('User', uid);
+  if (!user) throw HttpError.notFound('User', uid); // ← Never do this in service
   return user;
 }
 ```
 
-### Update with Existence Check
+### Update — Controller verifies first, then service updates
 
 ```typescript
+// ✅ CORRECT: Service trusts caller verified existence
 async updateUser(uid: string, data: UpdateUserDto): Promise<User> {
-  await this.getUserById(uid); // Ensure exists
   return this.userRepository.update({ uid }, data);
 }
+
+// In Controller:
+// const user = await this.userService.getUserById(id);
+// this.ensureResourceExists(user, 'User', id);  ← Controller throws 404
+// return this.userService.updateUser(id, dto);
 ```
 
-### Delete with Verification
+### Delete — Controller verifies first, then service deletes
 
 ```typescript
+// ✅ CORRECT: Service trusts caller verified existence
 async deleteUser(uid: string): Promise<void> {
-  // 1. Verify existence (throws 404 if missing)
-  await this.getUserById(uid);
-
-  // 2. Perform operation
   await this.userRepository.softDelete({ uid });
 }
+
+// In Controller:
+// const user = await this.userService.getUserById(id);
+// this.ensureResourceExists(user, 'User', id);  ← Controller throws 404
+// await this.userService.deleteUser(id);
 ```
 
 ### Bulk Operations

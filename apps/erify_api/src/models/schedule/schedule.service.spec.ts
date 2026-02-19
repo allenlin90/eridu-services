@@ -121,6 +121,8 @@ describe('scheduleService', () => {
   beforeEach(async () => {
     const scheduleRepositoryMock = createMockRepository<ScheduleRepository>({
       findOne: jest.fn(),
+      findPaginated: jest.fn().mockResolvedValue({ schedules: [mockSchedule1], total: 1 }),
+      findByDateRange: jest.fn().mockResolvedValue([]),
     });
 
     const utilityMock = createMockUtilityService();
@@ -470,15 +472,9 @@ describe('scheduleService', () => {
 
   describe('getMonthlyOverview', () => {
     beforeEach(() => {
-      scheduleRepository.findMany = jest.fn().mockResolvedValue([
-        {
-          ...mockSchedule1,
-          client: mockClient1,
-        },
-        {
-          ...mockSchedule2,
-          client: mockClient2,
-        },
+      scheduleRepository.findByDateRange = jest.fn().mockResolvedValue([
+        { ...mockSchedule1, client: mockClient1 },
+        { ...mockSchedule2, client: mockClient2 },
       ]);
     });
 
@@ -488,9 +484,7 @@ describe('scheduleService', () => {
           startDate: new Date('2025-01-01'),
           endDate: new Date('2025-01-31'),
         },
-        {
-          client: true,
-        },
+        { client: true },
       );
 
       expect(result.totalSchedules).toBe(2);
@@ -503,11 +497,8 @@ describe('scheduleService', () => {
     });
 
     it('should filter by client IDs when provided', async () => {
-      scheduleRepository.findMany = jest.fn().mockResolvedValue([
-        {
-          ...mockSchedule1,
-          client: mockClient1,
-        },
+      scheduleRepository.findByDateRange = jest.fn().mockResolvedValue([
+        { ...mockSchedule1, client: mockClient1 },
       ]);
 
       const result = await service.getMonthlyOverview(
@@ -516,9 +507,7 @@ describe('scheduleService', () => {
           endDate: new Date('2025-01-31'),
           clientIds: [mockClient1.uid],
         },
-        {
-          client: true,
-        },
+        { client: true },
       );
 
       expect(result.totalSchedules).toBe(1);
@@ -527,22 +516,14 @@ describe('scheduleService', () => {
     });
 
     it('should group schedules by status', async () => {
-      const draftSchedule = { ...mockSchedule1, status: 'draft' };
-      const publishedSchedule = { ...mockSchedule2, status: 'published' };
-
-      scheduleRepository.findMany = jest.fn().mockResolvedValue([
-        { ...draftSchedule, client: mockClient1 },
-        { ...publishedSchedule, client: mockClient2 },
+      scheduleRepository.findByDateRange = jest.fn().mockResolvedValue([
+        { ...mockSchedule1, status: 'draft', client: mockClient1 },
+        { ...mockSchedule2, status: 'published', client: mockClient2 },
       ]);
 
       const result = await service.getMonthlyOverview(
-        {
-          startDate: new Date('2025-01-01'),
-          endDate: new Date('2025-01-31'),
-        },
-        {
-          client: true,
-        },
+        { startDate: new Date('2025-01-01'), endDate: new Date('2025-01-31') },
+        { client: true },
       );
 
       expect(result.schedulesByStatus.draft).toBe(1);
@@ -550,21 +531,13 @@ describe('scheduleService', () => {
     });
 
     it('should filter by status when provided', async () => {
-      scheduleRepository.findMany = jest
-        .fn()
-        .mockResolvedValue([
-          { ...mockSchedule1, status: 'draft', client: mockClient1 },
-        ]);
+      scheduleRepository.findByDateRange = jest.fn().mockResolvedValue([
+        { ...mockSchedule1, status: 'draft', client: mockClient1 },
+      ]);
 
       const result = await service.getMonthlyOverview(
-        {
-          startDate: new Date('2025-01-01'),
-          endDate: new Date('2025-01-31'),
-          status: 'draft',
-        },
-        {
-          client: true,
-        },
+        { startDate: new Date('2025-01-01'), endDate: new Date('2025-01-31'), status: 'draft' },
+        { client: true },
       );
 
       expect(result.totalSchedules).toBe(1);
@@ -573,376 +546,56 @@ describe('scheduleService', () => {
   });
 
   describe('getPaginatedSchedules', () => {
+    const baseQuery = {
+      skip: 0,
+      take: 10,
+      page: 1,
+      limit: 10,
+      client_id: undefined,
+      status: undefined,
+      created_by: undefined,
+      published_by: undefined,
+      start_date_from: undefined,
+      start_date_to: undefined,
+      end_date_from: undefined,
+      end_date_to: undefined,
+      name: undefined,
+      order_by: 'created_at' as const,
+      order_direction: 'desc' as const,
+      include_plan_document: false,
+      include_deleted: false,
+      sort: 'desc' as const,
+      uid: undefined,
+    };
+
     beforeEach(() => {
-      scheduleRepository.findMany = jest
+      scheduleRepository.findPaginated = jest
         .fn()
-        .mockResolvedValue([mockSchedule1]);
-      scheduleRepository.count = jest.fn().mockResolvedValue(1);
+        .mockResolvedValue({ schedules: [mockSchedule1], total: 1 });
     });
 
-    it('should return paginated schedules with default filtering', async () => {
-      const query = {
-        skip: 0,
-        take: 10,
-        page: 1,
-        limit: 10,
-        client_id: undefined,
-        status: undefined,
-        created_by: undefined,
-        published_by: undefined,
-        start_date_from: undefined,
-        start_date_to: undefined,
-        end_date_from: undefined,
-        end_date_to: undefined,
-        name: undefined,
-        order_by: 'created_at' as const,
-        order_direction: 'desc' as const,
-        include_plan_document: false,
-        include_deleted: false,
-        sort: 'desc' as const,
-        uid: undefined,
-      };
-
-      const result = await service.getPaginatedSchedules(query);
+    it('should delegate to scheduleRepository.findPaginated and return its result', async () => {
+      const result = await service.getPaginatedSchedules(baseQuery);
 
       expect(result.schedules).toHaveLength(1);
       expect(result.total).toBe(1);
-      expect(scheduleRepository.findMany).toHaveBeenCalledWith({
-        skip: 0,
-        take: 10,
-        orderBy: { createdAt: 'desc' },
-        where: {
-          deletedAt: null,
-        },
-        include: {
-          client: true,
-          studio: true,
-          createdByUser: true,
-          publishedByUser: true,
-        },
-      });
-      expect(scheduleRepository.count).toHaveBeenCalledWith({
-        deletedAt: null,
-      });
+      expect(scheduleRepository.findPaginated).toHaveBeenCalledWith(baseQuery);
     });
 
-    it('should apply client filtering', async () => {
+    it('should pass through all filter params to the repository', async () => {
       const query = {
-        skip: 0,
-        take: 10,
-        page: 1,
-        limit: 10,
+        ...baseQuery,
         client_id: mockClient1.uid,
-        status: undefined,
-        created_by: undefined,
-        published_by: undefined,
-        start_date_from: undefined,
-        start_date_to: undefined,
-        end_date_from: undefined,
-        end_date_to: undefined,
-        name: undefined,
-        order_by: 'created_at' as const,
-        order_direction: 'desc' as const,
-        include_plan_document: false,
-        include_deleted: false,
-        sort: 'desc' as const,
-        uid: undefined,
-      };
-
-      await service.getPaginatedSchedules(query);
-
-      expect(scheduleRepository.findMany).toHaveBeenCalledWith({
-        skip: 0,
-        take: 10,
-        orderBy: { createdAt: 'desc' },
-        where: {
-          deletedAt: null,
-          client: {
-            uid: {
-              in: [mockClient1.uid],
-            },
-            deletedAt: null,
-          },
-        },
-        include: {
-          client: true,
-          studio: true,
-          createdByUser: true,
-          publishedByUser: true,
-        },
-      });
-    });
-
-    it('should apply status filtering', async () => {
-      const query = {
-        skip: 0,
-        take: 10,
-        page: 1,
-        limit: 10,
-        client_id: undefined,
         status: 'draft',
-        created_by: undefined,
-        published_by: undefined,
-        start_date_from: undefined,
-        start_date_to: undefined,
-        end_date_from: undefined,
-        end_date_to: undefined,
-        name: undefined,
-        order_by: 'created_at' as const,
-        order_direction: 'desc' as const,
-        include_plan_document: false,
-        include_deleted: false,
-        sort: 'desc' as const,
-        uid: undefined,
-      };
-
-      await service.getPaginatedSchedules(query);
-
-      expect(scheduleRepository.findMany).toHaveBeenCalledWith({
-        skip: 0,
-        take: 10,
-        orderBy: { createdAt: 'desc' },
-        where: {
-          deletedAt: null,
-          status: { in: ['draft'] },
-        },
-        include: {
-          client: true,
-          studio: true,
-          createdByUser: true,
-          publishedByUser: true,
-        },
-      });
-    });
-
-    it('should apply date range filtering', async () => {
-      const query = {
-        skip: 0,
-        take: 10,
-        page: 1,
-        limit: 10,
-        client_id: undefined,
-        status: undefined,
-        created_by: undefined,
-        published_by: undefined,
-        start_date_from: '2025-01-01T00:00:00Z',
-        start_date_to: '2025-01-31T23:59:59Z',
-        end_date_from: undefined,
-        end_date_to: undefined,
-        name: undefined,
-        order_by: 'created_at' as const,
-        order_direction: 'desc' as const,
-        include_plan_document: false,
-        include_deleted: false,
-        sort: 'desc' as const,
-        uid: undefined,
-      };
-
-      await service.getPaginatedSchedules(query);
-
-      expect(scheduleRepository.findMany).toHaveBeenCalledWith({
-        skip: 0,
-        take: 10,
-        orderBy: { createdAt: 'desc' },
-        where: {
-          deletedAt: null,
-          startDate: {
-            gte: new Date('2025-01-01T00:00:00Z'),
-            lte: new Date('2025-01-31T23:59:59Z'),
-          },
-        },
-        include: {
-          client: true,
-          studio: true,
-          createdByUser: true,
-          publishedByUser: true,
-        },
-      });
-    });
-
-    it('should apply name search filtering', async () => {
-      const query = {
-        skip: 0,
-        take: 10,
-        page: 1,
-        limit: 10,
-        client_id: undefined,
-        status: undefined,
-        created_by: undefined,
-        published_by: undefined,
-        start_date_from: undefined,
-        start_date_to: undefined,
-        end_date_from: undefined,
-        end_date_to: undefined,
         name: 'January',
-        order_by: 'created_at' as const,
-        order_direction: 'desc' as const,
-        include_plan_document: false,
-        include_deleted: false,
-        sort: 'desc' as const,
-        uid: undefined,
-      };
-
-      await service.getPaginatedSchedules(query);
-
-      expect(scheduleRepository.findMany).toHaveBeenCalledWith({
-        skip: 0,
-        take: 10,
-        orderBy: { createdAt: 'desc' },
-        where: {
-          deletedAt: null,
-          name: {
-            contains: 'January',
-            mode: 'insensitive',
-          },
-        },
-        include: {
-          client: true,
-          studio: true,
-          createdByUser: true,
-          publishedByUser: true,
-        },
-      });
-    });
-
-    it('should apply custom ordering', async () => {
-      const query = {
-        skip: 0,
-        take: 10,
-        page: 1,
-        limit: 10,
-        client_id: undefined,
-        status: undefined,
-        created_by: undefined,
-        published_by: undefined,
-        start_date_from: undefined,
-        start_date_to: undefined,
-        end_date_from: undefined,
-        end_date_to: undefined,
-        name: undefined,
+        include_deleted: true,
         order_by: 'start_date' as const,
         order_direction: 'asc' as const,
-        include_plan_document: false,
-        include_deleted: false,
-        sort: 'desc' as const,
-        uid: undefined,
       };
 
       await service.getPaginatedSchedules(query);
 
-      expect(scheduleRepository.findMany).toHaveBeenCalledWith({
-        skip: 0,
-        take: 10,
-        orderBy: { startDate: 'asc' },
-        where: {
-          deletedAt: null,
-        },
-        include: {
-          client: true,
-          studio: true,
-          createdByUser: true,
-          publishedByUser: true,
-        },
-      });
-    });
-
-    it('should include deleted records when include_deleted is true', async () => {
-      const query = {
-        skip: 0,
-        take: 10,
-        page: 1,
-        limit: 10,
-        client_id: undefined,
-        status: undefined,
-        created_by: undefined,
-        published_by: undefined,
-        start_date_from: undefined,
-        start_date_to: undefined,
-        end_date_from: undefined,
-        end_date_to: undefined,
-        name: undefined,
-        order_by: 'created_at' as const,
-        order_direction: 'desc' as const,
-        include_plan_document: false,
-        include_deleted: true,
-        sort: 'desc' as const,
-        uid: undefined,
-      };
-
-      await service.getPaginatedSchedules(query);
-
-      expect(scheduleRepository.findMany).toHaveBeenCalledWith({
-        skip: 0,
-        take: 10,
-        orderBy: { createdAt: 'desc' },
-        where: {}, // No deletedAt filter
-        include: {
-          client: true,
-          studio: true,
-          createdByUser: true,
-          publishedByUser: true,
-        },
-      });
-    });
-
-    it('should handle multiple filters combined', async () => {
-      const query = {
-        skip: 0,
-        take: 10,
-        page: 1,
-        limit: 10,
-        client_id: [mockClient1.uid, mockClient2.uid],
-        status: ['draft', 'review'],
-        created_by: mockUser.uid,
-        published_by: undefined,
-        start_date_from: '2025-01-01T00:00:00Z',
-        start_date_to: undefined,
-        end_date_from: undefined,
-        end_date_to: '2025-12-31T23:59:59Z',
-        name: 'planning',
-        order_by: 'updated_at' as const,
-        order_direction: 'asc' as const,
-        include_plan_document: false,
-        include_deleted: false,
-        sort: 'desc' as const,
-        uid: undefined,
-      };
-
-      await service.getPaginatedSchedules(query);
-
-      expect(scheduleRepository.findMany).toHaveBeenCalledWith({
-        skip: 0,
-        take: 10,
-        orderBy: { updatedAt: 'asc' },
-        where: {
-          deletedAt: null,
-          client: {
-            uid: { in: [mockClient1.uid, mockClient2.uid] },
-            deletedAt: null,
-          },
-          status: { in: ['draft', 'review'] },
-          createdByUser: {
-            uid: { in: [mockUser.uid] },
-            deletedAt: null,
-          },
-          startDate: {
-            gte: new Date('2025-01-01T00:00:00Z'),
-          },
-          endDate: {
-            lte: new Date('2025-12-31T23:59:59Z'),
-          },
-          name: {
-            contains: 'planning',
-            mode: 'insensitive',
-          },
-        },
-        include: {
-          client: true,
-          studio: true,
-          createdByUser: true,
-          publishedByUser: true,
-        },
-      });
+      expect(scheduleRepository.findPaginated).toHaveBeenCalledWith(query);
     });
   });
 

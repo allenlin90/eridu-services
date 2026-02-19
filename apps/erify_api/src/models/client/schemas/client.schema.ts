@@ -1,3 +1,9 @@
+// ============================================================================
+// Service Layer Payload Types
+// ============================================================================
+// NOTE: These types CAN use Prisma types to define the payload shape.
+// Services import these payload types, NOT Prisma types directly.
+import type { Prisma } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
@@ -77,3 +83,31 @@ export class ListClientsQueryDto extends createZodDto(listClientsQuerySchema) {
   declare include_deleted: boolean;
   declare uid: string | undefined;
 }
+
+/**
+ * Payload for creating a client (service layer).
+ */
+export type CreateClientPayload = {
+  name: string;
+  contactPerson: string;
+  contactEmail: string;
+  metadata?: Record<string, any>;
+};
+
+/**
+ * Payload for updating a client (service layer).
+ */
+export type UpdateClientPayload = {
+  name?: string;
+  contactPerson?: string;
+  contactEmail?: string;
+  metadata?: Record<string, any>;
+};
+
+/**
+ * Type-safe order by options for clients.
+ */
+export type ClientOrderBy = Pick<
+  Prisma.ClientOrderByWithRelationInput,
+  'name' | 'contactPerson' | 'contactEmail' | 'createdAt' | 'updatedAt'
+>;

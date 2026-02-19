@@ -39,10 +39,14 @@ export class AdminStudioMembershipController extends BaseAdminController {
     'Studio membership created successfully',
   )
   async createStudioMembership(@Body() body: CreateStudioMembershipDto) {
-    return this.studioMembershipService.createStudioMembershipFromDto(body, {
-      user: true,
-      studio: true,
-    });
+    const { userId, studioId, role, metadata } = body;
+    return this.studioMembershipService.createStudioMembership(
+      { userId, studioId, role, metadata },
+      {
+        user: true,
+        studio: true,
+      },
+    );
   }
 
   @Get()
@@ -52,7 +56,7 @@ export class AdminStudioMembershipController extends BaseAdminController {
   )
   async getStudioMemberships(@Query() query: ListStudioMembershipsQueryDto) {
     const { data, total } = await this.studioMembershipService.listStudioMemberships(
-      { skip: query.skip, take: query.take, uid: query.uid, studioUid: query.studioUid },
+      query,
       { user: true, studio: true },
     );
 
@@ -65,7 +69,7 @@ export class AdminStudioMembershipController extends BaseAdminController {
     HttpStatus.OK,
     'Studio membership details',
   )
-  getStudioMembership(
+  async getStudioMembership(
     @Param(
       'id',
       new UidValidationPipe(
@@ -75,10 +79,12 @@ export class AdminStudioMembershipController extends BaseAdminController {
     )
     id: string,
   ) {
-    return this.studioMembershipService.getStudioMembershipById(id, {
+    const membership = await this.studioMembershipService.getStudioMembershipById(id, {
       user: true,
       studio: true,
     });
+    this.ensureResourceExists(membership, 'Studio Membership', id);
+    return membership;
   }
 
   @Patch(':id')
@@ -87,7 +93,7 @@ export class AdminStudioMembershipController extends BaseAdminController {
     HttpStatus.OK,
     'Studio membership updated successfully',
   )
-  updateStudioMembership(
+  async updateStudioMembership(
     @Param(
       'id',
       new UidValidationPipe(
@@ -98,9 +104,13 @@ export class AdminStudioMembershipController extends BaseAdminController {
     id: string,
     @Body() body: UpdateStudioMembershipDto,
   ) {
-    return this.studioMembershipService.updateStudioMembershipFromDto(
+    const membership = await this.studioMembershipService.getStudioMembershipById(id);
+    this.ensureResourceExists(membership, 'Studio Membership', id);
+
+    const { userId, studioId, role, metadata } = body;
+    return this.studioMembershipService.updateStudioMembership(
       id,
-      body,
+      { userId, studioId, role, metadata },
       {
         user: true,
         studio: true,
@@ -120,6 +130,8 @@ export class AdminStudioMembershipController extends BaseAdminController {
     )
     id: string,
   ) {
+    const membership = await this.studioMembershipService.getStudioMembershipById(id);
+    this.ensureResourceExists(membership, 'Studio Membership', id);
     await this.studioMembershipService.deleteStudioMembership(id);
   }
 }

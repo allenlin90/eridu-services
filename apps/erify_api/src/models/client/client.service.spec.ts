@@ -69,24 +69,27 @@ describe('clientService', () => {
     await expect(service.createClient(dto)).rejects.toThrow(error);
   });
 
-  it('getClientById throws not found', async () => {
+  it('getClientByUid returns null if not found', async () => {
     (clientRepositoryMock.findByUid as jest.Mock).mockResolvedValue(null);
 
-    await expect(service.getClientById('client_404')).rejects.toMatchObject({
-      status: 404,
-    });
+    const result = await service.getClientByUid('client_404');
+    expect(result).toBeNull();
   });
 
-  it('updateClient maps P2002 to Conflict', async () => {
-    (clientRepositoryMock.findByUid as jest.Mock).mockResolvedValue({
+  it('updateClient calls repository update', async () => {
+    (clientRepositoryMock.update as jest.Mock).mockResolvedValue({
       uid: 'client_1',
-      name: 'OldName',
+      name: 'Acme',
     });
-    const error = createMockUniqueConstraintError(['name']);
-    (clientRepositoryMock.update as jest.Mock).mockRejectedValue(error);
 
-    await expect(
-      service.updateClient('client_1', { name: 'Acme' } as UpdateClientDto),
-    ).rejects.toThrow(error);
+    const result = await service.updateClient('client_1', {
+      name: 'Acme',
+    } as UpdateClientDto);
+
+    expect(clientRepositoryMock.update).toHaveBeenCalledWith(
+      { uid: 'client_1' },
+      { name: 'Acme' },
+    );
+    expect(result).toEqual({ uid: 'client_1', name: 'Acme' });
   });
 });

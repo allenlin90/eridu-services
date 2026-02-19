@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
@@ -14,7 +15,6 @@ describe('adminShowStatusController', () => {
   let controller: AdminShowStatusController;
 
   const mockShowStatusService = {
-    listShowStatuses: jest.fn(),
     createShowStatus: jest.fn(),
     getShowStatuses: jest.fn(),
     countShowStatuses: jest.fn(),
@@ -82,13 +82,13 @@ describe('adminShowStatusController', () => {
         hasPreviousPage: false,
       };
 
-      mockShowStatusService.listShowStatuses.mockResolvedValue({
+      mockShowStatusService.getShowStatuses.mockResolvedValue({
         data: statuses,
         total,
       } as any);
 
       const result = await controller.getShowStatuses(query);
-      expect(mockShowStatusService.listShowStatuses).toHaveBeenCalledWith({
+      expect(mockShowStatusService.getShowStatuses).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
       });
@@ -112,6 +112,15 @@ describe('adminShowStatusController', () => {
       );
       expect(result).toEqual(status);
     });
+
+    it('should throw NotFoundException when show status not found', async () => {
+      const statusId = 'show_status_404';
+      mockShowStatusService.getShowStatusById.mockResolvedValue(null);
+
+      await expect(controller.getShowStatus(statusId)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
   });
 
   describe('updateShowStatus', () => {
@@ -122,6 +131,10 @@ describe('adminShowStatusController', () => {
       } as UpdateShowStatusDto;
       const updatedStatus = { uid: statusId, ...updateDto };
 
+      mockShowStatusService.getShowStatusById.mockResolvedValue({
+        uid: statusId,
+        name: 'Old Status',
+      });
       mockShowStatusService.updateShowStatus.mockResolvedValue(
         updatedStatus as any,
       );
@@ -139,12 +152,16 @@ describe('adminShowStatusController', () => {
     it('should delete a show status', async () => {
       const statusId = 'show_status_123';
 
+      mockShowStatusService.getShowStatusById.mockResolvedValue({
+        uid: statusId,
+        name: 'ToDelete',
+      });
       mockShowStatusService.deleteShowStatus.mockResolvedValue(undefined);
 
       await controller.deleteShowStatus(statusId);
-      expect(mockShowStatusService.deleteShowStatus).toHaveBeenCalledWith(
-        statusId,
-      );
+      expect(mockShowStatusService.deleteShowStatus).toHaveBeenCalledWith({
+        uid: statusId,
+      });
     });
   });
 });

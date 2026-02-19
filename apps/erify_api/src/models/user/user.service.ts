@@ -1,14 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
+import { User } from '@prisma/client';
 
-import { CreateUserDto, UpdateUserDto } from './schemas/user.schema';
+import type {
+  CreateUserPayload,
+  UpdateUserPayload,
+  UserOrderBy,
+} from './schemas/user.schema';
+import {
+  ListUsersQueryDto,
+} from './schemas/user.schema';
 import { UserRepository } from './user.repository';
 
-import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { McService } from '@/models/mc/mc.service';
 import { UtilityService } from '@/utility/utility.service';
 
+/**
+ * Service for managing User entities.
+ */
 @Injectable()
 export class UserService extends BaseModelService {
   static readonly UID_PREFIX = 'user';
@@ -21,28 +30,34 @@ export class UserService extends BaseModelService {
     super(utilityService);
   }
 
-  async createUser(data: CreateUserDto): Promise<User> {
-    const { mc, ...userData } = data;
+  /**
+   * Creates a new user.
+   */
+  async createUser(
+    payload: CreateUserPayload,
+  ): Promise<User> {
+    const { mc, ...userData } = payload;
     const uid = this.generateUid();
 
     return this.userRepository.create({
       ...userData,
       uid,
-      ...(mc && { mc: {
-        create: {
-          name: mc.name,
-          aliasName: mc.aliasName,
-          metadata: mc.metadata ?? {},
-          uid: this.utilityService.generateBrandedId(McService.UID_PREFIX),
+      ...(mc && {
+        mc: {
+          create: {
+            name: mc.name,
+            aliasName: mc.aliasName,
+            metadata: mc.metadata ?? {},
+            uid: this.utilityService.generateBrandedId(McService.UID_PREFIX),
+          },
         },
-      } }),
-    }, {
-      mc: true,
+      }),
     });
   }
 
-  async createUsersBulk(data: CreateUserDto[]): Promise<User[]> {
-    const { usersWithMc, usersWithoutMc } = this.separateUsersByMcPresence(data);
+  async createUsersBulk(payloads: CreateUserPayload[]): Promise<User[]> {
+    const { usersWithMc, usersWithoutMc }
+      = this.separateUsersByMcPresence(payloads);
 
     const [bulkCreatedUsers, individualCreatedUsers] = await Promise.all([
       this.createUsersWithoutMc(usersWithoutMc),
@@ -52,8 +67,8 @@ export class UserService extends BaseModelService {
     return [...bulkCreatedUsers, ...individualCreatedUsers];
   }
 
-  private separateUsersByMcPresence(data: CreateUserDto[]) {
-    return data.reduce(
+  private separateUsersByMcPresence(payloads: CreateUserPayload[]) {
+    return payloads.reduce(
       (acc, user) => {
         if (user.mc) {
           acc.usersWithMc.push(user);
@@ -62,11 +77,14 @@ export class UserService extends BaseModelService {
         }
         return acc;
       },
-      { usersWithMc: [] as CreateUserDto[], usersWithoutMc: [] as CreateUserDto[] },
+      {
+        usersWithMc: [] as CreateUserPayload[],
+        usersWithoutMc: [] as CreateUserPayload[],
+      },
     );
   }
 
-  private async createUsersWithoutMc(users: CreateUserDto[]): Promise<User[]> {
+  private async createUsersWithoutMc(users: CreateUserPayload[]): Promise<User[]> {
     if (users.length === 0)
       return [];
 
@@ -78,7 +96,7 @@ export class UserService extends BaseModelService {
     return this.userRepository.createManyAndReturn(createInputs);
   }
 
-  private async createUsersWithMc(users: CreateUserDto[]): Promise<User[]> {
+  private async createUsersWithMc(users: CreateUserPayload[]): Promise<User[]> {
     if (users.length === 0)
       return [];
 
@@ -86,112 +104,110 @@ export class UserService extends BaseModelService {
     return Promise.all(createPromises);
   }
 
-  async getUserById(uid: string): Promise<User> {
-    return this.findUserOrThrow(uid);
+  /**
+   * Retrieves a user by UID.
+   * Returns null if not found (Controller handles 404).
+   */
+  async getUserById(uid: string): Promise<User | null> {
+    return this.userRepository.findByUid(uid);
+  }
+
+  /**
+   * Specialized method to get user with profile (if needed for internal logic)
+   * @internal
+   */
+  async getUserWithProfile(uid: string) {
+    return this.userRepository.findByUid(uid);
   }
 
   async findUserById(uid: string): Promise<User | null> {
     return this.userRepository.findByUid(uid);
   }
 
-  async getUserByExtId<T extends Prisma.UserInclude = Record<string, never>>(
-    extId: string,
-    include?: T,
-  ): Promise<Prisma.UserGetPayload<{ include: T }> | null> {
-    return this.userRepository.findByExtId(extId, include);
+  async getUserByExtId(extId: string): Promise<User | null> {
+    return this.userRepository.findByExtId(extId);
   }
 
-  async getUsers(params: {
-    skip?: number;
-    take?: number;
-    where?: Prisma.UserWhereInput;
-  }): Promise<User[]> {
-    return this.userRepository.findMany(params);
+  /**
+   * Retrieves a user's membership for a specific studio.
+   * Used by StudioGuard.
+   */
+  async getStudioMembership(extId: string, studioUid: string) {
+    const user = await this.userRepository.findByExtId(extId, {
+      studioMemberships: {
+        where: {
+          studio: { uid: studioUid },
+          deletedAt: null,
+        },
+        include: {
+          studio: {
+            select: {
+              uid: true,
+            },
+          },
+        },
+      },
+    });
+    return user?.studioMemberships?.[0];
   }
 
+  /**
+   * Retrieves a user with all their studio memberships.
+   * Used by ProfileController.
+   */
+  async getUserWithAllStudioMemberships(extId: string) {
+    return this.userRepository.findByExtId(extId, {
+      studioMemberships: {
+        include: {
+          studio: true,
+        },
+      },
+    });
+  }
+
+  /**
+   * Retrieves active users.
+   */
   async getActiveUsers(params: {
     skip?: number;
     take?: number;
-    orderBy?: Prisma.UserOrderByWithRelationInput;
+    orderBy?: UserOrderBy;
   }): Promise<User[]> {
     return this.userRepository.findActiveUsers(params);
   }
 
-  async countUsers(where?: Prisma.UserWhereInput): Promise<number> {
+  /**
+   * Counts users matching criteria.
+   */
+  async countUsers(
+    where?: Parameters<UserRepository['count']>[0],
+  ): Promise<number> {
     return this.userRepository.count(where ?? {});
   }
 
-  async listUsers(params: {
-    skip?: number;
-    take?: number;
-    name?: string;
-    email?: string;
-    uid?: string;
-    extId?: string;
-    isSystemAdmin?: boolean;
-    where?: Prisma.UserWhereInput;
-  }): Promise<{ data: User[]; total: number }> {
-    const where: Prisma.UserWhereInput = { ...params.where };
-
-    if (params.name) {
-      where.name = {
-        contains: params.name,
-        mode: 'insensitive',
-      };
-    }
-
-    if (params.email) {
-      where.email = {
-        contains: params.email,
-        mode: 'insensitive',
-      };
-    }
-
-    if (params.uid) {
-      where.uid = {
-        contains: params.uid,
-        mode: 'insensitive',
-      };
-    }
-
-    if (params.extId) {
-      where.extId = {
-        contains: params.extId,
-        mode: 'insensitive',
-      };
-    }
-
-    if (params.isSystemAdmin !== undefined) {
-      where.isSystemAdmin = params.isSystemAdmin;
-    }
-
-    const [data, total] = await Promise.all([
-      this.userRepository.findMany({
-        skip: params.skip,
-        take: params.take,
-        where,
-      }),
-      this.userRepository.count(where),
-    ]);
-
-    return { data, total };
+  /**
+   * Lists users with pagination and filtering.
+   */
+  async listUsers(
+    query: ListUsersQueryDto,
+  ): Promise<{ data: User[]; total: number }> {
+    return this.userRepository.findPaginated(query);
   }
 
-  async updateUser(uid: string, data: UpdateUserDto): Promise<User> {
-    await this.findUserOrThrow(uid);
-    return this.userRepository.update({ uid }, data);
+  /**
+   * Updates a user.
+   */
+  async updateUser(
+    uid: string,
+    payload: UpdateUserPayload,
+  ): Promise<User> {
+    return this.userRepository.update({ uid }, payload);
   }
 
+  /**
+   * Soft deletes a user.
+   */
   async deleteUser(uid: string): Promise<User> {
-    await this.findUserOrThrow(uid);
     return this.userRepository.softDelete({ uid });
-  }
-
-  private async findUserOrThrow(uid: string): Promise<User> {
-    const user = await this.userRepository.findByUid(uid);
-    if (!user) {
-      throw HttpError.notFound('User', uid);
-    }
-    return user;
   }
 }

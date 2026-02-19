@@ -15,7 +15,7 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
-// import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+// import { HttpError } from '@/lib/errors/http-error.util';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateShowStandardDto,
@@ -38,7 +38,8 @@ export class AdminShowStandardController extends BaseAdminController {
     'Show standard created successfully',
   )
   createShowStandard(@Body() body: CreateShowStandardDto) {
-    return this.showStandardService.createShowStandard(body);
+    const { name, metadata } = body;
+    return this.showStandardService.createShowStandard({ name, metadata });
   }
 
   @Get()
@@ -60,14 +61,16 @@ export class AdminShowStandardController extends BaseAdminController {
 
   @Get(':id')
   @AdminResponse(showStandardDto, HttpStatus.OK, 'Show standard details')
-  getShowStandard(
+  async getShowStandard(
     @Param(
       'id',
       new UidValidationPipe(ShowStandardService.UID_PREFIX, 'Show Standard'),
     )
     id: string,
   ) {
-    return this.showStandardService.getShowStandardById(id);
+    const showStandard = await this.showStandardService.getShowStandardById(id);
+    this.ensureResourceExists(showStandard, 'Show Standard', id);
+    return showStandard;
   }
 
   @Patch(':id')
@@ -76,7 +79,7 @@ export class AdminShowStandardController extends BaseAdminController {
     HttpStatus.OK,
     'Show standard updated successfully',
   )
-  updateShowStandard(
+  async updateShowStandard(
     @Param(
       'id',
       new UidValidationPipe(ShowStandardService.UID_PREFIX, 'Show Standard'),
@@ -84,7 +87,11 @@ export class AdminShowStandardController extends BaseAdminController {
     id: string,
     @Body() body: UpdateShowStandardDto,
   ) {
-    return this.showStandardService.updateShowStandard(id, body);
+    const showStandard = await this.showStandardService.getShowStandardById(id);
+    this.ensureResourceExists(showStandard, 'Show Standard', id);
+
+    const { name, metadata } = body;
+    return this.showStandardService.updateShowStandard(id, { name, metadata });
   }
 
   @Delete(':id')
@@ -96,6 +103,9 @@ export class AdminShowStandardController extends BaseAdminController {
     )
     id: string,
   ) {
-    await this.showStandardService.deleteShowStandard(id);
+    const showStandard = await this.showStandardService.getShowStandardById(id);
+    this.ensureResourceExists(showStandard, 'Show Standard', id);
+
+    await this.showStandardService.deleteShowStandard({ uid: id });
   }
 }

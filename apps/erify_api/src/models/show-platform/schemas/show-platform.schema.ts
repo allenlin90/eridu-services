@@ -1,3 +1,8 @@
+// ============================================================================
+// Service Layer Payload Types
+// ============================================================================
+// NOTE: These types CAN use Prisma types to define the payload shape.
+// Services import these payload types, NOT Prisma types directly.
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
@@ -123,3 +128,48 @@ export class UpdateShowPlatformDto extends createZodDto(
   updateShowPlatformSchema,
 ) {}
 export class ShowPlatformDto extends createZodDto(showPlatformDto) {}
+
+/**
+ * Payload for creating a show platform (service layer).
+ */
+export type CreateShowPlatformPayload = {
+  showId: string;
+  platformId: string;
+  liveStreamLink?: string | null;
+  platformShowId?: string | null;
+  viewerCount?: number;
+  metadata?: Record<string, any>;
+};
+
+/**
+ * Payload for updating a show platform (service layer).
+ */
+export type UpdateShowPlatformPayload = {
+  showId?: string;
+  platformId?: string;
+  liveStreamLink?: string | null;
+  platformShowId?: string | null;
+  viewerCount?: number;
+  metadata?: Record<string, any>;
+};
+
+/**
+ * Type-safe filter options for show platforms.
+ */
+export type ShowPlatformFilters = {
+  uid?: string;
+  showId?: bigint;
+  platformId?: bigint;
+  show?: { uid: string };
+  platform?: { uid: string };
+  deletedAt?: Date | null;
+};
+
+/**
+ * Type-safe order by options for show platforms.
+ */
+export type ShowPlatformOrderBy = {
+  createdAt?: 'asc' | 'desc';
+  updatedAt?: 'asc' | 'desc';
+  viewerCount?: 'asc' | 'desc';
+};

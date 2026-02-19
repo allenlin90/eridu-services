@@ -17,6 +17,7 @@ import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
+import { HttpError } from '@/lib/errors/http-error.util';
 import {
   createPaginatedQuerySchema,
 } from '@/lib/pagination/pagination.schema';
@@ -54,10 +55,19 @@ export class AdminStudioRoomController extends BaseAdminController {
     HttpStatus.CREATED,
     'Studio room created successfully',
   )
-  // TODO: add idempotency check
   createStudioRoom(@Body() body: CreateStudioRoomDto) {
-    return this.studioRoomService.createStudioRoomFromDto(body, {
-      studio: true,
+    const { name, capacity, metadata, studioId } = body;
+
+    if (!studioId) {
+      throw HttpError.badRequest('Studio ID is required');
+    }
+
+    return this.studioRoomService.create({
+      name,
+      capacity,
+      metadata,
+      studioId: studioId as string,
+      includeStudio: true,
     });
   }
 
@@ -67,42 +77,35 @@ export class AdminStudioRoomController extends BaseAdminController {
     'List of studio rooms with pagination',
   )
   async getStudioRooms(@Query() query: StudioRoomListQueryDto) {
-    const where: any = {};
-
-    if (query.name) {
-      where.name = { contains: query.name, mode: 'insensitive' };
-    }
-
-    if (query.studioId) {
-      where.studio = { uid: query.studioId };
-    }
-
-    if (query.id) {
-      where.uid = query.id;
-    }
-
-    const { data, total } = await this.studioRoomService.listStudioRooms(
-      {
-        skip: query.skip,
-        take: query.take,
-        where,
-      },
-      { studio: true },
-    );
+    const { data, total } = await this.studioRoomService.getStudioRooms({
+      skip: query.skip,
+      take: query.take,
+      studioUid: query.studioId,
+      name: query.name,
+      uid: query.id,
+      includeStudio: true,
+    });
 
     return this.createPaginatedResponse(data, total, query);
   }
 
   @Get(':id')
   @AdminResponse(studioRoomWithStudioDto, HttpStatus.OK, 'Studio room details')
-  getStudioRoom(
+  async getStudioRoom(
     @Param(
       'id',
       new UidValidationPipe(StudioRoomService.UID_PREFIX, 'Studio Room'),
     )
     id: string,
   ) {
-    return this.studioRoomService.getStudioRoomById(id, { studio: true });
+    const studioRoom = await this.studioRoomService.findOne(
+      { uid: id },
+      { studio: true },
+    );
+
+    this.ensureResourceExists(studioRoom, 'Studio Room', id);
+
+    return studioRoom;
   }
 
   @Patch(':id')
@@ -111,7 +114,7 @@ export class AdminStudioRoomController extends BaseAdminController {
     HttpStatus.OK,
     'Studio room updated successfully',
   )
-  updateStudioRoom(
+  async updateStudioRoom(
     @Param(
       'id',
       new UidValidationPipe(StudioRoomService.UID_PREFIX, 'Studio Room'),
@@ -119,8 +122,18 @@ export class AdminStudioRoomController extends BaseAdminController {
     id: string,
     @Body() body: UpdateStudioRoomDto,
   ) {
-    return this.studioRoomService.updateStudioRoomFromDto(id, body, {
-      studio: true,
+    // 1. Verify existence
+    const existing = await this.studioRoomService.findOne({ uid: id });
+    this.ensureResourceExists(existing, 'Studio Room', id);
+
+    // 2. Perform update
+    const { name, capacity, metadata, studioId } = body;
+    return this.studioRoomService.update(id, {
+      name,
+      capacity,
+      metadata,
+      studioId,
+      includeStudio: true,
     });
   }
 
@@ -133,6 +146,11 @@ export class AdminStudioRoomController extends BaseAdminController {
     )
     id: string,
   ) {
-    await this.studioRoomService.deleteStudioRoom(id);
+    // 1. Verify existence
+    const existing = await this.studioRoomService.findOne({ uid: id });
+    this.ensureResourceExists(existing, 'Studio Room', id);
+
+    // 2. Perform soft delete
+    await this.studioRoomService.softDelete({ uid: id });
   }
 }

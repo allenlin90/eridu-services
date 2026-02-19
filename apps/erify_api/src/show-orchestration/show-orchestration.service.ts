@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, Show } from '@prisma/client';
+import { Transactional } from '@nestjs-cls/transactional';
+import type { Show } from '@prisma/client';
 
 import {
   CreateShowWithAssignmentsDto,
@@ -7,15 +8,16 @@ import {
 } from './schemas/show-orchestration.schema';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { McRepository } from '@/models/mc/mc.repository';
+import { PlatformRepository } from '@/models/platform/platform.repository';
+import type { ShowInclude, ShowWithPayload } from '@/models/show/schemas/show.schema';
 import { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
+import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
+import { ShowMcRepository } from '@/models/show-mc/show-mc.repository';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
+import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
-import { PrismaService, TransactionClient } from '@/prisma/prisma.service';
-
-type ShowWithIncludes<T extends Prisma.ShowInclude> = Prisma.ShowGetPayload<{
-  include: T;
-}>;
 
 @Injectable()
 export class ShowOrchestrationService {
@@ -23,12 +25,16 @@ export class ShowOrchestrationService {
     private readonly showService: ShowService,
     private readonly showMcService: ShowMcService,
     private readonly showPlatformService: ShowPlatformService,
-    private readonly prisma: PrismaService,
+    private readonly showRepository: ShowRepository,
+    private readonly showMcRepository: ShowMcRepository,
+    private readonly mcRepository: McRepository,
+    private readonly showPlatformRepository: ShowPlatformRepository,
+    private readonly platformRepository: PlatformRepository,
   ) {}
 
   async createShowWithAssignments(
     data: CreateShowWithAssignmentsDto,
-  ): Promise<Show | ShowWithIncludes<Prisma.ShowInclude>> {
+  ): Promise<Show | ShowWithPayload<ShowInclude>> {
     const payload = this.createShowPayload(data);
 
     return this.showService.createShow(payload, this.getDefaultIncludes());
@@ -36,26 +42,11 @@ export class ShowOrchestrationService {
 
   /**
    * Retrieves shows with all relations (MCs, platforms, clients, etc.).
-   *
-   * @param params - Query parameters
-   * @param params.skip - Number of records to skip
-   * @param params.take - Number of records to take
-   * @param params.where - Where clause for filtering
-   * @param params.orderBy - Order by clause for sorting
-   * @param include - Optional Prisma include for relations
-   * @returns Shows with relations
    */
-  async getShowsWithRelations<
-    T extends Prisma.ShowInclude = Record<string, never>,
-  >(
-    params: {
-      skip?: number;
-      take?: number;
-      where?: Prisma.ShowWhereInput;
-      orderBy?: Prisma.ShowOrderByWithRelationInput;
-    },
+  async getShowsWithRelations<T extends ShowInclude = Record<string, never>>(
+    params: Parameters<ShowService['getActiveShows']>[0],
     include?: T,
-  ): Promise<Show[] | ShowWithIncludes<T>[]> {
+  ): Promise<Show[] | ShowWithPayload<T>[]> {
     return this.showService.getActiveShows({
       ...params,
       include: include || this.getDefaultIncludes(),
@@ -64,201 +55,23 @@ export class ShowOrchestrationService {
 
   /**
    * Retrieves paginated shows with filtering and full relations.
-   *
-   * @param query - Query parameters with filtering
-   * @returns Object with shows array and total count
    */
   async getPaginatedShowsWithRelations(query: ListShowsQueryDto): Promise<{
-    shows: ShowWithIncludes<Prisma.ShowInclude>[];
+    data: ShowWithPayload<ShowInclude>[];
     total: number;
   }> {
-    const where = this.buildShowWhereClause(query);
-    const orderBy = this.buildOrderByClause(query);
-
     const include = this.getDefaultIncludes();
-
-    const [shows, total] = await Promise.all([
-      this.getShowsWithRelations(
-        {
-          skip: query.skip,
-          take: query.take,
-          where,
-          orderBy,
-        },
-        include,
-      ),
-      this.showService.countShows(where),
-    ]);
-
-    return { shows: shows as ShowWithIncludes<Prisma.ShowInclude>[], total };
-  }
-
-  private buildShowWhereClause(
-    filters: Pick<
-      ListShowsQueryDto,
-      | 'name'
-      | 'client_id'
-      | 'client_name'
-      | 'mc_name'
-      | 'start_date_from'
-      | 'start_date_to'
-      | 'end_date_from'
-      | 'end_date_to'
-      | 'end_date_from'
-      | 'end_date_to'
-      | 'include_deleted'
-      | 'include_deleted'
-      | 'uid'
-      | 'show_standard_name'
-      | 'show_status_name'
-      | 'platform_name'
-    >,
-  ): Prisma.ShowWhereInput {
-    const where: Prisma.ShowWhereInput = {};
-
-    // Filter out soft deleted records by default
-    if (!filters.include_deleted) {
-      where.deletedAt = null;
-    }
-
-    // Name filtering
-    if (filters.name) {
-      where.name = {
-        contains: filters.name,
-        mode: 'insensitive',
-      };
-    }
-
-    // UID filtering
-    if (filters.uid) {
-      where.uid = {
-        contains: filters.uid,
-        mode: 'insensitive',
-      };
-    }
-
-    // Client filtering (ID)
-    if (filters.client_id) {
-      const clientIds = Array.isArray(filters.client_id)
-        ? filters.client_id
-        : [filters.client_id];
-      where.client = {
-        uid: { in: clientIds },
-        deletedAt: null,
-      };
-    }
-
-    // Client filtering (Name)
-    if (filters.client_name) {
-      where.client = {
-        ...((where.client as Prisma.ClientWhereInput) || {}),
-        name: {
-          contains: filters.client_name,
-          mode: 'insensitive',
-        },
-      };
-    }
-
-    // MC filtering (Name)
-    if (filters.mc_name) {
-      where.showMCs = {
-        some: {
-          mc: {
-            name: {
-              contains: filters.mc_name,
-              mode: 'insensitive',
-            },
-          },
-          deletedAt: null,
-        },
-      };
-    }
-
-    // Date range filtering for start time
-    if (filters.start_date_from || filters.start_date_to) {
-      where.startTime = {};
-      if (filters.start_date_from) {
-        where.startTime.gte = new Date(filters.start_date_from);
-      }
-      if (filters.start_date_to) {
-        const endDate = new Date(filters.start_date_to);
-        endDate.setHours(23, 59, 59, 999);
-        where.startTime.lte = endDate;
-      }
-    }
-
-    // Date range filtering for end time
-    if (filters.end_date_from || filters.end_date_to) {
-      where.endTime = {};
-      if (filters.end_date_from) {
-        where.endTime.gte = new Date(filters.end_date_from);
-      }
-      if (filters.end_date_to) {
-        const endDate = new Date(filters.end_date_to);
-        endDate.setHours(23, 59, 59, 999);
-        where.endTime.lte = endDate;
-      }
-    }
-
-    if (filters.show_standard_name) {
-      where.showStandard = {
-        name: {
-          contains: filters.show_standard_name,
-          mode: 'insensitive',
-        },
-      };
-    }
-
-    if (filters.show_status_name) {
-      where.showStatus = {
-        name: {
-          contains: filters.show_status_name,
-          mode: 'insensitive',
-        },
-      };
-    }
-
-    if (filters.platform_name) {
-      where.showPlatforms = {
-        some: {
-          platform: {
-            name: {
-              contains: filters.platform_name,
-              mode: 'insensitive',
-            },
-          },
-        },
-      };
-    }
-
-    return where;
-  }
-
-  private buildOrderByClause(
-    query: Pick<ListShowsQueryDto, 'order_by' | 'order_direction'>,
-  ): Record<string, 'asc' | 'desc'> {
-    const fieldMap: Record<string, string> = {
-      created_at: 'createdAt',
-      updated_at: 'updatedAt',
-      start_time: 'startTime',
-      end_time: 'endTime',
-    };
-    const field = fieldMap[query.order_by] || 'createdAt';
-    return { [field]: query.order_direction };
+    const result = await this.showService.getPaginatedShows(query, include);
+    return result as { data: ShowWithPayload<ShowInclude>[]; total: number };
   }
 
   /**
    * Gets a show by ID with all relations.
-   *
-   * @param uid - Show UID
-   * @param include - Optional Prisma include for relations
-   * @returns Show with relations
    */
-  async getShowWithRelations<
-    T extends Prisma.ShowInclude = Record<string, never>,
-  >(uid: string,
+  async getShowWithRelations<T extends ShowInclude = Record<string, never>>(
+    uid: string,
     include?: T,
-  ): Promise<Show | ShowWithIncludes<T>> {
+  ): Promise<Show | ShowWithPayload<T>> {
     return this.showService.getShowById(
       uid,
       include || this.getDefaultIncludes(),
@@ -266,217 +79,99 @@ export class ShowOrchestrationService {
   }
 
   /**
-   * Updates a show with optional MC and platform assignments.
-   *
-   * @param uid - Show UID
-   * @param dto - Update data with optional assignments
-   * @param include - Optional Prisma include for relations
-   * @returns Updated show with relations
+   * Updates a show with optional MC and platform assignments atomically.
    */
-  async updateShowWithAssignments<
-    T extends Prisma.ShowInclude = Record<string, never>,
-  >(
+  @Transactional()
+  async updateShowWithAssignments<T extends ShowInclude = Record<string, never>>(
     uid: string,
     dto: UpdateShowWithAssignmentsDto,
     include?: T,
-  ): Promise<Show | ShowWithIncludes<T>> {
+  ): Promise<Show | ShowWithPayload<T>> {
     const defaultInclude = include || this.getDefaultIncludes();
 
-    // Get existing show to check if it exists and get its ID
+    // Pre-validate existence (throws 404 if not found)
     const existingShow = await this.showService.getShowById(uid);
     const showId = existingShow.id;
 
-    return this.prisma.executeTransaction(async (tx) => {
-      // 1. Update core show attributes
-      const showUpdateData = this.buildShowUpdatePayload(dto);
-      if (Object.keys(showUpdateData).length > 0) {
-        await tx.show.update({
-          where: { id: showId },
-          data: showUpdateData,
-        });
-      }
+    // 1. Update core show attributes directly via repository
+    const updateData = this.showService.buildUpdatePayload(dto);
+    await this.showRepository.update({ uid }, updateData);
 
-      // 2. Handle MC assignments if provided
-      if (dto.showMcs) {
-        await this.syncShowMCs(tx, showId, dto.showMcs);
-      }
+    // 2. Sync MC assignments if provided
+    if (dto.showMcs) {
+      await this.syncShowMCs(showId, dto.showMcs);
+    }
 
-      // 3. Handle platform assignments if provided
-      if (dto.showPlatforms) {
-        await this.syncShowPlatforms(tx, showId, dto.showPlatforms);
-      }
+    // 3. Sync platform assignments if provided
+    if (dto.showPlatforms) {
+      await this.syncShowPlatforms(showId, dto.showPlatforms);
+    }
 
-      // 4. Fetch updated show with relations
-      return tx.show.findUniqueOrThrow({
-        where: { id: showId },
-        include: defaultInclude,
-      }) as Promise<Show | ShowWithIncludes<T>>;
-    });
+    // 4. Fetch updated show with relations directly via repository
+    return this.showRepository.findByUid(uid, defaultInclude) as Promise<Show | ShowWithPayload<T>>;
   }
 
   /**
    * Soft-deletes a show and all its related MC and platform assignments.
-   *
-   * @param uid - Show UID
    */
+  @Transactional()
   async deleteShow(uid: string): Promise<void> {
     const show = await this.showService.getShowById(uid);
     const showId = show.id;
-    const deletedAt = new Date();
 
-    await this.prisma.executeTransaction(async (tx) => {
-      // Soft-delete the show
-      await tx.show.update({
-        where: { id: showId },
-        data: { deletedAt },
-      });
-
-      // Soft-delete all related ShowMC records
-      await tx.showMC.updateMany({
-        where: { showId, deletedAt: null },
-        data: { deletedAt },
-      });
-
-      // Soft-delete all related ShowPlatform records
-      await tx.showPlatform.updateMany({
-        where: { showId, deletedAt: null },
-        data: { deletedAt },
-      });
-    });
+    await this.showRepository.softDelete({ uid });
+    await this.showMcRepository.softDeleteAllByShowId(showId);
+    await this.showPlatformRepository.softDeleteAllByShowId(showId);
   }
 
   /**
    * Removes MCs from a show by soft-deleting the ShowMC records.
-   *
-   * @param uid - Show UID
-   * @param mcIds - Array of MC UIDs to remove
    */
+  @Transactional()
   async removeMCsFromShow(uid: string, mcIds: string[]): Promise<void> {
     const show = await this.showService.getShowById(uid);
     const showId = show.id;
 
-    await this.prisma.executeTransaction(async (tx) => {
-      // Get MC IDs from UIDs
-      const mcRecords = await tx.mC.findMany({
-        where: { uid: { in: mcIds } },
-        select: { id: true },
-      });
-      const mcIdsBigInt = mcRecords.map((mc) => mc.id);
-
-      await tx.showMC.updateMany({
-        where: {
-          showId,
-          mcId: { in: mcIdsBigInt },
-          deletedAt: null,
-        },
-        data: { deletedAt: new Date() },
-      });
-    });
+    const mcs = await this.mcRepository.findByUids(mcIds);
+    const internalMcIds = mcs.map((mc) => mc.id);
+    await this.showMcRepository.softDeleteByMcIds(showId, internalMcIds);
   }
 
   /**
    * Removes platforms from a show by soft-deleting the ShowPlatform records.
-   *
-   * @param uid - Show UID
-   * @param platformIds - Array of platform UIDs to remove
    */
-  async removePlatformsFromShow(
-    uid: string,
-    platformIds: string[],
-  ): Promise<void> {
+  @Transactional()
+  async removePlatformsFromShow(uid: string, platformIds: string[]): Promise<void> {
     const show = await this.showService.getShowById(uid);
     const showId = show.id;
 
-    await this.prisma.executeTransaction(async (tx) => {
-      // Get platform IDs from UIDs
-      const platformRecords = await tx.platform.findMany({
-        where: { uid: { in: platformIds } },
-        select: { id: true },
-      });
-      const platformIdsBigInt = platformRecords.map((platform) => platform.id);
-
-      await tx.showPlatform.updateMany({
-        where: {
-          showId,
-          platformId: { in: platformIdsBigInt },
-          deletedAt: null,
-        },
-        data: { deletedAt: new Date() },
-      });
-    });
+    const platforms = await this.platformRepository.findByUids(platformIds);
+    const internalPlatformIds = platforms.map((p) => p.id);
+    await this.showPlatformRepository.softDeleteByPlatformIds(showId, internalPlatformIds);
   }
 
   /**
-   * Replaces all MCs for a show (removes existing, adds new).
-   *
-   * @param uid - Show UID
-   * @param mcs - Array of MC assignments
-   * @param include - Optional Prisma include for relations
-   * @returns Updated show with relations
+   * Replaces all MCs for a show (sync: removes removed, adds new, restores previously deleted).
    */
-  async replaceMCsForShow<T extends Prisma.ShowInclude = Record<string, never>>(
+  @Transactional()
+  async replaceMCsForShow<T extends ShowInclude = Record<string, never>>(
     uid: string,
     mcs: Array<{ mcId: string; note?: string | null; metadata?: object }>,
     include?: T,
-  ): Promise<Show | ShowWithIncludes<T>> {
+  ): Promise<Show | ShowWithPayload<T>> {
     const defaultInclude = include || this.getDefaultIncludes();
     const show = await this.showService.getShowById(uid);
     const showId = show.id;
 
-    return this.prisma.executeTransaction(async (tx) => {
-      // Soft-delete all existing ShowMC records
-      await tx.showMC.updateMany({
-        where: { showId, deletedAt: null },
-        data: { deletedAt: new Date() },
-      });
-
-      // Create new ShowMC records
-      if (mcs.length > 0) {
-        const mcRecords = await tx.mC.findMany({
-          where: { uid: { in: mcs.map((mc) => mc.mcId) } },
-          select: { id: true, uid: true },
-        });
-
-        const mcIdMap = new Map(mcRecords.map((mc) => [mc.uid, mc.id]));
-
-        await Promise.all(
-          mcs.map((mc) => {
-            const mcId = mcIdMap.get(mc.mcId);
-            if (!mcId) {
-              throw HttpError.notFound('MC', mc.mcId);
-            }
-            return tx.showMC.create({
-              data: {
-                uid: this.showMcService.generateShowMcUid(),
-                showId,
-                mcId,
-                note: mc.note ?? null,
-                metadata: mc.metadata ?? {},
-              },
-            });
-          }),
-        );
-      }
-
-      // Fetch updated show with relations
-      return tx.show.findUniqueOrThrow({
-        where: { id: showId },
-        include: defaultInclude,
-      }) as Promise<Show | ShowWithIncludes<T>>;
-    });
+    await this.syncShowMCs(showId, mcs);
+    return this.showRepository.findByUid(uid, defaultInclude) as Promise<Show | ShowWithPayload<T>>;
   }
 
   /**
-   * Replaces all platforms for a show (removes existing, adds new).
-   *
-   * @param uid - Show UID
-   * @param platforms - Array of platform assignments
-   * @param include - Optional Prisma include for relations
-   * @returns Updated show with relations
+   * Replaces all platforms for a show (sync: removes removed, adds new, restores previously deleted).
    */
-  async replacePlatformsForShow<
-    T extends Prisma.ShowInclude = Record<string, never>,
-  >(
+  @Transactional()
+  async replacePlatformsForShow<T extends ShowInclude = Record<string, never>>(
     uid: string,
     platforms: Array<{
       platformId: string;
@@ -486,61 +181,20 @@ export class ShowOrchestrationService {
       metadata?: object;
     }>,
     include?: T,
-  ): Promise<Show | ShowWithIncludes<T>> {
+  ): Promise<Show | ShowWithPayload<T>> {
     const defaultInclude = include || this.getDefaultIncludes();
     const show = await this.showService.getShowById(uid);
     const showId = show.id;
 
-    return this.prisma.executeTransaction(async (tx) => {
-      // Soft-delete all existing ShowPlatform records
-      await tx.showPlatform.updateMany({
-        where: { showId, deletedAt: null },
-        data: { deletedAt: new Date() },
-      });
-
-      // Create new ShowPlatform records
-      if (platforms.length > 0) {
-        const platformRecords = await tx.platform.findMany({
-          where: { uid: { in: platforms.map((p) => p.platformId) } },
-          select: { id: true, uid: true },
-        });
-
-        const platformIdMap = new Map(
-          platformRecords.map((p) => [p.uid, p.id]),
-        );
-
-        await Promise.all(
-          platforms.map((platform) => {
-            const platformId = platformIdMap.get(platform.platformId);
-            if (!platformId) {
-              throw HttpError.notFound('Platform', platform.platformId);
-            }
-            return tx.showPlatform.create({
-              data: {
-                uid: this.showPlatformService.generateShowPlatformUid(),
-                showId,
-                platformId,
-                liveStreamLink: platform.liveStreamLink ?? null,
-                platformShowId: platform.platformShowId ?? null,
-                viewerCount: platform.viewerCount ?? 0,
-                metadata: platform.metadata ?? {},
-              },
-            });
-          }),
-        );
-      }
-
-      // Fetch updated show with relations
-      return tx.show.findUniqueOrThrow({
-        where: { id: showId },
-        include: defaultInclude,
-      }) as Promise<Show | ShowWithIncludes<T>>;
-    });
+    await this.syncShowPlatforms(showId, platforms);
+    return this.showRepository.findByUid(uid, defaultInclude) as Promise<Show | ShowWithPayload<T>>;
   }
 
-  private createShowPayload(
-    data: CreateShowWithAssignmentsDto,
-  ): Prisma.ShowCreateInput {
+  // ---------------------------------------------------------------------------
+  // Private helpers
+  // ---------------------------------------------------------------------------
+
+  private createShowPayload(data: CreateShowWithAssignmentsDto) {
     const showUid = this.showService.generateShowUid();
 
     return {
@@ -580,130 +234,83 @@ export class ShowOrchestrationService {
     };
   }
 
-  /**
-   * Builds the update payload for core show attributes.
-   */
-  private buildShowUpdatePayload(
-    dto: UpdateShowWithAssignmentsDto,
-  ): Prisma.ShowUpdateInput {
-    const payload: Prisma.ShowUpdateInput = {};
-
-    if (dto.name)
-      payload.name = dto.name;
-    if (dto.startTime)
-      payload.startTime = dto.startTime;
-    if (dto.endTime)
-      payload.endTime = dto.endTime;
-    if (dto.metadata)
-      payload.metadata = dto.metadata;
-
-    if (dto.clientId) {
-      payload.client = { connect: { uid: dto.clientId } };
-    }
-    if (dto.studioRoomId) {
-      payload.studioRoom = { connect: { uid: dto.studioRoomId } };
-    }
-    if (dto.studioId) {
-      payload.studio = { connect: { uid: dto.studioId } };
-    }
-    if (dto.showTypeId) {
-      payload.showType = { connect: { uid: dto.showTypeId } };
-    }
-    if (dto.showStatusId) {
-      payload.showStatus = { connect: { uid: dto.showStatusId } };
-    }
-    if (dto.showStandardId) {
-      payload.showStandard = { connect: { uid: dto.showStandardId } };
-    }
-
-    // Validate time range if both times are present
-    if (dto.startTime && dto.endTime) {
-      if (dto.endTime <= dto.startTime) {
-        throw HttpError.badRequest('End time must be after start time');
-      }
-    }
-
-    return payload;
+  private getDefaultIncludes(): ShowInclude {
+    return {
+      client: true,
+      studio: true,
+      studioRoom: true,
+      showType: true,
+      showStatus: true,
+      showStandard: true,
+      showMCs: {
+        include: { mc: true },
+        where: { deletedAt: null },
+      },
+      showPlatforms: {
+        include: { platform: true },
+        where: { deletedAt: null },
+      },
+    };
   }
 
   /**
-   * Synchronizes ShowMC records for a show (creates, updates, or soft-deletes).
+   * Syncs MC assignments for a show within the active transaction (via CLS).
+   * Validates MCs exist, upserts active assignments, soft-deletes removed ones.
    */
   private async syncShowMCs(
-    tx: TransactionClient,
     showId: bigint,
     mcs: Array<{ mcId: string; note?: string | null; metadata?: object }>,
   ): Promise<void> {
-    // Get existing ShowMC records
-    const existingShowMCs = await tx.showMC.findMany({
-      where: { showId, deletedAt: null },
-      include: { mc: true },
-    });
+    const mcUids = mcs.map((m) => m.mcId);
 
-    // Get MC IDs from UIDs
-    const mcUids = mcs.map((mc) => mc.mcId);
-    const mcRecords = await tx.mC.findMany({
-      where: { uid: { in: mcUids } },
-      select: { id: true, uid: true },
-    });
-    const mcIdMap = new Map(mcRecords.map((mc) => [mc.uid, mc.id]));
+    const foundMcs = await this.mcRepository.findByUids(mcUids);
+    if (foundMcs.length !== mcUids.length) {
+      const foundUids = foundMcs.map((mc) => mc.uid);
+      const missingUids = mcUids.filter((uid) => !foundUids.includes(uid));
+      throw HttpError.badRequest(`MCs not found: ${missingUids.join(', ')}`);
+    }
 
-    // Process each MC assignment
+    const mcMap = new Map(foundMcs.map((m) => [m.uid, m.id]));
+    const existingAssignments = await this.showMcRepository.findMany({ where: { showId } });
     const processedMcIds = new Set<bigint>();
 
-    for (const mcAssignment of mcs) {
-      const mcId = mcIdMap.get(mcAssignment.mcId);
-      if (!mcId) {
-        throw HttpError.notFound('MC', mcAssignment.mcId);
-      }
+    for (const assignment of mcs) {
+      const internalMcId = mcMap.get(assignment.mcId);
+      if (!internalMcId)
+        continue;
 
-      processedMcIds.add(mcId);
-
-      const existing = existingShowMCs.find((showMc) => showMc.mcId === mcId);
+      processedMcIds.add(internalMcId);
+      const existing = existingAssignments.find((a) => a.mcId === internalMcId);
 
       if (existing) {
-        // Update existing ShowMC record
-        await tx.showMC.update({
-          where: { id: existing.id },
-          data: {
-            note: mcAssignment.note ?? null,
-            metadata: mcAssignment.metadata ?? existing.metadata ?? {},
-          },
+        await this.showMcRepository.restoreAndUpdateAssignment(existing.id, {
+          note: assignment.note ?? null,
+          metadata: assignment.metadata ?? (existing.metadata as object) ?? {},
         });
       } else {
-        // Create new ShowMC record
-        await tx.showMC.create({
-          data: {
-            uid: this.showMcService.generateShowMcUid(),
-            showId,
-            mcId,
-            note: mcAssignment.note ?? null,
-            metadata: mcAssignment.metadata ?? {},
-          },
+        await this.showMcRepository.createAssignment({
+          uid: this.showMcService.generateShowMcUid(),
+          showId,
+          mcId: internalMcId,
+          note: assignment.note ?? null,
+          metadata: assignment.metadata ?? {},
         });
       }
     }
 
-    // Soft-delete ShowMC records that are no longer in the list
-    const toDelete = existingShowMCs.filter(
-      (showMc) => !processedMcIds.has(showMc.mcId),
+    const toDelete = existingAssignments.filter(
+      (a) => !processedMcIds.has(a.mcId) && a.deletedAt === null,
     );
-
-    if (toDelete.length > 0) {
-      await tx.showMC.updateMany({
-        where: {
-          id: { in: toDelete.map((sm) => sm.id) },
-        },
-        data: { deletedAt: new Date() },
-      });
+    for (const assignment of toDelete) {
+      await this.showMcRepository.softDelete({ id: assignment.id });
     }
   }
 
   /**
-   * Synchronizes ShowPlatform records for a show (creates, updates, or soft-deletes).
+   * Syncs platform assignments for a show within the active transaction (via CLS).
+   * Validates platforms exist, upserts active assignments, soft-deletes removed ones.
    */
   private async syncShowPlatforms(
-    tx: TransactionClient,
     showId: bigint,
     platforms: Array<{
       platformId: string;
@@ -713,108 +320,52 @@ export class ShowOrchestrationService {
       metadata?: object;
     }>,
   ): Promise<void> {
-    // Get existing ShowPlatform records
-    const existingShowPlatforms = await tx.showPlatform.findMany({
-      where: { showId, deletedAt: null },
-      include: { platform: true },
-    });
-
-    // Get platform IDs from UIDs
     const platformUids = platforms.map((p) => p.platformId);
-    const platformRecords = await tx.platform.findMany({
-      where: { uid: { in: platformUids } },
-      select: { id: true, uid: true },
-    });
-    const platformIdMap = new Map(platformRecords.map((p) => [p.uid, p.id]));
 
-    // Process each platform assignment
+    const foundPlatforms = await this.platformRepository.findByUids(platformUids);
+    if (foundPlatforms.length !== platformUids.length) {
+      const foundUids = foundPlatforms.map((p) => p.uid);
+      const missingUids = platformUids.filter((uid) => !foundUids.includes(uid));
+      throw HttpError.badRequest(`Platforms not found: ${missingUids.join(', ')}`);
+    }
+
+    const platformMap = new Map(foundPlatforms.map((p) => [p.uid, p.id]));
+    const existingAssignments = await this.showPlatformRepository.findMany({ where: { showId } });
     const processedPlatformIds = new Set<bigint>();
 
-    for (const platformAssignment of platforms) {
-      const platformId = platformIdMap.get(platformAssignment.platformId);
-      if (!platformId) {
-        throw HttpError.notFound('Platform', platformAssignment.platformId);
-      }
+    for (const assignment of platforms) {
+      const internalPlatformId = platformMap.get(assignment.platformId);
+      if (!internalPlatformId)
+        continue;
 
-      processedPlatformIds.add(platformId);
-
-      const existing = existingShowPlatforms.find(
-        (showPlatform) => showPlatform.platformId === platformId,
-      );
+      processedPlatformIds.add(internalPlatformId);
+      const existing = existingAssignments.find((a) => a.platformId === internalPlatformId);
 
       if (existing) {
-        // Update existing ShowPlatform record
-        await tx.showPlatform.update({
-          where: { id: existing.id },
-          data: {
-            liveStreamLink:
-              platformAssignment.liveStreamLink ?? existing.liveStreamLink,
-            platformShowId:
-              platformAssignment.platformShowId ?? existing.platformShowId,
-            viewerCount: platformAssignment.viewerCount ?? existing.viewerCount,
-            metadata: platformAssignment.metadata ?? existing.metadata ?? {},
-          },
+        await this.showPlatformRepository.restoreAndUpdateAssignment(existing.id, {
+          liveStreamLink: assignment.liveStreamLink ?? existing.liveStreamLink,
+          platformShowId: assignment.platformShowId ?? existing.platformShowId,
+          viewerCount: assignment.viewerCount ?? existing.viewerCount,
+          metadata: assignment.metadata ?? (existing.metadata as object) ?? {},
         });
       } else {
-        // Create new ShowPlatform record
-        await tx.showPlatform.create({
-          data: {
-            uid: this.showPlatformService.generateShowPlatformUid(),
-            showId,
-            platformId,
-            liveStreamLink: platformAssignment.liveStreamLink ?? null,
-            platformShowId: platformAssignment.platformShowId ?? null,
-            viewerCount: platformAssignment.viewerCount ?? 0,
-            metadata: platformAssignment.metadata ?? {},
-          },
+        await this.showPlatformRepository.createAssignment({
+          uid: this.showPlatformService.generateShowPlatformUid(),
+          showId,
+          platformId: internalPlatformId,
+          liveStreamLink: assignment.liveStreamLink ?? null,
+          platformShowId: assignment.platformShowId ?? null,
+          viewerCount: assignment.viewerCount ?? 0,
+          metadata: assignment.metadata ?? {},
         });
       }
     }
 
-    // Soft-delete ShowPlatform records that are no longer in the list
-    const toDelete = existingShowPlatforms.filter(
-      (showPlatform) => !processedPlatformIds.has(showPlatform.platformId),
+    const toDelete = existingAssignments.filter(
+      (a) => !processedPlatformIds.has(a.platformId) && a.deletedAt === null,
     );
-
-    if (toDelete.length > 0) {
-      await tx.showPlatform.updateMany({
-        where: {
-          id: { in: toDelete.map((sp) => sp.id) },
-        },
-        data: { deletedAt: new Date() },
-      });
+    for (const assignment of toDelete) {
+      await this.showPlatformRepository.softDelete({ id: assignment.id });
     }
-  }
-
-  /**
-   * Returns default includes for show relations.
-   *
-   * @returns Default Prisma include object
-   */
-  private getDefaultIncludes(): Prisma.ShowInclude {
-    return {
-      client: true,
-      studio: true,
-      studioRoom: true,
-      showType: true,
-      showStatus: true,
-      showStandard: true,
-      showMCs: {
-        include: {
-          mc: true,
-        },
-        where: {
-          deletedAt: null,
-        },
-      },
-      showPlatforms: {
-        include: {
-          platform: true,
-        },
-        where: {
-          deletedAt: null,
-        },
-      },
-    };
   }
 }

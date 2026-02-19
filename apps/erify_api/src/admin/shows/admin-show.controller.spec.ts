@@ -115,7 +115,7 @@ describe('adminShowController', () => {
 
       mockShowOrchestrationService.getPaginatedShowsWithRelations.mockResolvedValue(
         {
-          shows,
+          data: shows,
           total,
         },
       );

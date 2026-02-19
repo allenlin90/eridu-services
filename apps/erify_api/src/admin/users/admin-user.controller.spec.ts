@@ -121,15 +121,7 @@ describe('adminUserController', () => {
       } as any);
 
       const result = await controller.getUsers(query);
-      expect(mockUserService.listUsers).toHaveBeenCalledWith({
-        skip: query.skip,
-        take: query.take,
-        name: undefined,
-        email: undefined,
-        uid: undefined,
-        extId: undefined,
-        isSystemAdmin: undefined,
-      });
+      expect(mockUserService.listUsers).toHaveBeenCalledWith(query);
       expect(result.data[0]).toHaveProperty('is_system_admin');
     });
 
@@ -152,15 +144,7 @@ describe('adminUserController', () => {
       } as any);
 
       await controller.getUsers(query);
-      expect(mockUserService.listUsers).toHaveBeenCalledWith({
-        skip: query.skip,
-        take: query.take,
-        name: 'test',
-        email: 'test@example.com',
-        uid: undefined,
-        extId: 'ext_123',
-        isSystemAdmin: undefined,
-      });
+      expect(mockUserService.listUsers).toHaveBeenCalledWith(query);
     });
 
     it('should filter users by isSystemAdmin=false', async () => {
@@ -180,15 +164,7 @@ describe('adminUserController', () => {
       } as any);
 
       await controller.getUsers(query);
-      expect(mockUserService.listUsers).toHaveBeenCalledWith({
-        skip: query.skip,
-        take: query.take,
-        name: undefined,
-        email: undefined,
-        uid: undefined,
-        extId: undefined,
-        isSystemAdmin: false,
-      });
+      expect(mockUserService.listUsers).toHaveBeenCalledWith(query);
     });
   });
 
@@ -207,6 +183,20 @@ describe('adminUserController', () => {
       expect(mockUserService.getUserById).toHaveBeenCalledWith(userId);
       expect(result).toEqual(user);
     });
+
+    it('should throw 404 if user not found', async () => {
+      const userId = 'user_404';
+      mockUserService.getUserById.mockResolvedValue(null);
+
+      // HttpError.notFound returns a NotFoundException
+      await expect(controller.getUser(userId)).rejects.toThrow();
+      try {
+        await controller.getUser(userId);
+      } catch (error: any) {
+        expect(error.status).toBe(404);
+        expect(error.message).toContain('User not found');
+      }
+    });
   });
 
   describe('updateUser', () => {
@@ -217,9 +207,12 @@ describe('adminUserController', () => {
       } as UpdateUserDto;
       const updatedUser = { uid: userId, ...updateDto };
 
+      mockUserService.getUserById.mockResolvedValue({ uid: userId } as any);
       mockUserService.updateUser.mockResolvedValue(updatedUser as any);
 
       const result = await controller.updateUser(userId, updateDto);
+
+      expect(mockUserService.getUserById).toHaveBeenCalledWith(userId);
       expect(mockUserService.updateUser).toHaveBeenCalledWith(
         userId,
         updateDto,
@@ -232,9 +225,12 @@ describe('adminUserController', () => {
     it('should delete a user', async () => {
       const userId = 'user_123';
 
+      mockUserService.getUserById.mockResolvedValue({ uid: userId } as any);
       mockUserService.deleteUser.mockResolvedValue(undefined);
 
       await controller.deleteUser(userId);
+
+      expect(mockUserService.getUserById).toHaveBeenCalledWith(userId);
       expect(mockUserService.deleteUser).toHaveBeenCalledWith(userId);
     });
   });

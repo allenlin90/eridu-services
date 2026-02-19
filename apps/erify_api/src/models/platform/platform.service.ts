@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Platform, Prisma } from '@prisma/client';
 
+import type {
+  CreatePlatformPayload,
+  UpdatePlatformPayload,
+} from './schemas/platform.schema';
 import { PlatformRepository } from './platform.repository';
 
-import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
@@ -19,94 +21,31 @@ export class PlatformService extends BaseModelService {
     super(utilityService);
   }
 
-  async createPlatform(
-    data: Omit<Prisma.PlatformCreateInput, 'uid'>,
-  ): Promise<Platform> {
+  async createPlatform(payload: CreatePlatformPayload): ReturnType<PlatformRepository['create']> {
     const uid = this.generateUid();
-    return this.platformRepository.create({ ...data, uid });
+    return this.platformRepository.create({ ...payload, uid });
   }
 
-  getPlatformById(
-    uid: string,
-    include?: Prisma.PlatformInclude,
-  ): Promise<Platform> {
-    return this.findPlatformOrThrow(uid, include);
+  async getPlatformById(
+    ...args: Parameters<PlatformRepository['findOne']>
+  ): ReturnType<PlatformRepository['findOne']> {
+    return this.platformRepository.findOne(...args);
   }
 
-  async findPlatformById(id: bigint): Promise<Platform | null> {
-    return this.platformRepository.findOne({ id });
-  }
-
-  async getPlatforms(params: {
-    skip?: number;
-    take?: number;
-    orderBy?: Record<string, 'asc' | 'desc'>;
-  }): Promise<Platform[]> {
-    return this.platformRepository.findMany(params);
-  }
-
-  async countPlatforms(): Promise<number> {
-    return this.platformRepository.count({});
-  }
-
-  async listPlatforms(query: {
-    skip?: number;
-    take?: number;
-    name?: string;
-    uid?: string;
-    include_deleted?: boolean;
-  }): Promise<{ data: Platform[]; total: number }> {
-    const where: Prisma.PlatformWhereInput = {};
-
-    if (!query.include_deleted) {
-      where.deletedAt = null;
-    }
-
-    if (query.name) {
-      where.name = {
-        contains: query.name,
-        mode: 'insensitive',
-      };
-    }
-
-    if (query.uid) {
-      where.uid = {
-        contains: query.uid,
-        mode: 'insensitive',
-      };
-    }
-
-    const [data, total] = await Promise.all([
-      this.platformRepository.findMany({
-        skip: query.skip,
-        take: query.take,
-        where,
-      }),
-      this.platformRepository.count(where),
-    ]);
-
-    return { data, total };
+  async listPlatforms(
+    ...args: Parameters<PlatformRepository['findPaginated']>
+  ): ReturnType<PlatformRepository['findPaginated']> {
+    return this.platformRepository.findPaginated(...args);
   }
 
   async updatePlatform(
     uid: string,
-    data: Prisma.PlatformUpdateInput,
-  ): Promise<Platform> {
-    return this.platformRepository.update({ uid }, data);
+    payload: UpdatePlatformPayload,
+  ): ReturnType<PlatformRepository['update']> {
+    return this.platformRepository.update({ uid }, payload);
   }
 
-  async deletePlatform(uid: string): Promise<Platform> {
+  async deletePlatform(uid: string): ReturnType<PlatformRepository['softDelete']> {
     return this.platformRepository.softDelete({ uid });
-  }
-
-  private async findPlatformOrThrow(
-    uid: string,
-    include?: Prisma.PlatformInclude,
-  ): Promise<Platform> {
-    const platform = await this.platformRepository.findOne({ uid }, include);
-    if (!platform) {
-      throw HttpError.notFound('Platform', uid);
-    }
-    return platform;
   }
 }

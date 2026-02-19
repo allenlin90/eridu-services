@@ -1,3 +1,8 @@
+// ============================================================================
+// Service Layer Payload Types
+// ============================================================================
+// NOTE: These types CAN use Prisma types to define the payload shape.
+// Services import these payload types, NOT Prisma types directly.
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
@@ -108,3 +113,47 @@ export class StudioRoomDto extends createZodDto(studioRoomDto) {}
 export class StudioRoomWithStudioDto extends createZodDto(
   studioRoomWithStudioDto,
 ) {}
+
+/**
+ * Payload for creating a studio room (service layer).
+ */
+export type CreateStudioRoomPayload = {
+  name: string;
+  capacity: number;
+  metadata?: Record<string, any>;
+  studioId: string;
+  uid?: string;
+  includeStudio?: boolean;
+};
+
+/**
+ * Payload for updating a studio room (service layer).
+ */
+export type UpdateStudioRoomPayload = {
+  name?: string;
+  capacity?: number;
+  metadata?: Record<string, any>;
+  studioId?: string;
+  includeStudio?: boolean;
+};
+
+/**
+ * Type-safe filter options for studio rooms.
+ */
+export type StudioRoomFilters = {
+  uid?: string | { contains: string; mode: 'insensitive' };
+  name?: string | { contains: string; mode: 'insensitive' };
+  studioId?: bigint;
+  studio?: { uid: string };
+  deletedAt?: Date | null;
+};
+
+/**
+ * Type-safe order by options for studio rooms.
+ */
+export type StudioRoomOrderBy = {
+  name?: 'asc' | 'desc';
+  capacity?: 'asc' | 'desc';
+  createdAt?: 'asc' | 'desc';
+  updatedAt?: 'asc' | 'desc';
+};

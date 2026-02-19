@@ -32,45 +32,65 @@ export class AdminMcController extends BaseAdminController {
 
   @Post()
   @AdminResponse(mcWithUserDto, HttpStatus.CREATED, 'MC created successfully')
-  createMc(@Body() body: CreateMcDto) {
-    return this.mcService.createMcFromDto(body, { user: true });
+  async createMc(@Body() body: CreateMcDto) {
+    const { name, aliasName, metadata, userId } = body;
+    const mc = await this.mcService.createMc({
+      name,
+      aliasName,
+      metadata,
+      userId,
+    });
+    return this.mcService.getMcByIdWithUser(mc.uid);
   }
 
   @Get()
   @AdminPaginatedResponse(mcWithUserDto, 'List of MCs with pagination')
   async getMcs(@Query() query: ListMcsQueryDto) {
-    const { data, total } = await this.mcService.listMcs(
-      {
-        skip: query.skip,
-        take: query.take,
-        name: query.name,
-        aliasName: query.aliasName,
-        uid: query.uid,
-        include_deleted: query.include_deleted,
-      },
-      { user: true },
-    );
+    const { data, total } = await this.mcService.listMcs({
+      skip: query.skip,
+      take: query.take,
+      name: query.name,
+      aliasName: query.aliasName,
+      uid: query.uid,
+      includeDeleted: query.include_deleted,
+      includeUser: true,
+    });
 
     return this.createPaginatedResponse(data, total, query);
   }
 
   @Get(':id')
   @AdminResponse(mcWithUserDto, HttpStatus.OK, 'MC details')
-  getMc(
+  async getMc(
     @Param('id', new UidValidationPipe(McService.UID_PREFIX, 'MC'))
     id: string,
   ) {
-    return this.mcService.getMcById(id, { user: true });
+    const mc = await this.mcService.getMcByIdWithUser(id);
+    this.ensureResourceExists(mc, 'MC', id);
+    return mc;
   }
 
   @Patch(':id')
   @AdminResponse(mcWithUserDto, HttpStatus.OK, 'MC updated successfully')
-  updateMc(
+  async updateMc(
     @Param('id', new UidValidationPipe(McService.UID_PREFIX, 'MC'))
     id: string,
     @Body() body: UpdateMcDto,
   ) {
-    return this.mcService.updateMcFromDto(id, body, { user: true });
+    // Check existence first
+    const existing = await this.mcService.getMcById(id);
+    this.ensureResourceExists(existing, 'MC', id);
+
+    const { name, aliasName, isBanned, metadata, userId } = body;
+    await this.mcService.updateMc(id, {
+      name,
+      aliasName,
+      isBanned,
+      metadata,
+      userId,
+    });
+
+    return this.mcService.getMcByIdWithUser(id);
   }
 
   @Delete(':id')
@@ -79,6 +99,10 @@ export class AdminMcController extends BaseAdminController {
     @Param('id', new UidValidationPipe(McService.UID_PREFIX, 'MC'))
     id: string,
   ) {
+    // Check existence first
+    const existing = await this.mcService.getMcById(id);
+    this.ensureResourceExists(existing, 'MC', id);
+
     await this.mcService.deleteMc(id);
   }
 }

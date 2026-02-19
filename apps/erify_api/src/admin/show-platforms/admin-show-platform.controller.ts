@@ -37,12 +37,23 @@ export class AdminShowPlatformController extends BaseAdminController {
     'Show platform created successfully',
   )
   async createShowPlatform(@Body() body: CreateShowPlatformDto) {
-    const showPlatform
-      = await this.showPlatformService.createShowPlatformFromDto(body);
-    return this.showPlatformService.getShowPlatformById(showPlatform.uid, {
+    const { showId, platformId, liveStreamLink, platformShowId, viewerCount, metadata } = body;
+    const showPlatform = await this.showPlatformService.create({
+      showId,
+      platformId,
+      liveStreamLink,
+      platformShowId,
+      viewerCount,
+      metadata,
+    });
+    const result = await this.showPlatformService.findOne(showPlatform.uid, {
       show: true,
       platform: true,
     });
+
+    // Should exist since we just created it
+    this.ensureResourceExists(result, 'Show Platform', showPlatform.uid);
+    return result;
   }
 
   @Get()
@@ -51,7 +62,7 @@ export class AdminShowPlatformController extends BaseAdminController {
     'List of show platforms with pagination',
   )
   async getShowPlatforms(@Query() query: PaginationQueryDto) {
-    const data = await this.showPlatformService.getActiveShowPlatforms({
+    const result = await this.showPlatformService.getShowPlatforms({
       skip: query.skip,
       take: query.take,
       orderBy: { createdAt: 'desc' },
@@ -60,24 +71,25 @@ export class AdminShowPlatformController extends BaseAdminController {
         platform: true,
       },
     });
-    const total = await this.showPlatformService.countShowPlatforms();
 
-    return this.createPaginatedResponse(data, total, query);
+    return this.createPaginatedResponse(result.data, result.total, query);
   }
 
   @Get(':id')
   @AdminResponse(showPlatformDto, HttpStatus.OK, 'Show platform details')
-  getShowPlatform(
+  async getShowPlatform(
     @Param(
       'id',
       new UidValidationPipe(ShowPlatformService.UID_PREFIX, 'Show Platform'),
     )
     id: string,
   ) {
-    return this.showPlatformService.getShowPlatformById(id, {
+    const result = await this.showPlatformService.findOne(id, {
       show: true,
       platform: true,
     });
+    this.ensureResourceExists(result, 'Show Platform', id);
+    return result;
   }
 
   @Patch(':id')
@@ -94,13 +106,30 @@ export class AdminShowPlatformController extends BaseAdminController {
     id: string,
     @Body() body: UpdateShowPlatformDto,
   ) {
-    const showPlatform
-      = await this.showPlatformService.updateShowPlatformFromDto(id, body);
-    // Fetch with relations for proper serialization
-    return this.showPlatformService.getShowPlatformById(showPlatform.uid, {
+    // 1. Check existence
+    const existing = await this.showPlatformService.findOne(id);
+    this.ensureResourceExists(existing, 'Show Platform', id);
+
+    const { showId, platformId, liveStreamLink, platformShowId, viewerCount, metadata } = body;
+
+    // 2. Update
+    const showPlatform = await this.showPlatformService.update(id, {
+      showId,
+      platformId,
+      liveStreamLink,
+      platformShowId,
+      viewerCount,
+      metadata,
+    });
+
+    // 3. Fetch with relations for proper serialization
+    const result = await this.showPlatformService.findOne(showPlatform.uid, {
       show: true,
       platform: true,
     });
+
+    this.ensureResourceExists(result, 'Show Platform', id);
+    return result;
   }
 
   @Delete(':id')
@@ -112,6 +141,9 @@ export class AdminShowPlatformController extends BaseAdminController {
     )
     id: string,
   ) {
-    await this.showPlatformService.deleteShowPlatform(id);
+    const existing = await this.showPlatformService.findOne(id);
+    this.ensureResourceExists(existing, 'Show Platform', id);
+
+    await this.showPlatformService.softDelete(id);
   }
 }

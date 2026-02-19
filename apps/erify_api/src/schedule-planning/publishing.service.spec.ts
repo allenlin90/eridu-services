@@ -1,7 +1,10 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Module } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
+import { ClsPluginTransactional } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import type { Schedule } from '@prisma/client';
+import { ClsModule } from 'nestjs-cls';
 
 import type { PlanDocument } from './schemas/schedule-planning.schema';
 import type { ScheduleWithRelations } from './publishing.service';
@@ -13,68 +16,37 @@ import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-sna
 import { ShowService } from '@/models/show/show.service';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
-import type {
-  TransactionClient,
-  TransactionOptions,
-} from '@/prisma/prisma.service';
-import {
-  PrismaService,
-} from '@/prisma/prisma.service';
+import { PrismaService } from '@/prisma/prisma.service';
 
-// Test helper type for mock transaction clients used in publishing tests
-// This allows test mocks to only implement the properties they need
-// The mock structure matches what's actually used in tests
-type PublishingMockTransactionClientStructure = {
-  show: {
-    deleteMany: jest.Mock;
-    createMany: jest.Mock;
-    findMany: jest.Mock;
-  };
-  showMC: {
-    createMany: jest.Mock;
-  };
-  showPlatform: {
-    createMany: jest.Mock;
-  };
-  schedule: {
-    update: jest.Mock;
-  };
-  client: {
-    findMany: jest.Mock;
-  };
-  studio: {
-    findMany: jest.Mock;
-  };
-  studioRoom: {
-    findMany: jest.Mock;
-  };
-  showType: {
-    findMany: jest.Mock;
-  };
-  showStatus: {
-    findMany: jest.Mock;
-  };
-  showStandard: {
-    findMany: jest.Mock;
-  };
-  mC: {
-    findMany: jest.Mock;
-  };
-  platform: {
-    findMany: jest.Mock;
-  };
+// File-scope mock transaction client (reassigned per test in beforeEach)
+let mockTransactionClient: {
+  show: { deleteMany: jest.Mock; createMany: jest.Mock; findMany: jest.Mock };
+  showMC: { createMany: jest.Mock };
+  showPlatform: { createMany: jest.Mock };
+  schedule: { update: jest.Mock };
+  client: { findMany: jest.Mock };
+  studio: { findMany: jest.Mock };
+  studioRoom: { findMany: jest.Mock };
+  showType: { findMany: jest.Mock };
+  showStatus: { findMany: jest.Mock };
+  showStandard: { findMany: jest.Mock };
+  mC: { findMany: jest.Mock };
+  platform: { findMany: jest.Mock };
 };
 
-// Helper function to convert mock transaction client to TransactionClient for tests
-// This is safe because the callback only accesses properties that exist on the mock
-// Using a type assertion that TypeScript accepts for test mocks
-function asTransactionClient(
-  mock: PublishingMockTransactionClientStructure,
-): TransactionClient {
-  // Type assertion is necessary here because test mocks don't implement full TransactionClient
-  // The callback will only access properties that exist on the mock
-  return mock as PublishingMockTransactionClientStructure & TransactionClient;
-}
+// File-scope mock PrismaService used by ClsPluginTransactional (closes over mockTransactionClient)
+const mockPrismaForCls = {
+  $transaction: jest.fn(async (callback: any, _options?: any) => {
+    return await callback(mockTransactionClient);
+  }),
+};
+
+// @Module-decorated class so ClsPluginTransactional.imports can resolve PrismaService via useExisting
+@Module({
+  providers: [{ provide: PrismaService, useValue: mockPrismaForCls }],
+  exports: [PrismaService],
+})
+class MockPrismaModule {}
 
 describe('publishingService', () => {
   let service: PublishingService;
@@ -84,54 +56,13 @@ describe('publishingService', () => {
   let showMcService: jest.Mocked<ShowMcService>;
   let showPlatformService: jest.Mocked<ShowPlatformService>;
   let validationService: jest.Mocked<ValidationService>;
-  let prismaService: jest.Mocked<PrismaService>;
   let getScheduleByIdMock: jest.Mock;
   let validateScheduleMock: jest.Mock;
   let createScheduleSnapshotMock: jest.Mock;
   let generateShowUidMock: jest.Mock;
   let generateShowMcUidMock: jest.Mock;
   let generateShowPlatformUidMock: jest.Mock;
-  let transactionMock: jest.Mock;
-  let mockTransactionClient: {
-    show: {
-      deleteMany: jest.Mock;
-      createMany: jest.Mock;
-      findMany: jest.Mock;
-    };
-    showMC: {
-      createMany: jest.Mock;
-    };
-    showPlatform: {
-      createMany: jest.Mock;
-    };
-    schedule: {
-      update: jest.Mock;
-    };
-    client: {
-      findMany: jest.Mock;
-    };
-    studio: {
-      findMany: jest.Mock;
-    };
-    studioRoom: {
-      findMany: jest.Mock;
-    };
-    showType: {
-      findMany: jest.Mock;
-    };
-    showStatus: {
-      findMany: jest.Mock;
-    };
-    showStandard: {
-      findMany: jest.Mock;
-    };
-    mC: {
-      findMany: jest.Mock;
-    };
-    platform: {
-      findMany: jest.Mock;
-    };
-  };
+  // mockTransactionClient is declared at file scope (above) — reassigned per test in beforeEach
 
   const mockPlanDocument: PlanDocument = {
     metadata: {
@@ -277,6 +208,20 @@ describe('publishingService', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ClsModule.forRoot({
+          global: true,
+          middleware: { mount: false },
+          plugins: [
+            new ClsPluginTransactional({
+              imports: [MockPrismaModule],
+              adapter: new TransactionalAdapterPrisma({
+                prismaInjectionToken: PrismaService,
+              }),
+            }),
+          ],
+        }),
+      ],
       providers: [
         PublishingService,
         {
@@ -315,23 +260,6 @@ describe('publishingService', () => {
             validateSchedule: jest.fn(),
           },
         },
-        {
-          provide: PrismaService,
-          useValue: {
-            executeTransaction: jest.fn(
-              async <T>(
-                callback: (tx: TransactionClient) => Promise<T>,
-                _options?: TransactionOptions,
-              ): Promise<T> => {
-                // Mock transaction client only implements subset needed for tests
-                // The callback will only access the properties that exist on mockTransactionClient
-                return await callback(
-                  asTransactionClient(mockTransactionClient),
-                );
-              },
-            ),
-          },
-        },
       ],
     }).compile();
 
@@ -342,7 +270,6 @@ describe('publishingService', () => {
     showMcService = module.get(ShowMcService);
     showPlatformService = module.get(ShowPlatformService);
     validationService = module.get(ValidationService);
-    prismaService = module.get(PrismaService);
 
     // Store mock functions to avoid unbound-method issues
     getScheduleByIdMock = scheduleService.getScheduleById as jest.Mock;
@@ -351,7 +278,6 @@ describe('publishingService', () => {
     generateShowUidMock = showService.generateShowUid as jest.Mock;
     generateShowMcUidMock = showMcService.generateShowMcUid as jest.Mock;
     generateShowPlatformUidMock = showPlatformService.generateShowPlatformUid as jest.Mock;
-    transactionMock = prismaService.executeTransaction as jest.Mock;
   });
 
   beforeEach(() => {
@@ -537,7 +463,6 @@ describe('publishingService', () => {
       ).rejects.toThrow('Schedule is already published');
 
       expect(validateScheduleMock).not.toHaveBeenCalled();
-      expect(transactionMock).not.toHaveBeenCalled();
     });
 
     it('should throw ConflictException on version mismatch', async () => {
@@ -549,7 +474,6 @@ describe('publishingService', () => {
       );
 
       expect(validateScheduleMock).not.toHaveBeenCalled();
-      expect(transactionMock).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException for invalid plan document structure - missing planDocument', async () => {
@@ -627,8 +551,6 @@ describe('publishingService', () => {
         details?: { errors: unknown[] };
       };
       expect(response.details?.errors).toHaveLength(1);
-
-      expect(transactionMock).not.toHaveBeenCalled();
     });
 
     it('should build UID lookup maps correctly', async () => {
@@ -794,7 +716,6 @@ describe('publishingService', () => {
     it('should execute all operations within a transaction', async () => {
       await service.publish(scheduleUid, version, userId);
 
-      expect(transactionMock).toHaveBeenCalledTimes(1);
       expect(createScheduleSnapshotMock).not.toHaveBeenCalled();
       expect(mockTransactionClient.show.deleteMany).toHaveBeenCalled();
       expect(mockTransactionClient.show.createMany).toHaveBeenCalled();

@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
@@ -120,6 +121,15 @@ describe('adminShowStandardController', () => {
       );
       expect(result).toEqual(standard);
     });
+
+    it('should throw NotFoundException when show standard not found', async () => {
+      const standardId = 'show_standard_404';
+      mockShowStandardService.getShowStandardById.mockResolvedValue(null);
+
+      await expect(controller.getShowStandard(standardId)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
   });
 
   describe('updateShowStandard', () => {
@@ -130,6 +140,10 @@ describe('adminShowStandardController', () => {
       } as UpdateShowStandardDto;
       const updatedStandard = { uid: standardId, ...updateDto };
 
+      mockShowStandardService.getShowStandardById.mockResolvedValue({
+        uid: standardId,
+        name: 'Old Standard',
+      });
       mockShowStandardService.updateShowStandard.mockResolvedValue(
         updatedStandard as any,
       );
@@ -147,12 +161,16 @@ describe('adminShowStandardController', () => {
     it('should delete a show standard', async () => {
       const standardId = 'show_standard_123';
 
+      mockShowStandardService.getShowStandardById.mockResolvedValue({
+        uid: standardId,
+        name: 'ToDelete',
+      });
       mockShowStandardService.deleteShowStandard.mockResolvedValue(undefined);
 
       await controller.deleteShowStandard(standardId);
-      expect(mockShowStandardService.deleteShowStandard).toHaveBeenCalledWith(
-        standardId,
-      );
+      expect(mockShowStandardService.deleteShowStandard).toHaveBeenCalledWith({
+        uid: standardId,
+      });
     });
   });
 });

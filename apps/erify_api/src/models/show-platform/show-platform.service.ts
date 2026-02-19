@@ -1,20 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, ShowPlatform } from '@prisma/client';
 
-import {
-  CreateShowPlatformDto,
-  UpdateShowPlatformDto,
+import type {
+  CreateShowPlatformPayload,
+  UpdateShowPlatformPayload,
 } from './schemas/show-platform.schema';
 import { ShowPlatformRepository } from './show-platform.repository';
 
-import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
-
-type ShowPlatformWithIncludes<T extends Prisma.ShowPlatformInclude> =
-  Prisma.ShowPlatformGetPayload<{
-    include: T;
-  }>;
 
 @Injectable()
 export class ShowPlatformService extends BaseModelService {
@@ -36,196 +29,80 @@ export class ShowPlatformService extends BaseModelService {
     return this.generateUid();
   }
 
-  async createShowPlatformFromDto<
-    T extends Prisma.ShowPlatformInclude = Record<string, never>,
-  >(
-    dto: CreateShowPlatformDto,
-    include?: T,
-  ): Promise<ShowPlatform | ShowPlatformWithIncludes<T>> {
-    const data = this.buildCreatePayload(dto);
-    return this.createShowPlatform(data, include);
-  }
-
-  async createShowPlatform<
-    T extends Prisma.ShowPlatformInclude = Record<string, never>,
-  >(
-    data: Omit<Prisma.ShowPlatformCreateInput, 'uid'>,
-    include?: T,
-  ): Promise<ShowPlatform | ShowPlatformWithIncludes<T>> {
+  async create(
+    payload: CreateShowPlatformPayload,
+  ): ReturnType<ShowPlatformRepository['create']> {
     const uid = this.generateUid();
-    return this.showPlatformRepository.create({ ...data, uid }, include);
+
+    return this.showPlatformRepository.create({
+      liveStreamLink: payload.liveStreamLink ?? null,
+      platformShowId: payload.platformShowId ?? null,
+      viewerCount: payload.viewerCount ?? 0,
+      metadata: payload.metadata ?? {},
+      show: { connect: { uid: payload.showId } },
+      platform: { connect: { uid: payload.platformId } },
+      uid,
+    });
   }
 
-  async getShowPlatformById<
-    T extends Prisma.ShowPlatformInclude = Record<string, never>,
-  >(
-    uid: string,
-    include?: T,
-  ): Promise<ShowPlatform | ShowPlatformWithIncludes<T>> {
-    return this.findShowPlatformOrThrow(uid, include);
+  async findOne(
+    ...args: Parameters<ShowPlatformRepository['findByUid']>
+  ): ReturnType<ShowPlatformRepository['findByUid']> {
+    return this.showPlatformRepository.findByUid(...args);
   }
 
-  async getShowPlatforms<
-    T extends Prisma.ShowPlatformInclude = Record<string, never>,
-  >(
-    params: {
-      skip?: number;
-      take?: number;
-      where?: Prisma.ShowPlatformWhereInput;
-    },
-    include?: T,
-  ): Promise<ShowPlatform[] | ShowPlatformWithIncludes<T>[]> {
-    return this.showPlatformRepository.findMany({ ...params, include });
-  }
-
-  async getActiveShowPlatforms(params: {
-    skip?: number;
-    take?: number;
-    orderBy?: Prisma.ShowPlatformOrderByWithRelationInput;
-    include?: Prisma.ShowPlatformInclude;
-  }): Promise<ShowPlatform[]> {
-    return this.showPlatformRepository.findActiveShowPlatforms(params);
+  async getShowPlatforms(
+    ...args: Parameters<ShowPlatformRepository['findPaginated']>
+  ): ReturnType<ShowPlatformRepository['findPaginated']> {
+    return this.showPlatformRepository.findPaginated(...args);
   }
 
   async getShowPlatformsByShow(
-    showId: bigint,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowPlatformOrderByWithRelationInput;
-      include?: Prisma.ShowPlatformInclude;
-    },
-  ): Promise<ShowPlatform[]> {
-    return this.showPlatformRepository.findByShow(showId, params);
+    ...args: Parameters<ShowPlatformRepository['findByShow']>
+  ): ReturnType<ShowPlatformRepository['findByShow']> {
+    return this.showPlatformRepository.findByShow(...args);
   }
 
   async getShowPlatformsByPlatform(
-    platformId: bigint,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowPlatformOrderByWithRelationInput;
-      include?: Prisma.ShowPlatformInclude;
-    },
-  ): Promise<ShowPlatform[]> {
-    return this.showPlatformRepository.findByPlatform(platformId, params);
+    ...args: Parameters<ShowPlatformRepository['findByPlatform']>
+  ): ReturnType<ShowPlatformRepository['findByPlatform']> {
+    return this.showPlatformRepository.findByPlatform(...args);
   }
 
   async findShowPlatformByShowAndPlatform(
     showId: bigint,
     platformId: bigint,
-  ): Promise<ShowPlatform | null> {
-    return this.showPlatformRepository.findByShowAndPlatform(
-      showId,
-      platformId,
-    );
+  ): ReturnType<ShowPlatformRepository['findByShowAndPlatform']> {
+    return this.showPlatformRepository.findByShowAndPlatform(showId, platformId);
   }
 
-  async countShowPlatforms(
-    where?: Prisma.ShowPlatformWhereInput,
-  ): Promise<number> {
-    return this.showPlatformRepository.count(where ?? {});
-  }
-
-  async listShowPlatforms<
-    T extends Prisma.ShowPlatformInclude = Record<string, never>,
-  >(
-    params: {
-      skip?: number;
-      take?: number;
-      where?: Prisma.ShowPlatformWhereInput;
-    },
-    include?: T,
-  ): Promise<{
-      data: ShowPlatform[] | ShowPlatformWithIncludes<T>[];
-      total: number;
-    }> {
-    const [data, total] = await Promise.all([
-      this.showPlatformRepository.findMany({ ...params, include }),
-      this.showPlatformRepository.count(params.where ?? {}),
-    ]);
-
-    return { data, total };
-  }
-
-  async updateShowPlatformFromDto<
-    T extends Prisma.ShowPlatformInclude = Record<string, never>,
-  >(
+  async update(
     uid: string,
-    dto: UpdateShowPlatformDto,
-    include?: T,
-  ): Promise<ShowPlatform | ShowPlatformWithIncludes<T>> {
-    const data = this.buildUpdatePayload(dto);
-    return this.updateShowPlatform(uid, data, include);
+    payload: UpdateShowPlatformPayload,
+  ): ReturnType<ShowPlatformRepository['update']> {
+    const data: Parameters<ShowPlatformRepository['update']>[1] = {};
+
+    if (payload.liveStreamLink !== undefined)
+      data.liveStreamLink = payload.liveStreamLink;
+    if (payload.platformShowId !== undefined)
+      data.platformShowId = payload.platformShowId;
+    if (payload.viewerCount !== undefined)
+      data.viewerCount = payload.viewerCount;
+    if (payload.metadata !== undefined)
+      data.metadata = payload.metadata;
+
+    if (payload.showId !== undefined) {
+      data.show = { connect: { uid: payload.showId } };
+    }
+
+    if (payload.platformId !== undefined) {
+      data.platform = { connect: { uid: payload.platformId } };
+    }
+
+    return this.showPlatformRepository.update({ uid }, data);
   }
 
-  async updateShowPlatform<
-    T extends Prisma.ShowPlatformInclude = Record<string, never>,
-  >(
-    uid: string,
-    data: Prisma.ShowPlatformUpdateInput,
-    include?: T,
-  ): Promise<ShowPlatform | ShowPlatformWithIncludes<T>> {
-    await this.findShowPlatformOrThrow(uid);
-    return this.showPlatformRepository.update({ uid }, data, include);
-  }
-
-  async deleteShowPlatform(uid: string): Promise<ShowPlatform> {
-    await this.findShowPlatformOrThrow(uid);
+  async softDelete(uid: string): ReturnType<ShowPlatformRepository['softDelete']> {
     return this.showPlatformRepository.softDelete({ uid });
-  }
-
-  private async findShowPlatformOrThrow<
-    T extends Prisma.ShowPlatformInclude = Record<string, never>,
-  >(
-    uid: string,
-    include?: T,
-  ): Promise<ShowPlatform | ShowPlatformWithIncludes<T>> {
-    const showPlatform = await this.showPlatformRepository.findByUid(
-      uid,
-      include,
-    );
-    if (!showPlatform) {
-      throw HttpError.notFound('ShowPlatform', uid);
-    }
-    return showPlatform;
-  }
-
-  private buildCreatePayload(
-    dto: CreateShowPlatformDto,
-  ): Omit<Prisma.ShowPlatformCreateInput, 'uid'> {
-    return {
-      liveStreamLink: dto.liveStreamLink,
-      platformShowId: dto.platformShowId,
-      viewerCount: dto.viewerCount ?? 0,
-      metadata: dto.metadata ?? {},
-      show: { connect: { uid: dto.showId } },
-      platform: { connect: { uid: dto.platformId } },
-    };
-  }
-
-  private buildUpdatePayload(
-    dto: UpdateShowPlatformDto,
-  ): Prisma.ShowPlatformUpdateInput {
-    const payload: Prisma.ShowPlatformUpdateInput = {};
-
-    if (dto.liveStreamLink !== undefined)
-      payload.liveStreamLink = dto.liveStreamLink;
-    if (dto.platformShowId !== undefined)
-      payload.platformShowId = dto.platformShowId;
-    if (dto.viewerCount !== undefined)
-      payload.viewerCount = dto.viewerCount;
-    if (dto.metadata !== undefined)
-      payload.metadata = dto.metadata;
-
-    if (dto.showId !== undefined) {
-      payload.show = { connect: { uid: dto.showId } };
-    }
-
-    if (dto.platformId !== undefined) {
-      payload.platform = { connect: { uid: dto.platformId } };
-    }
-
-    return payload;
   }
 }

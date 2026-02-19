@@ -38,8 +38,9 @@ export class AdminStudioController extends BaseAdminController {
 
   @Post()
   @AdminResponse(studioDto, HttpStatus.CREATED, 'Studio created successfully')
-  createStudio(@Body() body: CreateStudioDto) {
-    return this.studioService.createStudio(body);
+  async createStudio(@Body() body: CreateStudioDto) {
+    const { name, address, metadata } = body;
+    return this.studioService.createStudio({ name, address, metadata });
   }
 
   @Get(':id/studio-rooms')
@@ -52,12 +53,11 @@ export class AdminStudioController extends BaseAdminController {
     id: string,
     @Query() query: PaginationQueryDto,
   ) {
-    const data = await this.studioRoomService.getStudioRooms(
-      { skip: query.skip, take: query.take, studioId: id },
-      { studio: true },
-    );
-    const total = await this.studioRoomService.countStudioRooms({
-      studioId: id,
+    const { data, total } = await this.studioRoomService.getStudioRooms({
+      skip: query.skip,
+      take: query.take,
+      studioUid: id,
+      includeStudio: true,
     });
     return this.createPaginatedResponse(data, total, query);
   }
@@ -65,12 +65,14 @@ export class AdminStudioController extends BaseAdminController {
   @Get()
   @AdminPaginatedResponse(studioDto, 'List of studios with pagination')
   async getStudios(@Query() query: ListStudiosQueryDto) {
+    const { skip, take, name, uid, include_deleted, sort } = query;
     const { data, total } = await this.studioService.listStudios({
-      skip: query.skip,
-      take: query.take,
-      name: query.name,
-      uid: query.uid,
-      include_deleted: query.include_deleted,
+      skip,
+      take,
+      name,
+      uid,
+      include_deleted,
+      sort,
     });
 
     return this.createPaginatedResponse(data, total, query);
@@ -78,21 +80,27 @@ export class AdminStudioController extends BaseAdminController {
 
   @Get(':id')
   @AdminResponse(studioDto, HttpStatus.OK, 'Studio details')
-  getStudio(
+  async getStudio(
     @Param('id', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio'))
     id: string,
   ) {
-    return this.studioService.getStudioById(id);
+    const studio = await this.studioService.getStudioById(id);
+    this.ensureResourceExists(studio, 'Studio', id);
+    return studio;
   }
 
   @Patch(':id')
   @AdminResponse(studioDto, HttpStatus.OK, 'Studio updated successfully')
-  updateStudio(
+  async updateStudio(
     @Param('id', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio'))
     id: string,
     @Body() body: UpdateStudioDto,
   ) {
-    return this.studioService.updateStudio(id, body);
+    const studio = await this.studioService.getStudioById(id);
+    this.ensureResourceExists(studio, 'Studio', id);
+
+    const { name, address, metadata } = body;
+    return this.studioService.updateStudio(id, { name, address, metadata });
   }
 
   @Delete(':id')
@@ -101,6 +109,9 @@ export class AdminStudioController extends BaseAdminController {
     @Param('id', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio'))
     id: string,
   ) {
+    const studio = await this.studioService.getStudioById(id);
+    this.ensureResourceExists(studio, 'Studio', id);
+
     await this.studioService.deleteStudio(id);
   }
 }

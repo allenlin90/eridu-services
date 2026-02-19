@@ -12,7 +12,7 @@ describe('backdoorMembershipController', () => {
   let controller: BackdoorMembershipController;
 
   const mockStudioMembershipService = {
-    createStudioMembershipFromDto: jest.fn(),
+    createStudioMembership: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -62,15 +62,23 @@ describe('backdoorMembershipController', () => {
         studio: { uid: 'studio_123', name: 'Test Studio' },
       };
 
-      mockStudioMembershipService.createStudioMembershipFromDto.mockResolvedValue(
+      mockStudioMembershipService.createStudioMembership.mockResolvedValue(
         createdMembership as any,
       );
 
       const result = await controller.createStudioMembership(createDto);
 
       expect(
-        mockStudioMembershipService.createStudioMembershipFromDto,
-      ).toHaveBeenCalledWith(createDto, { user: true, studio: true });
+        mockStudioMembershipService.createStudioMembership,
+      ).toHaveBeenCalledWith(
+        {
+          userId: createDto.userId,
+          studioId: createDto.studioId,
+          role: createDto.role,
+          metadata: createDto.metadata,
+        },
+        { user: true, studio: true },
+      );
       expect(result).toEqual(createdMembership);
     });
 
@@ -88,15 +96,23 @@ describe('backdoorMembershipController', () => {
         studio: { uid: 'studio_456', name: 'Manager Studio' },
       };
 
-      mockStudioMembershipService.createStudioMembershipFromDto.mockResolvedValue(
+      mockStudioMembershipService.createStudioMembership.mockResolvedValue(
         createdMembership as any,
       );
 
       const result = await controller.createStudioMembership(createDto);
 
       expect(
-        mockStudioMembershipService.createStudioMembershipFromDto,
-      ).toHaveBeenCalledWith(createDto, { user: true, studio: true });
+        mockStudioMembershipService.createStudioMembership,
+      ).toHaveBeenCalledWith(
+        {
+          userId: createDto.userId,
+          studioId: createDto.studioId,
+          role: createDto.role,
+          metadata: createDto.metadata,
+        },
+        { user: true, studio: true },
+      );
       expect(result).toEqual(createdMembership);
     });
 
@@ -114,15 +130,23 @@ describe('backdoorMembershipController', () => {
         studio: { uid: 'studio_789', name: 'Member Studio' },
       };
 
-      mockStudioMembershipService.createStudioMembershipFromDto.mockResolvedValue(
+      mockStudioMembershipService.createStudioMembership.mockResolvedValue(
         createdMembership as any,
       );
 
       const result = await controller.createStudioMembership(createDto);
 
       expect(
-        mockStudioMembershipService.createStudioMembershipFromDto,
-      ).toHaveBeenCalledWith(createDto, { user: true, studio: true });
+        mockStudioMembershipService.createStudioMembership,
+      ).toHaveBeenCalledWith(
+        {
+          userId: createDto.userId,
+          studioId: createDto.studioId,
+          role: createDto.role,
+          metadata: createDto.metadata,
+        },
+        { user: true, studio: true },
+      );
       expect(result).toEqual(createdMembership);
     });
   });

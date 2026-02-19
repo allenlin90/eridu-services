@@ -1,13 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { Client, Prisma } from '@prisma/client';
 
-import { CreateClientDto, UpdateClientDto } from './schemas/client.schema';
+import type {
+  CreateClientPayload,
+  UpdateClientPayload,
+} from './schemas/client.schema';
 import { ClientRepository } from './client.repository';
 
-import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
+/**
+ * Service for managing Client entities.
+ */
 @Injectable()
 export class ClientService extends BaseModelService {
   static readonly UID_PREFIX = 'client';
@@ -20,119 +24,68 @@ export class ClientService extends BaseModelService {
     super(utilityService);
   }
 
-  async createClient(data: CreateClientDto): Promise<Client> {
+  /**
+   * Creates a new client.
+   */
+  createClient(
+    payload: CreateClientPayload,
+  ): ReturnType<ClientRepository['create']> {
     const uid = this.generateUid();
-    return this.clientRepository.create({ ...data, uid });
+    return this.clientRepository.create({ ...payload, uid });
   }
 
-  async getClientById(uid: string): Promise<Client> {
-    return this.findClientOrThrow(uid);
+  /**
+   * Retrieves a client by UID.
+   */
+  getClientByUid(
+    ...args: Parameters<ClientRepository['findByUid']>
+  ): ReturnType<ClientRepository['findByUid']> {
+    return this.clientRepository.findByUid(...args);
   }
 
-  async findClientById(id: bigint): Promise<Client | null> {
-    return this.clientRepository.findOne({ id });
+  /**
+   * Retrieves a client by internal ID.
+   */
+  findClientById(
+    ...args: Parameters<ClientRepository['findOne']>
+  ): ReturnType<ClientRepository['findOne']> {
+    return this.clientRepository.findOne(...args);
   }
 
-  async getClients(query: {
-    skip?: number;
-    take?: number;
-    name?: string;
-    uid?: string;
-    include_deleted?: boolean;
-  }): Promise<Client[]> {
-    const where: Prisma.ClientWhereInput = {};
-
-    if (!query.include_deleted) {
-      where.deletedAt = null;
-    }
-
-    if (query.name) {
-      where.name = {
-        contains: query.name,
-        mode: 'insensitive',
-      };
-    }
-
-    if (query.uid) {
-      where.uid = {
-        contains: query.uid,
-        mode: 'insensitive',
-      };
-    }
-
-    return this.clientRepository.findMany({
-      skip: query.skip,
-      take: query.take,
-      where,
-    });
+  /**
+   * Lists clients with pagination and filtering.
+   */
+  listClients(
+    ...args: Parameters<ClientRepository['findPaginated']>
+  ): ReturnType<ClientRepository['findPaginated']> {
+    return this.clientRepository.findPaginated(...args);
   }
 
-  async listClients(query: {
-    skip?: number;
-    take?: number;
-    name?: string;
-    uid?: string;
-    include_deleted?: boolean;
-  }): Promise<{ data: Client[]; total: number }> {
-    const where: Prisma.ClientWhereInput = {};
-
-    if (!query.include_deleted) {
-      where.deletedAt = null;
-    }
-
-    if (query.name) {
-      where.name = {
-        contains: query.name,
-        mode: 'insensitive',
-      };
-    }
-
-    if (query.uid) {
-      where.uid = {
-        contains: query.uid,
-        mode: 'insensitive',
-      };
-    }
-
-    const [data, total] = await Promise.all([
-      this.clientRepository.findMany({
-        skip: query.skip,
-        take: query.take,
-        where,
-      }),
-      this.clientRepository.count(where),
-    ]);
-
-    return { data, total };
+  /**
+   * Counts clients matching criteria.
+   */
+  countClients(
+    ...args: Parameters<ClientRepository['count']>
+  ): ReturnType<ClientRepository['count']> {
+    return this.clientRepository.count(...args);
   }
 
-  async getActiveClients(params: {
-    skip?: number;
-    take?: number;
-    orderBy?: Prisma.ClientOrderByWithRelationInput;
-  }): Promise<Client[]> {
-    return this.clientRepository.findActiveClients(params);
+  /**
+   * Updates a client.
+   */
+  updateClient(
+    uid: string,
+    payload: UpdateClientPayload,
+  ): ReturnType<ClientRepository['update']> {
+    return this.clientRepository.update({ uid }, payload);
   }
 
-  async countClients(where?: Prisma.ClientWhereInput): Promise<number> {
-    return this.clientRepository.count(where ?? {});
-  }
-
-  async updateClient(uid: string, data: UpdateClientDto): Promise<Client> {
-    await this.findClientOrThrow(uid);
-    return this.clientRepository.update({ uid }, data);
-  }
-
-  async deleteClient(uid: string): Promise<Client> {
-    await this.findClientOrThrow(uid);
+  /**
+   * Soft deletes a client.
+   */
+  deleteClient(
+    uid: string,
+  ): ReturnType<ClientRepository['softDelete']> {
     return this.clientRepository.softDelete({ uid });
-  }
-
-  private async findClientOrThrow(uid: string): Promise<Client> {
-    const client = await this.clientRepository.findByUid(uid);
-    if (!client) {
-      throw HttpError.notFound('Client', uid);
-    }
-    return client;
   }
 }

@@ -37,7 +37,8 @@ export class AdminPlatformController extends BaseAdminController {
     'Platform created successfully',
   )
   createPlatform(@Body() body: CreatePlatformDto) {
-    return this.platformService.createPlatform(body);
+    const { name, apiConfig, metadata } = body;
+    return this.platformService.createPlatform({ name, apiConfig, metadata });
   }
 
   @Get()
@@ -48,7 +49,7 @@ export class AdminPlatformController extends BaseAdminController {
       take: query.take,
       name: query.name,
       uid: query.uid,
-      include_deleted: query.include_deleted,
+      includeDeleted: query.includeDeleted,
     });
 
     return this.createPaginatedResponse(data, total, query);
@@ -56,21 +57,27 @@ export class AdminPlatformController extends BaseAdminController {
 
   @Get(':id')
   @AdminResponse(platformDto, HttpStatus.OK, 'Platform details')
-  getPlatform(
+  async getPlatform(
     @Param('id', new UidValidationPipe(PlatformService.UID_PREFIX, 'Platform'))
     id: string,
   ) {
-    return this.platformService.getPlatformById(id);
+    const platform = await this.platformService.getPlatformById({ uid: id });
+    this.ensureResourceExists(platform, 'Platform', id);
+    return platform;
   }
 
   @Patch(':id')
   @AdminResponse(platformDto, HttpStatus.OK, 'Platform updated successfully')
-  updatePlatform(
+  async updatePlatform(
     @Param('id', new UidValidationPipe(PlatformService.UID_PREFIX, 'Platform'))
     id: string,
     @Body() body: UpdatePlatformDto,
   ) {
-    return this.platformService.updatePlatform(id, body);
+    const platform = await this.platformService.getPlatformById({ uid: id });
+    this.ensureResourceExists(platform, 'Platform', id);
+
+    const { name, apiConfig, metadata } = body;
+    return this.platformService.updatePlatform(id, { name, apiConfig, metadata });
   }
 
   @Delete(':id')
@@ -79,6 +86,9 @@ export class AdminPlatformController extends BaseAdminController {
     @Param('id', new UidValidationPipe(PlatformService.UID_PREFIX, 'Platform'))
     id: string,
   ) {
+    const platform = await this.platformService.getPlatformById({ uid: id });
+    this.ensureResourceExists(platform, 'Platform', id);
+
     await this.platformService.deletePlatform(id);
   }
 }

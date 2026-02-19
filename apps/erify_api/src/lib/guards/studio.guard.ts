@@ -88,23 +88,7 @@ export class StudioGuard implements CanActivate {
   }
 
   private async fetchMembership(user: { ext_id: string }, studioId: string) {
-    const userData = await this.userService.getUserByExtId(user.ext_id, {
-      studioMemberships: {
-        where: {
-          studio: { uid: studioId },
-          deletedAt: null,
-        },
-        include: {
-          studio: {
-            select: {
-              uid: true,
-            },
-          },
-        },
-      },
-    });
-
-    return userData?.studioMemberships?.[0];
+    return this.userService.getStudioMembership(user.ext_id, studioId);
   }
 
   private ensureMembershipExists(membership: any, user: { ext_id: string; email: string }, studioId: string): void {

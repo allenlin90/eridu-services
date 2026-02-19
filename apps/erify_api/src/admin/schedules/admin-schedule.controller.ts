@@ -211,12 +211,13 @@ export class AdminScheduleController extends BaseAdminController {
     // Replace body.created_by with: @CurrentUser() user: User
     // Get user by UID
     const user = await this.userService.getUserById(body.created_by);
+    this.ensureResourceExists(user, 'User', body.created_by);
 
     // duplicateSchedule returns a Schedule with guaranteed uid property
     const duplicatedSchedule = await this.scheduleService.duplicateSchedule(
       id,
       body.name,
-      user.id,
+      user!.id,
     );
 
     // Fetch with relations for proper serialization
