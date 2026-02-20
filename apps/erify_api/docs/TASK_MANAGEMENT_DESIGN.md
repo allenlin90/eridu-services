@@ -1,8 +1,22 @@
 # Task Management System - Backend Design
 
-**Version**: 3.0  
-**Last Updated**: February 14, 2026  
-**Status**: Partially Implemented (TaskTemplate CRUD + Snapshots at `/studios/:studioId/task-templates`; Task CRUD, generation, assignment, and `/me/tasks` remain pending)
+**Version**: 3.1  
+**Last Updated**: February 20, 2026  
+**Status**: Partially Implemented — see [§12 Implementation Checklist](#12-implementation-checklist) for full progress
+
+### What's Done ✅
+- TaskTemplate CRUD + snapshot management (`/studios/:studioId/task-templates`)
+- Bulk Task Generation (`POST /studios/:studioId/tasks/generate`)
+- Bulk Show Assignment (`POST /studios/:studioId/tasks/assign-shows`)
+- Individual Task Reassignment (`PATCH /studios/:studioId/tasks/:id/assign`)
+- Studio Shows with Task Summary (`GET /studios/:studioId/shows`)
+- View Show Tasks (`GET /studios/:studioId/shows/:showUid/tasks`)
+
+### What's Pending ❌
+- `/me/tasks` endpoints (list, get, update)
+- Task content update with optimistic locking
+- Status transition enforcement + `completedAt` auto-set
+- Content validation against snapshot schema on update
 
 > **Related Documentation**  
 > For UI/UX specifications and user workflows, see [`apps/erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md`](../../erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md)
@@ -227,22 +241,30 @@ Manager A: Create tasks → Success
 Manager B: Create tasks → Duplicates created! ❌
 ```
 
-**Solution**: PostgreSQL Advisory Locks
+**Solution**: PostgreSQL Advisory Locks inside `@Transactional()` (CLS pattern)
 
 ```typescript
-await prisma.$transaction(async (tx) => {
-  // Lock acquired, held until transaction ends
-  await tx.$executeRaw`SELECT pg_advisory_xact_lock(${showId})`;
-  
-  const existing = await tx.taskTarget.findMany({ where: { showId } });
-  if (existing.length > 0) {
-    throw new ConflictException('Tasks already exist');
+// task-generation-processor.service.ts
+@Transactional()
+async processShow(show: any, templates: any[]) {
+  // Acquire advisory lock — held for the duration of the CLS transaction
+  await this.prisma.$executeRaw`SELECT pg_advisory_xact_lock(${show.id})`;
+
+  for (const template of templates) {
+    // Idempotency check
+    const existing = await this.taskRepository.findByShowAndTemplate(show.id, template.id);
+    if (existing) { continue; } // Skip, already exists
+
+    // Create task + TaskTarget atomically
+    const task = await this.taskRepository.create({ ... });
+    await this.taskTargetRepository.create({ task: { connect: { id: task.id } }, ... });
   }
-  
-  // Create tasks atomically
-  // Lock automatically released on commit/rollback
-});
+}
 ```
+
+> **Note**: `@Transactional()` only works on public methods called through the NestJS DI proxy.
+> Use a separate injectable service (`TaskGenerationProcessor`) to hold the transactional method —
+> self-invocation (`this.method()`) silently bypasses the transaction.
 
 **Why Advisory Locks**:
 - Database-level concurrency control
@@ -881,47 +903,57 @@ export class TaskValidationService {
 
 ### 7.2 TaskOrchestrationService
 
-**Responsibilities**: Bulk task generation, show-level assignment, and task reassignment. All operations scoped to a single studio.
+**Responsibilities**: Bulk task generation, show-level assignment, task reassignment, and studio show/task read operations. All operations scoped to a single studio.
 
-#### `generateTasksForShows` (Bulk)
+#### `generateTasksForShows` (Bulk) ✅
 
-Generates tasks for **multiple shows** from selected templates in a single API call.
+Generates tasks for **multiple shows** from a shared set of templates.
+
+> **Current implementation note**: The API accepts a flat `{ show_uids, template_uids }` — the same set of templates applies to all selected shows. Per-show template selection and per-template due dates are **deferred** (see §8 for actual request shape).
 
 **Behavior**:
-1. For each show, acquire an advisory lock (`pg_advisory_xact_lock(showId)`)
-2. Verify studio consistency: all shows must belong to the request's studio
-3. For each show × template pair:
-   - Skip if a task from that template already exists for the show (idempotent)
-   - Get-or-create snapshot for the template's current version
-   - Create a Task with `status=PENDING`, link via TaskTarget
-4. All operations in a single transaction per show
+1. Resolve templates and validate they belong to the studio and are active
+2. Resolve shows and validate they belong to the studio
+3. For each show, delegate to `TaskGenerationProcessor.processShow()` (separate injectable service to allow `@Transactional()` to work):
+   - Acquire `pg_advisory_xact_lock(showId)` to prevent race conditions
+   - For each template, skip if a task from that template already exists (idempotent)
+   - Use the template's latest snapshot; create `Task` + `TaskTarget` atomically
+4. Return per-show results + summary
 
-**Idempotency rule**: If a show already has a task generated from template X, that show-template pair is skipped. This allows managers to safely re-run generation to add new templates without duplicating existing tasks.
+**Task type inference**: Derived from the template's `name` field — names containing "pre"/"setup" → `SETUP`, "live"/"active" → `ACTIVE`, "post"/"closure" → `CLOSURE`, "admin" → `ADMIN`, "routine" → `ROUTINE`, otherwise `OTHER`.
 
-**Task type inference**: Derived from the template's `name` field — templates with "pre" or "setup" → SETUP, "live" or "active" → ACTIVE, "post" or "closure" → CLOSURE, otherwise OTHER.
-
-#### `assignShowsToUser` (Bulk Show Assignment)
+#### `assignShowsToUser` (Bulk Show Assignment) ✅
 
 Sets `assigneeId` on all tasks linked to the given show(s).
 
 **Behavior**:
-1. Validate the assignee is a member of the studio
-2. For each selected show, find all active tasks (via TaskTarget where `showId` matches)
-3. Batch-update `assigneeId` on those tasks
-4. Return summary: `{ updated_count, show_ids, assignee_id }`
+1. Validate the assignee is a studio member
+2. Resolve show IDs, find all active tasks via `TaskTarget`
+3. Batch-update `assigneeId`
+4. Return `{ updated_count, shows, assignee }`
 
-#### `reassignTask` (Individual Task Reassignment)
+#### `reassignTask` (Individual Task Reassignment) ✅
 
 Updates `assigneeId` on a single task.
 
 **Behavior**:
-1. Validate the new assignee is a member of the studio
-2. Update the task's `assigneeId`
-3. Optimistic locking NOT needed here (only assignment changes, not content)
+1. Load task, verify it belongs to the studio
+2. Validate new assignee is a studio member
+3. Update `assigneeId` (no optimistic locking — assignment-only change)
+
+#### `getShowTasks` (View Show Tasks) ✅
+
+Returns all tasks for a show, ordered by type (`SETUP → ACTIVE → CLOSURE → ADMIN → ROUTINE → OTHER`).
+
+#### `getStudioShowsWithTaskSummary` (Studio Shows List) ✅
+
+Returns paginated shows for a studio with per-show `task_summary` (total / assigned / unassigned / completed).
 
 ### 7.3 TaskService
 
 **Responsibilities**: Single-task update (content, status), optimistic locking, content validation.
+
+> **Current status**: ❌ Not yet implemented. `TaskService` is currently a thin shell (exposes `findOne` and `softDelete` pass-throughs from the repository). The `update` operation, status transition enforcement, and content validation are **pending** implementation.
 
 | Operation | Key Behaviors |
 | --------- | ------------- |
@@ -1001,7 +1033,17 @@ POST /studios/:studioId/tasks/generate
 
 Generates tasks for one or more shows from selected templates.
 
-**Request**
+> **Current implementation**: Uses a simplified flat request shape — the same set of templates is applied to all selected shows. Per-show template selection and per-template due dates are **deferred** to a future iteration.
+
+**Request (Current Implementation)**
+```json
+{
+  "show_uids": ["show_abc123", "show_def456"],
+  "template_uids": ["tpl_setup1", "tpl_live1", "tpl_closure1"]
+}
+```
+
+**Request (Future — Per-Show Configuration)**
 ```json
 {
   "shows": [
@@ -1012,14 +1054,6 @@ Generates tasks for one or more shows from selected templates.
         "tpl_setup1": "2026-02-03T17:00:00Z",
         "tpl_live1": "2026-02-05T20:00:00Z",
         "tpl_closure1": "2026-02-06T12:00:00Z"
-      }
-    },
-    {
-      "show_uid": "show_def456",
-      "template_uids": ["tpl_setup1", "tpl_live1"],
-      "due_dates": {
-        "tpl_setup1": "2026-02-10T17:00:00Z",
-        "tpl_live1": "2026-02-12T20:00:00Z"
       }
     }
   ]
@@ -1287,41 +1321,16 @@ Content-Type: application/json
 
 ### Guards
 
+Authorization is implemented via the `@StudioProtected()` decorator, which composes `JwtAuthGuard` + `StudioMembershipGuard` + role checking in a single decorator:
+
 ```typescript
-// studio-membership.guard.ts
-@Injectable()
-export class StudioMembershipGuard implements CanActivate {
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const user = request.user;
-    const studioId = BigInt(request.params.studioId);
-
-    const membership = await prisma.studioMembership.findUnique({
-      where: {
-        userId_studioId: { userId: user.id, studioId }
-      }
-    });
-
-    if (!membership) {
-      throw new ForbiddenException('Not a member of this studio');
-    }
-
-    // Check role for specific actions
-    const requiredRole = Reflector.get('role', context.getHandler());
-    if (requiredRole && !this.hasRole(membership.role, requiredRole)) {
-      throw new ForbiddenException('Insufficient permissions');
-    }
-
-    request.studioMembership = membership;
-    return true;
-  }
-
-  private hasRole(userRole: string, requiredRole: string): boolean {
-    const hierarchy = { admin: 3, manager: 2, member: 1 };
-    return hierarchy[userRole] >= hierarchy[requiredRole];
-  }
-}
+// Usage on a studio-scoped controller or method:
+@StudioProtected([STUDIO_ROLE.ADMIN])
+@Controller('studios/:studioId/tasks')
+export class StudioTaskController extends BaseStudioController { ... }
 ```
+
+The `studioId` route parameter is a UID string (e.g., `std_abc123`), which the guard resolves via the `UidValidationPipe` before performing the membership check. The role hierarchy is: `admin > manager > member`.
 
 ---
 
@@ -1436,60 +1445,54 @@ async function paginateTasks(
 
 ## 12. Implementation Checklist
 
-### Database (Week 1)
-- [ ] Create Prisma schema with all models
-- [ ] Add database constraints
-- [ ] Add GIN indexes for JSONB columns
-- [ ] Add composite indexes for common queries
-- [ ] Write migration scripts
-- [ ] Test on staging database
+### Database
+- [x] Create Prisma schema with all models (`TaskTemplate`, `TaskTemplateSnapshot`, `Task`, `TaskTarget`)
+- [x] Add composite indexes for common queries (assignee+status, studio+status, template+deletedAt, etc.)
+- [x] Write migration scripts
+- [ ] Add GIN indexes for JSONB columns (`content`, `schema`) — deferred
+- [ ] Add `one_target_only` DB constraint on `task_targets` — deferred
 
-### Core Services (Week 2)
-- [ ] TaskTemplateService (CRUD, validation)
-- [ ] TaskValidationService (schema + content)
-- [ ] TaskService (update, reassign, status transitions)
-- [ ] TaskOrchestrationService (generate with advisory locks)
-- [ ] Soft delete middleware
+### Core Services
+- [x] `TaskTemplateService` — CRUD, schema validation, snapshot creation on update
+- [x] `TaskOrchestrationService` — generate, assign-shows, reassign, get-show-tasks, studio-shows-with-summary
+- [x] `TaskGenerationProcessor` — single-show transactional processing with advisory lock
+- [x] Schema validation (moved into `TaskTemplateService.validateSchema()` + `@eridu/api-types`)
+- [ ] `TaskService.update()` — task content update with optimistic locking ❌
+- [ ] Content validation against snapshot schema on task update ❌
+- [ ] Status transition state machine enforcement ❌
+- [ ] `completedAt` auto-set on `COMPLETED` transition ❌
 
-### API Controllers (Week 2-3)
-- [ ] StudioTaskTemplateController (manager endpoints)
-- [ ] StudioTaskController (task generation, bulk ops)
-- [ ] MeTaskController (operator dashboard)
-- [ ] AdminTaskController (system admin tools)
-- [ ] Add API versioning (e.g. URI prefix /v1 or Header-based)
+### API Controllers
+- [x] `StudioTaskTemplateController` — full CRUD at `/studios/:studioId/task-templates`
+- [x] `StudioTaskController` — generate, assign-shows, reassign at `/studios/:studioId/tasks`
+- [x] `StudioShowController` — studio shows with task summary at `GET /studios/:studioId/shows`
+- [x] `StudioShowTaskController` — show tasks at `GET /studios/:studioId/shows/:showUid/tasks`
+- [ ] `MeTaskController` — `/me/tasks` (list, get, update) ❌
+- [ ] `AdminTaskController` — system admin tools ❌
 
-### Authentication & Guards (Week 3)
-- [ ] JwtAuthGuard
-- [ ] StudioMembershipGuard
-- [ ] SystemAdminGuard
-- [ ] Role-based decorators
-- [ ] Permission matrix enforcement
+### Authentication & Guards
+- [x] `JwtAuthGuard`
+- [x] `StudioMembershipGuard` (via `@StudioProtected()` decorator)
+- [x] `SystemAdminGuard` (via `AdminGuard`)
+- [x] Role-based decorators (`@StudioProtected([STUDIO_ROLE.ADMIN])`)
+- [ ] Enforce assignee-owns-task check for `PATCH /me/tasks/:uid` ❌
 
-### Error Handling (Week 3)
-- [ ] Global exception filter
-- [ ] Error code system
-- [ ] Validation error formatting
-- [ ] Logging integration
+### Error Handling
+- [x] Global exception filter
+- [x] `HttpError` utility + `VersionConflictError` domain error
+- [x] Zod validation error formatting via `nestjs-zod`
 
 ### Shared Types (`@eridu/api-types`)
-- [ ] Export enums: `TaskStatus`, `TaskType`, `TargetType`
-- [ ] Export DTOs: `CreateTaskDto`, `UpdateTaskDto`, `TaskDto`, etc.
-- [ ] Export API endpoint keys
+- [x] Export enums: `TaskStatus`, `TaskType`
+- [x] Export Zod schemas: `taskSchema`, `taskDto`, `generateTasksRequestSchema`, `assignShowsRequestSchema`, etc.
+- [ ] Export `/me/tasks` schemas ❌
 
-### Testing (Week 4)
-- [ ] Unit tests for validation service
-- [ ] Unit tests for status transition validation
-- [ ] Integration tests for race conditions
-- [ ] Integration tests for bulk operations
-- [ ] E2E tests for task generation flow
-- [ ] Test optimistic locking conflicts
-
-### Deployment (Week 4)
-- [ ] Environment configuration
-- [ ] Database migration process
-- [ ] API documentation (Swagger/OpenAPI)
-- [ ] Monitoring and alerts
-- [ ] Performance benchmarks
+### Testing
+- [x] `TaskTemplateService` unit tests (schema validation, create/update/delete)
+- [ ] Unit tests for status transition validation ❌
+- [ ] Integration tests for race condition (advisory lock) ❌
+- [ ] Integration tests for bulk assignment ❌
+- [ ] Test optimistic locking conflicts ❌
 
 ---
 
