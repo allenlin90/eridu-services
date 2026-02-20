@@ -29,5 +29,33 @@ export class TaskService extends BaseModelService {
     return this.taskRepository.softDelete(...args);
   }
 
-  // Orchestration service will handle complex creation/generation
+  /** @internal */
+  async create(...args: Parameters<TaskRepository['create']>): ReturnType<TaskRepository['create']> {
+    return this.taskRepository.create(...args);
+  }
+
+  /** @internal */
+  async findByUid(...args: Parameters<TaskRepository['findByUid']>): ReturnType<TaskRepository['findByUid']> {
+    return this.taskRepository.findByUid(...args);
+  }
+
+  /** @internal */
+  async findByShowAndTemplate(...args: Parameters<TaskRepository['findByShowAndTemplate']>): ReturnType<TaskRepository['findByShowAndTemplate']> {
+    return this.taskRepository.findByShowAndTemplate(...args);
+  }
+
+  /** @internal */
+  async findTasksByShowIds(...args: Parameters<TaskRepository['findTasksByShowIds']>): ReturnType<TaskRepository['findTasksByShowIds']> {
+    return this.taskRepository.findTasksByShowIds(...args);
+  }
+
+  /** @internal */
+  async updateAssigneeByTaskIds(...args: Parameters<TaskRepository['updateAssigneeByTaskIds']>): ReturnType<TaskRepository['updateAssigneeByTaskIds']> {
+    return this.taskRepository.updateAssigneeByTaskIds(...args);
+  }
+
+  /** @internal */
+  async update(...args: Parameters<TaskRepository['update']>): ReturnType<TaskRepository['update']> {
+    return this.taskRepository.update(...args);
+  }
 }

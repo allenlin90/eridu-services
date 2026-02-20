@@ -313,4 +313,70 @@ export class ShowRepository extends BaseRepository<
       data: { deletedAt: new Date() },
     });
   }
+
+  async findPaginatedWithTaskSummary(
+    studioId: bigint,
+    query: {
+      skip?: number;
+      take?: number;
+      search?: string;
+      date_from?: string;
+      date_to?: string;
+      has_tasks?: boolean;
+    },
+  ) {
+    const where: Prisma.ShowWhereInput = {
+      studioId,
+      deletedAt: null,
+    };
+
+    if (query.search) {
+      where.name = { contains: query.search, mode: 'insensitive' };
+    }
+
+    if (query.date_from || query.date_to) {
+      where.startTime = {
+        ...(query.date_from && { gte: new Date(query.date_from) }),
+        ...(query.date_to && { lte: new Date(query.date_to) }),
+      };
+    }
+
+    if (query.has_tasks !== undefined) {
+      if (query.has_tasks) {
+        where.taskTargets = { some: { deletedAt: null } };
+      } else {
+        where.taskTargets = { none: {} };
+      }
+    }
+
+    const [total, data] = await Promise.all([
+      this.delegate.count({ where }),
+      this.delegate.findMany({
+        where,
+        skip: query.skip,
+        take: query.take,
+        orderBy: { startTime: 'desc' },
+        include: {
+          client: true,
+          studioRoom: true,
+          showType: true,
+          showStatus: true,
+          showStandard: true,
+          taskTargets: {
+            where: { deletedAt: null },
+            include: {
+              task: {
+                select: {
+                  status: true,
+                  assigneeId: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+    return { data, total };
+  }
 }

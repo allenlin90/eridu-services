@@ -56,6 +56,15 @@ export class StudioService extends BaseModelService {
   }
 
   /**
+   * @internal
+   */
+  async findByUid(
+    ...args: Parameters<StudioRepository['findByUid']>
+  ): Promise<Awaited<ReturnType<StudioRepository['findByUid']>>> {
+    return this.studioRepository.findByUid(...args);
+  }
+
+  /**
    * Lists studios with pagination and filtering.
    */
   async listStudios(

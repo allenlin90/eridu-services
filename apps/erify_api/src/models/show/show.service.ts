@@ -68,6 +68,20 @@ export class ShowService extends BaseModelService {
   /**
    * @internal
    */
+  async findMany(...args: Parameters<ShowRepository['findMany']>): ReturnType<ShowRepository['findMany']> {
+    return this.showRepository.findMany(...args);
+  }
+
+  /**
+   * @internal
+   */
+  async findPaginatedWithTaskSummary(...args: Parameters<ShowRepository['findPaginatedWithTaskSummary']>): ReturnType<ShowRepository['findPaginatedWithTaskSummary']> {
+    return this.showRepository.findPaginatedWithTaskSummary(...args);
+  }
+
+  /**
+   * @internal
+   */
   async getActiveShows(
     params: Parameters<ShowRepository['findActiveShows']>[0],
   ): ReturnType<ShowRepository['findActiveShows']> {

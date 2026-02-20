@@ -200,6 +200,16 @@ export class TaskTemplateService extends BaseModelService {
     return this.taskTemplateRepository.findOne(...args);
   }
 
+  /** @internal */
+  async findAll(...args: Parameters<TaskTemplateRepository['findAll']>): ReturnType<TaskTemplateRepository['findAll']> {
+    return this.taskTemplateRepository.findAll(...args);
+  }
+
+  /** @internal */
+  async findByUid(...args: Parameters<TaskTemplateRepository['findByUid']>): ReturnType<TaskTemplateRepository['findByUid']> {
+    return this.taskTemplateRepository.findByUid(...args);
+  }
+
   async getTaskTemplates(...args: Parameters<TaskTemplateRepository['findPaginated']>): ReturnType<TaskTemplateRepository['findPaginated']> {
     return this.taskTemplateRepository.findPaginated(...args);
   }

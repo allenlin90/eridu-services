@@ -9,6 +9,6 @@ import { UtilityModule } from '@/utility/utility.module';
 @Module({
   imports: [PrismaModule, UtilityModule],
   providers: [McService, McRepository],
-  exports: [McService, McRepository],
+  exports: [McService],
 })
 export class McModule {}

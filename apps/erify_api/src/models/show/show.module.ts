@@ -22,6 +22,6 @@ import { UtilityModule } from '@/utility/utility.module';
     ShowStandardModule,
   ],
   providers: [ShowService, ShowRepository],
-  exports: [ShowService, ShowRepository],
+  exports: [ShowService],
 })
 export class ShowModule {}
