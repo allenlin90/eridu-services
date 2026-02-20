@@ -12,6 +12,7 @@ import type {
 } from './schemas/schedule-planning.schema';
 import { PublishingService } from './publishing.service';
 import { SchedulePlanningService } from './schedule-planning.service';
+import { ScheduleRestorationProcessor } from './schedule-restoration-processor.service';
 import { ValidationService } from './validation.service';
 
 import { ScheduleService } from '@/models/schedule/schedule.service';
@@ -43,6 +44,7 @@ describe('schedulePlanningService', () => {
   let scheduleSnapshotService: jest.Mocked<ScheduleSnapshotService>;
   let validationService: jest.Mocked<ValidationService>;
   let publishingService: jest.Mocked<PublishingService>;
+  let scheduleRestorationProcessor: jest.Mocked<ScheduleRestorationProcessor>;
   // mockTransactionClient is declared at file scope (above) — reassigned per test in beforeEach
   let getScheduleByIdMock: jest.Mock;
   let validateScheduleMock: jest.Mock;
@@ -50,6 +52,7 @@ describe('schedulePlanningService', () => {
   let getScheduleSnapshotsMock: jest.Mock;
   let createScheduleSnapshotMock: jest.Mock;
   let publishMock: jest.Mock;
+  let restoreMock: jest.Mock;
 
   const mockSchedule = {
     id: BigInt(1),
@@ -194,6 +197,12 @@ describe('schedulePlanningService', () => {
             publish: jest.fn(),
           },
         },
+        {
+          provide: ScheduleRestorationProcessor,
+          useValue: {
+            restore: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -202,6 +211,7 @@ describe('schedulePlanningService', () => {
     scheduleSnapshotService = module.get(ScheduleSnapshotService);
     validationService = module.get(ValidationService);
     publishingService = module.get(PublishingService);
+    scheduleRestorationProcessor = module.get(ScheduleRestorationProcessor);
 
     // Store mock function references to avoid unbound method errors
     getScheduleByIdMock = scheduleService.getScheduleById as jest.Mock;
@@ -210,6 +220,7 @@ describe('schedulePlanningService', () => {
     getScheduleSnapshotsMock = scheduleSnapshotService.getScheduleSnapshots as jest.Mock;
     createScheduleSnapshotMock = scheduleSnapshotService.createScheduleSnapshot as jest.Mock;
     publishMock = publishingService.publish as jest.Mock;
+    restoreMock = scheduleRestorationProcessor.restore as jest.Mock;
   });
 
   beforeEach(() => {
@@ -402,11 +413,7 @@ describe('schedulePlanningService', () => {
           user: { id: bigint; uid: string; name: string; email: string };
         },
       );
-      createScheduleSnapshotMock.mockResolvedValue({
-        id: BigInt(2),
-        uid: 'snapshot_backup123',
-      } as unknown as ScheduleSnapshot);
-      mockTransactionClient.schedule.update.mockResolvedValue(restoredSchedule);
+      restoreMock.mockResolvedValue(restoredSchedule);
 
       const result = await service.restoreFromSnapshot(snapshotUid, userId);
 
@@ -419,27 +426,8 @@ describe('schedulePlanningService', () => {
         },
         user: true,
       });
-      expect(createScheduleSnapshotMock).toHaveBeenCalledWith({
-        schedule: { connect: { id: mockSchedule.id } },
-        planDocument: mockSchedule.planDocument as Prisma.InputJsonValue,
-        version: mockSchedule.version,
-        status: mockSchedule.status,
-        snapshotReason: 'before_restore',
-        user: { connect: { id: userId } },
-      });
-      expect(mockTransactionClient.schedule.update).toHaveBeenCalledWith({
-        where: { id: mockSchedule.id },
-        data: {
-          planDocument: mockSnapshot.planDocument as Prisma.InputJsonValue,
-          version: mockSchedule.version + 1,
-          updatedAt: expect.any(Date) as unknown as Date,
-        },
-        include: {
-          client: true,
-          createdByUser: true,
-          publishedByUser: true,
-        },
-      });
+      // Verification of processor call (the core logic moved here)
+      expect(restoreMock).toHaveBeenCalledWith(mockSnapshot.schedule, mockSnapshot, userId);
       expect(result).toEqual(restoredSchedule);
     });
 

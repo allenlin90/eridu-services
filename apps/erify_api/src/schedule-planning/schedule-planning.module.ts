@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { PublishingService } from './publishing.service';
 import { SchedulePlanningService } from './schedule-planning.service';
+import { ScheduleRestorationProcessor } from './schedule-restoration-processor.service';
 import { ValidationService } from './validation.service';
 
 import { ScheduleModule } from '@/models/schedule/schedule.module';
@@ -22,7 +23,12 @@ import { UtilityModule } from '@/utility/utility.module';
     ShowPlatformModule,
     UtilityModule,
   ],
-  providers: [SchedulePlanningService, ValidationService, PublishingService],
+  providers: [
+    SchedulePlanningService,
+    ValidationService,
+    PublishingService,
+    ScheduleRestorationProcessor,
+  ],
   exports: [SchedulePlanningService],
 })
 export class SchedulePlanningModule {}

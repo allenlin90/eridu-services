@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
-import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma } from '@prisma/client';
 
 import {
@@ -8,6 +6,7 @@ import {
   ValidationResult,
 } from './schemas/schedule-planning.schema';
 import { PublishingService, ScheduleWithRelations } from './publishing.service';
+import { ScheduleRestorationProcessor } from './schedule-restoration-processor.service';
 import { ValidationService } from './validation.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
@@ -33,7 +32,7 @@ export class SchedulePlanningService {
     private readonly scheduleSnapshotService: ScheduleSnapshotService,
     private readonly validationService: ValidationService,
     private readonly publishingService: PublishingService,
-    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+    private readonly scheduleRestorationProcessor: ScheduleRestorationProcessor,
   ) {}
 
   /**
@@ -123,40 +122,8 @@ export class SchedulePlanningService {
       );
     }
 
-    // Execute restore in a transaction
-    return this.doRestore(schedule, snapshot, userId);
-  }
-
-  @Transactional()
-  private async doRestore(
-    schedule: { id: bigint; planDocument: Prisma.JsonValue; version: number; status: string },
-    snapshot: { planDocument: Prisma.JsonValue },
-    userId: bigint,
-  ) {
-    // 1. Create a snapshot of current state before restore (for rollback)
-    await this.scheduleSnapshotService.createScheduleSnapshot({
-      schedule: { connect: { id: schedule.id } },
-      planDocument: schedule.planDocument as Prisma.InputJsonValue,
-      version: schedule.version,
-      status: schedule.status,
-      snapshotReason: 'before_restore',
-      user: { connect: { id: userId } },
-    });
-
-    // 2. Restore plan document from snapshot
-    return this.txHost.tx.schedule.update({
-      where: { id: schedule.id },
-      data: {
-        planDocument: snapshot.planDocument as Prisma.InputJsonValue,
-        version: schedule.version + 1,
-        updatedAt: new Date(),
-      },
-      include: {
-        client: true,
-        createdByUser: true,
-        publishedByUser: true,
-      },
-    });
+    // Execute restore through processor
+    return this.scheduleRestorationProcessor.restore(schedule, snapshot, userId);
   }
 
   /**
