@@ -85,16 +85,47 @@ Distinguish between two types of services to manage complexity and avoid circula
 
 ## Module Exports
 
-**Default**: Export **Services Only**.
-Modules should export their Service as the public API. Other modules interact through the service.
+**Rule: Export Services Only. No exceptions.**
 
-**Exception**: Orchestration consumers.
-When an **Orchestration Service** needs direct data access across multiple entities, repositories MAY be exported IF the consuming orchestration service is in a clearly defined orchestration layer (not a sibling model module).
+Modules export their Service as the only public API.
+Repositories are private implementation details — never export them.
 
-- ✅ `TaskOrchestrationModule` imports `TaskTemplateRepository` (Orchestration Layer consuming Model Layer)
-- ❌ `ShowModule` imports `TaskTemplateRepository` (Sibling Model Layer violation)
+✅ exports: [UserService]
+❌ exports: [UserService, UserRepository]
+❌ exports: [UserRepository]
 
-The key test: "Is the consumer in a higher architectural layer?"
+**Why**: Exporting a repository leaks the data layer. Every consumer would couple
+to your database access patterns. When you need a new repository operation from
+an orchestration service, add a method to the model service instead.
+
+**Join/Association Table modules**: Follow the same rule.
+- Add a service even if it's thin (it generates UIDs and exposes the repo methods)
+- Export only the service
+- Examples: ShowMcModule, ShowPlatformModule, TaskTargetModule
+
+**Reference/Lookup table modules**: Same rule.
+- Examples: ShowStandardModule, ShowStatusModule, ShowTypeModule
+
+**Orchestration modules**: Same rule.
+- Export only the orchestration service
+- Never export orchestration-internal repositories or processors
+
+## When to Create a Separate Module for Join Tables
+
+Create a separate module when the association:
+- Has its own business lifecycle (create/restore/cascade-delete methods)
+- Carries extra payload fields beyond the two FK columns
+- Is referenced independently by multiple domains
+
+Fold into the parent module when:
+- It is purely a FK link with no extra data or logic
+- Only created/deleted within a single transaction owned by the parent
+
+Examples:
+- ShowMcModule (separate) → has restore/cascade methods, note field
+- ShowPlatformModule (separate) → has liveStreamLink, viewerCount
+- TaskTargetModule (separate) → simple join, but kept separate for consistency
+
 
 ## Performance Optimization Strategy
 

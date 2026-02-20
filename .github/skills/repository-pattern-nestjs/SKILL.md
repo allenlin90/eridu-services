@@ -115,6 +115,31 @@ async findByUidWithProfile(uid: string): Promise<User & { profile: Profile } | n
 
 ---
 
+## Join/Association Table Repositories
+
+Join table repositories follow the same BaseRepository pattern.
+The repository is always private to its module (never exported).
+The module's service wraps the repository and provides the public API.
+
+Example — TaskTargetRepository is a join table with no extra fields:
+```typescript
+// The repo exists as a file but is only referenced inside the module
+@Injectable()
+export class TaskTargetRepository extends BaseRepository<TaskTarget, ...> {
+  async findByShowId(showId: bigint): Promise<TaskTarget[]> { ... }
+  async findByTaskId(taskId: bigint): Promise<TaskTarget[]> { ... }
+}
+
+// The service is what gets exported
+@Injectable()
+export class TaskTargetService extends BaseModelService {
+  async create(...args) { return this.repo.create(...args); }
+  async findByShowId(showId: bigint) { return this.repo.findByShowId(showId); }
+}
+```
+
+---
+
 ## Advanced Filtering with Pagination
 
 🔴 **Critical**: Repositories should accept domain-level parameters and build Prisma where clauses internally.

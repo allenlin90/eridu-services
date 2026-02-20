@@ -85,6 +85,22 @@ export class UserService extends BaseModelService {
 }
 ```
 
+## When Does a Model Service Justify Existing?
+
+A model service exists to:
+1. Generate UIDs (`this.generateUid()`) — even thin services serve this purpose
+2. Enforce invariants before/after persistence
+3. Translate domain payloads into repository calls
+4. Be the stable public API of the module
+
+A service with only pass-through methods is acceptable when:
+- It provides a consistent pattern with sibling modules
+- It generates UIDs (join table services)
+- Its methods may gain logic in the future
+
+A service that does NOT generate UIDs and has zero logic should be questioned —
+consider whether the orchestration should just call the parent module's service.
+
 ---
 
 ## Avoiding ORM Coupling in Services
@@ -159,6 +175,20 @@ async findOne(
 - Service signature automatically matches repository
 - Changing ORM only requires updating repository
 - Service tests don't need to mock Prisma types
+
+**Tradeoff awareness**: `Parameters<Repository['method']>` couples the service
+method signature to the repository signature. Changing the repository method
+signature changes the service's public API.
+
+Use this pattern when:
+- The method is a genuine pass-through with no business logic
+- The service needs to expose a repository query for orchestration callers
+
+Mark these as `@internal` if they are not intended for controllers:
+```typescript
+/** @internal For orchestration use only. Controllers use findByUid(). */
+async findOne(...args: Parameters<TaskRepository['findOne']>)
+```
 
 ### Rule 4: Repository Owns Where-Clause Building
 
