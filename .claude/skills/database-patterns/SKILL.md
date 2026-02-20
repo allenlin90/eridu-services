@@ -106,6 +106,33 @@ export class ShowOrchestrationService {
 3.  Never pass `tx` as a method parameter — CLS handles propagation transparently.
 4.  Repositories access the active transaction via `TransactionHost` (injected by the CLS adapter).
 
+> [!WARNING]
+> **`@Transactional()` does NOT work on private methods or self-invocations.**
+> The decorator relies on NestJS AOP proxy interception, which only intercepts **external calls to public methods**.
+> If a method calls `this.someMethod()` within the same class, the proxy is bypassed and the decorator is silently ignored — no transaction is created.
+>
+> **Fix**: Extract transactional logic into a **separate injectable service**. The call goes through NestJS DI proxy, so the decorator works correctly.
+> **Example**: See `PublishingService` pattern — `SchedulePlanningService` delegates to `publishingService.publish()` (public method, separate service, `@Transactional()`).
+>
+> ```typescript
+> // ❌ BROKEN: Self-invocation bypasses proxy
+> class MyService {
+>   async doWork() { await this.innerWork(); }
+>   @Transactional()
+>   private async innerWork() { /* TX not active! */ }
+> }
+>
+> // ✅ CORRECT: External call through DI proxy
+> class MyProcessor {
+>   @Transactional()
+>   async process() { /* TX active ✅ */ }
+> }
+> class MyService {
+>   constructor(private processor: MyProcessor) {}
+>   async doWork() { await this.processor.process(); }
+> }
+> ```
+
 > [!NOTE]
 > **Legacy `$transaction` calls**: Some existing code may still use `prisma.$transaction(async (tx) => {...})` with explicit `tx` passing.
 > This is the **old pattern** and will be migrated to `@Transactional()` in Phase 2. Do NOT write new code using the old pattern.

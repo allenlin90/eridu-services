@@ -223,14 +223,12 @@ async getUserById(uid: string): Promise<User> {
 }
 ```
 
-### Controller-Checks Pattern (RoR Style)
+### Error Handling by Service Type
 
-🟡 **Recommended**: Service returns `null` or result. Controller handles existence checks and 404s.
+Differentiate your error handling strategy based on the service type:
 
-**Why**: This keeps services transport-agnostic (returning `null` is a data fact, throwing 404 is an HTTP response).
-
-#### 1. Read Operations
-Service returns `null`, Controller throws 404.
+#### 1. Model Services (Single Entity)
+**Pattern**: Return `null`, let Controller handle 404.
 
 ```typescript
 // Service
@@ -242,14 +240,35 @@ async getUserById(uid: string): Promise<User | null> {
 @Get(':id')
 async getUser(@Param('id') id: string) {
   const user = await this.userService.getUserById(id);
-  // Helper from BaseAdminController / BaseStudioController
-  this.ensureResourceExists(user, 'User', id);
+  this.ensureResourceExists(user, 'User', id); // Throws 404
   return user;
 }
 ```
 
-#### 2. Update/Delete Operations
-Controller verifies existence BEFORE calling the mutation service.
+#### 2. Orchestration Services (Complex Workflows)
+**Pattern**: Throw **Domain Exceptions** or business logic errors directly.
+
+Orchestration services often enforce rules that the controller cannot know about (e.g., "User must be a member of this Studio to be assigned").
+
+```typescript
+// Service
+async assignUserToStudio(userUid: string, studioUid: string) {
+  const isMember = await this.membershipService.isMember(userUid, studioUid);
+  
+  if (!isMember) {
+    // ✅ ACCEPTABLE: detailed business error
+    throw HttpError.forbidden('User is not a member of this studio');
+  }
+}
+```
+
+> [!TIP]
+> **Preferred**: Throw custom Domain Exceptions (e.g., `InvalidAssigneeError`) and use a global Exception Filter to map them to HTTP responses.
+> **Acceptable**: Use `HttpError` utility for immediate feedback in non-critical paths.
+> **Avoid**: Throwing generic `NotFoundException` for simple lookups — stick to `null` + `ensureResourceExists`.
+
+#### 3. Update/Delete Operations
+Controller verifies existence BEFORE calling the mutation service (Controller-Checks Pattern).
 
 ```typescript
 // Controller

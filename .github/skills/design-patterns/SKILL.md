@@ -83,6 +83,19 @@ Distinguish between two types of services to manage complexity and avoid circula
 - ❌ **Never** import from an `app` into a `package` (Cyclic dependency).
 - ❌ Ensure apps rely on packages, not other apps.
 
+## Module Exports
+
+**Default**: Export **Services Only**.
+Modules should export their Service as the public API. Other modules interact through the service.
+
+**Exception**: Orchestration consumers.
+When an **Orchestration Service** needs direct data access across multiple entities, repositories MAY be exported IF the consuming orchestration service is in a clearly defined orchestration layer (not a sibling model module).
+
+- ✅ `TaskOrchestrationModule` imports `TaskTemplateRepository` (Orchestration Layer consuming Model Layer)
+- ❌ `ShowModule` imports `TaskTemplateRepository` (Sibling Model Layer violation)
+
+The key test: "Is the consumer in a higher architectural layer?"
+
 ## Performance Optimization Strategy
 
 Address performance at the correct layer:
