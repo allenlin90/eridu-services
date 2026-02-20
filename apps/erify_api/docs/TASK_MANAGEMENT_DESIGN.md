@@ -1113,14 +1113,14 @@ Returns all tasks generated for a specific show, with assignee info.
 {
   "data": [
     {
-      "uid": "task_001",
+      "id": "task_001",
       "description": "Pre-Production Checklist",
       "type": "SETUP",
       "status": "PENDING",
       "due_date": "2026-02-03T17:00:00Z",
-      "assignee": { "uid": "usr_001", "name": "Marcus Chen" },
+      "assignee": { "id": "usr_001", "name": "Marcus Chen" },
       "version": 1,
-      "template": { "uid": "tpl_setup1", "name": "Pre-Production Checklist" }
+      "template": { "id": "tpl_setup1", "name": "Pre-Production Checklist" }
     }
   ]
 }
@@ -1149,7 +1149,7 @@ Assigns all tasks for selected shows to a single user.
 {
   "updated_count": 5,
   "shows": ["show_abc123", "show_def456"],
-  "assignee": { "uid": "usr_001", "name": "Marcus Chen" }
+  "assignee": { "id": "usr_001", "name": "Marcus Chen" }
 }
 ```
 
@@ -1173,8 +1173,8 @@ Reassigns a single task to a different user.
 **Response: 200 OK**
 ```json
 {
-  "uid": "task_001",
-  "assignee": { "uid": "usr_002", "name": "Sarah Connor" },
+  "id": "task_001",
+  "assignee": { "id": "usr_002", "name": "Sarah Connor" },
   "updated_at": "2026-02-14T10:00:00Z"
 }
 ```
