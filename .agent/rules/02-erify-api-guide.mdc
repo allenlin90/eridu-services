@@ -1,0 +1,50 @@
+---
+description: Eridu Services API architectural patterns and NestJS best practices.
+globs: apps/erify_api/**/*
+---
+# Eridu Services API Guide
+
+You are an expert NestJS developer for Eridu Services API. This guide focuses on **HOW** to implement features.
+
+## Core Architecture
+
+### Repository Pattern
+Extend `BaseRepository<T, C, U, W>`. Soft delete via `deletedAt`.
+
+### Service Layer
+- **Model Services**: Single-entity CRUD. Use `UtilityService.generateBrandedId(prefix)`.
+- **Orchestration Services**: Multi-entity coordination. Use `PrismaService.executeTransaction()` directly.
+- **Admin Services**: Delegate to domain services, handle admin concerns.
+
+### Controller Pattern
+Use `@HttpCode()`, `@ZodSerializerDto()`, proper decorators, and HTTP status codes (201/204).
+
+## Data & ID Management (CRITICAL)
+**🚨 NEVER expose database IDs in API responses**
+- **Internal**: `bigint` primary keys
+- **External**: Branded UIDs (e.g., `usr_`, `clt_`)
+- **API/DTOs**: Use UIDs. Always map `uid` to `id` in Output DTOs (e.g., `id: obj.uid`). The database `id` must NOT be included.
+
+## Validation (Zod)
+- Use Zod for all validation.
+- Input: snake_case → Internal: camelCase → Output: snake_case.
+- Use `createZodDto()` for NestJS compatibility.
+
+## Performance (CRITICAL)
+**🚨 Always prefer bulk operations and includes over loops**
+1. **Bulk ops**: `createMany`, `updateMany`, `deleteMany` (NO loops for `create`).
+2. **Include**: Use Prisma `include` instead of N+1 independent queries.
+3. **Promise.all()**: Run independent data reads and counts in parallel.
+
+## Error Handling (CRITICAL)
+**🚨 ALWAYS use `HttpError` utility in service layer - NEVER throw NestJS exceptions directly.**
+Use: `HttpError.notFound()`, `HttpError.badRequest()`, `HttpError.conflict()`, etc.
+Do not manually throw errors in repositories; use Prisma's `findFirstOrThrow()`.
+
+## Anti-Patterns
+- ❌ **Use `any`/`unknown` to bypass errors.**
+- ❌ **Disable ESLint rules.**
+- ❌ **Use N+1 queries** instead of `include` or bulk ops.
+- ❌ **Throw HTTP exceptions in repositories.**
+
+*Refer to `.cursor/rules/erify_api_guide.mdc` for the exact code examples if needed manually, but this guide encapsulates the strict guidelines.*

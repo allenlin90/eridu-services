@@ -3,6 +3,23 @@
 > **Last Updated**: 2026-02-17
 > **Status**: Production codebase with known architectural debt (see Known Issues)
 
+## Workflow Rules (MUST FOLLOW)
+
+### Skill-First Development
+Before implementing ANY feature, check if a relevant skill exists in `.claude/skills/`. Use the `Skill` tool to invoke it. **Common mappings:**
+- Backend: `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `erify-authorization`, `database-patterns`, `data-validation`
+- Frontend: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`
+- Full-stack: `admin-list-pattern`, `studio-list-pattern`
+
+### Mandatory Code Verification
+After every code change, run verification before marking work complete:
+```bash
+pnpm --filter <app_or_package> lint      # Fix ALL errors (never disable ESLint rules)
+pnpm --filter <app_or_package> typecheck # NEVER use `any` or `@ts-ignore` to bypass
+pnpm --filter <app_or_package> test      # All tests must pass
+```
+Run for each affected app/package. **Never skip. Fix errors before marking work complete.**
+
 ## Project Stack
 
 **Monorepo**: Turborepo + pnpm workspaces | Node >= 22 | TypeScript 5.9.3
@@ -57,6 +74,18 @@ method(@StudioParam() studioUid: string) {
 - Template → Snapshots (versioned schemas)
 - Task → references specific snapshot
 - Template updates don't affect existing tasks
+
+## Monorepo Package Rules (CRITICAL)
+
+- **Export compiled JS only**: All packages export from `dist/`, **never** from `src/`
+- **Exports format**: Both `types` and `default` fields required in `package.json` exports
+- **Dependencies**: Use `workspace:*` for internal packages (never `file:` or version numbers)
+- **tsconfig**: No path mappings to workspace sources in consuming apps — TS resolves via `package.json` exports
+- **Vite**: `preserveSymlinks: false` (required for pnpm) + workspace packages in `optimizeDeps.include`
+- **Package tsconfig**: Must include `declaration: true`, `declarationMap: true`, `sourceMap: true`, `outDir: "dist"`
+- **Dev mode**: Package dev script: `tsc --watch --preserveWatchOutput`
+
+> Full details + examples: [monorepo-package-rules.md](memory/monorepo-package-rules.md)
 
 ## Naming Conventions
 
@@ -204,3 +233,4 @@ const where: Prisma.TaskWhereInput = { ... };
 | **[skills-review.md](memory/skills-review.md)** | Skills review notes | Skills audit |
 | **[skills-linting-fixes.md](memory/skills-linting-fixes.md)** | Linting fix patterns | Fixing lint errors |
 | **[skills-updates-2026-02-15.md](memory/skills-updates-2026-02-15.md)** | Recent skills updates | Change history |
+| **[monorepo-package-rules.md](memory/monorepo-package-rules.md)** | Package exports, tsconfig, Vite config | Working with `packages/*` |
