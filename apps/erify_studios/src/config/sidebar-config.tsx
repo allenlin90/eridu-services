@@ -90,6 +90,10 @@ function getStudioManagementItems(
   // Check role safely (case-insensitive)
   if (role === STUDIO_ROLE.ADMIN) {
     managementItems.push({
+      title: 'Shows',
+      url: `/studios/${studioId}/shows`,
+    });
+    managementItems.push({
       title: 'Task Templates',
       url: `/studios/${studioId}/task-templates`,
     });

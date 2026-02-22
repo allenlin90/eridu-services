@@ -51,6 +51,12 @@ type AdminTableProps<TData> = {
   onSortingChange?: (sorting: SortingState) => void;
   // Extra actions
   renderExtraActions?: (row: TData) => React.ReactNode;
+  // Toolbar content (like bulk actions)
+  renderToolbarActions?: (table: import('@tanstack/react-table').Table<TData>) => React.ReactNode;
+  // Row selection
+  enableRowSelection?: boolean | ((row: import('@tanstack/react-table').Row<TData>) => boolean);
+  rowSelection?: import('@tanstack/react-table').RowSelectionState;
+  onRowSelectionChange?: (updater: import('@tanstack/react-table').Updater<import('@tanstack/react-table').RowSelectionState>) => void;
 };
 
 export function AdminTable<TData>({
@@ -73,6 +79,10 @@ export function AdminTable<TData>({
   sorting,
   onSortingChange,
   renderExtraActions,
+  renderToolbarActions,
+  enableRowSelection,
+  rowSelection,
+  onRowSelectionChange,
 }: AdminTableProps<TData>) {
   // Add actions column if edit or delete handlers are provided
   const columnsWithActions: ColumnDef<TData>[] = [
@@ -105,6 +115,8 @@ export function AdminTable<TData>({
     manualFiltering: !!onColumnFiltersChange,
     manualSorting: !!onSortingChange,
     pageCount: pagination?.pageCount,
+    enableRowSelection,
+    onRowSelectionChange,
     state: {
       ...(pagination
         ? {
@@ -116,6 +128,7 @@ export function AdminTable<TData>({
         : {}),
       ...(columnFilters ? { columnFilters } : {}),
       ...(sorting ? { sorting } : {}),
+      ...(rowSelection !== undefined ? { rowSelection } : {}),
     },
     onPaginationChange: pagination && onPaginationChange
       ? (updater) => {
@@ -158,7 +171,9 @@ export function AdminTable<TData>({
         searchPlaceholder={searchPlaceholder}
         quickFilterColumns={quickFilterColumns}
         featuredFilterColumns={featuredFilterColumns}
-      />
+      >
+        {renderToolbarActions?.(table)}
+      </AdminTableToolbar>
       <div className="rounded-md border overflow-x-auto relative">
         <div className="relative">
           {/* Progress bar for background fetches (only if not initial loading) */}
@@ -168,11 +183,7 @@ export function AdminTable<TData>({
             </div>
           )}
 
-          <div className={cn(
-            'transition-all duration-300 ease-in-out',
-            isLoading ? 'opacity-100' : 'opacity-100',
-          )}
-          >
+          <div className="transition-all duration-300 ease-in-out opacity-100">
             {isLoading
               ? (
                   <div className="animate-in fade-in duration-500">

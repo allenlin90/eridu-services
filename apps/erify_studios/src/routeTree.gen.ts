@@ -24,13 +24,17 @@ import { Route as SystemMembershipsIndexRouteImport } from './routes/system/memb
 import { Route as SystemMcsIndexRouteImport } from './routes/system/mcs/index'
 import { Route as SystemClientsIndexRouteImport } from './routes/system/clients/index'
 import { Route as StudiosStudioIdTaskTemplatesRouteImport } from './routes/studios/$studioId/task-templates'
+import { Route as StudiosStudioIdShowsRouteImport } from './routes/studios/$studioId/shows'
 import { Route as StudiosStudioIdMyTasksRouteImport } from './routes/studios/$studioId/my-tasks'
 import { Route as StudiosStudioIdDashboardRouteImport } from './routes/studios/$studioId/dashboard'
 import { Route as StudiosStudioIdTaskTemplatesIndexRouteImport } from './routes/studios/$studioId/task-templates/index'
+import { Route as StudiosStudioIdShowsIndexRouteImport } from './routes/studios/$studioId/shows/index'
+import { Route as SystemShowsShowIdTasksRouteImport } from './routes/system/shows/$showId/tasks'
 import { Route as StudiosStudioIdTaskTemplatesNewRouteImport } from './routes/studios/$studioId/task-templates/new'
 import { Route as StudiosStudioIdTaskTemplatesTemplateIdRouteImport } from './routes/studios/$studioId/task-templates/$templateId'
 import { Route as SystemStudiosStudioIdStudioRoomsIndexRouteImport } from './routes/system/studios/$studioId/studio-rooms/index'
 import { Route as SystemSchedulesScheduleIdSnapshotsIndexRouteImport } from './routes/system/schedules/$scheduleId/snapshots/index'
+import { Route as StudiosStudioIdShowsShowIdTasksRouteImport } from './routes/studios/$studioId/shows/$showId/tasks'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -109,6 +113,11 @@ const StudiosStudioIdTaskTemplatesRoute =
     path: '/$studioId/task-templates',
     getParentRoute: () => StudiosRouteRoute,
   } as any)
+const StudiosStudioIdShowsRoute = StudiosStudioIdShowsRouteImport.update({
+  id: '/$studioId/shows',
+  path: '/$studioId/shows',
+  getParentRoute: () => StudiosRouteRoute,
+} as any)
 const StudiosStudioIdMyTasksRoute = StudiosStudioIdMyTasksRouteImport.update({
   id: '/$studioId/my-tasks',
   path: '/$studioId/my-tasks',
@@ -126,6 +135,17 @@ const StudiosStudioIdTaskTemplatesIndexRoute =
     path: '/',
     getParentRoute: () => StudiosStudioIdTaskTemplatesRoute,
   } as any)
+const StudiosStudioIdShowsIndexRoute =
+  StudiosStudioIdShowsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => StudiosStudioIdShowsRoute,
+  } as any)
+const SystemShowsShowIdTasksRoute = SystemShowsShowIdTasksRouteImport.update({
+  id: '/shows/$showId/tasks',
+  path: '/shows/$showId/tasks',
+  getParentRoute: () => SystemRouteRoute,
+} as any)
 const StudiosStudioIdTaskTemplatesNewRoute =
   StudiosStudioIdTaskTemplatesNewRouteImport.update({
     id: '/new',
@@ -150,6 +170,12 @@ const SystemSchedulesScheduleIdSnapshotsIndexRoute =
     path: '/schedules/$scheduleId/snapshots/',
     getParentRoute: () => SystemRouteRoute,
   } as any)
+const StudiosStudioIdShowsShowIdTasksRoute =
+  StudiosStudioIdShowsShowIdTasksRouteImport.update({
+    id: '/$showId/tasks',
+    path: '/$showId/tasks',
+    getParentRoute: () => StudiosStudioIdShowsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -158,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
+  '/studios/$studioId/shows': typeof StudiosStudioIdShowsRouteWithChildren
   '/studios/$studioId/task-templates': typeof StudiosStudioIdTaskTemplatesRouteWithChildren
   '/system/clients': typeof SystemClientsIndexRoute
   '/system/mcs': typeof SystemMcsIndexRoute
@@ -171,7 +198,10 @@ export interface FileRoutesByFullPath {
   '/system/users': typeof SystemUsersIndexRoute
   '/studios/$studioId/task-templates/$templateId': typeof StudiosStudioIdTaskTemplatesTemplateIdRoute
   '/studios/$studioId/task-templates/new': typeof StudiosStudioIdTaskTemplatesNewRoute
+  '/system/shows/$showId/tasks': typeof SystemShowsShowIdTasksRoute
+  '/studios/$studioId/shows/': typeof StudiosStudioIdShowsIndexRoute
   '/studios/$studioId/task-templates/': typeof StudiosStudioIdTaskTemplatesIndexRoute
+  '/studios/$studioId/shows/$showId/tasks': typeof StudiosStudioIdShowsShowIdTasksRoute
   '/system/schedules/$scheduleId/snapshots': typeof SystemSchedulesScheduleIdSnapshotsIndexRoute
   '/system/studios/$studioId/studio-rooms': typeof SystemStudiosStudioIdStudioRoomsIndexRoute
 }
@@ -194,7 +224,10 @@ export interface FileRoutesByTo {
   '/system/users': typeof SystemUsersIndexRoute
   '/studios/$studioId/task-templates/$templateId': typeof StudiosStudioIdTaskTemplatesTemplateIdRoute
   '/studios/$studioId/task-templates/new': typeof StudiosStudioIdTaskTemplatesNewRoute
+  '/system/shows/$showId/tasks': typeof SystemShowsShowIdTasksRoute
+  '/studios/$studioId/shows': typeof StudiosStudioIdShowsIndexRoute
   '/studios/$studioId/task-templates': typeof StudiosStudioIdTaskTemplatesIndexRoute
+  '/studios/$studioId/shows/$showId/tasks': typeof StudiosStudioIdShowsShowIdTasksRoute
   '/system/schedules/$scheduleId/snapshots': typeof SystemSchedulesScheduleIdSnapshotsIndexRoute
   '/system/studios/$studioId/studio-rooms': typeof SystemStudiosStudioIdStudioRoomsIndexRoute
 }
@@ -206,6 +239,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
+  '/studios/$studioId/shows': typeof StudiosStudioIdShowsRouteWithChildren
   '/studios/$studioId/task-templates': typeof StudiosStudioIdTaskTemplatesRouteWithChildren
   '/system/clients/': typeof SystemClientsIndexRoute
   '/system/mcs/': typeof SystemMcsIndexRoute
@@ -219,7 +253,10 @@ export interface FileRoutesById {
   '/system/users/': typeof SystemUsersIndexRoute
   '/studios/$studioId/task-templates/$templateId': typeof StudiosStudioIdTaskTemplatesTemplateIdRoute
   '/studios/$studioId/task-templates/new': typeof StudiosStudioIdTaskTemplatesNewRoute
+  '/system/shows/$showId/tasks': typeof SystemShowsShowIdTasksRoute
+  '/studios/$studioId/shows/': typeof StudiosStudioIdShowsIndexRoute
   '/studios/$studioId/task-templates/': typeof StudiosStudioIdTaskTemplatesIndexRoute
+  '/studios/$studioId/shows/$showId/tasks': typeof StudiosStudioIdShowsShowIdTasksRoute
   '/system/schedules/$scheduleId/snapshots/': typeof SystemSchedulesScheduleIdSnapshotsIndexRoute
   '/system/studios/$studioId/studio-rooms/': typeof SystemStudiosStudioIdStudioRoomsIndexRoute
 }
@@ -232,6 +269,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/studios/$studioId/dashboard'
     | '/studios/$studioId/my-tasks'
+    | '/studios/$studioId/shows'
     | '/studios/$studioId/task-templates'
     | '/system/clients'
     | '/system/mcs'
@@ -245,7 +283,10 @@ export interface FileRouteTypes {
     | '/system/users'
     | '/studios/$studioId/task-templates/$templateId'
     | '/studios/$studioId/task-templates/new'
+    | '/system/shows/$showId/tasks'
+    | '/studios/$studioId/shows/'
     | '/studios/$studioId/task-templates/'
+    | '/studios/$studioId/shows/$showId/tasks'
     | '/system/schedules/$scheduleId/snapshots'
     | '/system/studios/$studioId/studio-rooms'
   fileRoutesByTo: FileRoutesByTo
@@ -268,7 +309,10 @@ export interface FileRouteTypes {
     | '/system/users'
     | '/studios/$studioId/task-templates/$templateId'
     | '/studios/$studioId/task-templates/new'
+    | '/system/shows/$showId/tasks'
+    | '/studios/$studioId/shows'
     | '/studios/$studioId/task-templates'
+    | '/studios/$studioId/shows/$showId/tasks'
     | '/system/schedules/$scheduleId/snapshots'
     | '/system/studios/$studioId/studio-rooms'
   id:
@@ -279,6 +323,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/studios/$studioId/dashboard'
     | '/studios/$studioId/my-tasks'
+    | '/studios/$studioId/shows'
     | '/studios/$studioId/task-templates'
     | '/system/clients/'
     | '/system/mcs/'
@@ -292,7 +337,10 @@ export interface FileRouteTypes {
     | '/system/users/'
     | '/studios/$studioId/task-templates/$templateId'
     | '/studios/$studioId/task-templates/new'
+    | '/system/shows/$showId/tasks'
+    | '/studios/$studioId/shows/'
     | '/studios/$studioId/task-templates/'
+    | '/studios/$studioId/shows/$showId/tasks'
     | '/system/schedules/$scheduleId/snapshots/'
     | '/system/studios/$studioId/studio-rooms/'
   fileRoutesById: FileRoutesById
@@ -411,6 +459,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudiosStudioIdTaskTemplatesRouteImport
       parentRoute: typeof StudiosRouteRoute
     }
+    '/studios/$studioId/shows': {
+      id: '/studios/$studioId/shows'
+      path: '/$studioId/shows'
+      fullPath: '/studios/$studioId/shows'
+      preLoaderRoute: typeof StudiosStudioIdShowsRouteImport
+      parentRoute: typeof StudiosRouteRoute
+    }
     '/studios/$studioId/my-tasks': {
       id: '/studios/$studioId/my-tasks'
       path: '/$studioId/my-tasks'
@@ -431,6 +486,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/studios/$studioId/task-templates/'
       preLoaderRoute: typeof StudiosStudioIdTaskTemplatesIndexRouteImport
       parentRoute: typeof StudiosStudioIdTaskTemplatesRoute
+    }
+    '/studios/$studioId/shows/': {
+      id: '/studios/$studioId/shows/'
+      path: '/'
+      fullPath: '/studios/$studioId/shows/'
+      preLoaderRoute: typeof StudiosStudioIdShowsIndexRouteImport
+      parentRoute: typeof StudiosStudioIdShowsRoute
+    }
+    '/system/shows/$showId/tasks': {
+      id: '/system/shows/$showId/tasks'
+      path: '/shows/$showId/tasks'
+      fullPath: '/system/shows/$showId/tasks'
+      preLoaderRoute: typeof SystemShowsShowIdTasksRouteImport
+      parentRoute: typeof SystemRouteRoute
     }
     '/studios/$studioId/task-templates/new': {
       id: '/studios/$studioId/task-templates/new'
@@ -460,8 +529,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SystemSchedulesScheduleIdSnapshotsIndexRouteImport
       parentRoute: typeof SystemRouteRoute
     }
+    '/studios/$studioId/shows/$showId/tasks': {
+      id: '/studios/$studioId/shows/$showId/tasks'
+      path: '/$showId/tasks'
+      fullPath: '/studios/$studioId/shows/$showId/tasks'
+      preLoaderRoute: typeof StudiosStudioIdShowsShowIdTasksRouteImport
+      parentRoute: typeof StudiosStudioIdShowsRoute
+    }
   }
 }
+
+interface StudiosStudioIdShowsRouteChildren {
+  StudiosStudioIdShowsIndexRoute: typeof StudiosStudioIdShowsIndexRoute
+  StudiosStudioIdShowsShowIdTasksRoute: typeof StudiosStudioIdShowsShowIdTasksRoute
+}
+
+const StudiosStudioIdShowsRouteChildren: StudiosStudioIdShowsRouteChildren = {
+  StudiosStudioIdShowsIndexRoute: StudiosStudioIdShowsIndexRoute,
+  StudiosStudioIdShowsShowIdTasksRoute: StudiosStudioIdShowsShowIdTasksRoute,
+}
+
+const StudiosStudioIdShowsRouteWithChildren =
+  StudiosStudioIdShowsRoute._addFileChildren(StudiosStudioIdShowsRouteChildren)
 
 interface StudiosStudioIdTaskTemplatesRouteChildren {
   StudiosStudioIdTaskTemplatesTemplateIdRoute: typeof StudiosStudioIdTaskTemplatesTemplateIdRoute
@@ -486,12 +575,14 @@ const StudiosStudioIdTaskTemplatesRouteWithChildren =
 interface StudiosRouteRouteChildren {
   StudiosStudioIdDashboardRoute: typeof StudiosStudioIdDashboardRoute
   StudiosStudioIdMyTasksRoute: typeof StudiosStudioIdMyTasksRoute
+  StudiosStudioIdShowsRoute: typeof StudiosStudioIdShowsRouteWithChildren
   StudiosStudioIdTaskTemplatesRoute: typeof StudiosStudioIdTaskTemplatesRouteWithChildren
 }
 
 const StudiosRouteRouteChildren: StudiosRouteRouteChildren = {
   StudiosStudioIdDashboardRoute: StudiosStudioIdDashboardRoute,
   StudiosStudioIdMyTasksRoute: StudiosStudioIdMyTasksRoute,
+  StudiosStudioIdShowsRoute: StudiosStudioIdShowsRouteWithChildren,
   StudiosStudioIdTaskTemplatesRoute:
     StudiosStudioIdTaskTemplatesRouteWithChildren,
 }
@@ -511,6 +602,7 @@ interface SystemRouteRouteChildren {
   SystemShowsIndexRoute: typeof SystemShowsIndexRoute
   SystemStudiosIndexRoute: typeof SystemStudiosIndexRoute
   SystemUsersIndexRoute: typeof SystemUsersIndexRoute
+  SystemShowsShowIdTasksRoute: typeof SystemShowsShowIdTasksRoute
   SystemSchedulesScheduleIdSnapshotsIndexRoute: typeof SystemSchedulesScheduleIdSnapshotsIndexRoute
   SystemStudiosStudioIdStudioRoomsIndexRoute: typeof SystemStudiosStudioIdStudioRoomsIndexRoute
 }
@@ -526,6 +618,7 @@ const SystemRouteRouteChildren: SystemRouteRouteChildren = {
   SystemShowsIndexRoute: SystemShowsIndexRoute,
   SystemStudiosIndexRoute: SystemStudiosIndexRoute,
   SystemUsersIndexRoute: SystemUsersIndexRoute,
+  SystemShowsShowIdTasksRoute: SystemShowsShowIdTasksRoute,
   SystemSchedulesScheduleIdSnapshotsIndexRoute:
     SystemSchedulesScheduleIdSnapshotsIndexRoute,
   SystemStudiosStudioIdStudioRoomsIndexRoute:
