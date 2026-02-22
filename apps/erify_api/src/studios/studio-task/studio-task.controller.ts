@@ -23,6 +23,7 @@ import {
   generateTasksResponseSchema,
   ReassignTaskDto,
   taskDto,
+  UpdateTaskDto,
 } from '@/models/task/schemas/task.schema';
 import { TaskService } from '@/models/task/task.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
@@ -30,7 +31,10 @@ import { TaskOrchestrationService } from '@/task-orchestration/task-orchestratio
 @StudioProtected([STUDIO_ROLE.ADMIN])
 @Controller('studios/:studioId/tasks')
 export class StudioTaskController extends BaseStudioController {
-  constructor(private readonly taskOrchestrationService: TaskOrchestrationService) {
+  constructor(
+    private readonly taskOrchestrationService: TaskOrchestrationService,
+    private readonly taskService: TaskService,
+  ) {
     super();
   }
 
@@ -62,5 +66,30 @@ export class StudioTaskController extends BaseStudioController {
     @Body() dto: ReassignTaskDto,
   ) {
     return this.taskOrchestrationService.reassignTask(studioId, id, dto.assignee_uid);
+  }
+
+  @Patch(':id')
+  @ZodResponse(taskDto)
+  async updateTask(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(TaskService.UID_PREFIX, 'Task')) id: string,
+    @Body() dto: UpdateTaskDto,
+  ) {
+    // 1. Verify existence and studio scoping (query-based)
+    const existingTask = await this.taskService.findOne({
+      uid: id,
+      studio: { uid: studioId },
+      deletedAt: null,
+    });
+    this.ensureResourceExists(existingTask, 'Task', id);
+
+    // 2. Perform operation
+    const updatedTask = await this.taskService.updateTaskContentAndStatus(id, dto.version, {
+      content: dto.content,
+      status: dto.status,
+    });
+
+    this.ensureResourceExists(updatedTask, 'Task', id);
+    return updatedTask;
   }
 }

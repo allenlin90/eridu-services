@@ -1,0 +1,88 @@
+import { Injectable } from '@nestjs/common';
+
+import type { ListMyTasksQueryTransformed, TaskStatus } from '@eridu/api-types/task-management';
+
+import { HttpError } from '@/lib/errors/http-error.util';
+import { TaskService } from '@/models/task/task.service';
+import { UserService } from '@/models/user/user.service';
+
+@Injectable()
+export class MeTaskService {
+  constructor(
+    private readonly taskService: TaskService,
+    private readonly userService: UserService,
+  ) {}
+
+  /**
+   * Retrieves a paginated list of tasks assigned to the current user.
+   */
+  async listMyTasks(userExtId: string, query: ListMyTasksQueryTransformed) {
+    const user = await this.userService.getUserByExtId(userExtId);
+    if (!user) {
+      throw HttpError.unauthorized('User not found');
+    }
+
+    return this.taskService.findTasksByAssignee(user.id, query);
+  }
+
+  /**
+   * Retrieves a specific task assigned to the current user.
+   */
+  async getMyTask(userExtId: string, taskUid: string) {
+    const user = await this.userService.getUserByExtId(userExtId);
+    if (!user) {
+      throw HttpError.unauthorized('User not found');
+    }
+
+    const task = await this.taskService.findOne({
+      uid: taskUid,
+      deletedAt: null,
+      assigneeId: user.id, // Enforce assignee ownership at query level
+    }, {
+      template: true,
+      assignee: true,
+      targets: {
+        where: { targetType: 'SHOW', deletedAt: null },
+        include: { show: true },
+      },
+    });
+
+    if (!task) {
+      throw HttpError.notFound('Task not found or not assigned to you');
+    }
+
+    return task;
+  }
+
+  /**
+   * Updates an assigned task for the currently logged-in user.
+   */
+  async updateMyTask(
+    userExtId: string,
+    taskUid: string,
+    version: number,
+    payload: {
+      content?: any;
+      status?: TaskStatus;
+    },
+  ) {
+    // 1. Resolve user ID from ext_id
+    const user = await this.userService.getUserByExtId(userExtId);
+    if (!user) {
+      throw HttpError.unauthorized('User not found');
+    }
+
+    // 2. Resolve task and verify assignment
+    const task = await this.taskService.findByUid(taskUid);
+    if (!task) {
+      return null;
+    }
+
+    if (task.assigneeId !== user.id) {
+      throw HttpError.forbidden('Task is not assigned to you');
+    }
+
+    // 3. Delegate to TaskService core functionality
+    return this.taskService.updateTaskContentAndStatus(taskUid, version, payload);
+  }
+}
