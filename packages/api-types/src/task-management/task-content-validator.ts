@@ -6,7 +6,7 @@ import type { UiSchema } from './template-definition.schema.js';
  * Builds a dynamic Zod schema based on a TaskTemplate UiSchema definition.
  * Can be used by both backend (API validation) and frontend (form validation).
  */
-export function buildTaskContentSchema(schema: UiSchema): z.ZodObject<any> {
+export function buildTaskContentSchema(schema: UiSchema): z.ZodObject<z.ZodRawShape> {
   const shape: Record<string, z.ZodTypeAny> = {};
 
   for (const item of schema.items) {
@@ -45,35 +45,38 @@ export function buildTaskContentSchema(schema: UiSchema): z.ZodObject<any> {
         break;
 
       case 'date':
+        validator = z.iso.date();
+        break;
+
       case 'datetime':
-        validator = z.string().datetime({ message: 'Must be a valid ISO datetime string' });
+        validator = z.iso.datetime();
         break;
 
       case 'select':
         if (!item.options || item.options.length === 0) {
-          validator = z.any(); // Fallback if schema is misconfigured
+          validator = z.string(); // Fallback if schema is misconfigured
         } else {
-          const values = item.options.map((o: any) => o.value) as [string, ...string[]];
+          const values = item.options.map((o) => o.value) as [string, ...string[]];
           validator = z.enum(values);
         }
         break;
 
       case 'multiselect':
         if (!item.options || item.options.length === 0) {
-          validator = z.array(z.any()); // Fallback
+          validator = z.array(z.string()); // Fallback
         } else {
-          const multivalues = item.options.map((o: any) => o.value) as [string, ...string[]];
+          const multivalues = item.options.map((o) => o.value) as [string, ...string[]];
           validator = z.array(z.enum(multivalues));
         }
         break;
 
       case 'file':
       case 'url':
-        validator = z.string().url({ message: 'Must be a valid URL' });
+        validator = z.url({ message: 'Must be a valid URL' });
         break;
 
       default:
-        validator = z.any();
+        validator = z.unknown();
     }
 
     // Handle null/empty appropriately for optional fields

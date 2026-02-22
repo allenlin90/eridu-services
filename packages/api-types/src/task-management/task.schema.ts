@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { UID_PREFIXES } from '../constants.js';
-import { paginationBaseSchema, paginationQuerySchema, transformPagination } from '../pagination/index.js';
+import { paginationBaseSchema, transformPagination } from '../pagination/index.js';
 import { showApiResponseSchema } from '../shows/index.js';
 
 /**
@@ -58,26 +58,9 @@ export const taskSchema = z.object({
 export type Task = z.infer<typeof taskSchema>;
 
 /**
- * Base Task DTO schema without transform (snake_case)
- */
-export const baseTaskDtoSchema = z.object({
-  id: z.string(),
-  description: z.string(),
-  status: z.nativeEnum(TASK_STATUS),
-  type: z.nativeEnum(TASK_TYPE),
-  due_date: z.string().nullable(),
-  completed_at: z.string().nullable(),
-  content: z.record(z.string(), z.any()).nullable(),
-  metadata: z.record(z.string(), z.any()).nullable(),
-  version: z.number().int(),
-  created_at: z.string(),
-  updated_at: z.string(),
-});
-
-/**
  * Task DTO transformation schema
  */
-export const taskDto = taskSchema.transform((obj): z.infer<typeof baseTaskDtoSchema> => ({
+export const taskDto = taskSchema.transform((obj) => ({
   id: obj.uid,
   description: obj.description,
   status: obj.status,
@@ -91,7 +74,7 @@ export const taskDto = taskSchema.transform((obj): z.infer<typeof baseTaskDtoSch
   updated_at: obj.updatedAt.toISOString(),
 }));
 
-export type TaskDto = z.infer<typeof baseTaskDtoSchema>;
+export type TaskDto = z.infer<typeof taskDto>;
 
 /**
  * Task with Relations entity schema
@@ -116,29 +99,9 @@ export const taskWithRelationsSchema = taskSchema.extend({
 });
 
 /**
- * Base Task with Relations DTO schema
- */
-export const baseTaskWithRelationsDtoSchema = baseTaskDtoSchema.extend({
-  assignee: z.object({
-    id: z.string(),
-    name: z.string(),
-  }).nullable().optional(),
-  template: z.object({
-    id: z.string(),
-    name: z.string(),
-  }).nullable().optional(),
-  show: z.object({
-    id: z.string(),
-    name: z.string(),
-    start_time: z.string(),
-    end_time: z.string(),
-  }).nullable().optional(),
-});
-
-/**
  * Task with Relations DTO
  */
-export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj): z.infer<typeof baseTaskWithRelationsDtoSchema> => {
+export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj) => {
   let show = null;
   if (obj.targets && obj.targets.length > 0) {
     const s = obj.targets[0]?.show;
@@ -164,13 +127,13 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj): z.i
     version: obj.version,
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
-    assignee: obj.assignee ? { id: obj.assignee.uid, name: obj.assignee.name } : obj.assignee,
-    template: obj.template ? { id: obj.template.uid, name: obj.template.name } : obj.template,
+    assignee: obj.assignee ? { id: obj.assignee.uid, name: obj.assignee.name } : null,
+    template: obj.template ? { id: obj.template.uid, name: obj.template.name } : null,
     show,
   };
 });
 
-export type TaskWithRelationsDto = z.infer<typeof baseTaskWithRelationsDtoSchema>;
+export type TaskWithRelationsDto = z.infer<typeof taskWithRelationsDto>;
 
 /**
  * Schema for generating tasks for multiple shows
@@ -237,7 +200,7 @@ export type AssignShowsResponse = z.infer<typeof assignShowsResponseSchema>;
  * Schema for reassigning a single task
  */
 export const reassignTaskRequestSchema = z.object({
-  assignee_uid: z.string(),
+  assignee_uid: z.string().nullable(),
 });
 
 export type ReassignTaskRequest = z.infer<typeof reassignTaskRequestSchema>;
@@ -259,14 +222,15 @@ export type ShowWithTaskSummaryDto = z.infer<typeof showWithTaskSummaryDto>;
 /**
  * Query schema for listing studio shows with task filters
  */
-export const listStudioShowsQuerySchema = paginationQuerySchema.and(
-  z.object({
+export const listStudioShowsQuerySchema = paginationBaseSchema
+  .extend({
     search: z.string().optional(),
     date_from: z.string().datetime().optional(),
     date_to: z.string().datetime().optional(),
     has_tasks: z.coerce.boolean().optional(),
-  }),
-);
+    sort: z.enum(['asc', 'desc']).optional().default('desc'),
+  })
+  .transform(transformPagination);
 
 export type ListStudioShowsQuery = z.input<typeof listStudioShowsQuerySchema>;
 export type ListStudioShowsQueryTransformed = z.infer<typeof listStudioShowsQuerySchema>;
@@ -291,6 +255,7 @@ export const listMyTasksQuerySchema = paginationBaseSchema
     due_date_from: z.string().datetime().optional(),
     due_date_to: z.string().datetime().optional(),
     sort: z.enum(['due_date:asc', 'due_date:desc', 'createdAt:asc', 'createdAt:desc']).optional(),
+    studio_id: z.string().optional(),
   })
   .transform(transformPagination);
 
