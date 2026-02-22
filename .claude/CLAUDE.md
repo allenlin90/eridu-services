@@ -1,13 +1,14 @@
 # Eridu Services Monorepo - Quick Reference
 
-> **Last Updated**: 2026-02-17
-> **Status**: Production codebase with known architectural debt (see Known Issues)
+> **Last Updated**: 2026-02-22
+> **Status**: Production codebase — major architectural debt resolved Feb 2026 (see Known Issues)
 
 ## Workflow Rules (MUST FOLLOW)
 
 ### Skill-First Development
 Before implementing ANY feature, check if a relevant skill exists in `.claude/skills/`. Use the `Skill` tool to invoke it. **Common mappings:**
 - Backend: `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `erify-authorization`, `database-patterns`, `data-validation`
+- Multi-service workflows: `orchestration-service-nestjs`
 - Frontend: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`
 - Full-stack: `admin-list-pattern`, `studio-list-pattern`
 
@@ -165,9 +166,9 @@ import { JwtVerifier } from '@eridu/auth-sdk/server/jwt/jwt-verifier';
 - `fix(auth): resolve token refresh race condition`
 - `refactor(user): migrate to payload pattern`
 
-## CRITICAL: Known Architectural Debt
+## Service Layer Rules (CRITICAL)
 
-**Status**: 14/18 models violate ideal patterns (previous agents had hallucinations)
+**Status**: Major violations resolved Feb 2026. See [known-issues.md](memory/known-issues.md) for models still needing verification.
 
 ### Quick Rules (FROM `.claude/skills/service-pattern-nestjs`)
 ```typescript
@@ -195,14 +196,14 @@ const where: Prisma.TaskWhereInput = { ... };
 |-------|----------|
 | Define payload types in schemas | Expose `Prisma.*` in service signatures |
 | Use repository for all DB access | Build Prisma queries in service |
-| Follow task model pattern | Copy patterns from user/studio models |
+| Follow task model pattern | Copy patterns from client/mc/platform models (unverified) |
 | Reference [ideal-pattern.md](memory/ideal-pattern.md) | Assume existing code is correct |
 
 ### Reference Priority
 1. **[ideal-pattern.md](memory/ideal-pattern.md)** ← Follow this for new code
-2. **task.service.ts** ← Best existing example
-3. **studio-membership schema** ← Best schema example
-4. **user/studio/show services** ← DO NOT copy (need refactoring)
+2. **task.service.ts** ← Best model service example
+3. **task-orchestration.service.ts** ← Best orchestration service example
+4. **studio-membership schema** ← Best schema example
 
 ## Documentation Index
 
@@ -210,14 +211,15 @@ const where: Prisma.TaskWhereInput = { ... };
 | Skill | Purpose | Priority |
 |-------|---------|----------|
 | **service-pattern-nestjs** | Service layer patterns, payload types | HIGH |
+| **orchestration-service-nestjs** | Multi-service coordination, bulk ops, idempotency | HIGH |
 | **repository-pattern-nestjs** | Repository layer, BaseRepository | HIGH |
 | **shared-api-types** | @eridu/api-types usage | HIGH |
 | **erify-authorization** | Guards, roles, permissions | HIGH |
-| **backend-controller-pattern-nestjs** | Controller patterns | MEDIUM |
+| **backend-controller-pattern-nestjs** | Controller patterns (admin/studio/me/backdoor) | MEDIUM |
 | **frontend-api-layer** | TanStack Query patterns | MEDIUM |
 | **frontend-state-management** | React state patterns | MEDIUM |
 
-**Full skill list** (23 total): See `.claude/skills/` directory
+**Full skill list** (26 total): See `.claude/skills/` directory
 
 ### Memory Files (Supplementary - `.claude/memory/`)
 | File | Purpose | When to Use |
@@ -225,12 +227,9 @@ const where: Prisma.TaskWhereInput = { ... };
 | **[quick-reference.md](memory/quick-reference.md)** | Templates & examples | Creating new code |
 | **[code-review-checklist.md](memory/code-review-checklist.md)** | Pre-commit checks | Before committing |
 | **[ideal-pattern.md](memory/ideal-pattern.md)** | Complete model template | Reference implementation |
-| **[known-issues.md](memory/known-issues.md)** | Technical debt tracker | Understanding violations |
+| **[known-issues.md](memory/known-issues.md)** | Technical debt tracker | Models needing verification |
 | **[tech-stack.md](memory/tech-stack.md)** | Stack details | Stack questions |
 | **[auth-patterns.md](memory/auth-patterns.md)** | Auth/guards details | Auth deep-dive |
 | **[schema-patterns.md](memory/schema-patterns.md)** | DTO transformations | Schema design |
-| **[skills-integration.md](memory/skills-integration.md)** | Skills integration notes | Skills reference |
-| **[skills-review.md](memory/skills-review.md)** | Skills review notes | Skills audit |
-| **[skills-linting-fixes.md](memory/skills-linting-fixes.md)** | Linting fix patterns | Fixing lint errors |
-| **[skills-updates-2026-02-15.md](memory/skills-updates-2026-02-15.md)** | Recent skills updates | Change history |
+| **[skills-integration.md](memory/skills-integration.md)** | Skills hierarchy & usage guide | Skills reference |
 | **[monorepo-package-rules.md](memory/monorepo-package-rules.md)** | Package exports, tsconfig, Vite config | Working with `packages/*` |
