@@ -11,12 +11,14 @@
 - Individual Task Reassignment (`PATCH /studios/:studioId/tasks/:id/assign`)
 - Studio Shows with Task Summary (`GET /studios/:studioId/shows`)
 - View Show Tasks (`GET /studios/:studioId/shows/:showUid/tasks`)
+- Task content update with optimistic locking (`PATCH /studios/:studioId/tasks/:id`)
+- Task content/status update for operators, assignee-owns-task guard (`PATCH /me/tasks/:id`)
+- Content validation against snapshot schema on update
+- `completedAt` auto-set on COMPLETED transition
 
 ### What's Pending ❌
-- `/me/tasks` endpoints (list, get, update)
-- Task content update with optimistic locking
-- Status transition enforcement + `completedAt` auto-set
-- Content validation against snapshot schema on update
+- Status transition enforcement (state machine)
+- `AdminTaskController` system admin tools
 
 > **Related Documentation**  
 > For UI/UX specifications and user workflows, see [`apps/erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md`](../../erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md)
@@ -953,15 +955,14 @@ Returns paginated shows for a studio with per-show `task_summary` (total / assig
 
 **Responsibilities**: Single-task update (content, status), optimistic locking, content validation.
 
-> **Current status**: ❌ Not yet implemented. `TaskService` is currently a thin shell (exposes `findOne` and `softDelete` pass-throughs from the repository). The `update` operation, status transition enforcement, and content validation are **pending** implementation.
+**Current status**: ✅ Core update functionality implemented in `updateTaskContentAndStatus()`. Exposed at both `PATCH /studios/:studioId/tasks/:id` (studio admin) and `PATCH /me/tasks/:id` (operator, own tasks only).
 
 | Operation | Key Behaviors |
 | --------- | ------------- |
-| `update` | Compare `version` for optimistic lock → validate content against snapshot schema → validate status transition → atomic update |
-| Status transitions | Enforced via state machine (see §4) |
+| `updateTaskContentAndStatus` | Compare `version` for optimistic lock → validate content against snapshot schema → update with version increment |
 | `completedAt` | Auto-set when transitioning to COMPLETED, cleared otherwise |
+| Status transitions | ❌ State machine enforcement **not yet implemented** — any transition currently accepted |
 
----
 
 ## 8. API Endpoints
 
@@ -1213,12 +1214,23 @@ GET  /studios/:studioId/tasks/dashboard
 
 ### User (Operator) Endpoints
 
+> **Note**: `/me/tasks/upcoming` is **not a separate endpoint**. "Upcoming" tasks are a subset of `GET /me/tasks` filtered by `status` (PENDING/IN_PROGRESS) and a `due_date_to` window. This keeps the API surface minimal.
+
 ```
-GET   /me/tasks
-GET   /me/tasks/upcoming
-GET   /me/tasks/:uid
-PATCH /me/tasks/:uid
+GET   /me/tasks          ✅ implemented — paginated access with filters
+GET   /me/tasks/:uid     ✅ implemented
+PATCH /me/tasks/:uid     ✅ implemented — content/status update with optimistic locking + assignee-owns-task check
 ```
+
+**Query Parameters for `GET /me/tasks`**:
+| Param | Type | Description |
+| ----- | ---- | ----------- |
+| `status` | enum (multi) | Filter by status (e.g. `PENDING`, `IN_PROGRESS`) |
+| `due_date_from` | ISO date | Tasks due on or after this date |
+| `due_date_to` | ISO date | Tasks due on or before this date (use for "upcoming" window) |
+| `sort` | string | e.g. `due_date:asc` |
+| `cursor` | string | Cursor-based pagination |
+| `limit` | number | Page size (default 20, max 100) |
 
 **Example: Get My Tasks**
 ```http
@@ -1457,17 +1469,17 @@ async function paginateTasks(
 - [x] `TaskOrchestrationService` — generate, assign-shows, reassign, get-show-tasks, studio-shows-with-summary
 - [x] `TaskGenerationProcessor` — single-show transactional processing with advisory lock
 - [x] Schema validation (moved into `TaskTemplateService.validateSchema()` + `@eridu/api-types`)
-- [ ] `TaskService.update()` — task content update with optimistic locking ❌
-- [ ] Content validation against snapshot schema on task update ❌
+- [x] `TaskService.update()` — task content update with optimistic locking ✅
+- [x] Content validation against snapshot schema on task update ✅
 - [ ] Status transition state machine enforcement ❌
-- [ ] `completedAt` auto-set on `COMPLETED` transition ❌
+- [x] `completedAt` auto-set on `COMPLETED` transition ✅
 
 ### API Controllers
 - [x] `StudioTaskTemplateController` — full CRUD at `/studios/:studioId/task-templates`
-- [x] `StudioTaskController` — generate, assign-shows, reassign at `/studios/:studioId/tasks`
+- [x] `StudioTaskController` — generate, assign-shows, reassign, task content update at `/studios/:studioId/tasks`
 - [x] `StudioShowController` — studio shows with task summary at `GET /studios/:studioId/shows`
 - [x] `StudioShowTaskController` — show tasks at `GET /studios/:studioId/shows/:showUid/tasks`
-- [ ] `MeTaskController` — `/me/tasks` (list, get, update) ❌
+- [x] `MeTaskController` — `GET /me/tasks`, `GET /me/tasks/:id`, `PATCH /me/tasks/:id` ✅ implemented
 - [ ] `AdminTaskController` — system admin tools ❌
 
 ### Authentication & Guards
@@ -1475,7 +1487,7 @@ async function paginateTasks(
 - [x] `StudioMembershipGuard` (via `@StudioProtected()` decorator)
 - [x] `SystemAdminGuard` (via `AdminGuard`)
 - [x] Role-based decorators (`@StudioProtected([STUDIO_ROLE.ADMIN])`)
-- [ ] Enforce assignee-owns-task check for `PATCH /me/tasks/:uid` ❌
+- [x] Enforce assignee-owns-task check for `PATCH /me/tasks/:uid` ✅ (implemented in `MeTaskService.updateMyTask`)
 
 ### Error Handling
 - [x] Global exception filter
@@ -1484,15 +1496,19 @@ async function paginateTasks(
 
 ### Shared Types (`@eridu/api-types`)
 - [x] Export enums: `TaskStatus`, `TaskType`
-- [x] Export Zod schemas: `taskSchema`, `taskDto`, `generateTasksRequestSchema`, `assignShowsRequestSchema`, etc.
-- [ ] Export `/me/tasks` schemas ❌
+- [x] Export Zod schemas: `taskSchema`, `taskDto`, `generateTasksRequestSchema`, `assignShowsRequestSchema`, `updateTaskRequestSchema`, etc.
+- [x] Export `/me/tasks` list/get schemas (needed for `GET /me/tasks`, `GET /me/tasks/:id`) ✅ implemented
 
 ### Testing
 - [x] `TaskTemplateService` unit tests (schema validation, create/update/delete)
-- [ ] Unit tests for status transition validation ❌
-- [ ] Integration tests for race condition (advisory lock) ❌
-- [ ] Integration tests for bulk assignment ❌
-- [ ] Test optimistic locking conflicts ❌
+- [x] `TaskOrchestrationService` unit tests (generate, assign-shows, reassign, getShowTasks, getStudioShowsWithTaskSummary)
+- [x] `TaskGenerationProcessor` unit tests
+- [x] `StudioTaskController` unit tests
+- [ ] `MeTaskController` / `MeTaskService` unit tests ❌
+- [ ] Unit tests for status transition validation — deferred (state machine not yet implemented) ❌
+- [ ] Integration tests for race condition (advisory lock) — deferred ❌
+- [ ] Integration tests for bulk assignment — deferred ❌
+- [ ] Integration test for optimistic locking conflict — deferred ❌
 
 ---
 
