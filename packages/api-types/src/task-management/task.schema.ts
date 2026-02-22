@@ -94,9 +94,31 @@ export const taskDto = taskSchema.transform((obj): z.infer<typeof baseTaskDtoSch
 export type TaskDto = z.infer<typeof baseTaskDtoSchema>;
 
 /**
- * Task with Relations DTO
+ * Task with Relations entity schema
  */
-export const taskWithRelationsDto = baseTaskDtoSchema.extend({
+export const taskWithRelationsSchema = taskSchema.extend({
+  assignee: z.object({
+    uid: z.string(),
+    name: z.string(),
+  }).nullable().optional(),
+  template: z.object({
+    uid: z.string(),
+    name: z.string(),
+  }).nullable().optional(),
+  targets: z.array(z.object({
+    show: z.object({
+      uid: z.string(),
+      name: z.string(),
+      startTime: z.date(),
+      endTime: z.date(),
+    }).nullable(),
+  })).optional(),
+});
+
+/**
+ * Base Task with Relations DTO schema
+ */
+export const baseTaskWithRelationsDtoSchema = baseTaskDtoSchema.extend({
   assignee: z.object({
     id: z.string(),
     name: z.string(),
@@ -113,7 +135,42 @@ export const taskWithRelationsDto = baseTaskDtoSchema.extend({
   }).nullable().optional(),
 });
 
-export type TaskWithRelationsDto = z.infer<typeof taskWithRelationsDto>;
+/**
+ * Task with Relations DTO
+ */
+export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj): z.infer<typeof baseTaskWithRelationsDtoSchema> => {
+  let show = null;
+  if (obj.targets && obj.targets.length > 0) {
+    const s = obj.targets[0]?.show;
+    if (s) {
+      show = {
+        id: s.uid,
+        name: s.name,
+        start_time: s.startTime.toISOString(),
+        end_time: s.endTime.toISOString(),
+      };
+    }
+  }
+
+  return {
+    id: obj.uid,
+    description: obj.description,
+    status: obj.status,
+    type: obj.type,
+    due_date: obj.dueDate?.toISOString() ?? null,
+    completed_at: obj.completedAt?.toISOString() ?? null,
+    content: obj.content,
+    metadata: obj.metadata,
+    version: obj.version,
+    created_at: obj.createdAt.toISOString(),
+    updated_at: obj.updatedAt.toISOString(),
+    assignee: obj.assignee ? { id: obj.assignee.uid, name: obj.assignee.name } : obj.assignee,
+    template: obj.template ? { id: obj.template.uid, name: obj.template.name } : obj.template,
+    show,
+  };
+});
+
+export type TaskWithRelationsDto = z.infer<typeof baseTaskWithRelationsDtoSchema>;
 
 /**
  * Schema for generating tasks for multiple shows
