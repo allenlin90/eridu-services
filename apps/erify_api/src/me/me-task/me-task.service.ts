@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
-import type { ListMyTasksQueryTransformed, TaskStatus } from '@eridu/api-types/task-management';
+import type { ListMyTasksQueryTransformed } from '@eridu/api-types/task-management';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { StudioService } from '@/models/studio/studio.service';
+import type { UpdateTaskPayload } from '@/models/task/schemas/task.schema';
 import { TaskService } from '@/models/task/task.service';
 import { UserService } from '@/models/user/user.service';
 
@@ -11,6 +13,7 @@ export class MeTaskService {
   constructor(
     private readonly taskService: TaskService,
     private readonly userService: UserService,
+    private readonly studioService: StudioService,
   ) {}
 
   /**
@@ -22,7 +25,15 @@ export class MeTaskService {
       throw HttpError.unauthorized('User not found');
     }
 
-    return this.taskService.findTasksByAssignee(user.id, query);
+    let resolvedStudioId: bigint | undefined;
+    if (query.studio_id) {
+      const studio = await this.studioService.findByUid(query.studio_id);
+      if (studio) {
+        resolvedStudioId = studio.id;
+      }
+    }
+
+    return this.taskService.findTasksByAssignee(user.id, query, resolvedStudioId);
   }
 
   /**
@@ -61,10 +72,7 @@ export class MeTaskService {
     userExtId: string,
     taskUid: string,
     version: number,
-    payload: {
-      content?: any;
-      status?: TaskStatus;
-    },
+    payload: UpdateTaskPayload,
   ) {
     // 1. Resolve user ID from ext_id
     const user = await this.userService.getUserByExtId(userExtId);
@@ -75,7 +83,7 @@ export class MeTaskService {
     // 2. Resolve task and verify assignment
     const task = await this.taskService.findByUid(taskUid);
     if (!task) {
-      return null;
+      throw HttpError.notFound('Task not found or not assigned to you');
     }
 
     if (task.assigneeId !== user.id) {

@@ -6,6 +6,7 @@ import type { ListMyTasksQueryTransformed, TaskStatus } from '@eridu/api-types/t
 
 import { MeTaskService } from './me-task.service';
 
+import { StudioService } from '@/models/studio/studio.service';
 import { TaskService } from '@/models/task/task.service';
 import { UserService } from '@/models/user/user.service';
 
@@ -31,6 +32,7 @@ describe('meTaskService', () => {
         MeTaskService,
         { provide: TaskService, useValue: mockTaskService },
         { provide: UserService, useValue: mockUserService },
+        { provide: StudioService, useValue: { findByUid: jest.fn() } },
       ],
     }).compile();
 
@@ -56,7 +58,7 @@ describe('meTaskService', () => {
       const result = await service.listMyTasks('ext_1', query);
 
       expect(userService.getUserByExtId).toHaveBeenCalledWith('ext_1');
-      expect(taskService.findTasksByAssignee).toHaveBeenCalledWith(BigInt(1), query);
+      expect(taskService.findTasksByAssignee).toHaveBeenCalledWith(BigInt(1), query, undefined);
       expect(result).toEqual(mockResult);
     });
   });
@@ -100,12 +102,11 @@ describe('meTaskService', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('should return null if task not found', async () => {
+    it('should throw not found if task not found', async () => {
       userService.getUserByExtId.mockResolvedValue({ id: BigInt(1) } as any);
       taskService.findByUid.mockResolvedValue(null);
 
-      const result = await service.updateMyTask('ext_1', 'task_1', 1, {});
-      expect(result).toBeNull();
+      await expect(service.updateMyTask('ext_1', 'task_1', 1, {})).rejects.toThrow(NotFoundException);
     });
 
     it('should throw forbidden if task is not assigned to user', async () => {
