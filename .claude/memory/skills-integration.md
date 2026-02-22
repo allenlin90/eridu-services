@@ -230,30 +230,31 @@ async findPaginated(params: {
 5. **erify-authorization** - erify_api-specific auth
 6. **database-patterns** - Transactions, soft delete, locking
 7. **data-validation** - Zod validation patterns
+8. **orchestration-service-nestjs** - Multi-service coordination, bulk ops
 
 ### Frontend (React)
-8. **frontend-api-layer** - TanStack Query, API client
-9. **frontend-state-management** - State patterns
-10. **frontend-ui-components** - Component patterns
-11. **frontend-testing-patterns** - Testing patterns
-12. **frontend-error-handling** - Error boundaries
-13. **frontend-performance** - Optimization patterns
-14. **frontend-i18n** - Paraglide usage
-15. **frontend-code-quality** - Quality standards
-16. **frontend-tech-stack** - Stack overview
+9. **frontend-api-layer** - TanStack Query, API client
+10. **frontend-state-management** - State patterns
+11. **frontend-ui-components** - Component patterns
+12. **frontend-testing-patterns** - Testing patterns
+13. **frontend-error-handling** - Error boundaries
+14. **frontend-performance** - Optimization patterns
+15. **frontend-i18n** - Paraglide usage
+16. **frontend-code-quality** - Quality standards
+17. **frontend-tech-stack** - Stack overview
 
 ### Shared
-17. **shared-api-types** - @eridu/api-types patterns
-18. **design-patterns** - General patterns
+18. **shared-api-types** - @eridu/api-types patterns
+19. **design-patterns** - General patterns
 
 ### Domain-Specific
-19. **admin-list-pattern** - Admin list pages
-20. **studio-list-pattern** - Studio list pages
-21. **task-template-builder** - Task template UI
+20. **admin-list-pattern** - Admin list pages
+21. **studio-list-pattern** - Studio list pages
+22. **task-template-builder** - Task template UI
 
 ### Meta
-22. **skill-creator** - Creating new skills
-23. **code-quality** - General quality rules
+23. **skill-creator** - Creating new skills
+24. **code-quality** - General quality rules
 
 ## Key Takeaways
 
@@ -263,10 +264,3 @@ async findPaginated(params: {
 4. **Use Parameters<>** - For repository pass-through methods
 5. **Repository builds queries** - Services pass domain filters
 
-## Action Items
-
-- [x] Read key skills (service, repository, shared-api-types, auth)
-- [ ] Update memory files to reference skills as primary
-- [ ] Add skills index to MEMORY.md
-- [ ] Update ideal-pattern.md with clarifications from skills
-- [ ] Update known-issues.md with refined understanding

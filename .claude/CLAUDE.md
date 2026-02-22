@@ -219,7 +219,7 @@ const where: Prisma.TaskWhereInput = { ... };
 | **frontend-api-layer** | TanStack Query patterns | MEDIUM |
 | **frontend-state-management** | React state patterns | MEDIUM |
 
-**Full skill list** (26 total): See `.claude/skills/` directory
+**Full skill list** (24 total): See `.claude/skills/` directory
 
 ### Memory Files (Supplementary - `.claude/memory/`)
 | File | Purpose | When to Use |
