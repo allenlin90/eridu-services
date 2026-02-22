@@ -7,345 +7,121 @@ description: Provides Prisma-specific patterns for soft delete, transactions, op
 
 **The Single Source of Truth for Database Interactions in Eridu Services.**
 
-This skill provides mandatory patterns for using Prisma ORM effectively, ensuring data integrity, performance, and maintainability.
-
-## 1. Soft Delete Pattern
-
-**Rule**: NEVER permanently delete logic data. Use `deletedAt` timestamps.
-
-### Schema Support
-```prisma
-model User {
-  id        BigInt    @id @default(autoincrement())
-  uid       String    @unique
-  deletedAt DateTime? @map("deleted_at")
-  
-  @@index([deletedAt]) // Mandatory index for filtering
-}
-```
-
-### Querying (The most common pitfall)
-You **MUST** filter out deleted records in **every** query unless specifically introspecting history.
-
-```typescript
-// ✅ CORRECT
-const activeUsers = await prisma.user.findMany({
-  where: { deletedAt: null }
-});
-
-// ❌ WRONG (Returns deleted "zombie" records)
-const users = await prisma.user.findMany();
-```
-
-### Implementing Soft Delete
-```typescript
-// ✅ CORRECT: Update timestamp
-await prisma.user.update({
-  where: { uid: 'u_1' },
-  data: { deletedAt: new Date() }
-});
-```
+For detailed code examples for each section, read the corresponding file from `references/` as needed.
 
 ---
 
-## 2. Bulk Operations Pattern
+## 1. Soft Delete
 
-**Rule**: NEVER loop over database calls. Use specialized bulk methods.
+**Rule**: NEVER permanently delete logical data. Use `deletedAt` timestamps.
 
-### Batch Insert
-```typescript
-// ✅ CORRECT: Single Query
-await prisma.show.createMany({
-  data: shows.map(s => ({ ...s, uid: generateUid() })),
-  skipDuplicates: true // Optional resilience
-});
-```
+- Every query **MUST** filter `deletedAt: null` unless intentionally listing history.
+- Use `BaseRepository.softDelete()` — never raw `prisma.model.delete()`.
+- Add `@@index([deletedAt])` to every soft-deletable model schema.
 
-### Batch Update
-```typescript
-// ✅ CORRECT: Update by criteria
-await prisma.show.updateMany({
-  where: { clientId: 1, deletedAt: null },
-  data: { status: 'PUBLISHED' }
-});
-```
+> 📖 See [`references/01-soft-delete.md`](references/01-soft-delete.md) for schema and query examples.
+
+---
+
+## 2. Bulk Operations
+
+**Rule**: NEVER loop over individual DB calls. Use `createMany` / `updateMany`.
+
+- A loop with `await prisma.model.create()` inside = N round-trips = ❌
+- Use `prisma.model.createMany({ skipDuplicates: true })` for inserts.
+- Use `prisma.model.updateMany({ where: {...} })` for batch updates.
+
+> 📖 See [`references/02-bulk-operations.md`](references/02-bulk-operations.md) for examples.
 
 ---
 
 ## 3. Transaction Pattern
 
-**Rule**: Use the `@Transactional()` decorator via CLS (Continuation-Local Storage) for **Atomic Multi-Entity Operations**.
+**Rule**: Use `@Transactional()` from `@nestjs-cls/transactional` for atomic multi-entity operations.
 
-Transactions are propagated automatically through the async context — no `tx` parameter passing between methods.
+- CLS propagates the transaction automatically — never pass `tx` as a parameter.
+- Apply `@Transactional()` on **Orchestration Service** methods, not repositories.
+- Keep transactions **short** — no external HTTP/email calls inside.
 
-**Scenario**: Creating a Show requires creating ShowMCs and ShowPlatforms simultaneously.
+### ⚠️ Anti-Pattern 1: Self-Invocation (silent no-op)
 
-```typescript
-import { Transactional } from '@nestjs-cls/transactional';
+`@Transactional()` relies on NestJS AOP proxy. `this.method()` within the same class bypasses the proxy — **no transaction is created, no error is raised**.
 
-@Injectable()
-export class ShowOrchestrationService {
-  constructor(
-    private readonly showService: ShowService,
-    private readonly showMcService: ShowMcService,
-  ) {}
+**Fix**: Extract the transactional method into a **separate `@Injectable()` class** and call it through DI.
 
-  @Transactional()
-  async createShowWithMcs(data: CreateShowWithMcsPayload) {
-    // No `tx` passed — CLS propagates it to all repository calls automatically
-    const show = await this.showService.createShow(data);
-    await this.showMcService.createMany(show.id, data.mcs);
-    return show;
-  }
-}
-```
+### ⚠️ Anti-Pattern 2: Internal `try/catch` (silent partial commit)
 
-**Critical Rules**:
-1.  Apply `@Transactional()` on the **Orchestration Service** method, not on individual repository/model-service calls.
-2.  Keep transactions **short**. Do not await external API calls (HTTP, email) inside a transaction.
-3.  Never pass `tx` as a method parameter — CLS handles propagation transparently.
-4.  Repositories access the active transaction via `TransactionHost` (injected by the CLS adapter).
+`@Transactional()` only rolls back if an unhandled error **propagates out** of the decorated method. Catching the error internally causes a **commit of partial DB writes**.
 
-> [!WARNING]
-> **`@Transactional()` does NOT work on private methods or self-invocations.**
-> The decorator relies on NestJS AOP proxy interception, which only intercepts **external calls to public methods**.
-> If a method calls `this.someMethod()` within the same class, the proxy is bypassed and the decorator is silently ignored — no transaction is created.
->
-> **Fix**: Extract transactional logic into a **separate injectable service**. The call goes through NestJS DI proxy, so the decorator works correctly.
-> **Example**: See `PublishingService` pattern — `SchedulePlanningService` delegates to `publishingService.publish()` (public method, separate service, `@Transactional()`).
->
-> ```typescript
-> // ❌ BROKEN: Self-invocation bypasses proxy
-> class MyService {
->   async doWork() { await this.innerWork(); }
->   @Transactional()
->   private async innerWork() { /* TX not active! */ }
-> }
->
-> // ✅ CORRECT: External call through DI proxy
-> class MyProcessor {
->   @Transactional()
->   async process() { /* TX active ✅ */ }
-> }
-> class MyService {
->   constructor(private processor: MyProcessor) {}
->   async doWork() { await this.processor.process(); }
-> }
-> ```
+**Fix**: Remove `try/catch` from inside the `@Transactional()` method. Place error handling in the **caller**, outside the transaction boundary. By the time the caller's `catch` block runs, the transaction has already been rolled back.
+
+> 📖 See [`references/03-transactions.md`](references/03-transactions.md) for full code examples of both anti-patterns and correct usage.
 
 > [!NOTE]
-> **Legacy `$transaction` calls**: Some existing code may still use `prisma.$transaction(async (tx) => {...})` with explicit `tx` passing.
-> This is the **old pattern** and will be migrated to `@Transactional()` in Phase 2. Do NOT write new code using the old pattern.
+> **Legacy pattern**: Some existing code uses `prisma.$transaction(async (tx) => {...})` with explicit `tx` passing. This is being migrated to `@Transactional()`. Do **NOT** write new code using the old pattern.
 
 ---
 
-## 4. Query Optimization Patterns
+## 4. Query Optimization
 
-### N+1 Prevention (Eager Loading)
-**Rule**: Fetch related data in a single query using `include`.
+**Rule**: Prevent N+1 queries; run independent queries in parallel.
 
-```typescript
-// ✅ CORRECT: 1 Query
-const shows = await prisma.show.findMany({
-  include: { client: true }
-});
+- Use `include` to eager-load relations — never loop and fetch separately.
+- Use `Promise.all([...])` for concurrent independent queries (e.g., `findMany` + `count`).
 
-// ❌ WRONG: 1 + N Queries
-const shows = await prisma.show.findMany();
-for (const show of shows) {
-  await prisma.client.findUnique({ where: { id: show.clientId } });
-}
-```
-
-### Parallel Execution
-**Rule**: Independent queries should run concurrently.
-
-```typescript
-// ✅ CORRECT: Runs in parallel
-const [users, count] = await Promise.all([
-  prisma.user.findMany({ where }),
-  prisma.user.count({ where })
-]);
-
-// ❌ WRONG: Runs sequentially (slower)
-const users = await prisma.user.findMany({ where });
-const count = await prisma.user.count({ where });
-```
+> 📖 See [`references/04-query-optimization.md`](references/04-query-optimization.md) for examples.
 
 ---
 
-## 5. Nested Connect Pattern
+## 5. Nested Connect
 
-**Rule**: Use `connect: { uid }` to link entities. avoids an extra read query to find the `id`.
+**Rule**: Use `connect: { uid }` to link related entities. Avoids an extra read to resolve `id`.
 
 ```typescript
-// ✅ CORRECT
-await prisma.show.create({
-  data: {
-    client: { connect: { uid: 'client_123' } } // Prisma handles the lookup
-  }
-});
-
-// ❌ WRONG
-const client = await prisma.client.findUnique({ where: { uid: 'client_123' }});
-await prisma.show.create({
-  data: { clientId: client.id }
-});
+// ✅ One round-trip
+await prisma.show.create({ data: { client: { connect: { uid: 'client_123' } } } });
 ```
+
+> 📖 See [`references/06-relationships-and-nested-writes.md`](references/06-relationships-and-nested-writes.md) for full examples.
 
 ---
 
 ## 6. Optimistic Locking (Version Check)
 
-**Rule**: Use a `version` integer to prevent overwriting concurrent updates.
+**Rule**: Use a `version` integer field to prevent concurrent overwrites.
 
-### Schema Support
-```prisma
-model TaskTemplate {
-  id      BigInt @id @default(autoincrement())
-  uid     String @unique
-  version Int    @default(1)
-  // ... other fields
-}
-```
+- Repository implements `updateWithVersionCheck()` and throws `VersionConflictError` (a domain error, not HTTP).
+- Service catches `VersionConflictError` and converts it to `HttpError.conflict(...)`.
+- This keeps DB layer decoupled from HTTP transport.
 
-### Implementation Pattern
-
-**Repository Layer**: Implement version check and throw domain error
-
-```typescript
-async updateWithVersionCheck(
-  where: Prisma.TaskTemplateWhereUniqueInput & { version?: number },
-  data: Prisma.TaskTemplateUpdateInput,
-): Promise<TaskTemplate> {
-  try {
-    return await this.prisma.taskTemplate.update({
-      where: { ...where, deletedAt: null },
-      data,
-    });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PRISMA_ERROR.RecordNotFound && where.version) {
-        const existing = await this.findOne({ uid: where.uid, deletedAt: null });
-        
-        if (!existing) {
-          throw error; // Actually not found
-        }
-        
-        // Version conflict - throw domain error
-        throw new VersionConflictError(
-          'Task template version is outdated',
-          where.version,
-          existing.version,
-        );
-      }
-    }
-    throw error;
-  }
-}
-```
-
-**Service Layer**: Catch and convert to HTTP error
-
-```typescript
-try {
-  const newVersion = (payload.version as number) + 1;
-  return await this.repository.updateWithVersionCheck(
-    where,
-    {
-      ...data,
-      version: newVersion,
-    },
-  );
-} catch (error) {
-  if (error instanceof VersionConflictError) {
-    throw HttpError.conflict(
-      `Record is out of date. Please refresh and try again.`,
-    );
-  }
-  throw error;
-}
-```
-
-### Why Use Domain Error?
-
-- **Layer Separation**: Repository doesn't know about HTTP
-- **Testability**: Can test version conflicts without HTTP context
-- **Reusability**: Same error handling across different transport layers
+> 📖 See [`references/05-optimistic-locking.md`](references/05-optimistic-locking.md) for full repository + service examples.
 
 ---
 
-## 7. Relationships vs Polymorphism
+## 7. Explicit FKs over Polymorphism
 
-**Rule**: PREFER Explicit Foreign Keys over Polymorphic IDs (`entity_id` + `entity_type`).
+**Rule**: PREFER explicit nullable foreign keys over `entity_id + entity_type` polymorphic columns.
 
-**Why?**
-1.  **Strict Integrity**: Polymorphism bypasses Foreign Key constraints, leading to "orphan data" (e.g., a Task pointing to a deleted Show).
-2.  **Performance (N+1)**: Prisma cannot `include` polymorphic relations natively. You are forced to loop and fetch manually, killing performance.
-3.  **Type Safety**: Explicit relations (`show: Show?`) are fully typed. Polymorphic IDs needs manual type narrowing.
+- Polymorphism bypasses FK constraints → orphan data risk.
+- Prisma cannot natively `include` polymorphic relations → N+1 forced.
+- Explicit FKs are fully typed and indexable.
 
-```typescript
-// ✅ CORRECT: Explicit Nullable FKs ("Exclusive Arc" Pattern)
-model Task {
-  id       BigInt @id
-  showId   BigInt?
-  show     Show?   @relation(fields: [showId], references: [id])
-  // If we ever need Client tasks:
-  clientId BigInt?
-  client   Client? @relation(fields: [clientId], references: [id])
-}
-
-// ❌ WRONG: Polymorphic Anti-Pattern
-model Task {
-  id           BigInt @id
-  taskableId   BigInt // No FK constraint!
-  taskableType String // "show", "client"
-}
-```
+> 📖 See [`references/06-relationships-and-nested-writes.md`](references/06-relationships-and-nested-writes.md) for schema examples.
 
 ---
 
-## 8. Nested Writes Pattern
+## 8. Nested Writes
 
-**Rule**: Use Prisma's nested writes for atomic parent + child creation.
+**Rule**: Use Prisma nested writes for atomic parent + child creation without an explicit transaction.
 
-### When to Use
+- Best for: single parent + direct children, simple relation.
+- Use `@Transactional()` when: multiple parents, conditional logic, or cross-service orchestration.
 
-- Creating a parent record with related children in one transaction
-- Simpler than manual transactions for single-parent scenarios
-- Prisma handles the transaction automatically
-
-### Implementation
-
-```typescript
-// Service method
-async createTemplateWithSnapshot(payload: CreateTaskTemplatePayload): Promise<TaskTemplate> {
-  const version = payload.version ?? 1;
-
-  return this.repository.create({
-    ...payload,
-    uid: payload.uid ?? this.generateUid(),
-    version,
-    snapshots: {
-      create: {
-        version,
-        schema: payload.currentSchema ?? {},
-      },
-    },
-  });
-}
-```
-
-### Nested Writes vs Transactions
-
-| Pattern | Use When |
-|---------|----------|
-| **Nested Writes** | Single parent + direct children, simple relation |
-| **Transactions** | Multiple parents, complex orchestration, external API calls |
+> 📖 See [`references/06-relationships-and-nested-writes.md`](references/06-relationships-and-nested-writes.md) for examples and comparison table.
 
 ---
 
 ## Related Skills
 
 - **[Repository Pattern](../repository-pattern-nestjs/SKILL.md)**: How to wrap these patterns in a reusable class.
-- **[Service Pattern](../service-pattern-nestjs/SKILL.md)**: Where to use Transactions and business logic.
+- **[Service Pattern](../service-pattern-nestjs/SKILL.md)**: Where to use transactions and business logic.
