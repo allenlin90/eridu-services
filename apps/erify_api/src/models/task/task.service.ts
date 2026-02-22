@@ -71,6 +71,11 @@ export class TaskService extends BaseModelService {
     return this.taskRepository.update(...args);
   }
 
+  /** @internal */
+  async setAssignee(...args: Parameters<TaskRepository['setAssignee']>): ReturnType<TaskRepository['setAssignee']> {
+    return this.taskRepository.setAssignee(...args);
+  }
+
   async updateTaskContentAndStatus(
     uid: string,
     version: number,

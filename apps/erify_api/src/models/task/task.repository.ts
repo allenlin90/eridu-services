@@ -126,6 +126,22 @@ export class TaskRepository extends BaseRepository<
     }
   }
 
+  async setAssignee(
+    uid: string,
+    membershipId: bigint | null,
+    include?: Prisma.TaskInclude,
+  ): Promise<Task> {
+    return this.prisma.task.update({
+      where: { uid, deletedAt: null },
+      data: {
+        assignee: membershipId !== null
+          ? { connect: { id: membershipId } }
+          : { disconnect: true },
+      },
+      ...(include && { include }),
+    });
+  }
+
   async softDelete(where: Prisma.TaskWhereUniqueInput): Promise<Task> {
     return this.prisma.task.update({
       where,
@@ -136,6 +152,7 @@ export class TaskRepository extends BaseRepository<
   async findTasksByAssignee(
     assigneeId: bigint,
     query: ListMyTasksQueryTransformed,
+    studioId?: bigint,
   ) {
     const { status, due_date_from, due_date_to, sort, page, limit } = query;
     const skip = (page - 1) * limit;
@@ -144,6 +161,10 @@ export class TaskRepository extends BaseRepository<
       assigneeId,
       deletedAt: null,
     };
+
+    if (studioId) {
+      where.studioId = studioId;
+    }
 
     if (status) {
       where.status = Array.isArray(status) ? { in: status } : status;

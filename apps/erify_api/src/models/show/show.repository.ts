@@ -271,8 +271,8 @@ export class ShowRepository extends BaseRepository<
     where?: Prisma.ShowWhereInput;
     skip?: number;
     take?: number;
-    orderBy?: any;
-    include?: Record<string, any>;
+    orderBy?: Prisma.ShowOrderByWithRelationInput;
+    include?: Prisma.ShowInclude;
   }): Promise<Show[]> {
     return this.delegate.findMany(params);
   }
@@ -358,6 +358,7 @@ export class ShowRepository extends BaseRepository<
         orderBy: { startTime: 'desc' },
         include: {
           client: true,
+          studio: true,
           studioRoom: true,
           showType: true,
           showStatus: true,

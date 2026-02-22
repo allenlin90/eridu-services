@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 
 import type {
@@ -59,8 +60,8 @@ export type CreateTaskPayload = {
   templateId: bigint;
   uid?: string;
   dueDate?: Date | null;
-  content?: any;
-  metadata?: any;
+  content?: Prisma.JsonValue;
+  metadata?: Prisma.JsonValue;
   assigneeUid?: string;
 };
 
@@ -68,6 +69,6 @@ export type CreateTaskPayload = {
  * Internal payload for updating a task (service layer).
  */
 export type UpdateTaskPayload = {
-  content?: any;
+  content?: Prisma.JsonValue;
   status?: TaskStatus;
 };
