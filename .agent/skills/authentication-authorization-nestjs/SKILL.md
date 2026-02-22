@@ -11,6 +11,10 @@ metadata:
 
 Complete guide for authentication and authorization across Eridu Services monorepo (backend and frontend).
 
+> **erify_api-specific authorization** (guards, JSONB roles, `@StudioProtected`, `@AdminProtected`):
+> use **[erify-authorization](../erify-authorization/SKILL.md)** instead — it has the concrete implementation details.
+> This skill covers general principles and frontend auth patterns.
+
 ## Table of Contents
 
 1. [General Principles](#general-principles)
@@ -457,7 +461,7 @@ throw new UnauthorizedException('Invalid credentials');
 
 ## Related Skills
 
-- **[Backend Controller Pattern NestJS](backend-controller-pattern-nestjs/SKILL.md)** - Controller patterns for protected endpoints
-- **[Service Pattern NestJS](service-pattern-nestjs/SKILL.md)** - Services receive authenticated user context
-- **[Data Validation](data-validation/SKILL.md)** - Input validation (complement to auth)
-- **[Erify Authorization](erify-authorization/SKILL.md)** - Role-based authorization in erify_api
+- **[Backend Controller Pattern NestJS](../backend-controller-pattern-nestjs/SKILL.md)** - Controller patterns for protected endpoints
+- **[Service Pattern NestJS](../service-pattern-nestjs/SKILL.md)** - Services receive authenticated user context
+- **[Data Validation](../data-validation/SKILL.md)** - Input validation (complement to auth)
+- **[Erify Authorization](../erify-authorization/SKILL.md)** - Role-based authorization in erify_api (use this for erify-specific guard/role implementation)

@@ -12,7 +12,7 @@ This skill provides patterns for structuring the API layer in React applications
 Study these real implementations:
 - **API Client with Better Auth**: [client.ts](../../../apps/erify_studios/src/lib/api/client.ts)
 - **Token Store**: [token-store.ts](../../../apps/erify_studios/src/lib/api/token-store.ts)
-- **API Declarations**: [task-templates.api.ts](../../../apps/erify_studios/src/features/task-templates/api/task-templates.api.ts)
+- **API Declarations**: [get-task-templates.ts](../../../apps/erify_studios/src/features/task-templates/api/get-task-templates.ts)
 
 **Detailed Code Examples**: See [references/api-layer-examples.md](references/api-layer-examples.md)
 
