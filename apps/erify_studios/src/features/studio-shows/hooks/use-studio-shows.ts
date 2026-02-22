@@ -32,10 +32,10 @@ export function useStudioShows({ studioId }: UseStudioShowsProps) {
     onColumnFiltersChange,
     sorting,
     onSortingChange,
-    dateRange,
   } = useTableUrlState(TABLE_OPTIONS);
 
   const searchQuery = (columnFilters.find((f) => f.id === 'name')?.value as string) || '';
+  const dateRange = (columnFilters.find((f) => f.id === 'start_time')?.value as { from?: Date; to?: Date }) || undefined;
 
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: studioShowsKeys.list(studioId, {
@@ -63,7 +63,7 @@ export function useStudioShows({ studioId }: UseStudioShowsProps) {
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({
-      queryKey: ['studio-shows', studioId],
+      queryKey: [...studioShowsKeys.lists(), studioId],
     });
   };
 
