@@ -142,17 +142,18 @@ A generic, extensible Task Management system using a **"Task as Form"** architec
 5. Optionally sets due dates or accepts auto-calculated defaults relative to show time
 6. Confirms → system creates tasks in a single batch transaction
 
-#### 2. Show-Level Assignment
-- After tasks are generated, manager assigns shows (all their tasks) to studio member users
-- **Assign show to user** = set `assigneeId` on every task whose `TaskTarget` references that show
-- Manager can select **multiple shows** and assign them to the same user in one bulk operation
-- Previously assigned tasks are overwritten (with confirmation prompt)
+#### 2. Show-Level Assignment (Select-Then-Act)
+- Manager selects shows from a read-only Data Table and opens the Assignment Dialog.
+- **Assign show to user** = Dialog calls `POST /studios/:studioId/tasks/assign-shows` to set `assigneeId` on all tasks whose `TaskTarget` references the selected shows.
+- One batch mutation, one refetch. No inline mutations or constant re-querying.
 
 **Assignment Flow**:
-1. Manager views shows with generated tasks
-2. Selects one or more shows
-3. Clicks "Assign" → picks a studio member from a dropdown
-4. Confirms → all tasks for the selected shows are assigned to that user
+1. Manager views the Shows Data Table (read-only, with Assignee column for visibility).
+2. Selects one or more shows via checkboxes.
+3. Clicks "Assign" in the floating action bar → opens Assignment Dialog.
+4. Picks a studio member from a dropdown. Sees summary of selected shows and task counts.
+5. Confirms → system calls one batch API → table refetches to reflect updated state.
+
 
 #### 3. Individual Task Reassignment (Split Ownership)
 - Default: One user per show (all tasks assigned to same person)

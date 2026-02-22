@@ -23,6 +23,7 @@
 10. [Implementation Roadmap](#10-implementation-roadmap)
 11. [Implemented Component Patterns](#11-implemented-component-patterns)
 12. [Task Generation & Assignment Workflows](#12-task-generation--assignment-workflows)
+13. [Implementation Status & Progress](#13-implementation-status--progress)
 
 ---
 
@@ -390,42 +391,50 @@ When editing a field, managers can configure advanced validation rules:
 
 ### 3.3 Manager: Shows List (Studio-Scoped)
 
-**Purpose**: Browse studio shows, view task generation status, select shows for bulk operations.
+**Purpose**: Browse studio shows, filter by date and status, select shows, and act on them via dialogs.
 
 **Route**: `/studios/$studioId/shows`
 
-**Key Features**:
-- **Table layout** with columns: Show Name, Client, Start Time, Task Status, Assignee, Actions
-- **Task Status column**: Shows a summary badge — "No tasks", "3 tasks (1 unassigned)", "3 tasks ✓"
-- **Checkbox selection**: Select one or more shows for bulk actions
-- **Bulk action bar**: Appears when shows are selected, with "Generate Tasks" and "Assign" buttons
-- **Search & date filter**: Filter by show name, date range, task status (has tasks / no tasks)
-- **Inline quick actions**: Per-row buttons for "View Tasks" and "Assign"
+**Design Rationale: Read-Only Table + Action Dialogs**
 
-**Layout** (Desktop):
+Users are accustomed to spreadsheet-like dense data views. The Data Table satisfies this by providing sortable columns, filters, and pagination — giving managers the at-a-glance overview they expect. However, **the table itself is read-only**. All mutations (task generation, assignment) happen through explicit dialogs triggered from the floating action bar. This avoids:
+- Chatty per-row mutations and constant refetching
+- Mixing read and write concerns in the same component
+- Over-engineering a simple "select and act" workflow
+
+**Key Features**:
+- **Data Table**: Columns for Show Name, Client, Start Time, Task Status (badge), and Assignee (read-only text). Familiar dense layout for scanning.
+- **Checkbox Selection**: Select one or many shows. Selection is per-page (simple state).
+- **Floating Action Bar**: Appears when ≥1 row is selected. Two actions: **Generate Tasks** and **Assign**. Both open dialogs.
+- **Toolbar Filters**: Search by name, filter by date range, filter by task status (has tasks / no tasks).
+
+**Layout** (Desktop Data Table):
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
 │ Shows                                                                 │
 │ Manage show tasks and assignments                                     │
-├───────────────────────────────────────────────────────────────────────┤
-│ [Search...          ] [Date: Feb 1-28 ▼] [Status: All ▼] [Refresh]    │
-├───────────────────────────────────────────────────────────────────────┤
-│ ☑ 2 selected                    [Generate Tasks]  [Assign to User]    │
+│                                                                       │
+│ [Search Shows...] [Date: Next 7 Days ▼] [Status ▼]                    │
 ├───┬────────────────────┬──────────┬──────────────┬─────────┬──────────┤
-│ ☐ │ Show Name          │ Client   │ Start Time   │ Tasks   │ Actions  │  
+│ ☐ │ Show Name          │ Client   │ Start Time   │ Tasks   │ Assignee │
 ├───┼────────────────────┼──────────┼──────────────┼─────────┼──────────┤
-│ ☑ │ Monday Night Live  │ Acme     │ Feb 5, 8 PM  │ 3 tasks │ [⋮]      │
-│ ☑ │ Morning Report     │ Acme     │ Feb 6, 7 AM  │ No tasks│ [⋮]      │
-│ ☐ │ Weekend Special    │ Globex   │ Feb 8, 6 PM  │ 2 tasks │ [⋮]      │
+│ ☑ │ Monday Night Live  │ Acme     │ Feb 5, 8 PM  │ 3 tasks │ Marcus C.│
+│ ☑ │ Morning Report     │ Acme     │ Feb 6, 7 AM  │ No tasks│    —     │
+│ ☐ │ Weekend Special    │ Globex   │ Feb 8, 6 PM  │ 2 tasks │ Mixed    │
 ├───┴────────────────────┴──────────┴──────────────┴─────────┴──────────┤
-│                      [Load more...]                                   │
+│                      [ < Prev ] Page 1 of 5 [ Next > ]                │
 └───────────────────────────────────────────────────────────────────────┘
+
+            ┌──────────────────────────────────────────┐
+            │ 2 selected  [Generate Tasks] [Assign] [✕]│  ← Floating bar
+            └──────────────────────────────────────────┘
 ```
 
-**Task Status Badges**:
-- `No tasks` — Gray badge, no tasks generated yet
-- `3 tasks (1 unassigned)` — Amber badge, some tasks lack assignee
-- `3 tasks ✓` — Green badge, all tasks assigned
+**Assignee Column (Read-Only)**:
+- Shows the name of the assigned user if all tasks share the same assignee.
+- Shows `Mixed` if tasks are split across different users.
+- Shows `—` if no tasks exist or none are assigned.
+- Clicking the show name navigates to the Show Detail (§3.3.3) for granular task-level reassignment.
 
 ---
 
@@ -1580,3 +1589,60 @@ The design balances functional efficiency with visual refinement, creating an in
 **End of UI/UX Design Document**
 
 For backend architecture and API specifications, see: [`apps/erify_api/docs/TASK_MANAGEMENT_DESIGN.md`](../../erify_api/docs/TASK_MANAGEMENT_DESIGN.md)
+
+---
+
+## 13. Implementation Status & Progress
+
+This section tracks the real-world implementation progress of the design, organized by phase.
+
+---
+
+### Architectural Boundary Rule
+
+> [!IMPORTANT]
+> **`/system/*` routes** are **root-level record control** — plain CRUD with no business logic. They exist for super-admin access to raw model data (create, read, update, delete individual records). No task orchestration, no bulk generation, no assignment workflows.
+>
+> **`/studios/$studioId/*` routes** own **all business workflows** — task generation, assignment, progress tracking, and operator execution. These routes are scoped to a studio context and enforce role-based access.
+
+---
+
+### Phase 1: Core Components & Form Engine
+- **Status**: ✅ Complete
+- `components/json-form/json-form.tsx` — Dynamic schema-based form renderer
+- `lib/zod-schema-builder.ts` — Server schema → Zod validator
+- `features/tasks/components/task-card.tsx` — Status-aware task display
+
+---
+
+### Phase 2: Template Builder
+- **Status**: ✅ Complete (Pre-existing)
+- `components/task-templates/builder/task-template-builder.tsx` — Visual editor
+- `routes/studios/$studioId/task-templates/index.tsx` — Template management
+
+---
+
+### Phase 3: Shows Task Management (Manager)
+- **Status**: 🚧 **In Progress** (UI foundation finished, logic pending)
+
+#### Phase 3.1: Studio UI Foundation (✅ Done)
+- **Studio Dashboard**: Dedicated board at `/studios/$studioId/shows` with real API fetching and task-progression cards.
+- **Scoping**: Properly scoped list with infinite scroll and search.
+- **Bulk Actions UI**: Selection mode and floating toolbar integrated.
+- **Admin Cleanup**: `/system/shows` reverted to plain CRUD as per architectural rule.
+
+#### Phase 3.2: Logic & API Integration (⏳ Placeholder)
+- **Dialog Logic**: `BulkTaskGenerationDialog` and `ShowAssignmentDialog` are current shells. Need template selection and POST integration.
+- **Show Tasks Detail**: The list of tasks in `/studios/$studioId/shows/$showId/tasks` is currently a placeholder.
+- **Inline Actions**: Reassignment dropdowns and status updates not yet implemented.
+
+---
+
+### Phase 4: My Tasks (Operator)
+- **Status**: ⏳ Planned
+- Focus: Mobile-first execution, Today/Upcoming tabs, Optimistic UI updates.
+
+---
+
+**End of Implementation Progress Tracker**
+
