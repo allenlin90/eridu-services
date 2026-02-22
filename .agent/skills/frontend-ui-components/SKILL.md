@@ -27,6 +27,22 @@ export function MyForm() {
 }
 ```
 
+### Specific Component Guidelines
+
+#### Date and Time Pickers
+Always use the custom `DatePicker` and `DateTimePicker` components from `@eridu/ui` instead of native `<input type="date">` or `<input type="datetime-local">` unless there is a highly specific and unavoidable requirement to use the native browser inputs. This ensures visual consistency, cross-browser compatibility, and a better user experience across the application.
+
+```typescript
+import { DatePicker, DateTimePicker } from '@eridu/ui/components/date-picker';
+
+// ✅ GOOD
+<DatePicker value={dateStr} onChange={setDateStr} />
+<DateTimePicker value={dateTimeStr} onChange={setDateTimeStr} />
+
+// ❌ BAD (Avoid native inputs)
+<input type="date" value={dateStr} />
+```
+
 ## Styling Pattern (Tailwind CSS v4)
 
 We use **Tailwind CSS v4** with `clsx` and `tailwind-merge` for conditional styling.
