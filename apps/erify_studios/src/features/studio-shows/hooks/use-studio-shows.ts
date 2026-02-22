@@ -11,6 +11,7 @@ type UseStudioShowsProps = {
 
 const TABLE_OPTIONS = {
   from: '/studios/$studioId/shows/',
+  searchColumnId: 'name',
   dateColumnId: 'start_time',
   paramNames: {
     search: 'search',
@@ -34,7 +35,7 @@ export function useStudioShows({ studioId }: UseStudioShowsProps) {
     dateRange,
   } = useTableUrlState(TABLE_OPTIONS);
 
-  const searchQuery = (columnFilters.find((f) => f.id === 'search')?.value as string) || '';
+  const searchQuery = (columnFilters.find((f) => f.id === 'name')?.value as string) || '';
 
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: studioShowsKeys.list(studioId, {
