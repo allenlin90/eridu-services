@@ -102,7 +102,21 @@ export function DateTimePicker({ value, onChange, className }: { value: string; 
           initialFocus
         />
         <div className="p-3 border-t border-border">
-          <Label className="text-xs mb-1 block">Time</Label>
+          <div className="flex items-center justify-between mb-2">
+            <Label className="text-xs block">Time</Label>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-[10px]"
+              onClick={() => {
+                const now = new Date();
+                onChange(now.toISOString());
+                setTime(format(now, 'HH:mm'));
+              }}
+            >
+              Now
+            </Button>
+          </div>
           <Input type="time" value={time} onChange={handleTimeChange} className="w-full" />
         </div>
       </PopoverContent>
