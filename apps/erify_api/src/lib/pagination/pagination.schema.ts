@@ -1,20 +1,34 @@
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
-// Input schema for pagination parameters
-export const paginationQuerySchema = z
-  .object({
-    page: z.coerce.number().int().min(1).optional().default(1),
-    limit: z.coerce.number().int().min(1).optional().default(10),
-    sort: z.enum(['asc', 'desc']).optional().default('desc'),
-  })
-  .transform((data) => ({
+/**
+ * Base pagination parameters (page, limit)
+ */
+export const paginationBaseSchema = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).optional().default(10),
+});
+
+/**
+ * Base pagination transformation logic
+ */
+export function transformPagination<T extends { page: number; limit: number; sort?: any }>(data: T) {
+  return {
+    ...data,
     page: data.page,
     limit: data.limit,
     take: data.limit,
     skip: (data.page - 1) * data.limit,
     sort: data.sort,
-  }));
+  };
+}
+
+// Input schema for pagination parameters
+export const paginationQuerySchema = paginationBaseSchema
+  .extend({
+    sort: z.enum(['asc', 'desc']).optional().default('desc'),
+  })
+  .transform(transformPagination);
 
 // Pagination metadata schema
 export const paginationMetaSchema = z.object({
@@ -37,14 +51,26 @@ export function createPaginatedResponseSchema<T extends z.ZodType>(itemSchema: T
 // DTOs and types
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
 
+/**
+ * Interface that all paginated query DTOs must satisfy.
+ * We use an interface instead of a hardcoded DTO for flexibility in 'sort' parameters.
+ */
+export type IPaginationQuery = {
+  page: number;
+  limit: number;
+  take: number;
+  skip: number;
+  sort?: any;
+};
+
 export class PaginationQueryDto
   extends createZodDto(paginationQuerySchema)
-  implements PaginationQuery {
+  implements IPaginationQuery {
   declare page: number;
   declare limit: number;
   declare take: number;
   declare skip: number;
-  declare sort: 'asc' | 'desc';
+  declare sort: any;
 }
 
 export type PaginationMeta = z.infer<typeof paginationMetaSchema>;

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { UID_PREFIXES } from '../constants.js';
-import { paginationQuerySchema } from '../pagination/index.js';
+import { paginationBaseSchema, paginationQuerySchema, transformPagination } from '../pagination/index.js';
 import { showApiResponseSchema } from '../shows/index.js';
 
 /**
@@ -213,3 +213,29 @@ export const listStudioShowsQuerySchema = paginationQuerySchema.and(
 
 export type ListStudioShowsQuery = z.input<typeof listStudioShowsQuerySchema>;
 export type ListStudioShowsQueryTransformed = z.infer<typeof listStudioShowsQuerySchema>;
+
+/**
+ * Schema for updating a task's content or status
+ */
+export const updateTaskRequestSchema = z.object({
+  version: z.number().int(),
+  content: z.record(z.string(), z.any()).optional(),
+  status: z.nativeEnum(TASK_STATUS).optional(),
+});
+
+export type UpdateTaskRequest = z.infer<typeof updateTaskRequestSchema>;
+
+/**
+ * Query schema for listing an operator's assigned tasks
+ */
+export const listMyTasksQuerySchema = paginationBaseSchema
+  .extend({
+    status: z.union([z.nativeEnum(TASK_STATUS), z.array(z.nativeEnum(TASK_STATUS))]).optional(),
+    due_date_from: z.string().datetime().optional(),
+    due_date_to: z.string().datetime().optional(),
+    sort: z.enum(['due_date:asc', 'due_date:desc', 'createdAt:asc', 'createdAt:desc']).optional(),
+  })
+  .transform(transformPagination);
+
+export type ListMyTasksQuery = z.input<typeof listMyTasksQuerySchema>;
+export type ListMyTasksQueryTransformed = z.infer<typeof listMyTasksQuerySchema>;
