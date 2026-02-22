@@ -1,7 +1,13 @@
 import { Injectable } from '@nestjs/common';
 
-import { TaskRepository } from './task.repository';
+import { TASK_STATUS } from '@eridu/api-types/task-management';
 
+import { UpdateTaskPayload } from './schemas/task.schema';
+import { TaskRepository } from './task.repository';
+import { TaskValidationService } from './task-validation.service';
+
+import { HttpError } from '@/lib/errors/http-error.util';
+import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
@@ -12,6 +18,7 @@ export class TaskService extends BaseModelService {
 
   constructor(
     private readonly taskRepository: TaskRepository,
+    private readonly taskValidationService: TaskValidationService,
     protected readonly utilityService: UtilityService,
   ) {
     super(utilityService);
@@ -55,7 +62,70 @@ export class TaskService extends BaseModelService {
   }
 
   /** @internal */
+  async findTasksByAssignee(...args: Parameters<TaskRepository['findTasksByAssignee']>): ReturnType<TaskRepository['findTasksByAssignee']> {
+    return this.taskRepository.findTasksByAssignee(...args);
+  }
+
+  /** @internal */
   async update(...args: Parameters<TaskRepository['update']>): ReturnType<TaskRepository['update']> {
     return this.taskRepository.update(...args);
+  }
+
+  async updateTaskContentAndStatus(
+    uid: string,
+    version: number,
+    payload: UpdateTaskPayload,
+  ) {
+    const task = await this.taskRepository.findByUidWithSnapshot(uid);
+
+    if (!task) {
+      return null;
+    }
+
+    let newContent = task.content;
+    let newStatus = task.status;
+    let completedAt = task.completedAt;
+
+    const uiSchema = task.snapshot?.schema as any;
+
+    if (payload.content !== undefined) {
+      if (uiSchema) {
+        this.taskValidationService.validateContent(payload.content, uiSchema);
+      }
+      newContent = payload.content;
+    }
+
+    if (payload.status && payload.status !== task.status) {
+      newStatus = payload.status;
+
+      if (newStatus === TASK_STATUS.COMPLETED) {
+        if (uiSchema) {
+          // Validate the final content thoroughly if marking completed
+          this.taskValidationService.validateContent(newContent || {}, uiSchema);
+        }
+        completedAt = new Date();
+      } else {
+        completedAt = null;
+      }
+    }
+
+    try {
+      return await this.taskRepository.updateWithVersionCheck(
+        { uid, version },
+        {
+          content: newContent ?? undefined,
+          status: newStatus,
+          completedAt,
+          version: version + 1,
+        },
+      );
+    } catch (error) {
+      if (error instanceof VersionConflictError) {
+        throw HttpError.conflict(
+          `Record is out of date. Please refresh and try again.`,
+        );
+      }
+      throw error;
+    }
   }
 }

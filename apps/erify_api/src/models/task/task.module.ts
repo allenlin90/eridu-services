@@ -7,6 +7,7 @@ import { TaskTemplateModule } from '../task-template/task-template.module';
 
 import { TaskRepository } from './task.repository';
 import { TaskService } from './task.service';
+import { TaskValidationService } from './task-validation.service';
 
 import { PrismaModule } from '@/prisma/prisma.module';
 import { UtilityModule } from '@/utility/utility.module';
@@ -20,7 +21,7 @@ import { UtilityModule } from '@/utility/utility.module';
     ShowModule,
     MembershipModule,
   ],
-  providers: [TaskService, TaskRepository],
-  exports: [TaskService],
+  providers: [TaskService, TaskValidationService, TaskRepository],
+  exports: [TaskService, TaskValidationService],
 })
 export class TaskModule {}
