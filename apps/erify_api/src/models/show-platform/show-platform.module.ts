@@ -9,6 +9,6 @@ import { UtilityModule } from '@/utility/utility.module';
 @Module({
   imports: [PrismaModule, UtilityModule],
   providers: [ShowPlatformService, ShowPlatformRepository],
-  exports: [ShowPlatformService],
+  exports: [ShowPlatformService, ShowPlatformRepository],
 })
 export class ShowPlatformModule {}
