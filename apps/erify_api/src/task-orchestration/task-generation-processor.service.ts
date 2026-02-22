@@ -27,58 +27,52 @@ export class TaskGenerationProcessor {
     let showStatus: 'success' | 'error' | 'skipped' = 'success';
     let errorMessage: string | undefined;
 
-    try {
-      // Acquire advisory lock using raw SQL via prisma service
-      await this.prisma.$executeRaw`SELECT pg_advisory_xact_lock(${show.id})`;
+    // Acquire advisory lock using raw SQL via prisma service
+    await this.prisma.$executeRaw`SELECT pg_advisory_xact_lock(${show.id})`;
 
-      for (const template of templates) {
-        // Idempotency check using Service
-        const existingTask = await this.taskService.findByShowAndTemplate(show.id, template.id);
+    for (const template of templates) {
+      // Idempotency check using Service
+      const existingTask = await this.taskService.findByShowAndTemplate(show.id, template.id);
 
-        if (existingTask) {
-          tasksSkippedForShow++;
-          continue;
-        }
-
-        const latestSnapshot = template.snapshots?.[0];
-        if (!latestSnapshot) {
-          this.logger.warn(`Template ${template.uid} has no snapshots, skipping`);
-          tasksSkippedForShow++;
-          continue;
-        }
-
-        const type = this.inferTaskType(template.name);
-        const taskUid = this.taskService.generateTaskUid();
-
-        const task = await this.taskService.create({
-          uid: taskUid,
-          description: template.name,
-          type,
-          status: TaskStatus.PENDING,
-          studio: { connect: { id: show.studioId } },
-          template: { connect: { id: template.id } },
-          snapshot: { connect: { id: latestSnapshot.id } },
-          content: {},
-          version: 1,
-        });
-
-        // Create TaskTarget via Service
-        await this.taskTargetService.create({
-          task: { connect: { id: task.id } },
-          targetType: 'SHOW',
-          targetId: show.id,
-          show: { connect: { id: show.id } },
-        });
-
-        tasksCreatedForShow++;
+      if (existingTask) {
+        tasksSkippedForShow++;
+        continue;
       }
-    } catch (error) {
-      this.logger.error(`Failed to generate tasks for show ${show.uid}`, error);
-      showStatus = 'error';
-      errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      const latestSnapshot = template.snapshots?.[0];
+      if (!latestSnapshot) {
+        this.logger.warn(`Template ${template.uid} has no snapshots, skipping`);
+        tasksSkippedForShow++;
+        continue;
+      }
+
+      const type = this.inferTaskType(template.name);
+      const taskUid = this.taskService.generateTaskUid();
+
+      const task = await this.taskService.create({
+        uid: taskUid,
+        description: template.name,
+        type,
+        status: TaskStatus.PENDING,
+        studio: { connect: { id: show.studioId } },
+        template: { connect: { id: template.id } },
+        snapshot: { connect: { id: latestSnapshot.id } },
+        content: {},
+        version: 1,
+      });
+
+      // Create TaskTarget via Service
+      await this.taskTargetService.create({
+        task: { connect: { id: task.id } },
+        targetType: 'SHOW',
+        targetId: show.id,
+        show: { connect: { id: show.id } },
+      });
+
+      tasksCreatedForShow++;
     }
 
-    if (tasksCreatedForShow === 0 && tasksSkippedForShow > 0 && showStatus === 'success') {
+    if (tasksCreatedForShow === 0 && tasksSkippedForShow > 0) {
       showStatus = 'skipped';
     }
 

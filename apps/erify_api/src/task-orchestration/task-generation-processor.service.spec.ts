@@ -127,16 +127,13 @@ describe('taskGenerationProcessor', () => {
       expect(result.tasks_skipped).toBe(1);
     });
 
-    it('should handle errors and return error status', async () => {
+    it('should bubble up errors from database', async () => {
       const show = { id: BigInt(10), uid: 'show_1' };
       const templates = [{ id: BigInt(1), uid: 'tpl_1' }];
 
       mockPrismaForCls.$executeRaw.mockRejectedValue(new Error('DB Error'));
 
-      const result = await processor.processShow(show, templates);
-
-      expect(result.status).toBe('error');
-      expect(result.error).toBe('DB Error');
+      await expect(processor.processShow(show, templates)).rejects.toThrow('DB Error');
     });
 
     it('should skip templates with no snapshots', async () => {

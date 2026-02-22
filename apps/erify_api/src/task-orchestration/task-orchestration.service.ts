@@ -72,12 +72,23 @@ export class TaskOrchestrationService {
 
     // 3. Process shows
     for (const show of shows) {
-      const showResult = await this.taskGenerationProcessor.processShow(show, templates);
-      results.push(showResult);
+      try {
+        const showResult = await this.taskGenerationProcessor.processShow(show, templates);
+        results.push(showResult);
 
-      if (showResult.status === 'success' || showResult.status === 'skipped') {
-        totalTasksCreated += showResult.tasks_created;
-        totalSkipped += showResult.tasks_skipped;
+        if (showResult.status === 'success' || showResult.status === 'skipped') {
+          totalTasksCreated += showResult.tasks_created;
+          totalSkipped += showResult.tasks_skipped;
+        }
+      } catch (error) {
+        this.logger.error(`Failed to generate tasks for show ${show.uid}`, error);
+        results.push({
+          show_uid: show.uid,
+          status: 'error',
+          tasks_created: 0,
+          tasks_skipped: 0,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
       }
     }
 
