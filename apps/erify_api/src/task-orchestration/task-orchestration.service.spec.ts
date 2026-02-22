@@ -33,6 +33,7 @@ describe('taskOrchestrationService', () => {
             updateAssigneeByTaskIds: jest.fn(),
             findByUid: jest.fn(),
             update: jest.fn(),
+            setAssignee: jest.fn(),
           },
         },
         {
@@ -160,11 +161,11 @@ describe('taskOrchestrationService', () => {
       studioMembershipService.listStudioMemberships.mockResolvedValue({
         data: [{ user: { uid: 'usr_1' }, userId: BigInt(2) }],
       } as any);
-      taskService.update.mockResolvedValue({ uid: 'task_1', assigneeId: BigInt(2) } as any);
+      taskService.setAssignee.mockResolvedValue({ uid: 'task_1', assigneeId: BigInt(2) } as any);
 
       const result = await service.reassignTask(studioUid, taskUid, assigneeUid);
 
-      expect(taskService.update).toHaveBeenCalled();
+      expect(taskService.setAssignee).toHaveBeenCalledWith('task_1', BigInt(2), expect.any(Object));
       expect(result.uid).toBe('task_1');
     });
 
@@ -194,10 +195,25 @@ describe('taskOrchestrationService', () => {
   describe('getStudioShowsWithTaskSummary', () => {
     it('should return paginated shows with task summaries', async () => {
       studioService.findByUid.mockResolvedValue({ id: BigInt(1) } as any);
+      const now = new Date();
       showService.findPaginatedWithTaskSummary.mockResolvedValue({
         data: [
           {
+            id: BigInt(1),
             uid: 'show_1',
+            clientId: BigInt(1),
+            studioId: BigInt(1),
+            studioRoomId: null,
+            showTypeId: BigInt(1),
+            showStatusId: BigInt(1),
+            showStandardId: BigInt(1),
+            name: 'Test Show',
+            startTime: now,
+            endTime: now,
+            metadata: {},
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
             taskTargets: [
               { task: { status: TaskStatus.COMPLETED, assigneeId: BigInt(1) } },
               { task: { status: TaskStatus.PENDING, assigneeId: null } },
@@ -207,7 +223,7 @@ describe('taskOrchestrationService', () => {
         total: 1,
       } as any);
 
-      const result = await service.getStudioShowsWithTaskSummary('std_1', {});
+      const result = await service.getStudioShowsWithTaskSummary('std_1', { page: 1, limit: 10, sort: 'desc', take: 10, skip: 0 });
 
       expect(result.data[0].task_summary).toEqual({
         total: 2,

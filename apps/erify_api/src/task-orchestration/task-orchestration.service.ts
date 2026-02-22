@@ -1,15 +1,28 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { TaskStatus, TaskType } from '@prisma/client';
+import { StudioMembership, TaskStatus, TaskType, User } from '@prisma/client';
+
+import type { ListStudioShowsQueryTransformed } from '@eridu/api-types/task-management';
 
 import { TaskGenerationProcessor } from './task-generation-processor.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
+import { showDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { TaskTemplateService } from '@/models/task-template/task-template.service';
+
+type MembershipWithUser = StudioMembership & { user: User };
+
+export type ShowGenerationResult = {
+  show_uid: string;
+  status: 'success' | 'skipped' | 'error';
+  tasks_created: number;
+  tasks_skipped: number;
+  error?: string;
+};
 
 @Injectable()
 export class TaskOrchestrationService {
@@ -66,7 +79,7 @@ export class TaskOrchestrationService {
       throw HttpError.badRequest('No valid shows found for the provided UIDs');
     }
 
-    const results: any[] = [];
+    const results: ShowGenerationResult[] = [];
     let totalTasksCreated = 0;
     let totalSkipped = 0;
 
@@ -103,19 +116,31 @@ export class TaskOrchestrationService {
   }
 
   /**
-   * Assigns all tasks of selected shows to a specific user.
+   * Resolves a studio member by user UID, throwing if not found.
    */
-  async assignShowsToUser(studioUid: string, showUids: string[], assigneeUid: string) {
-    // 1. Validate assignee is a studio member
+  private async resolveStudioMember(
+    studioUid: string,
+    assigneeUid: string,
+  ): Promise<MembershipWithUser> {
     const { data: memberships } = await this.studioMembershipService.listStudioMemberships(
       { studioId: studioUid },
       { user: true },
     );
-    const assigneeMembership: any = memberships.find((m: any) => m.user?.uid === assigneeUid);
-
-    if (!assigneeMembership) {
+    const membership = (memberships as MembershipWithUser[]).find(
+      (m) => m.user?.uid === assigneeUid,
+    );
+    if (!membership) {
       throw HttpError.badRequest(`User ${assigneeUid} is not a member of studio ${studioUid}`);
     }
+    return membership;
+  }
+
+  /**
+   * Assigns all tasks of selected shows to a specific user.
+   */
+  async assignShowsToUser(studioUid: string, showUids: string[], assigneeUid: string) {
+    // 1. Validate assignee is a studio member
+    const assigneeMembership = await this.resolveStudioMember(studioUid, assigneeUid);
 
     // 2. Resolve shows
     const shows = await this.showService.findMany({
@@ -148,7 +173,6 @@ export class TaskOrchestrationService {
     }
 
     // 4. Bulk update assignee
-    // Note: updateAssigneeByTaskIds is a custom repository method exposed via service
     await this.taskService.updateAssigneeByTaskIds(taskIds, assigneeMembership.userId);
 
     return {
@@ -162,39 +186,28 @@ export class TaskOrchestrationService {
   }
 
   /**
-   * Reassigns a single task to a user.
+   * Reassigns a single task to a user or unassigns it.
    */
-  async reassignTask(studioUid: string, taskUid: string, assigneeUid: string) {
+  async reassignTask(studioUid: string, taskUid: string, assigneeUid: string | null) {
     const task = await this.taskService.findByUid(taskUid);
     if (!task) {
       throw HttpError.notFound('Task', taskUid);
     }
 
-    // Verify studio scope (Optimization: check task.studioId vs studio.id if we had studio loaded,
-    // but here we look up studio by UID first to be safe or valid)
+    // Verify studio scope
     const studio = await this.studioService.findByUid(studioUid);
     if (!studio || task.studioId !== studio.id) {
       throw HttpError.forbidden('Task does not belong to this studio');
     }
 
-    const { data: memberships } = await this.studioMembershipService.listStudioMemberships(
-      { studioId: studioUid },
-      { user: true },
-    );
-    const assigneeMembership: any = memberships.find((m: any) => m.user?.uid === assigneeUid);
+    let membershipId: bigint | null = null;
 
-    if (!assigneeMembership) {
-      throw HttpError.badRequest(`User ${assigneeUid} is not a member of this studio`);
+    if (assigneeUid) {
+      const assigneeMembership = await this.resolveStudioMember(studioUid, assigneeUid);
+      membershipId = assigneeMembership.userId;
     }
 
-    // Use repository update
-    const updatedTask = await this.taskService.update(
-      { uid: taskUid },
-      { assignee: { connect: { id: assigneeMembership.userId } } },
-      { assignee: true, template: true }, // Include relations in return
-    );
-
-    return updatedTask;
+    return this.taskService.setAssignee(taskUid, membershipId, { assignee: true, template: true });
   }
 
   /**
@@ -229,7 +242,7 @@ export class TaskOrchestrationService {
   /**
    * Lists shows for a studio with task completion summaries.
    */
-  async getStudioShowsWithTaskSummary(studioUid: string, query: any) {
+  async getStudioShowsWithTaskSummary(studioUid: string, query: ListStudioShowsQueryTransformed) {
     const studio = await this.studioService.findByUid(studioUid);
     if (!studio) {
       throw HttpError.notFound('Studio', studioUid);
@@ -241,10 +254,13 @@ export class TaskOrchestrationService {
     );
 
     const data = shows.map((show) => {
+      // Map base show fields using shared showDto logic
+      const baseShow = showDto.parse(show);
+
       // prisma include type complexity
       const taskSummaries = show.taskTargets.map((tt) => tt.task);
       return {
-        ...show,
+        ...baseShow,
         task_summary: {
           total: taskSummaries.length,
           assigned: taskSummaries.filter((t) => t.assigneeId !== null).length,
