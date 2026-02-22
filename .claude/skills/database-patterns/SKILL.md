@@ -108,6 +108,9 @@ await prisma.show.create({ data: { client: { connect: { uid: 'client_123' } } } 
 
 > 📖 See [`references/06-relationships-and-nested-writes.md`](references/06-relationships-and-nested-writes.md) for schema examples.
 
+> [!IMPORTANT]
+> When a polymorphic **join table** is unavoidable (e.g., `TaskTarget` linking tasks to multiple target entity types), the Prisma `include` must traverse the join table explicitly. This means the raw Prisma shape is **nested** (`targets[].show`) rather than flat (`show`). The Zod DTO schema **MUST** include a `.transform()` to flatten and remap this to the API wire format. See the **Polymorphic relation DTO transform** pattern in the [Shared API Types skill](../shared-api-types/SKILL.md).
+
 ---
 
 ## 8. Nested Writes
