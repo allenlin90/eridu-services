@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import type { RowSelectionState } from '@tanstack/react-table';
 import { ListTodo } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@eridu/ui';
 
@@ -37,15 +37,34 @@ function StudioShowsPage() {
     onSortingChange,
   } = useStudioShows({ studioId });
 
-  // Convert rowSelection keys (which are indexes in current page) to actual `StudioShow` objects if needed,
-  // or we can map them on the fly. Since rowSelection is index-based in Tanstack Table by default (unless getRowId is provided),
-  // we extract the selected objects from the current page.
-  const selectedShows = useMemo(() => {
-    return Object.keys(rowSelection)
-      .filter((k) => rowSelection[k])
-      .map((k) => shows[Number.parseInt(k, 10)])
-      .filter(Boolean);
+  // Accumulate selected show objects across pages so we have their names for the dialogs
+  const [selectedShowObjects, setSelectedShowObjects] = useState<Record<string, StudioShow>>({});
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedShowObjects((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      shows.forEach((show) => {
+        if (rowSelection[show.id] && !next[show.id]) {
+          next[show.id] = show;
+          changed = true;
+        }
+      });
+
+      Object.keys(next).forEach((id) => {
+        if (!rowSelection[id]) {
+          delete next[id];
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
   }, [rowSelection, shows]);
+
+  const selectedShows = useMemo(() => Object.values(selectedShowObjects), [selectedShowObjects]);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
@@ -87,6 +106,7 @@ function StudioShowsPage() {
         enableRowSelection
         rowSelection={rowSelection}
         onRowSelectionChange={setRowSelection}
+        getRowId={(show) => show.id}
 
         // Extra toolbar actions
         renderToolbarActions={() => (

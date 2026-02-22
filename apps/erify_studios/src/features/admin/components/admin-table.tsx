@@ -57,6 +57,7 @@ type AdminTableProps<TData> = {
   enableRowSelection?: boolean | ((row: import('@tanstack/react-table').Row<TData>) => boolean);
   rowSelection?: import('@tanstack/react-table').RowSelectionState;
   onRowSelectionChange?: (updater: import('@tanstack/react-table').Updater<import('@tanstack/react-table').RowSelectionState>) => void;
+  getRowId?: (row: TData) => string;
 };
 
 export function AdminTable<TData>({
@@ -83,6 +84,7 @@ export function AdminTable<TData>({
   enableRowSelection,
   rowSelection,
   onRowSelectionChange,
+  getRowId,
 }: AdminTableProps<TData>) {
   // Add actions column if edit or delete handlers are provided
   const columnsWithActions: ColumnDef<TData>[] = [
@@ -110,6 +112,7 @@ export function AdminTable<TData>({
   const table = useReactTable({
     data,
     columns: columnsWithActions,
+    getRowId,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: !!pagination,
     manualFiltering: !!onColumnFiltersChange,

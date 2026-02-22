@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { Button } from '@eridu/ui';
 
@@ -24,14 +24,15 @@ function StudioShowTasksPage() {
     limit: 100, // get enough members to populate the dropdown
   });
 
-  const members = membersResponse?.data || [];
+  const rawMembers = membersResponse?.data;
+  const members = useMemo(() => rawMembers || [], [rawMembers]);
 
   // 2. Setup Assignment Mutation
   const { mutate: assignTask, isPending: isAssigning } = useAssignTask({ studioId, showId });
 
-  const handleAssign = (taskId: string, assigneeUid: string | null) => {
+  const handleAssign = useCallback((taskId: string, assigneeUid: string | null) => {
     assignTask({ taskId, assigneeUid });
-  };
+  }, [assignTask]);
 
   // 3. Define the columns
   const columns = useMemo(

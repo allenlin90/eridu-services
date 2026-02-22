@@ -1299,7 +1299,7 @@ function CardList({ items }) {
 
 **Usage Example**:
 ```tsx
-import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
+import { useInfiniteScroll } from '@eridu/ui';
 
 function InfiniteList() {
   const { data, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
