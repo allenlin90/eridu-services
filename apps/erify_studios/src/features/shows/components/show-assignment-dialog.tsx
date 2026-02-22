@@ -1,5 +1,5 @@
 import { useParams } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 import {
   Button,
@@ -9,11 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  AsyncCombobox,
   Skeleton,
 } from '@eridu/ui';
 
@@ -46,6 +42,22 @@ export function ShowAssignmentDialog({ shows, open, onOpenChange }: ShowAssignme
       setSelectedAssignee('');
     },
   });
+
+  const [memberSearch, setMemberSearch] = useState('');
+
+  const memberOptions = useMemo(() => {
+    return members.map((m) => ({
+      value: m.user.id,
+      label: `${m.user.name} (${m.user.email})`,
+    }));
+  }, [members]);
+
+  const filteredOptions = useMemo(() => {
+    if (!memberSearch) return memberOptions;
+    return memberOptions.filter((o) =>
+      o.label.toLowerCase().includes(memberSearch.toLowerCase())
+    );
+  }, [memberOptions, memberSearch]);
 
   const handleAssign = () => {
     if (!selectedAssignee || shows.length === 0)
@@ -94,22 +106,13 @@ export function ShowAssignmentDialog({ shows, open, onOpenChange }: ShowAssignme
                   <Skeleton className="h-9 w-full" />
                 )
               : (
-                  <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a studio member..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {members.map((member) => (
-                        <SelectItem key={member.user.id} value={member.user.id}>
-                          {member.user.name}
-                          {' '}
-                          (
-                          {member.user.email}
-                          )
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <AsyncCombobox
+                    value={selectedAssignee}
+                    onChange={setSelectedAssignee}
+                    onSearch={setMemberSearch}
+                    options={filteredOptions}
+                    placeholder="Search a studio member..."
+                  />
                 )}
           </div>
         </div>

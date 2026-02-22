@@ -2,47 +2,48 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 
 import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
-import { Badge, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@eridu/ui';
+import { Badge, AsyncCombobox } from '@eridu/ui';
+import { useState, useMemo } from 'react';
 
 import type { Membership } from '@/features/memberships/api/get-memberships';
 
 // A custom cell component so we can use hooks inside it
 function AssigneeCell({
   task,
-  members,
+  memberOptions,
   onAssign,
   isAssigning,
 }: {
   task: TaskWithRelationsDto;
+  memberOptions: { value: string; label: string }[];
   onAssign: (taskId: string, assigneeUid: string | null) => void;
   isAssigning: boolean;
 }) {
+  const [memberSearch, setMemberSearch] = useState('');
+
+  const filteredOptions = useMemo(() => {
+    if (!memberSearch) return memberOptions;
+    return memberOptions.filter((o) =>
+      o.label.toLowerCase().includes(memberSearch.toLowerCase())
+    );
+  }, [memberOptions, memberSearch]);
+
   const currentValue = task.assignee?.id || 'unassigned';
 
   return (
-    <Select
+    <AsyncCombobox
       value={currentValue}
-      onValueChange={(val) => {
+      onChange={(val) => {
         if (val !== currentValue) {
           onAssign(task.id, val === 'unassigned' ? null : val);
         }
       }}
+      onSearch={setMemberSearch}
+      options={[{ value: 'unassigned', label: 'Unassigned' }, ...filteredOptions]}
       disabled={isAssigning}
-    >
-      <SelectTrigger className="w-[200px] h-8 text-xs">
-        <SelectValue placeholder="Unassigned" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="unassigned" className="text-muted-foreground italic">
-          Unassigned
-        </SelectItem>
-        {members.map((member) => (
-          <SelectItem key={member.user.id} value={member.user.id}>
-            {member.user.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      placeholder="Unassigned"
+      className="w-[200px] h-8 text-xs"
+    />
   );
 }
 
@@ -51,6 +52,11 @@ export function getColumns(
   onAssign: (taskId: string, assigneeUid: string | null) => void,
   isAssigning: boolean,
 ): ColumnDef<TaskWithRelationsDto>[] {
+  const memberOptions = members.map((m) => ({
+    value: m.user.id,
+    label: `${m.user.name} (${m.user.email})`,
+  }));
+
   return [
     {
       accessorKey: 'type',
@@ -105,7 +111,7 @@ export function getColumns(
       cell: ({ row }) => (
         <AssigneeCell
           task={row.original}
-          members={members}
+          memberOptions={memberOptions}
           onAssign={onAssign}
           isAssigning={isAssigning}
         />
