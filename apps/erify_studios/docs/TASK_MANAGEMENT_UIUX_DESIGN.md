@@ -2,7 +2,7 @@
 
 **Version**: 3.2
 **Last Updated**: February 23, 2026
-**Status**: Implemented. Deferred items: animations (confetti/checkbox), mobile swipe gestures, file uploads, PWA/offline, real-time WebSocket updates, analytics dashboard.
+**Status**: Core implemented. Two functional gaps identified: (1) task form not rendered — `snapshot.schema` missing from API response; (2) My Tasks filter bar too limited. Both are planned next along with the review workflow. Deferred: animations, swipe gestures, file uploads, PWA/offline, WebSocket, analytics.
 
 > **Related Documentation**  
 > For API contracts, database schema, and backend architecture, see [`apps/erify_api/docs/TASK_MANAGEMENT_DESIGN.md`](../../erify_api/docs/TASK_MANAGEMENT_DESIGN.md)
@@ -22,6 +22,8 @@
 9. [Technical Integration](#9-technical-integration)
 10. [Implemented Component Patterns](#10-implemented-component-patterns)
 11. [Task Generation & Assignment Workflows](#11-task-generation--assignment-workflows)
+
+> **Screen index**: §3.1 Template Library · §3.2 Create/Edit Template · §3.3 Shows List · §3.3.1 Generate Dialog · §3.3.2 Assignment Dialog · §3.3.3 Show Detail/Tasks · §3.4 My Tasks · §3.5 Task Detail (Operator) · §3.6 Task Review Queue (Admin) · §3.7 All Tasks Dashboard
 
 ---
 
@@ -605,56 +607,318 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 
 **Purpose**: The operator's command center. Show what needs attention NOW.
 
-**Key Features**:
-- **Visual priority**: Color-coded urgency (red/yellow/white)
-- **Contextual info**: Show name, due date, progress
-- **One-tap action**: Direct to task detail
-- **Smart grouping**: Due today vs upcoming
-- **Progress indicators**: X/Y complete gives sense of completion
+> **Known gap**: Current implementation has only Today/Upcoming/All tabs with no filtering, no progress bars on cards (schema not in API response), and no search. The design below is the target state.
 
-**Mobile Layout**:
-![My Tasks Mobile](assets/task_management/my_tasks_mobile.png)
+#### 3.4.1 Filter Bar
 
-**Implementation Details**:
-- **Path**: `/my-tasks`
-- **Component**: `MobileTaskList` with tab navigation
-- **Tabs**: Today, Upcoming, All
-- **Card States**: Overdue (red border), Due Soon (amber border), In Progress (blue border)
-- **Actions**: Tap card to navigate to task detail
+The sticky toolbar above the task list replaces the simple 3-tab navigation with a richer filter surface. Filters compose: a user can combine status + type + date simultaneously.
 
----
+```
+Mobile:
+┌──────────────────────────────────────────────────┐
+│ My Tasks                              [⊞ Filter] │
+├──────────────────────────────────────────────────┤
+│ [Search shows or tasks...              🔍]        │
+│ ─────────────────────────────────────────────── │
+│ [All] [Today] [This Week] [Overdue]              │  ← date chips
+│ [All types] [SETUP] [ACTIVE] [CLOSURE]           │  ← type chips
+│ [All status] [To Do] [In Progress] [Blocked]     │  ← status chips
+└──────────────────────────────────────────────────┘
+```
 
-### 3.5 Operator: Task Detail (Mobile)
+```
+Desktop (sidebar layout):
+┌──────────────────────────────────────────────────────┐
+│ My Tasks                                             │
+│ [Search...] [Today ▼] [Status ▼] [Type ▼] [Sort ▼]  │
+└──────────────────────────────────────────────────────┘
+```
 
-**Purpose**: Complete checklist items. Report issues. Update status.
+**Filter parameters** (map to `GET /me/tasks` query params):
+| Filter | Values | API Param |
+|--------|--------|-----------|
+| Date | Today / This Week / Custom | `due_date_from` + `due_date_to` |
+| Status | To Do (PENDING) / In Progress / Review / Blocked / Done | `status[]` |
+| Type | SETUP / ACTIVE / CLOSURE / ADMIN / ROUTINE | `task_type[]` |
+| Search | Free text | `search` |
+| Sort | Due Date ↑ (default) / Due Date ↓ / Recently Updated | `sort` |
 
-**Mobile Layout** (Scrollable):
-![Task Detail Mobile](assets/task_management/task_detail_mobile.png)
+**"Overdue" shortcut** = `due_date_to=today&status=PENDING,IN_PROGRESS` — surfaces the most urgent items in one tap.
 
-**Interaction Patterns**:
-- **Tap checkbox** → Instant update, checkmark animation
-- **Tap completed item** → Expand to show completion time
-- **Hold checkbox** → Quick action menu (Undo, Add note)
-- **Progress Inference** → Frontend calculates progress percentage from content and required fields
+#### 3.4.2 Task Card (Enhanced)
 
-**Optimistic UI Updates**:
-```typescript
-// When user taps checkbox
-1. Immediately show checkmark (optimistic)
-2. Send API request with version number
-3. If conflict (409):
-   - Revert UI
-   - Show toast: "Someone else updated this task. Refreshing..."
-   - Reload task
-4. If success:
-   - Keep checkmark
-   - Increment local version
-   - Show confetti animation (if task now 100% complete)
+```
+┌──────────────────────────────────────────────────┐
+│ [SETUP]  Pre-Production Checklist       ● PENDING │
+│ Monday Night Live                                 │
+│ Due: Feb 5, 5:00 PM  ⚠️ Overdue                  │
+│ ▓▓▓▓▓▓▓░░░░░  5 / 12 items               42%     │
+└──────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────┐
+│ [ACTIVE]  Live Operations              ● IN PROG  │
+│ Morning Report                                    │
+│ Due: Feb 6, 7:00 AM  · 2 days away               │
+│ ▓▓▓▓▓▓▓▓▓▓░░  10 / 12 items              83%     │
+└──────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────┐
+│ [CLOSURE]  Post-Production             ● BLOCKED  │
+│ Weekend Special                                   │
+│ Due: Feb 8, 12:00 PM                              │
+│ ⊘ Blocked: "Audio files missing"                  │
+└──────────────────────────────────────────────────┘
+```
+
+**Card anatomy**:
+- **Row 1**: Task type badge (colored by type) + task description + status badge
+- **Row 2**: Show name
+- **Row 3**: Due date with urgency — overdue = red + ⚠️, due within 3h = amber, otherwise grey
+- **Row 4**: Progress bar (`snapshot.schema` required) OR blocked reason if BLOCKED
+- **Tap anywhere** → opens Task Execution Sheet
+
+**Progress bar requires `snapshot.schema`** in the API list response. Until the backend fix is deployed, show only status badge (no progress bar). FE should gracefully degrade: if `task.snapshot` is absent, omit progress bar.
+
+**Card border states**:
+- Red left border: overdue
+- Amber left border: due within 3 hours
+- Blue left border: in progress, on track
+- Grey left border: pending, not yet started
+- No border: completed
+
+#### 3.4.3 Empty States per Filter
+
+```
+No results for "Today":
+  "Nothing due today — check Upcoming for what's coming next."
+
+No results for "Overdue":
+  "You're all caught up! No overdue tasks."
+
+No assignments at all:
+  "No tasks assigned yet. Your manager will assign work from the Shows page."
 ```
 
 ---
 
-### 3.6 Manager: All Tasks Dashboard
+### 3.5 Operator: Task Execution Sheet (Form)
+
+**Purpose**: Complete the task checklist. Update status. This is the primary work surface for operators.
+
+> **Known gap**: Current implementation renders `task.content` as raw `{}` JSON. The `JsonForm` component exists and works but is not wired into this sheet. The design below is the target state requiring the snapshot fix.
+
+#### 3.5.1 Sheet Layout
+
+```
+┌──────────────────────────────────────────────────┐
+│ ← [SETUP]  Pre-Production Checklist    ● IN PROG │
+│ Monday Night Live · Feb 5, 8:00 PM               │
+│ Due: Feb 5, 5:00 PM                              │
+│ ▓▓▓▓▓▓▓░░░░░  5 / 12 required fields    42%     │
+├──────────────────────────────────────────────────┤
+│                                                  │
+│  Script reviewed and approved         [✓] ──────│
+│  ─────────────────────────────────────────────  │
+│  Number of cameras required                      │
+│  [  4                               ]            │
+│  ─────────────────────────────────────────────  │
+│  Lighting setup status               [Complete▼] │
+│  ─────────────────────────────────────────────  │
+│  Host name                                       │
+│  [  Marcus Chen                     ]            │
+│  ─────────────────────────────────────────────  │
+│  Show date                                       │
+│  [  Feb 5, 2026              📅     ]            │
+│  ─────────────────────────────────────────────  │
+│  Special notes                                   │
+│  ┌──────────────────────────────────────────┐   │
+│  │ Requires smoke machine for Act 2         │   │
+│  └──────────────────────────────────────────┘   │
+│                                                  │
+├──────────────────────────────────────────────────┤
+│              [▶ Start Task]                      │  ← PENDING state
+│              [✔ Complete Task]                   │  ← IN_PROGRESS state (current)
+│              [✔ Submit for Review]               │  ← IN_PROGRESS state (planned)
+│              [↩ Reopen Task]                     │  ← COMPLETED state
+└──────────────────────────────────────────────────┘
+```
+
+#### 3.5.2 Form Rendering
+
+The form is rendered by the existing `JsonForm` component using `task.snapshot.schema`:
+
+```typescript
+<JsonForm
+  schema={task.snapshot.schema}   // UiSchema from snapshot
+  values={task.content}           // Existing field answers
+  readOnly={isReadOnly}           // true when COMPLETED or REVIEW
+  onChange={handleFieldChange}    // debounced auto-save
+/>
+```
+
+**Auto-save behaviour**:
+- Field changes trigger a debounced `PATCH /me/tasks/:uid` (300ms debounce)
+- Version is sent with every PATCH for optimistic locking
+- No explicit "Save" button — form saves continuously
+- Saving indicator: small spinner / "Saved" label near the progress bar
+- If 409 conflict: revert field, show toast "Task updated elsewhere. Refreshing..."
+
+**Read-only states**:
+- `COMPLETED` or `REVIEW`: form is read-only (`readOnly={true}` on JsonForm); fields shown as display values, not inputs
+- `BLOCKED`: form still editable but action button shows "Resume Task" instead
+
+**Progress bar**:
+- Updates live as operator fills required fields
+- Derived from `calculateTaskProgress(task, schema)` using the current form values
+- When 100%: subtle green pulse animation on progress bar (no confetti yet — deferred)
+
+#### 3.5.3 Rejection Note Banner
+
+When `task.metadata.rejection_note` is present (task was sent back from REVIEW):
+
+```
+┌──────────────────────────────────────────────────┐
+│ ⚠️  Sent back for revision                        │
+│ "Audio setup incomplete — please redo section 3" │
+└──────────────────────────────────────────────────┘
+[← Resume Task] button below banner
+```
+
+Cleared (from display) once operator changes status back to IN_PROGRESS.
+
+#### 3.5.4 Status Action Buttons
+
+```
+PENDING:
+  [▶ Start Task]                  PENDING → IN_PROGRESS
+
+IN_PROGRESS (current, no review gate):
+  [✔ Complete Task]               IN_PROGRESS → COMPLETED
+  [⊘ Report Blocker]              → BLOCKED (opens text input for reason)
+
+IN_PROGRESS (planned, with review gate):
+  [✔ Submit for Review]           IN_PROGRESS → REVIEW
+  [⊘ Report Blocker]              → BLOCKED
+
+REVIEW:
+  [← Recall]                     REVIEW → IN_PROGRESS (self-recall)
+  Banner: "Awaiting admin review..." (grey, non-actionable)
+
+BLOCKED:
+  [← Resume Task]                 BLOCKED → IN_PROGRESS
+  Shows blocked reason from metadata
+
+COMPLETED:
+  [↩ Reopen Task]                 COMPLETED → IN_PROGRESS
+  Shows completedAt timestamp
+```
+
+#### 3.5.5 FE Implementation Notes
+
+**Component**: `task-execution-sheet.tsx`
+
+**Changes needed**:
+1. Replace `<pre>{JSON.stringify(task.content)}</pre>` with `<JsonForm schema={task.snapshot.schema} values={task.content} onChange={debouncedSave} readOnly={isReadOnly} />`
+2. Add `useUpdateMyTask` debounced content auto-save (separate from status transition)
+3. Add progress bar using `calculateTaskProgress(task, task.snapshot.schema)` — update live as form changes
+4. Guard: if `task.snapshot` is absent (old API / loading), show a skeleton or `<pre>` fallback
+5. Import and wire `JsonForm` from `@/components/json-form/json-form`
+
+**Hook changes needed**:
+- `use-my-tasks.ts`: ensure `task.snapshot` is surfaced from API response (depends on backend fix)
+- Consider a separate `useMyTask(taskId)` query for the detail fetch (`GET /me/tasks/:uid`) with `snapshot: true` — more complete than the list item, used when sheet opens
+
+**Recommended pattern**:
+```
+useMyTask(taskId)    ← detail query (GET /me/tasks/:uid), runs when sheet opens
+                       provides full snapshot.schema + current content
+useUpdateMyTask()    ← mutation, used for both field changes and status transitions
+```
+
+This way, the list (`useMyTasks`) doesn't need to carry the full schema for every card — only the selected task detail fetches it. The progress bar on the list card can use the list-level snapshot (simpler schema subset) when available, and degrade gracefully when not.
+
+**Optimistic Updates**:
+```typescript
+// When user changes a form field
+1. Immediately update form state (local, not persisted)
+2. Debounce 300ms → PATCH /me/tasks/:uid with full content + version
+3. On 409 conflict:
+   - Revert field to server value
+   - Toast: "Task updated elsewhere. Refreshing..."
+   - Refetch task detail
+4. On success:
+   - Update local version in cache
+   - "Saved" indicator appears briefly
+```
+
+---
+
+### 3.6 Manager: Task Review Queue ⏳ Planned
+
+**Purpose**: Review tasks submitted by operators. Approve (mark complete), reject (send back with note), or close.
+
+**Route**: `/studios/$studioId/tasks?status=REVIEW` — filtered view on the existing task infrastructure; no new route needed.
+
+**Layout**:
+```
+┌───────────────────────────────────────────────────────────────────┐
+│ Task Review Queue                                                 │
+│ Tasks awaiting your approval                      [Bulk Approve]  │
+│                                                                   │
+├───┬──────────────────────┬──────────┬──────────┬──────────────────┤
+│ ☐ │ Task                 │ Show     │ Operator │ Submitted        │
+├───┼──────────────────────┼──────────┼──────────┼──────────────────┤
+│ ☑ │ Pre-Production       │ Mon Live │ Marcus C │ 2h ago           │
+│ ☐ │ Live Operations      │ Morning  │ Sarah C  │ 30m ago          │
+│ ☐ │ Post-Production      │ Weekend  │ Marcus C │ 5m ago           │
+└───┴──────────────────────┴──────────┴──────────┴──────────────────┘
+
+       ┌──────────────────────────────────────────────────────┐
+       │ 1 selected   [✔ Approve]  [✕ Reject]  [⊘ Close] [✗]│
+       └──────────────────────────────────────────────────────┘
+```
+
+**Per-Task Actions** (from row action menu or task detail):
+- **Approve** → `REVIEW → COMPLETED`; task locked read-only
+- **Reject** → opens rejection note input → `REVIEW → IN_PROGRESS`; note surfaced to operator
+- **Close** → `any → CLOSED`; requires confirmation; terminal state
+
+**Rejection Note Flow**:
+```
+┌─────────────────────────────────────────┐
+│ Reject Task                             │
+├─────────────────────────────────────────┤
+│ Send this task back to the operator     │
+│ with a note explaining what to fix:     │
+│                                         │
+│ ┌─────────────────────────────────────┐ │
+│ │ Audio setup incomplete —            │ │
+│ │ please redo section 3               │ │
+│ └─────────────────────────────────────┘ │
+│                                         │
+│              [Cancel]  [Send Back →]    │
+└─────────────────────────────────────────┘
+```
+
+**Operator sees** (in `task-execution-sheet.tsx` when `task.metadata.rejection_note` is set):
+```
+┌─────────────────────────────────────────────────────────────┐
+│ ⚠️  Sent back for revision                                   │
+│ "Audio setup incomplete — please redo section 3"            │
+│                                                             │
+│ [← Resume Task]   → IN_PROGRESS                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**FE implementation notes:**
+- Use the existing `show-tasks-table` infrastructure with a `status=REVIEW` filter preset
+- Bulk approve: `PATCH /studios/:studioId/tasks/bulk-update-status` (planned endpoint)
+- Single approve/reject: `PATCH /studios/:studioId/tasks/:taskUid/status`
+- Rejection note stored in `task.metadata.rejection_note`; clear it when operator resumes
+
+---
+
+### 3.7 Manager: All Tasks Dashboard
 
 **Purpose**: Overview of all tasks across shows. Filter, search, monitor.
 
@@ -691,7 +955,9 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
   --color-due-soon: #F59E0B;     /* Amber 500 */
   --color-in-progress: #3B82F6;  /* Blue 500 */
   --color-completed: #10B981;    /* Green 500 */
+  --color-review: #F59E0B;       /* Amber 500 — awaiting approval */
   --color-blocked: #6B7280;      /* Gray 500 */
+  --color-closed: #9CA3AF;       /* Gray 400 — terminated */
   
   /* Accents */
   --color-primary: #0F172A;      /* Slate 900 - CTA buttons */
@@ -803,6 +1069,17 @@ body {
 .status-badge--blocked {
   background: #FEE2E2;
   color: #991B1B;
+}
+
+.status-badge--review {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.status-badge--closed {
+  background: #F3F4F6;
+  color: #6B7280;
+  text-decoration: line-through;
 }
 ```
 
@@ -1540,6 +1817,44 @@ These workflows reuse existing patterns from the codebase:
 
 ---
 
+
+## Planned Features
+
+### My Tasks Form Rendering & Navigation (Next Iteration — Blocking)
+
+These fix functional gaps identified in the current implementation:
+
+**BE** (prerequisite for all FE work below):
+- Include `snapshot: { schema, version }` in `GET /me/tasks` and `GET /me/tasks/:uid` responses (`TaskRepository` + `taskWithRelationsDto`)
+- Add `task_type[]`, `search`, `sort` query params to `ListMyTasksQueryDto` and wire through `TaskRepository.findTasksByAssignee()`
+
+**FE — Task Execution Sheet** (`task-execution-sheet.tsx`):
+- Replace `<pre>{JSON.stringify(content)}</pre>` with `<JsonForm schema={snapshot.schema} values={content} onChange={debouncedSave} readOnly={isReadOnly} />`
+- Add live progress bar from `calculateTaskProgress()` that updates as fields are filled
+- Debounced auto-save on field change (PATCH content, no explicit Save button)
+- Rejection note banner from `task.metadata.rejection_note`
+- Graceful fallback if `snapshot` absent: show raw content in `<pre>` until backend fix deployed
+
+**FE — My Task Card** (`my-task-card.tsx`):
+- Add progress bar (`calculateTaskProgress(task, task.snapshot.schema)`) — degrade to status-only if schema absent
+- Blocked reason excerpt when `status === BLOCKED`
+- Urgency border colours (overdue red, due-soon amber)
+
+**FE — My Tasks Filter Bar** (`my-tasks.tsx` + new toolbar component):
+- Replace 3-tab navigation with composable filter bar: date chips, status chips, type chips, search input, sort dropdown
+- Overdue shortcut chip (`due_date_to=today&status=PENDING,IN_PROGRESS`)
+- URL-sync all filter state (debounced search)
+
+---
+
+### Review Workflow (Next Iteration)
+- **BE**: State machine enforcement in `TaskService` — operator blocked from self-completing; role-based transition table (see `TASK_MANAGEMENT_DESIGN.md §7.3`)
+- **BE**: `PATCH /studios/:studioId/tasks/:taskUid/status` — admin approve, reject with note, close
+- **FE**: Operator `task-execution-sheet.tsx` — "Submit for Review" replaces "Complete Task"; rejection note banner; self-recall button on REVIEW state
+- **FE**: Admin task review queue at `§3.6` — bulk approve, reject with note dialog, per-task inline actions
+- **FE**: `status-badge` — add REVIEW (amber) and CLOSED (grey strikethrough) variants
+
+---
 
 ## Deferred Features
 

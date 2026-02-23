@@ -2,7 +2,7 @@
 
 **Version**: 3.3
 **Last Updated**: February 23, 2026
-**Status**: Implemented. Two items remain deferred post-MVP: status transition state machine enforcement, and `AdminTaskController` system admin tools.
+**Status**: Core implemented. Planned next: task review workflow (state machine enforcement + admin review endpoints). `AdminTaskController` system admin tools deferred.
 
 > **Related Documentation**  
 > For UI/UX specifications and user workflows, see [`apps/erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md`](../../erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md)
@@ -509,8 +509,8 @@ stateDiagram-v2
     PENDING --> BLOCKED
     PENDING --> CLOSED : Admin only
     
-    IN_PROGRESS --> REVIEW
-    IN_PROGRESS --> COMPLETED
+    IN_PROGRESS --> REVIEW : Operator submits
+    IN_PROGRESS --> COMPLETED : Admin only
     IN_PROGRESS --> BLOCKED
     IN_PROGRESS --> PENDING
     IN_PROGRESS --> CLOSED : Admin only
@@ -961,7 +961,26 @@ Returns paginated shows for a studio with per-show `task_summary` (total / assig
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `updateTaskContentAndStatus` | Compare `version` for optimistic lock → validate content against snapshot schema → update with version increment |
 | `completedAt`                | Auto-set when transitioning to COMPLETED, cleared otherwise                                                      |
-| Status transitions           | ❌ State machine enforcement **not yet implemented** — any transition currently accepted                          |
+| Status transitions           | ❌ State machine enforcement **not yet implemented** — any transition currently accepted. Planned implementation: |
+
+**Planned: Role-Based Transition Table**
+
+| From → To       | Operator (assignee) | Admin / Manager |
+| --------------- | :-----------------: | :-------------: |
+| PENDING → IN_PROGRESS | ✅ | ✅ |
+| IN_PROGRESS → REVIEW | ✅ (submit for review) | ✅ |
+| IN_PROGRESS → COMPLETED | ❌ | ✅ (bypass review) |
+| REVIEW → IN_PROGRESS | ✅ (self-recall) | ✅ (reject / send back) |
+| REVIEW → COMPLETED | ❌ | ✅ (approve) |
+| any → BLOCKED | ✅ | ✅ |
+| BLOCKED → IN_PROGRESS | ✅ | ✅ |
+| any → CLOSED | ❌ | ✅ |
+
+**Implementation notes:**
+- `MeTaskService.updateMyTask()` — enforce operator-only transitions; reject others with `422 TASK_003`
+- `StudioTaskController PATCH /:id` — enforce admin/manager transitions
+- `rejection_note` string field accepted on `REVIEW → IN_PROGRESS` to surface reason to operator
+- `BLOCKED` reason stored in `task.metadata.blocked_reason`
 
 
 ## 8. API Endpoints
@@ -1257,12 +1276,60 @@ Returns studio members available for task assignment.
 
 ---
 
-#### Other Bulk Operations
+#### Admin: Task Status Transition (Review Workflow) ⏳ Planned
+
+Used by studio admins/managers to action tasks in `REVIEW` status: approve, reject, close.
 
 ```
-POST /studios/:studioId/tasks/bulk-update-status
-POST /studios/:studioId/tasks/bulk-delete
-GET  /studios/:studioId/tasks/dashboard
+PATCH /studios/:studioId/tasks/:taskUid/status
+```
+
+**Request**
+```json
+{
+  "status": "COMPLETED",
+  "version": 4
+}
+```
+
+```json
+{
+  "status": "IN_PROGRESS",
+  "version": 4,
+  "rejection_note": "Audio setup incomplete — please redo section 3"
+}
+```
+
+**Response: 200 OK**
+```json
+{
+  "uid": "task_001",
+  "status": "COMPLETED",
+  "completed_at": "2026-03-01T15:00:00Z",
+  "version": 5
+}
+```
+
+**Transition rules** (enforced server-side):
+- Only admin/manager roles may call this endpoint
+- `REVIEW → COMPLETED`: approves the task
+- `REVIEW → IN_PROGRESS`: rejects; `rejection_note` stored in `task.metadata.rejection_note`
+- `any → CLOSED`: terminates task regardless of current state
+- `any → BLOCKED`: blocks task; `rejection_note` stored as `task.metadata.blocked_reason`
+- All other transitions: `422 TASK_003 Invalid status transition`
+- Version mismatch: `409 TASK_004 Optimistic lock failure`
+
+**Query: List Tasks Awaiting Review**
+
+The existing `GET /studios/:studioId/shows/:showUid/tasks` endpoint supports `?status=REVIEW` to list tasks in the review queue. No new endpoint is needed for the review list.
+
+---
+
+#### Other Bulk Operations ⏳ Planned
+
+```
+POST /studios/:studioId/tasks/bulk-update-status   (bulk approve/reject)
+GET  /studios/:studioId/tasks/dashboard            (cross-show task summary)
 ```
 
 ---
@@ -1277,23 +1344,35 @@ GET   /me/tasks/:uid     ✅ implemented
 PATCH /me/tasks/:uid     ✅ implemented — content/status update with optimistic locking + assignee-owns-task check
 ```
 
+> **Known gap**: Both endpoints must include `snapshot.schema` in their responses so the frontend can render the task form (via `JsonForm`) and calculate per-task progress. The backend repository currently omits `snapshot` from both queries.
+>
+> **Fix required in `TaskRepository`**:
+> - `findTasksByAssignee`: add `snapshot: { select: { schema: true, version: true } }` to the `include` block
+> - `findOne` (used by `getMyTask`): add `snapshot: true` to the `include` block
+>
+> **Fix required in `@eridu/api-types` `taskWithRelationsDto`**: add `snapshot: { schema: z.unknown(), version: z.number() }` to the DTO and expose via the API response.
+
 **Query Parameters for `GET /me/tasks`**:
 | Param           | Type         | Description                                                  |
 | --------------- | ------------ | ------------------------------------------------------------ |
 | `status`        | enum (multi) | Filter by status (e.g. `PENDING`, `IN_PROGRESS`)             |
+| `task_type`     | enum (multi) | Filter by type: `SETUP`, `ACTIVE`, `CLOSURE`, `ADMIN`, `ROUTINE`, `OTHER` |
 | `due_date_from` | ISO date     | Tasks due on or after this date                              |
 | `due_date_to`   | ISO date     | Tasks due on or before this date (use for "upcoming" window) |
-| `sort`          | string       | e.g. `due_date:asc`                                          |
+| `search`        | string       | Partial match on task description or show name               |
+| `sort`          | string       | `due_date:asc` (default), `due_date:desc`, `updated_at:desc` |
 | `cursor`        | string       | Cursor-based pagination                                      |
 | `limit`         | number       | Page size (default 20, max 100)                              |
 
+> **New params** (`task_type`, `search`, `sort`) are required to support the enhanced My Tasks filter bar (see UI/UX doc §3.4). Must be wired through `ListMyTasksQueryDto` → `TaskRepository.findTasksByAssignee()`.
+
 **Example: Get My Tasks**
 ```http
-GET /api/v1/me/tasks?status=PENDING&status=IN_PROGRESS
+GET /api/v1/me/tasks?status=PENDING&status=IN_PROGRESS&task_type=SETUP&sort=due_date:asc
 Authorization: Bearer {jwt}
 ```
 
-**Response: 200 OK**
+**Response: 200 OK** — with `snapshot` added
 ```json
 {
   "data": [
@@ -1303,6 +1382,16 @@ Authorization: Bearer {jwt}
       "status": "IN_PROGRESS",
       "type": "SETUP",
       "due_date": "2026-02-05T17:00:00Z",
+      "content": { "script_review": true, "camera_count": 4 },
+      "snapshot": {
+        "version": 2,
+        "schema": {
+          "items": [
+            { "key": "script_review", "type": "checkbox", "label": "Script reviewed", "required": true },
+            { "key": "camera_count", "type": "number", "label": "Cameras required", "required": true }
+          ]
+        }
+      },
       "show": {
         "uid": "show_abc123",
         "name": "Monday Night Live"
@@ -1371,20 +1460,27 @@ Content-Type: application/json
 
 ### Permission Matrix
 
-| Endpoint              | System Admin | Studio Admin | User (Assignee/Member) |
-| --------------------- | ------------ | ------------ | ---------------------- |
-| Create Template       | ✅            | ✅            | ❌                      |
-| Update Template       | ✅            | ✅            | ❌                      |
-| Delete Template       | ✅            | ✅            | ❌                      |
-| List Studio Shows     | ✅            | ✅            | ❌                      |
-| Generate Tasks (Bulk) | ✅            | ✅            | ❌                      |
-| Assign Shows (Bulk)   | ✅            | ✅            | ❌                      |
-| Reassign Task         | ✅            | ✅            | ❌                      |
-| View Show Tasks       | ✅            | ✅            | ❌                      |
-| View My Tasks         | ✅            | ✅            | ✅                      |
-| Update My Task        | ✅            | ✅            | ✅ (own only)           |
-| Force Update Any Task | ✅            | ✅            | ❌                      |
-| Hard Delete Task      | ✅            | ❌            | ❌                      |
+| Endpoint                              | System Admin | Studio Admin/Manager | Operator (Member) |
+| ------------------------------------- | :----------: | :------------------: | :---------------: |
+| Create Template                       | ✅ | ✅ | ❌ |
+| Update Template                       | ✅ | ✅ | ❌ |
+| Delete Template                       | ✅ | ✅ | ❌ |
+| List Studio Shows                     | ✅ | ✅ | ❌ |
+| Generate Tasks (Bulk)                 | ✅ | ✅ | ❌ |
+| Assign Shows (Bulk)                   | ✅ | ✅ | ❌ |
+| Reassign Task                         | ✅ | ✅ | ❌ |
+| View Show Tasks                       | ✅ | ✅ | ❌ |
+| View My Tasks                         | ✅ | ✅ | ✅ |
+| Update task content (own)             | ✅ | ✅ | ✅ (own only) |
+| Transition: PENDING → IN_PROGRESS     | ✅ | ✅ | ✅ (own only) |
+| Transition: IN_PROGRESS → REVIEW      | ✅ | ✅ | ✅ (own only) |
+| Transition: REVIEW → IN_PROGRESS      | ✅ | ✅ | ✅ (self-recall) |
+| Transition: REVIEW → COMPLETED        | ✅ | ✅ | ❌ |
+| Transition: IN_PROGRESS → COMPLETED   | ✅ | ✅ | ❌ (must go via REVIEW) |
+| Transition: any → BLOCKED             | ✅ | ✅ | ✅ (own only) |
+| Transition: any → CLOSED              | ✅ | ✅ | ❌ |
+| Force-update any task (content/status)| ✅ | ✅ | ❌ |
+| Hard Delete Task                      | ✅ | ❌ | ❌ |
 
 ### Guards
 
@@ -1583,16 +1679,23 @@ interface BulkDeleteTasksResponseDto {
 
 ---
 
-### Appendix B: Deferred Features
+### Appendix B: Planned & Deferred Features
 
-The following features are deferred for post-MVP implementation:
+**Planned (next iteration):**
+1. **Form rendering fix** — include `snapshot.schema` in `GET /me/tasks` and `GET /me/tasks/:uid` responses; wire `TaskRepository` and `taskWithRelationsDto` DTO accordingly
+2. **New query params for `/me/tasks`** — `task_type` (multi-enum), `search` (description/show name), `sort` (`due_date:asc/desc`, `updated_at:desc`) to support enhanced filter bar
+3. **State machine enforcement** — role-based transition validation in `TaskService`; operator blocked from self-completing (`TASK_003`)
+4. **`PATCH /studios/:studioId/tasks/:taskUid/status`** — admin-only review actions (approve, reject with note, close, block)
+5. **`rejection_note` / `blocked_reason`** stored in `task.metadata` and surfaced to operator in `GET /me/tasks/:uid`
 
+**Deferred (post-MVP):**
 1. **File Upload Handling**: Support for field type `file` with direct upload to cloud storage
 2. **Auto "Smart" Task Generation**: Auto-calculation of due dates based on show schedule
 3. **Progress Calculation in API**: API response field `progress` derived from schema + content (currently frontend calculates)
 4. **Advanced Analytics & Search**: Full-text search across JSONB content, materialized views
 5. **Real-time Collaboration**: WebSocket-based live status updates
 6. **Mobile Offline / PWA**: Full offline sync and conflict resolution
+7. **`AdminTaskController`**: System-level cross-studio task management
 
 ---
 
