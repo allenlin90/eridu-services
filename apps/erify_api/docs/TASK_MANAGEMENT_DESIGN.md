@@ -1046,7 +1046,7 @@ Returns shows belonging to the studio with task generation status summary.
 }
 ```
 
-**Note**: `task_summary` is `null` if no tasks have been generated for the show.
+**Note**: `task_summary` always returns the counts object. If no tasks have been generated, all counts are `0` (not `null`).
 
 ---
 
@@ -1171,8 +1171,7 @@ Soft-deletes an array of tasks. Used by managers to remove wrongly generated tas
 **Response: 200 OK**
 ```json
 {
-  "deleted_count": 2,
-  "tasks": ["task_001", "task_002"]
+  "deleted_count": 2
 }
 ```
 
@@ -1633,7 +1632,7 @@ interface BulkDeleteTasksDto {
 }
 
 interface BulkDeleteTasksResponseDto {
-  count: number;
+  deleted_count: number;
 }
 ```
 
