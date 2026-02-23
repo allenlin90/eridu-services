@@ -65,6 +65,25 @@ const [isOpen, setIsOpen] = useState(false);
 const [searchInput, setSearchInput] = useState('');
 ```
 
+#### Derive Don't Store
+
+When local state relates to server data (e.g. a "selected item"), store only the **ID** and derive the full object from the server state. This avoids stale object references after background refetches.
+
+```typescript
+// ❌ AVOID: storing a full server object in local state
+// After a background refetch, selectedTask will be stale even though
+// the TanStack Query cache is fresh.
+const [selectedTask, setSelectedTask] = useState<TaskDto | null>(null);
+
+// ✅ GOOD: store only the ID; derive the object from server state
+const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+const selectedTask = selectedTaskId
+  ? (tasks ?? []).find((task) => task.id === selectedTaskId) ?? null
+  : null;
+```
+
+**When to apply**: Any time you store a reference to an item from a server-fetched list (selected row, active item, detail panel, etc.).
+
 ### 4. Global Client State (Zustand)
 
 **Use for**: Truly global state like auth user, theme, sidebar state.
@@ -141,6 +160,7 @@ const mutation = useMutation({
 - [ ] Debounced search with URL synchronization
 - [ ] Optimistic updates for mutations
 - [ ] Query invalidation on mutations
+- [ ] Selected item stored as ID, not full object (derive-don't-store)
 
 ---
 

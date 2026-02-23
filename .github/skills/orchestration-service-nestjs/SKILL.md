@@ -182,17 +182,32 @@ export class TaskGenerationProcessor {
     let tasksSkipped = 0;
 
     for (const template of templates) {
-      // Idempotency check
-      const existing = await this.taskService.findByShowAndTemplate(show.id, template.id);
-      if (existing) {
+      const latestSnapshot = template.snapshots?.[0];
+      if (!latestSnapshot) { tasksSkipped++; continue; }
+
+      // includeDeleted: true enables soft-delete recovery (resume)
+      const existing = await this.taskService.findByShowAndTemplate(show.id, template.id, {
+        includeDeleted: true,
+      });
+
+      if (!existing) {
+        // Case 3: No task — CREATE NEW
+        const task = await this.taskService.create({ uid: this.taskService.generateTaskUid(), ... });
+        await this.taskTargetService.create({ task: { connect: { id: task.id } }, ... });
+        tasksCreated++;
+      } else if (existing.deletedAt !== null) {
+        // Case 2: Soft-deleted — RESUME
+        await this.taskService.resumeTask(existing.id, {
+          snapshotId: latestSnapshot.id,
+          status: TaskStatus.PENDING,
+          version: existing.version + 1,
+        });
+        await this.taskTargetService.undeleteByTaskId(existing.id);
+        tasksCreated++;
+      } else {
+        // Case 1: Active task exists — SKIP
         tasksSkipped++;
-        continue;
       }
-
-      const task = await this.taskService.create({ uid: this.taskService.generateTaskUid(), ... });
-      await this.taskTargetService.create({ task: { connect: { id: task.id } }, ... });
-
-      tasksCreated++;
     }
 
     return {
@@ -207,45 +222,93 @@ export class TaskGenerationProcessor {
 
 ---
 
-## Idempotency Pattern
+## Idempotency Pattern (Three-Case Resume)
 
-Idempotency prevents duplicate data when operations are retried or run concurrently.
+The processor must handle three cases for each item:
 
 ```typescript
-// Check before create — at the processor level
-const existing = await this.taskService.findByShowAndTemplate(show.id, template.id);
-if (existing) {
+// findByShowAndTemplate accepts includeDeleted to support resume
+const existing = await this.taskService.findByShowAndTemplate(show.id, template.id, {
+  includeDeleted: true,
+});
+
+if (!existing) {
+  // Case 3: No task — CREATE NEW
+  const task = await this.taskService.create({ ... });
+  await this.taskTargetService.create({ ... });
+  tasksCreated++;
+} else if (existing.deletedAt !== null) {
+  // Case 2: Soft-deleted — RESUME (restore, reset to PENDING, update snapshot)
+  await this.taskService.resumeTask(existing.id, {
+    snapshotId: latestSnapshot.id,
+    status: TaskStatus.PENDING,
+    version: existing.version + 1,
+  });
+  await this.taskTargetService.undeleteByTaskId(existing.id);
+  tasksCreated++;
+} else {
+  // Case 1: Active task exists — SKIP
   tasksSkipped++;
-  continue; // Skip without error
 }
 ```
 
-**Key properties of the idempotency check:**
+**Key properties:**
 1. Done **inside the transaction** (with advisory lock) to prevent race conditions
 2. Uses **natural key** (show × template), not the generated UID
-3. Returns `skipped` status (not an error) when all pairs already exist
+3. `includeDeleted: true` enables soft-delete recovery
+4. Returns `skipped` status (not an error) when all pairs are active already
 
 ---
 
 ## Cross-Domain Validation Pattern
 
-Orchestration services are the right place for cross-domain validation:
+Extract repeated cross-domain lookups into a **private helper** to keep operation methods clean:
 
 ```typescript
-async assignShowsToUser(studioUid: string, showUids: string[], assigneeUid: string) {
-  // 1. Validate assignee is a studio member (cross-domain: Studio + User)
-  const { data: memberships } = await this.studioMembershipService.listStudioMemberships(...);
-  const membership = memberships.find((m) => m.user?.uid === assigneeUid);
+type MembershipWithUser = StudioMembership & { user: User };
 
+// ✅ Private helper — encapsulates the member lookup + 404 throw
+private async resolveStudioMember(
+  studioUid: string,
+  assigneeUid: string,
+): Promise<MembershipWithUser> {
+  const { data: memberships } = await this.studioMembershipService.listStudioMemberships(
+    { studioId: studioUid },
+    { user: true },
+  );
+  const membership = (memberships as MembershipWithUser[]).find(
+    (m) => m.user?.uid === assigneeUid,
+  );
   if (!membership) {
     throw HttpError.badRequest(`User ${assigneeUid} is not a member of studio ${studioUid}`);
   }
+  return membership;
+}
 
-  // 2. Now proceed with the operation
-  const shows = await this.showService.findMany({ where: { uid: { in: showUids } } });
-  const taskIds = (await this.taskService.findTasksByShowIds(shows.map(s => s.id))).map(t => t.id);
+// ✅ Operation method stays readable — just calls the helper
+async assignShowsToUser(studioUid: string, showUids: string[], assigneeUid: string) {
+  // 1. Resolve + validate assignee
+  const assigneeMembership = await this.resolveStudioMember(studioUid, assigneeUid);
 
-  await this.taskService.updateAssigneeByTaskIds(taskIds, membership.userId);
+  // 2. Resolve shows (scoped to studio)
+  const shows = await this.showService.findMany({ where: { uid: { in: showUids }, ... } });
+
+  // 3. Find task IDs linked to those shows
+  const tasks = await this.taskService.findTasksByShowIds(shows.map(s => s.id));
+  const taskIds = tasks.map(t => t.id);
+
+  // 4. Bulk update assignee (uses internal DB userId, not UID)
+  await this.taskService.updateAssigneeByTaskIds(taskIds, assigneeMembership.userId);
+}
+
+// The same helper works for nullable assignee (unassign case)
+async reassignTask(studioUid: string, taskUid: string, assigneeUid: string | null) {
+  let membershipId: bigint | null = null;
+  if (assigneeUid) {
+    const membership = await this.resolveStudioMember(studioUid, assigneeUid);
+    membershipId = membership.userId;
+  }
+  return this.taskService.setAssignee(taskUid, membershipId, { assignee: true });
 }
 ```
 
@@ -318,10 +381,12 @@ for (const item of items) {
 - [ ] OrchestrationService injects only Model Services (no Repository imports)
 - [ ] `@Transactional()` is on the Processor Service, not the Orchestration Service
 - [ ] Processor is NOT exported from the module
-- [ ] Idempotency check is inside the transaction
+- [ ] Idempotency check uses `{ includeDeleted: true }` to catch soft-deleted records
+- [ ] Processor handles three cases: active→skip, soft-deleted→resume, missing→create
 - [ ] Advisory lock used if concurrent calls are possible for same entity
 - [ ] Per-item errors caught in the loop (allow partial success)
 - [ ] Cross-domain validation happens before the mutation loop
+- [ ] Repeated member lookups extracted to a private `resolveStudioMember()` helper
 - [ ] Logger used for per-item errors
 
 ---
