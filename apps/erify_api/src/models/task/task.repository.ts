@@ -31,11 +31,25 @@ export class TaskRepository extends BaseRepository<
 
   async findByUidWithSnapshot(
     uid: string,
-  ): Promise<(Task & { snapshot: TaskTemplateSnapshot | null }) | null> {
+  ): Promise<(Task & { snapshot: TaskTemplateSnapshot | null; targets: { show: { uid: string; startTime: Date; endTime: Date } | null }[] }) | null> {
     return this.model.findFirst({
       where: { uid, deletedAt: null },
-      include: { snapshot: true },
-    }) as Promise<(Task & { snapshot: TaskTemplateSnapshot | null }) | null>;
+      include: {
+        snapshot: true,
+        targets: {
+          where: { targetType: 'SHOW', deletedAt: null },
+          include: {
+            show: {
+              select: {
+                uid: true,
+                startTime: true,
+                endTime: true,
+              },
+            },
+          },
+        },
+      },
+    }) as Promise<(Task & { snapshot: TaskTemplateSnapshot | null; targets: { show: { uid: string; startTime: Date; endTime: Date } | null }[] }) | null>;
   }
 
   async findByShowAndTemplate(
@@ -289,7 +303,7 @@ export class TaskRepository extends BaseRepository<
 
   async resumeTask(
     id: bigint,
-    data: { snapshotId: bigint; status: TaskStatus; version: number },
+    data: { snapshotId: bigint; status: TaskStatus; version: number; dueDate: Date },
   ): Promise<Task> {
     return this.prisma.task.update({
       where: { id },
@@ -297,6 +311,7 @@ export class TaskRepository extends BaseRepository<
         deletedAt: null,
         status: data.status,
         snapshotId: data.snapshotId,
+        dueDate: data.dueDate,
         content: {},
         metadata: {},
         version: data.version,

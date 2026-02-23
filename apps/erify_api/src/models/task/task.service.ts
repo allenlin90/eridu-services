@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { TaskType } from '@prisma/client';
 
 import { TASK_STATUS } from '@eridu/api-types/task-management';
 
@@ -99,8 +100,10 @@ export class TaskService extends BaseModelService {
     let newContent = task.content;
     let newStatus = task.status;
     let completedAt = task.completedAt;
+    let newMetadata = task.metadata;
 
     const uiSchema = task.snapshot?.schema as any;
+    const targetShow = task.targets?.[0]?.show;
 
     try {
       if (payload.content !== undefined) {
@@ -111,6 +114,33 @@ export class TaskService extends BaseModelService {
       }
 
       if (payload.status && payload.status !== task.status) {
+        const isSubmitTransition = payload.status === TASK_STATUS.REVIEW || payload.status === TASK_STATUS.COMPLETED;
+
+        if (isSubmitTransition && targetShow) {
+          const now = new Date();
+
+          if (
+            (task.type === TaskType.ACTIVE || task.type === TaskType.CLOSURE)
+            && now < targetShow.startTime
+          ) {
+            throw HttpError.badRequest(
+              `${task.type} tasks cannot be submitted before show start time`,
+            );
+          }
+
+          if (task.dueDate && now > task.dueDate) {
+            const metadataObj = (task.metadata as Record<string, unknown> | null) ?? {};
+            newMetadata = {
+              ...metadataObj,
+              due_warning: {
+                is_overdue: true,
+                submitted_at: now.toISOString(),
+                due_date: task.dueDate.toISOString(),
+              },
+            };
+          }
+        }
+
         newStatus = payload.status;
 
         if (newStatus === TASK_STATUS.COMPLETED) {
@@ -128,6 +158,7 @@ export class TaskService extends BaseModelService {
         { uid, version },
         {
           content: newContent ?? undefined,
+          metadata: newMetadata ?? undefined,
           status: newStatus,
           completedAt,
           version: version + 1,
