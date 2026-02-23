@@ -2,6 +2,7 @@ import type { TaskTemplateDto } from '@eridu/api-types/task-management';
 
 const BASE_TEMPLATE: Omit<TaskTemplateDto, 'id' | 'name' | 'description' | 'version'> = {
   is_active: true,
+  task_type: 'SETUP',
   current_schema: { items: [] },
   created_at: '2024-01-01T00:00:00.000Z',
   updated_at: '2024-01-15T00:00:00.000Z',

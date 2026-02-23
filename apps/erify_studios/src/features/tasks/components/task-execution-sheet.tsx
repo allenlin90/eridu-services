@@ -1,6 +1,7 @@
 import { format } from 'date-fns';
-import { AlertCircle, CheckCircle2, Clock, PlayCircle, Send } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle2, Clock, PlayCircle, Send } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import type { TaskStatus, TaskWithRelationsDto } from '@eridu/api-types/task-management';
 import { TASK_STATUS, TemplateSchemaValidator } from '@eridu/api-types/task-management';
@@ -61,8 +62,22 @@ export function TaskExecutionSheet({ task, onClose, studioId: _studioId }: TaskE
     : (task.content ?? {});
 
   const rejectionNote = task.metadata?.rejection_note as string | undefined;
+  const isOverdue = task.due_date ? new Date(task.due_date) < new Date() : false;
 
   const handleUpdateStatus = (status: TaskStatus) => {
+    const isSubmitStatus = status === TASK_STATUS.REVIEW || status === TASK_STATUS.COMPLETED;
+    const showStartTime = task.show?.start_time ? new Date(task.show.start_time) : null;
+
+    if (
+      isSubmitStatus
+      && showStartTime
+      && (task.type === 'ACTIVE' || task.type === 'CLOSURE')
+      && new Date() < showStartTime
+    ) {
+      toast.error(`${task.type} tasks cannot be submitted before show start time.`);
+      return;
+    }
+
     const nextContent = draft?.taskId === task.id ? draft.content : task.content;
     updateTask(
       {
@@ -127,6 +142,18 @@ export function TaskExecutionSheet({ task, onClose, studioId: _studioId }: TaskE
                 <p className="text-sm font-semibold text-blue-800">Awaiting review</p>
                 <p className="text-sm text-blue-700 mt-0.5">
                   This task has been submitted and is pending approval.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {isOverdue && (
+            <div className="flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-amber-800">Task is overdue</p>
+                <p className="text-sm text-amber-700 mt-0.5">
+                  Submission is still allowed. Hard deadline enforcement can be enabled in a future studio setting.
                 </p>
               </div>
             </div>

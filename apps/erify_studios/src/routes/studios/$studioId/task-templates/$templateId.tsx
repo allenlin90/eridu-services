@@ -89,6 +89,7 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
   const [template, setTemplate] = useState<TemplateSchemaType>(() => ({
     name: taskTemplate.name,
     description: taskTemplate.description ?? '',
+    task_type: taskTemplate.task_type,
     items: taskTemplate.current_schema?.items ?? [],
   }));
 
@@ -116,6 +117,7 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
     const payload = {
       name: data.name,
       description: data.description,
+      task_type: data.task_type,
       schema: {
         items: schemaItems,
       },

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { endOfDay, startOfDay } from 'date-fns';
+import { addDays, endOfDay, startOfDay } from 'date-fns';
 import { ChevronDown, RotateCw, Search, X } from 'lucide-react';
 import { useState } from 'react';
 import { useDebounceValue } from 'usehooks-ts';
@@ -73,7 +73,7 @@ function MyTasksPage() {
       query.due_date_from = startOfDay(new Date()).toISOString();
       query.due_date_to = endOfDay(new Date()).toISOString();
     } else if (dateFilter === 'upcoming') {
-      query.due_date_from = startOfDay(new Date()).toISOString();
+      query.due_date_from = startOfDay(addDays(new Date(), 1)).toISOString();
     }
 
     if (selectedStatuses.length > 0) {

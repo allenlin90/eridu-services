@@ -72,6 +72,7 @@ export function TaskTemplateCard({ template, studioId }: TaskTemplateCardProps) 
     cloneTemplate({
       name: `${template.name} (Copy)`,
       description: template.description ?? '',
+      task_type: template.task_type,
       schema: {
         items: (template.current_schema?.items ?? []).map((item: any) => ({
           ...item,

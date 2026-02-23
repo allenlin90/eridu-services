@@ -10,6 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  Input,
 } from '@eridu/ui';
 
 import type { ShowSelection } from '@/features/studio-shows/api/get-studio-shows';
@@ -32,6 +33,7 @@ export function BulkTaskGenerationDialog({
   const { studioId } = useParams({ strict: false }) as { studioId: string };
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
   const [templateSearch, setTemplateSearch] = useState('');
+  const [dueDateOverrides, setDueDateOverrides] = useState<Record<string, string>>({});
 
   const { data: templates, isLoading: isLoadingTemplates } = useAllTaskTemplates({
     studioId,
@@ -44,6 +46,7 @@ export function BulkTaskGenerationDialog({
       onOpenChange(false);
       setSelectedTemplateIds([]);
       setTemplateSearch('');
+      setDueDateOverrides({});
       onSuccess?.();
     },
   });
@@ -55,12 +58,21 @@ export function BulkTaskGenerationDialog({
     generateTasks({
       show_uids: shows.map((s) => s.id),
       template_uids: selectedTemplateIds,
+      due_dates: Object.fromEntries(
+        Object.entries(dueDateOverrides)
+          .filter(([, value]) => Boolean(value))
+          .map(([templateUid, value]) => [templateUid, new Date(value).toISOString()]),
+      ),
     });
   };
   const templateOptions = (templates ?? []).map((template) => ({
     value: template.id,
-    label: template.name,
+    label: `${template.name} (${template.task_type})`,
   }));
+  const selectedOptionalDueTemplates = (templates ?? []).filter((template) =>
+    selectedTemplateIds.includes(template.id)
+    && ['ADMIN', 'ROUTINE', 'OTHER'].includes(template.task_type),
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -110,6 +122,31 @@ export function BulkTaskGenerationDialog({
               {templateSearch ? 'Refine your search to find specific templates.' : 'Type to search more templates.'}
             </p>
           </div>
+
+          {selectedOptionalDueTemplates.length > 0 && (
+            <div className="space-y-2">
+              <p className="font-medium text-slate-900">Optional Due Time Overrides</p>
+              <p className="text-xs text-muted-foreground">
+                Only applies to ADMIN / ROUTINE / OTHER templates.
+              </p>
+              {selectedOptionalDueTemplates.map((template) => (
+                <div key={template.id} className="space-y-1">
+                  <p className="text-sm">{template.name}</p>
+                  <Input
+                    type="datetime-local"
+                    value={dueDateOverrides[template.id] ?? ''}
+                    onChange={(event) => {
+                      setDueDateOverrides((prev) => ({
+                        ...prev,
+                        [template.id]: event.target.value,
+                      }));
+                    }}
+                    disabled={isGenerating}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <DialogFooter>
