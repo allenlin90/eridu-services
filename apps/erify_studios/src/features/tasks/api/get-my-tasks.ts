@@ -12,7 +12,17 @@ export const myTasksKeys = {
 };
 
 export async function getMyTasks(query: ListMyTasksQuery): Promise<MyTasksResponse> {
-  const { studio_id, status, due_date_from, due_date_to, sort, page = 1, limit = 20 } = query;
+  const {
+    studio_id,
+    status,
+    task_type,
+    due_date_from,
+    due_date_to,
+    search,
+    sort,
+    page = 1,
+    limit = 20,
+  } = query;
 
   const searchParams = new URLSearchParams();
   if (studio_id)
@@ -24,10 +34,19 @@ export async function getMyTasks(query: ListMyTasksQuery): Promise<MyTasksRespon
       searchParams.append('status', status as string);
     }
   }
+  if (task_type) {
+    if (Array.isArray(task_type)) {
+      task_type.forEach((taskType) => searchParams.append('task_type', taskType));
+    } else {
+      searchParams.append('task_type', task_type as string);
+    }
+  }
   if (due_date_from)
     searchParams.append('due_date_from', due_date_from);
   if (due_date_to)
     searchParams.append('due_date_to', due_date_to);
+  if (search)
+    searchParams.append('search', search);
   if (sort)
     searchParams.append('sort', sort);
   searchParams.append('page', page.toString());
