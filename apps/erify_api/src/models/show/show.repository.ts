@@ -340,17 +340,32 @@ export class ShowRepository extends BaseRepository<
     }
 
     if (query.date_from || query.date_to) {
+      const inclusiveDateTo = query.date_to ? new Date(query.date_to) : null;
+      if (inclusiveDateTo) {
+        inclusiveDateTo.setHours(23, 59, 59, 999);
+      }
+
       where.startTime = {
         ...(query.date_from && { gte: new Date(query.date_from) }),
-        ...(query.date_to && { lte: new Date(query.date_to) }),
+        ...(inclusiveDateTo && { lte: inclusiveDateTo }),
       };
     }
 
     if (query.has_tasks !== undefined) {
       if (query.has_tasks) {
-        where.taskTargets = { some: { deletedAt: null } };
+        where.taskTargets = {
+          some: {
+            deletedAt: null,
+            task: { deletedAt: null },
+          },
+        };
       } else {
-        where.taskTargets = { none: { deletedAt: null } };
+        where.taskTargets = {
+          none: {
+            deletedAt: null,
+            task: { deletedAt: null },
+          },
+        };
       }
     }
 
@@ -404,7 +419,10 @@ export class ShowRepository extends BaseRepository<
           showStatus: true,
           showStandard: true,
           taskTargets: {
-            where: { deletedAt: null },
+            where: {
+              deletedAt: null,
+              task: { deletedAt: null },
+            },
             include: {
               task: {
                 select: {
