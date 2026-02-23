@@ -188,6 +188,9 @@ export type AssignShowsRequest = z.infer<typeof assignShowsRequestSchema>;
 export const assignShowsResponseSchema = z.object({
   updated_count: z.number().int(),
   shows: z.array(z.string()),
+  show_count: z.number().int(),
+  shows_with_tasks_count: z.number().int(),
+  shows_without_tasks: z.array(z.string()),
   assignee: z.object({
     id: z.string(),
     name: z.string(),

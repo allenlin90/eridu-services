@@ -65,13 +65,15 @@ export function AsyncCombobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn('w-full justify-between', className)}
+          className={cn('w-full justify-between gap-2', className)}
           disabled={disabled}
         >
-          {value
-            ? selectedOption?.label ?? 'Select option...'
-            : placeholder}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <span className="min-w-0 flex-1 truncate text-left">
+            {value
+              ? selectedOption?.label ?? 'Select option...'
+              : placeholder}
+          </span>
+          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
