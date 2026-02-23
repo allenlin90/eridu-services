@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { UID_PREFIXES } from '../constants.js';
 import { paginationQuerySchema } from '../pagination/index.js';
 
+import { TASK_TYPE } from './task.schema.js';
+
 /**
  * Task Template entity schema
  * Represents a template for creating tasks within a studio
@@ -46,6 +48,7 @@ export type TaskTemplate = z.infer<typeof taskTemplateSchema>;
 export const createTaskTemplateSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
+  task_type: z.nativeEnum(TASK_TYPE),
   schema: z.record(z.string(), z.any()),
 });
 
@@ -62,6 +65,7 @@ export const taskTemplateDto = taskTemplateSchema.transform((obj) => ({
   id: obj.uid,
   name: obj.name,
   description: obj.description,
+  task_type: (obj.currentSchema as { metadata?: { task_type?: keyof typeof TASK_TYPE } })?.metadata?.task_type ?? TASK_TYPE.OTHER,
   is_active: obj.isActive,
   current_schema: obj.currentSchema,
   version: obj.version,
@@ -82,8 +86,8 @@ export const updateStudioTaskTemplateSchema = createTaskTemplateSchema
     version: z.number().int(),
   })
   .refine(
-    (data) => data.name || data.description || data.schema,
-    'At least one field (name, description, or schema) must be provided',
+    (data) => data.name || data.description || data.task_type || data.schema,
+    'At least one field (name, description, task_type, or schema) must be provided',
   );
 
 export type CreateStudioTaskTemplateInput = z.infer<typeof createStudioTaskTemplateSchema>;
