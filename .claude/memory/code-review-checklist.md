@@ -88,6 +88,12 @@ async create(data: Prisma.TaskCreateInput): Promise<Task>
 - [ ] Conditional rendering handles loading/error states
 - [ ] No inline object/function definitions in JSX (use `useMemo`/`useCallback`)
 
+### AdminTable / Studio List Patterns
+- [ ] `searchColumnId` in `useTableUrlState`, `searchColumn` on `<AdminTable>`, and filter id read in hook are the **same string** (see §14.1 design doc for the bug this prevents)
+- [ ] `getRowId={(row) => row.id}` passed to `<AdminTable>` whenever the table is paginated and rows are selectable — prevents index-collision bug across pages
+- [ ] Cross-page selection uses the accumulator pattern (`useEffect` keyed by item ID), not `shows[parseInt(k)]` index lookup
+- [ ] Member/assignee pickers use `AsyncCombobox` from `@eridu/ui`, not `<Select>`, with client-side `onSearch` filtering
+
 ### TanStack Query
 - [ ] Query keys follow convention: `['domain', action, ...params]`
 - [ ] Mutations invalidate related queries
