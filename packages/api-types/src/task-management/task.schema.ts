@@ -151,6 +151,7 @@ export type TaskWithRelationsDto = z.infer<typeof taskWithRelationsDto>;
 export const generateTasksRequestSchema = z.object({
   show_uids: z.array(z.string().startsWith(UID_PREFIXES.SHOW)).min(1),
   template_uids: z.array(z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE)).min(1),
+  due_dates: z.record(z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE), z.string().datetime()).optional(),
 });
 
 export type GenerateTasksRequest = z.infer<typeof generateTasksRequestSchema>;
