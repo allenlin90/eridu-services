@@ -31,6 +31,7 @@ export class ListTaskTemplatesQueryDto extends createZodDto(listTaskTemplatesQue
 export type CreateTaskTemplatePayload = {
   name: string;
   description?: string | null;
+  taskType: 'SETUP' | 'ACTIVE' | 'CLOSURE' | 'ADMIN' | 'ROUTINE' | 'OTHER';
   currentSchema: any;
   studioId: string;
   uid?: string;
@@ -43,6 +44,7 @@ export type CreateTaskTemplatePayload = {
 export type UpdateTaskTemplatePayload = {
   name?: string;
   description?: string | null;
+  taskType?: 'SETUP' | 'ACTIVE' | 'CLOSURE' | 'ADMIN' | 'ROUTINE' | 'OTHER';
   currentSchema?: any;
   version?: number;
 };

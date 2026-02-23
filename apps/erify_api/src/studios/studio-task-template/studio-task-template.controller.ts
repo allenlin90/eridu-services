@@ -78,11 +78,12 @@ export class StudioTaskTemplateController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Body() createStudioTaskTemplateDto: CreateStudioTaskTemplateDto,
   ) {
-    const { name, description, schema } = createStudioTaskTemplateDto;
+    const { name, description, task_type, schema } = createStudioTaskTemplateDto;
 
     return this.taskTemplateService.createTemplateWithSnapshot({
       name,
       description,
+      taskType: task_type,
       currentSchema: schema,
       studioId,
     });
@@ -95,7 +96,7 @@ export class StudioTaskTemplateController extends BaseStudioController {
     @Param('id', new UidValidationPipe(TaskTemplateService.UID_PREFIX, 'TaskTemplate')) id: string,
     @Body() updateStudioTaskTemplateDto: UpdateStudioTaskTemplateDto,
   ) {
-    const { name, description, schema, version } = updateStudioTaskTemplateDto;
+    const { name, description, task_type, schema, version } = updateStudioTaskTemplateDto;
 
     return this.taskTemplateService.updateTemplateWithSnapshot(
       id,
@@ -103,6 +104,7 @@ export class StudioTaskTemplateController extends BaseStudioController {
       {
         name,
         description,
+        taskType: task_type,
         currentSchema: schema,
         version,
       },
