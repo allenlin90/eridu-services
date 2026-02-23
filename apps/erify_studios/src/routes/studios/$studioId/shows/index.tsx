@@ -43,34 +43,50 @@ function StudioShowsPage() {
     onSortingChange,
   } = useStudioShows({ studioId });
 
-  // Accumulate selected show objects across pages so we have their names for the dialogs
-  const [selectedShowObjects, setSelectedShowObjects] = useState<Record<string, StudioShow>>({});
+  // Keep lightweight snapshots for selected rows that are not on current page.
+  const [selectedShowSnapshots, setSelectedShowSnapshots] = useState<Record<string, StudioShow>>({});
+  const selectedShowIds = useMemo(
+    () => Object.entries(rowSelection).filter(([, isSelected]) => isSelected).map(([id]) => id),
+    [rowSelection],
+  );
+  const showsById = useMemo(
+    () => Object.fromEntries(shows.map((show) => [show.id, show])),
+    [shows],
+  );
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelectedShowObjects((prev) => {
-      let changed = false;
-      const next = { ...prev };
+    setSelectedShowSnapshots((prev) => {
+      const selectedIds = new Set(selectedShowIds);
+      const next: Record<string, StudioShow> = {};
 
-      shows.forEach((show) => {
-        if (rowSelection[show.id] && !next[show.id]) {
-          next[show.id] = show;
-          changed = true;
+      Object.entries(prev).forEach(([id, show]) => {
+        if (selectedIds.has(id)) {
+          next[id] = show;
         }
       });
 
-      Object.keys(next).forEach((id) => {
-        if (!rowSelection[id]) {
-          delete next[id];
-          changed = true;
+      selectedShowIds.forEach((id) => {
+        const latestShow = showsById[id];
+        if (latestShow) {
+          next[id] = latestShow;
         }
       });
 
-      return changed ? next : prev;
+      const prevKeys = Object.keys(prev);
+      const nextKeys = Object.keys(next);
+      const hasSameStructure = prevKeys.length === nextKeys.length
+        && nextKeys.every((id) => prev[id] === next[id]);
+
+      return hasSameStructure ? prev : next;
     });
-  }, [rowSelection, shows]);
+  }, [selectedShowIds, showsById]);
 
-  const selectedShows = useMemo(() => Object.values(selectedShowObjects), [selectedShowObjects]);
+  const selectedShows = useMemo(() => {
+    return selectedShowIds
+      .map((id) => showsById[id] ?? selectedShowSnapshots[id] ?? null)
+      .filter((show): show is StudioShow => show !== null);
+  }, [selectedShowIds, selectedShowSnapshots, showsById]);
 
   // Fetch filter options
   const { options: clientOptions } = useClientFieldData(null);

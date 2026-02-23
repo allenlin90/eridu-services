@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import type { AssignShowsRequest, AssignShowsResponse } from '@eridu/api-types/task-management';
 
 import { assignShows } from '../api/assign-shows';
-import { studioShowsKeys } from '../api/get-studio-shows';
+import { invalidateStudioTaskQueries } from '../lib/invalidate-studio-task-queries';
 
 type UseAssignShowsProps = {
   studioId: string;
@@ -16,9 +16,12 @@ export function useAssignShows({ studioId, onSuccess }: UseAssignShowsProps) {
 
   return useMutation<AssignShowsResponse, Error, AssignShowsRequest>({
     mutationFn: (data) => assignShows(studioId, data),
-    onSuccess: (response) => {
-      // Invalidate the studio shows query so the table reflects the new assignee counts
-      queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) });
+    onSuccess: async (response, variables) => {
+      await invalidateStudioTaskQueries({
+        queryClient,
+        studioId,
+        showIds: variables.show_uids,
+      });
 
       if (response.updated_count === 0) {
         toast.warning(

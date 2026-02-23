@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import type { GenerateTasksRequest, GenerateTasksResponse } from '@eridu/api-types/task-management';
 
 import { generateTasks } from '../api/generate-tasks';
-import { studioShowsKeys } from '../api/get-studio-shows';
+import { invalidateStudioTaskQueries } from '../lib/invalidate-studio-task-queries';
 
 type UseGenerateTasksProps = {
   studioId: string;
@@ -16,9 +16,12 @@ export function useGenerateTasks({ studioId, onSuccess }: UseGenerateTasksProps)
 
   return useMutation<GenerateTasksResponse, Error, GenerateTasksRequest>({
     mutationFn: (data) => generateTasks(studioId, data),
-    onSuccess: (response) => {
-      // Invalidate the studio shows query so the table refreshes and shows new tasks
-      queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) });
+    onSuccess: async (response, variables) => {
+      await invalidateStudioTaskQueries({
+        queryClient,
+        studioId,
+        showIds: variables.show_uids,
+      });
 
       const createdCount = response.summary.total_tasks_created;
       const skippedCount = response.summary.total_skipped;

@@ -5,8 +5,10 @@ import type { BulkDeleteTasksResponse } from '@eridu/api-types/task-management';
 
 import { bulkDeleteTasks } from '../api/bulk-delete-tasks';
 
-import { showTasksKeys } from '@/features/studio-shows/api/get-show-tasks';
-import { studioShowsKeys } from '@/features/studio-shows/api/get-studio-shows';
+import {
+  invalidateStudioTaskQueries,
+  refetchStudioShowListsContainingShow,
+} from '@/features/studio-shows/lib/invalidate-studio-task-queries';
 
 type UseDeleteTasksProps = {
   studioId: string;
@@ -19,21 +21,27 @@ export function useDeleteTasks({ studioId, showId, onSuccess }: UseDeleteTasksPr
 
   return useMutation<BulkDeleteTasksResponse, Error, string[]>({
     mutationFn: (taskUids) => bulkDeleteTasks(studioId, { task_uids: taskUids }),
-    onSuccess: (response) => {
-      if (showId) {
-        queryClient.invalidateQueries({ queryKey: showTasksKeys.list(studioId, showId) });
-      } else {
-        queryClient.invalidateQueries({ queryKey: showTasksKeys.all });
-      }
-
-      queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) });
-
+    onSuccess: async (response) => {
       onSuccess?.();
       toast.success(
         response.deleted_count === 1
           ? '1 task deleted'
           : `${response.deleted_count} tasks deleted`,
       );
+
+      await invalidateStudioTaskQueries({
+        queryClient,
+        studioId,
+        showIds: showId ? [showId] : [],
+      });
+
+      if (showId) {
+        await refetchStudioShowListsContainingShow({
+          queryClient,
+          studioId,
+          showId,
+        });
+      }
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to delete tasks');
