@@ -80,6 +80,10 @@ export type TaskDto = z.infer<typeof taskDto>;
  * Task with Relations entity schema
  */
 export const taskWithRelationsSchema = taskSchema.extend({
+  snapshot: z.object({
+    schema: z.unknown(),
+    version: z.number().int(),
+  }).nullable().optional(),
   assignee: z.object({
     uid: z.string(),
     name: z.string(),
@@ -127,6 +131,12 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj) => {
     version: obj.version,
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
+    snapshot: obj.snapshot
+      ? {
+          schema: obj.snapshot.schema,
+          version: obj.snapshot.version,
+        }
+      : null,
     assignee: obj.assignee ? { id: obj.assignee.uid, name: obj.assignee.name } : null,
     template: obj.template ? { id: obj.template.uid, name: obj.template.name } : null,
     show,
@@ -278,9 +288,21 @@ export type UpdateTaskRequest = z.infer<typeof updateTaskRequestSchema>;
 export const listMyTasksQuerySchema = paginationBaseSchema
   .extend({
     status: z.union([z.nativeEnum(TASK_STATUS), z.array(z.nativeEnum(TASK_STATUS))]).optional(),
+    task_type: z.union([z.nativeEnum(TASK_TYPE), z.array(z.nativeEnum(TASK_TYPE))]).optional(),
     due_date_from: z.string().datetime().optional(),
     due_date_to: z.string().datetime().optional(),
-    sort: z.enum(['due_date:asc', 'due_date:desc', 'createdAt:asc', 'createdAt:desc']).optional(),
+    search: z.string().trim().min(1).optional(),
+    sort: z
+      .enum([
+        'due_date:asc',
+        'due_date:desc',
+        'updated_at:asc',
+        'updated_at:desc',
+        // Backward compatibility for older clients
+        'createdAt:asc',
+        'createdAt:desc',
+      ])
+      .optional(),
     studio_id: z.string().optional(),
   })
   .transform(transformPagination);
