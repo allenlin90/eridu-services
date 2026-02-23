@@ -21,6 +21,7 @@ describe('taskOrchestrationService', () => {
   let studioMembershipService: jest.Mocked<StudioMembershipService>;
   let taskGenerationProcessor: jest.Mocked<TaskGenerationProcessor>;
   let studioService: jest.Mocked<StudioService>;
+  let taskTargetService: jest.Mocked<TaskTargetService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -38,7 +39,9 @@ describe('taskOrchestrationService', () => {
         },
         {
           provide: TaskTargetService,
-          useValue: {},
+          useValue: {
+            findByShowIds: jest.fn(),
+          },
         },
         {
           provide: TaskTemplateService,
@@ -82,6 +85,7 @@ describe('taskOrchestrationService', () => {
     studioMembershipService = module.get(StudioMembershipService);
     taskGenerationProcessor = module.get(TaskGenerationProcessor);
     studioService = module.get(StudioService);
+    taskTargetService = module.get(TaskTargetService);
   });
 
   describe('generateTasksForShows', () => {
@@ -136,7 +140,11 @@ describe('taskOrchestrationService', () => {
         { id: BigInt(10), uid: 'show_1' },
         { id: BigInt(11), uid: 'show_2' },
       ] as any);
-      taskService.findTasksByShowIds.mockResolvedValue([{ id: BigInt(100) }, { id: BigInt(101) }] as any);
+      taskTargetService.findByShowIds.mockResolvedValue([
+        { taskId: BigInt(100), showId: BigInt(10) },
+        { taskId: BigInt(101), showId: BigInt(11) },
+      ] as any);
+      taskService.updateAssigneeByTaskIds.mockResolvedValue({ count: 2 } as any);
 
       const result = await service.assignShowsToUser(studioUid, showUids, assigneeUid);
 
