@@ -13,7 +13,7 @@ type TabType = 'today' | 'upcoming' | 'all';
 
 export function MobileTaskList({ studioId }: { studioId: string }) {
   const [activeTab, setActiveTab] = useState<TabType>('today');
-  const [selectedTask, setSelectedTask] = useState<TaskWithRelationsDto | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   // Determine query parameters based on active tab
   const getQueryParams = (): ListMyTasksQuery => {
@@ -34,6 +34,9 @@ export function MobileTaskList({ studioId }: { studioId: string }) {
 
   const { data, isLoading } = useMyTasks(getQueryParams());
   const tasks = data?.data ?? [];
+  const selectedTask: TaskWithRelationsDto | null = selectedTaskId
+    ? tasks.find((task) => task.id === selectedTaskId) ?? null
+    : null;
 
   return (
     <div className="flex flex-col h-full max-w-md mx-auto w-full bg-slate-50 border-x min-h-[calc(100vh-4rem)]">
@@ -76,7 +79,7 @@ export function MobileTaskList({ studioId }: { studioId: string }) {
                   <Card
                     key={task.id}
                     className="p-4 cursor-pointer hover:bg-slate-50 transition-colors bg-white group"
-                    onClick={() => setSelectedTask(task)}
+                    onClick={() => setSelectedTaskId(task.id)}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <Badge variant={task.status === 'COMPLETED' ? 'default' : 'secondary'} className="text-[10px]">
@@ -108,7 +111,7 @@ export function MobileTaskList({ studioId }: { studioId: string }) {
       {/* Slide-over for execution */}
       <TaskExecutionSheet
         task={selectedTask}
-        onClose={() => setSelectedTask(null)}
+        onClose={() => setSelectedTaskId(null)}
         studioId={studioId}
       />
     </div>
