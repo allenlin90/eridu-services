@@ -26,7 +26,7 @@ export function useDeleteTasks({ studioId, showId, onSuccess }: UseDeleteTasksPr
         queryClient.invalidateQueries({ queryKey: showTasksKeys.all });
       }
 
-      queryClient.invalidateQueries({ queryKey: studioShowsKeys.list(studioId) });
+      queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) });
 
       onSuccess?.();
       toast.success(

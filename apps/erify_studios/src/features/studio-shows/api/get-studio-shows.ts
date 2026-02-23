@@ -3,10 +3,12 @@ import type { ShowWithTaskSummaryDto } from '@eridu/api-types/task-management';
 import { apiClient } from '@/lib/api/client';
 
 export type StudioShow = ShowWithTaskSummaryDto;
+export type ShowSelection = Pick<StudioShow, 'id' | 'name' | 'task_summary'>;
 
 export const studioShowsKeys = {
   all: ['studio-shows'] as const,
   lists: () => [...studioShowsKeys.all, 'list'] as const,
+  listPrefix: (studioId: string) => [...studioShowsKeys.lists(), studioId] as const,
   list: (studioId: string, filters?: unknown) => [...studioShowsKeys.lists(), studioId, filters] as const,
 };
 

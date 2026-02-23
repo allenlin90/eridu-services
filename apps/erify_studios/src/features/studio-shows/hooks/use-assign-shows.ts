@@ -18,7 +18,7 @@ export function useAssignShows({ studioId, onSuccess }: UseAssignShowsProps) {
     mutationFn: (data) => assignShows(studioId, data),
     onSuccess: (response) => {
       // Invalidate the studio shows query so the table reflects the new assignee counts
-      queryClient.invalidateQueries({ queryKey: studioShowsKeys.list(studioId) });
+      queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) });
 
       toast.success(
         `Assigned ${response.updated_count} task(s) to ${response.assignee.name}`,

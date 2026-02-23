@@ -29,7 +29,7 @@ export function useAssignTask({ studioId, showId }: UseAssignTaskProps) {
       }
 
       // Also invalidate the studio shows summary list
-      queryClient.invalidateQueries({ queryKey: studioShowsKeys.list(studioId) });
+      queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) });
 
       toast.success('Task assignee updated');
     },

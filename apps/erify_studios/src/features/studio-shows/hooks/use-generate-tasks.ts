@@ -18,7 +18,7 @@ export function useGenerateTasks({ studioId, onSuccess }: UseGenerateTasksProps)
     mutationFn: (data) => generateTasks(studioId, data),
     onSuccess: (response) => {
       // Invalidate the studio shows query so the table refreshes and shows new tasks
-      queryClient.invalidateQueries({ queryKey: studioShowsKeys.list(studioId) });
+      queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) });
 
       const createdCount = response.summary.total_tasks_created;
       const skippedCount = response.summary.total_skipped;
