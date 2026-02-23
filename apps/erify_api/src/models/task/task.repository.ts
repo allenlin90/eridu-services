@@ -155,7 +155,16 @@ export class TaskRepository extends BaseRepository<
     query: ListMyTasksQueryTransformed,
     studioId?: bigint,
   ) {
-    const { status, due_date_from, due_date_to, sort, page, limit } = query;
+    const {
+      status,
+      task_type,
+      due_date_from,
+      due_date_to,
+      search,
+      sort,
+      page,
+      limit,
+    } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.TaskWhereInput = {
@@ -171,6 +180,10 @@ export class TaskRepository extends BaseRepository<
       where.status = Array.isArray(status) ? { in: status } : status;
     }
 
+    if (task_type) {
+      where.type = Array.isArray(task_type) ? { in: task_type } : task_type;
+    }
+
     if (due_date_from || due_date_to) {
       where.dueDate = {};
       if (due_date_from)
@@ -179,13 +192,33 @@ export class TaskRepository extends BaseRepository<
         where.dueDate.lte = new Date(due_date_to);
     }
 
-    let orderBy: Prisma.TaskOrderByWithRelationInput = { createdAt: 'desc' };
+    if (search) {
+      where.OR = [
+        { description: { contains: search, mode: 'insensitive' } },
+        {
+          targets: {
+            some: {
+              targetType: 'SHOW',
+              deletedAt: null,
+              show: {
+                name: { contains: search, mode: 'insensitive' },
+              },
+            },
+          },
+        },
+      ];
+    }
+
+    let orderBy: Prisma.TaskOrderByWithRelationInput = { dueDate: 'asc' };
     if (sort) {
       const [field, direction] = sort.split(':');
+      const sortDirection = direction === 'desc' ? 'desc' : 'asc';
       if (field === 'due_date') {
-        orderBy = { dueDate: direction as 'asc' | 'desc' };
-      } else if (field === 'createdAt') {
-        orderBy = { createdAt: direction as 'asc' | 'desc' };
+        orderBy = { dueDate: sortDirection };
+      } else if (field === 'updated_at' || field === 'updatedAt') {
+        orderBy = { updatedAt: sortDirection };
+      } else if (field === 'createdAt' || field === 'created_at') {
+        orderBy = { createdAt: sortDirection };
       }
     }
 
@@ -197,6 +230,12 @@ export class TaskRepository extends BaseRepository<
         take: limit,
         include: {
           template: true,
+          snapshot: {
+            select: {
+              schema: true,
+              version: true,
+            },
+          },
           assignee: true,
           targets: {
             where: { targetType: 'SHOW', deletedAt: null },

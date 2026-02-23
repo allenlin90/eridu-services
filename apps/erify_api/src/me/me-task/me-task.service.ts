@@ -28,9 +28,10 @@ export class MeTaskService {
     let resolvedStudioId: bigint | undefined;
     if (query.studio_id) {
       const studio = await this.studioService.findByUid(query.studio_id);
-      if (studio) {
-        resolvedStudioId = studio.id;
+      if (!studio) {
+        throw HttpError.notFound('Studio not found');
       }
+      resolvedStudioId = studio.id;
     }
 
     return this.taskService.findTasksByAssignee(user.id, query, resolvedStudioId);
@@ -51,6 +52,12 @@ export class MeTaskService {
       assigneeId: user.id, // Enforce assignee ownership at query level
     }, {
       template: true,
+      snapshot: {
+        select: {
+          schema: true,
+          version: true,
+        },
+      },
       assignee: true,
       targets: {
         where: { targetType: 'SHOW', deletedAt: null },
