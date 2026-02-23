@@ -1,16 +1,23 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowLeft, ListTodo, Trash2, UserRound } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { createFileRoute, Link, useLocation } from '@tanstack/react-router';
+import { format } from 'date-fns';
+import { ArrowLeft, ListTodo, RotateCw, Trash2, UserRound } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { Button } from '@eridu/ui';
+import { Badge, Button } from '@eridu/ui';
 
 import { AdminTable } from '@/features/admin/components/admin-table';
 import { useMembershipsQuery } from '@/features/memberships/api/get-memberships';
 import { BulkTaskGenerationDialog } from '@/features/shows/components/bulk-task-generation-dialog';
 import { ShowAssignmentDialog } from '@/features/shows/components/show-assignment-dialog';
+import { showTasksKeys } from '@/features/studio-shows/api/get-show-tasks';
+import type { StudioShowDetail } from '@/features/studio-shows/api/get-studio-show';
+import { studioShowKeys } from '@/features/studio-shows/api/get-studio-show';
 import type { ShowSelection } from '@/features/studio-shows/api/get-studio-shows';
+import { studioShowsKeys } from '@/features/studio-shows/api/get-studio-shows';
 import { getColumns } from '@/features/studio-shows/components/show-tasks-table/columns';
 import { useShowTasks } from '@/features/studio-shows/hooks/use-show-tasks';
+import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
 import { DeleteTasksDialog } from '@/features/tasks/components/delete-tasks-dialog';
 import { useAssignTask } from '@/features/tasks/hooks/use-assign-task';
 import { useDeleteTasks } from '@/features/tasks/hooks/use-delete-tasks';
@@ -21,18 +28,38 @@ export const Route = createFileRoute('/studios/$studioId/shows/$showId/tasks')({
 
 function StudioShowTasksPage() {
   const { studioId, showId } = Route.useParams();
+  const location = useLocation({ from: '/studios/$studioId/shows/$showId/tasks' });
+  const queryClient = useQueryClient();
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
 
   // 1. Fetch data
+  const showFromNavigation = (location.state as { show?: StudioShowDetail } | undefined)?.show;
   const {
     data: tasks,
     isLoading: isLoadingTasks,
+    isFetching: isFetchingTasks,
     refetch: refetchTasks,
   } = useShowTasks({ studioId, showId });
-  const { data: membersResponse, isLoading: isLoadingMembers } = useMembershipsQuery({
+  const {
+    data: showFromApi,
+    isLoading: isLoadingShow,
+    isFetching: isFetchingShow,
+    refetch: refetchShow,
+  } = useStudioShow({
+    studioId,
+    showId,
+    initialData: showFromNavigation,
+  });
+  const showDetails = showFromApi ?? showFromNavigation;
+  const {
+    data: membersResponse,
+    isLoading: isLoadingMembers,
+    isFetching: isFetchingMembers,
+    refetch: refetchMembers,
+  } = useMembershipsQuery({
     studio_id: studioId,
     limit: 100, // get enough members to populate the dropdown
   });
@@ -67,7 +94,7 @@ function StudioShowTasksPage() {
     const totalCount = tasks?.length ?? 0;
     return {
       id: showId,
-      name: tasks?.[0]?.show?.name ?? `Show ${showId}`,
+      name: showDetails?.name ?? tasks?.[0]?.show?.name ?? `Show ${showId}`,
       task_summary: {
         total: totalCount,
         assigned: assignedCount,
@@ -75,7 +102,7 @@ function StudioShowTasksPage() {
         completed: completedCount,
       },
     };
-  }, [showId, tasks]);
+  }, [showId, showDetails?.name, tasks]);
 
   const handleDeleteSelected = () => {
     if (selectedUids.length > 0) {
@@ -83,27 +110,93 @@ function StudioShowTasksPage() {
     }
   };
 
+  const isRefreshing = isFetchingTasks || isFetchingShow || isFetchingMembers;
+  const handleRefreshAll = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: showTasksKeys.list(studioId, showId) }),
+      queryClient.invalidateQueries({ queryKey: studioShowKeys.detail(studioId, showId) }),
+      queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) }),
+      queryClient.invalidateQueries({ queryKey: ['memberships', 'list'] }),
+    ]);
+
+    await Promise.all([refetchTasks(), refetchShow(), refetchMembers()]);
+  }, [queryClient, refetchMembers, refetchShow, refetchTasks, showId, studioId]);
+
   // 3. Define the columns
   const columns = useMemo(
     () => getColumns(members, handleAssign, isAssigning),
     [members, handleAssign, isAssigning],
   );
+  const showMetaItems = useMemo(() => {
+    if (!showDetails) {
+      return [];
+    }
+
+    return [
+      { label: 'Show ID', value: showDetails.id },
+      { label: 'Studio', value: showDetails.studio_name ?? '—' },
+      { label: 'Room', value: showDetails.studio_room_name ?? '—' },
+      { label: 'Type', value: showDetails.show_type_name ?? '—' },
+      { label: 'Standard', value: showDetails.show_standard_name ?? '—' },
+    ];
+  }, [showDetails]);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link to="/studios/$studioId/shows" params={{ studioId }}>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">Show Tasks</h1>
-            <p className="text-sm text-muted-foreground">Manage and assign specific tasks for this show.</p>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link to="/studios/$studioId/shows" params={{ studioId }}>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">
+                {isLoadingShow && !showDetails ? 'Loading show...' : (showDetails?.name ?? 'Show Tasks')}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {showDetails
+                  ? `${showDetails.client_name ?? 'No client'} • ${format(new Date(showDetails.start_time), 'PPP p')} - ${format(new Date(showDetails.end_time), 'p')}`
+                  : 'Manage and assign specific tasks for this show.'}
+              </p>
+            </div>
           </div>
         </div>
+
+        {showDetails && (
+          <div className="rounded-md border bg-muted/20 p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {showDetails.show_status_name && (
+                <Badge variant="outline" className="capitalize">
+                  {showDetails.show_status_name}
+                </Badge>
+              )}
+              {showDetails.show_type_name && (
+                <Badge variant="secondary" className="capitalize">
+                  {showDetails.show_type_name}
+                </Badge>
+              )}
+              {showDetails.show_standard_name && (
+                <Badge variant="outline" className="capitalize">
+                  {showDetails.show_standard_name}
+                </Badge>
+              )}
+            </div>
+
+            <dl className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2 lg:grid-cols-5">
+              {showMetaItems.map((item) => (
+                <div key={item.label} className="rounded border bg-background px-2 py-1.5">
+                  <dt className="text-muted-foreground">{item.label}</dt>
+                  <dd className="truncate font-medium" title={item.value}>
+                    {item.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 mt-4">
@@ -121,6 +214,16 @@ function StudioShowTasksPage() {
           getRowId={(task) => task.id}
           renderToolbarActions={() => (
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-full sm:w-auto"
+                onClick={handleRefreshAll}
+                disabled={isRefreshing}
+              >
+                <RotateCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

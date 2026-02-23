@@ -20,6 +20,29 @@ function ShowNameCell({ show }: { show: StudioShow }) {
       <Link
         to="/studios/$studioId/shows/$showId/tasks"
         params={{ studioId: actualStudioId, showId: show.id }}
+        state={{
+          show: {
+            id: show.id,
+            name: show.name,
+            client_id: show.client_id,
+            client_name: show.client_name,
+            studio_id: show.studio_id,
+            studio_name: show.studio_name,
+            studio_room_id: show.studio_room_id,
+            studio_room_name: show.studio_room_name,
+            show_type_id: show.show_type_id,
+            show_type_name: show.show_type_name,
+            show_status_id: show.show_status_id,
+            show_status_name: show.show_status_name,
+            show_standard_id: show.show_standard_id,
+            show_standard_name: show.show_standard_name,
+            start_time: show.start_time,
+            end_time: show.end_time,
+            metadata: show.metadata,
+            created_at: show.created_at,
+            updated_at: show.updated_at,
+          },
+        }}
         className="font-medium hover:underline flex items-center gap-1"
       >
         {show.name}

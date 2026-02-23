@@ -81,14 +81,19 @@ export function ShowAssignmentDialog({
     () => shows.filter((show) => show.task_summary.assigned > 0).length,
     [shows],
   );
+  const showsWithoutTasksCount = useMemo(
+    () => shows.filter((show) => show.task_summary.total === 0).length,
+    [shows],
+  );
   const overwriteTasksCount = useMemo(
     () => shows.reduce((total, show) => total + show.task_summary.assigned, 0),
     [shows],
   );
   const requiresOverwriteConfirmation = overwriteShowsCount > 0;
+  const hasNoAssignableTasks = showsWithoutTasksCount === shows.length;
 
   const handleAssign = () => {
-    if (!selectedAssignee || shows.length === 0)
+    if (!selectedAssignee || shows.length === 0 || hasNoAssignableTasks)
       return;
     if (requiresOverwriteConfirmation && !confirmOverwrite)
       return;
@@ -168,6 +173,16 @@ export function ShowAssignmentDialog({
               </label>
             </div>
           )}
+
+          {showsWithoutTasksCount > 0 && (
+            <div className="space-y-2 rounded-md border border-blue-200 bg-blue-50 p-3">
+              <p className="text-sm text-blue-900">
+                {hasNoAssignableTasks
+                  ? 'No generated tasks were found for the selected show(s). Generate tasks first, then assign.'
+                  : `${showsWithoutTasksCount} selected show(s) have no generated tasks and will be skipped.`}
+              </p>
+            </div>
+          )}
         </div>
 
         <DialogFooter>
@@ -176,7 +191,12 @@ export function ShowAssignmentDialog({
           </Button>
           <Button
             onClick={handleAssign}
-            disabled={isAssigning || !selectedAssignee || (requiresOverwriteConfirmation && !confirmOverwrite)}
+            disabled={
+              isAssigning
+              || !selectedAssignee
+              || hasNoAssignableTasks
+              || (requiresOverwriteConfirmation && !confirmOverwrite)
+            }
           >
             {isAssigning ? 'Assigning...' : 'Assign Tasks'}
           </Button>
