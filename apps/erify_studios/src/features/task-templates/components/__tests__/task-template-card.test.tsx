@@ -47,6 +47,7 @@ const MOCK_TEMPLATE: TaskTemplateDto = {
   name: 'Test Template',
   description: 'A test description',
   is_active: true,
+  task_type: 'SETUP',
   current_schema: { items: [] },
   version: 2,
   created_at: '2024-01-01T00:00:00.000Z',
@@ -64,7 +65,7 @@ describe('taskTemplateCard', () => {
     expect(screen.getByText('Test Template')).toBeInTheDocument();
     expect(screen.getByText('A test description')).toBeInTheDocument();
     expect(screen.getByText(/v2/)).toBeInTheDocument();
-    expect(screen.getByText('Active')).toBeInTheDocument();
+    expect(screen.getByText('SETUP')).toBeInTheDocument();
     expect(screen.getByText(/Updated Jan 15, 2024/)).toBeInTheDocument();
   });
 
@@ -75,11 +76,11 @@ describe('taskTemplateCard', () => {
     expect(viewLink).toHaveAttribute('href', '/studios/test-studio/task-templates/ttpl_test_123');
   });
 
-  it('displays correct badge for archived templates', () => {
+  it('displays task_type badge for archived templates', () => {
     const archivedTemplate = { ...MOCK_TEMPLATE, is_active: false };
     render(<TaskTemplateCard template={archivedTemplate} studioId="test-studio" />);
 
-    expect(screen.getByText('Archived')).toBeInTheDocument();
+    expect(screen.getByText('SETUP')).toBeInTheDocument();
   });
 
   it('calls clone mutation when clone button is clicked', async () => {
