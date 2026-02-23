@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link, useLocation } from '@tanstack/react-router';
 import { format } from 'date-fns';
-import { ArrowLeft, ListTodo, RotateCw, Trash2, UserRound } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ListTodo, RotateCw, Trash2, UserRound } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
 import { Badge, Button } from '@eridu/ui';
@@ -32,6 +32,7 @@ function StudioShowTasksPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [isShowDetailsOpen, setIsShowDetailsOpen] = useState(false);
 
   // 1. Fetch data
   const showFromNavigation = (location.state as { show?: StudioShowDetail } | undefined)?.show ?? null;
@@ -189,34 +190,51 @@ function StudioShowTasksPage() {
 
         {showDetails && (
           <div className="rounded-md border bg-muted/20 p-3">
-            <div className="flex flex-wrap items-center gap-2">
-              {showDetails.show_status_name && (
-                <Badge variant="outline" className="capitalize">
-                  {showDetails.show_status_name}
-                </Badge>
-              )}
-              {showDetails.show_type_name && (
-                <Badge variant="secondary" className="capitalize">
-                  {showDetails.show_type_name}
-                </Badge>
-              )}
-              {showDetails.show_standard_name && (
-                <Badge variant="outline" className="capitalize">
-                  {showDetails.show_standard_name}
-                </Badge>
-              )}
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-medium text-muted-foreground">Show Details</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setIsShowDetailsOpen((prev) => !prev)}
+              >
+                {isShowDetailsOpen ? 'Hide' : 'Show'}
+                <ChevronDown className={`ml-1 h-3.5 w-3.5 transition-transform ${isShowDetailsOpen ? 'rotate-180' : ''}`} />
+              </Button>
             </div>
 
-            <dl className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2 lg:grid-cols-5">
-              {showMetaItems.map((item) => (
-                <div key={item.label} className="rounded border bg-background px-2 py-1.5">
-                  <dt className="text-muted-foreground">{item.label}</dt>
-                  <dd className="truncate font-medium" title={item.value}>
-                    {item.value}
-                  </dd>
+            {isShowDetailsOpen && (
+              <>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {showDetails.show_status_name && (
+                    <Badge variant="outline" className="capitalize">
+                      {showDetails.show_status_name}
+                    </Badge>
+                  )}
+                  {showDetails.show_type_name && (
+                    <Badge variant="secondary" className="capitalize">
+                      {showDetails.show_type_name}
+                    </Badge>
+                  )}
+                  {showDetails.show_standard_name && (
+                    <Badge variant="outline" className="capitalize">
+                      {showDetails.show_standard_name}
+                    </Badge>
+                  )}
                 </div>
-              ))}
-            </dl>
+
+                <dl className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2 lg:grid-cols-5">
+                  {showMetaItems.map((item) => (
+                    <div key={item.label} className="rounded border bg-background px-2 py-1.5">
+                      <dt className="text-muted-foreground">{item.label}</dt>
+                      <dd className="truncate font-medium" title={item.value}>
+                        {item.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </>
+            )}
           </div>
         )}
       </div>
