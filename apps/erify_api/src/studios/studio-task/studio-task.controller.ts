@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 
@@ -31,6 +32,7 @@ import {
 import { TaskService } from '@/models/task/task.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
 
+@ApiTags('Studio Tasks')
 @StudioProtected([STUDIO_ROLE.ADMIN])
 @Controller('studios/:studioId/tasks')
 export class StudioTaskController extends BaseStudioController {
@@ -41,6 +43,7 @@ export class StudioTaskController extends BaseStudioController {
     super();
   }
 
+  @ApiOperation({ summary: 'Generate tasks for multiple shows from selected templates' })
   @Post('generate')
   @HttpCode(HttpStatus.CREATED)
   @ZodResponse(generateTasksResponseSchema)
@@ -51,6 +54,7 @@ export class StudioTaskController extends BaseStudioController {
     return this.taskOrchestrationService.generateTasksForShows(studioId, dto.show_uids, dto.template_uids);
   }
 
+  @ApiOperation({ summary: 'Assign all tasks for selected shows to a studio member' })
   @Post('assign-shows')
   @HttpCode(HttpStatus.OK)
   @ZodResponse(assignShowsResponseSchema)
@@ -61,6 +65,7 @@ export class StudioTaskController extends BaseStudioController {
     return this.taskOrchestrationService.assignShowsToUser(studioId, dto.show_uids, dto.assignee_uid);
   }
 
+  @ApiOperation({ summary: 'Reassign a single task to a different studio member' })
   @Patch(':id/assign')
   @ZodResponse(taskDto)
   async reassign(
@@ -71,6 +76,7 @@ export class StudioTaskController extends BaseStudioController {
     return this.taskOrchestrationService.reassignTask(studioId, id, dto.assignee_uid);
   }
 
+  @ApiOperation({ summary: 'Update task content and/or status (with optimistic locking)' })
   @Patch(':id')
   @ZodResponse(taskDto)
   async updateTask(
@@ -96,6 +102,7 @@ export class StudioTaskController extends BaseStudioController {
     return updatedTask;
   }
 
+  @ApiOperation({ summary: 'Soft-delete multiple tasks by UID' })
   @Delete('bulk')
   @HttpCode(HttpStatus.OK)
   @ZodResponse(bulkDeleteTasksResponseSchema)

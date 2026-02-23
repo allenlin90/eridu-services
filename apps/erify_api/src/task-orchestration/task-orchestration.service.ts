@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import type { TaskTemplate, TaskTemplateSnapshot } from '@prisma/client';
 import { StudioMembership, TaskStatus, TaskType, User } from '@prisma/client';
 
 import type { ListStudioShowsQueryTransformed } from '@eridu/api-types/task-management';
@@ -11,7 +12,6 @@ import { showDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { TaskService } from '@/models/task/task.service';
-import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { TaskTemplateService } from '@/models/task-template/task-template.service';
 
 type MembershipWithUser = StudioMembership & { user: User };
@@ -30,7 +30,6 @@ export class TaskOrchestrationService {
 
   constructor(
     private readonly taskService: TaskService,
-    private readonly taskTargetService: TaskTargetService,
     private readonly taskTemplateService: TaskTemplateService,
     private readonly showService: ShowService,
     private readonly studioMembershipService: StudioMembershipService,
@@ -60,7 +59,7 @@ export class TaskOrchestrationService {
           take: 1,
         },
       },
-    });
+    }) as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
 
     if (templates.length === 0) {
       throw HttpError.badRequest('No valid active templates found for the provided UIDs');
@@ -274,7 +273,7 @@ export class TaskOrchestrationService {
   }
 
   /**
-   * soft-deletes multiple tasks.
+   * Soft-deletes multiple tasks (must belong to the studio).
    */
   async bulkDeleteTasks(studioUid: string, taskUids: string[]) {
     // 1. Resolve studio
@@ -285,6 +284,10 @@ export class TaskOrchestrationService {
 
     // 2. Perform bulk soft delete
     const result = await this.taskService.bulkSoftDelete(studio.id, taskUids);
+
+    if (result.count === 0) {
+      throw HttpError.notFound('Tasks', taskUids.join(', '));
+    }
 
     return {
       deleted_count: result.count,

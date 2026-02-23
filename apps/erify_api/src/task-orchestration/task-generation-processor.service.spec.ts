@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClsPluginTransactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import type { Show, TaskTemplate, TaskTemplateSnapshot } from '@prisma/client';
 import { TaskType } from '@prisma/client';
 import { ClsModule } from 'nestjs-cls';
 
@@ -85,7 +86,7 @@ describe('taskGenerationProcessor', () => {
 
   describe('processShow', () => {
     it('should generate tasks for a show and acquire advisory lock', async () => {
-      const show = { id: BigInt(10), uid: 'show_1', studioId: BigInt(1) };
+      const show = { id: BigInt(10), uid: 'show_1', studioId: BigInt(1) } as unknown as Show;
       const templates = [
         {
           id: BigInt(1),
@@ -93,7 +94,7 @@ describe('taskGenerationProcessor', () => {
           name: 'Pre-production',
           snapshots: [{ id: BigInt(100) }],
         },
-      ];
+      ] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
 
       taskService.findByShowAndTemplate.mockResolvedValue(null);
       taskService.generateTaskUid.mockReturnValue('task_123');
@@ -115,8 +116,8 @@ describe('taskGenerationProcessor', () => {
     });
 
     it('should skip template if task already exists', async () => {
-      const show = { id: BigInt(10), uid: 'show_1' };
-      const templates = [{ id: BigInt(1), uid: 'tpl_1' }];
+      const show = { id: BigInt(10), uid: 'show_1' } as unknown as Show;
+      const templates = [{ id: BigInt(1), uid: 'tpl_1' }] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
 
       taskService.findByShowAndTemplate.mockResolvedValue({ id: BigInt(1000) } as any);
 
@@ -128,8 +129,8 @@ describe('taskGenerationProcessor', () => {
     });
 
     it('should bubble up errors from database', async () => {
-      const show = { id: BigInt(10), uid: 'show_1' };
-      const templates = [{ id: BigInt(1), uid: 'tpl_1' }];
+      const show = { id: BigInt(10), uid: 'show_1' } as unknown as Show;
+      const templates = [{ id: BigInt(1), uid: 'tpl_1' }] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
 
       mockPrismaForCls.$executeRaw.mockRejectedValue(new Error('DB Error'));
 
@@ -137,8 +138,8 @@ describe('taskGenerationProcessor', () => {
     });
 
     it('should skip templates with no snapshots', async () => {
-      const show = { id: BigInt(10), uid: 'show_1' };
-      const templates = [{ id: BigInt(1), uid: 'tpl_1', name: 'Test', snapshots: [] }];
+      const show = { id: BigInt(10), uid: 'show_1' } as unknown as Show;
+      const templates = [{ id: BigInt(1), uid: 'tpl_1', name: 'Test', snapshots: [] }] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
 
       taskService.findByShowAndTemplate.mockResolvedValue(null);
 

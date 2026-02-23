@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
+import type { Show, TaskTemplate, TaskTemplateSnapshot } from '@prisma/client';
 import { TaskStatus, TaskType } from '@prisma/client';
 
 import { TaskService } from '@/models/task/task.service';
@@ -21,7 +22,10 @@ export class TaskGenerationProcessor {
    * Extraction to separate service allows @Transactional to work via NestJS DI proxy.
    */
   @Transactional()
-  async processShow(show: any, templates: any[]) {
+  async processShow(
+    show: Show,
+    templates: (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[],
+  ) {
     let tasksCreatedForShow = 0;
     let tasksSkippedForShow = 0;
     let showStatus: 'success' | 'error' | 'skipped' = 'success';
@@ -74,7 +78,7 @@ export class TaskGenerationProcessor {
         description: template.name,
         type,
         status: TaskStatus.PENDING,
-        studio: { connect: { id: show.studioId } },
+        studio: { connect: { id: show.studioId! } },
         template: { connect: { id: template.id } },
         snapshot: { connect: { id: latestSnapshot.id } },
         content: {},
