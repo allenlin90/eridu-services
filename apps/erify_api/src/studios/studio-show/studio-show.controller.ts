@@ -11,6 +11,7 @@ import { BaseStudioController } from '../base-studio.controller';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
+import { showDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
 import {
@@ -35,6 +36,15 @@ export class StudioShowController extends BaseStudioController {
   ) {
     const { data, total } = await this.taskOrchestrationService.getStudioShowsWithTaskSummary(studioId, query);
     return this.createPaginatedResponse(data, total, query);
+  }
+
+  @Get(':id')
+  @ZodResponse(showDto)
+  async show(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+  ) {
+    return this.taskOrchestrationService.getStudioShow(studioId, id);
   }
 
   @Get(':id/tasks')

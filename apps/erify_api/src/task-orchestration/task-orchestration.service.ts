@@ -12,6 +12,7 @@ import { showDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { TaskService } from '@/models/task/task.service';
+import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { TaskTemplateService } from '@/models/task-template/task-template.service';
 
 type MembershipWithUser = StudioMembership & { user: User };
@@ -35,6 +36,7 @@ export class TaskOrchestrationService {
     private readonly studioMembershipService: StudioMembershipService,
     private readonly taskGenerationProcessor: TaskGenerationProcessor,
     private readonly studioService: StudioService,
+    private readonly taskTargetService: TaskTargetService,
   ) {}
 
   /**
@@ -156,14 +158,21 @@ export class TaskOrchestrationService {
 
     const showIds = shows.map((s) => s.id);
 
-    // 3. Find task IDs linked to these shows
-    const tasks = await this.taskService.findTasksByShowIds(showIds);
-    const taskIds = tasks.map((t) => t.id);
+    // 3. Find task-target links for these shows (explicitly captures shows with/without generated tasks)
+    const taskTargets = await this.taskTargetService.findByShowIds(showIds);
+    const taskIds = [...new Set(taskTargets.map((t) => t.taskId))];
+    const showsWithTasks = new Set(taskTargets.map((tt) => tt.showId).filter((id): id is bigint => id !== null));
+    const showsWithoutTasks = shows
+      .filter((show) => !showsWithTasks.has(show.id))
+      .map((show) => show.uid);
 
     if (taskIds.length === 0) {
       return {
         updated_count: 0,
         shows: shows.map((s) => s.uid),
+        show_count: shows.length,
+        shows_with_tasks_count: 0,
+        shows_without_tasks: showsWithoutTasks,
         assignee: {
           id: assigneeMembership.user.uid,
           name: assigneeMembership.user.name,
@@ -172,11 +181,14 @@ export class TaskOrchestrationService {
     }
 
     // 4. Bulk update assignee
-    await this.taskService.updateAssigneeByTaskIds(taskIds, assigneeMembership.userId);
+    const result = await this.taskService.updateAssigneeByTaskIds(taskIds, assigneeMembership.userId);
 
     return {
-      updated_count: taskIds.length,
+      updated_count: result.count,
       shows: shows.map((s) => s.uid),
+      show_count: shows.length,
+      shows_with_tasks_count: shows.length - showsWithoutTasks.length,
+      shows_without_tasks: showsWithoutTasks,
       assignee: {
         id: assigneeMembership.user.uid,
         name: assigneeMembership.user.name,
@@ -236,6 +248,27 @@ export class TaskOrchestrationService {
     };
 
     return tasks.sort((a, b) => typeOrder[a.type] - typeOrder[b.type]);
+  }
+
+  /**
+   * Gets studio-scoped show details for task pages.
+   */
+  async getStudioShow(studioUid: string, showUid: string) {
+    const show = await this.showService.getShowById(showUid, {
+      client: true,
+      studio: true,
+      studioRoom: true,
+      showType: true,
+      showStatus: true,
+      showStandard: true,
+    });
+
+    const studio = await this.studioService.findByUid(studioUid);
+    if (!studio || show.studioId !== studio.id) {
+      throw HttpError.forbidden('Show does not belong to this studio');
+    }
+
+    return show;
   }
 
   /**
