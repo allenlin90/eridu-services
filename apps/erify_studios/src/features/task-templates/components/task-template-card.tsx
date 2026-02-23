@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { format } from 'date-fns';
-import { Archive, CheckCircle2, Copy, FileText, MoreVertical, Trash2 } from 'lucide-react';
+import { Copy, FileText, MoreVertical, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -110,22 +110,10 @@ export function TaskTemplateCard({ template, studioId }: TaskTemplateCardProps) 
               </div>
             </div>
             <Badge
-              variant={template.is_active ? 'default' : 'secondary'}
+              variant="outline"
               className="shrink-0"
             >
-              {template.is_active
-                ? (
-                    <>
-                      <CheckCircle2 className="w-3 h-3 mr-1" />
-                      Active
-                    </>
-                  )
-                : (
-                    <>
-                      <Archive className="w-3 h-3 mr-1" />
-                      Archived
-                    </>
-                  )}
+              {template.task_type}
             </Badge>
           </div>
         </CardHeader>
