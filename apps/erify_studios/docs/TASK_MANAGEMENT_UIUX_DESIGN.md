@@ -645,6 +645,11 @@ Desktop (sidebar layout):
 
 **"Overdue" shortcut** = `due_date_to=today&status=PENDING,IN_PROGRESS` — surfaces the most urgent items in one tap.
 
+**Date tab behavior**:
+- `Today`: `due_date_from=startOfDay(today)` + `due_date_to=endOfDay(today)`
+- `Upcoming`: `due_date_from=startOfDay(tomorrow)`
+- `All`: no date filter
+
 #### 3.4.2 Task Card (Enhanced)
 
 ```
@@ -812,6 +817,26 @@ COMPLETED:
   [↩ Reopen Task]                 COMPLETED → IN_PROGRESS
   Shows completedAt timestamp
 ```
+
+#### 3.5.6 Show-Task Submission Window Rules
+
+When a task is associated with a Show, UI should enforce/communicate submission windows by `task.type`:
+
+- `SETUP`
+  - Submit must be before show start
+- `ACTIVE`
+  - Submit is blocked before show start
+  - Soft due warning after show end + 1 hour
+- `CLOSURE`
+  - Submit is blocked before show start
+  - Soft due warning after show end + 6 hours
+
+Current phase UX:
+- Window violation (too early) => inline error + disable submit action.
+- Overdue => warning banner + allow submit.
+
+Future phase UX:
+- Studio-level admin toggle can turn overdue warning into hard block.
 
 #### 3.5.5 FE Implementation Notes
 
@@ -1673,6 +1698,25 @@ Actions collapse to a dropdown on mobile (`<768px` / below `md` breakpoint) to s
 ```
 Desktop (≥768px):   [Search.............] [Refresh] [Create Template]
 Mobile (<768px):    [Search.................] [⋮ Menu]
+
+---
+
+### 10.5 Task Template Form Enhancements (Admin)
+
+Task template create/edit dialogs must expose:
+
+- `Task Type` (required): `SETUP`, `ACTIVE`, `CLOSURE`, `ADMIN`, `ROUTINE`, `OTHER`
+- `Schema` (existing JsonForm schema builder)
+- `Description` and active state (existing)
+
+Generation dialog behavior:
+- `SETUP` / `ACTIVE` / `CLOSURE`: due time is auto-derived from show schedule.
+- `ADMIN` / `ROUTINE` / `OTHER`: due time input is optional per generation action.
+
+Validation hints in template UI:
+- `SETUP`: "Due before show start."
+- `ACTIVE`: "Due at show end + 1h. Cannot submit before show starts."
+- `CLOSURE`: "Due at show end + 6h. Cannot submit before show starts."
                                               └─ Refresh
                                               └─ Create Template
 ```
@@ -1896,4 +1940,3 @@ The design balances functional efficiency with visual refinement, creating an in
 **End of UI/UX Design Document**
 
 For backend architecture and API specifications, see: [`apps/erify_api/docs/TASK_MANAGEMENT_DESIGN.md`](../../erify_api/docs/TASK_MANAGEMENT_DESIGN.md)
-

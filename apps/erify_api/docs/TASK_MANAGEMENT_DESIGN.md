@@ -82,6 +82,8 @@ A generic, extensible Task Management system using a **"Task as Form"** architec
 - Server-side validation of all task content against schema
 - Type-safe field validation (text, number, date, select, etc.)
 - Due date validation based on task type and show schedule
+- Submission window validation for show-linked tasks (type-aware, see §6.3)
+- Overdue submission is warning-only in current phase (no hard block)
 - **Studio Consistency**: Tasks for a Show MUST be generated using Templates from the same Studio as the Show
 
 ### API Enhancements
@@ -117,6 +119,8 @@ A generic, extensible Task Management system using a **"Task as Form"** architec
 - **Idempotency**: shows that already have active tasks for a given template are skipped.
 - **Resumption**: If a task for the template exists but is **soft-deleted**, it is "resumed" (undeleted, reset to PENDING, cleared content, and updated to latest template snapshot) to prevent data redundancy and preserve task UID stability.
 - **Advisory lock per show** prevents race conditions when two managers generate simultaneously
+- Template controls task type directly (`task_type` is explicit, no name inference)
+- For `ADMIN` / `ROUTINE` / `OTHER`, manager can optionally override generated due time during generation
 
 **Generation Flow**:
 1. Manager navigates to the Shows list (studio-scoped).
@@ -124,7 +128,7 @@ A generic, extensible Task Management system using a **"Task as Form"** architec
 3. Selects one or more shows (checkbox selection).
 4. Clicks "Generate Tasks" to open the generation dialog.
 5. For each task type slot (SETUP / ACTIVE / CLOSURE), picks a template from the studio's active templates.
-6. Optionally sets due dates or accepts auto-calculated defaults relative to show time.
+6. Optionally sets due dates for `ADMIN` / `ROUTINE` / `OTHER`, or accepts auto-calculated defaults.
 7. Confirms → system creates tasks in a single batch transaction.
 
 #### 2. Bulk Task Deletion (Cleanup)
@@ -604,6 +608,26 @@ Each template defines a form using this JSON structure:
 | `textarea`    | String          | minLength, maxLength                       |
 | `multiselect` | Array           | options (future)                           |
 
+### 5.1 Template Task Type & Due Policy
+
+Each `TaskTemplate` must define a `task_type` so generation and validation are deterministic:
+
+- `SETUP`
+- `ACTIVE`
+- `CLOSURE`
+- `ADMIN`
+- `ROUTINE`
+- `OTHER`
+
+For show-linked generation, backend calculates default due time as:
+
+- `SETUP`: before show starts (default = `show.startTime`)
+- `ACTIVE`: 1 hour after show ends (default = `show.endTime + 1h`)
+- `CLOSURE`: 6 hours after show ends (default = `show.endTime + 6h`)
+- `ADMIN` / `ROUTINE` / `OTHER`: optional manager-provided due time; if omitted, fallback default can be used by studio policy
+
+> Current phase keeps overdue enforcement soft (warning only). Hard cutoff is deferred as a future studio setting.
+
 ### Task Content Example
 
 After user completes form, data stored in `task.content`:
@@ -921,7 +945,13 @@ Generates tasks for **multiple shows** from a shared set of templates.
      - **None exists**: Create new `Task` + `TaskTarget` atomically
 4. Return per-show results + summary
 
-**Task type inference**: Derived from the template's `name` field — names containing "pre"/"setup" → `SETUP`, "live"/"active" → `ACTIVE`, "post"/"closure" → `CLOSURE`, "admin" → `ADMIN`, "routine" → `ROUTINE`, otherwise `OTHER`.
+**Task type source**: Read from `TaskTemplate.taskType` (explicit template config).
+
+**Due time defaults for show-linked tasks**:
+- `SETUP`: show start time baseline (must be before start for submission validation)
+- `ACTIVE`: show end + 1 hour buffer
+- `CLOSURE`: show end + 6 hours buffer
+- `ADMIN` / `ROUTINE` / `OTHER`: optional due time from generation input
 
 #### `assignShowsToUser` (Bulk Show Assignment) ✅
 
@@ -975,6 +1005,26 @@ Returns paginated shows for a studio with per-show `task_summary` (total / assig
 | any → BLOCKED | ✅ | ✅ |
 | BLOCKED → IN_PROGRESS | ✅ | ✅ |
 | any → CLOSED | ❌ | ✅ |
+
+### 7.4 Submission Window Validation (Show-Linked Tasks)
+
+Validation runs on submit transitions for operator/admin actions.
+
+- `SETUP`
+  - Must be submitted before show starts
+- `ACTIVE`
+  - Cannot be submitted before show starts
+  - Soft deadline: show end + 1 hour
+- `CLOSURE`
+  - Cannot be submitted before show starts
+  - Soft deadline: show end + 6 hours
+
+Current behavior:
+- If submitted after soft deadline: allow submit, return warning metadata (`task.metadata.due_warning`).
+- If window rule is violated (e.g. ACTIVE/CLOSURE before show start): reject with validation error.
+
+Future extension:
+- Studio-level toggle `enforce_due_deadline` can convert soft overdue warnings into hard validation failures.
 
 **Implementation notes:**
 - `MeTaskService.updateMyTask()` — enforce operator-only transitions; reject others with `422 TASK_003`
@@ -1618,12 +1668,14 @@ async function paginateTasks(
 interface CreateTaskTemplateDto {
   name: string;
   description?: string;
+  task_type: TaskType;
   schema: Json;  // UI Schema
 }
 
 interface UpdateTaskTemplateDto {
   name?: string;
   description?: string;
+  task_type?: TaskType;
   schema?: Json;
   is_active?: boolean;
 }
