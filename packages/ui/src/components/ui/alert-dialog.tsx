@@ -1,6 +1,7 @@
 'use client';
 
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
+import type { VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
 import { buttonVariants } from '@eridu/ui/components/ui/button';
@@ -119,12 +120,14 @@ function AlertDialogDescription({
 }
 
 function AlertDialogAction({
+  variant,
+  size,
   className,
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Action>) {
+}: React.ComponentProps<typeof AlertDialogPrimitive.Action> & VariantProps<typeof buttonVariants>) {
   return (
     <AlertDialogPrimitive.Action
-      className={cn(buttonVariants(), className)}
+      className={cn(buttonVariants({ variant, size }), className)}
       {...props}
     />
   );
