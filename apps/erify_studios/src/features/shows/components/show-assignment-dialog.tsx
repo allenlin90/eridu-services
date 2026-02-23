@@ -33,7 +33,8 @@ export function ShowAssignmentDialog({ shows, open, onOpenChange }: ShowAssignme
     limit: 100,
   });
 
-  const members = membersResponse?.data ?? [];
+  const rawMembers = membersResponse?.data;
+  const members = useMemo(() => rawMembers ?? [], [rawMembers]);
 
   const { mutate: assignShows, isPending: isAssigning } = useAssignShows({
     studioId,
