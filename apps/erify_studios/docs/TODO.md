@@ -22,7 +22,7 @@
 ### Show Assignment Dialog
 - [x] Opens when rows are selected and "Assign" is clicked
 - [x] Studio member dropdown is populated
-- [ ] Overwrite warning is shown when selected shows already have an assignee
+- [x] Overwrite warning is shown when selected shows already have an assignee
 - [x] Submitting assigns all selected shows to the chosen member
 - [x] Success toast and table refresh after assignment
 
@@ -46,7 +46,7 @@
 - [x] **PENDING** → "Start Task" button transitions to IN_PROGRESS
 - [x] **IN_PROGRESS** → "Complete Task" button transitions to COMPLETED and closes sheet
 - [x] **COMPLETED** → "Reopen Task" button transitions back to IN_PROGRESS
-- [ ] Buttons disabled while mutation is in-flight
+- [x] Buttons disabled while mutation is in-flight
 
 ### JsonForm Engine (`/studios/:studioId/demo/tasks`)
 - [ ] `text` field renders an Input

@@ -443,7 +443,7 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 
 **Trigger**: Select shows → click "Generate Tasks" in bulk action bar
 
-**Purpose**: Select templates to apply across all selected shows, grouped by task type (SETUP / ACTIVE / CLOSURE).
+**Purpose**: Select one or more templates to apply across all selected shows.
 
 **Dialog Layout**:
 ```
@@ -459,20 +459,11 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 │                                                                   │
 │ Template Selection:                                               │
 │                                                                   │
-│ ┌─ Before Show (SETUP) ──────────────────────────────────────┐    │
-│ │ [Select template...                                    ▼]  │    │
-│ │  ✓ Pre-Production Checklist (v4, 25 fields)                │    │
-│ └────────────────────────────────────────────────────────────┘    │
+│ [Search task templates...                                  ▼]     │
+│   3 selected                                                      │
 │                                                                   │
-│ ┌─ During Show (ACTIVE) ─────────────────────────────────────┐    │
-│ │ [Select template...                                    ▼]  │    │
-│ │  ✓ Live Show Operations (v2, 18 fields)                    │    │
-│ └────────────────────────────────────────────────────────────┘    │
-│                                                                   │
-│ ┌─ After Show (CLOSURE) ─────────────────────────────────────┐    │
-│ │ [Select template...                                    ▼]  │    │
-│ │  ✓ Post-Production Cleanup (v1, 12 fields)                 │    │
-│ └────────────────────────────────────────────────────────────┘    │
+│ ℹ️ Showing first 10 templates by default.                         │
+│    Type to search templates by name.                              │
 │                                                                   │
 │ ───────────────────────────────────────────────────────────────── │
 │                                                                   │
@@ -487,7 +478,8 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 ```
 
 **Key Design Decisions**:
-- Templates are grouped by task type (SETUP / ACTIVE / CLOSURE) — each slot has a dropdown
+- Uses searchable multi-select combobox (`AsyncMultiCombobox`) for template selection
+- First 10 templates are loaded by default; search refines server-side results
 - The same template set is applied to **all** selected shows
 - Generation is idempotent with three cases per show+template pair: (1) **active task exists** → skip; (2) **soft-deleted task exists** → resume (restore, reset to `PENDING`, wipe content, update to latest snapshot); (3) **no task** → create new
 - Due dates are optional in v1 (deferred to Smart Due Date feature)
@@ -540,7 +532,7 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 
 **Trigger**: Click "View Tasks" on a show row, or click show name
 
-**Purpose**: View all tasks for a show, reassign individual tasks to different users.
+**Purpose**: View all tasks for a show, run show-level generate/assign actions, and reassign individual tasks.
 
 **Route**: `/studios/$studioId/shows/$showUid/tasks`
 
@@ -553,7 +545,7 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 │ Acme Corp • Feb 5, 2026, 8:00 PM – 10:00 PM                     │
 ├───────────────────────────────────────────────────────────────────┤
 │                                                                   │
-│ Tasks (3)                                            [Assign All]│
+│ Tasks (3)                     [Generate Tasks] [Assign All Tasks]│
 │                                                                   │
 │ ┌──────────────────────────────────────────────────────────────┐  │
 │ │ SETUP  Pre-Production Checklist                              │  │
@@ -580,7 +572,12 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 - Each task card has an inline assignee dropdown
 - Changing the dropdown immediately triggers `PATCH /studios/:studioId/tasks/:taskUid/assign`
 - Change is reflected instantly (optimistic update)
-- "Assign All" button opens the same assignment dialog from §3.3.2 but for a single show
+- "Assign All Tasks" button opens the same assignment dialog from §3.3.2 but for a single show
+
+**Show-Level Actions in Detail Page**:
+- "Generate Tasks" button opens the same generation dialog from §3.3.1 scoped to the current show
+- "Assign All Tasks" opens assignment dialog from §3.3.2 scoped to the current show
+- Successful generate/assign actions refetch the show task list immediately
 
 **Key Features**:
 - Ordered by task type: SETUP → ACTIVE → CLOSURE → OTHER
@@ -1492,7 +1489,9 @@ ShowsPage
 
 ShowTasksPage
 ├── ShowHeader (back link, show name, client, schedule)
-├── "Assign All" button → ShowAssignmentDialog (for single show)
+├── "Generate Tasks" button → BulkTaskGenerationDialog (for single show)
+├── "Assign All Tasks" button → ShowAssignmentDialog (for single show)
+├── "Delete Selected" button → DeleteTasksDialog (for selected tasks)
 └── TaskCardList
     └── TaskCard (type badge, status, due date, assignee dropdown, view link)
         └── AssigneeDropdown → inline PATCH assign API call
@@ -1518,7 +1517,7 @@ sequenceDiagram
 
     M->>UI: Select shows + click "Generate Tasks"
     UI->>UI: Open BulkTaskGenerationDialog
-    M->>UI: Select templates per type slot
+    M->>UI: Search and select templates (multi-select)
     M->>UI: Click "Generate Tasks"
     UI->>API: POST /studios/:id/tasks/generate
     API-->>UI: 201 Created (results per show)
@@ -1533,6 +1532,16 @@ sequenceDiagram
     UI->>UI: Refresh, show success toast
 
     M->>UI: Navigate to show detail
+    M->>UI: Click "Generate Tasks"
+    UI->>API: POST /studios/:id/tasks/generate (single show UID)
+    API-->>UI: 201 Created
+    UI->>UI: Refetch show tasks
+
+    M->>UI: Click "Assign All Tasks"
+    UI->>API: POST /studios/:id/tasks/assign-shows (single show UID)
+    API-->>UI: 200 OK
+    UI->>UI: Refetch show tasks
+
     M->>UI: Change assignee dropdown on a task
     UI->>API: PATCH /studios/:id/tasks/:taskUid/assign
     API-->>UI: 200 OK
@@ -1541,7 +1550,7 @@ sequenceDiagram
     M->>UI: Select tasks + click "Delete"
     UI->>UI: Open DeleteTasksDialog
     M->>UI: Confirm Deletion
-    UI->>API: DELETE /studios/:id/tasks (bulk)
+    UI->>API: DELETE /studios/:id/tasks/bulk
     API-->>UI: 200 OK
     UI->>UI: Refresh tasks list, show success toast
 ```
