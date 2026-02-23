@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import {
   AsyncCombobox,
   Button,
+  Checkbox,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -13,24 +14,33 @@ import {
 } from '@eridu/ui';
 
 import { useMembershipsQuery } from '@/features/memberships/api/get-memberships';
-import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
+import type { ShowSelection } from '@/features/studio-shows/api/get-studio-shows';
 import { useAssignShows } from '@/features/studio-shows/hooks/use-assign-shows';
 
 type ShowAssignmentDialogProps = {
   studioId: string;
-  shows: StudioShow[];
+  shows: ShowSelection[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 };
 
-export function ShowAssignmentDialog({ studioId, shows, open, onOpenChange }: ShowAssignmentDialogProps) {
+export function ShowAssignmentDialog({
+  studioId,
+  shows,
+  open,
+  onOpenChange,
+  onSuccess,
+}: ShowAssignmentDialogProps) {
   const [selectedAssignee, setSelectedAssignee] = useState<string>('');
   const [memberSearch, setMemberSearch] = useState('');
+  const [confirmOverwrite, setConfirmOverwrite] = useState(false);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       setSelectedAssignee('');
       setMemberSearch('');
+      setConfirmOverwrite(false);
     }
     onOpenChange(nextOpen);
   };
@@ -48,6 +58,7 @@ export function ShowAssignmentDialog({ studioId, shows, open, onOpenChange }: Sh
     studioId,
     onSuccess: () => {
       handleOpenChange(false);
+      onSuccess?.();
     },
   });
 
@@ -66,8 +77,20 @@ export function ShowAssignmentDialog({ studioId, shows, open, onOpenChange }: Sh
     );
   }, [memberOptions, memberSearch]);
 
+  const overwriteShowsCount = useMemo(
+    () => shows.filter((show) => show.task_summary.assigned > 0).length,
+    [shows],
+  );
+  const overwriteTasksCount = useMemo(
+    () => shows.reduce((total, show) => total + show.task_summary.assigned, 0),
+    [shows],
+  );
+  const requiresOverwriteConfirmation = overwriteShowsCount > 0;
+
   const handleAssign = () => {
     if (!selectedAssignee || shows.length === 0)
+      return;
+    if (requiresOverwriteConfirmation && !confirmOverwrite)
       return;
 
     assignShows({
@@ -88,7 +111,7 @@ export function ShowAssignmentDialog({ studioId, shows, open, onOpenChange }: Sh
             Show(s)
           </DialogTitle>
           <DialogDescription>
-            Select a studio member to assign all unassigned tasks to for the selected shows.
+            Select a studio member to assign all tasks for the selected shows.
           </DialogDescription>
         </DialogHeader>
 
@@ -122,6 +145,29 @@ export function ShowAssignmentDialog({ studioId, shows, open, onOpenChange }: Sh
                   />
                 )}
           </div>
+
+          {requiresOverwriteConfirmation && (
+            <div className="space-y-3 rounded-md border border-amber-200 bg-amber-50 p-3">
+              <p className="text-sm text-amber-900">
+                This action will overwrite existing assignees on
+                {' '}
+                {overwriteTasksCount}
+                {' '}
+                task(s) across
+                {' '}
+                {overwriteShowsCount}
+                {' '}
+                selected show(s).
+              </p>
+              <label className="flex items-center gap-2 text-sm text-amber-900">
+                <Checkbox
+                  checked={confirmOverwrite}
+                  onCheckedChange={(checked) => setConfirmOverwrite(Boolean(checked))}
+                />
+                I understand existing assignees will be overwritten.
+              </label>
+            </div>
+          )}
         </div>
 
         <DialogFooter>
@@ -130,7 +176,7 @@ export function ShowAssignmentDialog({ studioId, shows, open, onOpenChange }: Sh
           </Button>
           <Button
             onClick={handleAssign}
-            disabled={isAssigning || !selectedAssignee}
+            disabled={isAssigning || !selectedAssignee || (requiresOverwriteConfirmation && !confirmOverwrite)}
           >
             {isAssigning ? 'Assigning...' : 'Assign Tasks'}
           </Button>
