@@ -1,6 +1,6 @@
 # Task Management System - UI/UX Design
 
-**Version**: 3.2
+**Version**: 3.3
 **Last Updated**: February 23, 2026
 **Status**: Core implemented. Two functional gaps identified: (1) task form not rendered — `snapshot.schema` missing from API response; (2) My Tasks filter bar too limited. Both are planned next along with the review workflow. Deferred: animations, swipe gestures, file uploads, PWA/offline, WebSocket, analytics.
 
@@ -1801,6 +1801,16 @@ ShowTasksPage
 - `useGenerateTasks()` → mutation for bulk task generation
 - `useAssignShows()` → mutation for bulk show assignment
 - `useReassignTask()` → mutation for individual task reassignment
+
+### Cache Freshness Strategy (Balanced)
+
+- Keep `staleTime` at 60s for show list/task list queries to avoid noisy background polling.
+- On bulk generate/assign success, invalidate:
+  - studio show lists for current studio (`studio-shows/list/{studioId}`)
+  - only affected show task queries (`show-tasks/list/{studioId}/{showUid}` for submitted `show_uids`)
+- Do not invalidate every show-task query globally; this prevents unnecessary refetches for unrelated shows.
+- On shows table selection, keep selected IDs as source of truth and hydrate selected show objects from latest query data each render.
+- Maintain a small selected-show snapshot map only for cross-page selection fallback (names/summary in dialogs), and overwrite with fresh row data whenever available.
 
 ### Data Flow
 

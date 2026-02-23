@@ -1,6 +1,6 @@
 # Task Management System - Backend Design
 
-**Version**: 3.3
+**Version**: 3.4
 **Last Updated**: February 23, 2026
 **Status**: Core implemented. Planned next: task review workflow (state machine enforcement + admin review endpoints). `AdminTaskController` system admin tools deferred.
 
@@ -1621,6 +1621,17 @@ const tasks = await prisma.task.findMany({
   }
 });
 ```
+
+### Frontend Cache Consistency Contract
+
+- Bulk mutation endpoints (`/tasks/generate`, `/tasks/assign-shows`) must remain studio-scoped and deterministic for submitted `show_uids`.
+- Frontend invalidates cache by scope:
+  - studio shows list cache for the studio
+  - show task caches only for affected `show_uids`
+- This keeps read-after-write consistency for:
+  - `/studios/:studioId/shows`
+  - `/studios/:studioId/shows/:showId/tasks`
+- Avoid broad "invalidate all task queries" patterns; they increase network load with no correctness benefit.
 
 ### Pagination
 
