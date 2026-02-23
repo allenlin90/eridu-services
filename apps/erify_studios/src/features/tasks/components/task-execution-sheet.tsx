@@ -1,8 +1,9 @@
 import { format } from 'date-fns';
-import { CheckCircle2, PlayCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, PlayCircle, Send } from 'lucide-react';
+import { useState } from 'react';
 
-import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
-import { TASK_STATUS } from '@eridu/api-types/task-management';
+import type { TaskStatus, TaskWithRelationsDto } from '@eridu/api-types/task-management';
+import { TASK_STATUS, TemplateSchemaValidator } from '@eridu/api-types/task-management';
 import {
   Badge,
   Button,
@@ -15,35 +16,75 @@ import {
 
 import { useUpdateMyTask } from '../hooks/use-update-my-task';
 
+import { JsonForm } from '@/components/json-form/json-form';
+
 type TaskExecutionSheetProps = {
   task: TaskWithRelationsDto | null;
   onClose: () => void;
   studioId: string;
 };
 
+const STATUS_VARIANT: Partial<Record<TaskStatus, 'default' | 'secondary' | 'destructive' | 'outline'>> = {
+  COMPLETED: 'default',
+  REVIEW: 'secondary',
+  BLOCKED: 'destructive',
+};
+
+function StatusBadge({ status }: { status: TaskStatus }) {
+  return (
+    <Badge variant={STATUS_VARIANT[status] ?? 'secondary'}>
+      {status.replace('_', ' ')}
+    </Badge>
+  );
+}
+
 export function TaskExecutionSheet({ task, onClose, studioId: _studioId }: TaskExecutionSheetProps) {
   const { mutate: updateTask, isPending } = useUpdateMyTask();
+  const [draft, setDraft] = useState<{ taskId: string; content: Record<string, unknown> } | null>(null);
 
+  // All hooks above — early return is safe here
   if (!task)
     return null;
 
-  const handleUpdateStatus = (status: typeof TASK_STATUS[keyof typeof TASK_STATUS]) => {
+  // task is narrowed to TaskWithRelationsDto from here on
+  const parsedSchema = task.snapshot?.schema
+    ? TemplateSchemaValidator.safeParse(task.snapshot.schema)
+    : null;
+  const uiSchema = parsedSchema?.success ? parsedSchema.data : null;
+
+  const isReadOnly = task.status === TASK_STATUS.COMPLETED
+    || task.status === TASK_STATUS.REVIEW
+    || task.status === TASK_STATUS.CLOSED;
+
+  const formValues: Record<string, unknown> = draft?.taskId === task.id
+    ? draft.content
+    : (task.content ?? {});
+
+  const rejectionNote = task.metadata?.rejection_note as string | undefined;
+
+  const handleUpdateStatus = (status: TaskStatus) => {
+    const nextContent = draft?.taskId === task.id ? draft.content : task.content;
     updateTask(
       {
         taskId: task.id,
         data: {
           version: task.version,
           status,
+          ...(nextContent ? { content: nextContent } : {}),
         },
       },
       {
         onSuccess: () => {
           if (status === TASK_STATUS.COMPLETED) {
-            onClose(); // Optional: close on completion
+            onClose();
           }
         },
       },
     );
+  };
+
+  const handleFormChange = (values: Record<string, unknown>) => {
+    setDraft({ taskId: task.id, content: values });
   };
 
   return (
@@ -51,11 +92,10 @@ export function TaskExecutionSheet({ task, onClose, studioId: _studioId }: TaskE
       <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col h-full bg-slate-50">
         <SheetHeader className="p-6 bg-white border-b">
           <div className="flex items-center gap-2 mb-2">
-            <Badge variant={task.status === TASK_STATUS.COMPLETED ? 'default' : 'secondary'}>
-              {task.status}
-            </Badge>
+            <StatusBadge status={task.status} />
             {task.due_date && (
-              <span className="text-xs text-muted-foreground font-medium">
+              <span className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                <Clock className="w-3 h-3" />
                 Due:
                 {' '}
                 {format(new Date(task.due_date), 'PPP')}
@@ -70,29 +110,45 @@ export function TaskExecutionSheet({ task, onClose, studioId: _studioId }: TaskE
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          <div className="bg-white border rounded-lg p-4 shadow-sm">
-            <h4 className="text-sm font-semibold mb-3">Task Content</h4>
-            {task.content
-              ? (
-                  <pre className="text-xs bg-slate-50 p-3 rounded-md overflow-x-auto text-slate-700 border">
-                    {JSON.stringify(task.content, null, 2)}
-                  </pre>
-                )
-              : (
-                  <p className="text-sm text-muted-foreground italic">No specific content or instructions provided.</p>
-                )}
-          </div>
+          {task.status === TASK_STATUS.IN_PROGRESS && rejectionNote && (
+            <div className="flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-amber-800">Reviewer note</p>
+                <p className="text-sm text-amber-700 mt-0.5">{rejectionNote}</p>
+              </div>
+            </div>
+          )}
+
+          {task.status === TASK_STATUS.REVIEW && (
+            <div className="flex gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <Clock className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-blue-800">Awaiting review</p>
+                <p className="text-sm text-blue-700 mt-0.5">
+                  This task has been submitted and is pending approval.
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="bg-white border rounded-lg p-4 shadow-sm">
-            <h4 className="text-sm font-semibold mb-3">Metadata</h4>
-            {task.metadata
+            <h4 className="text-sm font-semibold mb-4">Task Checklist</h4>
+            {uiSchema
               ? (
-                  <pre className="text-xs bg-slate-50 p-3 rounded-md overflow-x-auto text-slate-700 border">
-                    {JSON.stringify(task.metadata, null, 2)}
-                  </pre>
+                  <JsonForm
+                    schema={uiSchema}
+                    values={formValues}
+                    onChange={isReadOnly ? undefined : handleFormChange}
+                    readOnly={isReadOnly}
+                  />
                 )
               : (
-                  <p className="text-sm text-muted-foreground italic">No metadata attached.</p>
+                  <p className="text-sm text-muted-foreground italic">
+                    {task.snapshot?.schema
+                      ? 'Unable to render form — invalid schema.'
+                      : 'No form template attached to this task.'}
+                  </p>
                 )}
           </div>
         </div>
@@ -114,23 +170,19 @@ export function TaskExecutionSheet({ task, onClose, studioId: _studioId }: TaskE
             <Button
               className="w-full"
               size="lg"
-              onClick={() => handleUpdateStatus(TASK_STATUS.COMPLETED)}
+              onClick={() => handleUpdateStatus(TASK_STATUS.REVIEW)}
               disabled={isPending}
             >
-              <CheckCircle2 className="w-5 h-5 mr-2" />
-              Complete Task
+              <Send className="w-5 h-5 mr-2" />
+              Submit for Review
             </Button>
           )}
 
           {task.status === TASK_STATUS.COMPLETED && (
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => handleUpdateStatus(TASK_STATUS.IN_PROGRESS)}
-              disabled={isPending}
-            >
-              Reopen Task
-            </Button>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center py-1">
+              <CheckCircle2 className="w-4 h-4 text-green-500" />
+              Task completed
+            </div>
           )}
         </div>
       </SheetContent>
