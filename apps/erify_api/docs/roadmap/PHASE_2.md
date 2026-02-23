@@ -1,6 +1,6 @@
 # Phase 2: Show Task Management & Assignments
 
-**Status**: ⏳ Partially Implemented
+**Status**: ✅ Complete
 
 ## Overview
 
@@ -39,23 +39,12 @@ Phase 2 focuses on "**generic Task Management**" to enable extensible workflow m
 
 ## Implementation Scope
 
-### Database Schema Updates
+All items implemented. See [Task Management Design](../TASK_MANAGEMENT_DESIGN.md) for full API reference.
 
-- [ ] Add `studioId` (optional) to `Show` model.
-- [ ] Add `Studio` relation to `Show` model.
-
-### CRUD Entities
-
-- [x] `TaskTemplate` (Schema Definition) ✅ Implemented at `/studios/:studioId/task-templates`
-- [x] `TaskTemplateSnapshot` (Immutable version history) ✅ Auto-created on schema changes
-- [ ] Application constants: `TaskStatus` (Enum)
-- [ ] `Task` (Form Instance) & `TaskTarget` (Association)
-
-### Tasks & Assignments
-
-- [ ] Template management and automated generation logic (Show creation -> Task generation).
-- [ ] Assignment and status tracking endpoints.
-- [ ] Operator Dashboard endpoints.
+- `studioId` added to `Show` model with `Studio` relation
+- `TaskStatus`, `TaskType` enums in Prisma schema
+- `Task` and `TaskTarget` models with polymorphic association
+- Full template management, bulk generation, assignment, and operator endpoints
 
 ## Technical Considerations
 
@@ -74,10 +63,8 @@ Phase 2 focuses on "**generic Task Management**" to enable extensible workflow m
 
 ## Success Criteria
 
-### Task Management
-
-- [ ] Full workflow from Template -> Task generation -> Completion.
-- [ ] Operators can see "My Tasks" across all shows.
+- Full workflow from Template → Task generation → Completion: ✅
+- Operators can see "My Tasks" across all shows: ✅
 
 ## Dependencies
 
@@ -173,6 +160,7 @@ enum TaskStatus {
   REVIEW
   COMPLETED
   BLOCKED
+  CLOSED
 }
 
 model Task {
@@ -248,6 +236,7 @@ model TaskTarget {
   @@index([showId])
   @@index([studioId])
   @@index([targetType, targetId])
+  @@index([deletedAt])
   @@map("task_targets")
 }
 ```

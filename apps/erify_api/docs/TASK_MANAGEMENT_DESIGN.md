@@ -1,28 +1,8 @@
 # Task Management System - Backend Design
 
-**Version**: 3.2  
-**Last Updated**: February 23, 2026  
-**Status**: Partially Implemented — see [§12 Implementation Checklist](#12-implementation-checklist) for full progress
-
-### What's Done ✅
-- TaskTemplate CRUD + snapshot management (`/studios/:studioId/task-templates`)
-- Bulk Task Generation (`POST /studios/:studioId/tasks/generate`)
-- Bulk Show Assignment (`POST /studios/:studioId/tasks/assign-shows`)
-- Individual Task Reassignment (`PATCH /studios/:studioId/tasks/:id/assign`)
-- Studio Shows with Task Summary (`GET /studios/:studioId/shows`)
-- Studio Show Detail (`GET /studios/:studioId/shows/:showUid`)
-- View Show Tasks (`GET /studios/:studioId/shows/:showUid/tasks`)
-- Bulk Task Deletion with transactional cascading soft-delete (`DELETE /studios/:studioId/tasks/bulk`)
-- Task content update with optimistic locking (`PATCH /studios/:studioId/tasks/:id`)
-- Task content/status update for operators, assignee-owns-task guard (`PATCH /me/tasks/:id`)
-- Content validation against snapshot schema on update
-- `completedAt` auto-set on COMPLETED transition
-- Advanced filtering for Studio Shows (Client, Standard, Status, Platform, Task Presence)
-- Task resumption logic (soft-delete recovery during generation)
-
-### What's Pending ❌
-- Status transition enforcement (state machine)
-- `AdminTaskController` system admin tools
+**Version**: 3.3
+**Last Updated**: February 23, 2026
+**Status**: Implemented. Two items remain deferred post-MVP: status transition state machine enforcement, and `AdminTaskController` system admin tools.
 
 > **Related Documentation**  
 > For UI/UX specifications and user workflows, see [`apps/erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md`](../../erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md)
@@ -42,8 +22,7 @@
 9. [Authentication & Authorization](#9-authentication--authorization)
 10. [Error Handling](#10-error-handling)
 11. [Performance & Optimization](#11-performance--optimization)
-12. [Implementation Checklist](#12-implementation-checklist)
-13. [Appendices](#appendices)
+12. [Appendices](#appendices)
 
 ---
 
@@ -1528,63 +1507,6 @@ async function paginateTasks(
   };
 }
 ```
-
----
-
-## 12. Implementation Checklist
-
-### Database
-- [x] Create Prisma schema with all models (`TaskTemplate`, `TaskTemplateSnapshot`, `Task`, `TaskTarget`)
-- [x] Add composite indexes for common queries (assignee+status, studio+status, template+deletedAt, etc.)
-- [x] Write migration scripts
-- [ ] Add GIN indexes for JSONB columns (`content`, `schema`) — deferred
-- [ ] Add `one_target_only` DB constraint on `task_targets` — deferred
-
-### Core Services
-- [x] `TaskTemplateService` — CRUD, schema validation, snapshot creation on update
-- [x] `TaskOrchestrationService` — generate, assign-shows, reassign, get-show-tasks, studio-shows-with-summary
-- [x] `TaskGenerationProcessor` — single-show transactional processing with advisory lock
-- [x] Schema validation (moved into `TaskTemplateService.validateSchema()` + `@eridu/api-types`)
-- [x] `TaskService.update()` — task content update with optimistic locking ✅
-- [x] Content validation against snapshot schema on task update ✅
-- [ ] Status transition state machine enforcement ❌
-- [x] `completedAt` auto-set on `COMPLETED` transition ✅
-
-### API Controllers
-- [x] `StudioTaskTemplateController` — full CRUD at `/studios/:studioId/task-templates`
-- [x] `StudioTaskController` — generate, assign-shows, reassign, task content update, bulk delete at `/studios/:studioId/tasks` ✅
-- [x] `StudioShowController` — studio shows with task summary + advanced filters at `GET /studios/:studioId/shows` ✅
-- [x] `StudioShowTaskController` — show tasks at `GET /studios/:studioId/shows/:showUid/tasks` ✅
-- [x] `MeTaskController` — `GET /me/tasks`, `GET /me/tasks/:id`, `PATCH /me/tasks/:id` ✅
-- [ ] `AdminTaskController` — system admin tools ❌
-
-### Authentication & Guards
-- [x] `JwtAuthGuard`
-- [x] `StudioMembershipGuard` (via `@StudioProtected()` decorator)
-- [x] `SystemAdminGuard` (via `AdminGuard`)
-- [x] Role-based decorators (`@StudioProtected([STUDIO_ROLE.ADMIN])`)
-- [x] Enforce assignee-owns-task check for `PATCH /me/tasks/:uid` ✅ (implemented in `MeTaskService.updateMyTask`)
-
-### Error Handling
-- [x] Global exception filter
-- [x] `HttpError` utility + `VersionConflictError` domain error
-- [x] Zod validation error formatting via `nestjs-zod`
-
-### Shared Types (`@eridu/api-types`)
-- [x] Export enums: `TaskStatus`, `TaskType`
-- [x] Export Zod schemas: `taskSchema`, `taskDto`, `generateTasksRequestSchema`, `assignShowsRequestSchema`, `updateTaskRequestSchema`, etc.
-- [x] Export `/me/tasks` list/get schemas (needed for `GET /me/tasks`, `GET /me/tasks/:id`) ✅ implemented
-
-### Testing
-- [x] `TaskTemplateService` unit tests (schema validation, create/update/delete)
-- [x] `TaskOrchestrationService` unit tests (generate, assign-shows, reassign, getShowTasks, getStudioShowsWithTaskSummary)
-- [x] `TaskGenerationProcessor` unit tests
-- [x] `StudioTaskController` unit tests
-- [ ] `MeTaskController` / `MeTaskService` unit tests ❌
-- [ ] Unit tests for status transition validation — deferred (state machine not yet implemented) ❌
-- [ ] Integration tests for race condition (advisory lock) — deferred ❌
-- [ ] Integration tests for bulk assignment — deferred ❌
-- [ ] Integration test for optimistic locking conflict — deferred ❌
 
 ---
 

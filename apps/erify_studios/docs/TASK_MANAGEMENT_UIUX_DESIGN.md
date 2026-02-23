@@ -1,8 +1,8 @@
 # Task Management System - UI/UX Design
 
-**Version**: 3.1  
-**Last Updated**: February 23, 2026  
-**Status**: Partially Implemented (Core studio workflows live; remaining polish listed in §13)
+**Version**: 3.2
+**Last Updated**: February 23, 2026
+**Status**: Implemented. Deferred items: animations (confetti/checkbox), mobile swipe gestures, file uploads, PWA/offline, real-time WebSocket updates, analytics dashboard.
 
 > **Related Documentation**  
 > For API contracts, database schema, and backend architecture, see [`apps/erify_api/docs/TASK_MANAGEMENT_DESIGN.md`](../../erify_api/docs/TASK_MANAGEMENT_DESIGN.md)
@@ -20,11 +20,8 @@
 7. [Accessibility](#7-accessibility)
 8. [Error States & Edge Cases](#8-error-states--edge-cases)
 9. [Technical Integration](#9-technical-integration)
-10. [Implementation Roadmap](#10-implementation-roadmap)
-11. [Implemented Component Patterns](#11-implemented-component-patterns)
-12. [Task Generation & Assignment Workflows](#12-task-generation--assignment-workflows)
-13. [Implementation Status & Progress](#13-implementation-status--progress)
-14. [Bug Reports & Design Corrections](#14-bug-reports--design-corrections)
+10. [Implemented Component Patterns](#10-implemented-component-patterns)
+11. [Task Generation & Assignment Workflows](#11-task-generation--assignment-workflows)
 
 ---
 
@@ -93,6 +90,13 @@
    ├─ Task Detail
    └─ Task History
 ```
+
+### Architectural Boundary
+
+> [!IMPORTANT]
+> **`/system/*` routes** are root-level record control — plain CRUD, no business logic. For super-admin access to raw model data only.
+>
+> **`/studios/$studioId/*` routes** own all business workflows — task generation, assignment, progress tracking, and operator execution. Scoped to studio context with role-based access.
 
 ### Global Navigation
 
@@ -1210,53 +1214,11 @@ function isFieldComplete(type: string, value: any): boolean {
 
 ---
 
-## 10. Implementation Roadmap
+## 10. Implemented Component Patterns
 
-### Phase 1: Core Components (Week 1)
-- [ ] Setup `TaskTable` (Desktop) and `TaskList` (Mobile) components
-- [ ] Implement `BulkActionBar` with selection state
-- [ ] Create `TaskDrawer` container (routing-aware or state-driven)
-- [ ] Build responsive breakpoint logic (768px for mobile/desktop switch)
+The following patterns are implemented and available for use:
 
-### Phase 2: Form Engine (Week 2)
-- [ ] Implement `JsonForm` component that accepts a schema and renders fields
-- [ ] Integrate `react-hook-form` and `zod` for dynamic validation
-- [ ] Support primary field types: checkbox, text, number, select, date, textarea
-- [ ] Implement client-side progress calculation logic
-
-### Phase 3: Template Builder (Week 2-3)
-- [ ] Create `TemplateLibrary` grid view with search and filters
-- [ ] Build `TemplateCreateModal` for initial template setup
-- [ ] Implement `TemplateBuilder` with card stack design
-- [ ] Add drag-and-drop field reordering
-- [ ] Build mobile-optimized template builder with bottom sheet patterns
-
-### Phase 4: Integration (Week 3)
-- [ ] Connect `BulkAssignDialog` to API
-- [ ] Implement Optimistic UI updates for task content changes
-- [ ] Implement pull-to-refresh on mobile task lists
-- [ ] Add error handling and conflict resolution UI
-
-### Phase 5: Polish & Accessibility (Week 4)
-- [ ] Implement Optimistic Locking:
-  - Store `task.version` in state
-  - Send `version` with all PATCH requests
-  - Handle `409 Conflict` by showing toast and refreshing data
-- [ ] Add conflict resolution UI for concurrent edits
-- [ ] Add animations: checkbox complete, task complete confetti, loading states
-- [ ] Implement keyboard navigation and screen reader support
-- [ ] Ensure WCAG AA color contrast compliance
-- [ ] Add mobile swipe actions and gestures
-
----
-
-## 11. Implemented Component Patterns
-
-**Status**: ✅ Implemented (as of February 8, 2026)
-
-The following patterns have been implemented as part of the initial Task Templates feature:
-
-### 11.1 ResponsiveCardGrid Component
+### 10.1 ResponsiveCardGrid Component
 
 **Purpose**: Provides a responsive grid layout that automatically adjusts the number of columns based on available width without media queries.
 
@@ -1294,7 +1256,7 @@ function CardList({ items }) {
 
 ---
 
-### 11.2 useInfiniteScroll Hook
+### 10.2 useInfiniteScroll Hook
 
 **Purpose**: Implements infinite scroll using Intersection Observer API, automatically fetching more data when user scrolls near the bottom.
 
@@ -1348,7 +1310,7 @@ function InfiniteList() {
 
 ---
 
-### 11.3 Route Layout Pattern
+### 10.3 Route Layout Pattern
 
 **Pattern**: Parent route layouts should render `<Outlet />` without additional wrappers, as each child route handles its own layout structure.
 
@@ -1388,7 +1350,7 @@ function TaskTemplatesPage() {
 
 ---
 
-### 11.4 Sticky Toolbar Pattern
+### 10.4 Sticky Toolbar Pattern
 
 **Use Case**: Pages with infinite scroll lists where search and actions should remain accessible while scrolling.
 
@@ -1478,7 +1440,7 @@ function PageLayout({ refreshQueryKey }) {
 
 ---
 
-## 12. Task Generation & Assignment Workflows
+## 11. Task Generation & Assignment Workflows
 
 ### Route Structure
 
@@ -1620,78 +1582,3 @@ The design balances functional efficiency with visual refinement, creating an in
 
 For backend architecture and API specifications, see: [`apps/erify_api/docs/TASK_MANAGEMENT_DESIGN.md`](../../erify_api/docs/TASK_MANAGEMENT_DESIGN.md)
 
----
-
-## 13. Implementation Status & Progress
-
-This section tracks the real-world implementation progress of the design, organized by phase.
-
----
-
-### Architectural Boundary Rule
-
-> [!IMPORTANT]
-> **`/system/*` routes** are **root-level record control** — plain CRUD with no business logic. They exist for super-admin access to raw model data (create, read, update, delete individual records). No task orchestration, no bulk generation, no assignment workflows.
->
-> **`/studios/$studioId/*` routes** own **all business workflows** — task generation, assignment, progress tracking, and operator execution. These routes are scoped to a studio context and enforce role-based access.
-
----
-
-### Phase 1: Core Components & Form Engine
-- **Status**: ✅ Complete
-- `components/json-form/json-form.tsx` — Dynamic schema-based form renderer
-- `lib/zod-schema-builder.ts` — Server schema → Zod validator
-- `features/tasks/components/task-card.tsx` — Status-aware task display
-
----
-
-### Phase 2: Template Builder
-- **Status**: ✅ Complete (Pre-existing)
-- `components/task-templates/builder/task-template-builder.tsx` — Visual editor
-- `routes/studios/$studioId/task-templates/index.tsx` — Template management
-
----
-
-### Phase 3: Shows Task Management (Manager)
-- **Status**: ✅ Complete
-
-#### Phase 3.1: Studio UI Foundation (✅ Done)
-- **Studio Dashboard**: Dedicated board at `/studios/$studioId/shows` with real API fetching and task-progression cards.
-- **Scoping**: Properly scoped list with search (debounced, URL-synced) and date range filter.
-- **Bulk Actions UI**: ID-based row selection (cross-page safe), desktop floating action toolbar, and mobile bottom action sheet integrated.
-- **Admin Cleanup**: `/system/shows` reverted to plain CRUD as per architectural rule.
-
-#### Phase 3.2: Logic & API Integration (✅ Done)
-- **Dialog Logic**: `BulkTaskGenerationDialog` — checkbox template selection, grouped by type, POST to generate endpoint. `ShowAssignmentDialog` — `AsyncCombobox` member picker with client-side search, POST to assign endpoint.
-- **Show Tasks Detail**: Full task list with type, status, assignee, due date at `/studios/$studioId/shows/$showId/tasks`.
-- **Inline Actions**: `AsyncCombobox` assignee dropdown per task row; immediate `PATCH /assign` on change; supports clearing the assignee.
-
-#### Phase 3.3: Task Deletion Workflow (✅ Done)
-- **Backend API (`apps/erify_api`)**:
-  - `BulkDeleteTasksDto` and `DELETE /studios/:studioId/tasks/bulk` implemented.
-  - Transactional `bulkSoftDelete` in `TaskRepository`.
-  - **Resume strategy** in `TaskGenerationProcessor`: soft-deleted tasks are now restored and reset instead of duplicated during generation.
-- **Frontend UI (`apps/erify_studios`)**:
-  - `<ShowTasksTable>` row selection and `DeleteTasksDialog` implemented.
-  - CRUD operations invalidate correct query keys to refresh task list.
-
-#### Phase 3.4: Advanced Studio Filters (✅ Done)
-- **Backend API (`apps/erify_api`)**:
-  - `ListStudioShowsQueryDto` updated with name-based filters for Client, Standard, Status, Platform, and Type.
-  - `ShowRepository` applies these filters with case-insensitive partial matching (`ILIKE`).
-- **Frontend UI (`apps/erify_studios`)**:
-  - `useStudioShows` hook updated to handle advanced filter state.
-  - `<AdminTableToolbar />` integrated on shows page with dynamic options from field-data hooks.
-  - `has_tasks` moved into advanced filters (featured section) so reset/count behavior is consistent with other advanced filters.
-
----
-
-### Phase 4: My Tasks (Operator)
-- **Status**: ✅ Complete
-- **MobileTaskList**: Today/Upcoming/All tabs using `date-fns` for `due_date` filtering.
-- **TaskExecutionSheet**: Slide-over with task status badge, JSON content view, and status transition buttons (PENDING → IN_PROGRESS → COMPLETED).
-- **Interactivity**: Status buttons wired to `useUpdateMyTask` mutation with optimistic list invalidation.
-
----
-
-**End of Implementation Progress Tracker**
