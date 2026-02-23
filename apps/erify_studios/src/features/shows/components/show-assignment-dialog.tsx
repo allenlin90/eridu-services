@@ -1,4 +1,3 @@
-import { useParams } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 
 import {
@@ -18,14 +17,23 @@ import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
 import { useAssignShows } from '@/features/studio-shows/hooks/use-assign-shows';
 
 type ShowAssignmentDialogProps = {
+  studioId: string;
   shows: StudioShow[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-export function ShowAssignmentDialog({ shows, open, onOpenChange }: ShowAssignmentDialogProps) {
-  const { studioId } = useParams({ strict: false }) as { studioId: string };
+export function ShowAssignmentDialog({ studioId, shows, open, onOpenChange }: ShowAssignmentDialogProps) {
   const [selectedAssignee, setSelectedAssignee] = useState<string>('');
+  const [memberSearch, setMemberSearch] = useState('');
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setSelectedAssignee('');
+      setMemberSearch('');
+    }
+    onOpenChange(nextOpen);
+  };
 
   // Fetch studio members (up to 100 for the dropdown)
   const { data: membersResponse, isLoading: isLoadingMembers } = useMembershipsQuery({
@@ -39,12 +47,9 @@ export function ShowAssignmentDialog({ shows, open, onOpenChange }: ShowAssignme
   const { mutate: assignShows, isPending: isAssigning } = useAssignShows({
     studioId,
     onSuccess: () => {
-      onOpenChange(false);
-      setSelectedAssignee('');
+      handleOpenChange(false);
     },
   });
-
-  const [memberSearch, setMemberSearch] = useState('');
 
   const memberOptions = useMemo(() => {
     return members.map((m) => ({
@@ -72,7 +77,7 @@ export function ShowAssignmentDialog({ shows, open, onOpenChange }: ShowAssignme
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
           <DialogTitle>
@@ -120,7 +125,7 @@ export function ShowAssignmentDialog({ shows, open, onOpenChange }: ShowAssignme
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isAssigning}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isAssigning}>
             Cancel
           </Button>
           <Button

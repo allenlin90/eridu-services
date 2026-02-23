@@ -47,13 +47,10 @@ function StudioShowTasksPage() {
   }, [assignTask]);
 
   const selectedUids = useMemo(() => {
-    if (!tasks)
-      return [];
     return Object.entries(rowSelection)
       .filter(([, isSelected]) => isSelected)
-      .map(([index]) => tasks[Number.parseInt(index, 10)]?.id)
-      .filter((id): id is string => Boolean(id));
-  }, [rowSelection, tasks]);
+      .map(([id]) => id);
+  }, [rowSelection]);
   const selectedCount = selectedUids.length;
 
   const handleDeleteSelected = () => {
@@ -112,6 +109,7 @@ function StudioShowTasksPage() {
           searchPlaceholder="Search tasks..."
           rowSelection={rowSelection}
           onRowSelectionChange={setRowSelection}
+          getRowId={(task) => task.id}
         />
       </div>
 

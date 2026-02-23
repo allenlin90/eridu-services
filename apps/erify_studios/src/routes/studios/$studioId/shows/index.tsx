@@ -243,6 +243,7 @@ function StudioShowsPage() {
 
       {bulkAssigningShows && (
         <ShowAssignmentDialog
+          studioId={studioId}
           open={bulkAssigningShows.length > 0}
           onOpenChange={(open) => {
             if (!open)

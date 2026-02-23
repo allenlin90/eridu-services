@@ -38,10 +38,10 @@ export function useStudioShows({ studioId }: UseStudioShowsProps) {
   const dateRange = (columnFilters.find((f) => f.id === 'start_time')?.value as { from?: Date; to?: Date }) || undefined;
 
   const filters = useMemo(() => {
-    const f: any = {};
+    const f: Record<string, string | boolean | undefined> = {};
     columnFilters.forEach((filter) => {
       if (['client_name', 'show_type_name', 'show_standard_name', 'show_status_name', 'platform_name'].includes(filter.id)) {
-        f[filter.id] = filter.value;
+        f[filter.id] = filter.value as string;
       }
       if (filter.id === 'has_tasks') {
         f.has_tasks = filter.value === 'true' ? true : filter.value === 'false' ? false : undefined;
