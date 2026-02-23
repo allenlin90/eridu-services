@@ -7,6 +7,7 @@ import { TaskRepository } from './task.repository';
 import { TaskValidationService } from './task-validation.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { TaskValidationError } from '@/lib/errors/task-validation.error';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
@@ -101,28 +102,28 @@ export class TaskService extends BaseModelService {
 
     const uiSchema = task.snapshot?.schema as any;
 
-    if (payload.content !== undefined) {
-      if (uiSchema) {
-        this.taskValidationService.validateContent(payload.content, uiSchema);
-      }
-      newContent = payload.content;
-    }
-
-    if (payload.status && payload.status !== task.status) {
-      newStatus = payload.status;
-
-      if (newStatus === TASK_STATUS.COMPLETED) {
-        if (uiSchema) {
-          // Validate the final content thoroughly if marking completed
-          this.taskValidationService.validateContent(newContent || {}, uiSchema);
-        }
-        completedAt = new Date();
-      } else {
-        completedAt = null;
-      }
-    }
-
     try {
+      if (payload.content !== undefined) {
+        if (uiSchema) {
+          this.taskValidationService.validateContent(payload.content, uiSchema);
+        }
+        newContent = payload.content;
+      }
+
+      if (payload.status && payload.status !== task.status) {
+        newStatus = payload.status;
+
+        if (newStatus === TASK_STATUS.COMPLETED) {
+          if (uiSchema) {
+            // Validate the final content thoroughly if marking completed
+            this.taskValidationService.validateContent(newContent || {}, uiSchema);
+          }
+          completedAt = new Date();
+        } else {
+          completedAt = null;
+        }
+      }
+
       return await this.taskRepository.updateWithVersionCheck(
         { uid, version },
         {
@@ -133,6 +134,11 @@ export class TaskService extends BaseModelService {
         },
       );
     } catch (error) {
+      if (error instanceof TaskValidationError) {
+        throw HttpError.badRequestWithDetails(error.message, {
+          fields: error.validationErrors,
+        });
+      }
       if (error instanceof VersionConflictError) {
         throw HttpError.conflict(
           `Record is out of date. Please refresh and try again.`,
