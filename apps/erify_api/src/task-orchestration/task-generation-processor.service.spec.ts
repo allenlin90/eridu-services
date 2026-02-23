@@ -86,12 +86,15 @@ describe('taskGenerationProcessor', () => {
 
   describe('processShow', () => {
     it('should generate tasks for a show and acquire advisory lock', async () => {
-      const show = { id: BigInt(10), uid: 'show_1', studioId: BigInt(1) } as unknown as Show;
+      const startTime = new Date('2026-02-23T10:00:00.000Z');
+      const endTime = new Date('2026-02-23T12:00:00.000Z');
+      const show = { id: BigInt(10), uid: 'show_1', studioId: BigInt(1), startTime, endTime } as unknown as Show;
       const templates = [
         {
           id: BigInt(1),
           uid: 'tpl_1',
           name: 'Pre-production',
+          currentSchema: { metadata: { task_type: TaskType.SETUP } },
           snapshots: [{ id: BigInt(100) }],
         },
       ] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
@@ -109,6 +112,7 @@ describe('taskGenerationProcessor', () => {
       expect(taskService.create).toHaveBeenCalledWith(expect.objectContaining({
         uid: 'task_123',
         type: TaskType.SETUP,
+        dueDate: new Date(startTime.getTime() - 60 * 60 * 1000),
       }));
       expect(taskTargetService.create).toHaveBeenCalled();
       expect(result.status).toBe('success');
@@ -116,8 +120,13 @@ describe('taskGenerationProcessor', () => {
     });
 
     it('should skip template if task already exists', async () => {
-      const show = { id: BigInt(10), uid: 'show_1' } as unknown as Show;
-      const templates = [{ id: BigInt(1), uid: 'tpl_1' }] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
+      const show = {
+        id: BigInt(10),
+        uid: 'show_1',
+        startTime: new Date('2026-02-23T10:00:00.000Z'),
+        endTime: new Date('2026-02-23T12:00:00.000Z'),
+      } as unknown as Show;
+      const templates = [{ id: BigInt(1), uid: 'tpl_1', currentSchema: { metadata: { task_type: TaskType.SETUP } } }] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
 
       taskService.findByShowAndTemplate.mockResolvedValue({ id: BigInt(1000) } as any);
 
@@ -129,8 +138,13 @@ describe('taskGenerationProcessor', () => {
     });
 
     it('should bubble up errors from database', async () => {
-      const show = { id: BigInt(10), uid: 'show_1' } as unknown as Show;
-      const templates = [{ id: BigInt(1), uid: 'tpl_1' }] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
+      const show = {
+        id: BigInt(10),
+        uid: 'show_1',
+        startTime: new Date('2026-02-23T10:00:00.000Z'),
+        endTime: new Date('2026-02-23T12:00:00.000Z'),
+      } as unknown as Show;
+      const templates = [{ id: BigInt(1), uid: 'tpl_1', currentSchema: { metadata: { task_type: TaskType.SETUP } } }] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
 
       mockPrismaForCls.$executeRaw.mockRejectedValue(new Error('DB Error'));
 
@@ -138,8 +152,13 @@ describe('taskGenerationProcessor', () => {
     });
 
     it('should skip templates with no snapshots', async () => {
-      const show = { id: BigInt(10), uid: 'show_1' } as unknown as Show;
-      const templates = [{ id: BigInt(1), uid: 'tpl_1', name: 'Test', snapshots: [] }] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
+      const show = {
+        id: BigInt(10),
+        uid: 'show_1',
+        startTime: new Date('2026-02-23T10:00:00.000Z'),
+        endTime: new Date('2026-02-23T12:00:00.000Z'),
+      } as unknown as Show;
+      const templates = [{ id: BigInt(1), uid: 'tpl_1', name: 'Test', currentSchema: { metadata: { task_type: TaskType.SETUP } }, snapshots: [] }] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
 
       taskService.findByShowAndTemplate.mockResolvedValue(null);
 

@@ -3,6 +3,8 @@ import { Transactional } from '@nestjs-cls/transactional';
 import type { Show, TaskTemplate, TaskTemplateSnapshot } from '@prisma/client';
 import { TaskStatus, TaskType } from '@prisma/client';
 
+import { TASK_TYPE } from '@eridu/api-types/task-management';
+
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -25,6 +27,7 @@ export class TaskGenerationProcessor {
   async processShow(
     show: Show,
     templates: (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[],
+    dueDates: Record<string, string> = {},
   ) {
     let tasksCreatedForShow = 0;
     let tasksSkippedForShow = 0;
@@ -47,7 +50,8 @@ export class TaskGenerationProcessor {
         continue;
       }
 
-      const type = this.inferTaskType(template.name);
+      const type = this.resolveTemplateTaskType(template.currentSchema);
+      const dueDate = this.resolveDueDateByType(show, type, dueDates[template.uid]);
 
       if (existingTask) {
         if (existingTask.deletedAt === null) {
@@ -61,6 +65,7 @@ export class TaskGenerationProcessor {
           snapshotId: latestSnapshot.id,
           status: TaskStatus.PENDING,
           version: existingTask.version + 1,
+          dueDate,
         });
 
         // Also undelete targets
@@ -77,6 +82,7 @@ export class TaskGenerationProcessor {
         uid: taskUid,
         description: template.name,
         type,
+        dueDate,
         status: TaskStatus.PENDING,
         studio: { connect: { id: show.studioId! } },
         template: { connect: { id: template.id } },
@@ -109,18 +115,38 @@ export class TaskGenerationProcessor {
     };
   }
 
-  private inferTaskType(name: string): TaskType {
-    const lowerName = name.toLowerCase();
-    if (lowerName.includes('pre') || lowerName.includes('setup'))
-      return TaskType.SETUP;
-    if (lowerName.includes('live') || lowerName.includes('active'))
-      return TaskType.ACTIVE;
-    if (lowerName.includes('post') || lowerName.includes('closure') || lowerName.includes('closing'))
-      return TaskType.CLOSURE;
-    if (lowerName.includes('admin'))
-      return TaskType.ADMIN;
-    if (lowerName.includes('routine'))
-      return TaskType.ROUTINE;
+  private resolveTemplateTaskType(schema: unknown): TaskType {
+    const taskType = (schema as { metadata?: { task_type?: string } })?.metadata?.task_type;
+    if (taskType && Object.values(TASK_TYPE).includes(taskType as any)) {
+      return taskType as TaskType;
+    }
+
     return TaskType.OTHER;
+  }
+
+  /**
+   * Derive default due date for show-linked tasks until template-level due rules are available.
+   */
+  private resolveDueDateByType(show: Show, type: TaskType, optionalOverride?: string): Date {
+    if ((type === TaskType.ADMIN || type === TaskType.ROUTINE || type === TaskType.OTHER) && optionalOverride) {
+      const overrideDate = new Date(optionalOverride);
+      if (!Number.isNaN(overrideDate.getTime())) {
+        return overrideDate;
+      }
+    }
+
+    if (type === TaskType.SETUP) {
+      return new Date(show.startTime.getTime() - 60 * 60 * 1000);
+    }
+
+    if (type === TaskType.ACTIVE) {
+      return new Date(show.endTime.getTime() + 60 * 60 * 1000);
+    }
+
+    if (type === TaskType.CLOSURE) {
+      return new Date(show.endTime.getTime() + 6 * 60 * 60 * 1000);
+    }
+
+    return show.startTime;
   }
 }

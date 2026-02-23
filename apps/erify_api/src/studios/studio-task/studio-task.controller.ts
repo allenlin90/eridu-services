@@ -51,7 +51,12 @@ export class StudioTaskController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Body() dto: GenerateTasksDto,
   ) {
-    return this.taskOrchestrationService.generateTasksForShows(studioId, dto.show_uids, dto.template_uids);
+    return this.taskOrchestrationService.generateTasksForShows(
+      studioId,
+      dto.show_uids,
+      dto.template_uids,
+      dto.due_dates,
+    );
   }
 
   @ApiOperation({ summary: 'Assign all tasks for selected shows to a studio member' })

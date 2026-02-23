@@ -53,6 +53,7 @@ describe('studioTaskController', () => {
         studioId,
         dto.show_uids,
         dto.template_uids,
+        dto.due_dates,
       );
     });
   });

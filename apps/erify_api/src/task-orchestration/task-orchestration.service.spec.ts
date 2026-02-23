@@ -111,7 +111,7 @@ describe('taskOrchestrationService', () => {
 
       expect(taskTemplateService.findAll).toHaveBeenCalled();
       expect(showService.findMany).toHaveBeenCalled();
-      expect(taskGenerationProcessor.processShow).toHaveBeenCalledWith(mockShows[0], mockTemplates);
+      expect(taskGenerationProcessor.processShow).toHaveBeenCalledWith(mockShows[0], mockTemplates, undefined);
       expect(result.summary.total_tasks_created).toBe(2);
     });
 

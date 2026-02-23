@@ -47,6 +47,7 @@ export class TaskOrchestrationService {
     studioUid: string,
     showUids: string[],
     templateUids: string[],
+    dueDates?: Record<string, string>,
   ) {
     // 1. Resolve studio and validate templates
     const templates = await this.taskTemplateService.findAll({
@@ -87,7 +88,7 @@ export class TaskOrchestrationService {
     // 3. Process shows
     for (const show of shows) {
       try {
-        const showResult = await this.taskGenerationProcessor.processShow(show, templates);
+        const showResult = await this.taskGenerationProcessor.processShow(show, templates, dueDates);
         results.push(showResult);
 
         if (showResult.status === 'success' || showResult.status === 'skipped') {
@@ -211,14 +212,14 @@ export class TaskOrchestrationService {
       throw HttpError.forbidden('Task does not belong to this studio');
     }
 
-    let membershipId: bigint | null = null;
+    let assigneeUserId: bigint | null = null;
 
     if (assigneeUid) {
       const assigneeMembership = await this.resolveStudioMember(studioUid, assigneeUid);
-      membershipId = assigneeMembership.userId;
+      assigneeUserId = assigneeMembership.userId;
     }
 
-    return this.taskService.setAssignee(taskUid, membershipId, { assignee: true, template: true });
+    return this.taskService.setAssignee(taskUid, assigneeUserId, { assignee: true, template: true });
   }
 
   /**
