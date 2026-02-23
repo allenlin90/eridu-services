@@ -2,59 +2,65 @@ import { useParams } from '@tanstack/react-router';
 import { useState } from 'react';
 
 import {
+  AsyncMultiCombobox,
   Button,
-  Checkbox,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Skeleton,
 } from '@eridu/ui';
 
-import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
+import type { ShowSelection } from '@/features/studio-shows/api/get-studio-shows';
 import { useGenerateTasks } from '@/features/studio-shows/hooks/use-generate-tasks';
 import { useAllTaskTemplates } from '@/features/task-templates/hooks/use-all-task-templates';
 
 type BulkTaskGenerationDialogProps = {
-  shows: StudioShow[];
+  shows: ShowSelection[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 };
 
-export function BulkTaskGenerationDialog({ shows, open, onOpenChange }: BulkTaskGenerationDialogProps) {
+export function BulkTaskGenerationDialog({
+  shows,
+  open,
+  onOpenChange,
+  onSuccess,
+}: BulkTaskGenerationDialogProps) {
   const { studioId } = useParams({ strict: false }) as { studioId: string };
-  const [selectedTemplates, setSelectedTemplates] = useState<Set<string>>(new Set());
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
+  const [templateSearch, setTemplateSearch] = useState('');
 
-  const { data: templates, isLoading: isLoadingTemplates } = useAllTaskTemplates({ studioId });
+  const { data: templates, isLoading: isLoadingTemplates } = useAllTaskTemplates({
+    studioId,
+    search: templateSearch || undefined,
+    limit: 10,
+  });
   const { mutate: generateTasks, isPending: isGenerating } = useGenerateTasks({
     studioId,
     onSuccess: () => {
       onOpenChange(false);
-      setSelectedTemplates(new Set());
+      setSelectedTemplateIds([]);
+      setTemplateSearch('');
+      onSuccess?.();
     },
   });
 
   const handleGenerate = () => {
-    if (selectedTemplates.size === 0 || shows.length === 0)
+    if (selectedTemplateIds.length === 0 || shows.length === 0)
       return;
 
     generateTasks({
       show_uids: shows.map((s) => s.id),
-      template_uids: Array.from(selectedTemplates),
+      template_uids: selectedTemplateIds,
     });
   };
-
-  const toggleTemplate = (templateId: string) => {
-    const next = new Set(selectedTemplates);
-    if (next.has(templateId)) {
-      next.delete(templateId);
-    } else {
-      next.add(templateId);
-    }
-    setSelectedTemplates(next);
-  };
+  const templateOptions = (templates ?? []).map((template) => ({
+    value: template.id,
+    label: template.name,
+  }));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -88,43 +94,21 @@ export function BulkTaskGenerationDialog({ shows, open, onOpenChange }: BulkTask
 
           <div>
             <p className="font-medium text-slate-900 mb-3">Available Templates</p>
-            {isLoadingTemplates
-              ? (
-                  <div className="space-y-3">
-                    <Skeleton className="h-4 w-[250px]" />
-                    <Skeleton className="h-4 w-[200px]" />
-                    <Skeleton className="h-4 w-[220px]" />
-                  </div>
-                )
-              : templates && templates.length > 0
-                ? (
-                    <div className="space-y-3 max-h-48 overflow-y-auto pr-2">
-                      {templates.map((template) => (
-                        <label
-                          key={template.id}
-                          className="flex items-start space-x-3 space-y-0 p-2 border rounded-md hover:bg-slate-50 cursor-pointer"
-                        >
-                          <Checkbox
-                            checked={selectedTemplates.has(template.id)}
-                            onCheckedChange={() => toggleTemplate(template.id)}
-                          />
-                          <div className="space-y-1 leading-none">
-                            <p className="text-sm font-medium leading-none">{template.name}</p>
-                            {template.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-2">
-                                {template.description}
-                              </p>
-                            )}
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  )
-                : (
-                    <p className="text-sm text-muted-foreground italic bg-slate-50 p-3 rounded border text-center">
-                      No active templates found for this studio.
-                    </p>
-                  )}
+            <AsyncMultiCombobox
+              value={selectedTemplateIds}
+              onChange={setSelectedTemplateIds}
+              onSearch={setTemplateSearch}
+              options={templateOptions}
+              isLoading={isLoadingTemplates}
+              placeholder="Search task templates..."
+              emptyMessage={templateSearch ? 'No templates match your search.' : 'No active templates found for this studio.'}
+              disabled={isGenerating}
+            />
+            <p className="mt-2 text-xs text-muted-foreground">
+              Showing up to 10 templates.
+              {' '}
+              {templateSearch ? 'Refine your search to find specific templates.' : 'Type to search more templates.'}
+            </p>
           </div>
         </div>
 
@@ -134,9 +118,9 @@ export function BulkTaskGenerationDialog({ shows, open, onOpenChange }: BulkTask
           </Button>
           <Button
             onClick={handleGenerate}
-            disabled={isGenerating || selectedTemplates.size === 0}
+            disabled={isGenerating || selectedTemplateIds.length === 0}
           >
-            {isGenerating ? 'Generating...' : `Generate ${selectedTemplates.size * shows.length} Tasks`}
+            {isGenerating ? 'Generating...' : `Generate ${selectedTemplateIds.length * shows.length} Tasks`}
           </Button>
         </DialogFooter>
       </DialogContent>
