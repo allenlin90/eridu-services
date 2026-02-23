@@ -32,4 +32,8 @@ export class TaskTargetService extends BaseModelService {
   async findByTaskId(...args: Parameters<TaskTargetRepository['findByTaskId']>): ReturnType<TaskTargetRepository['findByTaskId']> {
     return this.taskTargetRepository.findByTaskId(...args);
   }
+
+  async undeleteByTaskId(...args: Parameters<TaskTargetRepository['undeleteByTaskId']>): ReturnType<TaskTargetRepository['undeleteByTaskId']> {
+    return this.taskTargetRepository.undeleteByTaskId(...args);
+  }
 }

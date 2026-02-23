@@ -8,6 +8,8 @@ import type {
 import {
   assignShowsRequestSchema,
   assignShowsResponseSchema,
+  bulkDeleteTasksRequestSchema,
+  bulkDeleteTasksResponseSchema,
   generateTasksRequestSchema,
   generateTasksResponseSchema,
   listMyTasksQuerySchema,
@@ -24,6 +26,8 @@ import {
 export {
   assignShowsRequestSchema,
   assignShowsResponseSchema,
+  bulkDeleteTasksRequestSchema,
+  bulkDeleteTasksResponseSchema,
   generateTasksRequestSchema,
   generateTasksResponseSchema,
   listMyTasksQuerySchema,
@@ -44,6 +48,8 @@ export class AssignShowsResponseDto extends createZodDto(assignShowsResponseSche
 export class ReassignTaskDto extends createZodDto(reassignTaskRequestSchema) {}
 export class ListStudioShowsQueryDto extends createZodDto(listStudioShowsQuerySchema) {}
 export class ListMyTasksQueryDto extends createZodDto(listMyTasksQuerySchema) {}
+export class BulkDeleteTasksDto extends createZodDto(bulkDeleteTasksRequestSchema) {}
+export class BulkDeleteTasksResponseDto extends createZodDto(bulkDeleteTasksResponseSchema) {}
 export class TaskDto extends createZodDto(taskDto) {}
 export class TaskWithRelationsDto extends createZodDto(taskWithRelationsDto) {}
 export class ShowWithTaskSummaryDto extends createZodDto(showWithTaskSummaryDto) {}

@@ -1,8 +1,8 @@
 # Task Management System - UI/UX Design
 
-**Version**: 3.0  
-**Last Updated**: February 14, 2026  
-**Status**: Ready for Implementation
+**Version**: 3.1  
+**Last Updated**: February 23, 2026  
+**Status**: Partially Implemented (Core studio workflows live; remaining polish listed in §13)
 
 > **Related Documentation**  
 > For API contracts, database schema, and backend architecture, see [`apps/erify_api/docs/TASK_MANAGEMENT_DESIGN.md`](../../erify_api/docs/TASK_MANAGEMENT_DESIGN.md)
@@ -24,6 +24,7 @@
 11. [Implemented Component Patterns](#11-implemented-component-patterns)
 12. [Task Generation & Assignment Workflows](#12-task-generation--assignment-workflows)
 13. [Implementation Status & Progress](#13-implementation-status--progress)
+14. [Bug Reports & Design Corrections](#14-bug-reports--design-corrections)
 
 ---
 
@@ -404,9 +405,9 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 
 **Key Features**:
 - **Data Table**: Columns for Show Name, Client, Start Time, Task Status (badge), and Assignee (read-only text). Familiar dense layout for scanning.
-- **Checkbox Selection**: Select one or many shows. Selection is per-page (simple state).
-- **Floating Action Bar**: Appears when ≥1 row is selected. Two actions: **Generate Tasks** and **Assign**. Both open dialogs.
-- **Toolbar Filters**: Search by name, filter by date range, filter by task status (has tasks / no tasks).
+- **Checkbox Selection**: Select one or many shows. Selection is ID-based (cross-page safe — selecting a show on page 1, navigating to page 2, and returning to page 1 keeps the original selection).
+- **Adaptive Bulk Actions**: Appears when ≥1 row is selected. Desktop uses a floating action bar; mobile uses a bottom sticky action tray + bottom sheet actions.
+- **Toolbar Filters**: Reuses `<AdminTableToolbar />` from system shows with advanced filters for show name, task presence (`has_tasks`), date range (`date_from`/`date_to`), and dimensions: Client, Show Type, Show Standard, Show Status, Platform.
 
 **Layout** (Desktop Data Table):
 ```
@@ -414,7 +415,7 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 │ Shows                                                                 │
 │ Manage show tasks and assignments                                     │
 │                                                                       │
-│ [Search Shows...] [Date: Next 7 Days ▼] [Status ▼]                    │
+│ [Search Shows...] [Date: Next 7 Days ▼] [Client ▼] [Type ▼] [Tasks ▼] │
 ├───┬────────────────────┬──────────┬──────────────┬─────────┬──────────┤
 │ ☐ │ Show Name          │ Client   │ Start Time   │ Tasks   │ Assignee │
 ├───┼────────────────────┼──────────┼──────────────┼─────────┼──────────┤
@@ -476,7 +477,8 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 │ ───────────────────────────────────────────────────────────────── │
 │                                                                   │
 │ ℹ️  Tasks will be created with PENDING status.                    │
-│     Shows with existing tasks for a template will be skipped.     │
+│     Shows with active tasks for a template will be skipped.       │
+│     Previously deleted tasks will be reset to PENDING.            │
 │                                                                   │
 │ This will create up to 6 new tasks across 2 shows.                │
 │                                                                   │
@@ -487,7 +489,7 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 **Key Design Decisions**:
 - Templates are grouped by task type (SETUP / ACTIVE / CLOSURE) — each slot has a dropdown
 - The same template set is applied to **all** selected shows
-- Shows that already have a task for a selected template are skipped (idempotent)
+- Generation is idempotent with three cases per show+template pair: (1) **active task exists** → skip; (2) **soft-deleted task exists** → resume (restore, reset to `PENDING`, wipe content, update to latest snapshot); (3) **no task** → create new
 - Due dates are optional in v1 (deferred to Smart Due Date feature)
 - Summary line updates dynamically as user selects templates
 
@@ -1124,7 +1126,7 @@ interface JsonFormProps {
 
 function JsonForm({ schema, values, onChange, onValidate }: JsonFormProps) {
   // Build Zod schema from UI schema
-  const zodSchema = buildZodSchema(schema);
+  const zodSchema = buildTaskContentSchema(schema);
   
   // Use react-hook-form for validation
   const { register, handleSubmit, formState: { errors } } = useForm({
@@ -1535,6 +1537,13 @@ sequenceDiagram
     UI->>API: PATCH /studios/:id/tasks/:taskUid/assign
     API-->>UI: 200 OK
     UI->>UI: Optimistic update
+
+    M->>UI: Select tasks + click "Delete"
+    UI->>UI: Open DeleteTasksDialog
+    M->>UI: Confirm Deletion
+    UI->>API: DELETE /studios/:id/tasks (bulk)
+    API-->>UI: 200 OK
+    UI->>UI: Refresh tasks list, show success toast
 ```
 
 ### Reusable Patterns
@@ -1623,26 +1632,45 @@ This section tracks the real-world implementation progress of the design, organi
 ---
 
 ### Phase 3: Shows Task Management (Manager)
-- **Status**: 🚧 **In Progress** (UI foundation finished, logic pending)
+- **Status**: ✅ Complete
 
 #### Phase 3.1: Studio UI Foundation (✅ Done)
 - **Studio Dashboard**: Dedicated board at `/studios/$studioId/shows` with real API fetching and task-progression cards.
-- **Scoping**: Properly scoped list with infinite scroll and search.
-- **Bulk Actions UI**: Selection mode and floating toolbar integrated.
+- **Scoping**: Properly scoped list with search (debounced, URL-synced) and date range filter.
+- **Bulk Actions UI**: ID-based row selection (cross-page safe), desktop floating action toolbar, and mobile bottom action sheet integrated.
 - **Admin Cleanup**: `/system/shows` reverted to plain CRUD as per architectural rule.
 
-#### Phase 3.2: Logic & API Integration (⏳ Placeholder)
-- **Dialog Logic**: `BulkTaskGenerationDialog` and `ShowAssignmentDialog` are current shells. Need template selection and POST integration.
-- **Show Tasks Detail**: The list of tasks in `/studios/$studioId/shows/$showId/tasks` is currently a placeholder.
-- **Inline Actions**: Reassignment dropdowns and status updates not yet implemented.
+#### Phase 3.2: Logic & API Integration (✅ Done)
+- **Dialog Logic**: `BulkTaskGenerationDialog` — checkbox template selection, grouped by type, POST to generate endpoint. `ShowAssignmentDialog` — `AsyncCombobox` member picker with client-side search, POST to assign endpoint.
+- **Show Tasks Detail**: Full task list with type, status, assignee, due date at `/studios/$studioId/shows/$showId/tasks`.
+- **Inline Actions**: `AsyncCombobox` assignee dropdown per task row; immediate `PATCH /assign` on change; supports clearing the assignee.
+
+#### Phase 3.3: Task Deletion Workflow (✅ Done)
+- **Backend API (`apps/erify_api`)**:
+  - `BulkDeleteTasksDto` and `DELETE /studios/:studioId/tasks/bulk` implemented.
+  - Transactional `bulkSoftDelete` in `TaskRepository`.
+  - **Resume strategy** in `TaskGenerationProcessor`: soft-deleted tasks are now restored and reset instead of duplicated during generation.
+- **Frontend UI (`apps/erify_studios`)**:
+  - `<ShowTasksTable>` row selection and `DeleteTasksDialog` implemented.
+  - CRUD operations invalidate correct query keys to refresh task list.
+
+#### Phase 3.4: Advanced Studio Filters (✅ Done)
+- **Backend API (`apps/erify_api`)**:
+  - `ListStudioShowsQueryDto` updated with name-based filters for Client, Standard, Status, Platform, and Type.
+  - `ShowRepository` applies these filters with case-insensitive partial matching (`ILIKE`).
+- **Frontend UI (`apps/erify_studios`)**:
+  - `useStudioShows` hook updated to handle advanced filter state.
+  - `<AdminTableToolbar />` integrated on shows page with dynamic options from field-data hooks.
+  - `has_tasks` moved into advanced filters (featured section) so reset/count behavior is consistent with other advanced filters.
 
 ---
 
 ### Phase 4: My Tasks (Operator)
-- **Status**: ⏳ Planned
-- Focus: Mobile-first execution, Today/Upcoming tabs, Optimistic UI updates.
+- **Status**: ✅ Complete
+- **MobileTaskList**: Today/Upcoming/All tabs using `date-fns` for `due_date` filtering.
+- **TaskExecutionSheet**: Slide-over with task status badge, JSON content view, and status transition buttons (PENDING → IN_PROGRESS → COMPLETED).
+- **Interactivity**: Status buttons wired to `useUpdateMyTask` mutation with optimistic list invalidation.
 
 ---
 
 **End of Implementation Progress Tracker**
-

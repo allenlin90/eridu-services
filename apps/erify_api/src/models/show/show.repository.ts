@@ -323,6 +323,11 @@ export class ShowRepository extends BaseRepository<
       date_from?: string;
       date_to?: string;
       has_tasks?: boolean;
+      client_name?: string;
+      show_type_name?: string;
+      show_standard_name?: string;
+      show_status_name?: string;
+      platform_name?: string;
     },
   ) {
     const where: Prisma.ShowWhereInput = {
@@ -345,8 +350,43 @@ export class ShowRepository extends BaseRepository<
       if (query.has_tasks) {
         where.taskTargets = { some: { deletedAt: null } };
       } else {
-        where.taskTargets = { none: {} };
+        where.taskTargets = { none: { deletedAt: null } };
       }
+    }
+
+    if (query.client_name) {
+      where.client = {
+        name: { contains: query.client_name, mode: 'insensitive' },
+        deletedAt: null,
+      };
+    }
+
+    if (query.show_type_name) {
+      where.showType = {
+        name: { contains: query.show_type_name, mode: 'insensitive' },
+      };
+    }
+
+    if (query.show_standard_name) {
+      where.showStandard = {
+        name: { contains: query.show_standard_name, mode: 'insensitive' },
+      };
+    }
+
+    if (query.show_status_name) {
+      where.showStatus = {
+        name: { contains: query.show_status_name, mode: 'insensitive' },
+      };
+    }
+
+    if (query.platform_name) {
+      where.showPlatforms = {
+        some: {
+          platform: {
+            name: { contains: query.platform_name, mode: 'insensitive' },
+          },
+        },
+      };
     }
 
     const [total, data] = await Promise.all([

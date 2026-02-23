@@ -32,4 +32,11 @@ export class TaskTargetRepository extends BaseRepository<
       where: { taskId, deletedAt: null },
     });
   }
+
+  async undeleteByTaskId(taskId: bigint): Promise<Prisma.BatchPayload> {
+    return this.prisma.taskTarget.updateMany({
+      where: { taskId },
+      data: { deletedAt: null },
+    });
+  }
 }

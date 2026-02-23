@@ -148,4 +148,42 @@ export const columns: ColumnDef<StudioShow>[] = [
       return <span className="text-xs">Assigned</span>;
     },
   },
+  // Hidden filter-support columns so toolbar filters can bind non-visible fields.
+  {
+    accessorKey: 'client_name',
+    header: () => null,
+    cell: () => null,
+    meta: { className: 'hidden' },
+  },
+  {
+    accessorKey: 'show_type_name',
+    header: () => null,
+    cell: () => null,
+    meta: { className: 'hidden' },
+  },
+  {
+    accessorKey: 'show_standard_name',
+    header: () => null,
+    cell: () => null,
+    meta: { className: 'hidden' },
+  },
+  {
+    accessorKey: 'show_status_name',
+    header: () => null,
+    cell: () => null,
+    meta: { className: 'hidden' },
+  },
+  {
+    accessorKey: 'platform_name',
+    header: () => null,
+    cell: () => null,
+    meta: { className: 'hidden' },
+  },
+  {
+    id: 'has_tasks',
+    accessorFn: (row) => String(row.task_summary.total > 0),
+    header: () => null,
+    cell: () => null,
+    meta: { className: 'hidden' },
+  },
 ];

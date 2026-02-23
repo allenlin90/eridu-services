@@ -272,4 +272,22 @@ export class TaskOrchestrationService {
 
     return { data, total };
   }
+
+  /**
+   * soft-deletes multiple tasks.
+   */
+  async bulkDeleteTasks(studioUid: string, taskUids: string[]) {
+    // 1. Resolve studio
+    const studio = await this.studioService.findByUid(studioUid);
+    if (!studio) {
+      throw HttpError.notFound('Studio', studioUid);
+    }
+
+    // 2. Perform bulk soft delete
+    const result = await this.taskService.bulkSoftDelete(studio.id, taskUids);
+
+    return {
+      deleted_count: result.count,
+    };
+  }
 }

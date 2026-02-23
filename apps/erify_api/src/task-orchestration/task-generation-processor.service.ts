@@ -31,13 +31,10 @@ export class TaskGenerationProcessor {
     await this.prisma.$executeRaw`SELECT pg_advisory_xact_lock(${show.id})`;
 
     for (const template of templates) {
-      // Idempotency check using Service
-      const existingTask = await this.taskService.findByShowAndTemplate(show.id, template.id);
-
-      if (existingTask) {
-        tasksSkippedForShow++;
-        continue;
-      }
+      // Idempotency check using Service - include deleted for resumption logic
+      const existingTask = await this.taskService.findByShowAndTemplate(show.id, template.id, {
+        includeDeleted: true,
+      });
 
       const latestSnapshot = template.snapshots?.[0];
       if (!latestSnapshot) {
@@ -47,6 +44,29 @@ export class TaskGenerationProcessor {
       }
 
       const type = this.inferTaskType(template.name);
+
+      if (existingTask) {
+        if (existingTask.deletedAt === null) {
+          // Already exists and active, skip
+          tasksSkippedForShow++;
+          continue;
+        }
+
+        // Task exists but is soft-deleted: RESUME
+        await this.taskService.resumeTask(existingTask.id, {
+          snapshotId: latestSnapshot.id,
+          status: TaskStatus.PENDING,
+          version: existingTask.version + 1,
+        });
+
+        // Also undelete targets
+        await this.taskTargetService.undeleteByTaskId(existingTask.id);
+
+        tasksCreatedForShow++;
+        continue;
+      }
+
+      // No existing task: CREATE NEW
       const taskUid = this.taskService.generateTaskUid();
 
       const task = await this.taskService.create({

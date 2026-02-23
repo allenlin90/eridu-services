@@ -17,6 +17,11 @@ type GetStudioShowsParams = {
   date_from?: string;
   date_to?: string;
   has_tasks?: boolean;
+  client_name?: string;
+  show_type_name?: string;
+  show_standard_name?: string;
+  show_status_name?: string;
+  platform_name?: string;
 };
 
 type StudioShowsResponse = {

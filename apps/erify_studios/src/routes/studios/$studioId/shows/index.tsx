@@ -7,8 +7,14 @@ import { Button } from '@eridu/ui';
 
 import { AdminTable } from '@/features/admin/components/admin-table';
 import { BulkTaskGenerationDialog } from '@/features/shows/components/bulk-task-generation-dialog';
+import { useClientFieldData } from '@/features/shows/components/hooks/use-client-field-data';
+import { usePlatformsFieldData } from '@/features/shows/components/hooks/use-platforms-field-data';
+import { useShowStandardFieldData } from '@/features/shows/components/hooks/use-show-standard-field-data';
+import { useShowStatusFieldData } from '@/features/shows/components/hooks/use-show-status-field-data';
+import { useShowTypeFieldData } from '@/features/shows/components/hooks/use-show-type-field-data';
 import { ShowAssignmentDialog } from '@/features/shows/components/show-assignment-dialog';
 import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
+import { SelectedShowsMobileActions } from '@/features/studio-shows/components/selected-shows-mobile-actions';
 import { columns } from '@/features/studio-shows/components/studio-shows-table/columns';
 import { useStudioShows } from '@/features/studio-shows/hooks/use-studio-shows';
 
@@ -66,6 +72,63 @@ function StudioShowsPage() {
 
   const selectedShows = useMemo(() => Object.values(selectedShowObjects), [selectedShowObjects]);
 
+  // Fetch filter options
+  const { options: clientOptions } = useClientFieldData(null);
+  const { options: typeOptions } = useShowTypeFieldData(null);
+  const { options: standardOptions } = useShowStandardFieldData(null);
+  const { options: statusOptions } = useShowStatusFieldData(null);
+  const { options: platformOptions } = usePlatformsFieldData(null);
+
+  const searchableColumns = useMemo(
+    () => [
+      { id: 'name', title: 'Show Name', type: 'text' as const },
+      {
+        id: 'has_tasks',
+        title: 'Tasks',
+        type: 'select' as const,
+        options: [
+          { value: 'true', label: 'Has Tasks' },
+          { value: 'false', label: 'No Tasks' },
+        ],
+      },
+      {
+        id: 'client_name',
+        title: 'Client',
+        type: 'select' as const,
+        options: clientOptions.map((o) => ({ value: o.label, label: o.label })),
+      },
+      {
+        id: 'show_type_name',
+        title: 'Show Type',
+        type: 'select' as const,
+        options: typeOptions.map((o) => ({ value: o.label, label: o.label })),
+      },
+      {
+        id: 'show_standard_name',
+        title: 'Show Standard',
+        type: 'select' as const,
+        options: standardOptions.map((o) => ({ value: o.label, label: o.label })),
+      },
+      {
+        id: 'show_status_name',
+        title: 'Show Status',
+        type: 'select' as const,
+        options: statusOptions.map((o) => ({ value: o.label, label: o.label })),
+      },
+      {
+        id: 'platform_name',
+        title: 'Platform',
+        type: 'select' as const,
+        options: platformOptions.map((o) => ({ value: o.label, label: o.label })),
+      },
+      { id: 'start_time', title: 'Date', type: 'date-range' as const },
+    ],
+    [clientOptions, typeOptions, standardOptions, statusOptions, platformOptions],
+  );
+
+  const quickFilterColumns = useMemo(() => ['start_time'], []);
+  const featuredFilterColumns = useMemo(() => ['has_tasks', 'client_name', 'show_status_name'], []);
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
       {/* Header */}
@@ -99,7 +162,9 @@ function StudioShowsPage() {
         columnFilters={columnFilters}
         onColumnFiltersChange={onColumnFiltersChange}
         searchColumn="name"
-        searchableColumns={[{ id: 'name', title: 'Show Name' }]}
+        searchableColumns={searchableColumns}
+        quickFilterColumns={quickFilterColumns}
+        featuredFilterColumns={featuredFilterColumns}
         searchPlaceholder="Search shows..."
 
         // Selection
@@ -118,42 +183,50 @@ function StudioShowsPage() {
 
       {/* Floating Action Bar */}
       {selectedShows.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-4 rounded-full bg-slate-900 px-6 py-3 text-slate-50 shadow-lg dark:bg-slate-50 dark:text-slate-900 border animate-in slide-in-from-bottom-5">
-          <div className="flex items-center gap-2 pr-4 border-r border-slate-700 dark:border-slate-300">
-            <span className="text-sm font-medium">
-              {selectedShows.length}
-              {' '}
-              selected
-            </span>
+        <>
+          <div className="fixed bottom-6 left-1/2 z-50 hidden -translate-x-1/2 items-center justify-between gap-4 rounded-full border bg-slate-900 px-6 py-3 text-slate-50 shadow-lg animate-in slide-in-from-bottom-5 dark:bg-slate-50 dark:text-slate-900 md:flex">
+            <div className="flex items-center gap-2 border-r border-slate-700 pr-4 dark:border-slate-300">
+              <span className="text-sm font-medium">
+                {selectedShows.length}
+                {' '}
+                selected
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                className="rounded-full"
+                onClick={() => setBulkGeneratingShows(selectedShows)}
+              >
+                <ListTodo className="mr-2 h-4 w-4" />
+                Generate Tasks
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="rounded-full"
+                onClick={() => setBulkAssigningShows(selectedShows)}
+              >
+                Assign Tasks
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="ml-2 rounded-full hover:bg-slate-800 hover:text-white dark:hover:bg-slate-200 dark:hover:text-black"
+                onClick={() => setRowSelection({})}
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              className="rounded-full"
-              onClick={() => setBulkGeneratingShows(selectedShows)}
-            >
-              <ListTodo className="h-4 w-4 mr-2" />
-              Generate Tasks
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              className="rounded-full"
-              onClick={() => setBulkAssigningShows(selectedShows)}
-            >
-              Assign Tasks
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="rounded-full hover:bg-slate-800 hover:text-white dark:hover:bg-slate-200 dark:hover:text-black ml-2"
-              onClick={() => setRowSelection({})}
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
+          <SelectedShowsMobileActions
+            selectedCount={selectedShows.length}
+            onGenerate={() => setBulkGeneratingShows(selectedShows)}
+            onAssign={() => setBulkAssigningShows(selectedShows)}
+            onClear={() => setRowSelection({})}
+          />
+        </>
       )}
 
       {/* Dialogs */}

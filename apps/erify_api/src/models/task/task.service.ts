@@ -51,6 +51,14 @@ export class TaskService extends BaseModelService {
     return this.taskRepository.findByShowAndTemplate(...args);
   }
 
+  async bulkSoftDelete(studioId: bigint, taskUids: string[]) {
+    return this.taskRepository.bulkSoftDelete(studioId, taskUids);
+  }
+
+  async resumeTask(...args: Parameters<TaskRepository['resumeTask']>): ReturnType<TaskRepository['resumeTask']> {
+    return this.taskRepository.resumeTask(...args);
+  }
+
   /** @internal */
   async findTasksByShowIds(...args: Parameters<TaskRepository['findTasksByShowIds']>): ReturnType<TaskRepository['findTasksByShowIds']> {
     return this.taskRepository.findTasksByShowIds(...args);

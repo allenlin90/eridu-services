@@ -1,7 +1,8 @@
 import { useParams } from '@tanstack/react-router';
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import {
+  AsyncCombobox,
   Button,
   Dialog,
   DialogContent,
@@ -9,7 +10,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  AsyncCombobox,
   Skeleton,
 } from '@eridu/ui';
 
@@ -53,9 +53,10 @@ export function ShowAssignmentDialog({ shows, open, onOpenChange }: ShowAssignme
   }, [members]);
 
   const filteredOptions = useMemo(() => {
-    if (!memberSearch) return memberOptions;
+    if (!memberSearch)
+      return memberOptions;
     return memberOptions.filter((o) =>
-      o.label.toLowerCase().includes(memberSearch.toLowerCase())
+      o.label.toLowerCase().includes(memberSearch.toLowerCase()),
     );
   }, [memberOptions, memberSearch]);
 

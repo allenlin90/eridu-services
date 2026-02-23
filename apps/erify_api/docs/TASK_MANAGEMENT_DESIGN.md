@@ -1,7 +1,7 @@
 # Task Management System - Backend Design
 
-**Version**: 3.1  
-**Last Updated**: February 20, 2026  
+**Version**: 3.2  
+**Last Updated**: February 23, 2026  
 **Status**: Partially Implemented — see [§12 Implementation Checklist](#12-implementation-checklist) for full progress
 
 ### What's Done ✅
@@ -11,10 +11,13 @@
 - Individual Task Reassignment (`PATCH /studios/:studioId/tasks/:id/assign`)
 - Studio Shows with Task Summary (`GET /studios/:studioId/shows`)
 - View Show Tasks (`GET /studios/:studioId/shows/:showUid/tasks`)
+- Bulk Task Deletion with transactional cascading soft-delete (`DELETE /studios/:studioId/tasks/bulk`)
 - Task content update with optimistic locking (`PATCH /studios/:studioId/tasks/:id`)
 - Task content/status update for operators, assignee-owns-task guard (`PATCH /me/tasks/:id`)
 - Content validation against snapshot schema on update
 - `completedAt` auto-set on COMPLETED transition
+- Advanced filtering for Studio Shows (Client, Standard, Status, Platform, Task Presence)
+- Task resumption logic (soft-delete recovery during generation)
 
 ### What's Pending ❌
 - Status transition enforcement (state machine)
@@ -131,21 +134,25 @@ A generic, extensible Task Management system using a **"Task as Form"** architec
 - Manager selects **multiple shows** and chooses which templates to apply per task type
 - For each show, the system generates one Task per selected template in a single transaction
 - The same template set can be applied to all selected shows, or template selection can vary per show
-- **Idempotency**: shows that already have tasks for a given template are skipped (not duplicated)
+- **Idempotency**: shows that already have active tasks for a given template are skipped.
+- **Resumption**: If a task for the template exists but is **soft-deleted**, it is "resumed" (undeleted, reset to PENDING, cleared content, and updated to latest template snapshot) to prevent data redundancy and preserve task UID stability.
 - **Advisory lock per show** prevents race conditions when two managers generate simultaneously
 
 **Generation Flow**:
-1. Manager navigates to the Shows list (studio-scoped)
-2. Selects one or more shows (checkbox selection)
-3. Clicks "Generate Tasks" to open the generation dialog
-4. For each task type slot (SETUP / ACTIVE / CLOSURE), picks a template from the studio's active templates
-5. Optionally sets due dates or accepts auto-calculated defaults relative to show time
-6. Confirms → system creates tasks in a single batch transaction
+1. Manager navigates to the Shows list (studio-scoped).
+2. Uses advanced filters to find relevant shows.
+3. Selects one or more shows (checkbox selection).
+4. Clicks "Generate Tasks" to open the generation dialog.
+5. For each task type slot (SETUP / ACTIVE / CLOSURE), picks a template from the studio's active templates.
+6. Optionally sets due dates or accepts auto-calculated defaults relative to show time.
+7. Confirms → system creates tasks in a single batch transaction.
 
-#### 2. Show-Level Assignment (Select-Then-Act)
-- Manager selects shows from a read-only Data Table and opens the Assignment Dialog.
-- **Assign show to user** = Dialog calls `POST /studios/:studioId/tasks/assign-shows` to set `assigneeId` on all tasks whose `TaskTarget` references the selected shows.
-- One batch mutation, one refetch. No inline mutations or constant re-querying.
+#### 2. Bulk Task Deletion (Cleanup)
+- Manager selects multiple tasks in the Show Tasks page.
+- Action: **Bulk Soft Delete**.
+- Implementation: `DELETE /studios/:studioId/tasks/bulk` using a batch transaction.
+- Effects: sets `deletedAt` on both `Task` and its `TaskTarget` records.
+- Rationale: Soft-deletion allows for **Resumption** (see workflow 1) if tasks are regenerated, preventing UID churn.
 
 **Assignment Flow**:
 1. Manager views the Shows Data Table (read-only, with Assignee column for visibility).
@@ -254,9 +261,18 @@ async processShow(show: any, templates: any[]) {
   await this.prisma.$executeRaw`SELECT pg_advisory_xact_lock(${show.id})`;
 
   for (const template of templates) {
-    // Idempotency check
-    const existing = await this.taskRepository.findByShowAndTemplate(show.id, template.id);
-    if (existing) { continue; } // Skip, already exists
+    // Idempotency / Resumption check
+    const existing = await this.taskRepository.findByShowAndTemplate(show.id, template.id, { includeDeleted: true });
+    
+    if (existing) { 
+      if (!existing.deletedAt) {
+        continue; // Active task exists: Skip
+      } else {
+        // Soft-deleted task exists: Resume (Undelete & Reset)
+        await this.taskRepository.resumeDeletedTask(existing.id, latestSnapshot.id);
+        continue;
+      }
+    }
 
     // Create task + TaskTarget atomically
     const task = await this.taskRepository.create({ ... });
@@ -898,11 +914,11 @@ export class TaskValidationService {
 
 **Responsibilities**: CRUD operations on TaskTemplate, schema validation, and snapshot management.
 
-| Operation | Key Behaviors |
-| --------- | ------------- |
-| `create` | Validate schema → create template + first snapshot in transaction |
-| `update` | Validate schema → if schema changed, create new snapshot + increment version |
-| `softDelete` | Set `deletedAt`, leave snapshots intact for existing tasks |
+| Operation    | Key Behaviors                                                                |
+| ------------ | ---------------------------------------------------------------------------- |
+| `create`     | Validate schema → create template + first snapshot in transaction            |
+| `update`     | Validate schema → if schema changed, create new snapshot + increment version |
+| `softDelete` | Set `deletedAt`, leave snapshots intact for existing tasks                   |
 
 ### 7.2 TaskOrchestrationService
 
@@ -919,8 +935,10 @@ Generates tasks for **multiple shows** from a shared set of templates.
 2. Resolve shows and validate they belong to the studio
 3. For each show, delegate to `TaskGenerationProcessor.processShow()` (separate injectable service to allow `@Transactional()` to work):
    - Acquire `pg_advisory_xact_lock(showId)` to prevent race conditions
-   - For each template, skip if a task from that template already exists (idempotent)
-   - Use the template's latest snapshot; create `Task` + `TaskTarget` atomically
+   - For each template, check if a task (active or deleted) exists:
+     - **Active exists**: Skip (idempotent)
+     - **Soft-deleted exists**: Resume (undelete, reset to `PENDING`, wipe content, update to latest snapshot)
+     - **None exists**: Create new `Task` + `TaskTarget` atomically
 4. Return per-show results + summary
 
 **Task type inference**: Derived from the template's `name` field — names containing "pre"/"setup" → `SETUP`, "live"/"active" → `ACTIVE`, "post"/"closure" → `CLOSURE`, "admin" → `ADMIN`, "routine" → `ROUTINE`, otherwise `OTHER`.
@@ -958,11 +976,11 @@ Returns paginated shows for a studio with per-show `task_summary` (total / assig
 
 **Current status**: ✅ Core update functionality implemented in `updateTaskContentAndStatus()`. Exposed at both `PATCH /studios/:studioId/tasks/:id` (studio admin) and `PATCH /me/tasks/:id` (operator, own tasks only).
 
-| Operation | Key Behaviors |
-| --------- | ------------- |
+| Operation                    | Key Behaviors                                                                                                    |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `updateTaskContentAndStatus` | Compare `version` for optimistic lock → validate content against snapshot schema → update with version increment |
-| `completedAt` | Auto-set when transitioning to COMPLETED, cleared otherwise |
-| Status transitions | ❌ State machine enforcement **not yet implemented** — any transition currently accepted |
+| `completedAt`                | Auto-set when transitioning to COMPLETED, cleared otherwise                                                      |
+| Status transitions           | ❌ State machine enforcement **not yet implemented** — any transition currently accepted                          |
 
 
 ## 8. API Endpoints
@@ -992,14 +1010,19 @@ GET /studios/:studioId/shows
 Returns shows belonging to the studio with task generation status summary.
 
 **Query Parameters**:
-| Param | Type | Description |
-| ----- | ---- | ----------- |
-| `search` | string | Filter by show name (partial match) |
-| `date_from` | ISO date | Show start time >= this date |
-| `date_to` | ISO date | Show start time <= this date |
-| `has_tasks` | boolean | `true` = only shows with generated tasks, `false` = only shows without tasks |
-| `cursor` | string | Cursor-based pagination |
-| `limit` | number | Page size (default 20, max 100) |
+| Param                | Type     | Description                                                                  |
+| -------------------- | -------- | ---------------------------------------------------------------------------- |
+| `search`             | string   | Filter by show name (partial match)                                          |
+| `client_name`        | string   | Filter by client name (exact match)                                          |
+| `show_type_name`     | string   | Filter by show type name (exact match)                                       |
+| `show_standard_name` | string   | Filter by show standard name (exact match)                                   |
+| `show_status_name`   | string   | Filter by show status name (exact match)                                     |
+| `platform_name`      | string   | Filter by broadcast platform name (exact match)                              |
+| `date_from`          | ISO date | Show start time >= this date                                                 |
+| `date_to`            | ISO date | Show start time <= this date                                                 |
+| `has_tasks`          | boolean  | `true` = only shows with generated tasks, `false` = only shows without tasks |
+| `cursor`             | string   | Cursor-based pagination                                                      |
+| `limit`              | number   | Page size (default 20, max 100)                                              |
 
 **Response: 200 OK**
 ```json
@@ -1130,6 +1153,36 @@ Returns all tasks generated for a specific show, with assignee info.
 
 ---
 
+#### Bulk Task Deletion
+
+```
+DELETE /studios/:studioId/tasks/bulk
+```
+
+Soft-deletes an array of tasks. Used by managers to remove wrongly generated tasks. **Soft Deletion** is necessary here because the `Task` entity contains a `deletedAt` column, ensuring that deleted tasks can be audited and recovered if necessary, rather than permanently destroying the records.
+
+**Request**
+```json
+{
+  "task_uids": ["task_001", "task_002"]
+}
+```
+
+**Response: 200 OK**
+```json
+{
+  "deleted_count": 2,
+  "tasks": ["task_001", "task_002"]
+}
+```
+
+**Error Scenarios**:
+- `400 Bad Request`: Validation failure on UIDs.
+- `403 Forbidden`: User is not a studio admin/manager.
+- `404 Not Found`: One or more tasks do not exist or do not belong to the studio.
+
+---
+
 #### Bulk Show Assignment
 
 ```
@@ -1224,14 +1277,14 @@ PATCH /me/tasks/:uid     ✅ implemented — content/status update with optimist
 ```
 
 **Query Parameters for `GET /me/tasks`**:
-| Param | Type | Description |
-| ----- | ---- | ----------- |
-| `status` | enum (multi) | Filter by status (e.g. `PENDING`, `IN_PROGRESS`) |
-| `due_date_from` | ISO date | Tasks due on or after this date |
-| `due_date_to` | ISO date | Tasks due on or before this date (use for "upcoming" window) |
-| `sort` | string | e.g. `due_date:asc` |
-| `cursor` | string | Cursor-based pagination |
-| `limit` | number | Page size (default 20, max 100) |
+| Param           | Type         | Description                                                  |
+| --------------- | ------------ | ------------------------------------------------------------ |
+| `status`        | enum (multi) | Filter by status (e.g. `PENDING`, `IN_PROGRESS`)             |
+| `due_date_from` | ISO date     | Tasks due on or after this date                              |
+| `due_date_to`   | ISO date     | Tasks due on or before this date (use for "upcoming" window) |
+| `sort`          | string       | e.g. `due_date:asc`                                          |
+| `cursor`        | string       | Cursor-based pagination                                      |
+| `limit`         | number       | Page size (default 20, max 100)                              |
 
 **Example: Get My Tasks**
 ```http
@@ -1477,10 +1530,10 @@ async function paginateTasks(
 
 ### API Controllers
 - [x] `StudioTaskTemplateController` — full CRUD at `/studios/:studioId/task-templates`
-- [x] `StudioTaskController` — generate, assign-shows, reassign, task content update at `/studios/:studioId/tasks`
-- [x] `StudioShowController` — studio shows with task summary at `GET /studios/:studioId/shows`
-- [x] `StudioShowTaskController` — show tasks at `GET /studios/:studioId/shows/:showUid/tasks`
-- [x] `MeTaskController` — `GET /me/tasks`, `GET /me/tasks/:id`, `PATCH /me/tasks/:id` ✅ implemented
+- [x] `StudioTaskController` — generate, assign-shows, reassign, task content update, bulk delete at `/studios/:studioId/tasks` ✅
+- [x] `StudioShowController` — studio shows with task summary + advanced filters at `GET /studios/:studioId/shows` ✅
+- [x] `StudioShowTaskController` — show tasks at `GET /studios/:studioId/shows/:showUid/tasks` ✅
+- [x] `MeTaskController` — `GET /me/tasks`, `GET /me/tasks/:id`, `PATCH /me/tasks/:id` ✅
 - [ ] `AdminTaskController` — system admin tools ❌
 
 ### Authentication & Guards
@@ -1573,6 +1626,14 @@ interface TaskDto {
   version: number;
   created_at: string;
   updated_at: string;
+}
+
+interface BulkDeleteTasksDto {
+  task_uids: string[];
+}
+
+interface BulkDeleteTasksResponseDto {
+  count: number;
 }
 ```
 

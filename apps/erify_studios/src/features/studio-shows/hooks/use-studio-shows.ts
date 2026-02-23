@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { useTableUrlState } from '@eridu/ui';
 
@@ -37,12 +37,26 @@ export function useStudioShows({ studioId }: UseStudioShowsProps) {
   const searchQuery = (columnFilters.find((f) => f.id === 'name')?.value as string) || '';
   const dateRange = (columnFilters.find((f) => f.id === 'start_time')?.value as { from?: Date; to?: Date }) || undefined;
 
+  const filters = useMemo(() => {
+    const f: any = {};
+    columnFilters.forEach((filter) => {
+      if (['client_name', 'show_type_name', 'show_standard_name', 'show_status_name', 'platform_name'].includes(filter.id)) {
+        f[filter.id] = filter.value;
+      }
+      if (filter.id === 'has_tasks') {
+        f.has_tasks = filter.value === 'true' ? true : filter.value === 'false' ? false : undefined;
+      }
+    });
+    return f;
+  }, [columnFilters]);
+
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: studioShowsKeys.list(studioId, {
       page: pagination.pageIndex,
       limit: pagination.pageSize,
       search: searchQuery,
       dateRange,
+      ...filters,
     }),
     queryFn: () =>
       getStudioShows(studioId, {
@@ -51,7 +65,7 @@ export function useStudioShows({ studioId }: UseStudioShowsProps) {
         search: searchQuery || undefined,
         date_from: dateRange?.from?.toISOString(),
         date_to: dateRange?.to?.toISOString(),
-        // Note: You can add has_tasks boolean logic later based on another column filter if needed.
+        ...filters,
       }),
   });
 

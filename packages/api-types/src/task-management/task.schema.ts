@@ -206,6 +206,24 @@ export const reassignTaskRequestSchema = z.object({
 export type ReassignTaskRequest = z.infer<typeof reassignTaskRequestSchema>;
 
 /**
+ * Schema for bulk task deletion
+ */
+export const bulkDeleteTasksRequestSchema = z.object({
+  task_uids: z.array(z.string().startsWith(UID_PREFIXES.TASK)).min(1),
+});
+
+export type BulkDeleteTasksRequest = z.infer<typeof bulkDeleteTasksRequestSchema>;
+
+/**
+ * Response schema for bulk task deletion
+ */
+export const bulkDeleteTasksResponseSchema = z.object({
+  deleted_count: z.number().int(),
+});
+
+export type BulkDeleteTasksResponse = z.infer<typeof bulkDeleteTasksResponseSchema>;
+
+/**
  * Show data with task completion summary
  */
 export const showWithTaskSummaryDto = showApiResponseSchema.extend({
@@ -225,6 +243,11 @@ export type ShowWithTaskSummaryDto = z.infer<typeof showWithTaskSummaryDto>;
 export const listStudioShowsQuerySchema = paginationBaseSchema
   .extend({
     search: z.string().optional(),
+    client_name: z.string().optional(),
+    show_type_name: z.string().optional(),
+    show_standard_name: z.string().optional(),
+    show_status_name: z.string().optional(),
+    platform_name: z.string().optional(),
     date_from: z.string().datetime().optional(),
     date_to: z.string().datetime().optional(),
     has_tasks: z.coerce.boolean().optional(),

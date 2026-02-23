@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, Task, TaskTemplateSnapshot } from '@prisma/client';
+import { Prisma, Task, TaskStatus, TaskTemplateSnapshot } from '@prisma/client';
 
 import type { ListMyTasksQueryTransformed } from '@eridu/api-types/task-management';
 
@@ -41,17 +41,18 @@ export class TaskRepository extends BaseRepository<
   async findByShowAndTemplate(
     showId: bigint,
     templateId: bigint,
+    options: { includeDeleted?: boolean } = {},
   ): Promise<Task | null> {
     // Check if a task already exists for this show and template to ensure idempotency
     return this.prisma.task.findFirst({
       where: {
         templateId,
-        deletedAt: null,
+        ...(options.includeDeleted ? {} : { deletedAt: null }),
         targets: {
           some: {
             showId,
             targetType: 'SHOW',
-            deletedAt: null,
+            ...(options.includeDeleted ? {} : { deletedAt: null }),
           },
         },
       },
@@ -207,5 +208,61 @@ export class TaskRepository extends BaseRepository<
     ]);
 
     return { items, total };
+  }
+
+  async bulkSoftDelete(studioId: bigint, uids: string[]): Promise<Prisma.BatchPayload> {
+    return this.prisma.$transaction(async (tx) => {
+      const now = new Date();
+
+      // 1. Find the internal IDs of the tasks to delete (and verify studio scope)
+      const tasks = await tx.task.findMany({
+        where: {
+          uid: { in: uids },
+          studioId,
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+
+      const ids = tasks.map((t) => t.id);
+      if (ids.length === 0) {
+        return { count: 0 };
+      }
+
+      // 2. Soft-delete the tasks
+      const result = await tx.task.updateMany({
+        where: { id: { in: ids } },
+        data: { deletedAt: now },
+      });
+
+      // 3. Soft-delete the related task targets
+      await tx.taskTarget.updateMany({
+        where: {
+          taskId: { in: ids },
+          deletedAt: null,
+        },
+        data: { deletedAt: now },
+      });
+
+      return result;
+    });
+  }
+
+  async resumeTask(
+    id: bigint,
+    data: { snapshotId: bigint; status: TaskStatus; version: number },
+  ): Promise<Task> {
+    return this.prisma.task.update({
+      where: { id },
+      data: {
+        deletedAt: null,
+        status: data.status,
+        snapshotId: data.snapshotId,
+        content: {},
+        metadata: {},
+        version: data.version,
+        completedAt: null,
+      },
+    });
   }
 }

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   HttpCode,
   HttpStatus,
   Param,
@@ -19,6 +20,8 @@ import { StudioService } from '@/models/studio/studio.service';
 import {
   AssignShowsDto,
   assignShowsResponseSchema,
+  BulkDeleteTasksDto,
+  bulkDeleteTasksResponseSchema,
   GenerateTasksDto,
   generateTasksResponseSchema,
   ReassignTaskDto,
@@ -91,5 +94,15 @@ export class StudioTaskController extends BaseStudioController {
 
     this.ensureResourceExists(updatedTask, 'Task', id);
     return updatedTask;
+  }
+
+  @Delete('bulk')
+  @HttpCode(HttpStatus.OK)
+  @ZodResponse(bulkDeleteTasksResponseSchema)
+  async bulkDelete(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Body() dto: BulkDeleteTasksDto,
+  ) {
+    return this.taskOrchestrationService.bulkDeleteTasks(studioId, dto.task_uids);
   }
 }

@@ -1,9 +1,9 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
+import { useMemo, useState } from 'react';
 
 import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
-import { Badge, AsyncCombobox } from '@eridu/ui';
-import { useState, useMemo } from 'react';
+import { AsyncCombobox, Badge, Checkbox } from '@eridu/ui';
 
 import type { Membership } from '@/features/memberships/api/get-memberships';
 
@@ -22,9 +22,10 @@ function AssigneeCell({
   const [memberSearch, setMemberSearch] = useState('');
 
   const filteredOptions = useMemo(() => {
-    if (!memberSearch) return memberOptions;
+    if (!memberSearch)
+      return memberOptions;
     return memberOptions.filter((o) =>
-      o.label.toLowerCase().includes(memberSearch.toLowerCase())
+      o.label.toLowerCase().includes(memberSearch.toLowerCase()),
     );
   }, [memberOptions, memberSearch]);
 
@@ -58,6 +59,28 @@ export function getColumns(
   }));
 
   return [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+          className="translate-y-0.5"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          className="translate-y-0.5"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+      size: 40,
+    },
     {
       accessorKey: 'type',
       header: 'Type',
