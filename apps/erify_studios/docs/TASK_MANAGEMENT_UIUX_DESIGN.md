@@ -523,6 +523,8 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 **Key Features**:
 - Studio members fetched from `GET /studios/:studioId/members`
 - Warning when overwriting existing assignments
+- Informational warning for selected shows with no generated tasks
+- Disable submit when all selected shows have no generated tasks (prompt user to generate tasks first)
 - Shows summary with current assignee info
 - Dynamic task count based on selected shows
 
@@ -575,9 +577,18 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 - "Assign All Tasks" button opens the same assignment dialog from §3.3.2 but for a single show
 
 **Show-Level Actions in Detail Page**:
+- "Refresh" button invalidates relevant TanStack Query caches and refetches active data for:
+  - current show detail (`['studio-show', studioId, showUid]`)
+  - current show task list (`['show-tasks', 'list', studioId, showUid]`)
+  - studio show lists (`['studio-shows', 'list', studioId, ...]`)
+  - memberships lists used by assignee dropdowns (`['memberships', 'list', ...]`)
 - "Generate Tasks" button opens the same generation dialog from §3.3.1 scoped to the current show
 - "Assign All Tasks" opens assignment dialog from §3.3.2 scoped to the current show
 - Successful generate/assign actions refetch the show task list immediately
+- Route receives show metadata via navigation state and passes it to `useStudioShow` as `initialData` for instant header render
+- Detail query always remains active and revalidates from `GET /studios/:studioId/shows/:showUid` (not only on route transitions)
+- On refresh/direct access (no navigation state), the same studio-scoped detail query loads full show metadata
+- Studio scoping is enforced server-side; users can only load show details for studios they can access
 
 **Key Features**:
 - Ordered by task type: SETUP → ACTIVE → CLOSURE → OTHER
@@ -1489,6 +1500,7 @@ ShowsPage
 
 ShowTasksPage
 ├── ShowHeader (back link, show name, client, schedule)
+├── "Refresh" button → invalidate show/task/member caches and refetch active queries
 ├── "Generate Tasks" button → BulkTaskGenerationDialog (for single show)
 ├── "Assign All Tasks" button → ShowAssignmentDialog (for single show)
 ├── "Delete Selected" button → DeleteTasksDialog (for selected tasks)

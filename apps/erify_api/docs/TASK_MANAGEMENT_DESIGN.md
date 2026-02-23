@@ -10,6 +10,7 @@
 - Bulk Show Assignment (`POST /studios/:studioId/tasks/assign-shows`)
 - Individual Task Reassignment (`PATCH /studios/:studioId/tasks/:id/assign`)
 - Studio Shows with Task Summary (`GET /studios/:studioId/shows`)
+- Studio Show Detail (`GET /studios/:studioId/shows/:showUid`)
 - View Show Tasks (`GET /studios/:studioId/shows/:showUid/tasks`)
 - Bulk Task Deletion with transactional cascading soft-delete (`DELETE /studios/:studioId/tasks/bulk`)
 - Task content update with optimistic locking (`PATCH /studios/:studioId/tasks/:id`)
@@ -949,9 +950,10 @@ Sets `assigneeId` on all tasks linked to the given show(s).
 
 **Behavior**:
 1. Validate the assignee is a studio member
-2. Resolve show IDs, find all active tasks via `TaskTarget`
-3. Batch-update `assigneeId`
-4. Return `{ updated_count, shows, assignee }`
+2. Resolve show IDs, find all active task-target links via `TaskTarget`
+3. Batch-update `assigneeId` for tasks that exist
+4. Shows with **no generated tasks** are explicitly skipped (no show-level assignee record is created)
+5. Return assignment summary including skipped shows
 
 #### `reassignTask` (Individual Task Reassignment) ✅
 
@@ -1153,6 +1155,20 @@ Returns all tasks generated for a specific show, with assignee info.
 
 ---
 
+#### Show Detail (Studio-Scoped)
+
+```
+GET /studios/:studioId/shows/:showUid
+```
+
+Returns show metadata (client, status, standard, type, schedule) for the task detail header.
+
+**Security/Scope Rule**:
+- Show must belong to `:studioId`; otherwise return `403 Forbidden`.
+- Endpoint is protected by `@StudioProtected()` and membership checks.
+
+---
+
 #### Bulk Task Deletion
 
 ```
@@ -1202,10 +1218,17 @@ Assigns all tasks for selected shows to a single user.
 ```json
 {
   "updated_count": 5,
+  "show_count": 2,
+  "shows_with_tasks_count": 1,
+  "shows_without_tasks": ["show_def456"],
   "shows": ["show_abc123", "show_def456"],
   "assignee": { "id": "usr_001", "name": "Marcus Chen" }
 }
 ```
+
+**Notes**:
+- Assignment is task-based. If a show has no generated tasks yet, there is nothing to assign.
+- Client should prompt users to generate tasks first when all selected shows are taskless.
 
 ---
 
