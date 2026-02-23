@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 
 import { useTableUrlState } from '@eridu/ui';
@@ -22,8 +22,6 @@ const TABLE_OPTIONS = {
 };
 
 export function useStudioShows({ studioId }: UseStudioShowsProps) {
-  const queryClient = useQueryClient();
-
   const {
     pagination,
     onPaginationChange,
@@ -50,7 +48,7 @@ export function useStudioShows({ studioId }: UseStudioShowsProps) {
     return f;
   }, [columnFilters]);
 
-  const { data, isLoading, isFetching, isError } = useQuery({
+  const query = useQuery({
     queryKey: studioShowsKeys.list(studioId, {
       page: pagination.pageIndex,
       limit: pagination.pageSize,
@@ -67,19 +65,17 @@ export function useStudioShows({ studioId }: UseStudioShowsProps) {
         date_to: dateRange?.to?.toISOString(),
         ...filters,
       }),
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
   });
+
+  const { data, isLoading, isFetching, isError } = query;
 
   useEffect(() => {
     if (data?.meta?.totalPages !== undefined) {
       setPageCount(data.meta.totalPages);
     }
   }, [data?.meta?.totalPages, setPageCount]);
-
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({
-      queryKey: [...studioShowsKeys.lists(), studioId],
-    });
-  };
 
   return {
     data,
@@ -88,7 +84,7 @@ export function useStudioShows({ studioId }: UseStudioShowsProps) {
     isLoading,
     isFetching,
     isError,
-    refetch: handleRefresh,
+    refetch: query.refetch,
     pagination,
     onPaginationChange,
     columnFilters,

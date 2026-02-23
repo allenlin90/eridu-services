@@ -12,6 +12,7 @@ export function useShowTasks({ studioId, showId }: UseShowTasksProps) {
     queryKey: showTasksKeys.list(studioId, showId),
     queryFn: () => getShowTasks(studioId, showId),
     staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
     enabled: !!studioId && !!showId,
   });
 }

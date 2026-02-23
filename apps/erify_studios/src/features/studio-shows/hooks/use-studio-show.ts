@@ -8,6 +8,7 @@ type UseStudioShowProps = {
   showId: string;
   enabled?: boolean;
   initialData?: StudioShowDetail;
+  initialDataUpdatedAt?: number;
 };
 
 export function useStudioShow({
@@ -15,15 +16,15 @@ export function useStudioShow({
   showId,
   enabled = true,
   initialData,
+  initialDataUpdatedAt,
 }: UseStudioShowProps) {
   return useQuery({
     queryKey: studioShowKeys.detail(studioId, showId),
     queryFn: () => getStudioShow(studioId, showId),
     enabled: enabled && !!studioId && !!showId,
     initialData,
-    // Navigation state should render immediately, but still be considered stale
-    // so React Query revalidates from the API on mount.
-    initialDataUpdatedAt: initialData ? 0 : undefined,
+    initialDataUpdatedAt,
     staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }

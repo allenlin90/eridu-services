@@ -10,10 +10,8 @@ import { AdminTable } from '@/features/admin/components/admin-table';
 import { useMembershipsQuery } from '@/features/memberships/api/get-memberships';
 import { BulkTaskGenerationDialog } from '@/features/shows/components/bulk-task-generation-dialog';
 import { ShowAssignmentDialog } from '@/features/shows/components/show-assignment-dialog';
-import { showTasksKeys } from '@/features/studio-shows/api/get-show-tasks';
 import type { StudioShowDetail } from '@/features/studio-shows/api/get-studio-show';
-import { studioShowKeys } from '@/features/studio-shows/api/get-studio-show';
-import type { ShowSelection } from '@/features/studio-shows/api/get-studio-shows';
+import type { ShowSelection, StudioShow } from '@/features/studio-shows/api/get-studio-shows';
 import { studioShowsKeys } from '@/features/studio-shows/api/get-studio-shows';
 import { getColumns } from '@/features/studio-shows/components/show-tasks-table/columns';
 import { useShowTasks } from '@/features/studio-shows/hooks/use-show-tasks';
@@ -28,7 +26,7 @@ export const Route = createFileRoute('/studios/$studioId/shows/$showId/tasks')({
 
 function StudioShowTasksPage() {
   const { studioId, showId } = Route.useParams();
-  const location = useLocation({ from: '/studios/$studioId/shows/$showId/tasks' });
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -36,7 +34,38 @@ function StudioShowTasksPage() {
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
 
   // 1. Fetch data
-  const showFromNavigation = (location.state as { show?: StudioShowDetail } | undefined)?.show;
+  const showFromNavigation = (location.state as { show?: StudioShowDetail } | undefined)?.show ?? null;
+  const showFromStudioShowsCache = useMemo(() => {
+    const cachedLists = queryClient.getQueriesData<{ data: StudioShow[] }>({
+      queryKey: studioShowsKeys.listPrefix(studioId),
+    });
+
+    for (const [, cached] of cachedLists) {
+      const cachedShow = cached?.data?.find((show) => show.id === showId);
+      if (cachedShow) {
+        return cachedShow as StudioShowDetail;
+      }
+    }
+
+    return null;
+  }, [queryClient, showId, studioId]);
+  const initialShowDetails = showFromNavigation ?? showFromStudioShowsCache;
+  const initialShowDetailsUpdatedAt = useMemo(() => {
+    const cachedLists = queryClient.getQueryCache().findAll({
+      queryKey: studioShowsKeys.listPrefix(studioId),
+    });
+
+    for (const query of cachedLists) {
+      const cached = query.state.data as { data?: StudioShow[] } | undefined;
+      const hasCurrentShow = cached?.data?.some((show) => show.id === showId);
+      if (hasCurrentShow) {
+        return query.state.dataUpdatedAt;
+      }
+    }
+
+    return null;
+  }, [queryClient, showId, studioId]);
+
   const {
     data: tasks,
     isLoading: isLoadingTasks,
@@ -44,16 +73,16 @@ function StudioShowTasksPage() {
     refetch: refetchTasks,
   } = useShowTasks({ studioId, showId });
   const {
-    data: showFromApi,
+    data: showDetails,
     isLoading: isLoadingShow,
     isFetching: isFetchingShow,
     refetch: refetchShow,
   } = useStudioShow({
     studioId,
     showId,
-    initialData: showFromNavigation,
+    initialData: initialShowDetails ?? undefined,
+    initialDataUpdatedAt: initialShowDetailsUpdatedAt ?? undefined,
   });
-  const showDetails = showFromApi ?? showFromNavigation;
   const {
     data: membersResponse,
     isLoading: isLoadingMembers,
@@ -112,15 +141,8 @@ function StudioShowTasksPage() {
 
   const isRefreshing = isFetchingTasks || isFetchingShow || isFetchingMembers;
   const handleRefreshAll = useCallback(async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: showTasksKeys.list(studioId, showId) }),
-      queryClient.invalidateQueries({ queryKey: studioShowKeys.detail(studioId, showId) }),
-      queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) }),
-      queryClient.invalidateQueries({ queryKey: ['memberships', 'list'] }),
-    ]);
-
     await Promise.all([refetchTasks(), refetchShow(), refetchMembers()]);
-  }, [queryClient, refetchMembers, refetchShow, refetchTasks, showId, studioId]);
+  }, [refetchMembers, refetchShow, refetchTasks]);
 
   // 3. Define the columns
   const columns = useMemo(
