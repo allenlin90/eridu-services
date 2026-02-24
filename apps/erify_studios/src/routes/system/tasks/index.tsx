@@ -17,6 +17,7 @@ import { systemTaskSearchSchema } from '@/features/tasks/config/system-task-sear
 import { useAdminTasks } from '@/features/tasks/hooks/use-admin-tasks';
 import { useReassignAdminTask } from '@/features/tasks/hooks/use-reassign-admin-task';
 import { useReassignAdminTaskShow } from '@/features/tasks/hooks/use-reassign-admin-task-show';
+import { useUpdateAdminTask } from '@/features/tasks/hooks/use-update-admin-task';
 
 export const Route = createFileRoute('/system/tasks/')({
   component: SystemTasksList,
@@ -40,6 +41,7 @@ function SystemTasksList() {
   const reassignMutation = useReassignAdminTask();
   const reassignShowMutation = useReassignAdminTaskShow();
   const deleteMutation = useDeleteAdminTask();
+  const updateMutation = useUpdateAdminTask();
 
   const handleAssign = async (taskId: string, assigneeUid: string | null) => {
     await reassignMutation.mutateAsync({
@@ -59,6 +61,16 @@ function SystemTasksList() {
     await reassignShowMutation.mutateAsync({
       taskId,
       data: { show_uid: showUid },
+    });
+  };
+
+  const handleUpdateDueDate = async (taskId: string, dueDate: string | null, version: number) => {
+    await updateMutation.mutateAsync({
+      taskId,
+      data: {
+        version,
+        due_date: dueDate,
+      },
     });
   };
 
@@ -115,6 +127,8 @@ function SystemTasksList() {
         isAssigning={reassignMutation.isPending}
         onReassignShow={handleReassignShow}
         isReassigningShow={reassignShowMutation.isPending}
+        onUpdateDueDate={handleUpdateDueDate}
+        isUpdatingDueDate={updateMutation.isPending}
       />
 
       <DeleteConfirmDialog

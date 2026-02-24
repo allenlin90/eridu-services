@@ -1400,6 +1400,14 @@ PATCH /studios/:studioId/tasks/:taskUid/action
 }
 ```
 
+```json
+{
+  "action": "CONTINUE_EDITING",
+  "version": 4,
+  "note": "Please fix the missing segment audio."
+}
+```
+
 **Response: 200 OK**
 ```json
 {
@@ -1415,13 +1423,17 @@ PATCH /studios/:studioId/tasks/:taskUid/action
 - `REVIEW → COMPLETED`: approves the task
 - `REVIEW → IN_PROGRESS`: rejects; `rejection_note` stored in `task.metadata.rejection_note`
 - `any → CLOSED`: terminates task regardless of current state
-- `any → BLOCKED`: blocks task; `rejection_note` stored as `task.metadata.blocked_reason`
+- `any → BLOCKED`: blocks task; reason stored as `task.metadata.blocked_reason`
 - All other transitions: `422 TASK_003 Invalid status transition`
 - Version mismatch: `409 TASK_004 Optimistic lock failure`
 
 **Query: List Tasks Awaiting Review**
 
-The existing `GET /studios/:studioId/shows/:showUid/tasks` endpoint supports `?status=REVIEW` to list tasks in the review queue. No new endpoint is needed for the review list.
+Use the studio-scoped list endpoint to power the review queue:
+
+```
+GET /studios/:studioId/tasks?status=REVIEW
+```
 
 ---
 

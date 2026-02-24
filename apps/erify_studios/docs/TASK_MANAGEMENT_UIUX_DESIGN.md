@@ -926,11 +926,11 @@ This way, the list (`useMyTasks`) doesn't need to carry the full schema for ever
 
 ---
 
-### 3.6 Manager: Task Review Queue ⏳ Planned
+### 3.6 Manager: Task Review Queue ✅ Implemented
 
 **Purpose**: Review tasks submitted by operators. Approve (mark complete), reject (send back with note), or close.
 
-**Route**: `/studios/$studioId/tasks?status=REVIEW` — filtered view on the existing task infrastructure; no new route needed.
+**Route**: `/studios/$studioId/tasks?status=REVIEW` — studio-wide review queue (default filter set to `REVIEW`).
 
 **Layout**:
 ```
@@ -951,12 +951,13 @@ This way, the list (`useMyTasks`) doesn't need to carry the full schema for ever
        └──────────────────────────────────────────────────────┘
 ```
 
-**Per-Task Actions** (from row action menu or task detail):
+**Per-Task Actions** (row action dropdown):
 - **Approve** → `REVIEW → COMPLETED`; task locked read-only
 - **Reject** → opens rejection note input → `REVIEW → IN_PROGRESS`; note surfaced to operator
 - **Close** → `any → CLOSED`; requires confirmation; terminal state
+- **Block** → `any → BLOCKED`; requires blocker note
 
-**Rejection Note Flow**:
+**Rejection/Block Note Flow**:
 ```
 ┌─────────────────────────────────────────┐
 │ Reject Task                             │
@@ -983,11 +984,13 @@ This way, the list (`useMyTasks`) doesn't need to carry the full schema for ever
 └─────────────────────────────────────────────────────────────┘
 ```
 
+Blocked tasks surface `task.metadata.blocked_reason` in the operator view with a red warning panel.
+
 **FE implementation notes:**
-- Use the existing `show-tasks-table` infrastructure with a `status=REVIEW` filter preset
-- Bulk approve: `PATCH /studios/:studioId/tasks/bulk-update-status` (planned endpoint)
-- Single approve/reject: `PATCH /studios/:studioId/tasks/:taskUid/action`
-- Rejection note stored in `task.metadata.rejection_note`; clear it when operator resumes
+- Review queue is a dedicated studio route with the same filter/search UX as other admin tables.
+- Single approve/reject/block/close uses `PATCH /studios/:studioId/tasks/:taskUid/action`.
+- Rejection note stored in `task.metadata.rejection_note`; blocker note stored in `task.metadata.blocked_reason`.
+- Bulk approve is still planned (`PATCH /studios/:studioId/tasks/bulk-update-status`).
 
 ---
 
@@ -2069,7 +2072,8 @@ These fix functional gaps identified in the current implementation:
 - **BE (implemented)**: studio transition actor is persisted in `task.metadata.audit.last_transition` (lightweight metadata audit)
 - **BE**: `/admin/tasks` remains system-admin-only support surface (cross-studio list/detail/reassign/delete) while task content/status edits stay studio-scoped
 - **FE**: Operator `task-execution-sheet.tsx` — "Submit for Review" replaces "Complete Task"; rejection note banner; self-recall button on REVIEW state
-- **FE**: Admin task review queue at `§3.6` — bulk approve, reject with note dialog, per-task inline actions
+- **FE (implemented)**: Admin task review queue at `§3.6` — per-task inline actions and rejection/block note capture
+- **FE (planned)**: bulk approve for review queue once `bulk-update-status` exists
 - **FE**: `status-badge` — add REVIEW (amber) and CLOSED (grey strikethrough) variants
 
 ---
