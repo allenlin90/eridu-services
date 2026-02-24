@@ -6,27 +6,13 @@ import { TASK_STATUS, TemplateSchemaValidator } from '@eridu/api-types/task-mana
 import { Badge, Card } from '@eridu/ui';
 import { cn } from '@eridu/ui/lib/utils';
 
+import { STATUS_VARIANT_MAP, TYPE_VARIANT_MAP } from '../lib/badge-maps';
 import { calculateTaskProgress } from '../lib/progress';
 
 type MyTaskCardProps = {
   task: TaskWithRelationsDto;
   onClick: (taskId: string) => void;
   className?: string;
-};
-
-const STATUS_VARIANT_MAP: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  COMPLETED: 'default',
-  REVIEW: 'secondary',
-  BLOCKED: 'destructive',
-};
-
-const TYPE_VARIANT_MAP: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  SETUP: 'secondary',
-  ACTIVE: 'default',
-  CLOSURE: 'outline',
-  ADMIN: 'outline',
-  ROUTINE: 'outline',
-  OTHER: 'outline',
 };
 
 export function MyTaskCard({ task, onClick, className }: MyTaskCardProps) {
