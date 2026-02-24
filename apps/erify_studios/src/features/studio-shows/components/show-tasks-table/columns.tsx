@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { Info } from 'lucide-react';
+import { Info, Pencil } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import {
@@ -180,6 +180,7 @@ export function getColumns(
   isAssigning: boolean,
   onRunAction: (task: TaskWithRelationsDto, action: TaskAction) => void,
   processingTaskId: string | null,
+  onEditDueDate: (task: TaskWithRelationsDto) => void,
 ): ColumnDef<TaskWithRelationsDto>[] {
   const memberOptions = members.map((m) => ({
     value: m.user.id,
@@ -333,13 +334,27 @@ export function getColumns(
       header: 'Due Date',
       cell: ({ row }) => {
         const date = row.original.due_date;
-        return date
-          ? (
-              <span className="text-sm">{format(new Date(date), 'MMM d, yyyy')}</span>
-            )
-          : (
-              <span className="text-sm text-muted-foreground">-</span>
-            );
+        return (
+          <div className="flex items-center gap-2">
+            {date
+              ? (
+                  <span className="text-sm">{format(new Date(date), 'MMM d, yyyy')}</span>
+                )
+              : (
+                  <span className="text-sm text-muted-foreground">-</span>
+                )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => onEditDueDate(row.original)}
+              aria-label="Edit due date"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        );
       },
       size: 140,
     },

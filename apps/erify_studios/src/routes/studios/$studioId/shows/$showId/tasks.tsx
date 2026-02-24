@@ -19,8 +19,10 @@ import { useShowTasks } from '@/features/studio-shows/hooks/use-show-tasks';
 import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
 import { DeleteTasksDialog } from '@/features/tasks/components/delete-tasks-dialog';
 import { StudioTaskActionSheet } from '@/features/tasks/components/studio-task-action-sheet';
+import { TaskDueDateDialog } from '@/features/tasks/components/task-due-date-dialog';
 import { useAssignTask } from '@/features/tasks/hooks/use-assign-task';
 import { useDeleteTasks } from '@/features/tasks/hooks/use-delete-tasks';
+import { useUpdateStudioTask } from '@/features/tasks/hooks/use-update-studio-task';
 import { useUpdateStudioTaskStatus } from '@/features/tasks/hooks/use-update-studio-task-status';
 
 export const Route = createFileRoute('/studios/$studioId/shows/$showId/tasks')({
@@ -37,6 +39,7 @@ function StudioShowTasksPage() {
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [isShowDetailsOpen, setIsShowDetailsOpen] = useState(false);
   const [actionDraft, setActionDraft] = useState<{ task: TaskWithRelationsDto; action: TaskAction } | null>(null);
+  const [dueDateTask, setDueDateTask] = useState<TaskWithRelationsDto | null>(null);
 
   // 1. Fetch data
   const showFromNavigation = (location.state as { show?: StudioShowDetail } | undefined)?.show ?? null;
@@ -116,6 +119,7 @@ function StudioShowTasksPage() {
     isPending: isUpdatingStatus,
     variables: updateStatusVariables,
   } = useUpdateStudioTaskStatus({ studioId, showId });
+  const { mutate: updateTask, isPending: isUpdatingTask } = useUpdateStudioTask({ studioId, showId });
 
   const handleAssign = useCallback((taskId: string, assigneeUid: string | null) => {
     assignTask({ taskId, assigneeUid });
@@ -126,7 +130,8 @@ function StudioShowTasksPage() {
     action: TaskAction,
   ) => {
     const requiresForm = action === TASK_ACTION.SUBMIT_FOR_REVIEW || action === TASK_ACTION.APPROVE_COMPLETED;
-    if (requiresForm) {
+    const requiresNote = action === TASK_ACTION.CONTINUE_EDITING || action === TASK_ACTION.MARK_BLOCKED;
+    if (requiresForm || requiresNote) {
       setActionDraft({ task, action });
       return;
     }
@@ -143,7 +148,8 @@ function StudioShowTasksPage() {
   const handleSubmitActionWithContent = useCallback((
     task: TaskWithRelationsDto,
     action: TaskAction,
-    content: Record<string, unknown>,
+    content?: Record<string, unknown>,
+    note?: string,
   ) => {
     updateTaskStatus(
       {
@@ -151,7 +157,8 @@ function StudioShowTasksPage() {
         data: {
           version: task.version,
           action,
-          content,
+          ...(content ? { content } : {}),
+          ...(note ? { note } : {}),
         },
       },
       {
@@ -195,7 +202,14 @@ function StudioShowTasksPage() {
 
   // 3. Define the columns
   const columns = useMemo(
-    () => getColumns(members, handleAssign, isAssigning, handleRunAction, isUpdatingStatus ? processingTaskId : null),
+    () => getColumns(
+      members,
+      handleAssign,
+      isAssigning,
+      handleRunAction,
+      isUpdatingStatus ? processingTaskId : null,
+      (task) => setDueDateTask(task),
+    ),
     [members, handleAssign, isAssigning, handleRunAction, isUpdatingStatus, processingTaskId],
   );
   const showMetaItems = useMemo(() => {
@@ -379,6 +393,33 @@ function StudioShowTasksPage() {
           }
         }}
         onSubmit={handleSubmitActionWithContent}
+      />
+
+      <TaskDueDateDialog
+        key={dueDateTask?.id ?? 'due-date-dialog'}
+        task={dueDateTask}
+        studioId={studioId}
+        open={!!dueDateTask}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDueDateTask(null);
+          }
+        }}
+        onSave={(taskId, dueDate, version) => {
+          updateTask(
+            {
+              taskId,
+              data: {
+                version,
+                due_date: dueDate,
+              },
+            },
+            {
+              onSuccess: () => setDueDateTask(null),
+            },
+          );
+        }}
+        isSaving={isUpdatingTask}
       />
 
       <ShowAssignmentDialog

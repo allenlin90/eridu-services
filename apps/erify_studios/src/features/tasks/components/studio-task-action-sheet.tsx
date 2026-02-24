@@ -9,11 +9,13 @@ import {
 } from '@eridu/api-types/task-management';
 import {
   Button,
+  Label,
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
+  Textarea,
 } from '@eridu/ui';
 
 import { JsonForm } from '@/components/json-form/json-form';
@@ -26,7 +28,12 @@ type StudioTaskActionSheetProps = {
   action: TaskAction | null;
   isPending?: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (task: TaskWithRelationsDto, action: TaskAction, content: Record<string, unknown>) => void;
+  onSubmit: (
+    task: TaskWithRelationsDto,
+    action: TaskAction,
+    content?: Record<string, unknown>,
+    note?: string,
+  ) => void;
 };
 
 function getActionTitle(action: TaskAction | null): string {
@@ -35,12 +42,16 @@ function getActionTitle(action: TaskAction | null): string {
       return 'Submit for Review';
     case TASK_ACTION.APPROVE_COMPLETED:
       return 'Approve as Completed';
+    case TASK_ACTION.CONTINUE_EDITING:
+      return 'Send Back for Edits';
+    case TASK_ACTION.MARK_BLOCKED:
+      return 'Mark as Blocked';
     default:
       return 'Run Action';
   }
 }
 
-export function StudioTaskActionSheet({
+function StudioTaskActionSheetBody({
   studioId,
   open,
   task,
@@ -51,11 +62,14 @@ export function StudioTaskActionSheet({
 }: StudioTaskActionSheetProps) {
   const [contentDraft, setContentDraft] = useState<Record<string, unknown> | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [note, setNote] = useState('');
   const taskId = task?.id;
+  const requiresContent = action === TASK_ACTION.SUBMIT_FOR_REVIEW || action === TASK_ACTION.APPROVE_COMPLETED;
+  const requiresNote = action === TASK_ACTION.CONTINUE_EDITING || action === TASK_ACTION.MARK_BLOCKED;
   const { data: taskDetail, isLoading: isLoadingTask } = useQuery({
     queryKey: taskId ? studioTaskKeys.detail(studioId, taskId) : studioTaskKeys.all,
     queryFn: () => getStudioTask(studioId, taskId!),
-    enabled: open && !!studioId && !!taskId,
+    enabled: open && requiresContent && !!studioId && !!taskId,
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -80,26 +94,43 @@ export function StudioTaskActionSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          {isLoadingTask && (
-            <p className="text-sm text-muted-foreground">Loading task schema...</p>
-          )}
-          {schema
-            ? (
-                <JsonForm
-                  schema={schema}
-                  values={content}
-                  onChange={(values) => {
-                    setIsDirty(true);
-                    setContentDraft(values);
-                  }}
-                />
-              )
-            : (
-                <p className="text-sm text-muted-foreground">
-                  This task has no renderable schema. Action will submit current content as-is.
-                </p>
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {requiresContent && (
+            <>
+              {isLoadingTask && (
+                <p className="text-sm text-muted-foreground">Loading task schema...</p>
               )}
+              {schema
+                ? (
+                    <JsonForm
+                      schema={schema}
+                      values={content}
+                      onChange={(values) => {
+                        setIsDirty(true);
+                        setContentDraft(values);
+                      }}
+                    />
+                  )
+                : (
+                    <p className="text-sm text-muted-foreground">
+                      This task has no renderable schema. Action will submit current content as-is.
+                    </p>
+                  )}
+            </>
+          )}
+
+          {requiresNote && (
+            <div className="space-y-2">
+              <Label htmlFor="task-action-note">Note</Label>
+              <Textarea
+                id="task-action-note"
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+                placeholder={action === TASK_ACTION.MARK_BLOCKED ? 'Add the blocker reason...' : 'Explain what needs fixing...'}
+                className="min-h-24"
+              />
+            </div>
+          )}
         </div>
 
         <div className="p-4 border-t flex items-center justify-end gap-2">
@@ -111,16 +142,34 @@ export function StudioTaskActionSheet({
               if (!resolvedTask || !action) {
                 return;
               }
-              onSubmit(resolvedTask, action, content);
-              setIsDirty(false);
-              setContentDraft(null);
+              const noteValue = requiresNote ? note.trim() : undefined;
+              onSubmit(resolvedTask, action, requiresContent ? content : undefined, noteValue);
             }}
-            disabled={isPending || isLoadingTask || !resolvedTask || !action}
+            disabled={
+              isPending
+              || isLoadingTask
+              || !resolvedTask
+              || !action
+              || (requiresNote && note.trim().length === 0)
+            }
           >
             {title}
           </Button>
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+export function StudioTaskActionSheet(props: StudioTaskActionSheetProps) {
+  const { task, action, ...rest } = props;
+  const key = `${task?.id ?? 'empty'}:${action ?? 'none'}`;
+  return (
+    <StudioTaskActionSheetBody
+      key={key}
+      task={task}
+      action={action}
+      {...rest}
+    />
   );
 }

@@ -10,10 +10,11 @@ import {
   refetchStudioShowListsContainingShow,
 } from '@/features/studio-shows/lib/invalidate-studio-task-queries';
 import { myTasksKeys } from '@/features/tasks/api/get-my-tasks';
+import { studioTasksKeys } from '@/features/tasks/api/get-studio-tasks';
 
 type UseUpdateStudioTaskStatusProps = {
   studioId: string;
-  showId: string;
+  showId?: string;
 };
 
 export function useUpdateStudioTaskStatus({ studioId, showId }: UseUpdateStudioTaskStatusProps) {
@@ -22,19 +23,22 @@ export function useUpdateStudioTaskStatus({ studioId, showId }: UseUpdateStudioT
   return useMutation<TaskDto, Error, { taskId: string; data: TaskActionRequest }>({
     mutationFn: ({ taskId, data }) => updateStudioTaskStatus(studioId, taskId, data),
     onSuccess: async () => {
-      await invalidateStudioTaskQueries({
-        queryClient,
-        studioId,
-        showIds: [showId],
-      });
+      if (showId) {
+        await invalidateStudioTaskQueries({
+          queryClient,
+          studioId,
+          showIds: [showId],
+        });
 
-      await refetchStudioShowListsContainingShow({
-        queryClient,
-        studioId,
-        showId,
-      });
+        await refetchStudioShowListsContainingShow({
+          queryClient,
+          studioId,
+          showId,
+        });
+      }
 
       queryClient.invalidateQueries({ queryKey: myTasksKeys.all });
+      queryClient.invalidateQueries({ queryKey: studioTasksKeys.all(studioId) });
 
       toast.success('Task status updated');
     },

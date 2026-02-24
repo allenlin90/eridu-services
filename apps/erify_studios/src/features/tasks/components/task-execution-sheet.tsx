@@ -61,6 +61,7 @@ export function TaskExecutionSheet({ task, onClose, studioId: _studioId }: TaskE
     : (task.content ?? {});
 
   const rejectionNote = task.metadata?.rejection_note as string | undefined;
+  const blockedReason = task.metadata?.blocked_reason as string | undefined;
   const isOverdue = task.due_date ? new Date(task.due_date) < new Date() : false;
 
   const handleRunAction = (action: keyof typeof TASK_ACTION) => {
@@ -130,6 +131,16 @@ export function TaskExecutionSheet({ task, onClose, studioId: _studioId }: TaskE
               <div>
                 <p className="text-sm font-semibold text-amber-800">Reviewer note</p>
                 <p className="text-sm text-amber-700 mt-0.5">{rejectionNote}</p>
+              </div>
+            </div>
+          )}
+
+          {task.status === TASK_STATUS.BLOCKED && blockedReason && (
+            <div className="flex gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-red-800">Task blocked</p>
+                <p className="text-sm text-red-700 mt-0.5">{blockedReason}</p>
               </div>
             </div>
           )}
