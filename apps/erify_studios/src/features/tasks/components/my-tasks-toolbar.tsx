@@ -4,6 +4,7 @@ import type { TaskStatus, TaskType } from '@eridu/api-types/task-management';
 import { TASK_STATUS, TASK_TYPE } from '@eridu/api-types/task-management';
 import {
   Button,
+  DatePicker,
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
@@ -11,21 +12,12 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
   Input,
 } from '@eridu/ui';
 import { cn } from '@eridu/ui/lib/utils';
 
-import type { DateFilter, MyTaskPageSize, MyTaskSort, TaskViewMode } from '../hooks/use-my-tasks-filters';
-
-const DATE_TABS: { id: DateFilter; label: string }[] = [
-  { id: 'today', label: 'Today' },
-  { id: 'upcoming', label: 'Upcoming' },
-  { id: 'all', label: 'All' },
-];
+import type { MyTaskPageSize, MyTaskSort, TaskViewMode } from '../hooks/use-my-tasks-filters';
 
 const STATUS_FILTERS: { value: TaskStatus; label: string }[] = [
   { value: TASK_STATUS.PENDING, label: 'Pending' },
@@ -53,8 +45,8 @@ const SORT_OPTIONS: { value: MyTaskSort; label: string }[] = [
 const PAGE_SIZE_OPTIONS: MyTaskPageSize[] = [20, 50, 100];
 
 type MyTasksToolbarProps = {
-  dateFilter: DateFilter;
-  onDateFilterChange: (dateFilter: DateFilter) => void;
+  showStartDate: string;
+  onShowStartDateChange: (value: string) => void;
   searchInput: string;
   onSearchChange: (value: string) => void;
   selectedStatuses: TaskStatus[];
@@ -75,8 +67,8 @@ type MyTasksToolbarProps = {
 };
 
 export function MyTasksToolbar({
-  dateFilter,
-  onDateFilterChange,
+  showStartDate,
+  onShowStartDateChange,
   searchInput,
   onSearchChange,
   selectedStatuses,
@@ -97,27 +89,6 @@ export function MyTasksToolbar({
 }: MyTasksToolbarProps) {
   return (
     <div className="sticky top-0 z-10 -mx-4 border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="flex">
-        {DATE_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => onDateFilterChange(tab.id)}
-            className={cn(
-              'relative px-6 py-3 text-sm font-medium transition-colors',
-              dateFilter === tab.id
-                ? 'text-primary'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {tab.label}
-            {dateFilter === tab.id && (
-              <div className="absolute right-0 bottom-0 left-0 h-0.5 bg-primary" />
-            )}
-          </button>
-        ))}
-      </div>
-
       <div className="flex flex-wrap items-center gap-2 py-2">
         <div className="relative min-w-40 max-w-64 flex-1">
           <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
@@ -127,6 +98,26 @@ export function MyTasksToolbar({
             placeholder="Search tasks..."
             className="h-8 pl-8 text-sm"
           />
+        </div>
+
+        <div className="flex min-w-48 items-center gap-1">
+          <DatePicker
+            value={showStartDate}
+            onChange={onShowStartDateChange}
+            className="h-8 text-xs"
+          />
+          {showStartDate && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => onShowStartDateChange('')}
+              title="Clear show start date filter"
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
 
         <DropdownMenu>
@@ -142,73 +133,64 @@ export function MyTasksToolbar({
               <ChevronDown className="h-3.5 w-3.5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64">
+          <DropdownMenuContent
+            align="end"
+            sideOffset={8}
+            className="w-[calc(100vw-2rem)] max-w-64 max-h-[70vh] overflow-y-auto"
+          >
             <DropdownMenuLabel>Task Filters</DropdownMenuLabel>
             <DropdownMenuSeparator />
 
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Status</DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="w-52">
-                {STATUS_FILTERS.map((statusOption) => (
-                  <DropdownMenuCheckboxItem
-                    key={statusOption.value}
-                    checked={selectedStatuses.includes(statusOption.value)}
-                    onCheckedChange={() => onToggleStatus(statusOption.value)}
-                    onSelect={(event) => event.preventDefault()}
-                  >
-                    {statusOption.label}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
+            <DropdownMenuLabel className="text-xs text-muted-foreground">Status</DropdownMenuLabel>
+            {STATUS_FILTERS.map((statusOption) => (
+              <DropdownMenuCheckboxItem
+                key={statusOption.value}
+                checked={selectedStatuses.includes(statusOption.value)}
+                onCheckedChange={() => onToggleStatus(statusOption.value)}
+                onSelect={(event) => event.preventDefault()}
+              >
+                {statusOption.label}
+              </DropdownMenuCheckboxItem>
+            ))}
 
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Task Type</DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="w-52">
-                {TASK_TYPE_FILTERS.map((taskTypeOption) => (
-                  <DropdownMenuCheckboxItem
-                    key={taskTypeOption.value}
-                    checked={selectedTaskTypes.includes(taskTypeOption.value)}
-                    onCheckedChange={() => onToggleTaskType(taskTypeOption.value)}
-                    onSelect={(event) => event.preventDefault()}
-                  >
-                    {taskTypeOption.label}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs text-muted-foreground">Task Type</DropdownMenuLabel>
+            {TASK_TYPE_FILTERS.map((taskTypeOption) => (
+              <DropdownMenuCheckboxItem
+                key={taskTypeOption.value}
+                checked={selectedTaskTypes.includes(taskTypeOption.value)}
+                onCheckedChange={() => onToggleTaskType(taskTypeOption.value)}
+                onSelect={(event) => event.preventDefault()}
+              >
+                {taskTypeOption.label}
+              </DropdownMenuCheckboxItem>
+            ))}
 
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Sort</DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="w-56">
-                <DropdownMenuRadioGroup
-                  value={sortBy}
-                  onValueChange={(value) => onSortChange(value as MyTaskSort)}
-                >
-                  {SORT_OPTIONS.map((option) => (
-                    <DropdownMenuRadioItem key={option.value} value={option.value}>
-                      {option.label}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs text-muted-foreground">Sort</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={sortBy}
+              onValueChange={(value) => onSortChange(value as MyTaskSort)}
+            >
+              {SORT_OPTIONS.map((option) => (
+                <DropdownMenuRadioItem key={option.value} value={option.value}>
+                  {option.label}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
 
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Rows Per Page</DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="w-36">
-                <DropdownMenuRadioGroup
-                  value={String(limit)}
-                  onValueChange={(value) => onLimitChange(Number(value) as MyTaskPageSize)}
-                >
-                  {PAGE_SIZE_OPTIONS.map((option) => (
-                    <DropdownMenuRadioItem key={option} value={String(option)}>
-                      {option}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs text-muted-foreground">Rows Per Page</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={String(limit)}
+              onValueChange={(value) => onLimitChange(Number(value) as MyTaskPageSize)}
+            >
+              {PAGE_SIZE_OPTIONS.map((option) => (
+                <DropdownMenuRadioItem key={option} value={String(option)}>
+                  {option}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
 
