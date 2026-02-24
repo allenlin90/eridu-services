@@ -84,9 +84,12 @@ export type CreateTaskPayload = {
 export type UpdateTaskPayload = {
   content?: Prisma.JsonValue;
   status?: TaskStatus;
+  metadata?: Prisma.JsonValue;
+  dueDate?: Date | null;
 };
 
 export type TaskActionPayload = {
   content?: Prisma.JsonValue;
   action: TaskAction;
+  note?: string;
 };

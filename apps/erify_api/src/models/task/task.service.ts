@@ -172,6 +172,7 @@ export class TaskService extends BaseModelService {
     let newStatus = task.status;
     let completedAt = task.completedAt;
     let newMetadata = task.metadata;
+    let newDueDate = task.dueDate;
 
     const uiSchema = task.snapshot?.schema as any;
     const targetShow = task.targets?.[0]?.show;
@@ -182,6 +183,19 @@ export class TaskService extends BaseModelService {
           this.taskValidationService.validateContent(payload.content, uiSchema);
         }
         newContent = payload.content;
+      }
+
+      if (payload.metadata !== undefined) {
+        const metadataObj = (newMetadata as Record<string, unknown> | null) ?? {};
+        const incomingMetadata = payload.metadata as Record<string, unknown>;
+        newMetadata = {
+          ...metadataObj,
+          ...incomingMetadata,
+        } as unknown as typeof task.metadata;
+      }
+
+      if (payload.dueDate !== undefined) {
+        newDueDate = payload.dueDate;
       }
 
       if (payload.status && payload.status !== task.status) {
@@ -203,7 +217,7 @@ export class TaskService extends BaseModelService {
           }
 
           if (task.dueDate && now > task.dueDate) {
-            const metadataObj = (task.metadata as Record<string, unknown> | null) ?? {};
+            const metadataObj = (newMetadata as Record<string, unknown> | null) ?? {};
             newMetadata = {
               ...metadataObj,
               due_warning: {
@@ -257,6 +271,7 @@ export class TaskService extends BaseModelService {
           content: newContent ?? undefined,
           metadata: newMetadata ?? undefined,
           status: newStatus,
+          dueDate: newDueDate === undefined ? undefined : newDueDate,
           completedAt,
           version: version + 1,
         },
