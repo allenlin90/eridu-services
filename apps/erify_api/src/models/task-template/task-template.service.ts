@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { TaskStatus } from '@prisma/client';
 
 import { TASK_TYPE, TemplateSchemaValidator } from '@eridu/api-types/task-management';
 
@@ -250,5 +251,29 @@ export class TaskTemplateService extends BaseModelService {
 
   async softDelete(...args: Parameters<TaskTemplateRepository['softDelete']>): ReturnType<TaskTemplateRepository['softDelete']> {
     return this.taskTemplateRepository.softDelete(...args);
+  }
+
+  async getAdminTaskTemplatesWithUsage(
+    ...args: Parameters<TaskTemplateRepository['findPaginatedAdminWithUsage']>
+  ): ReturnType<TaskTemplateRepository['findPaginatedAdminWithUsage']> {
+    return this.taskTemplateRepository.findPaginatedAdminWithUsage(...args);
+  }
+
+  async getTemplateUsageSummary(
+    ...args: Parameters<TaskTemplateRepository['getTemplateUsageSummary']>
+  ): ReturnType<TaskTemplateRepository['getTemplateUsageSummary']> {
+    return this.taskTemplateRepository.getTemplateUsageSummary(...args);
+  }
+
+  async getTemplateBindings(params: {
+    templateUid: string;
+    status?: TaskStatus | TaskStatus[];
+    showStartFrom?: string;
+    showStartTo?: string;
+    includeDeleted?: boolean;
+    skip?: number;
+    take?: number;
+  }) {
+    return this.taskTemplateRepository.findTemplateBindings(params);
   }
 }

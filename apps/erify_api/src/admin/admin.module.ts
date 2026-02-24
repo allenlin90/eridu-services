@@ -14,6 +14,7 @@ import { AdminShowModule } from './shows/admin-show.module';
 import { AdminSnapshotModule } from './snapshots/admin-snapshot.module';
 import { AdminStudioRoomModule } from './studio-rooms/admin-studio-room.module';
 import { AdminStudioModule } from './studios/admin-studio.module';
+import { AdminTaskTemplateModule } from './task-templates/admin-task-template.module';
 import { AdminTaskModule } from './tasks/admin-task.module';
 import { AdminUserModule } from './users/admin-user.module';
 
@@ -33,6 +34,7 @@ import { AdminUserModule } from './users/admin-user.module';
     AdminStudioRoomModule,
     AdminStudioMembershipModule,
     AdminTaskModule,
+    AdminTaskTemplateModule,
     AdminScheduleModule,
     AdminSnapshotModule,
   ],
@@ -51,6 +53,7 @@ import { AdminUserModule } from './users/admin-user.module';
     AdminStudioRoomModule,
     AdminStudioMembershipModule,
     AdminTaskModule,
+    AdminTaskTemplateModule,
     AdminScheduleModule,
     AdminSnapshotModule,
   ],
