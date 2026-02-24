@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { TaskType } from '@prisma/client';
+import { TaskStatus, TaskType } from '@prisma/client';
 
-import { TASK_STATUS } from '@eridu/api-types/task-management';
+import {
+  type ListMyTasksQueryTransformed,
+  TASK_STATUS,
+} from '@eridu/api-types/task-management';
 
 import { UpdateTaskPayload } from './schemas/task.schema';
 import { TaskRepository } from './task.repository';
@@ -11,6 +14,7 @@ import { HttpError } from '@/lib/errors/http-error.util';
 import { TaskValidationError } from '@/lib/errors/task-validation.error';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { ShowService } from '@/models/show/show.service';
 import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
@@ -21,6 +25,7 @@ export class TaskService extends BaseModelService {
   constructor(
     private readonly taskRepository: TaskRepository,
     private readonly taskValidationService: TaskValidationService,
+    private readonly showService: ShowService,
     protected readonly utilityService: UtilityService,
   ) {
     super(utilityService);
@@ -52,6 +57,10 @@ export class TaskService extends BaseModelService {
     return this.taskRepository.findByUidWithRelations(...args);
   }
 
+  async findByUidWithRelationsAdmin(...args: Parameters<TaskRepository['findByUidWithRelationsAdmin']>): ReturnType<TaskRepository['findByUidWithRelationsAdmin']> {
+    return this.taskRepository.findByUidWithRelationsAdmin(...args);
+  }
+
   /** @internal */
   async findByShowAndTemplate(...args: Parameters<TaskRepository['findByShowAndTemplate']>): ReturnType<TaskRepository['findByShowAndTemplate']> {
     return this.taskRepository.findByShowAndTemplate(...args);
@@ -80,6 +89,10 @@ export class TaskService extends BaseModelService {
     return this.taskRepository.findTasksByAssignee(...args);
   }
 
+  async findTasks(query: ListMyTasksQueryTransformed) {
+    return this.taskRepository.findTasks(query);
+  }
+
   /** @internal */
   async update(...args: Parameters<TaskRepository['update']>): ReturnType<TaskRepository['update']> {
     return this.taskRepository.update(...args);
@@ -90,10 +103,54 @@ export class TaskService extends BaseModelService {
     return this.taskRepository.setAssignee(...args);
   }
 
+  async reassignTaskToShowAsAdmin(taskUid: string, showUid: string) {
+    const task = await this.taskRepository.findByUidWithSnapshot(taskUid);
+    if (!task) {
+      return null;
+    }
+
+    if (task.status !== TaskStatus.PENDING) {
+      throw HttpError.badRequest('Only PENDING tasks can be reassigned to another show');
+    }
+
+    if (!task.studioId) {
+      throw HttpError.badRequest('Task has no studio scope and cannot be reassigned');
+    }
+
+    const show = await this.showService.getShowById(showUid);
+    if (!show.studioId) {
+      throw HttpError.badRequest('Target show has no studio scope');
+    }
+
+    if (show.studioId !== task.studioId) {
+      throw HttpError.badRequest('Target show must belong to the same studio as the task');
+    }
+
+    const dueDate = this.resolveDueDateForShowTaskType(show.startTime, show.endTime, task.type, task.dueDate);
+    return this.taskRepository.reassignTaskToShow(taskUid, show.id, show.studioId, dueDate);
+  }
+
   async updateTaskContentAndStatus(
     uid: string,
     version: number,
     payload: UpdateTaskPayload,
+  ) {
+    return this.updateTaskContentAndStatusCore(uid, version, payload, true);
+  }
+
+  async updateTaskContentAndStatusAsAdmin(
+    uid: string,
+    version: number,
+    payload: UpdateTaskPayload,
+  ) {
+    return this.updateTaskContentAndStatusCore(uid, version, payload, false);
+  }
+
+  private async updateTaskContentAndStatusCore(
+    uid: string,
+    version: number,
+    payload: UpdateTaskPayload,
+    enforceSubmitWindow: boolean,
   ) {
     const task = await this.taskRepository.findByUidWithSnapshot(uid);
 
@@ -124,8 +181,11 @@ export class TaskService extends BaseModelService {
           const now = new Date();
 
           if (
-            (task.type === TaskType.ACTIVE || task.type === TaskType.CLOSURE)
-            && now < targetShow.startTime
+            enforceSubmitWindow
+            && (
+              (task.type === TaskType.ACTIVE || task.type === TaskType.CLOSURE)
+              && now < targetShow.startTime
+            )
           ) {
             throw HttpError.badRequest(
               `${task.type} tasks cannot be submitted before show start time`,
@@ -181,5 +241,23 @@ export class TaskService extends BaseModelService {
       }
       throw error;
     }
+  }
+
+  private resolveDueDateForShowTaskType(
+    showStartTime: Date,
+    showEndTime: Date,
+    taskType: TaskType,
+    currentDueDate: Date | null,
+  ): Date | null {
+    if (taskType === TaskType.SETUP) {
+      return new Date(showStartTime.getTime() - 60 * 60 * 1000);
+    }
+    if (taskType === TaskType.ACTIVE) {
+      return new Date(showEndTime.getTime() + 60 * 60 * 1000);
+    }
+    if (taskType === TaskType.CLOSURE) {
+      return new Date(showEndTime.getTime() + 6 * 60 * 60 * 1000);
+    }
+    return currentDueDate;
   }
 }

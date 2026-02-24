@@ -15,6 +15,7 @@ import {
   listMyTasksQuerySchema,
   listStudioShowsQuerySchema,
   reassignTaskRequestSchema,
+  reassignTaskShowRequestSchema,
   showWithTaskSummaryDto,
   taskDto,
   taskSchema,
@@ -33,6 +34,7 @@ export {
   listMyTasksQuerySchema,
   listStudioShowsQuerySchema,
   reassignTaskRequestSchema,
+  reassignTaskShowRequestSchema,
   showWithTaskSummaryDto,
   taskDto,
   taskSchema,
@@ -46,6 +48,7 @@ export class GenerateTasksResponseDto extends createZodDto(generateTasksResponse
 export class AssignShowsDto extends createZodDto(assignShowsRequestSchema) {}
 export class AssignShowsResponseDto extends createZodDto(assignShowsResponseSchema) {}
 export class ReassignTaskDto extends createZodDto(reassignTaskRequestSchema) {}
+export class ReassignTaskShowDto extends createZodDto(reassignTaskShowRequestSchema) {}
 export class ListStudioShowsQueryDto extends createZodDto(listStudioShowsQuerySchema) {}
 export class ListMyTasksQueryDto extends createZodDto(listMyTasksQuerySchema) {}
 export class BulkDeleteTasksDto extends createZodDto(bulkDeleteTasksRequestSchema) {}

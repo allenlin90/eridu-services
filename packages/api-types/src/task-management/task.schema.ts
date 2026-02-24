@@ -235,6 +235,15 @@ export const reassignTaskRequestSchema = z.object({
 export type ReassignTaskRequest = z.infer<typeof reassignTaskRequestSchema>;
 
 /**
+ * Schema for reassigning a task to another show
+ */
+export const reassignTaskShowRequestSchema = z.object({
+  show_uid: z.string().startsWith(UID_PREFIXES.SHOW),
+});
+
+export type ReassignTaskShowRequest = z.infer<typeof reassignTaskShowRequestSchema>;
+
+/**
  * Schema for bulk task deletion
  */
 export const bulkDeleteTasksRequestSchema = z.object({
@@ -279,7 +288,10 @@ export const listStudioShowsQuerySchema = paginationBaseSchema
     platform_name: z.string().optional(),
     date_from: z.string().datetime().optional(),
     date_to: z.string().datetime().optional(),
-    has_tasks: z.coerce.boolean().optional(),
+    has_tasks: z
+      .union([z.boolean(), z.enum(['true', 'false'])])
+      .transform((value) => (typeof value === 'string' ? value === 'true' : value))
+      .optional(),
     sort: z.enum(['asc', 'desc']).optional().default('desc'),
   })
   .transform(transformPagination);
@@ -305,11 +317,24 @@ export const listMyTasksQuerySchema = paginationBaseSchema
   .extend({
     status: z.union([z.nativeEnum(TASK_STATUS), z.array(z.nativeEnum(TASK_STATUS))]).optional(),
     task_type: z.union([z.nativeEnum(TASK_TYPE), z.array(z.nativeEnum(TASK_TYPE))]).optional(),
+    has_assignee: z
+      .union([z.boolean(), z.enum(['true', 'false'])])
+      .transform((value) => (typeof value === 'string' ? value === 'true' : value))
+      .optional(),
+    has_due_date: z
+      .union([z.boolean(), z.enum(['true', 'false'])])
+      .transform((value) => (typeof value === 'string' ? value === 'true' : value))
+      .optional(),
     due_date_from: z.string().datetime().optional(),
     due_date_to: z.string().datetime().optional(),
     show_start_from: z.string().datetime().optional(),
     show_start_to: z.string().datetime().optional(),
+    studio_name: z.string().trim().min(1).optional(),
+    client_name: z.string().trim().min(1).optional(),
+    assignee_name: z.string().trim().min(1).optional(),
+    show_name: z.string().trim().min(1).optional(),
     search: z.string().trim().min(1).optional(),
+    reference_id: z.string().trim().min(1).optional(),
     sort: z
       .enum([
         'due_date:asc',
@@ -322,6 +347,7 @@ export const listMyTasksQuerySchema = paginationBaseSchema
       ])
       .optional(),
     studio_id: z.string().optional(),
+    client_id: z.string().optional(),
   })
   .transform(transformPagination);
 

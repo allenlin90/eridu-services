@@ -31,7 +31,7 @@ export class TaskRepository extends BaseRepository<
 
   async findByUidWithSnapshot(
     uid: string,
-  ): Promise<(Task & { snapshot: TaskTemplateSnapshot | null; targets: { show: { uid: string; startTime: Date; endTime: Date } | null }[] }) | null> {
+  ): Promise<(Task & { snapshot: TaskTemplateSnapshot | null; targets: { show: { id: bigint; uid: string; studioId: bigint | null; startTime: Date; endTime: Date } | null }[] }) | null> {
     return this.model.findFirst({
       where: { uid, deletedAt: null },
       include: {
@@ -41,7 +41,9 @@ export class TaskRepository extends BaseRepository<
           include: {
             show: {
               select: {
+                id: true,
                 uid: true,
+                studioId: true,
                 startTime: true,
                 endTime: true,
               },
@@ -49,7 +51,7 @@ export class TaskRepository extends BaseRepository<
           },
         },
       },
-    }) as Promise<(Task & { snapshot: TaskTemplateSnapshot | null; targets: { show: { uid: string; startTime: Date; endTime: Date } | null }[] }) | null>;
+    }) as Promise<(Task & { snapshot: TaskTemplateSnapshot | null; targets: { show: { id: bigint; uid: string; studioId: bigint | null; startTime: Date; endTime: Date } | null }[] }) | null>;
   }
 
   async findByUidWithRelations(
@@ -73,6 +75,84 @@ export class TaskRepository extends BaseRepository<
   }) | null> {
     return this.prisma.task.findFirst({
       where: { uid, deletedAt: null, assigneeId },
+      include: {
+        template: true,
+        snapshot: {
+          select: {
+            schema: true,
+            version: true,
+          },
+        },
+        assignee: true,
+        targets: {
+          where: { targetType: 'SHOW', deletedAt: null },
+          include: {
+            show: {
+              include: {
+                client: {
+                  select: {
+                    name: true,
+                  },
+                },
+                studioRoom: {
+                  select: {
+                    name: true,
+                  },
+                },
+                showMCs: {
+                  where: { deletedAt: null },
+                  include: {
+                    mc: {
+                      select: {
+                        name: true,
+                        aliasName: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }) as Promise<(Task & {
+      template: { uid: string; name: string } | null;
+      snapshot: { schema: unknown; version: number } | null;
+      assignee: { uid: string; name: string } | null;
+      targets: {
+        show: {
+          uid: string;
+          name: string;
+          startTime: Date;
+          endTime: Date;
+          client: { name: string } | null;
+          studioRoom: { name: string } | null;
+          showMCs: { mc: { name: string; aliasName: string } }[];
+        } | null;
+      }[];
+    }) | null>;
+  }
+
+  async findByUidWithRelationsAdmin(
+    uid: string,
+  ): Promise<(Task & {
+    template: { uid: string; name: string } | null;
+    snapshot: { schema: unknown; version: number } | null;
+    assignee: { uid: string; name: string } | null;
+    targets: {
+      show: {
+        uid: string;
+        name: string;
+        startTime: Date;
+        endTime: Date;
+        client: { name: string } | null;
+        studioRoom: { name: string } | null;
+        showMCs: { mc: { name: string; aliasName: string } }[];
+      } | null;
+    }[];
+  }) | null> {
+    return this.prisma.task.findFirst({
+      where: { uid, deletedAt: null },
       include: {
         template: true,
         snapshot: {
@@ -251,12 +331,20 @@ export class TaskRepository extends BaseRepository<
     const {
       status,
       task_type,
+      has_assignee,
+      has_due_date,
       due_date_from,
       due_date_to,
       show_start_from,
       show_start_to,
+      studio_name,
+      client_name,
+      assignee_name,
+      show_name,
       search,
+      reference_id,
       sort,
+      client_id,
       page,
       limit,
     } = query;
@@ -279,7 +367,25 @@ export class TaskRepository extends BaseRepository<
       where.type = Array.isArray(task_type) ? { in: task_type } : task_type;
     }
 
-    if (due_date_from || due_date_to) {
+    if (has_assignee === true) {
+      where.assigneeId = { not: null };
+    } else if (has_assignee === false) {
+      where.assigneeId = null;
+    }
+
+    if (has_due_date === false) {
+      where.dueDate = null;
+    } else if (has_due_date === true) {
+      if (due_date_from || due_date_to) {
+        where.dueDate = {};
+        if (due_date_from)
+          where.dueDate.gte = new Date(due_date_from);
+        if (due_date_to)
+          where.dueDate.lte = new Date(due_date_to);
+      } else {
+        where.dueDate = { not: null };
+      }
+    } else if (due_date_from || due_date_to) {
       where.dueDate = {};
       if (due_date_from)
         where.dueDate.gte = new Date(due_date_from);
@@ -306,9 +412,116 @@ export class TaskRepository extends BaseRepository<
       };
     }
 
+    if (studio_name) {
+      const studioFilter: Prisma.TaskWhereInput = {
+        studio: {
+          name: { contains: studio_name, mode: 'insensitive' },
+        },
+      };
+      const existingAnd = where.AND
+        ? Array.isArray(where.AND)
+          ? where.AND
+          : [where.AND]
+        : [];
+      where.AND = [...existingAnd, studioFilter];
+    }
+
+    if (client_name) {
+      const clientNameFilter: Prisma.TaskWhereInput = {
+        targets: {
+          some: {
+            targetType: 'SHOW',
+            deletedAt: null,
+            show: {
+              client: {
+                name: { contains: client_name, mode: 'insensitive' },
+              },
+            },
+          },
+        },
+      };
+      const existingAnd = where.AND
+        ? Array.isArray(where.AND)
+          ? where.AND
+          : [where.AND]
+        : [];
+      where.AND = [...existingAnd, clientNameFilter];
+    }
+
+    if (assignee_name) {
+      const assigneeNameFilter: Prisma.TaskWhereInput = {
+        assignee: {
+          name: { contains: assignee_name, mode: 'insensitive' },
+        },
+      };
+      const existingAnd = where.AND
+        ? Array.isArray(where.AND)
+          ? where.AND
+          : [where.AND]
+        : [];
+      where.AND = [...existingAnd, assigneeNameFilter];
+    }
+
+    if (show_name) {
+      const showNameFilter: Prisma.TaskWhereInput = {
+        targets: {
+          some: {
+            targetType: 'SHOW',
+            deletedAt: null,
+            show: {
+              name: { contains: show_name, mode: 'insensitive' },
+            },
+          },
+        },
+      };
+      const existingAnd = where.AND
+        ? Array.isArray(where.AND)
+          ? where.AND
+          : [where.AND]
+        : [];
+      where.AND = [...existingAnd, showNameFilter];
+    }
+
+    if (client_id) {
+      const clientFilter: Prisma.TaskWhereInput = {
+        targets: {
+          some: {
+            targetType: 'SHOW',
+            deletedAt: null,
+            show: {
+              client: {
+                uid: client_id,
+              },
+            },
+          },
+        },
+      };
+
+      const existingAnd = where.AND
+        ? Array.isArray(where.AND)
+          ? where.AND
+          : [where.AND]
+        : [];
+      where.AND = [...existingAnd, clientFilter];
+    }
+
     if (search) {
       where.OR = [
+        { uid: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
+        { assignee: { uid: { contains: search, mode: 'insensitive' } } },
+        { assignee: { name: { contains: search, mode: 'insensitive' } } },
+        {
+          targets: {
+            some: {
+              targetType: 'SHOW',
+              deletedAt: null,
+              show: {
+                uid: { contains: search, mode: 'insensitive' },
+              },
+            },
+          },
+        },
         {
           targets: {
             some: {
@@ -321,6 +534,332 @@ export class TaskRepository extends BaseRepository<
           },
         },
       ];
+    }
+
+    if (reference_id) {
+      const referenceFilter: Prisma.TaskWhereInput = {
+        OR: [
+          { assignee: { uid: { contains: reference_id, mode: 'insensitive' } } },
+          {
+            targets: {
+              some: {
+                targetType: 'SHOW',
+                deletedAt: null,
+                show: {
+                  uid: { contains: reference_id, mode: 'insensitive' },
+                },
+              },
+            },
+          },
+        ],
+      };
+
+      const existingAnd = where.AND
+        ? Array.isArray(where.AND)
+          ? where.AND
+          : [where.AND]
+        : [];
+      where.AND = [...existingAnd, referenceFilter];
+    }
+
+    let orderBy: Prisma.TaskOrderByWithRelationInput = { dueDate: 'asc' };
+    if (sort) {
+      const [field, direction] = sort.split(':');
+      const sortDirection = direction === 'desc' ? 'desc' : 'asc';
+      if (field === 'due_date') {
+        orderBy = { dueDate: sortDirection };
+      } else if (field === 'updated_at' || field === 'updatedAt') {
+        orderBy = { updatedAt: sortDirection };
+      } else if (field === 'createdAt' || field === 'created_at') {
+        orderBy = { createdAt: sortDirection };
+      }
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.task.findMany({
+        where,
+        orderBy,
+        skip,
+        take: limit,
+        include: {
+          template: true,
+          snapshot: {
+            select: {
+              schema: true,
+              version: true,
+            },
+          },
+          assignee: true,
+          targets: {
+            where: { targetType: 'SHOW', deletedAt: null },
+            include: {
+              show: {
+                include: {
+                  client: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                  studioRoom: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                  showMCs: {
+                    where: { deletedAt: null },
+                    include: {
+                      mc: {
+                        select: {
+                          name: true,
+                          aliasName: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.task.count({ where }),
+    ]);
+
+    return { items, total };
+  }
+
+  async findTasks(query: ListMyTasksQueryTransformed) {
+    const {
+      status,
+      task_type,
+      has_assignee,
+      has_due_date,
+      due_date_from,
+      due_date_to,
+      show_start_from,
+      show_start_to,
+      studio_name,
+      client_name,
+      assignee_name,
+      show_name,
+      search,
+      reference_id,
+      sort,
+      studio_id,
+      client_id,
+      page,
+      limit,
+    } = query;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.TaskWhereInput = {
+      deletedAt: null,
+    };
+
+    if (studio_id) {
+      where.studio = { uid: studio_id };
+    }
+
+    if (status) {
+      where.status = Array.isArray(status) ? { in: status } : status;
+    }
+
+    if (task_type) {
+      where.type = Array.isArray(task_type) ? { in: task_type } : task_type;
+    }
+
+    if (has_assignee === true) {
+      where.assigneeId = { not: null };
+    } else if (has_assignee === false) {
+      where.assigneeId = null;
+    }
+
+    if (has_due_date === false) {
+      where.dueDate = null;
+    } else if (has_due_date === true) {
+      if (due_date_from || due_date_to) {
+        where.dueDate = {};
+        if (due_date_from)
+          where.dueDate.gte = new Date(due_date_from);
+        if (due_date_to)
+          where.dueDate.lte = new Date(due_date_to);
+      } else {
+        where.dueDate = { not: null };
+      }
+    } else if (due_date_from || due_date_to) {
+      where.dueDate = {};
+      if (due_date_from)
+        where.dueDate.gte = new Date(due_date_from);
+      if (due_date_to)
+        where.dueDate.lte = new Date(due_date_to);
+    }
+
+    if (show_start_from || show_start_to) {
+      const showStartTimeFilter: Prisma.DateTimeFilter = {};
+      if (show_start_from)
+        showStartTimeFilter.gte = new Date(show_start_from);
+      if (show_start_to)
+        showStartTimeFilter.lte = new Date(show_start_to);
+
+      where.targets = {
+        some: {
+          targetType: 'SHOW',
+          deletedAt: null,
+          show: {
+            startTime: showStartTimeFilter,
+          },
+        },
+      };
+    }
+
+    if (studio_name) {
+      const studioFilter: Prisma.TaskWhereInput = {
+        studio: {
+          name: { contains: studio_name, mode: 'insensitive' },
+        },
+      };
+      const existingAnd = where.AND
+        ? Array.isArray(where.AND)
+          ? where.AND
+          : [where.AND]
+        : [];
+      where.AND = [...existingAnd, studioFilter];
+    }
+
+    if (client_name) {
+      const clientNameFilter: Prisma.TaskWhereInput = {
+        targets: {
+          some: {
+            targetType: 'SHOW',
+            deletedAt: null,
+            show: {
+              client: {
+                name: { contains: client_name, mode: 'insensitive' },
+              },
+            },
+          },
+        },
+      };
+      const existingAnd = where.AND
+        ? Array.isArray(where.AND)
+          ? where.AND
+          : [where.AND]
+        : [];
+      where.AND = [...existingAnd, clientNameFilter];
+    }
+
+    if (assignee_name) {
+      const assigneeNameFilter: Prisma.TaskWhereInput = {
+        assignee: {
+          name: { contains: assignee_name, mode: 'insensitive' },
+        },
+      };
+      const existingAnd = where.AND
+        ? Array.isArray(where.AND)
+          ? where.AND
+          : [where.AND]
+        : [];
+      where.AND = [...existingAnd, assigneeNameFilter];
+    }
+
+    if (show_name) {
+      const showNameFilter: Prisma.TaskWhereInput = {
+        targets: {
+          some: {
+            targetType: 'SHOW',
+            deletedAt: null,
+            show: {
+              name: { contains: show_name, mode: 'insensitive' },
+            },
+          },
+        },
+      };
+      const existingAnd = where.AND
+        ? Array.isArray(where.AND)
+          ? where.AND
+          : [where.AND]
+        : [];
+      where.AND = [...existingAnd, showNameFilter];
+    }
+
+    if (client_id) {
+      const clientFilter: Prisma.TaskWhereInput = {
+        targets: {
+          some: {
+            targetType: 'SHOW',
+            deletedAt: null,
+            show: {
+              client: {
+                uid: client_id,
+              },
+            },
+          },
+        },
+      };
+
+      const existingAnd = where.AND
+        ? Array.isArray(where.AND)
+          ? where.AND
+          : [where.AND]
+        : [];
+      where.AND = [...existingAnd, clientFilter];
+    }
+
+    if (search) {
+      where.OR = [
+        { uid: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { assignee: { uid: { contains: search, mode: 'insensitive' } } },
+        { assignee: { name: { contains: search, mode: 'insensitive' } } },
+        {
+          targets: {
+            some: {
+              targetType: 'SHOW',
+              deletedAt: null,
+              show: {
+                uid: { contains: search, mode: 'insensitive' },
+              },
+            },
+          },
+        },
+        {
+          targets: {
+            some: {
+              targetType: 'SHOW',
+              deletedAt: null,
+              show: {
+                name: { contains: search, mode: 'insensitive' },
+              },
+            },
+          },
+        },
+      ];
+    }
+
+    if (reference_id) {
+      const referenceFilter: Prisma.TaskWhereInput = {
+        OR: [
+          { assignee: { uid: { contains: reference_id, mode: 'insensitive' } } },
+          {
+            targets: {
+              some: {
+                targetType: 'SHOW',
+                deletedAt: null,
+                show: {
+                  uid: { contains: reference_id, mode: 'insensitive' },
+                },
+              },
+            },
+          },
+        ],
+      };
+
+      const existingAnd = where.AND
+        ? Array.isArray(where.AND)
+          ? where.AND
+          : [where.AND]
+        : [];
+      where.AND = [...existingAnd, referenceFilter];
     }
 
     let orderBy: Prisma.TaskOrderByWithRelationInput = { dueDate: 'asc' };
@@ -444,6 +983,86 @@ export class TaskRepository extends BaseRepository<
         version: data.version,
         completedAt: null,
       },
+    });
+  }
+
+  async reassignTaskToShow(
+    taskUid: string,
+    showId: bigint,
+    studioId: bigint,
+    dueDate: Date | null,
+  ): Promise<Task | null> {
+    return this.prisma.$transaction(async (tx) => {
+      const task = await tx.task.findFirst({
+        where: { uid: taskUid, deletedAt: null },
+        select: { id: true },
+      });
+
+      if (!task) {
+        return null;
+      }
+
+      const currentShowTarget = await tx.taskTarget.findFirst({
+        where: {
+          taskId: task.id,
+          targetType: 'SHOW',
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+
+      if (!currentShowTarget) {
+        return null;
+      }
+
+      const existingTargetForShow = await tx.taskTarget.findFirst({
+        where: {
+          taskId: task.id,
+          targetType: 'SHOW',
+          targetId: showId,
+        },
+        select: { id: true },
+      });
+
+      if (existingTargetForShow) {
+        if (existingTargetForShow.id !== currentShowTarget.id) {
+          await tx.taskTarget.updateMany({
+            where: {
+              taskId: task.id,
+              targetType: 'SHOW',
+              deletedAt: null,
+              id: { not: existingTargetForShow.id },
+            },
+            data: { deletedAt: new Date() },
+          });
+        }
+
+        await tx.taskTarget.update({
+          where: { id: existingTargetForShow.id },
+          data: {
+            deletedAt: null,
+            targetId: showId,
+            showId,
+          },
+        });
+      } else {
+        await tx.taskTarget.update({
+          where: { id: currentShowTarget.id },
+          data: {
+            targetId: showId,
+            showId,
+            deletedAt: null,
+          },
+        });
+      }
+
+      return tx.task.update({
+        where: { id: task.id },
+        data: {
+          studioId,
+          dueDate,
+        },
+      });
     });
   }
 }

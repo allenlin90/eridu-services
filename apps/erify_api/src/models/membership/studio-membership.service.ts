@@ -146,6 +146,19 @@ export class StudioMembershipService extends BaseModelService {
     return membership !== null;
   }
 
+  async hasUserMembershipInStudio(
+    userUid: string,
+    studioId: StudioId,
+  ): Promise<boolean> {
+    const membership = await this.studioMembershipRepository.findOne({
+      user: { uid: userUid },
+      studioId,
+      deletedAt: null,
+    });
+
+    return membership !== null;
+  }
+
   async updateStudioMembership<T extends Parameters<StudioMembershipRepository['updateByUnique']>[2]>(
     uid: string,
     payload: UpdateStudioMembershipPayload,
