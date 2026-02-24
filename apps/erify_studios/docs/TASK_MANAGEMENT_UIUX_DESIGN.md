@@ -2,7 +2,7 @@
 
 **Version**: 3.6
 **Last Updated**: February 24, 2026
-**Status**: Core implemented. `/system/tasks` now supports system-admin cross-studio discovery and reassignment with immutable task content in system scope. Current planned next: studio review workflow/state-machine enforcement and advanced grouping ergonomics at scale. Deferred: animations, swipe gestures, file uploads, PWA/offline, WebSocket, analytics.
+**Status**: Core implemented. `/system/tasks` now supports system-admin cross-studio discovery and reassignment with immutable task content in system scope. Studio-scoped review/state-machine enforcement is active on `/studios/$studioId/tasks/*` (manager/admin actions allowed on behalf of assignees). Current planned next: review UX refinements and advanced grouping ergonomics at scale. Deferred: animations, swipe gestures, file uploads, PWA/offline, WebSocket, analytics.
 
 > **Related Documentation**  
 > For API contracts, database schema, and backend architecture, see [`apps/erify_api/docs/TASK_MANAGEMENT_DESIGN.md`](../../erify_api/docs/TASK_MANAGEMENT_DESIGN.md)
@@ -986,7 +986,7 @@ This way, the list (`useMyTasks`) doesn't need to carry the full schema for ever
 **FE implementation notes:**
 - Use the existing `show-tasks-table` infrastructure with a `status=REVIEW` filter preset
 - Bulk approve: `PATCH /studios/:studioId/tasks/bulk-update-status` (planned endpoint)
-- Single approve/reject: `PATCH /studios/:studioId/tasks/:taskUid/status`
+- Single approve/reject: `PATCH /studios/:studioId/tasks/:taskUid/action`
 - Rejection note stored in `task.metadata.rejection_note`; clear it when operator resumes
 
 ---
@@ -2060,8 +2060,13 @@ These fix functional gaps identified in the current implementation:
 ---
 
 ### Review Workflow (Next Iteration)
-- **BE**: State machine enforcement in **studio module/services only** (`/studios/$studioId/*`) — operator blocked from self-completing; role-based transition table (see `TASK_MANAGEMENT_DESIGN.md §7.3`)
-- **BE**: `PATCH /studios/:studioId/tasks/:taskUid/status` — admin approve, reject with note, close
+- **BE (implemented)**: State machine enforcement in **studio module/services only** (`/studios/$studioId/*`) — role-based transition table (see `TASK_MANAGEMENT_DESIGN.md §7.3`)
+- **BE (legacy compatibility)**: `PATCH /studios/:studioId/tasks/:taskUid/status`
+- **BE (implemented)**: action-first workflow endpoints for clearer FE semantics:
+  - `PATCH /me/tasks/:taskUid/action`
+  - `PATCH /studios/:studioId/tasks/:taskUid/action`
+  - `GET /studios/:studioId/tasks/:taskUid` (lazy-load schema/details when manager opens action sheet)
+- **BE (implemented)**: studio transition actor is persisted in `task.metadata.audit.last_transition` (lightweight metadata audit)
 - **BE**: `/admin/tasks` remains system-admin-only support surface (cross-studio list/detail/reassign/delete) while task content/status edits stay studio-scoped
 - **FE**: Operator `task-execution-sheet.tsx` — "Submit for Review" replaces "Complete Task"; rejection note banner; self-recall button on REVIEW state
 - **FE**: Admin task review queue at `§3.6` — bulk approve, reject with note dialog, per-task inline actions

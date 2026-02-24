@@ -2,7 +2,7 @@
 
 **Version**: 3.6
 **Last Updated**: February 24, 2026
-**Status**: Core implemented. System admin task management (`/admin/tasks`) now supports cross-studio discovery + reassignment with membership validation, while keeping task content immutable in system scope. Planned next: studio review workflow/state machine endpoints.
+**Status**: Core implemented. System admin task management (`/admin/tasks`) now supports cross-studio discovery + reassignment with membership validation, while keeping task content immutable in system scope. Studio-scoped review/state-transition enforcement is implemented at `/studios/:studioId/tasks/*` with role-aware transitions.
 
 > **Related Documentation**  
 > For UI/UX specifications and user workflows, see [`apps/erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md`](../../erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md)
@@ -156,7 +156,7 @@ A generic, extensible Task Management system using a **"Task as Form"** architec
 - **Strict Templates**: All tasks generated from approved templates
 - **Manager Control**: Only managers generate/delete tasks, assign shows, or bulk update
 - **Operator Scope**: Can only update content + status on their assigned tasks
-- **Audit Trail**: (Future) Comprehensive change logging
+- **Audit Trail**: Partial now via `task.metadata.audit.last_transition` (studio-scoped status transitions); comprehensive append-only audit log remains a future enhancement.
 
 ---
 
@@ -504,6 +504,15 @@ CREATE INDEX idx_snapshots_schema_gin ON task_template_snapshots USING GIN (sche
 ```
 
 ### Task Status State Machine
+
+Implementation scope:
+- Enforced on studio endpoints only (`/studios/:studioId/tasks/*`).
+- Not enforced on system-admin endpoints (`/admin/tasks/*`), which intentionally remain unrestricted for cross-studio operational fixes.
+- Studio `MANAGER`/`ADMIN` can submit/review on behalf of assignees; latest transition actor is persisted to `task.metadata.audit.last_transition`.
+- Workflow API is now action-based for studio/member flows:
+  - `PATCH /me/tasks/:taskUid/action`
+  - `PATCH /studios/:studioId/tasks/:taskUid/action`
+  - Actions are mapped server-side to resulting statuses.
 
 ```mermaid
 stateDiagram-v2
@@ -988,13 +997,13 @@ Returns paginated shows for a studio with per-show `task_summary` (total / assig
 
 **Responsibilities**: Single-task update (content, status), optimistic locking, content validation.
 
-**Current status**: ✅ Core update functionality implemented in `updateTaskContentAndStatus()`. Exposed at both `PATCH /studios/:studioId/tasks/:id` (studio admin) and `PATCH /me/tasks/:id` (operator, own tasks only).
+**Current status**: ✅ Core update functionality implemented in `updateTaskContentAndStatus()`. Exposed at both `PATCH /studios/:studioId/tasks/:id` (studio manager/admin) and `PATCH /me/tasks/:id` (operator, own tasks only).
 
 | Operation                    | Key Behaviors                                                                                                    |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `updateTaskContentAndStatus` | Compare `version` for optimistic lock → validate content against snapshot schema → update with version increment |
 | `completedAt`                | Auto-set when transitioning to COMPLETED, cleared otherwise                                                      |
-| Status transitions           | ❌ State machine enforcement **not yet implemented** — any transition currently accepted. Planned implementation: |
+| Status transitions           | ✅ Studio-scoped state machine enforcement is active on `/studios/:studioId/tasks/*` (role-aware); `/admin/*` remains intentionally unrestricted |
 
 **Planned: Role-Based Transition Table**
 
@@ -1017,6 +1026,33 @@ Returns paginated shows for a studio with per-show `task_summary` (total / assig
   - Allow cross-studio task discovery and operational reassignment/deletion for recovery/support use cases.
   - Keep task form content immutable in system scope; workflow/status/content edits remain studio-scoped.
   - Must remain restricted to system-admin roles and should preserve audit metadata (actor + timestamp + reason when available).
+
+**Action-first workflow contract (implemented)**
+- Member actions (`/me/tasks/:id/action`):
+  - `SAVE_CONTENT`
+  - `START_WORK`
+  - `SUBMIT_FOR_REVIEW`
+  - `CONTINUE_EDITING`
+  - `MARK_BLOCKED`
+- Studio manager/admin actions (`/studios/:studioId/tasks/:id/action`):
+  - All member actions, plus:
+  - `APPROVE_COMPLETED`
+  - `CLOSE_TASK`
+  - `REOPEN_TASK`
+- Studio lazy detail endpoint for action sheet/form rendering:
+  - `GET /studios/:studioId/tasks/:id`
+  - Returns `taskWithRelationsDto` including `snapshot.schema` for on-demand form render.
+- `/admin/*` remains status-flexible and operationally unrestricted.
+
+**Current audit persistence (implemented)**
+- On studio-scoped status transition, latest actor attribution is written to:
+  - `task.metadata.audit.last_transition`
+- Structure:
+  - `from`, `to`, `at`
+  - `actor_ext_id`, `actor_email`, `actor_role`
+  - `source` (`"studio"`)
+  - `had_assignee` (boolean snapshot at transition time)
+- This is intentionally lightweight and non-breaking. Full append-only audit history remains planned.
 
 ### 7.4 Submission Window Validation (Show-Linked Tasks)
 
@@ -1338,27 +1374,29 @@ Returns studio members available for task assignment.
 
 ---
 
-#### Admin: Task Status Transition (Review Workflow) ⏳ Planned
+#### Admin: Task Action Command (Review Workflow) ✅ Implemented
 
-Used by studio admins/managers to action tasks in `REVIEW` status: approve, reject, close.
+Used by studio admins/managers to run explicit workflow actions (submit/reject/approve/close/reopen) with optional content payload when needed.
 
 ```
-PATCH /studios/:studioId/tasks/:taskUid/status
+PATCH /studios/:studioId/tasks/:taskUid/action
 ```
 
 **Request**
 ```json
 {
-  "status": "COMPLETED",
+  "action": "APPROVE_COMPLETED",
   "version": 4
 }
 ```
 
 ```json
 {
-  "status": "IN_PROGRESS",
+  "action": "SUBMIT_FOR_REVIEW",
   "version": 4,
-  "rejection_note": "Audio setup incomplete — please redo section 3"
+  "content": {
+    "audio_check": true
+  }
 }
 ```
 
@@ -1896,10 +1934,10 @@ interface BulkDeleteTasksResponseDto {
 **Planned (next iteration):**
 1. **Form rendering fix** — include `snapshot.schema` in `GET /me/tasks` and `GET /me/tasks/:uid` responses; wire `TaskRepository` and `taskWithRelationsDto` DTO accordingly
 2. **New query params for `/me/tasks`** — `task_type` (multi-enum), `search` (description/show name), `sort` (`due_date:asc/desc`, `updated_at:desc`) to support enhanced filter bar
-3. **State machine enforcement (studio-scoped)** — role-based transition validation in studio module `TaskService`; operator blocked from self-completing (`TASK_003`)
-4. **`PATCH /studios/:studioId/tasks/:taskUid/status`** — studio admin/manager review actions (approve, reject with note, close, block)
+3. **State machine hardening** — extend studio-scoped transition matrix coverage + explicit error codes across all studio task mutation paths
+4. **Review payload enrichment** — add explicit `rejection_note`/`blocked_reason` semantics to action flow (`PATCH /studios/:studioId/tasks/:taskUid/action`) and standardize metadata writes
 5. **`rejection_note` / `blocked_reason`** stored in `task.metadata` and surfaced to operator in `GET /me/tasks/:uid`
-6. **Admin module task management hardening (`/admin/tasks`)** — keep reassignment/delete operational path, add audit/reason fields and richer observability
+6. **Admin module task management hardening (`/admin/tasks`)** — keep reassignment/delete operational path, add reason fields and richer observability while preserving unrestricted system-admin control
 
 **Deferred (post-MVP):**
 1. **File Upload Handling**: Support for field type `file` with direct upload to cloud storage
