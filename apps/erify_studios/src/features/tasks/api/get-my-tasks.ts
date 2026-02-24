@@ -8,7 +8,7 @@ export type MyTasksResponse = PaginatedResponse<TaskWithRelationsDto>;
 export const myTasksKeys = {
   all: ['my-tasks'] as const,
   lists: () => [...myTasksKeys.all, 'list'] as const,
-  list: (filters?: any) => [...myTasksKeys.lists(), filters] as const,
+  list: (filters?: ListMyTasksQuery) => [...myTasksKeys.lists(), filters] as const,
 };
 
 export async function getMyTasks(query: ListMyTasksQuery): Promise<MyTasksResponse> {

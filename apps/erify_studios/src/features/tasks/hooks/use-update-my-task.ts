@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import type { TaskDto, TaskWithRelationsDto, UpdateTaskRequest } from '@eridu/api-types/task-management';
+import type { TaskActionRequest, TaskDto, TaskWithRelationsDto } from '@eridu/api-types/task-management';
 
 import { myTasksKeys } from '../api/get-my-tasks';
 import { updateMyTask } from '../api/update-my-task';
@@ -12,12 +12,8 @@ import type { PaginatedResponse } from '@/lib/api/admin';
 export function useUpdateMyTask() {
   const queryClient = useQueryClient();
 
-  return useMutation<TaskDto, Error, { taskId: string; data: UpdateTaskRequest }>({
+  return useMutation<TaskDto, Error, { taskId: string; data: TaskActionRequest }>({
     mutationFn: ({ taskId, data }) => updateMyTask(taskId, data),
-    onMutate: async ({ taskId: _taskId, data: _data }) => {
-      // Optimistic update implementation can be expanded here if needed
-      await queryClient.cancelQueries({ queryKey: myTasksKeys.all });
-    },
     onSuccess: (updatedTask) => {
       queryClient.setQueriesData<PaginatedResponse<TaskWithRelationsDto>>(
         { queryKey: myTasksKeys.lists() },

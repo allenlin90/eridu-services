@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { endOfDay, startOfDay } from 'date-fns';
 import { useEffect } from 'react';
 import type { DateRange } from 'react-day-picker';
@@ -11,7 +11,7 @@ import {
 } from '@eridu/api-types/task-management';
 import { useTableUrlState } from '@eridu/ui';
 
-import { useAdminTasksQuery } from '@/features/tasks/api/get-admin-tasks';
+import { adminTasksKeys, getAdminTasks } from '@/features/tasks/api/get-admin-tasks';
 
 const VALID_STATUS = new Set(Object.values(TASK_STATUS));
 const VALID_TASK_TYPES = new Set(Object.values(TASK_TYPE));
@@ -74,7 +74,7 @@ export function useAdminTasks() {
       ? false
       : undefined;
 
-  const { data, isLoading, isFetching } = useAdminTasksQuery({
+  const params = {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     search,
@@ -89,6 +89,14 @@ export function useAdminTasks() {
     status,
     task_type: taskType,
     sort: 'due_date:asc',
+  };
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: adminTasksKeys.list(params),
+    queryFn: () => getAdminTasks(params),
+    staleTime: 60 * 1000,
+    gcTime: 2 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 
   useEffect(() => {
@@ -98,7 +106,7 @@ export function useAdminTasks() {
   }, [data?.meta?.totalPages, setPageCount]);
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['admin-tasks'] });
+    queryClient.invalidateQueries({ queryKey: adminTasksKeys.all });
   };
 
   return {

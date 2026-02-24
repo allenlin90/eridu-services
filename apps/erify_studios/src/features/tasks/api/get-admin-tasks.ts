@@ -1,5 +1,3 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
-
 import type {
   ListMyTasksQuery,
   TaskWithRelationsDto,
@@ -32,17 +30,13 @@ export type GetAdminTasksParams = Pick<
   | 'client_id'
 >;
 
+export const adminTasksKeys = {
+  all: ['admin-tasks'] as const,
+  lists: () => [...adminTasksKeys.all, 'list'] as const,
+  list: (params: GetAdminTasksParams) => [...adminTasksKeys.lists(), params] as const,
+};
+
 export async function getAdminTasks(params: GetAdminTasksParams): Promise<AdminTasksResponse> {
   const response = await apiClient.get<AdminTasksResponse>('/admin/tasks', { params });
   return response.data;
-}
-
-export function useAdminTasksQuery(params: GetAdminTasksParams) {
-  return useQuery({
-    queryKey: ['admin-tasks', 'list', params],
-    queryFn: () => getAdminTasks(params),
-    staleTime: 60 * 1000,
-    gcTime: 2 * 60 * 1000,
-    placeholderData: keepPreviousData,
-  });
 }

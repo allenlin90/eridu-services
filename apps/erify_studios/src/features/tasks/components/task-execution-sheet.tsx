@@ -1,10 +1,10 @@
 import { format } from 'date-fns';
-import { AlertCircle, AlertTriangle, CheckCircle2, Clock, PlayCircle, Send } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle2, Clock, Send } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 import type { TaskStatus, TaskWithRelationsDto } from '@eridu/api-types/task-management';
-import { TASK_STATUS, TemplateSchemaValidator } from '@eridu/api-types/task-management';
+import { TASK_ACTION, TASK_STATUS, TemplateSchemaValidator } from '@eridu/api-types/task-management';
 import {
   Badge,
   Button,
@@ -54,7 +54,6 @@ export function TaskExecutionSheet({ task, onClose, studioId: _studioId }: TaskE
   const uiSchema = parsedSchema?.success ? parsedSchema.data : null;
 
   const isReadOnly = task.status === TASK_STATUS.COMPLETED
-    || task.status === TASK_STATUS.REVIEW
     || task.status === TASK_STATUS.CLOSED;
 
   const formValues: Record<string, unknown> = draft?.taskId === task.id
@@ -64,12 +63,12 @@ export function TaskExecutionSheet({ task, onClose, studioId: _studioId }: TaskE
   const rejectionNote = task.metadata?.rejection_note as string | undefined;
   const isOverdue = task.due_date ? new Date(task.due_date) < new Date() : false;
 
-  const handleUpdateStatus = (status: TaskStatus) => {
-    const isSubmitStatus = status === TASK_STATUS.REVIEW || status === TASK_STATUS.COMPLETED;
+  const handleRunAction = (action: keyof typeof TASK_ACTION) => {
+    const isSubmitAction = action === 'SUBMIT_FOR_REVIEW' || action === 'APPROVE_COMPLETED';
     const showStartTime = task.show?.start_time ? new Date(task.show.start_time) : null;
 
     if (
-      isSubmitStatus
+      isSubmitAction
       && showStartTime
       && (task.type === 'ACTIVE' || task.type === 'CLOSURE')
       && new Date() < showStartTime
@@ -84,13 +83,13 @@ export function TaskExecutionSheet({ task, onClose, studioId: _studioId }: TaskE
         taskId: task.id,
         data: {
           version: task.version,
-          status,
+          action: TASK_ACTION[action],
           ...(nextContent ? { content: nextContent } : {}),
         },
       },
       {
         onSuccess: () => {
-          if (status === TASK_STATUS.COMPLETED) {
+          if (action === 'APPROVE_COMPLETED') {
             onClose();
           }
         },
@@ -141,7 +140,7 @@ export function TaskExecutionSheet({ task, onClose, studioId: _studioId }: TaskE
               <div>
                 <p className="text-sm font-semibold text-blue-800">Awaiting review</p>
                 <p className="text-sm text-blue-700 mt-0.5">
-                  This task has been submitted and is pending approval.
+                  This task has been submitted and is pending approval. You can continue editing if needed.
                 </p>
               </div>
             </div>
@@ -181,27 +180,27 @@ export function TaskExecutionSheet({ task, onClose, studioId: _studioId }: TaskE
         </div>
 
         <div className="p-4 bg-white border-t flex flex-col gap-3 shadow-[0_-4px_6px_-1px_rgb(0,0,0,0.05)]">
-          {task.status === TASK_STATUS.PENDING && (
+          {(task.status === TASK_STATUS.PENDING || task.status === TASK_STATUS.IN_PROGRESS) && (
             <Button
               className="w-full"
               size="lg"
-              onClick={() => handleUpdateStatus(TASK_STATUS.IN_PROGRESS)}
-              disabled={isPending}
-            >
-              <PlayCircle className="w-5 h-5 mr-2" />
-              Start Task
-            </Button>
-          )}
-
-          {task.status === TASK_STATUS.IN_PROGRESS && (
-            <Button
-              className="w-full"
-              size="lg"
-              onClick={() => handleUpdateStatus(TASK_STATUS.REVIEW)}
+              onClick={() => handleRunAction('SUBMIT_FOR_REVIEW')}
               disabled={isPending}
             >
               <Send className="w-5 h-5 mr-2" />
               Submit for Review
+            </Button>
+          )}
+
+          {task.status === TASK_STATUS.REVIEW && (
+            <Button
+              variant="outline"
+              className="w-full"
+              size="lg"
+              onClick={() => handleRunAction('CONTINUE_EDITING')}
+              disabled={isPending}
+            >
+              Continue Editing
             </Button>
           )}
 

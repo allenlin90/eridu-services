@@ -8,8 +8,6 @@ import { DropdownMenuItem } from '@eridu/ui';
 import { AdminLayout, AdminTable } from '@/features/admin/components';
 import { DeleteConfirmDialog } from '@/features/admin/components/delete-confirm-dialog';
 import { useDeleteAdminTask } from '@/features/tasks/api/delete-admin-task';
-import { useReassignAdminTask } from '@/features/tasks/api/reassign-admin-task';
-import { useReassignAdminTaskShow } from '@/features/tasks/api/reassign-admin-task-show';
 import { SystemTaskDetailsDialog } from '@/features/tasks/components/system-task-details-dialog';
 import {
   systemTaskColumns,
@@ -17,6 +15,8 @@ import {
 } from '@/features/tasks/config/system-task-columns';
 import { systemTaskSearchSchema } from '@/features/tasks/config/system-task-search-schema';
 import { useAdminTasks } from '@/features/tasks/hooks/use-admin-tasks';
+import { useReassignAdminTask } from '@/features/tasks/hooks/use-reassign-admin-task';
+import { useReassignAdminTaskShow } from '@/features/tasks/hooks/use-reassign-admin-task-show';
 
 export const Route = createFileRoute('/system/tasks/')({
   component: SystemTasksList,

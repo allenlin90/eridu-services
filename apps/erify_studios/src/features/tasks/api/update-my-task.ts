@@ -1,8 +1,8 @@
-import type { TaskDto, UpdateTaskRequest } from '@eridu/api-types/task-management';
+import type { TaskActionRequest, TaskDto } from '@eridu/api-types/task-management';
 
 import { apiClient } from '@/lib/api/client';
 
-export async function updateMyTask(taskId: string, data: UpdateTaskRequest): Promise<TaskDto> {
-  const response = await apiClient.patch<TaskDto>(`/me/tasks/${taskId}`, data);
+export async function updateMyTask(taskId: string, data: TaskActionRequest): Promise<TaskDto> {
+  const response = await apiClient.patch<TaskDto>(`/me/tasks/${taskId}/action`, data);
   return response.data;
 }
