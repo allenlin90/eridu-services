@@ -33,6 +33,22 @@ export const TASK_TYPE = {
 export type TaskType = (typeof TASK_TYPE)[keyof typeof TASK_TYPE];
 
 /**
+ * Task Action enum (action-based workflow API)
+ */
+export const TASK_ACTION = {
+  SAVE_CONTENT: 'SAVE_CONTENT',
+  START_WORK: 'START_WORK',
+  SUBMIT_FOR_REVIEW: 'SUBMIT_FOR_REVIEW',
+  CONTINUE_EDITING: 'CONTINUE_EDITING',
+  MARK_BLOCKED: 'MARK_BLOCKED',
+  APPROVE_COMPLETED: 'APPROVE_COMPLETED',
+  CLOSE_TASK: 'CLOSE_TASK',
+  REOPEN_TASK: 'REOPEN_TASK',
+} as const;
+
+export type TaskAction = (typeof TASK_ACTION)[keyof typeof TASK_ACTION];
+
+/**
  * Task entity schema
  */
 export const taskSchema = z.object({
@@ -309,6 +325,17 @@ export const updateTaskRequestSchema = z.object({
 });
 
 export type UpdateTaskRequest = z.infer<typeof updateTaskRequestSchema>;
+
+/**
+ * Action-based task update request schema
+ */
+export const taskActionRequestSchema = z.object({
+  version: z.number().int(),
+  action: z.nativeEnum(TASK_ACTION),
+  content: z.record(z.string(), z.any()).optional(),
+});
+
+export type TaskActionRequest = z.infer<typeof taskActionRequestSchema>;
 
 /**
  * Query schema for listing an operator's assigned tasks
