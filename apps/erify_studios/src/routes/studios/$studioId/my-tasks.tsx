@@ -5,7 +5,7 @@ import { MyTaskGrid } from '@/features/tasks/components/my-task-grid';
 import { MyTasksPagination } from '@/features/tasks/components/my-tasks-pagination';
 import { MyTasksToolbar } from '@/features/tasks/components/my-tasks-toolbar';
 import type { MyTasksSearch } from '@/features/tasks/config/my-tasks-search-schema';
-import { myTasksSearchSchema, stripMyTasksSearchDefaults } from '@/features/tasks/config/my-tasks-search-schema';
+import { myTasksSearchSchema } from '@/features/tasks/config/my-tasks-search-schema';
 import { useMyTasks } from '@/features/tasks/hooks/use-my-tasks';
 import { useMyTasksFilters } from '@/features/tasks/hooks/use-my-tasks-filters';
 
@@ -20,7 +20,7 @@ function MyTasksPage() {
   const navigate = Route.useNavigate();
   const setUrlSearch = useCallback((updater: (prev: MyTasksSearch) => MyTasksSearch) => {
     navigate({
-      search: (prev: MyTasksSearch) => myTasksSearchSchema.parse(stripMyTasksSearchDefaults(updater(prev))),
+      search: (prev: MyTasksSearch) => updater(prev),
       replace: true,
     });
   }, [navigate]);

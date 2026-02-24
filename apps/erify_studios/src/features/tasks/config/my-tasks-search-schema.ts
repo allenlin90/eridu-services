@@ -43,25 +43,3 @@ export const myTasksSearchSchema = z.object({
 });
 
 export type MyTasksSearch = z.infer<typeof myTasksSearchSchema>;
-
-function isSameStringSet(a: string[], b: readonly string[]) {
-  if (a.length !== b.length) {
-    return false;
-  }
-
-  const setB = new Set(b);
-  return a.every((value) => setB.has(value));
-}
-
-export function stripMyTasksSearchDefaults(search: MyTasksSearch) {
-  return {
-    page: search.page === 1 ? undefined : search.page,
-    limit: search.limit === DEFAULT_LIMIT ? undefined : search.limit,
-    show_start_date: search.show_start_date || undefined,
-    status: isSameStringSet(search.status, DEFAULT_STATUS_FILTERS) ? undefined : search.status,
-    task_type: search.task_type.length === 0 ? undefined : search.task_type,
-    search: search.search || undefined,
-    sort: search.sort === DEFAULT_SORT ? undefined : search.sort,
-    view_mode: search.view_mode === 'task' ? undefined : search.view_mode,
-  };
-}
