@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 
 import type {
+  TaskAction,
   TaskStatus,
   TaskType,
 } from '@eridu/api-types/task-management';
@@ -17,6 +18,7 @@ import {
   reassignTaskRequestSchema,
   reassignTaskShowRequestSchema,
   showWithTaskSummaryDto,
+  taskActionRequestSchema,
   taskDto,
   taskSchema,
   taskWithRelationsDto,
@@ -36,6 +38,7 @@ export {
   reassignTaskRequestSchema,
   reassignTaskShowRequestSchema,
   showWithTaskSummaryDto,
+  taskActionRequestSchema,
   taskDto,
   taskSchema,
   taskWithRelationsDto,
@@ -57,6 +60,7 @@ export class TaskDto extends createZodDto(taskDto) {}
 export class TaskWithRelationsDto extends createZodDto(taskWithRelationsDto) {}
 export class ShowWithTaskSummaryDto extends createZodDto(showWithTaskSummaryDto) {}
 export class UpdateTaskDto extends createZodDto(updateTaskRequestSchema) {}
+export class TaskActionDto extends createZodDto(taskActionRequestSchema) {}
 
 /**
  * Internal payload for creating a task (service layer).
@@ -80,4 +84,9 @@ export type CreateTaskPayload = {
 export type UpdateTaskPayload = {
   content?: Prisma.JsonValue;
   status?: TaskStatus;
+};
+
+export type TaskActionPayload = {
+  content?: Prisma.JsonValue;
+  action: TaskAction;
 };

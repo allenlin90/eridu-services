@@ -1,5 +1,6 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
+import { TaskStatus } from '@prisma/client';
 
 import { StudioTaskController } from './studio-task.controller';
 
@@ -28,7 +29,7 @@ describe('studioTaskController', () => {
           provide: TaskService,
           useValue: {
             findOne: jest.fn(),
-            updateTaskContentAndStatus: jest.fn(),
+            updateTaskContentAndStatusAsAdmin: jest.fn(),
           },
         },
       ],
@@ -95,32 +96,40 @@ describe('studioTaskController', () => {
   });
 
   describe('updateTask', () => {
-    it('should call updateTaskContentAndStatus on TaskService', async () => {
+    it('should call updateTaskContentAndStatusAsAdmin on TaskService', async () => {
       const studioId = 'std_123';
       const taskId = 'task_123';
       const dto = {
         version: 1,
         content: { foo: 'bar' },
-        status: 'IN_PROGRESS',
+        status: TaskStatus.IN_PROGRESS,
       } as any;
 
-      const mockTask = { uid: taskId, studioId: BigInt(1) };
-      const mockUpdatedTask = { uid: taskId, version: 2, status: 'IN_PROGRESS' };
+      const mockTask = { uid: taskId, studioId: BigInt(1), status: TaskStatus.PENDING };
+      const mockUpdatedTask = { uid: taskId, version: 2, status: TaskStatus.IN_PROGRESS };
 
       taskService.findOne.mockResolvedValue(mockTask as any);
-      taskService.updateTaskContentAndStatus.mockResolvedValue(mockUpdatedTask as any);
+      taskService.updateTaskContentAndStatusAsAdmin.mockResolvedValue(mockUpdatedTask as any);
 
-      await controller.updateTask(studioId, taskId, dto);
+      await controller.updateTask(studioId, taskId, dto, {
+        studioMembership: { role: 'MANAGER' },
+      } as any);
 
       expect(taskService.findOne).toHaveBeenCalledWith({
         uid: taskId,
         studio: { uid: studioId },
         deletedAt: null,
       });
-      expect(taskService.updateTaskContentAndStatus).toHaveBeenCalledWith(
+      expect(taskService.updateTaskContentAndStatusAsAdmin).toHaveBeenCalledWith(
         taskId,
         dto.version,
         { content: dto.content, status: dto.status },
+        {
+          actorExtId: undefined,
+          actorEmail: undefined,
+          actorRole: 'MANAGER',
+          source: 'studio',
+        },
       );
     });
 
@@ -131,7 +140,11 @@ describe('studioTaskController', () => {
 
       taskService.findOne.mockResolvedValue(null);
 
-      await expect(controller.updateTask(studioId, taskId, dto)).rejects.toThrow();
+      await expect(
+        controller.updateTask(studioId, taskId, dto, {
+          studioMembership: { role: 'ADMIN' },
+        } as any),
+      ).rejects.toThrow();
     });
   });
 });

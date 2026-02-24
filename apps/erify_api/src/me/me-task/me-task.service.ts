@@ -1,10 +1,16 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
+import { TaskStatus } from '@prisma/client';
 
-import type { ListMyTasksQueryTransformed } from '@eridu/api-types/task-management';
+import {
+  type ListMyTasksQueryTransformed,
+  TASK_ACTION,
+  type TaskAction,
+} from '@eridu/api-types/task-management';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { StudioService } from '@/models/studio/studio.service';
-import type { UpdateTaskPayload } from '@/models/task/schemas/task.schema';
+import type { TaskActionPayload, UpdateTaskPayload } from '@/models/task/schemas/task.schema';
 import { TaskService } from '@/models/task/task.service';
 import { UserService } from '@/models/user/user.service';
 
@@ -80,7 +86,91 @@ export class MeTaskService {
       throw HttpError.forbidden('Task is not assigned to you');
     }
 
+    if (task.status === TaskStatus.COMPLETED || task.status === TaskStatus.CLOSED) {
+      throw HttpError.unprocessableEntity('Completed or closed tasks cannot be edited by assignees');
+    }
+
+    if (payload.status && payload.status !== task.status) {
+      this.ensureMemberTransitionAllowed(task.status, payload.status);
+    }
+
     // 3. Delegate to TaskService core functionality
     return this.taskService.updateTaskContentAndStatus(taskUid, version, payload);
+  }
+
+  async runMyTaskAction(
+    userExtId: string,
+    taskUid: string,
+    version: number,
+    payload: TaskActionPayload,
+  ) {
+    // 1. Resolve user ID from ext_id
+    const user = await this.userService.getUserByExtId(userExtId);
+    if (!user) {
+      throw HttpError.unauthorized('User not found');
+    }
+
+    // 2. Resolve task and verify assignment
+    const task = await this.taskService.findByUid(taskUid);
+    if (!task) {
+      throw HttpError.notFound('Task not found or not assigned to you');
+    }
+
+    if (task.assigneeId !== user.id) {
+      throw HttpError.forbidden('Task is not assigned to you');
+    }
+
+    if (task.status === TaskStatus.COMPLETED || task.status === TaskStatus.CLOSED) {
+      throw HttpError.unprocessableEntity('Completed or closed tasks cannot be edited by assignees');
+    }
+
+    const updatePayload = this.resolveMemberAction(task.status, payload.action, payload.content);
+    return this.taskService.updateTaskContentAndStatus(taskUid, version, updatePayload);
+  }
+
+  private resolveMemberAction(
+    currentStatus: TaskStatus,
+    action: TaskAction,
+    content?: Prisma.JsonValue,
+  ): UpdateTaskPayload {
+    const basePayload: UpdateTaskPayload = content !== undefined ? { content } : {};
+
+    switch (action) {
+      case TASK_ACTION.SAVE_CONTENT:
+        return basePayload;
+      case TASK_ACTION.START_WORK:
+        this.ensureMemberTransitionAllowed(currentStatus, TaskStatus.IN_PROGRESS);
+        return { ...basePayload, status: TaskStatus.IN_PROGRESS };
+      case TASK_ACTION.SUBMIT_FOR_REVIEW:
+        this.ensureMemberTransitionAllowed(currentStatus, TaskStatus.REVIEW);
+        return { ...basePayload, status: TaskStatus.REVIEW };
+      case TASK_ACTION.CONTINUE_EDITING:
+        this.ensureMemberTransitionAllowed(currentStatus, TaskStatus.IN_PROGRESS);
+        return { ...basePayload, status: TaskStatus.IN_PROGRESS };
+      case TASK_ACTION.MARK_BLOCKED:
+        this.ensureMemberTransitionAllowed(currentStatus, TaskStatus.BLOCKED);
+        return { ...basePayload, status: TaskStatus.BLOCKED };
+      default:
+        throw HttpError.unprocessableEntity(`Action ${action} is not allowed for assignees`);
+    }
+  }
+
+  private ensureMemberTransitionAllowed(from: TaskStatus, to: TaskStatus) {
+    const allowedTransitions = new Set<string>([
+      `${TaskStatus.PENDING}->${TaskStatus.IN_PROGRESS}`,
+      `${TaskStatus.PENDING}->${TaskStatus.REVIEW}`,
+      `${TaskStatus.PENDING}->${TaskStatus.BLOCKED}`,
+      `${TaskStatus.IN_PROGRESS}->${TaskStatus.REVIEW}`,
+      `${TaskStatus.IN_PROGRESS}->${TaskStatus.BLOCKED}`,
+      `${TaskStatus.REVIEW}->${TaskStatus.IN_PROGRESS}`,
+      `${TaskStatus.REVIEW}->${TaskStatus.BLOCKED}`,
+      `${TaskStatus.BLOCKED}->${TaskStatus.IN_PROGRESS}`,
+    ]);
+
+    if (!allowedTransitions.has(`${from}->${to}`)) {
+      throw HttpError.unprocessableEntity(
+        `Invalid status transition for assignee: ${from} -> ${to}`,
+      );
+    }
   }
 }

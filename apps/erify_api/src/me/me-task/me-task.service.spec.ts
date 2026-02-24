@@ -108,7 +108,7 @@ describe('meTaskService', () => {
 
     it('should throw forbidden if task is not assigned to user', async () => {
       userService.getUserByExtId.mockResolvedValue({ id: BigInt(1) } as any);
-      taskService.findByUid.mockResolvedValue({ assigneeId: BigInt(2) } as any);
+      taskService.findByUid.mockResolvedValue({ assigneeId: BigInt(2), status: 'PENDING' } as any);
 
       await expect(
         service.updateMyTask('ext_1', 'task_1', 1, {}),
@@ -117,7 +117,7 @@ describe('meTaskService', () => {
 
     it('should call updateTaskContentAndStatus if assigned', async () => {
       userService.getUserByExtId.mockResolvedValue({ id: BigInt(1) } as any);
-      taskService.findByUid.mockResolvedValue({ assigneeId: BigInt(1) } as any);
+      taskService.findByUid.mockResolvedValue({ assigneeId: BigInt(1), status: 'PENDING' } as any);
       taskService.updateTaskContentAndStatus.mockResolvedValue({ uid: 'task_1' } as any);
 
       const result = await service.updateMyTask('ext_1', 'task_1', 1, {

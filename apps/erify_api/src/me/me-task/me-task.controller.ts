@@ -10,6 +10,7 @@ import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   ListMyTasksQueryDto,
+  TaskActionDto,
   taskDto,
   taskWithRelationsDto,
   UpdateTaskDto,
@@ -58,6 +59,21 @@ export class MeTaskController extends BaseController {
     const task = await this.meTaskService.updateMyTask(user.ext_id, id, dto.version, {
       content: dto.content,
       status: dto.status,
+    });
+    this.ensureResourceExists(task, 'Task', id);
+    return task;
+  }
+
+  @Patch(':id/action')
+  @ZodResponse(taskDto)
+  async runTaskAction(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new UidValidationPipe(TaskService.UID_PREFIX, 'Task')) id: string,
+    @Body() dto: TaskActionDto,
+  ) {
+    const task = await this.meTaskService.runMyTaskAction(user.ext_id, id, dto.version, {
+      action: dto.action,
+      content: dto.content,
     });
     this.ensureResourceExists(task, 'Task', id);
     return task;

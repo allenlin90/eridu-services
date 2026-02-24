@@ -17,6 +17,13 @@ import { BaseModelService } from '@/lib/services/base-model.service';
 import { ShowService } from '@/models/show/show.service';
 import { UtilityService } from '@/utility/utility.service';
 
+type TaskUpdateAuditContext = {
+  actorExtId?: string;
+  actorEmail?: string;
+  actorRole?: string;
+  source?: 'studio' | 'me' | 'admin';
+};
+
 @Injectable()
 export class TaskService extends BaseModelService {
   static readonly UID_PREFIX = 'task';
@@ -134,16 +141,18 @@ export class TaskService extends BaseModelService {
     uid: string,
     version: number,
     payload: UpdateTaskPayload,
+    auditContext?: TaskUpdateAuditContext,
   ) {
-    return this.updateTaskContentAndStatusCore(uid, version, payload, true);
+    return this.updateTaskContentAndStatusCore(uid, version, payload, true, auditContext);
   }
 
   async updateTaskContentAndStatusAsAdmin(
     uid: string,
     version: number,
     payload: UpdateTaskPayload,
+    auditContext?: TaskUpdateAuditContext,
   ) {
-    return this.updateTaskContentAndStatusCore(uid, version, payload, false);
+    return this.updateTaskContentAndStatusCore(uid, version, payload, false, auditContext);
   }
 
   private async updateTaskContentAndStatusCore(
@@ -151,6 +160,7 @@ export class TaskService extends BaseModelService {
     version: number,
     payload: UpdateTaskPayload,
     enforceSubmitWindow: boolean,
+    auditContext?: TaskUpdateAuditContext,
   ) {
     const task = await this.taskRepository.findByUidWithSnapshot(uid);
 
@@ -206,6 +216,29 @@ export class TaskService extends BaseModelService {
         }
 
         newStatus = payload.status;
+
+        if (auditContext?.source === 'studio') {
+          const metadataObj = (newMetadata as Record<string, unknown> | null) ?? {};
+          const auditObj = (metadataObj.audit as Record<string, unknown> | null) ?? {};
+          const nowIso = new Date().toISOString();
+
+          newMetadata = {
+            ...metadataObj,
+            audit: {
+              ...auditObj,
+              last_transition: {
+                from: task.status,
+                to: payload.status,
+                at: nowIso,
+                actor_ext_id: auditContext.actorExtId ?? null,
+                actor_email: auditContext.actorEmail ?? null,
+                actor_role: auditContext.actorRole ?? null,
+                source: auditContext.source,
+                had_assignee: task.assigneeId !== null,
+              },
+            },
+          } as unknown as typeof task.metadata;
+        }
 
         if (newStatus === TASK_STATUS.COMPLETED) {
           if (uiSchema) {
