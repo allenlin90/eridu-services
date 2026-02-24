@@ -42,7 +42,13 @@ export function useStudioShows({ studioId }: UseStudioShowsProps) {
         f[filter.id] = filter.value as string;
       }
       if (filter.id === 'has_tasks') {
-        f.has_tasks = filter.value === 'true' ? true : filter.value === 'false' ? false : undefined;
+        if (filter.value === true || filter.value === 'true') {
+          f.has_tasks = true;
+        } else if (filter.value === false || filter.value === 'false') {
+          f.has_tasks = false;
+        } else {
+          f.has_tasks = undefined;
+        }
       }
     });
     return f;

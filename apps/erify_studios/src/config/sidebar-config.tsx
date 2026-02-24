@@ -61,6 +61,10 @@ const SYSTEM_NAV_ITEMS: SidebarNavItem['items'] = [
     url: '/system/schedules',
   },
   {
+    title: 'Tasks',
+    url: '/system/tasks',
+  },
+  {
     title: 'Shows',
     url: '/system/shows',
   },
