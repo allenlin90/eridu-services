@@ -20,6 +20,15 @@ const STATUS_VARIANT_MAP: Record<string, 'default' | 'secondary' | 'destructive'
   BLOCKED: 'destructive',
 };
 
+const TYPE_VARIANT_MAP: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  SETUP: 'secondary',
+  ACTIVE: 'default',
+  CLOSURE: 'outline',
+  ADMIN: 'outline',
+  ROUTINE: 'outline',
+  OTHER: 'outline',
+};
+
 export function MyTaskCard({ task, onClick, className }: MyTaskCardProps) {
   const parsedSchema = task.snapshot?.schema
     ? TemplateSchemaValidator.safeParse(task.snapshot.schema)
@@ -44,12 +53,20 @@ export function MyTaskCard({ task, onClick, className }: MyTaskCardProps) {
       onClick={() => onClick(task.id)}
     >
       <div className="flex justify-between items-start mb-2">
-        <Badge
-          variant={STATUS_VARIANT_MAP[task.status] ?? 'secondary'}
-          className="text-[10px]"
-        >
-          {task.status.replace('_', ' ')}
-        </Badge>
+        <div className="flex items-center gap-1.5">
+          <Badge
+            variant={TYPE_VARIANT_MAP[task.type] ?? 'outline'}
+            className="text-[10px]"
+          >
+            {task.type}
+          </Badge>
+          <Badge
+            variant={STATUS_VARIANT_MAP[task.status] ?? 'secondary'}
+            className="text-[10px]"
+          >
+            {task.status.replace('_', ' ')}
+          </Badge>
+        </div>
         {task.due_date && (
           <div className={cn(
             'flex items-center text-xs gap-1',
