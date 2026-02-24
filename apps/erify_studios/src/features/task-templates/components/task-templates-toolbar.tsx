@@ -9,9 +9,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   Input,
-  useDebounce,
   type UseTableUrlStateReturn,
 } from '@eridu/ui';
+
+import { useAppDebounce } from '@/lib/hooks/use-app-debounce';
 
 type TaskTemplatesToolbarProps = {
   tableState: UseTableUrlStateReturn;
@@ -32,7 +33,7 @@ export function TaskTemplatesToolbar({
 
   // Local state for immediate UI updates
   const [localSearch, setLocalSearch] = useState(searchValue);
-  const debouncedSearch = useDebounce(localSearch, 300);
+  const debouncedSearch = useAppDebounce(localSearch);
 
   // Sync local state with URL state
   useEffect(() => {

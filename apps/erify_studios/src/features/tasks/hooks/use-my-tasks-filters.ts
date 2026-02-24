@@ -6,6 +6,8 @@ import { TASK_STATUS } from '@eridu/api-types/task-management';
 
 import type { MyTasksSearch } from '../config/my-tasks-search-schema';
 
+import { useAppDebounce } from '@/lib/hooks/use-app-debounce';
+
 export type TaskViewMode = 'task' | 'show';
 export type MyTaskSort = 'due_date:asc' | 'due_date:desc' | 'updated_at:desc';
 export type MyTaskPageSize = 20 | 50 | 100;
@@ -27,6 +29,7 @@ export function useMyTasksFilters(studioId: string, search: MyTasksSearch, setUr
   const selectedTaskTypes = search.task_type;
   const sortBy = search.sort;
   const searchInput = search.search ?? '';
+  const debouncedSearchInput = useAppDebounce(searchInput);
   const page = search.page;
   const limit = search.limit;
   const viewMode = search.view_mode;
@@ -156,12 +159,12 @@ export function useMyTasksFilters(studioId: string, search: MyTasksSearch, setUr
       nextQuery.task_type = selectedTaskTypes;
     }
 
-    if (searchInput) {
-      nextQuery.search = searchInput;
+    if (debouncedSearchInput) {
+      nextQuery.search = debouncedSearchInput;
     }
 
     return nextQuery;
-  }, [limit, page, searchInput, selectedStatuses, selectedTaskTypes, showStartDate, sortBy, studioId]);
+  }, [debouncedSearchInput, limit, page, selectedStatuses, selectedTaskTypes, showStartDate, sortBy, studioId]);
 
   return {
     query,

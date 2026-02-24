@@ -1,7 +1,9 @@
 import { RotateCw, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { Button, Input, useDebounce, type UseTableUrlStateReturn } from '@eridu/ui';
+import { Button, Input, type UseTableUrlStateReturn } from '@eridu/ui';
+
+import { useAppDebounce } from '@/lib/hooks/use-app-debounce';
 
 type StudioShowsToolbarProps = {
   tableState: UseTableUrlStateReturn;
@@ -15,7 +17,7 @@ export function StudioShowsToolbar({ tableState, onRefresh, isRefreshing, total 
   const searchValue = (columnFilters.find((f) => f.id === 'search')?.value as string) || '';
 
   const [localSearch, setLocalSearch] = useState(searchValue);
-  const debouncedSearch = useDebounce(localSearch, 300);
+  const debouncedSearch = useAppDebounce(localSearch);
 
   // Sync local state with URL state (e.g. on back navigation)
   useEffect(() => {
