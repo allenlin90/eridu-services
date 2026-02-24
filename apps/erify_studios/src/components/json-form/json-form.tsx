@@ -61,6 +61,7 @@ export function JsonForm({
   // Watch for changes and call onChange
   useEffect(() => {
     if (onChange) {
+      // eslint-disable-next-line react-hooks/incompatible-library
       const subscription = form.watch((value) => {
         onChange(value as Record<string, unknown>);
       });

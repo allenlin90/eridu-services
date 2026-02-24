@@ -561,7 +561,7 @@ const ConditionalLogicEditor = memo(({
       <Label>Conditional Explanation</Label>
       <div className="space-y-2">
         {requireReasons.map((cond, idx) => (
-          <div key={idx} className="flex gap-2 items-center">
+          <div key={`${cond.op}-${String(cond.value)}`} className="flex gap-2 items-center">
             <span className="text-sm text-muted-foreground w-16">Value is</span>
 
             <ConditionOperatorSelector

@@ -160,8 +160,8 @@ export function TaskTemplateBuilder({
                   Please correct the issues below before saving.
                   <ul className="list-disc list-inside mt-2 space-y-1">
                     {Object.entries(errors).flatMap(([path, messages]) =>
-                      messages.map((msg, i) => (
-                        <li key={`${path}-${msg}-${i}`}>
+                      messages.map((msg) => (
+                        <li key={`${path}-${msg}`}>
                           {msg}
                         </li>
                       )),

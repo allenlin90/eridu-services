@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { useMemo, useState } from 'react';
