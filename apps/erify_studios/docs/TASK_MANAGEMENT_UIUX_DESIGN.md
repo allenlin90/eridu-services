@@ -1,6 +1,6 @@
 # Task Management System - UI/UX Design
 
-**Version**: 3.4
+**Version**: 3.5
 **Last Updated**: February 24, 2026
 **Status**: Core implemented. Two functional gaps identified: (1) task form not rendered — `snapshot.schema` missing from API response; (2) My Tasks filter bar too limited. Both are planned next along with the review workflow. Deferred: animations, swipe gestures, file uploads, PWA/offline, WebSocket, analytics.
 
@@ -609,7 +609,7 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 
 **Purpose**: The operator's command center. Show what needs attention NOW.
 
-> **Known gap**: Current implementation has only Today/Upcoming/All tabs with no filtering, no progress bars on cards (schema not in API response), and no search. The design below is the target state.
+> **Known gap**: Current implementation now supports search + status/type filters + sorting + pagination, but still needs better grouping ergonomics for users with many tasks across many shows.
 
 #### 3.4.1 Filter Bar
 
@@ -705,6 +705,38 @@ No results for "Overdue":
 No assignments at all:
   "No tasks assigned yet. Your manager will assign work from the Shows page."
 ```
+
+#### 3.4.4 View Modes (Task vs Show)
+
+Operators need two complementary views:
+
+- **Task View** (default card grid): best for quick scanning by urgency.
+- **Show View** (grouped): best for "what do I need to do for this show now?"
+
+`Show View` groups assigned tasks by show to reduce cognitive overload when the same task type appears across many shows.
+
+```
+┌──────────────────────────────────────────────────┐
+│ [Task View] [Show View]                          │
+├──────────────────────────────────────────────────┤
+│ Monday Night Live                    2 / 5 done  │
+│ Feb 5, 8:00 PM • 1 overdue • 2 open              │
+│ ──────────────────────────────────────────────── │
+│ [SETUP]   Pre-checklist             ● COMPLETED  │
+│ [ACTIVE]  Live operations           ● IN PROG    │
+│ [CLOSURE] Post wrap-up              ● PENDING    │
+└──────────────────────────────────────────────────┘
+```
+
+`Show View` behavior:
+- Group key: `task.show.id` (fallback group: "Unlinked Tasks" when no show relation).
+- Group header includes:
+  - show name + show start time
+  - completed/total count
+  - overdue count (if any)
+- Task rows remain clickable and open the same Task Execution Sheet.
+- Existing filters (search/status/type/date/sort) apply before grouping.
+- Pagination remains server-driven to avoid unbounded local cache growth over time.
 
 ---
 

@@ -8,6 +8,8 @@ export function useMyTasks(query: ListMyTasksQuery) {
   return useQuery({
     queryKey: myTasksKeys.list(query),
     queryFn: () => getMyTasks(query),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
+    gcTime: 2 * 60 * 1000,
+    placeholderData: (previousData) => previousData,
   });
 }
