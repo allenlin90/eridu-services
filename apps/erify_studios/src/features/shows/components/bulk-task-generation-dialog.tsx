@@ -57,7 +57,8 @@ export function BulkTaskGenerationDialog({
 
   const { data: templates, isLoading: isLoadingTemplates } = useAllTaskTemplates({
     studioId,
-    limit: 200,
+    pageSize: 100,
+    enabled: open,
   });
   const { mutate: generateTasks, isPending: isGenerating } = useGenerateTasks({
     studioId,
