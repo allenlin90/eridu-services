@@ -2,7 +2,7 @@
 
 **Version**: 3.5
 **Last Updated**: February 24, 2026
-**Status**: Core implemented. Two functional gaps identified: (1) task form not rendered — `snapshot.schema` missing from API response; (2) My Tasks filter bar too limited. Both are planned next along with the review workflow. Deferred: animations, swipe gestures, file uploads, PWA/offline, WebSocket, analytics.
+**Status**: Core implemented. Key UX gaps around task form rendering and My Tasks filtering are now addressed. Current planned next: review workflow/state-machine enforcement and advanced grouping ergonomics at scale. Deferred: animations, swipe gestures, file uploads, PWA/offline, WebSocket, analytics.
 
 > **Related Documentation**  
 > For API contracts, database schema, and backend architecture, see [`apps/erify_api/docs/TASK_MANAGEMENT_DESIGN.md`](../../erify_api/docs/TASK_MANAGEMENT_DESIGN.md)
@@ -99,6 +99,10 @@
 > **`/system/*` routes** are root-level record control — plain CRUD, no business logic. For super-admin access to raw model data only.
 >
 > **`/studios/$studioId/*` routes** own all business workflows — task generation, assignment, progress tracking, and operator execution. Scoped to studio context with role-based access.
+>
+> **Task state-machine policy**:
+> - Enforce status transition rules only in studio-scoped workflow endpoints/services.
+> - Keep `/system/*` admin task operations as system-admin raw CRUD that may bypass workflow transition guards for operational recovery.
 
 ### Global Navigation
 
@@ -609,7 +613,7 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 
 **Purpose**: The operator's command center. Show what needs attention NOW.
 
-> **Known gap**: Current implementation now supports search + status/type filters + sorting + pagination, but still needs better grouping ergonomics for users with many tasks across many shows.
+> **Current status**: Implemented search + status/type filters + sorting + pagination + show-start-date filtering with URL state. Remaining improvement area: better grouping ergonomics for very large task volumes across many shows.
 
 #### 3.4.1 Filter Bar
 
@@ -637,14 +641,14 @@ Desktop (sidebar layout):
 ```
 
 **Filter parameters** (map to `GET /me/tasks` query params):
-| Filter | Values | API Param |
-|--------|--------|-----------|
-| Date | Today / This Week / Custom | `due_date_from` + `due_date_to` |
-| Show Start Date | Single date picker (operational 48h window) | `show_start_from` + `show_start_to` |
-| Status | To Do (PENDING) / In Progress / Review / Blocked / Done | `status[]` |
-| Type | SETUP / ACTIVE / CLOSURE / ADMIN / ROUTINE | `task_type[]` |
-| Search | Free text | `search` |
-| Sort | Due Date ↑ (default) / Due Date ↓ / Recently Updated | `sort` |
+| Filter          | Values                                                  | API Param                           |
+| --------------- | ------------------------------------------------------- | ----------------------------------- |
+| Date            | Today / This Week / Custom                              | `due_date_from` + `due_date_to`     |
+| Show Start Date | Single date picker (operational 48h window)             | `show_start_from` + `show_start_to` |
+| Status          | To Do (PENDING) / In Progress / Review / Blocked / Done | `status[]`                          |
+| Type            | SETUP / ACTIVE / CLOSURE / ADMIN / ROUTINE              | `task_type[]`                       |
+| Search          | Free text                                               | `search`                            |
+| Sort            | Due Date ↑ (default) / Due Date ↓ / Recently Updated    | `sort`                              |
 
 **"Overdue" shortcut** = `due_date_to=today&status=PENDING,IN_PROGRESS` — surfaces the most urgent items in one tap.
 
@@ -753,7 +757,7 @@ Operators need two complementary views:
 
 **Purpose**: Complete the task checklist. Update status. This is the primary work surface for operators.
 
-> **Known gap**: Current implementation renders `task.content` as raw `{}` JSON. The `JsonForm` component exists and works but is not wired into this sheet. The design below is the target state requiring the snapshot fix.
+> **Current status**: `JsonForm` is now wired in Task Execution Sheet, backed by `snapshot.schema` from `/me/tasks` responses. The design below reflects the active interaction model.
 
 #### 3.5.1 Sheet Layout
 
@@ -1945,8 +1949,9 @@ These fix functional gaps identified in the current implementation:
 ---
 
 ### Review Workflow (Next Iteration)
-- **BE**: State machine enforcement in `TaskService` — operator blocked from self-completing; role-based transition table (see `TASK_MANAGEMENT_DESIGN.md §7.3`)
+- **BE**: State machine enforcement in **studio module/services only** (`/studios/$studioId/*`) — operator blocked from self-completing; role-based transition table (see `TASK_MANAGEMENT_DESIGN.md §7.3`)
 - **BE**: `PATCH /studios/:studioId/tasks/:taskUid/status` — admin approve, reject with note, close
+- **BE**: Admin module (`/admin/*`) remains system-admin-only raw CRUD for tasks; may bypass studio state-machine constraints by design
 - **FE**: Operator `task-execution-sheet.tsx` — "Submit for Review" replaces "Complete Task"; rejection note banner; self-recall button on REVIEW state
 - **FE**: Admin task review queue at `§3.6` — bulk approve, reject with note dialog, per-task inline actions
 - **FE**: `status-badge` — add REVIEW (amber) and CLOSED (grey strikethrough) variants

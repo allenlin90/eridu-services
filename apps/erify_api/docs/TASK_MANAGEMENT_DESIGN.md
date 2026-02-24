@@ -2,7 +2,7 @@
 
 **Version**: 3.5
 **Last Updated**: February 24, 2026
-**Status**: Core implemented. Planned next: task review workflow (state machine enforcement + admin review endpoints). `AdminTaskController` system admin tools deferred.
+**Status**: Core implemented. Planned next: task review workflow (state machine enforcement + admin review endpoints). State machine enforcement will be scoped to studio module/services; admin module keeps system-admin raw CRUD bypass for cross-studio operations.
 
 > **Related Documentation**  
 > For UI/UX specifications and user workflows, see [`apps/erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md`](../../erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md)
@@ -998,16 +998,25 @@ Returns paginated shows for a studio with per-show `task_summary` (total / assig
 
 **Planned: Role-Based Transition Table**
 
-| From → To       | Operator (assignee) | Admin / Manager |
-| --------------- | :-----------------: | :-------------: |
-| PENDING → IN_PROGRESS | ✅ | ✅ |
-| IN_PROGRESS → REVIEW | ✅ (submit for review) | ✅ |
-| IN_PROGRESS → COMPLETED | ❌ | ✅ (bypass review) |
-| REVIEW → IN_PROGRESS | ✅ (self-recall) | ✅ (reject / send back) |
-| REVIEW → COMPLETED | ❌ | ✅ (approve) |
-| any → BLOCKED | ✅ | ✅ |
-| BLOCKED → IN_PROGRESS | ✅ | ✅ |
-| any → CLOSED | ❌ | ✅ |
+| From → To               |  Operator (assignee)  |    Admin / Manager     |
+| ----------------------- | :-------------------: | :--------------------: |
+| PENDING → IN_PROGRESS   |           ✅           |           ✅            |
+| IN_PROGRESS → REVIEW    | ✅ (submit for review) |           ✅            |
+| IN_PROGRESS → COMPLETED |           ❌           |   ✅ (bypass review)    |
+| REVIEW → IN_PROGRESS    |    ✅ (self-recall)    | ✅ (reject / send back) |
+| REVIEW → COMPLETED      |           ❌           |      ✅ (approve)       |
+| any → BLOCKED           |           ✅           |           ✅            |
+| BLOCKED → IN_PROGRESS   |           ✅           |           ✅            |
+| any → CLOSED            |           ❌           |           ✅            |
+
+**Scope & Bypass Requirement (new)**
+- **Studio module (`/studios/:studioId/*`)**:
+  - Enforce state machine transition rules in studio-scoped services/controllers.
+  - Applies to operator and studio admin/manager workflow endpoints.
+- **Admin module (`/admin/*`, system admin only)**:
+  - Allow basic task CRUD and direct status/content updates that can bypass studio workflow state-machine guards.
+  - Intended for cross-studio operational recovery, support, and data correction.
+  - Must remain restricted to system-admin roles and should preserve audit metadata (actor + timestamp + reason when available).
 
 ### 7.4 Submission Window Validation (Show-Linked Tasks)
 
@@ -1397,27 +1406,21 @@ GET   /me/tasks/:uid     ✅ implemented
 PATCH /me/tasks/:uid     ✅ implemented — content/status update with optimistic locking + assignee-owns-task check
 ```
 
-> **Known gap**: Both endpoints must include `snapshot.schema` in their responses so the frontend can render the task form (via `JsonForm`) and calculate per-task progress. The backend repository currently omits `snapshot` from both queries.
->
-> **Fix required in `TaskRepository`**:
-> - `findTasksByAssignee`: add `snapshot: { select: { schema: true, version: true } }` to the `include` block
-> - `findOne` (used by `getMyTask`): add `snapshot: true` to the `include` block
->
-> **Fix required in `@eridu/api-types` `taskWithRelationsDto`**: add `snapshot: { schema: z.unknown(), version: z.number() }` to the DTO and expose via the API response.
+> **Current status**: `snapshot.schema` is included in both `GET /me/tasks` and `GET /me/tasks/:uid`, and exposed through `taskWithRelationsDto`. This supports FE `JsonForm` rendering and progress calculations.
 
 **Query Parameters for `GET /me/tasks`**:
-| Param           | Type         | Description                                                  |
-| --------------- | ------------ | ------------------------------------------------------------ |
-| `status`        | enum (multi) | Filter by status (e.g. `PENDING`, `IN_PROGRESS`)             |
-| `task_type`     | enum (multi) | Filter by type: `SETUP`, `ACTIVE`, `CLOSURE`, `ADMIN`, `ROUTINE`, `OTHER` |
-| `due_date_from` | ISO date     | Tasks due on or after this date                              |
-| `due_date_to`   | ISO date     | Tasks due on or before this date (use for "upcoming" window) |
-| `show_start_from` | ISO date-time | Tasks linked to shows with `show.start_time >= value` |
-| `show_start_to` | ISO date-time | Tasks linked to shows with `show.start_time <= value` |
-| `search`        | string       | Partial match on task description or show name               |
-| `sort`          | string       | `due_date:asc` (default), `due_date:desc`, `updated_at:desc` |
-| `cursor`        | string       | Cursor-based pagination                                      |
-| `limit`         | number       | Page size (default 20, max 100)                              |
+| Param             | Type          | Description                                                               |
+| ----------------- | ------------- | ------------------------------------------------------------------------- |
+| `status`          | enum (multi)  | Filter by status (e.g. `PENDING`, `IN_PROGRESS`)                          |
+| `task_type`       | enum (multi)  | Filter by type: `SETUP`, `ACTIVE`, `CLOSURE`, `ADMIN`, `ROUTINE`, `OTHER` |
+| `due_date_from`   | ISO date      | Tasks due on or after this date                                           |
+| `due_date_to`     | ISO date      | Tasks due on or before this date (use for "upcoming" window)              |
+| `show_start_from` | ISO date-time | Tasks linked to shows with `show.start_time >= value`                     |
+| `show_start_to`   | ISO date-time | Tasks linked to shows with `show.start_time <= value`                     |
+| `search`          | string        | Partial match on task description or show name                            |
+| `sort`            | string        | `due_date:asc` (default), `due_date:desc`, `updated_at:desc`              |
+| `cursor`          | string        | Cursor-based pagination                                                   |
+| `limit`           | number        | Page size (default 20, max 100)                                           |
 
 > **New params** (`task_type`, `search`, `sort`, `show_start_from`, `show_start_to`) are required to support the enhanced My Tasks filter bar (see UI/UX doc §3.4). Must be wired through `ListMyTasksQueryDto` → `TaskRepository.findTasksByAssignee()`.
 >
@@ -1517,27 +1520,28 @@ Content-Type: application/json
 
 ### Permission Matrix
 
-| Endpoint                              | System Admin | Studio Admin/Manager | Operator (Member) |
-| ------------------------------------- | :----------: | :------------------: | :---------------: |
-| Create Template                       | ✅ | ✅ | ❌ |
-| Update Template                       | ✅ | ✅ | ❌ |
-| Delete Template                       | ✅ | ✅ | ❌ |
-| List Studio Shows                     | ✅ | ✅ | ❌ |
-| Generate Tasks (Bulk)                 | ✅ | ✅ | ❌ |
-| Assign Shows (Bulk)                   | ✅ | ✅ | ❌ |
-| Reassign Task                         | ✅ | ✅ | ❌ |
-| View Show Tasks                       | ✅ | ✅ | ❌ |
-| View My Tasks                         | ✅ | ✅ | ✅ |
-| Update task content (own)             | ✅ | ✅ | ✅ (own only) |
-| Transition: PENDING → IN_PROGRESS     | ✅ | ✅ | ✅ (own only) |
-| Transition: IN_PROGRESS → REVIEW      | ✅ | ✅ | ✅ (own only) |
-| Transition: REVIEW → IN_PROGRESS      | ✅ | ✅ | ✅ (self-recall) |
-| Transition: REVIEW → COMPLETED        | ✅ | ✅ | ❌ |
-| Transition: IN_PROGRESS → COMPLETED   | ✅ | ✅ | ❌ (must go via REVIEW) |
-| Transition: any → BLOCKED             | ✅ | ✅ | ✅ (own only) |
-| Transition: any → CLOSED              | ✅ | ✅ | ❌ |
-| Force-update any task (content/status)| ✅ | ✅ | ❌ |
-| Hard Delete Task                      | ✅ | ❌ | ❌ |
+| Endpoint                               | System Admin | Studio Admin/Manager |   Operator (Member)    |
+| -------------------------------------- | :----------: | :------------------: | :--------------------: |
+| Create Template                        |      ✅       |          ✅           |           ❌            |
+| Update Template                        |      ✅       |          ✅           |           ❌            |
+| Delete Template                        |      ✅       |          ✅           |           ❌            |
+| List Studio Shows                      |      ✅       |          ✅           |           ❌            |
+| Generate Tasks (Bulk)                  |      ✅       |          ✅           |           ❌            |
+| Assign Shows (Bulk)                    |      ✅       |          ✅           |           ❌            |
+| Reassign Task                          |      ✅       |          ✅           |           ❌            |
+| View Show Tasks                        |      ✅       |          ✅           |           ❌            |
+| View My Tasks                          |      ✅       |          ✅           |           ✅            |
+| Update task content (own)              |      ✅       |          ✅           |      ✅ (own only)      |
+| Transition: PENDING → IN_PROGRESS      |      ✅       |          ✅           |      ✅ (own only)      |
+| Transition: IN_PROGRESS → REVIEW       |      ✅       |          ✅           |      ✅ (own only)      |
+| Transition: REVIEW → IN_PROGRESS       |      ✅       |          ✅           |    ✅ (self-recall)     |
+| Transition: REVIEW → COMPLETED         |      ✅       |          ✅           |           ❌            |
+| Transition: IN_PROGRESS → COMPLETED    |      ✅       |          ✅           | ❌ (must go via REVIEW) |
+| Transition: any → BLOCKED              |      ✅       |          ✅           |      ✅ (own only)      |
+| Transition: any → CLOSED               |      ✅       |          ✅           |           ❌            |
+| Force-update any task (content/status) |      ✅       |          ✅           |           ❌            |
+| Hard Delete Task                       |      ✅       |          ❌           |           ❌            |
+| Admin module raw CRUD bypass (system)  |      ✅       |          ❌           |           ❌            |
 
 ### Guards
 
@@ -1754,9 +1758,10 @@ interface BulkDeleteTasksResponseDto {
 **Planned (next iteration):**
 1. **Form rendering fix** — include `snapshot.schema` in `GET /me/tasks` and `GET /me/tasks/:uid` responses; wire `TaskRepository` and `taskWithRelationsDto` DTO accordingly
 2. **New query params for `/me/tasks`** — `task_type` (multi-enum), `search` (description/show name), `sort` (`due_date:asc/desc`, `updated_at:desc`) to support enhanced filter bar
-3. **State machine enforcement** — role-based transition validation in `TaskService`; operator blocked from self-completing (`TASK_003`)
-4. **`PATCH /studios/:studioId/tasks/:taskUid/status`** — admin-only review actions (approve, reject with note, close, block)
+3. **State machine enforcement (studio-scoped)** — role-based transition validation in studio module `TaskService`; operator blocked from self-completing (`TASK_003`)
+4. **`PATCH /studios/:studioId/tasks/:taskUid/status`** — studio admin/manager review actions (approve, reject with note, close, block)
 5. **`rejection_note` / `blocked_reason`** stored in `task.metadata` and surfaced to operator in `GET /me/tasks/:uid`
+6. **Admin module task CRUD endpoints (`/admin/*`)** — system-admin-only raw CRUD and direct status/content updates that bypass studio state-machine guards
 
 **Deferred (post-MVP):**
 1. **File Upload Handling**: Support for field type `file` with direct upload to cloud storage
@@ -1765,7 +1770,7 @@ interface BulkDeleteTasksResponseDto {
 4. **Advanced Analytics & Search**: Full-text search across JSONB content, materialized views
 5. **Real-time Collaboration**: WebSocket-based live status updates
 6. **Mobile Offline / PWA**: Full offline sync and conflict resolution
-7. **`AdminTaskController`**: System-level cross-studio task management
+7. **`AdminTaskController`**: System-level cross-studio task management (raw CRUD bypass retained by design)
 
 ---
 
