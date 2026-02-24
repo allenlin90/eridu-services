@@ -99,6 +99,13 @@ function getStudioManagementItems(
     },
   ];
 
+  if (role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER) {
+    managementItems.push({
+      title: 'Review Queue',
+      url: `/studios/${studioId}/tasks?status=REVIEW`,
+    });
+  }
+
   // Check role safely (case-insensitive)
   if (role === STUDIO_ROLE.ADMIN) {
     managementItems.push({

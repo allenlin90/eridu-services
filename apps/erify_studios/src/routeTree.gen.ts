@@ -26,6 +26,7 @@ import { Route as SystemPlatformsIndexRouteImport } from './routes/system/platfo
 import { Route as SystemMembershipsIndexRouteImport } from './routes/system/memberships/index'
 import { Route as SystemMcsIndexRouteImport } from './routes/system/mcs/index'
 import { Route as SystemClientsIndexRouteImport } from './routes/system/clients/index'
+import { Route as StudiosStudioIdTasksRouteImport } from './routes/studios/$studioId/tasks'
 import { Route as StudiosStudioIdTaskTemplatesRouteImport } from './routes/studios/$studioId/task-templates'
 import { Route as StudiosStudioIdShowsRouteImport } from './routes/studios/$studioId/shows'
 import { Route as StudiosStudioIdMyTasksRouteImport } from './routes/studios/$studioId/my-tasks'
@@ -126,6 +127,11 @@ const SystemClientsIndexRoute = SystemClientsIndexRouteImport.update({
   path: '/clients/',
   getParentRoute: () => SystemRouteRoute,
 } as any)
+const StudiosStudioIdTasksRoute = StudiosStudioIdTasksRouteImport.update({
+  id: '/$studioId/tasks',
+  path: '/$studioId/tasks',
+  getParentRoute: () => StudiosRouteRoute,
+} as any)
 const StudiosStudioIdTaskTemplatesRoute =
   StudiosStudioIdTaskTemplatesRouteImport.update({
     id: '/$studioId/task-templates',
@@ -205,6 +211,7 @@ export interface FileRoutesByFullPath {
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/shows': typeof StudiosStudioIdShowsRouteWithChildren
   '/studios/$studioId/task-templates': typeof StudiosStudioIdTaskTemplatesRouteWithChildren
+  '/studios/$studioId/tasks': typeof StudiosStudioIdTasksRoute
   '/system/clients': typeof SystemClientsIndexRoute
   '/system/mcs': typeof SystemMcsIndexRoute
   '/system/memberships': typeof SystemMembershipsIndexRoute
@@ -234,6 +241,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
+  '/studios/$studioId/tasks': typeof StudiosStudioIdTasksRoute
   '/system/clients': typeof SystemClientsIndexRoute
   '/system/mcs': typeof SystemMcsIndexRoute
   '/system/memberships': typeof SystemMembershipsIndexRoute
@@ -266,6 +274,7 @@ export interface FileRoutesById {
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/shows': typeof StudiosStudioIdShowsRouteWithChildren
   '/studios/$studioId/task-templates': typeof StudiosStudioIdTaskTemplatesRouteWithChildren
+  '/studios/$studioId/tasks': typeof StudiosStudioIdTasksRoute
   '/system/clients/': typeof SystemClientsIndexRoute
   '/system/mcs/': typeof SystemMcsIndexRoute
   '/system/memberships/': typeof SystemMembershipsIndexRoute
@@ -299,6 +308,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/shows'
     | '/studios/$studioId/task-templates'
+    | '/studios/$studioId/tasks'
     | '/system/clients'
     | '/system/mcs'
     | '/system/memberships'
@@ -328,6 +338,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/studios/$studioId/dashboard'
     | '/studios/$studioId/my-tasks'
+    | '/studios/$studioId/tasks'
     | '/system/clients'
     | '/system/mcs'
     | '/system/memberships'
@@ -359,6 +370,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/shows'
     | '/studios/$studioId/task-templates'
+    | '/studios/$studioId/tasks'
     | '/system/clients/'
     | '/system/mcs/'
     | '/system/memberships/'
@@ -510,6 +522,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SystemClientsIndexRouteImport
       parentRoute: typeof SystemRouteRoute
     }
+    '/studios/$studioId/tasks': {
+      id: '/studios/$studioId/tasks'
+      path: '/$studioId/tasks'
+      fullPath: '/studios/$studioId/tasks'
+      preLoaderRoute: typeof StudiosStudioIdTasksRouteImport
+      parentRoute: typeof StudiosRouteRoute
+    }
     '/studios/$studioId/task-templates': {
       id: '/studios/$studioId/task-templates'
       path: '/$studioId/task-templates'
@@ -635,6 +654,7 @@ interface StudiosRouteRouteChildren {
   StudiosStudioIdMyTasksRoute: typeof StudiosStudioIdMyTasksRoute
   StudiosStudioIdShowsRoute: typeof StudiosStudioIdShowsRouteWithChildren
   StudiosStudioIdTaskTemplatesRoute: typeof StudiosStudioIdTaskTemplatesRouteWithChildren
+  StudiosStudioIdTasksRoute: typeof StudiosStudioIdTasksRoute
 }
 
 const StudiosRouteRouteChildren: StudiosRouteRouteChildren = {
@@ -643,6 +663,7 @@ const StudiosRouteRouteChildren: StudiosRouteRouteChildren = {
   StudiosStudioIdShowsRoute: StudiosStudioIdShowsRouteWithChildren,
   StudiosStudioIdTaskTemplatesRoute:
     StudiosStudioIdTaskTemplatesRouteWithChildren,
+  StudiosStudioIdTasksRoute: StudiosStudioIdTasksRoute,
 }
 
 const StudiosRouteRouteWithChildren = StudiosRouteRoute._addFileChildren(
