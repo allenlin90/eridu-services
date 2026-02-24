@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { ArrowLeft, ChevronDown, ListTodo, RotateCw, Trash2, UserRound } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
+import { TASK_ACTION, type TaskAction, type TaskWithRelationsDto } from '@eridu/api-types/task-management';
 import { Badge, Button } from '@eridu/ui';
 
 import { AdminTable } from '@/features/admin/components/admin-table';
@@ -17,8 +18,10 @@ import { getColumns } from '@/features/studio-shows/components/show-tasks-table/
 import { useShowTasks } from '@/features/studio-shows/hooks/use-show-tasks';
 import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
 import { DeleteTasksDialog } from '@/features/tasks/components/delete-tasks-dialog';
+import { StudioTaskActionSheet } from '@/features/tasks/components/studio-task-action-sheet';
 import { useAssignTask } from '@/features/tasks/hooks/use-assign-task';
 import { useDeleteTasks } from '@/features/tasks/hooks/use-delete-tasks';
+import { useUpdateStudioTaskStatus } from '@/features/tasks/hooks/use-update-studio-task-status';
 
 export const Route = createFileRoute('/studios/$studioId/shows/$showId/tasks')({
   component: StudioShowTasksPage,
@@ -33,6 +36,7 @@ function StudioShowTasksPage() {
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [isShowDetailsOpen, setIsShowDetailsOpen] = useState(false);
+  const [actionDraft, setActionDraft] = useState<{ task: TaskWithRelationsDto; action: TaskAction } | null>(null);
 
   // 1. Fetch data
   const showFromNavigation = (location.state as { show?: StudioShowDetail } | undefined)?.show ?? null;
@@ -107,10 +111,54 @@ function StudioShowTasksPage() {
       setIsDeleteDialogOpen(false);
     },
   });
+  const {
+    mutate: updateTaskStatus,
+    isPending: isUpdatingStatus,
+    variables: updateStatusVariables,
+  } = useUpdateStudioTaskStatus({ studioId, showId });
 
   const handleAssign = useCallback((taskId: string, assigneeUid: string | null) => {
     assignTask({ taskId, assigneeUid });
   }, [assignTask]);
+  const processingTaskId = updateStatusVariables?.taskId ?? null;
+  const handleRunAction = useCallback((
+    task: TaskWithRelationsDto,
+    action: TaskAction,
+  ) => {
+    const requiresForm = action === TASK_ACTION.SUBMIT_FOR_REVIEW || action === TASK_ACTION.APPROVE_COMPLETED;
+    if (requiresForm) {
+      setActionDraft({ task, action });
+      return;
+    }
+
+    updateTaskStatus({
+      taskId: task.id,
+      data: {
+        version: task.version,
+        action,
+      },
+    });
+  }, [updateTaskStatus]);
+
+  const handleSubmitActionWithContent = useCallback((
+    task: TaskWithRelationsDto,
+    action: TaskAction,
+    content: Record<string, unknown>,
+  ) => {
+    updateTaskStatus(
+      {
+        taskId: task.id,
+        data: {
+          version: task.version,
+          action,
+          content,
+        },
+      },
+      {
+        onSuccess: () => setActionDraft(null),
+      },
+    );
+  }, [updateTaskStatus]);
 
   const selectedUids = useMemo(() => {
     return Object.entries(rowSelection)
@@ -147,8 +195,8 @@ function StudioShowTasksPage() {
 
   // 3. Define the columns
   const columns = useMemo(
-    () => getColumns(members, handleAssign, isAssigning),
-    [members, handleAssign, isAssigning],
+    () => getColumns(members, handleAssign, isAssigning, handleRunAction, isUpdatingStatus ? processingTaskId : null),
+    [members, handleAssign, isAssigning, handleRunAction, isUpdatingStatus, processingTaskId],
   );
   const showMetaItems = useMemo(() => {
     if (!showDetails) {
@@ -316,6 +364,21 @@ function StudioShowTasksPage() {
         onSuccess={() => {
           void refetchTasks();
         }}
+      />
+
+      <StudioTaskActionSheet
+        key={actionDraft ? `${actionDraft.task.id}:${actionDraft.task.version}:${actionDraft.action}` : 'studio-task-action-sheet'}
+        studioId={studioId}
+        open={!!actionDraft}
+        task={actionDraft?.task ?? null}
+        action={actionDraft?.action ?? null}
+        isPending={isUpdatingStatus}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActionDraft(null);
+          }
+        }}
+        onSubmit={handleSubmitActionWithContent}
       />
 
       <ShowAssignmentDialog
