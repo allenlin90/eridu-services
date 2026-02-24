@@ -1412,12 +1412,16 @@ PATCH /me/tasks/:uid     ✅ implemented — content/status update with optimist
 | `task_type`     | enum (multi) | Filter by type: `SETUP`, `ACTIVE`, `CLOSURE`, `ADMIN`, `ROUTINE`, `OTHER` |
 | `due_date_from` | ISO date     | Tasks due on or after this date                              |
 | `due_date_to`   | ISO date     | Tasks due on or before this date (use for "upcoming" window) |
+| `show_start_from` | ISO date-time | Tasks linked to shows with `show.start_time >= value` |
+| `show_start_to` | ISO date-time | Tasks linked to shows with `show.start_time <= value` |
 | `search`        | string       | Partial match on task description or show name               |
 | `sort`          | string       | `due_date:asc` (default), `due_date:desc`, `updated_at:desc` |
 | `cursor`        | string       | Cursor-based pagination                                      |
 | `limit`         | number       | Page size (default 20, max 100)                              |
 
-> **New params** (`task_type`, `search`, `sort`) are required to support the enhanced My Tasks filter bar (see UI/UX doc §3.4). Must be wired through `ListMyTasksQueryDto` → `TaskRepository.findTasksByAssignee()`.
+> **New params** (`task_type`, `search`, `sort`, `show_start_from`, `show_start_to`) are required to support the enhanced My Tasks filter bar (see UI/UX doc §3.4). Must be wired through `ListMyTasksQueryDto` → `TaskRepository.findTasksByAssignee()`.
+>
+> **TODO (system concern)**: `show_start_*` bounds should be normalized against studio timezone consistently before querying. Current implementation treats incoming ISO values directly.
 
 **Example: Get My Tasks**
 ```http

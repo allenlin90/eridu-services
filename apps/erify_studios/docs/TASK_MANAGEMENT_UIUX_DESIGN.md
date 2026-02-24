@@ -640,6 +640,7 @@ Desktop (sidebar layout):
 | Filter | Values | API Param |
 |--------|--------|-----------|
 | Date | Today / This Week / Custom | `due_date_from` + `due_date_to` |
+| Show Start Date | Single date picker (operational 48h window) | `show_start_from` + `show_start_to` |
 | Status | To Do (PENDING) / In Progress / Review / Blocked / Done | `status[]` |
 | Type | SETUP / ACTIVE / CLOSURE / ADMIN / ROUTINE | `task_type[]` |
 | Search | Free text | `search` |
@@ -647,10 +648,16 @@ Desktop (sidebar layout):
 
 **"Overdue" shortcut** = `due_date_to=today&status=PENDING,IN_PROGRESS` — surfaces the most urgent items in one tap.
 
-**Date tab behavior**:
-- `Today`: `due_date_from=startOfDay(today)` + `due_date_to=endOfDay(today)`
-- `Upcoming`: `due_date_from=startOfDay(tomorrow)`
-- `All`: no date filter
+**Show Start Date picker behavior**:
+- Selected date `D` maps to:
+  - `show_start_from=startOfDay(D)`
+  - `show_start_to=endOfDay(D + 1 day)`
+- Rationale: include next-day shows for overnight operations (e.g. 22:00-00:00).
+- This filter is additive with status/type/search/sort filters.
+
+**Scope boundary**:
+- FE refactor to merge My Tasks UI into shared admin-table/generalized components is intentionally out of scope for this iteration.
+- Keep current My Tasks components and query flow focused on behavior fixes.
 
 #### 3.4.2 Task Card (Enhanced)
 
@@ -734,6 +741,8 @@ Operators need two complementary views:
   - show name + show start time
   - completed/total count
   - overdue count (if any)
+- Details panel is collapsed by default and toggled via an icon-only chevron button in the group header (to keep vertical density high).
+- Expanded details include client, studio room, start/end time, and MC list.
 - Task rows remain clickable and open the same Task Execution Sheet.
 - Existing filters (search/status/type/date/sort) apply before grouping.
 - Pagination remains server-driven to avoid unbounded local cache growth over time.
