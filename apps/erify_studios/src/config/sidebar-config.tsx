@@ -53,6 +53,10 @@ const SYSTEM_NAV_ITEMS: SidebarNavItem['items'] = [
     url: '/system/show-standards',
   },
   {
+    title: 'Show Statuses',
+    url: '/system/show-statuses',
+  },
+  {
     title: 'Show Types',
     url: '/system/show-types',
   },
@@ -63,6 +67,10 @@ const SYSTEM_NAV_ITEMS: SidebarNavItem['items'] = [
   {
     title: 'Tasks',
     url: '/system/tasks',
+  },
+  {
+    title: 'Task Templates',
+    url: '/system/task-templates',
   },
   {
     title: 'Shows',
