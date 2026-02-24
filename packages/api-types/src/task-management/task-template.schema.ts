@@ -1,9 +1,13 @@
 import { z } from 'zod';
 
 import { UID_PREFIXES } from '../constants.js';
-import { paginationQuerySchema } from '../pagination/index.js';
+import {
+  paginationBaseSchema,
+  paginationQuerySchema,
+  transformPagination,
+} from '../pagination/index.js';
 
-import { TASK_TYPE } from './task.schema.js';
+import { TASK_STATUS, TASK_TYPE } from './task.schema.js';
 
 /**
  * Task Template entity schema
@@ -136,3 +140,119 @@ export type ListTaskTemplatesQuery = z.input<typeof listTaskTemplatesQuerySchema
  * Use this for validated and transformed query parameters in backend handlers
  */
 export type ListTaskTemplatesQueryTransformed = z.infer<typeof listTaskTemplatesQuerySchema>;
+
+/**
+ * Admin query schema for listing task templates across studios
+ */
+export const listAdminTaskTemplatesQuerySchema = paginationBaseSchema
+  .extend({
+    search: z.string().trim().min(1).optional(),
+    studio_id: z.string().startsWith(UID_PREFIXES.STUDIO).optional(),
+    studio_name: z.string().trim().min(1).optional(),
+    task_type: z.nativeEnum(TASK_TYPE).optional(),
+    is_active: z
+      .union([z.boolean(), z.enum(['true', 'false'])])
+      .transform((value) => (typeof value === 'string' ? value === 'true' : value))
+      .optional(),
+    include_deleted: z.coerce.boolean().default(false),
+    sort: z.enum(['updated_at:desc', 'updated_at:asc', 'last_used_at:desc', 'last_used_at:asc']).default('updated_at:desc'),
+  })
+  .transform(transformPagination);
+
+export type ListAdminTaskTemplatesQuery = z.input<typeof listAdminTaskTemplatesQuerySchema>;
+export type ListAdminTaskTemplatesQueryTransformed = z.infer<typeof listAdminTaskTemplatesQuerySchema>;
+
+/**
+ * Usage summary for system admin task template management
+ */
+export const taskTemplateUsageSummaryDto = z.object({
+  task_count_total: z.number().int(),
+  task_count_active: z.number().int(),
+  show_count_active: z.number().int(),
+  last_used_at: z.string().datetime().nullable(),
+});
+
+export type TaskTemplateUsageSummaryDto = z.infer<typeof taskTemplateUsageSummaryDto>;
+
+/**
+ * System admin task template row DTO with usage summary
+ */
+export const adminTaskTemplateDto = z.object({
+  id: z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE),
+  studio_id: z.string().startsWith(UID_PREFIXES.STUDIO),
+  studio_name: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  task_type: z.nativeEnum(TASK_TYPE),
+  is_active: z.boolean(),
+  version: z.number().int(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+  usage_summary: taskTemplateUsageSummaryDto,
+});
+
+export type AdminTaskTemplateDto = z.infer<typeof adminTaskTemplateDto>;
+
+/**
+ * Admin schema for creating a task template (studio is explicit in body)
+ */
+export const createAdminTaskTemplateSchema = createTaskTemplateSchema.extend({
+  studio_id: z.string().startsWith(UID_PREFIXES.STUDIO),
+});
+
+export type CreateAdminTaskTemplateInput = z.infer<typeof createAdminTaskTemplateSchema>;
+
+/**
+ * Admin schema for updating task template
+ */
+export const updateAdminTaskTemplateSchema = createTaskTemplateSchema
+  .partial()
+  .extend({
+    version: z.number().int(),
+  })
+  .refine(
+    (data) => data.name || data.description || data.task_type || data.schema,
+    'At least one field (name, description, task_type, or schema) must be provided',
+  );
+
+export type UpdateAdminTaskTemplateInput = z.infer<typeof updateAdminTaskTemplateSchema>;
+
+/**
+ * Query schema for paginated template binding drill-down
+ */
+export const listAdminTaskTemplateBindingsQuerySchema = paginationBaseSchema
+  .extend({
+    status: z.union([z.nativeEnum(TASK_STATUS), z.array(z.nativeEnum(TASK_STATUS))]).optional(),
+    show_start_from: z.string().datetime().optional(),
+    show_start_to: z.string().datetime().optional(),
+    include_deleted: z.coerce.boolean().default(false),
+    sort: z.enum(['asc', 'desc']).optional().default('desc'),
+  })
+  .transform(transformPagination);
+
+export type ListAdminTaskTemplateBindingsQuery = z.input<typeof listAdminTaskTemplateBindingsQuerySchema>;
+export type ListAdminTaskTemplateBindingsQueryTransformed = z.infer<typeof listAdminTaskTemplateBindingsQuerySchema>;
+
+export const adminTaskTemplateBindingDto = z.object({
+  task: z.object({
+    id: z.string().startsWith(UID_PREFIXES.TASK),
+    status: z.nativeEnum(TASK_STATUS),
+    type: z.nativeEnum(TASK_TYPE),
+    due_date: z.string().datetime().nullable(),
+    deleted_at: z.string().datetime().nullable(),
+  }),
+  show: z.object({
+    id: z.string().startsWith(UID_PREFIXES.SHOW),
+    name: z.string(),
+    start_time: z.string().datetime(),
+    end_time: z.string().datetime(),
+    client_name: z.string().nullable(),
+    studio_name: z.string().nullable(),
+  }).nullable(),
+  assignee: z.object({
+    id: z.string(),
+    name: z.string(),
+  }).nullable(),
+});
+
+export type AdminTaskTemplateBindingDto = z.infer<typeof adminTaskTemplateBindingDto>;
