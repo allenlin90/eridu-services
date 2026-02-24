@@ -1,7 +1,7 @@
 # Task Management System - Backend Design
 
-**Version**: 3.4
-**Last Updated**: February 23, 2026
+**Version**: 3.5
+**Last Updated**: February 24, 2026
 **Status**: Core implemented. Planned next: task review workflow (state machine enforcement + admin review endpoints). `AdminTaskController` system admin tools deferred.
 
 > **Related Documentation**  
@@ -117,7 +117,7 @@ A generic, extensible Task Management system using a **"Task as Form"** architec
 - For each show, the system generates one Task per selected template in a single transaction
 - The same template set can be applied to all selected shows, or template selection can vary per show
 - **Idempotency**: shows that already have active tasks for a given template are skipped.
-- **Resumption**: If a task for the template exists but is **soft-deleted**, it is "resumed" (undeleted, reset to PENDING, cleared content, and updated to latest template snapshot) to prevent data redundancy and preserve task UID stability.
+- **Resumption**: If a task for the template exists but is **soft-deleted**, it is "resumed" (undeleted, reset to PENDING, cleared content, updated to latest template snapshot, and task `type` synchronized to latest template `task_type`) to prevent data redundancy and preserve task UID stability.
 - **Advisory lock per show** prevents race conditions when two managers generate simultaneously
 - Template controls task type directly (`task_type` is explicit, no name inference)
 - For `ADMIN` / `ROUTINE` / `OTHER`, manager can optionally override generated due time during generation
@@ -627,6 +627,9 @@ For show-linked generation, backend calculates default due time as:
 - `ADMIN` / `ROUTINE` / `OTHER`: optional manager-provided due time; if omitted, fallback default can be used by studio policy
 
 > Current phase keeps overdue enforcement soft (warning only). Hard cutoff is deferred as a future studio setting.
+>
+> `Task.type` is the runtime source of truth for task lists (`/studios/:studioId/shows/:showUid/tasks`, `/me/tasks`).  
+> Updating a template's `task_type` does not mutate already-active tasks. The new type applies when tasks are newly generated or resumed from soft-deleted state.
 
 ### Task Content Example
 

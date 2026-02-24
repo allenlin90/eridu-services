@@ -1,7 +1,7 @@
 # Task Management System - UI/UX Design
 
-**Version**: 3.3
-**Last Updated**: February 23, 2026
+**Version**: 3.4
+**Last Updated**: February 24, 2026
 **Status**: Core implemented. Two functional gaps identified: (1) task form not rendered — `snapshot.schema` missing from API response; (2) My Tasks filter bar too limited. Both are planned next along with the review workflow. Deferred: animations, swipe gestures, file uploads, PWA/offline, WebSocket, analytics.
 
 > **Related Documentation**  
@@ -487,7 +487,7 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 - Uses searchable multi-select combobox (`AsyncMultiCombobox`) for template selection
 - First 10 templates are loaded by default; search refines server-side results
 - The same template set is applied to **all** selected shows
-- Generation is idempotent with three cases per show+template pair: (1) **active task exists** → skip; (2) **soft-deleted task exists** → resume (restore, reset to `PENDING`, wipe content, update to latest snapshot); (3) **no task** → create new
+- Generation is idempotent with three cases per show+template pair: (1) **active task exists** → skip; (2) **soft-deleted task exists** → resume (restore, reset to `PENDING`, wipe content, update to latest snapshot, sync task `type` to template `task_type`); (3) **no task** → create new
 - Due dates are optional in v1 (deferred to Smart Due Date feature)
 - Summary line updates dynamically as user selects templates
 
@@ -600,6 +600,8 @@ Users are accustomed to spreadsheet-like dense data views. The Data Table satisf
 - Ordered by task type: SETUP → ACTIVE → CLOSURE → OTHER
 - Status badges and due date indicators consistent with task card design
 - Quick "View Task" link navigates to the full task detail (form view)
+- Type badges in Show Tasks / My Tasks read from task records (`task.type`), not from template cards.
+- If template `task_type` changes, existing active tasks keep their current type until regenerated; resumed tasks pick up the updated type.
 
 ---
 
