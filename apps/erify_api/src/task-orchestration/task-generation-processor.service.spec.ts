@@ -60,12 +60,14 @@ describe('taskGenerationProcessor', () => {
             findByShowAndTemplate: jest.fn(),
             generateTaskUid: jest.fn(),
             create: jest.fn(),
+            resumeTask: jest.fn(),
           },
         },
         {
           provide: TaskTargetService,
           useValue: {
             create: jest.fn(),
+            undeleteByTaskId: jest.fn(),
           },
         },
       ],
@@ -135,6 +137,49 @@ describe('taskGenerationProcessor', () => {
       expect(taskService.create).not.toHaveBeenCalled();
       expect(result.status).toBe('skipped');
       expect(result.tasks_skipped).toBe(1);
+    });
+
+    it('should resume soft-deleted task with latest type and snapshot', async () => {
+      const show = {
+        id: BigInt(10),
+        uid: 'show_1',
+        studioId: BigInt(1),
+        startTime: new Date('2026-02-23T10:00:00.000Z'),
+        endTime: new Date('2026-02-23T12:00:00.000Z'),
+      } as unknown as Show;
+      const templates = [
+        {
+          id: BigInt(1),
+          uid: 'tpl_1',
+          name: 'Live Ops',
+          currentSchema: { metadata: { task_type: TaskType.ACTIVE } },
+          snapshots: [{ id: BigInt(200) }],
+        },
+      ] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
+
+      taskService.findByShowAndTemplate.mockResolvedValue({
+        id: BigInt(1000),
+        deletedAt: new Date('2026-02-01T00:00:00.000Z'),
+        version: 3,
+      } as any);
+
+      const result = await processor.processShow(show, templates);
+
+      expect(taskService.resumeTask).toHaveBeenCalledWith(
+        BigInt(1000),
+        expect.objectContaining({
+          snapshotId: BigInt(200),
+          status: 'PENDING',
+          type: TaskType.ACTIVE,
+          version: 4,
+          dueDate: new Date('2026-02-23T13:00:00.000Z'), // ACTIVE: endTime + 1h
+        }),
+      );
+      expect(taskTargetService.undeleteByTaskId).toHaveBeenCalledWith(BigInt(1000));
+      expect(taskService.create).not.toHaveBeenCalled();
+      expect(result.status).toBe('success');
+      expect(result.tasks_created).toBe(1);
+      expect(result.tasks_skipped).toBe(0);
     });
 
     it('should bubble up errors from database', async () => {
