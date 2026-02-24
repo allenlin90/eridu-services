@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
-import { CheckCircle2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { CheckCircle2, ChevronDown } from 'lucide-react';
+import { memo, useMemo, useState } from 'react';
 
 import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
 import { TASK_STATUS } from '@eridu/api-types/task-management';
@@ -21,6 +21,148 @@ export type MyTaskGridProps = {
   viewMode?: 'task' | 'show';
 };
 
+type ShowTaskGroupModel = {
+  key: string;
+  name: string;
+  startTime: string | null;
+  show: TaskWithRelationsDto['show'];
+  tasks: TaskWithRelationsDto[];
+};
+
+type ShowTaskGroupProps = {
+  group: ShowTaskGroupModel;
+  onTaskSelect: (taskId: string) => void;
+};
+
+const ShowTaskGroup = memo(({ group, onTaskSelect }: ShowTaskGroupProps) => {
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const completedCount = group.tasks.filter((task) => task.status === TASK_STATUS.COMPLETED).length;
+  const overdueCount = group.tasks.filter((task) =>
+    task.due_date
+    && task.status !== TASK_STATUS.COMPLETED
+    && new Date(task.due_date) < new Date()).length;
+  const showInfo = group.show;
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="border-b bg-muted/20 px-4 py-3">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <p className="font-semibold leading-tight">{group.name}</p>
+            <p className="text-xs text-muted-foreground">
+              {group.startTime ? format(new Date(group.startTime), 'PPP p') : 'No show schedule'}
+            </p>
+          </div>
+          <div className="text-right text-xs text-muted-foreground">
+            <p>
+              {completedCount}
+              /
+              {group.tasks.length}
+              {' '}
+              done
+            </p>
+            {overdueCount > 0 && (
+              <p className="text-amber-600">
+                {overdueCount}
+                {' '}
+                overdue
+              </p>
+            )}
+            <button
+              type="button"
+              className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded border bg-background text-muted-foreground hover:text-foreground"
+              title={isDetailsOpen ? 'Hide details' : 'Show details'}
+              aria-label={isDetailsOpen ? 'Hide details' : 'Show details'}
+              onClick={() => setIsDetailsOpen((prev) => !prev)}
+            >
+              <ChevronDown
+                className={cn(
+                  'h-3.5 w-3.5 transition-transform',
+                  isDetailsOpen && 'rotate-180',
+                )}
+              />
+            </button>
+          </div>
+        </div>
+
+        {isDetailsOpen && (
+          <div className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded border bg-background px-2 py-1.5">
+              <p className="text-muted-foreground">Client</p>
+              <p className="truncate font-medium" title={showInfo?.client_name ?? '—'}>
+                {showInfo?.client_name ?? '—'}
+              </p>
+            </div>
+            <div className="rounded border bg-background px-2 py-1.5">
+              <p className="text-muted-foreground">Studio Room</p>
+              <p className="truncate font-medium" title={showInfo?.studio_room_name ?? '—'}>
+                {showInfo?.studio_room_name ?? '—'}
+              </p>
+            </div>
+            <div className="rounded border bg-background px-2 py-1.5">
+              <p className="text-muted-foreground">Start</p>
+              <p className="font-medium">
+                {showInfo?.start_time
+                  ? format(new Date(showInfo.start_time), 'PPP p')
+                  : '—'}
+              </p>
+            </div>
+            <div className="rounded border bg-background px-2 py-1.5">
+              <p className="text-muted-foreground">End</p>
+              <p className="font-medium">
+                {showInfo?.end_time
+                  ? format(new Date(showInfo.end_time), 'PPP p')
+                  : '—'}
+              </p>
+            </div>
+            <div className="rounded border bg-background px-2 py-1.5 sm:col-span-2 lg:col-span-4">
+              <p className="text-muted-foreground">MCs</p>
+              <p className="truncate font-medium" title={showInfo?.mc_names?.join(', ') || '—'}>
+                {showInfo?.mc_names?.length
+                  ? showInfo.mc_names.join(', ')
+                  : '—'}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="divide-y">
+        {group.tasks.map((task) => (
+          <button
+            key={task.id}
+            type="button"
+            className="w-full px-4 py-3 text-left hover:bg-muted/30 transition-colors"
+            onClick={() => onTaskSelect(task.id)}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="mb-1 flex items-center gap-1.5">
+                  <Badge variant={TYPE_VARIANT_MAP[task.type] ?? 'outline'} className="text-[10px]">{task.type}</Badge>
+                  <Badge variant={STATUS_VARIANT_MAP[task.status] ?? 'secondary'} className="text-[10px]">
+                    {task.status.replace('_', ' ')}
+                  </Badge>
+                </div>
+                <p className="truncate text-sm font-medium">{task.description}</p>
+              </div>
+              <span className={cn(
+                'shrink-0 text-xs text-muted-foreground',
+                task.due_date
+                && task.status !== TASK_STATUS.COMPLETED
+                && new Date(task.due_date) < new Date()
+                && 'font-medium text-amber-600',
+              )}
+              >
+                {task.due_date ? format(new Date(task.due_date), 'MMM d, p') : 'No due'}
+              </span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </Card>
+  );
+});
+
 export function MyTaskGrid({ tasks, isLoading, studioId, viewMode = 'task' }: MyTaskGridProps) {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
@@ -28,12 +170,7 @@ export function MyTaskGrid({ tasks, isLoading, studioId, viewMode = 'task' }: My
     ? tasks.find((task) => task.id === selectedTaskId) ?? null
     : null;
   const groupedTasks = useMemo(() => {
-    const groups = new Map<string, {
-      key: string;
-      name: string;
-      startTime: string | null;
-      tasks: TaskWithRelationsDto[];
-    }>();
+    const groups = new Map<string, ShowTaskGroupModel>();
 
     tasks.forEach((task) => {
       const showId = task.show?.id ?? 'unlinked';
@@ -47,6 +184,7 @@ export function MyTaskGrid({ tasks, isLoading, studioId, viewMode = 'task' }: My
         key: showId,
         name: task.show?.name ?? 'Unlinked Tasks',
         startTime: task.show?.start_time ?? null,
+        show: task.show ?? null,
         tasks: [task],
       });
     });
@@ -109,77 +247,13 @@ export function MyTaskGrid({ tasks, isLoading, studioId, viewMode = 'task' }: My
       {viewMode === 'show'
         ? (
             <div className="flex flex-col gap-3">
-              {groupedTasks.map((group) => {
-                const completedCount = group.tasks.filter((task) => task.status === TASK_STATUS.COMPLETED).length;
-                const overdueCount = group.tasks.filter((task) =>
-                  task.due_date
-                  && task.status !== TASK_STATUS.COMPLETED
-                  && new Date(task.due_date) < new Date()).length;
-
-                return (
-                  <Card key={group.key} className="overflow-hidden">
-                    <div className="border-b bg-muted/20 px-4 py-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="font-semibold leading-tight">{group.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {group.startTime ? format(new Date(group.startTime), 'PPP p') : 'No show schedule'}
-                          </p>
-                        </div>
-                        <div className="text-right text-xs text-muted-foreground">
-                          <p>
-                            {completedCount}
-                            /
-                            {group.tasks.length}
-                            {' '}
-                            done
-                          </p>
-                          {overdueCount > 0 && (
-                            <p className="text-amber-600">
-                              {overdueCount}
-                              {' '}
-                              overdue
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="divide-y">
-                      {group.tasks.map((task) => (
-                        <button
-                          key={task.id}
-                          type="button"
-                          className="w-full px-4 py-3 text-left hover:bg-muted/30 transition-colors"
-                          onClick={() => setSelectedTaskId(task.id)}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <div className="mb-1 flex items-center gap-1.5">
-                                <Badge variant={TYPE_VARIANT_MAP[task.type] ?? 'outline'} className="text-[10px]">{task.type}</Badge>
-                                <Badge variant={STATUS_VARIANT_MAP[task.status] ?? 'secondary'} className="text-[10px]">
-                                  {task.status.replace('_', ' ')}
-                                </Badge>
-                              </div>
-                              <p className="truncate text-sm font-medium">{task.description}</p>
-                            </div>
-                            <span className={cn(
-                              'shrink-0 text-xs text-muted-foreground',
-                              task.due_date
-                              && task.status !== TASK_STATUS.COMPLETED
-                              && new Date(task.due_date) < new Date()
-                              && 'font-medium text-amber-600',
-                            )}
-                            >
-                              {task.due_date ? format(new Date(task.due_date), 'MMM d, p') : 'No due'}
-                            </span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </Card>
-                );
-              })}
+              {groupedTasks.map((group) => (
+                <ShowTaskGroup
+                  key={group.key}
+                  group={group}
+                  onTaskSelect={setSelectedTaskId}
+                />
+              ))}
             </div>
           )
         : (
