@@ -322,6 +322,7 @@ export const updateTaskRequestSchema = z.object({
   version: z.number().int(),
   content: z.record(z.string(), z.any()).optional(),
   status: z.nativeEnum(TASK_STATUS).optional(),
+  due_date: z.string().datetime().nullable().optional(),
 });
 
 export type UpdateTaskRequest = z.infer<typeof updateTaskRequestSchema>;
@@ -333,6 +334,7 @@ export const taskActionRequestSchema = z.object({
   version: z.number().int(),
   action: z.nativeEnum(TASK_ACTION),
   content: z.record(z.string(), z.any()).optional(),
+  note: z.string().trim().min(1).optional(),
 });
 
 export type TaskActionRequest = z.infer<typeof taskActionRequestSchema>;
