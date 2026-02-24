@@ -1405,6 +1405,7 @@ Current design keeps task content immutable in system scope and focuses on list/
 GET    /admin/tasks
 GET    /admin/tasks/:taskUid
 PATCH  /admin/tasks/:taskUid/assign
+PATCH  /admin/tasks/:taskUid/reassign-show
 DELETE /admin/tasks/:taskUid
 ```
 
@@ -1420,7 +1421,12 @@ DELETE /admin/tasks/:taskUid
 | `show_start_to`   | ISO date-time | Filter by linked show start time upper bound                                |
 | `studio_id`       | string (UID)  | Filter by studio UID                                                        |
 | `client_id`       | string (UID)  | Filter by client UID inferred through linked show                           |
-| `reference_id`    | string        | Targeted text filter on show UID or assignee user UID                       |
+| `studio_name`     | string        | Filter by studio name                                                       |
+| `client_name`     | string        | Filter by client name (through linked show)                                 |
+| `assignee_name`   | string        | Filter by assignee user name                                                |
+| `show_name`       | string        | Filter by linked show name                                                  |
+| `has_assignee`    | boolean       | Filter assigned vs unassigned tasks                                         |
+| `has_due_date`    | boolean       | Filter tasks with/without due date                                          |
 | `search`          | string        | Text search on task UID/description/show name&uid/assignee name&uid         |
 | `sort`            | string        | `due_date:asc` (default), `due_date:desc`, `updated_at:asc/desc`            |
 | `page`            | number        | Page number                                                                 |
@@ -1434,6 +1440,97 @@ DELETE /admin/tasks/:taskUid
   - Target user must have active membership in the task's studio.
   - `null` unassigns the task.
 - This endpoint is the system-admin-safe path for cross-studio reassignment without mutating task form content.
+
+#### `PATCH /admin/tasks/:taskUid/reassign-show`
+
+- Body: `{ show_uid: string }`
+- Purpose: move a task's show target for support/recovery operations while keeping task content immutable.
+- Strict guardrails:
+  - Task must exist and be `PENDING`.
+  - Task must be studio-scoped.
+  - Target show must be in the same studio as the task.
+- Due date behavior on move:
+  - `SETUP`: recompute to `show.start_time - 1 hour`
+  - `ACTIVE`: recompute to `show.end_time + 1 hour`
+  - `CLOSURE`: recompute to `show.end_time + 6 hours`
+  - `ADMIN` / `ROUTINE` / `OTHER`: keep existing due date
+
+#### Show Status Master Data (`/admin/show-statuses`)
+
+Show status is system-level master data used by show/task flows for filtering and lifecycle labeling.
+
+```
+GET    /admin/show-statuses
+POST   /admin/show-statuses
+GET    /admin/show-statuses/:id
+PATCH  /admin/show-statuses/:id
+DELETE /admin/show-statuses/:id
+```
+
+Usage notes:
+- Show create/edit forms and show filters consume this resource.
+- Task-related views that expose show-status filters should source options from this endpoint.
+
+#### System Task Template Management (`/admin/task-templates`) ⏳ Planned
+
+System admin should be able to manage task templates across studios and inspect where a template is currently bound/used, without loading massive historical linkage data in list responses.
+
+```
+GET    /admin/task-templates
+POST   /admin/task-templates
+GET    /admin/task-templates/:id
+PATCH  /admin/task-templates/:id
+DELETE /admin/task-templates/:id
+GET    /admin/task-templates/:id/usage-summary
+GET    /admin/task-templates/:id/bindings
+```
+
+Design guardrails:
+- Keep list payloads lightweight; do not inline full show/task bindings in `GET /admin/task-templates`.
+- Use soft-delete semantics for templates and preserve snapshots for existing tasks.
+- Cross-studio admin CRUD is allowed, but all writes must keep snapshot/version integrity.
+
+##### `GET /admin/task-templates` (summary-first)
+
+Returns template metadata plus compact usage summary only:
+- `task_count_total`
+- `task_count_active` (`deleted_at IS NULL`)
+- `show_count_active` (distinct active shows currently linked via tasks)
+- `last_used_at` (max task creation time)
+
+Optional query params:
+- `studio_id`
+- `task_type`
+- `is_active`
+- `search` (name/description)
+- `sort` (`updated_at`, `last_used_at`, `task_count_active`)
+- `page`, `limit`
+
+##### `GET /admin/task-templates/:id/bindings` (on-demand drill-down)
+
+Returns paginated bindings for one template only. This endpoint is the heavy view and must be explicitly requested by UI interaction.
+
+Query params:
+- `studio_id` (optional)
+- `status` (task status filter)
+- `show_start_from`, `show_start_to`
+- `cursor` or `page/limit` (implementation choice, must remain paginated)
+- `include_deleted` (default `false`)
+
+Response focus:
+- show identity and schedule
+- task identity/status/type/due-date/assignee
+- minimal fields for operations and diagnostics
+
+##### Performance strategy for large studios
+
+- Summary-first list avoids N+1 heavy joins in primary browsing flow.
+- Drill-down endpoint is server-paginated and filterable; FE loads incrementally.
+- Add supporting indexes for common access paths:
+  - `tasks(template_id, deleted_at, created_at)`
+  - `task_targets(task_id, target_type, deleted_at, show_id)`
+  - `shows(id, studio_id, start_time)`
+- If summary query cost grows materially, introduce a periodic/materialized usage rollup table and keep the API contract unchanged.
 
 ---
 

@@ -23,7 +23,7 @@
 10. [Implemented Component Patterns](#10-implemented-component-patterns)
 11. [Task Generation & Assignment Workflows](#11-task-generation--assignment-workflows)
 
-> **Screen index**: §3.1 Template Library · §3.2 Create/Edit Template · §3.3 Shows List · §3.3.1 Generate Dialog · §3.3.2 Assignment Dialog · §3.3.3 Show Detail/Tasks · §3.4 My Tasks · §3.5 Task Detail (Operator) · §3.6 Task Review Queue (Admin) · §3.7 All Tasks Dashboard · §3.8 System Tasks
+> **Screen index**: §3.1 Template Library · §3.2 Create/Edit Template · §3.3 Shows List · §3.3.1 Generate Dialog · §3.3.2 Assignment Dialog · §3.3.3 Show Detail/Tasks · §3.4 My Tasks · §3.5 Task Detail (Operator) · §3.6 Task Review Queue (Admin) · §3.7 All Tasks Dashboard · §3.8 System Tasks · §3.9 System Show Statuses · §3.10 System Task Templates
 
 ---
 
@@ -182,7 +182,7 @@
 **Navigation Structure**:
 1. **Dashboard** - Top-level item, always visible
 2. **System** - Collapsible group, visible only to system admins
-   - Contains: Clients, Studios, MCs, Memberships, Users, Platforms, Show Standards, Show Types, Schedules, Shows
+   - Contains: Clients, Studios, MCs, Memberships, Users, Platforms, Show Standards, Show Statuses, Show Types, Schedules, Task Templates, Shows
 3. **Studio** - Collapsible group, visible when user has active studio
    - **Dashboard** - Studio-specific dashboard (all roles)
    - **My Tasks** - User's assigned tasks (all roles)
@@ -1014,31 +1014,106 @@ This way, the list (`useMyTasks`) doesn't need to carry the full schema for ever
 **Scope**:
 - Read task details across studios.
 - Reassign a task assignee by user UID (including cross-studio navigation context).
+- Reassign a task's linked show (strict guarded flow).
 - Delete task records for recovery/cleanup.
 - Keep task form content immutable in system scope (no direct content editing from system UI).
 
 **Primary Interactions**:
 - **Top search input**: broad text search (`task uid`, `description`, `show uid/name`, `assignee uid/name`).
 - **Advanced filters dropdown**:
-  - `Studio` (select)
-  - `Client` (select inferred from linked show)
+  - `Studio` (name text filter)
+  - `Client` (name text filter inferred from linked show)
+  - `User` (assignee name text filter)
+  - `Show` (show name text filter)
   - `Task Type` (select)
+  - `Has Assignee` (select)
+  - `Has Due Date` (select)
   - `Due Date` (date range)
-  - `Show/User ID` (`reference_id` text filter, targeted UID lookup)
 - **Row action**: `View details` opens details dialog.
 - **Details dialog**:
   - Shows immutable task metadata and linked show context.
   - Supports reassignment via `assignee_uid` input.
+  - Supports moving task target via `show_uid` input.
   - Empty value unassigns task.
 
 **Validation UX**:
 - Reassignment requires target user to have active membership in the task's studio.
+- Show reassignment guardrails:
+  - Task must be `PENDING`.
+  - Target show must belong to the same studio.
+  - Due date is recalculated for `SETUP` / `ACTIVE` / `CLOSURE` using show timing rules.
 - Backend rejects invalid assignments; FE surfaces error toast/feedback.
 
 **Why this split**:
 - Keeps support operations available for system admins.
 - Prevents bypassing studio workflow semantics for task execution/state transitions.
 - Preserves clear responsibility boundary between `/system/*` and `/studios/$studioId/*`.
+
+### 3.9 System Admin: Show Statuses (`/system/show-statuses`)
+
+**Purpose**: Manage global show-status master data used by show forms and filters across system/studio modules.
+
+**Route alignment**:
+- Backend source of truth: `/admin/show-statuses` (CRUD available).
+- Frontend should expose a dedicated `/system/show-statuses` list/manage page consistent with other `/system/*` master-data screens.
+
+**Current implementation note**:
+- FE currently consumes show statuses as lookup data for show forms/filters.
+- Dedicated `/system/show-statuses` management screen is a gap and should be implemented to match BE capability.
+
+### 3.10 System Admin: Task Templates (`/system/task-templates`) ⏳ Planned
+
+**Purpose**: Let system admins manage task templates across studios and understand where a template is bound, while avoiding heavy/unbounded client payloads.
+
+**Core UX principle**: summary first, drill-down on demand.
+
+#### List View (fast path)
+
+Route: `/system/task-templates`
+
+Show template rows/cards with compact usage summary only:
+- template name, type, version, active state, studio
+- `tasks (active/total)`
+- `active shows count`
+- `last used at`
+
+Filters:
+- search (name/description)
+- studio
+- task type
+- active/inactive
+- sort (`updated`, `last used`, `active tasks`)
+
+#### Binding Drill-Down (explicit action)
+
+Row action: `View bindings`
+
+Open side panel/dialog with paginated table of linked task/show records:
+- show id/name/start/end
+- task id/status/type/due-date
+- assignee (if any)
+
+Drill-down filters:
+- show start date range
+- task status
+- studio (optional cross-check)
+- include deleted toggle (default off)
+
+#### Scalability/optimization requirements
+
+- Do not preload full template-to-task bindings in list query.
+- Bindings are fetched only when panel opens, with server pagination.
+- Default drill-down window can use recent operational range (e.g. last 90 days), with explicit expansion controls.
+- Keep FE cache bounded:
+  - list query cached normally
+  - bindings query keyed by `templateId + filters + page`
+  - no infinite local accumulation for historical records
+
+#### Why this design
+
+- Admin still gets operational visibility of template usage.
+- Avoids over-fetching and massive payloads as studios accumulate years of tasks.
+- Keeps first paint fast and pushes heavy reads behind intentional user actions.
 
 ---
 
