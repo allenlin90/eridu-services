@@ -1,8 +1,8 @@
 # Task Management System - UI/UX Design
 
-**Version**: 3.5
+**Version**: 3.6
 **Last Updated**: February 24, 2026
-**Status**: Core implemented. Key UX gaps around task form rendering and My Tasks filtering are now addressed. Current planned next: review workflow/state-machine enforcement and advanced grouping ergonomics at scale. Deferred: animations, swipe gestures, file uploads, PWA/offline, WebSocket, analytics.
+**Status**: Core implemented. `/system/tasks` now supports system-admin cross-studio discovery and reassignment with immutable task content in system scope. Current planned next: studio review workflow/state-machine enforcement and advanced grouping ergonomics at scale. Deferred: animations, swipe gestures, file uploads, PWA/offline, WebSocket, analytics.
 
 > **Related Documentation**  
 > For API contracts, database schema, and backend architecture, see [`apps/erify_api/docs/TASK_MANAGEMENT_DESIGN.md`](../../erify_api/docs/TASK_MANAGEMENT_DESIGN.md)
@@ -23,7 +23,7 @@
 10. [Implemented Component Patterns](#10-implemented-component-patterns)
 11. [Task Generation & Assignment Workflows](#11-task-generation--assignment-workflows)
 
-> **Screen index**: §3.1 Template Library · §3.2 Create/Edit Template · §3.3 Shows List · §3.3.1 Generate Dialog · §3.3.2 Assignment Dialog · §3.3.3 Show Detail/Tasks · §3.4 My Tasks · §3.5 Task Detail (Operator) · §3.6 Task Review Queue (Admin) · §3.7 All Tasks Dashboard
+> **Screen index**: §3.1 Template Library · §3.2 Create/Edit Template · §3.3 Shows List · §3.3.1 Generate Dialog · §3.3.2 Assignment Dialog · §3.3.3 Show Detail/Tasks · §3.4 My Tasks · §3.5 Task Detail (Operator) · §3.6 Task Review Queue (Admin) · §3.7 All Tasks Dashboard · §3.8 System Tasks
 
 ---
 
@@ -96,13 +96,14 @@
 ### Architectural Boundary
 
 > [!IMPORTANT]
-> **`/system/*` routes** are root-level record control — plain CRUD, no business logic. For super-admin access to raw model data only.
+> **`/system/*` routes** are root-level super-admin operations. For tasks, this is cross-studio discovery + reassignment/delete support flow, not full workflow execution.
 >
 > **`/studios/$studioId/*` routes** own all business workflows — task generation, assignment, progress tracking, and operator execution. Scoped to studio context with role-based access.
 >
 > **Task state-machine policy**:
 > - Enforce status transition rules only in studio-scoped workflow endpoints/services.
-> - Keep `/system/*` admin task operations as system-admin raw CRUD that may bypass workflow transition guards for operational recovery.
+> - Keep `/system/tasks` focused on operational recovery: task details, reassignment, deletion, and global filtering.
+> - Task content/status edits remain studio-scoped (`/studios/$studioId/*`), keeping system task content immutable in system UI.
 
 ### Global Navigation
 
@@ -1003,6 +1004,41 @@ This way, the list (`useMyTasks`) doesn't need to carry the full schema for ever
 - **Bulk actions**: Select multiple, reassign all
 - **Real-time updates**: WebSocket for live status changes (future)
 - **Export**: Download task report as CSV/PDF
+
+---
+
+### 3.8 System Admin: System Tasks (`/system/tasks`)
+
+**Purpose**: Cross-studio task operations for system administrators, focused on discovery and reassignment support.
+
+**Scope**:
+- Read task details across studios.
+- Reassign a task assignee by user UID (including cross-studio navigation context).
+- Delete task records for recovery/cleanup.
+- Keep task form content immutable in system scope (no direct content editing from system UI).
+
+**Primary Interactions**:
+- **Top search input**: broad text search (`task uid`, `description`, `show uid/name`, `assignee uid/name`).
+- **Advanced filters dropdown**:
+  - `Studio` (select)
+  - `Client` (select inferred from linked show)
+  - `Task Type` (select)
+  - `Due Date` (date range)
+  - `Show/User ID` (`reference_id` text filter, targeted UID lookup)
+- **Row action**: `View details` opens details dialog.
+- **Details dialog**:
+  - Shows immutable task metadata and linked show context.
+  - Supports reassignment via `assignee_uid` input.
+  - Empty value unassigns task.
+
+**Validation UX**:
+- Reassignment requires target user to have active membership in the task's studio.
+- Backend rejects invalid assignments; FE surfaces error toast/feedback.
+
+**Why this split**:
+- Keeps support operations available for system admins.
+- Prevents bypassing studio workflow semantics for task execution/state transitions.
+- Preserves clear responsibility boundary between `/system/*` and `/studios/$studioId/*`.
 
 ---
 
@@ -1951,7 +1987,7 @@ These fix functional gaps identified in the current implementation:
 ### Review Workflow (Next Iteration)
 - **BE**: State machine enforcement in **studio module/services only** (`/studios/$studioId/*`) — operator blocked from self-completing; role-based transition table (see `TASK_MANAGEMENT_DESIGN.md §7.3`)
 - **BE**: `PATCH /studios/:studioId/tasks/:taskUid/status` — admin approve, reject with note, close
-- **BE**: Admin module (`/admin/*`) remains system-admin-only raw CRUD for tasks; may bypass studio state-machine constraints by design
+- **BE**: `/admin/tasks` remains system-admin-only support surface (cross-studio list/detail/reassign/delete) while task content/status edits stay studio-scoped
 - **FE**: Operator `task-execution-sheet.tsx` — "Submit for Review" replaces "Complete Task"; rejection note banner; self-recall button on REVIEW state
 - **FE**: Admin task review queue at `§3.6` — bulk approve, reject with note dialog, per-task inline actions
 - **FE**: `status-badge` — add REVIEW (amber) and CLOSED (grey strikethrough) variants

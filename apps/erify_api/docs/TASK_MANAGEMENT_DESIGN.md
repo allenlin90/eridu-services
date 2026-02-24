@@ -1,8 +1,8 @@
 # Task Management System - Backend Design
 
-**Version**: 3.5
+**Version**: 3.6
 **Last Updated**: February 24, 2026
-**Status**: Core implemented. Planned next: task review workflow (state machine enforcement + admin review endpoints). State machine enforcement will be scoped to studio module/services; admin module keeps system-admin raw CRUD bypass for cross-studio operations.
+**Status**: Core implemented. System admin task management (`/admin/tasks`) now supports cross-studio discovery + reassignment with membership validation, while keeping task content immutable in system scope. Planned next: studio review workflow/state machine endpoints.
 
 > **Related Documentation**  
 > For UI/UX specifications and user workflows, see [`apps/erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md`](../../erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md)
@@ -1014,8 +1014,8 @@ Returns paginated shows for a studio with per-show `task_summary` (total / assig
   - Enforce state machine transition rules in studio-scoped services/controllers.
   - Applies to operator and studio admin/manager workflow endpoints.
 - **Admin module (`/admin/*`, system admin only)**:
-  - Allow basic task CRUD and direct status/content updates that can bypass studio workflow state-machine guards.
-  - Intended for cross-studio operational recovery, support, and data correction.
+  - Allow cross-studio task discovery and operational reassignment/deletion for recovery/support use cases.
+  - Keep task form content immutable in system scope; workflow/status/content edits remain studio-scoped.
   - Must remain restricted to system-admin roles and should preserve audit metadata (actor + timestamp + reason when available).
 
 ### 7.4 Submission Window Validation (Show-Linked Tasks)
@@ -1396,6 +1396,47 @@ GET  /studios/:studioId/tasks/dashboard            (cross-show task summary)
 
 ---
 
+### System Admin Endpoints (`/admin/*`)
+
+`/admin/tasks` is intended for cross-studio operations and support workflows.  
+Current design keeps task content immutable in system scope and focuses on list/detail/reassign/delete actions.
+
+```
+GET    /admin/tasks
+GET    /admin/tasks/:taskUid
+PATCH  /admin/tasks/:taskUid/assign
+DELETE /admin/tasks/:taskUid
+```
+
+#### `GET /admin/tasks` Query Parameters
+
+| Param             | Type          | Description                                                                 |
+| ----------------- | ------------- | --------------------------------------------------------------------------- |
+| `status`          | enum (multi)  | Filter by task status                                                       |
+| `task_type`       | enum (multi)  | Filter by task type (`SETUP`, `ACTIVE`, `CLOSURE`, `ADMIN`, `ROUTINE`, `OTHER`) |
+| `due_date_from`   | ISO date-time | Due date lower bound                                                        |
+| `due_date_to`     | ISO date-time | Due date upper bound                                                        |
+| `show_start_from` | ISO date-time | Filter by linked show start time lower bound                                |
+| `show_start_to`   | ISO date-time | Filter by linked show start time upper bound                                |
+| `studio_id`       | string (UID)  | Filter by studio UID                                                        |
+| `client_id`       | string (UID)  | Filter by client UID inferred through linked show                           |
+| `reference_id`    | string        | Targeted text filter on show UID or assignee user UID                       |
+| `search`          | string        | Text search on task UID/description/show name&uid/assignee name&uid         |
+| `sort`            | string        | `due_date:asc` (default), `due_date:desc`, `updated_at:asc/desc`            |
+| `page`            | number        | Page number                                                                 |
+| `limit`           | number        | Page size                                                                   |
+
+#### `PATCH /admin/tasks/:taskUid/assign`
+
+- Body: `{ assignee_uid: string | null }`
+- Validation:
+  - If non-null: target user must exist.
+  - Target user must have active membership in the task's studio.
+  - `null` unassigns the task.
+- This endpoint is the system-admin-safe path for cross-studio reassignment without mutating task form content.
+
+---
+
 ### User (Operator) Endpoints
 
 > **Note**: `/me/tasks/upcoming` is **not a separate endpoint**. "Upcoming" tasks are a subset of `GET /me/tasks` filtered by `status` (PENDING/IN_PROGRESS) and a `due_date_to` window. This keeps the API surface minimal.
@@ -1539,9 +1580,9 @@ Content-Type: application/json
 | Transition: IN_PROGRESS → COMPLETED    |      ✅       |          ✅           | ❌ (must go via REVIEW) |
 | Transition: any → BLOCKED              |      ✅       |          ✅           |      ✅ (own only)      |
 | Transition: any → CLOSED               |      ✅       |          ✅           |           ❌            |
-| Force-update any task (content/status) |      ✅       |          ✅           |           ❌            |
+| Force-update any task (content/status) |      ❌       |          ✅           |           ❌            |
 | Hard Delete Task                       |      ✅       |          ❌           |           ❌            |
-| Admin module raw CRUD bypass (system)  |      ✅       |          ❌           |           ❌            |
+| Admin module operational override (system reassignment/delete) |      ✅       |          ❌           |           ❌            |
 
 ### Guards
 
@@ -1761,7 +1802,7 @@ interface BulkDeleteTasksResponseDto {
 3. **State machine enforcement (studio-scoped)** — role-based transition validation in studio module `TaskService`; operator blocked from self-completing (`TASK_003`)
 4. **`PATCH /studios/:studioId/tasks/:taskUid/status`** — studio admin/manager review actions (approve, reject with note, close, block)
 5. **`rejection_note` / `blocked_reason`** stored in `task.metadata` and surfaced to operator in `GET /me/tasks/:uid`
-6. **Admin module task CRUD endpoints (`/admin/*`)** — system-admin-only raw CRUD and direct status/content updates that bypass studio state-machine guards
+6. **Admin module task management hardening (`/admin/tasks`)** — keep reassignment/delete operational path, add audit/reason fields and richer observability
 
 **Deferred (post-MVP):**
 1. **File Upload Handling**: Support for field type `file` with direct upload to cloud storage
@@ -1770,7 +1811,7 @@ interface BulkDeleteTasksResponseDto {
 4. **Advanced Analytics & Search**: Full-text search across JSONB content, materialized views
 5. **Real-time Collaboration**: WebSocket-based live status updates
 6. **Mobile Offline / PWA**: Full offline sync and conflict resolution
-7. **`AdminTaskController`**: System-level cross-studio task management (raw CRUD bypass retained by design)
+7. **`AdminTaskController` enhancements**: add bulk reassignment ergonomics and support-tooling safeguards
 
 ---
 
