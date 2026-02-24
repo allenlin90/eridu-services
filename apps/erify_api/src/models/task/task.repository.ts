@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, Task, TaskStatus, TaskTemplateSnapshot } from '@prisma/client';
+import { Prisma, Task, TaskStatus, TaskTemplateSnapshot, TaskType } from '@prisma/client';
 
 import type { ListMyTasksQueryTransformed } from '@eridu/api-types/task-management';
 
@@ -303,13 +303,14 @@ export class TaskRepository extends BaseRepository<
 
   async resumeTask(
     id: bigint,
-    data: { snapshotId: bigint; status: TaskStatus; version: number; dueDate: Date },
+    data: { snapshotId: bigint; status: TaskStatus; version: number; dueDate: Date; type: TaskType },
   ): Promise<Task> {
     return this.prisma.task.update({
       where: { id },
       data: {
         deletedAt: null,
         status: data.status,
+        type: data.type,
         snapshotId: data.snapshotId,
         dueDate: data.dueDate,
         content: {},

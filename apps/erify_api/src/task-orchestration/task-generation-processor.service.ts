@@ -64,6 +64,7 @@ export class TaskGenerationProcessor {
         await this.taskService.resumeTask(existingTask.id, {
           snapshotId: latestSnapshot.id,
           status: TaskStatus.PENDING,
+          type,
           version: existingTask.version + 1,
           dueDate,
         });
