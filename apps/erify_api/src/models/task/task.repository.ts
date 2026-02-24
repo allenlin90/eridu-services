@@ -52,6 +52,85 @@ export class TaskRepository extends BaseRepository<
     }) as Promise<(Task & { snapshot: TaskTemplateSnapshot | null; targets: { show: { uid: string; startTime: Date; endTime: Date } | null }[] }) | null>;
   }
 
+  async findByUidWithRelations(
+    uid: string,
+    assigneeId: bigint,
+  ): Promise<(Task & {
+    template: { uid: string; name: string } | null;
+    snapshot: { schema: unknown; version: number } | null;
+    assignee: { uid: string; name: string } | null;
+    targets: {
+      show: {
+        uid: string;
+        name: string;
+        startTime: Date;
+        endTime: Date;
+        client: { name: string } | null;
+        studioRoom: { name: string } | null;
+        showMCs: { mc: { name: string; aliasName: string } }[];
+      } | null;
+    }[];
+  }) | null> {
+    return this.prisma.task.findFirst({
+      where: { uid, deletedAt: null, assigneeId },
+      include: {
+        template: true,
+        snapshot: {
+          select: {
+            schema: true,
+            version: true,
+          },
+        },
+        assignee: true,
+        targets: {
+          where: { targetType: 'SHOW', deletedAt: null },
+          include: {
+            show: {
+              include: {
+                client: {
+                  select: {
+                    name: true,
+                  },
+                },
+                studioRoom: {
+                  select: {
+                    name: true,
+                  },
+                },
+                showMCs: {
+                  where: { deletedAt: null },
+                  include: {
+                    mc: {
+                      select: {
+                        name: true,
+                        aliasName: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }) as Promise<(Task & {
+      template: { uid: string; name: string } | null;
+      snapshot: { schema: unknown; version: number } | null;
+      assignee: { uid: string; name: string } | null;
+      targets: {
+        show: {
+          uid: string;
+          name: string;
+          startTime: Date;
+          endTime: Date;
+          client: { name: string } | null;
+          studioRoom: { name: string } | null;
+          showMCs: { mc: { name: string; aliasName: string } }[];
+        } | null;
+      }[];
+    }) | null>;
+  }
+
   async findByShowAndTemplate(
     showId: bigint,
     templateId: bigint,
@@ -174,6 +253,8 @@ export class TaskRepository extends BaseRepository<
       task_type,
       due_date_from,
       due_date_to,
+      show_start_from,
+      show_start_to,
       search,
       sort,
       page,
@@ -204,6 +285,25 @@ export class TaskRepository extends BaseRepository<
         where.dueDate.gte = new Date(due_date_from);
       if (due_date_to)
         where.dueDate.lte = new Date(due_date_to);
+    }
+
+    if (show_start_from || show_start_to) {
+      const showStartTimeFilter: Prisma.DateTimeFilter = {};
+      if (show_start_from)
+        showStartTimeFilter.gte = new Date(show_start_from);
+      if (show_start_to)
+        showStartTimeFilter.lte = new Date(show_start_to);
+
+      where.targets = {
+        some: {
+          targetType: 'SHOW',
+          deletedAt: null,
+          // TODO: normalize these bounds with studio timezone at query construction level.
+          show: {
+            startTime: showStartTimeFilter,
+          },
+        },
+      };
     }
 
     if (search) {
@@ -253,7 +353,33 @@ export class TaskRepository extends BaseRepository<
           assignee: true,
           targets: {
             where: { targetType: 'SHOW', deletedAt: null },
-            include: { show: true },
+            include: {
+              show: {
+                include: {
+                  client: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                  studioRoom: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                  showMCs: {
+                    where: { deletedAt: null },
+                    include: {
+                      mc: {
+                        select: {
+                          name: true,
+                          aliasName: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       }),

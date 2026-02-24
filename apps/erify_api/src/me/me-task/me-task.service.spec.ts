@@ -18,7 +18,7 @@ describe('meTaskService', () => {
   beforeEach(async () => {
     const mockTaskService = {
       findByUid: jest.fn(),
-      findOne: jest.fn(),
+      findByUidWithRelations: jest.fn(),
       findTasksByAssignee: jest.fn(),
       updateTaskContentAndStatus: jest.fn(),
     };
@@ -72,7 +72,7 @@ describe('meTaskService', () => {
     it('should throw not found if task does not exist or not assigned', async () => {
       const mockUser = { id: BigInt(1) };
       userService.getUserByExtId.mockResolvedValue(mockUser as any);
-      taskService.findOne.mockResolvedValue(null);
+      taskService.findByUidWithRelations.mockResolvedValue(null);
 
       await expect(service.getMyTask('ext_1', 'task_1')).rejects.toThrow(NotFoundException);
     });
@@ -82,14 +82,11 @@ describe('meTaskService', () => {
       const mockTask = { uid: 'task_1', assigneeId: BigInt(1) };
 
       userService.getUserByExtId.mockResolvedValue(mockUser as any);
-      taskService.findOne.mockResolvedValue(mockTask as any);
+      taskService.findByUidWithRelations.mockResolvedValue(mockTask as any);
 
       const result = await service.getMyTask('ext_1', 'task_1');
 
-      expect(taskService.findOne).toHaveBeenCalledWith(
-        { uid: 'task_1', deletedAt: null, assigneeId: BigInt(1) },
-        expect.any(Object),
-      );
+      expect(taskService.findByUidWithRelations).toHaveBeenCalledWith('task_1', BigInt(1));
       expect(result).toEqual(mockTask);
     });
   });

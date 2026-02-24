@@ -48,6 +48,10 @@ export class TaskService extends BaseModelService {
     return this.taskRepository.findByUid(...args);
   }
 
+  async findByUidWithRelations(...args: Parameters<TaskRepository['findByUidWithRelations']>): ReturnType<TaskRepository['findByUidWithRelations']> {
+    return this.taskRepository.findByUidWithRelations(...args);
+  }
+
   /** @internal */
   async findByShowAndTemplate(...args: Parameters<TaskRepository['findByShowAndTemplate']>): ReturnType<TaskRepository['findByShowAndTemplate']> {
     return this.taskRepository.findByShowAndTemplate(...args);

@@ -46,24 +46,7 @@ export class MeTaskService {
       throw HttpError.unauthorized('User not found');
     }
 
-    const task = await this.taskService.findOne({
-      uid: taskUid,
-      deletedAt: null,
-      assigneeId: user.id, // Enforce assignee ownership at query level
-    }, {
-      template: true,
-      snapshot: {
-        select: {
-          schema: true,
-          version: true,
-        },
-      },
-      assignee: true,
-      targets: {
-        where: { targetType: 'SHOW', deletedAt: null },
-        include: { show: true },
-      },
-    });
+    const task = await this.taskService.findByUidWithRelations(taskUid, user.id);
 
     if (!task) {
       throw HttpError.notFound('Task not found or not assigned to you');

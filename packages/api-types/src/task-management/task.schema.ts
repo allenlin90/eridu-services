@@ -98,6 +98,18 @@ export const taskWithRelationsSchema = taskSchema.extend({
       name: z.string(),
       startTime: z.date(),
       endTime: z.date(),
+      client: z.object({
+        name: z.string(),
+      }).nullable().optional(),
+      studioRoom: z.object({
+        name: z.string(),
+      }).nullable().optional(),
+      showMCs: z.array(z.object({
+        mc: z.object({
+          name: z.string(),
+          aliasName: z.string(),
+        }),
+      })).optional(),
     }).nullable(),
   })).optional(),
 });
@@ -115,6 +127,9 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj) => {
         name: s.name,
         start_time: s.startTime.toISOString(),
         end_time: s.endTime.toISOString(),
+        client_name: s.client?.name ?? null,
+        studio_room_name: s.studioRoom?.name ?? null,
+        mc_names: (s.showMCs ?? []).map((item) => item.mc.aliasName || item.mc.name),
       };
     }
   }
@@ -292,6 +307,8 @@ export const listMyTasksQuerySchema = paginationBaseSchema
     task_type: z.union([z.nativeEnum(TASK_TYPE), z.array(z.nativeEnum(TASK_TYPE))]).optional(),
     due_date_from: z.string().datetime().optional(),
     due_date_to: z.string().datetime().optional(),
+    show_start_from: z.string().datetime().optional(),
+    show_start_to: z.string().datetime().optional(),
     search: z.string().trim().min(1).optional(),
     sort: z
       .enum([
