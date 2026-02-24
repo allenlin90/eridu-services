@@ -1,11 +1,11 @@
 import { addDays, endOfDay, startOfDay } from 'date-fns';
-import { useMemo, useState } from 'react';
-import { useDebounceValue } from 'usehooks-ts';
+import { useMemo } from 'react';
 
 import type { ListMyTasksQuery, TaskStatus, TaskType } from '@eridu/api-types/task-management';
 import { TASK_STATUS } from '@eridu/api-types/task-management';
 
-export type DateFilter = 'today' | 'upcoming' | 'all';
+import type { MyTasksSearch } from '../config/my-tasks-search-schema';
+
 export type TaskViewMode = 'task' | 'show';
 export type MyTaskSort = 'due_date:asc' | 'due_date:desc' | 'updated_at:desc';
 export type MyTaskPageSize = 20 | 50 | 100;
@@ -19,65 +19,117 @@ const DEFAULT_STATUS_FILTERS: TaskStatus[] = [
 const DEFAULT_SORT: MyTaskSort = 'due_date:asc';
 const DEFAULT_LIMIT: MyTaskPageSize = 20;
 
-export function useMyTasksFilters(studioId: string) {
-  const [dateFilter, setDateFilter] = useState<DateFilter>('today');
-  const [selectedStatuses, setSelectedStatuses] = useState<TaskStatus[]>(DEFAULT_STATUS_FILTERS);
-  const [selectedTaskTypes, setSelectedTaskTypes] = useState<TaskType[]>([]);
-  const [sortBy, setSortBy] = useState<MyTaskSort>(DEFAULT_SORT);
-  const [searchInput, setSearchInput] = useState('');
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState<MyTaskPageSize>(DEFAULT_LIMIT);
-  const [viewMode, setViewMode] = useState<TaskViewMode>('task');
-  const [debouncedSearch] = useDebounceValue(searchInput, 400);
+type SetUrlSearch = (updater: (prev: MyTasksSearch) => MyTasksSearch) => void;
+
+export function useMyTasksFilters(studioId: string, search: MyTasksSearch, setUrlSearch: SetUrlSearch) {
+  const showStartDate = search.show_start_date ?? '';
+  const selectedStatuses = search.status;
+  const selectedTaskTypes = search.task_type;
+  const sortBy = search.sort;
+  const searchInput = search.search ?? '';
+  const page = search.page;
+  const limit = search.limit;
+  const viewMode = search.view_mode;
+
+  const setShowStartDate = (value: string) => {
+    setUrlSearch((prev) => ({
+      ...prev,
+      show_start_date: value || undefined,
+      page: 1,
+    }));
+  };
 
   const toggleStatus = (status: TaskStatus) => {
-    setSelectedStatuses((prev) =>
-      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]);
-    setPage(1);
+    setUrlSearch((prev) => {
+      const nextStatuses = prev.status.includes(status)
+        ? prev.status.filter((s) => s !== status)
+        : [...prev.status, status];
+
+      return {
+        ...prev,
+        status: nextStatuses,
+        page: 1,
+      };
+    });
   };
 
   const toggleTaskType = (taskType: TaskType) => {
-    setSelectedTaskTypes((prev) =>
-      prev.includes(taskType) ? prev.filter((t) => t !== taskType) : [...prev, taskType]);
-    setPage(1);
+    setUrlSearch((prev) => {
+      const nextTaskTypes = prev.task_type.includes(taskType)
+        ? prev.task_type.filter((t) => t !== taskType)
+        : [...prev.task_type, taskType];
+      return {
+        ...prev,
+        task_type: nextTaskTypes,
+        page: 1,
+      };
+    });
   };
 
   const setSearch = (value: string) => {
-    setSearchInput(value);
-    setPage(1);
+    setUrlSearch((prev) => ({
+      ...prev,
+      search: value || undefined,
+      page: 1,
+    }));
   };
 
   const setSort = (value: MyTaskSort) => {
-    setSortBy(value);
-    setPage(1);
+    setUrlSearch((prev) => ({
+      ...prev,
+      sort: value,
+      page: 1,
+    }));
   };
 
   const setPageSize = (value: MyTaskPageSize) => {
-    setLimit(value);
-    setPage(1);
+    setUrlSearch((prev) => ({
+      ...prev,
+      limit: value,
+      page: 1,
+    }));
+  };
+
+  const setPage = (updater: number | ((currentPage: number) => number)) => {
+    setUrlSearch((prev) => ({
+      ...prev,
+      page: typeof updater === 'function' ? updater(prev.page) : updater,
+    }));
+  };
+
+  const setViewMode = (mode: TaskViewMode) => {
+    setUrlSearch((prev) => ({
+      ...prev,
+      view_mode: mode,
+    }));
   };
 
   const clearFilters = () => {
-    setDateFilter('all');
-    setSelectedStatuses([]);
-    setSelectedTaskTypes([]);
-    setSortBy(DEFAULT_SORT);
-    setSearchInput('');
-    setPage(1);
-    setLimit(DEFAULT_LIMIT);
+    setUrlSearch((prev) => ({
+      ...prev,
+      page: 1,
+      limit: DEFAULT_LIMIT,
+      show_start_date: undefined,
+      status: [],
+      task_type: [],
+      search: undefined,
+      sort: DEFAULT_SORT,
+      view_mode: 'task',
+    }));
   };
 
   const statusModified = selectedStatuses.length !== DEFAULT_STATUS_FILTERS.length
     || !DEFAULT_STATUS_FILTERS.every((s) => selectedStatuses.includes(s));
 
-  const hasActiveFilters = dateFilter !== 'all'
+  const hasActiveFilters = showStartDate.length > 0
     || statusModified
     || selectedTaskTypes.length > 0
     || searchInput.length > 0
     || sortBy !== DEFAULT_SORT
     || limit !== DEFAULT_LIMIT;
 
-  const activeFilterCount = (statusModified ? 1 : 0)
+  const activeFilterCount = (showStartDate.length > 0 ? 1 : 0)
+    + (statusModified ? 1 : 0)
     + selectedTaskTypes.length
     + (sortBy !== DEFAULT_SORT ? 1 : 0)
     + (limit !== DEFAULT_LIMIT ? 1 : 0);
@@ -90,11 +142,10 @@ export function useMyTasksFilters(studioId: string) {
       sort: sortBy,
     };
 
-    if (dateFilter === 'today') {
-      nextQuery.due_date_from = startOfDay(new Date()).toISOString();
-      nextQuery.due_date_to = endOfDay(new Date()).toISOString();
-    } else if (dateFilter === 'upcoming') {
-      nextQuery.due_date_from = startOfDay(addDays(new Date(), 1)).toISOString();
+    if (showStartDate) {
+      const selectedDate = new Date(`${showStartDate}T00:00:00`);
+      nextQuery.show_start_from = startOfDay(selectedDate).toISOString();
+      nextQuery.show_start_to = endOfDay(addDays(selectedDate, 1)).toISOString();
     }
 
     if (selectedStatuses.length > 0) {
@@ -105,19 +156,19 @@ export function useMyTasksFilters(studioId: string) {
       nextQuery.task_type = selectedTaskTypes;
     }
 
-    if (debouncedSearch) {
-      nextQuery.search = debouncedSearch;
+    if (searchInput) {
+      nextQuery.search = searchInput;
     }
 
     return nextQuery;
-  }, [dateFilter, debouncedSearch, limit, page, selectedStatuses, selectedTaskTypes, sortBy, studioId]);
+  }, [limit, page, searchInput, selectedStatuses, selectedTaskTypes, showStartDate, sortBy, studioId]);
 
   return {
     query,
     page,
     setPage,
-    dateFilter,
-    setDateFilter,
+    showStartDate,
+    setShowStartDate,
     selectedStatuses,
     toggleStatus,
     selectedTaskTypes,

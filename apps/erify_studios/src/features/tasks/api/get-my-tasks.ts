@@ -18,6 +18,8 @@ export async function getMyTasks(query: ListMyTasksQuery): Promise<MyTasksRespon
     task_type,
     due_date_from,
     due_date_to,
+    show_start_from,
+    show_start_to,
     search,
     sort,
     page = 1,
@@ -45,6 +47,10 @@ export async function getMyTasks(query: ListMyTasksQuery): Promise<MyTasksRespon
     searchParams.append('due_date_from', due_date_from);
   if (due_date_to)
     searchParams.append('due_date_to', due_date_to);
+  if (show_start_from)
+    searchParams.append('show_start_from', show_start_from);
+  if (show_start_to)
+    searchParams.append('show_start_to', show_start_to);
   if (search)
     searchParams.append('search', search);
   if (sort)

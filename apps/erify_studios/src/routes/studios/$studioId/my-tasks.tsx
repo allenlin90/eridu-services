@@ -1,18 +1,30 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { useCallback } from 'react';
 
 import { MyTaskGrid } from '@/features/tasks/components/my-task-grid';
 import { MyTasksPagination } from '@/features/tasks/components/my-tasks-pagination';
 import { MyTasksToolbar } from '@/features/tasks/components/my-tasks-toolbar';
+import type { MyTasksSearch } from '@/features/tasks/config/my-tasks-search-schema';
+import { myTasksSearchSchema, stripMyTasksSearchDefaults } from '@/features/tasks/config/my-tasks-search-schema';
 import { useMyTasks } from '@/features/tasks/hooks/use-my-tasks';
 import { useMyTasksFilters } from '@/features/tasks/hooks/use-my-tasks-filters';
 
 export const Route = createFileRoute('/studios/$studioId/my-tasks')({
   component: MyTasksPage,
+  validateSearch: (search) => myTasksSearchSchema.parse(search),
 });
 
 function MyTasksPage() {
   const { studioId } = Route.useParams();
-  const filters = useMyTasksFilters(studioId);
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const setUrlSearch = useCallback((updater: (prev: MyTasksSearch) => MyTasksSearch) => {
+    navigate({
+      search: (prev: MyTasksSearch) => myTasksSearchSchema.parse(stripMyTasksSearchDefaults(updater(prev))),
+      replace: true,
+    });
+  }, [navigate]);
+  const filters = useMyTasksFilters(studioId, search, setUrlSearch);
 
   const { data, isLoading, isFetching, refetch } = useMyTasks(filters.query);
   const tasks = data?.data ?? [];
@@ -28,8 +40,8 @@ function MyTasksPage() {
       </div>
 
       <MyTasksToolbar
-        dateFilter={filters.dateFilter}
-        onDateFilterChange={filters.setDateFilter}
+        showStartDate={filters.showStartDate}
+        onShowStartDateChange={filters.setShowStartDate}
         searchInput={filters.searchInput}
         onSearchChange={filters.setSearch}
         selectedStatuses={filters.selectedStatuses}
