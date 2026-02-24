@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -24,7 +25,7 @@ import { BaseStudioController } from '../base-studio.controller';
 
 import type { AuthenticatedRequest } from '@/lib/auth/jwt-auth.guard';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
-import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
+import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { StudioService } from '@/models/studio/studio.service';
 import {
@@ -34,11 +35,13 @@ import {
   bulkDeleteTasksResponseSchema,
   GenerateTasksDto,
   generateTasksResponseSchema,
+  ListMyTasksQueryDto,
   ReassignTaskDto,
   TaskActionDto,
   taskDto,
   taskWithRelationsDto,
   UpdateTaskDto,
+  type UpdateTaskPayload,
 } from '@/models/task/schemas/task.schema';
 import { TaskService } from '@/models/task/task.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
@@ -112,6 +115,21 @@ export class StudioTaskController extends BaseStudioController {
     return task;
   }
 
+  @ApiOperation({ summary: 'List studio tasks with filters (review queue support)' })
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @Get()
+  @ZodPaginatedResponse(taskWithRelationsDto)
+  async listTasks(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: ListMyTasksQueryDto,
+  ) {
+    const { items, total } = await this.taskService.findTasks({
+      ...query,
+      studio_id: studioId,
+    });
+    return this.createPaginatedResponse(items, total, query);
+  }
+
   @ApiOperation({ summary: 'Update task content and/or status (with optimistic locking)' })
   @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @Patch(':id')
@@ -131,9 +149,16 @@ export class StudioTaskController extends BaseStudioController {
     this.ensureResourceExists(existingTask, 'Task', id);
 
     // 2. Perform operation
+    const dueDate = dto.due_date === undefined
+      ? undefined
+      : dto.due_date === null
+        ? null
+        : new Date(dto.due_date);
+
     const updatedTask = await this.taskService.updateTaskContentAndStatusAsAdmin(id, dto.version, {
       content: dto.content,
       status: dto.status,
+      dueDate,
     }, {
       actorExtId: request.user?.ext_id,
       actorEmail: request.user?.email,
@@ -163,9 +188,11 @@ export class StudioTaskController extends BaseStudioController {
     this.ensureResourceExists(existingTask, 'Task', id);
 
     const status = this.resolveStudioActionStatus(dto.action);
+    const noteMetadata = this.buildNoteMetadata(dto.action, dto.note);
     const updatedTask = await this.taskService.updateTaskContentAndStatusAsAdmin(id, dto.version, {
       content: dto.content,
       status,
+      ...(noteMetadata ? { metadata: noteMetadata } : {}),
     }, {
       actorExtId: request.user?.ext_id,
       actorEmail: request.user?.email,
@@ -207,5 +234,23 @@ export class StudioTaskController extends BaseStudioController {
       default:
         return undefined;
     }
+  }
+
+  private buildNoteMetadata(
+    action: TaskAction,
+    note?: string,
+  ): UpdateTaskPayload['metadata'] | null {
+    if (!note)
+      return null;
+
+    if (action === TASK_ACTION.CONTINUE_EDITING) {
+      return { rejection_note: note, blocked_reason: null } as unknown as UpdateTaskPayload['metadata'];
+    }
+
+    if (action === TASK_ACTION.MARK_BLOCKED) {
+      return { blocked_reason: note } as unknown as UpdateTaskPayload['metadata'];
+    }
+
+    return null;
   }
 }

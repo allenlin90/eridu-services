@@ -56,9 +56,16 @@ export class MeTaskController extends BaseController {
     @Param('id', new UidValidationPipe(TaskService.UID_PREFIX, 'Task')) id: string,
     @Body() dto: UpdateTaskDto,
   ) {
+    const dueDate = dto.due_date === undefined
+      ? undefined
+      : dto.due_date === null
+        ? null
+        : new Date(dto.due_date);
+
     const task = await this.meTaskService.updateMyTask(user.ext_id, id, dto.version, {
       content: dto.content,
       status: dto.status,
+      dueDate,
     });
     this.ensureResourceExists(task, 'Task', id);
     return task;
@@ -74,6 +81,7 @@ export class MeTaskController extends BaseController {
     const task = await this.meTaskService.runMyTaskAction(user.ext_id, id, dto.version, {
       action: dto.action,
       content: dto.content,
+      note: dto.note,
     });
     this.ensureResourceExists(task, 'Task', id);
     return task;

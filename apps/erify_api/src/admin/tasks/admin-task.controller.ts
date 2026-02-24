@@ -23,6 +23,7 @@ import {
   ReassignTaskShowDto,
   taskDto,
   taskWithRelationsDto,
+  UpdateTaskDto,
 } from '@/models/task/schemas/task.schema';
 import { TaskService } from '@/models/task/task.service';
 import { UserService } from '@/models/user/user.service';
@@ -98,6 +99,29 @@ export class AdminTaskController extends BaseAdminController {
     @Body() body: ReassignTaskShowDto,
   ) {
     const updated = await this.taskService.reassignTaskToShowAsAdmin(id, body.show_uid);
+    this.ensureResourceExists(updated, 'Task', id);
+    return updated;
+  }
+
+  @Patch(':id')
+  @AdminResponse(taskDto, HttpStatus.OK, 'Task updated successfully')
+  async updateTask(
+    @Param('id', new UidValidationPipe(TaskService.UID_PREFIX, 'Task'))
+    id: string,
+    @Body() body: UpdateTaskDto,
+  ) {
+    if (body.content !== undefined || body.status !== undefined) {
+      throw HttpError.badRequest('System admin cannot edit task content or status');
+    }
+
+    if (body.due_date === undefined) {
+      throw HttpError.badRequest('No updatable fields provided');
+    }
+
+    const dueDate = body.due_date === null ? null : new Date(body.due_date);
+    const updated = await this.taskService.updateTaskContentAndStatusAsAdmin(id, body.version, {
+      dueDate,
+    });
     this.ensureResourceExists(updated, 'Task', id);
     return updated;
   }

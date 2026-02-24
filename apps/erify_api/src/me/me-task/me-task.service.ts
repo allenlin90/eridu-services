@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
 import { TaskStatus } from '@prisma/client';
 
 import {
@@ -86,6 +85,10 @@ export class MeTaskService {
       throw HttpError.forbidden('Task is not assigned to you');
     }
 
+    if (payload.dueDate !== undefined) {
+      throw HttpError.unprocessableEntity('Assignees cannot update task due dates');
+    }
+
     if (task.status === TaskStatus.COMPLETED || task.status === TaskStatus.CLOSED) {
       throw HttpError.unprocessableEntity('Completed or closed tasks cannot be edited by assignees');
     }
@@ -124,35 +127,67 @@ export class MeTaskService {
       throw HttpError.unprocessableEntity('Completed or closed tasks cannot be edited by assignees');
     }
 
-    const updatePayload = this.resolveMemberAction(task.status, payload.action, payload.content);
+    const updatePayload = this.resolveMemberAction(
+      task.status,
+      payload.action,
+      payload.content,
+      payload.note,
+    );
     return this.taskService.updateTaskContentAndStatus(taskUid, version, updatePayload);
   }
 
   private resolveMemberAction(
     currentStatus: TaskStatus,
     action: TaskAction,
-    content?: Prisma.JsonValue,
+    content?: TaskActionPayload['content'],
+    note?: string,
   ): UpdateTaskPayload {
     const basePayload: UpdateTaskPayload = content !== undefined ? { content } : {};
+    const notePayload = this.buildNoteMetadata(action, note);
+    const combinedPayload = notePayload ? { ...basePayload, ...notePayload } : basePayload;
 
     switch (action) {
       case TASK_ACTION.SAVE_CONTENT:
-        return basePayload;
+        return combinedPayload;
       case TASK_ACTION.START_WORK:
         this.ensureMemberTransitionAllowed(currentStatus, TaskStatus.IN_PROGRESS);
-        return { ...basePayload, status: TaskStatus.IN_PROGRESS };
+        return { ...combinedPayload, status: TaskStatus.IN_PROGRESS };
       case TASK_ACTION.SUBMIT_FOR_REVIEW:
         this.ensureMemberTransitionAllowed(currentStatus, TaskStatus.REVIEW);
-        return { ...basePayload, status: TaskStatus.REVIEW };
+        return { ...combinedPayload, status: TaskStatus.REVIEW };
       case TASK_ACTION.CONTINUE_EDITING:
         this.ensureMemberTransitionAllowed(currentStatus, TaskStatus.IN_PROGRESS);
-        return { ...basePayload, status: TaskStatus.IN_PROGRESS };
+        return { ...combinedPayload, status: TaskStatus.IN_PROGRESS };
       case TASK_ACTION.MARK_BLOCKED:
         this.ensureMemberTransitionAllowed(currentStatus, TaskStatus.BLOCKED);
-        return { ...basePayload, status: TaskStatus.BLOCKED };
+        return { ...combinedPayload, status: TaskStatus.BLOCKED };
       default:
         throw HttpError.unprocessableEntity(`Action ${action} is not allowed for assignees`);
     }
+  }
+
+  private buildNoteMetadata(action: TaskAction, note?: string): UpdateTaskPayload | null {
+    if (!note)
+      return null;
+
+    if (action === TASK_ACTION.CONTINUE_EDITING) {
+      return {
+        metadata: {
+          rejection_note: note,
+          blocked_reason: null,
+        },
+      };
+    }
+
+    if (action === TASK_ACTION.MARK_BLOCKED) {
+      return {
+        metadata: {
+          blocked_reason: note,
+        },
+      };
+    }
+
+    return null;
   }
 
   private ensureMemberTransitionAllowed(from: TaskStatus, to: TaskStatus) {
