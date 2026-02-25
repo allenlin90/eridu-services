@@ -25,6 +25,7 @@ export type GetAdminTasksParams = Pick<
   | 'assignee_name'
   | 'show_name'
   | 'search'
+  | 'reference_id'
   | 'sort'
   | 'studio_id'
   | 'client_id'
