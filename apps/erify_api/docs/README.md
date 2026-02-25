@@ -1,114 +1,83 @@
 # Eridu Services API Documentation
 
-This directory contains comprehensive documentation for the Eridu Services API (`erify_api`).
+This directory contains documentation for the Eridu Services API (`erify_api`).
 
 ## Core Documentation
 
 ### Architecture & Design
 
-- **[Architecture Overview](./ARCHITECTURE.md)** - Module architecture, dependencies, and design patterns
-- **[Business Domain](./BUSINESS.md)** - Business domain information and entity relationships
+- **[Architecture Overview](./ARCHITECTURE_OVERVIEW.md)** — High-level system architecture, tech stack, and module design
+- **[Business Domain](./BUSINESS.md)** — Entity relationships and domain concepts
 
-### Authentication & Security
+### Authorization
 
-- **[Authentication & Authorization Guide](./AUTHENTICATION_GUIDE.md)** - JWT validation, authorization patterns, and SDK implementation strategy
-- **[Authorization Guide (Design Proposal)](./AUTHORIZATION_GUIDE.md)** - Planned JSONB-based roles/permissions system (NOT YET IMPLEMENTED)
-- **[Server-to-Server Authentication Guide](./SERVER_TO_SERVER_AUTH.md)** - API key guard usage for service-to-service communication
+- **[Authorization Guide (Design Proposal)](./AUTHORIZATION_GUIDE.md)** — Planned JSONB-based roles/permissions system (NOT YET IMPLEMENTED)
 
-### Features & Roadmap
+### Features
 
-- **[Phase 1 Roadmap](./roadmap/PHASE_1.md)** - Core Functions with Simplified Auth (current phase)
-- **[Phase 2 Roadmap](./roadmap/PHASE_2.md)** - Task Management & Assignments (planned)
-- **[Phase 3 Roadmap](./roadmap/PHASE_3.md)** - Material Management & File Uploads (planned)
-- **[Schedule Upload API Design](./SCHEDULE_UPLOAD_API_DESIGN.md)** - Schedule upload system design with JSON-based planning and snapshot versioning
-- **[Task Management Design](./TASK_MANAGEMENT_DESIGN.md)** - Task management system design, ERD, and implementation checklist (partially implemented)
+- **[Schedule Upload API Design](./SCHEDULE_UPLOAD_API_DESIGN.md)** — Schedule planning with JSON docs, snapshots, and optimistic locking
+- **[Task Management Summary](./TASK_MANAGEMENT_SUMMARY.md)** — Task management quick-reference: architecture, API, and workflows
+
+### Roadmap
+
+- **[Phase 1](./roadmap/PHASE_1.md)** — Core Functions with Simplified Auth
+- **[Phase 2](./roadmap/PHASE_2.md)** — Task Management & Assignments
+- **[Phase 3](./roadmap/PHASE_3.md)** — Material Management & File Uploads
+- **[Phase 4](./roadmap/PHASE_4.md)** — Review Quality & Controlled Bulk Actions
 
 ### API Reference
 
-- **[Postman Collection](./erify-api.postman_collection.json)** - Complete API endpoint collection for testing
+- **[Postman Collection](./erify-api.postman_collection.json)** — Complete API endpoint collection for testing
 
-## External Documentation
+## Implementation Patterns (Skills)
 
-### SDK Documentation
+For implementation patterns, see `.agent/skills/`. These are the **canonical references** for how to write code in this codebase:
 
-- **[Auth SDK](../../../packages/auth-sdk/README.md)** - Complete SDK documentation for JWT/JWKS integration with Better Auth
-
-### Shared Packages
-
-- **[API Types](../../../packages/api-types/README.md)** - Shared API types and schemas package (`@eridu/api-types`)
-  - Zod schemas for runtime validation
-  - TypeScript types inferred from schemas
-  - Constants (UID prefixes, etc.)
-  - Reusable pagination schemas
-
-## Quick Start
-
-1. **Check Current Implementation Status** - See [Phase 1 Roadmap](./roadmap/PHASE_1.md) for what's implemented and pending
-2. **Read the Architecture Overview** to understand the system design
-3. **Review the Authentication Guide** to understand how JWT validation works
-4. **Check Phase Roadmaps** to see what's implemented and what's planned
-5. **Use the Postman Collection** to test API endpoints
-6. **Run Manual Tests** - `pnpm -F erify_api manual:*` to verify complex workflows
+| Skill | Covers |
+|---|---|
+| `backend-controller-pattern-nestjs` | Controller types, base classes, response serialization |
+| `service-pattern-nestjs` | Model services, ORM decoupling, error handling |
+| `repository-pattern-nestjs` | BaseRepository, filtering, optimistic locking |
+| `orchestration-service-nestjs` | Multi-service coordination, `@Transactional` |
+| `authentication-authorization-nestjs` | JWT validation, token storage, protected routes |
+| `erify-authorization` | AdminGuard, StudioProtected, role-based access |
+| `database-patterns` | Soft delete, bulk ops, transactions, nested writes |
+| `data-validation` | ID mapping, input validation, response serialization |
+| `shared-api-types` | Zod schemas, DTO transforms, subpath imports |
 
 ## Documentation Structure
 
 ```
 docs/
-├── ARCHITECTURE.md              # System architecture and module design
-├── AUTHENTICATION_GUIDE.md      # Authentication, authorization, and SDK implementation
-├── AUTHORIZATION_GUIDE.md       # Authorization design proposal (not yet implemented)
-├── BUSINESS.md                  # Business domain concepts and entity relationships
-├── SERVER_TO_SERVER_AUTH.md     # API key authentication guide
-├── SCHEDULE_UPLOAD_API_DESIGN.md # Schedule planning system design
-├── TASK_MANAGEMENT_DESIGN.md    # Task management system design (partially implemented)
-├── README.md                    # This file
+├── ARCHITECTURE_OVERVIEW.md         # System architecture (links to skills)
+├── AUTHORIZATION_GUIDE.md           # Authorization design proposal (not implemented)
+├── BUSINESS.md                      # Business domain concepts and entity relationships
+├── SCHEDULE_UPLOAD_API_DESIGN.md    # Schedule planning system design
+├── TASK_MANAGEMENT_SUMMARY.md       # Task management quick-reference
+├── README.md                        # This file
 ├── roadmap/
-│   ├── PHASE_1.md              # Phase 1 implementation roadmap
-│   ├── PHASE_2.md              # Phase 2 implementation roadmap
-│   └── PHASE_3.md              # Phase 3 implementation roadmap
-└── erify-api.postman_collection.json # API testing collection
+│   ├── PHASE_1.md                  # Phase 1 implementation roadmap
+│   ├── PHASE_2.md                  # Phase 2 implementation roadmap
+│   ├── PHASE_3.md                  # Phase 3 implementation roadmap
+│   └── PHASE_4.md                  # Phase 4 implementation roadmap
+└── erify-api.postman_collection.json
 ```
 
-## Key Concepts
+## Quick Start
 
-### Authentication
+1. Read the **[Architecture Overview](./ARCHITECTURE_OVERVIEW.md)** for system design
+2. Read **[Business Domain](./BUSINESS.md)** for entity relationships
+3. Check **Phase Roadmaps** to see what's implemented
+4. Use the **[Postman Collection](./erify-api.postman_collection.json)** to test endpoints
+5. Run manual tests: `pnpm -F erify_api manual:*`
 
-- **JWT Validation**: Uses `@eridu/auth-sdk` SDK to validate tokens from `eridu_auth` service
-  - Automatic JWKS caching on startup
-  - Edge/worker runtime support with on-demand JWKS fetching
-  - Automatic key rotation handling
-  - `@CurrentUser()` decorator for accessing authenticated user information
-- **JWKS**: JSON Web Key Sets fetched from Better Auth's JWKS endpoint
-- **Admin Verification**: StudioMembership model determines admin permissions
+## External Packages
 
-### Authorization
-
-- **Admin Users**: Full CRUD access via admin endpoints (verified via StudioMembership in ANY studio)
-- **Other Users**: Access user-scoped endpoints (`/me/*`) with JWT authentication for their own data
-- **Service Integration**: API key authentication for internal operations
-  - Google Sheets API key for schedule operations
-  - Backdoor API key for user/membership management
-
-### Architecture
-
-- **Modular Design**: Separated into Admin, Me, Backdoor, and Common modules
-- **Service Pattern**: Consistent service patterns across all entities
-- **Repository Pattern**: Base repository with soft delete support
-- **Schedule Planning System**: JSON-based planning with snapshot versioning and optimistic locking
-- **Bulk Operations**: Bulk create and update schedules with partial success handling
-- **Validation & Publishing**: Pre-publish validation and sync to normalized Show tables
-
-## Contributing
-
-When updating documentation:
-
-1. Keep architecture diagrams up to date
-2. Update roadmap checklists as features are implemented
-3. Add examples for new patterns or features
-4. Cross-reference related documentation
+- **[Auth SDK](../../../packages/auth-sdk/README.md)** — JWT/JWKS integration (`@eridu/auth-sdk`)
+- **[API Types](../../../packages/api-types/README.md)** — Shared Zod schemas and types (`@eridu/api-types`)
 
 ## Related Services
 
-- **eridu_auth**: Authentication service using Better Auth (provides JWT tokens and JWKS endpoint)
-- **auth-sdk**: Shared SDK for JWT/JWKS validation (`@eridu/auth-sdk` package)
-- **api-types**: Shared API types and schemas (`@eridu/api-types` package) - Centralized Zod schemas and TypeScript types for API contracts
+- **eridu_auth** — Authentication service (JWT tokens and JWKS endpoint)
+- **auth-sdk** — Shared SDK for JWT/JWKS validation (`@eridu/auth-sdk`)
+- **api-types** — Shared API contracts (`@eridu/api-types`)

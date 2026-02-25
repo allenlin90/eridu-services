@@ -6,11 +6,10 @@ Phase 1 establishes the core production functions with simplified authentication
 
 ## Related Documentation
 
-- **[Architecture Overview](../ARCHITECTURE.md)** - Module architecture, dependencies, and design patterns
+- **[Architecture Overview](../ARCHITECTURE_OVERVIEW.md)** - System architecture and module design
 - **[Business Domain](../BUSINESS.md)** - Business domain information and entity relationships
 - **[Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md)** - Schedule upload system design with JSON-based planning and snapshot versioning
-- **[Authentication & Authorization Guide](../AUTHENTICATION_GUIDE.md)** - JWT validation, authorization patterns, and SDK implementation
-- **[Server-to-Server Authentication Guide](../SERVER_TO_SERVER_AUTH.md)** - API key guard usage
+- **Auth patterns**: See `authentication-authorization-nestjs` and `erify-authorization` skills
 - **[Auth SDK](../../../packages/auth-sdk/README.md)** - Complete SDK documentation and API reference
 
 ## Core Features
@@ -40,7 +39,7 @@ Phase 1 establishes the core production functions with simplified authentication
 - **Show Status**: Lifecycle management (draft, confirmed, live, completed, cancelled)
 - **Show Standards**: Quality tiers (standard, premium) for production levels
 - **Show-Schedule Integration**: Shows can be linked to schedules for planning workflows
-- **Show Orchestration**: Simplified orchestration for atomic show creation with MC/platform assignments (see [Architecture Overview](../ARCHITECTURE.md#showorchestrationmodule-))
+- **Show Orchestration**: Simplified orchestration for atomic show creation with MC/platform assignments (see `orchestration-service-nestjs` skill)
   - Atomic show creation with assignments using Prisma nested creates
   - Single show operations (add/remove/replace MCs and platforms)
   - One operation per API call (no bulk operations for shows in Phase 1; schedule bulk operations are implemented)
@@ -230,7 +229,7 @@ Phase 1 establishes the core production functions with simplified authentication
 - RESTful endpoints with ID mapping (UIDs for external communication)
 - Zod-based validation, NestJS error handling, pagination
 - Snake_case input/output with field mapping
-- See [Architecture Overview](../ARCHITECTURE.md) for module dependencies and endpoint patterns
+- See [Architecture Overview](../ARCHITECTURE_OVERVIEW.md) for module dependencies and endpoint patterns
 
 ### Security
 
@@ -238,7 +237,7 @@ Phase 1 establishes the core production functions with simplified authentication
 - Admin authorization via StudioMembership (admin users access admin endpoints, non-admin users access `/me/*` endpoints)
 - Service-to-service API key authentication (Google Sheets, Backdoor)
 - Input validation, SQL injection prevention (Prisma), CORS, security headers
-- See [Authentication Guide](../AUTHENTICATION_GUIDE.md) and [Server-to-Server Authentication Guide](../SERVER_TO_SERVER_AUTH.md) for implementation details
+- See `authentication-authorization-nestjs` and `erify-authorization` skills for auth implementation details
 
 ### Performance
 
@@ -346,7 +345,7 @@ For complete workflow, API call sequence, error handling, and AppsScript integra
 
 ### Service Patterns
 
-**Show Service Pattern**: Consistent DTO-to-Prisma transformation with builder methods (`buildCreatePayload`, `buildUpdatePayload`), type-safe relation loading, time range validation, and comprehensive test coverage. For complex operations with multiple MCs/platforms, see [Architecture Overview](../ARCHITECTURE.md#showorchestrationmodule-).
+**Show Service Pattern**: Consistent DTO-to-Prisma transformation with builder methods (`buildCreatePayload`, `buildUpdatePayload`), type-safe relation loading, time range validation, and comprehensive test coverage. For complex operations with multiple MCs/platforms, see `orchestration-service-nestjs` skill.
 
 **ShowPlatform Service Pattern**: Follows same pattern as ShowMC for managing show-platform relationships. Includes specialized queries (by show, by platform, composite key lookup), soft delete support, and relationship-specific metadata (live stream links, platform show IDs, viewer counts).
 

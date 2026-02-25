@@ -10,7 +10,7 @@ Phase 3 implements the Material Management System, File Uploads, and advanced co
 
 ## Related Documentation
 
-- **[Architecture Overview](../ARCHITECTURE.md)** - Module architecture, dependencies, and design patterns
+- **[Architecture Overview](../ARCHITECTURE_OVERVIEW.md)** - System architecture and module design
 - **[Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md)** - Schedule upload system design
 
 ## Core Features

@@ -15,9 +15,9 @@ This phase directly addresses the gap identified in Phase 2 follow-up work: revi
 
 ## Related Documentation
 
-- **[Task Management Design](../TASK_MANAGEMENT_DESIGN.md)** - Task architecture, workflow policies, and API behavior
-- **[Task Management UI/UX Design](../../../erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md)** - Review queue UX and operator/admin interaction patterns
-- **[Architecture Overview](../ARCHITECTURE.md)** - Module boundaries and service design
+- **[Task Management Summary](../TASK_MANAGEMENT_SUMMARY.md)** - Task architecture, workflow policies, and API quick-reference
+- **[Task Management UI/UX Summary](../../../erify_studios/docs/TASK_MANAGEMENT_SUMMARY.md)** - Review queue UX and operator/admin interaction patterns
+- **[Architecture Overview](../ARCHITECTURE_OVERVIEW.md)** - System architecture and module design
 
 ## Core Features
 

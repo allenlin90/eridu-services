@@ -4,7 +4,7 @@
 >
 > This document describes a **planned** JSONB-based roles/permissions authorization system that has **not been implemented**. The User model does not currently have `roles` or `permissions` fields, and `AdminGuard` does not perform role-to-permission expansion.
 >
-> **For the current authorization implementation**, see [Authentication & Authorization Guide](./AUTHENTICATION_GUIDE.md), which documents the actual `isSystemAdmin` flag + `StudioGuard` system.
+> **Current authorization**: `AdminGuard` checks `isSystemAdmin` flag only. Studio-scoped access uses `@StudioProtected()` with `StudioMembership` roles. See [Architecture Overview](./ARCHITECTURE_OVERVIEW.md) for details.
 
 ## Overview
 
@@ -340,6 +340,5 @@ This enables:
 
 ## Related Documentation
 
-- [Authentication Guide](./AUTHENTICATION_GUIDE.md) - JWT validation and authentication patterns
-- [Architecture Overview](./ARCHITECTURE.md) - Module architecture and design patterns
+- [Architecture Overview](./ARCHITECTURE_OVERVIEW.md) - System architecture and module design
 - [Business Domain](./BUSINESS.md) - Business domain and entity relationships

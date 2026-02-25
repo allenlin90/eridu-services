@@ -10,10 +10,9 @@ Phase 2 focuses on "**generic Task Management**" to enable extensible workflow m
 
 ## Related Documentation
 
-- **[Architecture Overview](../ARCHITECTURE.md)** - Module architecture, dependencies, and design patterns
+- **[Architecture Overview](../ARCHITECTURE_OVERVIEW.md)** - System architecture and module design
 - **[Business Domain](../BUSINESS.md)** - Business domain information and entity relationships
-- **[Authentication Guide](../AUTHENTICATION_GUIDE.md)** - JWT validation and authorization patterns
-- **[Task Management Design](../TASK_MANAGEMENT_DESIGN.md)** - Comprehensive Implementation Plan, ERD, and Runbook
+- **[Task Management Summary](../TASK_MANAGEMENT_SUMMARY.md)** - Quick-reference for task architecture, API, and workflows
 
 ## Core Features
 
@@ -39,7 +38,7 @@ Phase 2 focuses on "**generic Task Management**" to enable extensible workflow m
 
 ## Implementation Scope
 
-All items implemented. See [Task Management Design](../TASK_MANAGEMENT_DESIGN.md) for full API reference.
+All items implemented. See [Task Management Summary](../TASK_MANAGEMENT_SUMMARY.md) for quick-reference.
 
 - `studioId` added to `Show` model with `Studio` relation
 - `TaskStatus`, `TaskType` enums in Prisma schema
