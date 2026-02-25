@@ -46,6 +46,8 @@ function MyTasksPage() {
         onSearchChange={filters.setSearch}
         selectedStatuses={filters.selectedStatuses}
         onToggleStatus={filters.toggleStatus}
+        overdueOnly={filters.overdueOnly}
+        onOverdueOnlyChange={filters.setOverdueOnly}
         selectedTaskTypes={filters.selectedTaskTypes}
         onToggleTaskType={filters.toggleTaskType}
         sortBy={filters.sortBy}

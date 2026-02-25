@@ -51,6 +51,8 @@ type MyTasksToolbarProps = {
   onSearchChange: (value: string) => void;
   selectedStatuses: TaskStatus[];
   onToggleStatus: (status: TaskStatus) => void;
+  overdueOnly: boolean;
+  onOverdueOnlyChange: (enabled: boolean) => void;
   selectedTaskTypes: TaskType[];
   onToggleTaskType: (taskType: TaskType) => void;
   sortBy: MyTaskSort;
@@ -73,6 +75,8 @@ export function MyTasksToolbar({
   onSearchChange,
   selectedStatuses,
   onToggleStatus,
+  overdueOnly,
+  onOverdueOnlyChange,
   selectedTaskTypes,
   onToggleTaskType,
   sortBy,
@@ -193,6 +197,16 @@ export function MyTasksToolbar({
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <Button
+          type="button"
+          variant={overdueOnly ? 'secondary' : 'outline'}
+          size="sm"
+          className="h-8 gap-1.5 text-xs"
+          onClick={() => onOverdueOnlyChange(!overdueOnly)}
+        >
+          Overdue
+        </Button>
 
         <Button
           type="button"
