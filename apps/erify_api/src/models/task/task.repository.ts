@@ -367,10 +367,11 @@ export class TaskRepository extends BaseRepository<
       where.type = Array.isArray(task_type) ? { in: task_type } : task_type;
     }
 
-    if (has_assignee === true) {
-      where.assigneeId = { not: null };
-    } else if (has_assignee === false) {
-      where.assigneeId = null;
+    // /me/tasks is always scoped to the authenticated assigneeId.
+    // `has_assignee=true` is therefore a no-op, while `has_assignee=false`
+    // is impossible under this scope and should return an empty page.
+    if (has_assignee === false) {
+      return { items: [], total: 0 };
     }
 
     if (has_due_date === false) {
