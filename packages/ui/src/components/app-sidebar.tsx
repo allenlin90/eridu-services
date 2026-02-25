@@ -23,6 +23,8 @@ export type SidebarNavItem = {
   items?: {
     title: string;
     url: string;
+    icon?: LucideIcon;
+    isActive?: boolean;
   }[];
 };
 

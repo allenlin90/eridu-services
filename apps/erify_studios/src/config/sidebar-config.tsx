@@ -1,8 +1,22 @@
 import { useLocation } from '@tanstack/react-router';
 import {
+  BadgeCheck,
+  Building2,
+  CalendarDays,
+  Clapperboard,
+  ClipboardCheck,
+  Film,
+  Layers,
   LayoutDashboard,
+  ListTodo,
+  MonitorPlay,
+  Ruler,
   Settings,
+  Shapes,
+  Users,
+  UserSquare2,
   Videotape,
+  Warehouse,
 } from 'lucide-react';
 import type * as React from 'react';
 import { useCallback, useMemo } from 'react';
@@ -27,56 +41,84 @@ const SYSTEM_NAV_ITEMS: SidebarNavItem['items'] = [
   {
     title: 'Clients',
     url: '/system/clients',
+    icon: Building2,
   },
   {
     title: 'Studios',
     url: '/system/studios',
+    icon: Warehouse,
   },
   {
     title: 'MCs',
     url: '/system/mcs',
+    icon: MonitorPlay,
   },
   {
     title: 'Memberships',
     url: '/system/memberships',
+    icon: Users,
   },
   {
     title: 'Users',
     url: '/system/users',
+    icon: UserSquare2,
   },
   {
     title: 'Platforms',
     url: '/system/platforms',
+    icon: Layers,
   },
   {
     title: 'Show Standards',
     url: '/system/show-standards',
+    icon: Ruler,
   },
   {
     title: 'Show Statuses',
     url: '/system/show-statuses',
+    icon: BadgeCheck,
   },
   {
     title: 'Show Types',
     url: '/system/show-types',
+    icon: Shapes,
   },
   {
     title: 'Schedules',
     url: '/system/schedules',
+    icon: CalendarDays,
   },
   {
     title: 'Tasks',
     url: '/system/tasks',
+    icon: ListTodo,
   },
   {
     title: 'Task Templates',
     url: '/system/task-templates',
+    icon: ClipboardCheck,
   },
   {
     title: 'Shows',
     url: '/system/shows',
+    icon: Film,
   },
 ];
+
+function normalizePath(url: string): string {
+  const [path] = url.split('?');
+  if (!path || path === '/')
+    return '/';
+  return path.endsWith('/') ? path.slice(0, -1) : path;
+}
+
+function isPathActive(pathname: string, targetUrl: string): boolean {
+  const current = normalizePath(pathname);
+  const target = normalizePath(targetUrl);
+  if (target === '/')
+    return current === '/';
+  return current === target || current.startsWith(`${target}/`);
+}
 
 /**
  * Generates studio management navigation items based on user role
@@ -92,10 +134,12 @@ function getStudioManagementItems(
     {
       title: 'Dashboard',
       url: `/studios/${studioId}/dashboard`,
+      icon: LayoutDashboard,
     },
     {
       title: 'My Tasks',
       url: `/studios/${studioId}/my-tasks`,
+      icon: ListTodo,
     },
   ];
 
@@ -103,6 +147,7 @@ function getStudioManagementItems(
     managementItems.push({
       title: 'Review Queue',
       url: `/studios/${studioId}/tasks?status=REVIEW`,
+      icon: ClipboardCheck,
     });
   }
 
@@ -111,10 +156,12 @@ function getStudioManagementItems(
     managementItems.push({
       title: 'Shows',
       url: `/studios/${studioId}/shows`,
+      icon: Clapperboard,
     });
     managementItems.push({
       title: 'Task Templates',
       url: `/studios/${studioId}/task-templates`,
+      icon: ClipboardCheck,
     });
   }
 
@@ -136,37 +183,45 @@ export function useSidebarConfig(
 
   // Memoize nav items to prevent unnecessary re-renders
   const sidebarNavItems: SidebarNavItem[] = useMemo(() => {
+    const currentPath = location.pathname;
+    const buildActiveItems = (items: SidebarNavItem['items'] = []) =>
+      items.map((item) => ({
+        ...item,
+        isActive: isPathActive(currentPath, item.url),
+      }));
+
     const navItems: SidebarNavItem[] = [
       {
         title: 'Dashboard',
         url: `/dashboard`,
         icon: LayoutDashboard,
-        isActive: location.pathname === `/dashboard`,
+        isActive: isPathActive(currentPath, '/dashboard'),
       },
     ];
 
     // System items (if admin) - placed before studio management
     if (isSystemAdmin) {
+      const systemItems = buildActiveItems(SYSTEM_NAV_ITEMS);
       navItems.push({
         title: 'System',
         url: '/system',
         icon: Settings,
-        isActive: location.pathname.startsWith('/system'),
-        items: SYSTEM_NAV_ITEMS,
+        isActive: systemItems.some((item) => item.isActive),
+        items: systemItems,
       });
     }
     if (activeStudio) {
       // Studio management items (appended last)
-      const studioManagementItems = getStudioManagementItems(
+      const studioManagementItems = buildActiveItems(getStudioManagementItems(
         activeStudio.studio.uid,
         activeStudio.role,
-      );
+      ));
 
       navItems.push({
         title: 'Studio',
         url: '/studios',
         icon: Videotape,
-        isActive: location.pathname.startsWith('/studios'),
+        isActive: studioManagementItems.some((item) => item.isActive),
         items: studioManagementItems,
       });
     }
