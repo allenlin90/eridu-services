@@ -1944,12 +1944,10 @@ interface BulkDeleteTasksResponseDto {
 ### Appendix B: Planned & Deferred Features
 
 **Planned (next iteration):**
-1. **Form rendering fix** — include `snapshot.schema` in `GET /me/tasks` and `GET /me/tasks/:uid` responses; wire `TaskRepository` and `taskWithRelationsDto` DTO accordingly
-2. **New query params for `/me/tasks`** — `task_type` (multi-enum), `search` (description/show name), `sort` (`due_date:asc/desc`, `updated_at:desc`) to support enhanced filter bar
-3. **State machine hardening** — extend studio-scoped transition matrix coverage + explicit error codes across all studio task mutation paths
-4. **Review payload enrichment** — add explicit `rejection_note`/`blocked_reason` semantics to action flow (`PATCH /studios/:studioId/tasks/:taskUid/action`) and standardize metadata writes
-5. **`rejection_note` / `blocked_reason`** stored in `task.metadata` and surfaced to operator in `GET /me/tasks/:uid`
-6. **Admin module task management hardening (`/admin/tasks`)** — keep reassignment/delete operational path, add reason fields and richer observability while preserving unrestricted system-admin control
+1. **State machine hardening** — extend studio-scoped transition matrix coverage + explicit error codes across all studio task mutation paths
+2. **Admin module task management hardening (`/admin/tasks`)** — keep reassignment/delete operational path, add reason fields and richer observability while preserving unrestricted system-admin control
+3. **Review queue bulk action support** — add studio-scoped bulk status command path (e.g. bulk approve for REVIEW tasks) and align FE workflow ergonomics
+4. **Execution progress surface** — expose/standardize execution progress presentation in operator sheet (FE-calculated for now)
 
 **Deferred (post-MVP):**
 1. **File Upload Handling**: Support for field type `file` with direct upload to cloud storage

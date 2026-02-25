@@ -645,7 +645,7 @@ Desktop (sidebar layout):
 | Filter          | Values                                                  | API Param                           |
 | --------------- | ------------------------------------------------------- | ----------------------------------- |
 | Date            | Today / This Week / Custom                              | `due_date_from` + `due_date_to`     |
-| Show Start Date | Single date picker (operational 48h window)             | `show_start_from` + `show_start_to` |
+| Show Start Date | Single date picker (operational-day + next-morning window) | `show_start_from` + `show_start_to` |
 | Status          | To Do (PENDING) / In Progress / Review / Blocked / Done | `status[]`                          |
 | Type            | SETUP / ACTIVE / CLOSURE / ADMIN / ROUTINE              | `task_type[]`                       |
 | Search          | Free text                                               | `search`                            |
@@ -656,8 +656,8 @@ Desktop (sidebar layout):
 **Show Start Date picker behavior**:
 - Selected date `D` maps to:
   - `show_start_from=startOfDay(D)`
-  - `show_start_to=endOfDay(D + 1 day)`
-- Rationale: include next-day shows for overnight operations (e.g. 22:00-00:00).
+  - `show_start_to=startOfDay(D + 1 day) + 6h`
+- Rationale: include midnight/overnight operations (e.g. show at `00:00` next day) without pulling the full next day.
 - This filter is additive with status/type/search/sort filters.
 
 **Scope boundary**:
@@ -2035,30 +2035,32 @@ These workflows reuse existing patterns from the codebase:
 
 ## Planned Features
 
-### My Tasks Form Rendering & Navigation (Next Iteration — Blocking)
+### My Tasks Form Rendering & Navigation (Progress Update — February 25, 2026)
 
-These fix functional gaps identified in the current implementation:
+Most originally identified functional gaps are now implemented:
 
-**BE** (prerequisite for all FE work below):
+**BE (implemented)**:
 - Include `snapshot: { schema, version }` in `GET /me/tasks` and `GET /me/tasks/:uid` responses (`TaskRepository` + `taskWithRelationsDto`)
 - Add `task_type[]`, `search`, `sort` query params to `ListMyTasksQueryDto` and wire through `TaskRepository.findTasksByAssignee()`
 
 **FE — Task Execution Sheet** (`task-execution-sheet.tsx`):
-- Replace `<pre>{JSON.stringify(content)}</pre>` with `<JsonForm schema={snapshot.schema} values={content} onChange={debouncedSave} readOnly={isReadOnly} />`
-- Add live progress bar from `calculateTaskProgress()` that updates as fields are filled
-- Debounced auto-save on field change (PATCH content, no explicit Save button)
-- Rejection note banner from `task.metadata.rejection_note`
-- Graceful fallback if `snapshot` absent: show raw content in `<pre>` until backend fix deployed
+- (implemented) Replace `<pre>{JSON.stringify(content)}</pre>` with `<JsonForm ... />`
+- (implemented, optional) Debounced auto-save on field change (PATCH content, no explicit Save button), currently disabled by default
+- (implemented) Rejection note banner from `task.metadata.rejection_note`
+- (implemented) Graceful fallback for missing/invalid schema with empty-template messaging
+- (implemented) Live progress bar from `calculateTaskProgress()` updates as fields are filled
 
 **FE — My Task Card** (`my-task-card.tsx`):
-- Add progress bar (`calculateTaskProgress(task, task.snapshot.schema)`) — degrade to status-only if schema absent
-- Blocked reason excerpt when `status === BLOCKED`
-- Urgency border colours (overdue red, due-soon amber)
+- (implemented) Add progress bar (`calculateTaskProgress(task, task.snapshot.schema)`) — degrade to status-only if schema absent
+- (implemented) Urgency border for overdue tasks (red)
+- (implemented) Blocked reason excerpt when `status === BLOCKED`
+- (implemented) Due-soon urgency treatment (amber pre-overdue state)
 
 **FE — My Tasks Filter Bar** (`my-tasks.tsx` + new toolbar component):
-- Replace 3-tab navigation with composable filter bar: date chips, status chips, type chips, search input, sort dropdown
-- Overdue shortcut chip (`due_date_to=today&status=PENDING,IN_PROGRESS`)
-- URL-sync all filter state (debounced search)
+- (implemented) Replace 3-tab navigation with composable filter bar controls
+- (implemented) URL-sync all filter state (debounced search)
+- (implemented) Show-start operational-day window tuned for midnight coverage (`D 00:00` -> `D+1 06:00`)
+- (implemented) Overdue shortcut chip (`due_date_to=today&status=PENDING,IN_PROGRESS`)
 
 ---
 
