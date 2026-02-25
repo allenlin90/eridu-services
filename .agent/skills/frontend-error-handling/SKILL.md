@@ -11,7 +11,7 @@ This skill provides patterns for handling errors in React applications.
 
 Study these real implementations:
 - **API Client Interceptor**: [client.ts](../../../apps/erify_studios/src/lib/api/client.ts)
-- **Error Boundary**: [error-boundary.tsx](../../../apps/erify_studios/src/components/error-boundary.tsx)
+- **Route Error Handler**: [route-error.tsx](../../../apps/erify_studios/src/components/route-error.tsx)
 
 ---
 

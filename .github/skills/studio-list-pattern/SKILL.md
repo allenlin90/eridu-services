@@ -10,9 +10,9 @@ This skill outlines the standard pattern for implementing infinite scroll lists 
 ## Canonical Examples
 
 Study these real implementations as the source of truth:
-- **Task Templates List**: [index.tsx](../../../apps/erify_studios/src/routes/_authenticated/studios/$studioId/task-templates/index.tsx)
+- **Task Templates List**: [index.tsx](../../../apps/erify_studios/src/routes/studios/$studioId/task-templates/index.tsx)
 - **Feature Hook**: [use-task-templates.ts](../../../apps/erify_studios/src/features/task-templates/hooks/use-task-templates.ts)
-- **Toolbar Component**: [task-template-toolbar.tsx](../../../apps/erify_studios/src/features/task-templates/components/task-template-toolbar.tsx)
+- **Toolbar Component**: [task-templates-toolbar.tsx](../../../apps/erify_studios/src/features/task-templates/components/task-templates-toolbar.tsx)
 
 **Detailed code examples**: See [references/studio-list-examples.md](references/studio-list-examples.md)
 

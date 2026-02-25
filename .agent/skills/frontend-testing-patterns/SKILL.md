@@ -10,8 +10,8 @@ This skill provides patterns for testing React applications using Vitest and Rea
 ## Canonical Examples
 
 Study these real implementations:
-- **Component Test**: [task-template-card.test.tsx](../../../apps/erify_studios/src/features/task-templates/components/task-template-card.test.tsx)
-- **Hook Test**: [use-task-templates.test.ts](../../../apps/erify_studios/src/features/task-templates/hooks/use-task-templates.test.ts)
+- **Component Test**: [task-template-card.test.tsx](../../../apps/erify_studios/src/features/task-templates/components/__tests__/task-template-card.test.tsx)
+- **Hook Test**: [use-task-templates.test.tsx](../../../apps/erify_studios/src/features/task-templates/hooks/__tests__/use-task-templates.test.tsx)
 
 ---
 

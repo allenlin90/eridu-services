@@ -1,8 +1,8 @@
 # Task Management System - UI/UX Design
 
-**Version**: 3.0  
-**Last Updated**: February 14, 2026  
-**Status**: Ready for Implementation
+**Version**: 3.6
+**Last Updated**: February 25, 2026
+**Status**: Core implemented. `/system/tasks` now supports system-admin cross-studio discovery and reassignment with immutable task content in system scope. Studio-scoped review/state-machine enforcement is active on `/studios/$studioId/tasks/*` (manager/admin actions allowed on behalf of assignees). Current planned next: review UX refinements and advanced grouping ergonomics at scale. Deferred: animations, swipe gestures, file uploads, PWA/offline, WebSocket, analytics.
 
 > **Related Documentation**  
 > For API contracts, database schema, and backend architecture, see [`apps/erify_api/docs/TASK_MANAGEMENT_DESIGN.md`](../../erify_api/docs/TASK_MANAGEMENT_DESIGN.md)
@@ -20,9 +20,10 @@
 7. [Accessibility](#7-accessibility)
 8. [Error States & Edge Cases](#8-error-states--edge-cases)
 9. [Technical Integration](#9-technical-integration)
-10. [Implementation Roadmap](#10-implementation-roadmap)
-11. [Implemented Component Patterns](#11-implemented-component-patterns)
-12. [Task Generation & Assignment Workflows](#12-task-generation--assignment-workflows)
+10. [Implemented Component Patterns](#10-implemented-component-patterns)
+11. [Task Generation & Assignment Workflows](#11-task-generation--assignment-workflows)
+
+> **Screen index**: §3.1 Template Library · §3.2 Create/Edit Template · §3.3 Shows List · §3.3.1 Generate Dialog · §3.3.2 Assignment Dialog · §3.3.3 Show Detail/Tasks · §3.4 My Tasks · §3.5 Task Detail (Operator) · §3.6 Task Review Queue (Admin) · §3.7 All Tasks Dashboard · §3.8 System Tasks · §3.9 System Show Statuses · §3.10 System Task Templates
 
 ---
 
@@ -91,6 +92,18 @@
    ├─ Task Detail
    └─ Task History
 ```
+
+### Architectural Boundary
+
+> [!IMPORTANT]
+> **`/system/*` routes** are root-level super-admin operations. For tasks, this is cross-studio discovery + reassignment/delete support flow, not full workflow execution.
+>
+> **`/studios/$studioId/*` routes** own all business workflows — task generation, assignment, progress tracking, and operator execution. Scoped to studio context with role-based access.
+>
+> **Task state-machine policy**:
+> - Enforce status transition rules only in studio-scoped workflow endpoints/services.
+> - Keep `/system/tasks` focused on operational recovery: task details, reassignment, deletion, and global filtering.
+> - Task content/status edits remain studio-scoped (`/studios/$studioId/*`), keeping system task content immutable in system UI.
 
 ### Global Navigation
 
@@ -169,7 +182,7 @@
 **Navigation Structure**:
 1. **Dashboard** - Top-level item, always visible
 2. **System** - Collapsible group, visible only to system admins
-   - Contains: Clients, Studios, MCs, Memberships, Users, Platforms, Show Standards, Show Types, Schedules, Shows
+   - Contains: Clients, Studios, MCs, Memberships, Users, Platforms, Show Standards, Show Statuses, Show Types, Schedules, Task Templates, Shows
 3. **Studio** - Collapsible group, visible when user has active studio
    - **Dashboard** - Studio-specific dashboard (all roles)
    - **My Tasks** - User's assigned tasks (all roles)
@@ -390,42 +403,50 @@ When editing a field, managers can configure advanced validation rules:
 
 ### 3.3 Manager: Shows List (Studio-Scoped)
 
-**Purpose**: Browse studio shows, view task generation status, select shows for bulk operations.
+**Purpose**: Browse studio shows, filter by date and status, select shows, and act on them via dialogs.
 
 **Route**: `/studios/$studioId/shows`
 
-**Key Features**:
-- **Table layout** with columns: Show Name, Client, Start Time, Task Status, Assignee, Actions
-- **Task Status column**: Shows a summary badge — "No tasks", "3 tasks (1 unassigned)", "3 tasks ✓"
-- **Checkbox selection**: Select one or more shows for bulk actions
-- **Bulk action bar**: Appears when shows are selected, with "Generate Tasks" and "Assign" buttons
-- **Search & date filter**: Filter by show name, date range, task status (has tasks / no tasks)
-- **Inline quick actions**: Per-row buttons for "View Tasks" and "Assign"
+**Design Rationale: Read-Only Table + Action Dialogs**
 
-**Layout** (Desktop):
+Users are accustomed to spreadsheet-like dense data views. The Data Table satisfies this by providing sortable columns, filters, and pagination — giving managers the at-a-glance overview they expect. However, **the table itself is read-only**. All mutations (task generation, assignment) happen through explicit dialogs triggered from the floating action bar. This avoids:
+- Chatty per-row mutations and constant refetching
+- Mixing read and write concerns in the same component
+- Over-engineering a simple "select and act" workflow
+
+**Key Features**:
+- **Data Table**: Columns for Show Name, Client, Start Time, Task Status (badge), and Assignee (read-only text). Familiar dense layout for scanning.
+- **Checkbox Selection**: Select one or many shows. Selection is ID-based (cross-page safe — selecting a show on page 1, navigating to page 2, and returning to page 1 keeps the original selection).
+- **Adaptive Bulk Actions**: Appears when ≥1 row is selected. Desktop uses a floating action bar; mobile uses a bottom sticky action tray + bottom sheet actions.
+- **Toolbar Filters**: Reuses `<AdminTableToolbar />` from system shows with advanced filters for show name, task presence (`has_tasks`), date range (`date_from`/`date_to`), and dimensions: Client, Show Type, Show Standard, Show Status, Platform.
+
+**Layout** (Desktop Data Table):
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
 │ Shows                                                                 │
 │ Manage show tasks and assignments                                     │
-├───────────────────────────────────────────────────────────────────────┤
-│ [Search...          ] [Date: Feb 1-28 ▼] [Status: All ▼] [Refresh]    │
-├───────────────────────────────────────────────────────────────────────┤
-│ ☑ 2 selected                    [Generate Tasks]  [Assign to User]    │
+│                                                                       │
+│ [Search Shows...] [Date: Next 7 Days ▼] [Client ▼] [Type ▼] [Tasks ▼] │
 ├───┬────────────────────┬──────────┬──────────────┬─────────┬──────────┤
-│ ☐ │ Show Name          │ Client   │ Start Time   │ Tasks   │ Actions  │  
+│ ☐ │ Show Name          │ Client   │ Start Time   │ Tasks   │ Assignee │
 ├───┼────────────────────┼──────────┼──────────────┼─────────┼──────────┤
-│ ☑ │ Monday Night Live  │ Acme     │ Feb 5, 8 PM  │ 3 tasks │ [⋮]      │
-│ ☑ │ Morning Report     │ Acme     │ Feb 6, 7 AM  │ No tasks│ [⋮]      │
-│ ☐ │ Weekend Special    │ Globex   │ Feb 8, 6 PM  │ 2 tasks │ [⋮]      │
+│ ☑ │ Monday Night Live  │ Acme     │ Feb 5, 8 PM  │ 3 tasks │ Marcus C.│
+│ ☑ │ Morning Report     │ Acme     │ Feb 6, 7 AM  │ No tasks│    —     │
+│ ☐ │ Weekend Special    │ Globex   │ Feb 8, 6 PM  │ 2 tasks │ Mixed    │
 ├───┴────────────────────┴──────────┴──────────────┴─────────┴──────────┤
-│                      [Load more...]                                   │
+│                      [ < Prev ] Page 1 of 5 [ Next > ]                │
 └───────────────────────────────────────────────────────────────────────┘
+
+            ┌──────────────────────────────────────────┐
+            │ 2 selected  [Generate Tasks] [Assign] [✕]│  ← Floating bar
+            └──────────────────────────────────────────┘
 ```
 
-**Task Status Badges**:
-- `No tasks` — Gray badge, no tasks generated yet
-- `3 tasks (1 unassigned)` — Amber badge, some tasks lack assignee
-- `3 tasks ✓` — Green badge, all tasks assigned
+**Assignee Column (Read-Only)**:
+- Shows the name of the assigned user if all tasks share the same assignee.
+- Shows `Mixed` if tasks are split across different users.
+- Shows `—` if no tasks exist or none are assigned.
+- Clicking the show name navigates to the Show Detail (§3.3.3) for granular task-level reassignment.
 
 ---
 
@@ -433,7 +454,7 @@ When editing a field, managers can configure advanced validation rules:
 
 **Trigger**: Select shows → click "Generate Tasks" in bulk action bar
 
-**Purpose**: Select templates to apply across all selected shows, grouped by task type (SETUP / ACTIVE / CLOSURE).
+**Purpose**: Select one or more templates to apply across all selected shows.
 
 **Dialog Layout**:
 ```
@@ -449,25 +470,17 @@ When editing a field, managers can configure advanced validation rules:
 │                                                                   │
 │ Template Selection:                                               │
 │                                                                   │
-│ ┌─ Before Show (SETUP) ──────────────────────────────────────┐    │
-│ │ [Select template...                                    ▼]  │    │
-│ │  ✓ Pre-Production Checklist (v4, 25 fields)                │    │
-│ └────────────────────────────────────────────────────────────┘    │
+│ [Search task templates...                                  ▼]     │
+│   3 selected                                                      │
 │                                                                   │
-│ ┌─ During Show (ACTIVE) ─────────────────────────────────────┐    │
-│ │ [Select template...                                    ▼]  │    │
-│ │  ✓ Live Show Operations (v2, 18 fields)                    │    │
-│ └────────────────────────────────────────────────────────────┘    │
-│                                                                   │
-│ ┌─ After Show (CLOSURE) ─────────────────────────────────────┐    │
-│ │ [Select template...                                    ▼]  │    │
-│ │  ✓ Post-Production Cleanup (v1, 12 fields)                 │    │
-│ └────────────────────────────────────────────────────────────┘    │
+│ ℹ️ Showing first 10 templates by default.                         │
+│    Type to search templates by name.                              │
 │                                                                   │
 │ ───────────────────────────────────────────────────────────────── │
 │                                                                   │
 │ ℹ️  Tasks will be created with PENDING status.                    │
-│     Shows with existing tasks for a template will be skipped.     │
+│     Shows with active tasks for a template will be skipped.       │
+│     Previously deleted tasks will be reset to PENDING.            │
 │                                                                   │
 │ This will create up to 6 new tasks across 2 shows.                │
 │                                                                   │
@@ -476,9 +489,10 @@ When editing a field, managers can configure advanced validation rules:
 ```
 
 **Key Design Decisions**:
-- Templates are grouped by task type (SETUP / ACTIVE / CLOSURE) — each slot has a dropdown
+- Uses searchable multi-select combobox (`AsyncMultiCombobox`) for template selection
+- First 10 templates are loaded by default; search refines server-side results
 - The same template set is applied to **all** selected shows
-- Shows that already have a task for a selected template are skipped (idempotent)
+- Generation is idempotent with three cases per show+template pair: (1) **active task exists** → skip; (2) **soft-deleted task exists** → resume (restore, reset to `PENDING`, wipe content, update to latest snapshot, sync task `type` to template `task_type`); (3) **no task** → create new
 - Due dates are optional in v1 (deferred to Smart Due Date feature)
 - Summary line updates dynamically as user selects templates
 
@@ -520,6 +534,8 @@ When editing a field, managers can configure advanced validation rules:
 **Key Features**:
 - Studio members fetched from `GET /studios/:studioId/members`
 - Warning when overwriting existing assignments
+- Informational warning for selected shows with no generated tasks
+- Disable submit when all selected shows have no generated tasks (prompt user to generate tasks first)
 - Shows summary with current assignee info
 - Dynamic task count based on selected shows
 
@@ -529,7 +545,7 @@ When editing a field, managers can configure advanced validation rules:
 
 **Trigger**: Click "View Tasks" on a show row, or click show name
 
-**Purpose**: View all tasks for a show, reassign individual tasks to different users.
+**Purpose**: View all tasks for a show, run show-level generate/assign actions, and reassign individual tasks.
 
 **Route**: `/studios/$studioId/shows/$showUid/tasks`
 
@@ -542,7 +558,7 @@ When editing a field, managers can configure advanced validation rules:
 │ Acme Corp • Feb 5, 2026, 8:00 PM – 10:00 PM                     │
 ├───────────────────────────────────────────────────────────────────┤
 │                                                                   │
-│ Tasks (3)                                            [Assign All]│
+│ Tasks (3)                     [Generate Tasks] [Assign All Tasks]│
 │                                                                   │
 │ ┌──────────────────────────────────────────────────────────────┐  │
 │ │ SETUP  Pre-Production Checklist                              │  │
@@ -569,12 +585,28 @@ When editing a field, managers can configure advanced validation rules:
 - Each task card has an inline assignee dropdown
 - Changing the dropdown immediately triggers `PATCH /studios/:studioId/tasks/:taskUid/assign`
 - Change is reflected instantly (optimistic update)
-- "Assign All" button opens the same assignment dialog from §3.3.2 but for a single show
+- "Assign All Tasks" button opens the same assignment dialog from §3.3.2 but for a single show
+
+**Show-Level Actions in Detail Page**:
+- "Refresh" button invalidates relevant TanStack Query caches and refetches active data for:
+  - current show detail (`['studio-show', studioId, showUid]`)
+  - current show task list (`['show-tasks', 'list', studioId, showUid]`)
+  - studio show lists (`['studio-shows', 'list', studioId, ...]`)
+  - memberships lists used by assignee dropdowns (`['memberships', 'list', ...]`)
+- "Generate Tasks" button opens the same generation dialog from §3.3.1 scoped to the current show
+- "Assign All Tasks" opens assignment dialog from §3.3.2 scoped to the current show
+- Successful generate/assign actions refetch the show task list immediately
+- Route receives show metadata via navigation state and passes it to `useStudioShow` as `initialData` for instant header render
+- Detail query always remains active and revalidates from `GET /studios/:studioId/shows/:showUid` (not only on route transitions)
+- On refresh/direct access (no navigation state), the same studio-scoped detail query loads full show metadata
+- Studio scoping is enforced server-side; users can only load show details for studios they can access
 
 **Key Features**:
 - Ordered by task type: SETUP → ACTIVE → CLOSURE → OTHER
 - Status badges and due date indicators consistent with task card design
 - Quick "View Task" link navigates to the full task detail (form view)
+- Type badges in Show Tasks / My Tasks read from task records (`task.type`), not from template cards.
+- If template `task_type` changes, existing active tasks keep their current type until regenerated; resumed tasks pick up the updated type.
 
 ---
 
@@ -582,56 +614,387 @@ When editing a field, managers can configure advanced validation rules:
 
 **Purpose**: The operator's command center. Show what needs attention NOW.
 
-**Key Features**:
-- **Visual priority**: Color-coded urgency (red/yellow/white)
-- **Contextual info**: Show name, due date, progress
-- **One-tap action**: Direct to task detail
-- **Smart grouping**: Due today vs upcoming
-- **Progress indicators**: X/Y complete gives sense of completion
+> **Current status**: Implemented search + status/type filters + sorting + pagination + show-start-date filtering with URL state. Remaining improvement area: better grouping ergonomics for very large task volumes across many shows.
 
-**Mobile Layout**:
-![My Tasks Mobile](assets/task_management/my_tasks_mobile.png)
+#### 3.4.1 Filter Bar
 
-**Implementation Details**:
-- **Path**: `/my-tasks`
-- **Component**: `MobileTaskList` with tab navigation
-- **Tabs**: Today, Upcoming, All
-- **Card States**: Overdue (red border), Due Soon (amber border), In Progress (blue border)
-- **Actions**: Tap card to navigate to task detail
+The sticky toolbar above the task list replaces the simple 3-tab navigation with a richer filter surface. Filters compose: a user can combine status + type + date simultaneously.
+
+```
+Mobile:
+┌──────────────────────────────────────────────────┐
+│ My Tasks                              [⊞ Filter] │
+├──────────────────────────────────────────────────┤
+│ [Search shows or tasks...              🔍]        │
+│ ─────────────────────────────────────────────── │
+│ [All] [Today] [This Week] [Overdue]              │  ← date chips
+│ [All types] [SETUP] [ACTIVE] [CLOSURE]           │  ← type chips
+│ [All status] [To Do] [In Progress] [Blocked]     │  ← status chips
+└──────────────────────────────────────────────────┘
+```
+
+```
+Desktop (sidebar layout):
+┌──────────────────────────────────────────────────────┐
+│ My Tasks                                             │
+│ [Search...] [Today ▼] [Status ▼] [Type ▼] [Sort ▼]  │
+└──────────────────────────────────────────────────────┘
+```
+
+**Filter parameters** (map to `GET /me/tasks` query params):
+| Filter          | Values                                                  | API Param                           |
+| --------------- | ------------------------------------------------------- | ----------------------------------- |
+| Date            | Today / This Week / Custom                              | `due_date_from` + `due_date_to`     |
+| Show Start Date | Single date picker (operational-day + next-morning window) | `show_start_from` + `show_start_to` |
+| Status          | To Do (PENDING) / In Progress / Review / Blocked / Done | `status[]`                          |
+| Type            | SETUP / ACTIVE / CLOSURE / ADMIN / ROUTINE              | `task_type[]`                       |
+| Search          | Free text                                               | `search`                            |
+| Sort            | Due Date ↑ (default) / Due Date ↓ / Recently Updated    | `sort`                              |
+
+**"Overdue" shortcut** = `due_date_to=today&status=PENDING,IN_PROGRESS` — surfaces the most urgent items in one tap.
+
+**Show Start Date picker behavior**:
+- Selected date `D` maps to:
+  - `show_start_from=startOfDay(D)`
+  - `show_start_to=startOfDay(D + 1 day) + 6h`
+- Rationale: include midnight/overnight operations (e.g. show at `00:00` next day) without pulling the full next day.
+- This filter is additive with status/type/search/sort filters.
+
+**Scope boundary**:
+- FE refactor to merge My Tasks UI into shared admin-table/generalized components is intentionally out of scope for this iteration.
+- Keep current My Tasks components and query flow focused on behavior fixes.
+
+#### 3.4.2 Task Card (Enhanced)
+
+```
+┌──────────────────────────────────────────────────┐
+│ [SETUP]  Pre-Production Checklist       ● PENDING │
+│ Monday Night Live                                 │
+│ Due: Feb 5, 5:00 PM  ⚠️ Overdue                  │
+│ ▓▓▓▓▓▓▓░░░░░  5 / 12 items               42%     │
+└──────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────┐
+│ [ACTIVE]  Live Operations              ● IN PROG  │
+│ Morning Report                                    │
+│ Due: Feb 6, 7:00 AM  · 2 days away               │
+│ ▓▓▓▓▓▓▓▓▓▓░░  10 / 12 items              83%     │
+└──────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────┐
+│ [CLOSURE]  Post-Production             ● BLOCKED  │
+│ Weekend Special                                   │
+│ Due: Feb 8, 12:00 PM                              │
+│ ⊘ Blocked: "Audio files missing"                  │
+└──────────────────────────────────────────────────┘
+```
+
+**Card anatomy**:
+- **Row 1**: Task type badge (colored by type) + task description + status badge
+- **Row 2**: Show name
+- **Row 3**: Due date with urgency — overdue = red + ⚠️, due within 3h = amber, otherwise grey
+- **Row 4**: Progress bar (`snapshot.schema` required) OR blocked reason if BLOCKED
+- **Tap anywhere** → opens Task Execution Sheet
+
+**Progress bar requires `snapshot.schema`** in the API list response. Until the backend fix is deployed, show only status badge (no progress bar). FE should gracefully degrade: if `task.snapshot` is absent, omit progress bar.
+
+**Card border states**:
+- Red left border: overdue
+- Amber left border: due within 3 hours
+- Blue left border: in progress, on track
+- Grey left border: pending, not yet started
+- No border: completed
+
+#### 3.4.3 Empty States per Filter
+
+```
+No results for "Today":
+  "Nothing due today — check Upcoming for what's coming next."
+
+No results for "Overdue":
+  "You're all caught up! No overdue tasks."
+
+No assignments at all:
+  "No tasks assigned yet. Your manager will assign work from the Shows page."
+```
+
+#### 3.4.4 View Modes (Task vs Show)
+
+Operators need two complementary views:
+
+- **Task View** (default card grid): best for quick scanning by urgency.
+- **Show View** (grouped): best for "what do I need to do for this show now?"
+
+`Show View` groups assigned tasks by show to reduce cognitive overload when the same task type appears across many shows.
+
+```
+┌──────────────────────────────────────────────────┐
+│ [Task View] [Show View]                          │
+├──────────────────────────────────────────────────┤
+│ Monday Night Live                    2 / 5 done  │
+│ Feb 5, 8:00 PM • 1 overdue • 2 open              │
+│ ──────────────────────────────────────────────── │
+│ [SETUP]   Pre-checklist             ● COMPLETED  │
+│ [ACTIVE]  Live operations           ● IN PROG    │
+│ [CLOSURE] Post wrap-up              ● PENDING    │
+└──────────────────────────────────────────────────┘
+```
+
+`Show View` behavior:
+- Group key: `task.show.id` (fallback group: "Unlinked Tasks" when no show relation).
+- Group header includes:
+  - show name + show start time
+  - completed/total count
+  - overdue count (if any)
+- Details panel is collapsed by default and toggled via an icon-only chevron button in the group header (to keep vertical density high).
+- Expanded details include client, studio room, start/end time, and MC list.
+- Task rows remain clickable and open the same Task Execution Sheet.
+- Existing filters (search/status/type/date/sort) apply before grouping.
+- Pagination remains server-driven to avoid unbounded local cache growth over time.
 
 ---
 
-### 3.5 Operator: Task Detail (Mobile)
+### 3.5 Operator: Task Execution Sheet (Form)
 
-**Purpose**: Complete checklist items. Report issues. Update status.
+**Purpose**: Complete the task checklist. Update status. This is the primary work surface for operators.
 
-**Mobile Layout** (Scrollable):
-![Task Detail Mobile](assets/task_management/task_detail_mobile.png)
+> **Current status**: `JsonForm` is now wired in Task Execution Sheet, backed by `snapshot.schema` from `/me/tasks` responses. The design below reflects the active interaction model.
 
-**Interaction Patterns**:
-- **Tap checkbox** → Instant update, checkmark animation
-- **Tap completed item** → Expand to show completion time
-- **Hold checkbox** → Quick action menu (Undo, Add note)
-- **Progress Inference** → Frontend calculates progress percentage from content and required fields
+#### 3.5.1 Sheet Layout
 
-**Optimistic UI Updates**:
+```
+┌──────────────────────────────────────────────────┐
+│ ← [SETUP]  Pre-Production Checklist    ● IN PROG │
+│ Monday Night Live · Feb 5, 8:00 PM               │
+│ Due: Feb 5, 5:00 PM                              │
+│ ▓▓▓▓▓▓▓░░░░░  5 / 12 required fields    42%     │
+├──────────────────────────────────────────────────┤
+│                                                  │
+│  Script reviewed and approved         [✓] ──────│
+│  ─────────────────────────────────────────────  │
+│  Number of cameras required                      │
+│  [  4                               ]            │
+│  ─────────────────────────────────────────────  │
+│  Lighting setup status               [Complete▼] │
+│  ─────────────────────────────────────────────  │
+│  Host name                                       │
+│  [  Marcus Chen                     ]            │
+│  ─────────────────────────────────────────────  │
+│  Show date                                       │
+│  [  Feb 5, 2026              📅     ]            │
+│  ─────────────────────────────────────────────  │
+│  Special notes                                   │
+│  ┌──────────────────────────────────────────┐   │
+│  │ Requires smoke machine for Act 2         │   │
+│  └──────────────────────────────────────────┘   │
+│                                                  │
+├──────────────────────────────────────────────────┤
+│              [▶ Start Task]                      │  ← PENDING state
+│              [✔ Complete Task]                   │  ← IN_PROGRESS state (current)
+│              [✔ Submit for Review]               │  ← IN_PROGRESS state (planned)
+│              [↩ Reopen Task]                     │  ← COMPLETED state
+└──────────────────────────────────────────────────┘
+```
+
+#### 3.5.2 Form Rendering
+
+The form is rendered by the existing `JsonForm` component using `task.snapshot.schema`:
+
 ```typescript
-// When user taps checkbox
-1. Immediately show checkmark (optimistic)
-2. Send API request with version number
-3. If conflict (409):
-   - Revert UI
-   - Show toast: "Someone else updated this task. Refreshing..."
-   - Reload task
-4. If success:
-   - Keep checkmark
-   - Increment local version
-   - Show confetti animation (if task now 100% complete)
+<JsonForm
+  schema={task.snapshot.schema}   // UiSchema from snapshot
+  values={task.content}           // Existing field answers
+  readOnly={isReadOnly}           // true when COMPLETED or REVIEW
+  onChange={handleFieldChange}    // debounced auto-save
+/>
+```
+
+**Auto-save behaviour**:
+- Field changes trigger a debounced `PATCH /me/tasks/:uid` (300ms debounce)
+- Version is sent with every PATCH for optimistic locking
+- No explicit "Save" button — form saves continuously
+- Saving indicator: small spinner / "Saved" label near the progress bar
+- If 409 conflict: revert field, show toast "Task updated elsewhere. Refreshing..."
+
+**Read-only states**:
+- `COMPLETED` or `REVIEW`: form is read-only (`readOnly={true}` on JsonForm); fields shown as display values, not inputs
+- `BLOCKED`: form still editable but action button shows "Resume Task" instead
+
+**Progress bar**:
+- Updates live as operator fills required fields
+- Derived from `calculateTaskProgress(task, schema)` using the current form values
+- When 100%: subtle green pulse animation on progress bar (no confetti yet — deferred)
+
+#### 3.5.3 Rejection Note Banner
+
+When `task.metadata.rejection_note` is present (task was sent back from REVIEW):
+
+```
+┌──────────────────────────────────────────────────┐
+│ ⚠️  Sent back for revision                        │
+│ "Audio setup incomplete — please redo section 3" │
+└──────────────────────────────────────────────────┘
+[← Resume Task] button below banner
+```
+
+Cleared (from display) once operator changes status back to IN_PROGRESS.
+
+#### 3.5.4 Status Action Buttons
+
+```
+PENDING:
+  [▶ Start Task]                  PENDING → IN_PROGRESS
+
+IN_PROGRESS (current, no review gate):
+  [✔ Complete Task]               IN_PROGRESS → COMPLETED
+  [⊘ Report Blocker]              → BLOCKED (opens text input for reason)
+
+IN_PROGRESS (planned, with review gate):
+  [✔ Submit for Review]           IN_PROGRESS → REVIEW
+  [⊘ Report Blocker]              → BLOCKED
+
+REVIEW:
+  [← Recall]                     REVIEW → IN_PROGRESS (self-recall)
+  Banner: "Awaiting admin review..." (grey, non-actionable)
+
+BLOCKED:
+  [← Resume Task]                 BLOCKED → IN_PROGRESS
+  Shows blocked reason from metadata
+
+COMPLETED:
+  [↩ Reopen Task]                 COMPLETED → IN_PROGRESS
+  Shows completedAt timestamp
+```
+
+#### 3.5.6 Show-Task Submission Window Rules
+
+When a task is associated with a Show, UI should enforce/communicate submission windows by `task.type`:
+
+- `SETUP`
+  - Submit must be before show start
+- `ACTIVE`
+  - Submit is blocked before show start
+  - Soft due warning after show end + 1 hour
+- `CLOSURE`
+  - Submit is blocked before show start
+  - Soft due warning after show end + 6 hours
+
+Current phase UX:
+- Window violation (too early) => inline error + disable submit action.
+- Overdue => warning banner + allow submit.
+
+Future phase UX:
+- Studio-level admin toggle can turn overdue warning into hard block.
+
+#### 3.5.5 FE Implementation Notes
+
+**Component**: `task-execution-sheet.tsx`
+
+**Changes needed**:
+1. Replace `<pre>{JSON.stringify(task.content)}</pre>` with `<JsonForm schema={task.snapshot.schema} values={task.content} onChange={debouncedSave} readOnly={isReadOnly} />`
+2. Add `useUpdateMyTask` debounced content auto-save (separate from status transition)
+3. Add progress bar using `calculateTaskProgress(task, task.snapshot.schema)` — update live as form changes
+4. Guard: if `task.snapshot` is absent (old API / loading), show a skeleton or `<pre>` fallback
+5. Import and wire `JsonForm` from `@/components/json-form/json-form`
+
+**Hook changes needed**:
+- `use-my-tasks.ts`: ensure `task.snapshot` is surfaced from API response (depends on backend fix)
+- Consider a separate `useMyTask(taskId)` query for the detail fetch (`GET /me/tasks/:uid`) with `snapshot: true` — more complete than the list item, used when sheet opens
+
+**Recommended pattern**:
+```
+useMyTask(taskId)    ← detail query (GET /me/tasks/:uid), runs when sheet opens
+                       provides full snapshot.schema + current content
+useUpdateMyTask()    ← mutation, used for both field changes and status transitions
+```
+
+This way, the list (`useMyTasks`) doesn't need to carry the full schema for every card — only the selected task detail fetches it. The progress bar on the list card can use the list-level snapshot (simpler schema subset) when available, and degrade gracefully when not.
+
+**Optimistic Updates**:
+```typescript
+// When user changes a form field
+1. Immediately update form state (local, not persisted)
+2. Debounce 300ms → PATCH /me/tasks/:uid with full content + version
+3. On 409 conflict:
+   - Revert field to server value
+   - Toast: "Task updated elsewhere. Refreshing..."
+   - Refetch task detail
+4. On success:
+   - Update local version in cache
+   - "Saved" indicator appears briefly
 ```
 
 ---
 
-### 3.6 Manager: All Tasks Dashboard
+### 3.6 Manager: Task Review Queue ✅ Implemented
+
+**Purpose**: Review tasks submitted by operators. Approve (mark complete), reject (send back with note), or close.
+
+**Route**: `/studios/$studioId/tasks?status=REVIEW` — studio-wide review queue (default filter set to `REVIEW`).
+
+**Layout**:
+```
+┌───────────────────────────────────────────────────────────────────┐
+│ Task Review Queue                                                 │
+│ Tasks awaiting your approval                      [Bulk Approve]  │
+│                                                                   │
+├───┬──────────────────────┬──────────┬──────────┬──────────────────┤
+│ ☐ │ Task                 │ Show     │ Operator │ Submitted        │
+├───┼──────────────────────┼──────────┼──────────┼──────────────────┤
+│ ☑ │ Pre-Production       │ Mon Live │ Marcus C │ 2h ago           │
+│ ☐ │ Live Operations      │ Morning  │ Sarah C  │ 30m ago          │
+│ ☐ │ Post-Production      │ Weekend  │ Marcus C │ 5m ago           │
+└───┴──────────────────────┴──────────┴──────────┴──────────────────┘
+
+       ┌──────────────────────────────────────────────────────┐
+       │ 1 selected   [✔ Approve]  [✕ Reject]  [⊘ Close] [✗]│
+       └──────────────────────────────────────────────────────┘
+```
+
+**Per-Task Actions** (row action dropdown):
+- **Approve** → `REVIEW → COMPLETED`; task locked read-only
+- **Reject** → opens rejection note input → `REVIEW → IN_PROGRESS`; note surfaced to operator
+- **Close** → `any → CLOSED`; requires confirmation; terminal state
+- **Block** → `any → BLOCKED`; requires blocker note
+
+**Rejection/Block Note Flow**:
+```
+┌─────────────────────────────────────────┐
+│ Reject Task                             │
+├─────────────────────────────────────────┤
+│ Send this task back to the operator     │
+│ with a note explaining what to fix:     │
+│                                         │
+│ ┌─────────────────────────────────────┐ │
+│ │ Audio setup incomplete —            │ │
+│ │ please redo section 3               │ │
+│ └─────────────────────────────────────┘ │
+│                                         │
+│              [Cancel]  [Send Back →]    │
+└─────────────────────────────────────────┘
+```
+
+**Operator sees** (in `task-execution-sheet.tsx` when `task.metadata.rejection_note` is set):
+```
+┌─────────────────────────────────────────────────────────────┐
+│ ⚠️  Sent back for revision                                   │
+│ "Audio setup incomplete — please redo section 3"            │
+│                                                             │
+│ [← Resume Task]   → IN_PROGRESS                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+Blocked tasks surface `task.metadata.blocked_reason` in the operator view with a red warning panel.
+
+**FE implementation notes:**
+- Review queue is a dedicated studio route with the same filter/search UX as other admin tables.
+- Single approve/reject/block/close uses `PATCH /studios/:studioId/tasks/:taskUid/action`.
+- Rejection note stored in `task.metadata.rejection_note`; blocker note stored in `task.metadata.blocked_reason`.
+- Bulk approve is still planned (`PATCH /studios/:studioId/tasks/bulk-update-status`).
+
+---
+
+### 3.7 Manager: All Tasks Dashboard
 
 **Purpose**: Overview of all tasks across shows. Filter, search, monitor.
 
@@ -644,6 +1007,116 @@ When editing a field, managers can configure advanced validation rules:
 - **Bulk actions**: Select multiple, reassign all
 - **Real-time updates**: WebSocket for live status changes (future)
 - **Export**: Download task report as CSV/PDF
+
+---
+
+### 3.8 System Admin: System Tasks (`/system/tasks`)
+
+**Purpose**: Cross-studio task operations for system administrators, focused on discovery and reassignment support.
+
+**Scope**:
+- Read task details across studios.
+- Reassign a task assignee by user UID (including cross-studio navigation context).
+- Reassign a task's linked show (strict guarded flow).
+- Delete task records for recovery/cleanup.
+- Keep task form content immutable in system scope (no direct content editing from system UI).
+
+**Primary Interactions**:
+- **Top search input**: broad text search (`task uid`, `description`, `show uid/name`, `assignee uid/name`).
+- **Advanced filters dropdown**:
+  - `Studio` (name text filter)
+  - `Client` (name text filter inferred from linked show)
+  - `User` (assignee name text filter)
+  - `Show` (show name text filter)
+  - `Task Type` (select)
+  - `Has Assignee` (select)
+  - `Has Due Date` (select)
+  - `Due Date` (date range)
+- **Row action**: `View details` opens details dialog.
+- **Details dialog**:
+  - Shows immutable task metadata and linked show context.
+  - Supports reassignment via `assignee_uid` input.
+  - Supports moving task target via `show_uid` input.
+  - Empty value unassigns task.
+
+**Validation UX**:
+- Reassignment requires target user to have active membership in the task's studio.
+- Show reassignment guardrails:
+  - Task must be `PENDING`.
+  - Target show must belong to the same studio.
+  - Due date is recalculated for `SETUP` / `ACTIVE` / `CLOSURE` using show timing rules.
+- Backend rejects invalid assignments; FE surfaces error toast/feedback.
+
+**Why this split**:
+- Keeps support operations available for system admins.
+- Prevents bypassing studio workflow semantics for task execution/state transitions.
+- Preserves clear responsibility boundary between `/system/*` and `/studios/$studioId/*`.
+
+### 3.9 System Admin: Show Statuses (`/system/show-statuses`)
+
+**Purpose**: Manage global show-status master data used by show forms and filters across system/studio modules.
+
+**Route alignment**:
+- Backend source of truth: `/admin/show-statuses` (CRUD available).
+- Frontend should expose a dedicated `/system/show-statuses` list/manage page consistent with other `/system/*` master-data screens.
+
+**Current implementation note**:
+- FE currently consumes show statuses as lookup data for show forms/filters.
+- Dedicated `/system/show-statuses` management screen is a gap and should be implemented to match BE capability.
+
+### 3.10 System Admin: Task Templates (`/system/task-templates`) ⏳ Planned
+
+**Purpose**: Let system admins manage task templates across studios and understand where a template is bound, while avoiding heavy/unbounded client payloads.
+
+**Core UX principle**: summary first, drill-down on demand.
+
+#### List View (fast path)
+
+Route: `/system/task-templates`
+
+Show template rows/cards with compact usage summary only:
+- template name, type, version, active state, studio
+- `tasks (active/total)`
+- `active shows count`
+- `last used at`
+
+Filters:
+- search (name/description)
+- studio
+- task type
+- active/inactive
+- sort (`updated`, `last used`, `active tasks`)
+
+#### Binding Drill-Down (explicit action)
+
+Row action: `View bindings`
+
+Open side panel/dialog with paginated table of linked task/show records:
+- show id/name/start/end
+- task id/status/type/due-date
+- assignee (if any)
+
+Drill-down filters:
+- show start date range
+- task status
+- studio (optional cross-check)
+- include deleted toggle (default off)
+
+#### Scalability/optimization requirements
+
+- Do not preload full template-to-task bindings in list query.
+- Bindings are fetched only when panel opens, with server pagination.
+- Default drill-down window can use recent operational range (e.g. last 90 days), with explicit expansion controls.
+- Keep FE cache bounded:
+  - list query cached normally
+  - bindings query keyed by `templateId + filters + page`
+  - no infinite local accumulation for historical records
+
+#### Why this design
+
+- Admin still gets operational visibility of template usage.
+- Avoids over-fetching and massive payloads as studios accumulate years of tasks.
+- Keeps first paint fast and pushes heavy reads behind intentional user actions.
 
 ---
 
@@ -668,7 +1141,9 @@ When editing a field, managers can configure advanced validation rules:
   --color-due-soon: #F59E0B;     /* Amber 500 */
   --color-in-progress: #3B82F6;  /* Blue 500 */
   --color-completed: #10B981;    /* Green 500 */
+  --color-review: #F59E0B;       /* Amber 500 — awaiting approval */
   --color-blocked: #6B7280;      /* Gray 500 */
+  --color-closed: #9CA3AF;       /* Gray 400 — terminated */
   
   /* Accents */
   --color-primary: #0F172A;      /* Slate 900 - CTA buttons */
@@ -780,6 +1255,17 @@ body {
 .status-badge--blocked {
   background: #FEE2E2;
   color: #991B1B;
+}
+
+.status-badge--review {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.status-badge--closed {
+  background: #F3F4F6;
+  color: #6B7280;
+  text-decoration: line-through;
 }
 ```
 
@@ -1115,7 +1601,7 @@ interface JsonFormProps {
 
 function JsonForm({ schema, values, onChange, onValidate }: JsonFormProps) {
   // Build Zod schema from UI schema
-  const zodSchema = buildZodSchema(schema);
+  const zodSchema = buildTaskContentSchema(schema);
   
   // Use react-hook-form for validation
   const { register, handleSubmit, formState: { errors } } = useForm({
@@ -1191,53 +1677,11 @@ function isFieldComplete(type: string, value: any): boolean {
 
 ---
 
-## 10. Implementation Roadmap
+## 10. Implemented Component Patterns
 
-### Phase 1: Core Components (Week 1)
-- [ ] Setup `TaskTable` (Desktop) and `TaskList` (Mobile) components
-- [ ] Implement `BulkActionBar` with selection state
-- [ ] Create `TaskDrawer` container (routing-aware or state-driven)
-- [ ] Build responsive breakpoint logic (768px for mobile/desktop switch)
+The following patterns are implemented and available for use:
 
-### Phase 2: Form Engine (Week 2)
-- [ ] Implement `JsonForm` component that accepts a schema and renders fields
-- [ ] Integrate `react-hook-form` and `zod` for dynamic validation
-- [ ] Support primary field types: checkbox, text, number, select, date, textarea
-- [ ] Implement client-side progress calculation logic
-
-### Phase 3: Template Builder (Week 2-3)
-- [ ] Create `TemplateLibrary` grid view with search and filters
-- [ ] Build `TemplateCreateModal` for initial template setup
-- [ ] Implement `TemplateBuilder` with card stack design
-- [ ] Add drag-and-drop field reordering
-- [ ] Build mobile-optimized template builder with bottom sheet patterns
-
-### Phase 4: Integration (Week 3)
-- [ ] Connect `BulkAssignDialog` to API
-- [ ] Implement Optimistic UI updates for task content changes
-- [ ] Implement pull-to-refresh on mobile task lists
-- [ ] Add error handling and conflict resolution UI
-
-### Phase 5: Polish & Accessibility (Week 4)
-- [ ] Implement Optimistic Locking:
-  - Store `task.version` in state
-  - Send `version` with all PATCH requests
-  - Handle `409 Conflict` by showing toast and refreshing data
-- [ ] Add conflict resolution UI for concurrent edits
-- [ ] Add animations: checkbox complete, task complete confetti, loading states
-- [ ] Implement keyboard navigation and screen reader support
-- [ ] Ensure WCAG AA color contrast compliance
-- [ ] Add mobile swipe actions and gestures
-
----
-
-## 11. Implemented Component Patterns
-
-**Status**: ✅ Implemented (as of February 8, 2026)
-
-The following patterns have been implemented as part of the initial Task Templates feature:
-
-### 11.1 ResponsiveCardGrid Component
+### 10.1 ResponsiveCardGrid Component
 
 **Purpose**: Provides a responsive grid layout that automatically adjusts the number of columns based on available width without media queries.
 
@@ -1275,7 +1719,7 @@ function CardList({ items }) {
 
 ---
 
-### 11.2 useInfiniteScroll Hook
+### 10.2 useInfiniteScroll Hook
 
 **Purpose**: Implements infinite scroll using Intersection Observer API, automatically fetching more data when user scrolls near the bottom.
 
@@ -1290,7 +1734,7 @@ function CardList({ items }) {
 
 **Usage Example**:
 ```tsx
-import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
+import { useInfiniteScroll } from '@eridu/ui';
 
 function InfiniteList() {
   const { data, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
@@ -1329,7 +1773,7 @@ function InfiniteList() {
 
 ---
 
-### 11.3 Route Layout Pattern
+### 10.3 Route Layout Pattern
 
 **Pattern**: Parent route layouts should render `<Outlet />` without additional wrappers, as each child route handles its own layout structure.
 
@@ -1369,7 +1813,7 @@ function TaskTemplatesPage() {
 
 ---
 
-### 11.4 Sticky Toolbar Pattern
+### 10.4 Sticky Toolbar Pattern
 
 **Use Case**: Pages with infinite scroll lists where search and actions should remain accessible while scrolling.
 
@@ -1415,6 +1859,25 @@ Actions collapse to a dropdown on mobile (`<768px` / below `md` breakpoint) to s
 ```
 Desktop (≥768px):   [Search.............] [Refresh] [Create Template]
 Mobile (<768px):    [Search.................] [⋮ Menu]
+
+---
+
+### 10.5 Task Template Form Enhancements (Admin)
+
+Task template create/edit dialogs must expose:
+
+- `Task Type` (required): `SETUP`, `ACTIVE`, `CLOSURE`, `ADMIN`, `ROUTINE`, `OTHER`
+- `Schema` (existing JsonForm schema builder)
+- `Description` and active state (existing)
+
+Generation dialog behavior:
+- `SETUP` / `ACTIVE` / `CLOSURE`: due time is auto-derived from show schedule.
+- `ADMIN` / `ROUTINE` / `OTHER`: due time input is optional per generation action.
+
+Validation hints in template UI:
+- `SETUP`: "Due before show start."
+- `ACTIVE`: "Due at show end + 1h. Cannot submit before show starts."
+- `CLOSURE`: "Due at show end + 6h. Cannot submit before show starts."
                                               └─ Refresh
                                               └─ Create Template
 ```
@@ -1459,7 +1922,7 @@ function PageLayout({ refreshQueryKey }) {
 
 ---
 
-## 12. Task Generation & Assignment Workflows
+## 11. Task Generation & Assignment Workflows
 
 ### Route Structure
 
@@ -1481,7 +1944,10 @@ ShowsPage
 
 ShowTasksPage
 ├── ShowHeader (back link, show name, client, schedule)
-├── "Assign All" button → ShowAssignmentDialog (for single show)
+├── "Refresh" button → invalidate show/task/member caches and refetch active queries
+├── "Generate Tasks" button → BulkTaskGenerationDialog (for single show)
+├── "Assign All Tasks" button → ShowAssignmentDialog (for single show)
+├── "Delete Selected" button → DeleteTasksDialog (for selected tasks)
 └── TaskCardList
     └── TaskCard (type badge, status, due date, assignee dropdown, view link)
         └── AssigneeDropdown → inline PATCH assign API call
@@ -1497,6 +1963,16 @@ ShowTasksPage
 - `useAssignShows()` → mutation for bulk show assignment
 - `useReassignTask()` → mutation for individual task reassignment
 
+### Cache Freshness Strategy (Balanced)
+
+- Keep `staleTime` at 60s for show list/task list queries to avoid noisy background polling.
+- On bulk generate/assign success, invalidate:
+  - studio show lists for current studio (`studio-shows/list/{studioId}`)
+  - only affected show task queries (`show-tasks/list/{studioId}/{showUid}` for submitted `show_uids`)
+- Do not invalidate every show-task query globally; this prevents unnecessary refetches for unrelated shows.
+- On shows table selection, keep selected IDs as source of truth and hydrate selected show objects from latest query data each render.
+- Maintain a small selected-show snapshot map only for cross-page selection fallback (names/summary in dialogs), and overwrite with fresh row data whenever available.
+
 ### Data Flow
 
 ```mermaid
@@ -1507,7 +1983,7 @@ sequenceDiagram
 
     M->>UI: Select shows + click "Generate Tasks"
     UI->>UI: Open BulkTaskGenerationDialog
-    M->>UI: Select templates per type slot
+    M->>UI: Search and select templates (multi-select)
     M->>UI: Click "Generate Tasks"
     UI->>API: POST /studios/:id/tasks/generate
     API-->>UI: 201 Created (results per show)
@@ -1522,10 +1998,27 @@ sequenceDiagram
     UI->>UI: Refresh, show success toast
 
     M->>UI: Navigate to show detail
+    M->>UI: Click "Generate Tasks"
+    UI->>API: POST /studios/:id/tasks/generate (single show UID)
+    API-->>UI: 201 Created
+    UI->>UI: Refetch show tasks
+
+    M->>UI: Click "Assign All Tasks"
+    UI->>API: POST /studios/:id/tasks/assign-shows (single show UID)
+    API-->>UI: 200 OK
+    UI->>UI: Refetch show tasks
+
     M->>UI: Change assignee dropdown on a task
     UI->>API: PATCH /studios/:id/tasks/:taskUid/assign
     API-->>UI: 200 OK
     UI->>UI: Optimistic update
+
+    M->>UI: Select tasks + click "Delete"
+    UI->>UI: Open DeleteTasksDialog
+    M->>UI: Confirm Deletion
+    UI->>API: DELETE /studios/:id/tasks/bulk
+    API-->>UI: 200 OK
+    UI->>UI: Refresh tasks list, show success toast
 ```
 
 ### Reusable Patterns
@@ -1539,6 +2032,54 @@ These workflows reuse existing patterns from the codebase:
 
 ---
 
+
+## Planned Features
+
+### My Tasks Form Rendering & Navigation (Progress Update — February 25, 2026)
+
+Most originally identified functional gaps are now implemented:
+
+**BE (implemented)**:
+- Include `snapshot: { schema, version }` in `GET /me/tasks` and `GET /me/tasks/:uid` responses (`TaskRepository` + `taskWithRelationsDto`)
+- Add `task_type[]`, `search`, `sort` query params to `ListMyTasksQueryDto` and wire through `TaskRepository.findTasksByAssignee()`
+
+**FE — Task Execution Sheet** (`task-execution-sheet.tsx`):
+- (implemented) Replace `<pre>{JSON.stringify(content)}</pre>` with `<JsonForm ... />`
+- (implemented, optional) Debounced auto-save on field change (PATCH content, no explicit Save button), currently disabled by default
+- (implemented) Rejection note banner from `task.metadata.rejection_note`
+- (implemented) Graceful fallback for missing/invalid schema with empty-template messaging
+- (implemented) Live progress bar from `calculateTaskProgress()` updates as fields are filled
+
+**FE — My Task Card** (`my-task-card.tsx`):
+- (implemented) Add progress bar (`calculateTaskProgress(task, task.snapshot.schema)`) — degrade to status-only if schema absent
+- (implemented) Urgency border for overdue tasks (red)
+- (implemented) Blocked reason excerpt when `status === BLOCKED`
+- (implemented) Due-soon urgency treatment (amber pre-overdue state)
+
+**FE — My Tasks Filter Bar** (`my-tasks.tsx` + new toolbar component):
+- (implemented) Replace 3-tab navigation with composable filter bar controls
+- (implemented) URL-sync all filter state (debounced search)
+- (implemented) Show-start operational-day window tuned for midnight coverage (`D 00:00` -> `D+1 06:00`)
+- (implemented) Overdue shortcut chip (`due_date_to=today&status=PENDING,IN_PROGRESS`)
+
+---
+
+### Review Workflow (Current + Deferred)
+- **BE (implemented)**: State machine enforcement in **studio module/services only** (`/studios/$studioId/*`) — role-based transition table (see `TASK_MANAGEMENT_DESIGN.md §7.3`)
+- **BE (legacy compatibility)**: `PATCH /studios/:studioId/tasks/:taskUid/status`
+- **BE (implemented)**: action-first workflow endpoints for clearer FE semantics:
+  - `PATCH /me/tasks/:taskUid/action`
+  - `PATCH /studios/:studioId/tasks/:taskUid/action`
+  - `GET /studios/:studioId/tasks/:taskUid` (lazy-load schema/details when manager opens action sheet)
+- **BE (implemented)**: studio transition actor is persisted in `task.metadata.audit.last_transition` (lightweight metadata audit)
+- **BE**: `/admin/tasks` remains system-admin-only support surface (cross-studio list/detail/reassign/delete) while task content/status edits stay studio-scoped
+- **FE**: Operator `task-execution-sheet.tsx` — "Submit for Review" replaces "Complete Task"; rejection note banner; self-recall button on REVIEW state
+- **FE (implemented)**: Admin task review queue at `§3.6` — per-task inline actions and rejection/block note capture
+- **Phase 4 (deferred)**: review queue bulk approve is intentionally deferred until per-task review summary and validation safeguards are completed (see `apps/erify_api/docs/roadmap/PHASE_4.md`)
+- **Phase 4 (deferred)**: review-quality decision support (per-task summary + stronger validation/error contracts) is tracked in Phase 4
+- **FE**: `status-badge` — add REVIEW (amber) and CLOSED (grey strikethrough) variants
+
+---
 
 ## Deferred Features
 

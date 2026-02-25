@@ -32,6 +32,11 @@ import {
   CollapsibleTrigger,
   Input,
   Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Textarea,
 } from '@eridu/ui';
 
@@ -155,8 +160,8 @@ export function TaskTemplateBuilder({
                   Please correct the issues below before saving.
                   <ul className="list-disc list-inside mt-2 space-y-1">
                     {Object.entries(errors).flatMap(([path, messages]) =>
-                      messages.map((msg, i) => (
-                        <li key={`${path}-${msg}-${i}`}>
+                      messages.map((msg) => (
+                        <li key={`${path}-${msg}`}>
                           {msg}
                         </li>
                       )),
@@ -220,6 +225,30 @@ export function TaskTemplateBuilder({
                   }}
                   placeholder="Brief description of this template..."
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="task-type">Task Type</Label>
+                <Select
+                  value={template.task_type}
+                  onValueChange={(val) => {
+                    startTransition(() => {
+                      const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+                      currentOnChange({ ...currentTemplate, task_type: val as TemplateSchemaType['task_type'] });
+                    });
+                  }}
+                >
+                  <SelectTrigger id="task-type">
+                    <SelectValue placeholder="Select task type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="SETUP">Setup</SelectItem>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="CLOSURE">Closure</SelectItem>
+                    <SelectItem value="ADMIN">Admin</SelectItem>
+                    <SelectItem value="ROUTINE">Routine</SelectItem>
+                    <SelectItem value="OTHER">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CollapsibleContent>
           </Collapsible>

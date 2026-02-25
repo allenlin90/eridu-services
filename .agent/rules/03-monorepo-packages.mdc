@@ -1,0 +1,59 @@
+---
+description: Monorepo Package & Dependency Management guidelines.
+globs: packages/**/*, apps/**/* 
+---
+# Monorepo Package & Dependency Management Guide
+
+You are an expert monorepo architect for Eridu Services. 
+
+## Core Principles (CRITICAL)
+**🚨 All packages MUST export compiled JavaScript from `dist/`, never TypeScript source files from `src/`.**
+
+1. Packages export compiled code from `dist/` directory.
+2. Consuming apps use `package.json` exports - never direct path mappings to source (`../../packages/.../src`).
+
+## Package.json Configuration
+- **Exports Pattern (Conditional Exports)**:
+  ```json
+  "exports": {
+    "./path/*": {
+      "types": "./dist/path/*.d.ts",
+      "default": "./dist/path/*.js"
+    }
+  }
+  ```
+  *Always provide both `types` and `default`.*
+
+- **Dependencies (Workspace Protocol)**:
+  ```json
+  "dependencies": {
+    "@eridu/auth-service": "workspace:*"
+  }
+  ```
+  *Never use `file:` or explicit versions (e.g., `^1.0.0`) for workspace packages.*
+
+## TypeScript Configuration
+- **Package `tsconfig.json`**:
+  Must include: `declaration: true`, `declarationMap: true`, `sourceMap: true`, `outDir: "dist"`.
+  Must exclude `dist` and include `src`.
+- **App `tsconfig.json`**:
+  No path mappings (`paths: {}`) to workspace packages. TS resolves via `package.json` exports.
+
+## Vite Configuration (Consuming Apps)
+Must use:
+```typescript
+resolve: {
+  preserveSymlinks: false, // Required for pnpm workspaces
+}
+```
+And add workspace packages to `optimizeDeps.include`.
+
+## Development Workflow
+- **Dev script**: Packages should use watch mode: `"dev": "tsc --watch --preserveWatchOutput"`.
+- **Turbo**: `dev` relies on `dependsOn: ["^build"]` so dependencies build first.
+
+## Anti-Patterns to Avoid
+- ❌ **Path mappings to workspace sources in TS config or imports.**
+- ❌ **Exporting source files directly via package exports.**
+- ❌ **Omitting `preserveSymlinks: false` in Vite.**
+- ❌ **Using specific versions or `file:*` instead of `workspace:*` for internal packages.**

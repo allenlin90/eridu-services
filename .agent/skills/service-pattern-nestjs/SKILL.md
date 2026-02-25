@@ -85,6 +85,22 @@ export class UserService extends BaseModelService {
 }
 ```
 
+## When Does a Model Service Justify Existing?
+
+A model service exists to:
+1. Generate UIDs (`this.generateUid()`) — even thin services serve this purpose
+2. Enforce invariants before/after persistence
+3. Translate domain payloads into repository calls
+4. Be the stable public API of the module
+
+A service with only pass-through methods is acceptable when:
+- It provides a consistent pattern with sibling modules
+- It generates UIDs (join table services)
+- Its methods may gain logic in the future
+
+A service that does NOT generate UIDs and has zero logic should be questioned —
+consider whether the orchestration should just call the parent module's service.
+
 ---
 
 ## Avoiding ORM Coupling in Services
@@ -160,6 +176,20 @@ async findOne(
 - Changing ORM only requires updating repository
 - Service tests don't need to mock Prisma types
 
+**Tradeoff awareness**: `Parameters<Repository['method']>` couples the service
+method signature to the repository signature. Changing the repository method
+signature changes the service's public API.
+
+Use this pattern when:
+- The method is a genuine pass-through with no business logic
+- The service needs to expose a repository query for orchestration callers
+
+Mark these as `@internal` if they are not intended for controllers:
+```typescript
+/** @internal For orchestration use only. Controllers use findByUid(). */
+async findOne(...args: Parameters<TaskRepository['findOne']>)
+```
+
 ### Rule 4: Repository Owns Where-Clause Building
 
 The repository layer is responsible for building ORM-specific where clauses. Services pass domain-level parameters:
@@ -223,14 +253,12 @@ async getUserById(uid: string): Promise<User> {
 }
 ```
 
-### Controller-Checks Pattern (RoR Style)
+### Error Handling by Service Type
 
-🟡 **Recommended**: Service returns `null` or result. Controller handles existence checks and 404s.
+Differentiate your error handling strategy based on the service type:
 
-**Why**: This keeps services transport-agnostic (returning `null` is a data fact, throwing 404 is an HTTP response).
-
-#### 1. Read Operations
-Service returns `null`, Controller throws 404.
+#### 1. Model Services (Single Entity)
+**Pattern**: Return `null`, let Controller handle 404.
 
 ```typescript
 // Service
@@ -242,14 +270,35 @@ async getUserById(uid: string): Promise<User | null> {
 @Get(':id')
 async getUser(@Param('id') id: string) {
   const user = await this.userService.getUserById(id);
-  // Helper from BaseAdminController / BaseStudioController
-  this.ensureResourceExists(user, 'User', id);
+  this.ensureResourceExists(user, 'User', id); // Throws 404
   return user;
 }
 ```
 
-#### 2. Update/Delete Operations
-Controller verifies existence BEFORE calling the mutation service.
+#### 2. Orchestration Services (Complex Workflows)
+**Pattern**: Throw **Domain Exceptions** or business logic errors directly.
+
+Orchestration services often enforce rules that the controller cannot know about (e.g., "User must be a member of this Studio to be assigned").
+
+```typescript
+// Service
+async assignUserToStudio(userUid: string, studioUid: string) {
+  const isMember = await this.membershipService.isMember(userUid, studioUid);
+  
+  if (!isMember) {
+    // ✅ ACCEPTABLE: detailed business error
+    throw HttpError.forbidden('User is not a member of this studio');
+  }
+}
+```
+
+> [!TIP]
+> **Preferred**: Throw custom Domain Exceptions (e.g., `InvalidAssigneeError`) and use a global Exception Filter to map them to HTTP responses.
+> **Acceptable**: Use `HttpError` utility for immediate feedback in non-critical paths.
+> **Avoid**: Throwing generic `NotFoundException` for simple lookups — stick to `null` + `ensureResourceExists`.
+
+#### 3. Update/Delete Operations
+Controller verifies existence BEFORE calling the mutation service (Controller-Checks Pattern).
 
 ```typescript
 // Controller

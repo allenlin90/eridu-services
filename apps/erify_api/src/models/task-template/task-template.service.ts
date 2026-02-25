@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import type { TaskStatus } from '@prisma/client';
 
-import { TemplateSchemaValidator } from '@eridu/api-types/task-management';
+import { TASK_TYPE, TemplateSchemaValidator } from '@eridu/api-types/task-management';
 
 import type {
   CreateTaskTemplatePayload,
@@ -29,15 +30,30 @@ export class TaskTemplateService extends BaseModelService {
     return this.generateUid();
   }
 
+  private withTaskTypeInSchema(schema: unknown, taskType: string) {
+    const schemaObj = (schema && typeof schema === 'object') ? schema as Record<string, unknown> : {};
+    const metadataObj = (schemaObj.metadata && typeof schemaObj.metadata === 'object')
+      ? schemaObj.metadata as Record<string, unknown>
+      : {};
+
+    return {
+      ...schemaObj,
+      metadata: {
+        ...metadataObj,
+        task_type: taskType,
+      },
+    };
+  }
+
   async create(payload: CreateTaskTemplatePayload): ReturnType<TaskTemplateRepository['create']> {
-    if (!this.validateSchema(payload.currentSchema)) {
-      throw HttpError.badRequest('Invalid schema');
-    }
+    const schemaWithTaskType = this.withTaskTypeInSchema(payload.currentSchema, payload.taskType);
+
+    this.validateSchema(schemaWithTaskType);
 
     const data = {
       name: payload.name,
       description: payload.description ?? null,
-      currentSchema: payload.currentSchema,
+      currentSchema: schemaWithTaskType,
       studio: { connect: { uid: payload.studioId } },
       uid: payload.uid ?? this.generateTaskTemplateUid(),
       version: payload.version ?? 1,
@@ -47,9 +63,9 @@ export class TaskTemplateService extends BaseModelService {
   }
 
   async createTemplateWithSnapshot(payload: CreateTaskTemplatePayload): ReturnType<TaskTemplateRepository['create']> {
-    if (!this.validateSchema(payload.currentSchema)) {
-      throw HttpError.badRequest('Invalid schema');
-    }
+    const schemaWithTaskType = this.withTaskTypeInSchema(payload.currentSchema, payload.taskType);
+
+    this.validateSchema(schemaWithTaskType);
 
     const version = payload.version ?? 1;
     const uid = payload.uid ?? this.generateTaskTemplateUid();
@@ -57,14 +73,14 @@ export class TaskTemplateService extends BaseModelService {
     const data = {
       name: payload.name,
       description: payload.description ?? null,
-      currentSchema: payload.currentSchema,
+      currentSchema: schemaWithTaskType,
       studio: { connect: { uid: payload.studioId } },
       uid,
       version,
       snapshots: {
         create: {
           version,
-          schema: payload.currentSchema ?? {},
+          schema: schemaWithTaskType ?? {},
         },
       },
     };
@@ -77,29 +93,45 @@ export class TaskTemplateService extends BaseModelService {
     studioId: string,
     payload: UpdateTaskTemplatePayload,
   ): ReturnType<TaskTemplateRepository['update']> {
-    if (payload.currentSchema && !this.validateSchema(payload.currentSchema)) {
-      throw HttpError.badRequest('Invalid schema');
-    }
-
     try {
+      const existing = await this.taskTemplateRepository.findOne({
+        uid,
+        studio: { uid: studioId },
+        deletedAt: null,
+      });
+
+      if (!existing) {
+        throw HttpError.notFound('Task template not found');
+      }
+
+      const nextSchema = payload.currentSchema
+        ? this.withTaskTypeInSchema(payload.currentSchema, payload.taskType ?? ((existing.currentSchema as any)?.metadata?.task_type ?? TASK_TYPE.OTHER))
+        : (payload.taskType
+            ? this.withTaskTypeInSchema(existing.currentSchema, payload.taskType)
+            : null);
+
+      if (nextSchema) {
+        this.validateSchema(nextSchema);
+      }
+
       const params = {
         uid,
         studioUid: studioId,
         version: payload.version,
       };
 
-      if (payload.currentSchema) {
+      if (nextSchema) {
         // Increment version and create snapshot
         const newVersion = (payload.version ?? 1) + 1;
         const data = {
           ...(payload.name !== undefined && { name: payload.name }),
           ...(payload.description !== undefined && { description: payload.description }),
-          currentSchema: payload.currentSchema,
+          currentSchema: nextSchema,
           version: newVersion,
           snapshots: {
             create: {
               version: newVersion,
-              schema: payload.currentSchema,
+              schema: nextSchema,
             },
           },
         };
@@ -123,11 +155,16 @@ export class TaskTemplateService extends BaseModelService {
     }
   }
 
-  validateSchema(schema: CreateTaskTemplatePayload['currentSchema']): boolean {
+  validateSchema(schema: CreateTaskTemplatePayload['currentSchema']): void {
     const result = TemplateSchemaValidator.safeParse(schema);
 
     if (!result.success) {
       throw HttpError.badRequestWithDetails('Invalid template schema', result.error.issues);
+    }
+
+    const taskType = (schema as { metadata?: { task_type?: string } })?.metadata?.task_type;
+    if (!taskType || !Object.values(TASK_TYPE).includes(taskType as any)) {
+      throw HttpError.badRequest('Template metadata.task_type is required and must be a valid task type');
     }
 
     // Additional business rules
@@ -192,12 +229,20 @@ export class TaskTemplateService extends BaseModelService {
         }
       }
     }
-
-    return true;
   }
 
   async findOne(...args: Parameters<TaskTemplateRepository['findOne']>): ReturnType<TaskTemplateRepository['findOne']> {
     return this.taskTemplateRepository.findOne(...args);
+  }
+
+  /** @internal */
+  async findAll(...args: Parameters<TaskTemplateRepository['findAll']>): ReturnType<TaskTemplateRepository['findAll']> {
+    return this.taskTemplateRepository.findAll(...args);
+  }
+
+  /** @internal */
+  async findByUid(...args: Parameters<TaskTemplateRepository['findByUid']>): ReturnType<TaskTemplateRepository['findByUid']> {
+    return this.taskTemplateRepository.findByUid(...args);
   }
 
   async getTaskTemplates(...args: Parameters<TaskTemplateRepository['findPaginated']>): ReturnType<TaskTemplateRepository['findPaginated']> {
@@ -206,5 +251,29 @@ export class TaskTemplateService extends BaseModelService {
 
   async softDelete(...args: Parameters<TaskTemplateRepository['softDelete']>): ReturnType<TaskTemplateRepository['softDelete']> {
     return this.taskTemplateRepository.softDelete(...args);
+  }
+
+  async getAdminTaskTemplatesWithUsage(
+    ...args: Parameters<TaskTemplateRepository['findPaginatedAdminWithUsage']>
+  ): ReturnType<TaskTemplateRepository['findPaginatedAdminWithUsage']> {
+    return this.taskTemplateRepository.findPaginatedAdminWithUsage(...args);
+  }
+
+  async getTemplateUsageSummary(
+    ...args: Parameters<TaskTemplateRepository['getTemplateUsageSummary']>
+  ): ReturnType<TaskTemplateRepository['getTemplateUsageSummary']> {
+    return this.taskTemplateRepository.getTemplateUsageSummary(...args);
+  }
+
+  async getTemplateBindings(params: {
+    templateUid: string;
+    status?: TaskStatus | TaskStatus[];
+    showStartFrom?: string;
+    showStartTo?: string;
+    includeDeleted?: boolean;
+    skip?: number;
+    take?: number;
+  }) {
+    return this.taskTemplateRepository.findTemplateBindings(params);
   }
 }

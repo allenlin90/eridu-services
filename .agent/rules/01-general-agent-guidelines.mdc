@@ -1,0 +1,35 @@
+---
+description: Core behavior guidelines and workflows for Antigravity in Eridu Services.
+globs: *
+---
+# Eridu Services - General Antigravity Guidelines
+
+You are an expert full-stack developer working on Eridu Services. As an Antigravity agent, you must strictly follow these rules:
+
+## 1. Skill Utilization (CRITICAL)
+Before starting ANY task, you MUST check if there are relevant skills in the `.agent/skills/` directory and read them using `view_file` on the `SKILL.md` file.
+
+**Common Skill Mappings:**
+- **Backend (NestJS)**: `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `erify-authorization`, `database-patterns`, `data-validation`
+- **Frontend (React)**: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`, `frontend-performance`, `frontend-i18n`
+- **Full-Stack Features**: `admin-list-pattern`, `studio-list-pattern`
+- **Code Quality**: `code-quality`, `frontend-code-quality`
+
+*If you are unsure of how to build something, look for a skill first.*
+
+## 2. Code Verification Workflow (CRITICAL)
+**🚨 NEVER skip verification.** After generating, modifying, or refactoring code, you MUST invoke the verification workflow before considering your work complete.
+
+1. **Invoke the workflow:** Call `/verification` if acting in a context where slash commands are available, or manually run the equivalent steps:
+2. **Steps to manual verification:**
+   - `pnpm --filter <app_or_package> lint`
+   - `pnpm --filter <app_or_package> typecheck`
+   - `pnpm --filter <app_or_package> test`
+   - `pnpm --filter <app_or_package> build`
+3. **Fix Errors:** If ANY of the above fail, you MUST fix the errors. DO NOT use `any` or `@ts-ignore` to bypass type errors unless absolutely unavoidable and explicitly requested by the user.
+
+## 3. General Best Practices
+- **Code Style:** Follow the established patterns in the codebase.
+- **Type Safety:** Maintain strict typing.
+- **Error Handling:** Use centralized error handling patterns (e.g., `HttpError` utility for backend APIs).
+- **Communication:** If uncertain about requirements or if a proposed architecture requires user approval, stop and use `notify_user` to gather feedback.

@@ -88,6 +88,32 @@ Key Rules:
 - ❌ Never expose prefix pattern in error messages
 ```
 
+### 🔴 Critical: Never Compare Database IDs with UIDs
+
+Database IDs (`BigInt`) and UIDs (`string`) are fundamentally different types. **Never** compare them directly — this is a common source of bugs that silently fails.
+
+```
+❌ BAD: Comparing BigInt database ID with UID string
+// entity.studioId is BigInt (e.g., 12345n)
+// studioId is a UID string (e.g., "std_abc123")
+if (entity.studioId?.toString() !== studioId) { ... }
+// BigInt.toString() gives "12345", which NEVER equals "std_abc123"
+// This comparison ALWAYS fails!
+
+✅ GOOD: Use query-based scoping
+// Let the database handle the scoping in the query itself
+const entity = await this.service.findOne({
+  uid: entityUid,
+  studio: { uid: studioId },  // Prisma resolves the relation
+  deletedAt: null,
+});
+if (!entity) { throw HttpError.notFound(...); }
+
+✅ ACCEPTABLE: Resolve UID to ID first, then compare BigInt-to-BigInt
+const studio = await this.studioService.findByUid(studioUid);
+if (entity.studioId !== studio.id) { ... }  // BigInt === BigInt
+```
+
 ## Input Validation Pattern
 
 **Validate at API boundary, transform format**:

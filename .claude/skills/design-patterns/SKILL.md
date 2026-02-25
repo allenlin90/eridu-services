@@ -83,6 +83,50 @@ Distinguish between two types of services to manage complexity and avoid circula
 - ❌ **Never** import from an `app` into a `package` (Cyclic dependency).
 - ❌ Ensure apps rely on packages, not other apps.
 
+## Module Exports
+
+**Rule: Export Services Only. No exceptions.**
+
+Modules export their Service as the only public API.
+Repositories are private implementation details — never export them.
+
+✅ exports: [UserService]
+❌ exports: [UserService, UserRepository]
+❌ exports: [UserRepository]
+
+**Why**: Exporting a repository leaks the data layer. Every consumer would couple
+to your database access patterns. When you need a new repository operation from
+an orchestration service, add a method to the model service instead.
+
+**Join/Association Table modules**: Follow the same rule.
+- Add a service even if it's thin (it generates UIDs and exposes the repo methods)
+- Export only the service
+- Examples: ShowMcModule, ShowPlatformModule, TaskTargetModule
+
+**Reference/Lookup table modules**: Same rule.
+- Examples: ShowStandardModule, ShowStatusModule, ShowTypeModule
+
+**Orchestration modules**: Same rule.
+- Export only the orchestration service
+- Never export orchestration-internal repositories or processors
+
+## When to Create a Separate Module for Join Tables
+
+Create a separate module when the association:
+- Has its own business lifecycle (create/restore/cascade-delete methods)
+- Carries extra payload fields beyond the two FK columns
+- Is referenced independently by multiple domains
+
+Fold into the parent module when:
+- It is purely a FK link with no extra data or logic
+- Only created/deleted within a single transaction owned by the parent
+
+Examples:
+- ShowMcModule (separate) → has restore/cascade methods, note field
+- ShowPlatformModule (separate) → has liveStreamLink, viewerCount
+- TaskTargetModule (separate) → simple join, but kept separate for consistency
+
+
 ## Performance Optimization Strategy
 
 Address performance at the correct layer:

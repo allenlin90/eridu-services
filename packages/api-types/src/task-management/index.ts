@@ -17,5 +17,7 @@
  * ```
  */
 
+export * from './task.schema.js';
+export * from './task-content-validator.js';
 export * from './task-template.schema.js';
 export * from './template-definition.schema.js';

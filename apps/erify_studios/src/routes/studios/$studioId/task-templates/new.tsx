@@ -50,6 +50,7 @@ export function TaskTemplateBuilderPage() {
   const [template, setTemplate] = useState<TemplateSchemaType>({
     name: '',
     description: '',
+    task_type: 'SETUP',
     items: [],
   });
 
@@ -81,6 +82,7 @@ export function TaskTemplateBuilderPage() {
     const payload = {
       name: data.name,
       description: data.description,
+      task_type: data.task_type,
       schema: {
         items: schemaItems,
       },
@@ -103,7 +105,11 @@ export function TaskTemplateBuilderPage() {
   useEffect(() => {
     get(DRAFT_KEY).then((saved) => {
       if (saved) {
-        setTemplate(saved);
+        setTemplate((prev) => ({
+          ...prev,
+          ...(saved as Partial<TemplateSchemaType>),
+          task_type: (saved as Partial<TemplateSchemaType>)?.task_type ?? prev.task_type,
+        }));
       }
       setIsLoading(false);
     });

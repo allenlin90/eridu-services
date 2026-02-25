@@ -110,6 +110,106 @@ const form = useForm<CreateUserDto>({
 });
 ```
 
+## Transform Pattern for Prisma → DTO
+
+### When a transform is required
+
+A Zod schema needs a `.transform()` whenever the raw Prisma output **does not match** the wire-format directly. This happens when:
+
+- **Fields need renaming**: `createdAt` → `created_at`, `dueDate` → `due_date`
+- **Types need converting**: `Date` → ISO string, `bigint` → string
+- **`uid` maps to `id`**: Prisma exposes both a bigint `id` and a string `uid`; the API always exposes `uid` as `id`
+- **Relations are nested differently**: Polymorphic joins (see below)
+
+### Standard DTO transform
+
+```typescript
+// Entity schema (matches Prisma output exactly — camelCase, bigint ids, Date objects)
+export const taskSchema = z.object({
+  id: z.bigint(),
+  uid: z.string().startsWith('task_'),
+  createdAt: z.date(),
+  // ...
+});
+
+// Base DTO schema (wire format — snake_case, string ids, ISO strings)
+export const baseTaskDtoSchema = z.object({
+  id: z.string(),          // maps from uid
+  created_at: z.string(),  // maps from createdAt.toISOString()
+  // ...
+});
+
+// DTO with transform
+export const taskDto = taskSchema.transform((obj): z.infer<typeof baseTaskDtoSchema> => ({
+  id: obj.uid,
+  created_at: obj.createdAt.toISOString(),
+  // ...
+}));
+```
+
+### Polymorphic relation DTO transform
+
+When a Prisma model uses a **polymorphic join table** (e.g., `TaskTarget` that links tasks to shows, studios, etc.), Prisma cannot use a simple `include: { show: true }` — you must include the join table and then include the relation from there.
+
+The join table field name in the Prisma model (e.g., `targets`) is **not** the same as the target resource name (`show`). The schema transform must explicitly flatten this.
+
+```typescript
+// ❌ WRONG — no transform, mismatch at runtime
+export const taskWithRelationsDto = baseTaskDtoSchema.extend({
+  show: z.object({ ... }).nullable(),  // Prisma doesn't return a flat `show`
+});
+
+// ✅ CORRECT — include task.targets[0].show, then flatten in transform
+
+// Step 1: Entity schema that mirrors the Prisma include shape
+export const taskWithRelationsSchema = taskSchema.extend({
+  assignee: z.object({ uid: z.string(), name: z.string() }).nullable().optional(),
+  template: z.object({ uid: z.string(), name: z.string() }).nullable().optional(),
+  // Prisma field is `targets` (TaskTarget[]), NOT `shows`
+  targets: z.array(z.object({
+    show: z.object({
+      uid: z.string(),
+      name: z.string(),
+      startTime: z.date(),   // Prisma camelCase of start_time
+      endTime: z.date(),
+    }).nullable(),
+  })).optional(),
+});
+
+// Step 2: DTO schema (output wire format)
+export const baseTaskWithRelationsDtoSchema = baseTaskDtoSchema.extend({
+  assignee: z.object({ id: z.string(), name: z.string() }).nullable().optional(),
+  template: z.object({ id: z.string(), name: z.string() }).nullable().optional(),
+  show: z.object({ id: z.string(), name: z.string(), start_time: z.string(), end_time: z.string() }).nullable().optional(),
+});
+
+// Step 3: Transform — flatten targets[0].show into a top-level show field
+export const taskWithRelationsDto = taskWithRelationsSchema.transform(
+  (obj): z.infer<typeof baseTaskWithRelationsDtoSchema> => {
+    let show = null;
+    const s = obj.targets?.[0]?.show;
+    if (s) {
+      show = { id: s.uid, name: s.name, start_time: s.startTime.toISOString(), end_time: s.endTime.toISOString() };
+    }
+    return {
+      id: obj.uid,
+      // ... other mapped fields
+      assignee: obj.assignee ? { id: obj.assignee.uid, name: obj.assignee.name } : obj.assignee,
+      template: obj.template ? { id: obj.template.uid, name: obj.template.name } : obj.template,
+      show,
+    };
+  }
+);
+```
+
+> [!IMPORTANT]
+> When the Prisma query includes a join table (e.g., `targets: { include: { show: true } }`), the repository **MUST filter** the join table to the correct `targetType` to ensure `targets[0]` is always a show. Use: `targets: { where: { targetType: 'SHOW', deletedAt: null }, include: { show: true } }`.
+
+> [!NOTE]
+> Always use `uid` (not `id`) when mapping relation `id` fields in the transform. Prisma `id` columns are `bigint` and cannot be serialized to JSON; `uid` is the public string identifier.
+
+---
+
 ## Checklist
 
 - [ ] New API contract? Add to `@eridu/api-types` first.

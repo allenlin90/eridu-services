@@ -1,8 +1,8 @@
 # Task Management System - Backend Design
 
-**Version**: 3.0  
-**Last Updated**: February 14, 2026  
-**Status**: Partially Implemented (TaskTemplate CRUD + Snapshots at `/studios/:studioId/task-templates`; Task CRUD, generation, assignment, and `/me/tasks` remain pending)
+**Version**: 3.6
+**Last Updated**: February 25, 2026
+**Status**: Core implemented. System admin task management (`/admin/tasks`) now supports cross-studio discovery + reassignment with membership validation, while keeping task content immutable in system scope. Studio-scoped review/state-transition enforcement is implemented at `/studios/:studioId/tasks/*` with role-aware transitions.
 
 > **Related Documentation**  
 > For UI/UX specifications and user workflows, see [`apps/erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md`](../../erify_studios/docs/TASK_MANAGEMENT_UIUX_DESIGN.md)
@@ -22,8 +22,7 @@
 9. [Authentication & Authorization](#9-authentication--authorization)
 10. [Error Handling](#10-error-handling)
 11. [Performance & Optimization](#11-performance--optimization)
-12. [Implementation Checklist](#12-implementation-checklist)
-13. [Appendices](#appendices)
+12. [Appendices](#appendices)
 
 ---
 
@@ -83,6 +82,8 @@ A generic, extensible Task Management system using a **"Task as Form"** architec
 - Server-side validation of all task content against schema
 - Type-safe field validation (text, number, date, select, etc.)
 - Due date validation based on task type and show schedule
+- Submission window validation for show-linked tasks (type-aware, see §6.3)
+- Overdue submission is warning-only in current phase (no hard block)
 - **Studio Consistency**: Tasks for a Show MUST be generated using Templates from the same Studio as the Show
 
 ### API Enhancements
@@ -115,28 +116,35 @@ A generic, extensible Task Management system using a **"Task as Form"** architec
 - Manager selects **multiple shows** and chooses which templates to apply per task type
 - For each show, the system generates one Task per selected template in a single transaction
 - The same template set can be applied to all selected shows, or template selection can vary per show
-- **Idempotency**: shows that already have tasks for a given template are skipped (not duplicated)
+- **Idempotency**: shows that already have active tasks for a given template are skipped.
+- **Resumption**: If a task for the template exists but is **soft-deleted**, it is "resumed" (undeleted, reset to PENDING, cleared content, updated to latest template snapshot, and task `type` synchronized to latest template `task_type`) to prevent data redundancy and preserve task UID stability.
 - **Advisory lock per show** prevents race conditions when two managers generate simultaneously
+- Template controls task type directly (`task_type` is explicit, no name inference)
+- For `ADMIN` / `ROUTINE` / `OTHER`, manager can optionally override generated due time during generation
 
 **Generation Flow**:
-1. Manager navigates to the Shows list (studio-scoped)
-2. Selects one or more shows (checkbox selection)
-3. Clicks "Generate Tasks" to open the generation dialog
-4. For each task type slot (SETUP / ACTIVE / CLOSURE), picks a template from the studio's active templates
-5. Optionally sets due dates or accepts auto-calculated defaults relative to show time
-6. Confirms → system creates tasks in a single batch transaction
+1. Manager navigates to the Shows list (studio-scoped).
+2. Uses advanced filters to find relevant shows.
+3. Selects one or more shows (checkbox selection).
+4. Clicks "Generate Tasks" to open the generation dialog.
+5. For each task type slot (SETUP / ACTIVE / CLOSURE), picks a template from the studio's active templates.
+6. Optionally sets due dates for `ADMIN` / `ROUTINE` / `OTHER`, or accepts auto-calculated defaults.
+7. Confirms → system creates tasks in a single batch transaction.
 
-#### 2. Show-Level Assignment
-- After tasks are generated, manager assigns shows (all their tasks) to studio member users
-- **Assign show to user** = set `assigneeId` on every task whose `TaskTarget` references that show
-- Manager can select **multiple shows** and assign them to the same user in one bulk operation
-- Previously assigned tasks are overwritten (with confirmation prompt)
+#### 2. Bulk Task Deletion (Cleanup)
+- Manager selects multiple tasks in the Show Tasks page.
+- Action: **Bulk Soft Delete**.
+- Implementation: `DELETE /studios/:studioId/tasks/bulk` using a batch transaction.
+- Effects: sets `deletedAt` on both `Task` and its `TaskTarget` records.
+- Rationale: Soft-deletion allows for **Resumption** (see workflow 1) if tasks are regenerated, preventing UID churn.
 
 **Assignment Flow**:
-1. Manager views shows with generated tasks
-2. Selects one or more shows
-3. Clicks "Assign" → picks a studio member from a dropdown
-4. Confirms → all tasks for the selected shows are assigned to that user
+1. Manager views the Shows Data Table (read-only, with Assignee column for visibility).
+2. Selects one or more shows via checkboxes.
+3. Clicks "Assign" in the floating action bar → opens Assignment Dialog.
+4. Picks a studio member from a dropdown. Sees summary of selected shows and task counts.
+5. Confirms → system calls one batch API → table refetches to reflect updated state.
+
 
 #### 3. Individual Task Reassignment (Split Ownership)
 - Default: One user per show (all tasks assigned to same person)
@@ -148,7 +156,7 @@ A generic, extensible Task Management system using a **"Task as Form"** architec
 - **Strict Templates**: All tasks generated from approved templates
 - **Manager Control**: Only managers generate/delete tasks, assign shows, or bulk update
 - **Operator Scope**: Can only update content + status on their assigned tasks
-- **Audit Trail**: (Future) Comprehensive change logging
+- **Audit Trail**: Partial now via `task.metadata.audit.last_transition` (studio-scoped status transitions); comprehensive append-only audit log remains a future enhancement.
 
 ---
 
@@ -227,22 +235,39 @@ Manager A: Create tasks → Success
 Manager B: Create tasks → Duplicates created! ❌
 ```
 
-**Solution**: PostgreSQL Advisory Locks
+**Solution**: PostgreSQL Advisory Locks inside `@Transactional()` (CLS pattern)
 
 ```typescript
-await prisma.$transaction(async (tx) => {
-  // Lock acquired, held until transaction ends
-  await tx.$executeRaw`SELECT pg_advisory_xact_lock(${showId})`;
-  
-  const existing = await tx.taskTarget.findMany({ where: { showId } });
-  if (existing.length > 0) {
-    throw new ConflictException('Tasks already exist');
+// task-generation-processor.service.ts
+@Transactional()
+async processShow(show: any, templates: any[]) {
+  // Acquire advisory lock — held for the duration of the CLS transaction
+  await this.prisma.$executeRaw`SELECT pg_advisory_xact_lock(${show.id})`;
+
+  for (const template of templates) {
+    // Idempotency / Resumption check
+    const existing = await this.taskRepository.findByShowAndTemplate(show.id, template.id, { includeDeleted: true });
+    
+    if (existing) { 
+      if (!existing.deletedAt) {
+        continue; // Active task exists: Skip
+      } else {
+        // Soft-deleted task exists: Resume (Undelete & Reset)
+        await this.taskRepository.resumeDeletedTask(existing.id, latestSnapshot.id);
+        continue;
+      }
+    }
+
+    // Create task + TaskTarget atomically
+    const task = await this.taskRepository.create({ ... });
+    await this.taskTargetRepository.create({ task: { connect: { id: task.id } }, ... });
   }
-  
-  // Create tasks atomically
-  // Lock automatically released on commit/rollback
-});
+}
 ```
+
+> **Note**: `@Transactional()` only works on public methods called through the NestJS DI proxy.
+> Use a separate injectable service (`TaskGenerationProcessor`) to hold the transactional method —
+> self-invocation (`this.method()`) silently bypasses the transaction.
 
 **Why Advisory Locks**:
 - Database-level concurrency control
@@ -480,6 +505,15 @@ CREATE INDEX idx_snapshots_schema_gin ON task_template_snapshots USING GIN (sche
 
 ### Task Status State Machine
 
+Implementation scope:
+- Enforced on studio endpoints only (`/studios/:studioId/tasks/*`).
+- Not enforced on system-admin endpoints (`/admin/tasks/*`), which intentionally remain unrestricted for cross-studio operational fixes.
+- Studio `MANAGER`/`ADMIN` can submit/review on behalf of assignees; latest transition actor is persisted to `task.metadata.audit.last_transition`.
+- Workflow API is now action-based for studio/member flows:
+  - `PATCH /me/tasks/:taskUid/action`
+  - `PATCH /studios/:studioId/tasks/:taskUid/action`
+  - Actions are mapped server-side to resulting statuses.
+
 ```mermaid
 stateDiagram-v2
     [*] --> PENDING
@@ -488,8 +522,8 @@ stateDiagram-v2
     PENDING --> BLOCKED
     PENDING --> CLOSED : Admin only
     
-    IN_PROGRESS --> REVIEW
-    IN_PROGRESS --> COMPLETED
+    IN_PROGRESS --> REVIEW : Operator submits
+    IN_PROGRESS --> COMPLETED : Admin only
     IN_PROGRESS --> BLOCKED
     IN_PROGRESS --> PENDING
     IN_PROGRESS --> CLOSED : Admin only
@@ -582,6 +616,29 @@ Each template defines a form using this JSON structure:
 | `file`        | URL String      | accept, maxSize                            |
 | `textarea`    | String          | minLength, maxLength                       |
 | `multiselect` | Array           | options (future)                           |
+
+### 5.1 Template Task Type & Due Policy
+
+Each `TaskTemplate` must define a `task_type` so generation and validation are deterministic:
+
+- `SETUP`
+- `ACTIVE`
+- `CLOSURE`
+- `ADMIN`
+- `ROUTINE`
+- `OTHER`
+
+For show-linked generation, backend calculates default due time as:
+
+- `SETUP`: before show starts (default = `show.startTime`)
+- `ACTIVE`: 1 hour after show ends (default = `show.endTime + 1h`)
+- `CLOSURE`: 6 hours after show ends (default = `show.endTime + 6h`)
+- `ADMIN` / `ROUTINE` / `OTHER`: optional manager-provided due time; if omitted, fallback default can be used by studio policy
+
+> Current phase keeps overdue enforcement soft (warning only). Hard cutoff is deferred as a future studio setting.
+>
+> `Task.type` is the runtime source of truth for task lists (`/studios/:studioId/shows/:showUid/tasks`, `/me/tasks`).  
+> Updating a template's `task_type` does not mutate already-active tasks. The new type applies when tasks are newly generated or resumed from soft-deleted state.
 
 ### Task Content Example
 
@@ -873,63 +930,156 @@ export class TaskValidationService {
 
 **Responsibilities**: CRUD operations on TaskTemplate, schema validation, and snapshot management.
 
-| Operation | Key Behaviors |
-| --------- | ------------- |
-| `create` | Validate schema → create template + first snapshot in transaction |
-| `update` | Validate schema → if schema changed, create new snapshot + increment version |
-| `softDelete` | Set `deletedAt`, leave snapshots intact for existing tasks |
+| Operation    | Key Behaviors                                                                |
+| ------------ | ---------------------------------------------------------------------------- |
+| `create`     | Validate schema → create template + first snapshot in transaction            |
+| `update`     | Validate schema → if schema changed, create new snapshot + increment version |
+| `softDelete` | Set `deletedAt`, leave snapshots intact for existing tasks                   |
 
 ### 7.2 TaskOrchestrationService
 
-**Responsibilities**: Bulk task generation, show-level assignment, and task reassignment. All operations scoped to a single studio.
+**Responsibilities**: Bulk task generation, show-level assignment, task reassignment, and studio show/task read operations. All operations scoped to a single studio.
 
-#### `generateTasksForShows` (Bulk)
+#### `generateTasksForShows` (Bulk) ✅
 
-Generates tasks for **multiple shows** from selected templates in a single API call.
+Generates tasks for **multiple shows** from a shared set of templates.
+
+> **Current implementation note**: The API accepts a flat `{ show_uids, template_uids }` — the same set of templates applies to all selected shows. Per-show template selection and per-template due dates are **deferred** (see §8 for actual request shape).
 
 **Behavior**:
-1. For each show, acquire an advisory lock (`pg_advisory_xact_lock(showId)`)
-2. Verify studio consistency: all shows must belong to the request's studio
-3. For each show × template pair:
-   - Skip if a task from that template already exists for the show (idempotent)
-   - Get-or-create snapshot for the template's current version
-   - Create a Task with `status=PENDING`, link via TaskTarget
-4. All operations in a single transaction per show
+1. Resolve templates and validate they belong to the studio and are active
+2. Resolve shows and validate they belong to the studio
+3. For each show, delegate to `TaskGenerationProcessor.processShow()` (separate injectable service to allow `@Transactional()` to work):
+   - Acquire `pg_advisory_xact_lock(showId)` to prevent race conditions
+   - For each template, check if a task (active or deleted) exists:
+     - **Active exists**: Skip (idempotent)
+     - **Soft-deleted exists**: Resume (undelete, reset to `PENDING`, wipe content, update to latest snapshot)
+     - **None exists**: Create new `Task` + `TaskTarget` atomically
+4. Return per-show results + summary
 
-**Idempotency rule**: If a show already has a task generated from template X, that show-template pair is skipped. This allows managers to safely re-run generation to add new templates without duplicating existing tasks.
+**Task type source**: Read from `TaskTemplate.taskType` (explicit template config).
 
-**Task type inference**: Derived from the template's `name` field — templates with "pre" or "setup" → SETUP, "live" or "active" → ACTIVE, "post" or "closure" → CLOSURE, otherwise OTHER.
+**Due time defaults for show-linked tasks**:
+- `SETUP`: show start time baseline (must be before start for submission validation)
+- `ACTIVE`: show end + 1 hour buffer
+- `CLOSURE`: show end + 6 hours buffer
+- `ADMIN` / `ROUTINE` / `OTHER`: optional due time from generation input
 
-#### `assignShowsToUser` (Bulk Show Assignment)
+#### `assignShowsToUser` (Bulk Show Assignment) ✅
 
 Sets `assigneeId` on all tasks linked to the given show(s).
 
 **Behavior**:
-1. Validate the assignee is a member of the studio
-2. For each selected show, find all active tasks (via TaskTarget where `showId` matches)
-3. Batch-update `assigneeId` on those tasks
-4. Return summary: `{ updated_count, show_ids, assignee_id }`
+1. Validate the assignee is a studio member
+2. Resolve show IDs, find all active task-target links via `TaskTarget`
+3. Batch-update `assigneeId` for tasks that exist
+4. Shows with **no generated tasks** are explicitly skipped (no show-level assignee record is created)
+5. Return assignment summary including skipped shows
 
-#### `reassignTask` (Individual Task Reassignment)
+#### `reassignTask` (Individual Task Reassignment) ✅
 
 Updates `assigneeId` on a single task.
 
 **Behavior**:
-1. Validate the new assignee is a member of the studio
-2. Update the task's `assigneeId`
-3. Optimistic locking NOT needed here (only assignment changes, not content)
+1. Load task, verify it belongs to the studio
+2. Validate new assignee is a studio member
+3. Update `assigneeId` (no optimistic locking — assignment-only change)
+
+#### `getShowTasks` (View Show Tasks) ✅
+
+Returns all tasks for a show, ordered by type (`SETUP → ACTIVE → CLOSURE → ADMIN → ROUTINE → OTHER`).
+
+#### `getStudioShowsWithTaskSummary` (Studio Shows List) ✅
+
+Returns paginated shows for a studio with per-show `task_summary` (total / assigned / unassigned / completed).
 
 ### 7.3 TaskService
 
 **Responsibilities**: Single-task update (content, status), optimistic locking, content validation.
 
-| Operation | Key Behaviors |
-| --------- | ------------- |
-| `update` | Compare `version` for optimistic lock → validate content against snapshot schema → validate status transition → atomic update |
-| Status transitions | Enforced via state machine (see §4) |
-| `completedAt` | Auto-set when transitioning to COMPLETED, cleared otherwise |
+**Current status**: ✅ Core update functionality implemented in `updateTaskContentAndStatus()`. Exposed at both `PATCH /studios/:studioId/tasks/:id` (studio manager/admin) and `PATCH /me/tasks/:id` (operator, own tasks only).
 
----
+| Operation                    | Key Behaviors                                                                                                    |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `updateTaskContentAndStatus` | Compare `version` for optimistic lock → validate content against snapshot schema → update with version increment |
+| `completedAt`                | Auto-set when transitioning to COMPLETED, cleared otherwise                                                      |
+| Status transitions           | ✅ Studio-scoped state machine enforcement is active on `/studios/:studioId/tasks/*` (role-aware); `/admin/*` remains intentionally unrestricted |
+
+**Planned: Role-Based Transition Table**
+
+| From → To               |  Operator (assignee)  |    Admin / Manager     |
+| ----------------------- | :-------------------: | :--------------------: |
+| PENDING → IN_PROGRESS   |           ✅           |           ✅            |
+| IN_PROGRESS → REVIEW    | ✅ (submit for review) |           ✅            |
+| IN_PROGRESS → COMPLETED |           ❌           |   ✅ (bypass review)    |
+| REVIEW → IN_PROGRESS    |    ✅ (self-recall)    | ✅ (reject / send back) |
+| REVIEW → COMPLETED      |           ❌           |      ✅ (approve)       |
+| any → BLOCKED           |           ✅           |           ✅            |
+| BLOCKED → IN_PROGRESS   |           ✅           |           ✅            |
+| any → CLOSED            |           ❌           |           ✅            |
+
+**Scope & Bypass Requirement (new)**
+- **Studio module (`/studios/:studioId/*`)**:
+  - Enforce state machine transition rules in studio-scoped services/controllers.
+  - Applies to operator and studio admin/manager workflow endpoints.
+- **Admin module (`/admin/*`, system admin only)**:
+  - Allow cross-studio task discovery and operational reassignment/deletion for recovery/support use cases.
+  - Keep task form content immutable in system scope; workflow/status/content edits remain studio-scoped.
+  - Must remain restricted to system-admin roles and should preserve audit metadata (actor + timestamp + reason when available).
+
+**Action-first workflow contract (implemented)**
+- Member actions (`/me/tasks/:id/action`):
+  - `SAVE_CONTENT`
+  - `START_WORK`
+  - `SUBMIT_FOR_REVIEW`
+  - `CONTINUE_EDITING`
+  - `MARK_BLOCKED`
+- Studio manager/admin actions (`/studios/:studioId/tasks/:id/action`):
+  - All member actions, plus:
+  - `APPROVE_COMPLETED`
+  - `CLOSE_TASK`
+  - `REOPEN_TASK`
+- Studio lazy detail endpoint for action sheet/form rendering:
+  - `GET /studios/:studioId/tasks/:id`
+  - Returns `taskWithRelationsDto` including `snapshot.schema` for on-demand form render.
+- `/admin/*` remains status-flexible and operationally unrestricted.
+
+**Current audit persistence (implemented)**
+- On studio-scoped status transition, latest actor attribution is written to:
+  - `task.metadata.audit.last_transition`
+- Structure:
+  - `from`, `to`, `at`
+  - `actor_ext_id`, `actor_email`, `actor_role`
+  - `source` (`"studio"`)
+  - `had_assignee` (boolean snapshot at transition time)
+- This is intentionally lightweight and non-breaking. Full append-only audit history remains planned.
+
+### 7.4 Submission Window Validation (Show-Linked Tasks)
+
+Validation runs on submit transitions for operator/admin actions.
+
+- `SETUP`
+  - Must be submitted before show starts
+- `ACTIVE`
+  - Cannot be submitted before show starts
+  - Soft deadline: show end + 1 hour
+- `CLOSURE`
+  - Cannot be submitted before show starts
+  - Soft deadline: show end + 6 hours
+
+Current behavior:
+- If submitted after soft deadline: allow submit, return warning metadata (`task.metadata.due_warning`).
+- If window rule is violated (e.g. ACTIVE/CLOSURE before show start): reject with validation error.
+
+Future extension:
+- Studio-level toggle `enforce_due_deadline` can convert soft overdue warnings into hard validation failures.
+
+**Implementation notes:**
+- `MeTaskService.updateMyTask()` — enforce operator-only transitions; reject others with `422 TASK_003`
+- `StudioTaskController PATCH /:id` — enforce admin/manager transitions
+- `rejection_note` string field accepted on `REVIEW → IN_PROGRESS` to surface reason to operator
+- `BLOCKED` reason stored in `task.metadata.blocked_reason`
+
 
 ## 8. API Endpoints
 
@@ -958,14 +1108,19 @@ GET /studios/:studioId/shows
 Returns shows belonging to the studio with task generation status summary.
 
 **Query Parameters**:
-| Param | Type | Description |
-| ----- | ---- | ----------- |
-| `search` | string | Filter by show name (partial match) |
-| `date_from` | ISO date | Show start time >= this date |
-| `date_to` | ISO date | Show start time <= this date |
-| `has_tasks` | boolean | `true` = only shows with generated tasks, `false` = only shows without tasks |
-| `cursor` | string | Cursor-based pagination |
-| `limit` | number | Page size (default 20, max 100) |
+| Param                | Type     | Description                                                                  |
+| -------------------- | -------- | ---------------------------------------------------------------------------- |
+| `search`             | string   | Filter by show name (partial match)                                          |
+| `client_name`        | string   | Filter by client name (exact match)                                          |
+| `show_type_name`     | string   | Filter by show type name (exact match)                                       |
+| `show_standard_name` | string   | Filter by show standard name (exact match)                                   |
+| `show_status_name`   | string   | Filter by show status name (exact match)                                     |
+| `platform_name`      | string   | Filter by broadcast platform name (exact match)                              |
+| `date_from`          | ISO date | Show start time >= this date                                                 |
+| `date_to`            | ISO date | Show start time <= this date                                                 |
+| `has_tasks`          | boolean  | `true` = only shows with generated tasks, `false` = only shows without tasks |
+| `cursor`             | string   | Cursor-based pagination                                                      |
+| `limit`              | number   | Page size (default 20, max 100)                                              |
 
 **Response: 200 OK**
 ```json
@@ -989,7 +1144,7 @@ Returns shows belonging to the studio with task generation status summary.
 }
 ```
 
-**Note**: `task_summary` is `null` if no tasks have been generated for the show.
+**Note**: `task_summary` always returns the counts object. If no tasks have been generated, all counts are `0` (not `null`).
 
 ---
 
@@ -1001,7 +1156,17 @@ POST /studios/:studioId/tasks/generate
 
 Generates tasks for one or more shows from selected templates.
 
-**Request**
+> **Current implementation**: Uses a simplified flat request shape — the same set of templates is applied to all selected shows. Per-show template selection and per-template due dates are **deferred** to a future iteration.
+
+**Request (Current Implementation)**
+```json
+{
+  "show_uids": ["show_abc123", "show_def456"],
+  "template_uids": ["tpl_setup1", "tpl_live1", "tpl_closure1"]
+}
+```
+
+**Request (Future — Per-Show Configuration)**
 ```json
 {
   "shows": [
@@ -1012,14 +1177,6 @@ Generates tasks for one or more shows from selected templates.
         "tpl_setup1": "2026-02-03T17:00:00Z",
         "tpl_live1": "2026-02-05T20:00:00Z",
         "tpl_closure1": "2026-02-06T12:00:00Z"
-      }
-    },
-    {
-      "show_uid": "show_def456",
-      "template_uids": ["tpl_setup1", "tpl_live1"],
-      "due_dates": {
-        "tpl_setup1": "2026-02-10T17:00:00Z",
-        "tpl_live1": "2026-02-12T20:00:00Z"
       }
     }
   ]
@@ -1079,18 +1236,61 @@ Returns all tasks generated for a specific show, with assignee info.
 {
   "data": [
     {
-      "uid": "task_001",
+      "id": "task_001",
       "description": "Pre-Production Checklist",
       "type": "SETUP",
       "status": "PENDING",
       "due_date": "2026-02-03T17:00:00Z",
-      "assignee": { "uid": "usr_001", "name": "Marcus Chen" },
+      "assignee": { "id": "usr_001", "name": "Marcus Chen" },
       "version": 1,
-      "template": { "uid": "tpl_setup1", "name": "Pre-Production Checklist" }
+      "template": { "id": "tpl_setup1", "name": "Pre-Production Checklist" }
     }
   ]
 }
 ```
+
+---
+
+#### Show Detail (Studio-Scoped)
+
+```
+GET /studios/:studioId/shows/:showUid
+```
+
+Returns show metadata (client, status, standard, type, schedule) for the task detail header.
+
+**Security/Scope Rule**:
+- Show must belong to `:studioId`; otherwise return `403 Forbidden`.
+- Endpoint is protected by `@StudioProtected()` and membership checks.
+
+---
+
+#### Bulk Task Deletion
+
+```
+DELETE /studios/:studioId/tasks/bulk
+```
+
+Soft-deletes an array of tasks. Used by managers to remove wrongly generated tasks. **Soft Deletion** is necessary here because the `Task` entity contains a `deletedAt` column, ensuring that deleted tasks can be audited and recovered if necessary, rather than permanently destroying the records.
+
+**Request**
+```json
+{
+  "task_uids": ["task_001", "task_002"]
+}
+```
+
+**Response: 200 OK**
+```json
+{
+  "deleted_count": 2
+}
+```
+
+**Error Scenarios**:
+- `400 Bad Request`: Validation failure on UIDs.
+- `403 Forbidden`: User is not a studio admin/manager.
+- `404 Not Found`: One or more tasks do not exist or do not belong to the studio.
 
 ---
 
@@ -1114,10 +1314,17 @@ Assigns all tasks for selected shows to a single user.
 ```json
 {
   "updated_count": 5,
+  "show_count": 2,
+  "shows_with_tasks_count": 1,
+  "shows_without_tasks": ["show_def456"],
   "shows": ["show_abc123", "show_def456"],
-  "assignee": { "uid": "usr_001", "name": "Marcus Chen" }
+  "assignee": { "id": "usr_001", "name": "Marcus Chen" }
 }
 ```
+
+**Notes**:
+- Assignment is task-based. If a show has no generated tasks yet, there is nothing to assign.
+- Client should prompt users to generate tasks first when all selected shows are taskless.
 
 ---
 
@@ -1139,8 +1346,8 @@ Reassigns a single task to a different user.
 **Response: 200 OK**
 ```json
 {
-  "uid": "task_001",
-  "assignee": { "uid": "usr_002", "name": "Sarah Connor" },
+  "id": "task_001",
+  "assignee": { "id": "usr_002", "name": "Sarah Connor" },
   "updated_at": "2026-02-14T10:00:00Z"
 }
 ```
@@ -1167,32 +1374,253 @@ Returns studio members available for task assignment.
 
 ---
 
-#### Other Bulk Operations
+#### Admin: Task Action Command (Review Workflow) ✅ Implemented
+
+Used by studio admins/managers to run explicit workflow actions (submit/reject/approve/close/reopen) with optional content payload when needed.
 
 ```
-POST /studios/:studioId/tasks/bulk-update-status
-POST /studios/:studioId/tasks/bulk-delete
-GET  /studios/:studioId/tasks/dashboard
+PATCH /studios/:studioId/tasks/:taskUid/action
 ```
+
+**Request**
+```json
+{
+  "action": "APPROVE_COMPLETED",
+  "version": 4
+}
+```
+
+```json
+{
+  "action": "SUBMIT_FOR_REVIEW",
+  "version": 4,
+  "content": {
+    "audio_check": true
+  }
+}
+```
+
+```json
+{
+  "action": "CONTINUE_EDITING",
+  "version": 4,
+  "note": "Please fix the missing segment audio."
+}
+```
+
+**Response: 200 OK**
+```json
+{
+  "uid": "task_001",
+  "status": "COMPLETED",
+  "completed_at": "2026-03-01T15:00:00Z",
+  "version": 5
+}
+```
+
+**Transition rules** (enforced server-side):
+- Only admin/manager roles may call this endpoint
+- `REVIEW → COMPLETED`: approves the task
+- `REVIEW → IN_PROGRESS`: rejects; `rejection_note` stored in `task.metadata.rejection_note`
+- `any → CLOSED`: terminates task regardless of current state
+- `any → BLOCKED`: blocks task; reason stored as `task.metadata.blocked_reason`
+- All other transitions: `422 TASK_003 Invalid status transition`
+- Version mismatch: `409 TASK_004 Optimistic lock failure`
+
+**Query: List Tasks Awaiting Review**
+
+Use the studio-scoped list endpoint to power the review queue:
+
+```
+GET /studios/:studioId/tasks?status=REVIEW
+```
+
+---
+
+#### Other Bulk Operations ⏳ Deferred to Phase 4
+
+```
+POST /studios/:studioId/tasks/bulk-update-status   (bulk approve/reject, deferred to Phase 4 safeguards)
+GET  /studios/:studioId/tasks/dashboard            (cross-show task summary)
+```
+
+---
+
+### System Admin Endpoints (`/admin/*`)
+
+`/admin/tasks` is intended for cross-studio operations and support workflows.  
+Current design keeps task content immutable in system scope and focuses on list/detail/reassign/delete actions.
+
+```
+GET    /admin/tasks
+GET    /admin/tasks/:taskUid
+PATCH  /admin/tasks/:taskUid/assign
+PATCH  /admin/tasks/:taskUid/reassign-show
+DELETE /admin/tasks/:taskUid
+```
+
+#### `GET /admin/tasks` Query Parameters
+
+| Param             | Type          | Description                                                                 |
+| ----------------- | ------------- | --------------------------------------------------------------------------- |
+| `status`          | enum (multi)  | Filter by task status                                                       |
+| `task_type`       | enum (multi)  | Filter by task type (`SETUP`, `ACTIVE`, `CLOSURE`, `ADMIN`, `ROUTINE`, `OTHER`) |
+| `due_date_from`   | ISO date-time | Due date lower bound                                                        |
+| `due_date_to`     | ISO date-time | Due date upper bound                                                        |
+| `show_start_from` | ISO date-time | Filter by linked show start time lower bound                                |
+| `show_start_to`   | ISO date-time | Filter by linked show start time upper bound                                |
+| `studio_id`       | string (UID)  | Filter by studio UID                                                        |
+| `client_id`       | string (UID)  | Filter by client UID inferred through linked show                           |
+| `studio_name`     | string        | Filter by studio name                                                       |
+| `client_name`     | string        | Filter by client name (through linked show)                                 |
+| `assignee_name`   | string        | Filter by assignee user name                                                |
+| `show_name`       | string        | Filter by linked show name                                                  |
+| `has_assignee`    | boolean       | Filter assigned vs unassigned tasks                                         |
+| `has_due_date`    | boolean       | Filter tasks with/without due date                                          |
+| `search`          | string        | Text search on task UID/description/show name&uid/assignee name&uid         |
+| `sort`            | string        | `due_date:asc` (default), `due_date:desc`, `updated_at:asc/desc`            |
+| `page`            | number        | Page number                                                                 |
+| `limit`           | number        | Page size                                                                   |
+
+#### `PATCH /admin/tasks/:taskUid/assign`
+
+- Body: `{ assignee_uid: string | null }`
+- Validation:
+  - If non-null: target user must exist.
+  - Target user must have active membership in the task's studio.
+  - `null` unassigns the task.
+- This endpoint is the system-admin-safe path for cross-studio reassignment without mutating task form content.
+
+#### `PATCH /admin/tasks/:taskUid/reassign-show`
+
+- Body: `{ show_uid: string }`
+- Purpose: move a task's show target for support/recovery operations while keeping task content immutable.
+- Strict guardrails:
+  - Task must exist and be `PENDING`.
+  - Task must be studio-scoped.
+  - Target show must be in the same studio as the task.
+- Due date behavior on move:
+  - `SETUP`: recompute to `show.start_time - 1 hour`
+  - `ACTIVE`: recompute to `show.end_time + 1 hour`
+  - `CLOSURE`: recompute to `show.end_time + 6 hours`
+  - `ADMIN` / `ROUTINE` / `OTHER`: keep existing due date
+
+#### Show Status Master Data (`/admin/show-statuses`)
+
+Show status is system-level master data used by show/task flows for filtering and lifecycle labeling.
+
+```
+GET    /admin/show-statuses
+POST   /admin/show-statuses
+GET    /admin/show-statuses/:id
+PATCH  /admin/show-statuses/:id
+DELETE /admin/show-statuses/:id
+```
+
+Usage notes:
+- Show create/edit forms and show filters consume this resource.
+- Task-related views that expose show-status filters should source options from this endpoint.
+
+#### System Task Template Management (`/admin/task-templates`) ⏳ Planned
+
+System admin should be able to manage task templates across studios and inspect where a template is currently bound/used, without loading massive historical linkage data in list responses.
+
+```
+GET    /admin/task-templates
+POST   /admin/task-templates
+GET    /admin/task-templates/:id
+PATCH  /admin/task-templates/:id
+DELETE /admin/task-templates/:id
+GET    /admin/task-templates/:id/usage-summary
+GET    /admin/task-templates/:id/bindings
+```
+
+Design guardrails:
+- Keep list payloads lightweight; do not inline full show/task bindings in `GET /admin/task-templates`.
+- Use soft-delete semantics for templates and preserve snapshots for existing tasks.
+- Cross-studio admin CRUD is allowed, but all writes must keep snapshot/version integrity.
+
+##### `GET /admin/task-templates` (summary-first)
+
+Returns template metadata plus compact usage summary only:
+- `task_count_total`
+- `task_count_active` (`deleted_at IS NULL`)
+- `show_count_active` (distinct active shows currently linked via tasks)
+- `last_used_at` (max task creation time)
+
+Optional query params:
+- `studio_id`
+- `task_type`
+- `is_active`
+- `search` (name/description)
+- `sort` (`updated_at`, `last_used_at`, `task_count_active`)
+- `page`, `limit`
+
+##### `GET /admin/task-templates/:id/bindings` (on-demand drill-down)
+
+Returns paginated bindings for one template only. This endpoint is the heavy view and must be explicitly requested by UI interaction.
+
+Query params:
+- `studio_id` (optional)
+- `status` (task status filter)
+- `show_start_from`, `show_start_to`
+- `cursor` or `page/limit` (implementation choice, must remain paginated)
+- `include_deleted` (default `false`)
+
+Response focus:
+- show identity and schedule
+- task identity/status/type/due-date/assignee
+- minimal fields for operations and diagnostics
+
+##### Performance strategy for large studios
+
+- Summary-first list avoids N+1 heavy joins in primary browsing flow.
+- Drill-down endpoint is server-paginated and filterable; FE loads incrementally.
+- Add supporting indexes for common access paths:
+  - `tasks(template_id, deleted_at, created_at)`
+  - `task_targets(task_id, target_type, deleted_at, show_id)`
+  - `shows(id, studio_id, start_time)`
+- If summary query cost grows materially, introduce a periodic/materialized usage rollup table and keep the API contract unchanged.
 
 ---
 
 ### User (Operator) Endpoints
 
+> **Note**: `/me/tasks/upcoming` is **not a separate endpoint**. "Upcoming" tasks are a subset of `GET /me/tasks` filtered by `status` (PENDING/IN_PROGRESS) and a `due_date_to` window. This keeps the API surface minimal.
+
 ```
-GET   /me/tasks
-GET   /me/tasks/upcoming
-GET   /me/tasks/:uid
-PATCH /me/tasks/:uid
+GET   /me/tasks          ✅ implemented — paginated access with filters
+GET   /me/tasks/:uid     ✅ implemented
+PATCH /me/tasks/:uid     ✅ implemented — content/status update with optimistic locking + assignee-owns-task check
 ```
+
+> **Current status**: `snapshot.schema` is included in both `GET /me/tasks` and `GET /me/tasks/:uid`, and exposed through `taskWithRelationsDto`. This supports FE `JsonForm` rendering and progress calculations.
+
+**Query Parameters for `GET /me/tasks`**:
+| Param             | Type          | Description                                                               |
+| ----------------- | ------------- | ------------------------------------------------------------------------- |
+| `status`          | enum (multi)  | Filter by status (e.g. `PENDING`, `IN_PROGRESS`)                          |
+| `task_type`       | enum (multi)  | Filter by type: `SETUP`, `ACTIVE`, `CLOSURE`, `ADMIN`, `ROUTINE`, `OTHER` |
+| `due_date_from`   | ISO date      | Tasks due on or after this date                                           |
+| `due_date_to`     | ISO date      | Tasks due on or before this date (use for "upcoming" window)              |
+| `show_start_from` | ISO date-time | Tasks linked to shows with `show.start_time >= value`                     |
+| `show_start_to`   | ISO date-time | Tasks linked to shows with `show.start_time <= value`                     |
+| `search`          | string        | Partial match on task description or show name                            |
+| `sort`            | string        | `due_date:asc` (default), `due_date:desc`, `updated_at:desc`              |
+| `cursor`          | string        | Cursor-based pagination                                                   |
+| `limit`           | number        | Page size (default 20, max 100)                                           |
+
+> **New params** (`task_type`, `search`, `sort`, `show_start_from`, `show_start_to`) are required to support the enhanced My Tasks filter bar (see UI/UX doc §3.4). Must be wired through `ListMyTasksQueryDto` → `TaskRepository.findTasksByAssignee()`.
+>
+> **TODO (system concern)**: `show_start_*` bounds should be normalized against studio timezone consistently before querying. Current implementation treats incoming ISO values directly.
 
 **Example: Get My Tasks**
 ```http
-GET /api/v1/me/tasks?status=PENDING&status=IN_PROGRESS
+GET /api/v1/me/tasks?status=PENDING&status=IN_PROGRESS&task_type=SETUP&sort=due_date:asc
 Authorization: Bearer {jwt}
 ```
 
-**Response: 200 OK**
+**Response: 200 OK** — with `snapshot` added
 ```json
 {
   "data": [
@@ -1202,6 +1630,16 @@ Authorization: Bearer {jwt}
       "status": "IN_PROGRESS",
       "type": "SETUP",
       "due_date": "2026-02-05T17:00:00Z",
+      "content": { "script_review": true, "camera_count": 4 },
+      "snapshot": {
+        "version": 2,
+        "schema": {
+          "items": [
+            { "key": "script_review", "type": "checkbox", "label": "Script reviewed", "required": true },
+            { "key": "camera_count", "type": "number", "label": "Cameras required", "required": true }
+          ]
+        }
+      },
       "show": {
         "uid": "show_abc123",
         "name": "Monday Night Live"
@@ -1270,58 +1708,41 @@ Content-Type: application/json
 
 ### Permission Matrix
 
-| Endpoint              | System Admin | Studio Admin | User (Assignee/Member) |
-| --------------------- | ------------ | ------------ | ---------------------- |
-| Create Template       | ✅            | ✅            | ❌                      |
-| Update Template       | ✅            | ✅            | ❌                      |
-| Delete Template       | ✅            | ✅            | ❌                      |
-| List Studio Shows     | ✅            | ✅            | ❌                      |
-| Generate Tasks (Bulk) | ✅            | ✅            | ❌                      |
-| Assign Shows (Bulk)   | ✅            | ✅            | ❌                      |
-| Reassign Task         | ✅            | ✅            | ❌                      |
-| View Show Tasks       | ✅            | ✅            | ❌                      |
-| View My Tasks         | ✅            | ✅            | ✅                      |
-| Update My Task        | ✅            | ✅            | ✅ (own only)           |
-| Force Update Any Task | ✅            | ✅            | ❌                      |
-| Hard Delete Task      | ✅            | ❌            | ❌                      |
+| Endpoint                               | System Admin | Studio Admin/Manager |   Operator (Member)    |
+| -------------------------------------- | :----------: | :------------------: | :--------------------: |
+| Create Template                        |      ✅       |          ✅           |           ❌            |
+| Update Template                        |      ✅       |          ✅           |           ❌            |
+| Delete Template                        |      ✅       |          ✅           |           ❌            |
+| List Studio Shows                      |      ✅       |          ✅           |           ❌            |
+| Generate Tasks (Bulk)                  |      ✅       |          ✅           |           ❌            |
+| Assign Shows (Bulk)                    |      ✅       |          ✅           |           ❌            |
+| Reassign Task                          |      ✅       |          ✅           |           ❌            |
+| View Show Tasks                        |      ✅       |          ✅           |           ❌            |
+| View My Tasks                          |      ✅       |          ✅           |           ✅            |
+| Update task content (own)              |      ✅       |          ✅           |      ✅ (own only)      |
+| Transition: PENDING → IN_PROGRESS      |      ✅       |          ✅           |      ✅ (own only)      |
+| Transition: IN_PROGRESS → REVIEW       |      ✅       |          ✅           |      ✅ (own only)      |
+| Transition: REVIEW → IN_PROGRESS       |      ✅       |          ✅           |    ✅ (self-recall)     |
+| Transition: REVIEW → COMPLETED         |      ✅       |          ✅           |           ❌            |
+| Transition: IN_PROGRESS → COMPLETED    |      ✅       |          ✅           | ❌ (must go via REVIEW) |
+| Transition: any → BLOCKED              |      ✅       |          ✅           |      ✅ (own only)      |
+| Transition: any → CLOSED               |      ✅       |          ✅           |           ❌            |
+| Force-update any task (content/status) |      ❌       |          ✅           |           ❌            |
+| Hard Delete Task                       |      ✅       |          ❌           |           ❌            |
+| Admin module operational override (system reassignment/delete) |      ✅       |          ❌           |           ❌            |
 
 ### Guards
 
+Authorization is implemented via the `@StudioProtected()` decorator, which composes `JwtAuthGuard` + `StudioMembershipGuard` + role checking in a single decorator:
+
 ```typescript
-// studio-membership.guard.ts
-@Injectable()
-export class StudioMembershipGuard implements CanActivate {
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const user = request.user;
-    const studioId = BigInt(request.params.studioId);
-
-    const membership = await prisma.studioMembership.findUnique({
-      where: {
-        userId_studioId: { userId: user.id, studioId }
-      }
-    });
-
-    if (!membership) {
-      throw new ForbiddenException('Not a member of this studio');
-    }
-
-    // Check role for specific actions
-    const requiredRole = Reflector.get('role', context.getHandler());
-    if (requiredRole && !this.hasRole(membership.role, requiredRole)) {
-      throw new ForbiddenException('Insufficient permissions');
-    }
-
-    request.studioMembership = membership;
-    return true;
-  }
-
-  private hasRole(userRole: string, requiredRole: string): boolean {
-    const hierarchy = { admin: 3, manager: 2, member: 1 };
-    return hierarchy[userRole] >= hierarchy[requiredRole];
-  }
-}
+// Usage on a studio-scoped controller or method:
+@StudioProtected([STUDIO_ROLE.ADMIN])
+@Controller('studios/:studioId/tasks')
+export class StudioTaskController extends BaseStudioController { ... }
 ```
+
+The `studioId` route parameter is a UID string (e.g., `std_abc123`), which the guard resolves via the `UidValidationPipe` before performing the membership check. The role hierarchy is: `admin > manager > member`.
 
 ---
 
@@ -1400,6 +1821,17 @@ const tasks = await prisma.task.findMany({
 });
 ```
 
+### Frontend Cache Consistency Contract
+
+- Bulk mutation endpoints (`/tasks/generate`, `/tasks/assign-shows`) must remain studio-scoped and deterministic for submitted `show_uids`.
+- Frontend invalidates cache by scope:
+  - studio shows list cache for the studio
+  - show task caches only for affected `show_uids`
+- This keeps read-after-write consistency for:
+  - `/studios/:studioId/shows`
+  - `/studios/:studioId/shows/:showId/tasks`
+- Avoid broad "invalidate all task queries" patterns; they increase network load with no correctness benefit.
+
 ### Pagination
 
 ```typescript
@@ -1434,65 +1866,6 @@ async function paginateTasks(
 
 ---
 
-## 12. Implementation Checklist
-
-### Database (Week 1)
-- [ ] Create Prisma schema with all models
-- [ ] Add database constraints
-- [ ] Add GIN indexes for JSONB columns
-- [ ] Add composite indexes for common queries
-- [ ] Write migration scripts
-- [ ] Test on staging database
-
-### Core Services (Week 2)
-- [ ] TaskTemplateService (CRUD, validation)
-- [ ] TaskValidationService (schema + content)
-- [ ] TaskService (update, reassign, status transitions)
-- [ ] TaskOrchestrationService (generate with advisory locks)
-- [ ] Soft delete middleware
-
-### API Controllers (Week 2-3)
-- [ ] StudioTaskTemplateController (manager endpoints)
-- [ ] StudioTaskController (task generation, bulk ops)
-- [ ] MeTaskController (operator dashboard)
-- [ ] AdminTaskController (system admin tools)
-- [ ] Add API versioning (e.g. URI prefix /v1 or Header-based)
-
-### Authentication & Guards (Week 3)
-- [ ] JwtAuthGuard
-- [ ] StudioMembershipGuard
-- [ ] SystemAdminGuard
-- [ ] Role-based decorators
-- [ ] Permission matrix enforcement
-
-### Error Handling (Week 3)
-- [ ] Global exception filter
-- [ ] Error code system
-- [ ] Validation error formatting
-- [ ] Logging integration
-
-### Shared Types (`@eridu/api-types`)
-- [ ] Export enums: `TaskStatus`, `TaskType`, `TargetType`
-- [ ] Export DTOs: `CreateTaskDto`, `UpdateTaskDto`, `TaskDto`, etc.
-- [ ] Export API endpoint keys
-
-### Testing (Week 4)
-- [ ] Unit tests for validation service
-- [ ] Unit tests for status transition validation
-- [ ] Integration tests for race conditions
-- [ ] Integration tests for bulk operations
-- [ ] E2E tests for task generation flow
-- [ ] Test optimistic locking conflicts
-
-### Deployment (Week 4)
-- [ ] Environment configuration
-- [ ] Database migration process
-- [ ] API documentation (Swagger/OpenAPI)
-- [ ] Monitoring and alerts
-- [ ] Performance benchmarks
-
----
-
 ## Appendices
 
 ### Appendix A: DTOs & Schemas
@@ -1505,12 +1878,14 @@ async function paginateTasks(
 interface CreateTaskTemplateDto {
   name: string;
   description?: string;
+  task_type: TaskType;
   schema: Json;  // UI Schema
 }
 
 interface UpdateTaskTemplateDto {
   name?: string;
   description?: string;
+  task_type?: TaskType;
   schema?: Json;
   is_active?: boolean;
 }
@@ -1554,20 +1929,36 @@ interface TaskDto {
   created_at: string;
   updated_at: string;
 }
+
+interface BulkDeleteTasksDto {
+  task_uids: string[];
+}
+
+interface BulkDeleteTasksResponseDto {
+  deleted_count: number;
+}
 ```
 
 ---
 
-### Appendix B: Deferred Features
+### Appendix B: Planned & Deferred Features
 
-The following features are deferred for post-MVP implementation:
+**Planned (next iteration):**
+1. **Admin module task management hardening (`/admin/tasks`)** — keep reassignment/delete operational path, add reason fields and richer observability while preserving unrestricted system-admin control
+2. **Documentation and contract alignment pass** — keep backend/UI docs synchronized with implementation checkpoints
 
+**Deferred to Phase 4 (roadmap-owned):**
+1. **Review queue bulk action support** — studio-scoped bulk status command path (e.g. bulk approve for REVIEW tasks)
+2. **Review-quality decision support and validation hardening** — per-task review summary payload + standardized validation/error contracts for review decisions
+
+**Deferred (post-MVP):**
 1. **File Upload Handling**: Support for field type `file` with direct upload to cloud storage
 2. **Auto "Smart" Task Generation**: Auto-calculation of due dates based on show schedule
 3. **Progress Calculation in API**: API response field `progress` derived from schema + content (currently frontend calculates)
 4. **Advanced Analytics & Search**: Full-text search across JSONB content, materialized views
 5. **Real-time Collaboration**: WebSocket-based live status updates
 6. **Mobile Offline / PWA**: Full offline sync and conflict resolution
+7. **`AdminTaskController` enhancements**: add bulk reassignment ergonomics and support-tooling safeguards
 
 ---
 

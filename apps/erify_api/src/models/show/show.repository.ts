@@ -271,8 +271,8 @@ export class ShowRepository extends BaseRepository<
     where?: Prisma.ShowWhereInput;
     skip?: number;
     take?: number;
-    orderBy?: any;
-    include?: Record<string, any>;
+    orderBy?: Prisma.ShowOrderByWithRelationInput;
+    include?: Prisma.ShowInclude;
   }): Promise<Show[]> {
     return this.delegate.findMany(params);
   }
@@ -312,5 +312,130 @@ export class ShowRepository extends BaseRepository<
       where,
       data: { deletedAt: new Date() },
     });
+  }
+
+  async findPaginatedWithTaskSummary(
+    studioId: bigint,
+    query: {
+      skip?: number;
+      take?: number;
+      search?: string;
+      date_from?: string;
+      date_to?: string;
+      has_tasks?: boolean;
+      client_name?: string;
+      show_type_name?: string;
+      show_standard_name?: string;
+      show_status_name?: string;
+      platform_name?: string;
+    },
+  ) {
+    const where: Prisma.ShowWhereInput = {
+      studioId,
+      deletedAt: null,
+    };
+
+    if (query.search) {
+      where.name = { contains: query.search, mode: 'insensitive' };
+    }
+
+    if (query.date_from || query.date_to) {
+      const inclusiveDateTo = query.date_to ? new Date(query.date_to) : null;
+      if (inclusiveDateTo) {
+        inclusiveDateTo.setHours(23, 59, 59, 999);
+      }
+
+      where.startTime = {
+        ...(query.date_from && { gte: new Date(query.date_from) }),
+        ...(inclusiveDateTo && { lte: inclusiveDateTo }),
+      };
+    }
+
+    if (query.has_tasks !== undefined) {
+      if (query.has_tasks) {
+        where.taskTargets = {
+          some: {
+            deletedAt: null,
+            task: { deletedAt: null },
+          },
+        };
+      } else {
+        where.taskTargets = {
+          none: {
+            deletedAt: null,
+            task: { deletedAt: null },
+          },
+        };
+      }
+    }
+
+    if (query.client_name) {
+      where.client = {
+        name: { contains: query.client_name, mode: 'insensitive' },
+        deletedAt: null,
+      };
+    }
+
+    if (query.show_type_name) {
+      where.showType = {
+        name: { contains: query.show_type_name, mode: 'insensitive' },
+      };
+    }
+
+    if (query.show_standard_name) {
+      where.showStandard = {
+        name: { contains: query.show_standard_name, mode: 'insensitive' },
+      };
+    }
+
+    if (query.show_status_name) {
+      where.showStatus = {
+        name: { contains: query.show_status_name, mode: 'insensitive' },
+      };
+    }
+
+    if (query.platform_name) {
+      where.showPlatforms = {
+        some: {
+          platform: {
+            name: { contains: query.platform_name, mode: 'insensitive' },
+          },
+        },
+      };
+    }
+
+    const [total, data] = await Promise.all([
+      this.delegate.count({ where }),
+      this.delegate.findMany({
+        where,
+        skip: query.skip,
+        take: query.take,
+        orderBy: { startTime: 'desc' },
+        include: {
+          client: true,
+          studio: true,
+          studioRoom: true,
+          showType: true,
+          showStatus: true,
+          showStandard: true,
+          taskTargets: {
+            where: {
+              deletedAt: null,
+              task: { deletedAt: null },
+            },
+            include: {
+              task: {
+                select: {
+                  status: true,
+                  assigneeId: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+    return { data, total };
   }
 }

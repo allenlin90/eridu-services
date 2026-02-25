@@ -38,6 +38,9 @@ describe('taskTemplateService', () => {
   describe('validateSchema', () => {
     // Helper to create basic valid schema
     const createValidSchema = () => ({
+      metadata: {
+        task_type: 'SETUP',
+      },
       items: [
         {
           id: 'item_1',
@@ -51,7 +54,7 @@ describe('taskTemplateService', () => {
 
     it('should pass for a valid schema', () => {
       const schema = createValidSchema();
-      expect(service.validateSchema(schema)).toBe(true);
+      expect(() => service.validateSchema(schema)).not.toThrow();
     });
 
     it('should throw if key is not snake_case', () => {
@@ -63,6 +66,9 @@ describe('taskTemplateService', () => {
 
     it('should throw if duplicate keys exist', () => {
       const schema = {
+        metadata: {
+          task_type: 'SETUP',
+        },
         items: [
           {
             id: 'item_1',
@@ -93,6 +99,9 @@ describe('taskTemplateService', () => {
 
     it('should throw if select field has no options', () => {
       const schema = {
+        metadata: {
+          task_type: 'SETUP',
+        },
         items: [
           {
             id: 'item_1',
@@ -117,6 +126,9 @@ describe('taskTemplateService', () => {
     describe('require_reason validation', () => {
       it('should pass for valid boolean require_reason', () => {
         const schema = {
+          metadata: {
+            task_type: 'SETUP',
+          },
           items: [
             {
               id: 'item_1',
@@ -129,11 +141,14 @@ describe('taskTemplateService', () => {
             },
           ],
         };
-        expect(service.validateSchema(schema)).toBe(true);
+        expect(() => service.validateSchema(schema)).not.toThrow();
       });
 
       it('should throw if boolean require_reason used on number', () => {
         const schema = {
+          metadata: {
+            task_type: 'SETUP',
+          },
           items: [
             {
               id: 'item_1',
@@ -151,6 +166,9 @@ describe('taskTemplateService', () => {
 
       it('should pass for valid numeric require_reason', () => {
         const schema = {
+          metadata: {
+            task_type: 'SETUP',
+          },
           items: [
             {
               id: 'item_1',
@@ -166,11 +184,14 @@ describe('taskTemplateService', () => {
             },
           ],
         };
-        expect(service.validateSchema(schema)).toBe(true);
+        expect(() => service.validateSchema(schema)).not.toThrow();
       });
 
       it('should throw if numeric criteria require_reason used on checkbox', () => {
         const schema = {
+          metadata: {
+            task_type: 'SETUP',
+          },
           items: [
             {
               id: 'item_1',

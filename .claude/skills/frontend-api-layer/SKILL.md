@@ -12,7 +12,7 @@ This skill provides patterns for structuring the API layer in React applications
 Study these real implementations:
 - **API Client with Better Auth**: [client.ts](../../../apps/erify_studios/src/lib/api/client.ts)
 - **Token Store**: [token-store.ts](../../../apps/erify_studios/src/lib/api/token-store.ts)
-- **API Declarations**: [task-templates.api.ts](../../../apps/erify_studios/src/features/task-templates/api/task-templates.api.ts)
+- **API Declarations**: [get-task-templates.ts](../../../apps/erify_studios/src/features/task-templates/api/get-task-templates.ts)
 
 **Detailed Code Examples**: See [references/api-layer-examples.md](references/api-layer-examples.md)
 
@@ -104,11 +104,15 @@ apiClient.interceptors.response.use(
 import { apiClient } from '@/lib/api-client';
 import type { TaskTemplateDto, CreateTaskTemplateDto } from '@eridu/api-types';
 
-// Query Keys
+// Query Keys — use hierarchical factory pattern
 export const taskTemplateKeys = {
   all: ['task-templates'] as const,
   lists: () => [...taskTemplateKeys.all, 'list'] as const,
-  list: (studioId: string, filters: string) => [...taskTemplateKeys.lists(), studioId, filters] as const,
+  // listPrefix matches ALL queries for a scope, regardless of filter params.
+  // Use this key for mutation invalidation that affects any list for a studioId.
+  listPrefix: (studioId: string) => [...taskTemplateKeys.lists(), studioId] as const,
+  // list includes filters — use as the actual query key
+  list: (studioId: string, filters?: unknown) => [...taskTemplateKeys.listPrefix(studioId), filters] as const,
   details: () => [...taskTemplateKeys.all, 'detail'] as const,
   detail: (id: string) => [...taskTemplateKeys.details(), id] as const,
 };
@@ -129,10 +133,24 @@ export async function createTaskTemplate(studioId: string, payload: CreateTaskTe
 ```
 
 **Key Points**:
-- ✅ Centralize query keys using factory pattern
+- ✅ Centralize query keys using factory pattern with `listPrefix` + `list`
 - ✅ Use shared types from `@eridu/api-types`
 - ✅ Return typed responses
 - ✅ Handle params and payload transformation
+
+### Why `listPrefix` for Mutation Invalidation
+
+When a mutation affects all entries for a scope, invalidating by the exact `list(studioId, filters)` key only clears one cached filter combination. `listPrefix(studioId)` invalidates ALL cached queries for that studio regardless of which filters the user had active:
+
+```typescript
+// ❌ Only clears the query with exact currentFilters — other filter combos stay stale
+queryClient.invalidateQueries({ queryKey: studioShowsKeys.list(studioId, currentFilters) });
+
+// ✅ Clears ALL list queries for this studio (any filter combination)
+queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) });
+```
+
+**Rule**: Use `listPrefix` in mutations that change data visible in any list (e.g., assign, generate tasks, bulk delete). Use `list(...)` only in `queryKey` for `useQuery`/`useInfiniteQuery` hooks.
 
 ---
 
@@ -151,11 +169,74 @@ export function useTaskTemplates(studioId: string, filters: { name?: string }) {
 
 export function useCreateTaskTemplate(studioId: string) {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (payload: CreateTaskTemplateDto) => createTaskTemplate(studioId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: taskTemplateKeys.lists() });
+      // listPrefix invalidates all cached list variants for this studio
+      queryClient.invalidateQueries({ queryKey: taskTemplateKeys.listPrefix(studioId) });
+    },
+  });
+}
+
+// Write-through cache update — patch the list immediately, then invalidate
+// Use when the API returns the updated item and you want zero perceived latency
+export function useUpdateTask(studioId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ taskId, data }: { taskId: string; data: UpdateTaskRequest }) =>
+      updateMyTask(taskId, data),
+    onSuccess: (updatedTask) => {
+      // 1. Patch the cached list entries immediately (write-through)
+      queryClient.setQueriesData<PaginatedResponse<TaskDto>>(
+        { queryKey: myTasksKeys.lists() },
+        (prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            data: prev.data.map((t) =>
+              t.id === updatedTask.id ? { ...t, ...updatedTask } : t,
+            ),
+          };
+        },
+      );
+      // 2. Invalidate to fetch fresh data in background
+      queryClient.invalidateQueries({ queryKey: myTasksKeys.all });
+    },
+  });
+}
+
+// Silent mutation pattern — suppress toasts and cache invalidation for background saves
+// Use for autosave / debounced background operations that should not interrupt the user
+//
+// Pattern: add `silent?: boolean` to the variables type, then guard toasts/invalidations
+// with `if (!variables.silent)`. The write-through cache update always runs.
+export function useUpdateMyTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation<TaskDto, Error, { taskId: string; data: TaskActionRequest; silent?: boolean }>({
+    mutationFn: ({ taskId, data }) => updateMyTask(taskId, data),
+    onSuccess: (updatedTask, variables) => {
+      // Write-through always runs (keeps list UI in sync)
+      queryClient.setQueriesData<PaginatedResponse<TaskWithRelationsDto>>(
+        { queryKey: myTasksKeys.lists() },
+        (prev) => {
+          if (!prev) return prev;
+          return { ...prev, data: prev.data.map((t) => t.id === updatedTask.id ? { ...t, ...updatedTask } : t) };
+        },
+      );
+      if (!variables.silent) {
+        // Full invalidation + toast only for explicit user actions
+        queryClient.invalidateQueries({ queryKey: myTasksKeys.all });
+        toast.success('Task updated successfully');
+      }
+    },
+    onError: (error, variables) => {
+      if (!variables.silent) {
+        toast.error(error.message || 'Failed to update task');
+      }
+      // Note: silent errors are swallowed — only use for non-critical background saves
     },
   });
 }

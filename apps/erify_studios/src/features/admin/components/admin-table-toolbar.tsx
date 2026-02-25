@@ -29,6 +29,7 @@ type AdminTableToolbarProps<TData> = {
   quickFilterColumns?: string[];
   /** Column IDs to show at the top of the filter popover in a 'Featured' section */
   featuredFilterColumns?: string[];
+  children?: React.ReactNode;
 };
 
 /**
@@ -41,6 +42,7 @@ export function AdminTableToolbar<TData>({
   searchPlaceholder,
   quickFilterColumns = EMPTY_ARRAY,
   featuredFilterColumns = EMPTY_ARRAY,
+  children,
 }: AdminTableToolbarProps<TData>) {
   // Primary search column (first of searchableColumns or explicit searchColumn)
   const primaryColumnId = searchColumn ?? searchableColumns?.[0]?.id;
@@ -128,6 +130,7 @@ export function AdminTableToolbar<TData>({
             activeFilterCount={activeFilterCount}
           />
         )}
+        {children}
       </div>
 
       {/* Active Filter Chips */}

@@ -65,6 +65,71 @@ const [isOpen, setIsOpen] = useState(false);
 const [searchInput, setSearchInput] = useState('');
 ```
 
+#### Derive Don't Store
+
+When local state relates to server data (e.g. a "selected item"), store only the **ID** and derive the full object from the server state. This avoids stale object references after background refetches.
+
+```typescript
+// ❌ AVOID: storing a full server object in local state
+// After a background refetch, selectedTask will be stale even though
+// the TanStack Query cache is fresh.
+const [selectedTask, setSelectedTask] = useState<TaskDto | null>(null);
+
+// ✅ GOOD: store only the ID; derive the object from server state
+const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+const selectedTask = selectedTaskId
+  ? (tasks ?? []).find((task) => task.id === selectedTaskId) ?? null
+  : null;
+```
+
+**When to apply**: Any time you store a reference to an item from a server-fetched list (selected row, active item, detail panel, etc.).
+
+### Keyed State Entry (avoid reset effects)
+
+When a component shows different "items" (e.g. a sheet that shows different tasks), avoid resetting draft state via `useEffect(() => setState(null), [itemId])`. Instead, key the state object by item ID and derive the "current" state inline.
+
+```typescript
+// ❌ AVOID: reset effect pattern — causes extra render cycles and setState-in-effect lint errors
+const [draft, setDraft] = useState<Record<string, unknown> | null>(null);
+const [draftSaveState, setDraftSaveState] = useState<'idle' | 'dirty' | 'saving' | 'saved'>('idle');
+useEffect(() => {
+  setDraft(null);         // ← react-hooks/set-state-in-effect lint error
+  setDraftSaveState('idle');
+}, [task.id]);
+
+// ✅ GOOD: key the state entry by item ID — derived "current" is null when item changes
+type DraftStateEntry = {
+  taskId: string;
+  content: Record<string, unknown>;
+  saveState: 'idle' | 'dirty' | 'saving' | 'saved';
+};
+
+const [draftState, setDraftState] = useState<DraftStateEntry | null>(null);
+
+// Automatically null when task changes — no reset effect needed
+const currentDraft = draftState?.taskId === task.id ? draftState : null;
+const draftSaveState = currentDraft?.saveState ?? 'idle';
+```
+
+**Why**: Merging state into a single keyed object eliminates reset effects entirely. Changing the active item immediately derives `currentDraft = null` without any effect or extra render.
+
+### Impure Values in State (React Compiler)
+
+The React Compiler (`react-hooks/purity`) rejects impure function calls during render. `Date.now()` and `Math.random()` are impure and must NOT be called in the render body or inside `useMemo`. Use `useState` lazy initializer instead.
+
+```typescript
+// ❌ WRONG: impure call during render (caught by react-hooks/purity)
+const now = Date.now();
+
+// ❌ WRONG: useMemo does NOT satisfy purity — Date.now() still called during render
+const now = useMemo(() => Date.now(), []);
+
+// ✅ CORRECT: useState lazy initializer runs once on mount, not during render
+const [now] = useState(() => Date.now());
+```
+
+**When to apply**: Any time you need to capture a timestamp at mount time (e.g., computing relative time for "due soon" badges on list cards).
+
 ### 4. Global Client State (Zustand)
 
 **Use for**: Truly global state like auth user, theme, sidebar state.
@@ -141,6 +206,7 @@ const mutation = useMutation({
 - [ ] Debounced search with URL synchronization
 - [ ] Optimistic updates for mutations
 - [ ] Query invalidation on mutations
+- [ ] Selected item stored as ID, not full object (derive-don't-store)
 
 ---
 

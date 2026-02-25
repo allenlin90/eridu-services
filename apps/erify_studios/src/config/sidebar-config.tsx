@@ -53,12 +53,24 @@ const SYSTEM_NAV_ITEMS: SidebarNavItem['items'] = [
     url: '/system/show-standards',
   },
   {
+    title: 'Show Statuses',
+    url: '/system/show-statuses',
+  },
+  {
     title: 'Show Types',
     url: '/system/show-types',
   },
   {
     title: 'Schedules',
     url: '/system/schedules',
+  },
+  {
+    title: 'Tasks',
+    url: '/system/tasks',
+  },
+  {
+    title: 'Task Templates',
+    url: '/system/task-templates',
   },
   {
     title: 'Shows',
@@ -87,8 +99,19 @@ function getStudioManagementItems(
     },
   ];
 
+  if (role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER) {
+    managementItems.push({
+      title: 'Review Queue',
+      url: `/studios/${studioId}/tasks?status=REVIEW`,
+    });
+  }
+
   // Check role safely (case-insensitive)
   if (role === STUDIO_ROLE.ADMIN) {
+    managementItems.push({
+      title: 'Shows',
+      url: `/studios/${studioId}/shows`,
+    });
     managementItems.push({
       title: 'Task Templates',
       url: `/studios/${studioId}/task-templates`,

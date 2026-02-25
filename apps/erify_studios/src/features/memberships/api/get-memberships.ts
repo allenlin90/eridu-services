@@ -1,11 +1,21 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import type { MembershipApiResponse } from '@eridu/api-types/memberships';
 
 import type { PaginatedResponse } from '@/lib/api/admin';
 import { apiClient } from '@/lib/api/client';
 
-export type Membership = MembershipApiResponse;
+export type Membership = MembershipApiResponse & {
+  user: {
+    id: string; // user uid
+    email: string;
+    name: string;
+  };
+  studio: {
+    id: string; // studio uid
+    name: string;
+  };
+};
 export type MembershipsResponse = PaginatedResponse<Membership>;
 
 export type GetMembershipsParams = {
@@ -26,6 +36,6 @@ export function useMembershipsQuery(params: GetMembershipsParams) {
     queryKey: ['memberships', 'list', params],
     queryFn: () => getMemberships(params),
     staleTime: 5 * 60 * 1000,
-    placeholderData: keepPreviousData,
+    placeholderData: (previousData: MembershipsResponse | undefined) => previousData,
   });
 }

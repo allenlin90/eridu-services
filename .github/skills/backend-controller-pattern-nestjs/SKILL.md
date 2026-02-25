@@ -16,6 +16,7 @@ This skill covers **all controller patterns** in `erify_api`, from general princ
 Study these real implementations as the source of truth:
 - **Admin**: [admin-client.controller.ts](../../../apps/erify_api/src/admin/clients/admin-client.controller.ts)
 - **Studio**: [studio-task-template.controller.ts](../../../apps/erify_api/src/studios/studio-task-template/studio-task-template.controller.ts)
+- **Me (User-scoped)**: [me-task.controller.ts](../../../apps/erify_api/src/me/me-task/me-task.controller.ts), [me-task.service.ts](../../../apps/erify_api/src/me/me-task/me-task.service.ts)
 - **Base Controllers**: [base-admin.controller.ts](../../../apps/erify_api/src/admin/base-admin.controller.ts), [base-studio.controller.ts](../../../apps/erify_api/src/studios/base-studio.controller.ts), [base.controller.ts](../../../apps/erify_api/src/lib/controllers/base.controller.ts)
 
 **Detailed code examples**: See [references/controller-examples.md](references/controller-examples.md)
@@ -274,20 +275,126 @@ export class ResourceController extends BaseStudioController {
 
 ## User (Me) Controllers
 
-**Use Case:** Authenticated users interacting with their own resources.
+**Use Case:** Authenticated users interacting with their own resources (e.g., an operator managing their assigned tasks).
+
+**Canonical Example**: [me-task.controller.ts](../../../apps/erify_api/src/me/me-task/me-task.controller.ts)
 
 ### Core Principles
 
-1. 🟡 **Recommended**: Standard NestJS controller (no specific base class required)
-2. 🔴 **Critical**: ALWAYS use `@CurrentUser()` to scope operations to the authenticated user
-3. 🟡 **Recommended**: Routes typically start with `me/` or implied user context
+1. 🟡 **Recommended**: Extend `BaseController` (not a me-specific base class)
+2. 🔴 **Critical**: ALWAYS use `@CurrentUser()` to scope operations — NEVER trust a user ID from body/params
+3. 🟡 **Recommended**: Routes start with `me/`
+4. 🟡 **Recommended**: Use a dedicated `Me{Domain}Service` to resolve `user.ext_id` → internal DB user
+
+### The Me Service Pattern
+
+Me controllers delegate to a `Me{Domain}Service` that:
+1. Resolves `ext_id` (JWT claim) → internal user record via `UserService`
+2. Enforces ownership at the **query level** (e.g., `assigneeId: user.id`)
+3. Delegates actual business logic to the underlying Model Service
+
+```typescript
+// me-task.controller.ts
+@Controller('me/tasks')
+export class MeTaskController extends BaseController {
+  constructor(private readonly meTaskService: MeTaskService) {
+    super();
+  }
+
+  @Get()
+  @ZodPaginatedResponse(taskWithRelationsDto)
+  async listTasks(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: ListMyTasksQueryDto,
+  ) {
+    const { items, total } = await this.meTaskService.listMyTasks(user.ext_id, query);
+    return this.createPaginatedResponse(items, total, query);
+  }
+
+  @Get(':id')
+  @ZodResponse(taskWithRelationsDto)
+  async getTask(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new UidValidationPipe(TaskService.UID_PREFIX, 'Task')) id: string,
+  ) {
+    const task = await this.meTaskService.getMyTask(user.ext_id, id);
+    this.ensureResourceExists(task, 'Task', id);
+    return task;
+  }
+
+  @Patch(':id')
+  @ZodResponse(taskDto)
+  async updateTask(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new UidValidationPipe(TaskService.UID_PREFIX, 'Task')) id: string,
+    @Body() dto: UpdateTaskDto,
+  ) {
+    const task = await this.meTaskService.updateMyTask(user.ext_id, id, dto.version, {
+      content: dto.content,
+      status: dto.status,
+    });
+    this.ensureResourceExists(task, 'Task', id);
+    return task;
+  }
+}
+```
+
+```typescript
+// me-task.service.ts
+@Injectable()
+export class MeTaskService {
+  constructor(
+    private readonly taskService: TaskService,
+    private readonly userService: UserService,
+  ) {}
+
+  async listMyTasks(userExtId: string, query: ListMyTasksQueryTransformed) {
+    // 1. Resolve ext_id → internal user
+    const user = await this.userService.getUserByExtId(userExtId);
+    if (!user) throw HttpError.unauthorized('User not found');
+
+    // 2. Delegate with ownership filter
+    return this.taskService.findTasksByAssignee(user.id, query);
+  }
+
+  async getMyTask(userExtId: string, taskUid: string) {
+    const user = await this.userService.getUserByExtId(userExtId);
+    if (!user) throw HttpError.unauthorized('User not found');
+
+    // Enforce ownership at query level — not a post-query check
+    const task = await this.taskService.findOne(
+      { uid: taskUid, assigneeId: user.id, deletedAt: null },
+      { template: true, assignee: true },
+    );
+
+    if (!task) throw HttpError.notFound('Task not found or not assigned to you');
+    return task;
+  }
+}
+```
+
+### Me Module Setup
+
+```typescript
+@Module({
+  imports: [TaskModule, UserModule],
+  controllers: [MeTaskController],
+  providers: [MeTaskService],
+  exports: [MeTaskService],
+})
+export class MeTaskModule {}
+```
 
 ### Checklist
 
-- [ ] Route starts with `me/` or is user-scoped
-- [ ] Uses `@CurrentUser()` to get user ID
-- [ ] 🔴 **Critical**: NEVER trusts user ID from request body/params for self-operations
+- [ ] Extends `BaseController`
+- [ ] Route starts with `me/`
+- [ ] Uses `@CurrentUser()` to get `user.ext_id`
+- [ ] 🔴 **Critical**: Resolves `ext_id` → internal user in the Me Service (not the controller)
+- [ ] 🔴 **Critical**: Ownership enforced at **query level** (`assigneeId: user.id`), not post-query
 - [ ] Uses `@ZodResponse` or `@ZodPaginatedResponse`
+- [ ] 404 handling via `ensureResourceExists` in controller
+- [ ] Dedicated `Me{Domain}Service` — no direct Model Service injection in controller
 
 ---
 
@@ -345,7 +452,8 @@ export class ResourceController extends BaseStudioController {
 
 ## Related Skills
 
-- **[Service Pattern NestJS](service-pattern-nestjs/SKILL.md)** - Service layer patterns
-- **[Data Validation](data-validation/SKILL.md)** - Input validation and serialization
-- **[Shared API Types](shared-api-types/SKILL.md)** - API contracts and schemas
-- **[Database Patterns](database-patterns/SKILL.md)** - Soft delete, transactions
+- **[Service Pattern NestJS](../service-pattern-nestjs/SKILL.md)** - Service layer patterns
+- **[Orchestration Service NestJS](../orchestration-service-nestjs/SKILL.md)** - Multi-service coordination patterns
+- **[Data Validation](../data-validation/SKILL.md)** - Input validation and serialization
+- **[Shared API Types](../shared-api-types/SKILL.md)** - API contracts and schemas
+- **[Database Patterns](../database-patterns/SKILL.md)** - Soft delete, transactions

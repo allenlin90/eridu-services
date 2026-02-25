@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   FieldItemBaseSchema as SharedFieldItemBaseSchema,
   FieldTypeEnum as SharedFieldTypeEnum,
+  TASK_TYPE,
   validateFieldOptions,
 } from '@eridu/api-types/task-management';
 
@@ -17,6 +18,7 @@ export type FieldItem = z.infer<typeof FieldItemSchema>;
 export const TemplateSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
+  task_type: z.nativeEnum(TASK_TYPE),
   items: z.array(FieldItemSchema).min(1, 'At least one field is required'),
 }).superRefine((data, ctx) => {
   const keys = new Set<string>();

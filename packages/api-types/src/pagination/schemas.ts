@@ -11,20 +11,34 @@ export const paginationMetaSchema = z.object({
   totalPages: z.number().int().min(0),
 });
 
-// Input schema for pagination parameters (matches erify_api behavior)
-export const paginationQuerySchema = z
-  .object({
-    page: z.coerce.number().int().min(1).optional().default(1),
-    limit: z.coerce.number().int().min(1).optional().default(10),
-    sort: z.enum(['asc', 'desc']).optional().default('desc'),
-  })
-  .transform((data) => ({
+/**
+ * Base pagination parameters (page, limit)
+ */
+export const paginationBaseSchema = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).optional().default(10),
+});
+
+/**
+ * Base pagination transformation logic
+ */
+export function transformPagination<T extends { page: number; limit: number; sort?: any }>(data: T) {
+  return {
+    ...data,
     page: data.page,
     limit: data.limit,
     take: data.limit,
     skip: (data.page - 1) * data.limit,
     sort: data.sort,
-  }));
+  };
+}
+
+// Input schema for pagination parameters (matches erify_api behavior)
+export const paginationQuerySchema = paginationBaseSchema
+  .extend({
+    sort: z.enum(['asc', 'desc']).optional().default('desc'),
+  })
+  .transform(transformPagination);
 
 /**
  * Pagination query input type (before transformation)

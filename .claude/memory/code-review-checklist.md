@@ -88,6 +88,18 @@ async create(data: Prisma.TaskCreateInput): Promise<Task>
 - [ ] Conditional rendering handles loading/error states
 - [ ] No inline object/function definitions in JSX (use `useMemo`/`useCallback`)
 
+### React Compiler / react-hooks ESLint Rules (STRICT)
+- [ ] No hooks (`useState`, `useMemo`, `useEffect`, etc.) called **after** a conditional early return — extract an inner component if needed
+- [ ] No `setState` called **synchronously inside** `useEffect` — use keyed state or derived values instead (`react-hooks/set-state-in-effect`)
+- [ ] No impure function calls (`Date.now()`, `Math.random()`) in render or inside `useMemo` — use `useState(() => Date.now())` lazy initializer (`react-hooks/purity`)
+- [ ] Dialogs/Sheets using Radix have `<DialogDescription>` (not a bare `<p>`) for `aria-describedby` wiring
+
+### AdminTable / Studio List Patterns
+- [ ] `searchColumnId` in `useTableUrlState`, `searchColumn` on `<AdminTable>`, and filter id read in hook are the **same string** (see §14.1 design doc for the bug this prevents)
+- [ ] `getRowId={(row) => row.id}` passed to `<AdminTable>` whenever the table is paginated and rows are selectable — prevents index-collision bug across pages
+- [ ] Cross-page selection uses the accumulator pattern (`useEffect` keyed by item ID), not `shows[parseInt(k)]` index lookup
+- [ ] Member/assignee pickers use `AsyncCombobox` from `@eridu/ui`, not `<Select>`, with client-side `onSearch` filtering
+
 ### TanStack Query
 - [ ] Query keys follow convention: `['domain', action, ...params]`
 - [ ] Mutations invalidate related queries
