@@ -9,6 +9,7 @@ import {
   DateTimePicker,
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -76,9 +77,9 @@ export function TaskDueDateDialog({
       <DialogContent className="sm:max-w-[520px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Update Due Date</DialogTitle>
-          <p className="text-sm text-muted-foreground">
+          <DialogDescription>
             Adjust the deadline for this task.
-          </p>
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">

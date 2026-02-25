@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { ChevronRight, Clock } from 'lucide-react';
+import { useState } from 'react';
 
 import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
 import { TASK_STATUS, TemplateSchemaValidator } from '@eridu/api-types/task-management';
@@ -27,12 +28,25 @@ export function MyTaskCard({ task, onClick, className }: MyTaskCardProps) {
   const isOverdue = task.due_date
     && task.status !== TASK_STATUS.COMPLETED
     && new Date(task.due_date) < new Date();
+  const dueTimestamp = task.due_date ? new Date(task.due_date).getTime() : null;
+  // Captured once on mount; refreshes whenever the card remounts (e.g. after list refetch)
+  const [now] = useState(() => Date.now());
+  const isDueSoon = dueTimestamp !== null
+    && dueTimestamp > now
+    && dueTimestamp - now <= 3 * 60 * 60 * 1000
+    && task.status !== TASK_STATUS.COMPLETED
+    && task.status !== TASK_STATUS.CLOSED;
+  const blockedReason = task.metadata?.blocked_reason;
+  const blockedReasonExcerpt = typeof blockedReason === 'string' && blockedReason.trim().length > 0
+    ? blockedReason.trim()
+    : null;
 
   return (
     <Card
       className={cn(
         'p-4 cursor-pointer hover:bg-slate-50 transition-colors bg-white group h-full flex flex-col',
         isOverdue && 'border-l-4 border-l-red-400',
+        !isOverdue && isDueSoon && 'border-l-4 border-l-amber-400',
         task.status === TASK_STATUS.BLOCKED && 'border-l-4 border-l-amber-400',
         className,
       )}
@@ -57,6 +71,7 @@ export function MyTaskCard({ task, onClick, className }: MyTaskCardProps) {
           <div className={cn(
             'flex items-center text-xs gap-1',
             isOverdue ? 'text-red-500 font-medium' : 'text-muted-foreground',
+            !isOverdue && isDueSoon && 'text-amber-600 font-medium',
           )}
           >
             <Clock className="w-3 h-3" />
@@ -68,6 +83,13 @@ export function MyTaskCard({ task, onClick, className }: MyTaskCardProps) {
       <h3 className="font-semibold text-sm mb-1 leading-tight group-hover:text-primary transition-colors flex-1">
         {task.description}
       </h3>
+      {task.status === TASK_STATUS.BLOCKED && blockedReasonExcerpt && (
+        <p className="mb-1 line-clamp-2 text-[11px] text-red-700">
+          Blocked:
+          {' '}
+          {blockedReasonExcerpt}
+        </p>
+      )}
 
       {progress !== null && progress.total > 0 && (
         <div className="mt-2 mb-1">
