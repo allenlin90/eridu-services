@@ -12,9 +12,9 @@ import type { PaginatedResponse } from '@/lib/api/admin';
 export function useUpdateMyTask() {
   const queryClient = useQueryClient();
 
-  return useMutation<TaskDto, Error, { taskId: string; data: TaskActionRequest }>({
+  return useMutation<TaskDto, Error, { taskId: string; data: TaskActionRequest; silent?: boolean }>({
     mutationFn: ({ taskId, data }) => updateMyTask(taskId, data),
-    onSuccess: (updatedTask) => {
+    onSuccess: (updatedTask, variables) => {
       queryClient.setQueriesData<PaginatedResponse<TaskWithRelationsDto>>(
         { queryKey: myTasksKeys.lists() },
         (previousData) => {
@@ -42,13 +42,17 @@ export function useUpdateMyTask() {
         },
       );
 
-      queryClient.invalidateQueries({ queryKey: myTasksKeys.all });
-      // Depending on other views, we might also want to invalidate show tasks here
-      queryClient.invalidateQueries({ queryKey: showTasksKeys.all });
-      toast.success('Task updated successfully');
+      if (!variables.silent) {
+        queryClient.invalidateQueries({ queryKey: myTasksKeys.all });
+        // Depending on other views, we might also want to invalidate show tasks here
+        queryClient.invalidateQueries({ queryKey: showTasksKeys.all });
+        toast.success('Task updated successfully');
+      }
     },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to update task');
+    onError: (error, variables) => {
+      if (!variables.silent) {
+        toast.error(error.message || 'Failed to update task');
+      }
     },
   });
 }
