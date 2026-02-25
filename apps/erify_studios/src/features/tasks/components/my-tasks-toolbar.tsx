@@ -91,10 +91,13 @@ export function MyTasksToolbar({
   activeFilterCount,
   onClearFilters,
 }: MyTasksToolbarProps) {
+  const selectedStatusCount = selectedStatuses.length;
+  const selectedTaskTypeCount = selectedTaskTypes.length;
+
   return (
     <div className="sticky top-0 z-10 -mx-4 border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="flex flex-wrap items-center gap-2 py-2">
-        <div className="relative min-w-40 max-w-64 flex-1">
+      <div className="flex flex-col gap-2 py-2">
+        <div className="relative w-full">
           <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
           <Input
             value={searchInput}
@@ -104,154 +107,196 @@ export function MyTasksToolbar({
           />
         </div>
 
-        <div className="flex min-w-48 items-center gap-1">
-          <DatePicker
-            value={showStartDate}
-            onChange={onShowStartDateChange}
-            className="h-8 text-xs"
-          />
-          {showStartDate && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex min-w-48 items-center gap-1">
+            <DatePicker
+              value={showStartDate}
+              onChange={onShowStartDateChange}
+              className="h-8 text-xs"
+            />
+            {showStartDate && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => onShowStartDateChange('')}
+                title="Clear show start date filter"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 shrink-0 gap-1.5 text-xs"
+              >
+                Status
+                {selectedStatusCount > 0 ? ` (${selectedStatusCount})` : ''}
+                <ChevronDown className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="start"
+              sideOffset={8}
+              collisionPadding={12}
+              className="w-[calc(100vw-2rem)] max-w-72 max-h-[calc(100dvh-8rem)] overflow-y-auto overscroll-contain"
+            >
+              <DropdownMenuLabel>Task Status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {STATUS_FILTERS.map((statusOption) => (
+                <DropdownMenuCheckboxItem
+                  key={statusOption.value}
+                  checked={selectedStatuses.includes(statusOption.value)}
+                  onCheckedChange={() => onToggleStatus(statusOption.value)}
+                  onSelect={(event) => event.preventDefault()}
+                >
+                  {statusOption.label}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 shrink-0 gap-1.5 text-xs"
+              >
+                Task Type
+                {selectedTaskTypeCount > 0 ? ` (${selectedTaskTypeCount})` : ''}
+                <ChevronDown className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="start"
+              sideOffset={8}
+              collisionPadding={12}
+              className="w-[calc(100vw-2rem)] max-w-72 max-h-[calc(100dvh-8rem)] overflow-y-auto overscroll-contain"
+            >
+              <DropdownMenuLabel>Task Type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {TASK_TYPE_FILTERS.map((taskTypeOption) => (
+                <DropdownMenuCheckboxItem
+                  key={taskTypeOption.value}
+                  checked={selectedTaskTypes.includes(taskTypeOption.value)}
+                  onCheckedChange={() => onToggleTaskType(taskTypeOption.value)}
+                  onSelect={(event) => event.preventDefault()}
+                >
+                  {taskTypeOption.label}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 shrink-0 gap-1.5 text-xs"
+              >
+                Options
+                {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+                <ChevronDown className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="start"
+              sideOffset={8}
+              collisionPadding={12}
+              className="w-[calc(100vw-2rem)] max-w-72 max-h-[calc(100dvh-8rem)] overflow-y-auto overscroll-contain"
+            >
+              <DropdownMenuLabel>Sort</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={sortBy}
+                onValueChange={(value) => onSortChange(value as MyTaskSort)}
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <DropdownMenuRadioItem key={option.value} value={option.value}>
+                    {option.label}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Rows Per Page</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={String(limit)}
+                onValueChange={(value) => onLimitChange(Number(value) as MyTaskPageSize)}
+              >
+                {PAGE_SIZE_OPTIONS.map((option) => (
+                  <DropdownMenuRadioItem key={option} value={String(option)}>
+                    {option}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button
+            type="button"
+            variant={overdueOnly ? 'secondary' : 'outline'}
+            size="sm"
+            className="h-8 shrink-0 gap-1.5 text-xs"
+            onClick={() => onOverdueOnlyChange(!overdueOnly)}
+          >
+            Overdue
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 shrink-0 gap-1 text-xs"
+            onClick={onRefresh}
+            disabled={isFetching}
+          >
+            <RotateCw className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')} />
+            Refresh
+          </Button>
+
+          <div className="flex shrink-0 items-center gap-1 rounded-md border p-0.5">
             <Button
               type="button"
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => onShowStartDateChange('')}
-              title="Clear show start date filter"
+              variant={viewMode === 'task' ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => onViewModeChange('task')}
             >
-              <X className="h-3.5 w-3.5" />
+              Task View
+            </Button>
+            <Button
+              type="button"
+              variant={viewMode === 'show' ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => onViewModeChange('show')}
+            >
+              Show View
+            </Button>
+          </div>
+
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground h-8 shrink-0 gap-1 text-xs"
+              onClick={onClearFilters}
+            >
+              <X className="h-3 w-3" />
+              Clear
             </Button>
           )}
         </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 text-xs"
-            >
-              Filters
-              {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-              <ChevronDown className="h-3.5 w-3.5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            sideOffset={8}
-            className="w-[calc(100vw-2rem)] max-w-64 max-h-[70vh] overflow-y-auto"
-          >
-            <DropdownMenuLabel>Task Filters</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-
-            <DropdownMenuLabel className="text-xs text-muted-foreground">Status</DropdownMenuLabel>
-            {STATUS_FILTERS.map((statusOption) => (
-              <DropdownMenuCheckboxItem
-                key={statusOption.value}
-                checked={selectedStatuses.includes(statusOption.value)}
-                onCheckedChange={() => onToggleStatus(statusOption.value)}
-                onSelect={(event) => event.preventDefault()}
-              >
-                {statusOption.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs text-muted-foreground">Task Type</DropdownMenuLabel>
-            {TASK_TYPE_FILTERS.map((taskTypeOption) => (
-              <DropdownMenuCheckboxItem
-                key={taskTypeOption.value}
-                checked={selectedTaskTypes.includes(taskTypeOption.value)}
-                onCheckedChange={() => onToggleTaskType(taskTypeOption.value)}
-                onSelect={(event) => event.preventDefault()}
-              >
-                {taskTypeOption.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs text-muted-foreground">Sort</DropdownMenuLabel>
-            <DropdownMenuRadioGroup
-              value={sortBy}
-              onValueChange={(value) => onSortChange(value as MyTaskSort)}
-            >
-              {SORT_OPTIONS.map((option) => (
-                <DropdownMenuRadioItem key={option.value} value={option.value}>
-                  {option.label}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs text-muted-foreground">Rows Per Page</DropdownMenuLabel>
-            <DropdownMenuRadioGroup
-              value={String(limit)}
-              onValueChange={(value) => onLimitChange(Number(value) as MyTaskPageSize)}
-            >
-              {PAGE_SIZE_OPTIONS.map((option) => (
-                <DropdownMenuRadioItem key={option} value={String(option)}>
-                  {option}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <Button
-          type="button"
-          variant={overdueOnly ? 'secondary' : 'outline'}
-          size="sm"
-          className="h-8 gap-1.5 text-xs"
-          onClick={() => onOverdueOnlyChange(!overdueOnly)}
-        >
-          Overdue
-        </Button>
-
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1 text-xs"
-          onClick={onRefresh}
-          disabled={isFetching}
-        >
-          <RotateCw className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')} />
-          Refresh
-        </Button>
-
-        <div className="flex items-center gap-1 rounded-md border p-0.5">
-          <Button
-            type="button"
-            variant={viewMode === 'task' ? 'secondary' : 'ghost'}
-            size="sm"
-            className="h-7 px-2 text-xs"
-            onClick={() => onViewModeChange('task')}
-          >
-            Task View
-          </Button>
-          <Button
-            type="button"
-            variant={viewMode === 'show' ? 'secondary' : 'ghost'}
-            size="sm"
-            className="h-7 px-2 text-xs"
-            onClick={() => onViewModeChange('show')}
-          >
-            Show View
-          </Button>
-        </div>
-
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground h-8 gap-1 text-xs"
-            onClick={onClearFilters}
-          >
-            <X className="h-3 w-3" />
-            Clear
-          </Button>
-        )}
       </div>
     </div>
   );

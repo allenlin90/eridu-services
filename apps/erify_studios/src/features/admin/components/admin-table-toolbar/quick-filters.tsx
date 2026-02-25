@@ -77,7 +77,7 @@ function QuickSelectFilter<TData>({
       <SelectTrigger className="h-9 w-auto min-w-28 max-w-40 text-sm">
         <SelectValue placeholder={config.title} />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="max-h-[min(16rem,calc(100dvh-10rem))]">
         {config.options?.map((option) => (
           <SelectItem key={option.value} value={option.value}>
             {option.label}
