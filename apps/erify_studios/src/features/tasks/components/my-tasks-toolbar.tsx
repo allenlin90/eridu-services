@@ -107,19 +107,19 @@ export function MyTasksToolbar({
           />
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="flex min-w-48 items-center gap-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex w-full min-w-0 items-center gap-1 sm:w-auto sm:min-w-48">
             <DatePicker
               value={showStartDate}
               onChange={onShowStartDateChange}
-              className="h-8 text-xs"
+              className="h-8 min-w-0 flex-1 text-xs sm:flex-none"
             />
             {showStartDate && (
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 shrink-0"
+                className="h-8 w-8"
                 onClick={() => onShowStartDateChange('')}
                 title="Clear show start date filter"
               >
@@ -134,7 +134,7 @@ export function MyTasksToolbar({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 shrink-0 gap-1.5 text-xs"
+                className="h-8 gap-1.5 text-xs"
               >
                 Status
                 {selectedStatusCount > 0 ? ` (${selectedStatusCount})` : ''}
@@ -168,7 +168,7 @@ export function MyTasksToolbar({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 shrink-0 gap-1.5 text-xs"
+                className="h-8 gap-1.5 text-xs"
               >
                 Task Type
                 {selectedTaskTypeCount > 0 ? ` (${selectedTaskTypeCount})` : ''}
@@ -202,7 +202,7 @@ export function MyTasksToolbar({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 shrink-0 gap-1.5 text-xs"
+                className="h-8 gap-1.5 text-xs"
               >
                 Options
                 {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
@@ -246,7 +246,7 @@ export function MyTasksToolbar({
             type="button"
             variant={overdueOnly ? 'secondary' : 'outline'}
             size="sm"
-            className="h-8 shrink-0 gap-1.5 text-xs"
+            className="h-8 gap-1.5 text-xs"
             onClick={() => onOverdueOnlyChange(!overdueOnly)}
           >
             Overdue
@@ -256,7 +256,7 @@ export function MyTasksToolbar({
             type="button"
             variant="outline"
             size="sm"
-            className="h-8 shrink-0 gap-1 text-xs"
+            className="h-8 gap-1 text-xs"
             onClick={onRefresh}
             disabled={isFetching}
           >
@@ -264,7 +264,7 @@ export function MyTasksToolbar({
             Refresh
           </Button>
 
-          <div className="flex shrink-0 items-center gap-1 rounded-md border p-0.5">
+          <div className="flex items-center gap-1 rounded-md border p-0.5">
             <Button
               type="button"
               variant={viewMode === 'task' ? 'secondary' : 'ghost'}
@@ -289,7 +289,7 @@ export function MyTasksToolbar({
             <Button
               variant="ghost"
               size="sm"
-              className="text-muted-foreground h-8 shrink-0 gap-1 text-xs"
+              className="text-muted-foreground h-8 gap-1 text-xs"
               onClick={onClearFilters}
             >
               <X className="h-3 w-3" />
