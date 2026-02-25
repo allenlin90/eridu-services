@@ -23,7 +23,13 @@ export class TaskTargetRepository extends BaseRepository<
 
   async findByShowIds(showIds: bigint[]): Promise<TaskTarget[]> {
     return this.model.findMany({
-      where: { showId: { in: showIds }, deletedAt: null },
+      where: {
+        showId: { in: showIds },
+        deletedAt: null,
+        task: {
+          deletedAt: null,
+        },
+      },
     });
   }
 

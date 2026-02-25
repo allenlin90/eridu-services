@@ -317,9 +317,24 @@ export class TaskRepository extends BaseRepository<
   }
 
   async softDelete(where: Prisma.TaskWhereUniqueInput): Promise<Task> {
-    return this.prisma.task.update({
-      where,
-      data: { deletedAt: new Date() },
+    return this.prisma.$transaction(async (tx) => {
+      const now = new Date();
+      const task = await tx.task.update({
+        where,
+        data: { deletedAt: now },
+      });
+
+      await tx.taskTarget.updateMany({
+        where: {
+          taskId: task.id,
+          deletedAt: null,
+        },
+        data: {
+          deletedAt: now,
+        },
+      });
+
+      return task;
     });
   }
 
