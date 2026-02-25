@@ -1,7 +1,7 @@
 # Task Management System - Backend Design
 
 **Version**: 3.6
-**Last Updated**: February 24, 2026
+**Last Updated**: February 25, 2026
 **Status**: Core implemented. System admin task management (`/admin/tasks`) now supports cross-studio discovery + reassignment with membership validation, while keeping task content immutable in system scope. Studio-scoped review/state-transition enforcement is implemented at `/studios/:studioId/tasks/*` with role-aware transitions.
 
 > **Related Documentation**  
@@ -1437,10 +1437,10 @@ GET /studios/:studioId/tasks?status=REVIEW
 
 ---
 
-#### Other Bulk Operations ⏳ Planned
+#### Other Bulk Operations ⏳ Deferred to Phase 4
 
 ```
-POST /studios/:studioId/tasks/bulk-update-status   (bulk approve/reject)
+POST /studios/:studioId/tasks/bulk-update-status   (bulk approve/reject, deferred to Phase 4 safeguards)
 GET  /studios/:studioId/tasks/dashboard            (cross-show task summary)
 ```
 
@@ -1944,10 +1944,12 @@ interface BulkDeleteTasksResponseDto {
 ### Appendix B: Planned & Deferred Features
 
 **Planned (next iteration):**
-1. **State machine hardening** — extend studio-scoped transition matrix coverage + explicit error codes across all studio task mutation paths
-2. **Admin module task management hardening (`/admin/tasks`)** — keep reassignment/delete operational path, add reason fields and richer observability while preserving unrestricted system-admin control
-3. **Review queue bulk action support** — add studio-scoped bulk status command path (e.g. bulk approve for REVIEW tasks) and align FE workflow ergonomics
-4. **Execution progress surface** — expose/standardize execution progress presentation in operator sheet (FE-calculated for now)
+1. **Admin module task management hardening (`/admin/tasks`)** — keep reassignment/delete operational path, add reason fields and richer observability while preserving unrestricted system-admin control
+2. **Documentation and contract alignment pass** — keep backend/UI docs synchronized with implementation checkpoints
+
+**Deferred to Phase 4 (roadmap-owned):**
+1. **Review queue bulk action support** — studio-scoped bulk status command path (e.g. bulk approve for REVIEW tasks)
+2. **Review-quality decision support and validation hardening** — per-task review summary payload + standardized validation/error contracts for review decisions
 
 **Deferred (post-MVP):**
 1. **File Upload Handling**: Support for field type `file` with direct upload to cloud storage

@@ -1,7 +1,7 @@
 # Task Management System - UI/UX Design
 
 **Version**: 3.6
-**Last Updated**: February 24, 2026
+**Last Updated**: February 25, 2026
 **Status**: Core implemented. `/system/tasks` now supports system-admin cross-studio discovery and reassignment with immutable task content in system scope. Studio-scoped review/state-machine enforcement is active on `/studios/$studioId/tasks/*` (manager/admin actions allowed on behalf of assignees). Current planned next: review UX refinements and advanced grouping ergonomics at scale. Deferred: animations, swipe gestures, file uploads, PWA/offline, WebSocket, analytics.
 
 > **Related Documentation**  
@@ -2064,7 +2064,7 @@ Most originally identified functional gaps are now implemented:
 
 ---
 
-### Review Workflow (Next Iteration)
+### Review Workflow (Current + Deferred)
 - **BE (implemented)**: State machine enforcement in **studio module/services only** (`/studios/$studioId/*`) — role-based transition table (see `TASK_MANAGEMENT_DESIGN.md §7.3`)
 - **BE (legacy compatibility)**: `PATCH /studios/:studioId/tasks/:taskUid/status`
 - **BE (implemented)**: action-first workflow endpoints for clearer FE semantics:
@@ -2075,7 +2075,8 @@ Most originally identified functional gaps are now implemented:
 - **BE**: `/admin/tasks` remains system-admin-only support surface (cross-studio list/detail/reassign/delete) while task content/status edits stay studio-scoped
 - **FE**: Operator `task-execution-sheet.tsx` — "Submit for Review" replaces "Complete Task"; rejection note banner; self-recall button on REVIEW state
 - **FE (implemented)**: Admin task review queue at `§3.6` — per-task inline actions and rejection/block note capture
-- **FE (planned)**: bulk approve for review queue once `bulk-update-status` exists
+- **Phase 4 (deferred)**: review queue bulk approve is intentionally deferred until per-task review summary and validation safeguards are completed (see `apps/erify_api/docs/roadmap/PHASE_4.md`)
+- **Phase 4 (deferred)**: review-quality decision support (per-task summary + stronger validation/error contracts) is tracked in Phase 4
 - **FE**: `status-badge` — add REVIEW (amber) and CLOSED (grey strikethrough) variants
 
 ---
