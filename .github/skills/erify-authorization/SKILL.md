@@ -19,6 +19,22 @@ This skill provides **erify_api-specific** authorization implementation patterns
 - Troubleshooting permission denied errors
 - Extending the permission system with new roles or permissions
 
+## Implementation Status
+
+> [!IMPORTANT]
+> **Not all patterns in this skill are implemented.** Check the status below before using a pattern.
+
+| Pattern                                       | Status        | Notes                                         |
+| --------------------------------------------- | ------------- | --------------------------------------------- |
+| `isSystemAdmin` bypass                        | ✅ Implemented | `AdminGuard` checks this flag only            |
+| `@AdminProtected()` decorator                 | ✅ Implemented | Global guard in `app.module.ts`               |
+| `@StudioProtected([roles])`                   | ✅ Implemented | ADMIN, MANAGER, MEMBER via `StudioMembership` |
+| `StudioGuard` with membership check           | ✅ Implemented | Validates studio membership + role            |
+| JSONB `roles` field on User                   | ⏳ Planned     | Not in Prisma schema yet                      |
+| JSONB `permissions` field on User             | ⏳ Planned     | Not in Prisma schema yet                      |
+| `ROLE_PERMISSIONS` mapping                    | ⏳ Planned     | AdminGuard does not expand roles              |
+| Granular permission strings (`module:action`) | ⏳ Planned     | Not implemented                               |
+
 ## Core Principles
 
 ### 1. Separation of Concerns
@@ -32,13 +48,13 @@ This skill provides **erify_api-specific** authorization implementation patterns
 
 Different user types have different access scopes:
 
-| User Type | Access Scope | Implementation |
-|-----------|-------------|----------------|
-| MC | Own shows only | Via `ShowMC` relationship |
-| Studio Operator | Studio's rooms | Via `StudioMembership` |
-| Content Manager | Specific clients | Via `roles` + client filtering |
-| System Manager | All data | Via `roles: ["system_manager"]` |
-| Read-only Admin | View-only | Via `roles: ["analyst"]` |
+| User Type       | Access Scope     | Implementation                  |
+| --------------- | ---------------- | ------------------------------- |
+| MC              | Own shows only   | Via `ShowMC` relationship       |
+| Studio Operator | Studio's rooms   | Via `StudioMembership`          |
+| Content Manager | Specific clients | Via `roles` + client filtering  |
+| System Manager  | All data         | Via `roles: ["system_manager"]` |
+| Read-only Admin | View-only        | Via `roles: ["analyst"]`        |
 
 ### 3. Role-Based Permissions
 
@@ -317,5 +333,4 @@ await prisma.user.update({
 ## Related Documentation
 
 - [Authorization Guide](../../apps/erify_api/docs/AUTHORIZATION_GUIDE.md)
-- [Authentication Guide](../../apps/erify_api/docs/AUTHENTICATION_GUIDE.md)
-- [Architecture Overview](../../apps/erify_api/docs/ARCHITECTURE.md)
+- [Architecture Overview](../../apps/erify_api/docs/ARCHITECTURE_OVERVIEW.md)
