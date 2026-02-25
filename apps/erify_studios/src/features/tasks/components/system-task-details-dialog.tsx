@@ -9,6 +9,7 @@ import {
   DateTimePicker,
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -81,9 +82,9 @@ export function SystemTaskDetailsDialog({
       <DialogContent className="sm:max-w-[640px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Task Details</DialogTitle>
-          <p className="text-sm text-muted-foreground">
+          <DialogDescription>
             System scope: content is immutable.
-          </p>
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
