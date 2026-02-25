@@ -206,6 +206,40 @@ export function useUpdateTask(studioId: string) {
     },
   });
 }
+
+// Silent mutation pattern — suppress toasts and cache invalidation for background saves
+// Use for autosave / debounced background operations that should not interrupt the user
+//
+// Pattern: add `silent?: boolean` to the variables type, then guard toasts/invalidations
+// with `if (!variables.silent)`. The write-through cache update always runs.
+export function useUpdateMyTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation<TaskDto, Error, { taskId: string; data: TaskActionRequest; silent?: boolean }>({
+    mutationFn: ({ taskId, data }) => updateMyTask(taskId, data),
+    onSuccess: (updatedTask, variables) => {
+      // Write-through always runs (keeps list UI in sync)
+      queryClient.setQueriesData<PaginatedResponse<TaskWithRelationsDto>>(
+        { queryKey: myTasksKeys.lists() },
+        (prev) => {
+          if (!prev) return prev;
+          return { ...prev, data: prev.data.map((t) => t.id === updatedTask.id ? { ...t, ...updatedTask } : t) };
+        },
+      );
+      if (!variables.silent) {
+        // Full invalidation + toast only for explicit user actions
+        queryClient.invalidateQueries({ queryKey: myTasksKeys.all });
+        toast.success('Task updated successfully');
+      }
+    },
+    onError: (error, variables) => {
+      if (!variables.silent) {
+        toast.error(error.message || 'Failed to update task');
+      }
+      // Note: silent errors are swallowed — only use for non-critical background saves
+    },
+  });
+}
 ```
 
 ---
