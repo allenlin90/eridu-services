@@ -232,13 +232,13 @@ type FilterSectionsProps = {
   columnsById: Record<string, Column<unknown, unknown> | undefined>;
 };
 
-const MemoizedFilterSections = React.memo(({
+function FilterSections({
   localFeaturedColumns,
   textColumns,
   selectColumns,
   dateColumns,
   columnsById,
-}: FilterSectionsProps) => {
+}: FilterSectionsProps) {
   return (
     <div className="p-4 space-y-6">
       {localFeaturedColumns.length > 0 && (
@@ -290,7 +290,7 @@ const MemoizedFilterSections = React.memo(({
       )}
     </div>
   );
-});
+}
 
 /**
  * Filter popover with organized filter sections by type
@@ -398,7 +398,7 @@ export function FilterPopover<TData>({
           </SheetHeader>
           <div className="overflow-y-auto overscroll-contain">
             {isSheetOpen && (
-              <MemoizedFilterSections
+              <FilterSections
                 localFeaturedColumns={localFeaturedColumns}
                 textColumns={textColumns}
                 selectColumns={selectColumns}
@@ -433,7 +433,7 @@ export function FilterPopover<TData>({
             )}
           </div>
           {isPopoverOpen && (
-            <MemoizedFilterSections
+            <FilterSections
               localFeaturedColumns={localFeaturedColumns}
               textColumns={textColumns}
               selectColumns={selectColumns}

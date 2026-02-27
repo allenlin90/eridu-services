@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { RotateCcw } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -36,12 +36,13 @@ export function TaskDueDateDialog({
   isSaving,
   studioId,
 }: TaskDueDateDialogProps) {
-  const shouldFetch = Boolean(open && studioId && task?.id && !task?.show);
+  const queryClient = useQueryClient();
+  const shouldFetch = Boolean(open && studioId && task?.id);
   const { data: taskDetail, isLoading: isLoadingTask } = useQuery({
     queryKey: task?.id && studioId ? studioTaskKeys.detail(studioId, task.id) : studioTaskKeys.all,
     queryFn: () => getStudioTask(studioId!, task!.id),
     enabled: shouldFetch,
-    staleTime: 60 * 1000,
+    staleTime: 5_000,
     refetchOnWindowFocus: false,
   });
 
@@ -54,6 +55,7 @@ export function TaskDueDateDialog({
     taskId: string;
     value: string;
   } | null>(null);
+  const [isResolvingVersion, setIsResolvingVersion] = useState(false);
 
   const dueDate = draftDueDate?.taskId === resolvedTask?.id
     ? (draftDueDate?.value ?? '')
@@ -67,9 +69,28 @@ export function TaskDueDateDialog({
     ? format(new Date(suggestedDueDate), 'PPp')
     : null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!studioId) {
+      return;
+    }
+
+    setIsResolvingVersion(true);
     const value = (dueDate ?? '').trim();
-    onSave(resolvedTask.id, value ? new Date(value).toISOString() : null, resolvedTask.version);
+    const nextDueDate = value ? new Date(value).toISOString() : null;
+
+    try {
+      const latestTask = await queryClient.fetchQuery({
+        queryKey: studioTaskKeys.detail(studioId, resolvedTask.id),
+        queryFn: () => getStudioTask(studioId, resolvedTask.id),
+        staleTime: 0,
+      });
+      onSave(latestTask.id, nextDueDate, latestTask.version);
+    } catch {
+      // Fall back to current task snapshot if fetching latest version fails.
+      onSave(resolvedTask.id, nextDueDate, resolvedTask.version);
+    } finally {
+      setIsResolvingVersion(false);
+    }
   };
 
   return (
@@ -121,12 +142,12 @@ export function TaskDueDateDialog({
           <Button
             variant="outline"
             onClick={() => setDraftDueDate({ taskId: resolvedTask.id, value: '' })}
-            disabled={isSaving}
+            disabled={isSaving || isResolvingVersion}
           >
             Clear
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? 'Saving...' : 'Save'}
+          <Button onClick={handleSave} disabled={isSaving || isResolvingVersion || isLoadingTask}>
+            {(isSaving || isResolvingVersion) ? 'Saving...' : 'Save'}
           </Button>
         </DialogFooter>
       </DialogContent>

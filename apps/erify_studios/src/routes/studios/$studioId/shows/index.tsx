@@ -7,7 +7,6 @@ import { Button } from '@eridu/ui';
 
 import { AdminTable } from '@/features/admin/components/admin-table';
 import { BulkTaskGenerationDialog } from '@/features/shows/components/bulk-task-generation-dialog';
-import { useClientFieldData } from '@/features/shows/components/hooks/use-client-field-data';
 import { usePlatformsFieldData } from '@/features/shows/components/hooks/use-platforms-field-data';
 import { useShowStandardFieldData } from '@/features/shows/components/hooks/use-show-standard-field-data';
 import { useShowStatusFieldData } from '@/features/shows/components/hooks/use-show-status-field-data';
@@ -89,7 +88,6 @@ function StudioShowsPage() {
   }, [selectedShowIds, selectedShowSnapshots, showsById]);
 
   // Fetch filter options
-  const { options: clientOptions } = useClientFieldData(null);
   const { options: typeOptions } = useShowTypeFieldData(null);
   const { options: standardOptions } = useShowStandardFieldData(null);
   const { options: statusOptions } = useShowStatusFieldData(null);
@@ -110,8 +108,7 @@ function StudioShowsPage() {
       {
         id: 'client_name',
         title: 'Client',
-        type: 'select' as const,
-        options: clientOptions.map((o) => ({ value: o.label, label: o.label })),
+        type: 'text' as const,
       },
       {
         id: 'show_type_name',
@@ -139,7 +136,7 @@ function StudioShowsPage() {
       },
       { id: 'start_time', title: 'Date', type: 'date-range' as const },
     ],
-    [clientOptions, typeOptions, standardOptions, statusOptions, platformOptions],
+    [typeOptions, standardOptions, statusOptions, platformOptions],
   );
 
   const quickFilterColumns = useMemo(() => ['start_time'], []);

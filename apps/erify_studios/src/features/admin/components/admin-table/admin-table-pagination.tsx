@@ -7,6 +7,8 @@ import {
 
 import { Button } from '@eridu/ui';
 
+const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50, 100];
+
 type AdminTablePaginationProps = {
   pagination: {
     pageIndex: number;
@@ -48,7 +50,7 @@ export function AdminTablePagination({
             }}
             className="h-8 w-17.5 rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
-            {[10, 20, 30, 40, 50].map((pageSize) => (
+            {DEFAULT_PAGE_SIZE_OPTIONS.map((pageSize) => (
               <option key={pageSize} value={pageSize}>
                 {pageSize}
               </option>

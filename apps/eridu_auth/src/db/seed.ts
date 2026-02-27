@@ -189,8 +189,7 @@ async function seed() {
   try {
     // 1. Seed hardcoded test users (ONLY in non-production)
     if (env.NODE_ENV !== 'production') {
-      // await seedUsers(TEST_USERS, 'Hardcoded Test Users');
-      console.log('Skipping hardcoded test users in non-production environment.');
+      await seedUsers(TEST_USERS, 'Hardcoded Test Users');
     } else {
       console.log('Skipping hardcoded test users in production environment.');
     }

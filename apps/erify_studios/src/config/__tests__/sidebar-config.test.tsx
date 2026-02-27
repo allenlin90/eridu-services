@@ -5,16 +5,24 @@ import { useSidebarConfig } from '../sidebar-config';
 
 // Mock lucide-react icons
 vi.mock('lucide-react', () => ({
+  BadgeCheck: vi.fn(),
+  Clapperboard: vi.fn(),
+  ClipboardCheck: vi.fn(),
   Command: vi.fn(),
   LayoutDashboard: vi.fn(),
-  GalleryVerticalEnd: vi.fn(),
-  AudioWaveform: vi.fn(),
   Building2: vi.fn(),
+  Film: vi.fn(),
+  Layers: vi.fn(),
+  ListTodo: vi.fn(),
+  MonitorPlay: vi.fn(),
+  Ruler: vi.fn(),
   Settings: vi.fn(),
+  Shapes: vi.fn(),
   Users: vi.fn(),
+  UserSquare2: vi.fn(),
   CalendarDays: vi.fn(),
-  Tv: vi.fn(),
   Videotape: vi.fn(),
+  Warehouse: vi.fn(),
 }));
 
 // Mock auth client
@@ -141,16 +149,19 @@ describe('useSidebarConfig', () => {
       icon: expect.any(Function),
       isActive: false,
       items: expect.arrayContaining([
-        { title: 'Clients', url: '/system/clients' },
-        { title: 'Studios', url: '/system/studios' },
-        { title: 'MCs', url: '/system/mcs' },
-        { title: 'Memberships', url: '/system/memberships' },
-        { title: 'Users', url: '/system/users' },
-        { title: 'Platforms', url: '/system/platforms' },
-        { title: 'Show Standards', url: '/system/show-standards' },
-        { title: 'Show Types', url: '/system/show-types' },
-        { title: 'Schedules', url: '/system/schedules' },
-        { title: 'Shows', url: '/system/shows' },
+        expect.objectContaining({ title: 'Clients', url: '/system/clients' }),
+        expect.objectContaining({ title: 'Studios', url: '/system/studios' }),
+        expect.objectContaining({ title: 'MCs', url: '/system/mcs' }),
+        expect.objectContaining({ title: 'Memberships', url: '/system/memberships' }),
+        expect.objectContaining({ title: 'Users', url: '/system/users' }),
+        expect.objectContaining({ title: 'Platforms', url: '/system/platforms' }),
+        expect.objectContaining({ title: 'Show Standards', url: '/system/show-standards' }),
+        expect.objectContaining({ title: 'Show Statuses', url: '/system/show-statuses' }),
+        expect.objectContaining({ title: 'Show Types', url: '/system/show-types' }),
+        expect.objectContaining({ title: 'Schedules', url: '/system/schedules' }),
+        expect.objectContaining({ title: 'Tasks', url: '/system/tasks' }),
+        expect.objectContaining({ title: 'Task Templates', url: '/system/task-templates' }),
+        expect.objectContaining({ title: 'Shows', url: '/system/shows' }),
       ]),
     });
 
@@ -160,14 +171,14 @@ describe('useSidebarConfig', () => {
       icon: expect.any(Function),
       isActive: false,
       items: [
-        {
+        expect.objectContaining({
           title: 'Dashboard',
           url: '/studios/studio-1/dashboard',
-        },
-        {
+        }),
+        expect.objectContaining({
           title: 'My Tasks',
           url: '/studios/studio-1/my-tasks',
-        },
+        }),
       ],
     });
   });

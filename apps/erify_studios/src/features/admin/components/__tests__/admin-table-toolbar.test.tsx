@@ -1,5 +1,6 @@
 import type { Table } from '@tanstack/react-table';
 import { fireEvent, render, screen } from '@testing-library/react';
+import * as React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { SearchableColumn } from '../admin-table-toolbar';
@@ -28,12 +29,35 @@ vi.mock('@eridu/ui', () => ({
     </span>
   ),
   Label: ({ children, ...props }: any) => <label {...props}>{children}</label>,
-  Popover: ({ children }: any) => <div data-testid="popover">{children}</div>,
+  Popover: ({ children, open, onOpenChange }: any) => {
+    React.useEffect(() => {
+      if (!open) {
+        onOpenChange?.(true);
+      }
+    }, [open, onOpenChange]);
+    return <div data-testid="popover">{children}</div>;
+  },
   PopoverTrigger: ({ children }: any) => (
     <div data-testid="popover-trigger">{children}</div>
   ),
   PopoverContent: ({ children }: any) => (
     <div data-testid="popover-content">{children}</div>
+  ),
+  Sheet: ({ children }: any) => <div data-testid="sheet">{children}</div>,
+  SheetTrigger: ({ children }: any) => (
+    <div data-testid="sheet-trigger">{children}</div>
+  ),
+  SheetContent: ({ children }: any) => (
+    <div data-testid="sheet-content">{children}</div>
+  ),
+  SheetHeader: ({ children }: any) => (
+    <div data-testid="sheet-header">{children}</div>
+  ),
+  SheetTitle: ({ children }: any) => (
+    <div data-testid="sheet-title">{children}</div>
+  ),
+  SheetDescription: ({ children }: any) => (
+    <div data-testid="sheet-description">{children}</div>
   ),
   Select: ({ children, value, onValueChange: _onValueChange }: any) => (
     <div data-testid="select" data-value={value}>

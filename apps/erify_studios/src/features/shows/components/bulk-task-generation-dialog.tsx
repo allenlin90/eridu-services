@@ -148,7 +148,7 @@ export function BulkTaskGenerationDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[560px]">
+      <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             Generate Tasks for
@@ -291,7 +291,11 @@ export function BulkTaskGenerationDialog({
                 Only applies to ADMIN / ROUTINE / OTHER templates.
               </p>
               {selectedOptionalDueTemplates.map((template) => (
-                <div key={template.id} className="space-y-1">
+                <div
+                  key={template.id}
+                  className={`space-y-1 ${isGenerating ? 'pointer-events-none opacity-60' : ''}`}
+                  aria-disabled={isGenerating}
+                >
                   <p className="text-sm">{template.name}</p>
                   <DateTimePicker
                     value={dueDateOverrides[template.id] ?? ''}
@@ -301,7 +305,6 @@ export function BulkTaskGenerationDialog({
                         [template.id]: value,
                       }));
                     }}
-                    disabled={isGenerating}
                   />
                 </div>
               ))}
