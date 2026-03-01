@@ -1,6 +1,6 @@
-# Erify Studios
+# erify_studios
 
-A modern React application for managing studios, users, and broadcast infrastructure, built with TanStack Router, TypeScript, and Vite.
+> **TLDR**: Studio admin React app for managing shows, tasks, templates, and schedules. Features: admin CRUD tables (sorting/filtering/URL state), task template builder, bulk task generation, operator task execution (JsonForm), review queue, and studio context switching. Built with TanStack Router + React Query + Vite.
 
 **Current Status**: Phase 1 ✅ - Studio admin UI for managing studios, users, clients, platforms, and system infrastructure with advanced table features
 
@@ -546,7 +546,7 @@ Paraglide JS integrates with the build process:
 
 - **Local API Reference**: When API running, visit `http://localhost:3000/api-reference` (Scalar UI)
 - **API Types**: [`@eridu/api-types`](../../packages/api-types/README.md)
-- **Admin Endpoints**: Documented in [erify_api Admin Guide](../erify_api/docs/AUTHENTICATION_GUIDE.md)
+- **Admin Endpoints**: Documented in [erify_api Admin Guide](../erify_api/docs/design/AUTHORIZATION_GUIDE.md)
 
 ### Architecture & Design
 

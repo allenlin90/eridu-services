@@ -75,6 +75,17 @@ id: string
 | `PATCH`  | 200 OK         | `@ZodResponse(S, HttpStatus.OK)`                 |
 | `DELETE` | 204 No Content | `@ZodResponse(undefined, HttpStatus.NO_CONTENT)` |
 
+### 4.1 Action Endpoint vs Generic PATCH
+
+When a transition has domain semantics beyond simple field mutation, use a dedicated action endpoint (for example `POST .../resolve-cancellation`) instead of generic `PATCH`.
+
+Use an action endpoint when any of these apply:
+
+1. strict from-status/to-status rules,
+2. policy checks (task counts, lock windows, approval conditions),
+3. required action context (reason/actor/audit),
+4. deterministic domain error contract for FE workflows.
+
 ### 5. Payload Translation & Property Filtering
 
 🔴 **Critical**: Controllers MUST adapt external DTOs to internal Service Payloads and filter unnecessary properties.

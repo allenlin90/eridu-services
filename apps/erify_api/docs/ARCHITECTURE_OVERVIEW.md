@@ -1,5 +1,7 @@
 # Architecture Overview
 
+> **TLDR**: NestJS modular architecture with three controller scopes (`/admin`, `/studios/:id`, `/me`). Uses Prisma for data access, Zod for validation/serialization, and `@eridu/auth-sdk` for JWT auth. Each domain has its own module with model service → repository → Prisma layers.
+
 > Slim reference for high-level architecture decisions. For implementation patterns, see the **Skills** section below.
 
 ---
@@ -16,6 +18,42 @@
 | Monorepo      | Turborepo + pnpm workspaces                      |
 
 ## Module Architecture
+
+```mermaid
+block-beta
+    columns 1
+    block:http["HTTP Layer"]
+        columns 5
+        Admin["Admin\nController"]
+        Studio["Studio\nController"]
+        Me["Me\nController"]
+        Backdoor["Backdoor\nController"]
+        Integration["Integration\nController"]
+    end
+    space
+    block:biz["Business Logic Layer"]
+        columns 2
+        ModelSvc["Model Services\n(single-entity CRUD)"]
+        OrchSvc["Orchestration Services\n(multi-entity workflows)"]
+    end
+    space
+    block:data["Data Access Layer"]
+        columns 1
+        Repo["Repositories (BaseRepository)\nPrisma delegates, soft delete, version checks"]
+    end
+    space
+    block:db["Database"]
+        columns 1
+        PG["PostgreSQL (Prisma migrations)"]
+    end
+
+    http --> biz
+    biz --> data
+    data --> db
+```
+
+<details>
+<summary>ASCII fallback</summary>
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -41,6 +79,8 @@
 │  PostgreSQL (via Prisma migrations)              │
 └──────────────────────────────────────────────────┘
 ```
+
+</details>
 
 ## Controller Scopes
 
@@ -91,7 +131,7 @@ For detailed implementation patterns, see `.agent/skills/`:
 ## Related Documentation
 
 - **[Business Domain](./BUSINESS.md)** — Entity relationships and domain concepts
-- **[Authorization Guide](./AUTHORIZATION_GUIDE.md)** — Granular RBAC design proposal (not yet implemented)
-- **[Schedule Upload Design](./SCHEDULE_UPLOAD_API_DESIGN.md)** — Schedule planning system
+- **[Authorization Guide](./design/AUTHORIZATION_GUIDE.md)** — Granular RBAC design proposal (not yet implemented)
+- **[Schedule Planning](./SCHEDULE_PLANNING.md)** — Schedule planning system
 - **[Task Management Summary](./TASK_MANAGEMENT_SUMMARY.md)** — Task management quick-reference
 - **[Roadmap](./roadmap/)** — Phase 1–4 implementation plans

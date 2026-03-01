@@ -1,6 +1,6 @@
 # @eridu/api-types
 
-Shared API types and schemas for the eridu-services monorepo.
+> **TLDR**: Single source of truth for API contracts. Provides Zod schemas (runtime validation) + TypeScript types (compile-time safety) + UID prefix constants for all 15 entities. Precompiled to `dist/` — import from `@eridu/api-types/shows`, never from `src/`. All APIs use snake_case.
 
 **Current Status**: Phase 1 ✅ - 15 entities with Zod validation and TypeScript types
 
@@ -655,9 +655,9 @@ Interactive Scalar UI showing all endpoints, schemas, and example requests/respo
 ### Related Documentation
 
 - **[Copilot Instructions](../../.github/copilot-instructions.md)** - Conventions for AI agents
-- **[erify_api Architecture](../erify_api/docs/ARCHITECTURE.md)** - Backend module structure
+- **[erify_api Architecture](../erify_api/docs/ARCHITECTURE_OVERVIEW.md)** - Backend module structure
 - **[erify_api Business Logic](../erify_api/docs/BUSINESS.md)** - Entity relationships and rules
-- **[Authentication Guide](../erify_api/docs/AUTHENTICATION_GUIDE.md)** - Auth patterns and JWTs
+- **[Authorization Guide](../erify_api/docs/design/AUTHORIZATION_GUIDE.md)** - Auth patterns and JWTs
 
 ### Zod Documentation
 

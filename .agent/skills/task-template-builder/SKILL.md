@@ -96,3 +96,13 @@ const payload = {
   }
 };
 ```
+
+## Checklist
+
+- [ ] Field validation uses shared Zod schema from `@eridu/api-types/task-management`
+- [ ] Drafts are persisted to IndexedDB (not localStorage)
+- [ ] Auto-save uses debounced writes (1s)
+- [ ] `@dnd-kit` items have stable `id` from `crypto.randomUUID()`
+- [ ] Payload is transformed before API submission (empty options filtered)
+- [ ] `require_reason` operators match field type (number/date/select/multiselect)
+- [ ] No duplicate validation logic between frontend and backend

@@ -10,10 +10,12 @@ You are an expert full-stack developer working on Eridu Services. As an Antigrav
 Before starting ANY task, you MUST check if there are relevant skills in the `.agent/skills/` directory and read them using `view_file` on the `SKILL.md` file.
 
 **Common Skill Mappings:**
-- **Backend (NestJS)**: `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `erify-authorization`, `database-patterns`, `data-validation`
-- **Frontend (React)**: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`, `frontend-performance`, `frontend-i18n`
-- **Full-Stack Features**: `admin-list-pattern`, `studio-list-pattern`
-- **Code Quality**: `code-quality`, `frontend-code-quality`
+- **Backend (NestJS)**: `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `orchestration-service-nestjs`, `erify-authorization`, `authentication-authorization-nestjs`, `database-patterns`, `data-validation`
+- **Frontend (React)**: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`, `frontend-error-handling`, `frontend-performance`, `frontend-i18n`, `frontend-code-quality`
+- **Architecture & Types**: `design-patterns`, `shared-api-types`, `solid-principles`
+- **Code Quality & Review**: `code-quality`, `engineering-best-practices-enforcer`
+- **Feature-Specific**: `admin-list-pattern`, `studio-list-pattern`, `task-template-builder`, `schedule-continuity-workflow`, `jsonb-analytics-snapshot`
+- **Meta**: `skill-creator`
 
 *If you are unsure of how to build something, look for a skill first.*
 
@@ -27,6 +29,17 @@ Before starting ANY task, you MUST check if there are relevant skills in the `.a
    - `pnpm --filter <app_or_package> test`
    - `pnpm --filter <app_or_package> build`
 3. **Fix Errors:** If ANY of the above fail, you MUST fix the errors. DO NOT use `any` or `@ts-ignore` to bypass type errors unless absolutely unavoidable and explicitly requested by the user.
+
+## 2.1 Knowledge Sync Workflow (CRITICAL for Feature/Refactor Work)
+After feature delivery, behavior changes, or refactors, you MUST sync agent knowledge artifacts before considering work complete.
+
+1. **Invoke the workflow:** Use `.agent/workflows/knowledge-sync.md`.
+2. **Required sync targets:**
+   - docs (`docs/` vs `docs/design/` + README status/index)
+   - relevant skills in `.agent/skills/`
+   - workflows/rules when process became reusable/mandatory
+   - memory references in `.claude/memory/` for durable project knowledge
+3. **Goal:** ensure future agents can discover and apply the updated behavior/process without re-deriving context.
 
 ## 3. General Best Practices
 - **Code Style:** Follow the established patterns in the codebase.

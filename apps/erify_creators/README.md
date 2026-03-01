@@ -1,6 +1,6 @@
-# Erify Creators
+# erify_creators
 
-A modern React application for managing shows, built with TanStack Router, TypeScript, and Vite.
+> **TLDR**: Content creator React app for viewing and managing shows. Minimal admin overhead — designed for MCs/creators to see their assigned shows and upcoming schedule. Built with TanStack Router + React Query + Vite.
 
 **Current Status**: Phase 1 ✅ - Content creator UI for viewing and managing shows with advanced table features
 

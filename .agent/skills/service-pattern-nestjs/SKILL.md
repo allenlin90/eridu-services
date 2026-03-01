@@ -33,6 +33,19 @@ Services act as the business logic layer. They should:
 5. **Coordinate operations** - Orchestrate multi-entity workflows
 6. **Manage transactions** - Ensure data consistency
 
+## Domain Transition Rule
+
+If an operation is a business-state transition (not a generic field update), model it as an explicit service action with clear invariants.
+
+Examples of required invariants:
+
+1. allowed current state(s),
+2. blocking conditions (for example active tasks),
+3. required audit context (`reason`, actor, timestamp),
+4. idempotent behavior under retries/concurrency.
+
+Controller PATCH handlers should call this explicit service action rather than bypassing invariants through generic update payloads.
+
 ---
 
 ## Service Architecture
@@ -481,7 +494,7 @@ export class ShowOrchestrationService {
 
 ## Related Skills
 
-- **[Repository Pattern NestJS](repository-pattern-nestjs/SKILL.md)** - Data access patterns
-- **[Backend Controller Pattern NestJS](backend-controller-pattern-nestjs/SKILL.md)** - Controller patterns
-- **[Database Patterns](database-patterns/SKILL.md)** - Transactions, soft delete, locking
-- **[Data Validation](data-validation/SKILL.md)** - Input validation patterns
+- **[Repository Pattern NestJS](../repository-pattern-nestjs/SKILL.md)** - Data access patterns
+- **[Backend Controller Pattern NestJS](../backend-controller-pattern-nestjs/SKILL.md)** - Controller patterns
+- **[Database Patterns](../database-patterns/SKILL.md)** - Transactions, soft delete, locking
+- **[Data Validation](../data-validation/SKILL.md)** - Input validation patterns

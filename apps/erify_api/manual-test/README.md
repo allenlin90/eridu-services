@@ -158,7 +158,7 @@ All test scripts automatically read API keys from your `.env` file:
 
 This matches the server's actual configuration, so you can test the real behavior based on whether the server runs in dev or prod mode.
 
-See [Server-to-Server Authentication Guide](../docs/SERVER_TO_SERVER_AUTH.md) for complete authentication details.
+See [Server-to-Server Authentication Guide](../docs/design/AUTHORIZATION_GUIDE.md) for complete authentication details.
 
 ## Custom API URL
 
@@ -183,7 +183,7 @@ pnpm run test:backdoor:create-users -- --api-url=http://localhost:3000
 
 ## Related Documentation
 
-- **[Server-to-Server Authentication Guide](../docs/SERVER_TO_SERVER_AUTH.md)** - Complete API key guard documentation
-- **[Authentication Guide](../docs/AUTHENTICATION_GUIDE.md)** - JWT validation and authorization patterns
+- **[Server-to-Server Authentication Guide](../docs/design/AUTHORIZATION_GUIDE.md)** - Complete API key guard documentation
+- **[Authentication Guide](../docs/design/AUTHORIZATION_GUIDE.md)** - JWT validation and authorization patterns
 - **[Schedule Planning Flow](./schedule-planning/README.md)** - Schedule planning testing guide
 - **[Backdoor API Flow](./backdoor/README.md)** - Backdoor API testing guide

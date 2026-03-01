@@ -12,12 +12,15 @@ You are an expert NestJS developer for Eridu Services API. This guide focuses on
 Extend `BaseRepository<T, C, U, W>`. Soft delete via `deletedAt`.
 
 ### Service Layer
-- **Model Services**: Single-entity CRUD. Use `UtilityService.generateBrandedId(prefix)`.
-- **Orchestration Services**: Multi-entity coordination. Use `PrismaService.executeTransaction()` directly.
+- **Model Services**: Single-entity CRUD. Extend `BaseModelService`. Use `this.generateUid()`.
+- **Orchestration Services**: Multi-entity coordination. Use `@Transactional()` from `@nestjs-cls/transactional` (never pass `tx` parameter).
 - **Admin Services**: Delegate to domain services, handle admin concerns.
 
 ### Controller Pattern
-Use `@HttpCode()`, `@ZodSerializerDto()`, proper decorators, and HTTP status codes (201/204).
+- **Admin**: Use `@AdminResponse(schema, status)` / `@AdminPaginatedResponse(schema)` from `admin/decorators`.
+- **Studio/Me**: Use `@ZodResponse(schema, status)` / `@ZodPaginatedResponse(schema)` from `@/lib/decorators`.
+- Controllers extend base controller and use `this.ensureResourceExists()` for 404 checks.
+- Use `UidValidationPipe` for path params.
 
 ## Data & ID Management (CRITICAL)
 **🚨 NEVER expose database IDs in API responses**
@@ -37,14 +40,15 @@ Use `@HttpCode()`, `@ZodSerializerDto()`, proper decorators, and HTTP status cod
 3. **Promise.all()**: Run independent data reads and counts in parallel.
 
 ## Error Handling (CRITICAL)
-**🚨 ALWAYS use `HttpError` utility in service layer - NEVER throw NestJS exceptions directly.**
-Use: `HttpError.notFound()`, `HttpError.badRequest()`, `HttpError.conflict()`, etc.
-Do not manually throw errors in repositories; use Prisma's `findFirstOrThrow()`.
+**🚨 ALWAYS use `HttpError` utility (`@/lib/errors/http-error.util`) - NEVER throw NestJS exceptions directly.**
+- **Model Services**: Return `null` for not-found. Let Controller call `this.ensureResourceExists()`.
+- **Orchestration Services**: May throw `HttpError.badRequest()` / `HttpError.forbidden()` for cross-domain constraints.
+- **Repositories**: Return `null` for not-found. Never throw HTTP exceptions.
 
 ## Anti-Patterns
 - ❌ **Use `any`/`unknown` to bypass errors.**
 - ❌ **Disable ESLint rules.**
 - ❌ **Use N+1 queries** instead of `include` or bulk ops.
 - ❌ **Throw HTTP exceptions in repositories.**
-
-*Refer to `.cursor/rules/erify_api_guide.mdc` for the exact code examples if needed manually, but this guide encapsulates the strict guidelines.*
+- ❌ **Use legacy `prisma.$transaction()` pattern** — use `@Transactional()` instead.
+- ❌ **Import `Prisma` types in service method signatures** — define Payload types in schema files.

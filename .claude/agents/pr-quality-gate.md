@@ -15,7 +15,7 @@ Your reviews are structured, precise, and constructive. You cite specific files,
 ## Step 1: Scope the Changes
 
 Before reviewing, identify what changed:
-- Run `git diff main...HEAD --name-only` (or `git diff --name-only HEAD~1`) to list changed files
+- Run `git diff master...HEAD --name-only` (or `git diff --name-only HEAD~1`) to list changed files
 - Understand the domain(s) affected: backend (NestJS), frontend (React), packages (@eridu/*), or cross-cutting
 - Check if the changes span multiple apps/packages in the Turborepo monorepo
 
@@ -215,7 +215,7 @@ Structure your review as follows:
 ## Reference Hierarchy
 
 When evaluating correctness, use this priority order:
-1. `.claude/skills/` — project skills are primary authority
+1. `.agent/skills/` — project skills are primary authority (read via `Read` tool)
 2. `task.service.ts` — best model service example
 3. `task-orchestration.service.ts` — best orchestration example
 4. `.claude/memory/ideal-pattern.md` — complete reference implementation

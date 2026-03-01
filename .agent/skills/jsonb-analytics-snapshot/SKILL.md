@@ -82,3 +82,13 @@ If a webhook/cron job isn't viable yet, use a "Lazy Evaluation" pattern in the S
 3. If NO: Calculate the aggregations via Prisma `groupBy`, construct the `metrics` JSON, save it to the database, and return it.
 
 Because historical periods (e.g., "Last Month") are immutable, once the snapshot is generated, it never costs aggregation CPU cycles again.
+
+## Checklist
+
+- [ ] Snapshot table includes scoping fields (`studioId`, optional `userId`)
+- [ ] Time bounding fields present (`periodStart`, `periodEnd`, `periodType`)
+- [ ] `metrics` column is `Json` type (not normalized RDBMS tables)
+- [ ] DTO/Zod schema mirrors the `metrics` JSON structure
+- [ ] Lazy evaluation: check for existing snapshot before calculating
+- [ ] Indexes cover `(studioId, periodType, periodStart)` for efficient lookups
+- [ ] Snapshot is immutable after creation (historical periods don't change)

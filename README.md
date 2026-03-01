@@ -1,4 +1,50 @@
-### Apps
+# Eridu Services
+
+> **TLDR**: A TypeScript monorepo for live-commerce broadcast operations. `erify_api` (NestJS) manages shows, schedules, tasks, and users. `eridu_auth` (Better Auth) handles SSO. `erify_creators` and `erify_studios` (React/Vite) are the frontend apps. Shared packages provide type-safe API contracts, auth SDK, UI components, and i18n.
+
+## Architecture
+
+```mermaid
+graph TB
+    subgraph Frontend["Frontend Apps"]
+        creators["erify_creators<br/><i>React · Vite · TanStack Router</i><br/>Show management for creators"]
+        studios["erify_studios<br/><i>React · Vite · TanStack Router</i><br/>Studio admin & task management"]
+    end
+
+    subgraph Backend["Backend Services"]
+        api["erify_api<br/><i>NestJS · Prisma · PostgreSQL</i><br/>REST API for all operations"]
+        auth["eridu_auth<br/><i>Better Auth · PostgreSQL</i><br/>SSO & JWT authentication"]
+    end
+
+    subgraph Packages["Shared Packages"]
+        types["@eridu/api-types<br/><i>Zod schemas & TS types</i>"]
+        sdk["@eridu/auth-sdk<br/><i>JWT/JWKS validation</i>"]
+        ui["@eridu/ui<br/><i>shadcn/ui components</i>"]
+        i18n["@eridu/i18n<br/><i>Translations (EN/ZH-TW/TH)</i>"]
+    end
+
+    subgraph External["External Integrations"]
+        gs["Google Sheets<br/><i>Apps Script</i><br/>Schedule planning"]
+    end
+
+    creators --> api
+    studios --> api
+    creators --> auth
+    studios --> auth
+    api --> auth
+    gs --> api
+
+    creators -.-> types & sdk & ui & i18n
+    studios -.-> types & sdk & ui & i18n
+    api -.-> types & sdk
+
+    style Frontend fill:#e8f4fd,stroke:#2196F3
+    style Backend fill:#fff3e0,stroke:#FF9800
+    style Packages fill:#e8f5e9,stroke:#4CAF50
+    style External fill:#f3e5f5,stroke:#9C27B0
+```
+
+## Apps
 
 - **`erify_api`** - REST API service built with NestJS for managing shows, schedules, users, and related entities
 - **`eridu_auth`** - Better Auth service for SSO across all services in the monorepo

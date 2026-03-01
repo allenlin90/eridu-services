@@ -262,6 +262,6 @@ async updateWithVersionCheck(
 
 ## Related Skills
 
-- **[Service Pattern NestJS](service-pattern-nestjs/SKILL.md)** - Service layer using repositories
-- **[Database Patterns](database-patterns/SKILL.md)** - Soft delete, transactions, optimistic locking
-- **[Backend Controller Pattern NestJS](backend-controller-pattern-nestjs/SKILL.md)** - Controller patterns
+- **[Service Pattern NestJS](../service-pattern-nestjs/SKILL.md)** - Service layer using repositories
+- **[Database Patterns](../database-patterns/SKILL.md)** - Soft delete, transactions, optimistic locking
+- **[Backend Controller Pattern NestJS](../backend-controller-pattern-nestjs/SKILL.md)** - Controller patterns

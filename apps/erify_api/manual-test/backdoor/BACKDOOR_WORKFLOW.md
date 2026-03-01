@@ -275,7 +275,7 @@ pnpm run manual:backdoor:create-users
 
 This matches the server's actual configuration, allowing you to test the real API behavior based on server mode (dev vs prod) and `.env` configuration.
 
-See [Server-to-Server Authentication Guide](../docs/SERVER_TO_SERVER_AUTH.md) for complete authentication details.
+See [Server-to-Server Authentication Guide](../docs/design/AUTHORIZATION_GUIDE.md) for complete authentication details.
 
 ## Test Payloads
 
@@ -393,6 +393,6 @@ or
 
 ## Related Documentation
 
-- **[Server-to-Server Authentication Guide](../docs/SERVER_TO_SERVER_AUTH.md)** - Complete API key guard documentation
-- **[Authentication Guide](../docs/AUTHENTICATION_GUIDE.md)** - JWT validation and authorization patterns
+- **[Server-to-Server Authentication Guide](../docs/design/AUTHORIZATION_GUIDE.md)** - Complete API key guard documentation
+- **[Authentication Guide](../docs/design/AUTHORIZATION_GUIDE.md)** - JWT validation and authorization patterns
 - **[Test Payloads README](./README.md)** - Complete testing guide

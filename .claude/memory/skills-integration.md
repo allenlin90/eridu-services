@@ -1,14 +1,25 @@
 # Skills Integration Guide
 
-This document clarifies how `.claude/skills/` project skills relate to memory files.
+This document clarifies how `.agent/skills/` project skills relate to Claude Code memory files.
+
+> **Canonical skill location**: `.agent/skills/`. Claude Code reads skills directly from this path via the `Read` tool — there is no `.claude/skills/` copy.
 
 ## Authority Hierarchy
 
 ```
-1. .claude/skills/          ← PRIMARY (project-specific patterns)
-2. memory/*.md              ← SECONDARY (quick reference, known issues)
+1. .agent/skills/           ← PRIMARY (single source of truth)
+2. .claude/memory/*.md      ← SECONDARY (quick reference, known issues)
 3. Codebase examples        ← VALIDATION (task.service.ts, etc.)
 ```
+
+## Workflow Trigger (Feature/Refactor)
+
+For feature delivery, behavior changes, and refactors, run:
+
+1. `.agent/workflows/verification.md`
+2. `.agent/workflows/knowledge-sync.md`
+
+This keeps docs, skills, workflows/rules, and memory references aligned with shipped behavior.
 
 ## Critical Skills Clarifications
 
@@ -231,36 +242,39 @@ async findPaginated(params: {
 6. **database-patterns** - Transactions, soft delete, locking
 7. **data-validation** - Zod validation patterns
 8. **orchestration-service-nestjs** - Multi-service coordination, bulk ops
+9. **jsonb-analytics-snapshot** - Analytics aggregation with JSONB snapshots
 
 ### Frontend (React)
-9. **frontend-api-layer** - TanStack Query, API client
-10. **frontend-state-management** - State patterns
-11. **frontend-ui-components** - Component patterns
-12. **frontend-testing-patterns** - Testing patterns
-13. **frontend-error-handling** - Error boundaries
-14. **frontend-performance** - Optimization patterns
-15. **frontend-i18n** - Paraglide usage
-16. **frontend-code-quality** - Quality standards
-17. **frontend-tech-stack** - Stack overview
+10. **frontend-api-layer** - TanStack Query, API client
+11. **frontend-state-management** - State patterns
+12. **frontend-ui-components** - Component patterns
+13. **frontend-testing-patterns** - Testing patterns
+14. **frontend-error-handling** - Error boundaries
+15. **frontend-performance** - Optimization patterns
+16. **frontend-i18n** - Paraglide usage
+17. **frontend-code-quality** - Quality standards
+18. **frontend-tech-stack** - Stack overview
 
 ### Shared
-18. **shared-api-types** - @eridu/api-types patterns
-19. **design-patterns** - General patterns
+19. **shared-api-types** - @eridu/api-types patterns
+20. **design-patterns** - General patterns
+21. **solid-principles** - SOLID principles for backend & frontend
+22. **engineering-best-practices-enforcer** - Repo-aligned best practices audit & refactor
 
 ### Domain-Specific
-20. **admin-list-pattern** - Admin list pages
-21. **studio-list-pattern** - Studio list pages
-22. **task-template-builder** - Task template UI
+23. **admin-list-pattern** - Admin list pages
+24. **studio-list-pattern** - Studio list pages
+25. **task-template-builder** - Task template UI
+26. **schedule-continuity-workflow** - Schedule update/validate/publish workflow
 
 ### Meta
-23. **skill-creator** - Creating new skills
-24. **code-quality** - General quality rules
+27. **skill-creator** - Creating new skills
+28. **code-quality** - General quality rules
 
 ## Key Takeaways
 
-1. **Skills are authoritative** - Trust `.claude/skills/` over memory files
+1. **Skills are authoritative** - Trust `.agent/skills/` over memory files
 2. **Schemas CAN use Prisma** - To define payload types (abstraction layer)
 3. **Services CANNOT use Prisma** - In method signatures or logic
 4. **Use Parameters<>** - For repository pass-through methods
 5. **Repository builds queries** - Services pass domain filters
-

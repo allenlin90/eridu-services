@@ -1,6 +1,6 @@
-# Eridu Services API
+# erify_api
 
-A modern, scalable REST API built with NestJS, providing administrative operations for managing users, clients, MCs (Master of Ceremonies), platforms, shows, schedules, and related entities with comprehensive CRUD functionality.
+> **TLDR**: NestJS REST API for live-commerce operations — manages shows, schedules, tasks, users, clients, MCs, platforms, and studios. Uses Prisma/PostgreSQL, JWT auth via `@eridu/auth-sdk`, and Zod validation via `@eridu/api-types`. Three controller scopes: `/admin/*` (system admins), `/studios/:id/*` (studio members), `/me/*` (authenticated users).
 
 The API uses JWT validation via `@eridu/auth-sdk` SDK for authentication and StudioMembership model for authorization. For detailed implementation status and roadmap, see [Phase 1 Roadmap](docs/roadmap/PHASE_1.md).
 
@@ -181,13 +181,13 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK, validating tokens from th
 **Authorization**:
 - **System Admin**: Users with `is_system_admin=true` have full access to `/admin/*` endpoints.
 - **Studio Admin**: Admin access within specific studios is determined via StudioMembership model (Phase 1).
-See [Authentication Guide](docs/AUTHENTICATION_GUIDE.md) for details.
+See [Authentication Guide](docs/design/AUTHORIZATION_GUIDE.md) for details.
 
 **Service-to-Service Authentication**:
 
 - Backdoor endpoints (`/backdoor/*`) use API key authentication for privileged operations
 - Schedule endpoints (`/admin/schedules/*`) use Google Sheets API key authentication
-- See [Server-to-Server Authentication Guide](docs/SERVER_TO_SERVER_AUTH.md) for details
+- See [Server-to-Server Authentication Guide](docs/design/AUTHORIZATION_GUIDE.md) for details
 
 ### Available Endpoints
 
@@ -339,7 +339,7 @@ Service-to-service API key authenticated endpoints for privileged operations:
 - `POST /backdoor/studio-memberships` - Create studio membership (API key required)
 - `POST /backdoor/auth/jwks/refresh` - Manually refresh JWKS cache (API key required)
 
-**Note**: These endpoints are separate from admin endpoints and use API key authentication. See [Server-to-Server Authentication Guide](docs/SERVER_TO_SERVER_AUTH.md) for details.
+**Note**: These endpoints are separate from admin endpoints and use API key authentication. See [Server-to-Server Authentication Guide](docs/design/AUTHORIZATION_GUIDE.md) for details.
 
 ## 📚 OpenAPI Documentation
 
@@ -655,18 +655,29 @@ See [Manual Testing Guide](manual-test/README.md) for detailed workflow document
 
 Comprehensive documentation is available in the `docs/` directory. Refer to specific documents based on your task:
 
-| Document                                                         | Use When                                                       |
-| ---------------------------------------------------------------- | -------------------------------------------------------------- |
-| [Documentation Index](docs/README.md)                            | Need a quick overview of all documentation                     |
-| [Architecture Guide](docs/ARCHITECTURE.md)                       | Creating new modules, understanding dependencies               |
-| [Business Domain](docs/BUSINESS.md)                              | Understanding entity relationships and business rules          |
-| [Authentication Guide](docs/AUTHENTICATION_GUIDE.md)             | Implementing auth patterns and guard usage                     |
-| [Server-to-Server Auth](docs/SERVER_TO_SERVER_AUTH.md)           | Adding service-to-service endpoints                            |
-| [Schedule Upload API Design](docs/SCHEDULE_UPLOAD_API_DESIGN.md) | Working on schedule planning features                          |
-| [Phase 1 Roadmap](docs/roadmap/PHASE_1.md)                       | Checking current implementation status ✅                       |
-| [Phase 2 Roadmap](docs/roadmap/PHASE_2.md)                       | Understanding planned features                                 |
-| [Phase 3 Roadmap](docs/roadmap/PHASE_3.md)                       | Long-term vision and planning                                  |
-| [Manual Testing Guide](manual-test/README.md)                    | Running E2E workflows: `pnpm -F erify_api manual:schedule:all` |
+### Design
+
+| Document                                                                                   | Status | Description                                                                    |
+| ------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------ |
+| [Authorization Guide](./design/AUTHORIZATION_GUIDE.md)                                     | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
+| [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) | ⏳      | Studio-scoped resolution for cancelled shows                                   |
+| [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                | 📐      | Design for template-less pre-production ticketing using Tasks                  |
+| [Analytics Dashboard Plan](./design/ANALYTICS_DASHBOARD.md)                               | 📐      | Plan for Studio task performance overview using JSONB snapshots                |
+
+### Roadmap
+
+| Document                                               | Use When                                                       |
+| ------------------------------------------------------ | -------------------------------------------------------------- |
+| [Documentation Index](docs/README.md)                  | Need a quick overview of all documentation                     |
+| [Architecture Overview](docs/ARCHITECTURE_OVERVIEW.md)  | Creating new modules, understanding dependencies               |
+| [Business Domain](docs/BUSINESS.md)                    | Understanding entity relationships and business rules          |
+| [Authentication Guide](docs/design/AUTHORIZATION_GUIDE.md)    | Implementing auth patterns and guard usage                     |
+| [Server-to-Server Auth](docs/design/AUTHORIZATION_GUIDE.md) | Adding service-to-service endpoints                            |
+| [Schedule Planning](docs/SCHEDULE_PLANNING.md)         | Working on schedule planning features                          |
+| [Phase 1 Roadmap](docs/roadmap/PHASE_1.md)             | Checking current implementation status ✅                       |
+| [Phase 2 Roadmap](docs/roadmap/PHASE_2.md)             | Understanding planned features                                 |
+| [Phase 3 Roadmap](docs/roadmap/PHASE_3.md)             | Long-term vision and planning                                  |
+| [Manual Testing Guide](manual-test/README.md)          | Running E2E workflows: `pnpm -F erify_api manual:schedule:all` |
 
 ## 🔧 Configuration
 

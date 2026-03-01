@@ -1,12 +1,12 @@
 # Eridu Services Monorepo - Quick Reference
 
-> **Last Updated**: 2026-02-22
+> **Last Updated**: 2026-03-01
 > **Status**: Production codebase — major architectural debt resolved Feb 2026 (see Known Issues)
 
 ## Workflow Rules (MUST FOLLOW)
 
 ### Skill-First Development
-Before implementing ANY feature, check if a relevant skill exists in `.claude/skills/`. Use the `Skill` tool to invoke it. **Common mappings:**
+Before implementing ANY feature, read the relevant skill from `.agent/skills/<skill-name>/SKILL.md`. **Common mappings:**
 - Backend: `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `erify-authorization`, `database-patterns`, `data-validation`
 - Multi-service workflows: `orchestration-service-nestjs`
 - Frontend: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`
@@ -20,6 +20,9 @@ pnpm --filter <app_or_package> typecheck # NEVER use `any` or `@ts-ignore` to by
 pnpm --filter <app_or_package> test      # All tests must pass
 ```
 Run for each affected app/package. **Never skip. Fix errors before marking work complete.**
+
+### Knowledge Sync (Feature/Refactor Work)
+After feature delivery, behavior changes, or refactors — run `.agent/workflows/knowledge-sync.md`.
 
 ## Project Stack
 
@@ -166,11 +169,66 @@ import { JwtVerifier } from '@eridu/auth-sdk/server/jwt/jwt-verifier';
 - `fix(auth): resolve token refresh race condition`
 - `refactor(user): migrate to payload pattern`
 
+## NestJS API Patterns (CRITICAL)
+
+### Error Handling — Use `HttpError`, never NestJS exceptions directly
+```typescript
+import { HttpError } from '@/lib/errors/http-error.util';
+
+// Model services: return null for not-found
+async findOne(uid: string): Promise<Task | null>
+
+// Controller: call ensureResourceExists() for 404
+const task = await this.taskService.findOne(uid);
+this.ensureResourceExists(task);  // throws NotFoundException if null
+
+// Orchestration services: throw HttpError for cross-domain constraints
+throw HttpError.badRequest('Task already assigned');
+throw HttpError.forbidden('Studio access denied');
+```
+
+### Transactions — Use `@Transactional()` decorator, never pass `tx` as param
+```typescript
+import { Transactional } from '@nestjs-cls/transactional';
+
+@Transactional()
+async bulkCreateTasks(payload: BulkCreateTasksPayload): Promise<Task[]> {
+  // CLS manages the transaction automatically
+}
+```
+
+### Controller Response Decorators
+```typescript
+// Admin controllers (import from 'admin/decorators')
+@AdminResponse(taskApiResponseSchema, HttpStatus.OK)
+@AdminPaginatedResponse(taskApiResponseSchema)
+
+// Studio/Me controllers (import from '@/lib/decorators')
+@ZodResponse(taskApiResponseSchema, HttpStatus.OK)
+@ZodPaginatedResponse(taskApiResponseSchema)
+
+// Path params: always use UidValidationPipe
+@Get(':taskId')
+findOne(@Param('taskId', UidValidationPipe) taskUid: string) { ... }
+```
+
+### Performance — Bulk ops & parallel reads
+```typescript
+// ✅ Parallel independent reads
+const [tasks, total] = await Promise.all([
+  this.repository.findMany(filters),
+  this.repository.count(filters),
+]);
+
+// ✅ Bulk writes — never loop create()
+await this.repository.createMany(items);
+```
+
 ## Service Layer Rules (CRITICAL)
 
 **Status**: Major violations resolved Feb 2026. See [known-issues.md](memory/known-issues.md) for models still needing verification.
 
-### Quick Rules (FROM `.claude/skills/service-pattern-nestjs`)
+### Quick Rules (FROM `.agent/skills/service-pattern-nestjs`)
 ```typescript
 // CORRECT - Service imports payload type
 import { Task } from '@prisma/client';  // Only entity type
@@ -207,7 +265,7 @@ const where: Prisma.TaskWhereInput = { ... };
 
 ## Documentation Index
 
-### Project Skills (Primary Authority - `.claude/skills/`)
+### Project Skills (Primary Authority - `.agent/skills/`)
 | Skill | Purpose | Priority |
 |-------|---------|----------|
 | **service-pattern-nestjs** | Service layer patterns, payload types | HIGH |
@@ -215,11 +273,15 @@ const where: Prisma.TaskWhereInput = { ... };
 | **repository-pattern-nestjs** | Repository layer, BaseRepository | HIGH |
 | **shared-api-types** | @eridu/api-types usage | HIGH |
 | **erify-authorization** | Guards, roles, permissions | HIGH |
+| **engineering-best-practices-enforcer** | Repo-aligned best practices audit & refactor | HIGH |
 | **backend-controller-pattern-nestjs** | Controller patterns (admin/studio/me/backdoor) | MEDIUM |
+| **solid-principles** | SOLID principles for backend & frontend | MEDIUM |
 | **frontend-api-layer** | TanStack Query patterns | MEDIUM |
 | **frontend-state-management** | React state patterns | MEDIUM |
+| **jsonb-analytics-snapshot** | Analytics aggregation with JSONB snapshots | MEDIUM |
+| **schedule-continuity-workflow** | Schedule update/validate/publish workflow | MEDIUM |
 
-**Full skill list** (24 total): See `.claude/skills/` directory
+**Full skill list** (28 total): See `.agent/skills/` directory
 
 ### Memory Files (Supplementary - `.claude/memory/`)
 | File | Purpose | When to Use |

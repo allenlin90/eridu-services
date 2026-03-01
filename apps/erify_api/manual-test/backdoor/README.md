@@ -86,7 +86,7 @@ Scripts automatically read `BACKDOOR_API_KEY` from `.env` file:
 - **Without key**: Scripts don't send header (dev mode behavior)
 - **With key**: Scripts include `X-API-Key` header (production behavior)
 
-See [Server-to-Server Authentication Guide](../../docs/SERVER_TO_SERVER_AUTH.md) for details.
+See [Server-to-Server Authentication Guide](../../docs/design/AUTHORIZATION_GUIDE.md) for details.
 
 ## Endpoints
 

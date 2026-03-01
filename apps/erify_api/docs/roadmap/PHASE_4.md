@@ -1,5 +1,7 @@
 # Phase 4: Review Quality, Decision Support, and Controlled Bulk Actions
 
+> **TLDR**: 🗓️ **Planned**. Improves review throughput without weakening review rigor — adds per-task validation summaries, review decision support, standardized error codes, and audit/metrics. Bulk review is gated behind safeguards.
+
 **Status**: ⏳ Planning phase
 
 ## Overview

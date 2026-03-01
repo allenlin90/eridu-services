@@ -8,9 +8,9 @@ description: Provides general code quality and best practices guidance applicabl
 Provides general code quality and best practices guidance applicable across languages and frameworks. Focuses on **Linting**, **Testing**, and **Type Safety**.
 
 For architecture-specific patterns (N+1 queries, Soft Deletes, etc.), refer to:
-- **[Database Patterns](database-patterns/SKILL.md)**
-- **[Service Patterns](service-pattern-nestjs/SKILL.md)**
-- **[Repository Patterns](repository-pattern-nestjs/SKILL.md)**
+- **[Database Patterns](../database-patterns/SKILL.md)**
+- **[Service Patterns](../service-pattern-nestjs/SKILL.md)**
+- **[Repository Patterns](../repository-pattern-nestjs/SKILL.md)**
 
 ## Pre-Submission Checklist
 
@@ -86,8 +86,8 @@ describe('UserService', () => {
 
 ## Related Skills
 
-- **database-patterns/SKILL.md**: N+1 queries, Soft Deletes, Bulk Operations.
-- **service-pattern-nestjs/SKILL.md**: Business logic errors, Transactions.
-- **repository-pattern-nestjs/SKILL.md**: Data access rules.
-- **backend-controller-pattern-nestjs/SKILL.md**: NestJS-specific controller rules.
-- **frontend-code-quality/SKILL.md**: React/Frontend specific patterns.
+- **[Database Patterns](../database-patterns/SKILL.md)**: N+1 queries, Soft Deletes, Bulk Operations.
+- **[Service Pattern NestJS](../service-pattern-nestjs/SKILL.md)**: Business logic errors, Transactions.
+- **[Repository Pattern NestJS](../repository-pattern-nestjs/SKILL.md)**: Data access rules.
+- **[Backend Controller Pattern NestJS](../backend-controller-pattern-nestjs/SKILL.md)**: NestJS-specific controller rules.
+- **[Frontend Code Quality](../frontend-code-quality/SKILL.md)**: React/Frontend specific patterns.

@@ -1,5 +1,7 @@
 # Phase 2: Show Task Management & Assignments
 
+> **TLDR**: ✅ **Core Complete**. Adds "Task as Form" system — `TaskTemplate` → `TaskTemplateSnapshot` → `Task` + `TaskTarget`. Studio-scoped templates, bulk generation, operator assignment, and execution. Review gate (`REVIEW` status) exists but enforcement is deferred.
+
 **Status**: ✅ Core Complete — review workflow deferred (see Remaining Work)
 
 ## Overview

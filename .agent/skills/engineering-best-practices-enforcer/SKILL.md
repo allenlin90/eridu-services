@@ -57,6 +57,34 @@ If guidance conflicts, document the trade-off explicitly and choose the lower-ri
    - `pnpm --filter <workspace> test`
    - `pnpm --filter <workspace> build` (only when package wiring/build behavior changed)
 
+## Documentation Lifecycle and Placement (Repository Convention)
+
+Use this convention when creating or refactoring docs in any app/package:
+
+1. `docs/` root contains implemented/canonical documentation only.
+   - architecture overviews
+   - current feature behavior
+   - runbooks/playbooks that match shipped behavior
+2. `docs/design/` contains unimplemented or partially implemented artifacts.
+   - design proposals
+   - implementation plans
+   - TODO/follow-up requirements
+3. `docs/README.md` is the index and source of truth for status.
+   - each document listed with explicit status (`implemented`, `in progress`, `planned`, `deprecated`)
+   - do not leave design docs in root once a `docs/design/` structure exists
+4. When a feature is implemented:
+   - move/merge relevant content from `docs/design/*` into canonical `docs/*` files
+   - either delete stale design docs or keep them with explicit archival/deprecated note
+5. Apply the same pattern consistently across `apps/*` and `packages/*` where docs exist.
+
+### Review Gate for Documentation Changes
+
+For design-heavy feature work, include this gate in review:
+
+1. Is this describing current behavior? -> place in `docs/` root.
+2. Is this proposing future behavior or outstanding TODOs? -> place in `docs/design/`.
+3. Is status discoverable from `docs/README.md`? -> required before merge.
+
 ## Refactor Impact Protocol (Mandatory)
 
 Before implementation:

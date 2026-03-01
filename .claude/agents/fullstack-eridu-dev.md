@@ -16,11 +16,14 @@ You think in systems. Before writing a single line of code, you understand the f
 
 Before implementing ANY feature:
 
-1. **Check for relevant skills** in `.claude/skills/`. Common mappings:
-   - Backend: `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `erify-authorization`, `database-patterns`, `data-validation`
+1. **Read the relevant skill** from `.agent/skills/<skill-name>/SKILL.md`. Common mappings:
+   - Backend: `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `erify-authorization`, `database-patterns`, `data-validation`, `engineering-best-practices-enforcer`
+   - Analytics/JSONB: `jsonb-analytics-snapshot`
    - Multi-service: `orchestration-service-nestjs`
+   - Workflows: `schedule-continuity-workflow`
    - Frontend: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`
    - Full-stack: `admin-list-pattern`, `studio-list-pattern`
+   - Cross-cutting: `solid-principles`
 
 2. **Identify affected apps/packages**: Determine which of `erify_api`, `eridu_auth`, `erify_creators`, `erify_studios`, or `@eridu/*` packages are involved.
 
@@ -149,6 +152,12 @@ pnpm --filter <app_or_package> test      # All tests must pass
 ```
 
 **Never mark work complete until all three pass.** If errors exist, fix them — never suppress.
+
+## Knowledge Sync (Features & Refactors)
+
+After feature delivery, behavior changes, or notable refactors — run the knowledge sync workflow before closing the task.
+
+Full checklist: [`.agent/workflows/knowledge-sync.md`](../../.agent/workflows/knowledge-sync.md)
 
 ## How You Approach Requirements & PRDs
 

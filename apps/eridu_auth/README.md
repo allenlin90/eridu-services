@@ -1,8 +1,8 @@
-# Eridu Auth Service
+# eridu_auth
 
-Better Auth service for SSO across all services in the monorepo.
+> **TLDR**: SSO authentication service built on [Better Auth](https://better-auth.com/) with PostgreSQL. Provides email/password login, JWT issuance (EdDSA/Ed25519), and a JWKS endpoint. SSO providers (Google, LINE) are configured but not yet enabled. See [docs/](./docs/) for detailed guides.
 
-**Current Status**: Phase 1 ✅ - Email/password authentication with JWT tokens (15-minute expiration)
+**Current Status**: Phase 1 ✅ - Email/password authentication with JWT tokens
 
 ## Quick Start
 
@@ -172,10 +172,7 @@ Reference documentation based on your task:
 | Document                                                       | Use When                                  |
 | -------------------------------------------------------------- | ----------------------------------------- |
 | [Documentation Index](./docs/README.md)                        | Need overview of all documentation        |
-| [Phase 1 Setup Guide](./docs/PHASE_1_SETUP.md)                 | Setting up email/password auth ✅          |
-| [Environment Variables Guide](./docs/ENVIRONMENT_VARIABLES.md) | Configuring environment settings          |
-| [Google & LINE SSO Setup Guide](./docs/GOOGLE_LINE_SETUP.md)   | Planning SSO provider setup (future)      |
-| [Multi-Provider SSO Guide](./docs/MULTI_PROVIDER_SSO_GUIDE.md) | Understanding multi-provider architecture |
-| [Upgrade Summary](./docs/UPGRADE_SUMMARY.md)                   | Understanding Better Auth migration       |
+| [Setup Guide](./docs/SETUP_GUIDE.md)                           | Environment setup, auth flow, seeding     |
+| [SSO Guide](./docs/SSO_GUIDE.md)                               | SSO provider setup (Google, LINE, OIDC)   |
 
-**Key Reference**: See [Environment Variables Guide](./docs/ENVIRONMENT_VARIABLES.md) for complete configuration reference.
+**Key Reference**: See [Setup Guide](./docs/SETUP_GUIDE.md) for complete configuration reference.

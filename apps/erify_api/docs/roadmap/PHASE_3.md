@@ -1,5 +1,7 @@
 # Phase 3: Material Management & Advanced Collaboration
 
+> **TLDR**: 🗓️ **Planned**. Adds material management (CRUD, versioning, platform targeting), file uploads (S3/GCS), chunked schedule upload for large clients, and collaboration features (tags, comments, audit trail, notifications).
+
 **Status**: ⏳ Planning phase (Deferred to after Task Management)
 
 ## Overview
@@ -11,7 +13,7 @@ Phase 3 implements the Material Management System, File Uploads, and advanced co
 ## Related Documentation
 
 - **[Architecture Overview](../ARCHITECTURE_OVERVIEW.md)** - System architecture and module design
-- **[Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md)** - Schedule upload system design
+- **[Schedule Planning](../SCHEDULE_PLANNING.md)** - Schedule upload system design
 
 ## Core Features
 

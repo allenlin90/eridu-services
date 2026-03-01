@@ -437,6 +437,6 @@ flowchart TD
 
 ## Related Documentation
 
-- **[Schedule Upload API Design](../../docs/SCHEDULE_UPLOAD_API_DESIGN.md)** - Complete API design and architecture
+- **[Schedule Planning](../../docs/SCHEDULE_PLANNING.md)** - Schedule planning API design
 - **[Phase 1 Roadmap](../../docs/roadmap/PHASE_1.md)** - Phase 1 implementation plan
 - **[Test Payloads README](./README.md)** - Test payloads and testing guide

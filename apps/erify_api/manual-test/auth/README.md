@@ -123,7 +123,7 @@ auth/
 
 - **[Auth Workflow](./AUTH_WORKFLOW.md)** - Complete API workflow documentation
 - **[Main Test Payloads README](../README.md)** - Overview of all testing flows
-- **[Authentication Guide](../../docs/AUTHENTICATION_GUIDE.md)** - JWT validation and authorization patterns
+- **[Authentication Guide](../../docs/design/AUTHORIZATION_GUIDE.md)** - JWT validation and authorization patterns
 
 ## Endpoints
 

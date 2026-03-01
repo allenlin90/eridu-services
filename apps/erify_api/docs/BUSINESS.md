@@ -1,5 +1,7 @@
 # Business Domain Documentation
 
+> **TLDR**: The core domain revolves around **Shows** (live-commerce broadcasts) linked to **Clients**, **MCs**, **Platforms**, and **Studios**. **Schedules** plan shows monthly via Google Sheets. **Tasks** are studio-scoped checklists generated from **TaskTemplates** and assigned to operators. The system is built in 4 phases — Phases 1-2 are complete.
+
 This document provides comprehensive business domain information for the Eridu Services API. For development roadmap and implementation phases, see the [Core Production Management System](./roadmap/PHASE_1.md) documentation.
 
 > **⚠️ Note**: This document describes the full domain vision across all phases. For current implementation status, see [Phase 1 Roadmap](./roadmap/PHASE_1.md). **Phase 1 models currently implemented**: User, MC, Client, Platform, Show, ShowMC, ShowPlatform, Studio, StudioRoom, ShowType, ShowStatus, ShowStandard, StudioMembership, Schedule, ScheduleSnapshot
@@ -17,7 +19,7 @@ For detailed implementation plans, see:
 - [Phase 1 Roadmap](./roadmap/PHASE_1.md) ✅ (Current implementation)
 - [Phase 2 Roadmap](./roadmap/PHASE_2.md)
 - [Phase 3 Roadmap](./roadmap/PHASE_3.md)
-- [Schedule Upload API Design](./SCHEDULE_UPLOAD_API_DESIGN.md)
+- [Schedule Planning](./SCHEDULE_PLANNING.md)
 
 # Models
 

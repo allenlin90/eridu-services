@@ -9,7 +9,19 @@ Operational guide for coding agents in `eridu-services`.
 - Existing house rules and workflows are in:
   - `.agent/rules/`
   - `.agent/workflows/verification.md`
-  - `.claude/CLAUDE.md`
+  - `.agent/workflows/knowledge-sync.md`
+
+## Claude Code (`.claude/` System)
+
+For Claude Code sessions, the primary configuration lives in `.claude/`. Claude Code does **not** auto-load `AGENTS.md` — it reads `.claude/CLAUDE.md` instead.
+
+| Artifact | Location |
+|----------|----------|
+| Main project instructions | `.claude/CLAUDE.md` (auto-loaded by Claude Code) |
+| Skills | `.agent/skills/` (read directly via `Read` tool — no `.claude/skills/`) |
+| Workflows | `.agent/workflows/` (read directly — no `.claude/workflows/`) |
+| Project memory | `.claude/memory/` |
+| Subagents | `.claude/agents/` (fullstack-eridu-dev, pr-quality-gate) |
 
 ## Repository Overview
 - Monorepo: `pnpm` workspaces + Turborepo
@@ -34,6 +46,7 @@ Operational guide for coding agents in `eridu-services`.
   - `database-patterns`
   - `data-validation`
   - `erify-authorization`
+  - `authentication-authorization-nestjs`
   - `orchestration-service-nestjs` (for multi-service workflows)
 - Frontend features (`apps/erify_creators`, `apps/erify_studios`):
   - `frontend-tech-stack`
@@ -44,22 +57,31 @@ Operational guide for coding agents in `eridu-services`.
   - `frontend-error-handling`
   - `frontend-performance`
   - `frontend-i18n`
-- Cross-app/shared contracts:
+  - `frontend-code-quality`
+- Architecture and shared contracts:
   - `shared-api-types`
   - `design-patterns`
+  - `solid-principles`
+- Code quality and review:
   - `code-quality`
-- Feature templates/list pages:
+  - `engineering-best-practices-enforcer`
+- Feature-specific:
   - `admin-list-pattern`
   - `studio-list-pattern`
   - `task-template-builder`
+  - `schedule-continuity-workflow`
+  - `jsonb-analytics-snapshot`
+- Meta/Tooling:
+  - `skill-creator`
 - If a listed routing skill is unavailable, discover candidates in `.agent/skills/` and use the closest match.
 
 ## Standard Task Workflow
 1. Identify impacted workspace(s).
-2. Load relevant skill(s) from `.agent/skills/<skill>/SKILL.md`.
+2. Load relevant skill(s) from `.agent/skills/<skill>/SKILL.md` (both Antigravity and Claude Code read from here).
 3. Read local patterns in the target module before changing code.
 4. Implement minimal change set first; avoid broad refactors unless requested.
-5. Verify each impacted workspace.
+5. Verify each impacted workspace (`.agent/workflows/verification.md`).
+6. For feature/refactor/behavior changes, run knowledge sync (`.agent/workflows/knowledge-sync.md`).
 
 ## Verification Checklist (Mandatory)
 Run for every changed workspace/package:

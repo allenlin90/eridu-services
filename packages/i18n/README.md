@@ -1,5 +1,7 @@
 # @eridu/i18n
 
+> **TLDR**: Shared translations across the monorepo using [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs). Supports English, Traditional Chinese (zh-TW), and Thai. Precompiled at build time — each app also has its own app-specific translations. Use `import * as m from '@eridu/i18n'` for shared messages.
+
 **Current Status**: Phase 1 ✅ - Shared translations (3 languages) + Paraglide compilation
 
 Shared i18n translations package for Eridu Services monorepo.

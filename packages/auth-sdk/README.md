@@ -1,4 +1,6 @@
-# Auth SDK
+# @eridu/auth-sdk
+
+> **TLDR**: Framework-agnostic JWT/JWKS validation SDK. Server utilities fetch and cache JWKS from `eridu_auth`, then verify tokens locally (zero network overhead per request). Includes NestJS adapters (`JwtAuthGuard`, `@CurrentUser()`), React client (`createAuthClient`), and Zod schemas for JWT payloads.
 
 **Current Status**: Phase 1 ✅ - JWT/JWKS validation + NestJS adapters + React client
 
@@ -674,10 +676,9 @@ If you have existing JWT/JWKS implementation in your service:
 
 ## Related Documentation
 
-- **[Implementation Strategy](../../apps/erify_api/docs/IMPLEMENTATION_STRATEGY.md)** - SDK implementation plan for erify_api
-- **[Authentication Guide](../../apps/erify_api/docs/AUTHENTICATION_GUIDE.md)** - Authentication guide for erify_api
+- **[Authorization Guide](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md)** - Authorization guide for erify_api
 - **[Phase 1 Roadmap](../../apps/erify_api/docs/roadmap/PHASE_1.md)** - Implementation roadmap
-- **[Architecture Overview](../../apps/erify_api/docs/ARCHITECTURE.md)** - System architecture
+- **[Architecture Overview](../../apps/erify_api/docs/ARCHITECTURE_OVERVIEW.md)** - System architecture
 
 ## License
 

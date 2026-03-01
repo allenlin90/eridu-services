@@ -1,11 +1,11 @@
 ---
 name: erify-authorization
-description: Patterns for implementing role-based authorization in erify_api with JSONB roles/permissions, AdminGuard, and multi-scope access control
+description: Patterns for implementing authorization in erify_api with current StudioMembership + AdminGuard behavior, plus planned RBAC references
 ---
 
 # erify_api Authorization Patterns
 
-This skill provides **erify_api-specific** authorization implementation patterns, including role-based access control with JSONB storage, AdminGuard implementation, and multi-scope permissions.
+This skill provides **erify_api-specific** authorization implementation patterns, centered on current `isSystemAdmin` + `StudioMembership` behavior, with planned RBAC patterns kept as future-reference only.
 
 **For general authentication/authorization principles, see**:
 - `authentication-authorization-nestjs` - Comprehensive auth patterns
@@ -55,6 +55,16 @@ Different user types have different access scopes:
 | Content Manager | Specific clients | Via `roles` + client filtering  |
 | System Manager  | All data         | Via `roles: ["system_manager"]` |
 | Read-only Admin | View-only        | Via `roles: ["analyst"]`        |
+
+### 2.1 Workflow Action Authorization
+
+For workflow actions (for example show resolution actions), authorization must be scope-specific and stricter than generic edit checks.
+
+Minimum rule set:
+
+1. actor has required role in the target scope (for example studio admin),
+2. resource belongs to the scoped entity (for example show belongs to `:studioId`),
+3. cross-scope/system-only fallback is not assumed for normal studio operations.
 
 ### 3. Role-Based Permissions
 
@@ -325,12 +335,11 @@ await prisma.user.update({
 
 ## Related Skills
 
-- `authentication-authorization-nestjs` - Comprehensive auth patterns
-- `backend-controller-pattern-nestjs` - Controller patterns with auth decorators
-- `backend-controller-pattern-admin` - Admin controller patterns
-- `data-validation` - Input validation and serialization
+- [Authentication Authorization NestJS](../authentication-authorization-nestjs/SKILL.md) - Comprehensive auth patterns
+- [Backend Controller Pattern NestJS](../backend-controller-pattern-nestjs/SKILL.md) - Controller patterns (admin, studio, me) with auth decorators
+- [Data Validation](../data-validation/SKILL.md) - Input validation and serialization
 
 ## Related Documentation
 
-- [Authorization Guide](../../apps/erify_api/docs/AUTHORIZATION_GUIDE.md)
+- [Authorization Guide](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md) *(design-only; may be outdated vs current implementation)*
 - [Architecture Overview](../../apps/erify_api/docs/ARCHITECTURE_OVERVIEW.md)

@@ -1,5 +1,7 @@
 # Task Management — UI/UX Summary
 
+> **TLDR**: Frontend UI for task management across 10+ screens. Admin workflows: template library, bulk task generation, assignment dialogs, review queue. Operator workflows: "My Tasks" with filter bar, task execution sheet (JsonForm with auto-save), status actions. Studio context persisted via `TeamSwitcher`.
+
 > **Quick-reference** for the Task Management frontend UI/UX system.
 
 ---

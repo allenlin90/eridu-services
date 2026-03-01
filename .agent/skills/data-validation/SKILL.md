@@ -155,6 +155,17 @@ Validation rules:
 - Check format of IDs (startsWith prefix)
 - Check required fields
 - Check string lengths
+
+### Action Validation Rule (Workflow Endpoints)
+
+For workflow/action endpoints, validate action intent explicitly instead of relying on generic update schemas.
+
+Required patterns:
+
+1. action enum validation (`resolution_action`, etc.),
+2. required reason/metadata fields for audited transitions,
+3. deterministic domain error payloads for policy violations (for example active-task blocking),
+4. consistent external field naming in contract (`id`, `external_id`, snake_case).
 ```
 
 ## Response Serialization Pattern
@@ -345,6 +356,6 @@ Output:
 
 ## Related Skills
 
-- **backend-controller-pattern/SKILL.md** - Validation at HTTP boundary
-- **service-pattern/SKILL.md** - Business logic validation
-- **repository-pattern/SKILL.md** - Data access layer
+- **[Backend Controller Pattern NestJS](../backend-controller-pattern-nestjs/SKILL.md)** - Validation at HTTP boundary
+- **[Service Pattern NestJS](../service-pattern-nestjs/SKILL.md)** - Business logic validation
+- **[Repository Pattern NestJS](../repository-pattern-nestjs/SKILL.md)** - Data access layer

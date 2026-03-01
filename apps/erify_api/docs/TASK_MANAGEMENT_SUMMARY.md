@@ -1,5 +1,7 @@
 # Task Management — Backend Summary
 
+> **TLDR**: "Task as Form" system — `TaskTemplates` define JSON schemas, `Tasks` are created per-show with form content, `TaskTargets` link tasks to shows via polymorphic association. Tasks follow a PENDING → IN_PROGRESS → REVIEW → COMPLETED lifecycle. Templates and tasks are studio-scoped.
+
 > **Quick-reference** for the Task Management backend system.
 
 ---

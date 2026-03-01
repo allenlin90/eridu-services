@@ -1,5 +1,7 @@
 # Phase 1: Core Functions with Simplified Auth
 
+> **TLDR**: ✅ **Complete**. Establishes all core entities (User, Client, MC, Platform, Show, Studio), schedule planning (JSON documents + snapshot versioning + publish), JWT auth via `@eridu/auth-sdk`, and three controller scopes (`/admin`, `/me`, `/backdoor`). ~15 entities, full CRUD.
+
 ## Overview
 
 Phase 1 establishes the core production functions with simplified authentication where admin users have full CRUD access via admin endpoints and other users access their own data via user-scoped endpoints (`/me/*`). This phase includes essential entities, basic show management, and the Schedule Planning Management System using JSON-based planning documents with snapshot-based versioning.
@@ -8,7 +10,7 @@ Phase 1 establishes the core production functions with simplified authentication
 
 - **[Architecture Overview](../ARCHITECTURE_OVERVIEW.md)** - System architecture and module design
 - **[Business Domain](../BUSINESS.md)** - Business domain information and entity relationships
-- **[Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md)** - Schedule upload system design with JSON-based planning and snapshot versioning
+- **[Schedule Planning](../SCHEDULE_PLANNING.md)** - Schedule upload system design with JSON-based planning and snapshot versioning
 - **Auth patterns**: See `authentication-authorization-nestjs` and `erify-authorization` skills
 - **[Auth SDK](../../../packages/auth-sdk/README.md)** - Complete SDK documentation and API reference
 
@@ -68,11 +70,11 @@ Phase 1 establishes the core production functions with simplified authentication
   - **Individual Publishing**: Publish each schedule via `POST /admin/schedules/:id/publish` (one at a time)
   - **Use Case**: Monthly planning with ~50 clients, ~50 shows per client
   - **Note**: Bulk publish operations (publish multiple schedules in single API call) are deferred to Phase 2
-  - **Design**: See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md#phase-1-client-by-client-upload--implemented) for workflow and rationale
+  - **Design**: See [Schedule Planning](../SCHEDULE_PLANNING.md#phase-1-client-by-client-upload--implemented) for workflow and rationale
 - **Schedule Query Support**: Flexible queries for planning workflows
   - Query schedules by client ID and date range (for planning stage)
   - Support Google Sheets integration with sorted date-based listings
-- **Implementation Details**: See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md) for complete design
+- **Implementation Details**: See [Schedule Planning](../SCHEDULE_PLANNING.md) for complete design
 
 ### 5. Authentication & Authorization
 
@@ -792,4 +794,4 @@ model ScheduleSnapshot {
 }
 ```
 
-**Note on Schedule Planning**: The Schedule Planning Management System uses JSON documents for flexible planning during draft phase, with automatic snapshots for version history. Only published schedules sync their JSON data to normalized Show tables. See [Schedule Upload API Design](../SCHEDULE_UPLOAD_API_DESIGN.md) for complete design and implementation details.
+**Note on Schedule Planning**: The Schedule Planning Management System uses JSON documents for flexible planning during draft phase, with automatic snapshots for version history. Only published schedules sync their JSON data to normalized Show tables. See [Schedule Planning](../SCHEDULE_PLANNING.md) for complete design and implementation details.
