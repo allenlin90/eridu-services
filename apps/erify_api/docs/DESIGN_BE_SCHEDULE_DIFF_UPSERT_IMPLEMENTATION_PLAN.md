@@ -55,13 +55,14 @@ Add to `Show`:
 
 Rules:
 
-1. External UID is immutable after first association.
+1. External UID (internal term) is immutable after first association.
 2. Publish matching key = `(clientId, externalId)`.
 
 Naming contract:
 
-1. Storage and internal BE naming use `external_id` (`externalId` in Prisma).
-2. For compatibility, input payload may temporarily accept `external_uid` and normalize server-side.
+1. API contract and external communication use `external_id` only.
+2. Internal BE implementation can use UID terminology for clarity (for example, `externalUid` in service logic).
+3. Prisma model field remains `externalId` mapped to DB column `external_id`.
 
 ### 4.1.2 `ShowStatus` machine key
 
@@ -154,7 +155,7 @@ Hard delete:
 
 Transaction-level flow:
 
-1. Load schedule by UID + version check.
+1. Load schedule by schedule UID (from `:id` route param) + version check.
 2. Acquire advisory lock on schedule ID: `pg_advisory_xact_lock(schedule.id)` to serialize concurrent publishes.
 3. Validate plan document and references.
 4. Resolve lookup maps for refs and required statuses.
@@ -178,11 +179,11 @@ Transaction-level flow:
 10. Update schedule publish metadata/status.
 11. Return deterministic summary counts.
 
-Validation rules for external UID (in validate and publish endpoints):
+Validation rules for `external_id` (in validate and publish endpoints):
 
-1. Reject plan items with missing or empty `externalId`.
-2. Reject duplicate `externalId` values within the same plan document payload.
-3. Reject `externalId` values that collide with shows from a different schedule for the same client.
+1. Reject plan items with missing or empty `external_id`.
+2. Reject duplicate `external_id` values within the same plan document payload.
+3. Reject `external_id` values that collide with shows from a different schedule for the same client.
 
 Performance constraints:
 
@@ -281,13 +282,13 @@ Behavioral updates:
    - create/update/remove sets
 2. Remove policy:
    - missing show with tasks -> status set pending resolution
-   - missing show without tasks -> soft delete/cancel path
+   - missing show without tasks -> status set to `CANCELLED`
 3. Conflict policy:
    - publish payload overwrites publish-owned fields
 
 ## 7.2 Integration tests
 
-1. Republish with unchanged UIDs preserves show IDs.
+1. Republish with unchanged `external_id` values preserves show IDs.
 2. Republish with changed fields updates in place.
 3. Existing tasks remain linked after republish.
 4. Relation sync add/update/remove correctness.

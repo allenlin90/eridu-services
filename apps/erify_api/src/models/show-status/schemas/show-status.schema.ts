@@ -12,6 +12,7 @@ import { ShowStatusService } from '@/models/show-status/show-status.service';
 export const showStatusSchema = z.object({
   id: z.bigint(),
   uid: z.string().startsWith(ShowStatusService.UID_PREFIX),
+  systemKey: z.string().nullable().optional(),
   name: z.string(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
@@ -50,6 +51,7 @@ export const showStatusDto = showStatusSchema
   .transform((obj) => ({
     id: obj.uid,
     name: obj.name,
+    system_key: obj.systemKey ?? null,
     metadata: obj.metadata,
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),

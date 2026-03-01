@@ -47,6 +47,7 @@ describe('showOrchestrationService', () => {
   const mockShow: Show = {
     id: BigInt(1),
     uid: 'show_test123',
+    externalId: null,
     clientId: BigInt(1),
     studioId: null,
     studioRoomId: BigInt(1),

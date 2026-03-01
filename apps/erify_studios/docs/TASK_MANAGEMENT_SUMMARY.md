@@ -28,8 +28,8 @@
 | 3.6   | Task Review Queue      | `/studios/$studioId/tasks?status=REVIEW`  | Admin        | ✅       |
 | 3.7   | All Tasks Dashboard    | Studio-scoped                             | Admin        | Planned |
 | 3.8   | System Tasks           | `/system/tasks`                           | System Admin | ✅       |
-| 3.9   | System Show Statuses   | `/system/show-statuses`                   | System Admin | Gap     |
-| 3.10  | System Task Templates  | `/system/task-templates`                  | System Admin | Planned |
+| 3.9   | System Show Statuses   | `/system/show-statuses`                   | System Admin | ✅      |
+| 3.10  | System Task Templates  | `/system/task-templates`                  | System Admin | ✅      |
 
 ---
 
@@ -130,4 +130,4 @@ Review Queue → row actions: Approve (`→ COMPLETED`), Reject (with note, `→
 ✅ Review Queue (per-task actions, rejection/block note dialogs)  
 ✅ System Tasks (cross-studio list, detail dialog, reassignment)
 
-**Deferred**: Animations/confetti, swipe gestures, file uploads, PWA/offline, WebSocket sync, analytics dashboard, bulk review approve
+**Deferred**: Animations/confetti, swipe gestures, file uploads, PWA/offline, WebSocket sync, ~~analytics dashboard~~, bulk review approve

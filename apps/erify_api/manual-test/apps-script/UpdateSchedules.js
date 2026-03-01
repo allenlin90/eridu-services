@@ -6,11 +6,9 @@
  * 2. Strict Validation: VALIDATES ALL rows first. If ANY row is invalid (missing IDs, bad dates), 
  *    it aborts immediately and writes errors to the user-facing sheet.
  * 3. Grouping: Groups valid rows by Schedule ID.
- * 4. Smart Processing Strategy:
- *    - Partial Mode: If ANY schedule is not 'Synced' (Status), updates ONLY those schedules. 
- *      (Focuses on fixing failures or adding new items).
- *    - Full Update Mode: If ALL schedules are ALREADY 'Synced', updates EVERYTHING. 
- *      (Assumes user wants to push changes to existing schedules).
+ * 4. Processing Strategy:
+ *    - Process all selected schedules (`schedules!L = TRUE`) per iteration.
+ *    - Continue on per-schedule failures so reruns can resume from partial progress.
  * 5. Optimistic Versioning: 
  *    - Reads initial versions from 'schedules' sheet.
  *    - Attempts to update via API (PATCH).
@@ -18,13 +16,12 @@
  * 6. Feedback: 
  *    - Marks rows as 'Synced' or 'Error' in the planning sheet.
  *    - Updates the 'schedules' sheet with the next version on success.
- * 7. Orphan Check: Scans for Schedule IDs in the 'schedules' sheet (within active range) that were NOT present in the 
+ * 7. Orphan Check: Scans selected schedules (Column L = true) that were NOT present in the
  *    planning data and marks them with a "No shows found" warning.
  */
 function updateShowBySchedules() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sourceSheet = ss.getSheetByName(SHEET_NAME);
-  const configSheet = ss.getSheetByName(CONFIG_SHEET);
   const targetSheet = ss.getSheetByName(TARGET_SHEET_NAME);
   const schedulesSheet = ss.getSheetByName(SCHEDULE_SHEET);
 
@@ -32,9 +29,6 @@ function updateShowBySchedules() {
     Logger.log(`Target sheet '${TARGET_SHEET_NAME}' not found.`);
     return;
   }
-
-  // Get Active Range for Schedules (used for Orphan Check later)
-  const activeSchedulesRange = configSheet.getRange(CONFIG_ACTIVE_SCHEDULE_RANGE).getValue();
 
   // Get ALL Data from Source Sheet (Integration Sheet)
   // Assuming Row 1 is header, data starts from Row 2
@@ -62,59 +56,37 @@ function updateShowBySchedules() {
   
   // Read current versions and metadata from Schedules Sheet (Source of Truth)
   const scheduleDefinitions = getScheduleDefinitions(schedulesSheet);
-  const schedules = processSchedulesFromRows(rawData, scheduleDefinitions);
-
-  // 3. Process each schedule
-  const processedIds = new Set();
-  
-  // [Retry Logic]
-  // Priority: Focus on non-synced (Error/New) schedules first.
-  let schedulesToUpdate = schedules.filter(s => !s.allSynced);
-  
-  if (schedulesToUpdate.length > 0) {
-    const skippedCount = schedules.length - schedulesToUpdate.length;
-    Logger.log(`Partial Mode: Processing ${schedulesToUpdate.length} non-synced schedules. (Skipping ${skippedCount} synced)`);
-  } else {
-    // If ALL are synced, assume User wants to push changes/updates to existing schedules.
-    // Fallback to Full Update.
-    Logger.log(`All schedules synced. Switching to Full Update mode to capture potential changes.`);
-    schedulesToUpdate = schedules;
+  const selectedScheduleIds = getSelectedScheduleIds(schedulesSheet);
+  if (selectedScheduleIds.size === 0) {
+    Logger.log('No schedules selected in Column L (active_schedule=true). Update skipped.');
+    return;
   }
 
-  schedulesToUpdate.forEach(schedule => {
+  const schedules = processSchedulesFromRows(
+    rawData,
+    scheduleDefinitions,
+    selectedScheduleIds,
+  );
+
+  // 3. Process each selected schedule
+  const processedIds = new Set();
+
+  schedules.forEach(schedule => {
     processSingleSchedule(schedule, { targetSheet, schedulesSheet });
     processedIds.add(schedule.scheduleId);
   });
   
-  // 4. Handle Empty Schedules (In Schedules Sheet but NO shows in Planning)
-  // Use the configuration range to only check relevant/active schedules
-  handleEmptySchedules(schedulesSheet, processedIds, activeSchedulesRange);
+  // 4. Handle selected schedules that have no shows in planning data
+  handleEmptySchedules(schedulesSheet, processedIds, selectedScheduleIds);
 }
 
-function handleEmptySchedules(schedulesSheet, processedIds, rangeString) {
-  if (!rangeString) return;
-  
-  // Get data from the Active Range only
-  const rows = schedulesSheet.getRange(rangeString).getValues();
-  const startRowOffset = getStartRowFromRangeString(rangeString);
-  
-  rows.forEach((row, index) => {
-    // Col B (Schedule ID) is index 1
-    const id = row[1];
-    
-    if (id && !processedIds.has(id.toString().trim())) {
-      // Calculate absolute sheet row
-      const sheetRow = startRowOffset + index;
-      
-      // Update Note (Col J / 10) to inform user
-      schedulesSheet.getRange(sheetRow, 10).setValue('Warning: No shows found in planning');
+function handleEmptySchedules(schedulesSheet, processedIds, selectedScheduleIds) {
+  const selectedRows = getSelectedScheduleRows(schedulesSheet);
+  selectedRows.forEach(({ sheetRow, scheduleId }) => {
+    if (selectedScheduleIds.has(scheduleId) && !processedIds.has(scheduleId)) {
+      schedulesSheet.getRange(sheetRow, SCHEDULE_COLS.NOTE).setValue('Warning: No shows found in planning');
     }
   });
-}
-
-function getStartRowFromRangeString(rangeStr) {
-   const match = rangeStr.match(/[A-Z]+(\d+)/);
-   return match ? parseInt(match[1], 10) : 2; 
 }
 
 function processSingleSchedule(schedule, { targetSheet, schedulesSheet }) {
@@ -178,22 +150,19 @@ function processSingleSchedule(schedule, { targetSheet, schedulesSheet }) {
 
 // --- Data Processing Implementations ---
 
-function processSchedulesFromRows(rows, scheduleDefinitions) {
+function processSchedulesFromRows(rows, scheduleDefinitions, selectedScheduleIds) {
   const groups = {};
   const platformMap = getPlatformMap();
 
   rows.forEach((row, index) => {
     // 1: schedule_id (Col B)
     const scheduleId = row[1] ? row[1].toString().trim() : '';
+    if (!selectedScheduleIds.has(scheduleId)) return;
     
     // Version Lookup
     const def = scheduleDefinitions[scheduleId];
     const sheetVersion = def ? def.version : null;
     
-    // Check Status (Col S / Index 18)
-    const status = row[18];
-    const isSynced = status === 'Synced';
-
     if (!groups[scheduleId]) {
       groups[scheduleId] = {
         scheduleId,
@@ -201,20 +170,16 @@ function processSchedulesFromRows(rows, scheduleDefinitions) {
         rawVersion: sheetVersion !== undefined ? sheetVersion : row[17], // Prefer map, fallback to row
         client: row[6],
         rawDate: row[3],
-        allSynced: true // Assume true, prove false
       };
     }
     groups[scheduleId].rows.push({ row, index });
-    if (!isSynced) {
-       groups[scheduleId].allSynced = false;
-    }
   });
 
   return Object.values(groups).map(group => buildSchedulePayload(group, platformMap, scheduleDefinitions));
 }
 
 function buildSchedulePayload(group, platformMap, scheduleDefinitions) {
-  const { scheduleId, rows, rawVersion, client, rawDate, allSynced } = group;
+  const { scheduleId, rows, rawVersion, client, rawDate } = group;
 
   // 1. Determine Version & Metadata from Source of Truth
   let version = 1;
@@ -280,7 +245,6 @@ function buildSchedulePayload(group, platformMap, scheduleDefinitions) {
     scheduleId,
     version,
     rowIndices,
-    allSynced,
     payload: {
       name: scheduleName,
       start_date: finalStartDate.toISOString(),
@@ -370,7 +334,8 @@ function parseShowFromRow(row, platformMap) {
 
   // Defaults
   const showItem = {
-      tempId: show_id || undefined, 
+      tempId: show_id || undefined,
+      external_id: show_id || undefined,
       name: `${show_id || 'Untitled'}`, 
       startTime: startAt ? startAt.toISOString() : null,
       endTime: endAt ? endAt.toISOString() : null,
@@ -521,6 +486,7 @@ function validateRows(rows) {
 
     const missing = [];
     if (!scheduleId) missing.push('Schedule ID');
+    if (!showId) missing.push('Show ID');
     if (!client) missing.push('Client ID');
     if (!date) missing.push('Date');
     if (!start) missing.push('Start Time');
@@ -574,7 +540,7 @@ function validateRows(rows) {
 function writeValidationErrors(sheet, errors, totalRows) {
   const offset = getStartRowOffset();
   
-  // [Cleanup] Clear Status/Error for ALL rows in the active range first.
+  // [Cleanup] Clear Status/Error for all currently loaded planning rows first.
   // This ensures we don't leave stale "Synced" statuses next to "Validation Error" statuses,
   // which implies the whole batch failed.
   if (totalRows > 0) {
@@ -645,6 +611,13 @@ function updateParentScheduleSheet(schedulesSheet, scheduleId, newVersion) {
 function getStartRowOffset() {
    // Since we are now reading the whole sheet starting from Row 2:
    return 2;
+}
+
+function getSelectedScheduleIds(schedulesSheet) {
+  const rows = getSelectedScheduleRows(schedulesSheet);
+  const selected = new Set();
+  rows.forEach(({ scheduleId }) => selected.add(scheduleId));
+  return selected;
 }
 
 function getScheduleDefinitions(sheet) {

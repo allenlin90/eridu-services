@@ -85,3 +85,51 @@ function bulkCreateSchedules({ schedules = [] }) {
 
   return res;
 }
+
+function isCheckedCell(value) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') return value.trim().toLowerCase() === 'true';
+  return false;
+}
+
+function getSelectedScheduleRows(schedulesSheet) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const configSheet = ss.getSheetByName(CONFIG_SHEET);
+  const lastRow = schedulesSheet.getLastRow();
+  if (lastRow < 2) return [];
+
+  let startRow = 2;
+  let endRow = lastRow;
+
+  // Use config cache (J4/J5) as a performance hint window.
+  // Fall back to full scan if cache is missing/invalid/stale.
+  if (configSheet) {
+    const cachedStart = Number(configSheet.getRange(CONFIG_SELECTED_START_ROW_RANGE).getValue());
+    const cachedEnd = Number(configSheet.getRange(CONFIG_SELECTED_END_ROW_RANGE).getValue());
+    const hasValidCache = Number.isFinite(cachedStart)
+      && Number.isFinite(cachedEnd)
+      && cachedStart >= 2
+      && cachedEnd >= cachedStart
+      && cachedEnd <= lastRow;
+
+    if (hasValidCache) {
+      startRow = cachedStart;
+      endRow = cachedEnd;
+    }
+  }
+
+  const numRows = endRow - startRow + 1;
+  // Read A:L so we can access schedule_id and active_schedule in one fetch.
+  const rows = schedulesSheet.getRange(startRow, 1, numRows, SCHEDULE_COLS.ACTIVE_SCHEDULE).getValues();
+
+  return rows
+    .map((row, index) => ({
+      row,
+      sheetRow: index + startRow,
+      scheduleId: row[SCHEDULE_COLS.SCHEDULE_ID - 1]
+        ? row[SCHEDULE_COLS.SCHEDULE_ID - 1].toString().trim()
+        : '',
+      isSelected: isCheckedCell(row[SCHEDULE_COLS.ACTIVE_SCHEDULE - 1]),
+    }))
+    .filter((item) => item.scheduleId && item.isSelected);
+}

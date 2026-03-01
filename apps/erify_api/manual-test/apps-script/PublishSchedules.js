@@ -1,85 +1,21 @@
 function publishSchedules() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const configSheet = ss.getSheetByName(CONFIG_SHEET);
   const schedulesSheet = ss.getSheetByName(SCHEDULE_SHEET);
-
-  // Get active range from config (e.g., J4 -> A2:T20)
-  const rangeString = configSheet.getRange(CONFIG_ACTIVE_SCHEDULE_RANGE).getValue();
-  if (!rangeString) {
-    Logger.log('No active schedule range defined in Config sheet.');
-    return;
-  }
-
-  const match = rangeString.match(/[A-Z]+(\d+):/);
-  const startRowOffset = match ? parseInt(match[1], 10) : 2; 
-
-  const rows = schedulesSheet.getRange(rangeString).getValues();
+  const selectedRows = getSelectedScheduleRows(schedulesSheet);
 
   let stats = { total: 0, success: 0, failed: 0, skipped: 0 };
 
-  Logger.log('--- Starting Publish Process ---');
-
-  // --- Pre-flight Strict Validation ---
-  Logger.log('Processing Pre-flight Validation...');
-  
-  // 1. Check consistency of ALL rows in the active range first.
-  // If ANY row is not ready ('review') or has version mismatch, we abort EVERYTHING.
-  // This prevents partial publishing where some are published and others are left behind.
-  
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    const scheduleId = row[1];
-    const status = row[3];
-    const sheetVersion = row[6];
-    
-    if (!scheduleId) continue; // Skip empty rows
-
-    // Check Status
-    if (!status || status.toLowerCase() !== 'review') {
-      const msg = `Pre-flight Failed: Schedule ${scheduleId} is in status '${status}' (expected 'review'). Aborting all.`;
-      Logger.log(msg);
-      // Write error to the specific row so user knows which one blocked it
-      const sheetRow = startRowOffset + i;
-      schedulesSheet.getRange(sheetRow, 10).setValue(msg);
-      
-      const e = new Error(msg);
-      e.name = 'FatalError';
-      throw e;
-    }
-
-    // Check Version Mismatch
-    try {
-      const serverSchedule = getSchedule(scheduleId);
-      if (!serverSchedule || typeof serverSchedule.version === 'undefined') {
-         throw new Error(`Could not fetch version for ${scheduleId}`);
-      }
-      if (serverSchedule.version != sheetVersion) {
-        const msg = `Pre-flight Failed: Version mismatch for ${scheduleId} (Sheet: ${sheetVersion}, Server: ${serverSchedule.version}). Sync required.`;
-        Logger.log(msg);
-        const sheetRow = startRowOffset + i;
-        schedulesSheet.getRange(sheetRow, 10).setValue(msg);
-        
-        const e = new Error(msg);
-        e.name = 'FatalError';
-        throw e;
-      }
-    } catch (e) {
-      if (e.name === 'FatalError') throw e;
-      const msg = `Pre-flight Check Error for ${scheduleId}: ${e.message}`;
-      Logger.log(msg);
-      const err = new Error(msg);
-      err.name = 'FatalError';
-      throw err;
-    }
+  if (selectedRows.length === 0) {
+    Logger.log('No schedules selected in Column L (active_schedule=true). Publish skipped.');
+    return;
   }
 
-  Logger.log('Pre-flight Validation Passed. Proceeding to Publish...');
+  Logger.log('--- Starting Publish Process ---');
 
-  // --- Execution Loop ---
-
-  rows.forEach((row, index) => {
-    const scheduleId = row[1]; // Col B
-    const rawVersion = row[6]; // Col G (Version)
+  selectedRows.forEach(({ row, sheetRow }) => {
+    const scheduleId = row[SCHEDULE_COLS.SCHEDULE_ID - 1]; // Col B
+    const rawVersion = row[SCHEDULE_COLS.VERSION - 1]; // Col G (Version)
+    const status = row[SCHEDULE_COLS.STATUS - 1];
 
     if (!scheduleId) return;
 
@@ -92,6 +28,26 @@ function publishSchedules() {
 
     stats.total++;
     try {
+      if (!status || status.toLowerCase() !== 'review') {
+        schedulesSheet.getRange(sheetRow, SCHEDULE_COLS.NOTE).setValue(
+          `Publish skipped: status '${status || 'empty'}' (expected 'review')`,
+        );
+        stats.skipped++;
+        return;
+      }
+
+      const serverSchedule = getSchedule(scheduleId);
+      if (!serverSchedule || typeof serverSchedule.version === 'undefined') {
+        throw new Error(`Could not fetch version for ${scheduleId}`);
+      }
+      if (serverSchedule.version != version) {
+        schedulesSheet.getRange(sheetRow, SCHEDULE_COLS.NOTE).setValue(
+          `Publish skipped: version mismatch (Sheet: ${version}, Server: ${serverSchedule.version})`,
+        );
+        stats.skipped++;
+        return;
+      }
+
       Logger.log(`Publishing Schedule ${scheduleId} (v${version})...`);
       const result = publishSchedule(scheduleId, version);
       
@@ -103,9 +59,8 @@ function publishSchedules() {
          throw new Error(result.message || result.error);
       }
       
-      const sheetRow = startRowOffset + index;
-      const statusCell = schedulesSheet.getRange(sheetRow, 4);  // Col D
-      const noteCell = schedulesSheet.getRange(sheetRow, 10);   // Col J
+      const statusCell = schedulesSheet.getRange(sheetRow, SCHEDULE_COLS.STATUS); // Col D
+      const noteCell = schedulesSheet.getRange(sheetRow, SCHEDULE_COLS.NOTE); // Col J
       
       Logger.log(`Schedule ${scheduleId} PUBLISHED.`);
       statusCell.setValue('published');
@@ -114,8 +69,7 @@ function publishSchedules() {
 
     } catch (e) {
       Logger.log(`Error publishing ${scheduleId}: ${e.message}`);
-      const sheetRow = startRowOffset + index;
-      schedulesSheet.getRange(sheetRow, 10).setValue(`Publish Error: ${e.message}`);
+      schedulesSheet.getRange(sheetRow, SCHEDULE_COLS.NOTE).setValue(`Publish Error: ${e.message}`);
       stats.failed++;
     }
   });
@@ -124,5 +78,6 @@ function publishSchedules() {
   Logger.log(`Total Processed: ${stats.total}`);
   Logger.log(`Success: ${stats.success}`);
   Logger.log(`Failed: ${stats.failed}`);
+  Logger.log(`Skipped: ${stats.skipped}`);
   Logger.log('-----------------------');
 }

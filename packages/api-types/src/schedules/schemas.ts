@@ -35,6 +35,31 @@ export const scheduleListResponseSchema
   = createPaginatedResponseSchema(scheduleApiResponseSchema);
 
 /**
+ * Publish summary schema for continuity-safe schedule publish.
+ */
+export const schedulePublishSummarySchema = z.object({
+  shows_created: z.number().int().nonnegative(),
+  shows_updated: z.number().int().nonnegative(),
+  shows_cancelled: z.number().int().nonnegative(),
+  shows_pending_resolution: z.number().int().nonnegative(),
+  shows_restored: z.number().int().nonnegative(),
+  mc_links_added: z.number().int().nonnegative(),
+  mc_links_updated: z.number().int().nonnegative(),
+  mc_links_removed: z.number().int().nonnegative(),
+  platform_links_added: z.number().int().nonnegative(),
+  platform_links_updated: z.number().int().nonnegative(),
+  platform_links_removed: z.number().int().nonnegative(),
+});
+
+/**
+ * Publish schedule response envelope schema.
+ */
+export const publishScheduleResponseSchema = z.object({
+  schedule: scheduleApiResponseSchema,
+  publish_summary: schedulePublishSummarySchema,
+});
+
+/**
  * Create Schedule Input Schema (snake_case - matches API input)
  */
 export const createScheduleInputSchema = z

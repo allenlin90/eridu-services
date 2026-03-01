@@ -78,6 +78,7 @@ describe('validationService', () => {
     shows: [
       {
         tempId: 'temp_1',
+        externalId: 'show_temp_1',
         name: 'Test Show 1',
         startTime: '2024-01-01T10:00:00Z',
         endTime: '2024-01-01T12:00:00Z',
@@ -103,6 +104,7 @@ describe('validationService', () => {
       },
       {
         tempId: 'temp_2',
+        externalId: 'show_temp_2',
         name: 'Test Show 2',
         startTime: '2024-01-02T10:00:00Z',
         endTime: '2024-01-02T12:00:00Z',
@@ -241,7 +243,7 @@ describe('validationService', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should handle undefined values in UID lookups gracefully', async () => {
+    it('should fail fast when MC payload entries are malformed', async () => {
       // Clone the mock data to avoid mutating shared state
       // Clone the mock data using spread to avoid BigInt serialization issues and mutation
       const schedule = {
@@ -274,10 +276,14 @@ describe('validationService', () => {
 
       const result = await service.validateSchedule(schedule);
 
-      // The undefined MC should be ignored, and since 'mc_valid' is found and other fields are valid,
-      // validation should pass.
-      expect(result.isValid).toBe(true);
-      expect(result.errors).toHaveLength(0);
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          type: 'missing_field',
+          message: expect.stringContaining('shows.0.mcs.0.mcId'),
+          showIndex: 0,
+        }),
+      );
     });
 
     it('should return validation errors for invalid plan document structure - missing shows array', async () => {
@@ -366,10 +372,9 @@ describe('validationService', () => {
       expect(result.isValid).toBe(false);
       expect(result.errors).toContainEqual(
         expect.objectContaining({
-          type: 'time_range',
-          message: 'Show end time must be after start time',
+          type: 'missing_field',
+          message: expect.stringContaining('End time must be after start time'),
           showIndex: 0,
-          showTempId: 'temp_1',
         }),
       );
     });
@@ -656,15 +661,15 @@ describe('validationService', () => {
           shows: [
             {
               ...mockValidPlanDocument.shows[0],
-              startTime: '2024-01-01T12:00:00Z',
-              endTime: '2024-01-01T10:00:00Z', // Invalid time range
               clientId: 'nonexistent_client', // Invalid reference
+              showTypeId: 'show_type_nonexistent', // Invalid reference
             },
           ],
         },
       };
 
       mockTransactionClient.client.findMany.mockResolvedValue([]);
+      mockTransactionClient.showType.findMany.mockResolvedValue([]);
 
       const result = await service.validateSchedule(invalidSchedule);
 
@@ -695,6 +700,7 @@ describe('validationService', () => {
           shows: [
             {
               tempId: 'temp_minimal',
+              externalId: 'show_temp_minimal',
               name: 'Minimal Show',
               startTime: '2024-01-01T10:00:00Z',
               endTime: '2024-01-01T12:00:00Z',
@@ -781,6 +787,7 @@ describe('validationService', () => {
           shows: [
             {
               tempId: 'temp_overnight',
+              externalId: 'show_temp_overnight',
               name: 'Overnight Show',
               startTime: '2024-01-31T23:00:00Z', // Starts before end
               endTime: '2024-02-01T02:00:00Z', // Ends after end (Next day)
@@ -996,6 +1003,7 @@ describe('validationService', () => {
           shows: [
             {
               tempId: 'temp_boundary',
+              externalId: 'show_temp_boundary',
               name: 'Boundary Show',
               startTime: '2024-01-01T00:00:00Z', // Exactly at start
               endTime: '2024-01-31T00:00:00Z', // Exactly at schedule end boundary
@@ -1056,6 +1064,7 @@ describe('validationService', () => {
           shows: [
             {
               tempId: 'show_1',
+              externalId: 'show_show_1',
               name: 'Show 1',
               startTime: '2024-01-01T10:00:00Z',
               endTime: '2024-01-01T12:00:00Z',
@@ -1069,6 +1078,7 @@ describe('validationService', () => {
             },
             {
               tempId: 'show_2',
+              externalId: 'show_show_2',
               name: 'Show 2',
               startTime: '2024-01-01T11:00:00Z',
               endTime: '2024-01-01T13:00:00Z',

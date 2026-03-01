@@ -190,6 +190,7 @@ export const showDto = showWithRelationsSchema
     show_type_name: obj.showType?.name ?? null,
     show_status_id: obj.showStatus?.uid ?? null,
     show_status_name: obj.showStatus?.name ?? null,
+    show_status_system_key: obj.showStatus?.systemKey ?? null,
     show_standard_id: obj.showStandard?.uid ?? null,
     show_standard_name: obj.showStandard?.name ?? null,
     start_time: obj.startTime.toISOString(),

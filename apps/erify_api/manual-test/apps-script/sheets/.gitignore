@@ -1,0 +1,5 @@
+# Real sheet exports may contain sensitive data.
+# Keep raw CSV exports local and untracked.
+*.csv
+!templates/
+!templates/*.csv

@@ -46,6 +46,8 @@ import { ScheduleWithRelations } from '@/schedule-planning/publishing.service';
 import { SchedulePlanningService } from '@/schedule-planning/schedule-planning.service';
 import {
   PublishScheduleDto,
+  PublishScheduleResponseEnvelopeDto,
+  publishScheduleResponseEnvelopeSchema,
   ValidationResult,
   validationResultSchema,
 } from '@/schedule-planning/schemas/schedule-planning.schema';
@@ -278,8 +280,11 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
       'Publish schedule to create actual shows. Expensive operation: Deletes existing shows and creates new ones from plan document. Creates snapshot, marks as published, and increments version. Requires current version for optimistic locking.',
   })
   @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(scheduleDto, 'Schedule published successfully')
-  @ZodSerializerDto(ScheduleDto)
+  @ApiZodResponse(
+    publishScheduleResponseEnvelopeSchema,
+    'Schedule published successfully',
+  )
+  @ZodSerializerDto(PublishScheduleResponseEnvelopeDto)
   async publishSchedule(
     @Param('id', new UidValidationPipe(ScheduleService.UID_PREFIX, 'Schedule'))
     id: string,
@@ -308,12 +313,17 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
     // result.schedule is ScheduleWithRelations from publishing service, uid is guaranteed to exist
     const publishedSchedule: ScheduleWithRelations = result.schedule;
     const scheduleUid: string = publishedSchedule.uid;
-    return this.scheduleService.getScheduleById(scheduleUid, {
+    const scheduleData = await this.scheduleService.getScheduleById(scheduleUid, {
       client: true,
       studio: true,
       createdByUser: true,
       publishedByUser: true,
     });
+
+    return {
+      schedule: scheduleDto.parse(scheduleData),
+      publish_summary: result.publishSummary,
+    };
   }
 
   @Post(':id/duplicate')

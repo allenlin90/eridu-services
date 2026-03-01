@@ -1,0 +1,4 @@
+master_plan_id,schedule_id,show_id,date,start_time,end_time,client,platforms,show_standard,show_type,shopee_ticket_id,lazada_ticket_id,tiktok_ticket_id,show_status,studio_room,mcs,note,version,error_on_version,status,error_msg
+, schedule_example_001,show_example_0001,1-Mar-2026,10:00,12:00,client_demo_a,"shopee, tiktok",standard,bau,SH-1001,,,draft,301,"mc_alpha,mc_beta","Morning slot",, ,,
+, schedule_example_001,show_example_0002,1-Mar-2026,20:00,22:00,client_demo_a,shopee,premium,campaign,SH-1002,,,draft,302,mc_alpha,"Prime slot",, ,,
+, schedule_example_002,show_example_0003,2-Apr-2026,12:00,14:00,client_demo_b,lazada,standard,bau,,LZ-2001,,draft,303,mc_beta,"Not selected schedule row",, ,,

@@ -34,6 +34,12 @@ print_limited_matches "ts-ignore / ts-expect-error" "@ts-ignore|@ts-expect-error
 print_limited_matches "explicit any" "\\bany\\b"
 print_limited_matches "eslint-disable markers" "eslint-disable|eslint-disable-next-line"
 print_limited_matches "TODO/FIXME/HACK" "TODO|FIXME|HACK"
+# Heuristic: optional-chain equality checks can accidentally pass when both sides are undefined.
+# These need manual review to ensure no immediate non-null dereference follows.
+print_limited_matches "risky optional-chain equality guards" "if\\s*\\([^)]*\\?\\.[^)]*(===|!==)[^)]*\\?\\."
+# Heuristic: memoizing simple table pagination/filter objects often adds stale-state risk.
+# Flag for manual review when useMemo appears tied to table pagination/filter shaping.
+print_limited_matches "possible over-memoized table state" "useMemo\\s*\\([^)]*(tablePagination|pageCount|pageIndex|pageSize|columnFilters|sorting)"
 
 echo "-- large ts/tsx files (>300 lines) --"
 rg --files "${ROOT_DIR}" -g '*.ts' -g '*.tsx' -g '!**/node_modules/**' \

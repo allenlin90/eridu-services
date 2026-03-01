@@ -20,6 +20,7 @@ export const showApiResponseSchema = z.object({
   show_type_name: z.string().nullable(),
   show_status_id: z.string().nullable(),
   show_status_name: z.string().nullable(),
+  show_status_system_key: z.string().nullable(),
   show_standard_id: z.string().nullable(),
   show_standard_name: z.string().nullable(),
   start_time: z.string(), // ISO 8601 datetime string

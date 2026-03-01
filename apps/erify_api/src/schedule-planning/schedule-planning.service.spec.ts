@@ -81,6 +81,7 @@ describe('schedulePlanningService', () => {
       shows: [
         {
           tempId: 'temp_1',
+          externalId: 'show_temp_1',
           name: 'Test Show',
           startTime: '2024-01-01T10:00:00Z',
           endTime: '2024-01-01T12:00:00Z',
@@ -118,6 +119,7 @@ describe('schedulePlanningService', () => {
       shows: [
         {
           tempId: 'temp_1',
+          externalId: 'show_temp_1',
           name: 'Snapshot Show',
           startTime: '2024-01-01T10:00:00Z',
           endTime: '2024-01-01T12:00:00Z',
@@ -367,8 +369,19 @@ describe('schedulePlanningService', () => {
             email: 'test@example.com',
           },
         },
-        showsCreated: 1,
-        showsDeleted: 0,
+        publishSummary: {
+          shows_created: 1,
+          shows_updated: 0,
+          shows_cancelled: 0,
+          shows_pending_resolution: 0,
+          shows_restored: 0,
+          mc_links_added: 0,
+          mc_links_updated: 0,
+          mc_links_removed: 0,
+          platform_links_added: 0,
+          platform_links_updated: 0,
+          platform_links_removed: 0,
+        },
       };
 
       publishingService.publish.mockResolvedValue(publishedResult);

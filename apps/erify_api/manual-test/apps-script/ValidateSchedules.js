@@ -1,28 +1,18 @@
 function validateSchedules() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const configSheet = ss.getSheetByName(CONFIG_SHEET);
   const schedulesSheet = ss.getSheetByName(SCHEDULE_SHEET);
+  const selectedRows = getSelectedScheduleRows(schedulesSheet);
 
-  // Get active range from config (e.g., J4 -> A2:T20)
-  const rangeString = configSheet.getRange(CONFIG_ACTIVE_SCHEDULE_RANGE).getValue();
-  if (!rangeString) {
-    Logger.log('No active schedule range defined in Config sheet.');
+  if (selectedRows.length === 0) {
+    Logger.log('No schedules selected in Column L (active_schedule=true). Validate skipped.');
     return;
   }
 
-  // Parse start row offset for correct writing back
-  // Assuming rangeString is like "A2:T20"
-  const match = rangeString.match(/[A-Z]+(\d+):/);
-  const startRowOffset = match ? parseInt(match[1], 10) : 2; 
-
-  const rows = schedulesSheet.getRange(rangeString).getValues();
-
   let stats = { total: 0, success: 0, failed: 0, skipped: 0 };
 
-  rows.forEach((row, index) => {
-    const scheduleId = row[1]; // Col B
-    const status = row[3];     // Col D (Status)
-    const sheetVersion = row[6]; // Col G (Version)
+  selectedRows.forEach(({ row, sheetRow, scheduleId }) => {
+    const status = row[SCHEDULE_COLS.STATUS - 1]; // Col D (Status)
+    const sheetVersion = row[SCHEDULE_COLS.VERSION - 1]; // Col G (Version)
     
     if (!scheduleId) return;
 
@@ -35,8 +25,7 @@ function validateSchedules() {
     }
 
     stats.total++;
-    const sheetRow = startRowOffset + index;
-    const noteCell = schedulesSheet.getRange(sheetRow, 10);   // Col J
+    const noteCell = schedulesSheet.getRange(sheetRow, SCHEDULE_COLS.NOTE); // Col J
 
     try {
       // Version Check: Stop execution if version mismatch
@@ -50,10 +39,8 @@ function validateSchedules() {
         const msg = `Version Mismatch! Sheet: ${sheetVersion}, Server: ${serverSchedule.version}. Sync required.`;
         Logger.log(msg);
         noteCell.setValue(msg);
-        
-        const e = new Error(msg);
-        e.name = 'FatalError';
-        throw e;
+        stats.failed++;
+        return;
       }
 
       const result = validateSchedule(scheduleId);
@@ -63,7 +50,7 @@ function validateSchedules() {
         throw new Error(result.message || `API Error ${result.statusCode}`);
       }
       
-      const statusCell = schedulesSheet.getRange(sheetRow, 4);  // Col D
+      const statusCell = schedulesSheet.getRange(sheetRow, SCHEDULE_COLS.STATUS); // Col D
 
       if (result.isValid) {
         Logger.log(`Schedule ${scheduleId} is VALID.`);
@@ -79,13 +66,8 @@ function validateSchedules() {
         stats.failed++;
       }
     } catch (e) {
-      if (e.name === 'FatalError') {
-         // Stop the entire process
-         throw new Error(`Execution Stopped: ${e.message}`);
-      }
-      
       Logger.log(`Error validating ${scheduleId}: ${e.message}`);
-      schedulesSheet.getRange(sheetRow, 10).setValue(`System Error: ${e.message}`);
+      schedulesSheet.getRange(sheetRow, SCHEDULE_COLS.NOTE).setValue(`System Error: ${e.message}`);
       stats.failed++;
     }
   });

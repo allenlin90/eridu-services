@@ -60,6 +60,9 @@ export const envSchema = z.object({
     .int({ message: 'THROTTLE_LIMIT must be an integer' })
     .min(1, { message: 'THROTTLE_LIMIT must be at least 1' })
     .default(10),
+
+  // Schedule publish rollout
+  SCHEDULE_PUBLISH_DIFF_UPSERT_ENABLED: z.coerce.boolean().default(false),
 });
 
 // Export type for use with ConfigService<Env>

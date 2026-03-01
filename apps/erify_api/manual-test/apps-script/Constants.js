@@ -2,16 +2,27 @@
 const SCHEDULE_SHEET = 'schedules';
 const CONFIG_SHEET = 'config';
 const CONFIG_CREATE_SCHEDULE_FIRST_ROW_RANGE = 'J2';
-const CONFIG_ACTIVE_SCHEDULE_RANGE = 'J4';
+const CONFIG_SELECTED_START_ROW_RANGE = 'J4';
+const CONFIG_SELECTED_END_ROW_RANGE = 'J6';
+const CONFIG_SELECTED_COUNT_RANGE = 'J8';
 const SHEET_NAME = 'show_planning_integration';
 const TARGET_SHEET_NAME = 'show_planning'; // User facing sheet
 
 // Column Configurations
 const COLS = {
   VERSION: 18, // Column R
-  STATUS: 19, // Column S
-  ERROR_MSG: 20 // Column T
+  STATUS: 20, // Column T
+  ERROR_MSG: 21 // Column U
 }
+
+// schedules sheet columns
+const SCHEDULE_COLS = {
+  SCHEDULE_ID: 2, // Column B
+  STATUS: 4, // Column D
+  VERSION: 7, // Column G
+  NOTE: 10, // Column J
+  ACTIVE_SCHEDULE: 12, // Column L
+};
 
 // utility constants
 const MONTHS = [

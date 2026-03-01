@@ -43,6 +43,7 @@ import { ScheduleWithRelations } from '@/schedule-planning/publishing.service';
 import { SchedulePlanningService } from '@/schedule-planning/schedule-planning.service';
 import {
   PublishScheduleDto,
+  publishScheduleResponseEnvelopeSchema,
   ValidationResult,
   validationResultSchema,
 } from '@/schedule-planning/schemas/schedule-planning.schema';
@@ -161,7 +162,11 @@ export class AdminScheduleController extends BaseAdminController {
   }
 
   @Post(':id/publish')
-  @AdminResponse(scheduleDto, HttpStatus.OK, 'Schedule published successfully')
+  @AdminResponse(
+    publishScheduleResponseEnvelopeSchema,
+    HttpStatus.OK,
+    'Schedule published successfully',
+  )
   async publishSchedule(
     @Param('id', new UidValidationPipe(ScheduleService.UID_PREFIX, 'Schedule'))
     id: string,
@@ -192,12 +197,17 @@ export class AdminScheduleController extends BaseAdminController {
     // result.schedule is ScheduleWithRelations from publishing service, uid is guaranteed to exist
     const publishedSchedule: ScheduleWithRelations = result.schedule;
     const scheduleUid: string = publishedSchedule.uid;
-    return this.scheduleService.getScheduleById(scheduleUid, {
+    const scheduleData = await this.scheduleService.getScheduleById(scheduleUid, {
       client: true,
       studio: true,
       createdByUser: true,
       publishedByUser: true,
     });
+
+    return {
+      schedule: scheduleDto.parse(scheduleData),
+      publish_summary: result.publishSummary,
+    };
   }
 
   @Post(':id/duplicate')

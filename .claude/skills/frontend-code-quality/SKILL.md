@@ -152,6 +152,28 @@ function Dashboard() {
 }
 ```
 
+### Avoid Low-Value Component Extraction
+
+Do not extract a component if it only wraps a single primitive element with fixed styling and one callback, unless there is a clear reuse or complexity need.
+
+Use this extraction gate:
+
+1. Keep inline when all are true:
+   - single element (`Button`, `div`, etc.)
+   - no internal state/effects
+   - no conditional rendering complexity
+   - used in one place
+2. Extract only when at least one is true:
+   - reused across multiple routes/features
+   - has meaningful internal behavior (state/effects/derived logic)
+   - materially improves readability by removing complex branching
+   - establishes a stable UI contract shared by multiple callers
+
+Review expectation:
+
+1. If extracting, state the value (reuse, complexity reduction, or contract boundary).
+2. If not, prefer inline code to avoid indirection and file churn.
+
 ### Limit Props
 
 If a component accepts too many props, consider:

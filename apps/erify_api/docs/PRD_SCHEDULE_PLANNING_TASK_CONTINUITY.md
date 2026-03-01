@@ -20,7 +20,7 @@ Decision:
 1. Keep Google Sheets + Apps Script workflow for planners in the current phase.
 2. Keep only the existing 4 integration endpoints in active use.
 3. Replace destructive publish behavior with identity-preserving `diff + upsert`.
-4. Use stable Google Sheets show UID as external identity.
+4. Use stable Google Sheets `external_id` as external identity.
 5. Allow mapping work (MC/platform) from both Google Sheets and web app with deterministic merge rules.
 
 Primary objective:
@@ -173,12 +173,12 @@ Conclusion:
 
 1. Keep Google Sheets workflow active for planners.
 2. Keep current 4 integration endpoints as the active integration contract.
-3. Adopt stable show identity from Google Sheets UID.
+3. Adopt stable show identity from Google Sheets `external_id`.
 4. Replace destructive publish with `diff + upsert`.
 5. Permit mapping updates from both Google Sheets and web app.
 6. Use `publish-payload-wins` as deterministic conflict policy at publish time.
 7. Protect task continuity as a hard constraint.
-8. External UID uniqueness scope is by client (`client_id + external_uid`).
+8. `external_id` uniqueness scope is by client (`client_id + external_id`).
 9. Removed shows with existing tasks transition to `cancelled_pending_resolution` in `show_status`.
 10. Required system statuses are runtime ensured (resolve-or-create), not startup hard-fail prerequisites.
 
@@ -188,7 +188,7 @@ Conclusion:
 
 ### 11.1 Planning and Sync
 
-1. Planner updates shows in Google Sheets, including stable show UID.
+1. Planner updates shows in Google Sheets, including stable `external_id`.
 2. Apps Script updates schedule draft via `PATCH`.
 3. Planner runs `validate`.
 4. Planner runs `publish`.
@@ -210,7 +210,7 @@ Version behavior:
 
 1. Validate all references and schedule constraints.
 2. Load existing schedule shows and mappings once.
-3. Compute show diff by external show UID.
+3. Compute show diff by `external_id`.
 4. Apply transactional upsert:
    - matched -> update in place
    - new -> create
@@ -236,15 +236,16 @@ Task-generation eligibility (phase 1 baseline):
 
 ### 12.1 Show Identity
 
-1. Every show must include stable external identity stored in a dedicated DB column (`external_uid` or equivalent).
+1. Every show must include stable external identity stored in a dedicated DB column (`external_id`).
 2. External identity is immutable after first association.
 3. Display fields (like `name`) are editable and not identity.
-4. In the current phase, external UID is generated from Google Sheets during planning and consolidation.
-5. The plan document schema must include the external UID per show entry for diff matching.
+4. In the current phase, `external_id` is generated from Google Sheets during planning and consolidation.
+5. The plan document schema must include `external_id` per show entry for diff matching.
 6. This column also supports future use cases where clients provide their own show IDs (e.g., client-facing app or direct upload). No client-side generation is required in this phase.
-7. External UID uniqueness scope is by client (recommended unique key: `client_id + external_uid`).
+7. `external_id` uniqueness scope is by client (recommended unique key: `client_id + external_id`).
+8. Naming convention: internal implementation may refer to this identity as an "external UID" for disambiguation, but external API communication must use the field name `external_id`.
 
-External UID generation (current phase):
+`external_id` generation (current phase):
 
 1. Generated manually on Google Sheets via formula: `="show_"&DEC2HEX(RANDBETWEEN(0, 549755813887), 10)`.
 2. Format: `show_` prefix + 10 hex characters (~39 bits of entropy).
@@ -252,18 +253,18 @@ External UID generation (current phase):
 4. The generated value is persisted as a cell value on the sheet (not recalculated).
 5. Column is optional in DB schema (nullable for legacy rows) but required for the current planning process.
 
-Validation rules for external UID:
+Validation rules for `external_id`:
 
-1. Reject plan items with missing or empty external UID.
-2. Reject duplicate external UIDs within the same plan document payload.
-3. Reject external UIDs that collide with shows from a different schedule for the same client.
+1. Reject plan items with missing or empty `external_id`.
+2. Reject duplicate `external_id` values within the same plan document payload.
+3. Reject `external_id` values that collide with shows from a different schedule for the same client.
 
 ### 12.2 Show Sync Semantics
 
 1. Matched identity -> update existing show record in place.
 2. No match -> create new show record.
 3. Existing but absent in incoming payload -> apply remove policy:
-   - no tasks -> soft delete according to policy.
+   - no tasks -> move status to `cancelled` according to policy.
    - has tasks -> mark as `cancelled_pending_resolution`; preserve tasks and task-targets for admin resolution (Section 20.1).
 4. Global delete/recreate of schedule shows is forbidden in normal publish flow.
 5. Hard delete of any show is restricted to privileged override only. Cascade deletion of associated tasks is accepted in this path (Section 12.5).
@@ -307,7 +308,7 @@ Field ownership table:
 1. Existing task-target links must survive show updates where identity matches.
 2. System must not silently remove operational tasks due to schedule refresh.
 3. Changes impacting tasks must be surfaced explicitly.
-4. Default removal path is soft-cancel (Section 20.1). Tasks and task-targets are preserved for admin resolution.
+4. Default removal path is status-only cancellation transitions (Section 20.1). Tasks and task-targets are preserved for admin resolution.
 5. If a show must be hard-deleted (privileged override), associated tasks and task-targets are cascade-deleted. This is acceptable because:
    - Hard delete is an explicit, audited, privileged action — not an automated path.
    - Keeping orphaned tasks with no traceable show creates worse data integrity than removing them.
@@ -358,7 +359,7 @@ Policy:
 1. Do not expand endpoint count in this phase.
 2. Make these endpoints deterministic and retry-safe.
 3. Improve internals (publish semantics), not integration complexity.
-4. The bulk PATCH variant (`/google-sheets/schedules/bulk`) exists in the controller but is not part of the active integration contract for this phase.
+4. `POST /google-sheets/schedules/bulk` remains in the active integration contract as the primary intake path, with iterative/sliced fallback when payload thresholds are exceeded.
 
 Reasoning:
 
@@ -488,7 +489,7 @@ Rollout rationale:
 
 The solution is not rollout-ready until all conditions pass:
 
-1. Republish with unchanged external UIDs does not recreate matched shows.
+1. Republish with unchanged `external_id` values does not recreate matched shows.
 2. Existing generated/assigned tasks remain linked after safe republish.
 3. Removing a show with tasks never silently deletes operational data.
 4. MC/platform mapping updates apply correctly without show recreation.
@@ -529,7 +530,7 @@ Reasoning:
 1. Prevents silent data loss.
 2. Avoids blocking all updates due to a single removal.
 3. Preserves operational continuity while forcing explicit resolution.
-4. Status-only transitions avoid unique constraint collisions on `(client_id, external_uid)` that would occur with soft-delete.
+4. Status-only transitions avoid unique constraint collisions on `(client_id, external_id)` that would occur with soft-delete.
 5. Auto-resume on reappearance ensures shows that come back do not leave orphaned cancelled tasks.
 
 Required guardrails:
@@ -608,7 +609,7 @@ Reasoning:
 
 If no stakeholder objections, adopt this default set:
 
-1. Remove policy: soft-cancel + resolution queue.
+1. Remove policy: status-only cancellation transitions + resolution queue.
 2. Conflict policy: publish-payload-wins + audit metadata.
 3. High-impact fields: timing, room/studio, cancellation status, type.
 4. Intake mode: bulk primary with iterative fallback.
@@ -650,7 +651,7 @@ sequenceDiagram
     participant DB as Database
     actor Admin as Studio Admin
 
-    Planner->>GAS: Update schedule rows (with external_uid)
+    Planner->>GAS: Update schedule rows (with external_id)
     GAS->>GSAPI: PATCH /google-sheets/schedules/:id (draft planDocument + version)
     GSAPI->>DB: Update schedule draft + snapshot/version
     DB-->>GSAPI: Updated schedule
@@ -666,16 +667,16 @@ sequenceDiagram
     GAS->>GSAPI: POST /google-sheets/schedules/:id/publish (version)
     GSAPI->>SVC: publish(scheduleId, version)
     SVC->>DB: Load schedule + existing shows + relations
-    SVC->>SVC: Diff by (client_id, external_uid)
+    SVC->>SVC: Diff by (client_id, external_id)
 
-    alt Matched external_uid
+    alt Matched external_id
         SVC->>DB: Update show in place
-    else New external_uid
+    else New external_id
         SVC->>DB: Create show
     end
 
     alt Existing show missing in payload and has no tasks
-        SVC->>DB: Soft delete/cancel show
+        SVC->>DB: Set status = cancelled
     else Existing show missing in payload and has tasks
         SVC->>DB: Set status = cancelled_pending_resolution
         Note over SVC,DB: Keep tasks + task_targets
@@ -698,7 +699,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    A[Planner updates Google Sheets<br/>with stable external_uid] --> B[Apps Script PATCH draft schedule]
+    A[Planner updates Google Sheets<br/>with stable external_id] --> B[Apps Script PATCH draft schedule]
     B --> C[Validate schedule]
     C --> D{Validation passed?}
     D -- No --> E[Return validation errors to planner]
@@ -706,13 +707,13 @@ flowchart TD
     D -- Yes --> F[Publish request]
 
     F --> G[Load existing schedule shows + mappings]
-    G --> H[Diff by client_id + external_uid]
+    G --> H[Diff by client_id + external_id]
     H --> I[Upsert matched/new shows]
     I --> J{Existing show missing from payload?}
 
     J -- No --> K[Sync MC/platform relation diffs]
     J -- Yes --> L{Show has tasks?}
-    L -- No --> M[Soft delete/cancel show]
+    L -- No --> M[Set status:<br/>cancelled]
     L -- Yes --> N[Set status:<br/>cancelled_pending_resolution]
     N --> O[Keep tasks/task_targets for admin resolution]
     M --> K
@@ -735,6 +736,6 @@ flowchart TD
 
 ### 22.3 Legend
 
-1. `external_uid`: stable show identity from planning source.
+1. `external_id`: stable show identity from planning source.
 2. `publish-payload-wins`: publish payload takes precedence for publish-owned fields at publish time.
 3. `cancelled_pending_resolution`: show removed from plan but has existing tasks; requires admin resolution queue.

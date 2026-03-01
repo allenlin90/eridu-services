@@ -4,7 +4,7 @@ import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-pr
 import { Prisma } from '@prisma/client';
 
 import {
-  PlanDocument,
+  planDocumentSchema,
   ShowPlanItem,
   ValidationError,
   ValidationResult,
@@ -39,7 +39,7 @@ export class ValidationService {
       uid: string;
       startDate: Date;
       endDate: Date;
-      planDocument: PlanDocument;
+      planDocument: unknown;
       clientId: bigint | null;
     },
   ): Promise<ValidationResult> {
@@ -47,10 +47,8 @@ export class ValidationService {
     const errors: ValidationError[] = [];
 
     // Validate plan document structure
-    if (
-      !schedule.planDocument.shows
-      || !Array.isArray(schedule.planDocument.shows)
-    ) {
+    const rawPlanDocument = schedule.planDocument as Record<string, unknown> | null;
+    if (!rawPlanDocument || !Array.isArray(rawPlanDocument.shows)) {
       errors.push({
         type: 'reference_not_found',
         message: 'Plan document must contain a shows array',
@@ -58,12 +56,37 @@ export class ValidationService {
       return { isValid: false, errors };
     }
 
-    const shows = schedule.planDocument.shows;
+    const parseResult = planDocumentSchema.safeParse(schedule.planDocument);
+    if (!parseResult.success) {
+      parseResult.error.issues.forEach((issue) => {
+        const showIndex = typeof issue.path[1] === 'number'
+          ? issue.path[1]
+          : undefined;
+        const fieldPath = issue.path.join('.');
+        errors.push({
+          type: 'missing_field',
+          message: `Invalid plan document at "${fieldPath}": ${issue.message}`,
+          showIndex,
+        });
+      });
+      return { isValid: false, errors };
+    }
+
+    const parsedPlan = parseResult.data;
+    const shows = parsedPlan.shows;
     const scheduleStart = new Date(schedule.startDate);
     const scheduleEnd = new Date(schedule.endDate);
 
     // Build UID lookup maps for all references
     const uidMaps = await this.buildUidLookupMaps(shows, prismaClient);
+
+    const externalIdErrors = await this.validateExternalIdRules(
+      shows,
+      schedule.id,
+      uidMaps,
+      prismaClient,
+    );
+    errors.push(...externalIdErrors);
 
     // Validate each show
     for (let i = 0; i < shows.length; i++) {
@@ -107,6 +130,99 @@ export class ValidationService {
       isValid: errors.length === 0,
       errors,
     };
+  }
+
+  private async validateExternalIdRules(
+    shows: ShowPlanItem[],
+    scheduleId: bigint,
+    uidMaps: Awaited<ReturnType<typeof this.buildUidLookupMaps>>,
+    prismaClient: Prisma.TransactionClient | PrismaService,
+  ): Promise<ValidationError[]> {
+    const errors: ValidationError[] = [];
+    const seen = new Set<string>();
+    const duplicated = new Set<string>();
+    const uniqueExternalIds = new Set<string>();
+
+    shows.forEach((show, index) => {
+      if (!show.externalId || !show.externalId.trim()) {
+        errors.push({
+          type: 'missing_field',
+          message: 'external_id is required',
+          showIndex: index,
+          showTempId: show.tempId,
+        });
+        return;
+      }
+
+      const normalized = show.externalId.trim();
+      uniqueExternalIds.add(normalized);
+
+      if (seen.has(normalized)) {
+        duplicated.add(normalized);
+      } else {
+        seen.add(normalized);
+      }
+    });
+
+    if (duplicated.size > 0) {
+      shows.forEach((show, index) => {
+        if (show.externalId && duplicated.has(show.externalId.trim())) {
+          errors.push({
+            type: 'invalid_relationship',
+            message: `Duplicate external_id "${show.externalId}" in plan payload`,
+            showIndex: index,
+            showTempId: show.tempId,
+          });
+        }
+      });
+    }
+
+    const clientIds = Array.from(
+      new Set(
+        shows
+          .map((show) => uidMaps.clients.get(show.clientId))
+          .filter((id): id is bigint => !!id),
+      ),
+    );
+
+    if (clientIds.length === 0 || uniqueExternalIds.size === 0) {
+      return errors;
+    }
+
+    const collisions = await prismaClient.show.findMany({
+      where: {
+        clientId: { in: clientIds },
+        externalId: { in: Array.from(uniqueExternalIds) },
+        scheduleId: { not: scheduleId },
+        deletedAt: null,
+      },
+      select: {
+        externalId: true,
+      },
+    });
+
+    const collidedExternalIds = new Set(
+      collisions
+        .map((row) => row.externalId)
+        .filter((externalId): externalId is string => !!externalId),
+    );
+
+    if (collidedExternalIds.size === 0) {
+      return errors;
+    }
+
+    shows.forEach((show, index) => {
+      if (show.externalId && collidedExternalIds.has(show.externalId.trim())) {
+        errors.push({
+          type: 'invalid_relationship',
+          message: `external_id "${show.externalId}" already exists on a different schedule for this client`,
+          showIndex: index,
+          showTempId: show.tempId,
+        });
+      }
+    });
+
+    return errors;
   }
 
   /**

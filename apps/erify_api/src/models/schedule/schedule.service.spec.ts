@@ -626,6 +626,7 @@ describe('scheduleService', () => {
     const mockShows = [
       {
         tempId: 'temp_1',
+        externalId: 'show_temp_1',
         name: 'Test Show 1',
         startTime: '2025-01-01T10:00:00Z',
         endTime: '2025-01-01T12:00:00Z',

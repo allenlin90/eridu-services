@@ -49,6 +49,7 @@ describe('showStatusService', () => {
       const expectedResult = {
         id: 1n,
         uid: 'shs_00000001',
+        systemKey: null,
         name: 'Draft',
         metadata: { description: 'Show is in draft status' },
         createdAt: new Date(),
@@ -94,6 +95,7 @@ describe('showStatusService', () => {
       const expectedResult = {
         id: 1n,
         uid,
+        systemKey: null,
         name: 'Draft',
         metadata: {},
         createdAt: new Date(),
@@ -135,6 +137,7 @@ describe('showStatusService', () => {
         {
           id: 1n,
           uid: 'shs_00000001',
+          systemKey: null,
           name: 'Draft',
           metadata: {},
           createdAt: new Date(),
@@ -144,6 +147,7 @@ describe('showStatusService', () => {
         {
           id: 2n,
           uid: 'shs_00000002',
+          systemKey: null,
           name: 'Confirmed',
           metadata: {},
           createdAt: new Date(),
@@ -174,6 +178,7 @@ describe('showStatusService', () => {
       const expectedResult = {
         id: 1n,
         uid,
+        systemKey: null,
         name: 'Updated Status',
         metadata: { description: 'Updated description' },
         createdAt: new Date(),
@@ -215,6 +220,7 @@ describe('showStatusService', () => {
       const expectedResult = {
         id: 1n,
         uid,
+        systemKey: null,
         name: 'Draft',
         metadata: {},
         createdAt: new Date(),

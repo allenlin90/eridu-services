@@ -1,0 +1,5 @@
+show_status,show_type,show_room,show_standard,schedule_status,mcs,platforms,schedule_change_type,schedule_change_category,first_row_to_create_schedules
+"draft|confirmed|live|completed|cancelled","bau|campaign",301,standard,"draft|review|published","mc_alpha|mc_beta","tiktok|shopee|lazada","first_planning|campaign_update","client_requested|operational",2
+,,, ,,, ,,,selected_start_row
+,,, ,,, ,,,selected_end_row
+,,, ,,, ,,,selected_count

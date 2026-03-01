@@ -450,14 +450,6 @@ describe('adminScheduleController', () => {
         createdBy: mockUser.id,
         createdByUser: mockUser,
       };
-      const publishResult = {
-        schedule: {
-          uid: scheduleId,
-          name: 'Published Schedule',
-        },
-        showsCreated: 5,
-        showsDeleted: 0,
-      };
       const publishedSchedule: ScheduleWithRelations = {
         id: BigInt(1),
         uid: scheduleId,
@@ -480,6 +472,22 @@ describe('adminScheduleController', () => {
         studio: null,
         createdByUser: mockUser,
         publishedByUser: mockUser,
+      };
+      const publishResult = {
+        schedule: publishedSchedule,
+        publishSummary: {
+          shows_created: 5,
+          shows_updated: 0,
+          shows_cancelled: 0,
+          shows_pending_resolution: 0,
+          shows_restored: 0,
+          mc_links_added: 0,
+          mc_links_updated: 0,
+          mc_links_removed: 0,
+          platform_links_added: 0,
+          platform_links_updated: 0,
+          platform_links_removed: 0,
+        },
       };
 
       mockScheduleService.getScheduleById.mockResolvedValue(schedule as any);
@@ -505,7 +513,14 @@ describe('adminScheduleController', () => {
           publishedByUser: true,
         },
       );
-      expect(result).toEqual(publishedSchedule);
+      expect(result).toEqual({
+        schedule: expect.objectContaining({
+          id: scheduleId,
+          name: 'Published Schedule',
+          status: 'published',
+        }),
+        publish_summary: publishResult.publishSummary,
+      });
     });
   });
 

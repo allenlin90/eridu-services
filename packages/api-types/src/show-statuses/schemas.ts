@@ -6,6 +6,7 @@ import { z } from 'zod';
 export const showStatusApiResponseSchema = z.object({
   id: z.string(),
   name: z.string(),
+  system_key: z.string().nullable(),
   metadata: z.record(z.string(), z.any()),
   created_at: z.string(), // ISO 8601 datetime string
   updated_at: z.string(), // ISO 8601 datetime string

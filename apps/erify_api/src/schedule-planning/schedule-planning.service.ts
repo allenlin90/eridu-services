@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 
 import {
   PlanDocument,
+  PublishScheduleSummary,
   ValidationResult,
 } from './schemas/schedule-planning.schema';
 import { PublishingService, ScheduleWithRelations } from './publishing.service';
@@ -79,8 +80,7 @@ export class SchedulePlanningService {
     userId: bigint,
   ): Promise<{
       schedule: ScheduleWithRelations;
-      showsCreated: number;
-      showsDeleted: number;
+      publishSummary: PublishScheduleSummary;
     }> {
     return this.publishingService.publish(scheduleUid, version, userId);
   }

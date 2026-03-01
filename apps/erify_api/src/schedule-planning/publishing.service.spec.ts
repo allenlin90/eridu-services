@@ -1,4 +1,5 @@
 import { BadRequestException, ConflictException, Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { ClsPluginTransactional } from '@nestjs-cls/transactional';
@@ -17,6 +18,7 @@ import { ShowService } from '@/models/show/show.service';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { PrismaService } from '@/prisma/prisma.service';
+import { UtilityService } from '@/utility/utility.service';
 
 // File-scope mock transaction client (reassigned per test in beforeEach)
 let mockTransactionClient: {
@@ -78,6 +80,7 @@ describe('publishingService', () => {
     shows: [
       {
         tempId: 'temp_1',
+        externalId: 'show_temp_1',
         name: 'Test Show 1',
         startTime: '2024-01-01T10:00:00Z',
         endTime: '2024-01-01T12:00:00Z',
@@ -103,6 +106,7 @@ describe('publishingService', () => {
       },
       {
         tempId: 'temp_2',
+        externalId: 'show_temp_2',
         name: 'Test Show 2',
         startTime: '2024-01-02T10:00:00Z',
         endTime: '2024-01-02T12:00:00Z',
@@ -225,6 +229,12 @@ describe('publishingService', () => {
       providers: [
         PublishingService,
         {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue(false),
+          },
+        },
+        {
           provide: ScheduleService,
           useValue: {
             getScheduleById: jest.fn(),
@@ -258,6 +268,12 @@ describe('publishingService', () => {
           provide: ValidationService,
           useValue: {
             validateSchedule: jest.fn(),
+          },
+        },
+        {
+          provide: UtilityService,
+          useValue: {
+            generateBrandedId: jest.fn().mockReturnValue('shst_generated'),
           },
         },
       ],
@@ -374,8 +390,8 @@ describe('publishingService', () => {
         },
       });
       expect(result.schedule.status).toBe('published');
-      expect(result.showsCreated).toBe(2);
-      expect(result.showsDeleted).toBe(0);
+      expect(result.publishSummary.shows_created).toBe(2);
+      expect(result.publishSummary.shows_cancelled).toBe(0);
     });
 
     it('should delete existing shows before creating new ones', async () => {
@@ -389,8 +405,8 @@ describe('publishingService', () => {
           deletedAt: null,
         },
       });
-      expect(result.showsDeleted).toBe(3);
-      expect(result.showsCreated).toBe(2);
+      expect(result.publishSummary.shows_cancelled).toBe(3);
+      expect(result.publishSummary.shows_created).toBe(2);
     });
 
     it('should create shows with MCs and Platforms', async () => {
@@ -748,12 +764,11 @@ describe('publishingService', () => {
       expect(
         mockTransactionClient.showPlatform.createMany,
       ).not.toHaveBeenCalled();
-      expect(result.showsCreated).toBe(0);
-      expect(result.showsDeleted).toBe(0);
+      expect(result.publishSummary.shows_created).toBe(0);
+      expect(result.publishSummary.shows_cancelled).toBe(0);
     });
 
-    it('should handle undefined values in UID lookups gracefully during publish', async () => {
-      // Mock schedule service to return a schedule with undefined UIDs in plan document
+    it('should reject malformed plan payload before publish', async () => {
       const scheduleWithMissingUids = {
         ...mockSchedule,
         planDocument: {
@@ -761,7 +776,6 @@ describe('publishingService', () => {
           shows: [
             {
               ...mockPlanDocument.shows[0],
-              // Simulate undefined values in optional relationships
               mcs: [{ mcId: undefined }, { mcId: 'mc_test123' }] as any,
               studioRoomId: undefined,
             },
@@ -771,82 +785,13 @@ describe('publishingService', () => {
 
       getScheduleByIdMock.mockResolvedValue(scheduleWithMissingUids);
 
-      // Mock validation success
-      validateScheduleMock.mockResolvedValue({
-        isValid: true,
-        errors: [],
-      });
-
-      // Mock UID lookups
-      // Client lookup
-      mockTransactionClient.client.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'client_test123' },
-      ]);
-      // Show Type/Status/Standard lookups
-      mockTransactionClient.showType.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'sht_test123' },
-      ]);
-      mockTransactionClient.showStatus.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'shst_test123' },
-      ]);
-      mockTransactionClient.showStandard.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'shsd_test123' },
-      ]);
-
-      // MC lookup - should filter out undefined and only find 'mc_valid'
-      mockTransactionClient.mC.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'mc_test123' },
-      ]);
-
-      // Platform lookup
-      mockTransactionClient.platform.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'platform_test123' },
-      ]);
-
-      // Studio room - ensure empty result doesn't crash
-      mockTransactionClient.studioRoom.findMany.mockResolvedValue([]);
-
-      // Create Many mocks
-      mockTransactionClient.show.createMany.mockResolvedValue({ count: 1 });
-      mockTransactionClient.show.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'show_test123' },
-      ]);
-      mockTransactionClient.showMC.createMany.mockResolvedValue({ count: 1 });
-      mockTransactionClient.showPlatform.createMany.mockResolvedValue({ count: 1 });
-
-      // Update schedule status
-      mockTransactionClient.schedule.update.mockResolvedValue({
-        ...mockSchedule,
-        status: 'published',
-      });
-
-      const result = await service.publish(scheduleUid, version, userId);
-
-      // Verify success
-      expect(result.schedule.status).toBe('published');
-
-      // Verify mC.findMany was called presumably without undefined (implicit in success)
-      expect(mockTransactionClient.mC.findMany).toHaveBeenCalled();
-
-      // Verify createMany was called with correct data (only valid MCs)
-      expect(mockTransactionClient.showMC.createMany).toHaveBeenCalledTimes(1);
-      const showMCCall = mockTransactionClient.showMC.createMany.mock.calls[0] as unknown as [{ data: Array<{ mcId: bigint }> }];
-      expect(showMCCall[0].data).toHaveLength(1);
-      expect(showMCCall[0].data[0].mcId).toBe(BigInt(1)); // Only the valid MC should be present
-      // The `!` asserts it's not undefined.
-      // So if undefined is passed to `get`, and undefined is returned, `!` will not throw at runtime (TS only),
-      // but it might result in `undefined` being passed to `createMany`.
-      // However, validation service normally checks "Reference not found".
-      // If validation passes, we assume IDs exist.
-      // The Fix I implemented in publishing.service.ts filters undefined from `buildUidLookupMaps`.
-      // But it does NOT filter undefined from the `flatMap` loop in steps 7 & 9.
-      // Wait, if I have `mcId: undefined`, `uidMaps.mcs.get(undefined)` returns `undefined`.
-      // Then `{ mcId: undefined }` is passed to Prisma.
-      // Prisma createMany likely throws if a required field is undefined.
-      // The fix strictly prevents crashing in step 2 (buildUidLookupMaps).
-      // If the paylod has undefined, we likely still have an issue in step 7 if validation didn't catch it.
-      // BUT, let's verify if the tests pass or if I need to add filtering in step 7 too.
-      // This test will reveal that.
+      await expect(
+        service.publish(scheduleUid, version, userId),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.publish(scheduleUid, version, userId),
+      ).rejects.toThrow('Invalid plan document structure');
+      expect(validateScheduleMock).not.toHaveBeenCalled();
     });
   });
 });

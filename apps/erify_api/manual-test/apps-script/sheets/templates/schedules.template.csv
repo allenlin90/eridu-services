@@ -1,0 +1,3 @@
+master_plan_id,schedule_id,client,schedule_status,start_date,end_date,version,name,description,note,client_id,active_schedule
+MP-EXAMPLE-001,schedule_example_001,client-demo-a,draft,2026/03/01 00:00,2026/03/31 23:59,1,Client Demo A - March 2026,"Demo schedule for staging","",client_demo_a,true
+MP-EXAMPLE-002,schedule_example_002,client-demo-b,draft,2026/04/01 00:00,2026/04/30 23:59,2,Client Demo B - April 2026,"Not selected for this run","",client_demo_b,false

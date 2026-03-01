@@ -3,8 +3,10 @@ import type { z } from 'zod';
 import type {
   createScheduleInputSchema,
   listSchedulesQuerySchema,
+  publishScheduleResponseSchema,
   scheduleApiResponseSchema,
   scheduleListResponseSchema,
+  schedulePublishSummarySchema,
   updateScheduleInputSchema,
 } from './schemas.js';
 
@@ -17,6 +19,8 @@ export type ScheduleApiResponse = z.infer<typeof scheduleApiResponseSchema>;
  * Schedule List Response Type
  */
 export type ScheduleListResponse = z.infer<typeof scheduleListResponseSchema>;
+export type SchedulePublishSummary = z.infer<typeof schedulePublishSummarySchema>;
+export type PublishScheduleResponse = z.infer<typeof publishScheduleResponseSchema>;
 
 /**
  * Create Schedule Input Type

@@ -89,6 +89,8 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 | `PATCH /admin/tasks/:uid/assign`        | Reassign (membership validated)              |
 | `PATCH /admin/tasks/:uid/reassign-show` | Move task target (PENDING only, same studio) |
 | `DELETE /admin/tasks/:uid`              | Hard delete                                  |
+| `GET /admin/show-statuses`              | Manage system-wide show statuses             |
+| `GET /admin/task-templates`             | Manage task templates across studios         |
 
 ---
 
