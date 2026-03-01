@@ -2,7 +2,7 @@ import type { Column, Table } from '@tanstack/react-table';
 import type { DateRange } from 'react-day-picker';
 
 /**
- * Searchable column configuration for admin tables
+ * Searchable column configuration for shared data tables
  */
 export type SearchableColumn = {
   id: string;
@@ -17,15 +17,20 @@ export type SearchableColumn = {
 export type FilterValue = string | DateRange | undefined;
 
 /**
- * Props for the main toolbar component
+ * Props for the shared data table toolbar component
  */
-export type AdminTableToolbarProps<TData> = {
+export type DataTableToolbarProps<TData> = {
   table: Table<TData>;
   searchColumn?: string;
   searchableColumns?: SearchableColumn[];
   searchPlaceholder?: string;
   /** Columns to show as quick filters inline (by id) */
   quickFilterColumns?: string[];
+  /** Columns to show at top of filter popover */
+  featuredFilterColumns?: string[];
+  /** Label for "clear all filters" button shown in chips row */
+  resetButtonLabel?: string;
+  children?: React.ReactNode;
 };
 
 /**
@@ -66,6 +71,7 @@ export type FilterChipsProps<TData> = {
   searchableColumns: SearchableColumn[];
   primaryColumnId?: string;
   onClearAll: () => void;
+  resetButtonLabel?: string;
 };
 
 /**

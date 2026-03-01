@@ -5,7 +5,14 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@eridu/ui';
 
-import { AdminTable } from '@/features/admin/components/admin-table';
+import {
+  adaptColumnFiltersChange,
+  adaptPaginationChange,
+  adaptSortingChange,
+  DataTable,
+  DataTablePagination,
+  DataTableToolbar,
+} from '@/components/data-table';
 import { BulkTaskGenerationDialog } from '@/features/shows/components/bulk-task-generation-dialog';
 import { usePlatformsFieldData } from '@/features/shows/components/hooks/use-platforms-field-data';
 import { useShowStandardFieldData } from '@/features/shows/components/hooks/use-show-standard-field-data';
@@ -139,8 +146,8 @@ function StudioShowsPage() {
     [typeOptions, standardOptions, statusOptions, platformOptions],
   );
 
-  const quickFilterColumns = useMemo(() => ['start_time'], []);
-  const featuredFilterColumns = useMemo(() => ['has_tasks', 'client_name', 'show_status_name'], []);
+  const quickFilterColumns = ['start_time'];
+  const featuredFilterColumns = ['has_tasks', 'client_name', 'show_status_name'];
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
@@ -153,44 +160,53 @@ function StudioShowsPage() {
       </div>
 
       {/* Data Table */}
-      <AdminTable
+      <DataTable
         data={shows}
         columns={columns}
         isLoading={isLoading}
         isFetching={isFetching}
         emptyMessage="No shows found."
-
-        // Pagination
-        pagination={{
+        manualPagination
+        manualFiltering
+        manualSorting
+        pageCount={Math.ceil(total / pagination.pageSize)}
+        paginationState={{
           pageIndex: pagination.pageIndex,
           pageSize: pagination.pageSize,
-          total,
-          pageCount: Math.ceil(total / pagination.pageSize),
         }}
-        onPaginationChange={onPaginationChange}
-
-        // Sorting & Filtering
+        onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
         sorting={sorting}
-        onSortingChange={onSortingChange}
+        onSortingChange={adaptSortingChange(sorting, onSortingChange)}
         columnFilters={columnFilters}
-        onColumnFiltersChange={onColumnFiltersChange}
-        searchColumn="name"
-        searchableColumns={searchableColumns}
-        quickFilterColumns={quickFilterColumns}
-        featuredFilterColumns={featuredFilterColumns}
-        searchPlaceholder="Search shows..."
-
-        // Selection
+        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
         enableRowSelection
         rowSelection={rowSelection}
         onRowSelectionChange={setRowSelection}
         getRowId={(show) => show.id}
-
-        // Extra toolbar actions
-        renderToolbarActions={() => (
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-            Refresh
-          </Button>
+        renderToolbar={(table) => (
+          <DataTableToolbar
+            table={table}
+            searchColumn="name"
+            searchableColumns={searchableColumns}
+            quickFilterColumns={quickFilterColumns}
+            featuredFilterColumns={featuredFilterColumns}
+            searchPlaceholder="Search shows..."
+          >
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+              Refresh
+            </Button>
+          </DataTableToolbar>
+        )}
+        renderFooter={() => (
+          <DataTablePagination
+            pagination={{
+              pageIndex: pagination.pageIndex,
+              pageSize: pagination.pageSize,
+              total,
+              pageCount: Math.ceil(total / pagination.pageSize),
+            }}
+            onPaginationChange={onPaginationChange}
+          />
         )}
       />
 

@@ -97,4 +97,3 @@ function validateSchedules() {
   Logger.log(`Skipped: ${stats.skipped}`);
   Logger.log('--------------------------');
 }
-

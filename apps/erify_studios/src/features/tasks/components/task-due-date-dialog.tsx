@@ -28,6 +28,37 @@ type TaskDueDateDialogProps = {
   studioId?: string;
 };
 
+type DraftDueDate = {
+  taskId: string;
+  value: string;
+};
+
+function resolveDueDateValue(
+  draftDueDate: DraftDueDate | null,
+  task: TaskWithRelationsDto | null,
+  suggestedDueDate: string | null,
+): string {
+  if (!task) {
+    return '';
+  }
+
+  if (draftDueDate && draftDueDate.taskId === task.id) {
+    return draftDueDate.value;
+  }
+
+  return task.due_date ?? suggestedDueDate ?? '';
+}
+
+function toIsoDueDateOrError(value: string): { dueDate: string | null; error: string | null } {
+  const trimmedValue = value.trim();
+  const parsedDate = trimmedValue ? new Date(trimmedValue) : null;
+  if (parsedDate && Number.isNaN(parsedDate.getTime())) {
+    return { dueDate: null, error: 'Please enter a valid due date.' };
+  }
+
+  return { dueDate: parsedDate ? parsedDate.toISOString() : null, error: null };
+}
+
 export function TaskDueDateDialog({
   task,
   open,
@@ -56,10 +87,9 @@ export function TaskDueDateDialog({
     value: string;
   } | null>(null);
   const [isResolvingVersion, setIsResolvingVersion] = useState(false);
+  const [inputError, setInputError] = useState<string | null>(null);
 
-  const dueDate = draftDueDate?.taskId === resolvedTask?.id
-    ? (draftDueDate?.value ?? '')
-    : (resolvedTask?.due_date ?? suggestedDueDate ?? '');
+  const dueDate = resolveDueDateValue(draftDueDate, resolvedTask ?? null, suggestedDueDate);
 
   if (!resolvedTask) {
     return null;
@@ -69,14 +99,24 @@ export function TaskDueDateDialog({
     ? format(new Date(suggestedDueDate), 'PPp')
     : null;
 
+  const updateDraftDueDate = (value: string) => {
+    setInputError(null);
+    setDraftDueDate({ taskId: resolvedTask.id, value });
+  };
+
   const handleSave = async () => {
     if (!studioId) {
       return;
     }
 
+    const { dueDate: nextDueDate, error } = toIsoDueDateOrError(dueDate);
+    if (error) {
+      setInputError(error);
+      return;
+    }
+
+    setInputError(null);
     setIsResolvingVersion(true);
-    const value = (dueDate ?? '').trim();
-    const nextDueDate = value ? new Date(value).toISOString() : null;
 
     try {
       const latestTask = await queryClient.fetchQuery({
@@ -107,9 +147,12 @@ export function TaskDueDateDialog({
           <Label htmlFor="task_due_date">Due Date</Label>
           <DateTimePicker
             value={dueDate ?? ''}
-            onChange={(value) => setDraftDueDate({ taskId: resolvedTask.id, value: value ?? '' })}
+            onChange={(value) => updateDraftDueDate(value ?? '')}
             className="w-full"
           />
+          {inputError && (
+            <div className="text-xs text-destructive">{inputError}</div>
+          )}
           {isLoadingTask && (
             <div className="text-xs text-muted-foreground">Loading show details...</div>
           )}
@@ -125,7 +168,7 @@ export function TaskDueDateDialog({
                 variant="ghost"
                 size="sm"
                 className="h-6 px-2 text-[10px]"
-                onClick={() => setDraftDueDate({ taskId: resolvedTask.id, value: suggestedDueDate })}
+                onClick={() => updateDraftDueDate(suggestedDueDate)}
                 disabled={isSaving}
               >
                 <RotateCcw className="mr-1 h-3 w-3" />
@@ -141,7 +184,7 @@ export function TaskDueDateDialog({
           </Button>
           <Button
             variant="outline"
-            onClick={() => setDraftDueDate({ taskId: resolvedTask.id, value: '' })}
+            onClick={() => updateDraftDueDate('')}
             disabled={isSaving || isResolvingVersion}
           >
             Clear

@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 
 import type {
@@ -8,7 +9,15 @@ import type {
   updateShowStandardInputSchema,
 } from '@eridu/api-types/show-standards';
 
-import { AdminLayout, AdminTable } from '@/features/admin/components';
+import {
+  adaptColumnFiltersChange,
+  adaptPaginationChange,
+  DataTable,
+  DataTableActions,
+  DataTablePagination,
+  DataTableToolbar,
+} from '@/components/data-table';
+import { AdminLayout } from '@/features/admin/components';
 import {
   ShowStandardCreateDialog,
   ShowStandardDeleteDialog,
@@ -72,6 +81,31 @@ function ShowStandardsList() {
     setEditingShowStandard(null);
   };
 
+  const pagination = data?.meta
+    ? {
+        pageIndex: data.meta.page - 1,
+        pageSize: data.meta.limit,
+        total: data.meta.total,
+        pageCount: data.meta.totalPages,
+      }
+    : undefined;
+
+  const columnsWithActions = useMemo<ColumnDef<ShowStandard>[]>(() => [
+    ...showStandardColumns,
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DataTableActions
+          row={row.original}
+          onEdit={(type) => setEditingShowStandard(type)}
+          onDelete={(type) => setDeleteId(type.id)}
+        />
+      ),
+      size: 50,
+      enableHiding: false,
+    } as ColumnDef<ShowStandard>,
+  ], []);
+
   return (
     <AdminLayout
       title="Show Standards"
@@ -83,29 +117,39 @@ function ShowStandardsList() {
       onRefresh={handleRefresh}
       refreshQueryKey={['show-standards']}
     >
-      <AdminTable
+      <DataTable
         data={data?.data || []}
-        columns={showStandardColumns}
+        columns={columnsWithActions}
         isLoading={isLoading}
         isFetching={isFetching}
-        onEdit={(type) => setEditingShowStandard(type)}
-        onDelete={(type) => setDeleteId(type.id)}
         emptyMessage="No show standards found. Create one to get started."
+        manualPagination={!!pagination}
+        manualFiltering
+        pageCount={pagination?.pageCount}
+        paginationState={pagination
+          ? {
+              pageIndex: pagination.pageIndex,
+              pageSize: pagination.pageSize,
+            }
+          : undefined}
+        onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
         columnFilters={columnFilters}
-        onColumnFiltersChange={onColumnFiltersChange}
-        searchableColumns={showStandardSearchableColumns}
-        searchPlaceholder="Search show standards..."
-        pagination={
-          data?.meta
-            ? {
-                pageIndex: data.meta.page - 1,
-                pageSize: data.meta.limit,
-                total: data.meta.total,
-                pageCount: data.meta.totalPages,
-              }
-            : undefined
-        }
-        onPaginationChange={onPaginationChange}
+        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
+        renderToolbar={(table) => (
+          <DataTableToolbar
+            table={table}
+            searchableColumns={showStandardSearchableColumns}
+            searchPlaceholder="Search show standards..."
+          />
+        )}
+        renderFooter={() => pagination
+          ? (
+              <DataTablePagination
+                pagination={pagination}
+                onPaginationChange={onPaginationChange}
+              />
+            )
+          : null}
       />
 
       <ShowStandardCreateDialog

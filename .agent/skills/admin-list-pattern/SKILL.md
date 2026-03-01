@@ -123,9 +123,9 @@ const searchSchema = z.object({
 });
 ```
 
-### 2. AdminTable Configuration
+### 2. DataTable Configuration
 
-Pass `searchColumn` and `onColumnFiltersChange` to the `AdminTable`.
+Pass `searchColumn` and `onColumnFiltersChange` to `DataTable` via `DataTableToolbar`.
 
 ```typescript
 const { 
@@ -144,17 +144,23 @@ const { data, isLoading } = useAdminList<Resource>('resources', {
 });
 
 // ... inside render
-<AdminTable
+<DataTable
   // ...
-  searchColumn="name"
   columnFilters={columnFilters}
-  onColumnFiltersChange={onColumnFiltersChange}
+  onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
+  renderToolbar={(table) => (
+    <DataTableToolbar
+      table={table}
+      searchColumn="name"
+      searchableColumns={resourceSearchableColumns}
+    />
+  )}
 />
 ```
 
 ### 3. Toolbar UX (Debouncing)
 
-The `AdminTableToolbar` (generic component) should handle internal debouncing of the input to avoid immediate server queries on every keystroke.
+The `DataTableToolbar` (generic component) should handle internal debouncing of the input to avoid immediate server queries on every keystroke.
 
 - **Timeout**: Use a 500ms debounce.
 - **Visibility**: Only show the search input when `searchColumn` is provided.
@@ -167,5 +173,5 @@ The `AdminTableToolbar` (generic component) should handle internal debouncing of
 - [ ] Backend: **Repository** builds `where` clause with `contains` and `insensitive` (NOT the service).
 - [ ] Backend: Service delegates directly to `repository.findPaginated()` using `Parameters<>` spread.
 - [ ] Frontend: `useTableUrlState` used for URL synchronization.
-- [ ] Frontend: `searchColumn` passed to `AdminTable`.
+- [ ] Frontend: `searchColumn` passed to `DataTableToolbar`.
 - [ ] Frontend: Verification of debounced input behavior.

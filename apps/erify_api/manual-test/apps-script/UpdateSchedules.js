@@ -252,6 +252,7 @@ function buildSchedulePayload(group, platformMap, scheduleDefinitions) {
     // The consumer (markRowsSuccess) adds the getStartRowOffset().
     rowIndices.push(index); // This is correct if getStartRowOffset() returns 2 and index 0 is Row 2.
     const show = parseShowFromRow(row, platformMap);
+
     if (!show) return; // Should catch in validation, but safety check
 
     shows.push(show.data);
@@ -296,13 +297,25 @@ function isValidDate(d) {
   return d && Object.prototype.toString.call(d) === "[object Date]" && !isNaN(d.getTime());
 }
 
-
 function parseShowFromRow(row, platformMap) {
   const [
-    master_plan_id, schedule_id, show_id, date, start_time, end_time,
-    client, platforms, show_standard, show_type,
-    shopee_ticket_id, lazada_ticket_id, tiktok_ticket_id,
-    show_status, studio_rooms, mcs, note
+    master_plan_id,
+    schedule_id,
+    show_id,
+    date,
+    start_time,
+    end_time,
+    client,
+    platforms,
+    show_standard,
+    show_type,
+    shopee_ticket_id,
+    lazada_ticket_id,
+    tiktok_ticket_id,
+    show_status,
+    studio_rooms,
+    mcs,
+    note
   ] = row;
 
   // Time Parsing
@@ -346,6 +359,7 @@ function parseShowFromRow(row, platformMap) {
   const showTypeId = resolveValue(show_type, SHOW_TYPES, DEFAULTS.SHOW_TYPE_UID);
   const showStatusId = resolveValue(show_status, SHOW_STATUSES, DEFAULTS.SHOW_STATUS_UID);
   const showStandardId = resolveValue(show_standard, SHOW_STANDARDS, DEFAULTS.SHOW_STANDARD_UID);
+  const showStudioId = DEFAULTS.STUDIO_UID;
   
   // Studio Room: Nullable
   let studioRoomId = undefined;
@@ -361,6 +375,7 @@ function parseShowFromRow(row, platformMap) {
       startTime: startAt ? startAt.toISOString() : null,
       endTime: endAt ? endAt.toISOString() : null,
       clientId: client,
+      studioId: showStudioId,
       studioRoomId: studioRoomId,
       showTypeId: showTypeId,
       showStatusId: showStatusId,

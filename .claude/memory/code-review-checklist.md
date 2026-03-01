@@ -94,9 +94,9 @@ async create(data: Prisma.TaskCreateInput): Promise<Task>
 - [ ] No impure function calls (`Date.now()`, `Math.random()`) in render or inside `useMemo` — use `useState(() => Date.now())` lazy initializer (`react-hooks/purity`)
 - [ ] Dialogs/Sheets using Radix have `<DialogDescription>` (not a bare `<p>`) for `aria-describedby` wiring
 
-### AdminTable / Studio List Patterns
-- [ ] `searchColumnId` in `useTableUrlState`, `searchColumn` on `<AdminTable>`, and filter id read in hook are the **same string** (see §14.1 design doc for the bug this prevents)
-- [ ] `getRowId={(row) => row.id}` passed to `<AdminTable>` whenever the table is paginated and rows are selectable — prevents index-collision bug across pages
+### DataTable / Studio List Patterns
+- [ ] `searchColumnId` in `useTableUrlState`, `searchColumn` on `<DataTableToolbar>`, and filter id read in hook are the **same string** (see §14.1 design doc for the bug this prevents)
+- [ ] `getRowId={(row) => row.id}` passed to `<DataTable>` whenever the table is paginated and rows are selectable — prevents index-collision bug across pages
 - [ ] Cross-page selection uses the accumulator pattern (`useEffect` keyed by item ID), not `shows[parseInt(k)]` index lookup
 - [ ] Member/assignee pickers use `AsyncCombobox` from `@eridu/ui`, not `<Select>`, with client-side `onSearch` filtering
 

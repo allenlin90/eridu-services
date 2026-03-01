@@ -1,13 +1,21 @@
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import type { ColumnFiltersState } from '@tanstack/react-table';
+import type { ColumnDef, ColumnFiltersState } from '@tanstack/react-table';
 import { Eye, RotateCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
 import { Button, DropdownMenuItem } from '@eridu/ui';
 
-import { AdminLayout, AdminTable } from '@/features/admin/components';
+import {
+  adaptColumnFiltersChange,
+  adaptPaginationChange,
+  DataTable,
+  DataTableActions,
+  DataTablePagination,
+  DataTableToolbar,
+} from '@/components/data-table';
+import { AdminLayout } from '@/features/admin/components';
 import { DeleteConfirmDialog } from '@/features/admin/components/delete-confirm-dialog';
 import { useDeleteAdminTask } from '@/features/tasks/api/delete-admin-task';
 import { adminTasksKeys, getAdminTasks } from '@/features/tasks/api/get-admin-tasks';
@@ -97,6 +105,34 @@ function ShowTasks() {
     queryClient.invalidateQueries({ queryKey: adminTasksKeys.all });
   };
 
+  const tablePagination = {
+    pageIndex: (data?.meta.page ?? 1) - 1,
+    pageSize: data?.meta.limit ?? pagination.pageSize,
+    total: data?.meta.total ?? 0,
+    pageCount: data?.meta.totalPages ?? 0,
+  };
+
+  const columnsWithActions = useMemo<ColumnDef<TaskWithRelationsDto>[]>(() => [
+    ...systemTaskColumns,
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DataTableActions
+          row={row.original}
+          onDelete={(task) => setDeleteTask(task)}
+          renderExtraActions={(task) => (
+            <DropdownMenuItem onClick={() => setSelectedTask(task)}>
+              <Eye className="mr-2 h-4 w-4" />
+              View details
+            </DropdownMenuItem>
+          )}
+        />
+      ),
+      size: 50,
+      enableHiding: false,
+    } as ColumnDef<TaskWithRelationsDto>,
+  ], []);
+
   return (
     <AdminLayout
       title={`Tasks for Show ${showId}`}
@@ -104,43 +140,47 @@ function ShowTasks() {
       onRefresh={handleRefresh}
       refreshQueryKey={adminTasksKeys.all}
     >
-      <AdminTable
+      <DataTable
         data={data?.data || []}
-        columns={systemTaskColumns}
+        columns={columnsWithActions}
         isLoading={isLoading}
         isFetching={isFetching}
         emptyMessage="No tasks found for this show."
-        columnFilters={columnFilters}
-        onColumnFiltersChange={setColumnFilters}
-        searchableColumns={systemTaskSearchableColumns}
-        searchColumn="description"
-        searchPlaceholder="Search by task, assignee..."
-        featuredFilterColumns={['status', 'task_type', 'due_date']}
-        onDelete={(task) => setDeleteTask(task)}
-        renderExtraActions={(task) => (
-          <DropdownMenuItem onClick={() => setSelectedTask(task)}>
-            <Eye className="mr-2 h-4 w-4" />
-            View details
-          </DropdownMenuItem>
-        )}
-        renderToolbarActions={() => (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 w-full sm:w-auto"
-            onClick={handleRefresh}
-          >
-            <RotateCw className="mr-2 h-4 w-4" />
-            Refresh
-          </Button>
-        )}
-        pagination={{
-          pageIndex: (data?.meta.page ?? 1) - 1,
-          pageSize: data?.meta.limit ?? pagination.pageSize,
-          total: data?.meta.total ?? 0,
-          pageCount: data?.meta.totalPages ?? 0,
+        manualPagination
+        manualFiltering
+        pageCount={tablePagination.pageCount}
+        paginationState={{
+          pageIndex: tablePagination.pageIndex,
+          pageSize: tablePagination.pageSize,
         }}
-        onPaginationChange={setPagination}
+        onPaginationChange={adaptPaginationChange(tablePagination, setPagination)}
+        columnFilters={columnFilters}
+        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, setColumnFilters)}
+        renderToolbar={(table) => (
+          <DataTableToolbar
+            table={table}
+            searchableColumns={systemTaskSearchableColumns}
+            searchColumn="description"
+            searchPlaceholder="Search by task, assignee..."
+            featuredFilterColumns={['status', 'task_type', 'due_date']}
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-full sm:w-auto"
+              onClick={handleRefresh}
+            >
+              <RotateCw className="mr-2 h-4 w-4" />
+              Refresh
+            </Button>
+          </DataTableToolbar>
+        )}
+        renderFooter={() => (
+          <DataTablePagination
+            pagination={tablePagination}
+            onPaginationChange={setPagination}
+          />
+        )}
       />
 
       <SystemTaskDetailsDialog

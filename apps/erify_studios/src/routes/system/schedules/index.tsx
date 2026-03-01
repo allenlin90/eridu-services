@@ -1,12 +1,21 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import type { ColumnDef } from '@tanstack/react-table';
 import { History } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 
 import type { ScheduleApiResponse, updateScheduleInputSchema } from '@eridu/api-types/schedules';
 import { DropdownMenuItem } from '@eridu/ui';
 
-import { AdminLayout, AdminTable } from '@/features/admin/components';
+import {
+  adaptColumnFiltersChange,
+  adaptPaginationChange,
+  DataTable,
+  DataTableActions,
+  DataTablePagination,
+  DataTableToolbar,
+} from '@/components/data-table';
+import { AdminLayout } from '@/features/admin/components';
 import {
   ScheduleDeleteDialog,
   ScheduleUpdateDialog,
@@ -52,8 +61,12 @@ function SchedulesList() {
     if (!deleteId)
       return;
 
-    await deleteMutation.mutateAsync(deleteId);
-    setDeleteId(null);
+    try {
+      await deleteMutation.mutateAsync(deleteId);
+      setDeleteId(null);
+    } catch {
+      // Mutation-level error handling already surfaces user feedback.
+    }
   };
 
   const handleUpdate = async (data: UpdateScheduleFormData) => {
@@ -63,6 +76,46 @@ function SchedulesList() {
     setEditingSchedule(null);
   };
 
+  const pagination = data?.meta
+    ? {
+        pageIndex: data.meta.page - 1,
+        pageSize: data.meta.limit,
+        total: data.meta.total,
+        pageCount: data.meta.totalPages,
+      }
+    : undefined;
+
+  const columnsWithActions = useMemo<ColumnDef<Schedule>[]>(() => [
+    ...scheduleColumns,
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DataTableActions
+          row={row.original}
+          onEdit={(schedule) => setEditingSchedule(schedule)}
+          onDelete={(schedule) => setDeleteId(schedule.id)}
+          renderExtraActions={(schedule) => (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate({
+                  to: '/system/schedules/$scheduleId/snapshots',
+                  params: { scheduleId: schedule.id },
+                  search: { page: 1, pageSize: 10 },
+                });
+              }}
+            >
+              <History className="mr-2 h-4 w-4" />
+              View Snapshots
+            </DropdownMenuItem>
+          )}
+        />
+      ),
+      size: 50,
+      enableHiding: false,
+    } as ColumnDef<Schedule>,
+  ], [navigate]);
+
   return (
     <AdminLayout
       title="Schedules"
@@ -70,44 +123,39 @@ function SchedulesList() {
       onRefresh={handleRefresh}
       refreshQueryKey={['schedules']}
     >
-      <AdminTable
+      <DataTable
         data={data?.data || []}
-        columns={scheduleColumns}
+        columns={columnsWithActions}
         isLoading={isLoading}
         isFetching={isFetching}
-        onEdit={(schedule) => setEditingSchedule(schedule)}
-        onDelete={(schedule) => setDeleteId(schedule.id)}
-        renderExtraActions={(schedule) => (
-          <DropdownMenuItem
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate({
-                to: '/system/schedules/$scheduleId/snapshots',
-                params: { scheduleId: schedule.id },
-                search: { page: 1, pageSize: 10 },
-              });
-            }}
-          >
-            <History className="mr-2 h-4 w-4" />
-            View Snapshots
-          </DropdownMenuItem>
-        )}
         emptyMessage="No schedules found."
-        searchColumn="name"
-        searchableColumns={scheduleSearchableColumns}
-        pagination={
-          data?.meta
-            ? {
-                pageIndex: data.meta.page - 1,
-                pageSize: data.meta.limit,
-                total: data.meta.total,
-                pageCount: data.meta.totalPages,
-              }
-            : undefined
-        }
-        onPaginationChange={onPaginationChange}
+        manualPagination={!!pagination}
+        manualFiltering
+        pageCount={pagination?.pageCount}
+        paginationState={pagination
+          ? {
+              pageIndex: pagination.pageIndex,
+              pageSize: pagination.pageSize,
+            }
+          : undefined}
+        onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
         columnFilters={columnFilters}
-        onColumnFiltersChange={onColumnFiltersChange}
+        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
+        renderToolbar={(table) => (
+          <DataTableToolbar
+            table={table}
+            searchableColumns={scheduleSearchableColumns}
+            searchColumn="name"
+          />
+        )}
+        renderFooter={() => pagination
+          ? (
+              <DataTablePagination
+                pagination={pagination}
+                onPaginationChange={onPaginationChange}
+              />
+            )
+          : null}
       />
 
       <ScheduleUpdateDialog

@@ -1,6 +1,6 @@
 ---
 name: database-patterns
-description: Provides Prisma-specific patterns for soft delete, transactions, optimistic locking, bulk operations, and performance optimization. This skill should be used when implementing data persistence, handling concurrent updates, managing complex multi-table operations, or optimizing query performance.
+description: Provides Prisma-specific patterns for soft delete, transactions, optimistic locking, advisory locks, bulk operations, and performance optimization. This skill should be used when implementing data persistence, handling concurrent updates, serializing concurrent operations on the same resource, managing complex multi-table operations, or optimizing query performance.
 ---
 
 # Database Patterns Skill (Prisma/PostgreSQL)
@@ -121,6 +121,46 @@ await prisma.show.create({ data: { client: { connect: { uid: 'client_123' } } } 
 - Use `@Transactional()` when: multiple parents, conditional logic, or cross-service orchestration.
 
 > 📖 See [`references/06-relationships-and-nested-writes.md`](references/06-relationships-and-nested-writes.md) for examples and comparison table.
+
+---
+
+## 9. Advisory Locks (Concurrency Serialization)
+
+**Rule**: Use `pg_advisory_xact_lock` to serialize concurrent operations on the same logical resource within a transaction.
+
+Advisory locks prevent race conditions when two concurrent requests modify the same entity (e.g., two publish requests for the same schedule, or two task-generation requests for the same show).
+
+**When to use**:
+- Concurrent mutation risk on the same entity (double-click, parallel workers)
+- Must serialize within a `@Transactional()` boundary
+- Optimistic locking (version check) alone is insufficient — it detects conflicts but doesn't prevent them; the second request fails instead of waiting
+
+**Pattern**:
+
+```typescript
+@Transactional<TransactionalAdapterPrisma>({ timeout: 30_000 })
+async processEntity(entityId: bigint) {
+  // Acquire transaction-scoped advisory lock — auto-releases on commit/rollback
+  await this.txHost.tx.$executeRaw`SELECT pg_advisory_xact_lock(${entityId})`;
+
+  // ... rest of transactional logic (safe from concurrent modification)
+}
+```
+
+**Key properties**:
+- `pg_advisory_xact_lock` is **transaction-scoped** — auto-releases when the transaction commits or rolls back. No manual release needed.
+- Works across **any number of Node.js processes** (including BullMQ workers, horizontal scaling) as long as they connect to the same PostgreSQL instance.
+- The lock key is a `bigint` — use the entity's primary key (`id`).
+- A second caller with the same key **waits** until the first transaction completes (blocking, not failing).
+
+**When NOT to use**:
+- Non-transactional operations (use Redis distributed lock or optimistic locking instead)
+- Cross-database coordination (advisory locks are per PostgreSQL instance)
+
+> [!NOTE]
+> **DB cluster consideration**: If the system moves to a PostgreSQL cluster (e.g., read replicas with a primary), advisory locks only work on the primary (write) node. Ensure the connection proxy/gateway routes transactional writes to the primary. This is standard behavior for most PostgreSQL proxies (PgBouncer, PgPool, RDS Proxy).
+
+**Canonical example**: [TaskGenerationProcessor.processShow()](../../../apps/erify_api/src/task-orchestration/task-generation-processor.service.ts) — uses advisory lock to prevent concurrent task generation for the same show.
 
 ---
 

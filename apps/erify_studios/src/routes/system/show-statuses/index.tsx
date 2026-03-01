@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
 
 import type {
   CreateShowStatusInput,
@@ -7,7 +8,15 @@ import type {
   UpdateShowStatusInput,
 } from '@eridu/api-types/show-statuses';
 
-import { AdminLayout, AdminTable } from '@/features/admin/components';
+import {
+  adaptColumnFiltersChange,
+  adaptPaginationChange,
+  DataTable,
+  DataTableActions,
+  DataTablePagination,
+  DataTableToolbar,
+} from '@/components/data-table';
+import { AdminLayout } from '@/features/admin/components';
 import {
   ShowStatusCreateDialog,
   ShowStatusDeleteDialog,
@@ -69,6 +78,31 @@ function ShowStatusesList() {
     setEditingShowStatus(null);
   };
 
+  const pagination = data?.meta
+    ? {
+        pageIndex: data.meta.page - 1,
+        pageSize: data.meta.limit,
+        total: data.meta.total,
+        pageCount: data.meta.totalPages,
+      }
+    : undefined;
+
+  const columnsWithActions = useMemo<ColumnDef<ShowStatus>[]>(() => [
+    ...showStatusColumns,
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DataTableActions
+          row={row.original}
+          onEdit={(status) => setEditingShowStatus(status)}
+          onDelete={(status) => setDeleteId(status.id)}
+        />
+      ),
+      size: 50,
+      enableHiding: false,
+    } as ColumnDef<ShowStatus>,
+  ], []);
+
   return (
     <AdminLayout
       title="Show Statuses"
@@ -80,29 +114,39 @@ function ShowStatusesList() {
       onRefresh={handleRefresh}
       refreshQueryKey={['show-statuses']}
     >
-      <AdminTable
+      <DataTable
         data={data?.data || []}
-        columns={showStatusColumns}
+        columns={columnsWithActions}
         isLoading={isLoading}
         isFetching={isFetching}
-        onEdit={(status) => setEditingShowStatus(status)}
-        onDelete={(status) => setDeleteId(status.id)}
         emptyMessage="No show statuses found. Create one to get started."
+        manualPagination={!!pagination}
+        manualFiltering
+        pageCount={pagination?.pageCount}
+        paginationState={pagination
+          ? {
+              pageIndex: pagination.pageIndex,
+              pageSize: pagination.pageSize,
+            }
+          : undefined}
+        onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
         columnFilters={columnFilters}
-        onColumnFiltersChange={onColumnFiltersChange}
-        searchableColumns={showStatusSearchableColumns}
-        searchPlaceholder="Search show statuses..."
-        pagination={
-          data?.meta
-            ? {
-                pageIndex: data.meta.page - 1,
-                pageSize: data.meta.limit,
-                total: data.meta.total,
-                pageCount: data.meta.totalPages,
-              }
-            : undefined
-        }
-        onPaginationChange={onPaginationChange}
+        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
+        renderToolbar={(table) => (
+          <DataTableToolbar
+            table={table}
+            searchableColumns={showStatusSearchableColumns}
+            searchPlaceholder="Search show statuses..."
+          />
+        )}
+        renderFooter={() => pagination
+          ? (
+              <DataTablePagination
+                pagination={pagination}
+                onPaginationChange={onPaginationChange}
+              />
+            )
+          : null}
       />
 
       <ShowStatusCreateDialog

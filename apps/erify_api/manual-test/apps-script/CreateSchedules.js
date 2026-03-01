@@ -35,6 +35,7 @@ function createSchedules() {
       version: version || 1,
       metadata: { description, note, },
       client_id,
+      studio_id: DEFAULTS.STUDIO_UID,
       plan_document: {}
     };
   });

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
+import { useMemo } from 'react';
 import { z } from 'zod';
 
 import {
@@ -11,7 +12,8 @@ import {
   BreadcrumbSeparator,
 } from '@eridu/ui';
 
-import { AdminLayout, AdminTable } from '@/features/admin/components';
+import { DataTable } from '@/components/data-table';
+import { AdminLayout } from '@/features/admin/components';
 import { adminApi } from '@/lib/api/admin';
 
 const snapshotsSearchSchema = z.object({
@@ -42,7 +44,7 @@ export function ScheduleSnapshotsList() {
     queryFn: () => adminApi.customGet<Snapshot[]>(`schedules/${scheduleId}/snapshots`),
   });
 
-  const columns: ColumnDef<Snapshot>[] = [
+  const columns = useMemo<ColumnDef<Snapshot>[]>(() => [
     {
       accessorKey: 'id',
       header: 'ID',
@@ -68,7 +70,7 @@ export function ScheduleSnapshotsList() {
       header: 'Created At',
       cell: ({ row }) => new Date(row.original.created_at).toLocaleString(),
     },
-  ];
+  ], []);
 
   return (
     <AdminLayout
@@ -106,7 +108,7 @@ export function ScheduleSnapshotsList() {
         </Breadcrumb>
       )}
     >
-      <AdminTable
+      <DataTable
         data={snapshots || []}
         columns={columns}
         isLoading={isLoading}

@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 
 import type {
@@ -8,7 +9,15 @@ import type {
   updateClientInputSchema,
 } from '@eridu/api-types/clients';
 
-import { AdminLayout, AdminTable } from '@/features/admin/components';
+import {
+  adaptColumnFiltersChange,
+  adaptPaginationChange,
+  DataTable,
+  DataTableActions,
+  DataTablePagination,
+  DataTableToolbar,
+} from '@/components/data-table';
+import { AdminLayout } from '@/features/admin/components';
 import {
   ClientCreateDialog,
   ClientDeleteDialog,
@@ -72,6 +81,31 @@ function ClientsList() {
     setEditingClient(null);
   };
 
+  const pagination = data?.meta
+    ? {
+        pageIndex: data.meta.page - 1,
+        pageSize: data.meta.limit,
+        total: data.meta.total,
+        pageCount: data.meta.totalPages,
+      }
+    : undefined;
+
+  const columnsWithActions = useMemo<ColumnDef<Client>[]>(() => [
+    ...clientColumns,
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DataTableActions
+          row={row.original}
+          onEdit={(client) => setEditingClient(client)}
+          onDelete={(client) => setDeleteId(client.id)}
+        />
+      ),
+      size: 50,
+      enableHiding: false,
+    } as ColumnDef<Client>,
+  ], []);
+
   return (
     <AdminLayout
       title="Clients"
@@ -83,29 +117,39 @@ function ClientsList() {
       onRefresh={handleRefresh}
       refreshQueryKey={['clients']}
     >
-      <AdminTable
+      <DataTable
         data={data?.data || []}
-        columns={clientColumns}
+        columns={columnsWithActions}
         isLoading={isLoading}
         isFetching={isFetching}
-        onEdit={(client) => setEditingClient(client)}
-        onDelete={(client) => setDeleteId(client.id)}
         emptyMessage="No clients found. Create one to get started."
+        manualPagination={!!pagination}
+        manualFiltering
+        pageCount={pagination?.pageCount}
+        paginationState={pagination
+          ? {
+              pageIndex: pagination.pageIndex,
+              pageSize: pagination.pageSize,
+            }
+          : undefined}
+        onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
         columnFilters={columnFilters}
-        onColumnFiltersChange={onColumnFiltersChange}
-        searchableColumns={clientSearchableColumns}
-        searchPlaceholder="Search clients..."
-        pagination={
-          data?.meta
-            ? {
-                pageIndex: data.meta.page - 1,
-                pageSize: data.meta.limit,
-                total: data.meta.total,
-                pageCount: data.meta.totalPages,
-              }
-            : undefined
-        }
-        onPaginationChange={onPaginationChange}
+        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
+        renderToolbar={(table) => (
+          <DataTableToolbar
+            table={table}
+            searchableColumns={clientSearchableColumns}
+            searchPlaceholder="Search clients..."
+          />
+        )}
+        renderFooter={() => pagination
+          ? (
+              <DataTablePagination
+                pagination={pagination}
+                onPaginationChange={onPaginationChange}
+              />
+            )
+          : null}
       />
 
       <ClientCreateDialog

@@ -42,6 +42,7 @@ const DEFAULTS = {
   SHOW_TYPE_UID: 'sht_X7czbuD84flXOcf_hj0K', // show_type bau
   SHOW_STATUS_UID: 'shst_F6LbjLg5DdDD6ubUdk5a', // show_status draft
   SHOW_STANDARD_UID: 'shsd_0Okt_vla8ABX9zDVBWrd', // show_standard standard
+  STUDIO_UID: 'std_OBXMKm0gW4IGQUNQzp4E', // default studio a schedule links to
 }
 
 const SHOW_STANDARDS = {
@@ -81,3 +82,7 @@ const STUDIO_ROOMS = {
   'srm_-E8xvYD9cb4R7ZzjfA1z': 407,
   'srm_3r-OMCLkMhud4kpcDjfT': 999,
 }
+
+const STUDIOS = {
+  'std_OBXMKm0gW4IGQUNQzp4E': 'onnut'
+};

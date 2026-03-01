@@ -10,8 +10,6 @@ import { cn } from '@eridu/ui/lib/utils';
 
 import type { ActiveFilter, FilterChipsProps } from './types';
 
-import * as m from '@/paraglide/messages.js';
-
 /**
  * Display active filters as dismissible chips
  */
@@ -20,6 +18,7 @@ export function FilterChips<TData>({
   searchableColumns,
   primaryColumnId,
   onClearAll,
+  resetButtonLabel = 'Reset',
 }: FilterChipsProps<TData>) {
   const columnFilters = table.getState().columnFilters;
 
@@ -114,7 +113,7 @@ export function FilterChips<TData>({
           onClick={onClearAll}
           className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
         >
-          {m['admin.resetButton']()}
+          {resetButtonLabel}
         </Button>
       )}
     </div>

@@ -1,11 +1,20 @@
 import { createFileRoute } from '@tanstack/react-router';
+import type { ColumnDef } from '@tanstack/react-table';
 import { Eye } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
 import { DropdownMenuItem } from '@eridu/ui';
 
-import { AdminLayout, AdminTable } from '@/features/admin/components';
+import {
+  adaptColumnFiltersChange,
+  adaptPaginationChange,
+  DataTable,
+  DataTableActions,
+  DataTablePagination,
+  DataTableToolbar,
+} from '@/components/data-table';
+import { AdminLayout } from '@/features/admin/components';
 import { DeleteConfirmDialog } from '@/features/admin/components/delete-confirm-dialog';
 import { useDeleteAdminTask } from '@/features/tasks/api/delete-admin-task';
 import { SystemTaskDetailsDialog } from '@/features/tasks/components/system-task-details-dialog';
@@ -74,6 +83,41 @@ function SystemTasksList() {
     });
   };
 
+  const tablePagination = data?.meta
+    ? {
+        pageIndex: data.meta.page - 1,
+        pageSize: data.meta.limit,
+        total: data.meta.total,
+        pageCount: data.meta.totalPages,
+      }
+    : {
+        pageIndex: pagination.pageIndex,
+        pageSize: pagination.pageSize,
+        total: 0,
+        pageCount: 0,
+      };
+
+  const columnsWithActions = useMemo<ColumnDef<TaskWithRelationsDto>[]>(() => [
+    ...systemTaskColumns,
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DataTableActions
+          row={row.original}
+          onDelete={(task) => setDeleteTask(task)}
+          renderExtraActions={(task) => (
+            <DropdownMenuItem onClick={() => setSelectedTask(task)}>
+              <Eye className="mr-2 h-4 w-4" />
+              View details
+            </DropdownMenuItem>
+          )}
+        />
+      ),
+      size: 50,
+      enableHiding: false,
+    } as ColumnDef<TaskWithRelationsDto>,
+  ], []);
+
   return (
     <AdminLayout
       title="Tasks"
@@ -81,41 +125,37 @@ function SystemTasksList() {
       onRefresh={handleRefresh}
       refreshQueryKey={['admin-tasks']}
     >
-      <AdminTable
+      <DataTable
         data={data?.data || []}
-        columns={systemTaskColumns}
+        columns={columnsWithActions}
         isLoading={isLoading}
         isFetching={isFetching}
         emptyMessage="No tasks found."
+        manualPagination
+        manualFiltering
+        pageCount={tablePagination.pageCount}
+        paginationState={{
+          pageIndex: tablePagination.pageIndex,
+          pageSize: tablePagination.pageSize,
+        }}
+        onPaginationChange={adaptPaginationChange(tablePagination, onPaginationChange)}
         columnFilters={columnFilters}
-        onColumnFiltersChange={onColumnFiltersChange}
-        searchableColumns={systemTaskSearchableColumns}
-        searchColumn="description"
-        searchPlaceholder="Search by task, show, assignee..."
-        featuredFilterColumns={['studio_name', 'client_name', 'status', 'task_type', 'due_date']}
-        onDelete={(task) => setDeleteTask(task)}
-        renderExtraActions={(task) => (
-          <DropdownMenuItem onClick={() => setSelectedTask(task)}>
-            <Eye className="mr-2 h-4 w-4" />
-            View details
-          </DropdownMenuItem>
+        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
+        renderToolbar={(table) => (
+          <DataTableToolbar
+            table={table}
+            searchableColumns={systemTaskSearchableColumns}
+            searchColumn="description"
+            searchPlaceholder="Search by task, show, assignee..."
+            featuredFilterColumns={['studio_name', 'client_name', 'status', 'task_type', 'due_date']}
+          />
         )}
-        pagination={
-          data?.meta
-            ? {
-                pageIndex: data.meta.page - 1,
-                pageSize: data.meta.limit,
-                total: data.meta.total,
-                pageCount: data.meta.totalPages,
-              }
-            : {
-                pageIndex: pagination.pageIndex,
-                pageSize: pagination.pageSize,
-                total: 0,
-                pageCount: 0,
-              }
-        }
-        onPaginationChange={onPaginationChange}
+        renderFooter={() => (
+          <DataTablePagination
+            pagination={tablePagination}
+            onPaginationChange={onPaginationChange}
+          />
+        )}
       />
 
       <SystemTaskDetailsDialog

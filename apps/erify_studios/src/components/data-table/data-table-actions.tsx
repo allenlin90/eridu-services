@@ -14,19 +14,19 @@ import {
   DropdownMenuTrigger,
 } from '@eridu/ui';
 
-type AdminTableActionsProps<TData> = {
+type DataTableActionsProps<TData> = {
   row: TData;
   onEdit?: (row: TData) => void;
   onDelete?: (row: TData) => void;
   renderExtraActions?: (row: TData) => React.ReactNode;
 };
 
-export function AdminTableActions<TData>({
+export function DataTableActions<TData>({
   row,
   onEdit,
   onDelete,
   renderExtraActions,
-}: AdminTableActionsProps<TData>) {
+}: DataTableActionsProps<TData>) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

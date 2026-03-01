@@ -9,7 +9,7 @@ import { Button } from '@eridu/ui';
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50, 100];
 
-type AdminTablePaginationProps = {
+type DataTablePaginationProps = {
   pagination: {
     pageIndex: number;
     pageSize: number;
@@ -19,10 +19,10 @@ type AdminTablePaginationProps = {
   onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
 };
 
-export function AdminTablePagination({
+export function DataTablePagination({
   pagination,
   onPaginationChange,
-}: AdminTablePaginationProps) {
+}: DataTablePaginationProps) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2">
       <div className="text-sm text-muted-foreground order-2 sm:order-1 text-center sm:text-left">

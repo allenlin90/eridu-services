@@ -53,25 +53,52 @@ vi.mock('@/features/admin/components', () => ({
       {children}
     </div>
   ),
-  AdminTable: ({ data, renderExtraActions }: any) => (
+}));
+
+vi.mock('@/components/data-table', () => ({
+  DataTable: ({ data, columns }: any) => (
     <table>
       <tbody>
         {data.map((row: any) => (
           <tr key={row.id}>
-            <td>{row.name}</td>
-            <td>
-              {/* Render actions dropdown trigger */}
-              <button type="button" aria-label="Actions">Actions</button>
-              {/* Force render the extra action for assertion */}
-              <div data-testid={`actions-${row.id}`}>
-                {renderExtraActions(row)}
-              </div>
-            </td>
+            {columns.map((column: any) => (
+              <td key={column.id ?? column.accessorKey}>
+                {column.cell
+                  ? column.cell({ row: { original: row } })
+                  : row[column.accessorKey]}
+              </td>
+            ))}
           </tr>
         ))}
       </tbody>
     </table>
   ),
+  DataTableCore: ({ data, columns }: any) => (
+    <table>
+      <tbody>
+        {data.map((row: any) => (
+          <tr key={row.id}>
+            {columns.map((column: any) => (
+              <td key={column.id ?? column.accessorKey}>
+                {column.cell
+                  ? column.cell({ row: { original: row } })
+                  : row[column.accessorKey]}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  ),
+  DataTableToolbar: () => null,
+  adaptColumnFiltersChange: (value: any, cb: any) => cb,
+  adaptPaginationChange: (value: any, cb: any) => cb,
+  DataTableActions: ({ row, renderExtraActions }: any) => (
+    <div data-testid={`actions-${row.id}`}>
+      {renderExtraActions?.(row)}
+    </div>
+  ),
+  DataTablePagination: () => null,
 }));
 
 // Mock UI components
@@ -79,6 +106,7 @@ vi.mock('@eridu/ui', () => ({
   DropdownMenuItem: ({ children, onClick }: any) => (
     <button type="button" onClick={onClick}>{children}</button>
   ),
+  CopyableText: ({ value }: any) => <span>{value}</span>,
   Button: ({ children, onClick }: any) => (
     <button type="button" onClick={onClick}>{children}</button>
   ),
@@ -119,7 +147,7 @@ describe('studiosList', () => {
     render(<StudiosList />);
 
     // The "Manage Room" button was previously part of the columns.
-    // Since we mocked AdminTable to only render name and actions,
+    // Since we mocked DataTable to only render name and actions,
     // we can't fully check if the column is NOT rendered without a more complex mock
     // that uses the real columns.
     // However, the purpose of this task was to remove it from `studio-columns.tsx`.

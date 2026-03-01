@@ -28,6 +28,8 @@ import {
 
 import type { Membership } from '@/features/memberships/api/get-memberships';
 
+type MemberOption = { value: string; label: string };
+
 // A custom cell component so we can use hooks inside it
 function AssigneeCell({
   task,
@@ -36,7 +38,7 @@ function AssigneeCell({
   isAssigning,
 }: {
   task: TaskWithRelationsDto;
-  memberOptions: { value: string; label: string }[];
+  memberOptions: MemberOption[];
   onAssign: (taskId: string, assigneeUid: string | null) => void;
   isAssigning: boolean;
 }) {
@@ -77,30 +79,18 @@ const STUDIO_REVIEW_ACTIONS: Partial<Record<TaskStatus, TaskAction[]>> = {
   [TASK_STATUS.CLOSED]: [TASK_ACTION.REOPEN_TASK],
 };
 
-function getActionLabel(action: TaskAction): string {
-  if (action === TASK_ACTION.START_WORK) {
-    return 'Start Work';
-  }
-  if (action === TASK_ACTION.SUBMIT_FOR_REVIEW) {
-    return 'Submit for Review';
-  }
-  if (action === TASK_ACTION.APPROVE_COMPLETED) {
-    return 'Approve as Completed';
-  }
-  if (action === TASK_ACTION.CONTINUE_EDITING) {
-    return 'Send Back to In Progress';
-  }
-  if (action === TASK_ACTION.MARK_BLOCKED) {
-    return 'Mark as Blocked';
-  }
-  if (action === TASK_ACTION.CLOSE_TASK) {
-    return 'Close Task';
-  }
-  if (action === TASK_ACTION.REOPEN_TASK) {
-    return 'Reopen Task';
-  }
+const TASK_ACTION_LABELS: Record<TaskAction, string> = {
+  [TASK_ACTION.START_WORK]: 'Start Work',
+  [TASK_ACTION.SUBMIT_FOR_REVIEW]: 'Submit for Review',
+  [TASK_ACTION.APPROVE_COMPLETED]: 'Approve as Completed',
+  [TASK_ACTION.CONTINUE_EDITING]: 'Send Back to In Progress',
+  [TASK_ACTION.MARK_BLOCKED]: 'Mark as Blocked',
+  [TASK_ACTION.CLOSE_TASK]: 'Close Task',
+  [TASK_ACTION.REOPEN_TASK]: 'Reopen Task',
+};
 
-  return action.replace('_', ' ');
+function getActionLabel(action: TaskAction): string {
+  return TASK_ACTION_LABELS[action];
 }
 
 type TaskLastTransition = {
@@ -114,11 +104,83 @@ type TaskLastTransition = {
   had_assignee?: boolean;
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 function getLastTransition(task: TaskWithRelationsDto): TaskLastTransition | null {
-  const metadata = task.metadata as Record<string, unknown> | null;
-  const audit = (metadata?.audit as Record<string, unknown> | null) ?? null;
-  const lastTransition = (audit?.last_transition as TaskLastTransition | null) ?? null;
-  return lastTransition;
+  const metadata = isRecord(task.metadata) ? task.metadata : null;
+  const audit = metadata && isRecord(metadata.audit) ? metadata.audit : null;
+  const lastTransition = audit?.last_transition;
+  if (!isRecord(lastTransition)) {
+    return null;
+  }
+  // Transition payload is backend-controlled JSON metadata.
+  // Narrow to expected shape for display.
+  const typed = lastTransition as TaskLastTransition;
+  return typed;
+}
+
+function getTaskActionOptions(status: TaskStatus): Array<{ value: TaskAction; label: string }> {
+  const actions = STUDIO_REVIEW_ACTIONS[status] ?? [];
+  return actions.map((action) => ({
+    value: action,
+    label: getActionLabel(action),
+  }));
+}
+
+function getMemberOptions(members: Membership[]): MemberOption[] {
+  return members.map((m) => ({
+    value: m.user.id,
+    label: `${m.user.name} (${m.user.email})`,
+  }));
+}
+
+function formatTransitionAt(value?: string): string {
+  return value ? format(new Date(value), 'PPP p') : 'Unknown';
+}
+
+function LastTransitionPopover({ transition }: { transition: TaskLastTransition }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center text-muted-foreground hover:text-foreground"
+          aria-label="View last processing details"
+        >
+          <Info className="h-3.5 w-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-3 text-xs">
+        <div className="space-y-1.5">
+          <p className="font-medium text-sm">Last processing</p>
+          <p className="text-muted-foreground">
+            {(transition.from ?? 'UNKNOWN')}
+            {' -> '}
+            {(transition.to ?? 'UNKNOWN')}
+          </p>
+          <p className="text-muted-foreground">
+            By:
+            {' '}
+            {transition.actor_email
+            ?? transition.actor_ext_id
+            ?? 'Unknown user'}
+          </p>
+          <p className="text-muted-foreground">
+            Role:
+            {' '}
+            {transition.actor_role ?? 'Unknown'}
+          </p>
+          <p className="text-muted-foreground">
+            At:
+            {' '}
+            {formatTransitionAt(transition.at)}
+          </p>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 function ProcessStatusCell({
@@ -146,10 +208,7 @@ function ProcessStatusCell({
     );
   }
 
-  const options = (STUDIO_REVIEW_ACTIONS[task.status] ?? []).map((action) => ({
-    value: action,
-    label: getActionLabel(action),
-  }));
+  const options = getTaskActionOptions(task.status);
 
   return (
     <Select
@@ -182,10 +241,7 @@ export function getColumns(
   processingTaskId: string | null,
   onEditDueDate: (task: TaskWithRelationsDto) => void,
 ): ColumnDef<TaskWithRelationsDto>[] {
-  const memberOptions = members.map((m) => ({
-    value: m.user.id,
-    label: `${m.user.name} (${m.user.email})`,
-  }));
+  const memberOptions = getMemberOptions(members);
 
   return [
     {
@@ -257,48 +313,7 @@ export function getColumns(
             >
               {status}
             </Badge>
-            {lastTransition && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    className="inline-flex items-center text-muted-foreground hover:text-foreground"
-                    aria-label="View last processing details"
-                  >
-                    <Info className="h-3.5 w-3.5" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-3 text-xs">
-                  <div className="space-y-1.5">
-                    <p className="font-medium text-sm">Last processing</p>
-                    <p className="text-muted-foreground">
-                      {(lastTransition.from ?? 'UNKNOWN')}
-                      {' -> '}
-                      {(lastTransition.to ?? 'UNKNOWN')}
-                    </p>
-                    <p className="text-muted-foreground">
-                      By:
-                      {' '}
-                      {lastTransition.actor_email
-                      ?? lastTransition.actor_ext_id
-                      ?? 'Unknown user'}
-                    </p>
-                    <p className="text-muted-foreground">
-                      Role:
-                      {' '}
-                      {lastTransition.actor_role ?? 'Unknown'}
-                    </p>
-                    <p className="text-muted-foreground">
-                      At:
-                      {' '}
-                      {lastTransition.at
-                        ? format(new Date(lastTransition.at), 'PPP p')
-                        : 'Unknown'}
-                    </p>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
+            {lastTransition && <LastTransitionPopover transition={lastTransition} />}
           </div>
         );
       },

@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import type { ColumnDef } from '@tanstack/react-table';
 import { DoorOpen } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 
 import type {
@@ -10,7 +11,15 @@ import type {
 } from '@eridu/api-types/studios';
 import { DropdownMenuItem } from '@eridu/ui';
 
-import { AdminLayout, AdminTable } from '@/features/admin/components';
+import {
+  adaptColumnFiltersChange,
+  adaptPaginationChange,
+  DataTable,
+  DataTableActions,
+  DataTablePagination,
+  DataTableToolbar,
+} from '@/components/data-table';
+import { AdminLayout } from '@/features/admin/components';
 import {
   StudioCreateDialog,
   StudioDeleteDialog,
@@ -77,6 +86,46 @@ export function StudiosList() {
     setEditingStudio(null);
   };
 
+  const pagination = data?.meta
+    ? {
+        pageIndex: data.meta.page - 1,
+        pageSize: data.meta.limit,
+        total: data.meta.total,
+        pageCount: data.meta.totalPages,
+      }
+    : undefined;
+
+  const columnsWithActions = useMemo<ColumnDef<Studio>[]>(() => [
+    ...studioColumns,
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DataTableActions
+          row={row.original}
+          onEdit={(studio) => setEditingStudio(studio)}
+          onDelete={(studio) => setDeleteId(studio.id)}
+          renderExtraActions={(studio) => (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate({
+                  to: '/system/studios/$studioId/studio-rooms',
+                  params: { studioId: studio.id },
+                  search: { page: 1, pageSize: 10 },
+                });
+              }}
+            >
+              <DoorOpen className="mr-2 h-4 w-4" />
+              View Rooms
+            </DropdownMenuItem>
+          )}
+        />
+      ),
+      size: 50,
+      enableHiding: false,
+    } as ColumnDef<Studio>,
+  ], [navigate, studioColumns]);
+
   return (
     <AdminLayout
       title="Studios"
@@ -88,44 +137,39 @@ export function StudiosList() {
       onRefresh={handleRefresh}
       refreshQueryKey={['studios']}
     >
-      <AdminTable
+      <DataTable
         data={data?.data || []}
-        columns={studioColumns}
+        columns={columnsWithActions}
         isLoading={isLoading}
         isFetching={isFetching}
-        onEdit={(studio) => setEditingStudio(studio)}
-        onDelete={(studio) => setDeleteId(studio.id)}
-        renderExtraActions={(studio) => (
-          <DropdownMenuItem
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate({
-                to: '/system/studios/$studioId/studio-rooms',
-                params: { studioId: studio.id },
-                search: { page: 1, pageSize: 10 },
-              });
-            }}
-          >
-            <DoorOpen className="mr-2 h-4 w-4" />
-            View Rooms
-          </DropdownMenuItem>
-        )}
         emptyMessage="No studios found. Create one to get started."
+        manualPagination={!!pagination}
+        manualFiltering
+        pageCount={pagination?.pageCount}
+        paginationState={pagination
+          ? {
+              pageIndex: pagination.pageIndex,
+              pageSize: pagination.pageSize,
+            }
+          : undefined}
+        onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
         columnFilters={columnFilters}
-        onColumnFiltersChange={onColumnFiltersChange}
-        searchableColumns={studioSearchableColumns}
-        searchPlaceholder="Search studios..."
-        pagination={
-          data?.meta
-            ? {
-                pageIndex: data.meta.page - 1,
-                pageSize: data.meta.limit,
-                total: data.meta.total,
-                pageCount: data.meta.totalPages,
-              }
-            : undefined
-        }
-        onPaginationChange={onPaginationChange}
+        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
+        renderToolbar={(table) => (
+          <DataTableToolbar
+            table={table}
+            searchableColumns={studioSearchableColumns}
+            searchPlaceholder="Search studios..."
+          />
+        )}
+        renderFooter={() => pagination
+          ? (
+              <DataTablePagination
+                pagination={pagination}
+                onPaginationChange={onPaginationChange}
+              />
+            )
+          : null}
       />
 
       <StudioCreateDialog

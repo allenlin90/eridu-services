@@ -1,10 +1,20 @@
 import { createFileRoute } from '@tanstack/react-router';
+import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 
 import type { updateShowInputSchema } from '@eridu/api-types/shows';
 
-import { AdminLayout, AdminTable } from '@/features/admin/components';
+import {
+  adaptColumnFiltersChange,
+  adaptPaginationChange,
+  adaptSortingChange,
+  DataTable,
+  DataTableActions,
+  DataTablePagination,
+  DataTableToolbar,
+} from '@/components/data-table';
+import { AdminLayout } from '@/features/admin/components';
 import type { Show } from '@/features/shows/api/get-shows';
 import { usePlatformsFieldData } from '@/features/shows/components/hooks/use-platforms-field-data';
 import { useShowStandardFieldData } from '@/features/shows/components/hooks/use-show-standard-field-data';
@@ -95,6 +105,31 @@ function ShowsList() {
     setEditingShow(null);
   };
 
+  const pagination = data?.meta
+    ? {
+        pageIndex: data.meta.page - 1,
+        pageSize: data.meta.limit,
+        total: data.meta.total,
+        pageCount: data.meta.totalPages,
+      }
+    : undefined;
+
+  const columnsWithActions = useMemo<ColumnDef<Show>[]>(() => [
+    ...showColumns,
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DataTableActions
+          row={row.original}
+          onEdit={(show) => setEditingShow(show)}
+          onDelete={(show) => setDeleteId(show.id)}
+        />
+      ),
+      size: 50,
+      enableHiding: false,
+    } as ColumnDef<Show>,
+  ], []);
+
   return (
     <AdminLayout
       title="Shows"
@@ -102,34 +137,44 @@ function ShowsList() {
       onRefresh={handleRefresh}
       refreshQueryKey={['shows']}
     >
-      <AdminTable
+      <DataTable
         data={data?.data || []}
-        columns={showColumns}
+        columns={columnsWithActions}
         isLoading={isLoading}
         isFetching={isFetching}
-        onEdit={(show) => setEditingShow(show)}
-        onDelete={(show) => setDeleteId(show.id)}
         emptyMessage="No shows found."
-        searchColumn="name"
-        searchableColumns={searchableColumns}
-        searchPlaceholder="Search shows..."
-        featuredFilterColumns={['show_standard_name', 'start_time']}
-
-        pagination={
-          data?.meta
-            ? {
-                pageIndex: data.meta.page - 1,
-                pageSize: data.meta.limit,
-                total: data.meta.total,
-                pageCount: data.meta.totalPages,
-              }
-            : undefined
-        }
+        manualPagination={!!pagination}
+        manualFiltering
+        manualSorting
+        pageCount={pagination?.pageCount}
+        paginationState={pagination
+          ? {
+              pageIndex: pagination.pageIndex,
+              pageSize: pagination.pageSize,
+            }
+          : undefined}
+        onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
         columnFilters={columnFilters}
-        onColumnFiltersChange={onColumnFiltersChange}
-        onPaginationChange={onPaginationChange}
+        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
         sorting={sorting}
-        onSortingChange={onSortingChange}
+        onSortingChange={adaptSortingChange(sorting, onSortingChange)}
+        renderToolbar={(table) => (
+          <DataTableToolbar
+            table={table}
+            searchColumn="name"
+            searchableColumns={searchableColumns}
+            searchPlaceholder="Search shows..."
+            featuredFilterColumns={['show_standard_name', 'start_time']}
+          />
+        )}
+        renderFooter={() => pagination
+          ? (
+              <DataTablePagination
+                pagination={pagination}
+                onPaginationChange={onPaginationChange}
+              />
+            )
+          : null}
       />
 
       <ShowUpdateDialog

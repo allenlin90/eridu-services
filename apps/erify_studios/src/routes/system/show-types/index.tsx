@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
 
 import type {
   CreateShowTypeInput,
@@ -7,7 +8,15 @@ import type {
   UpdateShowTypeInput,
 } from '@eridu/api-types/show-types';
 
-import { AdminLayout, AdminTable } from '@/features/admin/components';
+import {
+  adaptColumnFiltersChange,
+  adaptPaginationChange,
+  DataTable,
+  DataTableActions,
+  DataTablePagination,
+  DataTableToolbar,
+} from '@/components/data-table';
+import { AdminLayout } from '@/features/admin/components';
 import {
   ShowTypeCreateDialog,
   ShowTypeDeleteDialog,
@@ -69,6 +78,31 @@ function ShowTypesList() {
     setEditingShowType(null);
   };
 
+  const pagination = data?.meta
+    ? {
+        pageIndex: data.meta.page - 1,
+        pageSize: data.meta.limit,
+        total: data.meta.total,
+        pageCount: data.meta.totalPages,
+      }
+    : undefined;
+
+  const columnsWithActions = useMemo<ColumnDef<ShowType>[]>(() => [
+    ...showTypeColumns,
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DataTableActions
+          row={row.original}
+          onEdit={(type) => setEditingShowType(type)}
+          onDelete={(type) => setDeleteId(type.id)}
+        />
+      ),
+      size: 50,
+      enableHiding: false,
+    } as ColumnDef<ShowType>,
+  ], []);
+
   return (
     <AdminLayout
       title="Show Types"
@@ -80,29 +114,39 @@ function ShowTypesList() {
       onRefresh={handleRefresh}
       refreshQueryKey={['show-types']}
     >
-      <AdminTable
+      <DataTable
         data={data?.data || []}
-        columns={showTypeColumns}
+        columns={columnsWithActions}
         isLoading={isLoading}
         isFetching={isFetching}
-        onEdit={(type) => setEditingShowType(type)}
-        onDelete={(type) => setDeleteId(type.id)}
         emptyMessage="No show types found. Create one to get started."
+        manualPagination={!!pagination}
+        manualFiltering
+        pageCount={pagination?.pageCount}
+        paginationState={pagination
+          ? {
+              pageIndex: pagination.pageIndex,
+              pageSize: pagination.pageSize,
+            }
+          : undefined}
+        onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
         columnFilters={columnFilters}
-        onColumnFiltersChange={onColumnFiltersChange}
-        searchableColumns={showTypeSearchableColumns}
-        searchPlaceholder="Search show types..."
-        pagination={
-          data?.meta
-            ? {
-                pageIndex: data.meta.page - 1,
-                pageSize: data.meta.limit,
-                total: data.meta.total,
-                pageCount: data.meta.totalPages,
-              }
-            : undefined
-        }
-        onPaginationChange={onPaginationChange}
+        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
+        renderToolbar={(table) => (
+          <DataTableToolbar
+            table={table}
+            searchableColumns={showTypeSearchableColumns}
+            searchPlaceholder="Search show types..."
+          />
+        )}
+        renderFooter={() => pagination
+          ? (
+              <DataTablePagination
+                pagination={pagination}
+                onPaginationChange={onPaginationChange}
+              />
+            )
+          : null}
       />
 
       <ShowTypeCreateDialog

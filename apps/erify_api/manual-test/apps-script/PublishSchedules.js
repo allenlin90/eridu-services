@@ -126,4 +126,3 @@ function publishSchedules() {
   Logger.log(`Failed: ${stats.failed}`);
   Logger.log('-----------------------');
 }
-

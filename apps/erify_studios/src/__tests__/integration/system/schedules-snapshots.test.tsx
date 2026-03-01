@@ -35,7 +35,12 @@ vi.mock('@/features/admin/components', () => ({
       {children}
     </div>
   ),
-  AdminTable: () => <div data-testid="admin-table">Table</div>,
+}));
+
+vi.mock('@/components/data-table', () => ({
+  DataTable: () => <div data-testid="data-table-core">Table</div>,
+  DataTableCore: () => <div data-testid="data-table-core">Table</div>,
+  DataTableToolbar: () => null,
 }));
 
 // Mock @eridu/ui components

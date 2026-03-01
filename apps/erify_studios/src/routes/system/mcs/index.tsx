@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 
 import type {
@@ -8,7 +9,15 @@ import type {
   updateMcInputSchema,
 } from '@eridu/api-types/mcs';
 
-import { AdminLayout, AdminTable } from '@/features/admin/components';
+import {
+  adaptColumnFiltersChange,
+  adaptPaginationChange,
+  DataTable,
+  DataTableActions,
+  DataTablePagination,
+  DataTableToolbar,
+} from '@/components/data-table';
+import { AdminLayout } from '@/features/admin/components';
 import {
   McCreateDialog,
   McDeleteDialog,
@@ -72,6 +81,31 @@ function McsList() {
     setEditingMc(null);
   };
 
+  const pagination = data?.meta
+    ? {
+        pageIndex: data.meta.page - 1,
+        pageSize: data.meta.limit,
+        total: data.meta.total,
+        pageCount: data.meta.totalPages,
+      }
+    : undefined;
+
+  const columnsWithActions = useMemo<ColumnDef<Mc>[]>(() => [
+    ...mcColumns,
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DataTableActions
+          row={row.original}
+          onEdit={(mc) => setEditingMc(mc)}
+          onDelete={(mc) => setDeleteId(mc.id)}
+        />
+      ),
+      size: 50,
+      enableHiding: false,
+    } as ColumnDef<Mc>,
+  ], []);
+
   return (
     <AdminLayout
       title="MCs"
@@ -83,29 +117,39 @@ function McsList() {
       onRefresh={handleRefresh}
       refreshQueryKey={['mcs']}
     >
-      <AdminTable
+      <DataTable
         data={data?.data || []}
-        columns={mcColumns}
+        columns={columnsWithActions}
         isLoading={isLoading}
         isFetching={isFetching}
-        onEdit={(mc) => setEditingMc(mc)}
-        onDelete={(mc) => setDeleteId(mc.id)}
         emptyMessage="No MCs found. Create one to get started."
+        manualPagination={!!pagination}
+        manualFiltering
+        pageCount={pagination?.pageCount}
+        paginationState={pagination
+          ? {
+              pageIndex: pagination.pageIndex,
+              pageSize: pagination.pageSize,
+            }
+          : undefined}
+        onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
         columnFilters={columnFilters}
-        onColumnFiltersChange={onColumnFiltersChange}
-        searchableColumns={mcSearchableColumns}
-        searchPlaceholder="Search by name..."
-        pagination={
-          data?.meta
-            ? {
-                pageIndex: data.meta.page - 1,
-                pageSize: data.meta.limit,
-                total: data.meta.total,
-                pageCount: data.meta.totalPages,
-              }
-            : undefined
-        }
-        onPaginationChange={onPaginationChange}
+        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
+        renderToolbar={(table) => (
+          <DataTableToolbar
+            table={table}
+            searchableColumns={mcSearchableColumns}
+            searchPlaceholder="Search by name..."
+          />
+        )}
+        renderFooter={() => pagination
+          ? (
+              <DataTablePagination
+                pagination={pagination}
+                onPaginationChange={onPaginationChange}
+              />
+            )
+          : null}
       />
 
       <McCreateDialog

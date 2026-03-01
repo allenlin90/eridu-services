@@ -3,8 +3,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import * as React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { SearchableColumn } from '../admin-table-toolbar';
-import { AdminTableToolbar } from '../admin-table-toolbar';
+import type { SearchableColumn } from '@/components/data-table/data-table-toolbar';
+import { DataTableToolbar } from '@/components/data-table/data-table-toolbar';
 
 // Mock UI components
 vi.mock('@eridu/ui', () => ({
@@ -112,7 +112,7 @@ vi.mock('@/paraglide/messages.js', () => ({
   'admin.resetButton': () => 'Reset',
 }));
 
-describe('adminTableToolbar', () => {
+describe('dataTableToolbar', () => {
   let mockTable: Partial<Table<any>>;
   let mockColumn: any;
 
@@ -135,7 +135,7 @@ describe('adminTableToolbar', () => {
 
   it('renders primary search input', () => {
     render(
-      <AdminTableToolbar
+      <DataTableToolbar
         table={mockTable as Table<any>}
         searchColumn="name"
         searchPlaceholder="Search by name"
@@ -147,7 +147,7 @@ describe('adminTableToolbar', () => {
 
   it('uses default search placeholder from i18n', () => {
     render(
-      <AdminTableToolbar table={mockTable as Table<any>} searchColumn="name" />,
+      <DataTableToolbar table={mockTable as Table<any>} searchColumn="name" />,
     );
 
     expect(screen.getByPlaceholderText('Search...')).toBeInTheDocument();
@@ -160,7 +160,7 @@ describe('adminTableToolbar', () => {
     ];
 
     render(
-      <AdminTableToolbar
+      <DataTableToolbar
         table={mockTable as Table<any>}
         searchableColumns={searchableColumns}
       />,
@@ -179,7 +179,7 @@ describe('adminTableToolbar', () => {
     ];
 
     render(
-      <AdminTableToolbar
+      <DataTableToolbar
         table={mockTable as Table<any>}
         searchableColumns={searchableColumns}
       />,
@@ -201,7 +201,7 @@ describe('adminTableToolbar', () => {
     })) as any;
 
     render(
-      <AdminTableToolbar
+      <DataTableToolbar
         table={mockTable as Table<any>}
         searchableColumns={searchableColumns}
       />,
@@ -224,7 +224,7 @@ describe('adminTableToolbar', () => {
     })) as any;
 
     render(
-      <AdminTableToolbar
+      <DataTableToolbar
         table={mockTable as Table<any>}
         searchableColumns={searchableColumns}
       />,
@@ -252,7 +252,7 @@ describe('adminTableToolbar', () => {
     })) as any;
 
     render(
-      <AdminTableToolbar
+      <DataTableToolbar
         table={mockTable as Table<any>}
         searchableColumns={searchableColumns}
       />,
@@ -265,7 +265,7 @@ describe('adminTableToolbar', () => {
 
   it('does not render filter popover when no searchable columns', () => {
     render(
-      <AdminTableToolbar table={mockTable as Table<any>} searchColumn="name" />,
+      <DataTableToolbar table={mockTable as Table<any>} searchColumn="name" />,
     );
 
     // Should not show filter button
@@ -287,7 +287,7 @@ describe('adminTableToolbar', () => {
     })) as any;
 
     render(
-      <AdminTableToolbar
+      <DataTableToolbar
         table={mockTable as Table<any>}
         searchableColumns={searchableColumns}
       />,
@@ -307,7 +307,7 @@ describe('adminTableToolbar', () => {
     ];
 
     render(
-      <AdminTableToolbar
+      <DataTableToolbar
         table={mockTable as Table<any>}
         searchableColumns={searchableColumns}
       />,
@@ -318,7 +318,7 @@ describe('adminTableToolbar', () => {
   });
 
   it('handles no searchable columns gracefully', () => {
-    render(<AdminTableToolbar table={mockTable as Table<any>} />);
+    render(<DataTableToolbar table={mockTable as Table<any>} />);
 
     // Should not crash, just render empty toolbar
     expect(screen.queryByPlaceholderText('Search...')).not.toBeInTheDocument();
@@ -331,7 +331,7 @@ describe('adminTableToolbar', () => {
     ];
 
     render(
-      <AdminTableToolbar
+      <DataTableToolbar
         table={mockTable as Table<any>}
         searchableColumns={searchableColumns}
       />,
@@ -356,7 +356,7 @@ describe('adminTableToolbar', () => {
     ];
 
     render(
-      <AdminTableToolbar
+      <DataTableToolbar
         table={mockTable as Table<any>}
         searchableColumns={searchableColumns}
         quickFilterColumns={['status']}
@@ -376,7 +376,7 @@ describe('adminTableToolbar', () => {
     ];
 
     render(
-      <AdminTableToolbar
+      <DataTableToolbar
         table={mockTable as Table<any>}
         searchableColumns={searchableColumns}
         featuredFilterColumns={['status', 'created_at']}
@@ -401,7 +401,7 @@ describe('adminTableToolbar', () => {
     ];
 
     render(
-      <AdminTableToolbar
+      <DataTableToolbar
         table={mockTable as Table<any>}
         searchableColumns={searchableColumns}
         featuredFilterColumns={['status']}
