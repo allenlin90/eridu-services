@@ -37,6 +37,12 @@ Out of scope:
 3. No dedicated FE surface today for publish impact summary from Sheets path.
 4. No explicit resolution workflow UI for shows moved to `cancelled_pending_resolution`.
 
+## 3.1 Confirmed Gap from Current Rollout
+
+1. Studio admins can discover pending-resolution shows via status filter, but there is no focused queue and no explicit resolve action in studio scope.
+2. System admins can manually edit show status in `/system/shows`, creating role asymmetry for day-to-day studio operations.
+3. Studio member task pages do not always make cancellation/pending-resolution state obvious enough during execution.
+
 ---
 
 ## 4. Target UX Behavior (Phase-based)
@@ -203,3 +209,33 @@ Mitigations:
 2. Existing studio task operations remain stable.
 3. Admins can identify and resolve pending-resolution impacts without backend console intervention.
 
+---
+
+## 13. End-to-End User Flow (UX Target)
+
+1. Planner republishes; backend marks impacted show as `cancelled_pending_resolution`.
+2. Studio admin lands on a dedicated pending-resolution queue (not just generic filter).
+3. Studio admin opens show tasks, sees explicit warning context, then resolves task workload.
+4. Studio admin confirms show outcome using explicit resolve action (when BE endpoint/policy is available).
+5. Studio member always sees clear warning badge/banner when working tasks linked to pending/cancelled shows.
+6. If planner re-adds the show later, FE surfaces a restore indicator so users understand why status changed back.
+
+---
+
+## 14. Consolidated Cleanup Checklist (FE)
+
+1. Status compatibility:
+   - ensure all status enums/dropdowns include `cancelled` and `cancelled_pending_resolution`.
+   - keep fallback rendering for unknown statuses.
+2. Discovery and queue UX:
+   - add dedicated pending-resolution view in studio scope.
+   - keep deep-link support from filtered shows/tasks routes.
+3. Task-context visibility:
+   - add persistent warning banner on show-task pages for pending/cancelled statuses.
+   - add status chips in task list/detail surfaces where show context appears.
+4. Resolution UX:
+   - add explicit CTA(s) for admin resolution flow once BE action is exposed.
+   - preserve current assign/reassign/close flows to avoid regressions.
+5. Verification and docs:
+   - regression-test status filters, badges, warning banners, and mobile dialogs.
+   - keep this FE design doc and BE design doc as canonical continuity references.

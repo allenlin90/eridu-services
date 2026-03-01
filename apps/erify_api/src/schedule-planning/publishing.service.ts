@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Schedule } from '@prisma/client';
@@ -12,7 +11,6 @@ import {
 } from './schemas/schedule-planning.schema';
 import { ValidationService } from './validation.service';
 
-import { Env } from '@/config/env.schema';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ShowService } from '@/models/show/show.service';
@@ -64,7 +62,6 @@ export class PublishingService {
 
   constructor(
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
-    private readonly configService: ConfigService<Env>,
     private readonly scheduleService: ScheduleService,
     private readonly showService: ShowService,
     private readonly showMcService: ShowMcService,
@@ -122,146 +119,7 @@ export class PublishingService {
       });
     }
 
-    const diffUpsertEnabled = this.configService.get(
-      'SCHEDULE_PUBLISH_DIFF_UPSERT_ENABLED',
-      { infer: true },
-    );
-
-    if (!diffUpsertEnabled) {
-      return this.publishLegacy(schedule as ScheduleWithRelations, planDocument, userId);
-    }
-
     return this.publishDiffUpsert(schedule as ScheduleWithRelations, planDocument, userId);
-  }
-
-  private async publishLegacy(
-    schedule: ScheduleWithRelations,
-    planDocument: PlanDocument,
-    userId: bigint,
-  ): Promise<{
-      schedule: ScheduleWithRelations;
-      publishSummary: PublishScheduleSummary;
-    }> {
-    const tx = this.txHost.tx;
-
-    const deletedShows = await tx.show.deleteMany({
-      where: {
-        scheduleId: schedule.id,
-        deletedAt: null,
-      },
-    });
-
-    const uidMaps = await this.buildUidLookupMaps(
-      planDocument.shows,
-      schedule,
-    );
-
-    const showUids = planDocument.shows.map(() => this.showService.generateShowUid());
-    const showsToCreate = planDocument.shows.map((showItem, index) => ({
-      uid: showUids[index],
-      externalId: showItem.externalId,
-      name: showItem.name,
-      startTime: new Date(showItem.startTime),
-      endTime: new Date(showItem.endTime),
-      metadata: showItem.metadata || {},
-      clientId: uidMaps.clients.get(showItem.clientId)!,
-      studioId: showItem.studioId
-        ? uidMaps.studios.get(showItem.studioId)!
-        : schedule.studioId || null,
-      studioRoomId: showItem.studioRoomId
-        ? uidMaps.studioRooms.get(showItem.studioRoomId)!
-        : null,
-      showTypeId: uidMaps.showTypes.get(showItem.showTypeId)!,
-      showStatusId: uidMaps.showStatuses.get(showItem.showStatusId)!,
-      showStandardId: uidMaps.showStandards.get(showItem.showStandardId)!,
-      scheduleId: schedule.id,
-    }));
-
-    await tx.show.createMany({ data: showsToCreate });
-
-    const createdShows = await tx.show.findMany({
-      where: {
-        uid: { in: showUids },
-        scheduleId: schedule.id,
-      },
-      select: { id: true, uid: true },
-    });
-
-    const showIdMap = new Map(createdShows.map((show) => [show.uid, show.id]));
-
-    const showMCsToCreate = planDocument.shows.flatMap((showItem, index) => {
-      const showId = showIdMap.get(showUids[index])!;
-      return (showItem.mcs || [])
-        .filter((mc) => mc.mcId && uidMaps.mcs.has(mc.mcId))
-        .map((mc) => ({
-          uid: this.showMcService.generateShowMcUid(),
-          showId,
-          mcId: uidMaps.mcs.get(mc.mcId)!,
-          note: mc.note,
-          metadata: {},
-        }));
-    });
-
-    if (showMCsToCreate.length > 0) {
-      await tx.showMC.createMany({ data: showMCsToCreate });
-    }
-
-    const showPlatformsToCreate = planDocument.shows.flatMap((showItem, index) => {
-      const showId = showIdMap.get(showUids[index])!;
-      return (showItem.platforms || [])
-        .filter((platform) => platform.platformId && uidMaps.platforms.has(platform.platformId))
-        .map((platform) => ({
-          uid: this.showPlatformService.generateShowPlatformUid(),
-          showId,
-          platformId: uidMaps.platforms.get(platform.platformId)!,
-          liveStreamLink: platform.liveStreamLink,
-          platformShowId: platform.platformShowId,
-          viewerCount: 0,
-          metadata: {},
-        }));
-    });
-
-    if (showPlatformsToCreate.length > 0) {
-      await tx.showPlatform.createMany({ data: showPlatformsToCreate });
-    }
-
-    const updatedSchedule = await tx.schedule.update({
-      where: { id: schedule.id },
-      data: {
-        status: 'published',
-        publishedAt: new Date(),
-        publishedBy: userId,
-      },
-      include: {
-        client: true,
-        studio: true,
-        createdByUser: true,
-        publishedByUser: true,
-      },
-    });
-
-    const publishSummary: PublishScheduleSummary = {
-      shows_created: createdShows.length,
-      shows_updated: 0,
-      shows_cancelled: deletedShows.count,
-      shows_pending_resolution: 0,
-      shows_restored: 0,
-      mc_links_added: showMCsToCreate.length,
-      mc_links_updated: 0,
-      mc_links_removed: 0,
-      platform_links_added: showPlatformsToCreate.length,
-      platform_links_updated: 0,
-      platform_links_removed: 0,
-    };
-
-    this.logger.log(
-      `Legacy schedule publish finished schedule_uid=${schedule.uid} deleted=${deletedShows.count} created=${createdShows.length}`,
-    );
-
-    return {
-      schedule: updatedSchedule,
-      publishSummary,
-    };
   }
 
   private async publishDiffUpsert(
@@ -274,7 +132,9 @@ export class PublishingService {
     }> {
     const tx = this.txHost.tx;
 
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${schedule.id})`;
+    if (typeof tx.$executeRaw === 'function') {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${schedule.id})`;
+    }
 
     const uidMaps = await this.buildUidLookupMaps(planDocument.shows, schedule);
     const statusIds = await this.resolveRequiredStatusIds();

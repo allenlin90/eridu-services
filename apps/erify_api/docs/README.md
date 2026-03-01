@@ -16,6 +16,7 @@ This directory contains documentation for the Eridu Services API (`erify_api`).
 ### Features
 
 - **[Schedule Upload API Design](./SCHEDULE_UPLOAD_API_DESIGN.md)** — Schedule planning with JSON docs, snapshots, and optimistic locking
+- **[Schedule Continuity (BE Design)](./DESIGN_BE_SCHEDULE_DIFF_UPSERT_IMPLEMENTATION_PLAN.md)** — Identity-preserving publish, pending-resolution handling, and consolidated cleanup checklist
 - **[Task Management Summary](./TASK_MANAGEMENT_SUMMARY.md)** — Task management quick-reference: architecture, API, and workflows
 
 ### Roadmap

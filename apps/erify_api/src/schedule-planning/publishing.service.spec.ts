@@ -1,5 +1,4 @@
 import { BadRequestException, ConflictException, Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { ClsPluginTransactional } from '@nestjs-cls/transactional';
@@ -22,15 +21,18 @@ import { UtilityService } from '@/utility/utility.service';
 
 // File-scope mock transaction client (reassigned per test in beforeEach)
 let mockTransactionClient: {
-  show: { deleteMany: jest.Mock; createMany: jest.Mock; findMany: jest.Mock };
-  showMC: { createMany: jest.Mock };
-  showPlatform: { createMany: jest.Mock };
+  $executeRaw: jest.Mock;
+  show: { createMany: jest.Mock; findMany: jest.Mock; update: jest.Mock };
+  showMC: { findMany: jest.Mock; create: jest.Mock; update: jest.Mock; updateMany: jest.Mock };
+  showPlatform: { findMany: jest.Mock; create: jest.Mock; update: jest.Mock; updateMany: jest.Mock };
+  taskTarget: { findFirst: jest.Mock; findMany: jest.Mock; updateMany: jest.Mock };
+  task: { updateMany: jest.Mock };
   schedule: { update: jest.Mock };
   client: { findMany: jest.Mock };
   studio: { findMany: jest.Mock };
   studioRoom: { findMany: jest.Mock };
   showType: { findMany: jest.Mock };
-  showStatus: { findMany: jest.Mock };
+  showStatus: { findMany: jest.Mock; upsert: jest.Mock };
   showStandard: { findMany: jest.Mock };
   mC: { findMany: jest.Mock };
   platform: { findMany: jest.Mock };
@@ -171,16 +173,31 @@ describe('publishingService', () => {
 
   beforeEach(async () => {
     mockTransactionClient = {
+      $executeRaw: jest.fn(),
       show: {
-        deleteMany: jest.fn(),
         createMany: jest.fn(),
         findMany: jest.fn(),
+        update: jest.fn(),
       },
       showMC: {
-        createMany: jest.fn(),
+        findMany: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        updateMany: jest.fn(),
       },
       showPlatform: {
-        createMany: jest.fn(),
+        findMany: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        updateMany: jest.fn(),
+      },
+      taskTarget: {
+        findFirst: jest.fn(),
+        findMany: jest.fn(),
+        updateMany: jest.fn(),
+      },
+      task: {
+        updateMany: jest.fn(),
       },
       schedule: {
         update: jest.fn(),
@@ -199,6 +216,7 @@ describe('publishingService', () => {
       },
       showStatus: {
         findMany: jest.fn(),
+        upsert: jest.fn(),
       },
       showStandard: {
         findMany: jest.fn(),
@@ -228,12 +246,6 @@ describe('publishingService', () => {
       ],
       providers: [
         PublishingService,
-        {
-          provide: ConfigService,
-          useValue: {
-            get: jest.fn().mockReturnValue(false),
-          },
-        },
         {
           provide: ScheduleService,
           useValue: {
@@ -317,17 +329,26 @@ describe('publishingService', () => {
         errors: [],
       });
 
-      mockTransactionClient.show.deleteMany.mockResolvedValue({ count: 0 });
       mockTransactionClient.show.createMany.mockResolvedValue({ count: 2 });
-      // Mock findMany to return created shows with IDs
-      mockTransactionClient.show.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'show_test123' },
-        { id: BigInt(2), uid: 'show_test456' },
-      ]);
-      mockTransactionClient.showMC.createMany.mockResolvedValue({ count: 1 });
-      mockTransactionClient.showPlatform.createMany.mockResolvedValue({
-        count: 1,
-      });
+      mockTransactionClient.show.findMany
+        .mockResolvedValueOnce([]) // existing shows
+        .mockResolvedValueOnce([ // created shows lookup
+          { id: BigInt(1), clientId: BigInt(1), externalId: 'show_temp_1' },
+          { id: BigInt(2), clientId: BigInt(1), externalId: 'show_temp_2' },
+        ]);
+      mockTransactionClient.showMC.findMany.mockResolvedValue([]);
+      mockTransactionClient.showPlatform.findMany.mockResolvedValue([]);
+      mockTransactionClient.taskTarget.findFirst.mockResolvedValue(null);
+      mockTransactionClient.taskTarget.findMany.mockResolvedValue([]);
+      mockTransactionClient.taskTarget.updateMany.mockResolvedValue({ count: 0 });
+      mockTransactionClient.task.updateMany.mockResolvedValue({ count: 0 });
+      mockTransactionClient.show.update.mockResolvedValue({});
+      mockTransactionClient.showMC.create.mockResolvedValue({});
+      mockTransactionClient.showMC.update.mockResolvedValue({});
+      mockTransactionClient.showMC.updateMany.mockResolvedValue({ count: 0 });
+      mockTransactionClient.showPlatform.create.mockResolvedValue({});
+      mockTransactionClient.showPlatform.update.mockResolvedValue({});
+      mockTransactionClient.showPlatform.updateMany.mockResolvedValue({ count: 0 });
 
       mockTransactionClient.schedule.update.mockResolvedValue(
         mockPublishedSchedule,
@@ -347,6 +368,14 @@ describe('publishingService', () => {
       mockTransactionClient.showStatus.findMany.mockResolvedValue([
         { id: BigInt(1), uid: 'shst_test123' },
       ]);
+      mockTransactionClient.showStatus.upsert.mockImplementation(
+        async ({ where }: { where: { systemKey: string } }) => ({
+          id: where.systemKey === 'CANCELLED'
+            ? BigInt(9001)
+            : BigInt(9002),
+          systemKey: where.systemKey,
+        }),
+      );
       mockTransactionClient.showStandard.findMany.mockResolvedValue([
         { id: BigInt(1), uid: 'shsd_test123' },
       ]);
@@ -383,29 +412,24 @@ describe('publishingService', () => {
       });
 
       expect(createScheduleSnapshotMock).not.toHaveBeenCalled();
-      expect(mockTransactionClient.show.deleteMany).toHaveBeenCalledWith({
-        where: {
-          scheduleId: mockSchedule.id,
-          deletedAt: null,
-        },
-      });
       expect(result.schedule.status).toBe('published');
       expect(result.publishSummary.shows_created).toBe(2);
       expect(result.publishSummary.shows_cancelled).toBe(0);
     });
 
-    it('should delete existing shows before creating new ones', async () => {
-      mockTransactionClient.show.deleteMany.mockResolvedValue({ count: 3 });
+    it('should keep identity and not mark removals when payload matches existing scope', async () => {
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([]) // existing shows
+        .mockResolvedValueOnce([
+          { id: BigInt(1), clientId: BigInt(1), externalId: 'show_temp_1' },
+          { id: BigInt(2), clientId: BigInt(1), externalId: 'show_temp_2' },
+        ]);
 
       const result = await service.publish(scheduleUid, version, userId);
 
-      expect(mockTransactionClient.show.deleteMany).toHaveBeenCalledWith({
-        where: {
-          scheduleId: mockSchedule.id,
-          deletedAt: null,
-        },
-      });
-      expect(result.publishSummary.shows_cancelled).toBe(3);
+      expect(mockTransactionClient.show.createMany).toHaveBeenCalledTimes(1);
+      expect(result.publishSummary.shows_cancelled).toBe(0);
       expect(result.publishSummary.shows_created).toBe(2);
     });
 
@@ -414,32 +438,30 @@ describe('publishingService', () => {
 
       // Verify bulk show creation was called
       expect(mockTransactionClient.show.createMany).toHaveBeenCalledTimes(1);
-      expect(mockTransactionClient.show.findMany).toHaveBeenCalledTimes(1);
+      expect(mockTransactionClient.show.findMany).toHaveBeenCalledTimes(2);
 
-      // Verify ShowMC bulk creation was called
-      expect(mockTransactionClient.showMC.createMany).toHaveBeenCalledTimes(1);
-      const showMCCall = mockTransactionClient.showMC.createMany.mock
+      // Verify ShowMC creation was called
+      expect(mockTransactionClient.showMC.create).toHaveBeenCalledTimes(1);
+      const showMCCall = mockTransactionClient.showMC.create.mock
         .calls[0] as unknown as [
-        { data: Array<{ mcId: bigint; note: string }> },
+        { data: { mcId: bigint; note: string } },
       ];
-      expect(showMCCall[0].data).toHaveLength(1);
-      expect(showMCCall[0].data[0]?.mcId).toBe(BigInt(1));
-      expect(showMCCall[0].data[0]?.note).toBe('MC Note 1');
+      expect(showMCCall[0].data.mcId).toBe(BigInt(1));
+      expect(showMCCall[0].data.note).toBe('MC Note 1');
 
-      // Verify ShowPlatform bulk creation was called
+      // Verify ShowPlatform creation was called
       expect(
-        mockTransactionClient.showPlatform.createMany,
+        mockTransactionClient.showPlatform.create,
       ).toHaveBeenCalledTimes(1);
-      const showPlatformCall = mockTransactionClient.showPlatform.createMany
+      const showPlatformCall = mockTransactionClient.showPlatform.create
         .mock
         .calls[0] as unknown as [
         {
-          data: Array<{ platformId: bigint; liveStreamLink: string }>;
+          data: { platformId: bigint; liveStreamLink: string };
         },
       ];
-      expect(showPlatformCall[0].data).toHaveLength(1);
-      expect(showPlatformCall[0].data[0]?.platformId).toBe(BigInt(1));
-      expect(showPlatformCall[0].data[0]?.liveStreamLink).toBe(
+      expect(showPlatformCall[0].data.platformId).toBe(BigInt(1));
+      expect(showPlatformCall[0].data.liveStreamLink).toBe(
         'https://example.com/stream1',
       );
     });
@@ -618,16 +640,19 @@ describe('publishingService', () => {
         },
       };
       getScheduleByIdMock.mockResolvedValue(scheduleWithoutRelations);
-      mockTransactionClient.show.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'show_test123' },
-      ]);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          { id: BigInt(1), clientId: BigInt(1), externalId: 'show_temp_1' },
+        ]);
 
       await service.publish(scheduleUid, version, userId);
 
-      // Verify ShowMC and ShowPlatform createMany are not called when empty
-      expect(mockTransactionClient.showMC.createMany).not.toHaveBeenCalled();
+      // Verify ShowMC and ShowPlatform create are not called when empty
+      expect(mockTransactionClient.showMC.create).not.toHaveBeenCalled();
       expect(
-        mockTransactionClient.showPlatform.createMany,
+        mockTransactionClient.showPlatform.create,
       ).not.toHaveBeenCalled();
     });
 
@@ -669,26 +694,22 @@ describe('publishingService', () => {
         { id: BigInt(1), uid: 'platform_test123' },
         { id: BigInt(2), uid: 'platform_test456' },
       ]);
-      mockTransactionClient.show.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'show_test123' },
-      ]);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          { id: BigInt(1), clientId: BigInt(1), externalId: 'show_temp_1' },
+        ]);
 
       await service.publish(scheduleUid, version, userId);
 
-      // Verify ShowMC bulk creation with 2 items
-      expect(mockTransactionClient.showMC.createMany).toHaveBeenCalledTimes(1);
-      const showMCCall = mockTransactionClient.showMC.createMany.mock
-        .calls[0] as unknown as [{ data: Array<unknown> }];
-      expect(showMCCall[0].data).toHaveLength(2);
+      // Verify ShowMC creation with 2 items
+      expect(mockTransactionClient.showMC.create).toHaveBeenCalledTimes(2);
 
-      // Verify ShowPlatform bulk creation with 2 items
+      // Verify ShowPlatform creation with 2 items
       expect(
-        mockTransactionClient.showPlatform.createMany,
-      ).toHaveBeenCalledTimes(1);
-      const showPlatformCall = mockTransactionClient.showPlatform.createMany
-        .mock
-        .calls[0] as unknown as [{ data: Array<unknown> }];
-      expect(showPlatformCall[0].data).toHaveLength(2);
+        mockTransactionClient.showPlatform.create,
+      ).toHaveBeenCalledTimes(2);
     });
 
     it('should preserve show metadata', async () => {
@@ -733,11 +754,10 @@ describe('publishingService', () => {
       await service.publish(scheduleUid, version, userId);
 
       expect(createScheduleSnapshotMock).not.toHaveBeenCalled();
-      expect(mockTransactionClient.show.deleteMany).toHaveBeenCalled();
       expect(mockTransactionClient.show.createMany).toHaveBeenCalled();
       expect(mockTransactionClient.show.findMany).toHaveBeenCalled();
-      expect(mockTransactionClient.showMC.createMany).toHaveBeenCalled();
-      expect(mockTransactionClient.showPlatform.createMany).toHaveBeenCalled();
+      expect(mockTransactionClient.showMC.create).toHaveBeenCalled();
+      expect(mockTransactionClient.showPlatform.create).toHaveBeenCalled();
       expect(mockTransactionClient.schedule.update).toHaveBeenCalled();
     });
 
@@ -755,14 +775,10 @@ describe('publishingService', () => {
 
       const result = await service.publish(scheduleUid, version, userId);
 
-      // createMany is still called with empty array (Prisma handles it gracefully)
-      expect(mockTransactionClient.show.createMany).toHaveBeenCalledWith({
-        data: [],
-      });
-      expect(mockTransactionClient.show.findMany).toHaveBeenCalled();
-      expect(mockTransactionClient.showMC.createMany).not.toHaveBeenCalled();
+      expect(mockTransactionClient.show.createMany).not.toHaveBeenCalled();
+      expect(mockTransactionClient.showMC.create).not.toHaveBeenCalled();
       expect(
-        mockTransactionClient.showPlatform.createMany,
+        mockTransactionClient.showPlatform.create,
       ).not.toHaveBeenCalled();
       expect(result.publishSummary.shows_created).toBe(0);
       expect(result.publishSummary.shows_cancelled).toBe(0);

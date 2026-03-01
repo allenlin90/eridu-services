@@ -303,16 +303,11 @@ Behavioral updates:
 
 ## 8. Rollout and Flags
 
-1. Add feature flag for new publish semantics (recommended):
-   - `SCHEDULE_PUBLISH_DIFF_UPSERT_ENABLED=true`
-2. Phase rollout:
+1. Phase rollout:
    - staging validation
    - pilot client
    - full enable
-
-Rollback:
-
-1. Keep old code path temporarily behind inverse flag during rollout window.
+2. Current steady state: diff+upsert path is always enabled; legacy destructive publish path removed.
 
 ---
 
@@ -410,7 +405,7 @@ This is the recommended execution order to minimize risk and keep testability hi
    - show created/updated/removed/pending-resolution
    - MC/platform add/update/remove
 2. Add structured logs for source and version.
-3. Add feature flag guard for new publish path.
+3. Keep publish path single-branch (diff+upsert only).
 
 ### Step 7: Apps Script Patch (manual-test/apps-script)
 
@@ -441,7 +436,7 @@ Patch order:
 
 ### Step 9: Pilot Rollout
 
-1. Enable feature flag for pilot client(s).
+1. Pilot rollout with diff+upsert-only behavior.
 2. Monitor publish latency and pending-resolution volume.
 3. Collect operational feedback from studio admins.
 4. Expand rollout after pilot acceptance.
@@ -462,4 +457,66 @@ Ready for FE implementation handoff when:
 1. Backend publish no longer delete/recreates matched shows.
 2. Task continuity acceptance criteria pass.
 3. Publish summary contract is stable.
-4. Feature flag rollout plan is validated in staging.
+4. Diff+upsert publish path is the only active path in staging/production.
+
+---
+
+## 13. Confirmed Product Gap (Pending Resolution Handling)
+
+Validated gap from current rollout:
+
+1. `CANCELLED_PENDING_RESOLUTION` can be produced by publish, but studio admins do not yet have a dedicated resolution queue/action model.
+2. System admin can edit show status in `/system/shows`, but studio admins mainly have discovery via filter in `/studios/:studioId/shows`.
+3. Studio member task pages can miss obvious context that a show is now cancelled/pending-resolution.
+
+Backend implications:
+
+1. Keep status transition in publish as-is (already correct and continuity-safe).
+2. Add/confirm studio-admin-safe resolution capability in next BE phase:
+   - resolve pending show to `CANCELLED` via explicit action.
+   - optional guard: block transition if active tasks remain (or require explicit override with audit metadata).
+3. Keep restore behavior deterministic:
+   - if planner re-adds the show on next publish, matched by `(client_id, external_id)` and restored from pending/cancelled state.
+
+---
+
+## 14. End-to-End User Flow (Current + Target)
+
+Current flow:
+
+1. Planner republishes and removed show with active tasks becomes `CANCELLED_PENDING_RESOLUTION`.
+2. Studio admin discovers it via show-status filtering.
+3. Studio admin resolves tasks manually (reassign/close/etc.).
+4. Final show status cleanup may require system-admin intervention today.
+
+Target flow (next phase):
+
+1. Planner publish sets pending-resolution state automatically when needed.
+2. Studio admin opens dedicated pending-resolution queue.
+3. Studio admin resolves task impact and confirms show outcome.
+4. Studio admin executes explicit resolution action (`pending_resolution -> cancelled`) with audit trail.
+5. If planner reintroduces show in future publish, backend restores show/tasks without identity churn.
+
+---
+
+## 15. Consolidated Cleanup Checklist (BE + Integration)
+
+This replaces the standalone cleanup-plan document.
+
+1. API/contract consolidation:
+   - verify all publish consumers use envelope response (`schedule`, `publish_summary`).
+   - remove any old publish-shape adapters.
+   - confirm all plan payload producers send `external_id`.
+2. Google Sheets integration cleanup:
+   - keep Column L selector as single scope source of truth.
+   - keep only minimal config cache hints (`selected_start_row`, `selected_end_row`, `selected_count`).
+   - remove dead range-driven helper behavior/comments.
+3. Data and migration hygiene:
+   - archive old planning sheets and stale rows.
+   - run one duplicate audit for `(client_id, external_id)` and duplicate show IDs within a schedule.
+4. Test/ops hardening:
+   - keep canonical tests for identity-preserving republish, pending-resolution transitions, restore semantics, and publish summary counts.
+   - monitor pending-resolution volume, publish latency, and validation failure rates.
+5. Documentation consolidation:
+   - treat this BE design doc + FE design doc as canonical sources.
+   - keep cleanup tasks here rather than a separate cleanup-plan file.

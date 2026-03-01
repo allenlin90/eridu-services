@@ -252,7 +252,19 @@ function buildSchedulePayload(group, platformMap, scheduleDefinitions) {
       status: 'draft',
       client_id: client,
       created_by: GOOGLE_SHEET_USER_ID,
-      plan_document: { shows }
+      plan_document: {
+        metadata: {
+          lastEditedBy: GOOGLE_SHEET_USER_ID,
+          lastEditedAt: new Date().toISOString(),
+          totalShows: shows.length,
+          clientName: String(client || ''),
+          dateRange: {
+            start: finalStartDate.toISOString(),
+            end: finalEndDate.toISOString(),
+          },
+        },
+        shows,
+      }
     }
   };
 }

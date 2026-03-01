@@ -36,7 +36,18 @@ function createSchedules() {
       metadata: { description, note, },
       client_id,
       studio_id: DEFAULTS.STUDIO_UID,
-      plan_document: {}
+      plan_document: {
+        metadata: {
+          lastEditedBy: GOOGLE_SHEET_USER_ID,
+          lastEditedAt: new Date().toISOString(),
+          totalShows: 0,
+          clientName: String(client_name || ''),
+          dateRange: {
+            start: start_date.toISOString(),
+            end: end_date.toISOString(),
+          },
+        },
+      }
     };
   });
 
