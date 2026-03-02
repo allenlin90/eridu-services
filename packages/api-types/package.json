@@ -82,7 +82,7 @@
   },
   "dependencies": {
     "@eridu/auth-sdk": "workspace:*",
-    "zod": "^4.1.13"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eridu/eslint-config": "workspace:*",
