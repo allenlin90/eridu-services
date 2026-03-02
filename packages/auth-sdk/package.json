@@ -83,7 +83,7 @@
   "devDependencies": {
     "@eridu/eslint-config": "workspace:*",
     "@eridu/typescript-config": "workspace:*",
-    "@nestjs/common": "^11.1.12",
+    "@nestjs/common": "^11.1.14",
     "@types/express": "^5.0.0",
     "@types/node": "^24.10.1",
     "eslint": "^9.39.1",
