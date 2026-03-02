@@ -2,6 +2,7 @@ import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
 import {
+  createShowObjectSchema,
   createShowSchema,
   showDto,
   showWithRelationsSchema,
@@ -48,8 +49,24 @@ const transformCreateShowWithAssignmentsSchema
     })),
   }));
 
-export const updateShowWithAssignmentsSchema
-  = createShowWithAssignmentsSchema.partial();
+// Build update schema from the base object (before refinements) so .partial() is valid in Zod 4.3+
+export const updateShowWithAssignmentsSchema = createShowObjectSchema
+  .extend({
+    mcs: z.array(createShowMcSchema.omit({ show_id: true })).optional(),
+    platforms: z
+      .array(createShowPlatformSchema.omit({ show_id: true }))
+      .optional(),
+  })
+  .partial()
+  .refine(
+    (data) => {
+      if (data.start_time && data.end_time) {
+        return new Date(data.end_time) > new Date(data.start_time);
+      }
+      return true;
+    },
+    { message: 'End time must be after start time', path: ['end_time'] },
+  );
 
 const transformUpdateShowWithAssignmentsSchema
   = updateShowWithAssignmentsSchema.transform((data) => ({
