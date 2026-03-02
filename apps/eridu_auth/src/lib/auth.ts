@@ -1,8 +1,8 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { apiKey } from '@better-auth/api-key';
 import {
   admin,
-  apiKey,
   bearer,
   jwt,
   magicLink,

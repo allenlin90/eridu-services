@@ -36,6 +36,13 @@
       "when": 1740873600000,
       "tag": "0004_silent_vulcan",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1741046400000,
+      "tag": "0005_drop_apikey_userid",
+      "breakpoints": true
     }
   ]
 }

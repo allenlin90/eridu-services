@@ -78,7 +78,6 @@ async function drop() {
     console.error('❌ Error dropping database:', error);
     throw error;
   } finally {
-    // @ts-expect-error - drizzle client end method may not be in type definitions
     await db.$client.end();
   }
 }
