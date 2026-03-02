@@ -96,9 +96,7 @@ export const apikey = pgTable(
     start: text('start'),
     prefix: text('prefix'),
     key: text('key').notNull(),
-    userId: text('user_id')
-      .notNull()
-      .references(() => user.id, { onDelete: 'cascade' }),
+    referenceId: text('reference_id').notNull(),
     refillInterval: integer('refill_interval'),
     refillAmount: integer('refill_amount'),
     lastRefillAt: timestamp('last_refill_at'),
@@ -114,15 +112,9 @@ export const apikey = pgTable(
     updatedAt: timestamp('updated_at').notNull(),
     permissions: text('permissions'),
     metadata: text('metadata'),
-    // Added in Phase 2A migration (0004) — populated from user_id, will replace it in Phase 2B
-    referenceId: text('reference_id'),
-    // Added in Phase 2A migration (0004) — required by better-auth 1.5
-    configId: text('config_id').default('default'),
+    configId: text('config_id').default('default').notNull(),
   },
-  (table) => [
-    index('apikey_key_idx').on(table.key),
-    index('apikey_userId_idx').on(table.userId),
-  ],
+  (table) => [index('apikey_key_idx').on(table.key)],
 );
 
 export const jwks = pgTable('jwks', {
@@ -247,7 +239,7 @@ export const accountRelations = relations(account, ({ one }) => ({
 
 export const apikeyRelations = relations(apikey, ({ one }) => ({
   user: one(user, {
-    fields: [apikey.userId],
+    fields: [apikey.referenceId],
     references: [user.id],
   }),
 }));
