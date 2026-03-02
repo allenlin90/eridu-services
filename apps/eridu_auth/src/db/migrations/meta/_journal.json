@@ -29,6 +29,13 @@
       "when": 1769136015844,
       "tag": "0003_dazzling_spyke",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1740873600000,
+      "tag": "0004_silent_vulcan",
+      "breakpoints": true
     }
   ]
 }
