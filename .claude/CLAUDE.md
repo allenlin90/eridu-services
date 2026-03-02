@@ -1,6 +1,6 @@
 # Eridu Services Monorepo - Quick Reference
 
-> **Last Updated**: 2026-03-01
+> **Last Updated**: 2026-03-02
 > **Status**: Production codebase — major architectural debt resolved Feb 2026 (see Known Issues)
 
 ## Workflow Rules (MUST FOLLOW)
@@ -12,14 +12,30 @@ Before implementing ANY feature, read the relevant skill from `.agent/skills/<sk
 - Frontend: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`
 - Full-stack: `admin-list-pattern`, `studio-list-pattern`
 
+### Dependency Changes — Full Impact (CRITICAL)
+The cloud build runs `pnpm install --frozen-lockfile`. **`pnpm-lock.yaml` is the authoritative install manifest** — `package.json` alone is not enough. A stale lockfile hard-fails the build before any code runs, which cascades: build fails → deployment blocked → pre-deploy migration never runs → all downstream issues compound.
+
+**Every time any `package.json` is modified**, ALL three must move together in the SAME commit:
+
+| Artifact | Command | Why |
+|----------|---------|-----|
+| `pnpm-lock.yaml` | `pnpm install` (from root) | Cloud installs from lockfile, not package.json |
+| Type + build | `pnpm --filter <affected> typecheck && pnpm --filter <affected> build` | Upgraded packages may change type signatures; build uses stricter config than typecheck |
+| Lint/sherif | `pnpm lint && pnpm sherif` | Catch version mismatches across workspace |
+
+**Also consider**: does any other workspace package share this dep? If so, align versions and re-run for those packages too.
+
 ### Mandatory Code Verification
-After every code change, run verification before marking work complete:
+After every code change, run ALL of the following before marking work complete:
 ```bash
 pnpm --filter <app_or_package> lint      # Fix ALL errors (never disable ESLint rules)
-pnpm --filter <app_or_package> typecheck # NEVER use `any` or `@ts-ignore` to bypass
+pnpm --filter <app_or_package> typecheck # Catches most TS errors early
+pnpm --filter <app_or_package> build     # REQUIRED — stricter tsconfig than typecheck alone
 pnpm --filter <app_or_package> test      # All tests must pass
 ```
 Run for each affected app/package. **Never skip. Fix errors before marking work complete.**
+
+**Why `build` is mandatory**: `typecheck` uses root `tsconfig.json --noEmit`. The actual build uses stricter/different configs (e.g. `tsconfig.server.json` for eridu_auth backend, vite for frontend). Errors like stale `@ts-expect-error`, `noUnusedLocals`, or ESLint type-aware rules only surface in `build`, not `typecheck`. Passing typecheck ≠ passing build.
 
 ### Knowledge Sync (Feature/Refactor Work)
 After feature delivery, behavior changes, or refactors — run `.agent/workflows/knowledge-sync.md`.
