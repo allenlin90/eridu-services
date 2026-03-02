@@ -75,7 +75,7 @@ export const auth = betterAuth({
     changeEmail: {
       enabled: true,
       requireEmailVerification: true,
-      sendChangeEmailVerification: async (_data, _request) => {
+      sendChangeEmailVerification: async () => {
         // TODO: verification email must be sent to the current user email to approve the change
         // if the current email isn't verified, the change happens immediately without verification
       },
