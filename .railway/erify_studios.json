@@ -5,6 +5,7 @@
     "buildCommand": "npx turbo run build --filter=erify_studios",
     "watchPatterns": [
       "/apps/erify_studios/src/**",
+      "/apps/erify_studios/package.json",
       "/packages/api-types/**",
       "/packages/auth-sdk/**",
       "/packages/ui/**"

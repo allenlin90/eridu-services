@@ -5,6 +5,7 @@
     "buildCommand": "npx turbo run build --filter=eridu_auth",
     "watchPatterns": [
       "/apps/eridu_auth/src/**",
+      "/apps/eridu_auth/package.json",
       "/packages/auth-sdk/**",
       "/packages/ui/**"
     ]
