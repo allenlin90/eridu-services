@@ -114,6 +114,10 @@ export const apikey = pgTable(
     updatedAt: timestamp('updated_at').notNull(),
     permissions: text('permissions'),
     metadata: text('metadata'),
+    // Added in Phase 2A migration (0004) — populated from user_id, will replace it in Phase 2B
+    referenceId: text('reference_id'),
+    // Added in Phase 2A migration (0004) — required by better-auth 1.5
+    configId: text('config_id').default('default'),
   },
   (table) => [
     index('apikey_key_idx').on(table.key),
