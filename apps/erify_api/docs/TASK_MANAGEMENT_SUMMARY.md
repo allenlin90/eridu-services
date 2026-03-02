@@ -50,7 +50,8 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
           any → CLOSED (admin only, terminal)
 ```
 
-- **Enforced** on studio endpoints (`/studios/:studioId/tasks/*`) with role-aware transitions
+- **Enforced for operators** on `/me/tasks/:id/action` — strict 8-transition allowlist in `MeTaskService.ensureMemberTransitionAllowed()`
+- **Not enforced for admin/manager** on `/studios/:studioId/tasks/:id/action` — action resolves to target status with no "from → to" validation (Phase 4 gap)
 - **Not enforced** on system-admin endpoints (`/admin/tasks/*`) for operational recovery
 - Action-based workflow: `PATCH .../action` with named actions (`START_WORK`, `SUBMIT_FOR_REVIEW`, `APPROVE_COMPLETED`, etc.)
 
@@ -120,7 +121,7 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 
 ✅ Template CRUD, bulk generation, assignment, reassignment, operator tasks  
 ✅ Optimistic locking, advisory locks, soft-delete with resumption  
-✅ State machine enforcement (studio-scoped), action-based workflow endpoints  
+✅ Action-based workflow endpoints, operator state machine enforcement (admin/manager transition whitelist deferred to Phase 4)  
 ✅ Submission window validation (SETUP before show start, ACTIVE/CLOSURE after show start)  
 ✅ Audit metadata (`task.metadata.audit.last_transition`)
 

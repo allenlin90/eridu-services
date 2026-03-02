@@ -158,9 +158,9 @@ Immutable version history, created automatically on every update. Snapshot reaso
 | Error Code | HTTP Status | Condition |
 |---|---|---|
 | `VERSION_MISMATCH` | 409 | Optimistic lock conflict |
-| `SEQUENTIAL_VIOLATION` | 409 | Chunk out of order (Phase 2) |
-| `UPLOAD_COMPLETE` | 400 | All chunks already received (Phase 2) |
-| `UPLOAD_INCOMPLETE` | 400 | Publish before all chunks (Phase 2) |
+| `SEQUENTIAL_VIOLATION` | 409 | Chunk out of order (Phase 5) |
+| `UPLOAD_COMPLETE` | 400 | All chunks already received (Phase 5) |
+| `UPLOAD_INCOMPLETE` | 400 | Publish before all chunks (Phase 5) |
 
 ---
 

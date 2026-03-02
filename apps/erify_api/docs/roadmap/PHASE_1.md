@@ -341,7 +341,7 @@ For complete workflow, API call sequence, error handling, and AppsScript integra
 - One show operation per API call (no bulk show operations)
 - No material management, CSV import/export, or chunked upload for large clients (>200 shows)
 
-**Deferred to Phase 2+:** Bulk publish operations, chunked upload, material management, CSV import/export, enhanced query features, idempotency handling
+**Deferred:** Bulk publish operations (Phase 2 — done), chunked upload (Phase 5), material management (Phase 3), CSV import/export, enhanced query features
 
 ## Implementation Details
 
@@ -390,7 +390,7 @@ model User {
 }
 ```
 
-**Note**: Relations to `Comment`, `Task`, `Audit` (Phase 3) will be added in that phase. Relations to `Material` (Phase 2) will be added in that phase.
+**Note**: Relations to `Task` added in Phase 2. Relations to `Material` will be added in Phase 3. Relations to `Comment`, `Audit` will be added in Phase 5.
 
 #### MC
 
@@ -446,7 +446,7 @@ model Client {
 }
 ```
 
-**Note**: Relations to `Material` (Phase 2) will be added in that phase. The `schedules` relation links clients to their schedule planning documents.
+**Note**: Relations to `Material` (Phase 3) will be added in that phase. The `schedules` relation links clients to their schedule planning documents.
 
 #### Platform
 
@@ -469,7 +469,7 @@ model Platform {
 }
 ```
 
-**Note**: Relations to `Material` (Phase 2) will be added in that phase.
+**Note**: Relations to `Material` (Phase 3) will be added in that phase.
 
 ### Show Management
 
@@ -522,7 +522,7 @@ model Show {
 }
 ```
 
-**Note**: The `scheduleId` field and `Schedule` relation link shows to schedules for planning workflows. The `showMaterials` relation (Phase 2) will be added in that phase.
+**Note**: The `scheduleId` field and `Schedule` relation link shows to schedules for planning workflows. The `showMaterials` relation (Phase 3) will be added in that phase.
 
 #### ShowMC
 
@@ -662,7 +662,7 @@ model Studio {
 }
 ```
 
-**Note**: Relations to `Tag` and `TaskTemplate` (Phase 3) will be added in that phase. The `materials` relation (Phase 2) will be added in that phase.
+**Note**: Relations to `TaskTemplate` added in Phase 2. Relations to `Material`, `StudioShift` will be added in Phase 3. Relations to `Tag` will be added in Phase 5.
 
 #### StudioRoom
 

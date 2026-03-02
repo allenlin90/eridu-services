@@ -134,4 +134,4 @@ For detailed implementation patterns, see `.agent/skills/`:
 - **[Authorization Guide](./design/AUTHORIZATION_GUIDE.md)** — Granular RBAC design proposal (not yet implemented)
 - **[Schedule Planning](./SCHEDULE_PLANNING.md)** — Schedule planning system
 - **[Task Management Summary](./TASK_MANAGEMENT_SUMMARY.md)** — Task management quick-reference
-- **[Roadmap](./roadmap/)** — Phase 1–4 implementation plans
+- **[Roadmap](./roadmap/)** — Phase 1–5 implementation plans

@@ -1,8 +1,8 @@
 # Phase 2: Show Task Management & Assignments
 
-> **TLDR**: ✅ **Core Complete**. Adds "Task as Form" system — `TaskTemplate` → `TaskTemplateSnapshot` → `Task` + `TaskTarget`. Studio-scoped templates, bulk generation, operator assignment, and execution. Review gate (`REVIEW` status) exists but enforcement is deferred.
+> **TLDR**: ✅ **Complete**. Adds "Task as Form" system — `TaskTemplate` → `TaskTemplateSnapshot` → `Task` + `TaskTarget`. Studio-scoped templates, bulk generation, operator assignment, and execution. Review gate (`REVIEW` status) exists; enforcement and review UI deferred to Phase 4. Ad-hoc ticketing and advanced task management deferred to Phase 3.
 
-**Status**: ✅ Core Complete — review workflow deferred (see Remaining Work)
+**Status**: ✅ Complete — all remaining items assigned to later phases (see Deferred Work)
 
 ## Overview
 
@@ -66,45 +66,33 @@ All items implemented. See [Task Management Summary](../TASK_MANAGEMENT_SUMMARY.
 
 - Full workflow from Template → Task generation → Completion: ✅
 - Operators can see "My Tasks" across all shows: ✅
-- Admin review gate before task marked complete: ⏳ (see Remaining Work)
+- Admin review gate before task marked complete: ✅ Partial — see Deferred Work
 
-## Remaining Work
+## Deferred Work (Assigned to Later Phases)
 
-### 1. State Machine Enforcement
+All remaining items have been explicitly assigned. Phase 2 is closed.
 
-The `REVIEW` status exists but is never enforced. Currently operators transition directly to `COMPLETED`, bypassing the review gate. The intended lifecycle is:
+### What was completed (verified against code)
 
-```
-Operator:       PENDING → IN_PROGRESS → REVIEW          (submit for review)
-Admin/Manager:                           REVIEW → COMPLETED   (approve)
-                                         REVIEW → IN_PROGRESS (reject, request revision)
-Either role:    any active state → BLOCKED               (task is stuck)
-                BLOCKED → IN_PROGRESS                    (unblock)
-Admin only:     any → CLOSED                             (terminate without completing)
-```
+- ✅ Action-based endpoints: `PATCH /me/tasks/:id/action` and `PATCH /studios/:studioId/tasks/:id/action`
+- ✅ Operator state machine: `MeTaskService.ensureMemberTransitionAllowed()` — strict 8-transition allowlist
+- ✅ Frontend integration: Both action mutations wired, action sheet UI with confirmation
 
-**Backend work needed:**
-- Add transition validation in `TaskService.updateTaskContentAndStatus()` — reject illegal transitions based on the caller's role
-- `MeTaskService` (operator): permits `PENDING→IN_PROGRESS`, `IN_PROGRESS→REVIEW`, `REVIEW→IN_PROGRESS` (self-recall), `any→BLOCKED`
-- `StudioTaskService` (admin/manager): permits `REVIEW→COMPLETED`, `REVIEW→IN_PROGRESS`, `any→BLOCKED`, `any→CLOSED`
-- Return `422 Unprocessable Entity` on invalid transitions
+### → Phase 3: Advanced Task Management
 
-### 2. Admin Task Review Endpoints
+- **Ad-hoc Task Ticketing**: Template-less task creation for pre-production one-off requirements. Reuses `Task` model with `snapshotId: null`. See [Ad-hoc Task Ticketing Design](../design/AD_HOC_TASK_TICKETING.md).
+- **Task Reopening Workflow**: Formal process for reopening `completed` tasks (requiring reason/approval).
+- **Complex Reassignment Rules**: Advanced validation for reassignment requests based on strict Show status.
 
-Studio admins need dedicated endpoints to action tasks in `REVIEW` status. Options:
-- Extend `StudioTaskController` with `PATCH /studios/:studioId/tasks/:id/status` scoped to admin transitions
-- Or implement `AdminTaskController` at `/admin/tasks` for cross-studio system admin tooling
+### → Phase 4: Review Quality (remaining gaps)
 
-Minimum needed for review workflow:
-- `GET /studios/:studioId/tasks?status=REVIEW` — list tasks awaiting review (already possible via query param; verify filter is wired)
-- `PATCH /studios/:studioId/tasks/:id` with `status` field — approve or reject (partially implemented; blocked by missing transition enforcement)
-
-### 3. Frontend: Admin Review Queue
-
-Operators currently see the "Complete Task" button (`IN_PROGRESS → COMPLETED`). With the review gate:
-- Operator button changes to **"Submit for Review"** (`IN_PROGRESS → REVIEW`)
-- Admin needs a filtered view (`?status=REVIEW`) with bulk approve / reject actions
-- Rejected tasks (back to `IN_PROGRESS`) should surface a rejection note to the operator
+- **Admin/Manager Transition Enforcement**: The studio `PATCH .../action` endpoint currently resolves action → status with no "from → to" whitelist — admins can freely transition to any status. Needs a transition allowlist matching the intended lifecycle:
+  ```
+  Admin/Manager:  REVIEW → COMPLETED   (approve)
+                  REVIEW → IN_PROGRESS (reject, request revision)
+                  any → BLOCKED, any → CLOSED
+  ```
+- **Frontend: Admin Review Queue**: A dedicated filtered review queue UI (`?status=REVIEW`) with rejection notes surfaced to operators.
 
 ## Dependencies
 

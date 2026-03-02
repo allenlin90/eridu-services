@@ -1,6 +1,8 @@
 # Analytics Dashboard Design Plan
 
-## Goal Description
+> **Status**: ⚠️ **Superseded** — This in-app analytics approach (`TaskAnalyticsSnapshot` + Recharts) has been replaced by a Datastream + BigQuery data warehouse strategy. See [Phase 4 Roadmap](../roadmap/PHASE_4.md#5-operational-data-warehouse-datastream--bigquery) and [Data Warehouse Design](./DATA_WAREHOUSE_DESIGN.md) (to be written). This document is retained for historical reference only.
+
+## Goal Description (Original)
 Implement an Analytics Dashboard to check on task submissions and summarize operational performance. This dashboard will give Studio Admins and Managers insights into task completion rates, identifying bottlenecks by task template, and tracking overdue tasks. For regular Studio Members, it will be scoped only to their own assignments.
 
 ## Proposed Changes

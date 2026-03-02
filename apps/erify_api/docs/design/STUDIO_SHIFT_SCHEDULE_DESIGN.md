@@ -1,0 +1,118 @@
+# Studio Shift Schedule Integration Plan
+
+Integrate a Studio-based user shift schedule feature to track part-timer shifts, align them with assigned tasks/shows, identify unassigned shift hours, manage duty managers, and calculate costs.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Conceptual Design Questions to Review**
+> This document proposes a baseline architecture based on your feedback:
+> 1. **Hourly Rates**: The `baseHourlyRate` will be stored on the `StudioMembership`. The `StudioShift` can override it for special shifts (weekends/holidays).
+> 2. **Shift Gaps (Breaks)**: Handled via the **Blocks** approach. If a shift is 9 hours straight with no gaps, it will simply have 1 continuous block. If they go home for 3 hours and come back, it will have 2 blocks.
+> 3. **Midnight Shifts (Cross-Day)**: The parent `StudioShift`'s `date` field represents the logical "start day" of the shift (e.g., Friday night). The child `StudioShiftBlock` objects hold absolute `startTime` and `endTime` using standard UTC DateTime. This allows a block to naturally span from 11:00 PM (Friday) to 03:00 AM (Saturday) without breaking calendar rendering logic.
+> 4. **Cost Calculation & Admin Override**: The API will auto-calculate a `projectedCost`. However, to grant admins final decision-making power, we will introduce `calculatedCost` and `isApproved` fields. Admins can manually set `calculatedCost` independent of the auto-calculated projection.
+> 5. **Calendar View**: The API will support timeline rendering across Days, Weeks, and Months, similar to Google Calendar.
+
+## Proposed Changes
+
+### Data Models (Prisma Schema Updates)
+
+- **[MODIFY]** `apps/erify_api/prisma/schema.prisma`
+  - Enhance `StudioMembership` with `baseHourlyRate Decimal?`.
+  - Add **[NEW]** `StudioShift` and `StudioShiftBlock` models:
+    ```prisma
+    enum StudioShiftStatus {
+      SCHEDULED
+      COMPLETED
+      CANCELLED
+    }
+
+    model StudioShift {
+      id             BigInt    @id @default(autoincrement())
+      uid            String    @unique
+      studioId       BigInt    @map("studio_id")
+      userId         BigInt    @map("user_id") // The assigned part-timer/member
+      
+      // The logical start date of the shift (useful for querying midnight-crossing shifts intuitively)
+      date           DateTime  @db.Date
+      
+      // Cost tracking
+      hourlyRate     Decimal   @map("hourly_rate") // Copied from StudioMembership at creation, can be overridden
+      projectedCost  Decimal   @map("projected_cost") // Auto-calculated based on blocks
+      calculatedCost Decimal?  @map("calculated_cost") // Admin manual override for final payment
+      isApproved     Boolean   @default(false) @map("is_approved") // Final admin sign-off
+      
+      // Roles
+      isDutyManager  Boolean   @default(false) @map("is_duty_manager")
+      
+      status         StudioShiftStatus @default(SCHEDULED)
+      
+      metadata       Json      @default("{}")
+      
+      // Relations
+      blocks         StudioShiftBlock[]
+      studio         Studio    @relation(fields: [studioId], references: [id], onDelete: Cascade)
+      user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+      
+      createdAt      DateTime  @default(now()) @map("created_at")
+      updatedAt      DateTime  @updatedAt @map("updated_at")
+      deletedAt      DateTime? @map("deleted_at")
+
+      @@index([studioId, date])
+      @@index([userId, date])
+      @@index([studioId, isDutyManager, date]) // Fast duty manager lookup
+      @@map("studio_shifts")
+    }
+
+    model StudioShiftBlock {
+      id             BigInt    @id @default(autoincrement())
+      uid            String    @unique
+      shiftId        BigInt    @map("shift_id")
+      
+      startTime      DateTime  @map("start_time") // Can safely cross midnight
+      endTime        DateTime  @map("end_time")   // Can safely cross midnight
+
+      metadata       Json      @default("{}")
+
+      shift          StudioShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+      createdAt      DateTime  @default(now()) @map("created_at")
+      updatedAt      DateTime  @updatedAt @map("updated_at")
+      deletedAt      DateTime? @map("deleted_at")
+
+      @@index([shiftId])
+      @@index([startTime, endTime])
+      @@map("studio_shift_blocks")
+    }
+    ```
+
+### Shift Management Services
+- **[NEW]** `apps/erify_api/src/models/studio-shift/studio-shift.service.ts`
+  - CRUD operations for Shifts and their nested Blocks.
+  - Generates the `projectedCost` automatically upon creation/update of blocks.
+- **[NEW]** `apps/erify_api/src/controllers/studio-shift/studio-shift.controller.ts`
+  - Endpoints to create, update, delete, and list shifts for a studio.
+  - Endpoint: `GET /studios/:id/shifts/duty-manager?time=...` to resolve the active point of contact by finding the active Block.
+
+### Alignment & Calendar Orchestration
+- **[NEW]** `apps/erify_api/src/orchestration/shift-calendar/shift-calendar.service.ts`
+  - **Daily Timeline View**: Given a date range (e.g. a week), returns the structured timeline of `StudioShifts` (with their active blocks) grouped by Date and User.
+  - **Financial Aggregation**: Calculates and returns the total projected cost for the selected period.
+- **[NEW]** `apps/erify_api/src/orchestration/shift-alignment/shift-alignment.service.ts`
+  - **Cross-Checking Logic**: Given a timeframe, retrieves Shifts/Blocks and overlapping `Shows`.
+  - **MVP Scope — Shows Only**: Alignment is performed against `Show.startTime`/`Show.endTime` windows only. Standalone tasks without a show target are excluded from alignment checks. Tasks linked to shows inherit the show's time window via `TaskTarget`.
+  - Explores and returns warnings for:
+    1. **Idle Members**: Block segments where the user has no assigned shows.
+    2. **Missing Shifts**: Users assigned to a Show but have NO overlapping `StudioShiftBlock`.
+- **[NEW]** `apps/erify_api/src/controllers/studio-shift/shift-calendar.controller.ts`
+  - Exposes `GET /studios/:id/shift-calendar` (for the timeline & costs) and `GET /studios/:id/shift-alignment` (for cross-checking warnings).
+
+## Verification Plan
+
+### Automated Tests
+- Create unit tests for `StudioShiftService` isolating the rate calculation and override logic.
+- Create unit tests for `ShiftAlignmentService` ensuring it accurately detects under-utilized shifts and un-shifted task assignments using standard Date intersections.
+
+### Manual Verification
+- Seed `StudioShifts` via the schedule UI. Ensure the cost calculations display correctly.
+- Test scenarios where a user is assigned a task during a show, but their shift ends *before* the show ends, ensuring the alignment warnings flag this discrepancy appropriately.

@@ -1,6 +1,6 @@
 # Business Domain Documentation
 
-> **TLDR**: The core domain revolves around **Shows** (live-commerce broadcasts) linked to **Clients**, **MCs**, **Platforms**, and **Studios**. **Schedules** plan shows monthly via Google Sheets. **Tasks** are studio-scoped checklists generated from **TaskTemplates** and assigned to operators. The system is built in 4 phases — Phases 1-2 are complete.
+> **TLDR**: The core domain revolves around **Shows** (live-commerce broadcasts) linked to **Clients**, **MCs**, **Platforms**, and **Studios**. **Schedules** plan shows monthly via Google Sheets. **Tasks** are studio-scoped checklists generated from **TaskTemplates** and assigned to operators. The system is built in 5 phases — Phases 1-2 are complete.
 
 This document provides comprehensive business domain information for the Eridu Services API. For development roadmap and implementation phases, see the [Core Production Management System](./roadmap/PHASE_1.md) documentation.
 
@@ -10,22 +10,26 @@ This document provides comprehensive business domain information for the Eridu S
 
 The system is being developed in structured phases:
 
-- **Phase 1** ✅ (Current): Core Functions with Hybrid Authentication - Essential CRUD operations, basic show management, Schedule Planning Management System, JWT validation from eridu_auth service, and simple StudioMembership-based authorization
-- **Phase 2** (Planned): Task Management System - Generic, extensible task management suitable for Shows and future entities.
-- **Phase 3** (Planned): Material Management System & Advanced Collaboration - Material versioning, platform targeting, tagging, comments, and audit trails
+- **Phase 1** ✅: Core Functions — Essential CRUD, show management, schedule planning, JWT auth, StudioMembership-based authorization
+- **Phase 2** ✅: Task Management — Generic "Task as Form" system with templates, snapshots, bulk generation, and operator workflows
+- **Phase 3** (Planned): Material Management, Shift Schedules & File Uploads — Material versioning, studio shifts, Cloudflare R2 presigned uploads
+- **Phase 4** (Planned): Review Quality, Decision Support & Analytics — Review summaries, error hardening, admin transition enforcement, Datastream + BigQuery data warehouse
+- **Phase 5** (Planned): Collaboration, Notifications & Enterprise Scheduling — Tags, comments, audit logging, notifications, chunked uploads
 
 For detailed implementation plans, see:
 
-- [Phase 1 Roadmap](./roadmap/PHASE_1.md) ✅ (Current implementation)
+- [Phase 1 Roadmap](./roadmap/PHASE_1.md)
 - [Phase 2 Roadmap](./roadmap/PHASE_2.md)
 - [Phase 3 Roadmap](./roadmap/PHASE_3.md)
+- [Phase 4 Roadmap](./roadmap/PHASE_4.md)
+- [Phase 5 Roadmap](./roadmap/PHASE_5.md)
 - [Schedule Planning](./SCHEDULE_PLANNING.md)
 
 # Models
 
 ## Audit
 
-**Phase 3 Feature** - Purpose: Maintains complete audit trail of all significant system changes for compliance and debugging.
+**Phase 5 Feature** - Purpose: Maintains complete audit trail of all significant system changes for compliance and debugging.
 
 The `Audits` table tracks all CRUD operations performed by users, storing both old and new values for complete change history. This enables rollback capabilities, compliance reporting, and debugging of data issues.
 
@@ -76,7 +80,7 @@ Business Rules:
 
 ## Comment
 
-**Phase 3 Feature** - Purpose: Enables threaded collaboration and communication across all system entities.
+**Phase 5 Feature** - Purpose: Enables threaded collaboration and communication across all system entities.
 
 `Users` can leave `Comments` on various records (shows, schedules, tasks) to facilitate collaboration. Comments support threading for organized discussions and can include mentions and notifications.
 
@@ -93,7 +97,7 @@ Features:
 
 Purpose: Manages content assets used in show production.
 
-**Phase 3 Feature** - Materials represent all content assets used in shows, including scripts, briefs, graphics, and platform-specific content. Each material is owned by a client and can be associated with multiple shows.
+**Phase 3 Feature** — Materials represent all content assets used in shows, including scripts, briefs, graphics, and platform-specific content. Each material is owned by a client and can be associated with multiple shows.
 
 Key Models: `materials`, `show_materials`
 

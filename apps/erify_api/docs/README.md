@@ -27,16 +27,21 @@
 | ------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------ |
 | [Authorization Guide](./design/AUTHORIZATION_GUIDE.md)                                     | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
 | [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) | ⏳      | Studio-scoped resolution for cancelled shows                                   |
-| [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                | 📐      | Design for template-less pre-production ticketing using Tasks                  |
+| [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                | 📐      | Template-less pre-production ticketing using Tasks                             |
+| [Studio Shift Schedule](./design/STUDIO_SHIFT_SCHEDULE_DESIGN.md)                         | 📐      | Shift blocks, cost tracking, calendar/alignment                                |
+| [File Upload (Cloudflare R2)](./design/FILE_UPLOAD_DESIGN.md)                              | 📐      | Presigned URL architecture for file uploads                                    |
+| [Material Management](./design/MATERIAL_MANAGEMENT_DESIGN.md)                             | ⏳      | To be written (Phase 3 prerequisite)                                           |
+| [Data Warehouse](./design/DATA_WAREHOUSE_DESIGN.md)                                       | ⏳      | Datastream + BigQuery — to be written (Phase 4)                                |
 
 ## Roadmap
 
-| Phase                           | Status | Focus                                  |
-| ------------------------------- | ------ | -------------------------------------- |
-| [Phase 1](./roadmap/PHASE_1.md) | ✅      | Core entities, schedule planning, auth |
-| [Phase 2](./roadmap/PHASE_2.md) | ✅ Core | Task management system                 |
-| [Phase 3](./roadmap/PHASE_3.md) | 🗓️      | Material management, collaboration     |
-| [Phase 4](./roadmap/PHASE_4.md) | 🗓️      | Review quality, bulk actions           |
+| Phase                           | Status | Focus                                           |
+| ------------------------------- | ------ | ----------------------------------------------- |
+| [Phase 1](./roadmap/PHASE_1.md) | ✅      | Core entities, schedule planning, auth           |
+| [Phase 2](./roadmap/PHASE_2.md) | ✅      | Task management system                           |
+| [Phase 3](./roadmap/PHASE_3.md) | 🗓️      | Material management, shift schedules, file uploads |
+| [Phase 4](./roadmap/PHASE_4.md) | 🗓️      | Review quality, decision support, analytics (BigQuery) |
+| [Phase 5](./roadmap/PHASE_5.md) | 🗓️      | Collaboration, notifications, enterprise scheduling |
 
 ## Quick Start
 
