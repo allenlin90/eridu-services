@@ -11,5 +11,4 @@ if (!env.DB_MIGRATING) {
 }
 
 await migrate(db, { migrationsFolder: config.out! });
-// @ts-expect-error - drizzle client end method may not be in type definitions
 await db.$client.end();

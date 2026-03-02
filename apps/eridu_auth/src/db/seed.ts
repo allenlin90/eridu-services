@@ -233,7 +233,6 @@ async function seed() {
     console.error('❌ Error seeding database:', error);
     throw error;
   } finally {
-    // @ts-expect-error - drizzle client end method may not be in type definitions
     await db.$client.end();
   }
 }
