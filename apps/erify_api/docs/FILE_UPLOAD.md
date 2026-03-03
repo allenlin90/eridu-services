@@ -79,17 +79,25 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[MATERIAL_ASSET] --> B{task.metadata\nupload_routing.\nmaterial_asset_directory\nset?}
+    A[MATERIAL_ASSET] --> C{task has a\nshow-linked target?}
+    C -- Yes --> D{task.type === CLOSURE?}
+    D -- Yes --> MC[mc-review]
+    D -- No --> B{task.metadata\nupload_routing.\nmaterial_asset_directory\nset?}
+    C -- No --> B
     B -- Yes --> DIR["Use metadata value\ne.g. 'wardrobe-archive'"]
-    B -- No --> C{task has a\nshow-linked target?}
-    C -- No --> SINGLE[single-use]
-    C -- Yes --> D{task.type?}
-    D -- SETUP --> PRE[pre-production]
-    D -- CLOSURE --> MC[mc-review]
-    D -- ACTIVE / other --> GEN[show-general]
+    B -- No --> E{show-linked target?}
+    E -- No --> SINGLE[single-use]
+    E -- Yes --> F{task.type?}
+    F -- SETUP --> PRE[pre-production]
+    F -- ACTIVE / other --> GEN[show-general]
 ```
 
-The `upload_routing.material_asset_directory` key is stamped onto task metadata by `TaskGenerationProcessor` when the source template declares a `material_asset_directory` field. This lets template authors pin generated tasks to a custom R2 directory at generation time.
+Current routing behavior:
+- Show-linked `CLOSURE` tasks always resolve to `mc-review` (closure override)
+- Otherwise, `upload_routing.material_asset_directory` is used when present
+- Without metadata: no show-linked target → `single-use`; show-linked `SETUP` → `pre-production`; show-linked other types → `show-general`
+
+`single-use` and `show-general` are active in storage routing. UI workflow handling for these directories remains TODO.
 
 The metadata shape is typed as `UploadRoutingMetadata` (exported from `@eridu/api-types/uploads`). Both the producer (`TaskGenerationProcessor`) and the consumer (`UploadService.extractDirectoryFromMetadata`) use `Partial<UploadRoutingMetadata>` for typed access, eliminating stringly-typed double casts.
 
@@ -97,21 +105,23 @@ The metadata shape is typed as `UploadRoutingMetadata` (exported from `@eridu/ap
 
 ## Object Key Format
 
-**Non-MATERIAL_ASSET** (via `StorageService.generateObjectKey`):
+**Non-MATERIAL_ASSET** (via `StorageService.generateObjectKey`; not part of MATERIAL routing workflow):
 ```
-{useCase_lower}/{actorId}/{YYYY-MM-DD}/{uuid}-{safeName}
+{useCase_lower}/{actorId}/{YYYY-MM-DD}/{uuid32hex}-{safeName}
 
 Example:
-  qc_screenshot/ext_abc123/2026-03-03/a1b2c3d4-screen.png
+  scene_reference/ext_abc123/2026-03-03/6f2be9e1f2b94fd8b5d2d6b4186cc8a9-reference.pdf
 ```
+
+`INSTRUCTION_ASSET` is a special case: it is currently mapped to `pre-production` as the storage prefix.
 
 **MATERIAL_ASSET — show-linked** (via `buildMaterialAssetObjectKey`):
 ```
 {storageDir}/{YYYY-MM-DD}/{showRef}-v{uploadVersion}{ext}
 
 Example:
-  pre-production/2026-03-03/show-1-v1.png
-  mc-review/2026-03-03/show-xyz-v2.jpg
+  pre-production/2026-03-03/show_1-v1.png
+  mc-review/2026-03-03/show_wf6ac_eleklxv2n-zcqo-v1.webp
 ```
 
 **MATERIAL_ASSET — no show target**:
@@ -119,10 +129,18 @@ Example:
 {storageDir}/{YYYY-MM-DD}/{fieldKey}-v{uploadVersion}{ext}
 
 Example:
-  single-use/2026-03-03/proof-photo-v1.png
+  single-use/2026-03-03/proof_photo-v1.png
 ```
 
 `actorId` = `user.ext_id` (external UID, never internal DB id). Note: MATERIAL_ASSET keys use show UID or field key as the base name — `actorId` is **not** included in MATERIAL_ASSET paths.
+
+Normalization details for `showRef`, `fieldKey`, and `storageDir`:
+- Lowercase
+- Keep `a-z`, `0-9`, `_`, `-`
+- Replace other characters with `-`
+- Collapse duplicate `-` and trim edge `-`
+
+`ext` comes from the uploaded file extension (or is inferred from MIME type when missing).
 
 ## Frontend Compression (erify_studios)
 

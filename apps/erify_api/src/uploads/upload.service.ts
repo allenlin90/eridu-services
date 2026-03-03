@@ -284,12 +284,23 @@ export class UploadService {
     useCase: string,
     taskContext: MaterialAssetTaskContext | null,
   ): string {
+    if (useCase === FILE_UPLOAD_USE_CASE.INSTRUCTION_ASSET) {
+      return 'pre-production';
+    }
+
     if (useCase !== FILE_UPLOAD_USE_CASE.MATERIAL_ASSET) {
       return useCase;
     }
 
     if (!taskContext) {
-      return useCase;
+      return 'single-use';
+    }
+
+    const normalizedTaskType = taskContext.type.trim().toUpperCase();
+    const isShowLinked = taskContext.targets?.some((target) => target.show !== null) ?? false;
+
+    if (isShowLinked && normalizedTaskType === 'CLOSURE') {
+      return 'mc-review';
     }
 
     const metadataDirectory = this.extractDirectoryFromMetadata(taskContext.metadata);
@@ -297,19 +308,15 @@ export class UploadService {
       return metadataDirectory;
     }
 
-    const isShowLinked = taskContext.targets?.some((target) => target.show !== null) ?? false;
     if (!isShowLinked) {
       return 'single-use';
     }
 
     const directoryByTaskType: Partial<Record<string, string>> = {
-      // TODO(upload-workflow): keep these mappings for storage organization only.
-      // UI workflow-specific handling for these directories will be added later.
       SETUP: 'pre-production',
-      CLOSURE: 'mc-review',
     };
 
-    return directoryByTaskType[taskContext.type] ?? 'show-general';
+    return directoryByTaskType[normalizedTaskType] ?? 'show-general';
   }
 
   private extractDirectoryFromMetadata(metadata: unknown): string | null {

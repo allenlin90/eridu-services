@@ -28,6 +28,9 @@ type TasksDialogsProps = {
     action: TaskAction,
     content?: Record<string, unknown>,
     note?: string,
+    options?: {
+      onSuccess?: () => void;
+    },
   ) => void;
   dueDateTask: TaskWithRelationsDto | null;
   onDueDateDialogOpenChange: (open: boolean) => void;

@@ -48,11 +48,13 @@ The `upload_routing` metadata key is typed as `UploadRoutingMetadata` (exported 
 
 Storage directory is resolved in this priority order:
 
-1. `task.metadata.upload_routing.material_asset_directory` — if present, use it directly (set by `TaskGenerationProcessor` from template definition)
-2. No show-linked target → `single-use`
-3. Show-linked + `task.type === SETUP` → `pre-production`
-4. Show-linked + `task.type === CLOSURE` → `mc-review`
+1. Show-linked + `task.type === CLOSURE` → force `mc-review`
+2. `task.metadata.upload_routing.material_asset_directory` — if present, use it directly
+3. No show-linked target → `single-use`
+4. Show-linked + `task.type === SETUP` → `pre-production`
 5. Show-linked + any other type → `show-general`
+
+Special case: `INSTRUCTION_ASSET` (non-material use case) is currently routed to `pre-production`.
 
 ## Frontend Image Compression
 

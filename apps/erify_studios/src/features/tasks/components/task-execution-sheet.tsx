@@ -202,6 +202,7 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
 
     if ((action === 'SUBMIT_FOR_REVIEW' || action === 'APPROVE_COMPLETED') && jsonFormRef.current) {
       try {
+        await jsonFormRef.current.validateBeforeSubmit();
         nextContent = await jsonFormRef.current.flushPendingFileUploads();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Failed to upload pending files');

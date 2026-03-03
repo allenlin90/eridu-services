@@ -320,6 +320,70 @@ describe('uploadService', () => {
     );
   });
 
+  it('should map INSTRUCTION_ASSET uploads to pre-production directory', async () => {
+    await service.createPresignedUpload({
+      use_case: FILE_UPLOAD_USE_CASE.INSTRUCTION_ASSET,
+      mime_type: 'image/png',
+      file_size: 1024,
+      file_name: 'instruction',
+      actorId: 'ext_123',
+    });
+
+    expect(storageService.generateObjectKey).toHaveBeenCalledWith(
+      'pre-production',
+      'ext_123',
+      'instruction.png',
+    );
+  });
+
+  it('should keep CLOSURE show-linked uploads in mc-review even when metadata has show-general', async () => {
+    taskService.findByUidWithSnapshot.mockResolvedValueOnce({
+      uid: 'task_123',
+      type: 'closure',
+      targets: [{
+        show: {
+          id: 1n,
+          uid: 'show_1',
+          externalId: 'SHOW-CLOSE',
+          client: { name: 'Acme' },
+          showMCs: [{ mc: { aliasName: 'MC Prime', name: 'MC Prime' } }],
+        },
+      }],
+      metadata: { upload_routing: { material_asset_directory: 'show-general' } },
+      snapshot: {
+        schema: {
+          items: [
+            {
+              id: 'item_1',
+              key: 'proof_photo',
+              type: 'file',
+              label: 'Proof Photo',
+              validation: { accept: 'image/*' },
+            },
+          ],
+          metadata: { task_type: 'OTHER' },
+        },
+      },
+    } as any);
+
+    await service.createPresignedUpload({
+      use_case: FILE_UPLOAD_USE_CASE.MATERIAL_ASSET,
+      mime_type: 'image/png',
+      file_size: 1024,
+      file_name: 'proof',
+      task_id: 'task_123',
+      field_key: 'proof_photo',
+      actorId: 'ext_123',
+    });
+
+    expect(storageService.generateObjectKey).not.toHaveBeenCalled();
+    expect(storageService.generatePresignedUploadUrl).toHaveBeenCalledWith(
+      expect.objectContaining({
+        objectKey: 'mc-review/2026-03-03/show_1-v1.png',
+      }),
+    );
+  });
+
   it('should route ACTIVE show-linked uploads to show-general directory', async () => {
     taskService.findByUidWithSnapshot.mockResolvedValueOnce({
       uid: 'task_123',

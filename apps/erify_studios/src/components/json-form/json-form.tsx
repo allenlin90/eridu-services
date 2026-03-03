@@ -53,6 +53,7 @@ export type JsonFormUploadState = {
 };
 
 export type JsonFormHandle = {
+  validateBeforeSubmit: () => Promise<void>;
   flushPendingFileUploads: () => Promise<Record<string, unknown>>;
   hasPendingFileUploads: () => boolean;
   hasBlockingFileIssues: () => boolean;
@@ -201,6 +202,25 @@ export const JsonForm = function JsonForm({
   }, [onUploadStateChange, pendingFilesByKey]);
 
   useImperativeHandle(ref, () => ({
+    async validateBeforeSubmit() {
+      const currentValues = form.getValues();
+      const valuesWithPendingUploads = { ...currentValues };
+      for (const key of Object.keys(pendingFilesByKey)) {
+        const currentValue = valuesWithPendingUploads[key];
+        if (typeof currentValue !== 'string' || currentValue.trim().length === 0) {
+          valuesWithPendingUploads[key] = '__pending_upload__';
+        }
+      }
+
+      const validation = zodSchema.safeParse(valuesWithPendingUploads);
+      if (!validation.success) {
+        await form.trigger();
+        const firstIssue = validation.error.issues[0]?.message;
+        throw new Error(firstIssue ?? 'Please complete required fields before submitting');
+      }
+
+      await form.trigger();
+    },
     async flushPendingFileUploads() {
       if (Object.keys(pendingFilesByKey).length === 0) {
         return form.getValues();
@@ -293,7 +313,7 @@ export const JsonForm = function JsonForm({
     hasBlockingFileIssues() {
       return Object.values(pendingFilesByKey).some((upload) => upload.isPreparing || !!upload.error);
     },
-  }), [form, itemsByKey, pendingFilesByKey, uploadTaskId]);
+  }), [form, itemsByKey, pendingFilesByKey, uploadTaskId, zodSchema]);
 
   const handleSubmit = (data: Record<string, unknown>) => {
     if (onSubmit) {

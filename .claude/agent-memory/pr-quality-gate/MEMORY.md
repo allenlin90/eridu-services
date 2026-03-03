@@ -192,3 +192,28 @@ These are intentionally different namespaces. Mutations on admin memberships DO 
 
 ### name filter: accepted by schema, not implemented in repository
 `listStudioMembershipsFilterSchema` accepts a `name?: string` field. The repository `listStudioMemberships` does not filter by name. This is pre-existing debt carried over from the admin endpoint — the field is silently ignored at query time.
+
+## Upload Routing Refactor (fix: align upload routing with closure workflow)
+
+### CLOSURE override is now the highest-priority routing rule
+`resolveStorageUseCaseForObjectKey` in `upload.service.ts` was refactored so that show-linked CLOSURE tasks ALWAYS resolve to `mc-review`, regardless of metadata. The new priority order:
+1. INSTRUCTION_ASSET → `pre-production` (hardcoded)
+2. Non-MATERIAL_ASSET → use_case lowercased
+3. No taskContext (MATERIAL_ASSET without task) → `single-use`
+4. Show-linked + CLOSURE → `mc-review` (early return before metadata check)
+5. metadata.upload_routing.material_asset_directory → use it
+6. Not show-linked → `single-use`
+7. Show-linked + SETUP → `pre-production`
+8. Show-linked + other → `show-general`
+
+### Dead code: CLOSURE in directoryByTaskType
+After the CLOSURE early-return at step 4, `directoryByTaskType` at line 314-317 still contains `CLOSURE: 'mc-review'`. This entry is unreachable dead code. Minor cleanup candidate but lint does not catch it.
+
+### Missing `options` propagation in use-studio-tasks-page-controller.tsx
+`handleSubmitAction` in `apps/erify_studios/src/features/tasks/hooks/use-studio-tasks-page-controller.tsx` does NOT accept the `options?: { onSuccess?: () => void }` parameter that `StudioTaskActionSheet.onSubmit` now passes. The draft-clearing `onSuccess` callback is silently dropped when `StudioTaskActionSheet` is used from the `/studios/$studioId/tasks` route. TypeScript does not catch this because the prop type constraint is satisfied by the function's declared parameters (extra args are ignored in TS function subtyping). The show-tasks route (`use-studio-show-tasks-page-mutations.ts`) correctly forwards `options?.onSuccess?.()`.
+
+### validateBeforeSubmit: return value is unused by callers
+`JsonFormHandle.validateBeforeSubmit()` returns `Promise<Record<string, unknown>>` (current form values). Both callers — `studio-task-action-sheet.tsx` and `task-execution-sheet.tsx` — discard the return value (use `await` without assignment) and then call `flushPendingFileUploads()` separately. The return value is superfluous on the interface but not harmful. Consider making the return type `Promise<void>` to match actual usage.
+
+### idb-keyval draft persistence pattern
+`studio-task-action-sheet.tsx` uses `idb-keyval` (already in `package.json`) for IndexedDB draft persistence. Draft key format: `studio_task_action_draft:{taskId}:{action}`. Debounce: 500ms. Draft is cleared only via `onSuccess` callback after confirmed server commit. Two-phase: hydrate on open, persist on content change, delete on success.

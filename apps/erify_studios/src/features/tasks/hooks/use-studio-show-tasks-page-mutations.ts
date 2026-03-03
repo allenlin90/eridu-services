@@ -66,6 +66,9 @@ export function useStudioShowTasksPageMutations({
     action: TaskAction,
     content?: Record<string, unknown>,
     note?: string,
+    options?: {
+      onSuccess?: () => void;
+    },
   ) => {
     updateTaskStatus(
       {
@@ -78,7 +81,10 @@ export function useStudioShowTasksPageMutations({
         },
       },
       {
-        onSuccess: onClearTaskActionDraft,
+        onSuccess: () => {
+          onClearTaskActionDraft();
+          options?.onSuccess?.();
+        },
       },
     );
   }, [onClearTaskActionDraft, updateTaskStatus]);

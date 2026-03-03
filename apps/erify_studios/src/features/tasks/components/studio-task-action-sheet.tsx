@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { useRef, useState } from 'react';
+import { del, get, set } from 'idb-keyval';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -35,6 +36,9 @@ type StudioTaskActionSheetProps = {
     action: TaskAction,
     content?: Record<string, unknown>,
     note?: string,
+    options?: {
+      onSuccess?: () => void;
+    },
   ) => void;
 };
 
@@ -44,6 +48,21 @@ const DEFAULT_UPLOAD_STATE: JsonFormUploadState = {
   isPreparingUploads: false,
   blockingMessages: [],
 };
+const TASK_ACTION_DRAFT_PREFIX = 'studio_task_action_draft';
+const DRAFT_SAVE_DEBOUNCE_MS = 500;
+
+type TaskActionDraftCache = {
+  taskId: string;
+  action: TaskAction;
+  content: Record<string, unknown>;
+  baseContent: Record<string, unknown>;
+  baseVersion: number;
+  updatedAt: string;
+};
+
+function getTaskActionDraftKey(taskId: string, action: TaskAction): string {
+  return `${TASK_ACTION_DRAFT_PREFIX}:${taskId}:${action}`;
+}
 
 function getActionTitle(action: TaskAction | null): string {
   switch (action) {
@@ -76,8 +95,18 @@ function StudioTaskActionSheetBody({
   const [uploadState, setUploadState] = useState<JsonFormUploadState>(DEFAULT_UPLOAD_STATE);
   const jsonFormRef = useRef<JsonFormHandle>(null);
   const taskId = task?.id;
+  const draftKey = useMemo(() => {
+    if (!taskId || !action) {
+      return null;
+    }
+    return getTaskActionDraftKey(taskId, action);
+  }, [action, taskId]);
   const requiresContent = action === TASK_ACTION.SUBMIT_FOR_REVIEW || action === TASK_ACTION.APPROVE_COMPLETED;
   const requiresNote = action === TASK_ACTION.CONTINUE_EDITING || action === TASK_ACTION.MARK_BLOCKED;
+  const [isLoadingDraft, setIsLoadingDraft] = useState(() => Boolean(open && requiresContent));
+  const [isDraftHydrated, setIsDraftHydrated] = useState(() => !requiresContent);
+  const [draftBaseVersion, setDraftBaseVersion] = useState<number | null>(null);
+  const [draftBaseContent, setDraftBaseContent] = useState<Record<string, unknown> | null>(null);
   const hasPreparingUploads = requiresContent && uploadState.isPreparingUploads;
   const hasUploadValidationIssues = requiresContent && uploadState.hasBlockingIssues && !uploadState.isPreparingUploads;
   const { data: taskDetail, isLoading: isLoadingTask } = useQuery({
@@ -92,11 +121,105 @@ function StudioTaskActionSheetBody({
     ? TemplateSchemaValidator.safeParse(resolvedTask.snapshot.schema)
     : null;
   const schema = parsedSchema?.success ? parsedSchema.data : null;
-  const content = isDirty
-    ? (contentDraft ?? {})
-    : ((resolvedTask?.content as Record<string, unknown> | null) ?? {});
+  const content = useMemo(
+    () => (isDirty ? (contentDraft ?? {}) : ((resolvedTask?.content as Record<string, unknown> | null) ?? {})),
+    [contentDraft, isDirty, resolvedTask?.content],
+  );
+  const resolvedTaskContent = useMemo(
+    () => ((resolvedTask?.content as Record<string, unknown> | null) ?? {}),
+    [resolvedTask?.content],
+  );
+  const contentString = useMemo(() => JSON.stringify(content), [content]);
+  const resolvedTaskContentString = useMemo(() => JSON.stringify(resolvedTaskContent), [resolvedTaskContent]);
+  const hasUnsavedDraftChanges = contentString !== resolvedTaskContentString;
+  const hasDraftMismatch = Boolean(
+    resolvedTask
+    && draftBaseVersion !== null
+    && draftBaseContent !== null
+    && (resolvedTask.version !== draftBaseVersion
+      || JSON.stringify(draftBaseContent) !== resolvedTaskContentString),
+  );
 
   const title = getActionTitle(action);
+
+  useEffect(() => {
+    if (!open || !requiresContent || !resolvedTask || !action || !draftKey || isDraftHydrated) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    void get<TaskActionDraftCache>(draftKey)
+      .then((saved) => {
+        if (isCancelled) {
+          return;
+        }
+        if (!saved || saved.taskId !== resolvedTask.id || saved.action !== action) {
+          setDraftBaseVersion(resolvedTask.version);
+          setDraftBaseContent(resolvedTaskContent);
+          return;
+        }
+
+        setContentDraft(saved.content);
+        setIsDirty(true);
+        setDraftBaseVersion(saved.baseVersion);
+        setDraftBaseContent(saved.baseContent);
+      })
+      .catch(() => {
+        setDraftBaseVersion(resolvedTask.version);
+        setDraftBaseContent(resolvedTaskContent);
+      })
+      .finally(() => {
+        if (!isCancelled) {
+          setIsLoadingDraft(false);
+          setIsDraftHydrated(true);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [action, draftKey, isDraftHydrated, open, requiresContent, resolvedTask, resolvedTaskContent]);
+
+  useEffect(() => {
+    if (!open || !requiresContent || !resolvedTask || !action || !draftKey || !isDraftHydrated) {
+      return;
+    }
+    if (!isDirty && !hasUnsavedDraftChanges) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      const baseVersion = draftBaseVersion ?? resolvedTask.version;
+      const baseContent = draftBaseContent ?? resolvedTaskContent;
+      const payload: TaskActionDraftCache = {
+        taskId: resolvedTask.id,
+        action,
+        content,
+        baseContent,
+        baseVersion,
+        updatedAt: new Date().toISOString(),
+      };
+      void set(draftKey, payload);
+    }, DRAFT_SAVE_DEBOUNCE_MS);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [
+    action,
+    content,
+    draftBaseContent,
+    draftBaseVersion,
+    draftKey,
+    hasUnsavedDraftChanges,
+    isDirty,
+    isDraftHydrated,
+    open,
+    requiresContent,
+    resolvedTask,
+    resolvedTaskContent,
+  ]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -133,6 +256,21 @@ function StudioTaskActionSheetBody({
                       This task has no renderable schema. Action will submit current content as-is.
                     </p>
                   )}
+              {isLoadingDraft && (
+                <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                  Loading saved draft from this device...
+                </p>
+              )}
+              {!isLoadingDraft && hasUnsavedDraftChanges && (
+                <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  You have unsaved local changes stored in IndexedDB.
+                </p>
+              )}
+              {!isLoadingDraft && hasDraftMismatch && (
+                <p className="rounded-md border border-orange-200 bg-orange-50 px-3 py-2 text-xs text-orange-800">
+                  Local draft and server task content are different. Local draft is kept so you can review and edit.
+                </p>
+              )}
               {hasPreparingUploads && (
                 <p className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
                   Preparing images for upload. You can submit once preparation is complete.
@@ -185,6 +323,7 @@ function StudioTaskActionSheetBody({
                   return;
                 }
                 try {
+                  await jsonFormRef.current.validateBeforeSubmit();
                   nextContent = await jsonFormRef.current.flushPendingFileUploads();
                 } catch (error) {
                   toast.error(error instanceof Error ? error.message : 'Failed to upload pending files');
@@ -193,7 +332,19 @@ function StudioTaskActionSheetBody({
                 }
               }
               const noteValue = requiresNote ? note.trim() : undefined;
-              onSubmit(resolvedTask, action, requiresContent ? nextContent : undefined, noteValue);
+              onSubmit(
+                resolvedTask,
+                action,
+                requiresContent ? nextContent : undefined,
+                noteValue,
+                {
+                  onSuccess: () => {
+                    if (requiresContent && draftKey) {
+                      void del(draftKey).catch(() => undefined);
+                    }
+                  },
+                },
+              );
               setIsPreparingSubmit(false);
             }}
             disabled={

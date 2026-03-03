@@ -62,6 +62,7 @@ export function useStudioTasksPageController({ studioId }: UseStudioTasksPageCon
     action: TaskAction,
     content?: Record<string, unknown>,
     note?: string,
+    options?: { onSuccess?: () => void },
   ) => {
     updateTaskStatus(
       {
@@ -74,7 +75,10 @@ export function useStudioTasksPageController({ studioId }: UseStudioTasksPageCon
         },
       },
       {
-        onSuccess: () => setActionDraft(null),
+        onSuccess: () => {
+          setActionDraft(null);
+          options?.onSuccess?.();
+        },
       },
     );
   }, [updateTaskStatus]);
