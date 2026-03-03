@@ -4,16 +4,8 @@ import { ListTree } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import type { AdminTaskTemplateDto } from '@eridu/api-types/task-management';
-import { DropdownMenuItem } from '@eridu/ui';
+import { adaptColumnFiltersChange, adaptPaginationChange, DataTable, DataTableActions, DataTablePagination, DataTableToolbar, DropdownMenuItem } from '@eridu/ui';
 
-import {
-  adaptColumnFiltersChange,
-  adaptPaginationChange,
-  DataTable,
-  DataTableActions,
-  DataTablePagination,
-  DataTableToolbar,
-} from '@/components/data-table';
 import { AdminLayout } from '@/features/admin/components';
 import { DeleteConfirmDialog } from '@/features/admin/components/delete-confirm-dialog';
 import { useDeleteAdminTaskTemplate } from '@/features/task-templates/api/delete-admin-task-template';

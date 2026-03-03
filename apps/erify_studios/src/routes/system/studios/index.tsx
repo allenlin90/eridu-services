@@ -9,16 +9,8 @@ import type {
   StudioApiResponse,
   updateStudioInputSchema,
 } from '@eridu/api-types/studios';
-import { DropdownMenuItem } from '@eridu/ui';
+import { adaptColumnFiltersChange, adaptPaginationChange, DataTable, DataTableActions, DataTablePagination, DataTableToolbar, DropdownMenuItem } from '@eridu/ui';
 
-import {
-  adaptColumnFiltersChange,
-  adaptPaginationChange,
-  DataTable,
-  DataTableActions,
-  DataTablePagination,
-  DataTableToolbar,
-} from '@/components/data-table';
 import { AdminLayout } from '@/features/admin/components';
 import {
   StudioCreateDialog,

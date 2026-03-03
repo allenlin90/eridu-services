@@ -1,10 +1,12 @@
-import type { Table } from '@tanstack/react-table';
-import { fireEvent, render, screen } from '@testing-library/react';
-import * as React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import '@testing-library/jest-dom/vitest';
 
-import type { SearchableColumn } from '@/components/data-table/data-table-toolbar';
-import { DataTableToolbar } from '@/components/data-table/data-table-toolbar';
+import type { Table } from '@tanstack/react-table';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import * as React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { SearchableColumn } from '../data-table-toolbar';
+import { DataTableToolbar } from '../data-table-toolbar';
 
 // Mock UI components
 vi.mock('@eridu/ui', () => ({
@@ -92,6 +94,12 @@ vi.mock('@eridu/ui/lib/utils', () => ({
   cn: (...args: any[]) => args.filter(Boolean).join(' '),
 }));
 
+// Mock @eridu/i18n
+vi.mock('@eridu/i18n', () => ({
+  'common.search': () => 'Search...',
+  'common.reset': () => 'Reset',
+}));
+
 // Mock lucide-react
 vi.mock('lucide-react', () => ({
   Plus: () => <span>+</span>,
@@ -104,12 +112,6 @@ vi.mock('lucide-react', () => ({
 // Mock date-fns
 vi.mock('date-fns', () => ({
   format: (_date: Date, _formatStr: string) => 'Jan 1',
-}));
-
-// Mock i18n
-vi.mock('@/paraglide/messages.js', () => ({
-  'admin.searchPlaceholder': () => 'Search...',
-  'admin.resetButton': () => 'Reset',
 }));
 
 describe('dataTableToolbar', () => {
@@ -133,6 +135,10 @@ describe('dataTableToolbar', () => {
     };
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it('renders primary search input', () => {
     render(
       <DataTableToolbar
@@ -145,7 +151,7 @@ describe('dataTableToolbar', () => {
     expect(screen.getByPlaceholderText('Search by name')).toBeInTheDocument();
   });
 
-  it('uses default search placeholder from i18n', () => {
+  it('uses default search placeholder', () => {
     render(
       <DataTableToolbar table={mockTable as Table<any>} searchColumn="name" />,
     );

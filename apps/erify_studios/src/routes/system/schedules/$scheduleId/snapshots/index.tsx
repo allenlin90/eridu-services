@@ -10,9 +10,9 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
+  DataTable,
 } from '@eridu/ui';
 
-import { DataTable } from '@/components/data-table';
 import { AdminLayout } from '@/features/admin/components';
 import { adminApi } from '@/lib/api/admin';
 

@@ -2,20 +2,19 @@
 
 import * as React from 'react';
 
+import * as m from '@eridu/i18n';
 import { cn } from '@eridu/ui/lib/utils';
 
-import { FilterChips } from '@/components/data-table/toolbar/filter-chips';
-import { FilterPopover } from '@/components/data-table/toolbar/filter-popover';
-import { QuickFilters } from '@/components/data-table/toolbar/quick-filters';
-import { SearchInput } from '@/components/data-table/toolbar/search-input';
+import { FilterChips } from './toolbar/filter-chips';
+import { FilterPopover } from './toolbar/filter-popover';
+import { QuickFilters } from './toolbar/quick-filters';
+import { SearchInput } from './toolbar/search-input';
 import type {
   DataTableToolbarProps,
   SearchableColumn,
-} from '@/components/data-table/toolbar/types';
+} from './toolbar/types';
 
 const EMPTY_ARRAY: string[] = [];
-const DEFAULT_SEARCH_PLACEHOLDER = 'Search...';
-const DEFAULT_RESET_BUTTON_LABEL = 'Reset';
 
 export type { SearchableColumn };
 
@@ -26,7 +25,7 @@ export function DataTableToolbar<TData>({
   searchPlaceholder,
   quickFilterColumns = EMPTY_ARRAY,
   featuredFilterColumns = EMPTY_ARRAY,
-  resetButtonLabel = DEFAULT_RESET_BUTTON_LABEL,
+  resetButtonLabel,
   children,
 }: DataTableToolbarProps<TData>) {
   const primaryColumnId = searchColumn ?? searchableColumns?.[0]?.id;
@@ -85,7 +84,7 @@ export function DataTableToolbar<TData>({
           <SearchInput
             value={primaryFilterValue}
             onChange={handleSearchChange}
-            placeholder={searchPlaceholder ?? DEFAULT_SEARCH_PLACEHOLDER}
+            placeholder={searchPlaceholder ?? m['common.search']()}
             className="w-full sm:w-64 lg:w-80"
           />
         )}
@@ -111,7 +110,7 @@ export function DataTableToolbar<TData>({
           searchableColumns={searchableColumns}
           primaryColumnId={primaryColumnId}
           onClearAll={handleResetAll}
-          resetButtonLabel={resetButtonLabel}
+          resetButtonLabel={resetButtonLabel ?? m['common.reset']()}
         />
       )}
     </div>

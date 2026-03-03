@@ -1,8 +1,8 @@
 import type { RowSelectionState, Updater } from '@tanstack/react-table';
 
 import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
+import { DataTable, DataTableToolbar } from '@eridu/ui';
 
-import { DataTable, DataTableToolbar } from '@/components/data-table';
 import type { getColumns } from '@/features/studio-shows/components/show-tasks-table/columns';
 
 type TasksTableSectionProps = {

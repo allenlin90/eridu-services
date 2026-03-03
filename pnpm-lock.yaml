@@ -349,6 +349,9 @@ importers:
       '@eridu/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@hookform/resolvers':
+        specifier: ^5.2.2
+        version: 5.2.2(react-hook-form@7.68.0(react@19.2.0))
       '@tanstack/react-query':
         specifier: ^5.90.11
         version: 5.90.11(react@19.2.0)
@@ -367,6 +370,9 @@ importers:
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@tanstack/react-virtual':
+        specifier: ^3.13.18
+        version: 3.13.18(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       axios:
         specifier: ^1.13.2
         version: 1.13.2
@@ -391,9 +397,18 @@ importers:
       react-dom:
         specifier: ^19.2.0
         version: 19.2.0(react@19.2.0)
+      react-hook-form:
+        specifier: ^7.68.0
+        version: 7.68.0(react@19.2.0)
       serve:
         specifier: ^14.2.5
         version: 14.2.5
+      sonner:
+        specifier: ^2.0.7
+        version: 2.0.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      usehooks-ts:
+        specifier: ^3.1.1
+        version: 3.1.1(react@19.2.0)
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -772,6 +787,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@eridu/i18n':
+        specifier: workspace:*
+        version: link:../i18n
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.68.0(react@19.2.0))
@@ -857,6 +875,9 @@ importers:
       '@testing-library/dom':
         specifier: ^10.4.1
         version: 10.4.1
+      '@testing-library/jest-dom':
+        specifier: ^6.9.1
+        version: 6.9.1
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.6))(@types/react@19.2.6)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)

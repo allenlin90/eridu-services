@@ -4,7 +4,7 @@ import type { DateRange } from 'react-day-picker';
 
 import { LoadingPage, PageTransition, useTableUrlState } from '@eridu/ui';
 
-import { useShows } from '@/features/shows/api';
+import { useMyShows } from '@/features/shows/api/shows.api';
 import { columns } from '@/features/shows/components/columns';
 import { ShowsTable } from '@/features/shows/components/shows-table';
 import * as m from '@/paraglide/messages.js';
@@ -43,7 +43,7 @@ export function ShowsListPage() {
     return dateObj.toISOString();
   };
 
-  const { data, isLoading, error } = useShows({
+  const { data, isLoading, isFetching, error } = useMyShows({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     name: nameFilter,
@@ -93,6 +93,8 @@ export function ShowsListPage() {
         onSortingChange={onSortingChange}
         columnFilters={columnFilters as ColumnFiltersState}
         onColumnFiltersChange={onColumnFiltersChange}
+        isLoading={isLoading}
+        isFetching={isFetching}
       />
     </PageTransition>
   );

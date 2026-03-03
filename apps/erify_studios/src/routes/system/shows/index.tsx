@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 
 import type { updateShowInputSchema } from '@eridu/api-types/shows';
-
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
@@ -13,7 +12,8 @@ import {
   DataTableActions,
   DataTablePagination,
   DataTableToolbar,
-} from '@/components/data-table';
+} from '@eridu/ui';
+
 import { AdminLayout } from '@/features/admin/components';
 import type { Show } from '@/features/shows/api/get-shows';
 import { usePlatformsFieldData } from '@/features/shows/components/hooks/use-platforms-field-data';

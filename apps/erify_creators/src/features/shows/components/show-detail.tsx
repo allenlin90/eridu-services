@@ -61,7 +61,7 @@ export function ShowDetailView({ show }: ShowDetailProps) {
                   pageSize: 10,
                 }}
               >
-                Shows
+                {m['shows.title']()}
               </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
@@ -82,7 +82,7 @@ export function ShowDetailView({ show }: ShowDetailProps) {
         {/* Basic Information */}
         <div className="space-y-4">
           <h2 className="text-lg font-semibold border-b pb-2">
-            Basic Information
+            {m['shows.basicInformation']()}
           </h2>
           <dl className="space-y-3">
             <div className="grid grid-cols-3 gap-2">
@@ -107,7 +107,7 @@ export function ShowDetailView({ show }: ShowDetailProps) {
             )}
             {show.show_standard_name && (
               <div className="grid grid-cols-3 gap-2">
-                <dt className="text-sm font-medium text-gray-600">Standard</dt>
+                <dt className="text-sm font-medium text-gray-600">{m['shows.standard']()}</dt>
                 <dd className="col-span-2 text-sm">{show.show_standard_name}</dd>
               </div>
             )}
@@ -117,19 +117,19 @@ export function ShowDetailView({ show }: ShowDetailProps) {
         {/* Client & Studio Information */}
         <div className="space-y-4">
           <h2 className="text-lg font-semibold border-b pb-2">
-            Client & Studio
+            {m['shows.clientAndStudio']()}
           </h2>
           <dl className="space-y-3">
             {show.client_name && (
               <div className="grid grid-cols-3 gap-2">
-                <dt className="text-sm font-medium text-gray-600">Client</dt>
+                <dt className="text-sm font-medium text-gray-600">{m['shows.client']()}</dt>
                 <dd className="col-span-2 text-sm">{show.client_name}</dd>
               </div>
             )}
             {show.studio_room_name && (
               <div className="grid grid-cols-3 gap-2">
                 <dt className="text-sm font-medium text-gray-600">
-                  Studio Room
+                  {m['shows.studioRoom']()}
                 </dt>
                 <dd className="col-span-2 text-sm">{show.studio_room_name}</dd>
               </div>
@@ -139,7 +139,7 @@ export function ShowDetailView({ show }: ShowDetailProps) {
 
         {/* Schedule Information */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold border-b pb-2">Schedule</h2>
+          <h2 className="text-lg font-semibold border-b pb-2">{m['shows.schedule']()}</h2>
           <dl className="space-y-3">
             {show.start_time && (
               <div className="grid grid-cols-3 gap-2">
@@ -167,7 +167,7 @@ export function ShowDetailView({ show }: ShowDetailProps) {
         {/* Metadata */}
         {show.metadata && Object.keys(show.metadata).length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold border-b pb-2">Metadata</h2>
+            <h2 className="text-lg font-semibold border-b pb-2">{m['shows.metadata']()}</h2>
             <dl className="space-y-3">
               {Object.entries(show.metadata).map(([key, value]) => (
                 <div key={key} className="grid grid-cols-3 gap-2">
