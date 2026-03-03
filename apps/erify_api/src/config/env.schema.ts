@@ -61,6 +61,13 @@ export const envSchema = z.object({
     .min(1, { message: 'THROTTLE_LIMIT must be at least 1' })
     .default(10),
 
+  // Cloudflare R2 (S3-compatible object storage)
+  R2_ENDPOINT: z.url({ message: 'R2_ENDPOINT must be a valid URL' }).optional(),
+  R2_ACCESS_KEY_ID: z.string().min(1).optional(),
+  R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+  R2_BUCKET_NAME: z.string().min(1).optional(),
+  R2_PUBLIC_BASE_URL: z.url({ message: 'R2_PUBLIC_BASE_URL must be a valid URL' }).optional(),
+
 });
 
 // Export type for use with ConfigService<Env>

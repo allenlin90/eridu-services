@@ -28,6 +28,7 @@ import { UserModule } from '@/models/user/user.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { PrismaService } from '@/prisma/prisma.service';
 import { StudiosModule } from '@/studios/studios.module';
+import { UploadModule } from '@/uploads/upload.module';
 
 @Module({
   imports: [
@@ -99,6 +100,7 @@ import { StudiosModule } from '@/studios/studios.module';
     UserModule,
     MeModule,
     StudiosModule,
+    UploadModule,
     OpenAPIModule.forRoot(),
   ],
   providers: [
