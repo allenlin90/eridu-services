@@ -281,3 +281,18 @@ const canManageTasks = membership?.role === 'admin' || membership?.role === 'man
 
 {canManageTasks && <Button>Generate Tasks</Button>}
 ```
+
+### IDOR Protection: Route Param is Authoritative
+
+When a client can supply a `studio_id` in the request body or query string (e.g., from a Zod DTO), always discard it and use the validated route param instead:
+
+```typescript
+// ❌ WRONG — uses client-supplied studio_id from query
+const { data } = await this.service.list({ ...query });
+
+// ✅ CORRECT — discard client value, use route param the guard already validated
+const { studioId: _ignoredStudioId, ...scopedQuery } = query;
+const { data } = await this.service.list({ ...scopedQuery, studioId });
+```
+
+This applies to all studio-scoped controllers, including lookup/proxy controllers.

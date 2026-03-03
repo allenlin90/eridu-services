@@ -2,7 +2,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { Info, Pencil } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import {
   TASK_ACTION,
@@ -33,25 +33,18 @@ type MemberOption = { value: string; label: string };
 // A custom cell component so we can use hooks inside it
 function AssigneeCell({
   task,
-  memberOptions,
+  getMembers,
+  onSearch,
   onAssign,
   isAssigning,
 }: {
   task: TaskWithRelationsDto;
-  memberOptions: MemberOption[];
+  getMembers: () => Membership[];
+  onSearch: (value: string) => void;
   onAssign: (taskId: string, assigneeUid: string | null) => void;
   isAssigning: boolean;
 }) {
-  const [memberSearch, setMemberSearch] = useState('');
-
-  const filteredOptions = useMemo(() => {
-    if (!memberSearch)
-      return memberOptions;
-    return memberOptions.filter((o) =>
-      o.label.toLowerCase().includes(memberSearch.toLowerCase()),
-    );
-  }, [memberOptions, memberSearch]);
-
+  const memberOptions = getMemberOptions(getMembers());
   const currentValue = task.assignee?.id || 'unassigned';
 
   return (
@@ -62,8 +55,8 @@ function AssigneeCell({
           onAssign(task.id, val === 'unassigned' ? null : val);
         }
       }}
-      onSearch={setMemberSearch}
-      options={[{ value: 'unassigned', label: 'Unassigned' }, ...filteredOptions]}
+      onSearch={onSearch}
+      options={[{ value: 'unassigned', label: 'Unassigned' }, ...memberOptions]}
       disabled={isAssigning}
       placeholder="Unassigned"
       className="w-[200px] h-8 text-xs"
@@ -234,15 +227,14 @@ function ProcessStatusCell({
 }
 
 export function getColumns(
-  members: Membership[],
+  getMembers: () => Membership[],
+  onMemberSearch: (value: string) => void,
   onAssign: (taskId: string, assigneeUid: string | null) => void,
   isAssigning: boolean,
   onRunAction: (task: TaskWithRelationsDto, action: TaskAction) => void,
   processingTaskId: string | null,
   onEditDueDate: (task: TaskWithRelationsDto) => void,
 ): ColumnDef<TaskWithRelationsDto>[] {
-  const memberOptions = getMemberOptions(members);
-
   return [
     {
       id: 'select',
@@ -337,7 +329,8 @@ export function getColumns(
       cell: ({ row }) => (
         <AssigneeCell
           task={row.original}
-          memberOptions={memberOptions}
+          getMembers={getMembers}
+          onSearch={onMemberSearch}
           onAssign={onAssign}
           isAssigning={isAssigning}
         />

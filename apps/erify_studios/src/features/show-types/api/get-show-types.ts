@@ -15,8 +15,12 @@ export type GetShowTypesParams = {
   id?: string;
 };
 
-export async function getShowTypes(params: GetShowTypesParams): Promise<ShowTypesResponse> {
-  const response = await apiClient.get<ShowTypesResponse>('/admin/show-types', { params });
+export async function getShowTypes(
+  params: GetShowTypesParams,
+  studioId?: string,
+): Promise<ShowTypesResponse> {
+  const endpoint = studioId ? `/studios/${studioId}/show-types` : '/admin/show-types';
+  const response = await apiClient.get<ShowTypesResponse>(endpoint, { params });
   return response.data;
 }
 

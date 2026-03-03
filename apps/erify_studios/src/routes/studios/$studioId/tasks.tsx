@@ -20,6 +20,8 @@ function StudioTasksPage() {
     studioId,
   });
   const pagination = tableProps.pagination;
+  const { key: actionSheetKey, ...actionSheetRestProps } = actionSheetProps;
+  const { key: dueDateDialogKey, ...dueDateDialogRestProps } = dueDateDialogProps;
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
@@ -73,9 +75,9 @@ function StudioTasksPage() {
         )}
       />
 
-      <StudioTaskActionSheet {...actionSheetProps} />
+      <StudioTaskActionSheet key={actionSheetKey} {...actionSheetRestProps} />
 
-      <TaskDueDateDialog {...dueDateDialogProps} />
+      <TaskDueDateDialog key={dueDateDialogKey} {...dueDateDialogRestProps} />
     </div>
   );
 }

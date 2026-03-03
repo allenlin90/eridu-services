@@ -10,10 +10,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Skeleton,
 } from '@eridu/ui';
 
-import { useMembershipsQuery } from '@/features/memberships/api/get-memberships';
+import { useStudioMembershipsQuery } from '@/features/memberships/api/get-studio-memberships';
 import type { ShowSelection } from '@/features/studio-shows/api/get-studio-shows';
 import { useAssignShows } from '@/features/studio-shows/hooks/use-assign-shows';
 
@@ -45,11 +44,17 @@ export function ShowAssignmentDialog({
     onOpenChange(nextOpen);
   };
 
-  // Fetch studio members (up to 100 for the dropdown)
-  const { data: membersResponse, isLoading: isLoadingMembers } = useMembershipsQuery({
-    studio_id: studioId,
-    limit: 100,
-  });
+  // Fetch studio members by search term (server-side) while dialog is open.
+  const { data: membersResponse, isLoading: isLoadingMembers } = useStudioMembershipsQuery(
+    studioId,
+    {
+      limit: 50,
+      name: memberSearch || undefined,
+    },
+    {
+      enabled: open,
+    },
+  );
 
   const rawMembers = membersResponse?.data;
   const members = useMemo(() => rawMembers ?? [], [rawMembers]);
@@ -68,14 +73,6 @@ export function ShowAssignmentDialog({
       label: `${m.user.name} (${m.user.email})`,
     }));
   }, [members]);
-
-  const filteredOptions = useMemo(() => {
-    if (!memberSearch)
-      return memberOptions;
-    return memberOptions.filter((o) =>
-      o.label.toLowerCase().includes(memberSearch.toLowerCase()),
-    );
-  }, [memberOptions, memberSearch]);
 
   const overwriteShowsCount = useMemo(
     () => shows.filter((show) => show.task_summary.assigned > 0).length,
@@ -136,19 +133,14 @@ export function ShowAssignmentDialog({
 
           <div className="space-y-2 mt-2">
             <p className="text-sm font-medium">Assignee</p>
-            {isLoadingMembers
-              ? (
-                  <Skeleton className="h-9 w-full" />
-                )
-              : (
-                  <AsyncCombobox
-                    value={selectedAssignee}
-                    onChange={setSelectedAssignee}
-                    onSearch={setMemberSearch}
-                    options={filteredOptions}
-                    placeholder="Search a studio member..."
-                  />
-                )}
+            <AsyncCombobox
+              value={selectedAssignee}
+              onChange={setSelectedAssignee}
+              onSearch={setMemberSearch}
+              options={memberOptions}
+              isLoading={isLoadingMembers}
+              placeholder="Search a studio member..."
+            />
           </div>
 
           {requiresOverwriteConfirmation && (

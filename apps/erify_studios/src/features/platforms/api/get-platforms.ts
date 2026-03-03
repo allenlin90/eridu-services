@@ -15,8 +15,12 @@ export type GetPlatformsParams = {
   id?: string;
 };
 
-export async function getPlatforms(params: GetPlatformsParams): Promise<PlatformsResponse> {
-  const response = await apiClient.get<PlatformsResponse>('/admin/platforms', { params });
+export async function getPlatforms(
+  params: GetPlatformsParams,
+  studioId?: string,
+): Promise<PlatformsResponse> {
+  const endpoint = studioId ? `/studios/${studioId}/platforms` : '/admin/platforms';
+  const response = await apiClient.get<PlatformsResponse>(endpoint, { params });
   return response.data;
 }
 

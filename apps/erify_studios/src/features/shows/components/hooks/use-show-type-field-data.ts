@@ -8,10 +8,10 @@ import type { Show } from '@/features/shows/api/get-shows';
  * Network hook for show type field.
  * Stable list with 1 hour cache.
  */
-export function useShowTypeFieldData(show: Show | null) {
+export function useShowTypeFieldData(show: Show | null, studioId?: string) {
   const { data: showTypesData, isLoading } = useQuery({
-    queryKey: ['show-types', 'list', 'all'],
-    queryFn: () => getShowTypes({ limit: 100 }),
+    queryKey: ['show-types', 'list', studioId ?? 'admin', 'all'],
+    queryFn: () => getShowTypes({ limit: 100 }, studioId),
     staleTime: 60 * 60 * 1000, // 1 hour
   });
 

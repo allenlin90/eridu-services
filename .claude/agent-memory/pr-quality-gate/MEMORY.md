@@ -131,3 +131,64 @@ Returns `min(fieldMax, QC_SCREENSHOT limit = 200KB)`. Name is misleading (sounds
 
 ### isSupportedUploadMimeType: Redundant Double-Check (Known Suggestion)
 In `json-form.tsx`, `isSupportedUploadMimeType(value)` checks `MATERIAL_ASSET_ALLOWED_MIME_TYPES.has(value) && isUploadMimeTypeAllowed(MATERIAL_ASSET, value)`. Both checks query the same data structure. The Set.has() is redundant with the includes() inside isUploadMimeTypeAllowed. Minor dead-code smell, not a blocker.
+
+## Studio-Scoped Lookup Pattern (fix/studio-membership-scoped-routes)
+
+### StudioLookupModule Location and Design
+- `apps/erify_api/src/studios/studio-lookup/` holds thin routing adapters for show-types, show-standards, show-statuses, platforms under `/studios/:studioId/`
+- studioId param is validated by UidValidationPipe but intentionally DISCARDED (`_studioId`) — these are global reference data, not studio-scoped data; studioId serves only as auth gate
+- StudioGuard validates user membership in the studio before serving the response — security model is correct
+- Pattern: `@StudioProtected()` on class (any member), studioId validated by pipe but ignored in method body
+
+### Frontend Lookup Hook Dual-Endpoint Pattern
+- `getPlatforms`, `getShowTypes`, `getShowStandards`, `getShowStatuses` all accept optional `studioId?: string`
+- When studioId is present: hits `/studios/:studioId/<resource>`; when absent: hits `/admin/<resource>`
+- Query keys use `studioId ?? 'admin'` as discriminator — prevents cache collisions between studio and admin contexts
+- show-form-fields.tsx uses hooks WITHOUT studioId (always admin path) — safe because ShowUpdateDialog is ONLY used in system (admin) routes, never in studio routes
+- system/shows route uses the hooks without studioId — correct (admin auth context)
+- studios/$studioId/shows route uses hooks WITH studioId — correct (studio auth context)
+
+### Shared memberSearch State Across AssigneeCell Rows (Known Design)
+- `use-studio-show-tasks-page-controller.tsx` holds a single `memberSearch` state and passes `setMemberSearch` to ALL AssigneeCell rows via `onMemberSearch` in getColumns
+- Each AssigneeCell has its own local `inputValue` state in AsyncCombobox, but onSearch is shared
+- Only one popover can be open at a time so shared search state works in practice; edge case: opening row B clears row A's search (acceptable UX tradeoff)
+- `membersRef` pattern: useRef<Membership[]> stores current member list, passed as `() => membersRef.current` getter to getColumns to prevent column re-creation on member data changes
+- `react-hooks/refs` ESLint suppressions are LEGITIMATE — this rule (`eslint-plugin-react-hooks@7.0.1`) flags ref mutation outside useEffect; the pattern here (update ref in render body) is intentional for stable getters in memoized callbacks
+
+### Unstaged Repository Change (name filter)
+- In `fix/studio-membership-scoped-routes`, `studio-membership.repository.ts` has an unstaged `name` filter addition
+- This is the `if (params.name)` filter on `user.name` — it was being added to implement search-by-name but not committed
+- The schema (`listStudioMembershipsFilterSchema`) accepts `name` field; service passes it through; but repository silently ignores it until committed
+- This is pre-existing debt per MEMORY.md ("name filter: accepted by schema, not implemented in repository")
+
+### getMemberOptions Called Per Render in AssigneeCell (Known Perf Note)
+- `getMemberOptions(getMembers())` is called inside AssigneeCell on every render (no useMemo)
+- Maps members array to options array — O(N) per cell per render; with 50 tasks × 50 members = 2500 ops
+- Low-cost string mapping; not a performance blocker but worth noting for large member/task lists
+
+## Studio-Scoped Module Pattern (feat/studio-membership-endpoint)
+
+### StudioMembershipModule Location
+- The NEW studio-scoped controller for memberships lives at `apps/erify_api/src/studios/studio-membership/` (not under `models/`).
+- This is correct: `studios/` sub-modules are thin routing adapters, they import `MembershipModule` from `models/membership/`.
+- Route: `GET /studios/:studioId/studio-memberships` — different from admin `GET /admin/studio-memberships`.
+
+### Double @StudioProtected Is Intentional and Correct
+`BaseStudioController` applies `@StudioProtected()` (no roles = any member).
+Each concrete controller applies its own `@StudioProtected([ROLE])` to tighten.
+`StudioGuard` uses `reflector.getAllAndOverride()` — the METHOD decorator wins over CLASS decorator; CLASS decorator wins over BASE CLASS decorator.
+Net effect: `@StudioProtected([STUDIO_ROLE.ADMIN])` on the controller class overrides the base class `@StudioProtected()`. No double execution issue.
+
+### listStudioMembershipsQuerySchema: studioId from schema transform is IGNORED by controller
+The `listStudioMembershipsQuerySchema` transforms `studio_id` → `studioId`. In the studio-scoped controller, this client-supplied `studioId` is intentionally destructured and discarded (`_ignoredStudioId`), and the route-param `studioId` is substituted. This prevents IDOR — clients cannot query another studio's memberships by passing a different `studio_id`.
+
+### Frontend Query Key Namespace: 'studio-memberships' vs 'memberships'
+- Admin endpoint query key: `['memberships', 'list', params]`
+- Studio-scoped endpoint query key: `['studio-memberships', 'list', studioId, params]`
+These are intentionally different namespaces. Mutations on admin memberships DO invalidate `['memberships']` but NOT `['studio-memberships']`. If an admin creates/updates/deletes a membership while the studio view is open, the studio-membership cache will go stale. This is acceptable for current usage (studio members list is a dropdown, not a live-updated critical view). If real-time consistency becomes important, invalidation should cross namespaces.
+
+### Frontend: get-studio-memberships.ts id param maps to uid filter
+`GetStudioMembershipsParams.id` maps to backend `listStudioMembershipsQuerySchema`'s `id` field which transforms to `uid`. The backend filter does a `contains/insensitive` search on uid — not exact match. This is the established pattern from the admin endpoint.
+
+### name filter: accepted by schema, not implemented in repository
+`listStudioMembershipsFilterSchema` accepts a `name?: string` field. The repository `listStudioMemberships` does not filter by name. This is pre-existing debt carried over from the admin endpoint — the field is silently ignored at query time.

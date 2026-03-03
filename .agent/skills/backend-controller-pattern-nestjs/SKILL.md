@@ -282,6 +282,52 @@ export class ResourceController extends BaseStudioController {
 - [ ] Studio scoping in all queries
 - [ ] Create operations connect studio relation
 
+### Studio-Scoped Lookup Controllers
+
+**Use Case:** Expose globally-managed reference data (ShowTypes, Platforms, etc.) through a studio-auth guard so that studio members can only reach them via their studio context.
+
+Unlike standard studio controllers, lookup controllers call **unscoped** global model services — the guard handles IDOR protection, not the service call.
+
+```typescript
+@ApiTags('Studio Lookup')
+@StudioProtected()                          // No roles — any member can read lookups
+@Controller('studios/:studioId')
+export class StudioLookupController extends BaseStudioController {
+  @Get('show-types')
+  @ZodPaginatedResponse(showTypeDto)
+  async getShowTypes(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
+    @Query() query: ListShowTypesQueryDto,
+  ) {
+    // _studioId prefix: validated by guard but not passed to service (service is unscoped)
+    const { data, total } = await this.showTypeService.listShowTypes({
+      skip: query.skip,
+      take: query.take,
+      name: query.name,
+    });
+    return this.createPaginatedResponse(data, total, query);
+  }
+}
+```
+
+**Key rules:**
+- Prefix unused route param with `_` (e.g., `_studioId`) — guard already validated it
+- Add `@ApiTags` explicitly (no inherited tag from a resource-specific controller)
+- Do NOT export `StudioLookupModule` from `StudiosModule` unless another module injects its services
+
+**IDOR protection when client can also supply `studio_id` in query/body:** Discard the client value and use the route param exclusively:
+
+```typescript
+@Get()
+async index(
+  @Param('studioId', new UidValidationPipe(...)) studioId: string,
+  @Query() query: ListStudioMembershipsQueryDto,
+) {
+  const { studioId: _ignoredStudioId, ...scopedQuery } = query;   // ← discard client value
+  return this.service.list({ ...scopedQuery, studioId });           // ← route param is authoritative
+}
+```
+
 ---
 
 ## User (Me) Controllers

@@ -15,8 +15,12 @@ export type GetShowStatusesParams = {
   id?: string;
 };
 
-export async function getShowStatuses(params: GetShowStatusesParams): Promise<ShowStatusesResponse> {
-  const response = await apiClient.get<ShowStatusesResponse>('/admin/show-statuses', { params });
+export async function getShowStatuses(
+  params: GetShowStatusesParams,
+  studioId?: string,
+): Promise<ShowStatusesResponse> {
+  const endpoint = studioId ? `/studios/${studioId}/show-statuses` : '/admin/show-statuses';
+  const response = await apiClient.get<ShowStatusesResponse>(endpoint, { params });
   return response.data;
 }
 

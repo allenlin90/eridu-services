@@ -152,6 +152,30 @@ queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) }
 
 **Rule**: Use `listPrefix` in mutations that change data visible in any list (e.g., assign, generate tasks, bulk delete). Use `list(...)` only in `queryKey` for `useQuery`/`useInfiniteQuery` hooks.
 
+### Dual-Endpoint + Query Key Cache Isolation
+
+Some API functions serve **both admin and studio contexts** (e.g., `getShowTypes` hits `/admin/show-types` or `/studios/:studioId/show-types`). The query key **must include the scope** to prevent cache collisions.
+
+```typescript
+// api/get-show-types.ts — the fetcher accepts optional studioId
+export async function getShowTypes(params: GetShowTypesParams, studioId?: string) {
+  const endpoint = studioId ? `/studios/${studioId}/show-types` : '/admin/show-types';
+  const { data } = await apiClient.get<ShowTypesResponse>(endpoint, { params });
+  return data;
+}
+
+// hooks/use-show-type-field-data.ts — include scope in query key
+export function useShowTypeFieldData(show: Show | null, studioId?: string) {
+  return useQuery({
+    queryKey: ['show-types', 'list', studioId ?? 'admin', 'all'],  // ← scope discriminator
+    queryFn: () => getShowTypes({ limit: 100 }, studioId),
+    staleTime: 60 * 60 * 1000,
+  });
+}
+```
+
+**Rule**: `studioId ?? 'admin'` as a key segment prevents a studio-scoped fetch from poisoning the admin cache (and vice versa). Apply this pattern whenever the same fetcher can hit different base paths.
+
 ---
 
 ## TanStack Query Integration

@@ -87,10 +87,10 @@ function StudioShowsPage() {
   }, [selectedShowIds, selectedShowSnapshots, showsById]);
 
   // Fetch filter options
-  const { options: typeOptions } = useShowTypeFieldData(null);
-  const { options: standardOptions } = useShowStandardFieldData(null);
-  const { options: statusOptions } = useShowStatusFieldData(null);
-  const { options: platformOptions } = usePlatformsFieldData(null);
+  const { options: typeOptions } = useShowTypeFieldData(null, studioId);
+  const { options: standardOptions } = useShowStandardFieldData(null, studioId);
+  const { options: statusOptions } = useShowStatusFieldData(null, studioId);
+  const { options: platformOptions } = usePlatformsFieldData(null, studioId);
 
   const searchableColumns = useMemo(
     () => [

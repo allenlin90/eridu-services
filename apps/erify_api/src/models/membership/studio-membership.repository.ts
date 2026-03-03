@@ -76,6 +76,7 @@ export class StudioMembershipRepository extends BaseRepository<
       studioId?: string;
       role?: string;
       userId?: UserId;
+      name?: string;
     },
     include?: T,
   ): Promise<{
@@ -108,6 +109,15 @@ export class StudioMembershipRepository extends BaseRepository<
 
     if (params.userId) {
       where.userId = params.userId;
+    }
+
+    if (params.name) {
+      where.user = {
+        name: {
+          contains: params.name,
+          mode: 'insensitive',
+        },
+      };
     }
 
     const [data, total] = await Promise.all([

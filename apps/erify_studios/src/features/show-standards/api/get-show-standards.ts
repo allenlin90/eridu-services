@@ -15,8 +15,12 @@ export type GetShowStandardsParams = {
   id?: string;
 };
 
-export async function getShowStandards(params: GetShowStandardsParams): Promise<ShowStandardsResponse> {
-  const response = await apiClient.get<ShowStandardsResponse>('/admin/show-standards', { params });
+export async function getShowStandards(
+  params: GetShowStandardsParams,
+  studioId?: string,
+): Promise<ShowStandardsResponse> {
+  const endpoint = studioId ? `/studios/${studioId}/show-standards` : '/admin/show-standards';
+  const response = await apiClient.get<ShowStandardsResponse>(endpoint, { params });
   return response.data;
 }
 

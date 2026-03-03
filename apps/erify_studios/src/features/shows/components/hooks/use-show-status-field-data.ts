@@ -8,10 +8,10 @@ import type { Show } from '@/features/shows/api/get-shows';
  * Network hook for show status field.
  * Stable list with 1 hour cache.
  */
-export function useShowStatusFieldData(show: Show | null) {
+export function useShowStatusFieldData(show: Show | null, studioId?: string) {
   const { data: showStatusesData, isLoading } = useQuery({
-    queryKey: ['show-statuses', 'list', 'all'],
-    queryFn: () => getShowStatuses({ limit: 100 }),
+    queryKey: ['show-statuses', 'list', studioId ?? 'admin', 'all'],
+    queryFn: () => getShowStatuses({ limit: 100 }, studioId),
     staleTime: 60 * 60 * 1000, // 1 hour
   });
 

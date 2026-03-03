@@ -10,12 +10,12 @@ import type { Show } from '@/features/shows/api/get-shows';
  * - Allows searching by name
  * - Always includes currently selected platforms at TOP of list (for visibility in dropdown)
  */
-export function usePlatformsFieldData(show: Show | null) {
+export function usePlatformsFieldData(show: Show | null, studioId?: string) {
   const [search, setSearch] = useState('');
 
   const { data: platformsData, isLoading } = useQuery({
-    queryKey: ['platforms', 'list', { name: search }],
-    queryFn: () => getPlatforms({ name: search, limit: search ? 20 : 10 }),
+    queryKey: ['platforms', 'list', studioId ?? 'admin', { name: search }],
+    queryFn: () => getPlatforms({ name: search, limit: search ? 20 : 10 }, studioId),
     staleTime: 15 * 60 * 1000, // 15 minutes
   });
 
