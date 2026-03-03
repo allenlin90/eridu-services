@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom/vitest';
+
 import type { Table } from '@tanstack/react-table';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import * as React from 'react';
@@ -91,6 +92,12 @@ vi.mock('@eridu/ui', () => ({
 // Mock @eridu/ui/lib/utils
 vi.mock('@eridu/ui/lib/utils', () => ({
   cn: (...args: any[]) => args.filter(Boolean).join(' '),
+}));
+
+// Mock @eridu/i18n
+vi.mock('@eridu/i18n', () => ({
+  'common.search': () => 'Search...',
+  'common.reset': () => 'Reset',
 }));
 
 // Mock lucide-react

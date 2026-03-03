@@ -22,7 +22,8 @@
   },
   "scripts": {
     "generate": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide",
-    "build": "npm run generate && tsc --skipLibCheck",
+    "build": "npm run generate && tsc --skipLibCheck && npm run patch-dts",
+    "patch-dts": "sed -i '' -E 's/export \\{ ([a-zA-Z0-9_]+) as ([a-zA-Z0-9_]+\\.[a-zA-Z0-9_]+) \\};/export { \\1 as \"\\2\" };/g' dist/paraglide/messages/*.d.ts || true",
     "dev": "npm run generate && chokidar \"messages/**/*.json\" \"project.inlang/**/*\" -c \"npm run generate\"",
     "prepare": "npm run generate",
     "typecheck": "tsc --noEmit",

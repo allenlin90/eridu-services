@@ -1,10 +1,10 @@
 'use client';
 
 import { useNavigate } from '@tanstack/react-router';
-import {
-  type ColumnDef,
-  type ColumnFiltersState,
-  type SortingState,
+import type {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
 } from '@tanstack/react-table';
 import * as React from 'react';
 

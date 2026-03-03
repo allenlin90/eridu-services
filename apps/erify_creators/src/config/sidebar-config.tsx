@@ -14,7 +14,7 @@ import * as m from '@/paraglide/messages.js';
 const sidebarHeader: SidebarHeaderContent = {
   icon: Command,
   title: 'Erify',
-  subtitle: 'Studio',
+  subtitle: 'Creators',
   url: '/',
 };
 

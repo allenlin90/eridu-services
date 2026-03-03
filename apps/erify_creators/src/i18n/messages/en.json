@@ -21,7 +21,14 @@
     "endLabel": "End:",
     "createdLabel": "Created:",
     "updatedLabel": "Updated:",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "basicInformation": "Basic Information",
+    "clientAndStudio": "Client & Studio",
+    "schedule": "Schedule",
+    "metadata": "Metadata",
+    "standard": "Standard",
+    "client": "Client",
+    "studioRoom": "Studio Room"
   },
   "pages": {
     "notFound": "Page Not Found",
