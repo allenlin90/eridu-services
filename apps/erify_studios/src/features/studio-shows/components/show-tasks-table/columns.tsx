@@ -27,6 +27,7 @@ import {
 } from '@eridu/ui';
 
 import type { Membership } from '@/features/memberships/api/get-memberships';
+import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 
 type MemberOption = { value: string; label: string };
 
@@ -262,8 +263,8 @@ export function getColumns(
       accessorKey: 'type',
       header: 'Type',
       cell: ({ row }) => (
-        <Badge variant="outline" className="text-[10px] uppercase font-semibold">
-          {row.original.type}
+        <Badge variant="outline" className="text-[10px] font-semibold">
+          {getTaskTypeLabel(row.original.type)}
         </Badge>
       ),
       size: 100,

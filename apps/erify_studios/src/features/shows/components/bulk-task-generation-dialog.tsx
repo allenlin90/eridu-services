@@ -3,7 +3,6 @@ import { ChevronDown, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import type { TaskType } from '@eridu/api-types/task-management';
-import { TASK_TYPE } from '@eridu/api-types/task-management';
 import {
   Badge,
   Button,
@@ -27,6 +26,7 @@ import {
 import type { ShowSelection } from '@/features/studio-shows/api/get-studio-shows';
 import { useGenerateTasks } from '@/features/studio-shows/hooks/use-generate-tasks';
 import { useAllTaskTemplates } from '@/features/task-templates/hooks/use-all-task-templates';
+import { getTaskTypeLabel, getTaskTypeOptions } from '@/lib/constants/task-type-labels';
 
 type BulkTaskGenerationDialogProps = {
   shows: ShowSelection[];
@@ -41,6 +41,7 @@ export function BulkTaskGenerationDialog({
   onOpenChange,
   onSuccess,
 }: BulkTaskGenerationDialogProps) {
+  const taskTypeOptions = getTaskTypeOptions();
   const { studioId } = useParams({ strict: false }) as { studioId: string };
   // null = user hasn't made any explicit selection → default to all templates selected
   const [userSelectedIds, setUserSelectedIds] = useState<string[] | null>(null);
@@ -202,14 +203,14 @@ export function BulkTaskGenerationDialog({
                 <DropdownMenuContent align="start" className="w-56">
                   <DropdownMenuLabel>Filter By Type</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {(Object.values(TASK_TYPE) as TaskType[]).map((taskType) => (
+                  {taskTypeOptions.map(({ value: taskType, label }) => (
                     <DropdownMenuCheckboxItem
                       key={taskType}
                       checked={selectedTaskTypes.includes(taskType)}
                       onCheckedChange={() => toggleTaskType(taskType)}
                       onSelect={(event) => event.preventDefault()}
                     >
-                      {taskType}
+                      {label}
                     </DropdownMenuCheckboxItem>
                   ))}
                 </DropdownMenuContent>
@@ -276,7 +277,7 @@ export function BulkTaskGenerationDialog({
                       <p className="truncate text-sm font-medium">{template.name}</p>
                     </div>
                     <Badge variant="outline" className="text-[10px]">
-                      {template.task_type}
+                      {getTaskTypeLabel(template.task_type)}
                     </Badge>
                   </label>
                 );

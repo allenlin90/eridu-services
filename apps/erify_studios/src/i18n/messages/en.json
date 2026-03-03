@@ -7,5 +7,11 @@
   "admin_access_required_desc": "Your account does not have system administrator privileges.",
   "go_home": "Go Home",
   "admin.searchPlaceholder": "Search...",
-  "admin.resetButton": "Reset"
+  "admin.resetButton": "Reset",
+  "task_type_setup": "Pre-production",
+  "task_type_active": "On-air",
+  "task_type_closure": "Post-production",
+  "task_type_admin": "Admin",
+  "task_type_routine": "Routine",
+  "task_type_other": "Other"
 }

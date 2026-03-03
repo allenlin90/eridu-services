@@ -53,6 +53,8 @@ This inconsistency is pre-existing technical debt. Should eventually be addresse
 - `DataTableCore` alias exported from index - intended for backward compat with test mocks; can be removed once all test mocks are updated
 - `tablePagination` objects built inline (without `useMemo`) in some routes - minor perf concern, pre-existing
 - `requiresActionSheet`/`requiresTaskActionSheet` duplicated between task hooks - should be extracted to shared util
+- Task type label i18n (chore/studios-task-type-ui-labels): ADMIN/ROUTINE/OTHER hardcoded in 4 files instead of using `getTaskTypeLabel()` — see topic file for full list
+- `getTaskTypeOptions()` called inline in component render body without `useMemo` (minor, consistent with project pattern)
 
 ## erify_api Upload / Storage Patterns (feat/file-upload-presign-phase3)
 

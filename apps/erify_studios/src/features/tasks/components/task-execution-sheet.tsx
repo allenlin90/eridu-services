@@ -21,6 +21,7 @@ import { calculateTaskProgress } from '../lib/progress';
 import type { JsonFormHandle, JsonFormUploadState } from '@/components/json-form/json-form';
 import { JsonForm } from '@/components/json-form/json-form';
 import { ProgressBar } from '@/components/progress-bar';
+import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 
 type TaskExecutionSheetProps = {
   task: TaskWithRelationsDto | null;
@@ -184,7 +185,7 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
       && (task.type === 'ACTIVE' || task.type === 'CLOSURE')
       && new Date() < showStartTime
     ) {
-      toast.error(`${task.type} tasks cannot be submitted before show start time.`);
+      toast.error(`${getTaskTypeLabel(task.type)} tasks cannot be submitted before show start time.`);
       setIsSubmittingAction(false);
       return;
     }
@@ -359,7 +360,7 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
           <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
             This
             {' '}
-            {task.type}
+            {getTaskTypeLabel(task.type)}
             {' '}
             task can be submitted after show start:
             {' '}

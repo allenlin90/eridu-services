@@ -44,6 +44,8 @@ import { LivePreview } from './live-preview';
 import type { FieldItem, TemplateSchemaType } from './schema';
 import { SortableFieldList } from './sortable-field-list';
 
+import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
+
 export type TaskTemplateBuilderProps = {
   template: TemplateSchemaType;
   onChange: (template: TemplateSchemaType) => void;
@@ -241,12 +243,12 @@ export function TaskTemplateBuilder({
                     <SelectValue placeholder="Select task type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="SETUP">Setup</SelectItem>
-                    <SelectItem value="ACTIVE">Active</SelectItem>
-                    <SelectItem value="CLOSURE">Closure</SelectItem>
-                    <SelectItem value="ADMIN">Admin</SelectItem>
-                    <SelectItem value="ROUTINE">Routine</SelectItem>
-                    <SelectItem value="OTHER">Other</SelectItem>
+                    <SelectItem value="SETUP">{getTaskTypeLabel('SETUP')}</SelectItem>
+                    <SelectItem value="ACTIVE">{getTaskTypeLabel('ACTIVE')}</SelectItem>
+                    <SelectItem value="CLOSURE">{getTaskTypeLabel('CLOSURE')}</SelectItem>
+                    <SelectItem value="ADMIN">{getTaskTypeLabel('ADMIN')}</SelectItem>
+                    <SelectItem value="ROUTINE">{getTaskTypeLabel('ROUTINE')}</SelectItem>
+                    <SelectItem value="OTHER">{getTaskTypeLabel('OTHER')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

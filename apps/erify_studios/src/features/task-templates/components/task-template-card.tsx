@@ -31,6 +31,8 @@ import {
 import { useCreateTaskTemplate } from '../hooks/use-create-task-template';
 import { useDeleteTaskTemplate } from '../hooks/use-delete-task-template';
 
+import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
+
 type TaskTemplateCardProps = {
   template: TaskTemplateDto;
   studioId: string;
@@ -113,7 +115,7 @@ export function TaskTemplateCard({ template, studioId }: TaskTemplateCardProps) 
               variant="outline"
               className="shrink-0"
             >
-              {template.task_type}
+              {getTaskTypeLabel(template.task_type)}
             </Badge>
           </div>
         </CardHeader>

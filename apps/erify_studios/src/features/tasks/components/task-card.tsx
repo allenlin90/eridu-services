@@ -10,6 +10,7 @@ import { calculateTaskProgress } from '../lib/progress';
 import { StatusBadge } from './status-badge';
 
 import { ProgressBar } from '@/components/progress-bar';
+import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 import type { UiSchema } from '@/lib/zod-schema-builder';
 
 type TaskCardProps = {
@@ -37,7 +38,7 @@ export function TaskCard({ task, schema, onClick, className }: TaskCardProps) {
             {task.description}
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            {task.type}
+            {getTaskTypeLabel(task.type)}
           </p>
         </div>
         <StatusBadge status={task.status} />

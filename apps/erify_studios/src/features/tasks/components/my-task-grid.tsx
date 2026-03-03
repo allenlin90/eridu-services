@@ -13,6 +13,7 @@ import { MyTaskCard } from './my-task-card';
 import { TaskExecutionSheet } from './task-execution-sheet';
 
 import { ResponsiveCardGrid } from '@/components/responsive-card-grid';
+import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 
 export type MyTaskGridProps = {
   tasks: TaskWithRelationsDto[];
@@ -138,7 +139,7 @@ const ShowTaskGroup = memo(({ group, onTaskSelect }: ShowTaskGroupProps) => {
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <div className="mb-1 flex items-center gap-1.5">
-                  <Badge variant={TYPE_VARIANT_MAP[task.type] ?? 'outline'} className="text-[10px]">{task.type}</Badge>
+                  <Badge variant={TYPE_VARIANT_MAP[task.type] ?? 'outline'} className="text-[10px]">{getTaskTypeLabel(task.type)}</Badge>
                   <Badge variant={STATUS_VARIANT_MAP[task.status] ?? 'secondary'} className="text-[10px]">
                     {task.status.replace('_', ' ')}
                   </Badge>

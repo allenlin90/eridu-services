@@ -1,7 +1,7 @@
 import { ChevronDown, RotateCw, Search, X } from 'lucide-react';
 
 import type { TaskStatus, TaskType } from '@eridu/api-types/task-management';
-import { TASK_STATUS, TASK_TYPE } from '@eridu/api-types/task-management';
+import { TASK_STATUS } from '@eridu/api-types/task-management';
 import {
   Button,
   DatePicker,
@@ -19,21 +19,14 @@ import { cn } from '@eridu/ui/lib/utils';
 
 import type { MyTaskPageSize, MyTaskSort, TaskViewMode } from '../hooks/use-my-tasks-filters';
 
+import { getTaskTypeOptions } from '@/lib/constants/task-type-labels';
+
 const STATUS_FILTERS: { value: TaskStatus; label: string }[] = [
   { value: TASK_STATUS.PENDING, label: 'Pending' },
   { value: TASK_STATUS.IN_PROGRESS, label: 'In Progress' },
   { value: TASK_STATUS.REVIEW, label: 'In Review' },
   { value: TASK_STATUS.BLOCKED, label: 'Blocked' },
   { value: TASK_STATUS.COMPLETED, label: 'Completed' },
-];
-
-const TASK_TYPE_FILTERS: { value: TaskType; label: string }[] = [
-  { value: TASK_TYPE.SETUP, label: 'Setup' },
-  { value: TASK_TYPE.ACTIVE, label: 'Active' },
-  { value: TASK_TYPE.CLOSURE, label: 'Closure' },
-  { value: TASK_TYPE.ADMIN, label: 'Admin' },
-  { value: TASK_TYPE.ROUTINE, label: 'Routine' },
-  { value: TASK_TYPE.OTHER, label: 'Other' },
 ];
 
 const SORT_OPTIONS: { value: MyTaskSort; label: string }[] = [
@@ -91,6 +84,7 @@ export function MyTasksToolbar({
   activeFilterCount,
   onClearFilters,
 }: MyTasksToolbarProps) {
+  const taskTypeFilters = getTaskTypeOptions();
   const selectedStatusCount = selectedStatuses.length;
   const selectedTaskTypeCount = selectedTaskTypes.length;
 
@@ -183,7 +177,7 @@ export function MyTasksToolbar({
             >
               <DropdownMenuLabel>Task Type</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {TASK_TYPE_FILTERS.map((taskTypeOption) => (
+              {taskTypeFilters.map((taskTypeOption) => (
                 <DropdownMenuCheckboxItem
                   key={taskTypeOption.value}
                   checked={selectedTaskTypes.includes(taskTypeOption.value)}

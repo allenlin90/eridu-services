@@ -21,6 +21,8 @@ import {
   SelectValue,
 } from '@eridu/ui';
 
+import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
+
 const STUDIO_REVIEW_ACTIONS: Partial<Record<TaskStatus, TaskAction[]>> = {
   [TASK_STATUS.PENDING]: [TASK_ACTION.START_WORK, TASK_ACTION.SUBMIT_FOR_REVIEW, TASK_ACTION.MARK_BLOCKED, TASK_ACTION.CLOSE_TASK],
   [TASK_STATUS.IN_PROGRESS]: [TASK_ACTION.SUBMIT_FOR_REVIEW, TASK_ACTION.MARK_BLOCKED, TASK_ACTION.CLOSE_TASK],
@@ -122,8 +124,8 @@ export function getStudioTaskColumns(
       accessorKey: 'type',
       header: 'Type',
       cell: ({ row }) => (
-        <Badge variant="outline" className="text-[10px] uppercase font-semibold">
-          {row.original.type}
+        <Badge variant="outline" className="text-[10px] font-semibold">
+          {getTaskTypeLabel(row.original.type)}
         </Badge>
       ),
     },
@@ -269,12 +271,12 @@ export const studioTaskSearchableColumns = [
     title: 'Task Type',
     type: 'select' as const,
     options: [
-      { value: 'SETUP', label: 'Setup' },
-      { value: 'ACTIVE', label: 'Active' },
-      { value: 'CLOSURE', label: 'Closure' },
-      { value: 'ADMIN', label: 'Admin' },
-      { value: 'ROUTINE', label: 'Routine' },
-      { value: 'OTHER', label: 'Other' },
+      { value: 'SETUP', label: getTaskTypeLabel('SETUP') },
+      { value: 'ACTIVE', label: getTaskTypeLabel('ACTIVE') },
+      { value: 'CLOSURE', label: getTaskTypeLabel('CLOSURE') },
+      { value: 'ADMIN', label: getTaskTypeLabel('ADMIN') },
+      { value: 'ROUTINE', label: getTaskTypeLabel('ROUTINE') },
+      { value: 'OTHER', label: getTaskTypeLabel('OTHER') },
     ],
   },
 ];

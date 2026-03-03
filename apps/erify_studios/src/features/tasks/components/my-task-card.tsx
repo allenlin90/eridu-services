@@ -10,6 +10,8 @@ import { cn } from '@eridu/ui/lib/utils';
 import { STATUS_VARIANT_MAP, TYPE_VARIANT_MAP } from '../lib/badge-maps';
 import { calculateTaskProgress } from '../lib/progress';
 
+import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
+
 type MyTaskCardProps = {
   task: TaskWithRelationsDto;
   onClick: (taskId: string) => void;
@@ -58,7 +60,7 @@ export function MyTaskCard({ task, onClick, className }: MyTaskCardProps) {
             variant={TYPE_VARIANT_MAP[task.type] ?? 'outline'}
             className="text-[10px]"
           >
-            {task.type}
+            {getTaskTypeLabel(task.type)}
           </Badge>
           <Badge
             variant={STATUS_VARIANT_MAP[task.status] ?? 'secondary'}

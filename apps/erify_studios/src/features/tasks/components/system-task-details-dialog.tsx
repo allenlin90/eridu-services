@@ -21,6 +21,7 @@ import {
 } from '@eridu/ui';
 
 import { computeSuggestedDueDate } from '@/features/tasks/lib/task-due-date';
+import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 
 type SystemTaskDetailsDialogProps = {
   task: TaskWithRelationsDto | null;
@@ -97,7 +98,7 @@ export function SystemTaskDetailsDialog({
               </div>
               <div>
                 <div className="text-muted-foreground">Type</div>
-                <Badge variant="outline" className="mt-1 text-[10px] uppercase">{task.type}</Badge>
+                <Badge variant="outline" className="mt-1 text-[10px]">{getTaskTypeLabel(task.type)}</Badge>
               </div>
               <div>
                 <div className="text-muted-foreground">Status</div>

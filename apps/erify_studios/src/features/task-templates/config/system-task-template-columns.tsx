@@ -3,6 +3,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type { AdminTaskTemplateDto } from '@eridu/api-types/task-management';
 import { Badge } from '@eridu/ui';
 
+import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
+
 export const systemTaskTemplateColumns: ColumnDef<AdminTaskTemplateDto>[] = [
   {
     accessorKey: 'id',
@@ -31,8 +33,8 @@ export const systemTaskTemplateColumns: ColumnDef<AdminTaskTemplateDto>[] = [
     accessorKey: 'task_type',
     header: 'Type',
     cell: ({ row }) => (
-      <Badge variant="outline" className="text-[10px] uppercase">
-        {row.original.task_type}
+      <Badge variant="outline" className="text-[10px]">
+        {getTaskTypeLabel(row.original.task_type)}
       </Badge>
     ),
   },
@@ -72,12 +74,12 @@ export const systemTaskTemplateSearchableColumns = [
     title: 'Task Type',
     type: 'select' as const,
     options: [
-      { value: 'SETUP', label: 'Setup' },
-      { value: 'ACTIVE', label: 'Active' },
-      { value: 'CLOSURE', label: 'Closure' },
-      { value: 'ADMIN', label: 'Admin' },
-      { value: 'ROUTINE', label: 'Routine' },
-      { value: 'OTHER', label: 'Other' },
+      { value: 'SETUP', label: getTaskTypeLabel('SETUP') },
+      { value: 'ACTIVE', label: getTaskTypeLabel('ACTIVE') },
+      { value: 'CLOSURE', label: getTaskTypeLabel('CLOSURE') },
+      { value: 'ADMIN', label: getTaskTypeLabel('ADMIN') },
+      { value: 'ROUTINE', label: getTaskTypeLabel('ROUTINE') },
+      { value: 'OTHER', label: getTaskTypeLabel('OTHER') },
     ],
   },
   {
