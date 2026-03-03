@@ -351,6 +351,41 @@ export function createPaginatedResponse<T>(
 }
 ```
 
+## Package API Version Discipline (MUST FOLLOW)
+
+Always use the API recommended by the **installed version** of a package. When an API is marked deprecated, do not use it — regardless of whether it still works. This applies to Zod, NestJS, or any other dependency.
+
+**How to check**: If autocomplete or docs mark something as `@deprecated`, find the replacement before writing code. Do not copy patterns from older files in the codebase without verifying they reflect the current package version.
+
+**Current known cases (Zod — check installed version for changes):**
+- `z.nativeEnum(CONST)` → `z.enum(Object.values(CONST) as [string, ...string[]])` or inline `z.enum([...])`
+- `z.string().email()` → `z.email()` (standalone)
+- `z.string().url()` → `z.url()` (standalone)
+
+```typescript
+// Example: const-object enum (current correct pattern)
+use_case: z.enum(Object.values(FILE_UPLOAD_USE_CASE) as [string, ...string[]]),
+
+// Example: small stable set (inline preferred)
+mime_type: z.enum(['image/jpeg', 'image/png', 'image/webp']),
+```
+
+The cast `as [string, ...string[]]` is required because `Object.values()` returns `string[]` and `z.enum()` requires a non-empty tuple type.
+
+## Subpath Import Enforcement
+
+Code in `erify_api` (and frontends) **must always** import from the subpath export, never the barrel root. This applies to all files including tests.
+
+```typescript
+// ❌ WRONG — barrel root import
+import { FILE_UPLOAD_USE_CASE } from '@eridu/api-types';
+
+// ✅ CORRECT — subpath export
+import { FILE_UPLOAD_USE_CASE } from '@eridu/api-types/uploads';
+```
+
+When a new domain is added to `@eridu/api-types`, all consuming files (service, schema, controller, specs) must use the new subpath from day one.
+
 ## Key Principles
 
 1. **Single Source of Truth**: API schemas defined once in @eridu/api-types
@@ -361,3 +396,4 @@ export function createPaginatedResponse<T>(
 6. **Never Expose Internal IDs**: Always use UIDs in API responses
 7. **Consistent Casing**: snake_case for API, camelCase for internal
 8. **ISO Dates**: Always serialize dates as ISO 8601 strings in API
+9. **No nativeEnum**: Always use `z.enum(Object.values(...))` for const-object enums

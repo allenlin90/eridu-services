@@ -53,3 +53,31 @@ This inconsistency is pre-existing technical debt. Should eventually be addresse
 - `DataTableCore` alias exported from index - intended for backward compat with test mocks; can be removed once all test mocks are updated
 - `tablePagination` objects built inline (without `useMemo`) in some routes - minor perf concern, pre-existing
 - `requiresActionSheet`/`requiresTaskActionSheet` duplicated between task hooks - should be extracted to shared util
+
+## erify_api Upload / Storage Patterns (feat/file-upload-presign-phase3)
+
+### Module Structure
+- `StorageService` lives in `apps/erify_api/src/lib/storage/` (shared lib) — not in models/ because it's infrastructure
+- `UploadModule` lives in `apps/erify_api/src/uploads/` (not under models/ - correct, no DB entity)
+- `@eridu/api-types/uploads` subpath added with `presignUploadRequestSchema`, `presignUploadResponseSchema`, `FILE_UPLOAD_USE_CASE`
+
+### Import Convention Violation Found
+All other backend schema/service files import from `@eridu/api-types/<subpath>` (e.g. `@eridu/api-types/task-management`).
+The uploads domain incorrectly uses the barrel `@eridu/api-types` in:
+- `upload.service.ts`, `schemas/upload.schema.ts`, test files
+This is inconsistent with project convention. Should be `@eridu/api-types/uploads`.
+
+### S3Client Singleton Pattern in StorageService
+`StorageService` caches the `S3Client` instance in a private field. This means credentials are read twice on first call — once at the top of `generatePresignedUploadUrl` (validation-only, discarded), then again inside `getS3Client`. This is not a bug (it's defensive validation before calling AWS) but is slightly redundant. Pre-existing acceptable pattern.
+
+### R2 Config: All Optional in env.schema
+All five R2 env vars (`R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_BASE_URL`) are optional in `env.schema.ts`. Runtime errors are thrown in `StorageService.getRequiredConfig()` when actually invoked. This is intentional — allows the API to start without R2 configured. The endpoint has no DB entity, no `deletedAt`/`version`/`metadata` fields needed.
+
+### forcePathStyle on R2
+`S3Client` uses `forcePathStyle: true`. For Cloudflare R2 presigned URLs this is correct — R2 supports path-style requests and the presigned URL generation matches the endpoint pattern.
+
+### file_size: No Schema-Level Upper Bound
+`presignUploadRequestSchema` uses `z.number().int().positive()` for `file_size` — no max cap at schema level. Upper bound enforcement is per-use-case in `USE_CASE_RULES` inside `UploadService`. This means a client can send a very large number that still passes Zod validation before being rejected by the service. Low risk since it's just a number check, not actual data transfer.
+
+### _endpoint and _bucket params in buildPublicFileUrl
+`buildPublicFileUrl(_endpoint: URL, _bucket: string, objectKey: string)` ignores its first two params (prefixed with `_`). The public URL always uses `R2_PUBLIC_BASE_URL`. The unused params are there for potential future use. The leading underscore convention is correct for TypeScript unused params.

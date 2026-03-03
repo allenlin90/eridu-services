@@ -210,6 +210,10 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform(
 
 ---
 
+## Package API Discipline
+
+Always use the API recommended by the **installed version** of each package. Do not use deprecated APIs even if they still work — and do not copy patterns from older files in the codebase without verifying they are current. If autocomplete or docs mark an API as `@deprecated`, find the replacement first.
+
 ## Checklist
 
 - [ ] New API contract? Add to `@eridu/api-types` first.
@@ -217,3 +221,5 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform(
 - [ ] Export `schemas` (runtime) and `types` (static).
 - [ ] Use `snake_case` for wire formats.
 - [ ] Infer types using `z.infer`.
+- [ ] Use only non-deprecated APIs for the installed package version.
+- [ ] All consumers (service, schema, controller, specs) import from subpath, never barrel root.
