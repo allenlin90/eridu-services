@@ -4,7 +4,12 @@ import type { ControllerRenderProps, FieldValues } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { FILE_UPLOAD_USE_CASE } from '@eridu/api-types/uploads';
+import {
+  FILE_UPLOAD_USE_CASE,
+  FILE_UPLOAD_USE_CASE_RULES,
+  getMaterialAssetImageMaxBytes,
+  isUploadMimeTypeAllowed,
+} from '@eridu/api-types/uploads';
 import { matchesAcceptRule, prepareImageForUpload } from '@eridu/browser-upload';
 import {
   Button,
@@ -62,11 +67,15 @@ type PendingUpload = {
 };
 
 const DEFAULT_VALUES: Record<string, unknown> = {};
-const SUPPORTED_UPLOAD_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'video/mp4'] as const;
-const SCREENSHOT_MAX_BYTES = 200 * 1024;
+const SCREENSHOT_MAX_BYTES = getMaterialAssetImageMaxBytes(Number.POSITIVE_INFINITY);
+const MATERIAL_ASSET_MAX_BYTES = FILE_UPLOAD_USE_CASE_RULES[FILE_UPLOAD_USE_CASE.MATERIAL_ASSET].max_file_size_bytes;
+const MATERIAL_ASSET_ALLOWED_MIME_TYPES = new Set(
+  FILE_UPLOAD_USE_CASE_RULES[FILE_UPLOAD_USE_CASE.MATERIAL_ASSET].allowed_mime_types,
+);
 
-function isSupportedUploadMimeType(value: string): value is (typeof SUPPORTED_UPLOAD_MIME_TYPES)[number] {
-  return SUPPORTED_UPLOAD_MIME_TYPES.includes(value as (typeof SUPPORTED_UPLOAD_MIME_TYPES)[number]);
+function isSupportedUploadMimeType(value: string): boolean {
+  return MATERIAL_ASSET_ALLOWED_MIME_TYPES.has(value)
+    && isUploadMimeTypeAllowed(FILE_UPLOAD_USE_CASE.MATERIAL_ASSET, value);
 }
 
 function isLikelyImageUrl(url: string): boolean {
@@ -84,13 +93,38 @@ function releasePendingUploads(map: Record<string, PendingUpload>): void {
 function getFieldMaxBytes(item: UiSchema['items'][0], file: File): number {
   const fieldMaxBytes = item.validation?.max_size ?? Number.POSITIVE_INFINITY;
   if (file.type.startsWith('image/')) {
-    return Math.min(fieldMaxBytes, SCREENSHOT_MAX_BYTES);
+    return getMaterialAssetImageMaxBytes(fieldMaxBytes);
   }
   return fieldMaxBytes;
 }
 
 function getFileTooLargeMessage(label: string, maxBytes: number): string {
   return `File for '${label}' must be <= ${Math.round(maxBytes / 1024)} KB`;
+}
+
+function getFieldMaxHint(item: UiSchema['items'][0], pendingUpload?: PendingUpload): string {
+  const fieldMax = item.validation?.max_size ?? MATERIAL_ASSET_MAX_BYTES;
+  if (pendingUpload?.file.type.startsWith('image/')) {
+    return formatFileSize(getMaterialAssetImageMaxBytes(fieldMax));
+  }
+
+  if (item.validation?.accept?.includes('image/')) {
+    return `${formatFileSize(fieldMax)} (images capped at ${formatFileSize(getMaterialAssetImageMaxBytes(fieldMax))})`;
+  }
+  return formatFileSize(fieldMax);
+}
+
+function formatFileSize(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) {
+    return 'Unknown size';
+  }
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
 export const JsonForm = function JsonForm({
@@ -209,6 +243,7 @@ export const JsonForm = function JsonForm({
           ? await prepareImageForUpload(file, {
             targetMaxBytes: maxBytesForField,
             accept,
+            maxDimension: maxBytesForField <= SCREENSHOT_MAX_BYTES ? 1600 : undefined,
             preferWorker: true,
           })
           : { file, wasCompressed: false, usedWorker: false };
@@ -393,6 +428,7 @@ export const JsonForm = function JsonForm({
                                   const prepared = await prepareImageForUpload(file, {
                                     targetMaxBytes: maxBytesForField,
                                     accept: item.validation?.accept,
+                                    maxDimension: maxBytesForField <= SCREENSHOT_MAX_BYTES ? 1600 : undefined,
                                     preferWorker: true,
                                   });
                                   const preparedFile = prepared.file;
@@ -530,7 +566,21 @@ function FileFieldRenderer({
             {pendingUpload.file.name}
           </p>
           <p className="text-xs text-muted-foreground">
-            {pendingUpload.isPreparing ? 'Preparing file...' : 'Will upload when you submit.'}
+            Size:
+            {' '}
+            {formatFileSize(pendingUpload.file.size)}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Max size:
+            {' '}
+            {getFieldMaxHint(item, pendingUpload)}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {pendingUpload.isPreparing
+              ? (pendingUpload.file.type.startsWith('image/')
+                  ? 'Compressing image in background...'
+                  : 'Preparing file...')
+              : 'Will upload when you submit.'}
           </p>
           {pendingUpload.error && (
             <p className="text-xs text-red-600">{pendingUpload.error}</p>
@@ -607,6 +657,13 @@ function FileFieldRenderer({
       </div>
       {isUploading && (
         <p className="text-xs text-muted-foreground">Uploading...</p>
+      )}
+      {!pendingUpload && (
+        <p className="text-xs text-muted-foreground">
+          Max size:
+          {' '}
+          {getFieldMaxHint(item)}
+        </p>
       )}
     </div>
   );

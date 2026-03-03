@@ -108,7 +108,9 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
   const isSubmitBlockedByShowStart = !!showStartTime
     && (task.type === 'ACTIVE' || task.type === 'CLOSURE')
     && new Date() < showStartTime;
-  const isSubmitBlockedByUploadIssues = uploadState.hasBlockingIssues;
+  const isSubmitBlockedByUploadPreparing = uploadState.isPreparingUploads;
+  const isSubmitBlockedByUploadValidation = uploadState.hasBlockingIssues && !uploadState.isPreparingUploads;
+  const isSubmitBlockedByUploadIssues = isSubmitBlockedByUploadPreparing || isSubmitBlockedByUploadValidation;
 
   useEffect(() => {
     if (!enableAutosave || !hasDraft || !hasUnsavedDraftChanges || isReadOnly) {
@@ -187,7 +189,11 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
       return;
     }
     if (isSubmitAction && isSubmitBlockedByUploadIssues) {
-      toast.error(uploadState.blockingMessages[0] ?? 'Please fix file upload issues before submitting');
+      toast.error(
+        isSubmitBlockedByUploadPreparing
+          ? 'Please wait. Images are still being prepared.'
+          : (uploadState.blockingMessages[0] ?? 'Please fix file upload issues before submitting'),
+      );
       setIsSubmittingAction(false);
       return;
     }
@@ -359,7 +365,12 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
             {format(showStartTime!, 'PPP p')}
           </p>
         )}
-        {isSubmitBlockedByUploadIssues && (
+        {isSubmitBlockedByUploadPreparing && (
+          <p className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+            Preparing images for upload. Submit will be enabled when finished.
+          </p>
+        )}
+        {isSubmitBlockedByUploadValidation && (
           <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
             {uploadState.blockingMessages[0] ?? 'Please fix file upload issues before submitting.'}
           </p>
@@ -376,7 +387,7 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
             <Send className="w-5 h-5 mr-2" />
             {isSubmittingAction
               ? (jsonFormRef.current?.hasPendingFileUploads() ? 'Uploading files...' : 'Submitting...')
-              : 'Submit for Review'}
+              : (isSubmitBlockedByUploadPreparing ? 'Preparing images...' : 'Submit for Review')}
           </Button>
         )}
 

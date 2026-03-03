@@ -15,8 +15,8 @@ export type PreparedImageResult = {
   usedWorker: boolean;
 };
 
-const DEFAULT_SCALES = [1, 0.9, 0.8, 0.7, 0.6];
-const DEFAULT_QUALITIES = [0.9, 0.82, 0.74, 0.66, 0.58, 0.5, 0.42, 0.34];
+const DEFAULT_SCALES = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25];
+const DEFAULT_QUALITIES = [0.9, 0.82, 0.74, 0.66, 0.58, 0.5, 0.42, 0.34, 0.26, 0.2];
 
 function replaceFileExtension(fileName: string, mimeType: string): string {
   const extensionByMime: Record<string, string> = {
@@ -67,14 +67,14 @@ export function matchesAcceptRule(fileType: string, fileName: string, accept?: s
 
 function pickOutputMimeType(fileType: string, fileName: string, accept?: string): string {
   const currentMime = fileType || 'image/jpeg';
-  if (matchesAcceptRule(currentMime, fileName, accept)) {
-    return currentMime;
+  if (matchesAcceptRule('image/webp', fileName, accept)) {
+    return 'image/webp';
   }
   if (matchesAcceptRule('image/jpeg', fileName, accept)) {
     return 'image/jpeg';
   }
-  if (matchesAcceptRule('image/webp', fileName, accept)) {
-    return 'image/webp';
+  if (matchesAcceptRule(currentMime, fileName, accept)) {
+    return currentMime;
   }
   return currentMime;
 }

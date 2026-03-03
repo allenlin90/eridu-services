@@ -78,6 +78,8 @@ function StudioTaskActionSheetBody({
   const taskId = task?.id;
   const requiresContent = action === TASK_ACTION.SUBMIT_FOR_REVIEW || action === TASK_ACTION.APPROVE_COMPLETED;
   const requiresNote = action === TASK_ACTION.CONTINUE_EDITING || action === TASK_ACTION.MARK_BLOCKED;
+  const hasPreparingUploads = requiresContent && uploadState.isPreparingUploads;
+  const hasUploadValidationIssues = requiresContent && uploadState.hasBlockingIssues && !uploadState.isPreparingUploads;
   const { data: taskDetail, isLoading: isLoadingTask } = useQuery({
     queryKey: taskId ? studioTaskKeys.detail(studioId, taskId) : studioTaskKeys.all,
     queryFn: () => getStudioTask(studioId, taskId!),
@@ -131,7 +133,12 @@ function StudioTaskActionSheetBody({
                       This task has no renderable schema. Action will submit current content as-is.
                     </p>
                   )}
-              {uploadState.hasBlockingIssues && (
+              {hasPreparingUploads && (
+                <p className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+                  Preparing images for upload. You can submit once preparation is complete.
+                </p>
+              )}
+              {hasUploadValidationIssues && (
                 <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
                   {uploadState.blockingMessages[0] ?? 'Please fix file upload issues before continuing.'}
                 </p>
@@ -168,8 +175,12 @@ function StudioTaskActionSheetBody({
               setIsPreparingSubmit(true);
               let nextContent = content;
               if (requiresContent && jsonFormRef.current) {
-                if (uploadState.hasBlockingIssues) {
-                  toast.error(uploadState.blockingMessages[0] ?? 'Please fix file upload issues before continuing');
+                if (hasPreparingUploads || hasUploadValidationIssues) {
+                  toast.error(
+                    hasPreparingUploads
+                      ? 'Please wait. Images are still being prepared.'
+                      : (uploadState.blockingMessages[0] ?? 'Please fix file upload issues before continuing'),
+                  );
                   setIsPreparingSubmit(false);
                   return;
                 }
@@ -191,11 +202,14 @@ function StudioTaskActionSheetBody({
               || isLoadingTask
               || !resolvedTask
               || !action
-              || (requiresContent && uploadState.hasBlockingIssues)
+              || hasPreparingUploads
+              || hasUploadValidationIssues
               || (requiresNote && note.trim().length === 0)
             }
           >
-            {isPreparingSubmit ? 'Uploading files...' : title}
+            {isPreparingSubmit
+              ? 'Uploading files...'
+              : (hasPreparingUploads ? 'Preparing images...' : title)}
           </Button>
         </div>
       </SheetContent>

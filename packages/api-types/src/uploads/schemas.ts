@@ -9,6 +9,46 @@ export const FILE_UPLOAD_USE_CASE = {
 
 export type FileUploadUseCase = (typeof FILE_UPLOAD_USE_CASE)[keyof typeof FILE_UPLOAD_USE_CASE];
 
+const KB = 1024;
+const MB = 1024 * 1024;
+
+type UploadUseCaseRule = {
+  max_file_size_bytes: number;
+  allowed_mime_types: readonly string[];
+};
+
+export const FILE_UPLOAD_USE_CASE_RULES: Record<FileUploadUseCase, UploadUseCaseRule> = {
+  [FILE_UPLOAD_USE_CASE.QC_SCREENSHOT]: {
+    max_file_size_bytes: 200 * KB,
+    allowed_mime_types: ['image/jpeg', 'image/png', 'image/webp'],
+  },
+  [FILE_UPLOAD_USE_CASE.SCENE_REFERENCE]: {
+    max_file_size_bytes: 10 * MB,
+    allowed_mime_types: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
+  },
+  [FILE_UPLOAD_USE_CASE.INSTRUCTION_ASSET]: {
+    max_file_size_bytes: 50 * MB,
+    allowed_mime_types: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'video/mp4'],
+  },
+  [FILE_UPLOAD_USE_CASE.MATERIAL_ASSET]: {
+    max_file_size_bytes: 50 * MB,
+    allowed_mime_types: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'video/mp4'],
+  },
+} as const;
+
+export function getUploadMaxFileSizeBytes(useCase: FileUploadUseCase): number {
+  return FILE_UPLOAD_USE_CASE_RULES[useCase].max_file_size_bytes;
+}
+
+export function isUploadMimeTypeAllowed(useCase: FileUploadUseCase, mimeType: string): boolean {
+  return FILE_UPLOAD_USE_CASE_RULES[useCase].allowed_mime_types.includes(mimeType);
+}
+
+export function getMaterialAssetImageMaxBytes(fieldMaxBytes?: number): number {
+  const fieldMax = fieldMaxBytes ?? Number.POSITIVE_INFINITY;
+  return Math.min(fieldMax, getUploadMaxFileSizeBytes(FILE_UPLOAD_USE_CASE.QC_SCREENSHOT));
+}
+
 export const presignUploadRequestSchema = z.object({
   use_case: z.enum(Object.values(FILE_UPLOAD_USE_CASE) as [string, ...string[]]),
   mime_type: z.enum(['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'video/mp4']),

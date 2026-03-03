@@ -20,8 +20,8 @@ type WorkerError = {
 
 const workerScope: DedicatedWorkerGlobalScope = globalThis as unknown as DedicatedWorkerGlobalScope;
 
-const DEFAULT_SCALES = [1, 0.9, 0.8, 0.7, 0.6];
-const DEFAULT_QUALITIES = [0.9, 0.82, 0.74, 0.66, 0.58, 0.5, 0.42, 0.34];
+const DEFAULT_SCALES = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25];
+const DEFAULT_QUALITIES = [0.9, 0.82, 0.74, 0.66, 0.58, 0.5, 0.42, 0.34, 0.26, 0.2];
 
 function matchesAccept(fileType: string, fileName: string, accept?: string): boolean {
   if (!accept || accept.trim().length === 0) {
@@ -53,16 +53,14 @@ function matchesAccept(fileType: string, fileName: string, accept?: string): boo
 
 function pickOutputMimeType(fileType: string, fileName: string, accept?: string): string {
   const currentMime = fileType || 'image/jpeg';
-  if (matchesAccept(currentMime, fileName, accept)) {
-    return currentMime;
+  if (matchesAccept('image/webp', fileName, accept)) {
+    return 'image/webp';
   }
-
   if (matchesAccept('image/jpeg', fileName, accept)) {
     return 'image/jpeg';
   }
-
-  if (matchesAccept('image/webp', fileName, accept)) {
-    return 'image/webp';
+  if (matchesAccept(currentMime, fileName, accept)) {
+    return currentMime;
   }
 
   return currentMime;
