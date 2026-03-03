@@ -42,7 +42,7 @@ export class AdminTaskController extends BaseAdminController {
   @AdminPaginatedResponse(taskWithRelationsDto, 'List of tasks with pagination and filtering')
   async getTasks(@Query() query: ListMyTasksQueryDto) {
     const { items, total } = await this.taskService.findTasks(query);
-    return this.createPaginatedResponse(items, total, query);
+    return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
   }
 
   @Get(':id')

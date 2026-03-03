@@ -10,6 +10,20 @@ import {
  */
 export abstract class BaseController {
   constructor() {}
+  protected toPaginationQuery(
+    query: Partial<IPaginationQuery> & { page?: number; limit?: number },
+  ): IPaginationQuery {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    return {
+      page,
+      limit,
+      take: query.take ?? limit,
+      skip: query.skip ?? ((page - 1) * limit),
+      sort: query.sort,
+    };
+  }
+
   /**
    * Creates a paginated response with data and pagination metadata.
    *

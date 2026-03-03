@@ -127,7 +127,7 @@ export class StudioTaskController extends BaseStudioController {
       ...query,
       studio_id: studioId,
     });
-    return this.createPaginatedResponse(items, total, query);
+    return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
   }
 
   @ApiOperation({ summary: 'Update task content and/or status (with optimistic locking)' })

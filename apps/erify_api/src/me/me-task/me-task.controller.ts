@@ -35,7 +35,7 @@ export class MeTaskController extends BaseController {
     @Query() query: ListMyTasksQueryDto,
   ) {
     const { items, total } = await this.meTaskService.listMyTasks(user.ext_id, query);
-    return this.createPaginatedResponse(items, total, query);
+    return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
   }
 
   @Get(':id')

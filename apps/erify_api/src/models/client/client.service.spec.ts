@@ -1,4 +1,4 @@
-import type { CreateClientDto, UpdateClientDto } from './schemas/client.schema';
+import type { CreateClientPayload, UpdateClientDto } from './schemas/client.schema';
 import { ClientRepository } from './client.repository';
 import { ClientService } from './client.service';
 
@@ -37,12 +37,12 @@ describe('clientService', () => {
   });
 
   it('createClient returns created client', async () => {
-    const dto: CreateClientDto = {
+    const dto: CreateClientPayload = {
       name: 'Acme',
       contactPerson: 'Jane',
       contactEmail: 'jane@acme.com',
       metadata: {},
-    } as CreateClientDto;
+    };
     const created = { uid: 'client_123', ...dto } as const;
     (clientRepositoryMock.create as jest.Mock).mockResolvedValue(created);
 
@@ -57,12 +57,12 @@ describe('clientService', () => {
   });
 
   it('createClient maps P2002 to Conflict', async () => {
-    const dto: CreateClientDto = {
+    const dto: CreateClientPayload = {
       name: 'Acme',
       contactPerson: 'Jane',
       contactEmail: 'jane@acme.com',
       metadata: {},
-    } as CreateClientDto;
+    };
     const error = createMockUniqueConstraintError(['email']);
     (clientRepositoryMock.create as jest.Mock).mockRejectedValue(error);
 

@@ -35,7 +35,7 @@ export class StudioShowController extends BaseStudioController {
     @Query() query: ListStudioShowsQueryDto,
   ) {
     const { data, total } = await this.taskOrchestrationService.getStudioShowsWithTaskSummary(studioId, query);
-    return this.createPaginatedResponse(data, total, query);
+    return this.createPaginatedResponse(data, total, this.toPaginationQuery(query));
   }
 
   @Get(':id')

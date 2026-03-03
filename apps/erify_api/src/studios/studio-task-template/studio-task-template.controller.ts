@@ -50,7 +50,7 @@ export class StudioTaskTemplateController extends BaseStudioController {
       orderBy: query.sort ?? 'desc',
     });
 
-    return this.createPaginatedResponse(data, total, query);
+    return this.createPaginatedResponse(data, total, this.toPaginationQuery(query));
   }
 
   @Get(':id')

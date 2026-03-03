@@ -64,7 +64,7 @@ export class AdminTaskTemplateController extends BaseAdminController {
       sort: query.sort,
     });
 
-    return this.createPaginatedResponse(data, total, query);
+    return this.createPaginatedResponse(data, total, this.toPaginationQuery(query));
   }
 
   @Get(':id')
@@ -147,6 +147,6 @@ export class AdminTaskTemplateController extends BaseAdminController {
       take: query.take,
     });
 
-    return this.createPaginatedResponse(data, total, query);
+    return this.createPaginatedResponse(data, total, this.toPaginationQuery(query));
   }
 }
