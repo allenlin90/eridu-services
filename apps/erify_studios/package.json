@@ -23,6 +23,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@eridu/api-types": "workspace:*",
     "@eridu/auth-sdk": "workspace:*",
+    "@eridu/browser-upload": "workspace:*",
     "@eridu/i18n": "workspace:*",
     "@eridu/ui": "workspace:*",
     "@hookform/resolvers": "^5.2.2",

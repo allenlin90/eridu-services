@@ -115,6 +115,13 @@ describe('taskGenerationProcessor', () => {
         uid: 'task_123',
         type: TaskType.SETUP,
         dueDate: new Date(startTime.getTime() - 60 * 60 * 1000),
+        metadata: {
+          upload_routing: {
+            source: 'show_task_generation',
+            scope: 'show',
+            material_asset_directory: 'pre-production',
+          },
+        },
       }));
       expect(taskTargetService.create).toHaveBeenCalled();
       expect(result.status).toBe('success');
@@ -173,6 +180,13 @@ describe('taskGenerationProcessor', () => {
           type: TaskType.ACTIVE,
           version: 4,
           dueDate: new Date('2026-02-23T13:00:00.000Z'), // ACTIVE: endTime + 1h
+          metadata: {
+            upload_routing: {
+              source: 'show_task_generation',
+              scope: 'show',
+              material_asset_directory: 'show-general',
+            },
+          },
         }),
       );
       expect(taskTargetService.undeleteByTaskId).toHaveBeenCalledWith(BigInt(1000));

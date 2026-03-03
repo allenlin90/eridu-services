@@ -14,6 +14,8 @@ export const presignUploadRequestSchema = z.object({
   mime_type: z.enum(['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'video/mp4']),
   file_size: z.number().int().positive().max(100 * 1024 * 1024),
   file_name: z.string().min(1).max(255),
+  task_id: z.string().startsWith('task_').optional(),
+  field_key: z.string().regex(/^[a-z][a-z0-9_]*$/).optional(),
 });
 
 export const presignUploadResponseSchema = z.object({

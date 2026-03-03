@@ -984,7 +984,14 @@ export class TaskRepository extends BaseRepository<
 
   async resumeTask(
     id: bigint,
-    data: { snapshotId: bigint; status: TaskStatus; version: number; dueDate: Date; type: TaskType },
+    data: {
+      snapshotId: bigint;
+      status: TaskStatus;
+      version: number;
+      dueDate: Date;
+      type: TaskType;
+      metadata?: Prisma.InputJsonValue;
+    },
   ): Promise<Task> {
     return this.prisma.task.update({
       where: { id },
@@ -995,7 +1002,7 @@ export class TaskRepository extends BaseRepository<
         snapshotId: data.snapshotId,
         dueDate: data.dueDate,
         content: {},
-        metadata: {},
+        metadata: data.metadata ?? {},
         version: data.version,
         completedAt: null,
       },

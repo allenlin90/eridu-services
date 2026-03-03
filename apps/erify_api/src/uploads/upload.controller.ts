@@ -9,11 +9,14 @@ import {
 import { UploadService } from './upload.service';
 
 import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
+import { BaseController } from '@/lib/controllers/base.controller';
 import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
 
 @Controller('uploads')
-export class UploadController {
-  constructor(private readonly uploadService: UploadService) {}
+export class UploadController extends BaseController {
+  constructor(private readonly uploadService: UploadService) {
+    super();
+  }
 
   @Post('presign')
   @ZodResponse(

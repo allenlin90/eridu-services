@@ -19,6 +19,9 @@ export async function uploadFileToPresignedUrl(
   presigned: PresignUploadResponse,
   file: File,
 ): Promise<void> {
+  // Uses fetch directly — DO NOT use apiClient here.
+  // Presigned R2 URLs must not include the API Authorization header;
+  // adding it would cause R2 to reject the request with a 403.
   const response = await fetch(presigned.upload_url, {
     method: presigned.upload_method,
     headers: {

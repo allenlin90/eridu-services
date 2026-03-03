@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import {
   TASK_ACTION,
@@ -18,6 +19,7 @@ import {
   Textarea,
 } from '@eridu/ui';
 
+import type { JsonFormHandle, JsonFormUploadState } from '@/components/json-form/json-form';
 import { JsonForm } from '@/components/json-form/json-form';
 import { getStudioTask, studioTaskKeys } from '@/features/tasks/api/get-studio-task';
 
@@ -34,6 +36,13 @@ type StudioTaskActionSheetProps = {
     content?: Record<string, unknown>,
     note?: string,
   ) => void;
+};
+
+const DEFAULT_UPLOAD_STATE: JsonFormUploadState = {
+  hasPendingUploads: false,
+  hasBlockingIssues: false,
+  isPreparingUploads: false,
+  blockingMessages: [],
 };
 
 function getActionTitle(action: TaskAction | null): string {
@@ -63,6 +72,9 @@ function StudioTaskActionSheetBody({
   const [contentDraft, setContentDraft] = useState<Record<string, unknown> | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [note, setNote] = useState('');
+  const [isPreparingSubmit, setIsPreparingSubmit] = useState(false);
+  const [uploadState, setUploadState] = useState<JsonFormUploadState>(DEFAULT_UPLOAD_STATE);
+  const jsonFormRef = useRef<JsonFormHandle>(null);
   const taskId = task?.id;
   const requiresContent = action === TASK_ACTION.SUBMIT_FOR_REVIEW || action === TASK_ACTION.APPROVE_COMPLETED;
   const requiresNote = action === TASK_ACTION.CONTINUE_EDITING || action === TASK_ACTION.MARK_BLOCKED;
@@ -103,8 +115,11 @@ function StudioTaskActionSheetBody({
               {schema
                 ? (
                     <JsonForm
+                      ref={jsonFormRef}
                       schema={schema}
                       values={content}
+                      uploadTaskId={resolvedTask?.id}
+                      onUploadStateChange={setUploadState}
                       onChange={(values) => {
                         setIsDirty(true);
                         setContentDraft(values);
@@ -116,6 +131,11 @@ function StudioTaskActionSheetBody({
                       This task has no renderable schema. Action will submit current content as-is.
                     </p>
                   )}
+              {uploadState.hasBlockingIssues && (
+                <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                  {uploadState.blockingMessages[0] ?? 'Please fix file upload issues before continuing.'}
+                </p>
+              )}
             </>
           )}
 
@@ -138,22 +158,44 @@ function StudioTaskActionSheetBody({
             Cancel
           </Button>
           <Button
-            onClick={() => {
+            onClick={async () => {
               if (!resolvedTask || !action) {
                 return;
               }
+              if (isPreparingSubmit) {
+                return;
+              }
+              setIsPreparingSubmit(true);
+              let nextContent = content;
+              if (requiresContent && jsonFormRef.current) {
+                if (uploadState.hasBlockingIssues) {
+                  toast.error(uploadState.blockingMessages[0] ?? 'Please fix file upload issues before continuing');
+                  setIsPreparingSubmit(false);
+                  return;
+                }
+                try {
+                  nextContent = await jsonFormRef.current.flushPendingFileUploads();
+                } catch (error) {
+                  toast.error(error instanceof Error ? error.message : 'Failed to upload pending files');
+                  setIsPreparingSubmit(false);
+                  return;
+                }
+              }
               const noteValue = requiresNote ? note.trim() : undefined;
-              onSubmit(resolvedTask, action, requiresContent ? content : undefined, noteValue);
+              onSubmit(resolvedTask, action, requiresContent ? nextContent : undefined, noteValue);
+              setIsPreparingSubmit(false);
             }}
             disabled={
               isPending
+              || isPreparingSubmit
               || isLoadingTask
               || !resolvedTask
               || !action
+              || (requiresContent && uploadState.hasBlockingIssues)
               || (requiresNote && note.trim().length === 0)
             }
           >
-            {title}
+            {isPreparingSubmit ? 'Uploading files...' : title}
           </Button>
         </div>
       </SheetContent>

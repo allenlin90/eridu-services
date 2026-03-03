@@ -497,6 +497,9 @@ importers:
       '@eridu/auth-sdk':
         specifier: workspace:*
         version: link:../../packages/auth-sdk
+      '@eridu/browser-upload':
+        specifier: workspace:*
+        version: link:../../packages/browser-upload
       '@eridu/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
@@ -698,6 +701,24 @@ importers:
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6
+      '@types/node':
+        specifier: ^24.10.1
+        version: 24.10.1
+      eslint:
+        specifier: ^9.39.1
+        version: 9.39.1(jiti@2.6.1)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/browser-upload:
+    devDependencies:
+      '@eridu/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@eridu/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
       '@types/node':
         specifier: ^24.10.1
         version: 24.10.1

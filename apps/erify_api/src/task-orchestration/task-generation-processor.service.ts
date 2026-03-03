@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
-import type { Show, TaskTemplate, TaskTemplateSnapshot } from '@prisma/client';
+import type { Prisma, Show, TaskTemplate, TaskTemplateSnapshot } from '@prisma/client';
 import { TaskStatus, TaskType } from '@prisma/client';
 
 import { TASK_TYPE } from '@eridu/api-types/task-management';
@@ -67,6 +67,7 @@ export class TaskGenerationProcessor {
           type,
           version: existingTask.version + 1,
           dueDate,
+          metadata: this.buildShowGeneratedTaskMetadata(type),
         });
 
         // Also undelete targets
@@ -89,6 +90,7 @@ export class TaskGenerationProcessor {
         template: { connect: { id: template.id } },
         snapshot: { connect: { id: latestSnapshot.id } },
         content: {},
+        metadata: this.buildShowGeneratedTaskMetadata(type),
         version: 1,
       });
 
@@ -149,5 +151,25 @@ export class TaskGenerationProcessor {
     }
 
     return show.startTime;
+  }
+
+  private buildShowGeneratedTaskMetadata(type: TaskType): Prisma.InputJsonValue {
+    return {
+      upload_routing: {
+        source: 'show_task_generation',
+        scope: 'show',
+        material_asset_directory: this.resolveMaterialAssetDirectory(type),
+      },
+    } as Prisma.InputJsonValue;
+  }
+
+  private resolveMaterialAssetDirectory(type: TaskType): string {
+    if (type === TaskType.SETUP) {
+      return 'pre-production';
+    }
+    if (type === TaskType.CLOSURE) {
+      return 'mc-review';
+    }
+    return 'show-general';
   }
 }

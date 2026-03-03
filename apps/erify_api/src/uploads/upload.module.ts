@@ -4,9 +4,10 @@ import { UploadController } from './upload.controller';
 import { UploadService } from './upload.service';
 
 import { StorageModule } from '@/lib/storage/storage.module';
+import { TaskModule } from '@/models/task/task.module';
 
 @Module({
-  imports: [StorageModule],
+  imports: [StorageModule, TaskModule],
   controllers: [UploadController],
   providers: [UploadService],
 })

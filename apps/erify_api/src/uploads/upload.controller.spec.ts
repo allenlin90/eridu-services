@@ -9,10 +9,12 @@ import { UploadService } from './upload.service';
 
 import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { StorageService } from '@/lib/storage/storage.service';
+import { TaskService } from '@/models/task/task.service';
 
 describe('uploadController', () => {
   let controller: UploadController;
   let storageService: jest.Mocked<StorageService>;
+  let taskService: jest.Mocked<Pick<TaskService, 'findByUidWithSnapshot'>>;
 
   const mockUser: AuthenticatedUser = {
     id: 'ext_1',
@@ -40,6 +42,9 @@ describe('uploadController', () => {
         expiresInSeconds: 300,
       }),
     };
+    const mockTaskService = {
+      findByUidWithSnapshot: jest.fn().mockResolvedValue(null),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UploadController],
@@ -49,11 +54,16 @@ describe('uploadController', () => {
           provide: StorageService,
           useValue: mockStorageService,
         },
+        {
+          provide: TaskService,
+          useValue: mockTaskService,
+        },
       ],
     }).compile();
 
     controller = module.get<UploadController>(UploadController);
     storageService = module.get(StorageService);
+    taskService = module.get(TaskService);
   });
 
   it('should return a presigned upload payload using service validation rules', async () => {
@@ -83,6 +93,7 @@ describe('uploadController', () => {
       file_url: 'https://cdn.example.com/uploads/qc_screenshot/ext_1/2026-03-03/test-file.png',
       expires_in_seconds: 300,
     });
+    expect(taskService.findByUidWithSnapshot).not.toHaveBeenCalled();
   });
 
   it('should surface service validation errors as bad request', async () => {
