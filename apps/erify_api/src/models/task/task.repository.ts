@@ -31,7 +31,7 @@ export class TaskRepository extends BaseRepository<
 
   async findByUidWithSnapshot(
     uid: string,
-  ): Promise<(Task & { snapshot: TaskTemplateSnapshot | null; targets: { show: { id: bigint; uid: string; studioId: bigint | null; startTime: Date; endTime: Date } | null }[] }) | null> {
+  ): Promise<(Task & { snapshot: TaskTemplateSnapshot | null; targets: { show: { id: bigint; uid: string; externalId: string | null; studioId: bigint | null; startTime: Date; endTime: Date; client: { name: string } | null; showMCs: { mc: { name: string; aliasName: string } }[] } | null }[] }) | null> {
     return this.model.findFirst({
       where: { uid, deletedAt: null },
       include: {
@@ -43,15 +43,32 @@ export class TaskRepository extends BaseRepository<
               select: {
                 id: true,
                 uid: true,
+                externalId: true,
                 studioId: true,
                 startTime: true,
                 endTime: true,
+                client: {
+                  select: {
+                    name: true,
+                  },
+                },
+                showMCs: {
+                  where: { deletedAt: null },
+                  include: {
+                    mc: {
+                      select: {
+                        name: true,
+                        aliasName: true,
+                      },
+                    },
+                  },
+                },
               },
             },
           },
         },
       },
-    }) as Promise<(Task & { snapshot: TaskTemplateSnapshot | null; targets: { show: { id: bigint; uid: string; studioId: bigint | null; startTime: Date; endTime: Date } | null }[] }) | null>;
+    }) as Promise<(Task & { snapshot: TaskTemplateSnapshot | null; targets: { show: { id: bigint; uid: string; externalId: string | null; studioId: bigint | null; startTime: Date; endTime: Date; client: { name: string } | null; showMCs: { mc: { name: string; aliasName: string } }[] } | null }[] }) | null>;
   }
 
   async findByUidWithRelations(
@@ -942,6 +959,55 @@ export class TaskRepository extends BaseRepository<
     ]);
 
     return { items, total };
+  }
+
+  async reserveMaterialAssetUploadVersion(taskUid: string, fieldKey: string): Promise<number> {
+    return this.prisma.$transaction(async (tx) => {
+      const task = await tx.task.findFirst({
+        where: {
+          uid: taskUid,
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+          metadata: true,
+        },
+      });
+
+      if (!task) {
+        throw new Error('Task not found');
+      }
+
+      const metadataObj = (task.metadata && typeof task.metadata === 'object')
+        ? task.metadata as Record<string, unknown>
+        : {};
+      const versionsRaw = metadataObj.material_asset_upload_versions;
+      const versionsByField = (versionsRaw && typeof versionsRaw === 'object')
+        ? versionsRaw as Record<string, unknown>
+        : {};
+      const currentVersionRaw = versionsByField[fieldKey];
+      const currentVersion = typeof currentVersionRaw === 'number'
+        ? currentVersionRaw
+        : 0;
+      const nextVersion = currentVersion + 1;
+
+      await tx.task.update({
+        where: {
+          id: task.id,
+        },
+        data: {
+          metadata: {
+            ...metadataObj,
+            material_asset_upload_versions: {
+              ...versionsByField,
+              [fieldKey]: nextVersion,
+            },
+          } as Prisma.InputJsonValue,
+        },
+      });
+
+      return nextVersion;
+    });
   }
 
   async bulkSoftDelete(studioId: bigint, uids: string[]): Promise<Prisma.BatchPayload> {

@@ -25,6 +25,7 @@ type PresignedUploadResult = {
 
 const DEFAULT_EXPIRY_SECONDS = 300;
 const AWS_REGION = 'auto';
+const REQUEST_CHECKSUM_CALCULATION = 'WHEN_REQUIRED' as const;
 
 @Injectable()
 export class StorageService {
@@ -66,7 +67,7 @@ export class StorageService {
     const date = new Date().toISOString().slice(0, 10);
     const randomPart = randomUUID().replace(/-/g, '');
     const safeName = this.sanitizeFileName(fileName);
-    return `uploads/${useCase.toLowerCase()}/${actorId}/${date}/${randomPart}-${safeName}`;
+    return `${useCase.toLowerCase()}/${actorId}/${date}/${randomPart}-${safeName}`;
   }
 
   private getRequiredConfig(key: keyof Env): string {
@@ -144,6 +145,9 @@ export class StorageService {
         secretAccessKey,
       },
       forcePathStyle: true,
+      // R2 presigned PUT uploads can fail when optional SDK checksum query params are included.
+      // Keep checksum calculation only when required by the operation.
+      requestChecksumCalculation: REQUEST_CHECKSUM_CALCULATION,
     });
 
     return this.s3Client;

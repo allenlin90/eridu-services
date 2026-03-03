@@ -32,7 +32,7 @@ describe('storageService', () => {
 
     const key = service.generateObjectKey('QC_SCREENSHOT', 'ext_123', 'My File.PNG');
     expect(key).toMatch(
-      /^uploads\/qc_screenshot\/ext_123\/2026-03-03\/[a-f0-9]{32}-my-file\.png$/,
+      /^qc_screenshot\/ext_123\/2026-03-03\/[a-f0-9]{32}-my-file\.png$/,
     );
 
     jest.useRealTimers();
@@ -41,23 +41,23 @@ describe('storageService', () => {
   it('should generate presigned upload URL', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-03-03T10:00:00.000Z'));
     (getSignedUrl as jest.Mock).mockResolvedValue(
-      'https://account-id.r2.cloudflarestorage.com/assets/uploads/qc_screenshot/ext_123/2026-03-03/test-file.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=test',
+      'https://account-id.r2.cloudflarestorage.com/assets/qc_screenshot/ext_123/2026-03-03/test-file.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=test',
     );
 
     const result = await service.generatePresignedUploadUrl({
-      objectKey: 'uploads/qc_screenshot/ext_123/2026-03-03/test-file.png',
+      objectKey: 'qc_screenshot/ext_123/2026-03-03/test-file.png',
       contentType: 'image/png',
       expiresInSeconds: 300,
     });
 
     expect(result.uploadMethod).toBe('PUT');
-    expect(result.objectKey).toBe('uploads/qc_screenshot/ext_123/2026-03-03/test-file.png');
+    expect(result.objectKey).toBe('qc_screenshot/ext_123/2026-03-03/test-file.png');
     expect(result.uploadHeaders.contentType).toBe('image/png');
     expect(result.expiresInSeconds).toBe(300);
     expect(result.uploadUrl).toContain('X-Amz-Algorithm=AWS4-HMAC-SHA256');
     expect(result.uploadUrl).toContain('X-Amz-Signature=');
     expect(result.fileUrl).toBe(
-      'https://cdn.example.com/uploads/qc_screenshot/ext_123/2026-03-03/test-file.png',
+      'https://cdn.example.com/qc_screenshot/ext_123/2026-03-03/test-file.png',
     );
 
     jest.useRealTimers();

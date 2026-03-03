@@ -92,16 +92,18 @@ flowchart TD
 
 The `upload_routing.material_asset_directory` key is stamped onto task metadata by `TaskGenerationProcessor` when the source template declares a `material_asset_directory` field. This lets template authors pin generated tasks to a custom R2 directory at generation time.
 
+> TODO(upload-workflow): dedicated UI workflow handling for `pre-production` and `mc-review` directories is pending.
+
 ## Object Key Format
 
 ```
-uploads/{storageUseCase}/{actorId}/{YYYY-MM-DD}/{fileName}
+{storageUseCase}/{actorId}/{YYYY-MM-DD}/{fileName}
 
 Examples:
-  uploads/pre-production/user_abc123/2026-03-03/proof.png
-  uploads/mc-review/user_abc123/2026-03-03/closure-check.jpg
-  uploads/wardrobe-archive/user_abc123/2026-03-03/costume.jpg
-  uploads/qc_screenshot/user_abc123/2026-03-03/screen.png
+  pre-production/user_abc123/2026-03-03/proof.png
+  mc-review/user_abc123/2026-03-03/closure-check.jpg
+  wardrobe-archive/user_abc123/2026-03-03/costume.jpg
+  qc_screenshot/user_abc123/2026-03-03/screen.png
 ```
 
 `actorId` = `user.ext_id` (external UID, never internal DB id).

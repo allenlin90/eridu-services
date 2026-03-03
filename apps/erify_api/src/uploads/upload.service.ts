@@ -6,6 +6,8 @@ import { TemplateSchemaValidator } from '@eridu/api-types/task-management';
 import {
   FILE_UPLOAD_USE_CASE,
   type FileUploadUseCase,
+  getUploadMaxFileSizeBytes,
+  isUploadMimeTypeAllowed,
   type PresignUploadRequest,
   type PresignUploadResponse,
 } from '@eridu/api-types/uploads';
@@ -14,40 +16,21 @@ import { HttpError } from '@/lib/errors/http-error.util';
 import { StorageService } from '@/lib/storage/storage.service';
 import { TaskService } from '@/models/task/task.service';
 
-type UploadRule = {
-  maxFileSizeBytes: number;
-  allowedMimeTypes: string[];
-};
-
 type MaterialAssetTaskContext = {
+  fieldKey: string;
+  uploadVersion: number;
   type: string;
+  show: {
+    uid: string;
+    externalId: string | null;
+    clientName: string | null;
+    mcNames: string[];
+  } | null;
   targets?: Array<{ show: unknown | null }>;
   metadata?: unknown;
 };
 
-const KB = 1024;
-const MB = 1024 * 1024;
 const DEFAULT_PRESIGN_EXPIRY_SECONDS = 300;
-
-const USE_CASE_RULES: Record<FileUploadUseCase, UploadRule> = {
-  [FILE_UPLOAD_USE_CASE.QC_SCREENSHOT]: {
-    // Frontend compresses images to this target before upload
-    maxFileSizeBytes: 200 * KB,
-    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
-  },
-  [FILE_UPLOAD_USE_CASE.SCENE_REFERENCE]: {
-    maxFileSizeBytes: 10 * MB,
-    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
-  },
-  [FILE_UPLOAD_USE_CASE.INSTRUCTION_ASSET]: {
-    maxFileSizeBytes: 50 * MB,
-    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'video/mp4'],
-  },
-  [FILE_UPLOAD_USE_CASE.MATERIAL_ASSET]: {
-    maxFileSizeBytes: 50 * MB,
-    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'video/mp4'],
-  },
-};
 
 @Injectable()
 export class UploadService {
@@ -66,15 +49,16 @@ export class UploadService {
       field_key,
       actorId,
     } = request;
-    const rule = USE_CASE_RULES[use_case];
+    const useCase = use_case as FileUploadUseCase;
 
-    if (!rule.allowedMimeTypes.includes(mime_type)) {
+    if (!isUploadMimeTypeAllowed(useCase, mime_type)) {
       throw HttpError.badRequest(`mime_type '${mime_type}' is not allowed for use_case '${use_case}'`);
     }
 
-    if (file_size > rule.maxFileSizeBytes) {
+    const maxFileSizeBytes = getUploadMaxFileSizeBytes(useCase);
+    if (file_size > maxFileSizeBytes) {
       throw HttpError.badRequest(
-        `file_size exceeds maximum for '${use_case}' (${rule.maxFileSizeBytes} bytes)`,
+        `file_size exceeds maximum for '${use_case}' (${maxFileSizeBytes} bytes)`,
       );
     }
 
@@ -88,7 +72,13 @@ export class UploadService {
 
     const fileName = this.withValidatedExtension(file_name, mime_type);
     const storageUseCase = this.resolveStorageUseCaseForObjectKey(use_case, taskContext);
-    const objectKey = this.storageService.generateObjectKey(storageUseCase, actorId, fileName);
+    const objectKey = this.resolveObjectKey({
+      useCase: use_case,
+      storageUseCase,
+      actorId,
+      fileName,
+      taskContext,
+    });
     const presignedResult = await this.storageService.generatePresignedUploadUrl({
       objectKey,
       contentType: mime_type,
@@ -131,6 +121,62 @@ export class UploadService {
     };
 
     return map[mimeType] ?? null;
+  }
+
+  private resolveObjectKey(input: {
+    useCase: string;
+    storageUseCase: string;
+    actorId: string;
+    fileName: string;
+    taskContext: MaterialAssetTaskContext | null;
+  }): string {
+    if (input.useCase !== FILE_UPLOAD_USE_CASE.MATERIAL_ASSET) {
+      return this.storageService.generateObjectKey(input.storageUseCase, input.actorId, input.fileName);
+    }
+
+    return this.buildMaterialAssetObjectKey({
+      storageUseCase: input.storageUseCase,
+      fileName: input.fileName,
+      fieldKey: input.taskContext?.fieldKey ?? 'file',
+      uploadVersion: input.taskContext?.uploadVersion ?? 1,
+      showContext: input.taskContext?.show ?? null,
+    });
+  }
+
+  private buildMaterialAssetObjectKey(input: {
+    storageUseCase: string;
+    fileName: string;
+    fieldKey: string;
+    uploadVersion: number;
+    showContext: MaterialAssetTaskContext['show'];
+  }): string {
+    const date = new Date().toISOString().slice(0, 10);
+    const extension = extname(input.fileName).toLowerCase();
+    const baseName = input.showContext
+      ? this.buildShowScopedMaterialAssetBaseName(input.showContext, input.uploadVersion)
+      : `${this.normalizePathToken(input.fieldKey, 'file')}-v${input.uploadVersion}`;
+    const safeDirectory = this.normalizePathToken(input.storageUseCase, 'material-asset');
+
+    return `${safeDirectory}/${date}/${baseName}${extension}`;
+  }
+
+  private buildShowScopedMaterialAssetBaseName(
+    show: NonNullable<MaterialAssetTaskContext['show']>,
+    uploadVersion: number,
+  ): string {
+    const showRef = this.normalizePathToken(show.uid, 'show');
+    return `${showRef}-v${uploadVersion}`;
+  }
+
+  private normalizePathToken(value: string | null | undefined, fallback: string): string {
+    const normalized = (value ?? '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    return normalized.length > 0 ? normalized : fallback;
   }
 
   private async validateTemplateFilePolicy(input: {
@@ -176,10 +222,60 @@ export class UploadService {
       );
     }
 
+    const uploadVersion = await this.taskService.reserveMaterialAssetUploadVersion(
+      task.uid,
+      input.fieldKey,
+    );
+
     return {
+      fieldKey: input.fieldKey,
+      uploadVersion,
       type: task.type,
+      show: this.extractMaterialAssetShowContext(task.targets),
       targets: task.targets,
       metadata: task.metadata,
+    };
+  }
+
+  private extractMaterialAssetShowContext(targets: Array<{ show: unknown | null }> | undefined): MaterialAssetTaskContext['show'] {
+    const linkedShow = targets?.find((target) => target.show !== null)?.show;
+    if (!linkedShow || typeof linkedShow !== 'object') {
+      return null;
+    }
+
+    const rawShow = linkedShow as {
+      uid?: unknown;
+      externalId?: unknown;
+      client?: { name?: unknown } | null;
+      showMCs?: Array<{ mc?: { name?: unknown; aliasName?: unknown } | null }> | null;
+    };
+
+    const uid = typeof rawShow.uid === 'string' ? rawShow.uid : null;
+    if (!uid) {
+      return null;
+    }
+
+    const mcNames = Array.isArray(rawShow.showMCs)
+      ? rawShow.showMCs
+          .map((showMc) => {
+            const alias = showMc?.mc && typeof showMc.mc.aliasName === 'string'
+              ? showMc.mc.aliasName
+              : null;
+            const name = showMc?.mc && typeof showMc.mc.name === 'string'
+              ? showMc.mc.name
+              : null;
+            return alias ?? name;
+          })
+          .filter((name): name is string => !!name)
+      : [];
+
+    return {
+      uid,
+      externalId: typeof rawShow.externalId === 'string' ? rawShow.externalId : null,
+      clientName: rawShow.client && typeof rawShow.client.name === 'string'
+        ? rawShow.client.name
+        : null,
+      mcNames,
     };
   }
 
@@ -206,6 +302,8 @@ export class UploadService {
     }
 
     const directoryByTaskType: Partial<Record<string, string>> = {
+      // TODO(upload-workflow): keep these mappings for storage organization only.
+      // UI workflow-specific handling for these directories will be added later.
       SETUP: 'pre-production',
       CLOSURE: 'mc-review',
     };

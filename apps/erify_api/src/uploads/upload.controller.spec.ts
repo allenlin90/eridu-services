@@ -27,18 +27,18 @@ describe('uploadController', () => {
   beforeEach(async () => {
     const mockStorageService = {
       generateObjectKey: jest.fn().mockReturnValue(
-        'uploads/qc_screenshot/ext_1/2026-03-03/test-file.png',
+        'qc_screenshot/ext_1/2026-03-03/test-file.png',
       ),
       generatePresignedUploadUrl: jest.fn().mockResolvedValue({
         uploadUrl:
-          'https://account-id.r2.cloudflarestorage.com/assets/uploads/qc_screenshot/ext_1/2026-03-03/test-file.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=test',
+          'https://account-id.r2.cloudflarestorage.com/assets/qc_screenshot/ext_1/2026-03-03/test-file.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=test',
         uploadMethod: 'PUT',
         uploadHeaders: {
           contentType: 'image/png',
         },
-        objectKey: 'uploads/qc_screenshot/ext_1/2026-03-03/test-file.png',
+        objectKey: 'qc_screenshot/ext_1/2026-03-03/test-file.png',
         fileUrl:
-          'https://cdn.example.com/uploads/qc_screenshot/ext_1/2026-03-03/test-file.png',
+          'https://cdn.example.com/qc_screenshot/ext_1/2026-03-03/test-file.png',
         expiresInSeconds: 300,
       }),
     };
@@ -80,17 +80,17 @@ describe('uploadController', () => {
       'screen.png',
     );
     expect(storageService.generatePresignedUploadUrl).toHaveBeenCalledWith({
-      objectKey: 'uploads/qc_screenshot/ext_1/2026-03-03/test-file.png',
+      objectKey: 'qc_screenshot/ext_1/2026-03-03/test-file.png',
       contentType: 'image/png',
       expiresInSeconds: 300,
     });
     expect(result).toEqual({
       upload_url:
-        'https://account-id.r2.cloudflarestorage.com/assets/uploads/qc_screenshot/ext_1/2026-03-03/test-file.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=test',
+        'https://account-id.r2.cloudflarestorage.com/assets/qc_screenshot/ext_1/2026-03-03/test-file.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=test',
       upload_method: 'PUT',
       upload_headers: { content_type: 'image/png' },
-      object_key: 'uploads/qc_screenshot/ext_1/2026-03-03/test-file.png',
-      file_url: 'https://cdn.example.com/uploads/qc_screenshot/ext_1/2026-03-03/test-file.png',
+      object_key: 'qc_screenshot/ext_1/2026-03-03/test-file.png',
+      file_url: 'https://cdn.example.com/qc_screenshot/ext_1/2026-03-03/test-file.png',
       expires_in_seconds: 300,
     });
     expect(taskService.findByUidWithSnapshot).not.toHaveBeenCalled();

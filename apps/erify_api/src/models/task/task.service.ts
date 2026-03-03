@@ -74,6 +74,11 @@ export class TaskService extends BaseModelService {
   }
 
   /** @internal */
+  async reserveMaterialAssetUploadVersion(...args: Parameters<TaskRepository['reserveMaterialAssetUploadVersion']>): ReturnType<TaskRepository['reserveMaterialAssetUploadVersion']> {
+    return this.taskRepository.reserveMaterialAssetUploadVersion(...args);
+  }
+
+  /** @internal */
   async findByShowAndTemplate(...args: Parameters<TaskRepository['findByShowAndTemplate']>): ReturnType<TaskRepository['findByShowAndTemplate']> {
     return this.taskRepository.findByShowAndTemplate(...args);
   }

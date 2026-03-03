@@ -111,6 +111,7 @@ export const taskWithRelationsSchema = taskSchema.extend({
   targets: z.array(z.object({
     show: z.object({
       uid: z.string(),
+      externalId: z.string().nullable().optional(),
       name: z.string(),
       startTime: z.date(),
       endTime: z.date(),
@@ -140,6 +141,7 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj) => {
     if (s) {
       show = {
         id: s.uid,
+        external_id: s.externalId ?? s.uid,
         name: s.name,
         start_time: s.startTime.toISOString(),
         end_time: s.endTime.toISOString(),
