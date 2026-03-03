@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { Show } from '@eridu/api-types/shows';
 
-import { useShow } from '../../../features/shows/api';
+import { useMyShow } from '../../../features/shows/api/shows.api';
 import { ShowDetailPage } from '../show-detail-page';
 
 // Mock the router Link component
@@ -16,9 +16,9 @@ vi.mock('@tanstack/react-router', () => ({
   ),
 }));
 
-// Mock the useShow hook
-vi.mock('../../../features/shows/api', () => ({
-  useShow: vi.fn(),
+// Mock the useMyShow hook
+vi.mock('../../../features/shows/api/shows.api', () => ({
+  useMyShow: vi.fn(),
 }));
 
 // Create a query client for tests
@@ -75,7 +75,7 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
 describe('showDetailPage', () => {
   beforeEach(() => {
     // Reset mock to default state
-    vi.mocked(useShow).mockReturnValue(createMockShowResult());
+    vi.mocked(useMyShow).mockReturnValue(createMockShowResult());
   });
 
   afterEach(() => {
@@ -102,7 +102,7 @@ describe('showDetailPage', () => {
 
   it('renders show detail view when show is available', () => {
     // Mock show data
-    vi.mocked(useShow).mockReturnValue(createMockShowResult({
+    vi.mocked(useMyShow).mockReturnValue(createMockShowResult({
       data: {
         id: 'test-id',
         name: 'Test Show',
@@ -136,7 +136,7 @@ describe('showDetailPage', () => {
   });
 
   it('renders loading page when loading', () => {
-    vi.mocked(useShow).mockReturnValue(createMockShowResult({
+    vi.mocked(useMyShow).mockReturnValue(createMockShowResult({
       data: undefined,
       isLoading: true,
       isPending: true,

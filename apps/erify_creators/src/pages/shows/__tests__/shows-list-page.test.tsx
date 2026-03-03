@@ -2,13 +2,13 @@ import { screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useShows } from '../../../features/shows/api';
+import { useMyShows } from '../../../features/shows/api/shows.api';
 import { renderWithQueryClient } from '../../../test/test-utils';
 import { ShowsListPage } from '../shows-list-page';
 
 // Mock the hooks
-vi.mock('../../../features/shows/api', () => ({
-  useShows: vi.fn(),
+vi.mock('../../../features/shows/api/shows.api', () => ({
+  useMyShows: vi.fn(),
 }));
 
 // Mock UI components
@@ -72,7 +72,7 @@ vi.mock('@tanstack/react-table', () => ({
 describe('showsListPage', () => {
   beforeEach(() => {
     // Reset mock to default state
-    vi.mocked(useShows).mockReturnValue({
+    vi.mocked(useMyShows).mockReturnValue({
       data: { data: [], meta: { totalPages: 0 } },
       isLoading: false,
       error: null,
@@ -98,7 +98,7 @@ describe('showsListPage', () => {
 
   it('renders loading page when loading', () => {
     // Mock loading state
-    vi.mocked(useShows).mockReturnValue({
+    vi.mocked(useMyShows).mockReturnValue({
       data: null,
       isLoading: true,
       error: null,

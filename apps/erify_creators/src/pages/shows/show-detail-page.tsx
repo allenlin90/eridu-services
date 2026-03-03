@@ -1,6 +1,6 @@
 import { LoadingPage } from '@eridu/ui';
 
-import { useShow } from '@/features/shows/api';
+import { useMyShow } from '@/features/shows/api/shows.api';
 import { ShowDetailView } from '@/features/shows/components/show-detail';
 import * as m from '@/paraglide/messages.js';
 
@@ -18,7 +18,7 @@ type ShowDetailPageProps = {
  * - SEO metadata (when needed)
  */
 export function ShowDetailPage({ showId }: ShowDetailPageProps) {
-  const { data: show, isLoading, error } = useShow(showId);
+  const { data: show, isLoading, error } = useMyShow(showId);
 
   if (isLoading) {
     return <LoadingPage />;
