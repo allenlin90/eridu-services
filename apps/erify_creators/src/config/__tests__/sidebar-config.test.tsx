@@ -132,7 +132,7 @@ describe('useSidebarConfig', () => {
 
     expect(result.current.header).toMatchObject({
       title: 'Erify',
-      subtitle: 'Studio',
+      subtitle: 'Creators',
       url: '/',
     });
     expect((result.current.header as SidebarHeaderContent).icon).toBeDefined();

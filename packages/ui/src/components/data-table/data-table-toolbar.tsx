@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 
-import * as m from '@eridu/i18n';
 import { cn } from '@eridu/ui/lib/utils';
 
 import { FilterChips } from './toolbar/filter-chips';
@@ -84,7 +83,7 @@ export function DataTableToolbar<TData>({
           <SearchInput
             value={primaryFilterValue}
             onChange={handleSearchChange}
-            placeholder={searchPlaceholder ?? m['common.search']()}
+            placeholder={searchPlaceholder ?? 'Search...'}
             className="w-full sm:w-64 lg:w-80"
           />
         )}
@@ -110,7 +109,7 @@ export function DataTableToolbar<TData>({
           searchableColumns={searchableColumns}
           primaryColumnId={primaryColumnId}
           onClearAll={handleResetAll}
-          resetButtonLabel={resetButtonLabel ?? m['common.reset']()}
+          resetButtonLabel={resetButtonLabel ?? 'Reset'}
         />
       )}
     </div>

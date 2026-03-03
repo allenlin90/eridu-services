@@ -5,7 +5,6 @@ import {
   ChevronsRight,
 } from 'lucide-react';
 
-import * as m from '@eridu/i18n';
 import { Button } from '@eridu/ui';
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50, 100];
@@ -65,7 +64,7 @@ export function DataTablePagination({
       </div>
       <div className="flex flex-col-reverse sm:flex-row items-center gap-4 sm:gap-6 lg:gap-8 order-1 sm:order-2">
         <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">{textOverrides?.rowsPerPage ?? m['table.rowsPerPage']()}</p>
+          <p className="text-sm font-medium">{textOverrides?.rowsPerPage ?? 'Rows per page'}</p>
           <select
             value={pagination.pageSize}
             onChange={(e) => {
@@ -84,7 +83,17 @@ export function DataTablePagination({
           <div className="flex w-25 items-center justify-center text-sm font-medium">
             {textOverrides?.pageCount
               ? textOverrides.pageCount(pagination.pageIndex + 1, pagination.pageCount)
-              : m['table.page']({ current: pagination.pageIndex + 1, total: pagination.pageCount })}
+              : (
+                  <>
+                    Page
+                    {' '}
+                    {pagination.pageIndex + 1}
+                    {' '}
+                    of
+                    {' '}
+                    {pagination.pageCount}
+                  </>
+                )}
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -93,7 +102,7 @@ export function DataTablePagination({
               onClick={() => onPaginationChange({ pageIndex: 0, pageSize: pagination.pageSize })}
               disabled={pagination.pageIndex === 0}
             >
-              <span className="sr-only">{textOverrides?.goToFirstPage ?? m['table.goToFirstPage']()}</span>
+              <span className="sr-only">{textOverrides?.goToFirstPage ?? 'Go to first page'}</span>
               <ChevronsLeft className="h-4 w-4" />
             </Button>
             <Button
@@ -102,7 +111,7 @@ export function DataTablePagination({
               onClick={() => onPaginationChange({ pageIndex: pagination.pageIndex - 1, pageSize: pagination.pageSize })}
               disabled={pagination.pageIndex === 0}
             >
-              <span className="sr-only">{textOverrides?.goToPreviousPage ?? m['table.goToPreviousPage']()}</span>
+              <span className="sr-only">{textOverrides?.goToPreviousPage ?? 'Go to previous page'}</span>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
@@ -111,7 +120,7 @@ export function DataTablePagination({
               onClick={() => onPaginationChange({ pageIndex: pagination.pageIndex + 1, pageSize: pagination.pageSize })}
               disabled={pagination.pageIndex >= pagination.pageCount - 1}
             >
-              <span className="sr-only">{textOverrides?.goToNextPage ?? m['table.goToNextPage']()}</span>
+              <span className="sr-only">{textOverrides?.goToNextPage ?? 'Go to next page'}</span>
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button
@@ -120,7 +129,7 @@ export function DataTablePagination({
               onClick={() => onPaginationChange({ pageIndex: pagination.pageCount - 1, pageSize: pagination.pageSize })}
               disabled={pagination.pageIndex >= pagination.pageCount - 1}
             >
-              <span className="sr-only">{textOverrides?.goToLastPage ?? m['table.goToLastPage']()}</span>
+              <span className="sr-only">{textOverrides?.goToLastPage ?? 'Go to last page'}</span>
               <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>
