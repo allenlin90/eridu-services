@@ -33,6 +33,72 @@ vi.mock('@eridu/ui', async (importOriginal) => {
   return {
     ...actual,
     useTableUrlState: (...args: Parameters<typeof useTableUrlState>) => mockUseTableUrlState(...args),
+    adaptColumnFiltersChange: (filters: any, onChange: any) => (updater: any) => {
+      if (!onChange)
+        return;
+      const next = typeof updater === 'function' ? updater(filters || []) : updater;
+      onChange(next);
+    },
+    adaptPaginationChange: (pagination: any, onChange: any) => (updater: any) => {
+      if (!onChange || !pagination)
+        return;
+      const next = typeof updater === 'function' ? updater(pagination) : updater;
+      onChange(next);
+    },
+    DataTable: ({ data, columns, emptyMessage }: any) => {
+      const actionColumn = columns.find((column: any) => column.id === 'actions');
+      return (
+        <div>
+          {data.length === 0
+            ? (
+                <div>{emptyMessage}</div>
+              )
+            : (
+                <table>
+                  <tbody>
+                    {data.map((item: any) => (
+                      <tr key={item.id}>
+                        <td>{item.name}</td>
+                        <td>{actionColumn?.cell?.({ row: { original: item } })}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+        </div>
+      );
+    },
+    DataTableCore: ({ data, columns, emptyMessage }: any) => {
+      const actionColumn = columns.find((column: any) => column.id === 'actions');
+      return (
+        <div>
+          {data.length === 0
+            ? (
+                <div>{emptyMessage}</div>
+              )
+            : (
+                <table>
+                  <tbody>
+                    {data.map((item: any) => (
+                      <tr key={item.id}>
+                        <td>{item.name}</td>
+                        <td>{actionColumn?.cell?.({ row: { original: item } })}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+        </div>
+      );
+    },
+    DataTableToolbar: () => null,
+    DataTableActions: ({ row, onEdit, onDelete }: any) => (
+      <div>
+        {onEdit && <button type="button" onClick={() => onEdit(row)}>Edit</button>}
+        {onDelete && <button type="button" onClick={() => onDelete(row)}>Delete</button>}
+      </div>
+    ),
+    DataTablePagination: () => null,
   };
 });
 
@@ -96,79 +162,6 @@ vi.mock('@/features/admin/components', () => ({
       {children}
     </div>
   ),
-}));
-
-vi.mock('@/components/data-table', () => ({
-  adaptColumnFiltersChange: (filters: any, onChange: any) => (updater: any) => {
-    if (!onChange)
-      return;
-    const next = typeof updater === 'function' ? updater(filters || []) : updater;
-    onChange(next);
-  },
-  adaptPaginationChange: (pagination: any, onChange: any) => (updater: any) => {
-    if (!onChange || !pagination)
-      return;
-    const next = typeof updater === 'function' ? updater(pagination) : updater;
-    onChange(next);
-  },
-  DataTable: ({ data, columns, emptyMessage }: { data: UserApiResponse[]; columns: any[]; emptyMessage?: string }) => {
-    const actionColumn = columns.find((column) => column.id === 'actions');
-    return (
-      <div>
-        {data.length === 0
-          ? (
-              <div>{emptyMessage}</div>
-            )
-          : (
-              <table>
-                <tbody>
-                  {data.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.name}</td>
-                      <td>
-                        {actionColumn?.cell?.({ row: { original: item } })}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-      </div>
-    );
-  },
-  DataTableCore: ({ data, columns, emptyMessage }: { data: UserApiResponse[]; columns: any[]; emptyMessage?: string }) => {
-    const actionColumn = columns.find((column) => column.id === 'actions');
-    return (
-      <div>
-        {data.length === 0
-          ? (
-              <div>{emptyMessage}</div>
-            )
-          : (
-              <table>
-                <tbody>
-                  {data.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.name}</td>
-                      <td>
-                        {actionColumn?.cell?.({ row: { original: item } })}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-      </div>
-    );
-  },
-  DataTableToolbar: () => null,
-  DataTableActions: ({ row, onEdit, onDelete }: { row: UserApiResponse; onEdit?: (row: UserApiResponse) => void; onDelete?: (row: UserApiResponse) => void }) => (
-    <div>
-      {onEdit && <button type="button" onClick={() => onEdit(row)}>Edit</button>}
-      {onDelete && <button type="button" onClick={() => onDelete(row)}>Delete</button>}
-    </div>
-  ),
-  DataTablePagination: () => null,
 }));
 
 vi.mock('@/features/users/components/user-dialogs', () => ({

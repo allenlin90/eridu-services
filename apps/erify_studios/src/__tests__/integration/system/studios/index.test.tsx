@@ -55,7 +55,22 @@ vi.mock('@/features/admin/components', () => ({
   ),
 }));
 
-vi.mock('@/components/data-table', () => ({
+// Mock UI components
+vi.mock('@eridu/ui', () => ({
+  DropdownMenuItem: ({ children, onClick }: any) => (
+    <button type="button" onClick={onClick}>{children}</button>
+  ),
+  CopyableText: ({ value }: any) => <span>{value}</span>,
+  Button: ({ children, onClick }: any) => (
+    <button type="button" onClick={onClick}>{children}</button>
+  ),
+  Badge: ({ children }: any) => <span>{children}</span>,
+  Input: ({ ...props }: any) => <input {...props} />,
+  Select: ({ ...props }: any) => <select {...props} />,
+  SelectContent: ({ children }: any) => <>{children}</>,
+  SelectItem: ({ children }: any) => <option>{children}</option>,
+  SelectTrigger: ({ children }: any) => <button type="button">{children}</button>,
+  SelectValue: ({ children }: any) => <span>{children}</span>,
   DataTable: ({ data, columns }: any) => (
     <table>
       <tbody>
@@ -99,24 +114,6 @@ vi.mock('@/components/data-table', () => ({
     </div>
   ),
   DataTablePagination: () => null,
-}));
-
-// Mock UI components
-vi.mock('@eridu/ui', () => ({
-  DropdownMenuItem: ({ children, onClick }: any) => (
-    <button type="button" onClick={onClick}>{children}</button>
-  ),
-  CopyableText: ({ value }: any) => <span>{value}</span>,
-  Button: ({ children, onClick }: any) => (
-    <button type="button" onClick={onClick}>{children}</button>
-  ),
-  Badge: ({ children }: any) => <span>{children}</span>,
-  Input: ({ ...props }: any) => <input {...props} />,
-  Select: ({ ...props }: any) => <select {...props} />,
-  SelectContent: ({ children }: any) => <>{children}</>,
-  SelectItem: ({ children }: any) => <option>{children}</option>,
-  SelectTrigger: ({ children }: any) => <button type="button">{children}</button>,
-  SelectValue: ({ children }: any) => <span>{children}</span>,
 }));
 
 // Mock Studio Components

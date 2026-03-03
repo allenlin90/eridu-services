@@ -1,15 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { RotateCw } from 'lucide-react';
 
-import { Button } from '@eridu/ui';
+import { adaptColumnFiltersChange, adaptPaginationChange, Button, DataTable, DataTablePagination, DataTableToolbar } from '@eridu/ui';
 
-import {
-  adaptColumnFiltersChange,
-  adaptPaginationChange,
-  DataTable,
-  DataTablePagination,
-  DataTableToolbar,
-} from '@/components/data-table';
 import { StudioTaskActionSheet } from '@/features/tasks/components/studio-task-action-sheet';
 import { TaskDueDateDialog } from '@/features/tasks/components/task-due-date-dialog';
 import { studioTaskSearchableColumns } from '@/features/tasks/config/studio-task-columns';

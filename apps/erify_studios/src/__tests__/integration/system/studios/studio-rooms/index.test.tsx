@@ -51,6 +51,50 @@ vi.mock('@eridu/ui', async () => {
     Textarea: ({ value, onChange, placeholder, ...props }: any) => (
       <textarea value={value} onChange={onChange} placeholder={placeholder} {...props} />
     ),
+    DataTable: ({ data, columns }: any) => (
+      <table>
+        <tbody>
+          {data.map((row: any) => (
+            <tr key={row.id}>
+              {columns.map((column: any) => (
+                <td key={column.id ?? column.accessorKey}>
+                  {column.cell
+                    ? column.cell({ row: { original: row } })
+                    : row[column.accessorKey]}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ),
+    DataTableCore: ({ data, columns }: any) => (
+      <table>
+        <tbody>
+          {data.map((row: any) => (
+            <tr key={row.id}>
+              {columns.map((column: any) => (
+                <td key={column.id ?? column.accessorKey}>
+                  {column.cell
+                    ? column.cell({ row: { original: row } })
+                    : row[column.accessorKey]}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ),
+    DataTableToolbar: () => null,
+    adaptColumnFiltersChange: (value: any, cb: any) => cb,
+    adaptPaginationChange: (value: any, cb: any) => cb,
+    DataTableActions: ({ row, onEdit, onDelete }: any) => (
+      <div>
+        <button type="button" onClick={() => onEdit?.(row)}>Edit</button>
+        <button type="button" onClick={() => onDelete?.(row)}>Delete</button>
+      </div>
+    ),
+    DataTablePagination: () => null,
   };
 });
 
@@ -107,53 +151,6 @@ vi.mock('@/features/admin/components', () => ({
           </div>
         )
       : null,
-}));
-
-vi.mock('@/components/data-table', () => ({
-  DataTable: ({ data, columns }: any) => (
-    <table>
-      <tbody>
-        {data.map((row: any) => (
-          <tr key={row.id}>
-            {columns.map((column: any) => (
-              <td key={column.id ?? column.accessorKey}>
-                {column.cell
-                  ? column.cell({ row: { original: row } })
-                  : row[column.accessorKey]}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  ),
-  DataTableCore: ({ data, columns }: any) => (
-    <table>
-      <tbody>
-        {data.map((row: any) => (
-          <tr key={row.id}>
-            {columns.map((column: any) => (
-              <td key={column.id ?? column.accessorKey}>
-                {column.cell
-                  ? column.cell({ row: { original: row } })
-                  : row[column.accessorKey]}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  ),
-  DataTableToolbar: () => null,
-  adaptColumnFiltersChange: (value: any, cb: any) => cb,
-  adaptPaginationChange: (value: any, cb: any) => cb,
-  DataTableActions: ({ row, onEdit, onDelete }: any) => (
-    <div>
-      <button type="button" onClick={() => onEdit?.(row)}>Edit</button>
-      <button type="button" onClick={() => onDelete?.(row)}>Delete</button>
-    </div>
-  ),
-  DataTablePagination: () => null,
 }));
 
 // Mock Hooks

@@ -43,7 +43,7 @@ export function ShowsListPage() {
     return dateObj.toISOString();
   };
 
-  const { data, isLoading, error } = useMyShows({
+  const { data, isLoading, isFetching, error } = useMyShows({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     name: nameFilter,
@@ -93,6 +93,8 @@ export function ShowsListPage() {
         onSortingChange={onSortingChange}
         columnFilters={columnFilters as ColumnFiltersState}
         onColumnFiltersChange={onColumnFiltersChange}
+        isLoading={isLoading}
+        isFetching={isFetching}
       />
     </PageTransition>
   );

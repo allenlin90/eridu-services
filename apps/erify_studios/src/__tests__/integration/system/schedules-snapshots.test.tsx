@@ -37,12 +37,6 @@ vi.mock('@/features/admin/components', () => ({
   ),
 }));
 
-vi.mock('@/components/data-table', () => ({
-  DataTable: () => <div data-testid="data-table-core">Table</div>,
-  DataTableCore: () => <div data-testid="data-table-core">Table</div>,
-  DataTableToolbar: () => null,
-}));
-
 // Mock @eridu/ui components
 vi.mock('@eridu/ui', () => ({
   Breadcrumb: ({ children }: any) => <nav>{children}</nav>,
@@ -51,6 +45,9 @@ vi.mock('@eridu/ui', () => ({
   BreadcrumbLink: ({ children }: any) => <span>{children}</span>,
   BreadcrumbPage: ({ children }: any) => <span aria-current="page">{children}</span>,
   BreadcrumbSeparator: () => <span aria-hidden="true">/</span>,
+  DataTable: () => <div data-testid="data-table-core">Table</div>,
+  DataTableCore: () => <div data-testid="data-table-core">Table</div>,
+  DataTableToolbar: () => null,
 }));
 
 vi.mock('@/lib/api/admin', () => ({

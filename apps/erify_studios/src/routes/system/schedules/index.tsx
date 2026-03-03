@@ -5,16 +5,8 @@ import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 
 import type { ScheduleApiResponse, updateScheduleInputSchema } from '@eridu/api-types/schedules';
-import { DropdownMenuItem } from '@eridu/ui';
+import { adaptColumnFiltersChange, adaptPaginationChange, DataTable, DataTableActions, DataTablePagination, DataTableToolbar, DropdownMenuItem } from '@eridu/ui';
 
-import {
-  adaptColumnFiltersChange,
-  adaptPaginationChange,
-  DataTable,
-  DataTableActions,
-  DataTablePagination,
-  DataTableToolbar,
-} from '@/components/data-table';
 import { AdminLayout } from '@/features/admin/components';
 import {
   ScheduleDeleteDialog,

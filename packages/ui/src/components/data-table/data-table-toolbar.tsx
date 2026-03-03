@@ -4,14 +4,14 @@ import * as React from 'react';
 
 import { cn } from '@eridu/ui/lib/utils';
 
-import { FilterChips } from '@/components/data-table/toolbar/filter-chips';
-import { FilterPopover } from '@/components/data-table/toolbar/filter-popover';
-import { QuickFilters } from '@/components/data-table/toolbar/quick-filters';
-import { SearchInput } from '@/components/data-table/toolbar/search-input';
+import { FilterChips } from './toolbar/filter-chips';
+import { FilterPopover } from './toolbar/filter-popover';
+import { QuickFilters } from './toolbar/quick-filters';
+import { SearchInput } from './toolbar/search-input';
 import type {
   DataTableToolbarProps,
   SearchableColumn,
-} from '@/components/data-table/toolbar/types';
+} from './toolbar/types';
 
 const EMPTY_ARRAY: string[] = [];
 const DEFAULT_SEARCH_PLACEHOLDER = 'Search...';

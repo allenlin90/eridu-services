@@ -8,7 +8,6 @@ import type {
   createClientInputSchema,
   updateClientInputSchema,
 } from '@eridu/api-types/clients';
-
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
@@ -16,7 +15,8 @@ import {
   DataTableActions,
   DataTablePagination,
   DataTableToolbar,
-} from '@/components/data-table';
+} from '@eridu/ui';
+
 import { AdminLayout } from '@/features/admin/components';
 import {
   ClientCreateDialog,

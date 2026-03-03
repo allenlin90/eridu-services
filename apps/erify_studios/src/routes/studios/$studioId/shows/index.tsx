@@ -3,16 +3,8 @@ import type { RowSelectionState } from '@tanstack/react-table';
 import { ListTodo } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { Button } from '@eridu/ui';
+import { adaptColumnFiltersChange, adaptPaginationChange, adaptSortingChange, Button, DataTable, DataTablePagination, DataTableToolbar } from '@eridu/ui';
 
-import {
-  adaptColumnFiltersChange,
-  adaptPaginationChange,
-  adaptSortingChange,
-  DataTable,
-  DataTablePagination,
-  DataTableToolbar,
-} from '@/components/data-table';
 import { BulkTaskGenerationDialog } from '@/features/shows/components/bulk-task-generation-dialog';
 import { usePlatformsFieldData } from '@/features/shows/components/hooks/use-platforms-field-data';
 import { useShowStandardFieldData } from '@/features/shows/components/hooks/use-show-standard-field-data';

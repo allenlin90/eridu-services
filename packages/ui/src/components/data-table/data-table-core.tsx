@@ -43,6 +43,7 @@ type DataTableProps<TData> = {
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: OnChangeFn<RowSelectionState>;
   getRowId?: (row: TData) => string;
+  onRowClick?: (row: TData) => void;
   renderToolbar?: (table: import('@tanstack/react-table').Table<TData>) => React.ReactNode;
   renderFooter?: (table: import('@tanstack/react-table').Table<TData>) => React.ReactNode;
 };
@@ -67,10 +68,10 @@ export function DataTable<TData>({
   rowSelection,
   onRowSelectionChange,
   getRowId,
+  onRowClick,
   renderToolbar,
   renderFooter,
 }: DataTableProps<TData>) {
-  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
@@ -143,7 +144,11 @@ export function DataTable<TData>({
                       >
                         {table.getRowModel().rows.length > 0
                           ? table.getRowModel().rows.map((row) => (
-                              <TableRow key={row.id}>
+                              <TableRow
+                                key={row.id}
+                                className={cn(onRowClick && 'cursor-pointer hover:bg-muted/50')}
+                                onClick={() => onRowClick?.(row.original)}
+                              >
                                 {row.getVisibleCells().map((cell) => (
                                   <TableCell key={cell.id} className={cn('whitespace-nowrap', (cell.column.columnDef.meta as { className?: string })?.className)}>
                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

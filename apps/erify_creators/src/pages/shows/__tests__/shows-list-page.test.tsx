@@ -35,6 +35,7 @@ vi.mock('@eridu/ui', () => ({
   ),
   DatePickerWithRange: () => <div>Date Picker</div>,
   Button: ({ children, onClick }: any) => <button onClick={onClick}>{children}</button>,
+  DataTable: ({ emptyMessage }: any) => <div>{emptyMessage || 'DataTable Component'}</div>,
 }));
 
 // Mock TanStack Table

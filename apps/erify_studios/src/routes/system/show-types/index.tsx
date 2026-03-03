@@ -7,7 +7,6 @@ import type {
   ShowTypeApiResponse,
   UpdateShowTypeInput,
 } from '@eridu/api-types/show-types';
-
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
@@ -15,7 +14,8 @@ import {
   DataTableActions,
   DataTablePagination,
   DataTableToolbar,
-} from '@/components/data-table';
+} from '@eridu/ui';
+
 import { AdminLayout } from '@/features/admin/components';
 import {
   ShowTypeCreateDialog,

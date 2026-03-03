@@ -1,4 +1,5 @@
 export { CopyableText, type CopyableTextProps } from './components/copyable-text';
+export * from './components/data-table';
 export { DatePicker, DateTimePicker } from './components/date-picker';
 export { LoadingPage, LoadingSpinner } from './components/loading';
 export {
