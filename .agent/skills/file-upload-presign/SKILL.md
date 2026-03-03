@@ -5,7 +5,7 @@ description: Covers the presigned upload system for Cloudflare R2. Use this skil
 
 # File Upload — Presigned URL
 
-> Full design doc with flow diagrams: `apps/erify_api/docs/design/FILE_UPLOAD_DESIGN.md`
+> Full design doc with flow diagrams: `apps/erify_api/docs/FILE_UPLOAD.md`
 
 ## Key Files
 
@@ -38,11 +38,13 @@ description: Covers the presigned upload system for Cloudflare R2. Use this skil
 | `INSTRUCTION_ASSET` | 50 MB | `image/*`, `application/pdf`, `video/mp4` |
 | `MATERIAL_ASSET` | 50 MB | `image/*`, `application/pdf`, `video/mp4` |
 
-Defined in `USE_CASE_RULES` in `upload.service.ts`. **When changing limits, update this table and the design doc.**
+Defined in `FILE_UPLOAD_USE_CASE_RULES` in `packages/api-types/src/uploads/schemas.ts`. **When changing limits, update this table and the design doc.**
 
-`QC_SCREENSHOT` 200 KB limit intentionally matches `SCREENSHOT_MAX_BYTES = 200 * 1024` in `json-form.tsx`. Both must stay in sync.
+`QC_SCREENSHOT` 200 KB limit intentionally matches `SCREENSHOT_MAX_BYTES` (derived from `getImageCompressionTargetBytes()`) in `json-form.tsx`. Both must stay in sync.
 
 ## MATERIAL_ASSET Routing Rules
+
+The `upload_routing` metadata key is typed as `UploadRoutingMetadata` (exported from `@eridu/api-types/uploads`). Both `TaskGenerationProcessor` (producer) and `UploadService.extractDirectoryFromMetadata` (consumer) use this type to enforce the contract.
 
 Storage directory is resolved in this priority order:
 
@@ -63,14 +65,14 @@ Storage directory is resolved in this priority order:
 ## Checklist: Adding a New Use Case
 
 - [ ] Add enum value to `FILE_UPLOAD_USE_CASE` in `packages/api-types/src/uploads/schemas.ts`
-- [ ] Add entry to `USE_CASE_RULES` in `upload.service.ts`
-- [ ] Add routing logic in `resolveStorageUseCaseForObjectKey` if needed
+- [ ] Add entry to `FILE_UPLOAD_USE_CASE_RULES` in `packages/api-types/src/uploads/schemas.ts`
+- [ ] Add routing logic in `resolveStorageUseCaseForObjectKey` in `upload.service.ts` if needed
 - [ ] Update the use case table in this skill and the design doc
 - [ ] Add tests in `upload.service.spec.ts`
 
 ## Checklist: Changing a Size Limit
 
-- [ ] Update `USE_CASE_RULES[USE_CASE].maxFileSizeBytes` in `upload.service.ts`
-- [ ] If `QC_SCREENSHOT`: also verify `SCREENSHOT_MAX_BYTES` in `json-form.tsx` matches
+- [ ] Update `FILE_UPLOAD_USE_CASE_RULES[USE_CASE].max_file_size_bytes` in `packages/api-types/src/uploads/schemas.ts`
+- [ ] If `QC_SCREENSHOT`: also verify `SCREENSHOT_MAX_BYTES` in `json-form.tsx` still matches (it's derived from `getImageCompressionTargetBytes()`)
 - [ ] Update the use case table above and in the design doc
 - [ ] Run `pnpm --filter erify_api test --testPathPattern=upload`

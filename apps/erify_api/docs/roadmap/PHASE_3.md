@@ -1,8 +1,8 @@
 # Phase 3: Material Management, Shift Schedules & File Uploads
 
-> **TLDR**: 🗓️ **Planned**. Adds material management (CRUD, versioning, platform targeting), studio shift schedules (shift blocks, cost tracking, calendar views), and file uploads (Cloudflare R2 presigned URLs). Notifications and advanced collaboration deferred to Phase 5.
+> **TLDR**: 🚧 **In Progress**. File Upload (Cloudflare R2 presigned URLs) implemented March 2026. Material management and studio shift schedules still pending.
 
-**Status**: ⏳ Planning phase (Deferred to after Task Management)
+**Status**: 🚧 In Progress — File Upload complete; Material Management and Shift Schedules pending
 
 ## Overview
 
@@ -64,14 +64,17 @@ Phase 3 implements the Material Management System, Studio Shift Schedules, and F
 - [ ] Calendar and alignment controllers
 - [ ] Shared Zod schemas in `@eridu/api-types`
 
-### File Upload System
+### File Upload System ✅ Implemented (March 2026)
 
-- [ ] Add `@aws-sdk/client-s3` and `@aws-sdk/s3-request-presigner` dependencies
-- [ ] Add R2 env vars (`R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`) to `env.schema.ts`, `.env.example`, `.env.railway.example`
-- [ ] `StorageService` — S3/R2 abstraction layer with presigned URL generation
-- [ ] `FileUploadService` — Use-case validation (size limits, allowed types per use case)
-- [ ] `UploadController` — `POST /uploads/presign` endpoint
-- [ ] Define upload request/response schemas in `@eridu/api-types`
+- [x] Add `@aws-sdk/client-s3` and `@aws-sdk/s3-request-presigner` dependencies
+- [x] Add R2 env vars (`R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`) to `env.schema.ts`
+- [x] `StorageService` — S3/R2 abstraction layer with presigned URL generation
+- [x] `UploadService` — Use-case validation (size limits, allowed types per use case), MATERIAL_ASSET template policy enforcement, upload version reservation
+- [x] `UploadController` — `POST /uploads/presign` endpoint (200 OK)
+- [x] Define upload request/response schemas in `@eridu/api-types/uploads`
+- [x] `@eridu/browser-upload` — worker-based image compression with main-thread canvas fallback
+- [x] `JsonForm` integration — file field rendering, client-side compression, flush-on-submit
+- [x] `UploadRoutingMetadata` shared type for typed `upload_routing` metadata contract
 
 ## Technical Considerations
 
@@ -99,10 +102,12 @@ Phase 3 implements the Material Management System, Studio Shift Schedules, and F
 - [ ] Cost calculations and administrative overrides trigger correctly.
 - [ ] Show alignment flags members working without shift coverage (shows only).
 
-### File Upload
+### File Upload ✅
 
-- [ ] Users can request presigned URLs and upload files directly to R2.
-- [ ] Uploaded file URLs are accessible via CDN and usable in material/task entities.
+- [x] Users can request presigned URLs and upload files directly to R2.
+- [x] Uploaded file URLs are accessible via CDN and usable in material/task entities.
+- [x] MATERIAL_ASSET uploads validate against task snapshot schema and reserve upload versions atomically.
+- [x] Images are compressed client-side before upload (worker + canvas fallback).
 
 ## Dependencies
 

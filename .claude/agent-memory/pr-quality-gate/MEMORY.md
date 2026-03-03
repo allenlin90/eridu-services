@@ -76,8 +76,58 @@ All five R2 env vars (`R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
 ### forcePathStyle on R2
 `S3Client` uses `forcePathStyle: true`. For Cloudflare R2 presigned URLs this is correct — R2 supports path-style requests and the presigned URL generation matches the endpoint pattern.
 
-### file_size: No Schema-Level Upper Bound
-`presignUploadRequestSchema` uses `z.number().int().positive()` for `file_size` — no max cap at schema level. Upper bound enforcement is per-use-case in `USE_CASE_RULES` inside `UploadService`. This means a client can send a very large number that still passes Zod validation before being rejected by the service. Low risk since it's just a number check, not actual data transfer.
+### file_size: Schema-Level Upper Bound Added in Phase 3
+`presignUploadRequestSchema` uses `z.number().int().positive().max(100 * 1024 * 1024)` — a 100MB hard cap at schema level. Per-use-case limits (10/25/50MB) are additionally enforced in `USE_CASE_RULES` inside `UploadService`. Defense in depth: schema rejects anything over 100MB, service enforces tighter per-use-case limits.
 
-### _endpoint and _bucket params in buildPublicFileUrl
-`buildPublicFileUrl(_endpoint: URL, _bucket: string, objectKey: string)` ignores its first two params (prefixed with `_`). The public URL always uses `R2_PUBLIC_BASE_URL`. The unused params are there for potential future use. The leading underscore convention is correct for TypeScript unused params.
+### buildPublicFileUrl (cleaned up in Phase 3)
+`buildPublicFileUrl(objectKey: string)` — unused params were removed in Phase 3. The public URL always uses `R2_PUBLIC_BASE_URL`.
+
+### Task Metadata upload_routing Pattern (NEW in Phase 3)
+`TaskGenerationProcessor.buildShowGeneratedTaskMetadata()` stamps every generated task with:
+```json
+{ "upload_routing": { "source": "show_task_generation", "scope": "show", "material_asset_directory": "<pre-production|mc-review|show-general>" } }
+```
+`UploadService.extractDirectoryFromMetadata()` reads `task.metadata.upload_routing.material_asset_directory` to override the default storage directory. This is an implicit coupling via opaque metadata — not enforced by TypeScript shared type. A shared type constant for the `upload_routing` key structure would be safer long-term.
+
+### SCREENSHOT_MAX_BYTES Compression Target (200KB) vs QC_SCREENSHOT API Limit (200KB)
+In `json-form.tsx`, `SCREENSHOT_MAX_BYTES = 200 * 1024` is the client-side image compression TARGET before upload for MATERIAL_ASSET image fields. The `QC_SCREENSHOT` backend API limit is also 200KB — both are in sync. `QC_SCREENSHOT` is not called from any erify_studios frontend code in Phase 3 (enum exists, but no UI path uses it yet).
+
+### Zod v4 z.url() Usage
+`presignUploadResponseSchema` uses `z.url()` which is a Zod v4 API. Project uses `zod@^4.3.6` in api-types. This is correct and passes typecheck and build. Do not flag as an issue.
+
+### UploadController Extends BaseController (Correct)
+`UploadController` DOES extend `BaseController`. Global guard chain (Throttler → JwtAuth) via `APP_GUARD` in `app.module.ts` covers this controller. No `@StudioProtected` needed — presign is a cross-studio POST action authenticated by JWT.
+
+### mime_type Schema Enum vs image/* in Design Doc
+The `presignUploadRequestSchema` limits `mime_type` to a closed enum: jpeg/png/webp/pdf/mp4. SKILL.md describes MATERIAL_ASSET as `image/*` but the schema is the authoritative gate. Service USE_CASE_RULES list the same 5 types. Both consistent — design doc `image/*` is aspirational shorthand.
+
+### findByUidWithSnapshot Returns Full Task Including metadata
+`TaskRepository.findByUidWithSnapshot` uses `include` (not `select`) for snapshot/targets — all root scalar fields including `metadata` are returned automatically. `UploadService.extractDirectoryFromMetadata` relies on this. Not a bug.
+
+### flushPendingFileUploads Sequential Upload Loop
+Processes uploads sequentially. On failure: throws (remaining uploads abort), failed field stays in `pendingFilesByKey` (user can retry), `uploadingByKey` always reset in `finally`. Intentional and correct.
+
+### JsonForm File Validation — Two-Layer Pattern
+Layer 1 (`onFileSelect`): checks MIME against `SUPPORTED_UPLOAD_MIME_TYPES` + `doesFileMatchAccept` — surfaces via `toast.error` immediately.
+Layer 2 (`flushPendingFileUploads`): re-validates before presign request, throws on failure — callers catch and call `toast.error`.
+
+### QC_SCREENSHOT Not Used in Frontend (Phase 3)
+Commit title `feat(erify_studios): add QC screenshot upload flow in task sheet` is misleading. Frontend uses MATERIAL_ASSET use case only. `QC_SCREENSHOT` enum exists at backend but has no frontend call path yet.
+
+### browser-upload Package: src-direct Export Is Established Pattern
+`@eridu/browser-upload` exports `"default": "./src/index.ts"`. This mirrors `@eridu/ui` (same pattern). Both are Vite-consumed packages resolved via bundler moduleResolution. Do NOT flag src-direct export as a violation for these packages. Worker URL (`new URL('./image-compress.worker.ts', import.meta.url)`) is correctly handled by Vite — confirmed by build output emitting a separate worker chunk. Package is NOT in `optimizeDeps.include` or `exclude` which is correct (worker packages with `import.meta.url` should not be pre-bundled).
+
+### getMaterialAssetImageMaxBytes Naming (Confirmed in Phase 3 Review)
+Returns `min(fieldMax, QC_SCREENSHOT limit = 200KB)`. Name is misleading (sounds like material asset limit = 50MB) but it's the image COMPRESSION TARGET cap, not the upload limit. Both uses in `json-form.tsx` are correct.
+
+### reserveMaterialAssetUploadVersion: $transaction in Repository Is Correct
+`TaskRepository.reserveMaterialAssetUploadVersion()` uses `prisma.$transaction` directly. `@Transactional()` decorator applies only to SERVICE layer. Repository layer uses `prisma.$transaction()` for atomic ops — consistent with all other transactional methods in `task.repository.ts`.
+
+### USE_CASE_RULES in api-types (Phase 3)
+`FILE_UPLOAD_USE_CASE_RULES`, `getUploadMaxFileSizeBytes`, `isUploadMimeTypeAllowed`, `getMaterialAssetImageMaxBytes` live in `packages/api-types/src/uploads/schemas.ts`. Backend imports from `@eridu/api-types/uploads`. Frontend imports from `@eridu/api-types/uploads`. Single source of truth for validation constants — correct pattern.
+
+### Upload Controller: HTTP 201 for Presign POST (Accepted)
+`POST /uploads/presign` returns 201 CREATED. Semantically 200 OK would be more accurate (computed result, no persisted resource), but 201 is consistent with other POST endpoints in the project. Acceptable as-is.
+
+### isSupportedUploadMimeType: Redundant Double-Check (Known Suggestion)
+In `json-form.tsx`, `isSupportedUploadMimeType(value)` checks `MATERIAL_ASSET_ALLOWED_MIME_TYPES.has(value) && isUploadMimeTypeAllowed(MATERIAL_ASSET, value)`. Both checks query the same data structure. The Set.has() is redundant with the includes() inside isUploadMimeTypeAllowed. Minor dead-code smell, not a blocker.

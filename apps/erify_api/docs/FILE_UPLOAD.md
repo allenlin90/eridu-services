@@ -1,7 +1,6 @@
-# File Upload — Presigned URL Design
+# File Upload — Presigned URL
 
-> **Status**: Implemented (Phase 3, March 2026)
-> **Original proposal**: This document supersedes the initial R2 integration plan.
+> **Status**: ✅ Implemented (Phase 3, March 2026)
 
 ## Overview
 
@@ -45,7 +44,7 @@ sequenceDiagram
 | `INSTRUCTION_ASSET` | **50 MB** | `image/*`, `application/pdf`, `video/mp4` | |
 | `MATERIAL_ASSET` | **50 MB** | `image/*`, `application/pdf`, `video/mp4` | Also validates against task snapshot schema |
 
-Rules are enforced in `USE_CASE_RULES` constant in [`upload.service.ts`](../../src/uploads/upload.service.ts).
+Rules are enforced in `FILE_UPLOAD_USE_CASE_RULES` constant in [`packages/api-types/src/uploads/schemas.ts`](../../../../packages/api-types/src/uploads/schemas.ts).
 
 ## Backend Validation Pipeline
 
@@ -92,21 +91,38 @@ flowchart TD
 
 The `upload_routing.material_asset_directory` key is stamped onto task metadata by `TaskGenerationProcessor` when the source template declares a `material_asset_directory` field. This lets template authors pin generated tasks to a custom R2 directory at generation time.
 
+The metadata shape is typed as `UploadRoutingMetadata` (exported from `@eridu/api-types/uploads`). Both the producer (`TaskGenerationProcessor`) and the consumer (`UploadService.extractDirectoryFromMetadata`) use `Partial<UploadRoutingMetadata>` for typed access, eliminating stringly-typed double casts.
+
 > TODO(upload-workflow): dedicated UI workflow handling for `pre-production` and `mc-review` directories is pending.
 
 ## Object Key Format
 
+**Non-MATERIAL_ASSET** (via `StorageService.generateObjectKey`):
 ```
-{storageUseCase}/{actorId}/{YYYY-MM-DD}/{fileName}
+{useCase_lower}/{actorId}/{YYYY-MM-DD}/{uuid}-{safeName}
 
-Examples:
-  pre-production/user_abc123/2026-03-03/proof.png
-  mc-review/user_abc123/2026-03-03/closure-check.jpg
-  wardrobe-archive/user_abc123/2026-03-03/costume.jpg
-  qc_screenshot/user_abc123/2026-03-03/screen.png
+Example:
+  qc_screenshot/ext_abc123/2026-03-03/a1b2c3d4-screen.png
 ```
 
-`actorId` = `user.ext_id` (external UID, never internal DB id).
+**MATERIAL_ASSET — show-linked** (via `buildMaterialAssetObjectKey`):
+```
+{storageDir}/{YYYY-MM-DD}/{showRef}-v{uploadVersion}{ext}
+
+Example:
+  pre-production/2026-03-03/show-1-v1.png
+  mc-review/2026-03-03/show-xyz-v2.jpg
+```
+
+**MATERIAL_ASSET — no show target**:
+```
+{storageDir}/{YYYY-MM-DD}/{fieldKey}-v{uploadVersion}{ext}
+
+Example:
+  single-use/2026-03-03/proof-photo-v1.png
+```
+
+`actorId` = `user.ext_id` (external UID, never internal DB id). Note: MATERIAL_ASSET keys use show UID or field key as the base name — `actorId` is **not** included in MATERIAL_ASSET paths.
 
 ## Frontend Compression (erify_studios)
 

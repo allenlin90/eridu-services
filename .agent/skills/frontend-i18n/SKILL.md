@@ -69,7 +69,27 @@ import * as sharedM from '@eridu/i18n';
 <Button>{sharedM['common.cancel']()}</Button>
 ```
 
-### 3. Locale Management
+### 3. Shared UI Abstraction (`@eridu/ui`)
+
+When building generic shared UI components inside `@eridu/ui` (such as `DataTable`), the component should ideally be ignorant of upstream application context while still providing localized defaults.
+
+1. **Default to Shared Translations:** Import `@eridu/i18n` inside `@eridu/ui/components/...` to provide default labels.
+2. **Expose `textOverrides` Props:** Always allow downstream applications (like `erify_creators` or `erify_studios`) to inject their own specific terminology through props (e.g., `textOverrides={{ searchPlaceholder: m['specific.search']() }}`).
+
+Example:
+```tsx
+import * as sharedM from '@eridu/i18n';
+
+interface DataTableToolbarProps {
+  searchPlaceholder?: string; // Optional app-specific override
+}
+
+export function DataTableToolbar({ searchPlaceholder = sharedM['common.search']() }: DataTableToolbarProps) {
+  return <Input placeholder={searchPlaceholder} />;
+}
+```
+
+### 4. Locale Management
 
 Use the `LocaleEnum` and helper functions from `@eridu/i18n` when dealing with locale logic (e.g., language switchers).
 
@@ -94,3 +114,4 @@ import { LocaleEnum, LOCALE_LABELS } from '@eridu/i18n';
 
 -   **"Property '...' does not exist on type..."**: Run `pnpm dev` or `pnpm build` to force regeneration of the Paraglide files.
 -   **Missing Translations**: Ensure you've added the key to `en.json`. Other languages (e.g., `zh-TW`) can be filled in later or via translation tools.
+-   **TypeScript Error TS1005: ',' expected during build**: `tsc` contains a bug where it strips quotes around string exports when generating `.d.ts` files from Paraglide JS (e.g., `export { foo as foo.bar }`). The `@eridu/i18n` package includes a `patch-dts` script in its `package.json` build step to regex-replace this invalid syntax. If a new shared package exhibits this behavior, apply the fix to its `package.json`.
