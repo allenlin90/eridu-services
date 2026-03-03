@@ -20,6 +20,7 @@
 | [Schedule Planning](./SCHEDULE_PLANNING.md)                                         | ✅ Phase 1 | JSON planning, snapshots, validation, publishing    |
 | [Schedule Continuity](./SCHEDULE_CONTINUITY.md)                                     | ✅ Core    | Identity-preserving diff+upsert publish             |
 | [Task Management Summary](./TASK_MANAGEMENT_SUMMARY.md)                             | ✅         | Task-as-Form architecture, API surface, workflows   |
+| [File Upload (Cloudflare R2)](./FILE_UPLOAD.md)                                     | ✅ Phase 3 | Presigned URL flow, use-case limits, storage routing |
 
 ## Design
 
@@ -29,7 +30,7 @@
 | [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) | ⏳      | Studio-scoped resolution for cancelled shows                                   |
 | [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                | 📐      | Template-less pre-production ticketing using Tasks                             |
 | [Studio Shift Schedule](./design/STUDIO_SHIFT_SCHEDULE_DESIGN.md)                         | 📐      | Shift blocks, cost tracking, calendar/alignment                                |
-| [File Upload (Cloudflare R2)](./design/FILE_UPLOAD_DESIGN.md)                              | 📐      | Presigned URL architecture for file uploads                                    |
+| ~~[File Upload (Cloudflare R2)](./FILE_UPLOAD.md)~~                                        | ✅      | Moved to Features — fully implemented                                          |
 | [Material Management](./design/MATERIAL_MANAGEMENT_DESIGN.md)                             | ⏳      | To be written (Phase 3 prerequisite)                                           |
 | [Data Warehouse](./design/DATA_WAREHOUSE_DESIGN.md)                                       | ⏳      | Datastream + BigQuery — to be written (Phase 4)                                |
 
@@ -39,7 +40,7 @@
 | ------------------------------- | ------ | ----------------------------------------------- |
 | [Phase 1](./roadmap/PHASE_1.md) | ✅      | Core entities, schedule planning, auth           |
 | [Phase 2](./roadmap/PHASE_2.md) | ✅      | Task management system                           |
-| [Phase 3](./roadmap/PHASE_3.md) | 🗓️      | Material management, shift schedules, file uploads |
+| [Phase 3](./roadmap/PHASE_3.md) | 🚧      | Material management, shift schedules, file uploads |
 | [Phase 4](./roadmap/PHASE_4.md) | 🗓️      | Review quality, decision support, analytics (BigQuery) |
 | [Phase 5](./roadmap/PHASE_5.md) | 🗓️      | Collaboration, notifications, enterprise scheduling |
 

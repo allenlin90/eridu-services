@@ -296,8 +296,9 @@ const where: Prisma.TaskWhereInput = { ... };
 | **frontend-state-management** | React state patterns | MEDIUM |
 | **jsonb-analytics-snapshot** | Analytics aggregation with JSONB snapshots | MEDIUM |
 | **schedule-continuity-workflow** | Schedule update/validate/publish workflow | MEDIUM |
+| **file-upload-presign** | Presigned R2 upload flow, use case limits, storage routing | MEDIUM |
 
-**Full skill list** (28 total): See `.agent/skills/` directory
+**Full skill list** (29 total): See `.agent/skills/` directory
 
 ### Memory Files (Supplementary - `.claude/memory/`)
 | File | Purpose | When to Use |
