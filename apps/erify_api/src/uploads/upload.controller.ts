@@ -21,7 +21,7 @@ export class UploadController extends BaseController {
   @Post('presign')
   @ZodResponse(
     presignUploadResponseSchema,
-    HttpStatus.CREATED,
+    HttpStatus.OK,
     'Generate a short-lived presigned upload URL for Cloudflare R2',
   )
   createPresignedUpload(

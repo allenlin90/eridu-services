@@ -176,7 +176,7 @@ async function compressInWorker(file: File, options: PrepareImageForUploadOption
       }, [fileArrayBuffer]);
     });
 
-    if ('message' in result) {
+    if (!result.ok) {
       throw new Error(result.message);
     }
 

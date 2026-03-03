@@ -4,6 +4,7 @@ import type { Prisma, Show, TaskTemplate, TaskTemplateSnapshot } from '@prisma/c
 import { TaskStatus, TaskType } from '@prisma/client';
 
 import { TASK_TYPE } from '@eridu/api-types/task-management';
+import type { UploadRoutingMetadata } from '@eridu/api-types/uploads';
 
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
@@ -154,13 +155,14 @@ export class TaskGenerationProcessor {
   }
 
   private buildShowGeneratedTaskMetadata(type: TaskType): Prisma.InputJsonValue {
-    return {
+    const metadata: UploadRoutingMetadata = {
       upload_routing: {
         source: 'show_task_generation',
         scope: 'show',
         material_asset_directory: this.resolveMaterialAssetDirectory(type),
       },
-    } as Prisma.InputJsonValue;
+    };
+    return metadata as Prisma.InputJsonValue;
   }
 
   private resolveMaterialAssetDirectory(type: TaskType): string {

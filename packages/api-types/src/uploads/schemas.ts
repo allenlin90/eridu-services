@@ -44,7 +44,15 @@ export function isUploadMimeTypeAllowed(useCase: FileUploadUseCase, mimeType: st
   return FILE_UPLOAD_USE_CASE_RULES[useCase].allowed_mime_types.includes(mimeType);
 }
 
-export function getMaterialAssetImageMaxBytes(fieldMaxBytes?: number): number {
+export type UploadRoutingMetadata = {
+  upload_routing: {
+    source: string;
+    scope: string;
+    material_asset_directory: string;
+  };
+};
+
+export function getImageCompressionTargetBytes(fieldMaxBytes?: number): number {
   const fieldMax = fieldMaxBytes ?? Number.POSITIVE_INFINITY;
   return Math.min(fieldMax, getUploadMaxFileSizeBytes(FILE_UPLOAD_USE_CASE.QC_SCREENSHOT));
 }

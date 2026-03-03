@@ -10,6 +10,7 @@ import {
   isUploadMimeTypeAllowed,
   type PresignUploadRequest,
   type PresignUploadResponse,
+  type UploadRoutingMetadata,
 } from '@eridu/api-types/uploads';
 
 import { HttpError } from '@/lib/errors/http-error.util';
@@ -316,12 +317,12 @@ export class UploadService {
       return null;
     }
 
-    const uploadRouting = (metadata as { upload_routing?: unknown }).upload_routing;
+    const uploadRouting = (metadata as Partial<UploadRoutingMetadata>).upload_routing;
     if (!uploadRouting || typeof uploadRouting !== 'object') {
       return null;
     }
 
-    const directory = (uploadRouting as { material_asset_directory?: unknown }).material_asset_directory;
+    const directory = uploadRouting.material_asset_directory;
     if (typeof directory !== 'string' || directory.trim().length === 0) {
       return null;
     }

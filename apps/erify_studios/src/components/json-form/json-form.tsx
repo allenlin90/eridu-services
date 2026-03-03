@@ -7,8 +7,7 @@ import { toast } from 'sonner';
 import {
   FILE_UPLOAD_USE_CASE,
   FILE_UPLOAD_USE_CASE_RULES,
-  getMaterialAssetImageMaxBytes,
-  isUploadMimeTypeAllowed,
+  getImageCompressionTargetBytes,
 } from '@eridu/api-types/uploads';
 import { matchesAcceptRule, prepareImageForUpload } from '@eridu/browser-upload';
 import {
@@ -67,15 +66,14 @@ type PendingUpload = {
 };
 
 const DEFAULT_VALUES: Record<string, unknown> = {};
-const SCREENSHOT_MAX_BYTES = getMaterialAssetImageMaxBytes(Number.POSITIVE_INFINITY);
+const SCREENSHOT_MAX_BYTES = getImageCompressionTargetBytes(Number.POSITIVE_INFINITY);
 const MATERIAL_ASSET_MAX_BYTES = FILE_UPLOAD_USE_CASE_RULES[FILE_UPLOAD_USE_CASE.MATERIAL_ASSET].max_file_size_bytes;
 const MATERIAL_ASSET_ALLOWED_MIME_TYPES = new Set(
   FILE_UPLOAD_USE_CASE_RULES[FILE_UPLOAD_USE_CASE.MATERIAL_ASSET].allowed_mime_types,
 );
 
 function isSupportedUploadMimeType(value: string): boolean {
-  return MATERIAL_ASSET_ALLOWED_MIME_TYPES.has(value)
-    && isUploadMimeTypeAllowed(FILE_UPLOAD_USE_CASE.MATERIAL_ASSET, value);
+  return MATERIAL_ASSET_ALLOWED_MIME_TYPES.has(value);
 }
 
 function isLikelyImageUrl(url: string): boolean {
@@ -93,7 +91,7 @@ function releasePendingUploads(map: Record<string, PendingUpload>): void {
 function getFieldMaxBytes(item: UiSchema['items'][0], file: File): number {
   const fieldMaxBytes = item.validation?.max_size ?? Number.POSITIVE_INFINITY;
   if (file.type.startsWith('image/')) {
-    return getMaterialAssetImageMaxBytes(fieldMaxBytes);
+    return getImageCompressionTargetBytes(fieldMaxBytes);
   }
   return fieldMaxBytes;
 }
@@ -105,11 +103,11 @@ function getFileTooLargeMessage(label: string, maxBytes: number): string {
 function getFieldMaxHint(item: UiSchema['items'][0], pendingUpload?: PendingUpload): string {
   const fieldMax = item.validation?.max_size ?? MATERIAL_ASSET_MAX_BYTES;
   if (pendingUpload?.file.type.startsWith('image/')) {
-    return formatFileSize(getMaterialAssetImageMaxBytes(fieldMax));
+    return formatFileSize(getImageCompressionTargetBytes(fieldMax));
   }
 
   if (item.validation?.accept?.includes('image/')) {
-    return `${formatFileSize(fieldMax)} (images capped at ${formatFileSize(getMaterialAssetImageMaxBytes(fieldMax))})`;
+    return `${formatFileSize(fieldMax)} (images capped at ${formatFileSize(getImageCompressionTargetBytes(fieldMax))})`;
   }
   return formatFileSize(fieldMax);
 }

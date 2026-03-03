@@ -14,7 +14,7 @@ import { TaskService } from '@/models/task/task.service';
 describe('uploadController', () => {
   let controller: UploadController;
   let storageService: jest.Mocked<StorageService>;
-  let taskService: jest.Mocked<Pick<TaskService, 'findByUidWithSnapshot'>>;
+  let taskService: jest.Mocked<Pick<TaskService, 'findByUidWithSnapshot' | 'reserveMaterialAssetUploadVersion'>>;
 
   const mockUser: AuthenticatedUser = {
     id: 'ext_1',
@@ -44,6 +44,7 @@ describe('uploadController', () => {
     };
     const mockTaskService = {
       findByUidWithSnapshot: jest.fn().mockResolvedValue(null),
+      reserveMaterialAssetUploadVersion: jest.fn().mockResolvedValue(1),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -105,5 +106,38 @@ describe('uploadController', () => {
         file_name: 'video.mp4',
       }),
     ).rejects.toThrow(BadRequestException);
+  });
+
+  it('should call reserveMaterialAssetUploadVersion when use_case is MATERIAL_ASSET', async () => {
+    taskService.findByUidWithSnapshot.mockResolvedValue({
+      uid: 'task_abc',
+      type: 'SETUP',
+      targets: [],
+      snapshot: {
+        schema: {
+          items: [
+            {
+              id: 'item_1',
+              key: 'proof_photo',
+              type: 'file',
+              label: 'Proof Photo',
+              validation: { accept: 'image/*' },
+            },
+          ],
+          metadata: { task_type: 'OTHER' },
+        },
+      },
+    } as any);
+
+    await controller.createPresignedUpload(mockUser, {
+      use_case: FILE_UPLOAD_USE_CASE.MATERIAL_ASSET,
+      mime_type: 'image/png',
+      file_size: 1024,
+      file_name: 'proof.png',
+      task_id: 'task_abc',
+      field_key: 'proof_photo',
+    });
+
+    expect(taskService.reserveMaterialAssetUploadVersion).toHaveBeenCalledWith('task_abc', 'proof_photo');
   });
 });
