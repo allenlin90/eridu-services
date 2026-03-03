@@ -1,13 +1,15 @@
 import { format } from 'date-fns';
-import { AlertCircle, AlertTriangle, CheckCircle2, Clock, Send } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle2, Clock, Paperclip, Send, Upload } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { TaskStatus, TaskWithRelationsDto } from '@eridu/api-types/task-management';
 import { TASK_ACTION, TASK_STATUS, TemplateSchemaValidator } from '@eridu/api-types/task-management';
+import { FILE_UPLOAD_USE_CASE } from '@eridu/api-types/uploads';
 import {
   Badge,
   Button,
+  Input,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -15,6 +17,7 @@ import {
   SheetTitle,
 } from '@eridu/ui';
 
+import { requestPresignedUpload, uploadFileToPresignedUrl } from '../api/presign-upload';
 import { useUpdateMyTask } from '../hooks/use-update-my-task';
 import { calculateTaskProgress } from '../lib/progress';
 
@@ -29,7 +32,13 @@ type TaskExecutionSheetProps = {
 };
 
 const DRAFT_AUTOSAVE_DEBOUNCE_MS = 650;
+const QC_UPLOAD_CONTENT_KEY = 'qc_screenshot_urls';
+const SUPPORTED_QC_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 type DraftSaveState = 'idle' | 'dirty' | 'saving' | 'saved';
+
+function isSupportedQcMimeType(value: string): value is (typeof SUPPORTED_QC_MIME_TYPES)[number] {
+  return SUPPORTED_QC_MIME_TYPES.includes(value as (typeof SUPPORTED_QC_MIME_TYPES)[number]);
+}
 
 const STATUS_VARIANT: Partial<Record<TaskStatus, 'default' | 'secondary' | 'destructive' | 'outline'>> = {
   COMPLETED: 'default',
@@ -58,13 +67,16 @@ type DraftStateEntry = {
 };
 
 function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutionSheetInnerProps) {
-  const { mutate: updateTask, isPending } = useUpdateMyTask();
+  const { mutate: updateTask, mutateAsync: updateTaskAsync, isPending } = useUpdateMyTask();
   // Keyed by taskId — automatically "resets" when task changes without needing an effect
   const [draftState, setDraftState] = useState<DraftStateEntry | null>(null);
+  const [uploadSelection, setUploadSelection] = useState<{ taskId: string; file: File | null } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const draftAutoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // currentDraft is null whenever the stored draft belongs to a different task
   const currentDraft = draftState?.taskId === task.id ? draftState : null;
+  const selectedUploadFile = uploadSelection?.taskId === task.id ? uploadSelection.file : null;
   const draftSaveState: DraftSaveState = currentDraft?.saveState ?? 'idle';
   const hasDraft = currentDraft !== null;
 
@@ -89,6 +101,10 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
   const taskContentString = useMemo(() => JSON.stringify(task.content ?? {}), [task.content]);
   const formValuesString = useMemo(() => JSON.stringify(formValues), [formValues]);
   const hasUnsavedDraftChanges = hasDraft && formValuesString !== taskContentString;
+  const uploadedQcScreenshots = useMemo(
+    () => (Array.isArray(formValues[QC_UPLOAD_CONTENT_KEY]) ? (formValues[QC_UPLOAD_CONTENT_KEY] as string[]) : []),
+    [formValues],
+  );
 
   const rejectionNote = task.metadata?.rejection_note as string | undefined;
   const blockedReason = task.metadata?.blocked_reason as string | undefined;
@@ -186,6 +202,58 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
 
   const handleFormChange = (values: Record<string, unknown>) => {
     setDraftState({ taskId: task.id, content: values, saveState: 'dirty' });
+  };
+
+  const handleUploadQcScreenshot = async () => {
+    if (!selectedUploadFile) {
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      if (!isSupportedQcMimeType(selectedUploadFile.type)) {
+        throw new Error('Only JPEG, PNG, and WEBP files are supported');
+      }
+
+      const presigned = await requestPresignedUpload({
+        use_case: FILE_UPLOAD_USE_CASE.QC_SCREENSHOT,
+        mime_type: selectedUploadFile.type,
+        file_size: selectedUploadFile.size,
+        file_name: selectedUploadFile.name,
+      });
+
+      await uploadFileToPresignedUrl(presigned, selectedUploadFile);
+
+      const nextUrls = uploadedQcScreenshots.includes(presigned.file_url)
+        ? uploadedQcScreenshots
+        : [...uploadedQcScreenshots, presigned.file_url];
+      const nextContent = {
+        ...formValues,
+        [QC_UPLOAD_CONTENT_KEY]: nextUrls,
+      };
+
+      setDraftState({ taskId: task.id, content: nextContent, saveState: 'saving' });
+      await updateTaskAsync({
+        taskId: task.id,
+        data: {
+          version: task.version,
+          action: TASK_ACTION.SAVE_CONTENT,
+          content: nextContent,
+        },
+        silent: true,
+      });
+
+      setDraftState({ taskId: task.id, content: nextContent, saveState: 'saved' });
+      setUploadSelection({ taskId: task.id, file: null });
+      toast.success('QC screenshot uploaded');
+    } catch (error) {
+      setDraftState((prev) =>
+        prev?.taskId === task.id ? { ...prev, saveState: 'dirty' } : prev,
+      );
+      toast.error(error instanceof Error ? error.message : 'Failed to upload screenshot');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -303,6 +371,53 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
                     : 'No form template attached to this task.'}
                 </p>
               )}
+        </div>
+
+        <div className="bg-white border rounded-lg p-4 shadow-sm space-y-3">
+          <div className="flex items-center gap-2">
+            <Paperclip className="h-4 w-4 text-muted-foreground" />
+            <h4 className="text-sm font-semibold">QC Screenshots</h4>
+          </div>
+
+          {uploadedQcScreenshots.length > 0 && (
+            <div className="space-y-2">
+              {uploadedQcScreenshots.map((url) => (
+                <a
+                  key={url}
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block truncate text-sm text-primary hover:underline"
+                >
+                  {url}
+                </a>
+              ))}
+            </div>
+          )}
+
+          {!isReadOnly && (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(event) => {
+                  const file = event.target.files?.[0] ?? null;
+                  setUploadSelection({ taskId: task.id, file });
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!selectedUploadFile || isUploading}
+                onClick={() => {
+                  void handleUploadQcScreenshot();
+                }}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                {isUploading ? 'Uploading...' : 'Upload'}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
