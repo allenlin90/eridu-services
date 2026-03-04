@@ -179,6 +179,10 @@ describe('useSidebarConfig', () => {
           title: 'My Tasks',
           url: '/studios/studio-1/my-tasks',
         }),
+        expect.objectContaining({
+          title: 'Shift Schedule',
+          url: '/studios/studio-1/shifts',
+        }),
       ],
     });
   });

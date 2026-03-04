@@ -141,6 +141,11 @@ function getStudioManagementItems(
       url: `/studios/${studioId}/my-tasks`,
       icon: ListTodo,
     },
+    {
+      title: 'Shift Schedule',
+      url: `/studios/${studioId}/shifts`,
+      icon: CalendarDays,
+    },
   ];
 
   if (role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER) {
