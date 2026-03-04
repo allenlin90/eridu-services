@@ -20,6 +20,7 @@ model User {
   metadata           Json               @default("{}")
   mc                 MC? // Optional MC profile linkage
   studioMemberships  StudioMembership[]
+  studioShifts       StudioShift[]
   schedules          Schedule[]         @relation("ScheduleCreator")
   publishedSchedules Schedule[]         @relation("SchedulePublisher")
   scheduleSnapshots  ScheduleSnapshot[]
@@ -128,6 +129,7 @@ model Show {
   updatedAt      DateTime       @updatedAt @map("updated_at")
   deletedAt      DateTime?      @map("deleted_at")
 
+  @@unique([clientId, externalId])
   @@index([uid])
   @@index([name])
   @@index([clientId])
@@ -154,7 +156,6 @@ model Show {
   @@index([studioRoomId, startTime, endTime, deletedAt]) // Room conflict detection
   @@index([scheduleId, startTime, deletedAt]) // Publishing workflow queries
   @@index([clientId, startTime, endTime, deletedAt]) // MC double-booking detection
-  @@unique([clientId, externalId])
   @@map("shows")
 }
 
@@ -221,6 +222,7 @@ model Studio {
   taskTemplates     TaskTemplate[]
   tasks             Task[]
   taskTargets       TaskTarget[]
+  studioShifts      StudioShift[]
   createdAt         DateTime           @default(now()) @map("created_at")
   updatedAt         DateTime           @updatedAt @map("updated_at")
   deletedAt         DateTime?          @map("deleted_at")
@@ -301,17 +303,18 @@ model ShowStandard {
 }
 
 model StudioMembership {
-  id        BigInt    @id @default(autoincrement())
-  uid       String    @unique
-  role      String // admin, manager, member
-  metadata  Json      @default("{}")
-  userId    BigInt    @map("user_id")
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  studioId  BigInt    @map("studio_id")
-  studio    Studio    @relation(fields: [studioId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  id             BigInt    @id @default(autoincrement())
+  uid            String    @unique
+  role           String // admin, manager, member
+  baseHourlyRate Decimal?  @map("base_hourly_rate") @db.Decimal(10, 2)
+  metadata       Json      @default("{}")
+  userId         BigInt    @map("user_id")
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studioId       BigInt    @map("studio_id")
+  studio         Studio    @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
 
   @@unique([userId, studioId])
   @@index([uid])
@@ -324,6 +327,60 @@ model StudioMembership {
   @@index([studioId, deletedAt])
   @@index([userId, role, deletedAt]) // Authorization checks
   @@map("studio_memberships")
+}
+
+enum StudioShiftStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+model StudioShift {
+  id             BigInt             @id @default(autoincrement())
+  uid            String             @unique
+  studioId       BigInt             @map("studio_id")
+  userId         BigInt             @map("user_id")
+  date           DateTime           @db.Date
+  hourlyRate     Decimal            @map("hourly_rate") @db.Decimal(10, 2)
+  projectedCost  Decimal            @map("projected_cost") @db.Decimal(10, 2)
+  calculatedCost Decimal?           @map("calculated_cost") @db.Decimal(10, 2)
+  isApproved     Boolean            @default(false) @map("is_approved")
+  isDutyManager  Boolean            @default(false) @map("is_duty_manager")
+  status         StudioShiftStatus  @default(SCHEDULED)
+  metadata       Json               @default("{}")
+  blocks         StudioShiftBlock[]
+  studio         Studio             @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  deletedAt      DateTime?          @map("deleted_at")
+
+  @@index([studioId, date])
+  @@index([userId, date])
+  @@index([studioId, isDutyManager, date])
+  @@index([deletedAt])
+  @@index([studioId, deletedAt])
+  @@index([userId, deletedAt])
+  @@map("studio_shifts")
+}
+
+model StudioShiftBlock {
+  id        BigInt      @id @default(autoincrement())
+  uid       String      @unique
+  shiftId   BigInt      @map("shift_id")
+  startTime DateTime    @map("start_time")
+  endTime   DateTime    @map("end_time")
+  metadata  Json        @default("{}")
+  shift     StudioShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+  deletedAt DateTime?   @map("deleted_at")
+
+  @@index([shiftId])
+  @@index([startTime, endTime])
+  @@index([deletedAt])
+  @@index([shiftId, deletedAt])
+  @@map("studio_shift_blocks")
 }
 
 model Schedule {

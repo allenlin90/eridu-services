@@ -25,6 +25,7 @@ export const studioMembershipSchema = z.object({
   userId: z.bigint(),
   studioId: z.bigint(),
   role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
+  baseHourlyRate: z.any().nullable(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -32,24 +33,36 @@ export const studioMembershipSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const createStudioMembershipSchema = createMembershipInputSchema.transform(
-  (data) => ({
+export const createStudioMembershipSchema = createMembershipInputSchema
+  .extend({
+    base_hourly_rate: z.coerce.number().positive().optional(),
+  })
+  .transform((data) => ({
     userId: data.user_id,
     studioId: data.studio_id,
     role: data.role,
+    ...(data.base_hourly_rate !== undefined && {
+      baseHourlyRate: data.base_hourly_rate.toFixed(2),
+    }),
     metadata: data.metadata || {},
-  }),
-);
+  }));
 
 // API input schema (snake_case input, transforms to camelCase)
-export const updateStudioMembershipSchema = updateMembershipInputSchema.transform(
-  (data) => ({
+export const updateStudioMembershipSchema = updateMembershipInputSchema
+  .extend({
+    base_hourly_rate: z.union([z.coerce.number().positive(), z.null()]).optional(),
+  })
+  .transform((data) => ({
     userId: data.user_id,
     studioId: data.studio_id,
     role: data.role,
+    ...(data.base_hourly_rate !== undefined && {
+      baseHourlyRate: data.base_hourly_rate === null
+        ? null
+        : data.base_hourly_rate.toFixed(2),
+    }),
     metadata: data.metadata,
-  }),
-);
+  }));
 
 // Basic studio membership DTO (without related data)
 // Note: user_id and studio_id are set to null when relations are not loaded.
@@ -60,11 +73,16 @@ export const studioMembershipDto = studioMembershipSchema
     user_id: null as string | null, // Set to null when user relation is not loaded (use studioMembershipWithRelationsDto for user_id)
     studio_id: null as string | null, // Set to null when studio relation is not loaded (use studioMembershipWithRelationsDto for studio_id)
     role: obj.role,
+    base_hourly_rate: obj.baseHourlyRate ? obj.baseHourlyRate.toString() : null,
     metadata: obj.metadata,
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
   }))
-  .pipe(membershipApiResponseSchema);
+  .pipe(
+    membershipApiResponseSchema.extend({
+      base_hourly_rate: z.string().nullable(),
+    }),
+  );
 
 // Schema for studio membership with related data (used in admin endpoints)
 export const studioMembershipWithRelationsSchema = z.object({
@@ -73,6 +91,7 @@ export const studioMembershipWithRelationsSchema = z.object({
   userId: z.bigint(),
   studioId: z.bigint(),
   role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
+  baseHourlyRate: z.any().nullable(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -95,6 +114,7 @@ export const studioMembershipWithRelationsDto = studioMembershipWithRelationsSch
       user_id: obj.user.uid,
       studio_id: obj.studio.uid,
       role: obj.role,
+      base_hourly_rate: obj.baseHourlyRate ? obj.baseHourlyRate.toString() : null,
       metadata: obj.metadata,
       created_at: obj.createdAt.toISOString(),
       updated_at: obj.updatedAt.toISOString(),
@@ -110,6 +130,7 @@ export const studioMembershipWithRelationsDto = studioMembershipWithRelationsSch
     membershipApiResponseSchema.extend({
       user_id: z.string(),
       studio_id: z.string(),
+      base_hourly_rate: z.string().nullable(),
       user: z.object({
         id: z.string(),
         ext_id: z.string().nullable(),
@@ -155,6 +176,7 @@ export const createStudioMembershipInternalSchema = z
     userId: validateUserUid,
     studioId: validateStudioUid,
     role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
+    baseHourlyRate: z.string().optional(),
     metadata: z.record(z.string(), z.any()).default({}),
   })
   .strict();
@@ -168,6 +190,7 @@ export const updateStudioMembershipInternalSchema = z
     userId: validateUserUid.optional(),
     studioId: validateStudioUid.optional(),
     role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]).optional(),
+    baseHourlyRate: z.union([z.string(), z.null()]).optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .strict();
@@ -235,6 +258,7 @@ export type CreateStudioMembershipPayload = {
   userId: string;
   studioId: string;
   role: string;
+  baseHourlyRate?: string;
   metadata?: Record<string, any>;
 };
 
@@ -245,6 +269,7 @@ export type UpdateStudioMembershipPayload = {
   userId?: string;
   studioId?: string;
   role?: string;
+  baseHourlyRate?: string | null;
   metadata?: Record<string, any>;
 };
 
