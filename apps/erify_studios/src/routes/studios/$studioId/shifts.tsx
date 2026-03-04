@@ -58,9 +58,11 @@ function StudioShiftsPage() {
   const [formState, setFormState] = useState<ShiftFormState>(() => createDefaultFormState());
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteConfirmShiftId, setDeleteConfirmShiftId] = useState<string | null>(null);
-  const [editingShiftId, setEditingShiftId] = useState<string | null>(null);
-  const [editFormState, setEditFormState] = useState<ShiftFormState | null>(null);
-  const [editFormError, setEditFormError] = useState<string | null>(null);
+  const [draftState, setDraftState] = useState<{
+    shiftId: string;
+    formState: ShiftFormState;
+    error: string | null;
+  } | null>(null);
 
   const { data: membersResponse, isLoading: isLoadingMembers } = useStudioMembershipsQuery(
     studioId,
@@ -105,9 +107,11 @@ function StudioShiftsPage() {
     });
   }, [shiftsResponse?.data]);
 
-  const editingShift = editingShiftId
-    ? shifts.find((shift) => shift.id === editingShiftId) ?? null
+  const editingShift = draftState
+    ? shifts.find((shift) => shift.id === draftState.shiftId) ?? null
     : null;
+
+  const currentDraft = editingShift ? draftState : null;
 
   const calendarEvents = useMemo(() => {
     return shifts.flatMap((shift) => {
@@ -207,64 +211,64 @@ function StudioShiftsPage() {
   };
 
   const handleStartEdit = (shift: (typeof shifts)[number]) => {
-    setEditingShiftId(shift.id);
-    setEditFormError(null);
-    setEditFormState(createEditFormState(shift));
+    setDraftState({
+      shiftId: shift.id,
+      formState: createEditFormState(shift),
+      error: null,
+    });
   };
 
   const handleCancelEdit = () => {
-    setEditingShiftId(null);
-    setEditFormState(null);
-    setEditFormError(null);
+    setDraftState(null);
   };
 
   const handleUpdateShift = async () => {
-    if (!editingShiftId || !editFormState)
+    if (!currentDraft)
       return;
 
-    setEditFormError(null);
+    setDraftState((prev) => (prev ? { ...prev, error: null } : null));
 
-    if (!editFormState.userId) {
-      setEditFormError('Please select a studio member.');
-      return;
-    }
-
-    if (!editFormState.date || !editFormState.startTime || !editFormState.endTime) {
-      setEditFormError('Date, start time, and end time are required.');
+    if (!currentDraft.formState.userId) {
+      setDraftState((prev) => (prev ? { ...prev, error: 'Please select a studio member.' } : null));
       return;
     }
 
-    const start = combineDateAndTime(editFormState.date, editFormState.startTime);
-    const end = combineDateAndTime(editFormState.date, editFormState.endTime);
+    if (!currentDraft.formState.date || !currentDraft.formState.startTime || !currentDraft.formState.endTime) {
+      setDraftState((prev) => (prev ? { ...prev, error: 'Date, start time, and end time are required.' } : null));
+      return;
+    }
+
+    const start = combineDateAndTime(currentDraft.formState.date, currentDraft.formState.startTime);
+    const end = combineDateAndTime(currentDraft.formState.date, currentDraft.formState.endTime);
 
     if (new Date(end).getTime() <= new Date(start).getTime()) {
-      setEditFormError('End time must be later than start time.');
+      setDraftState((prev) => (prev ? { ...prev, error: 'End time must be later than start time.' } : null));
       return;
     }
 
     const payload: UpdateStudioShiftPayload = {
-      user_id: editFormState.userId,
-      date: editFormState.date,
-      status: editFormState.status ?? 'SCHEDULED',
-      is_duty_manager: editFormState.isDutyManager,
+      user_id: currentDraft.formState.userId,
+      date: currentDraft.formState.date,
+      status: currentDraft.formState.status ?? 'SCHEDULED',
+      is_duty_manager: currentDraft.formState.isDutyManager,
       blocks: [{ start_time: start, end_time: end }],
     };
 
-    if (editFormState.hourlyRate.trim()) {
-      payload.hourly_rate = Number(editFormState.hourlyRate);
+    if (currentDraft.formState.hourlyRate.trim()) {
+      payload.hourly_rate = Number(currentDraft.formState.hourlyRate);
     }
 
     try {
-      await updateShiftMutation.mutateAsync({ shiftId: editingShiftId, payload });
+      await updateShiftMutation.mutateAsync({ shiftId: currentDraft.shiftId, payload });
       handleCancelEdit();
     } catch {
-      setEditFormError('Failed to update shift. Please try again.');
+      setDraftState((prev) => (prev ? { ...prev, error: 'Failed to update shift. Please try again.' } : null));
     }
   };
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="rounded-xl border bg-gradient-to-r from-slate-50 via-white to-slate-50 p-4">
+      <div className="rounded-xl border bg-linear-to-r from-slate-50 via-white to-slate-50 p-4">
         <h1 className="text-2xl font-bold tracking-tight">Shift Schedule</h1>
         <p className="text-muted-foreground">
           Studio-wide calendar for all members, with admin controls for shift management.
@@ -311,16 +315,17 @@ function StudioShiftsPage() {
                 </Card>
               )}
 
-          {canManageShifts && editingShift && editFormState && (
+          {canManageShifts && currentDraft && editingShift && (
             <ShiftEditCard
               shift={editingShift}
               memberName={memberMap.get(editingShift.user_id)?.name}
               dateLabel={formatDate(editingShift.date)}
               members={members}
-              formState={editFormState}
-              formError={editFormError}
+              formState={currentDraft.formState}
+              formError={currentDraft.error}
               isSaving={updateShiftMutation.isPending}
-              onChange={setEditFormState}
+              onChange={(nextFormState) =>
+                setDraftState((prev) => (prev ? { ...prev, formState: nextFormState } : null))}
               onSave={handleUpdateShift}
               onCancel={handleCancelEdit}
             />

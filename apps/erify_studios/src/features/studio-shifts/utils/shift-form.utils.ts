@@ -5,18 +5,17 @@ export const DEFAULT_START_TIME = '09:00';
 export const DEFAULT_END_TIME = '18:00';
 
 export function toLocalDateInputValue(value: Date): string {
-  const date = new Date(value);
-  date.setHours(0, 0, 0, 0);
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
+  const d = new Date(value);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
 export function toLocalTimeInputValue(value: string): string {
-  const date = new Date(value);
-  const hours = `${date.getHours()}`.padStart(2, '0');
-  const minutes = `${date.getMinutes()}`.padStart(2, '0');
+  const d = new Date(value);
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
   return `${hours}:${minutes}`;
 }
 
@@ -54,11 +53,18 @@ export function createEditFormState(shift: StudioShift): ShiftFormState {
 }
 
 export function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString();
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value));
 }
 
 export function formatDateTime(value: string): string {
-  return new Date(value).toLocaleString();
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true,
+  }).format(new Date(value));
 }
 
 export function getShiftWindowLabel(shift: StudioShift): string {
@@ -72,11 +78,7 @@ export function getShiftWindowLabel(shift: StudioShift): string {
   const firstBlock = sortedBlocks[0];
   const lastBlock = sortedBlocks[sortedBlocks.length - 1];
 
-  return `${new Date(firstBlock.start_time).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-  })} - ${new Date(lastBlock.end_time).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-  })}`;
+  const timeFormatter = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+
+  return `${timeFormatter.format(new Date(firstBlock.start_time))} - ${timeFormatter.format(new Date(lastBlock.end_time))}`;
 }
