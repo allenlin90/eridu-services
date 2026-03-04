@@ -37,7 +37,7 @@ export function calculateTaskProgress(task: TaskDto, schema: UiSchema): Progress
   };
 }
 
-function isFieldComplete(type: string, value: unknown): boolean {
+export function isFieldComplete(type: string, value: unknown): boolean {
   if (value === null || value === undefined)
     return false;
 

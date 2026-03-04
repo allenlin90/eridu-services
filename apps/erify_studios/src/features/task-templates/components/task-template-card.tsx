@@ -76,11 +76,12 @@ export function TaskTemplateCard({ template, studioId }: TaskTemplateCardProps) 
       description: template.description ?? '',
       task_type: template.task_type,
       schema: {
-        items: (template.current_schema?.items ?? []).map((item: any) => ({
+        items: (template.current_schema?.items ?? []).map((item) => ({
           ...item,
           // Generate new IDs for the cloned fields to ensure they are unique
           id: crypto.randomUUID(),
         })),
+        ...(template.current_schema?.metadata ? { metadata: template.current_schema.metadata } : {}),
       },
     });
   };

@@ -1,13 +1,16 @@
 import { format } from 'date-fns';
+import { del, get, set } from 'idb-keyval';
 import { AlertCircle, AlertTriangle, CheckCircle2, Clock, Send } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useDebounceCallback } from 'usehooks-ts';
 
 import type { TaskStatus, TaskWithRelationsDto } from '@eridu/api-types/task-management';
-import { TASK_ACTION, TASK_STATUS, TemplateSchemaValidator } from '@eridu/api-types/task-management';
+import { TASK_ACTION, TASK_STATUS } from '@eridu/api-types/task-management';
 import {
   Badge,
   Button,
+  Progress,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -16,11 +19,11 @@ import {
 } from '@eridu/ui';
 
 import { useUpdateMyTask } from '../hooks/use-update-my-task';
-import { calculateTaskProgress } from '../lib/progress';
+import { calculateTaskProgress, isFieldComplete } from '../lib/progress';
+import { resolveUiSchema } from '../lib/resolve-ui-schema';
 
 import type { JsonFormHandle, JsonFormUploadState } from '@/components/json-form/json-form';
 import { JsonForm } from '@/components/json-form/json-form';
-import { ProgressBar } from '@/components/progress-bar';
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 
 type TaskExecutionSheetProps = {
@@ -31,6 +34,10 @@ type TaskExecutionSheetProps = {
 };
 
 const DRAFT_AUTOSAVE_DEBOUNCE_MS = 650;
+const LOCAL_DRAFT_SAVE_DEBOUNCE_MS = 500;
+const LOOP_CLOCK_TICK_MS = 30_000;
+const DEFAULT_LOOP_DURATION_MIN = 15;
+const MY_TASK_EXECUTION_DRAFT_PREFIX = 'my_task_execution_draft';
 type DraftSaveState = 'idle' | 'dirty' | 'saving' | 'saved';
 
 const STATUS_VARIANT: Partial<Record<TaskStatus, 'default' | 'secondary' | 'destructive' | 'outline'>> = {
@@ -59,12 +66,35 @@ type DraftStateEntry = {
   saveState: DraftSaveState;
 };
 
+type TaskExecutionDraftCache = {
+  taskId: string;
+  content: Record<string, unknown>;
+  baseContent: Record<string, unknown>;
+  baseVersion: number;
+  updatedAt: string;
+};
+
+type LoopTab = {
+  id: string;
+  name: string;
+  durationMin: number;
+};
+
+type LoopProgress = {
+  completed: number;
+  total: number;
+};
+
 const DEFAULT_UPLOAD_STATE: JsonFormUploadState = {
   hasPendingUploads: false,
   hasBlockingIssues: false,
   isPreparingUploads: false,
   blockingMessages: [],
 };
+
+function getTaskExecutionDraftKey(taskId: string): string {
+  return `${MY_TASK_EXECUTION_DRAFT_PREFIX}:${taskId}`;
+}
 
 function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutionSheetInnerProps) {
   const { mutateAsync: updateTaskAsync } = useUpdateMyTask();
@@ -74,16 +104,84 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
   const [uploadState, setUploadState] = useState<JsonFormUploadState>(DEFAULT_UPLOAD_STATE);
   const draftAutoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const jsonFormRef = useRef<JsonFormHandle>(null);
+  const [currentTimeMs, setCurrentTimeMs] = useState(() => Date.now());
 
   // currentDraft is null whenever the stored draft belongs to a different task
   const currentDraft = draftState?.taskId === task.id ? draftState : null;
   const draftSaveState: DraftSaveState = currentDraft?.saveState ?? 'idle';
   const hasDraft = currentDraft !== null;
 
-  const parsedSchema = task.snapshot?.schema
-    ? TemplateSchemaValidator.safeParse(task.snapshot.schema)
+  const uiSchema = task.snapshot?.schema
+    ? resolveUiSchema(task.snapshot.schema)
     : null;
-  const uiSchema = parsedSchema?.success ? parsedSchema.data : null;
+  const draftKey = useMemo(() => getTaskExecutionDraftKey(task.id), [task.id]);
+  const showStartTimeMs = task.show?.start_time ? new Date(task.show.start_time).getTime() : null;
+  const showStartTime = showStartTimeMs ? new Date(showStartTimeMs) : null;
+
+  const loopTabs = useMemo<LoopTab[]>(() => {
+    if (!uiSchema) {
+      return [];
+    }
+
+    const groups = Array.from(new Set(uiSchema.items.map((item) => item.group).filter((group): group is string => !!group)));
+    if (groups.length === 0) {
+      return [];
+    }
+
+    const metadataLoops = uiSchema.metadata?.loops;
+
+    if (metadataLoops && metadataLoops.length > 0) {
+      const filteredLoops = metadataLoops
+        .filter((loop) => groups.includes(loop.id))
+        .map((loop) => ({
+          id: loop.id,
+          name: loop.name,
+          durationMin: loop.durationMin,
+        }));
+
+      if (filteredLoops.length > 0) {
+        return filteredLoops;
+      }
+    }
+
+    return groups.map((group) => ({
+      id: group,
+      name: group,
+      durationMin: DEFAULT_LOOP_DURATION_MIN,
+    }));
+  }, [uiSchema]);
+
+  const liveLoopId = useMemo(() => {
+    if (!showStartTimeMs || loopTabs.length === 0) {
+      return undefined;
+    }
+
+    const elapsedMinutes = (currentTimeMs - showStartTimeMs) / 60_000;
+    if (elapsedMinutes <= 0) {
+      return loopTabs[0]?.id;
+    }
+
+    let cumulative = 0;
+    for (const loop of loopTabs) {
+      cumulative += loop.durationMin;
+      if (elapsedMinutes < cumulative) {
+        return loop.id;
+      }
+    }
+
+    return loopTabs[loopTabs.length - 1]?.id;
+  }, [currentTimeMs, loopTabs, showStartTimeMs]);
+
+  const [activeGroup, setActiveGroup] = useState<string | undefined>(undefined);
+  const resolvedActiveGroup = useMemo(() => {
+    if (loopTabs.length === 0) {
+      return undefined;
+    }
+    if (activeGroup && loopTabs.some((loop) => loop.id === activeGroup)) {
+      return activeGroup;
+    }
+    return liveLoopId ?? loopTabs[0].id;
+  }, [activeGroup, liveLoopId, loopTabs]);
 
   const isReadOnly = task.status === TASK_STATUS.COMPLETED
     || task.status === TASK_STATUS.CLOSED;
@@ -98,6 +196,34 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
         uiSchema,
       )
     : null;
+  const loopProgressById = useMemo<Record<string, LoopProgress>>(() => {
+    if (!uiSchema) {
+      return {};
+    }
+
+    return uiSchema.items.reduce<Record<string, LoopProgress>>((acc, item) => {
+      if (!item.group) {
+        return acc;
+      }
+
+      if (!acc[item.group]) {
+        acc[item.group] = { completed: 0, total: 0 };
+      }
+
+      const current = acc[item.group];
+      current.total += 1;
+      if (isFieldComplete(item.type, formValues[item.key])) {
+        current.completed += 1;
+      }
+
+      return acc;
+    }, {});
+  }, [uiSchema, formValues]);
+  const activeLoopIndex = loopTabs.findIndex((loop) => loop.id === resolvedActiveGroup);
+  const activeLoop = activeLoopIndex >= 0 ? loopTabs[activeLoopIndex] : undefined;
+  const loopStepProgress = loopTabs.length > 0 && activeLoopIndex >= 0
+    ? ((activeLoopIndex + 1) / loopTabs.length) * 100
+    : 0;
   const taskContentString = useMemo(() => JSON.stringify(task.content ?? {}), [task.content]);
   const formValuesString = useMemo(() => JSON.stringify(formValues), [formValues]);
   const hasUnsavedDraftChanges = hasDraft && formValuesString !== taskContentString;
@@ -105,13 +231,60 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
   const rejectionNote = task.metadata?.rejection_note as string | undefined;
   const blockedReason = task.metadata?.blocked_reason as string | undefined;
   const isOverdue = task.due_date ? new Date(task.due_date) < new Date() : false;
-  const showStartTime = task.show?.start_time ? new Date(task.show.start_time) : null;
-  const isSubmitBlockedByShowStart = !!showStartTime
+  const isSubmitBlockedByShowStart = !!showStartTimeMs
     && (task.type === 'ACTIVE' || task.type === 'CLOSURE')
-    && new Date() < showStartTime;
+    && Date.now() < showStartTimeMs;
   const isSubmitBlockedByUploadPreparing = uploadState.isPreparingUploads;
   const isSubmitBlockedByUploadValidation = uploadState.hasBlockingIssues && !uploadState.isPreparingUploads;
   const isSubmitBlockedByUploadIssues = isSubmitBlockedByUploadPreparing || isSubmitBlockedByUploadValidation;
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    void get<TaskExecutionDraftCache>(draftKey)
+      .then((saved) => {
+        if (isCancelled || !saved || saved.taskId !== task.id) {
+          return;
+        }
+
+        setDraftState({
+          taskId: task.id,
+          content: saved.content,
+          saveState: 'dirty',
+        });
+      })
+      .catch(() => undefined);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [draftKey, task.id]);
+
+  useEffect(() => {
+    if (!currentDraft || currentDraft.taskId !== task.id || isReadOnly) {
+      return;
+    }
+
+    if (!hasUnsavedDraftChanges) {
+      void del(draftKey).catch(() => undefined);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      const payload: TaskExecutionDraftCache = {
+        taskId: task.id,
+        content: currentDraft.content,
+        baseContent: (task.content as Record<string, unknown> | null) ?? {},
+        baseVersion: task.version,
+        updatedAt: new Date().toISOString(),
+      };
+      void set(draftKey, payload).catch(() => undefined);
+    }, LOCAL_DRAFT_SAVE_DEBOUNCE_MS);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [currentDraft, draftKey, hasUnsavedDraftChanges, isReadOnly, task.content, task.id, task.version]);
 
   useEffect(() => {
     if (!enableAutosave || !hasDraft || !hasUnsavedDraftChanges || isReadOnly) {
@@ -166,6 +339,16 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
     setUploadState(DEFAULT_UPLOAD_STATE);
   }, [task.id]);
 
+  useEffect(() => {
+    if (!showStartTimeMs || loopTabs.length === 0) {
+      return;
+    }
+    const interval = setInterval(() => {
+      setCurrentTimeMs(Date.now());
+    }, LOOP_CLOCK_TICK_MS);
+    return () => clearInterval(interval);
+  }, [showStartTimeMs, loopTabs.length]);
+
   const handleRunAction = async (action: keyof typeof TASK_ACTION) => {
     if (isSubmittingAction) {
       return;
@@ -181,9 +364,9 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
 
     if (
       isSubmitAction
-      && showStartTime
+      && showStartTimeMs
       && (task.type === 'ACTIVE' || task.type === 'CLOSURE')
-      && new Date() < showStartTime
+      && Date.now() < showStartTimeMs
     ) {
       toast.error(`${getTaskTypeLabel(task.type)} tasks cannot be submitted before show start time.`);
       setIsSubmittingAction(false);
@@ -221,6 +404,8 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
           ...(nextContent ? { content: nextContent } : {}),
         },
       });
+      void del(draftKey).catch(() => undefined);
+      setDraftState(null);
       if (action === 'APPROVE_COMPLETED') {
         onClose();
       }
@@ -229,9 +414,9 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
     }
   };
 
-  const handleFormChange = (values: Record<string, unknown>) => {
+  const handleFormChange = useDebounceCallback((values: Record<string, unknown>) => {
     setDraftState({ taskId: task.id, content: values, saveState: 'dirty' });
-  };
+  }, 300);
 
   return (
     <>
@@ -302,14 +487,75 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
         <div className="bg-white border rounded-lg p-4 shadow-sm">
           <div className="mb-4 flex items-center justify-between gap-2">
             <h4 className="text-sm font-semibold">Task Checklist</h4>
-            {!isReadOnly && enableAutosave && (
+            {!isReadOnly && (enableAutosave || hasDraft) && (
               <span className="text-xs text-muted-foreground">
                 {draftSaveState === 'saving' && 'Saving draft...'}
                 {draftSaveState === 'saved' && !hasUnsavedDraftChanges && 'Draft saved'}
-                {draftSaveState === 'dirty' && 'Unsaved changes'}
+                {draftSaveState === 'dirty' && (enableAutosave ? 'Unsaved changes' : 'Draft kept locally')}
               </span>
             )}
           </div>
+
+          {loopTabs.length > 0 && (
+            <div className="mb-4 rounded-md border bg-muted/20 p-3">
+              <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+                <span>Loop Progress</span>
+                <span>
+                  {activeLoopIndex + 1}
+                  /
+                  {loopTabs.length}
+                  {' '}
+                  loops
+                </span>
+              </div>
+              <Progress value={loopStepProgress} className="h-1.5" />
+              <div className="mt-2 rounded-md border bg-background p-2">
+                <p className="text-sm font-medium">
+                  {activeLoopIndex + 1}
+                  .
+                  {' '}
+                  {activeLoop?.name ?? '-'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Items completed:
+                  {' '}
+                  {(activeLoop ? loopProgressById[activeLoop.id]?.completed : 0) ?? 0}
+                  /
+                  {(activeLoop ? loopProgressById[activeLoop.id]?.total : 0) ?? 0}
+                  {liveLoopId && activeLoop && liveLoopId === activeLoop.id ? ' (Live)' : ''}
+                </p>
+              </div>
+              <div className="mt-3 flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={activeLoopIndex <= 0}
+                  onClick={() => {
+                    if (activeLoopIndex <= 0) {
+                      return;
+                    }
+                    setActiveGroup(loopTabs[activeLoopIndex - 1]?.id);
+                  }}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={activeLoopIndex < 0 || activeLoopIndex >= loopTabs.length - 1}
+                  onClick={() => {
+                    if (activeLoopIndex < 0 || activeLoopIndex >= loopTabs.length - 1) {
+                      return;
+                    }
+                    setActiveGroup(loopTabs[activeLoopIndex + 1]?.id);
+                  }}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+
           {progress && progress.total > 0 && (
             <div className="mb-4 rounded-md border bg-muted/20 p-3">
               <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
@@ -325,7 +571,7 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
                   %
                 </span>
               </div>
-              <ProgressBar
+              <Progress
                 value={progress.percentage}
                 className="h-1.5"
                 indicatorClassName={progress.percentage === 100 ? 'bg-emerald-500' : 'bg-primary'}
@@ -340,6 +586,7 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
                   values={formValues}
                   onChange={isReadOnly ? undefined : handleFormChange}
                   readOnly={isReadOnly}
+                  activeGroup={loopTabs.length > 0 ? resolvedActiveGroup : undefined}
                   uploadTaskId={task.id}
                   onUploadStateChange={setUploadState}
                 />

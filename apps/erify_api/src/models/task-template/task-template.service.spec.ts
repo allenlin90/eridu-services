@@ -123,6 +123,118 @@ describe('taskTemplateService', () => {
       }
     });
 
+    it('should throw when grouped fields exist but metadata.loops is missing', () => {
+      const schema = {
+        metadata: {
+          task_type: 'ACTIVE',
+        },
+        items: [
+          {
+            id: 'item_1',
+            key: 'loop_step',
+            type: 'checkbox' as const,
+            label: 'Loop Step',
+            group: 'l1',
+          },
+        ],
+      };
+
+      expect(() => service.validateSchema(schema)).toThrow(/Loop metadata is required/);
+    });
+
+    it('should throw when grouped field references unknown loop id', () => {
+      const schema = {
+        metadata: {
+          task_type: 'ACTIVE',
+          loops: [
+            { id: 'l1', name: 'Loop 1', durationMin: 15 },
+          ],
+        },
+        items: [
+          {
+            id: 'item_1',
+            key: 'loop_step',
+            type: 'checkbox' as const,
+            label: 'Loop Step',
+            group: 'l2',
+          },
+        ],
+      };
+
+      expect(() => service.validateSchema(schema)).toThrow(/must match metadata\.loops/);
+    });
+
+    it('should throw when metadata.loops is defined but no fields have a group', () => {
+      const schema = {
+        metadata: {
+          task_type: 'ACTIVE',
+          loops: [
+            { id: 'l1', name: 'Loop 1', durationMin: 15 },
+          ],
+        },
+        items: [
+          {
+            id: 'item_1',
+            key: 'step_1',
+            type: 'checkbox' as const,
+            label: 'Step 1',
+          },
+        ],
+      };
+
+      expect(() => service.validateSchema(schema)).toThrow(/no fields have a group/);
+    });
+
+    it('should throw when moderation template has ungrouped fields mixed in', () => {
+      const schema = {
+        metadata: {
+          task_type: 'ACTIVE',
+          loops: [
+            { id: 'l1', name: 'Loop 1', durationMin: 15 },
+          ],
+        },
+        items: [
+          {
+            id: 'item_1',
+            key: 'l1_step_1',
+            type: 'checkbox' as const,
+            label: 'Step 1',
+            group: 'l1',
+          },
+          {
+            id: 'item_2',
+            key: 'ungrouped_note',
+            type: 'text' as const,
+            label: 'Note without group',
+          },
+        ],
+      };
+
+      expect(() => service.validateSchema(schema)).toThrow(/Ungrouped fields/);
+    });
+
+    it('should pass when grouped fields map to metadata.loops ids', () => {
+      const schema = {
+        metadata: {
+          task_type: 'ACTIVE',
+          loops: [
+            { id: 'l1', name: 'Loop 1', durationMin: 15 },
+          ],
+        },
+        items: [
+          {
+            id: 'item_1',
+            key: 'loop_step',
+            type: 'checkbox' as const,
+            label: 'Loop Step',
+            group: 'l1',
+          },
+        ],
+      };
+
+      expect(() => service.validateSchema(schema)).not.toThrow();
+    });
+
     describe('require_reason validation', () => {
       it('should pass for valid boolean require_reason', () => {
         const schema = {

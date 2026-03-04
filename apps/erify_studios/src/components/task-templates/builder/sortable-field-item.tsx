@@ -51,7 +51,12 @@ export const SortableFieldItem = memo(({ index, item, onUpdate, onRemove, errors
   }, [item.id, onUpdate]);
 
   return (
-    <div ref={setNodeRef} style={style} className="relative group">
+    <div
+      ref={setNodeRef}
+      data-field-id={item.id}
+      style={style}
+      className="relative group"
+    >
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <Card className={`${isDragging ? 'border-primary' : ''} ${hasErrors ? 'border-destructive ring-1 ring-destructive/20' : ''}`}>
           <CardHeader className="p-3 flex flex-row items-center space-y-0 gap-3">

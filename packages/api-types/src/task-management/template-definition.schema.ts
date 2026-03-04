@@ -29,6 +29,7 @@ export const FieldItemBaseSchema = z
     type: FieldTypeEnum,
     label: z.string().min(1).max(200).describe('User-facing label text'),
     description: z.string().max(500).optional(),
+    group: z.string().optional().describe('Loop / visual grouping identifier'),
     required: z.boolean().optional().default(true),
     options: z
       .array(
@@ -75,10 +76,22 @@ export function validateFieldOptions(data: any, ctx: z.RefinementCtx) {
 
 export const FieldItemSchema = FieldItemBaseSchema.superRefine(validateFieldOptions);
 
+export const LoopMetadataSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  durationMin: z.number().int().positive().default(15),
+});
+
+export type LoopMetadata = z.infer<typeof LoopMetadataSchema>;
+
+export const TemplateMetadataSchema = z.object({
+  loops: z.array(LoopMetadataSchema).optional(),
+}).catchall(z.any());
+
 export const TemplateSchemaValidator = z
   .object({
     items: z.array(FieldItemSchema).min(1),
-    metadata: z.record(z.string(), z.any()).optional(),
+    metadata: TemplateMetadataSchema.optional(),
   })
   .strict()
   .superRefine((data, ctx) => {

@@ -91,6 +91,7 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
     description: taskTemplate.description ?? '',
     task_type: taskTemplate.task_type,
     items: taskTemplate.current_schema?.items ?? [],
+    metadata: taskTemplate.current_schema?.metadata as TemplateSchemaType['metadata'] | undefined,
   }));
 
   const onSave = useCallback((data: TemplateSchemaType) => {
@@ -114,12 +115,16 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
     }));
 
     // Transform structure to match backend API contract
+    const schemaMetadata = data.metadata && Object.keys(data.metadata).length > 0
+      ? data.metadata
+      : undefined;
     const payload = {
       name: data.name,
       description: data.description,
       task_type: data.task_type,
       schema: {
         items: schemaItems,
+        ...(schemaMetadata ? { metadata: schemaMetadata } : {}),
       },
       version: taskTemplate.version,
     };

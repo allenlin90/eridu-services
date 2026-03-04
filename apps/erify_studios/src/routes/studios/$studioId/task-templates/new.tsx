@@ -79,12 +79,16 @@ export function TaskTemplateBuilderPage() {
     }));
 
     // Transform structure to match backend API contract
+    const schemaMetadata = data.metadata && Object.keys(data.metadata).length > 0
+      ? data.metadata
+      : undefined;
     const payload = {
       name: data.name,
       description: data.description,
       task_type: data.task_type,
       schema: {
         items: schemaItems,
+        ...(schemaMetadata ? { metadata: schemaMetadata } : {}),
       },
     };
 

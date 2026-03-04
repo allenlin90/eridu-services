@@ -14,8 +14,8 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { AlertCircle, ChevronsUpDown, Plus } from 'lucide-react';
-import { startTransition, useCallback, useDeferredValue, useEffect, useRef, useState } from 'react';
+import { AlertCircle, ChevronDown, ChevronsUpDown, Copy, Plus, Trash2 } from 'lucide-react';
+import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   AlertDialog,
@@ -41,7 +41,7 @@ import {
 } from '@eridu/ui';
 
 import { LivePreview } from './live-preview';
-import type { FieldItem, TemplateSchemaType } from './schema';
+import type { FieldItem, LoopMetadata, TemplateSchemaType } from './schema';
 import { SortableFieldList } from './sortable-field-list';
 
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
@@ -55,6 +55,91 @@ export type TaskTemplateBuilderProps = {
   errors?: Record<string, string[]>;
 };
 
+const DEFAULT_LOOP_DURATION_MIN = 15;
+
+function buildLoopMetadataFromTemplate(template: TemplateSchemaType): LoopMetadata[] {
+  const metadataLoops = template.metadata?.loops;
+  const normalizedFromMetadata = Array.isArray(metadataLoops)
+    ? metadataLoops
+        .filter((loop): loop is LoopMetadata => !!loop?.id && !!loop?.name)
+        .map((loop) => ({
+          id: loop.id,
+          name: loop.name,
+          durationMin: loop.durationMin > 0 ? loop.durationMin : DEFAULT_LOOP_DURATION_MIN,
+        }))
+    : [];
+
+  const knownIds = new Set(normalizedFromMetadata.map((loop) => loop.id));
+  const fallbackGroups = Array.from(new Set(template.items.map((item) => item.group).filter((group): group is string => !!group)));
+
+  for (const group of fallbackGroups) {
+    if (!knownIds.has(group)) {
+      normalizedFromMetadata.push({
+        id: group,
+        name: group,
+        durationMin: DEFAULT_LOOP_DURATION_MIN,
+      });
+    }
+  }
+
+  return normalizedFromMetadata;
+}
+
+function omitLoopsFromMetadata(metadata: TemplateSchemaType['metadata']): TemplateSchemaType['metadata'] | undefined {
+  if (!metadata) {
+    return undefined;
+  }
+
+  const { loops: _ignored, ...rest } = metadata;
+  return Object.keys(rest).length > 0 ? rest : undefined;
+}
+
+function createNextLoop(existingLoops: LoopMetadata[]): LoopMetadata {
+  const existingIds = new Set(existingLoops.map((loop) => loop.id));
+  let ordinal = existingLoops.length + 1;
+  let id = `l${ordinal}`;
+
+  while (existingIds.has(id)) {
+    ordinal += 1;
+    id = `l${ordinal}`;
+  }
+
+  return {
+    id,
+    name: `Loop ${ordinal}`,
+    durationMin: DEFAULT_LOOP_DURATION_MIN,
+  };
+}
+
+function createUniqueCopiedKey(originalKey: string, usedKeys: Set<string>): string {
+  const baseWithCopy = originalKey.endsWith('_copy') ? originalKey : `${originalKey}_copy`;
+  const normalizedBase = baseWithCopy.slice(0, 50);
+
+  let candidate = normalizedBase;
+  let counter = 2;
+  while (usedKeys.has(candidate)) {
+    const suffix = `_${counter}`;
+    candidate = `${normalizedBase.slice(0, 50 - suffix.length)}${suffix}`;
+    counter += 1;
+  }
+
+  usedKeys.add(candidate);
+  return candidate;
+}
+
+function formatTotalLoopDuration(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours} hr${hours > 1 ? 's' : ''} ${minutes} min${minutes > 1 ? 's' : ''}`;
+  }
+  if (hours > 0) {
+    return `${hours} hr${hours > 1 ? 's' : ''}`;
+  }
+  return `${minutes} min${minutes > 1 ? 's' : ''}`;
+}
+
 export function TaskTemplateBuilder({
   template,
   onChange,
@@ -65,6 +150,32 @@ export function TaskTemplateBuilder({
 }: TaskTemplateBuilderProps) {
   const [showCancelAlert, setShowCancelAlert] = useState(false);
   const [isHeaderOpen, setIsHeaderOpen] = useState(true);
+  const [pendingFocusLoopId, setPendingFocusLoopId] = useState<string | null>(null);
+  const [pendingScrollFieldId, setPendingScrollFieldId] = useState<string | null>(null);
+  const [collapsedLoops, setCollapsedLoops] = useState<Record<string, boolean>>({});
+
+  const isModerationMode = template.items.some((item) => !!item.group) || (template.metadata?.loops?.length ?? 0) > 0;
+  const moderationLoops = useMemo(() => {
+    return buildLoopMetadataFromTemplate(template);
+  }, [template]);
+  const totalLoopDurationMin = useMemo(
+    () => moderationLoops.reduce((sum, loop) => sum + loop.durationMin, 0),
+    [moderationLoops],
+  );
+
+  const emptyLoopItems: FieldItem[] = useMemo(() => [], []);
+  const loopItemsById = useMemo(() => {
+    const record: Record<string, FieldItem[]> = {};
+    for (const item of template.items) {
+      if (item.group) {
+        if (!record[item.group]) {
+          record[item.group] = [];
+        }
+        record[item.group].push(item);
+      }
+    }
+    return record;
+  }, [template.items]);
 
   const [localName, setLocalName] = useState(template.name);
   const [localDescription, setLocalDescription] = useState(template.description || '');
@@ -84,9 +195,30 @@ export function TaskTemplateBuilder({
 
   // Keep latest props in a ref to avoid re-creating callbacks
   const propsRef = useRef({ template, onChange });
+  const loopCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   useEffect(() => {
     propsRef.current = { template, onChange };
   }, [template, onChange]);
+
+  useEffect(() => {
+    if (!pendingFocusLoopId) {
+      return;
+    }
+
+    const loopExists = moderationLoops.some((loop) => loop.id === pendingFocusLoopId);
+    if (!loopExists) {
+      return;
+    }
+
+    const rafId = requestAnimationFrame(() => {
+      loopCardRefs.current[pendingFocusLoopId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setPendingFocusLoopId(null);
+    });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+    };
+  }, [moderationLoops, pendingFocusLoopId]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -125,6 +257,7 @@ export function TaskTemplateBuilder({
       label: 'New Question',
       required: true,
     };
+    setPendingScrollFieldId(newField.id);
 
     currentOnChange({
       ...currentTemplate,
@@ -148,10 +281,39 @@ export function TaskTemplateBuilder({
     });
   }, []);
 
+  const handleWorkflowModeChange = useCallback((nextMode: 'STANDARD' | 'MODERATION') => {
+    const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+
+    if (nextMode === 'MODERATION') {
+      const loops = buildLoopMetadataFromTemplate(currentTemplate);
+      const nextLoops = loops.length > 0 ? loops : [createNextLoop([])];
+      const defaultLoopId = nextLoops[0]?.id;
+
+      currentOnChange({
+        ...currentTemplate,
+        task_type: 'ACTIVE',
+        metadata: {
+          ...(currentTemplate.metadata ?? {}),
+          loops: nextLoops,
+        },
+        items: currentTemplate.items.map((item) => (
+          !item.group && defaultLoopId ? { ...item, group: defaultLoopId } : item
+        )),
+      });
+      return;
+    }
+
+    currentOnChange({
+      ...currentTemplate,
+      metadata: omitLoopsFromMetadata(currentTemplate.metadata),
+      items: currentTemplate.items.map(({ group: _ignored, ...item }) => item),
+    });
+  }, []);
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-13rem)]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8 lg:h-full lg:min-h-0">
       {/* Editor Column */}
-      <div className="flex flex-col space-y-6 overflow-hidden">
+      <div className="flex min-h-0 flex-col space-y-6">
         {errors && Object.keys(errors).length > 0 && (
           <div className="px-1">
             <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg flex gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -252,44 +414,389 @@ export function TaskTemplateBuilder({
                   </SelectContent>
                 </Select>
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="workflow-mode">Workflow View</Label>
+                <Select
+                  value={isModerationMode ? 'MODERATION' : 'STANDARD'}
+                  onValueChange={(value) => {
+                    handleWorkflowModeChange(value as 'STANDARD' | 'MODERATION');
+                  }}
+                >
+                  <SelectTrigger id="workflow-mode">
+                    <SelectValue placeholder="Select workflow view" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="STANDARD">Standard checklist</SelectItem>
+                    <SelectItem value="MODERATION">Loop-based moderation</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </CollapsibleContent>
           </Collapsible>
         </div>
 
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium">
-            Fields (
-            {template.items.length}
-            )
-          </h3>
-          <Button onClick={addField} size="sm">
+          <div>
+            <h3 className="text-lg font-medium">
+              {isModerationMode ? 'Loops Configuration' : `Fields (${template.items.length})`}
+            </h3>
+            {isModerationMode && moderationLoops.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Total duration:
+                {' '}
+                {formatTotalLoopDuration(totalLoopDurationMin)}
+              </p>
+            )}
+          </div>
+          <Button
+            onClick={() => {
+              if (isModerationMode) {
+                const nextLoops = [...moderationLoops, createNextLoop(moderationLoops)];
+                const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+                currentOnChange({
+                  ...currentTemplate,
+                  metadata: {
+                    ...(currentTemplate.metadata ?? {}),
+                    loops: nextLoops,
+                  },
+                });
+                setPendingFocusLoopId(nextLoops[nextLoops.length - 1].id);
+              } else {
+                addField();
+              }
+            }}
+            size="sm"
+          >
             <Plus className="mr-2 h-4 w-4" />
             {' '}
-            Add Field
+            {isModerationMode ? 'Add Loop' : 'Add Field'}
           </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto pr-2">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext items={template.items} strategy={verticalListSortingStrategy}>
-              <SortableFieldList
-                items={template.items}
-                onUpdate={updateField}
-                onRemove={removeField}
-                errors={errors}
-              />
-            </SortableContext>
-          </DndContext>
+        <div className="flex-1 min-h-0 overflow-visible lg:overflow-y-auto lg:pr-2">
+          {isModerationMode
+            ? (
+                <div className="space-y-6 pb-6">
+                  {moderationLoops.map((loop, loopIndex) => {
+                    const loopItems = loopItemsById[loop.id] || emptyLoopItems;
+                    const isCollapsed = collapsedLoops[loop.id] ?? false;
+                    return (
+                      <div
+                        key={loop.id}
+                        ref={(node) => {
+                          loopCardRefs.current[loop.id] = node;
+                        }}
+                        className="border rounded-md p-4 space-y-4 bg-muted/10 transition-all"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <span className="text-xs font-medium text-muted-foreground">
+                                Loop
+                                {' '}
+                                {loopIndex + 1}
+                              </span>
+                              <span className="inline-flex h-5 items-center rounded-full bg-background px-2 text-[11px] text-muted-foreground">
+                                {loopItems.length}
+                                {' '}
+                                items
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title={isCollapsed ? 'Expand loop' : 'Collapse loop'}
+                                aria-label={isCollapsed ? 'Expand loop' : 'Collapse loop'}
+                                onClick={() => {
+                                  setCollapsedLoops((prev) => ({
+                                    ...prev,
+                                    [loop.id]: !(prev[loop.id] ?? false),
+                                  }));
+                                }}
+                              >
+                                <ChevronDown className={`h-4 w-4 transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
+                                <span className="sr-only">{isCollapsed ? 'Expand Loop' : 'Collapse Loop'}</span>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground"
+                                title="Clone loop"
+                                aria-label="Clone loop"
+                                onClick={() => {
+                                  const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+                                  const nextLoopBase = createNextLoop(moderationLoops);
+                                  const clonedLoop: LoopMetadata = {
+                                    ...nextLoopBase,
+                                    name: `${loop.name} (Copy)`,
+                                    durationMin: loop.durationMin,
+                                  };
 
-          {!template.items.length && (
-            <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
-              <p>No fields yet. Click "Add Field" to start building your template.</p>
-            </div>
-          )}
+                                  const nextLoops = [...moderationLoops, clonedLoop];
+                                  const loopItems = currentTemplate.items.filter((item) => item.group === loop.id);
+                                  const usedKeys = new Set(currentTemplate.items.map((item) => item.key));
+                                  const clonedItems = loopItems.map((item) => ({
+                                    ...structuredClone(item),
+                                    id: crypto.randomUUID(),
+                                    key: createUniqueCopiedKey(item.key, usedKeys),
+                                    group: clonedLoop.id,
+                                  }));
+
+                                  currentOnChange({
+                                    ...currentTemplate,
+                                    metadata: {
+                                      ...(currentTemplate.metadata ?? {}),
+                                      loops: nextLoops,
+                                    },
+                                    items: [...currentTemplate.items, ...clonedItems],
+                                  });
+                                  setCollapsedLoops((prev) => ({ ...prev, [clonedLoop.id]: false }));
+                                }}
+                              >
+                                <Copy className="h-4 w-4" />
+                                <span className="sr-only">Clone Loop</span>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                title="Remove loop"
+                                aria-label="Remove loop"
+                                onClick={() => {
+                                  const newLoops = [...moderationLoops];
+                                  newLoops.splice(loopIndex, 1);
+
+                                  const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+                                  setCollapsedLoops((prev) => {
+                                    const next = { ...prev };
+                                    delete next[loop.id];
+                                    return next;
+                                  });
+                                  currentOnChange({
+                                    ...currentTemplate,
+                                    metadata: newLoops.length > 0
+                                      ? {
+                                          ...(currentTemplate.metadata ?? {}),
+                                          loops: newLoops,
+                                        }
+                                      : omitLoopsFromMetadata(currentTemplate.metadata),
+                                    items: currentTemplate.items.filter((item) => item.group !== loop.id),
+                                  });
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Remove Loop</span>
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="flex min-w-0 flex-wrap items-start gap-3">
+                            <div className="min-w-0 flex-1 basis-[220px] space-y-1">
+                              <label className="text-[11px] font-medium text-muted-foreground leading-none">Loop Name</label>
+                              <Input
+                                value={loop.name}
+                                onChange={(e) => {
+                                  const newName = e.target.value;
+                                  const nextLoops = moderationLoops.map((item, i) => (i === loopIndex ? { ...item, name: newName } : item));
+
+                                  const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+                                  currentOnChange({
+                                    ...currentTemplate,
+                                    metadata: {
+                                      ...(currentTemplate.metadata ?? {}),
+                                      loops: nextLoops,
+                                    },
+                                  });
+                                }}
+                                className="font-semibold"
+                                placeholder="Loop Name"
+                              />
+                            </div>
+                            <div className="w-[130px] space-y-1">
+                              <label className="text-[11px] font-medium text-muted-foreground leading-none">Duration (mins)</label>
+                              <div className="relative">
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  step={1}
+                                  value={loop.durationMin}
+                                  onChange={(e) => {
+                                    const parsed = Number.parseInt(e.target.value, 10);
+                                    const durationMin = Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_LOOP_DURATION_MIN;
+                                    const nextLoops = moderationLoops.map((item, i) => (
+                                      i === loopIndex ? { ...item, durationMin } : item
+                                    ));
+
+                                    const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+                                    currentOnChange({
+                                      ...currentTemplate,
+                                      metadata: {
+                                        ...(currentTemplate.metadata ?? {}),
+                                        loops: nextLoops,
+                                      },
+                                    });
+                                  }}
+                                  aria-label="Loop duration in minutes"
+                                  placeholder="15"
+                                  title="How many minutes this loop runs"
+                                  className="pr-10"
+                                />
+                                <span className="pointer-events-none absolute inset-y-0 right-3 inline-flex items-center text-xs text-muted-foreground">
+                                  min
+                                </span>
+                              </div>
+                            </div>
+                            <div className="w-[140px] space-y-1">
+                              <label className="text-[11px] font-medium text-muted-foreground leading-none">Position</label>
+                              <Select
+                                value={String(loopIndex + 1)}
+                                onValueChange={(value) => {
+                                  const targetPosition = Number.parseInt(value, 10);
+                                  const targetIndex = Number.isFinite(targetPosition) ? targetPosition - 1 : loopIndex;
+
+                                  if (targetIndex === loopIndex || targetIndex < 0 || targetIndex >= moderationLoops.length) {
+                                    return;
+                                  }
+
+                                  const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+                                  const nextLoops = arrayMove(moderationLoops, loopIndex, targetIndex);
+                                  currentOnChange({
+                                    ...currentTemplate,
+                                    metadata: {
+                                      ...(currentTemplate.metadata ?? {}),
+                                      loops: nextLoops,
+                                    },
+                                  });
+                                }}
+                              >
+                                <SelectTrigger aria-label="Loop position">
+                                  <SelectValue placeholder="Position" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {moderationLoops.map((_, index) => (
+                                    <SelectItem key={`${loop.id}-position-${index + 1}`} value={String(index + 1)}>
+                                      {index + 1}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+
+                        {!isCollapsed && (
+                          <>
+                            {loopItems.length === 0 && (
+                              <div className="rounded-md border border-dashed bg-background/70 p-3 text-xs text-muted-foreground flex items-center justify-between gap-3">
+                                <span>This loop is empty. Add at least one field to make it actionable.</span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs shrink-0"
+                                  onClick={() => {
+                                    const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+                                    const newField: FieldItem = {
+                                      id: crypto.randomUUID(),
+                                      key: `field_${Date.now()}`,
+                                      type: 'text',
+                                      label: 'New Question',
+                                      required: true,
+                                      group: loop.id,
+                                    };
+                                    currentOnChange({
+                                      ...currentTemplate,
+                                      items: [...currentTemplate.items, newField],
+                                    });
+                                  }}
+                                >
+                                  Add First Field
+                                </Button>
+                              </div>
+                            )}
+
+                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                              <SortableContext items={loopItems} strategy={verticalListSortingStrategy}>
+                                <SortableFieldList
+                                  items={loopItems}
+                                  templateItems={template.items}
+                                  onUpdate={updateField}
+                                  onRemove={removeField}
+                                  errors={errors}
+                                />
+                              </SortableContext>
+                            </DndContext>
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full border-dashed"
+                              onClick={() => {
+                                const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+                                const newField: FieldItem = {
+                                  id: crypto.randomUUID(),
+                                  key: `field_${Date.now()}`,
+                                  type: 'text',
+                                  label: 'New Question',
+                                  required: true,
+                                  group: loop.id,
+                                };
+                                currentOnChange({
+                                  ...currentTemplate,
+                                  items: [...currentTemplate.items, newField],
+                                });
+                              }}
+                            >
+                              <Plus className="mr-2 h-4 w-4" />
+                              {' '}
+                              Add Field to
+                              {' '}
+                              Loop
+                              {' '}
+                              {loopIndex + 1}
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {!moderationLoops.length && (
+                    <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
+                      <p>No loops yet. Click "Add Loop" to start building.</p>
+                    </div>
+                  )}
+                </div>
+              )
+            : (
+                <>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext items={template.items} strategy={verticalListSortingStrategy}>
+                      <SortableFieldList
+                        items={template.items}
+                        templateItems={template.items}
+                        onUpdate={updateField}
+                        onRemove={removeField}
+                        errors={errors}
+                        scrollToItemId={pendingScrollFieldId}
+                        onScrolledToItem={() => {
+                          setPendingScrollFieldId(null);
+                        }}
+                      />
+                    </SortableContext>
+                  </DndContext>
+
+                  {!template.items.length && (
+                    <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
+                      <p>No fields yet. Click "Add Field" to start building your template.</p>
+                    </div>
+                  )}
+                </>
+              )}
         </div>
         <div className="flex items-center justify-between pt-4 border-t mt-4">
           <Button variant="outline" onClick={() => setShowCancelAlert(true)}>Cancel</Button>
@@ -327,7 +834,7 @@ export function TaskTemplateBuilder({
       </AlertDialog>
 
       {/* Preview Column */}
-      <div className="hidden lg:flex flex-col bg-muted/30 rounded-lg border overflow-hidden">
+      <div className="hidden lg:flex min-h-0 flex-col bg-muted/30 rounded-lg border overflow-hidden">
         <div className="p-4 border-b bg-background/50 backdrop-blur-sm sticky top-0 z-10">
           <h3 className="font-medium flex items-center">
             <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse" />

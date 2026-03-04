@@ -52,6 +52,9 @@ My Tasks → tap card → Task Execution Sheet (JsonForm) → auto-save on field
 ### 5. Review (Admin)
 Review Queue → row actions: Approve (`→ COMPLETED`), Reject (with note, `→ IN_PROGRESS`), Close, Block
 
+### 6. Moderation Loop Execution (Moderator)
+My Tasks → tap moderation task → Task Execution Sheet with **Loop Progress block** → navigate loops via Previous/Next → auto-save per field → Submit for Review when done. See [MODERATION_WORKFLOW.md](./MODERATION_WORKFLOW.md) for full data contract and business rules.
+
 ---
 
 ## Navigation & Studio Context
@@ -119,17 +122,20 @@ Review Queue → row actions: Approve (`→ COMPLETED`), Reject (with note, `→
 - **Progress**: Frontend-calculated from `calculateTaskProgress(task, schema)` — required fields only
 - **Optimistic updates**: On field change → local state → debounce → PATCH → 409 conflict → revert + toast
 - **Cache strategy**: `staleTime: 60s`; invalidate only affected show/task queries on mutations
+- **Draft persistence**: `idb-keyval` (IndexedDB) keyed by `{prefix}:{taskId}` — hydrated on sheet open, cleared on submit
+- **Loop content**: Flat `task.content` JSON covering all loops; `JsonForm` filtered by `activeGroup` (loop ID) in execution sheet only
 
 ---
 
 ## Implementation Status
 
-✅ Template library (cards, search, infinite scroll), create/edit dialog  
-✅ Shows list (data table, filters, bulk actions bar), generation & assignment dialogs  
-✅ Show detail with task cards and inline reassignment  
-✅ My Tasks (filter bar, task cards, progress bars, urgency borders, show-start-date filter)  
-✅ Task Execution Sheet (JsonForm, auto-save, rejection banner, status actions)  
-✅ Review Queue (per-task actions, rejection/block note dialogs)  
+✅ Template library (cards, search, infinite scroll), create/edit dialog
+✅ Shows list (data table, filters, bulk actions bar), generation & assignment dialogs
+✅ Show detail with task cards and inline reassignment
+✅ My Tasks (filter bar, task cards, progress bars, urgency borders, show-start-date filter)
+✅ Task Execution Sheet (JsonForm, auto-save, rejection banner, status actions, IndexedDB draft persistence)
+✅ Review Queue (per-task actions, rejection/block note dialogs, IndexedDB draft persistence)
 ✅ System Tasks (cross-studio list, detail dialog, reassignment)
+✅ Moderation loop workflow (loop-based template builder, loop progress block, live loop detection, per-loop field filtering)
 
-**Deferred**: Animations/confetti, swipe gestures, file uploads, PWA/offline, WebSocket sync, ~~analytics dashboard~~, bulk review approve
+**Deferred**: Animations/confetti, swipe gestures, PWA/offline, WebSocket sync, ~~analytics dashboard~~, bulk review approve, per-loop countdown timer, "Mark Loop Complete" button

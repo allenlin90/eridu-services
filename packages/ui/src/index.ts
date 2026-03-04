@@ -86,6 +86,7 @@ export {
   PopoverContent,
   PopoverTrigger,
 } from './components/ui/popover';
+export { Progress } from './components/ui/progress';
 export {
   Select,
   SelectContent,

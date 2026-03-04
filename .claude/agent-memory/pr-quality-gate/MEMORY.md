@@ -218,4 +218,12 @@ After the CLOSURE early-return at step 4, `directoryByTaskType` at line 314-317 
 `JsonFormHandle.validateBeforeSubmit()` returns `Promise<Record<string, unknown>>` (current form values). Both callers — `studio-task-action-sheet.tsx` and `task-execution-sheet.tsx` — discard the return value (use `await` without assignment) and then call `flushPendingFileUploads()` separately. The return value is superfluous on the interface but not harmful. Consider making the return type `Promise<void>` to match actual usage.
 
 ### idb-keyval draft persistence pattern
-`studio-task-action-sheet.tsx` uses `idb-keyval` (already in `package.json`) for IndexedDB draft persistence. Draft key format: `studio_task_action_draft:{taskId}:{action}`. Debounce: 500ms. Draft is cleared only via `onSuccess` callback after confirmed server commit. Two-phase: hydrate on open, persist on content change, delete on success.
+`studio-task-action-sheet.tsx` uses `idb-keyval` for IndexedDB draft persistence. Key: `studio_task_action_draft:{taskId}:{action}`. Debounce: 500ms. Two-phase: hydrate on open, persist on change, delete on success. `task-execution-sheet.tsx` uses same pattern with key `my_task_execution_draft:{taskId}`.
+
+## Moderation Loop Workflow (feat/moderator-workflow — MERGED)
+See detailed notes in `moderation-workflow-patterns.md`. Key facts:
+- `group` field added to `FieldItemBaseSchema` in `@eridu/api-types` (optional string)
+- Loop metadata stored in `template.snapshot.schema.metadata.loops` (app-layer, opaque to backend)
+- `ProgressBar` at `src/components/progress-bar.tsx` still exists; used by `task-card.tsx` (studio tasks) — NOT dead code
+- Canonical feature doc: `apps/erify_studios/docs/MODERATION_WORKFLOW.md`
+- All PR review issues resolved; see patterns file for full resolution status

@@ -167,6 +167,60 @@ export class TaskTemplateService extends BaseModelService {
       throw HttpError.badRequest('Template metadata.task_type is required and must be a valid task type');
     }
 
+    const groupedItems = result.data.items.filter((item) => item.group !== undefined);
+    const normalizedGroupedItems = groupedItems.map((item) => ({
+      ...item,
+      group: item.group?.trim() ?? '',
+    }));
+    const hasGroupedItems = normalizedGroupedItems.length > 0;
+    const loops = result.data.metadata?.loops ?? [];
+
+    for (const item of normalizedGroupedItems) {
+      if (!item.group) {
+        throw HttpError.badRequest(
+          `Field group cannot be empty when provided. Field: ${item.key}`,
+        );
+      }
+    }
+
+    if (hasGroupedItems && loops.length === 0) {
+      throw HttpError.badRequest(
+        'Loop metadata is required when any field has a group',
+      );
+    }
+
+    if (loops.length > 0 && !hasGroupedItems) {
+      throw HttpError.badRequest(
+        'metadata.loops is defined but no fields have a group. Assign all fields to a loop (moderation template) or remove metadata.loops (standard template)',
+      );
+    }
+
+    if (loops.length > 0) {
+      const ungroupedItems = result.data.items.filter((item) => item.group === undefined);
+      if (ungroupedItems.length > 0) {
+        const ungroupedKeys = ungroupedItems.map((i) => i.key).join(', ');
+        throw HttpError.badRequest(
+          `Moderation templates require all fields to have a group. Ungrouped fields: ${ungroupedKeys}`,
+        );
+      }
+
+      const loopIds = new Set<string>();
+      for (const loop of loops) {
+        if (loopIds.has(loop.id)) {
+          throw HttpError.badRequest(`Duplicate loop id detected: "${loop.id}"`);
+        }
+        loopIds.add(loop.id);
+      }
+
+      for (const item of normalizedGroupedItems) {
+        if (!loopIds.has(item.group)) {
+          throw HttpError.badRequest(
+            `Field group "${item.group}" must match metadata.loops[].id. Field: ${item.key}`,
+          );
+        }
+      }
+    }
+
     // Additional business rules
     for (const item of result.data.items) {
       // Validate require_reason rule usage

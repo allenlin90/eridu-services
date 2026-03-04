@@ -3,12 +3,13 @@ import { ChevronRight, Clock } from 'lucide-react';
 import { useState } from 'react';
 
 import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
-import { TASK_STATUS, TemplateSchemaValidator } from '@eridu/api-types/task-management';
+import { TASK_STATUS } from '@eridu/api-types/task-management';
 import { Badge, Card } from '@eridu/ui';
 import { cn } from '@eridu/ui/lib/utils';
 
 import { STATUS_VARIANT_MAP, TYPE_VARIANT_MAP } from '../lib/badge-maps';
 import { calculateTaskProgress } from '../lib/progress';
+import { resolveUiSchema } from '../lib/resolve-ui-schema';
 
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 
@@ -19,12 +20,12 @@ type MyTaskCardProps = {
 };
 
 export function MyTaskCard({ task, onClick, className }: MyTaskCardProps) {
-  const parsedSchema = task.snapshot?.schema
-    ? TemplateSchemaValidator.safeParse(task.snapshot.schema)
+  const uiSchema = task.snapshot?.schema
+    ? resolveUiSchema(task.snapshot.schema)
     : null;
 
-  const progress = parsedSchema?.success
-    ? calculateTaskProgress(task as Parameters<typeof calculateTaskProgress>[0], parsedSchema.data)
+  const progress = uiSchema
+    ? calculateTaskProgress(task as Parameters<typeof calculateTaskProgress>[0], uiSchema)
     : null;
 
   const isOverdue = task.due_date

@@ -41,6 +41,7 @@ type JsonFormProps = {
   onChange?: (values: Record<string, unknown>) => void;
   onSubmit?: (values: Record<string, unknown>) => void;
   readOnly?: boolean;
+  activeGroup?: string;
   uploadTaskId?: string;
   onUploadStateChange?: (state: JsonFormUploadState) => void;
 };
@@ -133,6 +134,7 @@ export const JsonForm = function JsonForm({
   onChange,
   onSubmit,
   readOnly = false,
+  activeGroup,
   uploadTaskId,
   onUploadStateChange,
 }: JsonFormProps & { ref?: React.RefObject<JsonFormHandle | null> }) {
@@ -327,181 +329,183 @@ export const JsonForm = function JsonForm({
         onSubmit={form.handleSubmit(handleSubmit)}
         className="space-y-6"
       >
-        {schema.items.map((item) => (
-          <FormField
-            key={item.key}
-            control={form.control}
-            name={item.key}
-            render={({ field }) => (
-              <FormItem className={item.type === 'checkbox' ? 'flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm' : ''}>
-                {item.type === 'checkbox'
-                  ? (
-                      <>
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value as boolean}
-                            onCheckedChange={field.onChange}
-                            disabled={readOnly}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
+        {schema.items
+          .filter((item) => !activeGroup || item.group === activeGroup)
+          .map((item) => (
+            <FormField
+              key={item.key}
+              control={form.control}
+              name={item.key}
+              render={({ field }) => (
+                <FormItem className={item.type === 'checkbox' ? 'flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm' : ''}>
+                  {item.type === 'checkbox'
+                    ? (
+                        <>
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value as boolean}
+                              onCheckedChange={field.onChange}
+                              disabled={readOnly}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              {item.label}
+                              {item.required && <span className="text-destructive ml-1">*</span>}
+                            </FormLabel>
+                            {item.description && (
+                              <FormDescription>
+                                {item.description}
+                              </FormDescription>
+                            )}
+                          </div>
+                        </>
+                      )
+                    : (
+                        <>
                           <FormLabel>
                             {item.label}
                             {item.required && <span className="text-destructive ml-1">*</span>}
                           </FormLabel>
-                          {item.description && (
-                            <FormDescription>
-                              {item.description}
-                            </FormDescription>
-                          )}
-                        </div>
-                      </>
-                    )
-                  : (
-                      <>
-                        <FormLabel>
-                          {item.label}
-                          {item.required && <span className="text-destructive ml-1">*</span>}
-                        </FormLabel>
-                        <FormControl>
-                          <FieldRenderer
-                            item={item}
-                            field={field}
-                            readOnly={readOnly}
-                            isUploading={uploadingByKey[item.key] ?? false}
-                            pendingUpload={pendingFilesByKey[item.key]}
-                            onClearPendingUpload={() => {
-                              setPendingFilesByKey((prev) => {
-                                const next = { ...prev };
-                                const removed = next[item.key];
-                                if (removed?.previewUrl) {
-                                  URL.revokeObjectURL(removed.previewUrl);
-                                }
-                                delete next[item.key];
-                                return next;
-                              });
-                            }}
-                            onClearCurrentUpload={() => {
-                              field.onChange('');
-                            }}
-                            onFileSelect={(file) => {
-                              if (!isSupportedUploadMimeType(file.type)) {
-                                toast.error(`Unsupported file type: ${file.type || 'unknown'}`);
-                                return;
-                              }
-
-                              if (!matchesAcceptRule(file.type, file.name, item.validation?.accept)) {
-                                toast.error('File does not match allowed types');
-                                return;
-                              }
-
-                              const maxBytesForField = getFieldMaxBytes(item, file);
-                              setPendingFilesByKey((prev) => {
-                                const previous = prev[item.key];
-                                if (previous?.previewUrl) {
-                                  URL.revokeObjectURL(previous.previewUrl);
-                                }
-                                const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
-                                return {
-                                  ...prev,
-                                  [item.key]: {
-                                    file,
-                                    previewUrl,
-                                    error: null,
-                                    isPreparing: file.type.startsWith('image/'),
-                                  },
-                                };
-                              });
-
-                              const setFileError = (error: string | null) => {
+                          <FormControl>
+                            <FieldRenderer
+                              item={item}
+                              field={field}
+                              readOnly={readOnly}
+                              isUploading={uploadingByKey[item.key] ?? false}
+                              pendingUpload={pendingFilesByKey[item.key]}
+                              onClearPendingUpload={() => {
                                 setPendingFilesByKey((prev) => {
-                                  const current = prev[item.key];
-                                  if (!current || current.file !== file) {
-                                    return prev;
+                                  const next = { ...prev };
+                                  const removed = next[item.key];
+                                  if (removed?.previewUrl) {
+                                    URL.revokeObjectURL(removed.previewUrl);
                                   }
+                                  delete next[item.key];
+                                  return next;
+                                });
+                              }}
+                              onClearCurrentUpload={() => {
+                                field.onChange('');
+                              }}
+                              onFileSelect={(file) => {
+                                if (!isSupportedUploadMimeType(file.type)) {
+                                  toast.error(`Unsupported file type: ${file.type || 'unknown'}`);
+                                  return;
+                                }
+
+                                if (!matchesAcceptRule(file.type, file.name, item.validation?.accept)) {
+                                  toast.error('File does not match allowed types');
+                                  return;
+                                }
+
+                                const maxBytesForField = getFieldMaxBytes(item, file);
+                                setPendingFilesByKey((prev) => {
+                                  const previous = prev[item.key];
+                                  if (previous?.previewUrl) {
+                                    URL.revokeObjectURL(previous.previewUrl);
+                                  }
+                                  const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
                                   return {
                                     ...prev,
                                     [item.key]: {
-                                      ...current,
-                                      error,
-                                      isPreparing: false,
+                                      file,
+                                      previewUrl,
+                                      error: null,
+                                      isPreparing: file.type.startsWith('image/'),
                                     },
                                   };
                                 });
-                              };
 
-                              if (!file.type.startsWith('image/')) {
-                                if (file.size > maxBytesForField) {
-                                  const error = getFileTooLargeMessage(item.label, maxBytesForField);
-                                  toast.error(error);
-                                  setFileError(error);
-                                  return;
-                                }
-                                setFileError(null);
-                                return;
-                              }
-
-                              void (async () => {
-                                try {
-                                  const prepared = await prepareImageForUpload(file, {
-                                    targetMaxBytes: maxBytesForField,
-                                    accept: item.validation?.accept,
-                                    maxDimension: maxBytesForField <= SCREENSHOT_MAX_BYTES ? 1600 : undefined,
-                                    preferWorker: true,
-                                  });
-                                  const preparedFile = prepared.file;
-
+                                const setFileError = (error: string | null) => {
                                   setPendingFilesByKey((prev) => {
                                     const current = prev[item.key];
                                     if (!current || current.file !== file) {
                                       return prev;
                                     }
-
-                                    let error: string | null = null;
-                                    if (!matchesAcceptRule(preparedFile.type, preparedFile.name, item.validation?.accept)) {
-                                      error = `Compressed file for '${item.label}' does not match allowed types`;
-                                    } else if (preparedFile.size > maxBytesForField) {
-                                      error = getFileTooLargeMessage(item.label, maxBytesForField);
-                                    }
-
-                                    if (error) {
-                                      toast.error(error);
-                                    }
-
                                     return {
                                       ...prev,
                                       [item.key]: {
                                         ...current,
-                                        file: preparedFile,
                                         error,
                                         isPreparing: false,
                                       },
                                     };
                                   });
+                                };
 
-                                  if (prepared.wasCompressed && preparedFile.size < file.size) {
-                                    const method = prepared.usedWorker ? ' in background' : '';
-                                    toast.success(`Compressed '${item.label}' to ${Math.round(preparedFile.size / 1024)} KB${method}`);
+                                if (!file.type.startsWith('image/')) {
+                                  if (file.size > maxBytesForField) {
+                                    const error = getFileTooLargeMessage(item.label, maxBytesForField);
+                                    toast.error(error);
+                                    setFileError(error);
+                                    return;
                                   }
-                                } catch {
-                                  setFileError(`Failed to prepare '${item.label}' for upload`);
+                                  setFileError(null);
+                                  return;
                                 }
-                              })();
-                            }}
-                          />
-                        </FormControl>
-                        {item.description && (
-                          <FormDescription>
-                            {item.description}
-                          </FormDescription>
-                        )}
-                        <FormMessage />
-                      </>
-                    )}
-              </FormItem>
-            )}
-          />
-        ))}
+
+                                void (async () => {
+                                  try {
+                                    const prepared = await prepareImageForUpload(file, {
+                                      targetMaxBytes: maxBytesForField,
+                                      accept: item.validation?.accept,
+                                      maxDimension: maxBytesForField <= SCREENSHOT_MAX_BYTES ? 1600 : undefined,
+                                      preferWorker: true,
+                                    });
+                                    const preparedFile = prepared.file;
+
+                                    setPendingFilesByKey((prev) => {
+                                      const current = prev[item.key];
+                                      if (!current || current.file !== file) {
+                                        return prev;
+                                      }
+
+                                      let error: string | null = null;
+                                      if (!matchesAcceptRule(preparedFile.type, preparedFile.name, item.validation?.accept)) {
+                                        error = `Compressed file for '${item.label}' does not match allowed types`;
+                                      } else if (preparedFile.size > maxBytesForField) {
+                                        error = getFileTooLargeMessage(item.label, maxBytesForField);
+                                      }
+
+                                      if (error) {
+                                        toast.error(error);
+                                      }
+
+                                      return {
+                                        ...prev,
+                                        [item.key]: {
+                                          ...current,
+                                          file: preparedFile,
+                                          error,
+                                          isPreparing: false,
+                                        },
+                                      };
+                                    });
+
+                                    if (prepared.wasCompressed && preparedFile.size < file.size) {
+                                      const method = prepared.usedWorker ? ' in background' : '';
+                                      toast.success(`Compressed '${item.label}' to ${Math.round(preparedFile.size / 1024)} KB${method}`);
+                                    }
+                                  } catch {
+                                    setFileError(`Failed to prepare '${item.label}' for upload`);
+                                  }
+                                })();
+                              }}
+                            />
+                          </FormControl>
+                          {item.description && (
+                            <FormDescription>
+                              {item.description}
+                            </FormDescription>
+                          )}
+                          <FormMessage />
+                        </>
+                      )}
+                </FormItem>
+              )}
+            />
+          ))}
       </form>
     </Form>
   );

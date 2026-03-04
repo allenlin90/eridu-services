@@ -1,0 +1,56 @@
+import { TemplateSchemaValidator, type UiSchema } from '@eridu/api-types/task-management';
+
+type RawSchemaContainer = {
+  items?: unknown;
+  metadata?: unknown;
+  schema?: unknown;
+  current_schema?: unknown;
+  currentSchema?: unknown;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function pickUiSchemaShape(value: unknown): unknown {
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  if ('items' in value) {
+    const schema = value as RawSchemaContainer;
+    return {
+      items: schema.items,
+      ...(schema.metadata !== undefined ? { metadata: schema.metadata } : {}),
+    };
+  }
+
+  if ('schema' in value) {
+    return pickUiSchemaShape((value as RawSchemaContainer).schema);
+  }
+
+  if ('current_schema' in value) {
+    return pickUiSchemaShape((value as RawSchemaContainer).current_schema);
+  }
+
+  if ('currentSchema' in value) {
+    return pickUiSchemaShape((value as RawSchemaContainer).currentSchema);
+  }
+
+  return value;
+}
+
+export function resolveUiSchema(snapshotSchema: unknown): UiSchema | null {
+  const direct = TemplateSchemaValidator.safeParse(snapshotSchema);
+  if (direct.success) {
+    return direct.data;
+  }
+
+  const normalized = pickUiSchemaShape(snapshotSchema);
+  const fallback = TemplateSchemaValidator.safeParse(normalized);
+  if (fallback.success) {
+    return fallback.data;
+  }
+
+  return null;
+}

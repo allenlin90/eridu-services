@@ -7,7 +7,6 @@ import {
   TASK_ACTION,
   type TaskAction,
   type TaskWithRelationsDto,
-  TemplateSchemaValidator,
 } from '@eridu/api-types/task-management';
 import {
   Button,
@@ -23,6 +22,7 @@ import {
 import type { JsonFormHandle, JsonFormUploadState } from '@/components/json-form/json-form';
 import { JsonForm } from '@/components/json-form/json-form';
 import { getStudioTask, studioTaskKeys } from '@/features/tasks/api/get-studio-task';
+import { resolveUiSchema } from '@/features/tasks/lib/resolve-ui-schema';
 
 type StudioTaskActionSheetProps = {
   studioId: string;
@@ -117,10 +117,9 @@ function StudioTaskActionSheetBody({
     refetchOnWindowFocus: false,
   });
   const resolvedTask = taskDetail ?? task;
-  const parsedSchema = resolvedTask?.snapshot?.schema
-    ? TemplateSchemaValidator.safeParse(resolvedTask.snapshot.schema)
+  const schema = resolvedTask?.snapshot?.schema
+    ? resolveUiSchema(resolvedTask.snapshot.schema)
     : null;
-  const schema = parsedSchema?.success ? parsedSchema.data : null;
   const content = useMemo(
     () => (isDirty ? (contentDraft ?? {}) : ((resolvedTask?.content as Record<string, unknown> | null) ?? {})),
     [contentDraft, isDirty, resolvedTask?.content],
@@ -239,6 +238,8 @@ function StudioTaskActionSheetBody({
               )}
               {schema
                 ? (
+                    // activeGroup is intentionally omitted — studio reviewers see all fields
+                    // across all loops at once to have a complete view of the task content.
                     <JsonForm
                       ref={jsonFormRef}
                       schema={schema}

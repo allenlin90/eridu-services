@@ -2,14 +2,13 @@ import { format } from 'date-fns';
 import { Calendar, CheckCircle2 } from 'lucide-react';
 
 import type { TaskDto } from '@eridu/api-types/task-management';
-import { Card, CardContent, CardHeader, CardTitle } from '@eridu/ui';
+import { Card, CardContent, CardHeader, CardTitle, Progress } from '@eridu/ui';
 import { cn } from '@eridu/ui/lib/utils';
 
 import { calculateTaskProgress } from '../lib/progress';
 
 import { StatusBadge } from './status-badge';
 
-import { ProgressBar } from '@/components/progress-bar';
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 import type { UiSchema } from '@/lib/zod-schema-builder';
 
@@ -61,7 +60,7 @@ export function TaskCard({ task, schema, onClick, className }: TaskCardProps) {
                 %
               </span>
             </div>
-            <ProgressBar
+            <Progress
               value={progress.percentage}
               indicatorClassName={cn(
                 progress.percentage === 100 ? 'bg-emerald-500' : 'bg-primary',
