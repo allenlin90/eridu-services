@@ -1,4 +1,4 @@
-import { ShieldCheck, Trash2, UserCheck } from 'lucide-react';
+import { ShieldCheck, Trash2 } from 'lucide-react';
 
 import {
   Badge,
@@ -121,16 +121,30 @@ export function ShiftRosterCard({
                               <Badge variant="outline">{shift.status}</Badge>
                             </TableCell>
                             <TableCell>
-                              {shift.is_duty_manager
-                                ? (
-                                    <Badge>
-                                      <ShieldCheck className="mr-1 h-3 w-3" />
-                                      Assigned
-                                    </Badge>
-                                  )
-                                : (
-                                    <span className="text-sm text-muted-foreground">No</span>
-                                  )}
+                              <div className="space-y-2">
+                                {shift.is_duty_manager
+                                  ? (
+                                      <Badge>
+                                        <ShieldCheck className="mr-1 h-3 w-3" />
+                                        Assigned
+                                      </Badge>
+                                    )
+                                  : (
+                                      <span className="text-sm text-muted-foreground">Not assigned</span>
+                                    )}
+                                {canManageShifts && (
+                                  <div>
+                                    <Button
+                                      size="sm"
+                                      variant={shift.is_duty_manager ? 'outline' : 'default'}
+                                      onClick={() => onToggleDutyManager(shift.id, !shift.is_duty_manager)}
+                                      disabled={isMutating}
+                                    >
+                                      {shift.is_duty_manager ? 'Remove duty manager' : 'Set as duty manager'}
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
                               {formatDateTime(shift.updated_at)}
@@ -138,15 +152,6 @@ export function ShiftRosterCard({
                             {canManageShifts && (
                               <TableCell>
                                 <div className="flex justify-end gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant={shift.is_duty_manager ? 'outline' : 'default'}
-                                    onClick={() => onToggleDutyManager(shift.id, !shift.is_duty_manager)}
-                                    disabled={isMutating}
-                                  >
-                                    <UserCheck className="mr-2 h-4 w-4" />
-                                    {shift.is_duty_manager ? 'Unset' : 'Set'}
-                                  </Button>
                                   <Button
                                     size="sm"
                                     variant="outline"

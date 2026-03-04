@@ -6,8 +6,10 @@ import {
 } from '@schedule-x/calendar';
 import { useNextCalendarApp } from '@schedule-x/react';
 import { createFileRoute } from '@tanstack/react-router';
-import { Filter, Loader2, Plus } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ChevronDown, Filter, Loader2, Plus } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { DateRange } from 'react-day-picker';
+import { z } from 'zod';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
@@ -15,10 +17,11 @@ import {
   Button,
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
-  DatePicker,
+  Collapsible,
+  CollapsibleContent,
+  DatePickerWithRange,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -62,28 +65,34 @@ import {
 } from '@/features/studio-shifts/utils/shift-form.utils';
 import { useUserProfile } from '@/lib/hooks/use-user';
 
+const shiftsSearchSchema = z.object({
+  view: z.enum(['calendar', 'table']).catch('calendar'),
+  page: z.coerce.number().int().min(1).catch(1),
+  limit: z.coerce.number().int().min(10).max(100).catch(20),
+  user_id: z.string().optional().catch(undefined),
+  status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']).optional().catch(undefined),
+  duty: z.enum(['YES', 'NO']).optional().catch(undefined),
+  date_from: z.string().optional().catch(undefined),
+  date_to: z.string().optional().catch(undefined),
+});
+
 export const Route = createFileRoute('/studios/$studioId/shifts')({
+  validateSearch: (search) => shiftsSearchSchema.parse(search),
   component: StudioShiftsPage,
 });
 
-type ShiftStatusFilter = 'ALL' | 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
-type DutyManagerFilter = 'ALL' | 'YES' | 'NO';
-
 function StudioShiftsPage() {
   const { studioId } = Route.useParams();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const { data: profile, isLoading: isLoadingProfile } = useUserProfile();
 
-  const [viewMode, setViewMode] = useState<'calendar' | 'table'>('calendar');
+  const viewMode = search.view;
   const [deleteConfirmShiftId, setDeleteConfirmShiftId] = useState<string | null>(null);
-
-  const [tablePage, setTablePage] = useState(1);
-  const [tableLimit, setTableLimit] = useState(20);
-  const [tableUserIdFilter, setTableUserIdFilter] = useState('');
   const [tableMemberSearch, setTableMemberSearch] = useState('');
-  const [tableStatusFilter, setTableStatusFilter] = useState<ShiftStatusFilter>('ALL');
-  const [tableDutyFilter, setTableDutyFilter] = useState<DutyManagerFilter>('ALL');
-  const [tableDateFrom, setTableDateFrom] = useState('');
-  const [tableDateTo, setTableDateTo] = useState('');
+  const [isFilterOpen, setIsFilterOpen] = useState(
+    Boolean(search.status || search.duty || search.date_from || search.date_to),
+  );
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [createMemberSearch, setCreateMemberSearch] = useState('');
@@ -102,6 +111,35 @@ function StudioShiftsPage() {
     [profile?.studio_memberships, studioId],
   );
   const isStudioAdmin = activeMembership?.role === STUDIO_ROLE.ADMIN;
+  const hasAnyFilters = Boolean(
+    search.user_id
+    || search.status
+    || search.duty
+    || search.date_from
+    || search.date_to,
+  );
+
+  const updateSearch = useCallback((
+    updater: (previous: typeof search) => typeof search,
+    options?: { replace?: boolean },
+  ) => {
+    void navigate({
+      to: '/studios/$studioId/shifts',
+      params: { studioId },
+      search: updater,
+      replace: options?.replace ?? true,
+    });
+  }, [navigate, studioId]);
+
+  const tableDateRange = useMemo<DateRange | undefined>(() => {
+    if (!search.date_from && !search.date_to) {
+      return undefined;
+    }
+    return {
+      from: search.date_from ? new Date(`${search.date_from}T00:00:00`) : undefined,
+      to: search.date_to ? new Date(`${search.date_to}T00:00:00`) : undefined,
+    };
+  }, [search.date_from, search.date_to]);
 
   const { data: displayMembersResponse } = useStudioMembershipsQuery(
     studioId,
@@ -132,23 +170,23 @@ function StudioShiftsPage() {
 
   const tableQueryParams = useMemo(() => {
     return {
-      page: tablePage,
-      limit: tableLimit,
-      ...(tableUserIdFilter ? { user_id: tableUserIdFilter } : {}),
-      ...(tableDateFrom ? { date_from: tableDateFrom } : {}),
-      ...(tableDateTo ? { date_to: tableDateTo } : {}),
-      ...(tableStatusFilter !== 'ALL' ? { status: tableStatusFilter } : {}),
-      ...(tableDutyFilter === 'YES' ? { is_duty_manager: true } : {}),
-      ...(tableDutyFilter === 'NO' ? { is_duty_manager: false } : {}),
+      page: search.page,
+      limit: search.limit,
+      ...(search.user_id ? { user_id: search.user_id } : {}),
+      ...(search.date_from ? { date_from: search.date_from } : {}),
+      ...(search.date_to ? { date_to: search.date_to } : {}),
+      ...(search.status ? { status: search.status } : {}),
+      ...(search.duty === 'YES' ? { is_duty_manager: true } : {}),
+      ...(search.duty === 'NO' ? { is_duty_manager: false } : {}),
     } as const;
   }, [
-    tableDateFrom,
-    tableDateTo,
-    tableDutyFilter,
-    tableLimit,
-    tablePage,
-    tableStatusFilter,
-    tableUserIdFilter,
+    search.date_from,
+    search.date_to,
+    search.duty,
+    search.limit,
+    search.page,
+    search.status,
+    search.user_id,
   ]);
 
   const {
@@ -200,6 +238,16 @@ function StudioShiftsPage() {
       return timeA - timeB;
     });
   }, [tableShiftsResponse?.data]);
+  const tableTotalPages = tableShiftsResponse?.meta?.totalPages ?? 1;
+
+  useEffect(() => {
+    if (search.page > tableTotalPages && tableTotalPages > 0) {
+      updateSearch((previous) => ({
+        ...previous,
+        page: tableTotalPages,
+      }));
+    }
+  }, [search.page, tableTotalPages, updateSearch]);
 
   const editingShift = editDialogState
     ? tableShifts.find((shift) => shift.id === editDialogState.shiftId)
@@ -370,14 +418,16 @@ function StudioShiftsPage() {
   };
 
   const handleResetFilters = () => {
-    setTableUserIdFilter('');
-    setTableStatusFilter('ALL');
-    setTableDutyFilter('ALL');
-    setTableDateFrom('');
-    setTableDateTo('');
-    setTableLimit(20);
     setTableMemberSearch('');
-    setTablePage(1);
+    updateSearch((previous) => ({
+      ...previous,
+      page: 1,
+      user_id: undefined,
+      status: undefined,
+      duty: undefined,
+      date_from: undefined,
+      date_to: undefined,
+    }));
   };
 
   if (isLoadingProfile) {
@@ -423,14 +473,22 @@ function StudioShiftsPage() {
           <Button
             size="sm"
             variant={viewMode === 'calendar' ? 'default' : 'ghost'}
-            onClick={() => setViewMode('calendar')}
+            onClick={() =>
+              updateSearch((previous) => ({
+                ...previous,
+                view: 'calendar',
+              }), { replace: false })}
           >
             Calendar
           </Button>
           <Button
             size="sm"
             variant={viewMode === 'table' ? 'default' : 'ghost'}
-            onClick={() => setViewMode('table')}
+            onClick={() =>
+              updateSearch((previous) => ({
+                ...previous,
+                view: 'table',
+              }), { replace: false })}
           >
             Table
           </Button>
@@ -457,112 +515,129 @@ function StudioShiftsPage() {
           )
         : (
             <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Filter className="h-4 w-4" />
-                    Search and Filters
-                  </CardTitle>
-                  <CardDescription>
-                    Search shifts by member and use advanced filters.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-                    <div className="space-y-2">
-                      <Label>Member</Label>
-                      <AsyncCombobox
-                        value={tableUserIdFilter}
-                        onChange={(value) => {
-                          setTableUserIdFilter(value);
-                          setTablePage(1);
-                        }}
-                        onSearch={setTableMemberSearch}
-                        options={tableMemberOptions}
-                        isLoading={isLoadingTableMemberOptions}
-                        placeholder="Search a studio member..."
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Status</Label>
-                      <Select
-                        value={tableStatusFilter}
-                        onValueChange={(value) => {
-                          setTableStatusFilter(value as ShiftStatusFilter);
-                          setTablePage(1);
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ALL">All</SelectItem>
-                          <SelectItem value="SCHEDULED">Scheduled</SelectItem>
-                          <SelectItem value="COMPLETED">Completed</SelectItem>
-                          <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Duty Manager</Label>
-                      <Select
-                        value={tableDutyFilter}
-                        onValueChange={(value) => {
-                          setTableDutyFilter(value as DutyManagerFilter);
-                          setTablePage(1);
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ALL">All</SelectItem>
-                          <SelectItem value="YES">Duty Manager Only</SelectItem>
-                          <SelectItem value="NO">Non Duty Manager</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Date From</Label>
-                      <DatePicker
-                        value={tableDateFrom}
-                        onChange={(value) => {
-                          setTableDateFrom(value);
-                          setTablePage(1);
-                        }}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Date To</Label>
-                      <DatePicker
-                        value={tableDateTo}
-                        onChange={(value) => {
-                          setTableDateTo(value);
-                          setTablePage(1);
-                        }}
-                      />
-                    </div>
+              <div className="space-y-3 rounded-lg border bg-background p-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                  <div className="w-full space-y-2 lg:max-w-md">
+                    <Label>Member</Label>
+                    <AsyncCombobox
+                      value={search.user_id ?? ''}
+                      onChange={(value) => {
+                        updateSearch((previous) => ({
+                          ...previous,
+                          page: 1,
+                          user_id: value || undefined,
+                        }));
+                      }}
+                      onSearch={setTableMemberSearch}
+                      options={tableMemberOptions}
+                      isLoading={isLoadingTableMemberOptions}
+                      placeholder="Search and select a studio member..."
+                    />
                   </div>
-                  <div>
-                    <Button type="button" variant="outline" size="sm" onClick={handleResetFilters}>
-                      Reset Filters
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsFilterOpen((previous) => !previous)}
+                    >
+                      <Filter className="mr-2 h-4 w-4" />
+                      Advanced Filters
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleResetFilters}
+                      disabled={!hasAnyFilters}
+                    >
+                      Reset
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+
+                <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                  <CollapsibleContent className="space-y-3">
+                    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label>Shift Status</Label>
+                        <Select
+                          value={search.status ?? 'ALL'}
+                          onValueChange={(value) => {
+                            updateSearch((previous) => ({
+                              ...previous,
+                              page: 1,
+                              status: value === 'ALL' ? undefined : value as 'SCHEDULED' | 'COMPLETED' | 'CANCELLED',
+                            }));
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ALL">All</SelectItem>
+                            <SelectItem value="SCHEDULED">Scheduled</SelectItem>
+                            <SelectItem value="COMPLETED">Completed</SelectItem>
+                            <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Duty Manager</Label>
+                        <Select
+                          value={search.duty ?? 'ALL'}
+                          onValueChange={(value) => {
+                            updateSearch((previous) => ({
+                              ...previous,
+                              page: 1,
+                              duty: value === 'ALL' ? undefined : value as 'YES' | 'NO',
+                            }));
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ALL">All</SelectItem>
+                            <SelectItem value="YES">Duty Manager Only</SelectItem>
+                            <SelectItem value="NO">Non Duty Manager</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2 md:col-span-2 lg:col-span-1">
+                        <Label>Date Range</Label>
+                        <DatePickerWithRange
+                          date={tableDateRange}
+                          setDate={(range) => {
+                            updateSearch((previous) => ({
+                              ...previous,
+                              page: 1,
+                              date_from: range?.from ? toLocalDateInputValue(range.from) : undefined,
+                              date_to: range?.to ? toLocalDateInputValue(range.to) : undefined,
+                            }));
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Status tracks operational lifecycle: scheduled, completed, or cancelled.
+                    </p>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
 
               <ShiftRosterCard
                 shifts={tableShifts}
                 isLoading={isLoadingTableShifts}
                 isFetching={isFetchingTableShifts}
-                page={tablePage}
-                totalPages={tableShiftsResponse?.meta?.totalPages ?? 1}
+                page={search.page}
+                totalPages={tableTotalPages}
                 total={tableShiftsResponse?.meta?.total ?? 0}
-                limit={tableLimit}
+                limit={search.limit}
                 canManageShifts
                 memberMap={memberMap}
                 deleteConfirmShiftId={deleteConfirmShiftId}
@@ -577,12 +652,19 @@ function StudioShiftsPage() {
                 onToggleDutyManager={handleSetDutyManager}
                 onEdit={handleStartEdit}
                 onDelete={handleDeleteShift}
-                onPreviousPage={() => setTablePage((previous) => Math.max(1, previous - 1))}
-                onNextPage={() => setTablePage((previous) =>
-                  Math.min(tableShiftsResponse?.meta?.totalPages ?? previous, previous + 1))}
+                onPreviousPage={() =>
+                  updateSearch((previous) => ({ ...previous, page: Math.max(1, previous.page - 1) }), { replace: false })}
+                onNextPage={() =>
+                  updateSearch((previous) => ({
+                    ...previous,
+                    page: Math.min(tableTotalPages, previous.page + 1),
+                  }), { replace: false })}
                 onLimitChange={(limit) => {
-                  setTableLimit(limit);
-                  setTablePage(1);
+                  updateSearch((previous) => ({
+                    ...previous,
+                    page: 1,
+                    limit,
+                  }));
                 }}
               />
             </div>
