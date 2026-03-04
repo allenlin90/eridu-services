@@ -1,3 +1,5 @@
+import 'temporal-polyfill/global';
+
 import type { CalendarApp } from '@schedule-x/calendar';
 import { ScheduleXCalendar } from '@schedule-x/react';
 

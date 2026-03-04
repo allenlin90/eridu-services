@@ -524,9 +524,15 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.68.0(react@19.2.0))
+      '@preact/signals':
+        specifier: ^2.8.1
+        version: 2.8.1(preact@10.28.4)
       '@schedule-x/calendar':
         specifier: ^4.2.0
         version: 4.2.0(@preact/signals@2.8.1(preact@10.28.4))(preact@10.28.4)(temporal-polyfill@0.3.0)
+      '@schedule-x/events-service':
+        specifier: ^4.3.0
+        version: 4.3.0
       '@schedule-x/react':
         specifier: ^4.1.0
         version: 4.1.0(@schedule-x/calendar@4.2.0(@preact/signals@2.8.1(preact@10.28.4))(preact@10.28.4)(temporal-polyfill@0.3.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -569,6 +575,9 @@ importers:
       lucide-react:
         specifier: ^0.554.0
         version: 0.554.0(react@19.2.0)
+      preact:
+        specifier: ^10.28.4
+        version: 10.28.4
       react:
         specifier: ^19.2.0
         version: 19.2.0
@@ -587,6 +596,9 @@ importers:
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      temporal-polyfill:
+        specifier: ^0.3.0
+        version: 0.3.0
       usehooks-ts:
         specifier: ^3.1.1
         version: 3.1.1(react@19.2.0)
@@ -3984,6 +3996,9 @@ packages:
       '@preact/signals': ^2.0.2
       preact: ^10.19.2
       temporal-polyfill: 0.3.0
+
+  '@schedule-x/events-service@4.3.0':
+    resolution: {integrity: sha512-otIDvEy39X38rTQSw2n4TsEyd0xs7CxDRj4wgqabqXtbwLRm1OW/YwKgDrEU7Vd4xKQMFyCYgwVSnaj5oCcUig==}
 
   '@schedule-x/react@4.1.0':
     resolution: {integrity: sha512-l2hn1kdTModk4Lbt+nEr/VAcuNMA+w+hAAtgz8VLOj5UeieM7PWoK+cDapzPHCjUKisCSPd8QZfAX966Ma82kQ==}
@@ -13159,6 +13174,8 @@ snapshots:
       '@preact/signals': 2.8.1(preact@10.28.4)
       preact: 10.28.4
       temporal-polyfill: 0.3.0
+
+  '@schedule-x/events-service@4.3.0': {}
 
   '@schedule-x/react@4.1.0(@schedule-x/calendar@4.2.0(@preact/signals@2.8.1(preact@10.28.4))(preact@10.28.4)(temporal-polyfill@0.3.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:

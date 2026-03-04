@@ -1,5 +1,6 @@
 import {
   Checkbox,
+  DatePicker,
   Input,
   Label,
   Select,
@@ -53,13 +54,11 @@ export function ShiftFormFields({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
+        <div className="space-y-2 flex flex-col">
           <Label htmlFor={`${idPrefix}-date`}>Date</Label>
-          <Input
-            id={`${idPrefix}-date`}
-            type="date"
+          <DatePicker
             value={formState.date}
-            onChange={(event) => onChange({ ...formState, date: event.target.value })}
+            onChange={(val) => onChange({ ...formState, date: val })}
           />
         </div>
 

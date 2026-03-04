@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { studioShiftsKeys } from './get-studio-shifts';
-import type { StudioShift } from './studio-shifts.types';
+import type { StudioShift, StudioShiftsResponse } from './studio-shifts.types';
 
 import { apiClient } from '@/lib/api/client';
 
@@ -30,7 +30,23 @@ export function useCreateStudioShift(studioId: string) {
 
   return useMutation({
     mutationFn: (payload: CreateStudioShiftPayload) => createStudioShift(studioId, payload),
-    onSuccess: async () => {
+    onSuccess: async (newShift) => {
+      queryClient.setQueriesData<StudioShiftsResponse>(
+        { queryKey: studioShiftsKeys.listPrefix(studioId) },
+        (prev) => {
+          if (!prev)
+            return prev;
+          return {
+            ...prev,
+            data: [...prev.data, newShift],
+          };
+        },
+      );
+
+      if (newShift.is_duty_manager) {
+        queryClient.setQueryData<StudioShift>(studioShiftsKeys.dutyManager(studioId), newShift);
+      }
+
       await queryClient.invalidateQueries({ queryKey: studioShiftsKeys.listPrefix(studioId) });
       await queryClient.invalidateQueries({ queryKey: studioShiftsKeys.dutyManager(studioId) });
     },

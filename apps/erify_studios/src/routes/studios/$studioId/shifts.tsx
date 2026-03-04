@@ -37,6 +37,7 @@ import {
   useStudioShifts,
 } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import type { ShiftFormState } from '@/features/studio-shifts/types/shift-form.types';
+import { toScheduleXDateTime } from '@/features/studio-shifts/utils/schedule-x.utils';
 import {
   combineDateAndTime,
   createDefaultFormState,
@@ -121,8 +122,8 @@ function StudioShiftsPage() {
       return shift.blocks.map((block) => ({
         id: `${shift.id}-${block.id}`,
         title: shift.is_duty_manager ? `Duty: ${memberName}` : memberName,
-        start: block.start_time,
-        end: block.end_time,
+        start: toScheduleXDateTime(block.start_time),
+        end: toScheduleXDateTime(block.end_time),
         calendarId: shift.is_duty_manager ? 'duty-manager' : 'shift',
         description: `${formatDate(shift.date)} | ${shift.status}`,
       }));
