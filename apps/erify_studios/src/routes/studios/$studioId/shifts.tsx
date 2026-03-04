@@ -1,3 +1,10 @@
+import {
+  type CalendarEvent,
+  viewDay,
+  viewMonthGrid,
+  viewWeek,
+} from '@schedule-x/calendar';
+import { ScheduleXCalendar, useNextCalendarApp } from '@schedule-x/react';
 import { createFileRoute } from '@tanstack/react-router';
 import { Loader2, ShieldCheck, Trash2, UserCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -20,6 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@eridu/ui';
+
+import '@schedule-x/theme-default/dist/index.css';
 
 import { useStudioMembershipsQuery } from '@/features/memberships/api/get-studio-memberships';
 import { useAssignDutyManager } from '@/features/studio-shifts/api/assign-duty-manager';
@@ -153,6 +162,44 @@ function StudioShiftsPage() {
       return timeA - timeB;
     });
   }, [shiftsResponse?.data]);
+  const calendarEvents = useMemo(() => {
+    return shifts.flatMap((shift) => {
+      const user = memberMap.get(shift.user_id);
+      const memberName = user?.name ?? shift.user_id;
+
+      return shift.blocks.map((block) => ({
+        id: `${shift.id}-${block.id}`,
+        title: shift.is_duty_manager ? `Duty: ${memberName}` : memberName,
+        start: block.start_time,
+        end: block.end_time,
+        calendarId: shift.is_duty_manager ? 'duty-manager' : 'shift',
+        description: `${formatDate(shift.date)} | ${shift.status}`,
+      }));
+    });
+  }, [memberMap, shifts]);
+  const calendarApp = useNextCalendarApp({
+    views: [viewMonthGrid, viewWeek, viewDay],
+    defaultView: viewWeek.name,
+    events: calendarEvents as unknown as CalendarEvent[],
+    calendars: {
+      'shift': {
+        colorName: 'shift',
+        lightColors: {
+          main: '#1d4ed8',
+          container: '#dbeafe',
+          onContainer: '#1e3a8a',
+        },
+      },
+      'duty-manager': {
+        colorName: 'duty',
+        lightColors: {
+          main: '#b45309',
+          container: '#fef3c7',
+          onContainer: '#78350f',
+        },
+      },
+    },
+  });
 
   const handleCreateShift = async () => {
     setFormError(null);
@@ -397,9 +444,9 @@ function StudioShiftsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Upcoming Shifts</CardTitle>
+          <CardTitle>Schedule Calendar</CardTitle>
           <CardDescription>
-            All studio members can review the schedule and duty manager assignment.
+            Month, week, and day calendar view for all studio shifts.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -413,6 +460,19 @@ function StudioShiftsPage() {
                 )
               : (
                   <div className="space-y-3">
+                    <div className="rounded-lg border p-2">
+                      <ScheduleXCalendar calendarApp={calendarApp} />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-blue-700" />
+                        Shift
+                      </span>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-amber-700" />
+                        Duty Manager
+                      </span>
+                    </div>
                     {shifts.map((shift) => {
                       const user = memberMap.get(shift.user_id);
 
