@@ -19,6 +19,8 @@ type ShiftEditCardProps = {
   memberName?: string;
   dateLabel: string;
   members: Membership[];
+  onMemberSearch: (value: string) => void;
+  isLoadingMembers?: boolean;
   formState: ShiftFormState;
   formError: string | null;
   isSaving: boolean;
@@ -32,6 +34,8 @@ export function ShiftEditCard({
   memberName,
   dateLabel,
   members,
+  onMemberSearch,
+  isLoadingMembers = false,
   formState,
   formError,
   isSaving,
@@ -58,6 +62,8 @@ export function ShiftEditCard({
         <ShiftFormFields
           idPrefix="shift-edit"
           members={members}
+          onMemberSearch={onMemberSearch}
+          isLoadingMembers={isLoadingMembers}
           formState={formState}
           onChange={onChange}
           includeStatus

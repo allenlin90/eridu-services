@@ -93,7 +93,7 @@ describe('useSidebarConfig', () => {
         studio_memberships: [
           {
             studio: { uid: 'studio-1', name: 'Studio 1' },
-            role: 'owner',
+            role: 'admin',
           },
           {
             studio: { uid: 'studio-2', name: 'Studio 2' },
@@ -165,12 +165,12 @@ describe('useSidebarConfig', () => {
       ]),
     });
 
-    expect(result.current.navMain[2]).toEqual({
+    expect(result.current.navMain[2]).toEqual(expect.objectContaining({
       title: 'Studio',
       url: '/studios',
       icon: expect.any(Function),
       isActive: false,
-      items: [
+      items: expect.arrayContaining([
         expect.objectContaining({
           title: 'Dashboard',
           url: '/studios/studio-1/dashboard',
@@ -183,8 +183,8 @@ describe('useSidebarConfig', () => {
           title: 'Shift Schedule',
           url: '/studios/studio-1/shifts',
         }),
-      ],
-    });
+      ]),
+    }));
   });
 
   it('sets system navigation as active when on system routes', () => {

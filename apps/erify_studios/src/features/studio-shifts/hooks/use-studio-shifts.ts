@@ -15,6 +15,9 @@ const DEFAULT_QUERY_PARAMS: GetStudioShiftsParams = {
 export function useStudioShifts(
   studioId: string,
   params?: GetStudioShiftsParams,
+  options?: {
+    enabled?: boolean;
+  },
 ) {
   const queryParams = {
     ...DEFAULT_QUERY_PARAMS,
@@ -24,14 +27,20 @@ export function useStudioShifts(
   return useQuery({
     queryKey: studioShiftsKeys.list(studioId, queryParams),
     queryFn: () => getStudioShifts(studioId, queryParams),
-    enabled: Boolean(studioId),
+    enabled: Boolean(studioId) && (options?.enabled ?? true),
   });
 }
 
-export function useDutyManager(studioId: string) {
+export function useDutyManager(
+  studioId: string,
+  time?: string,
+  options?: {
+    enabled?: boolean;
+  },
+) {
   return useQuery({
-    queryKey: studioShiftsKeys.dutyManager(studioId),
-    queryFn: () => getDutyManager(studioId),
-    enabled: Boolean(studioId),
+    queryKey: studioShiftsKeys.dutyManager(studioId, time),
+    queryFn: () => getDutyManager(studioId, time),
+    enabled: Boolean(studioId) && (options?.enabled ?? true),
   });
 }

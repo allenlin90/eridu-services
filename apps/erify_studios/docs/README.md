@@ -6,6 +6,7 @@ Implemented/canonical docs stay in `docs/` root. Design/proposal/in-progress doc
 
 1. [Task Management Summary](./TASK_MANAGEMENT_SUMMARY.md)
 2. [Moderation Loop Workflow](./MODERATION_WORKFLOW.md)
+3. [Studio Role Use Cases and Views](./STUDIO_ROLE_USE_CASES_AND_VIEWS.md)
 
 ## Design Docs
 

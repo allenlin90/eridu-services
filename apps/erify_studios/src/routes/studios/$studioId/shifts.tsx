@@ -6,12 +6,31 @@ import {
 } from '@schedule-x/calendar';
 import { useNextCalendarApp } from '@schedule-x/react';
 import { createFileRoute } from '@tanstack/react-router';
+import { Filter, Loader2, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
+  AsyncCombobox,
+  Button,
   Card,
   CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  DatePicker,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@eridu/ui';
 
 import '@schedule-x/theme-default/dist/index.css';
@@ -27,15 +46,10 @@ import {
   type UpdateStudioShiftPayload,
   useUpdateStudioShift,
 } from '@/features/studio-shifts/api/update-studio-shift';
-import { CurrentDutyManagerCard } from '@/features/studio-shifts/components/current-duty-manager-card';
 import { ShiftCalendarCard } from '@/features/studio-shifts/components/shift-calendar-card';
-import { ShiftCreateCard } from '@/features/studio-shifts/components/shift-create-card';
-import { ShiftEditCard } from '@/features/studio-shifts/components/shift-edit-card';
+import { ShiftFormFields } from '@/features/studio-shifts/components/shift-form-fields';
 import { ShiftRosterCard } from '@/features/studio-shifts/components/shift-roster-card';
-import {
-  useDutyManager,
-  useStudioShifts,
-} from '@/features/studio-shifts/hooks/use-studio-shifts';
+import { useStudioShifts } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import type { ShiftFormState } from '@/features/studio-shifts/types/shift-form.types';
 import { toScheduleXDateTime } from '@/features/studio-shifts/utils/schedule-x.utils';
 import {
@@ -52,44 +66,114 @@ export const Route = createFileRoute('/studios/$studioId/shifts')({
   component: StudioShiftsPage,
 });
 
+type ShiftStatusFilter = 'ALL' | 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
+type DutyManagerFilter = 'ALL' | 'YES' | 'NO';
+
 function StudioShiftsPage() {
   const { studioId } = Route.useParams();
-  const { data: profile } = useUserProfile();
+  const { data: profile, isLoading: isLoadingProfile } = useUserProfile();
 
-  const [formState, setFormState] = useState<ShiftFormState>(() => createDefaultFormState());
-  const [formError, setFormError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'calendar' | 'table'>('calendar');
   const [deleteConfirmShiftId, setDeleteConfirmShiftId] = useState<string | null>(null);
-  const [draftState, setDraftState] = useState<{
+
+  const [tablePage, setTablePage] = useState(1);
+  const [tableLimit, setTableLimit] = useState(20);
+  const [tableUserIdFilter, setTableUserIdFilter] = useState('');
+  const [tableMemberSearch, setTableMemberSearch] = useState('');
+  const [tableStatusFilter, setTableStatusFilter] = useState<ShiftStatusFilter>('ALL');
+  const [tableDutyFilter, setTableDutyFilter] = useState<DutyManagerFilter>('ALL');
+  const [tableDateFrom, setTableDateFrom] = useState('');
+  const [tableDateTo, setTableDateTo] = useState('');
+
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [createMemberSearch, setCreateMemberSearch] = useState('');
+  const [createFormState, setCreateFormState] = useState<ShiftFormState>(() => createDefaultFormState());
+  const [createFormError, setCreateFormError] = useState<string | null>(null);
+
+  const [editDialogState, setEditDialogState] = useState<{
     shiftId: string;
     formState: ShiftFormState;
     error: string | null;
   } | null>(null);
+  const [editMemberSearch, setEditMemberSearch] = useState('');
 
-  const { data: membersResponse, isLoading: isLoadingMembers } = useStudioMembershipsQuery(
-    studioId,
-    { limit: 200 },
+  const activeMembership = useMemo(
+    () => profile?.studio_memberships?.find((membership) => membership.studio.uid === studioId),
+    [profile?.studio_memberships, studioId],
   );
-  const { data: shiftsResponse, isLoading: isLoadingShifts, isFetching: isFetchingShifts }
-    = useStudioShifts(studioId, { limit: 200, page: 1 });
-  const { data: dutyManager, isLoading: isLoadingDutyManager } = useDutyManager(studioId);
+  const isStudioAdmin = activeMembership?.role === STUDIO_ROLE.ADMIN;
+
+  const { data: displayMembersResponse } = useStudioMembershipsQuery(
+    studioId,
+    { page: 1, limit: 200 },
+    { enabled: isStudioAdmin },
+  );
+  const { data: createMemberOptionsResponse, isLoading: isLoadingCreateMemberOptions } = useStudioMembershipsQuery(
+    studioId,
+    { page: 1, limit: 50, name: createMemberSearch || undefined },
+    { enabled: isStudioAdmin && isCreateDialogOpen },
+  );
+  const { data: editMemberOptionsResponse, isLoading: isLoadingEditMemberOptions } = useStudioMembershipsQuery(
+    studioId,
+    { page: 1, limit: 50, name: editMemberSearch || undefined },
+    { enabled: isStudioAdmin && Boolean(editDialogState) },
+  );
+  const { data: tableMemberOptionsResponse, isLoading: isLoadingTableMemberOptions } = useStudioMembershipsQuery(
+    studioId,
+    { page: 1, limit: 50, name: tableMemberSearch || undefined },
+    { enabled: isStudioAdmin && viewMode === 'table' },
+  );
+
+  const {
+    data: calendarShiftsResponse,
+    isLoading: isLoadingCalendarShifts,
+    isFetching: isFetchingCalendarShifts,
+  } = useStudioShifts(studioId, { page: 1, limit: 500 }, { enabled: isStudioAdmin });
+
+  const tableQueryParams = useMemo(() => {
+    return {
+      page: tablePage,
+      limit: tableLimit,
+      ...(tableUserIdFilter ? { user_id: tableUserIdFilter } : {}),
+      ...(tableDateFrom ? { date_from: tableDateFrom } : {}),
+      ...(tableDateTo ? { date_to: tableDateTo } : {}),
+      ...(tableStatusFilter !== 'ALL' ? { status: tableStatusFilter } : {}),
+      ...(tableDutyFilter === 'YES' ? { is_duty_manager: true } : {}),
+      ...(tableDutyFilter === 'NO' ? { is_duty_manager: false } : {}),
+    } as const;
+  }, [
+    tableDateFrom,
+    tableDateTo,
+    tableDutyFilter,
+    tableLimit,
+    tablePage,
+    tableStatusFilter,
+    tableUserIdFilter,
+  ]);
+
+  const {
+    data: tableShiftsResponse,
+    isLoading: isLoadingTableShifts,
+    isFetching: isFetchingTableShifts,
+  } = useStudioShifts(studioId, tableQueryParams, { enabled: isStudioAdmin });
 
   const createShiftMutation = useCreateStudioShift(studioId);
   const deleteShiftMutation = useDeleteStudioShift(studioId);
   const updateShiftMutation = useUpdateStudioShift(studioId);
   const assignDutyManagerMutation = useAssignDutyManager(studioId);
 
-  const activeMembership = useMemo(
-    () => profile?.studio_memberships?.find((membership) => membership.studio.uid === studioId),
-    [profile?.studio_memberships, studioId],
-  );
-  const canManageShifts = activeMembership?.role === STUDIO_ROLE.ADMIN;
-
-  const members = useMemo(() => membersResponse?.data ?? [], [membersResponse?.data]);
-  const selectedUserId = formState.userId || members[0]?.user.id || '';
+  const displayMembers = useMemo(() => displayMembersResponse?.data ?? [], [displayMembersResponse?.data]);
+  const tableMemberOptions = useMemo(() => {
+    const rows = tableMemberOptionsResponse?.data ?? [];
+    return rows.map((member) => ({
+      value: member.user.id,
+      label: `${member.user.name} (${member.user.email})`,
+    }));
+  }, [tableMemberOptionsResponse?.data]);
 
   const memberMap = useMemo(() => {
     return new Map(
-      members.map((member) => [
+      displayMembers.map((member) => [
         member.user.id,
         {
           name: member.user.name,
@@ -97,38 +181,55 @@ function StudioShiftsPage() {
         },
       ]),
     );
-  }, [members]);
+  }, [displayMembers]);
 
-  const shifts = useMemo(() => {
-    const rows = shiftsResponse?.data ?? [];
+  const calendarShifts = useMemo(() => {
+    const rows = calendarShiftsResponse?.data ?? [];
     return [...rows].sort((a, b) => {
       const timeA = a.blocks[0] ? new Date(a.blocks[0].start_time).getTime() : Number.MAX_SAFE_INTEGER;
       const timeB = b.blocks[0] ? new Date(b.blocks[0].start_time).getTime() : Number.MAX_SAFE_INTEGER;
       return timeA - timeB;
     });
-  }, [shiftsResponse?.data]);
+  }, [calendarShiftsResponse?.data]);
 
-  const editingShift = draftState
-    ? shifts.find((shift) => shift.id === draftState.shiftId) ?? null
+  const tableShifts = useMemo(() => {
+    const rows = tableShiftsResponse?.data ?? [];
+    return [...rows].sort((a, b) => {
+      const timeA = a.blocks[0] ? new Date(a.blocks[0].start_time).getTime() : Number.MAX_SAFE_INTEGER;
+      const timeB = b.blocks[0] ? new Date(b.blocks[0].start_time).getTime() : Number.MAX_SAFE_INTEGER;
+      return timeA - timeB;
+    });
+  }, [tableShiftsResponse?.data]);
+
+  const editingShift = editDialogState
+    ? tableShifts.find((shift) => shift.id === editDialogState.shiftId)
+    ?? calendarShifts.find((shift) => shift.id === editDialogState.shiftId)
+    ?? null
     : null;
 
-  const currentDraft = editingShift ? draftState : null;
-
   const calendarEvents = useMemo(() => {
-    return shifts.flatMap((shift) => {
+    return calendarShifts.flatMap((shift) => {
       const user = memberMap.get(shift.user_id);
       const memberName = user?.name ?? shift.user_id;
+      const sortedBlocks = [...shift.blocks].sort(
+        (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
+      );
+      const firstBlock = sortedBlocks[0];
+      const lastBlock = sortedBlocks[sortedBlocks.length - 1];
+      if (!firstBlock || !lastBlock) {
+        return [];
+      }
 
-      return shift.blocks.map((block) => ({
-        id: `${shift.id}-${block.id}`,
+      return [{
+        id: shift.id,
         title: shift.is_duty_manager ? `Duty: ${memberName}` : memberName,
-        start: toScheduleXDateTime(block.start_time),
-        end: toScheduleXDateTime(block.end_time),
+        start: toScheduleXDateTime(firstBlock.start_time),
+        end: toScheduleXDateTime(lastBlock.end_time),
         calendarId: shift.is_duty_manager ? 'duty-manager' : 'shift',
         description: `${formatDate(shift.date)} | ${shift.status}`,
-      }));
+      }];
     });
-  }, [memberMap, shifts]);
+  }, [calendarShifts, memberMap]);
 
   const calendarApp = useNextCalendarApp({
     views: [viewMonthGrid, viewWeek, viewDay],
@@ -155,45 +256,47 @@ function StudioShiftsPage() {
   });
 
   const handleCreateShift = async () => {
-    setFormError(null);
+    setCreateFormError(null);
 
-    if (!selectedUserId) {
-      setFormError('Please select a studio member.');
+    if (!createFormState.userId) {
+      setCreateFormError('Please select a studio member.');
       return;
     }
 
-    if (!formState.date || !formState.startTime || !formState.endTime) {
-      setFormError('Date, start time, and end time are required.');
+    if (!createFormState.date || !createFormState.startTime || !createFormState.endTime) {
+      setCreateFormError('Date, start time, and end time are required.');
       return;
     }
 
-    const start = combineDateAndTime(formState.date, formState.startTime);
-    const end = combineDateAndTime(formState.date, formState.endTime);
+    const start = combineDateAndTime(createFormState.date, createFormState.startTime);
+    const end = combineDateAndTime(createFormState.date, createFormState.endTime);
 
     if (new Date(end).getTime() <= new Date(start).getTime()) {
-      setFormError('End time must be later than start time.');
+      setCreateFormError('End time must be later than start time.');
       return;
     }
 
     const payload: CreateStudioShiftPayload = {
-      user_id: selectedUserId,
-      date: formState.date,
+      user_id: createFormState.userId,
+      date: createFormState.date,
       blocks: [{ start_time: start, end_time: end }],
-      is_duty_manager: formState.isDutyManager,
+      is_duty_manager: createFormState.isDutyManager,
     };
 
-    if (formState.hourlyRate.trim()) {
-      payload.hourly_rate = Number(formState.hourlyRate);
+    if (createFormState.hourlyRate.trim()) {
+      payload.hourly_rate = Number(createFormState.hourlyRate);
     }
 
     try {
       await createShiftMutation.mutateAsync(payload);
-      setFormState((previous) => ({
+      setIsCreateDialogOpen(false);
+      setCreateFormState((previous) => ({
         ...createDefaultFormState(),
         userId: previous.userId,
       }));
+      setCreateMemberSearch('');
     } catch {
-      setFormError('Failed to create shift. Please try again.');
+      setCreateFormError('Failed to create shift. Please try again.');
     }
   };
 
@@ -211,148 +314,364 @@ function StudioShiftsPage() {
     await assignDutyManagerMutation.mutateAsync({ shiftId, isDutyManager });
   };
 
-  const handleStartEdit = (shift: (typeof shifts)[number]) => {
-    setDraftState({
+  const handleStartEdit = (shift: (typeof tableShifts)[number]) => {
+    setEditDialogState({
       shiftId: shift.id,
       formState: createEditFormState(shift),
       error: null,
     });
-  };
-
-  const handleCancelEdit = () => {
-    setDraftState(null);
+    setEditMemberSearch('');
   };
 
   const handleUpdateShift = async () => {
-    if (!currentDraft)
-      return;
-
-    setDraftState((prev) => (prev ? { ...prev, error: null } : null));
-
-    if (!currentDraft.formState.userId) {
-      setDraftState((prev) => (prev ? { ...prev, error: 'Please select a studio member.' } : null));
+    if (!editDialogState || !editingShift) {
       return;
     }
 
-    if (!currentDraft.formState.date || !currentDraft.formState.startTime || !currentDraft.formState.endTime) {
-      setDraftState((prev) => (prev ? { ...prev, error: 'Date, start time, and end time are required.' } : null));
+    const { formState } = editDialogState;
+    setEditDialogState((previous) => (previous ? { ...previous, error: null } : null));
+
+    if (!formState.userId) {
+      setEditDialogState((previous) => (previous ? { ...previous, error: 'Please select a studio member.' } : null));
       return;
     }
 
-    const start = combineDateAndTime(currentDraft.formState.date, currentDraft.formState.startTime);
-    const end = combineDateAndTime(currentDraft.formState.date, currentDraft.formState.endTime);
+    if (!formState.date || !formState.startTime || !formState.endTime) {
+      setEditDialogState((previous) => (previous ? { ...previous, error: 'Date, start time, and end time are required.' } : null));
+      return;
+    }
+
+    const start = combineDateAndTime(formState.date, formState.startTime);
+    const end = combineDateAndTime(formState.date, formState.endTime);
 
     if (new Date(end).getTime() <= new Date(start).getTime()) {
-      setDraftState((prev) => (prev ? { ...prev, error: 'End time must be later than start time.' } : null));
+      setEditDialogState((previous) => (previous ? { ...previous, error: 'End time must be later than start time.' } : null));
       return;
     }
 
     const payload: UpdateStudioShiftPayload = {
-      user_id: currentDraft.formState.userId,
-      date: currentDraft.formState.date,
-      status: currentDraft.formState.status ?? 'SCHEDULED',
-      is_duty_manager: currentDraft.formState.isDutyManager,
+      user_id: formState.userId,
+      date: formState.date,
+      status: formState.status ?? 'SCHEDULED',
+      is_duty_manager: formState.isDutyManager,
       blocks: [{ start_time: start, end_time: end }],
     };
 
-    if (currentDraft.formState.hourlyRate.trim()) {
-      payload.hourly_rate = Number(currentDraft.formState.hourlyRate);
+    if (formState.hourlyRate.trim()) {
+      payload.hourly_rate = Number(formState.hourlyRate);
     }
 
     try {
-      await updateShiftMutation.mutateAsync({ shiftId: currentDraft.shiftId, payload });
-      handleCancelEdit();
+      await updateShiftMutation.mutateAsync({ shiftId: editingShift.id, payload });
+      setEditDialogState(null);
     } catch {
-      setDraftState((prev) => (prev ? { ...prev, error: 'Failed to update shift. Please try again.' } : null));
+      setEditDialogState((previous) => (previous ? { ...previous, error: 'Failed to update shift. Please try again.' } : null));
     }
   };
 
+  const handleResetFilters = () => {
+    setTableUserIdFilter('');
+    setTableStatusFilter('ALL');
+    setTableDutyFilter('ALL');
+    setTableDateFrom('');
+    setTableDateTo('');
+    setTableLimit(20);
+    setTableMemberSearch('');
+    setTablePage(1);
+  };
+
+  if (isLoadingProfile) {
+    return (
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground">Checking access...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!isStudioAdmin) {
+    return (
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <Card>
+          <CardHeader>
+            <CardTitle>Shift Management Access Required</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Only studio admins can access shift management.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="rounded-xl border bg-linear-to-r from-slate-50 via-white to-slate-50 p-4">
-        <h1 className="text-2xl font-bold tracking-tight">Shift Schedule</h1>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Studio Shift Schedule</h1>
         <p className="text-muted-foreground">
-          Studio-wide calendar for all members, with admin controls for shift management.
+          Manage all studio shifts with calendar and table views.
         </p>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-3">
-        <ShiftCalendarCard
-          isLoading={isLoadingShifts}
-          isFetching={isFetchingShifts}
-          shiftCount={shifts.length}
-          calendarApp={calendarApp}
-        />
-
-        <div className="space-y-4 xl:sticky xl:top-20 xl:self-start">
-          <CurrentDutyManagerCard
-            isLoading={isLoadingDutyManager}
-            dutyManager={dutyManager}
-            memberName={dutyManager ? memberMap.get(dutyManager.user_id)?.name : undefined}
-            memberEmail={dutyManager ? memberMap.get(dutyManager.user_id)?.email : undefined}
-            dateLabel={dutyManager ? formatDate(dutyManager.date) : undefined}
-            shiftLabel={dutyManager ? getShiftWindowLabel(dutyManager) : undefined}
-          />
-
-          {canManageShifts
-            ? (
-                <ShiftCreateCard
-                  members={members}
-                  formState={{ ...formState, userId: selectedUserId }}
-                  formError={formError}
-                  isCreating={createShiftMutation.isPending}
-                  isLoadingMembers={isLoadingMembers}
-                  onChange={setFormState}
-                  onCreate={handleCreateShift}
-                />
-              )
-            : (
-                <Card>
-                  <CardContent className="pt-6">
-                    <p className="text-sm text-muted-foreground">
-                      Shift creation and assignments are restricted to studio admins.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-
-          {canManageShifts && currentDraft && editingShift && (
-            <ShiftEditCard
-              shift={editingShift}
-              memberName={memberMap.get(editingShift.user_id)?.name}
-              dateLabel={formatDate(editingShift.date)}
-              members={members}
-              formState={currentDraft.formState}
-              formError={currentDraft.error}
-              isSaving={updateShiftMutation.isPending}
-              onChange={(nextFormState) =>
-                setDraftState((prev) => (prev ? { ...prev, formState: nextFormState } : null))}
-              onSave={handleUpdateShift}
-              onCancel={handleCancelEdit}
-            />
-          )}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/20 px-3 py-2">
+        <div className="inline-flex rounded-md border bg-background p-1">
+          <Button
+            size="sm"
+            variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+            onClick={() => setViewMode('calendar')}
+          >
+            Calendar
+          </Button>
+          <Button
+            size="sm"
+            variant={viewMode === 'table' ? 'default' : 'ghost'}
+            onClick={() => setViewMode('table')}
+          >
+            Table
+          </Button>
         </div>
+        <Button
+          size="sm"
+          onClick={() => setIsCreateDialogOpen(true)}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Create Shift
+        </Button>
       </div>
 
-      <ShiftRosterCard
-        shifts={shifts}
-        isLoading={isLoadingShifts}
-        isFetching={isFetchingShifts}
-        canManageShifts={canManageShifts}
-        memberMap={memberMap}
-        deleteConfirmShiftId={deleteConfirmShiftId}
-        isMutating={
-          assignDutyManagerMutation.isPending
-          || updateShiftMutation.isPending
-          || deleteShiftMutation.isPending
-        }
-        formatDate={formatDate}
-        formatDateTime={formatDateTime}
-        getShiftWindowLabel={getShiftWindowLabel}
-        onToggleDutyManager={handleSetDutyManager}
-        onEdit={handleStartEdit}
-        onDelete={handleDeleteShift}
-      />
+      {viewMode === 'calendar'
+        ? (
+            <div className="grid gap-4">
+              <ShiftCalendarCard
+                isLoading={isLoadingCalendarShifts}
+                isFetching={isFetchingCalendarShifts}
+                shiftCount={calendarShifts.length}
+                calendarApp={calendarApp}
+              />
+            </div>
+          )
+        : (
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    Search and Filters
+                  </CardTitle>
+                  <CardDescription>
+                    Search shifts by member and use advanced filters.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                    <div className="space-y-2">
+                      <Label>Member</Label>
+                      <AsyncCombobox
+                        value={tableUserIdFilter}
+                        onChange={(value) => {
+                          setTableUserIdFilter(value);
+                          setTablePage(1);
+                        }}
+                        onSearch={setTableMemberSearch}
+                        options={tableMemberOptions}
+                        isLoading={isLoadingTableMemberOptions}
+                        placeholder="Search a studio member..."
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Status</Label>
+                      <Select
+                        value={tableStatusFilter}
+                        onValueChange={(value) => {
+                          setTableStatusFilter(value as ShiftStatusFilter);
+                          setTablePage(1);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">All</SelectItem>
+                          <SelectItem value="SCHEDULED">Scheduled</SelectItem>
+                          <SelectItem value="COMPLETED">Completed</SelectItem>
+                          <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Duty Manager</Label>
+                      <Select
+                        value={tableDutyFilter}
+                        onValueChange={(value) => {
+                          setTableDutyFilter(value as DutyManagerFilter);
+                          setTablePage(1);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">All</SelectItem>
+                          <SelectItem value="YES">Duty Manager Only</SelectItem>
+                          <SelectItem value="NO">Non Duty Manager</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Date From</Label>
+                      <DatePicker
+                        value={tableDateFrom}
+                        onChange={(value) => {
+                          setTableDateFrom(value);
+                          setTablePage(1);
+                        }}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Date To</Label>
+                      <DatePicker
+                        value={tableDateTo}
+                        onChange={(value) => {
+                          setTableDateTo(value);
+                          setTablePage(1);
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Button type="button" variant="outline" size="sm" onClick={handleResetFilters}>
+                      Reset Filters
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <ShiftRosterCard
+                shifts={tableShifts}
+                isLoading={isLoadingTableShifts}
+                isFetching={isFetchingTableShifts}
+                page={tablePage}
+                totalPages={tableShiftsResponse?.meta?.totalPages ?? 1}
+                total={tableShiftsResponse?.meta?.total ?? 0}
+                limit={tableLimit}
+                canManageShifts
+                memberMap={memberMap}
+                deleteConfirmShiftId={deleteConfirmShiftId}
+                isMutating={
+                  assignDutyManagerMutation.isPending
+                  || updateShiftMutation.isPending
+                  || deleteShiftMutation.isPending
+                }
+                formatDate={formatDate}
+                formatDateTime={formatDateTime}
+                getShiftWindowLabel={getShiftWindowLabel}
+                onToggleDutyManager={handleSetDutyManager}
+                onEdit={handleStartEdit}
+                onDelete={handleDeleteShift}
+                onPreviousPage={() => setTablePage((previous) => Math.max(1, previous - 1))}
+                onNextPage={() => setTablePage((previous) =>
+                  Math.min(tableShiftsResponse?.meta?.totalPages ?? previous, previous + 1))}
+                onLimitChange={(limit) => {
+                  setTableLimit(limit);
+                  setTablePage(1);
+                }}
+              />
+            </div>
+          )}
+
+      <Dialog
+        open={isCreateDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCreateFormError(null);
+          }
+          setIsCreateDialogOpen(open);
+        }}
+      >
+        <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Shift</DialogTitle>
+            <DialogDescription>
+              Create a shift and optionally assign duty manager immediately.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <ShiftFormFields
+              idPrefix="studio-shift-create"
+              members={createMemberOptionsResponse?.data ?? []}
+              onMemberSearch={setCreateMemberSearch}
+              isLoadingMembers={isLoadingCreateMemberOptions}
+              formState={createFormState}
+              onChange={setCreateFormState}
+            />
+            {createFormError && <p className="text-sm text-destructive">{createFormError}</p>}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} disabled={createShiftMutation.isPending}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateShift} disabled={createShiftMutation.isPending}>
+              {createShiftMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create Shift
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(editDialogState)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditDialogState(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Shift</DialogTitle>
+            <DialogDescription>
+              Update shift details, status, and duty manager assignment.
+            </DialogDescription>
+          </DialogHeader>
+
+          {editDialogState && (
+            <div className="space-y-4 py-2">
+              <ShiftFormFields
+                idPrefix="studio-shift-edit"
+                members={editMemberOptionsResponse?.data ?? []}
+                onMemberSearch={setEditMemberSearch}
+                isLoadingMembers={isLoadingEditMemberOptions}
+                formState={editDialogState.formState}
+                onChange={(nextFormState) =>
+                  setEditDialogState((previous) => (previous ? { ...previous, formState: nextFormState } : null))}
+                includeStatus
+              />
+              {editDialogState.error && <p className="text-sm text-destructive">{editDialogState.error}</p>}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogState(null)} disabled={updateShiftMutation.isPending}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateShift} disabled={updateShiftMutation.isPending}>
+              {updateShiftMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -27,9 +27,9 @@ export function ShiftCalendarCard({
   return (
     <Card className="xl:col-span-2">
       <CardHeader>
-        <CardTitle>Schedule Calendar</CardTitle>
+        <CardTitle>Shift Calendar</CardTitle>
         <CardDescription>
-          Month, week, and day calendar view for all studio shifts.
+          Calendar view of all studio shifts. Duty manager shifts are highlighted.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">

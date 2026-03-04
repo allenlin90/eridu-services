@@ -1,4 +1,5 @@
 import {
+  AsyncCombobox,
   Checkbox,
   DatePicker,
   Input,
@@ -16,6 +17,8 @@ import type { ShiftFormState } from '@/features/studio-shifts/types/shift-form.t
 type ShiftFormFieldsProps = {
   idPrefix: string;
   members: Membership[];
+  onMemberSearch: (value: string) => void;
+  isLoadingMembers?: boolean;
   formState: ShiftFormState;
   onChange: (next: ShiftFormState) => void;
   includeStatus?: boolean;
@@ -24,33 +27,29 @@ type ShiftFormFieldsProps = {
 export function ShiftFormFields({
   idPrefix,
   members,
+  onMemberSearch,
+  isLoadingMembers = false,
   formState,
   onChange,
   includeStatus = false,
 }: ShiftFormFieldsProps) {
+  const memberOptions = members.map((member) => ({
+    value: member.user.id,
+    label: `${member.user.name} (${member.user.email})`,
+  }));
+
   return (
     <div className="space-y-3">
       <div className="space-y-2">
         <Label htmlFor={`${idPrefix}-user`}>Member</Label>
-        <Select
+        <AsyncCombobox
           value={formState.userId}
-          onValueChange={(value) => onChange({ ...formState, userId: value })}
-        >
-          <SelectTrigger id={`${idPrefix}-user`}>
-            <SelectValue placeholder="Select member" />
-          </SelectTrigger>
-          <SelectContent>
-            {members.map((member) => (
-              <SelectItem key={member.id} value={member.user.id}>
-                {member.user.name}
-                {' '}
-                (
-                {member.user.email}
-                )
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onChange={(value) => onChange({ ...formState, userId: value })}
+          onSearch={onMemberSearch}
+          options={memberOptions}
+          isLoading={isLoadingMembers}
+          placeholder="Search a studio member..."
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -58,7 +57,7 @@ export function ShiftFormFields({
           <Label htmlFor={`${idPrefix}-date`}>Date</Label>
           <DatePicker
             value={formState.date}
-            onChange={(val) => onChange({ ...formState, date: val })}
+            onChange={(value) => onChange({ ...formState, date: value })}
           />
         </div>
 

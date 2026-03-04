@@ -141,11 +141,6 @@ function getStudioManagementItems(
       url: `/studios/${studioId}/my-tasks`,
       icon: ListTodo,
     },
-    {
-      title: 'Shift Schedule',
-      url: `/studios/${studioId}/shifts`,
-      icon: CalendarDays,
-    },
   ];
 
   if (role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER) {
@@ -158,6 +153,11 @@ function getStudioManagementItems(
 
   // Check role safely (case-insensitive)
   if (role === STUDIO_ROLE.ADMIN) {
+    managementItems.push({
+      title: 'Shift Schedule',
+      url: `/studios/${studioId}/shifts`,
+      icon: CalendarDays,
+    });
     managementItems.push({
       title: 'Shows',
       url: `/studios/${studioId}/shows`,

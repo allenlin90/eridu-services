@@ -15,6 +15,7 @@ import type { ShiftFormState } from '@/features/studio-shifts/types/shift-form.t
 
 type ShiftCreateCardProps = {
   members: Membership[];
+  onMemberSearch: (value: string) => void;
   formState: ShiftFormState;
   formError: string | null;
   isCreating: boolean;
@@ -25,6 +26,7 @@ type ShiftCreateCardProps = {
 
 export function ShiftCreateCard({
   members,
+  onMemberSearch,
   formState,
   formError,
   isCreating,
@@ -44,6 +46,8 @@ export function ShiftCreateCard({
         <ShiftFormFields
           idPrefix="studio-shift"
           members={members}
+          onMemberSearch={onMemberSearch}
+          isLoadingMembers={isLoadingMembers}
           formState={formState}
           onChange={onChange}
         />
