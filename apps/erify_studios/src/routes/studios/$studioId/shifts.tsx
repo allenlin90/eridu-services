@@ -39,6 +39,10 @@ import {
 import { useDeleteStudioShift } from '@/features/studio-shifts/api/delete-studio-shift';
 import type { StudioShift } from '@/features/studio-shifts/api/studio-shifts.types';
 import {
+  type UpdateStudioShiftPayload,
+  useUpdateStudioShift,
+} from '@/features/studio-shifts/api/update-studio-shift';
+import {
   useDutyManager,
   useStudioShifts,
 } from '@/features/studio-shifts/hooks/use-studio-shifts';
@@ -54,6 +58,7 @@ type ShiftFormState = {
   startTime: string;
   endTime: string;
   hourlyRate: string;
+  status?: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
   isDutyManager: boolean;
 };
 
@@ -82,6 +87,31 @@ function toLocalDateInputValue(value: Date): string {
 
 function combineDateAndTime(date: string, time: string): string {
   return new Date(`${date}T${time}:00`).toISOString();
+}
+
+function toLocalTimeInputValue(value: string): string {
+  const date = new Date(value);
+  const hours = `${date.getHours()}`.padStart(2, '0');
+  const minutes = `${date.getMinutes()}`.padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
+function createEditFormState(shift: StudioShift): ShiftFormState {
+  const sortedBlocks = [...shift.blocks].sort(
+    (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
+  );
+  const firstBlock = sortedBlocks[0];
+  const lastBlock = sortedBlocks[sortedBlocks.length - 1];
+
+  return {
+    userId: shift.user_id,
+    date: shift.date,
+    startTime: firstBlock ? toLocalTimeInputValue(firstBlock.start_time) : DEFAULT_START_TIME,
+    endTime: lastBlock ? toLocalTimeInputValue(lastBlock.end_time) : DEFAULT_END_TIME,
+    hourlyRate: shift.hourly_rate ?? '',
+    status: shift.status,
+    isDutyManager: shift.is_duty_manager,
+  };
 }
 
 function formatDate(value: string): string {
@@ -120,6 +150,9 @@ function StudioShiftsPage() {
   const [formState, setFormState] = useState<ShiftFormState>(() => createDefaultFormState());
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteConfirmShiftId, setDeleteConfirmShiftId] = useState<string | null>(null);
+  const [editingShiftId, setEditingShiftId] = useState<string | null>(null);
+  const [editFormState, setEditFormState] = useState<ShiftFormState | null>(null);
+  const [editFormError, setEditFormError] = useState<string | null>(null);
 
   const { data: membersResponse, isLoading: isLoadingMembers } = useStudioMembershipsQuery(
     studioId,
@@ -131,6 +164,7 @@ function StudioShiftsPage() {
 
   const createShiftMutation = useCreateStudioShift(studioId);
   const deleteShiftMutation = useDeleteStudioShift(studioId);
+  const updateShiftMutation = useUpdateStudioShift(studioId);
   const assignDutyManagerMutation = useAssignDutyManager(studioId);
 
   const activeMembership = useMemo(
@@ -261,6 +295,65 @@ function StudioShiftsPage() {
 
   const handleSetDutyManager = async (shiftId: string, isDutyManager: boolean) => {
     await assignDutyManagerMutation.mutateAsync({ shiftId, isDutyManager });
+  };
+  const handleStartEdit = (shift: StudioShift) => {
+    setEditingShiftId(shift.id);
+    setEditFormError(null);
+    setEditFormState(createEditFormState(shift));
+  };
+  const handleCancelEdit = () => {
+    setEditingShiftId(null);
+    setEditFormState(null);
+    setEditFormError(null);
+  };
+  const handleUpdateShift = async () => {
+    if (!editingShiftId || !editFormState) {
+      return;
+    }
+
+    setEditFormError(null);
+
+    if (!editFormState.userId) {
+      setEditFormError('Please select a studio member.');
+      return;
+    }
+
+    if (!editFormState.date || !editFormState.startTime || !editFormState.endTime) {
+      setEditFormError('Date, start time, and end time are required.');
+      return;
+    }
+
+    const start = combineDateAndTime(editFormState.date, editFormState.startTime);
+    const end = combineDateAndTime(editFormState.date, editFormState.endTime);
+
+    if (new Date(end).getTime() <= new Date(start).getTime()) {
+      setEditFormError('End time must be later than start time.');
+      return;
+    }
+
+    const payload: UpdateStudioShiftPayload = {
+      user_id: editFormState.userId,
+      date: editFormState.date,
+      status: editFormState.status ?? 'SCHEDULED',
+      is_duty_manager: editFormState.isDutyManager,
+      blocks: [
+        {
+          start_time: start,
+          end_time: end,
+        },
+      ],
+    };
+
+    if (editFormState.hourlyRate.trim()) {
+      payload.hourly_rate = Number(editFormState.hourlyRate);
+    }
+
+    try {
+      await updateShiftMutation.mutateAsync({ shiftId: editingShiftId, payload });
+      handleCancelEdit();
+    } catch {
+      setEditFormError('Failed to update shift. Please try again.');
+    }
   };
 
   const dutyManagerMember = dutyManager ? memberMap.get(dutyManager.user_id) : undefined;
@@ -511,16 +604,24 @@ function StudioShiftsPage() {
                                   size="sm"
                                   variant={shift.is_duty_manager ? 'outline' : 'default'}
                                   onClick={() => handleSetDutyManager(shift.id, !shift.is_duty_manager)}
-                                  disabled={assignDutyManagerMutation.isPending}
+                                  disabled={assignDutyManagerMutation.isPending || updateShiftMutation.isPending}
                                 >
                                   <UserCheck className="mr-2 h-4 w-4" />
                                   {shift.is_duty_manager ? 'Unset Duty Manager' : 'Set Duty Manager'}
                                 </Button>
                                 <Button
                                   size="sm"
+                                  variant="outline"
+                                  onClick={() => handleStartEdit(shift)}
+                                  disabled={updateShiftMutation.isPending}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="sm"
                                   variant="destructive"
                                   onClick={() => handleDeleteShift(shift.id)}
-                                  disabled={deleteShiftMutation.isPending}
+                                  disabled={deleteShiftMutation.isPending || updateShiftMutation.isPending}
                                 >
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   {deleteConfirmShiftId === shift.id ? 'Confirm Delete' : 'Delete'}
@@ -528,6 +629,160 @@ function StudioShiftsPage() {
                               </div>
                             )}
                           </div>
+                          {canManageShifts && editingShiftId === shift.id && editFormState && (
+                            <div className="mt-4 space-y-4 border-t pt-4">
+                              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                                <div className="space-y-2 md:col-span-2 xl:col-span-1">
+                                  <Label htmlFor={`shift-edit-user-${shift.id}`}>Member</Label>
+                                  <Select
+                                    value={editFormState.userId}
+                                    onValueChange={(value) =>
+                                      setEditFormState((previous) =>
+                                        previous ? { ...previous, userId: value } : previous,
+                                      )}
+                                  >
+                                    <SelectTrigger id={`shift-edit-user-${shift.id}`}>
+                                      <SelectValue placeholder="Select member" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {members.map((member) => (
+                                        <SelectItem key={member.id} value={member.user.id}>
+                                          {member.user.name}
+                                          {' '}
+                                          (
+                                          {member.user.email}
+                                          )
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label htmlFor={`shift-edit-date-${shift.id}`}>Date</Label>
+                                  <Input
+                                    id={`shift-edit-date-${shift.id}`}
+                                    type="date"
+                                    value={editFormState.date}
+                                    onChange={(event) => {
+                                      const { value } = event.target;
+                                      setEditFormState((previous) =>
+                                        previous ? { ...previous, date: value } : previous,
+                                      );
+                                    }}
+                                  />
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label htmlFor={`shift-edit-rate-${shift.id}`}>Hourly Rate</Label>
+                                  <Input
+                                    id={`shift-edit-rate-${shift.id}`}
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={editFormState.hourlyRate}
+                                    onChange={(event) => {
+                                      const { value } = event.target;
+                                      setEditFormState((previous) =>
+                                        previous ? { ...previous, hourlyRate: value } : previous,
+                                      );
+                                    }}
+                                  />
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label htmlFor={`shift-edit-start-${shift.id}`}>Start Time</Label>
+                                  <Input
+                                    id={`shift-edit-start-${shift.id}`}
+                                    type="time"
+                                    value={editFormState.startTime}
+                                    onChange={(event) => {
+                                      const { value } = event.target;
+                                      setEditFormState((previous) =>
+                                        previous ? { ...previous, startTime: value } : previous,
+                                      );
+                                    }}
+                                  />
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label htmlFor={`shift-edit-end-${shift.id}`}>End Time</Label>
+                                  <Input
+                                    id={`shift-edit-end-${shift.id}`}
+                                    type="time"
+                                    value={editFormState.endTime}
+                                    onChange={(event) => {
+                                      const { value } = event.target;
+                                      setEditFormState((previous) =>
+                                        previous ? { ...previous, endTime: value } : previous,
+                                      );
+                                    }}
+                                  />
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label htmlFor={`shift-edit-status-${shift.id}`}>Status</Label>
+                                  <Select
+                                    value={editFormState.status ?? 'SCHEDULED'}
+                                    onValueChange={(value) =>
+                                      setEditFormState((previous) =>
+                                        previous
+                                          ? { ...previous, status: value as StudioShift['status'] }
+                                          : previous,
+                                      )}
+                                  >
+                                    <SelectTrigger id={`shift-edit-status-${shift.id}`}>
+                                      <SelectValue placeholder="Select status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="SCHEDULED">SCHEDULED</SelectItem>
+                                      <SelectItem value="COMPLETED">COMPLETED</SelectItem>
+                                      <SelectItem value="CANCELLED">CANCELLED</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+
+                                <div className="flex items-end">
+                                  <label className="flex items-center gap-2 text-sm">
+                                    <Checkbox
+                                      checked={editFormState.isDutyManager}
+                                      onCheckedChange={(checked) => {
+                                        setEditFormState((previous) =>
+                                          previous
+                                            ? { ...previous, isDutyManager: checked === true }
+                                            : previous,
+                                        );
+                                      }}
+                                    />
+                                    Set as duty manager
+                                  </label>
+                                </div>
+                              </div>
+
+                              {editFormError && (
+                                <p className="text-sm text-destructive">{editFormError}</p>
+                              )}
+
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={handleUpdateShift}
+                                  disabled={updateShiftMutation.isPending}
+                                >
+                                  {updateShiftMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                  Save Changes
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={handleCancelEdit}
+                                  disabled={updateShiftMutation.isPending}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
