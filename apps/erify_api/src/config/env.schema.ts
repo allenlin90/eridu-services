@@ -27,6 +27,14 @@ export const envSchema = z.object({
     .min(1, { message: 'CORS_ORIGIN cannot be empty' })
     .default('*'),
 
+  // Body Parser
+  BODY_PARSER_LIMIT: z
+    .string()
+    .regex(/^\d+(kb|mb|gb)$/i, {
+      message: 'BODY_PARSER_LIMIT must be in bytes format, e.g. 100kb, 2mb',
+    })
+    .default('100kb'),
+
   // Graceful Shutdown
   SHUTDOWN_TIMEOUT: z.coerce
     .number()

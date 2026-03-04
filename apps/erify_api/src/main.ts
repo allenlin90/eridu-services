@@ -1,14 +1,24 @@
 import type { Server } from 'node:http';
 
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { json, urlencoded } from 'express';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 
+import type { Env } from './config/env.schema';
 import { setupOpenAPI } from './lib/openapi/openapi.config';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+    bodyParser: false,
+  });
+  const configService = app.get<ConfigService<Env>>(ConfigService);
+  const bodyLimit = configService.getOrThrow('BODY_PARSER_LIMIT');
+  app.use(json({ limit: bodyLimit }));
+  app.use(urlencoded({ extended: true, limit: bodyLimit }));
   app.useLogger(app.get(Logger));
   app.use(
     helmet({
@@ -52,17 +62,14 @@ async function bootstrap() {
   // Enable graceful shutdown with timeout
   app.enableShutdownHooks();
 
-  const port = process.env.PORT ?? 3000;
+  const port = configService.getOrThrow('PORT');
   const server = (await app.listen(port, '::')) as Server;
 
   const logger = app.get(Logger);
   logger.log(`🚀 Application is running on: http://localhost:${port}`);
 
   // Graceful shutdown configuration
-  const SHUTDOWN_TIMEOUT = Number.parseInt(
-    process.env.SHUTDOWN_TIMEOUT || '30000',
-    10,
-  ); // 30 seconds default
+  const SHUTDOWN_TIMEOUT = configService.getOrThrow('SHUTDOWN_TIMEOUT');
 
   let isShuttingDown = false;
 
