@@ -40,7 +40,7 @@
 | ------------------------------- | ------ | ----------------------------------------------- |
 | [Phase 1](./roadmap/PHASE_1.md) | ✅      | Core entities, schedule planning, auth           |
 | [Phase 2](./roadmap/PHASE_2.md) | ✅      | Task management system                           |
-| [Phase 3](./roadmap/PHASE_3.md) | 🚧      | Material management, shift schedules, file uploads |
+| [Phase 3](./roadmap/PHASE_3.md) | 🚧      | Ticketing system, shift schedules, file uploads (material management deferred to Phase 4) |
 | [Phase 4](./roadmap/PHASE_4.md) | 🗓️      | Review quality, decision support, analytics (BigQuery) |
 | [Phase 5](./roadmap/PHASE_5.md) | 🗓️      | Collaboration, notifications, enterprise scheduling |
 

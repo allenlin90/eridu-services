@@ -72,6 +72,9 @@ Use roles for permission bundles, custom permissions for edge cases.
 
 ## Permission Model
 
+> [!CAUTION]
+> **The following Permission Model section describes PLANNED (not yet implemented) patterns.** The `roles` and `permissions` fields do NOT currently exist on the `User` model. The current `AdminGuard` only checks `isSystemAdmin`. Do NOT use this code in production without first adding schema migrations.
+
 ### Database Schema
 
 ```prisma
@@ -123,9 +126,12 @@ Effective permissions = Role permissions + Custom permissions
 
 **Effective**: `shows:read`, `shows:write`, `schedules:read`, `schedules:write`, `reports:export`
 
-## Implementation Patterns
+### Implementation Patterns
 
-### AdminGuard Pattern
+> [!CAUTION]
+> **All code examples below (AdminGuard, Controller pattern, Frontend integration, Role assignment) are PLANNED patterns — they reference `user.roles`, `user.permissions`, and `ROLE_PERMISSIONS` which do NOT yet exist. See the status table above.**
+
+### AdminGuard Pattern (Planned)
 
 ```typescript
 @Injectable()

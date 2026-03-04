@@ -568,11 +568,11 @@ The database schema includes comprehensive models for the full livestream produc
 - **Shows**: Core operational records for livestream productions ✅ (Implemented)
 - **ShowMC & ShowPlatform**: Show relationship management ✅ (Implemented)
 - **Schedules & ScheduleSnapshots**: Collaborative planning system ✅ (Implemented)
-- **Materials & MaterialTypes**: Content assets management (Phase 2)
-- **Tasks & TaskTemplates**: Workflow automation (Phase 3)
-- **Comments**: Collaboration system (Phase 3)
-- **Tags & Taggables**: Flexible categorization (Phase 3)
-- **Audits**: Complete audit trail (Phase 3)
+- **Tasks & TaskTemplates**: Workflow automation ✅ (Implemented — Phase 2)
+- **Materials & MaterialTypes**: Content assets management (Phase 3)
+- **Comments**: Collaboration system (Phase 4)
+- **Tags & Taggables**: Flexible categorization (Phase 4)
+- **Audits**: Complete audit trail (Phase 4)
 
 See the [Business Documentation](docs/BUSINESS.md) for detailed information about the complete system architecture. For implementation status and roadmap, see [Phase 1 Roadmap](docs/roadmap/PHASE_1.md), [Phase 2 Roadmap](docs/roadmap/PHASE_2.md), and [Phase 3 Roadmap](docs/roadmap/PHASE_3.md).
 
@@ -657,12 +657,12 @@ Comprehensive documentation is available in the `docs/` directory. Refer to spec
 
 ### Design
 
-| Document                                                                                   | Status | Description                                                                    |
-| ------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------ |
-| [Authorization Guide](./design/AUTHORIZATION_GUIDE.md)                                     | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
-| [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) | ⏳      | Studio-scoped resolution for cancelled shows                                   |
-| [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                | 📐      | Design for template-less pre-production ticketing using Tasks                  |
-| [Analytics Dashboard Plan](./design/ANALYTICS_DASHBOARD.md)                               | 📐      | Plan for Studio task performance overview using JSONB snapshots                |
+| Document                                                                                               | Status | Description                                                                    |
+| ------------------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------ |
+| [Authorization Guide](docs/design/AUTHORIZATION_GUIDE.md)                                              | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
+| [Pending-Resolution MVP](docs/design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md)           | ⏳      | Studio-scoped resolution for cancelled shows                                   |
+| [Ad-hoc Task Ticketing](docs/design/AD_HOC_TASK_TICKETING.md)                                         | 📐      | Design for template-less pre-production ticketing using Tasks                  |
+| [Analytics Dashboard Plan](docs/design/ANALYTICS_DASHBOARD.md)                                        | 📐      | Plan for Studio task performance overview using JSONB snapshots                |
 
 ### Roadmap
 
