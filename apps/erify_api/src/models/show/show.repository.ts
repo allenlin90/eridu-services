@@ -418,6 +418,21 @@ export class ShowRepository extends BaseRepository<
           showType: true,
           showStatus: true,
           showStandard: true,
+          showMCs: {
+            where: {
+              deletedAt: null,
+              mc: { deletedAt: null },
+            },
+            include: {
+              mc: {
+                select: {
+                  uid: true,
+                  name: true,
+                  aliasName: true,
+                },
+              },
+            },
+          },
           taskTargets: {
             where: {
               deletedAt: null,

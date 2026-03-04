@@ -283,6 +283,11 @@ export type BulkDeleteTasksResponse = z.infer<typeof bulkDeleteTasksResponseSche
  * Show data with task completion summary
  */
 export const showWithTaskSummaryDto = showApiResponseSchema.extend({
+  mcs: z.array(z.object({
+    mc_id: z.string(),
+    mc_name: z.string(),
+    mc_aliasname: z.string(),
+  })).default([]),
   task_summary: z.object({
     total: z.number().int(),
     assigned: z.number().int(),
