@@ -123,9 +123,8 @@ function formatDateTime(value: string): string {
 }
 
 function getShiftWindowLabel(shift: StudioShift): string {
-  if (shift.blocks.length === 0) {
+  if (shift.blocks.length === 0)
     return 'No shift blocks';
-  }
 
   const sortedBlocks = [...shift.blocks].sort(
     (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
@@ -175,12 +174,12 @@ function StudioShiftsPage() {
 
   const members = useMemo(() => membersResponse?.data ?? [], [membersResponse?.data]);
   const selectedUserId = formState.userId || members[0]?.user.id || '';
+
   const memberMap = useMemo(() => {
     return new Map(
       members.map((member) => [
         member.user.id,
         {
-          label: `${member.user.name} (${member.user.email})`,
           name: member.user.name,
           email: member.user.email,
         },
@@ -196,6 +195,11 @@ function StudioShiftsPage() {
       return timeA - timeB;
     });
   }, [shiftsResponse?.data]);
+
+  const editingShift = editingShiftId
+    ? shifts.find((shift) => shift.id === editingShiftId) ?? null
+    : null;
+
   const calendarEvents = useMemo(() => {
     return shifts.flatMap((shift) => {
       const user = memberMap.get(shift.user_id);
@@ -211,6 +215,7 @@ function StudioShiftsPage() {
       }));
     });
   }, [memberMap, shifts]);
+
   const calendarApp = useNextCalendarApp({
     views: [viewMonthGrid, viewWeek, viewDay],
     defaultView: viewWeek.name,
@@ -259,12 +264,7 @@ function StudioShiftsPage() {
     const payload: CreateStudioShiftPayload = {
       user_id: selectedUserId,
       date: formState.date,
-      blocks: [
-        {
-          start_time: start,
-          end_time: end,
-        },
-      ],
+      blocks: [{ start_time: start, end_time: end }],
       is_duty_manager: formState.isDutyManager,
     };
 
@@ -296,20 +296,22 @@ function StudioShiftsPage() {
   const handleSetDutyManager = async (shiftId: string, isDutyManager: boolean) => {
     await assignDutyManagerMutation.mutateAsync({ shiftId, isDutyManager });
   };
+
   const handleStartEdit = (shift: StudioShift) => {
     setEditingShiftId(shift.id);
     setEditFormError(null);
     setEditFormState(createEditFormState(shift));
   };
+
   const handleCancelEdit = () => {
     setEditingShiftId(null);
     setEditFormState(null);
     setEditFormError(null);
   };
+
   const handleUpdateShift = async () => {
-    if (!editingShiftId || !editFormState) {
+    if (!editingShiftId || !editFormState)
       return;
-    }
 
     setEditFormError(null);
 
@@ -336,12 +338,7 @@ function StudioShiftsPage() {
       date: editFormState.date,
       status: editFormState.status ?? 'SCHEDULED',
       is_duty_manager: editFormState.isDutyManager,
-      blocks: [
-        {
-          start_time: start,
-          end_time: end,
-        },
-      ],
+      blocks: [{ start_time: start, end_time: end }],
     };
 
     if (editFormState.hourlyRate.trim()) {
@@ -363,183 +360,379 @@ function StudioShiftsPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Shift Schedule</h1>
         <p className="text-muted-foreground">
-          Studio-wide shift visibility for all members, including current duty manager.
+          Studio-wide calendar for all members, with admin controls for shift management.
         </p>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-3">
+        <Card className="xl:col-span-2">
+          <CardHeader>
+            <CardTitle>Schedule Calendar</CardTitle>
+            <CardDescription>
+              Month, week, and day calendar view for all studio shifts.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {(isLoadingShifts || isFetchingShifts)
+              ? (
+                  <p className="text-sm text-muted-foreground">Loading shifts...</p>
+                )
+              : shifts.length === 0
+                ? (
+                    <p className="text-sm text-muted-foreground">No shifts scheduled yet.</p>
+                  )
+                : (
+                    <>
+                      <div className="rounded-lg border p-2">
+                        <ScheduleXCalendar calendarApp={calendarApp} />
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-blue-700" />
+                          Shift
+                        </span>
+                        <span className="inline-flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-amber-700" />
+                          Duty Manager
+                        </span>
+                      </div>
+                    </>
+                  )}
+          </CardContent>
+        </Card>
+
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Current Duty Manager</CardTitle>
+              <CardDescription>
+                Active duty manager based on the current shift window.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingDutyManager
+                ? (
+                    <p className="text-sm text-muted-foreground">Loading current duty manager...</p>
+                  )
+                : dutyManager
+                  ? (
+                      <div className="space-y-2">
+                        <p className="font-medium">{dutyManagerMember?.name ?? dutyManager.user_id}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {dutyManagerMember?.email ?? 'Member details unavailable'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {formatDate(dutyManager.date)}
+                          {' '}
+                          |
+                          {' '}
+                          {getShiftWindowLabel(dutyManager)}
+                        </p>
+                        <Badge className="w-fit">On Duty</Badge>
+                      </div>
+                    )
+                  : (
+                      <p className="text-sm text-muted-foreground">No active duty manager.</p>
+                    )}
+            </CardContent>
+          </Card>
+
+          {canManageShifts
+            ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Create Shift</CardTitle>
+                    <CardDescription>
+                      Create a shift and optionally assign duty manager immediately.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="studio-shift-user">Member</Label>
+                        <Select
+                          value={selectedUserId}
+                          onValueChange={(value) => setFormState((previous) => ({ ...previous, userId: value }))}
+                        >
+                          <SelectTrigger id="studio-shift-user">
+                            <SelectValue placeholder="Select member" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {members.map((member) => (
+                              <SelectItem key={member.id} value={member.user.id}>
+                                {member.user.name}
+                                {' '}
+                                (
+                                {member.user.email}
+                                )
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="studio-shift-date">Date</Label>
+                          <Input
+                            id="studio-shift-date"
+                            type="date"
+                            value={formState.date}
+                            onChange={(event) => {
+                              const { value } = event.target;
+                              setFormState((previous) => ({ ...previous, date: value }));
+                            }}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="studio-shift-rate">Hourly Rate</Label>
+                          <Input
+                            id="studio-shift-rate"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={formState.hourlyRate}
+                            onChange={(event) => {
+                              const { value } = event.target;
+                              setFormState((previous) => ({ ...previous, hourlyRate: value }));
+                            }}
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="studio-shift-start">Start Time</Label>
+                          <Input
+                            id="studio-shift-start"
+                            type="time"
+                            value={formState.startTime}
+                            onChange={(event) => {
+                              const { value } = event.target;
+                              setFormState((previous) => ({ ...previous, startTime: value }));
+                            }}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="studio-shift-end">End Time</Label>
+                          <Input
+                            id="studio-shift-end"
+                            type="time"
+                            value={formState.endTime}
+                            onChange={(event) => {
+                              const { value } = event.target;
+                              setFormState((previous) => ({ ...previous, endTime: value }));
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={formState.isDutyManager}
+                          onCheckedChange={(checked) => {
+                            setFormState((previous) => ({
+                              ...previous,
+                              isDutyManager: checked === true,
+                            }));
+                          }}
+                        />
+                        Set as duty manager
+                      </label>
+                    </div>
+
+                    {formError && (
+                      <p className="text-sm text-destructive">{formError}</p>
+                    )}
+
+                    <Button
+                      onClick={handleCreateShift}
+                      disabled={createShiftMutation.isPending || isLoadingMembers}
+                      className="w-full"
+                    >
+                      {createShiftMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Create Shift
+                    </Button>
+                  </CardContent>
+                </Card>
+              )
+            : (
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="text-sm text-muted-foreground">
+                      Shift creation and assignments are restricted to studio admins.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+          {canManageShifts && editingShift && editFormState && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Edit Shift</CardTitle>
+                <CardDescription>
+                  Updating
+                  {' '}
+                  {memberMap.get(editingShift.user_id)?.name ?? editingShift.user_id}
+                  {' '}
+                  on
+                  {' '}
+                  {formatDate(editingShift.date)}
+                  .
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="shift-edit-user">Member</Label>
+                    <Select
+                      value={editFormState.userId}
+                      onValueChange={(value) =>
+                        setEditFormState((previous) =>
+                          previous ? { ...previous, userId: value } : previous,
+                        )}
+                    >
+                      <SelectTrigger id="shift-edit-user">
+                        <SelectValue placeholder="Select member" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {members.map((member) => (
+                          <SelectItem key={member.id} value={member.user.id}>
+                            {member.user.name}
+                            {' '}
+                            (
+                            {member.user.email}
+                            )
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="shift-edit-date">Date</Label>
+                      <Input
+                        id="shift-edit-date"
+                        type="date"
+                        value={editFormState.date}
+                        onChange={(event) => {
+                          const { value } = event.target;
+                          setEditFormState((previous) =>
+                            previous ? { ...previous, date: value } : previous,
+                          );
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="shift-edit-rate">Hourly Rate</Label>
+                      <Input
+                        id="shift-edit-rate"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={editFormState.hourlyRate}
+                        onChange={(event) => {
+                          const { value } = event.target;
+                          setEditFormState((previous) =>
+                            previous ? { ...previous, hourlyRate: value } : previous,
+                          );
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="shift-edit-start">Start Time</Label>
+                      <Input
+                        id="shift-edit-start"
+                        type="time"
+                        value={editFormState.startTime}
+                        onChange={(event) => {
+                          const { value } = event.target;
+                          setEditFormState((previous) =>
+                            previous ? { ...previous, startTime: value } : previous,
+                          );
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="shift-edit-end">End Time</Label>
+                      <Input
+                        id="shift-edit-end"
+                        type="time"
+                        value={editFormState.endTime}
+                        onChange={(event) => {
+                          const { value } = event.target;
+                          setEditFormState((previous) =>
+                            previous ? { ...previous, endTime: value } : previous,
+                          );
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2 col-span-2">
+                      <Label htmlFor="shift-edit-status">Status</Label>
+                      <Select
+                        value={editFormState.status ?? 'SCHEDULED'}
+                        onValueChange={(value) =>
+                          setEditFormState((previous) =>
+                            previous
+                              ? { ...previous, status: value as StudioShift['status'] }
+                              : previous,
+                          )}
+                      >
+                        <SelectTrigger id="shift-edit-status">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="SCHEDULED">SCHEDULED</SelectItem>
+                          <SelectItem value="COMPLETED">COMPLETED</SelectItem>
+                          <SelectItem value="CANCELLED">CANCELLED</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={editFormState.isDutyManager}
+                      onCheckedChange={(checked) => {
+                        setEditFormState((previous) =>
+                          previous
+                            ? { ...previous, isDutyManager: checked === true }
+                            : previous,
+                        );
+                      }}
+                    />
+                    Set as duty manager
+                  </label>
+                </div>
+
+                {editFormError && (
+                  <p className="text-sm text-destructive">{editFormError}</p>
+                )}
+
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    onClick={handleUpdateShift}
+                    disabled={updateShiftMutation.isPending}
+                  >
+                    {updateShiftMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Changes
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCancelEdit}
+                    disabled={updateShiftMutation.isPending}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Current Duty Manager</CardTitle>
+          <CardTitle>Shift Roster</CardTitle>
           <CardDescription>
-            Active duty manager right now based on the shift blocks.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoadingDutyManager
-            ? (
-                <p className="text-sm text-muted-foreground">Loading current duty manager...</p>
-              )
-            : dutyManager
-              ? (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="font-medium">
-                        {dutyManagerMember?.name ?? dutyManager.user_id}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {dutyManagerMember?.email ?? 'Member details unavailable'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDate(dutyManager.date)}
-                        {' '}
-                        |
-                        {' '}
-                        {getShiftWindowLabel(dutyManager)}
-                      </p>
-                    </div>
-                    <Badge className="w-fit">On Duty</Badge>
-                  </div>
-                )
-              : (
-                  <p className="text-sm text-muted-foreground">No active duty manager.</p>
-                )}
-        </CardContent>
-      </Card>
-
-      {canManageShifts && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Create Shift</CardTitle>
-            <CardDescription>
-              Create a shift sheet entry and optionally mark it as duty manager.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <div className="space-y-2 md:col-span-2 xl:col-span-1">
-                <Label htmlFor="studio-shift-user">Member</Label>
-                <Select
-                  value={selectedUserId}
-                  onValueChange={(value) => setFormState((previous) => ({ ...previous, userId: value }))}
-                >
-                  <SelectTrigger id="studio-shift-user">
-                    <SelectValue placeholder="Select member" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {members.map((member) => (
-                      <SelectItem key={member.id} value={member.user.id}>
-                        {member.user.name}
-                        {' '}
-                        (
-                        {member.user.email}
-                        )
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="studio-shift-date">Date</Label>
-                <Input
-                  id="studio-shift-date"
-                  type="date"
-                  value={formState.date}
-                  onChange={(event) => {
-                    const { value } = event.target;
-                    setFormState((previous) => ({ ...previous, date: value }));
-                  }}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="studio-shift-rate">Hourly Rate (optional)</Label>
-                <Input
-                  id="studio-shift-rate"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formState.hourlyRate}
-                  onChange={(event) => {
-                    const { value } = event.target;
-                    setFormState((previous) => ({ ...previous, hourlyRate: value }));
-                  }}
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="studio-shift-start">Start Time</Label>
-                <Input
-                  id="studio-shift-start"
-                  type="time"
-                  value={formState.startTime}
-                  onChange={(event) => {
-                    const { value } = event.target;
-                    setFormState((previous) => ({ ...previous, startTime: value }));
-                  }}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="studio-shift-end">End Time</Label>
-                <Input
-                  id="studio-shift-end"
-                  type="time"
-                  value={formState.endTime}
-                  onChange={(event) => {
-                    const { value } = event.target;
-                    setFormState((previous) => ({ ...previous, endTime: value }));
-                  }}
-                />
-              </div>
-
-              <div className="flex items-end">
-                <label className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={formState.isDutyManager}
-                    onCheckedChange={(checked) => {
-                      setFormState((previous) => ({
-                        ...previous,
-                        isDutyManager: checked === true,
-                      }));
-                    }}
-                  />
-                  Set as duty manager
-                </label>
-              </div>
-            </div>
-
-            {formError && (
-              <p className="text-sm text-destructive">{formError}</p>
-            )}
-
-            <Button
-              onClick={handleCreateShift}
-              disabled={createShiftMutation.isPending || isLoadingMembers}
-            >
-              {createShiftMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Shift
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {!canManageShifts && (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">
-              Shift creation and duty manager assignment are restricted to studio admins.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Schedule Calendar</CardTitle>
-          <CardDescription>
-            Month, week, and day calendar view for all studio shifts.
+            Quick list of scheduled shifts and duty manager assignment.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -551,243 +744,75 @@ function StudioShiftsPage() {
               ? (
                   <p className="text-sm text-muted-foreground">No shifts scheduled yet.</p>
                 )
-              : (
-                  <div className="space-y-3">
-                    <div className="rounded-lg border p-2">
-                      <ScheduleXCalendar calendarApp={calendarApp} />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                      <span className="inline-flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-blue-700" />
-                        Shift
-                      </span>
-                      <span className="inline-flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-amber-700" />
-                        Duty Manager
-                      </span>
-                    </div>
-                    {shifts.map((shift) => {
-                      const user = memberMap.get(shift.user_id);
+              : shifts.map((shift) => {
+                  const user = memberMap.get(shift.user_id);
 
-                      return (
-                        <div key={shift.id} className="rounded-lg border p-3">
-                          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                            <div className="space-y-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <p className="font-medium">{user?.name ?? shift.user_id}</p>
-                                <Badge variant="outline">{shift.status}</Badge>
-                                {shift.is_duty_manager && (
-                                  <Badge>
-                                    <ShieldCheck className="mr-1 h-3 w-3" />
-                                    Duty Manager
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-sm text-muted-foreground">{user?.email ?? 'Member details unavailable'}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {formatDate(shift.date)}
-                                {' '}
-                                |
-                                {' '}
-                                {getShiftWindowLabel(shift)}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Last updated:
-                                {' '}
-                                {formatDateTime(shift.updated_at)}
-                              </p>
-                            </div>
-
-                            {canManageShifts && (
-                              <div className="flex flex-wrap gap-2">
-                                <Button
-                                  size="sm"
-                                  variant={shift.is_duty_manager ? 'outline' : 'default'}
-                                  onClick={() => handleSetDutyManager(shift.id, !shift.is_duty_manager)}
-                                  disabled={assignDutyManagerMutation.isPending || updateShiftMutation.isPending}
-                                >
-                                  <UserCheck className="mr-2 h-4 w-4" />
-                                  {shift.is_duty_manager ? 'Unset Duty Manager' : 'Set Duty Manager'}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleStartEdit(shift)}
-                                  disabled={updateShiftMutation.isPending}
-                                >
-                                  Edit
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleDeleteShift(shift.id)}
-                                  disabled={deleteShiftMutation.isPending || updateShiftMutation.isPending}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  {deleteConfirmShiftId === shift.id ? 'Confirm Delete' : 'Delete'}
-                                </Button>
-                              </div>
+                  return (
+                    <div
+                      key={shift.id}
+                      className="rounded-lg border p-3 transition-colors hover:bg-muted/40"
+                    >
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-medium">{user?.name ?? shift.user_id}</p>
+                            <Badge variant="outline">{shift.status}</Badge>
+                            {shift.is_duty_manager && (
+                              <Badge>
+                                <ShieldCheck className="mr-1 h-3 w-3" />
+                                Duty Manager
+                              </Badge>
                             )}
                           </div>
-                          {canManageShifts && editingShiftId === shift.id && editFormState && (
-                            <div className="mt-4 space-y-4 border-t pt-4">
-                              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                                <div className="space-y-2 md:col-span-2 xl:col-span-1">
-                                  <Label htmlFor={`shift-edit-user-${shift.id}`}>Member</Label>
-                                  <Select
-                                    value={editFormState.userId}
-                                    onValueChange={(value) =>
-                                      setEditFormState((previous) =>
-                                        previous ? { ...previous, userId: value } : previous,
-                                      )}
-                                  >
-                                    <SelectTrigger id={`shift-edit-user-${shift.id}`}>
-                                      <SelectValue placeholder="Select member" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {members.map((member) => (
-                                        <SelectItem key={member.id} value={member.user.id}>
-                                          {member.user.name}
-                                          {' '}
-                                          (
-                                          {member.user.email}
-                                          )
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label htmlFor={`shift-edit-date-${shift.id}`}>Date</Label>
-                                  <Input
-                                    id={`shift-edit-date-${shift.id}`}
-                                    type="date"
-                                    value={editFormState.date}
-                                    onChange={(event) => {
-                                      const { value } = event.target;
-                                      setEditFormState((previous) =>
-                                        previous ? { ...previous, date: value } : previous,
-                                      );
-                                    }}
-                                  />
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label htmlFor={`shift-edit-rate-${shift.id}`}>Hourly Rate</Label>
-                                  <Input
-                                    id={`shift-edit-rate-${shift.id}`}
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={editFormState.hourlyRate}
-                                    onChange={(event) => {
-                                      const { value } = event.target;
-                                      setEditFormState((previous) =>
-                                        previous ? { ...previous, hourlyRate: value } : previous,
-                                      );
-                                    }}
-                                  />
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label htmlFor={`shift-edit-start-${shift.id}`}>Start Time</Label>
-                                  <Input
-                                    id={`shift-edit-start-${shift.id}`}
-                                    type="time"
-                                    value={editFormState.startTime}
-                                    onChange={(event) => {
-                                      const { value } = event.target;
-                                      setEditFormState((previous) =>
-                                        previous ? { ...previous, startTime: value } : previous,
-                                      );
-                                    }}
-                                  />
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label htmlFor={`shift-edit-end-${shift.id}`}>End Time</Label>
-                                  <Input
-                                    id={`shift-edit-end-${shift.id}`}
-                                    type="time"
-                                    value={editFormState.endTime}
-                                    onChange={(event) => {
-                                      const { value } = event.target;
-                                      setEditFormState((previous) =>
-                                        previous ? { ...previous, endTime: value } : previous,
-                                      );
-                                    }}
-                                  />
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label htmlFor={`shift-edit-status-${shift.id}`}>Status</Label>
-                                  <Select
-                                    value={editFormState.status ?? 'SCHEDULED'}
-                                    onValueChange={(value) =>
-                                      setEditFormState((previous) =>
-                                        previous
-                                          ? { ...previous, status: value as StudioShift['status'] }
-                                          : previous,
-                                      )}
-                                  >
-                                    <SelectTrigger id={`shift-edit-status-${shift.id}`}>
-                                      <SelectValue placeholder="Select status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="SCHEDULED">SCHEDULED</SelectItem>
-                                      <SelectItem value="COMPLETED">COMPLETED</SelectItem>
-                                      <SelectItem value="CANCELLED">CANCELLED</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-
-                                <div className="flex items-end">
-                                  <label className="flex items-center gap-2 text-sm">
-                                    <Checkbox
-                                      checked={editFormState.isDutyManager}
-                                      onCheckedChange={(checked) => {
-                                        setEditFormState((previous) =>
-                                          previous
-                                            ? { ...previous, isDutyManager: checked === true }
-                                            : previous,
-                                        );
-                                      }}
-                                    />
-                                    Set as duty manager
-                                  </label>
-                                </div>
-                              </div>
-
-                              {editFormError && (
-                                <p className="text-sm text-destructive">{editFormError}</p>
-                              )}
-
-                              <div className="flex flex-wrap gap-2">
-                                <Button
-                                  size="sm"
-                                  onClick={handleUpdateShift}
-                                  disabled={updateShiftMutation.isPending}
-                                >
-                                  {updateShiftMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                  Save Changes
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={handleCancelEdit}
-                                  disabled={updateShiftMutation.isPending}
-                                >
-                                  Cancel
-                                </Button>
-                              </div>
-                            </div>
-                          )}
+                          <p className="text-sm text-muted-foreground">{user?.email ?? 'Member details unavailable'}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatDate(shift.date)}
+                            {' '}
+                            |
+                            {' '}
+                            {getShiftWindowLabel(shift)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Last updated:
+                            {' '}
+                            {formatDateTime(shift.updated_at)}
+                          </p>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+
+                        {canManageShifts && (
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              variant={shift.is_duty_manager ? 'outline' : 'default'}
+                              onClick={() => handleSetDutyManager(shift.id, !shift.is_duty_manager)}
+                              disabled={assignDutyManagerMutation.isPending || updateShiftMutation.isPending}
+                            >
+                              <UserCheck className="mr-2 h-4 w-4" />
+                              {shift.is_duty_manager ? 'Unset Duty Manager' : 'Set Duty Manager'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleStartEdit(shift)}
+                              disabled={updateShiftMutation.isPending}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeleteShift(shift.id)}
+                              disabled={deleteShiftMutation.isPending || updateShiftMutation.isPending}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {deleteConfirmShiftId === shift.id ? 'Confirm Delete' : 'Delete'}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
         </CardContent>
       </Card>
     </div>
