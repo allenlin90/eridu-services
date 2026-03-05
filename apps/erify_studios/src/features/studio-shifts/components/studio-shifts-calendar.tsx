@@ -8,7 +8,7 @@ import { useNextCalendarApp } from '@schedule-x/react';
 import { RefreshCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { Button } from '@eridu/ui';
+import { Button, Input } from '@eridu/ui';
 
 import '@schedule-x/theme-default/dist/index.css';
 
@@ -18,8 +18,10 @@ import { useStudioMemberMap } from '@/features/studio-shifts/hooks/use-studio-me
 import { useMyShifts, useStudioShifts } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import { toScheduleXDateTime } from '@/features/studio-shifts/utils/schedule-x.utils';
 import { sortShiftBlocksByStart } from '@/features/studio-shifts/utils/shift-blocks.utils';
-import { formatDate } from '@/features/studio-shifts/utils/shift-form.utils';
+import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';
+import { formatDate, toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
 import { sortShiftsByFirstBlockStart } from '@/features/studio-shifts/utils/shift-timeline.utils';
+import { useAppDebounce } from '@/lib/hooks/use-app-debounce';
 
 export type StudioShiftsCalendarProps = {
   studioId: string;
@@ -51,6 +53,8 @@ export function StudioShiftsCalendar({
       date_to: toDateString(end),
     };
   });
+  const [jumpDate, setJumpDate] = useState(() => toLocalDateInputValue(new Date()));
+  const debouncedDateRange = useAppDebounce(dateRange, { delay: 300 });
 
   const extractDateString = (value: unknown): string | null => {
     const raw = String(value);
@@ -61,25 +65,25 @@ export function StudioShiftsCalendar({
   const { memberMap } = useStudioMemberMap(studioId, { limit: STUDIO_MEMBER_MAP_CALENDAR_LIMIT });
 
   const calendarRangeLimit = useMemo(() => {
-    if (!dateRange) {
+    if (!debouncedDateRange) {
       return 150;
     }
 
-    const start = new Date(`${dateRange.date_from}T00:00:00`);
-    const end = new Date(`${dateRange.date_to}T23:59:59`);
+    const start = new Date(`${debouncedDateRange.date_from}T00:00:00`);
+    const end = new Date(`${debouncedDateRange.date_to}T23:59:59`);
     const daySpan = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
 
     return Math.min(600, Math.max(60, daySpan * 12));
-  }, [dateRange]);
+  }, [debouncedDateRange]);
 
   const queryParams = useMemo(() => {
     return {
       limit: calendarRangeLimit,
       page: 1,
       ...(queryScope === 'me' ? { studio_id: studioId } : {}),
-      ...(dateRange ? { date_from: dateRange.date_from, date_to: dateRange.date_to } : {}),
+      ...(debouncedDateRange ? { date_from: debouncedDateRange.date_from, date_to: debouncedDateRange.date_to } : {}),
     } as const;
-  }, [calendarRangeLimit, dateRange, queryScope, studioId]);
+  }, [calendarRangeLimit, debouncedDateRange, queryScope, studioId]);
 
   const studioShiftsQuery = useStudioShifts(studioId, queryParams, { enabled: queryScope === 'studio' });
   const myShiftsQuery = useMyShifts(queryParams, { enabled: queryScope === 'me' });
@@ -114,9 +118,22 @@ export function StudioShiftsCalendar({
     });
   }, [calendarShifts, memberMap]);
 
+  const selectedDate = useMemo(() => {
+    if (!jumpDate || !globalThis.Temporal?.PlainDate) {
+      return undefined;
+    }
+
+    try {
+      return globalThis.Temporal.PlainDate.from(jumpDate);
+    } catch {
+      return undefined;
+    }
+  }, [jumpDate]);
+
   const calendarApp = useNextCalendarApp({
     views: [viewMonthGrid, viewWeek, viewDay],
     defaultView: viewWeek.name,
+    ...(selectedDate ? { selectedDate } : {}),
     events: calendarEvents as unknown as CalendarEvent[],
     calendars: {
       'shift': {
@@ -145,9 +162,15 @@ export function StudioShiftsCalendar({
           return;
         }
 
-        setDateRange({
-          date_from: startRaw,
-          date_to: endRaw,
+        setDateRange((previous) => {
+          if (previous?.date_from === startRaw && previous?.date_to === endRaw) {
+            return previous;
+          }
+
+          return {
+            date_from: startRaw,
+            date_to: endRaw,
+          };
         });
       },
     },
@@ -155,20 +178,45 @@ export function StudioShiftsCalendar({
 
   return (
     <div className="grid gap-4 mt-2">
-      <div className="flex justify-between items-center bg-muted/20 border rounded-lg px-3 py-2">
+      <div className="flex flex-col gap-2 bg-muted/20 border rounded-lg px-3 py-2 lg:flex-row lg:items-center">
         <p className="text-sm text-muted-foreground mr-auto">
           {summaryText}
         </p>
 
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => void refetch()}
-          disabled={isFetchingCalendarShifts}
-        >
-          <RefreshCw className={`mr-2 h-4 w-4 ${isFetchingCalendarShifts ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            type="date"
+            className="h-8 w-[160px]"
+            value={jumpDate}
+            onChange={(event) => setJumpDate(event.target.value)}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              if (!jumpDate) {
+                return;
+              }
+
+              const targetDate = new Date(`${jumpDate}T00:00:00`);
+              setDateRange({
+                date_from: toLocalDateInputValue(addDays(targetDate, -1)),
+                date_to: toLocalDateInputValue(addDays(targetDate, 8)),
+              });
+            }}
+          >
+            Jump To Date
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void refetch()}
+            disabled={isFetchingCalendarShifts}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isFetchingCalendarShifts ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <ShiftCalendarCard

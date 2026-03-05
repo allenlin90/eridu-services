@@ -225,6 +225,8 @@ Pending scope:
 - Added frontend API hooks for `shift-calendar`/`shift-alignment` and admin planning cards on dedicated surfaces: `/studios/:studioId/shows` (risk warning summary) and `/studios/:studioId/shifts` (cost snapshot).
 - Shift cost snapshot card now includes an inline date-range picker + reset action, eliminating manual URL edits for planning window changes.
 - Extracted shared date helpers (`addDays`, `fromLocalDateInput`, date param resolver) into `shift-date.utils` and reused across dashboard/shifts/my-shifts routes.
+- Shift calendar now supports quick jump-to-date and debounced range updates to reduce noisy refetches during navigation.
+- Show-task assignment now warns (non-blocking) when selected assignee has no overlapping shift coverage for the show window.
 
 ## Current Operational Workflows
 
@@ -313,7 +315,7 @@ Pending scope:
 
 1. **Show alignment orchestration** — baseline planning warning summary is implemented in `/studios/:studioId/shows`; pending dedicated report/drill-down views.
 2. **Financial aggregation** — baseline planning cost snapshot is implemented in `/studios/:studioId/shifts`; pending richer report views.
-3. **Calendar event interactivity** — Admin: click → edit dialog. Member: click → read-only detail popover. (Later phase.)
+3. **Calendar event interactivity** — Admin: click → edit dialog. Member: click → read-only detail popover. Deferred to Phase 4 planning.
 4. **Member availability** — members set availability for admin reference.
 5. **Recurring shift templates** — weekly pattern creation.
 6. **Shift data export** — CSV/Excel for payroll.

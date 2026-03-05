@@ -132,8 +132,8 @@ Integrate a Studio-based user shift schedule feature to track part-timer shifts,
 1. **Task assignment shift warning** — Implemented in studio show-task assignee flow: assignment now checks assignee overlap against `StudioShiftBlock` and surfaces a non-blocking warning if no shift covers the show window.
 2. **Show alignment orchestration** — `shift-alignment` service (design Section 8) for duty-manager and show-task-readiness planning risks.
 3. **Financial aggregation** — `shift-calendar` orchestration service for period cost rollups.
-4. **Calendar event interactivity** — Admin: calendar block click → edit dialog or scroll-to table row. Member: click → read-only detail popover. (Later phase improvement.)
-5. **Member `/my-shifts` table view** — Add a read-only table/list view with date-range query alongside the existing calendar view.
+4. **Calendar event interactivity** — Admin: calendar block click → edit dialog or scroll-to table row. Member: click → read-only detail popover. Deferred to Phase 4 planning.
+5. **Member `/my-shifts` table view** — Implemented as read-only table/list mode with date-range filtering alongside calendar view.
 6. **Member availability** — Allow members to set availability slots for admin reference during shift creation.
 7. **Recurring shift templates** — Weekly pattern creation instead of one-off entries.
 8. **Shift data export** — CSV/Excel for payroll integration.

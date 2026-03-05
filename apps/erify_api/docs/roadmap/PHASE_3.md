@@ -60,6 +60,7 @@ Phase 3 pivots to deliver the **Ticketing System** (ad-hoc task creation, task r
 - [ ] `ShiftAlignmentOrchestrationService` — Cross-check shifts against **Shows only** (idle members, missing shifts)
 - [ ] Calendar and alignment controllers
 - [ ] Shared Zod schemas in `@eridu/api-types`
+- [ ] Calendar event interactivity (admin edit/member popover) — deferred to Phase 4
 
 ### File Upload System ✅ Implemented (March 2026)
 

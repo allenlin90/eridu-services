@@ -96,11 +96,11 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 
 ### Later Phase
 
-- [ ] **Calendar event interactivity**: Calendar blocks are display-only. Admin: click → open edit dialog. Member: click → read-only detail popover. (Documented in design docs as future improvement.)
+- [ ] **Calendar event interactivity**: Calendar blocks are display-only. Admin: click → open edit dialog. Member: click → read-only detail popover. Deferred to Phase 4 planning.
 - [x] **Cost snapshot inline date range**: Added inline date-range controls on the shift cost snapshot card (with quick reset) so admins can adjust the reporting window directly in UI.
-- [ ] **Calendar jump-to-date**: No quick way to navigate to a specific date.
+- [x] **Calendar jump-to-date**: Added a quick date input + “Jump To Date” control on shift calendars.
 - [x] **Utility dedup**: Extracted shared `addDays` / `fromLocalDateInput` / date-param resolver helpers to shift date utils and adopted across `dashboard.tsx`, `shifts.tsx`, and `my-shifts.tsx`.
-- [ ] **Calendar range debounce**: `onRangeUpdate` fires on every navigation → debounce `setDateRange`.
+- [x] **Calendar range debounce**: Added debounced range handling for calendar-driven date-window query updates.
 - [ ] **Bulk shift operations**: For studios with many members, add "Copy Previous Week" or "Apply Shift Template."
 
 ---
