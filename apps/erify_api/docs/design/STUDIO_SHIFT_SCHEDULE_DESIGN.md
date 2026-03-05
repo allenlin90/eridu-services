@@ -101,10 +101,12 @@ Integrate a Studio-based user shift schedule feature to track part-timer shifts,
 - **[NEW]** `apps/erify_api/src/orchestration/shift-alignment/shift-alignment.service.ts`
   - **Cross-Checking Logic**: Given a timeframe, retrieves upcoming `Shows`, duty-manager shifts, and show-linked tasks.
   - **Operational Day Rule**: Day boundary is `06:00`. Shows before `06:00` belong to the previous operational day; shows at/after `06:00` belong to their calendar date.
+  - **Duty-manager coverage**: The primary concern is that **at least one** duty manager is on-shift during any show — they are the person in charge and point of contact during live operations. Continuous coverage across the entire operational day is a secondary awareness metric.
   - Returns planning-risk warnings for:
-    1. **Duty manager missing at show time**: Upcoming shows with no overlapping duty-manager shift block.
-    2. **Operational day duty-manager gap**: Uncovered segments between the first and last show in an operational day.
+    1. **Duty manager missing at show time** (critical): Upcoming shows with no overlapping duty-manager shift block.
+    2. **Operational day duty-manager gap** (awareness): Uncovered segments between the first and last show in an operational day.
     3. **Show task readiness**: No tasks, unassigned tasks, missing required `SETUP`/`ACTIVE`/`CLOSURE` tasks, and premium shows missing moderation task.
+  - **Known issue**: When a show has zero tasks, the service should explicitly report all required task types as missing.
 - **[NEW]** `apps/erify_api/src/controllers/studio-shift/shift-calendar.controller.ts`
   - Exposes `GET /studios/:id/shift-calendar` (for the timeline & costs) and `GET /studios/:id/shift-alignment` (for cross-checking warnings).
 
@@ -130,9 +132,11 @@ Integrate a Studio-based user shift schedule feature to track part-timer shifts,
 1. **Task assignment shift warning** — When assigning a task, check if the assignee has an overlapping `StudioShiftBlock`. Surface a warning if no shift covers the task's show window.
 2. **Show alignment orchestration** — `shift-alignment` service (design Section 8) for duty-manager and show-task-readiness planning risks.
 3. **Financial aggregation** — `shift-calendar` orchestration service for period cost rollups.
-4. **Member availability** — Allow members to set availability slots for admin reference during shift creation.
-5. **Recurring shift templates** — Weekly pattern creation instead of one-off entries.
-6. **Shift data export** — CSV/Excel for payroll integration.
+4. **Calendar event interactivity** — Admin: calendar block click → edit dialog or scroll-to table row. Member: click → read-only detail popover. (Later phase improvement.)
+5. **Member `/my-shifts` table view** — Add a read-only table/list view with date-range query alongside the existing calendar view.
+6. **Member availability** — Allow members to set availability slots for admin reference during shift creation.
+7. **Recurring shift templates** — Weekly pattern creation instead of one-off entries.
+8. **Shift data export** — CSV/Excel for payroll integration.
 
 ### Shared API Types
 

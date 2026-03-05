@@ -80,6 +80,31 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 
 ---
 
+## UX Review Findings (Revised March 5, 2026)
+
+### Critical
+
+- [ ] **Missing-tasks logic for zero-task shows**: When a show has no tasks at all, `ShiftAlignmentService` reports `has_no_tasks: true` but `missing_required_task_types` may be incomplete. Should short-circuit: report all three required types (`SETUP`, `ACTIVE`, `CLOSURE`) as missing, and `missing_moderation_task: true` for premium shows.
+- [ ] **Duty-manager coverage clarification**: The primary business concern is "at least one duty manager during show time" — not continuous coverage across the full operational day. Per-show check is the critical one. Operational-day gap check remains useful but is secondary. Clarify in code comments and docs.
+
+### Important
+
+- [ ] **Member `/my-shifts` table view**: Currently calendar-only. Add a table/list view with date-range query (read-only, member-scoped) with calendar/table toggle.
+- [ ] **Generic error messages**: Create/edit failures show "Failed to create shift. Please try again." — parse API error response to surface backend-specific messages.
+- [ ] **Delete confirmation UX**: Two-click same-button pattern has no visual armed state. Change text/color on armed state (e.g., "Delete" → "Confirm Delete" in red).
+- [ ] **Dashboard "My Upcoming Shifts" link**: No "View All →" link to `/my-shifts`. Add link in card header/footer.
+
+### Later Phase
+
+- [ ] **Calendar event interactivity**: Calendar blocks are display-only. Admin: click → open edit dialog. Member: click → read-only detail popover. (Documented in design docs as future improvement.)
+- [ ] **Cost snapshot inline date range**: Admin must change URL params to adjust the window. Add a date-range control on the card.
+- [ ] **Calendar jump-to-date**: No quick way to navigate to a specific date.
+- [ ] **Utility dedup**: `addDays` / `fromLocalDateInput` duplicated in `dashboard.tsx` and `shifts.tsx` → extract to shared utils.
+- [ ] **Calendar range debounce**: `onRangeUpdate` fires on every navigation → debounce `setDateRange`.
+- [ ] **Bulk shift operations**: For studios with many members, add "Copy Previous Week" or "Apply Shift Template."
+
+---
+
 ## Future Integration TODOs
 
 | Feature                       | Description                                                                                                    | Priority |
@@ -87,7 +112,7 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 | Task assignment shift warning | Check if assignee has overlapping `StudioShiftBlock` during task assignment; show warning if no shift coverage | High     |
 | Show alignment orchestration (FE integration) | Backend `shift-alignment` endpoint is implemented; `/studios/:studioId/shows` now includes a date-range summary warning card focused on task-readiness metrics | High     |
 | Financial aggregation (FE integration)         | Backend `shift-calendar` endpoint is implemented; admin planning cost snapshot is now in `/studios/:studioId/shifts`, richer report views remain              | Medium   |
-| `/my-shifts` member enhancements | Extend the implemented read-only member calendar with richer range controls and additional filters            | Medium   |
+| `/my-shifts` table view       | Add read-only table/list view with date-range query alongside the existing calendar view                       | Medium   |
 | Member availability           | Members set availability slots for admin reference during shift creation                                       | Low      |
 | Recurring shift templates     | Weekly pattern creation instead of one-off entries                                                             | Low      |
 | Shift data export             | CSV/Excel export for payroll integration                                                                       | Low      |

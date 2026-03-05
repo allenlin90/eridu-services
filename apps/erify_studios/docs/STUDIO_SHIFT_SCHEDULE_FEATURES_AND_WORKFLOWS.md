@@ -294,6 +294,8 @@ Pending scope:
 1. **`/shifts` is admin-only by design** — members check from dashboard.
 2. **`/my-shifts` route** — implemented as read-only member calendar using member-scoped shift query.
 3. **Dashboard "My Upcoming Shifts"** — implemented (next 5 upcoming assigned shifts).
+4. **TODO**: Add "View All →" link from dashboard "My Upcoming Shifts" card to `/my-shifts`.
+5. **TODO**: Add table/list view to `/my-shifts` (read-only, with date-range query) alongside the existing calendar view.
 
 ### Code Quality
 
@@ -309,9 +311,11 @@ Pending scope:
 1. **Task assignment shift warning** — check assignee has overlapping `StudioShiftBlock`; surface warning if no shift covers the show window.
 2. **Show alignment orchestration** — baseline planning warning summary is implemented in `/studios/:studioId/shows`; pending dedicated report/drill-down views.
 3. **Financial aggregation** — baseline planning cost snapshot is implemented in `/studios/:studioId/shifts`; pending richer report views.
-4. **Member availability** — members set availability for admin reference.
-5. **Recurring shift templates** — weekly pattern creation.
-6. **Shift data export** — CSV/Excel for payroll.
+4. **Calendar event interactivity** — Admin: click → edit dialog. Member: click → read-only detail popover. (Later phase.)
+5. **Member `/my-shifts` table view** — Table/list view with date-range query alongside calendar.
+6. **Member availability** — members set availability for admin reference.
+7. **Recurring shift templates** — weekly pattern creation.
+8. **Shift data export** — CSV/Excel for payroll.
 
 ### Frontend Test Gaps
 
