@@ -202,6 +202,7 @@ Pending scope:
 - Extracted shifts route view-toggle search transitions into shared utility functions and added focused tests for calendar/table search state behavior.
 - Expanded FE utility tests for additional edge cases: query param mapping, empty-block ordering fallback, cross-midnight sequential normalization, local-time extraction, edit-form defaults, and block-first display date semantics.
 - Dashboard pagination controls now hide the rows-per-page selector on mobile to avoid action-row overflow while preserving next/previous actions.
+- Refactored dashboard/calendar shift timeline handling into shared utilities (`sortShiftsByFirstBlockStart`, `getShiftFirstBlockStartMs`) and replaced repeated hardcoded member/query fetch limits with named constants.
 
 ## Current Operational Workflows
 
@@ -249,8 +250,8 @@ Pending scope:
 
 1. **Skeleton loading**: Resolved in current branch work (`TableSkeleton`, limit-aligned rows, `isLoading`/`isFetching` separation).
 2. **Missing columns**: Resolved in current branch work (`Projected Cost`, `Total Hours`).
-3. **Column header clarity**: Rename "Time" to "Date / Window".
-4. **Single-block display**: "1 block" text adds no info — show the time range inline instead.
+3. **Column header clarity**: Resolved in current branch work. "Time" renamed to "Date / Window".
+4. **Single-block display**: Resolved in current branch work. Single-block rows show inline time range text.
 
 ### Block Ordering & Shift Window Contract
 
@@ -282,9 +283,9 @@ Pending scope:
 
 1. **Orphaned `ShiftCreateCard`**: Resolved in current branch work. Unused component removed.
 2. **FE types not in `@eridu/api-types`**: Resolved in current branch work. Shift types now live in shared `@eridu/api-types/studio-shifts`.
-3. **Repeated block sorting**: 6+ places sort blocks with the same comparator. Extract `sortBlocks` utility.
-4. **Duplicated `memberMap` building**: Calendar and table independently build the same map. Extract shared hook.
-5. **Magic number fetch limits**: `limit: 200` for display members, `limit: 500` for calendar members. Document or derive from studio size.
+3. **Repeated block sorting**: Resolved in current branch work. Shared block/timeline sorting helpers are used across table/calendar/dashboard.
+4. **Duplicated `memberMap` building**: Resolved in current branch work. Shared `useStudioMemberMap` hook is used across shift surfaces.
+5. **Magic number fetch limits**: Resolved in current branch work. Shift member/query limits are centralized in named constants.
 6. **Backend soft-delete / lookup / JSON typing refinements**: Resolved in current branch work (service/repository improvements applied).
 
 ### Future Integration TODOs
@@ -298,8 +299,8 @@ Pending scope:
 
 ### Frontend Test Gaps
 
-- No tests for `validateShiftBlocks`, `combineDateAndTime`, or any frontend utils.
-- No component tests for any shift-related component.
+- Utility/component baseline coverage now exists for shift helpers and core shift UI cards/dialogs.
+- Remaining gap: deeper integration coverage across full shift page workflows.
 
 ## Verification Snapshot
 

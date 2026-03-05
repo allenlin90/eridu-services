@@ -13,11 +13,13 @@ import { Button } from '@eridu/ui';
 import '@schedule-x/theme-default/dist/index.css';
 
 import { ShiftCalendarCard } from '@/features/studio-shifts/components/shift-calendar-card';
+import { STUDIO_MEMBER_MAP_CALENDAR_LIMIT } from '@/features/studio-shifts/constants/studio-shifts.constants';
 import { useStudioMemberMap } from '@/features/studio-shifts/hooks/use-studio-member-map';
 import { useMyShifts, useStudioShifts } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import { toScheduleXDateTime } from '@/features/studio-shifts/utils/schedule-x.utils';
 import { sortShiftBlocksByStart } from '@/features/studio-shifts/utils/shift-blocks.utils';
 import { formatDate } from '@/features/studio-shifts/utils/shift-form.utils';
+import { sortShiftsByFirstBlockStart } from '@/features/studio-shifts/utils/shift-timeline.utils';
 
 export type StudioShiftsCalendarProps = {
   studioId: string;
@@ -56,7 +58,7 @@ export function StudioShiftsCalendar({
     return match?.[0] ?? null;
   };
 
-  const { memberMap } = useStudioMemberMap(studioId, { limit: 500 });
+  const { memberMap } = useStudioMemberMap(studioId, { limit: STUDIO_MEMBER_MAP_CALENDAR_LIMIT });
 
   const calendarRangeLimit = useMemo(() => {
     if (!dateRange) {
@@ -89,13 +91,7 @@ export function StudioShiftsCalendar({
 
   const calendarShifts = useMemo(() => {
     const rows = calendarShiftsResponse?.data ?? [];
-    return [...rows].sort((a, b) => {
-      const sortedBlocksA = sortShiftBlocksByStart(a.blocks);
-      const sortedBlocksB = sortShiftBlocksByStart(b.blocks);
-      const timeA = sortedBlocksA[0] ? new Date(sortedBlocksA[0].start_time).getTime() : Number.MAX_SAFE_INTEGER;
-      const timeB = sortedBlocksB[0] ? new Date(sortedBlocksB[0].start_time).getTime() : Number.MAX_SAFE_INTEGER;
-      return timeA - timeB;
-    });
+    return sortShiftsByFirstBlockStart(rows);
   }, [calendarShiftsResponse?.data]);
 
   const calendarEvents = useMemo(() => {

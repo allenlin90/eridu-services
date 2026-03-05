@@ -87,7 +87,7 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 | Task assignment shift warning | Check if assignee has overlapping `StudioShiftBlock` during task assignment; show warning if no shift coverage | High     |
 | Show alignment orchestration  | `shift-alignment` service to detect idle members and missing shifts against show windows                       | High     |
 | Financial aggregation         | `shift-calendar` orchestration for period cost rollups                                                         | Medium   |
-| `/my-shifts` member view      | Read-only calendar + upcoming shifts for members                                                               | Medium   |
+| `/my-shifts` member enhancements | Extend the implemented read-only member calendar with richer range controls and additional filters            | Medium   |
 | Member availability           | Members set availability slots for admin reference during shift creation                                       | Low      |
 | Recurring shift templates     | Weekly pattern creation instead of one-off entries                                                             | Low      |
 | Shift data export             | CSV/Excel export for payroll integration                                                                       | Low      |
@@ -96,10 +96,10 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 
 ## Test Gaps
 
-| Area                 | Existing                                             | Missing                                                      |
-| -------------------- | ---------------------------------------------------- | ------------------------------------------------------------ |
-| Service: createShift | ✅ Cost calc, overlap rejection, non-member rejection, cross-midnight and empty-block validation | None identified in reviewed scope |
-| Service: updateShift | ✅ Duty manager flag preservation, block UID stability/soft-delete behavior, user reassignment rate inheritance | None identified in reviewed scope |
-| Controller           | ✅ Pagination, duty manager, timestamp query, create/update/delete flows, not-found paths | None identified in reviewed scope |
-| FE utils             | ✅ Added coverage for query param mapping, empty-block sorting behavior, cross-midnight sequencing, local time extraction, edit-state defaults, and display date precedence | None identified in reviewed scope |
-| FE components        | ✅ Initial coverage for duty manager/calendar cards, table orchestration, form/dialog interactions, and route view-search transition utils | Deep integration coverage across full shift page flows |
+| Area                 | Existing                                                                                                                                                                   | Missing                                                |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Service: createShift | ✅ Cost calc, overlap rejection, non-member rejection, cross-midnight and empty-block validation                                                                            | None identified in reviewed scope                      |
+| Service: updateShift | ✅ Duty manager flag preservation, block UID stability/soft-delete behavior, user reassignment rate inheritance                                                             | None identified in reviewed scope                      |
+| Controller           | ✅ Pagination, duty manager, timestamp query, create/update/delete flows, not-found paths                                                                                   | None identified in reviewed scope                      |
+| FE utils             | ✅ Added coverage for query param mapping, empty-block sorting behavior, cross-midnight sequencing, local time extraction, edit-state defaults, and display date precedence | None identified in reviewed scope                      |
+| FE components        | ✅ Initial coverage for duty manager/calendar cards, table orchestration, form/dialog interactions, and route view-search transition utils                                  | Deep integration coverage across full shift page flows |

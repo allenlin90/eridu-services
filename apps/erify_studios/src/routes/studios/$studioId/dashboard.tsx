@@ -28,10 +28,16 @@ import {
 
 import { PageLayout } from '@/components/layouts/page-layout';
 import { ShowStandardBadge, ShowStatusBadge } from '@/features/admin/components/show-table-cells';
+import {
+  DASHBOARD_DUTY_SHIFTS_LIMIT,
+  DASHBOARD_MY_SHIFTS_QUERY_LIMIT,
+  DASHBOARD_MY_UPCOMING_SHIFTS_LIMIT,
+  STUDIO_MEMBER_MAP_DEFAULT_LIMIT,
+} from '@/features/studio-shifts/constants/studio-shifts.constants';
 import { useStudioMemberMap } from '@/features/studio-shifts/hooks/use-studio-member-map';
 import { useDutyManager, useMyShifts, useStudioShifts } from '@/features/studio-shifts/hooks/use-studio-shifts';
-import { sortShiftBlocksByStart } from '@/features/studio-shifts/utils/shift-blocks.utils';
 import { formatDate, getShiftWindowLabel, toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
+import { getShiftFirstBlockStartMs, sortShiftsByFirstBlockStart } from '@/features/studio-shifts/utils/shift-timeline.utils';
 import { getStudioShows } from '@/features/studio-shows/api/get-studio-shows';
 import { useUserProfile } from '@/lib/hooks/use-user';
 
@@ -105,7 +111,7 @@ function StudioDashboardPage() {
     isFetching: isFetchingDutyShifts,
   } = useStudioShifts(studioId, {
     page: 1,
-    limit: 200,
+    limit: DASHBOARD_DUTY_SHIFTS_LIMIT,
     date_from: selectedDate,
     date_to: previewUntil,
     is_duty_manager: true,
@@ -116,14 +122,14 @@ function StudioDashboardPage() {
     isFetching: isFetchingMyShifts,
   } = useMyShifts({
     page: 1,
-    limit: 20,
+    limit: DASHBOARD_MY_SHIFTS_QUERY_LIMIT,
     studio_id: studioId,
     date_from: selectedDate,
     date_to: previewUntil,
   }, {
     enabled: Boolean(studioId),
   });
-  const { memberMap } = useStudioMemberMap(studioId, { limit: 200 });
+  const { memberMap } = useStudioMemberMap(studioId, { limit: STUDIO_MEMBER_MAP_DEFAULT_LIMIT });
 
   const {
     data: todayShowsResponse,
@@ -141,26 +147,12 @@ function StudioDashboardPage() {
     enabled: Boolean(studioId),
   });
 
-  const activeShiftStartMs = dutyManager?.blocks?.[0]
-    ? new Date(sortShiftBlocksByStart(dutyManager.blocks)[0].start_time).getTime()
-    : null;
+  const activeShiftStartMs = dutyManager ? getShiftFirstBlockStartMs(dutyManager) : null;
 
-  const upcomingDutyManagerShifts = (dutyShiftResponse?.data ?? [])
-    .filter((shift) => Array.isArray(shift.blocks) && shift.blocks.length > 0)
-    .sort((a, b) => {
-      const aSortedBlocks = sortShiftBlocksByStart(a.blocks);
-      const bSortedBlocks = sortShiftBlocksByStart(b.blocks);
-      const aStart = aSortedBlocks[0]?.start_time
-        ? new Date(aSortedBlocks[0].start_time).getTime()
-        : Number.MAX_SAFE_INTEGER;
-      const bStart = bSortedBlocks[0]?.start_time
-        ? new Date(bSortedBlocks[0].start_time).getTime()
-        : Number.MAX_SAFE_INTEGER;
-      return aStart - bStart;
-    })
+  const upcomingDutyManagerShifts = sortShiftsByFirstBlockStart(dutyShiftResponse?.data ?? [])
     .filter((shift) => {
-      const firstBlock = sortShiftBlocksByStart(shift.blocks)[0];
-      if (!firstBlock) {
+      const shiftStartMs = getShiftFirstBlockStartMs(shift);
+      if (shiftStartMs === null) {
         return false;
       }
       if (shift.id === dutyManager?.id) {
@@ -169,33 +161,21 @@ function StudioDashboardPage() {
       if (activeShiftStartMs === null) {
         return true;
       }
-      return new Date(firstBlock.start_time).getTime() > activeShiftStartMs;
+      return shiftStartMs > activeShiftStartMs;
     });
 
   const nextDutyShift = upcomingDutyManagerShifts[0];
-  const myUpcomingShifts = (myShiftResponse?.data ?? [])
-    .filter((shift) => Array.isArray(shift.blocks) && shift.blocks.length > 0)
-    .sort((a, b) => {
-      const aSortedBlocks = sortShiftBlocksByStart(a.blocks);
-      const bSortedBlocks = sortShiftBlocksByStart(b.blocks);
-      const aStart = aSortedBlocks[0]?.start_time
-        ? new Date(aSortedBlocks[0].start_time).getTime()
-        : Number.MAX_SAFE_INTEGER;
-      const bStart = bSortedBlocks[0]?.start_time
-        ? new Date(bSortedBlocks[0].start_time).getTime()
-        : Number.MAX_SAFE_INTEGER;
-      return aStart - bStart;
-    })
+  const myUpcomingShifts = sortShiftsByFirstBlockStart(myShiftResponse?.data ?? [])
     .filter((shift) => {
-      const firstBlock = sortShiftBlocksByStart(shift.blocks)[0];
-      if (!firstBlock) {
+      const shiftStartMs = getShiftFirstBlockStartMs(shift);
+      if (shiftStartMs === null) {
         return false;
       }
 
       const referenceTime = isSelectedToday ? now.getTime() : dayStart.getTime();
-      return new Date(firstBlock.start_time).getTime() >= referenceTime;
+      return shiftStartMs >= referenceTime;
     })
-    .slice(0, 5);
+    .slice(0, DASHBOARD_MY_UPCOMING_SHIFTS_LIMIT);
 
   const totalShows = todayShowsResponse?.meta?.total ?? 0;
   const totalShowPages = todayShowsResponse?.meta?.totalPages ?? 1;

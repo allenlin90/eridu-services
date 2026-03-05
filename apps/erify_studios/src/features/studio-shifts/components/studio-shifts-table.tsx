@@ -88,7 +88,7 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     || search.date_to,
   );
 
-  const { memberMap } = useStudioMemberMap(studioId, { enabled: isStudioAdmin, limit: 200 });
+  const { memberMap } = useStudioMemberMap(studioId, { enabled: isStudioAdmin });
   const { data: createMemberOptionsResponse, isLoading: isLoadingCreateMemberOptions } = useStudioMembershipsQuery(
     studioId,
     { page: 1, limit: 50, name: createMemberSearch || undefined },

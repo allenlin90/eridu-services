@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { useStudioMembershipsQuery } from '@/features/memberships/api/get-studio-memberships';
+import { STUDIO_MEMBER_MAP_DEFAULT_LIMIT } from '@/features/studio-shifts/constants/studio-shifts.constants';
 
 export type StudioMemberInfo = {
   name: string;
@@ -15,7 +16,7 @@ type UseStudioMemberMapOptions = {
 export function useStudioMemberMap(studioId: string, options?: UseStudioMemberMapOptions) {
   const { data, isLoading } = useStudioMembershipsQuery(
     studioId,
-    { page: 1, limit: options?.limit ?? 200 },
+    { page: 1, limit: options?.limit ?? STUDIO_MEMBER_MAP_DEFAULT_LIMIT },
     { enabled: options?.enabled ?? true },
   );
 

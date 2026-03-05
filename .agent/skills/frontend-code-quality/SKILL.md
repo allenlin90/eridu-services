@@ -209,6 +209,7 @@ function UserCard({ user }: { user: User }) {
 2.  **Server State separation**: Use TanStack Query for server data; use `React.useState`/`useReducer` only for local UI state.
 3.  **Composition over Inheritance**: Build complex UIs by composing small, focused components.
 4.  **Consistent Code Style**: Use ESLint and Prettier to enforce consistency across the codebase.
+5.  **No repeated magic limits**: Centralize repeated pagination/fetch limits in named constants instead of duplicating raw numbers across routes/components.
 
 ## Checklist
 
