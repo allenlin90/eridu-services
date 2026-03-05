@@ -3,12 +3,14 @@ import { createFileRoute } from '@tanstack/react-router';
 import type { ColumnDef, ColumnFiltersState } from '@tanstack/react-table';
 import { Eye, RotateCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
 import { adaptColumnFiltersChange, adaptPaginationChange, Button, DataTable, DataTableActions, DataTablePagination, DataTableToolbar, DropdownMenuItem } from '@eridu/ui';
 
 import { AdminLayout } from '@/features/admin/components';
 import { DeleteConfirmDialog } from '@/features/admin/components/delete-confirm-dialog';
+import { getShows } from '@/features/shows/api/get-shows';
 import { useDeleteAdminTask } from '@/features/tasks/api/delete-admin-task';
 import { adminTasksKeys, getAdminTasks } from '@/features/tasks/api/get-admin-tasks';
 import { SystemTaskDetailsDialog } from '@/features/tasks/components/system-task-details-dialog';
@@ -19,6 +21,8 @@ import {
 import { useReassignAdminTask } from '@/features/tasks/hooks/use-reassign-admin-task';
 import { useReassignAdminTaskShow } from '@/features/tasks/hooks/use-reassign-admin-task-show';
 import { useUpdateAdminTask } from '@/features/tasks/hooks/use-update-admin-task';
+import { checkAssigneeShiftCoverageInShowWindow } from '@/features/tasks/lib/task-assignment-shift-coverage';
+import { buildShiftCoverageWarning } from '@/features/tasks/lib/task-assignment-shift-warning';
 
 export const Route = createFileRoute('/system/shows/$showId/tasks')({
   component: ShowTasks,
@@ -54,13 +58,55 @@ function ShowTasks() {
     gcTime: 2 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
+  const { data: showSummary } = useQuery({
+    queryKey: ['system-show-summary', showId],
+    queryFn: async () => {
+      const response = await getShows({
+        page: 1,
+        limit: 1,
+        id: showId,
+      });
+
+      return response.data[0] ?? null;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 2 * 60 * 1000,
+  });
 
   const reassignMutation = useReassignAdminTask();
   const reassignShowMutation = useReassignAdminTaskShow();
   const deleteMutation = useDeleteAdminTask();
   const updateMutation = useUpdateAdminTask();
 
+  const warningStudioId = showSummary?.studio_id ?? null;
+
   const handleAssign = async (taskId: string, assigneeUid: string | null) => {
+    if (
+      assigneeUid
+      && warningStudioId
+      && selectedTask
+      && selectedTask.id === taskId
+      && selectedTask.show
+    ) {
+      try {
+        const coverageResult = await checkAssigneeShiftCoverageInShowWindow(
+          warningStudioId,
+          assigneeUid,
+          {
+            name: selectedTask.show.name,
+            start_time: selectedTask.show.start_time,
+            end_time: selectedTask.show.end_time,
+          },
+        );
+
+        if (!coverageResult.hasCoverage && coverageResult.showStart) {
+          toast.warning(buildShiftCoverageWarning(selectedTask.show.name, coverageResult.showStart));
+        }
+      } catch {
+        // Non-blocking warning check: assignment should proceed even if lookup fails.
+      }
+    }
+
     await reassignMutation.mutateAsync({
       taskId,
       data: { assignee_uid: assigneeUid },

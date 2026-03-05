@@ -3,21 +3,15 @@ import { toast } from 'sonner';
 
 import type { TaskAction, TaskWithRelationsDto } from '@eridu/api-types/task-management';
 
-import { getStudioShifts } from '@/features/studio-shifts/api/get-studio-shifts';
-import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';
-import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
 import { useAssignTask } from '@/features/tasks/hooks/use-assign-task';
 import { useDeleteTasks } from '@/features/tasks/hooks/use-delete-tasks';
 import { useUpdateStudioTask } from '@/features/tasks/hooks/use-update-studio-task';
 import { useUpdateStudioTaskStatus } from '@/features/tasks/hooks/use-update-studio-task-status';
 import { requiresTaskActionSheet } from '@/features/tasks/lib/task-action-sheet';
+import { checkAssigneeShiftCoverageInShowWindow } from '@/features/tasks/lib/task-assignment-shift-coverage';
 import {
   buildShiftCoverageWarning,
-  hasShiftCoverageForWindow,
 } from '@/features/tasks/lib/task-assignment-shift-warning';
-
-const SHIFT_COVERAGE_QUERY_LIMIT = 200;
-const SHIFT_COVERAGE_LOOKBACK_DAYS = 1;
 
 type UseStudioShowTasksPageMutationsProps = {
   studioId: string;
@@ -58,20 +52,14 @@ export function useStudioShowTasksPageMutations({
   const handleAssign = useCallback(async (task: TaskWithRelationsDto, assigneeUid: string | null) => {
     if (assigneeUid && showWindow) {
       try {
-        const showStart = new Date(showWindow.start_time);
-        const showEnd = new Date(showWindow.end_time);
-        const shifts = await getStudioShifts(studioId, {
-          page: 1,
-          limit: SHIFT_COVERAGE_QUERY_LIMIT,
-          user_id: assigneeUid,
-          date_from: toLocalDateInputValue(addDays(showStart, -SHIFT_COVERAGE_LOOKBACK_DAYS)),
-          date_to: toLocalDateInputValue(showEnd),
-        });
+        const coverageResult = await checkAssigneeShiftCoverageInShowWindow(
+          studioId,
+          assigneeUid,
+          showWindow,
+        );
 
-        const hasOverlappingShift = hasShiftCoverageForWindow(shifts.data, showStart, showEnd);
-
-        if (!hasOverlappingShift) {
-          toast.warning(buildShiftCoverageWarning(showWindow.name, showStart));
+        if (!coverageResult.hasCoverage && coverageResult.showStart) {
+          toast.warning(buildShiftCoverageWarning(showWindow.name, coverageResult.showStart));
         }
       } catch {
         // Non-blocking warning check: assignment should proceed even if lookup fails.
