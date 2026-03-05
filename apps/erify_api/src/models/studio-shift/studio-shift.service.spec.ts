@@ -13,6 +13,8 @@ describe('studioShiftService', () => {
   let membershipService: jest.Mocked<StudioMembershipService>;
 
   beforeEach(async () => {
+    let brandedIdCounter = 0;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StudioShiftService,
@@ -38,11 +40,7 @@ describe('studioShiftService', () => {
         {
           provide: UtilityService,
           useValue: {
-            generateBrandedId: jest
-              .fn()
-              .mockReturnValueOnce('ssh_1')
-              .mockReturnValueOnce('ssb_1')
-              .mockReturnValueOnce('ssb_2'),
+            generateBrandedId: jest.fn((prefix: string) => `${prefix}_${++brandedIdCounter}`),
           },
         },
       ],
@@ -217,6 +215,74 @@ describe('studioShiftService', () => {
       });
 
       expect(repository.findOverlappingShift).not.toHaveBeenCalled();
+    });
+
+    it('should preserve stable block UIDs on update and soft-delete removed blocks', async () => {
+      repository.findByUidInStudio.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'ssh_1',
+        status: 'SCHEDULED',
+        user: { uid: 'user_1' },
+        hourlyRate: { toString: () => '20.00' },
+        blocks: [
+          {
+            uid: 'ssb_keep',
+            startTime: new Date('2026-03-05T09:00:00.000Z'),
+            endTime: new Date('2026-03-05T12:00:00.000Z'),
+            metadata: {},
+          },
+          {
+            uid: 'ssb_remove',
+            startTime: new Date('2026-03-05T13:00:00.000Z'),
+            endTime: new Date('2026-03-05T14:00:00.000Z'),
+            metadata: {},
+          },
+        ],
+      } as never);
+
+      repository.updateShift.mockResolvedValue({ uid: 'ssh_1' } as never);
+
+      await service.updateShift('std_1', 'ssh_1', {
+        blocks: [
+          {
+            startTime: new Date('2026-03-05T09:30:00.000Z'),
+            endTime: new Date('2026-03-05T12:30:00.000Z'),
+            metadata: {},
+          },
+        ],
+      });
+
+      expect(repository.updateShift).toHaveBeenCalledWith(
+        'std_1',
+        'ssh_1',
+        expect.objectContaining({
+          blocks: expect.objectContaining({
+            updateMany: expect.objectContaining({
+              where: {
+                deletedAt: null,
+                uid: {
+                  notIn: ['ssb_keep'],
+                },
+              },
+              data: {
+                deletedAt: expect.any(Date),
+              },
+            }),
+            upsert: [
+              expect.objectContaining({
+                where: {
+                  uid: 'ssb_keep',
+                },
+                update: expect.objectContaining({
+                  startTime: new Date('2026-03-05T09:30:00.000Z'),
+                  endTime: new Date('2026-03-05T12:30:00.000Z'),
+                }),
+              }),
+            ],
+          }),
+        }),
+        BigInt(1),
+      );
     });
   });
 });

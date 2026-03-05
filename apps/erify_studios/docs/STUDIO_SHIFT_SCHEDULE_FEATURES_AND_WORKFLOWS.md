@@ -192,6 +192,7 @@ Pending scope:
 - Backend quality pass: shift soft-delete now cascades to child blocks, local `JsonValue` alias replaced with `Prisma.JsonValue`, and update/delete now avoid duplicate repository lookup by reusing resolved shift ID.
 - Added dedicated backend endpoint `GET /me/shifts` for member shift queries (no studio admin endpoint reuse for user scope).
 - Added overlap guard on create/update for the same member/studio block window; overlap validation excludes `CANCELLED` shifts.
+- Block update persistence now preserves stable block UIDs with nested upsert and soft-deletes removed blocks instead of full block replacement.
 
 ## Current Operational Workflows
 

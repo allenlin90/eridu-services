@@ -62,7 +62,7 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 
 - [x] **Soft-delete cascade**: `softDeleteInStudio` must also soft-delete child `StudioShiftBlock` rows
 - [x] **Double lookup**: `updateShift` does `findByUidInStudio` in both service and repo — refactor to single lookup
-- [ ] **Block UID instability**: Block updates use `deleteMany` + `create`, regenerating UIDs — consider diff-based upsert
+- [x] **Block UID instability**: Block updates use `deleteMany` + `create`, regenerating UIDs — replaced with upsert + soft-delete strategy to preserve stable block UIDs
 - [x] **Duplicate shift guard**: No check for overlapping shifts on the same user/date — add service-level validation (ignore `CANCELLED` shifts)
 - [x] **Local `JsonValue` type**: Replace with `Prisma.JsonValue`
 

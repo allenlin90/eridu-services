@@ -15,6 +15,7 @@ import { StudioMembershipService } from '@/models/membership/studio-membership.s
 import { UtilityService } from '@/utility/utility.service';
 
 type ShiftBlockInput = {
+  uid?: string;
   startTime: Date;
   endTime: Date;
   metadata: Record<string, Prisma.JsonValue>;
@@ -156,15 +157,7 @@ export class StudioShiftService extends BaseModelService {
       hourlyRate,
       projectedCost,
       ...(payload.blocks && {
-        blocks: {
-          deleteMany: {},
-          create: normalizedBlocks.map((block) => ({
-            uid: this.generateBlockUid(),
-            startTime: block.startTime,
-            endTime: block.endTime,
-            metadata: block.metadata,
-          })),
-        },
+        blocks: this.buildBlocksUpdateData(normalizedBlocks, existing.blocks),
       }),
     }, existing.id);
   }
@@ -260,6 +253,64 @@ export class StudioShiftService extends BaseModelService {
 
   private generateBlockUid(): string {
     return this.utilityService.generateBrandedId(StudioShiftService.BLOCK_UID_PREFIX);
+  }
+
+  private buildBlocksUpdateData(
+    blocks: ShiftBlockInput[],
+    existingBlocks: Array<{
+      uid: string;
+      startTime: Date;
+      endTime: Date;
+      metadata: Prisma.JsonValue;
+    }>,
+  ): Prisma.StudioShiftUpdateInput['blocks'] {
+    const sortedExistingBlocks = this.normalizeAndValidateBlocks(
+      existingBlocks.map((block) => ({
+        uid: block.uid,
+        startTime: block.startTime,
+        endTime: block.endTime,
+        metadata: block.metadata as Record<string, Prisma.JsonValue>,
+      })),
+    );
+
+    const blocksWithUid = blocks.map((block, index) => ({
+      uid: sortedExistingBlocks[index]?.uid ?? this.generateBlockUid(),
+      startTime: block.startTime,
+      endTime: block.endTime,
+      metadata: block.metadata,
+    }));
+
+    const retainedUids = blocksWithUid.map((block) => block.uid);
+    const deletedAt = new Date();
+
+    return {
+      updateMany: {
+        where: {
+          deletedAt: null,
+          uid: {
+            notIn: retainedUids,
+          },
+        },
+        data: {
+          deletedAt,
+        },
+      },
+      upsert: blocksWithUid.map((block) => ({
+        where: { uid: block.uid },
+        update: {
+          startTime: block.startTime,
+          endTime: block.endTime,
+          metadata: block.metadata,
+          deletedAt: null,
+        },
+        create: {
+          uid: block.uid,
+          startTime: block.startTime,
+          endTime: block.endTime,
+          metadata: block.metadata,
+        },
+      })),
+    };
   }
 
   private async ensureNoOverlapInStudio(
