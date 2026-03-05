@@ -44,6 +44,14 @@ function addDays(base: Date, days: number): Date {
   return next;
 }
 
+function fromLocalDateInput(value: string): Date {
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date();
+  date.setFullYear(year || date.getFullYear(), (month || 1) - 1, day || 1);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
 function resolveDateParamOrDefault(value: string | undefined, fallback: string): string {
   if (!value) {
     return fallback;
@@ -61,7 +69,7 @@ function StudioShiftsPage() {
   const planningDateFrom = resolveDateParamOrDefault(search.date_from, today);
   const planningDateTo = resolveDateParamOrDefault(
     search.date_to,
-    toLocalDateInputValue(addDays(new Date(`${planningDateFrom}T00:00:00`), 7)),
+    toLocalDateInputValue(addDays(fromLocalDateInput(planningDateFrom), 7)),
   );
 
   const viewMode = search.view;

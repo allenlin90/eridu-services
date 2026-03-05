@@ -41,6 +41,8 @@ export class ShiftAlignmentService {
     }
 
     const window = this.resolveWindow(query.dateFrom, query.dateTo);
+    const now = new Date();
+    const planningStart = new Date(Math.max(window.start.getTime(), now.getTime()));
 
     const [shifts, shows] = await Promise.all([
       this.studioShiftService.findShiftsInWindow({
@@ -54,7 +56,7 @@ export class ShiftAlignmentService {
           studio: { uid: studioUid, deletedAt: null },
           deletedAt: null,
           startTime: { lt: window.end },
-          endTime: { gt: window.start },
+          endTime: { gt: planningStart },
         },
         orderBy: { startTime: 'asc' },
         include: {
@@ -93,7 +95,6 @@ export class ShiftAlignmentService {
 
     let assignedMembersChecked = 0;
     let showsChecked = 0;
-    const now = new Date();
 
     for (const show of shows as ShowWithAssignments[]) {
       const showWindow = this.clipInterval(show.startTime, show.endTime, window.start, window.end);
