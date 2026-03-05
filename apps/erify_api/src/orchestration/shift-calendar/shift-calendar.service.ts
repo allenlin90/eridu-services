@@ -53,6 +53,14 @@ export class ShiftCalendarService {
     private readonly studioShiftService: StudioShiftService,
   ) {}
 
+  /**
+   * Calendar/cost orchestration for studio-admin planning.
+   *
+   * Purpose:
+   * - Return shift timeline grouped by UTC day and member for calendar/table rendering.
+   * - Return period-level totals (hours, projected cost, calculated cost).
+   * - Keep aggregation read-only and deterministic from existing shifts/blocks.
+   */
   async getCalendar(studioUid: string, query: ShiftCalendarQuery) {
     const studio = await this.studioService.findByUid(studioUid);
     if (!studio) {
@@ -87,6 +95,7 @@ export class ShiftCalendarService {
       timeline: CalendarTimelineDay[];
       summary: CalendarSummary;
     } {
+    // date -> user -> shifts accumulator.
     const dayMap = new Map<string, Map<string, {
       user_id: string;
       user_name: string;
@@ -106,6 +115,7 @@ export class ShiftCalendarService {
       shiftIds.add(shift.uid);
       const hourlyRate = this.toNumber(shift.hourlyRate);
       const shiftBlocks = shift.blocks ?? [];
+      // Full shift duration is used to pro-rate manual calculated cost across clipped range.
       const shiftTotalBlockHours = shiftBlocks.reduce(
         (acc, block) => acc + this.hoursBetween(block.startTime, block.endTime),
         0,
@@ -123,6 +133,7 @@ export class ShiftCalendarService {
         const clippedHours = this.hoursBetween(clipped.start, clipped.end);
         shiftOverlapHours += clippedHours;
 
+        // Split cross-midnight blocks so each segment is aggregated into the correct day bucket.
         const segments = this.splitIntervalByDay(clipped.start, clipped.end);
         for (const segment of segments) {
           const dateKey = this.toDateKey(segment.start);
@@ -175,6 +186,7 @@ export class ShiftCalendarService {
       totalHours += shiftOverlapHours;
       totalProjectedCost += shiftOverlapHours * hourlyRate;
 
+      // calculated_cost is a shift-level final amount; distribute by effective hourly rate for clipped windows.
       if (shift.calculatedCost && shiftTotalBlockHours > 0) {
         const calculatedRate = this.toNumber(shift.calculatedCost) / shiftTotalBlockHours;
         totalCalculatedCost += shiftOverlapHours * calculatedRate;
@@ -305,6 +317,7 @@ export class ShiftCalendarService {
     let cursor = new Date(start);
 
     while (cursor < end) {
+      // UTC midnight boundary keeps API date keys and DB timestamps consistent.
       const nextMidnight = new Date(cursor);
       nextMidnight.setUTCHours(24, 0, 0, 0);
       const segmentEnd = new Date(Math.min(nextMidnight.getTime(), end.getTime()));

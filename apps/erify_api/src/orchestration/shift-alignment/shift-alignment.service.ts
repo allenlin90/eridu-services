@@ -39,6 +39,8 @@ const REQUIRED_SHOW_TASK_TYPES: TaskType[] = [TaskType.SETUP, TaskType.ACTIVE, T
 @Injectable()
 export class ShiftAlignmentService {
   private static readonly DEFAULT_WINDOW_DAYS = 7;
+  // Operational day is 06:00 -> 05:59 next calendar day.
+  // This matches studio ops where after-midnight shows still belong to the prior workday.
   private static readonly OPERATIONAL_DAY_START_HOUR_UTC = 6;
 
   constructor(
@@ -48,6 +50,14 @@ export class ShiftAlignmentService {
     private readonly taskService: TaskService,
   ) {}
 
+  /**
+   * Planning-risk orchestration for studio admins.
+   *
+   * Purpose:
+   * - Evaluate upcoming shows only (past shows are skipped).
+   * - Detect duty-manager gaps during show windows and across each operational day.
+   * - Detect show task-readiness gaps (missing required tasks / unassigned tasks / premium moderation).
+   */
   async getAlignment(studioUid: string, query: ShiftAlignmentQuery) {
     const studio = await this.studioService.findByUid(studioUid);
     if (!studio) {
@@ -56,6 +66,7 @@ export class ShiftAlignmentService {
 
     const window = this.resolveWindow(query.dateFrom, query.dateTo);
     const now = new Date();
+    // Planning is forward-looking: never evaluate ended shows, even if date_from is in the past.
     const planningStart = new Date(Math.max(window.start.getTime(), now.getTime()));
 
     const [shifts, shows] = await Promise.all([
@@ -112,6 +123,7 @@ export class ShiftAlignmentService {
       missing_moderation_task: boolean;
     }> = [];
 
+    // Check continuity from first show start to last show end in each operational day.
     for (const [operationalDay, bucket] of operationalDays.entries()) {
       const showDayWindow = { start: bucket.firstShowStart, end: bucket.lastShowEnd };
       const dayOverlaps = dutyManagerIntervals
@@ -131,6 +143,7 @@ export class ShiftAlignmentService {
       }
     }
 
+    // Per-show risk checks: duty manager overlap + task readiness contract.
     for (const show of showWindows) {
       const showDutyOverlaps = dutyManagerIntervals
         .map((interval) => this.clipInterval(interval.start, interval.end, show.start, show.end))
@@ -154,6 +167,7 @@ export class ShiftAlignmentService {
         .filter((requiredType) => !presentTypes.has(requiredType))
         .map((type) => type as 'SETUP' | 'ACTIVE' | 'CLOSURE');
 
+      // Premium shows require at least one moderation task.
       const isPremiumShow = show.standardName.toLowerCase() === 'premium';
       const hasModerationTask = tasks.some((task) => this.isModerationTask(task));
       const missingModerationTask = isPremiumShow && !hasModerationTask;
@@ -215,6 +229,7 @@ export class ShiftAlignmentService {
     const intervals: TimeInterval[] = [];
 
     for (const shift of shifts) {
+      // Only active duty-manager shifts contribute to coverage.
       if (!shift.isDutyManager || shift.status === 'CANCELLED') {
         continue;
       }
@@ -292,6 +307,7 @@ export class ShiftAlignmentService {
     }
 
     const showIds = showWindows.map((show) => show.id);
+    // Include template for moderation detection and targets for show association.
     const tasks = await this.taskService.findTasksByShowIds(showIds, {
       targets: true,
       template: true,
@@ -320,6 +336,7 @@ export class ShiftAlignmentService {
 
   private toOperationalDay(value: Date): string {
     const date = new Date(value);
+    // Shows before 06:00 are attributed to the previous operational day.
     if (date.getUTCHours() < ShiftAlignmentService.OPERATIONAL_DAY_START_HOUR_UTC) {
       date.setUTCDate(date.getUTCDate() - 1);
     }
