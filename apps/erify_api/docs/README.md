@@ -29,7 +29,7 @@
 | [Authorization Guide](./design/AUTHORIZATION_GUIDE.md)                                     | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
 | [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) | ⏳      | Studio-scoped resolution for cancelled shows                                   |
 | [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                | 📐      | Template-less pre-production ticketing using Tasks                             |
-| [Studio Shift Schedule](./design/STUDIO_SHIFT_SCHEDULE_DESIGN.md)                         | ⏳      | Foundation implemented (shift models + studio CRUD API); calendar/alignment pending |
+| [Studio Shift Schedule](./design/STUDIO_SHIFT_SCHEDULE_DESIGN.md)                         | ✅      | Shift models, studio CRUD, calendar/alignment orchestration                |\n
 | ~~[File Upload (Cloudflare R2)](./FILE_UPLOAD.md)~~                                        | ✅      | Moved to Features — fully implemented                                          |
 | [Material Management](./design/MATERIAL_MANAGEMENT_DESIGN.md)                             | ⏳      | To be written (Phase 3 prerequisite)                                           |
 | [Data Warehouse](./design/DATA_WAREHOUSE_DESIGN.md)                                       | ⏳      | Datastream + BigQuery — to be written (Phase 4)                                |

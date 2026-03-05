@@ -142,6 +142,7 @@ Delivered:
   - `/studios/:studioId/shows` for date-range task-readiness summary warnings.
   - `/studios/:studioId/shifts` for shift cost snapshot.
 - `/studios/:studioId/shows` summary warning card supports date-range querying and focuses on task-readiness metrics (`no tasks`, `unassigned`, required `SETUP`/`ACTIVE`/`CLOSURE`, premium moderation).
+- Shows task-readiness date range is local UI state (not URL-backed) and includes a quick reset action for the next 7 days.
 
 Pending scope:
 - Dedicated report pages beyond the summary card (separate from planning workflow) for richer analytics.
@@ -164,7 +165,7 @@ Pending scope:
 11. `c08aead` `feat(erify_studios): redesign shifts admin UX and studio dashboard operations`
 12. `3a462de` `refactor(erify_studios): align shifts filters with url state and improve duty manager actions`
 
-### Current in-progress (uncommitted)
+### Implementation Highlights (Committed)
 
 1. Block-aware display consistency:
 - Calendar renders one event per `StudioShiftBlock`.
@@ -188,7 +189,7 @@ Pending scope:
 - `studio-shifts-table` responsibilities were split with shared dialog and pure utils modules.
 - Search/update typing was tightened (removed `any` path in table search/update flow).
 
-6. E2E review follow-up implementation pass (active):
+6. E2E review follow-up implementation pass:
 - Calendar now keeps `ScheduleXCalendar` mounted even with zero blocks in the visible range.
 - Calendar loading and refetch UI is now persistent (summary + spinner + fixed-height skeleton state).
 - Calendar query overfetch was reduced: removed hardcoded `limit: 1000` and switched to range-aware limit sizing.
@@ -284,10 +285,9 @@ Pending scope:
 
 ### Dashboard UX
 
-1. **Hardcoded date**: `dashboard.tsx` uses `new Date()` with no navigation. Members on midnight shows (after 00:00) see the next day's records with no way to go back.
-2. **Day navigation**: Add simple prev/next day buttons (±1 day). Keep intentionally simple — no date picker, no jump-to-date. Store selected date in URL search params.
-3. **Operational day window**: `00:00 → next day 05:59` is correct but the `6am` cutoff should be documented and potentially configurable.
-4. **Rows per page**: Search schema accepts `limit` (1–100, default 10) but no UI selector exists. Add a rows-per-page dropdown (e.g., 10 / 25 / 50).
+1. **Date navigation**: Resolved. Dashboard now supports simple prev/next day navigation with URL-backed `date`.
+2. **Operational day window**: Resolved and documented. Dashboard uses `00:00 → next day 05:59` with 6am boundary behavior documented.
+3. **Rows per page**: Resolved. Rows-per-page selector is available (and hidden on mobile to avoid overflow).
 
 ### Member Experience
 

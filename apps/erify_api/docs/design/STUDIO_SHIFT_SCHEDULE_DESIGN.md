@@ -134,18 +134,15 @@ Integrate a Studio-based user shift schedule feature to track part-timer shifts,
 5. **Recurring shift templates** — Weekly pattern creation instead of one-off entries.
 6. **Shift data export** — CSV/Excel for payroll integration.
 
-### Shared API Types (TODO)
+### Shared API Types
 
-`StudioShift` and `StudioShiftBlock` types are currently defined only in the frontend (`studio-shifts.types.ts`). These should be added to `@eridu/api-types` for type safety across the stack.
+`StudioShift` and `StudioShiftBlock` types are defined in `@eridu/api-types/studio-shifts` and consumed by frontend shift modules.
 
 ## Verification Plan
 
 ### Automated Tests
-- Create unit tests for `StudioShiftService` isolating the rate calculation and override logic.
-- Create unit tests for `ShiftAlignmentService` ensuring it accurately detects duty-manager show coverage gaps, operational-day gaps, and show task readiness risks.
-- **TODO**: Add test coverage for cross-midnight block normalization.
-- **TODO**: Add test coverage for block replacement on update (UID stability, cascade).
-- **TODO**: Add test coverage for user change with rate inheritance during update.
+- Maintain unit tests for `StudioShiftService` covering rate calculation, overlap validation, block handling, and update flows.
+- Maintain unit tests for `ShiftAlignmentService` covering duty-manager show coverage gaps, operational-day gaps, and show task readiness risks.
 
 ### Manual Verification
 - Seed `StudioShifts` via the schedule UI. Ensure the cost calculations display correctly.
