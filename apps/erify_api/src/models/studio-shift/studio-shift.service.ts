@@ -106,6 +106,13 @@ export class StudioShiftService extends BaseModelService {
     });
   }
 
+  /**
+   * @internal
+   */
+  async findShiftsInWindow(params: Parameters<StudioShiftRepository['findByStudioAndBlockWindow']>[0]) {
+    return this.studioShiftRepository.findByStudioAndBlockWindow(params);
+  }
+
   async updateShift(
     studioId: string,
     uid: string,

@@ -126,10 +126,18 @@ Design intent:
 - `shift-calendar` orchestration endpoint (timeline + costs)
 - `shift-alignment` endpoint for gaps/missing shifts against show windows
 
-Status: `Pending`
+Status: `Implemented (Backend MVP)`
+
+Delivered:
+- Dedicated studio-scoped orchestration endpoints were added:
+  - `GET /studios/:studioId/shift-calendar`
+  - `GET /studios/:studioId/shift-alignment`
+- `shift-calendar` now returns date-window timeline aggregation grouped by day/member, with period summary totals (hours/projected/calculated cost).
+- `shift-alignment` now computes show-window coverage warnings against assigned members (idle uncovered segments + missing shift assignments).
 
 Pending scope:
-- Dedicated orchestration services/controllers for alignment warnings and period financial aggregation remain to be implemented.
+- Frontend alignment/rollup views and action wiring to consume these orchestration endpoints.
+- Task-assignment-time warning integration (check shift coverage during assignee selection).
 
 ## Implementation Timeline (This Branch)
 
@@ -203,6 +211,7 @@ Pending scope:
 - Expanded FE utility tests for additional edge cases: query param mapping, empty-block ordering fallback, cross-midnight sequential normalization, local-time extraction, edit-form defaults, and block-first display date semantics.
 - Dashboard pagination controls now hide the rows-per-page selector on mobile to avoid action-row overflow while preserving next/previous actions.
 - Refactored dashboard/calendar shift timeline handling into shared utilities (`sortShiftsByFirstBlockStart`, `getShiftFirstBlockStartMs`) and replaced repeated hardcoded member/query fetch limits with named constants.
+- Added backend orchestration services/modules and studio routes for `shift-calendar` and `shift-alignment`, including typed query/response schemas and service/controller tests.
 
 ## Current Operational Workflows
 
@@ -230,10 +239,8 @@ Pending scope:
 ## Remaining Follow-ups
 
 1. Add advanced multi-block editing UX (reorder/drag, richer inline error states).
-2. Add orchestration APIs for:
-  - shift timeline aggregation
-  - shift/show alignment warnings
-3. Add dedicated FE views for alignment and cost rollups once orchestration APIs exist.
+2. Add dedicated FE views for alignment and cost rollups using the implemented orchestration APIs.
+3. Add task assignment workflow warning integration using shift-alignment overlap checks.
 4. Expand member shift visibility from 7-day preview to optional longer range/date controls if needed.
 
 ## E2E Review Findings (March 5, 2026)

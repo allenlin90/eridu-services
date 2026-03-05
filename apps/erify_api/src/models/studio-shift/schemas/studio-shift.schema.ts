@@ -235,11 +235,103 @@ export const assignDutyManagerSchema = z.object({
   is_duty_manager: z.boolean(),
 });
 
+export const shiftCalendarQuerySchema = z.object({
+  date_from: z.iso.date().optional(),
+  date_to: z.iso.date().optional(),
+  include_cancelled: z.coerce.boolean().default(true),
+})
+  .transform((data) => ({
+    dateFrom: data.date_from ? new Date(data.date_from) : undefined,
+    dateTo: data.date_to ? new Date(data.date_to) : undefined,
+    includeCancelled: data.include_cancelled,
+  }));
+
+export const shiftAlignmentQuerySchema = z.object({
+  date_from: z.iso.date().optional(),
+  date_to: z.iso.date().optional(),
+  include_cancelled: z.coerce.boolean().default(false),
+})
+  .transform((data) => ({
+    dateFrom: data.date_from ? new Date(data.date_from) : undefined,
+    dateTo: data.date_to ? new Date(data.date_to) : undefined,
+    includeCancelled: data.include_cancelled,
+  }));
+
+export const shiftCalendarDto = z.object({
+  period: z.object({
+    date_from: z.iso.datetime(),
+    date_to: z.iso.datetime(),
+  }),
+  summary: z.object({
+    shift_count: z.number().int().nonnegative(),
+    block_count: z.number().int().nonnegative(),
+    total_hours: z.number().nonnegative(),
+    total_projected_cost: z.string(),
+    total_calculated_cost: z.string(),
+  }),
+  timeline: z.array(z.object({
+    date: z.iso.date(),
+    users: z.array(z.object({
+      user_id: z.string(),
+      user_name: z.string(),
+      total_hours: z.number().nonnegative(),
+      total_projected_cost: z.string(),
+      shifts: z.array(z.object({
+        shift_id: z.string(),
+        status: studioShiftStatusSchema,
+        is_duty_manager: z.boolean(),
+        hourly_rate: z.string(),
+        projected_cost: z.string(),
+        calculated_cost: z.string().nullable(),
+        total_hours: z.number().nonnegative(),
+        blocks: z.array(z.object({
+          block_id: z.string(),
+          start_time: z.iso.datetime(),
+          end_time: z.iso.datetime(),
+          duration_hours: z.number().nonnegative(),
+        })),
+      })),
+    })),
+  })),
+});
+
+export const shiftAlignmentDto = z.object({
+  period: z.object({
+    date_from: z.iso.datetime(),
+    date_to: z.iso.datetime(),
+  }),
+  summary: z.object({
+    shows_checked: z.number().int().nonnegative(),
+    assigned_members_checked: z.number().int().nonnegative(),
+    idle_segments_count: z.number().int().nonnegative(),
+    missing_shift_count: z.number().int().nonnegative(),
+  }),
+  idle_segments: z.array(z.object({
+    show_id: z.string(),
+    show_name: z.string(),
+    user_id: z.string(),
+    user_name: z.string(),
+    segment_start: z.iso.datetime(),
+    segment_end: z.iso.datetime(),
+    duration_minutes: z.number().int().positive(),
+  })),
+  missing_shift_assignments: z.array(z.object({
+    show_id: z.string(),
+    show_name: z.string(),
+    user_id: z.string(),
+    user_name: z.string(),
+    show_start: z.iso.datetime(),
+    show_end: z.iso.datetime(),
+  })),
+});
+
 export type CreateStudioShiftInput = z.infer<typeof createStudioShiftSchema>;
 export type UpdateStudioShiftInput = z.infer<typeof updateStudioShiftSchema>;
 export type ListStudioShiftsQuery = z.infer<typeof listStudioShiftsQuerySchema>;
 export type ListMyStudioShiftsQuery = z.infer<typeof listMyStudioShiftsQuerySchema>;
 export type AssignDutyManagerInput = z.infer<typeof assignDutyManagerSchema>;
+export type ShiftCalendarQuery = z.infer<typeof shiftCalendarQuerySchema>;
+export type ShiftAlignmentQuery = z.infer<typeof shiftAlignmentQuerySchema>;
 
 export class CreateStudioShiftDto extends createZodDto(createStudioShiftSchema) {}
 export class UpdateStudioShiftDto extends createZodDto(updateStudioShiftSchema) {}
@@ -247,4 +339,6 @@ export class ListStudioShiftsQueryDto extends createZodDto(listStudioShiftsQuery
 export class ListMyStudioShiftsQueryDto extends createZodDto(listMyStudioShiftsQuerySchema) {}
 export class DutyManagerQueryDto extends createZodDto(dutyManagerQuerySchema) {}
 export class AssignDutyManagerDto extends createZodDto(assignDutyManagerSchema) {}
+export class ShiftCalendarQueryDto extends createZodDto(shiftCalendarQuerySchema) {}
+export class ShiftAlignmentQueryDto extends createZodDto(shiftAlignmentQuerySchema) {}
 export class StudioShiftDto extends createZodDto(studioShiftDto) {}

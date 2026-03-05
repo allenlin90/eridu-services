@@ -25,6 +25,7 @@ describe('studioShiftService', () => {
             findByUidInStudio: jest.fn(),
             findPaginated: jest.fn(),
             findPaginatedForUser: jest.fn(),
+            findByStudioAndBlockWindow: jest.fn(),
             findOverlappingShift: jest.fn(),
             updateShift: jest.fn(),
             softDeleteInStudio: jest.fn(),

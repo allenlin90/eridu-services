@@ -214,6 +214,44 @@ export class StudioShiftRepository extends BaseRepository<
     return { data, total };
   }
 
+  async findByStudioAndBlockWindow(params: {
+    studioUid: string;
+    start: Date;
+    end: Date;
+    includeCancelled?: boolean;
+  }): Promise<StudioShiftWithRelations[]> {
+    return this.prisma.studioShift.findMany({
+      where: {
+        studio: {
+          uid: params.studioUid,
+          deletedAt: null,
+        },
+        deletedAt: null,
+        ...(params.includeCancelled ? {} : { status: { not: 'CANCELLED' } }),
+        blocks: {
+          some: {
+            deletedAt: null,
+            startTime: { lt: params.end },
+            endTime: { gt: params.start },
+          },
+        },
+      },
+      orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
+      include: {
+        user: true,
+        studio: true,
+        blocks: {
+          where: {
+            deletedAt: null,
+            startTime: { lt: params.end },
+            endTime: { gt: params.start },
+          },
+          orderBy: { startTime: 'asc' },
+        },
+      },
+    });
+  }
+
   async findOverlappingShift(params: {
     studioUid: string;
     userUid: string;
