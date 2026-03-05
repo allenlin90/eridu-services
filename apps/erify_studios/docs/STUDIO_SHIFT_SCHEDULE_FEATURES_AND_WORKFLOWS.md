@@ -196,6 +196,7 @@ Pending scope:
 - Expanded backend service tests to cover cross-midnight block cost calculation and empty-block rejection.
 - Added backend `updateShift` test coverage for member reassignment with membership-rate inheritance when `hourly_rate` is omitted.
 - Expanded studio shift controller tests to cover show/create/update/delete flows and not-found handling on show/update/delete/duty-manager assignment.
+- Added initial FE shift component tests for `CurrentDutyManagerCard` and `ShiftCalendarCard` state rendering.
 
 ## Current Operational Workflows
 
