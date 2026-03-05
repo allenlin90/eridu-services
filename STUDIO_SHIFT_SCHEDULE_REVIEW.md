@@ -89,7 +89,7 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 
 ### Important
 
-- [ ] **Member `/my-shifts` table view**: Currently calendar-only. Add a table/list view with date-range query (read-only, member-scoped) with calendar/table toggle.
+- [x] **Member `/my-shifts` table view**: Added read-only table/list mode with calendar/table toggle, date-range filtering, status filter, and pagination on member-scoped query.
 - [x] **Generic error messages**: Shift create/edit now parses API error payloads and surfaces backend-specific validation messages when available.
 - [x] **Delete confirmation UX**: Added armed-state styling behavior so only the confirm state renders as destructive (`Confirm Delete` in red).
 - [x] **Dashboard "My Upcoming Shifts" link**: Added `View All` link from dashboard card to `/my-shifts`.
@@ -112,7 +112,6 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 | Task assignment shift warning | Check if assignee has overlapping `StudioShiftBlock` during task assignment; show warning if no shift coverage | High     |
 | Show alignment orchestration (FE integration) | Backend `shift-alignment` endpoint is implemented; `/studios/:studioId/shows` now includes a date-range summary warning card focused on task-readiness metrics | High     |
 | Financial aggregation (FE integration)         | Backend `shift-calendar` endpoint is implemented; admin planning cost snapshot is now in `/studios/:studioId/shifts`, richer report views remain              | Medium   |
-| `/my-shifts` table view       | Add read-only table/list view with date-range query alongside the existing calendar view                       | Medium   |
 | Member availability           | Members set availability slots for admin reference during shift creation                                       | Low      |
 | Recurring shift templates     | Weekly pattern creation instead of one-off entries                                                             | Low      |
 | Shift data export             | CSV/Excel export for payroll integration                                                                       | Low      |
