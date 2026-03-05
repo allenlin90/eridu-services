@@ -123,7 +123,7 @@ export class ShiftAlignmentService {
       missing_moderation_task: boolean;
     }> = [];
 
-    // Check continuity from first show start to last show end in each operational day.
+    // Secondary awareness metric: continuity from first show start to last show end in each operational day.
     for (const [operationalDay, bucket] of operationalDays.entries()) {
       const showDayWindow = { start: bucket.firstShowStart, end: bucket.lastShowEnd };
       const dayOverlaps = dutyManagerIntervals
@@ -143,7 +143,8 @@ export class ShiftAlignmentService {
       }
     }
 
-    // Per-show risk checks: duty manager overlap + task readiness contract.
+    // Primary risk check: at least one duty manager must overlap each show window.
+    // Task readiness checks are also evaluated per show.
     for (const show of showWindows) {
       const showDutyOverlaps = dutyManagerIntervals
         .map((interval) => this.clipInterval(interval.start, interval.end, show.start, show.end))
@@ -162,10 +163,14 @@ export class ShiftAlignmentService {
       const tasks = taskMapByShowId.get(show.id) ?? [];
       const hasNoTasks = tasks.length === 0;
       const unassignedTaskCount = tasks.filter((task) => task.assigneeId === null).length;
-      const presentTypes = new Set(tasks.map((task) => task.type));
-      const missingRequiredTaskTypes = REQUIRED_SHOW_TASK_TYPES
-        .filter((requiredType) => !presentTypes.has(requiredType))
-        .map((type) => type as 'SETUP' | 'ACTIVE' | 'CLOSURE');
+      const missingRequiredTaskTypes = hasNoTasks
+        ? REQUIRED_SHOW_TASK_TYPES.map((type) => type as 'SETUP' | 'ACTIVE' | 'CLOSURE')
+        : (() => {
+            const presentTypes = new Set(tasks.map((task) => task.type));
+            return REQUIRED_SHOW_TASK_TYPES
+              .filter((requiredType) => !presentTypes.has(requiredType))
+              .map((type) => type as 'SETUP' | 'ACTIVE' | 'CLOSURE');
+          })();
 
       // Premium shows require at least one moderation task.
       const isPremiumShow = show.standardName.toLowerCase() === 'premium';

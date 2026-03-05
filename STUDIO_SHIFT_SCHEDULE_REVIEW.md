@@ -84,15 +84,15 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 
 ### Critical
 
-- [ ] **Missing-tasks logic for zero-task shows**: When a show has no tasks at all, `ShiftAlignmentService` reports `has_no_tasks: true` but `missing_required_task_types` may be incomplete. Should short-circuit: report all three required types (`SETUP`, `ACTIVE`, `CLOSURE`) as missing, and `missing_moderation_task: true` for premium shows.
-- [ ] **Duty-manager coverage clarification**: The primary business concern is "at least one duty manager during show time" — not continuous coverage across the full operational day. Per-show check is the critical one. Operational-day gap check remains useful but is secondary. Clarify in code comments and docs.
+- [x] **Missing-tasks logic for zero-task shows**: `ShiftAlignmentService` now short-circuits zero-task shows to report all required types (`SETUP`, `ACTIVE`, `CLOSURE`) as missing, and flags `missing_moderation_task: true` for premium shows.
+- [x] **Duty-manager coverage clarification**: Clarified in service comments/docs that per-show duty-manager overlap is the primary risk check; operational-day continuity gaps are secondary awareness.
 
 ### Important
 
 - [ ] **Member `/my-shifts` table view**: Currently calendar-only. Add a table/list view with date-range query (read-only, member-scoped) with calendar/table toggle.
-- [ ] **Generic error messages**: Create/edit failures show "Failed to create shift. Please try again." — parse API error response to surface backend-specific messages.
-- [ ] **Delete confirmation UX**: Two-click same-button pattern has no visual armed state. Change text/color on armed state (e.g., "Delete" → "Confirm Delete" in red).
-- [ ] **Dashboard "My Upcoming Shifts" link**: No "View All →" link to `/my-shifts`. Add link in card header/footer.
+- [x] **Generic error messages**: Shift create/edit now parses API error payloads and surfaces backend-specific validation messages when available.
+- [x] **Delete confirmation UX**: Added armed-state styling behavior so only the confirm state renders as destructive (`Confirm Delete` in red).
+- [x] **Dashboard "My Upcoming Shifts" link**: Added `View All` link from dashboard card to `/my-shifts`.
 
 ### Later Phase
 

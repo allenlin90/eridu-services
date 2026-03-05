@@ -221,7 +221,11 @@ export function ShiftRosterCard({
                                       </DropdownMenuItem>
                                       <DropdownMenuItem
                                         onClick={() => onDelete(shift.id)}
-                                        className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
+                                        className={
+                                          deleteConfirmShiftId === shift.id
+                                            ? 'text-destructive focus:bg-destructive focus:text-destructive-foreground'
+                                            : ''
+                                        }
                                       >
                                         {deleteConfirmShiftId === shift.id ? 'Confirm Delete' : 'Delete Shift'}
                                       </DropdownMenuItem>

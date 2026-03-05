@@ -548,11 +548,18 @@ function StudioDashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>My Upcoming Shifts</CardTitle>
-            <CardDescription>
-              Next 5 assigned shifts from the selected operational day.
-            </CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between gap-3">
+            <div>
+              <CardTitle>My Upcoming Shifts</CardTitle>
+              <CardDescription>
+                Next 5 assigned shifts from the selected operational day.
+              </CardDescription>
+            </div>
+            <Button asChild size="sm" variant="outline">
+              <Link to="/studios/$studioId/my-shifts" params={{ studioId }}>
+                View All
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent className="space-y-2">
             {(isLoadingMyShifts || isFetchingMyShifts)

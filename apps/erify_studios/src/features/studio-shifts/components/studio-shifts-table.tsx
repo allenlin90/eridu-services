@@ -28,6 +28,7 @@ import {
 } from '@/features/studio-shifts/utils/shift-form.utils';
 import {
   buildStudioShiftsQueryParams,
+  getApiErrorMessage,
   type ShiftListDutyFilter,
   type ShiftListStatus,
   sortShiftsByFirstBlockStart,
@@ -187,8 +188,8 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
         userId: previous.userId,
       }));
       setCreateMemberSearch('');
-    } catch {
-      setCreateFormError('Failed to create shift. Please try again.');
+    } catch (error) {
+      setCreateFormError(getApiErrorMessage(error, 'Failed to create shift. Please try again.'));
     }
   }, [createFormState, createShiftMutation]);
 
@@ -254,8 +255,12 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     try {
       await updateShiftMutation.mutateAsync({ shiftId: editingShift.id, payload });
       setEditDialogState(null);
-    } catch {
-      setEditDialogState((previous) => (previous ? { ...previous, error: 'Failed to update shift. Please try again.' } : null));
+    } catch (error) {
+      setEditDialogState((previous) => (
+        previous
+          ? { ...previous, error: getApiErrorMessage(error, 'Failed to update shift. Please try again.') }
+          : null
+      ));
     }
   }, [editDialogState, editingShift, updateShiftMutation]);
 

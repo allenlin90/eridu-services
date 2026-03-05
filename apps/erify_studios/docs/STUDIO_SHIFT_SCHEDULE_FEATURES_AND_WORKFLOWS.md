@@ -294,7 +294,7 @@ Pending scope:
 1. **`/shifts` is admin-only by design** — members check from dashboard.
 2. **`/my-shifts` route** — implemented as read-only member calendar using member-scoped shift query.
 3. **Dashboard "My Upcoming Shifts"** — implemented (next 5 upcoming assigned shifts).
-4. **TODO**: Add "View All →" link from dashboard "My Upcoming Shifts" card to `/my-shifts`.
+4. **Dashboard "View All" link**: Implemented. "My Upcoming Shifts" now links to `/my-shifts`.
 5. **TODO**: Add table/list view to `/my-shifts` (read-only, with date-range query) alongside the existing calendar view.
 
 ### Code Quality

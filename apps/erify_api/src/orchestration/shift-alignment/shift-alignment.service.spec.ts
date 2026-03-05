@@ -186,4 +186,37 @@ describe('shiftAlignmentService', () => {
     expect(result.summary.operational_days_checked).toBe(1);
     expect(result.duty_manager_missing_shows[0].operational_day).toBe('2026-03-05');
   });
+
+  it('should report all required task types as missing when a show has no tasks', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-03-05T04:00:00.000Z'));
+    studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
+    studioShiftService.findShiftsInWindow.mockResolvedValue([] as never);
+    showService.findMany.mockResolvedValue([
+      {
+        id: BigInt(30),
+        uid: 'show_no_tasks',
+        name: 'No Tasks Premium Show',
+        startTime: new Date('2026-03-05T10:00:00.000Z'),
+        endTime: new Date('2026-03-05T11:00:00.000Z'),
+        showStandard: { name: 'premium' },
+      },
+    ] as never);
+    taskService.findTasksByShowIds.mockResolvedValue([] as never);
+
+    const result = await service.getAlignment('std_1', {
+      dateFrom: new Date('2026-03-05'),
+      dateTo: new Date('2026-03-05'),
+      includeCancelled: false,
+    });
+
+    expect(result.summary.shows_without_tasks_count).toBe(1);
+    expect(result.summary.shows_missing_required_tasks_count).toBe(1);
+    expect(result.summary.premium_shows_missing_moderation_count).toBe(1);
+    expect(result.task_readiness_warnings[0]).toEqual(expect.objectContaining({
+      show_id: 'show_no_tasks',
+      has_no_tasks: true,
+      missing_required_task_types: ['SETUP', 'ACTIVE', 'CLOSURE'],
+      missing_moderation_task: true,
+    }));
+  });
 });

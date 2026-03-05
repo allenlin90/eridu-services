@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 import type { GetStudioShiftsParams } from '@/features/studio-shifts/api/get-studio-shifts';
 import type { ShiftBlockFormState } from '@/features/studio-shifts/types/shift-form.types';
 import { sortShiftFormBlocksByStart } from '@/features/studio-shifts/utils/shift-blocks.utils';
@@ -65,4 +67,30 @@ export function validateShiftBlocks(date: string, formBlocks: ShiftBlockFormStat
   }
 
   return { error: null, blocks };
+}
+
+type ApiErrorResponse = {
+  message?: string | string[];
+  error?: string;
+};
+
+export function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (axios.isAxiosError(error)) {
+    const responseData = error.response?.data as ApiErrorResponse | undefined;
+    if (Array.isArray(responseData?.message) && responseData.message.length > 0) {
+      return responseData.message.join(', ');
+    }
+    if (typeof responseData?.message === 'string' && responseData.message.trim().length > 0) {
+      return responseData.message;
+    }
+    if (typeof responseData?.error === 'string' && responseData.error.trim().length > 0) {
+      return responseData.error;
+    }
+  }
+
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+
+  return fallback;
 }
