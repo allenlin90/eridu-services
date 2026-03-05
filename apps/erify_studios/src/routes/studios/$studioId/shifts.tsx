@@ -13,6 +13,10 @@ import {
 
 import { StudioShiftsCalendar } from '@/features/studio-shifts/components/studio-shifts-calendar';
 import { StudioShiftsTable } from '@/features/studio-shifts/components/studio-shifts-table';
+import {
+  toCalendarViewSearch,
+  toTableViewSearch,
+} from '@/features/studio-shifts/utils/studio-shifts-route-search.utils';
 import { useUserProfile } from '@/lib/hooks/use-user';
 
 const shiftsSearchSchema = z.object({
@@ -60,14 +64,9 @@ function StudioShiftsPage() {
   const handleToggleView = (mode: 'calendar' | 'table') => {
     updateSearch((prev) => {
       if (mode === 'calendar') {
-        // Strip out table-specific query parameters
-        return {
-          view: 'calendar',
-          page: 1,
-          limit: 20,
-        };
+        return toCalendarViewSearch();
       }
-      return { ...prev, view: 'table' };
+      return toTableViewSearch(prev);
     }, { replace: false });
   };
 

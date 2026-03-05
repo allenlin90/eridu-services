@@ -199,6 +199,7 @@ Pending scope:
 - Added initial FE shift component tests for `CurrentDutyManagerCard` and `ShiftCalendarCard` state rendering.
 - Added initial `StudioShiftsTable` orchestration tests (shift ordering, delete confirmation behavior, create dialog open state, and limit-change wiring).
 - Added `StudioShiftFormDialog` and `ShiftFormFields` interaction tests (submit/cancel/loading behavior, block add defaults, date-required feedback, and cross-midnight `+1 day` indicator).
+- Extracted shifts route view-toggle search transitions into shared utility functions and added focused tests for calendar/table search state behavior.
 
 ## Current Operational Workflows
 

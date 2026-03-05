@@ -101,4 +101,4 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 | Service: updateShift | ✅ Duty manager flag preservation, block UID stability/soft-delete behavior, user reassignment rate inheritance | None identified in reviewed scope |
 | Controller           | ✅ Pagination, duty manager, timestamp query, create/update/delete flows, not-found paths | None identified in reviewed scope |
 | FE utils             | ✅ Added initial coverage (`validateShiftBlocks`, `combineDateAndTime`, sort/window helpers) | Remaining utility edge cases and timezone variants            |
-| FE components        | ✅ Initial coverage for duty manager/calendar cards, table orchestration, and form/dialog interactions | Deep integration coverage across full shift page flows |
+| FE components        | ✅ Initial coverage for duty manager/calendar cards, table orchestration, form/dialog interactions, and route view-search transition utils | Deep integration coverage across full shift page flows |
