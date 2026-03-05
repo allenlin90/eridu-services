@@ -1,5 +1,6 @@
 import { ShiftAlignmentService } from './shift-alignment.service';
 
+import type { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import type { ShowService } from '@/models/show/show.service';
 import type { StudioService } from '@/models/studio/studio.service';
 import type { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
@@ -9,6 +10,7 @@ describe('shiftAlignmentService', () => {
   let studioService: jest.Mocked<StudioService>;
   let studioShiftService: jest.Mocked<StudioShiftService>;
   let showService: jest.Mocked<ShowService>;
+  let studioMembershipService: jest.Mocked<StudioMembershipService>;
 
   beforeEach(() => {
     studioService = {
@@ -23,7 +25,11 @@ describe('shiftAlignmentService', () => {
       findMany: jest.fn(),
     } as never;
 
-    service = new ShiftAlignmentService(studioService, studioShiftService, showService);
+    studioMembershipService = {
+      listStudioMemberships: jest.fn(),
+    } as never;
+
+    service = new ShiftAlignmentService(studioService, studioShiftService, showService, studioMembershipService);
   });
 
   afterEach(() => {
@@ -45,6 +51,17 @@ describe('shiftAlignmentService', () => {
   it('should report both idle segments and missing shift assignments', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-03-05T09:00:00.000Z'));
     studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
+    studioMembershipService.listStudioMemberships.mockResolvedValue({
+      data: [
+        {
+          user: { uid: 'user_1' },
+        },
+        {
+          user: { uid: 'user_2' },
+        },
+      ],
+      total: 2,
+    } as never);
 
     studioShiftService.findShiftsInWindow.mockResolvedValue([
       {
@@ -113,6 +130,14 @@ describe('shiftAlignmentService', () => {
   it('should skip already-ended shows when checking planning coverage', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-03-05T15:00:00.000Z'));
     studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
+    studioMembershipService.listStudioMemberships.mockResolvedValue({
+      data: [
+        {
+          user: { uid: 'user_1' },
+        },
+      ],
+      total: 1,
+    } as never);
 
     studioShiftService.findShiftsInWindow.mockResolvedValue([
       {
@@ -169,5 +194,48 @@ describe('shiftAlignmentService', () => {
     expect(result.summary.missing_shift_count).toBe(0);
     expect(result.idle_segments).toEqual([]);
     expect(result.missing_shift_assignments).toEqual([]);
+  });
+
+  it('should ignore show MC users without studio membership', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-03-05T09:00:00.000Z'));
+    studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
+    studioMembershipService.listStudioMemberships.mockResolvedValue({
+      data: [
+        {
+          user: { uid: 'user_1' },
+        },
+      ],
+      total: 1,
+    } as never);
+
+    studioShiftService.findShiftsInWindow.mockResolvedValue([] as never);
+    showService.findMany.mockResolvedValue([
+      {
+        uid: 'show_1',
+        name: 'Show With Non-member MC',
+        startTime: new Date('2026-03-05T10:00:00.000Z'),
+        endTime: new Date('2026-03-05T11:00:00.000Z'),
+        showMCs: [
+          {
+            mc: {
+              user: { uid: 'user_999', name: 'External MC' },
+            },
+          },
+        ],
+      },
+    ] as never);
+
+    const result = await service.getAlignment('std_1', {
+      dateFrom: new Date('2026-03-05'),
+      dateTo: new Date('2026-03-05'),
+      includeCancelled: false,
+    });
+
+    expect(result.summary.shows_checked).toBe(1);
+    expect(result.summary.assigned_members_checked).toBe(0);
+    expect(result.summary.missing_shift_count).toBe(0);
+    expect(result.summary.idle_segments_count).toBe(0);
+    expect(result.missing_shift_assignments).toEqual([]);
+    expect(result.idle_segments).toEqual([]);
   });
 });

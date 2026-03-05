@@ -133,7 +133,7 @@ Delivered:
   - `GET /studios/:studioId/shift-calendar`
   - `GET /studios/:studioId/shift-alignment`
 - `shift-calendar` now returns date-window timeline aggregation grouped by day/member, with period summary totals (hours/projected/calculated cost).
-- `shift-alignment` now computes show-window coverage warnings against assigned members (idle uncovered segments + missing shift assignments), and skips already-ended shows for planning-focused output.
+- `shift-alignment` now computes show-window coverage warnings against assigned members (idle uncovered segments + missing shift assignments), skips already-ended shows for planning-focused output, and only evaluates assigned users who have active membership in the target studio.
 - Frontend admin planning cards now consume these endpoints on `/studios/:studioId/shifts` (coverage warnings + cost snapshot), rather than dashboard.
 
 Pending scope:

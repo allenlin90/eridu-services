@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
 import type { ShiftAlignmentQuery } from '@/models/studio-shift/schemas/studio-shift.schema';
@@ -32,6 +33,7 @@ export class ShiftAlignmentService {
     private readonly studioService: StudioService,
     private readonly studioShiftService: StudioShiftService,
     private readonly showService: ShowService,
+    private readonly studioMembershipService: StudioMembershipService,
   ) {}
 
   async getAlignment(studioUid: string, query: ShiftAlignmentQuery) {
@@ -75,6 +77,7 @@ export class ShiftAlignmentService {
     ]);
 
     const shiftIntervalsByUser = this.indexShiftIntervalsByUser(shifts, window.start, window.end);
+    const studioMemberUserIds = await this.getStudioMemberUserIds(studioUid);
     const idleSegments: Array<{
       show_id: string;
       show_name: string;
@@ -107,7 +110,8 @@ export class ShiftAlignmentService {
 
       showsChecked += 1;
 
-      const assignedUsers = this.getAssignedUsers(show);
+      const assignedUsers = this.getAssignedUsers(show)
+        .filter((assignedUser) => studioMemberUserIds.has(assignedUser.userId));
       for (const assignedUser of assignedUsers) {
         assignedMembersChecked += 1;
         const userIntervals = shiftIntervalsByUser.get(assignedUser.userId) ?? [];
@@ -200,6 +204,36 @@ export class ShiftAlignmentService {
     }
 
     return [...unique.entries()].map(([userId, userName]) => ({ userId, userName }));
+  }
+
+  private async getStudioMemberUserIds(studioUid: string): Promise<Set<string>> {
+    const pageSize = 500;
+    let skip = 0;
+    const memberUserIds = new Set<string>();
+
+    while (true) {
+      const memberships = await this.studioMembershipService.listStudioMemberships<{ user: true }>({
+        studioId: studioUid,
+        skip,
+        take: pageSize,
+      }, {
+        user: true,
+      });
+
+      for (const membership of memberships.data) {
+        const userUid = 'user' in membership ? membership.user?.uid : undefined;
+        if (userUid) {
+          memberUserIds.add(userUid);
+        }
+      }
+
+      if (memberships.data.length < pageSize) {
+        break;
+      }
+      skip += pageSize;
+    }
+
+    return memberUserIds;
   }
 
   private findGaps(window: TimeInterval, intervals: TimeInterval[]): TimeInterval[] {
