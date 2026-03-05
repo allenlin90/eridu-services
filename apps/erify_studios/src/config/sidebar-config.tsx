@@ -13,6 +13,7 @@ import {
   Ruler,
   Settings,
   Shapes,
+  ShieldCheck,
   Users,
   UserSquare2,
   Videotape,
@@ -121,16 +122,12 @@ function isPathActive(pathname: string, targetUrl: string): boolean {
 }
 
 /**
- * Generates studio management navigation items based on user role
- * @param studioId - The unique identifier of the active studio
- * @param role - The user's role in the studio (admin, manager, member)
- * @returns Array of navigation sub-items for the Studio section
+ * Generates common studio navigation items available to all studio members.
  */
-function getStudioManagementItems(
+function getStudioCommonItems(
   studioId: string,
-  role: string,
 ): SidebarNavItem['items'] {
-  const managementItems: SidebarNavItem['items'] = [
+  return [
     {
       title: 'Dashboard',
       url: `/studios/${studioId}/dashboard`,
@@ -147,35 +144,44 @@ function getStudioManagementItems(
       icon: CalendarDays,
     },
   ];
+}
+
+/**
+ * Generates elevated studio navigation items (manager/admin routes).
+ */
+function getStudioAdminItems(
+  studioId: string,
+  role: string,
+): SidebarNavItem['items'] {
+  const adminItems: SidebarNavItem['items'] = [];
 
   if (role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER) {
-    managementItems.push({
+    adminItems.push({
       title: 'Review Queue',
       url: `/studios/${studioId}/tasks?status=REVIEW`,
       icon: ClipboardCheck,
     });
   }
 
-  // Check role safely (case-insensitive)
   if (role === STUDIO_ROLE.ADMIN) {
-    managementItems.push({
+    adminItems.push({
       title: 'Shift Schedule',
       url: `/studios/${studioId}/shifts`,
       icon: CalendarDays,
     });
-    managementItems.push({
+    adminItems.push({
       title: 'Shows',
       url: `/studios/${studioId}/shows`,
       icon: Clapperboard,
     });
-    managementItems.push({
+    adminItems.push({
       title: 'Task Templates',
       url: `/studios/${studioId}/task-templates`,
       icon: ClipboardCheck,
     });
   }
 
-  return managementItems;
+  return adminItems;
 }
 
 /**
@@ -221,19 +227,26 @@ export function useSidebarConfig(
       });
     }
     if (activeStudio) {
-      // Studio management items (appended last)
-      const studioManagementItems = buildActiveItems(getStudioManagementItems(
-        activeStudio.studio.uid,
-        activeStudio.role,
-      ));
+      const studioCommonItems = buildActiveItems(getStudioCommonItems(activeStudio.studio.uid));
+      const studioAdminItems = buildActiveItems(getStudioAdminItems(activeStudio.studio.uid, activeStudio.role));
 
       navItems.push({
-        title: 'Studio',
-        url: '/studios',
+        title: 'Studio Common',
+        url: `/studios/${activeStudio.studio.uid}`,
         icon: Videotape,
-        isActive: studioManagementItems.some((item) => item.isActive),
-        items: studioManagementItems,
+        isActive: studioCommonItems.some((item) => item.isActive),
+        items: studioCommonItems,
       });
+
+      if (studioAdminItems.length > 0) {
+        navItems.push({
+          title: 'Studio Admin',
+          url: `/studios/${activeStudio.studio.uid}/admin`,
+          icon: ShieldCheck,
+          isActive: studioAdminItems.some((item) => item.isActive),
+          items: studioAdminItems,
+        });
+      }
     }
 
     return navItems;
@@ -269,7 +282,7 @@ export function useSidebarConfig(
       />
     ),
     navMain: sidebarNavItems,
-    navMainLabel: 'Activities', // Hardcoded for now
+    navMainLabel: 'Workspace',
     user,
     onLogout: handleLogout,
   };
