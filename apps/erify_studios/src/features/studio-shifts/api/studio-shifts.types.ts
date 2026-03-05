@@ -73,25 +73,41 @@ export type StudioShiftAlignmentResponse = {
   };
   summary: {
     shows_checked: number;
-    assigned_members_checked: number;
-    idle_segments_count: number;
-    missing_shift_count: number;
+    operational_days_checked: number;
+    risk_show_count: number;
+    shows_without_duty_manager_count: number;
+    operational_days_without_duty_manager_count: number;
+    shows_without_tasks_count: number;
+    shows_with_unassigned_tasks_count: number;
+    tasks_unassigned_count: number;
+    shows_missing_required_tasks_count: number;
+    premium_shows_missing_moderation_count: number;
   };
-  idle_segments: Array<{
-    show_id: string;
-    show_name: string;
-    user_id: string;
-    user_name: string;
+  duty_manager_uncovered_segments: Array<{
+    operational_day: string;
     segment_start: string;
     segment_end: string;
     duration_minutes: number;
+    first_show_start: string;
+    last_show_end: string;
   }>;
-  missing_shift_assignments: Array<{
+  duty_manager_missing_shows: Array<{
     show_id: string;
     show_name: string;
-    user_id: string;
-    user_name: string;
     show_start: string;
     show_end: string;
+    operational_day: string;
+  }>;
+  task_readiness_warnings: Array<{
+    show_id: string;
+    show_name: string;
+    show_start: string;
+    show_end: string;
+    operational_day: string;
+    show_standard: string;
+    has_no_tasks: boolean;
+    unassigned_task_count: number;
+    missing_required_task_types: Array<'SETUP' | 'ACTIVE' | 'CLOSURE'>;
+    missing_moderation_task: boolean;
   }>;
 };

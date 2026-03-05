@@ -97,17 +97,7 @@ function StudioShiftsPage() {
     isFetching: isFetchingShiftAlignment,
     refetch: refetchShiftAlignment,
   } = useShiftAlignment(studioId, orchestrationQueryParams, { enabled: isStudioAdmin });
-  const missingShiftAssignments = shiftAlignmentResponse?.missing_shift_assignments ?? [];
-  const missingShiftPairCount = missingShiftAssignments.length;
-  const uniqueShowsWithMissingCoverageCount = new Set(
-    missingShiftAssignments.map((assignment) => assignment.show_id),
-  ).size;
-  const uniqueMembersWithMissingCoverageCount = new Set(
-    missingShiftAssignments.map((assignment) => assignment.user_id),
-  ).size;
-  const idleUncoveredSegmentCount = shiftAlignmentResponse?.summary.idle_segments_count ?? 0;
-  const shiftCoverageWarningCount = (shiftAlignmentResponse?.summary.idle_segments_count ?? 0)
-    + (shiftAlignmentResponse?.summary.missing_shift_count ?? 0);
+  const shiftCoverageWarningCount = shiftAlignmentResponse?.summary.risk_show_count ?? 0;
   const hasShiftCoverageWarnings = shiftCoverageWarningCount > 0;
 
   const updateSearch = useCallback((
@@ -192,7 +182,7 @@ function StudioShiftsPage() {
         <Card>
           <CardHeader className="flex flex-row items-start justify-between space-y-0">
             <div className="space-y-1">
-              <CardTitle className="text-base">Shift Coverage Warnings</CardTitle>
+              <CardTitle className="text-base">Planning Risk Warnings</CardTitle>
               <CardDescription>
                 Planning window:
                 {' '}
@@ -211,7 +201,7 @@ function StudioShiftsPage() {
               className="h-8 w-8 shrink-0"
               onClick={() => void refetchShiftAlignment()}
               disabled={isFetchingShiftAlignment}
-              aria-label="Refresh shift coverage warnings"
+              aria-label="Refresh planning risk warnings"
             >
               <RefreshCw className={`h-4 w-4 ${isFetchingShiftAlignment ? 'animate-spin' : ''}`} />
             </Button>
@@ -219,7 +209,7 @@ function StudioShiftsPage() {
           <CardContent>
             {(isLoadingShiftAlignment || isFetchingShiftAlignment)
               ? (
-                  <p className="text-sm text-muted-foreground">Checking shift/show alignment...</p>
+                  <p className="text-sm text-muted-foreground">Checking duty manager and task readiness risks...</p>
                 )
               : (
                   <div className="space-y-2">
@@ -228,28 +218,44 @@ function StudioShiftsPage() {
                       ? (
                           <div className="space-y-1 text-sm text-amber-700">
                             <p>
-                              {uniqueShowsWithMissingCoverageCount}
+                              {shiftAlignmentResponse?.summary.shows_without_duty_manager_count ?? 0}
                               {' '}
-                              unique shows with missing coverage
+                              upcoming shows without duty manager coverage
                             </p>
                             <p>
-                              {uniqueMembersWithMissingCoverageCount}
+                              {shiftAlignmentResponse?.summary.operational_days_without_duty_manager_count ?? 0}
                               {' '}
-                              unique members with missing coverage
+                              operational days (6am boundary) with duty manager gaps
                             </p>
                             <p>
-                              {missingShiftPairCount}
+                              {shiftAlignmentResponse?.summary.shows_without_tasks_count ?? 0}
                               {' '}
-                              show-member missing coverage pairs and
+                              shows with no tasks,
                               {' '}
-                              {idleUncoveredSegmentCount}
+                              {shiftAlignmentResponse?.summary.shows_with_unassigned_tasks_count ?? 0}
                               {' '}
-                              idle uncovered segments.
+                              shows with unassigned tasks (
+                              {shiftAlignmentResponse?.summary.tasks_unassigned_count ?? 0}
+                              {' '}
+                              tasks).
+                            </p>
+                            <p>
+                              {shiftAlignmentResponse?.summary.shows_missing_required_tasks_count ?? 0}
+                              {' '}
+                              shows missing required
+                              {' '}
+                              SETUP/ACTIVE/CLOSURE tasks and
+                              {' '}
+                              {shiftAlignmentResponse?.summary.premium_shows_missing_moderation_count ?? 0}
+                              {' '}
+                              premium shows missing moderation tasks.
                             </p>
                           </div>
                         )
                       : (
-                          <p className="text-sm text-emerald-700">No shift coverage warnings for assigned show members.</p>
+                          <p className="text-sm text-emerald-700">
+                            No duty manager or task-readiness risks for upcoming shows.
+                          </p>
                         )}
                   </div>
                 )}

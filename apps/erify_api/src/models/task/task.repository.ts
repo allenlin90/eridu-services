@@ -249,10 +249,15 @@ export class TaskRepository extends BaseRepository<
     });
   }
 
+  async findTasksByShowIds(showIds: bigint[]): Promise<Task[]>;
+  async findTasksByShowIds<T extends Prisma.TaskInclude>(
+    showIds: bigint[],
+    include: T,
+  ): Promise<Array<Prisma.TaskGetPayload<{ include: T }>>>;
   async findTasksByShowIds(
     showIds: bigint[],
     include?: Prisma.TaskInclude,
-  ): Promise<Task[]> {
+  ) {
     return this.prisma.task.findMany({
       where: {
         deletedAt: null,

@@ -70,21 +70,27 @@ describe('shiftCalendarController', () => {
       },
       summary: {
         shows_checked: 1,
-        assigned_members_checked: 1,
-        idle_segments_count: 0,
-        missing_shift_count: 1,
+        operational_days_checked: 1,
+        risk_show_count: 1,
+        shows_without_duty_manager_count: 1,
+        operational_days_without_duty_manager_count: 1,
+        shows_without_tasks_count: 0,
+        shows_with_unassigned_tasks_count: 1,
+        tasks_unassigned_count: 2,
+        shows_missing_required_tasks_count: 1,
+        premium_shows_missing_moderation_count: 1,
       },
-      idle_segments: [],
-      missing_shift_assignments: [
+      duty_manager_uncovered_segments: [],
+      duty_manager_missing_shows: [
         {
           show_id: 'show_1',
           show_name: 'Morning Show',
-          user_id: 'user_1',
-          user_name: 'Alice',
           show_start: '2026-03-05T10:00:00.000Z',
           show_end: '2026-03-05T12:00:00.000Z',
+          operational_day: '2026-03-05',
         },
       ],
+      task_readiness_warnings: [],
     });
 
     const query = {
@@ -95,6 +101,6 @@ describe('shiftCalendarController', () => {
     const result = await controller.showAlignment('std_1', query as never);
 
     expect(shiftAlignmentService.getAlignment).toHaveBeenCalledWith('std_1', query);
-    expect(result.summary.missing_shift_count).toBe(1);
+    expect(result.summary.shows_without_duty_manager_count).toBe(1);
   });
 });

@@ -1,39 +1,51 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
+import { TaskType } from '@prisma/client';
 
 import { HttpError } from '@/lib/errors/http-error.util';
-import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
 import type { ShiftAlignmentQuery } from '@/models/studio-shift/schemas/studio-shift.schema';
 import { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
+import { TaskService } from '@/models/task/task.service';
 
 type ShiftWithBlocks = Awaited<ReturnType<StudioShiftService['findShiftsInWindow']>>[number];
-type ShowWithAssignments = Prisma.ShowGetPayload<{
+type ShowWithPlanningContext = Prisma.ShowGetPayload<{
   include: {
-    showMCs: {
-      include: {
-        mc: {
-          include: {
-            user: true;
-          };
-        };
-      };
-    };
+    showStandard: true;
   };
 }>;
+type TaskWithTargets = Awaited<ReturnType<TaskService['findTasksByShowIds']>>[number];
 
 type TimeInterval = { start: Date; end: Date };
+type ShowWindow = {
+  id: bigint;
+  uid: string;
+  name: string;
+  standardName: string;
+  start: Date;
+  end: Date;
+  operationalDay: string;
+};
+
+type OperationalDayBucket = {
+  firstShowStart: Date;
+  lastShowEnd: Date;
+  shows: ShowWindow[];
+};
+
+const REQUIRED_SHOW_TASK_TYPES: TaskType[] = [TaskType.SETUP, TaskType.ACTIVE, TaskType.CLOSURE];
 
 @Injectable()
 export class ShiftAlignmentService {
   private static readonly DEFAULT_WINDOW_DAYS = 7;
+  private static readonly OPERATIONAL_DAY_START_HOUR_UTC = 6;
 
   constructor(
     private readonly studioService: StudioService,
     private readonly studioShiftService: StudioShiftService,
     private readonly showService: ShowService,
-    private readonly studioMembershipService: StudioMembershipService,
+    private readonly taskService: TaskService,
   ) {}
 
   async getAlignment(studioUid: string, query: ShiftAlignmentQuery) {
@@ -62,89 +74,109 @@ export class ShiftAlignmentService {
         },
         orderBy: { startTime: 'asc' },
         include: {
-          showMCs: {
-            where: { deletedAt: null },
-            include: {
-              mc: {
-                include: {
-                  user: true,
-                },
-              },
-            },
-          },
+          showStandard: true,
         },
       }),
     ]);
 
-    const shiftIntervalsByUser = this.indexShiftIntervalsByUser(shifts, window.start, window.end);
-    const studioMemberUserIds = await this.getStudioMemberUserIds(studioUid);
-    const idleSegments: Array<{
-      show_id: string;
-      show_name: string;
-      user_id: string;
-      user_name: string;
+    const dutyManagerIntervals = this.collectDutyManagerIntervals(shifts, window.start, window.end);
+    const showWindows = this.buildShowWindows(shows as ShowWithPlanningContext[], window.start, window.end, now);
+    const operationalDays = this.groupShowsByOperationalDay(showWindows);
+    const taskMapByShowId = await this.buildTaskMapByShowId(showWindows);
+
+    const dutyManagerUncoveredSegments: Array<{
+      operational_day: string;
       segment_start: string;
       segment_end: string;
       duration_minutes: number;
+      first_show_start: string;
+      last_show_end: string;
     }> = [];
-    const missingShiftAssignments: Array<{
+    const dutyManagerMissingShows: Array<{
       show_id: string;
       show_name: string;
-      user_id: string;
-      user_name: string;
       show_start: string;
       show_end: string;
+      operational_day: string;
+    }> = [];
+    const taskReadinessWarnings: Array<{
+      show_id: string;
+      show_name: string;
+      show_start: string;
+      show_end: string;
+      operational_day: string;
+      show_standard: string;
+      has_no_tasks: boolean;
+      unassigned_task_count: number;
+      missing_required_task_types: Array<'SETUP' | 'ACTIVE' | 'CLOSURE'>;
+      missing_moderation_task: boolean;
     }> = [];
 
-    let assignedMembersChecked = 0;
-    let showsChecked = 0;
+    for (const [operationalDay, bucket] of operationalDays.entries()) {
+      const showDayWindow = { start: bucket.firstShowStart, end: bucket.lastShowEnd };
+      const dayOverlaps = dutyManagerIntervals
+        .map((interval) => this.clipInterval(interval.start, interval.end, showDayWindow.start, showDayWindow.end))
+        .filter((interval): interval is TimeInterval => Boolean(interval));
+      const dayGaps = this.findGaps(showDayWindow, dayOverlaps);
 
-    for (const show of shows as ShowWithAssignments[]) {
-      const showWindow = this.clipInterval(show.startTime, show.endTime, window.start, window.end);
-      if (!showWindow) {
-        continue;
-      }
-      if (showWindow.end <= now) {
-        continue;
-      }
-
-      showsChecked += 1;
-
-      const assignedUsers = this.getAssignedUsers(show)
-        .filter((assignedUser) => studioMemberUserIds.has(assignedUser.userId));
-      for (const assignedUser of assignedUsers) {
-        assignedMembersChecked += 1;
-        const userIntervals = shiftIntervalsByUser.get(assignedUser.userId) ?? [];
-        const overlappingIntervals = userIntervals
-          .map((interval) => this.clipInterval(interval.start, interval.end, showWindow.start, showWindow.end))
-          .filter((interval): interval is TimeInterval => Boolean(interval));
-
-        if (overlappingIntervals.length === 0) {
-          missingShiftAssignments.push({
-            show_id: show.uid,
-            show_name: show.name,
-            user_id: assignedUser.userId,
-            user_name: assignedUser.userName,
-            show_start: showWindow.start.toISOString(),
-            show_end: showWindow.end.toISOString(),
-          });
-          continue;
-        }
-
-        const gaps = this.findGaps(showWindow, overlappingIntervals);
-        for (const gap of gaps) {
-          idleSegments.push({
-            show_id: show.uid,
-            show_name: show.name,
-            user_id: assignedUser.userId,
-            user_name: assignedUser.userName,
-            segment_start: gap.start.toISOString(),
-            segment_end: gap.end.toISOString(),
-            duration_minutes: Math.floor((gap.end.getTime() - gap.start.getTime()) / (1000 * 60)),
-          });
-        }
+      for (const gap of dayGaps) {
+        dutyManagerUncoveredSegments.push({
+          operational_day: operationalDay,
+          segment_start: gap.start.toISOString(),
+          segment_end: gap.end.toISOString(),
+          duration_minutes: Math.floor((gap.end.getTime() - gap.start.getTime()) / (1000 * 60)),
+          first_show_start: bucket.firstShowStart.toISOString(),
+          last_show_end: bucket.lastShowEnd.toISOString(),
+        });
       }
     }
+
+    for (const show of showWindows) {
+      const showDutyOverlaps = dutyManagerIntervals
+        .map((interval) => this.clipInterval(interval.start, interval.end, show.start, show.end))
+        .filter((interval): interval is TimeInterval => Boolean(interval));
+
+      if (showDutyOverlaps.length === 0) {
+        dutyManagerMissingShows.push({
+          show_id: show.uid,
+          show_name: show.name,
+          show_start: show.start.toISOString(),
+          show_end: show.end.toISOString(),
+          operational_day: show.operationalDay,
+        });
+      }
+
+      const tasks = taskMapByShowId.get(show.id) ?? [];
+      const hasNoTasks = tasks.length === 0;
+      const unassignedTaskCount = tasks.filter((task) => task.assigneeId === null).length;
+      const presentTypes = new Set(tasks.map((task) => task.type));
+      const missingRequiredTaskTypes = REQUIRED_SHOW_TASK_TYPES
+        .filter((requiredType) => !presentTypes.has(requiredType))
+        .map((type) => type as 'SETUP' | 'ACTIVE' | 'CLOSURE');
+
+      const isPremiumShow = show.standardName.toLowerCase() === 'premium';
+      const hasModerationTask = tasks.some((task) => this.isModerationTask(task));
+      const missingModerationTask = isPremiumShow && !hasModerationTask;
+
+      if (hasNoTasks || unassignedTaskCount > 0 || missingRequiredTaskTypes.length > 0 || missingModerationTask) {
+        taskReadinessWarnings.push({
+          show_id: show.uid,
+          show_name: show.name,
+          show_start: show.start.toISOString(),
+          show_end: show.end.toISOString(),
+          operational_day: show.operationalDay,
+          show_standard: show.standardName,
+          has_no_tasks: hasNoTasks,
+          unassigned_task_count: unassignedTaskCount,
+          missing_required_task_types: missingRequiredTaskTypes,
+          missing_moderation_task: missingModerationTask,
+        });
+      }
+    }
+
+    const showsWithoutDutyManagerIds = new Set(dutyManagerMissingShows.map((item) => item.show_id));
+    const taskWarningShowIds = new Set(taskReadinessWarnings.map((item) => item.show_id));
+    const riskShowCount = new Set([...showsWithoutDutyManagerIds, ...taskWarningShowIds]).size;
 
     return {
       period: {
@@ -152,88 +184,146 @@ export class ShiftAlignmentService {
         date_to: window.end.toISOString(),
       },
       summary: {
-        shows_checked: showsChecked,
-        assigned_members_checked: assignedMembersChecked,
-        idle_segments_count: idleSegments.length,
-        missing_shift_count: missingShiftAssignments.length,
+        shows_checked: showWindows.length,
+        operational_days_checked: operationalDays.size,
+        risk_show_count: riskShowCount,
+        shows_without_duty_manager_count: dutyManagerMissingShows.length,
+        operational_days_without_duty_manager_count: new Set(
+          dutyManagerUncoveredSegments.map((segment) => segment.operational_day),
+        ).size,
+        shows_without_tasks_count: taskReadinessWarnings.filter((warning) => warning.has_no_tasks).length,
+        shows_with_unassigned_tasks_count: taskReadinessWarnings.filter((warning) => warning.unassigned_task_count > 0).length,
+        tasks_unassigned_count: taskReadinessWarnings.reduce((sum, warning) => sum + warning.unassigned_task_count, 0),
+        shows_missing_required_tasks_count: taskReadinessWarnings.filter(
+          (warning) => warning.missing_required_task_types.length > 0,
+        ).length,
+        premium_shows_missing_moderation_count: taskReadinessWarnings.filter(
+          (warning) => warning.missing_moderation_task,
+        ).length,
       },
-      idle_segments: idleSegments,
-      missing_shift_assignments: missingShiftAssignments,
+      duty_manager_uncovered_segments: dutyManagerUncoveredSegments,
+      duty_manager_missing_shows: dutyManagerMissingShows,
+      task_readiness_warnings: taskReadinessWarnings,
     };
   }
 
-  private indexShiftIntervalsByUser(
+  private collectDutyManagerIntervals(
     shifts: ShiftWithBlocks[],
     rangeStart: Date,
     rangeEnd: Date,
-  ): Map<string, TimeInterval[]> {
-    const map = new Map<string, TimeInterval[]>();
+  ): TimeInterval[] {
+    const intervals: TimeInterval[] = [];
 
     for (const shift of shifts) {
-      const userId = shift.user.uid;
-      if (!map.has(userId)) {
-        map.set(userId, []);
+      if (!shift.isDutyManager || shift.status === 'CANCELLED') {
+        continue;
       }
 
-      const userIntervals = map.get(userId)!;
       for (const block of shift.blocks) {
         const clipped = this.clipInterval(block.startTime, block.endTime, rangeStart, rangeEnd);
         if (!clipped) {
           continue;
         }
-        userIntervals.push(clipped);
+        intervals.push(clipped);
       }
     }
 
-    for (const [userId, intervals] of map.entries()) {
-      map.set(userId, this.mergeIntervals(intervals));
+    return this.mergeIntervals(intervals);
+  }
+
+  private buildShowWindows(
+    shows: ShowWithPlanningContext[],
+    rangeStart: Date,
+    rangeEnd: Date,
+    now: Date,
+  ): ShowWindow[] {
+    const windows: ShowWindow[] = [];
+
+    for (const show of shows) {
+      const clipped = this.clipInterval(show.startTime, show.endTime, rangeStart, rangeEnd);
+      if (!clipped || clipped.end <= now) {
+        continue;
+      }
+
+      windows.push({
+        id: show.id,
+        uid: show.uid,
+        name: show.name,
+        standardName: show.showStandard?.name ?? 'standard',
+        start: clipped.start,
+        end: clipped.end,
+        operationalDay: this.toOperationalDay(clipped.start),
+      });
+    }
+
+    return windows;
+  }
+
+  private groupShowsByOperationalDay(shows: ShowWindow[]): Map<string, OperationalDayBucket> {
+    const map = new Map<string, OperationalDayBucket>();
+
+    for (const show of shows) {
+      if (!map.has(show.operationalDay)) {
+        map.set(show.operationalDay, {
+          firstShowStart: show.start,
+          lastShowEnd: show.end,
+          shows: [show],
+        });
+        continue;
+      }
+
+      const bucket = map.get(show.operationalDay)!;
+      if (show.start < bucket.firstShowStart) {
+        bucket.firstShowStart = show.start;
+      }
+      if (show.end > bucket.lastShowEnd) {
+        bucket.lastShowEnd = show.end;
+      }
+      bucket.shows.push(show);
     }
 
     return map;
   }
 
-  private getAssignedUsers(show: ShowWithAssignments): Array<{ userId: string; userName: string }> {
-    const unique = new Map<string, string>();
-
-    for (const showMC of show.showMCs ?? []) {
-      const user = showMC.mc?.user;
-      if (!user?.uid) {
-        continue;
-      }
-      unique.set(user.uid, user.name ?? user.uid);
+  private async buildTaskMapByShowId(showWindows: ShowWindow[]): Promise<Map<bigint, TaskWithTargets[]>> {
+    const map = new Map<bigint, TaskWithTargets[]>();
+    if (showWindows.length === 0) {
+      return map;
     }
 
-    return [...unique.entries()].map(([userId, userName]) => ({ userId, userName }));
+    const showIds = showWindows.map((show) => show.id);
+    const tasks = await this.taskService.findTasksByShowIds(showIds, {
+      targets: true,
+      template: true,
+    });
+
+    for (const task of tasks) {
+      for (const target of task.targets ?? []) {
+        if (target.targetType !== 'SHOW' || target.deletedAt || !target.showId) {
+          continue;
+        }
+
+        if (!map.has(target.showId)) {
+          map.set(target.showId, []);
+        }
+        map.get(target.showId)!.push(task);
+      }
+    }
+
+    return map;
   }
 
-  private async getStudioMemberUserIds(studioUid: string): Promise<Set<string>> {
-    const pageSize = 500;
-    let skip = 0;
-    const memberUserIds = new Set<string>();
+  private isModerationTask(task: TaskWithTargets): boolean {
+    const moderationPattern = /moderation/i;
+    return moderationPattern.test(task.description ?? '') || moderationPattern.test(task.template?.name ?? '');
+  }
 
-    while (true) {
-      const memberships = await this.studioMembershipService.listStudioMemberships<{ user: true }>({
-        studioId: studioUid,
-        skip,
-        take: pageSize,
-      }, {
-        user: true,
-      });
-
-      for (const membership of memberships.data) {
-        const userUid = 'user' in membership ? membership.user?.uid : undefined;
-        if (userUid) {
-          memberUserIds.add(userUid);
-        }
-      }
-
-      if (memberships.data.length < pageSize) {
-        break;
-      }
-      skip += pageSize;
+  private toOperationalDay(value: Date): string {
+    const date = new Date(value);
+    if (date.getUTCHours() < ShiftAlignmentService.OPERATIONAL_DAY_START_HOUR_UTC) {
+      date.setUTCDate(date.getUTCDate() - 1);
     }
-
-    return memberUserIds;
+    return date.toISOString().slice(0, 10);
   }
 
   private findGaps(window: TimeInterval, intervals: TimeInterval[]): TimeInterval[] {

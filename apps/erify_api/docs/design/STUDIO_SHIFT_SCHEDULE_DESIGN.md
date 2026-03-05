@@ -1,6 +1,6 @@
 # Studio Shift Schedule Integration Plan
 
-Integrate a Studio-based user shift schedule feature to track part-timer shifts, align them with assigned tasks/shows, identify unassigned shift hours, manage duty managers, and calculate costs.
+Integrate a Studio-based user shift schedule feature to track part-timer shifts, support show-planning risk control, manage duty managers, and calculate costs.
 
 ## User Review Required
 
@@ -99,19 +99,53 @@ Integrate a Studio-based user shift schedule feature to track part-timer shifts,
   - **Daily Timeline View**: Given a date range (e.g. a week), returns the structured timeline of `StudioShifts` (with their active blocks) grouped by Date and User.
   - **Financial Aggregation**: Calculates and returns the total projected cost for the selected period.
 - **[NEW]** `apps/erify_api/src/orchestration/shift-alignment/shift-alignment.service.ts`
-  - **Cross-Checking Logic**: Given a timeframe, retrieves Shifts/Blocks and overlapping `Shows`.
-  - **MVP Scope — Shows Only**: Alignment is performed against `Show.startTime`/`Show.endTime` windows only. Standalone tasks without a show target are excluded from alignment checks. Tasks linked to shows inherit the show's time window via `TaskTarget`.
-  - Explores and returns warnings for:
-    1. **Idle Members**: Block segments where the user has no assigned shows.
-    2. **Missing Shifts**: Users assigned to a Show but have NO overlapping `StudioShiftBlock`.
+  - **Cross-Checking Logic**: Given a timeframe, retrieves upcoming `Shows`, duty-manager shifts, and show-linked tasks.
+  - **Operational Day Rule**: Day boundary is `06:00`. Shows before `06:00` belong to the previous operational day; shows at/after `06:00` belong to their calendar date.
+  - Returns planning-risk warnings for:
+    1. **Duty manager missing at show time**: Upcoming shows with no overlapping duty-manager shift block.
+    2. **Operational day duty-manager gap**: Uncovered segments between the first and last show in an operational day.
+    3. **Show task readiness**: No tasks, unassigned tasks, missing required `SETUP`/`ACTIVE`/`CLOSURE` tasks, and premium shows missing moderation task.
 - **[NEW]** `apps/erify_api/src/controllers/studio-shift/shift-calendar.controller.ts`
   - Exposes `GET /studios/:id/shift-calendar` (for the timeline & costs) and `GET /studios/:id/shift-alignment` (for cross-checking warnings).
+
+## E2E Review Findings (March 5, 2026)
+
+### Backend Code Quality
+
+1. **Soft-delete does not cascade to blocks**: `softDeleteInStudio` sets `deletedAt` on the parent `StudioShift` but does NOT soft-delete child `StudioShiftBlock` rows. Include-level `where: { deletedAt: null }` on blocks mitigates display, but orphaned block rows remain queryable via direct block queries.
+2. **Double lookup on update**: `StudioShiftService.updateShift` calls `findByUidInStudio`, then `StudioShiftRepository.updateShift` calls it again. Refactor to pass the pre-fetched entity or use `where` directly.
+3. **Block UID instability**: Block updates use `deleteMany` + `create`, regenerating all block UIDs. This breaks any future references to specific block UIDs. Consider diff-based upsert or stable UID preservation.
+4. **No duplicate shift overlap guard**: The service does not check whether the same user already has an overlapping shift on the same date/time range.
+5. **Local `JsonValue` type**: Redundant with Prisma's `Prisma.JsonValue`. Replace with the Prisma-provided type.
+
+### Block Ordering & Shift Window Contract
+
+1. **Shift window** derives from blocks: earliest `start_time` → latest `end_time`. The parent `StudioShift.date` is the logical start day only.
+2. **Blocks must be time-series ordered**: each block's `start_time` must be ≥ the previous block's `end_time`.
+3. **BE enforces**: `normalizeAndValidateBlocks` already sorts by `startTime` before overlap validation. This is correct — the API accepts unordered blocks and normalizes them.
+4. **FE contract**: Frontend must sort blocks by `startTime` before submitting to prevent its own cross-midnight normalization from producing incorrect ISO strings.
+
+### Future Integration Opportunities (TODO)
+
+1. **Task assignment shift warning** — When assigning a task, check if the assignee has an overlapping `StudioShiftBlock`. Surface a warning if no shift covers the task's show window.
+2. **Show alignment orchestration** — `shift-alignment` service (design Section 8) for duty-manager and show-task-readiness planning risks.
+3. **Financial aggregation** — `shift-calendar` orchestration service for period cost rollups.
+4. **Member availability** — Allow members to set availability slots for admin reference during shift creation.
+5. **Recurring shift templates** — Weekly pattern creation instead of one-off entries.
+6. **Shift data export** — CSV/Excel for payroll integration.
+
+### Shared API Types (TODO)
+
+`StudioShift` and `StudioShiftBlock` types are currently defined only in the frontend (`studio-shifts.types.ts`). These should be added to `@eridu/api-types` for type safety across the stack.
 
 ## Verification Plan
 
 ### Automated Tests
 - Create unit tests for `StudioShiftService` isolating the rate calculation and override logic.
-- Create unit tests for `ShiftAlignmentService` ensuring it accurately detects under-utilized shifts and un-shifted task assignments using standard Date intersections.
+- Create unit tests for `ShiftAlignmentService` ensuring it accurately detects duty-manager show coverage gaps, operational-day gaps, and show task readiness risks.
+- **TODO**: Add test coverage for cross-midnight block normalization.
+- **TODO**: Add test coverage for block replacement on update (UID stability, cascade).
+- **TODO**: Add test coverage for user change with rate inheritance during update.
 
 ### Manual Verification
 - Seed `StudioShifts` via the schedule UI. Ensure the cost calculations display correctly.
