@@ -2,11 +2,23 @@ import { useQuery } from '@tanstack/react-query';
 
 import { getMyShifts, type GetMyShiftsParams, myShiftsKeys } from '@/features/studio-shifts/api/get-my-shifts';
 import {
+  getShiftAlignment,
+  shiftAlignmentKeys,
+} from '@/features/studio-shifts/api/get-shift-alignment';
+import {
+  getShiftCalendar,
+  shiftCalendarKeys,
+} from '@/features/studio-shifts/api/get-shift-calendar';
+import {
   getDutyManager,
   getStudioShifts,
   type GetStudioShiftsParams,
   studioShiftsKeys,
 } from '@/features/studio-shifts/api/get-studio-shifts';
+import type {
+  StudioShiftAlignmentQueryParams,
+  StudioShiftCalendarQueryParams,
+} from '@/features/studio-shifts/api/studio-shifts.types';
 
 const DEFAULT_QUERY_PARAMS: GetStudioShiftsParams = {
   page: 1,
@@ -66,5 +78,37 @@ export function useMyShifts(
     queryKey: myShiftsKeys.list(queryParams),
     queryFn: () => getMyShifts(queryParams),
     enabled: options?.enabled ?? true,
+  });
+}
+
+export function useShiftCalendar(
+  studioId: string,
+  params?: StudioShiftCalendarQueryParams,
+  options?: {
+    enabled?: boolean;
+  },
+) {
+  const queryParams = params ?? {};
+
+  return useQuery({
+    queryKey: shiftCalendarKeys.detail(studioId, queryParams),
+    queryFn: () => getShiftCalendar(studioId, queryParams),
+    enabled: Boolean(studioId) && (options?.enabled ?? true),
+  });
+}
+
+export function useShiftAlignment(
+  studioId: string,
+  params?: StudioShiftAlignmentQueryParams,
+  options?: {
+    enabled?: boolean;
+  },
+) {
+  const queryParams = params ?? {};
+
+  return useQuery({
+    queryKey: shiftAlignmentKeys.detail(studioId, queryParams),
+    queryFn: () => getShiftAlignment(studioId, queryParams),
+    enabled: Boolean(studioId) && (options?.enabled ?? true),
   });
 }

@@ -212,6 +212,7 @@ Pending scope:
 - Dashboard pagination controls now hide the rows-per-page selector on mobile to avoid action-row overflow while preserving next/previous actions.
 - Refactored dashboard/calendar shift timeline handling into shared utilities (`sortShiftsByFirstBlockStart`, `getShiftFirstBlockStartMs`) and replaced repeated hardcoded member/query fetch limits with named constants.
 - Added backend orchestration services/modules and studio routes for `shift-calendar` and `shift-alignment`, including typed query/response schemas and service/controller tests.
+- Added frontend API hooks for `shift-calendar`/`shift-alignment` and initial admin dashboard cards for coverage warnings and shift cost snapshot consumption.
 
 ## Current Operational Workflows
 
@@ -239,7 +240,7 @@ Pending scope:
 ## Remaining Follow-ups
 
 1. Add advanced multi-block editing UX (reorder/drag, richer inline error states).
-2. Add dedicated FE views for alignment and cost rollups using the implemented orchestration APIs.
+2. Expand from dashboard summary cards to dedicated FE alignment/rollup drill-down views (filterable member/show details).
 3. Add task assignment workflow warning integration using shift-alignment overlap checks.
 4. Expand member shift visibility from 7-day preview to optional longer range/date controls if needed.
 
