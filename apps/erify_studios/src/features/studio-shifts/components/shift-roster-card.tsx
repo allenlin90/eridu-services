@@ -1,4 +1,4 @@
-import { ShieldCheck, Trash2 } from 'lucide-react';
+import { MoreVertical, ShieldCheck } from 'lucide-react';
 
 import {
   Badge,
@@ -8,6 +8,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   Select,
   SelectContent,
   SelectItem,
@@ -37,7 +41,8 @@ type ShiftRosterCardProps = {
   memberMap: Map<string, MemberInfo>;
   deleteConfirmShiftId: string | null;
   isMutating: boolean;
-  formatDate: (value: string) => string;
+  getShiftDisplayDate: (shift: StudioShift) => string;
+  getShiftBlockLabels: (shift: StudioShift) => string[];
   formatDateTime: (value: string) => string;
   getShiftWindowLabel: (shift: StudioShift) => string;
   onToggleDutyManager: (shiftId: string, nextDutyManager: boolean) => void;
@@ -60,7 +65,8 @@ export function ShiftRosterCard({
   memberMap,
   deleteConfirmShiftId,
   isMutating,
-  formatDate,
+  getShiftDisplayDate,
+  getShiftBlockLabels,
   formatDateTime,
   getShiftWindowLabel,
   onToggleDutyManager,
@@ -93,83 +99,92 @@ export function ShiftRosterCard({
                     <TableHeader>
                       <TableRow>
                         <TableHead>Member</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Shift Window</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Duty Manager</TableHead>
-                        <TableHead>Updated</TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead className="hidden lg:table-cell">Blocks</TableHead>
+                        <TableHead className="hidden xl:table-cell">Status</TableHead>
+                        <TableHead className="hidden md:table-cell">Updated</TableHead>
                         {canManageShifts && <TableHead className="text-right">Actions</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {shifts.map((shift) => {
                         const user = memberMap.get(shift.user_id);
+                        const blockLabels = getShiftBlockLabels(shift);
 
                         return (
                           <TableRow key={shift.id}>
                             <TableCell>
-                              <div>
-                                <p className="font-medium">{user?.name ?? shift.user_id}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {user?.email ?? 'Member details unavailable'}
-                                </p>
+                              <div className="flex items-center gap-2">
+                                <div>
+                                  <div className="font-medium text-sm lg:text-base flex items-center">
+                                    {user?.name ?? shift.user_id}
+                                    {shift.is_duty_manager && (
+                                      <Badge variant="secondary" className="ml-2 scale-90 px-1.5 py-0 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100">
+                                        <ShieldCheck className="h-3 w-3 mr-1" />
+                                        Duty
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-muted-foreground hidden sm:block">
+                                    {user?.email ?? 'Member details unavailable'}
+                                  </p>
+                                </div>
                               </div>
                             </TableCell>
-                            <TableCell>{formatDate(shift.date)}</TableCell>
-                            <TableCell>{getShiftWindowLabel(shift)}</TableCell>
                             <TableCell>
+                              <div className="space-y-0.5">
+                                <p className="font-medium">{getShiftDisplayDate(shift)}</p>
+                                <p className="text-xs text-muted-foreground">{getShiftWindowLabel(shift)}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              {blockLabels.length <= 1
+                                ? (
+                                    <span className="text-sm text-muted-foreground">1 block</span>
+                                  )
+                                : (
+                                    <div className="space-y-1">
+                                      <Badge variant="secondary">
+                                        {blockLabels.length}
+                                        {' '}
+                                        blocks
+                                      </Badge>
+                                      <p className="text-xs text-muted-foreground">
+                                        {blockLabels.slice(0, 2).join(', ')}
+                                        {blockLabels.length > 2 ? ` +${blockLabels.length - 2} more` : ''}
+                                      </p>
+                                    </div>
+                                  )}
+                            </TableCell>
+                            <TableCell className="hidden xl:table-cell">
                               <Badge variant="outline">{shift.status}</Badge>
                             </TableCell>
-                            <TableCell>
-                              <div className="space-y-2">
-                                {shift.is_duty_manager
-                                  ? (
-                                      <Badge>
-                                        <ShieldCheck className="mr-1 h-3 w-3" />
-                                        Assigned
-                                      </Badge>
-                                    )
-                                  : (
-                                      <span className="text-sm text-muted-foreground">Not assigned</span>
-                                    )}
-                                {canManageShifts && (
-                                  <div>
-                                    <Button
-                                      size="sm"
-                                      variant={shift.is_duty_manager ? 'outline' : 'default'}
-                                      onClick={() => onToggleDutyManager(shift.id, !shift.is_duty_manager)}
-                                      disabled={isMutating}
-                                    >
-                                      {shift.is_duty_manager ? 'Remove duty manager' : 'Set as duty manager'}
-                                    </Button>
-                                  </div>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
+                            <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
                               {formatDateTime(shift.updated_at)}
                             </TableCell>
                             {canManageShifts && (
-                              <TableCell>
-                                <div className="flex justify-end gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => onEdit(shift)}
-                                    disabled={isMutating}
-                                  >
-                                    Edit
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => onDelete(shift.id)}
-                                    disabled={isMutating}
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    {deleteConfirmShiftId === shift.id ? 'Confirm' : 'Delete'}
-                                  </Button>
-                                </div>
+                              <TableCell className="text-right">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isMutating}>
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => onEdit(shift)}>
+                                      Edit Shift
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onToggleDutyManager(shift.id, !shift.is_duty_manager)}>
+                                      {shift.is_duty_manager ? 'Remove Duty Manager' : 'Set as Duty Manager'}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => onDelete(shift.id)}
+                                      className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
+                                    >
+                                      {deleteConfirmShiftId === shift.id ? 'Confirm Delete' : 'Delete Shift'}
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </TableCell>
                             )}
                           </TableRow>

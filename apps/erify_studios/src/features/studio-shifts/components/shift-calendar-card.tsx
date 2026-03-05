@@ -29,7 +29,7 @@ export function ShiftCalendarCard({
       <CardHeader>
         <CardTitle>Shift Calendar</CardTitle>
         <CardDescription>
-          Calendar view of all studio shifts. Duty manager shifts are highlighted.
+          Calendar view of all shift blocks. Duty manager blocks are highlighted.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
