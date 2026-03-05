@@ -99,5 +99,5 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 | Service: createShift | ✅ Cost calc, overlap rejection, non-member rejection | Cross-midnight blocks, empty blocks                          |
 | Service: updateShift | ✅ Duty manager flag preservation                     | Block replacement, user change with rate inheritance         |
 | Controller           | ✅ Pagination, duty manager, timestamp query          | Create/update/delete flows, error cases                      |
-| FE utils             | ❌ None                                               | `validateShiftBlocks`, `combineDateAndTime`, all other utils |
+| FE utils             | ✅ Added initial coverage (`validateShiftBlocks`, `combineDateAndTime`, sort/window helpers) | Remaining utility edge cases and timezone variants            |
 | FE components        | ❌ None                                               | All shift-related components                                 |

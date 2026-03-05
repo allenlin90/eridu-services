@@ -188,6 +188,7 @@ Pending scope:
 - Added dashboard "My Upcoming Shifts" card (next 5 shifts from selected operational day).
 - Removed unused `ShiftCreateCard` component to reduce dead code in shift feature module.
 - Added shared `StudioShift`/`StudioShiftBlock` API types in `@eridu/api-types/studio-shifts` and adopted them in FE shift API typing.
+- Added FE utility tests for shift schedule helpers (`validateShiftBlocks`, `combineDateAndTime`, sorting/window helpers).
 
 ## Current Operational Workflows
 
