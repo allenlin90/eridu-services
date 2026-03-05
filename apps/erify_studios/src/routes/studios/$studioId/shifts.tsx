@@ -1,16 +1,23 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { RefreshCw } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
+  Badge,
   Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@eridu/ui';
 
 import { StudioShiftsCalendar } from '@/features/studio-shifts/components/studio-shifts-calendar';
@@ -61,10 +68,22 @@ function resolveDateParamOrDefault(value: string | undefined, fallback: string):
   return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : fallback;
 }
 
+function toLocalDate(value: string): string {
+  return toLocalDateInputValue(new Date(value));
+}
+
+function formatDateTime(value: string): string {
+  return new Intl.DateTimeFormat('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value));
+}
+
 function StudioShiftsPage() {
   const { studioId } = Route.useParams();
   const search = Route.useSearch();
-  const navigate = Route.useNavigate();
+  const routeNavigate = Route.useNavigate();
+  const navigate = useNavigate();
   const { data: profile, isLoading: isLoadingProfile } = useUserProfile();
   const today = toLocalDateInputValue(new Date());
   const planningDateFrom = resolveDateParamOrDefault(search.date_from, today);
@@ -99,18 +118,20 @@ function StudioShiftsPage() {
   } = useShiftAlignment(studioId, orchestrationQueryParams, { enabled: isStudioAdmin });
   const shiftCoverageWarningCount = shiftAlignmentResponse?.summary.risk_show_count ?? 0;
   const hasShiftCoverageWarnings = shiftCoverageWarningCount > 0;
+  const dutyManagerMissingShows = shiftAlignmentResponse?.duty_manager_missing_shows ?? [];
+  const taskReadinessWarnings = shiftAlignmentResponse?.task_readiness_warnings ?? [];
 
   const updateSearch = useCallback((
     updater: (previous: typeof search) => typeof search,
     options?: { replace?: boolean },
   ) => {
-    void navigate({
+    void routeNavigate({
       to: '/studios/$studioId/shifts',
       params: { studioId },
       search: updater,
       replace: options?.replace ?? true,
     });
-  }, [navigate, studioId]);
+  }, [routeNavigate, studioId]);
 
   const handleToggleView = (mode: 'calendar' | 'table') => {
     updateSearch((prev) => {
@@ -119,6 +140,27 @@ function StudioShiftsPage() {
       }
       return toTableViewSearch(prev);
     }, { replace: false });
+  };
+
+  const handlePlanDutyShift = (showStart: string) => {
+    const showDate = toLocalDate(showStart);
+    updateSearch((prev) => ({
+      ...toTableViewSearch(prev),
+      page: 1,
+      duty: 'true',
+      date_from: showDate,
+      date_to: showDate,
+    }), { replace: false });
+  };
+
+  const handleOpenShowTasks = (showId: string) => {
+    void navigate({
+      to: '/studios/$studioId/shows/$showId/tasks',
+      params: {
+        studioId,
+        showId,
+      },
+    });
   };
 
   if (isLoadingProfile) {
@@ -318,6 +360,132 @@ function StudioShiftsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {hasShiftCoverageWarnings && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Planning Risk Drill-down</CardTitle>
+            <CardDescription>
+              Review impacted shows and jump directly to actions.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-medium">Shows Without Duty Manager Coverage</h3>
+                <Badge variant="secondary">{dutyManagerMissingShows.length}</Badge>
+              </div>
+              {dutyManagerMissingShows.length === 0
+                ? (
+                    <p className="text-sm text-muted-foreground">No duty-manager gaps in this planning window.</p>
+                  )
+                : (
+                    <div className="overflow-x-auto rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Show</TableHead>
+                            <TableHead>Window</TableHead>
+                            <TableHead>Operational Day</TableHead>
+                            <TableHead className="text-right">Action</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {dutyManagerMissingShows.map((item) => (
+                            <TableRow key={`dm-missing-${item.show_id}`}>
+                              <TableCell className="font-medium">{item.show_name}</TableCell>
+                              <TableCell>
+                                {formatDateTime(item.show_start)}
+                                {' '}
+                                -
+                                {' '}
+                                {formatDateTime(item.show_end)}
+                              </TableCell>
+                              <TableCell>{item.operational_day}</TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handlePlanDutyShift(item.show_start)}
+                                >
+                                  Plan Duty Shift
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-medium">Shows With Task Readiness Risks</h3>
+                <Badge variant="secondary">{taskReadinessWarnings.length}</Badge>
+              </div>
+              {taskReadinessWarnings.length === 0
+                ? (
+                    <p className="text-sm text-muted-foreground">No task-readiness gaps in this planning window.</p>
+                  )
+                : (
+                    <div className="overflow-x-auto rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Show</TableHead>
+                            <TableHead>Task Risks</TableHead>
+                            <TableHead>Window</TableHead>
+                            <TableHead className="text-right">Action</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {taskReadinessWarnings.map((item) => {
+                            const riskTags: string[] = [];
+                            if (item.has_no_tasks) {
+                              riskTags.push('No tasks');
+                            }
+                            if (item.unassigned_task_count > 0) {
+                              riskTags.push(`${item.unassigned_task_count} unassigned`);
+                            }
+                            if (item.missing_required_task_types.length > 0) {
+                              riskTags.push(`Missing ${item.missing_required_task_types.join('/')}`);
+                            }
+                            if (item.missing_moderation_task) {
+                              riskTags.push('Missing moderation');
+                            }
+
+                            return (
+                              <TableRow key={`task-risk-${item.show_id}`}>
+                                <TableCell className="font-medium">{item.show_name}</TableCell>
+                                <TableCell>{riskTags.join(' · ') || '-'}</TableCell>
+                                <TableCell>
+                                  {formatDateTime(item.show_start)}
+                                  {' '}
+                                  -
+                                  {' '}
+                                  {formatDateTime(item.show_end)}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleOpenShowTasks(item.show_id)}
+                                  >
+                                    Open Show Tasks
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {viewMode === 'calendar'
         ? (

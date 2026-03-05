@@ -139,9 +139,12 @@ Delivered:
   - Task-readiness risks: no tasks, unassigned tasks, missing `SETUP`/`ACTIVE`/`CLOSURE`, and missing moderation task on premium shows.
   - Operational day boundary is fixed at `06:00`: show starts before `06:00` are counted toward the previous operational day; `06:00` or later uses the same date.
 - Frontend admin planning cards now consume these endpoints on `/studios/:studioId/shifts` (planning risk warnings + cost snapshot), rather than dashboard.
+- `/studios/:studioId/shifts` now includes planning risk drill-down tables for:
+  - `duty_manager_missing_shows` with direct "Plan Duty Shift" action.
+  - `task_readiness_warnings` with direct "Open Show Tasks" action.
 
 Pending scope:
-- Dedicated drill-down/report pages for alignment and financial analysis (separate from planning workflow).
+- Dedicated report pages beyond inline drill-down tables (separate from planning workflow) for richer analytics.
 - Task-assignment-time warning integration (check shift coverage during assignee selection).
 
 ## Implementation Timeline (This Branch)
@@ -245,7 +248,7 @@ Pending scope:
 ## Remaining Follow-ups
 
 1. Add advanced multi-block editing UX (reorder/drag, richer inline error states).
-2. Expand from shift-schedule planning summary cards to dedicated FE alignment/rollup drill-down views (filterable day/show/task details).
+2. Expand from inline drill-down tables to dedicated FE alignment/rollup report views (filterable day/show/task details).
 3. Add task assignment workflow warning integration using shift-alignment overlap checks.
 4. Expand member shift visibility from 7-day preview to optional longer range/date controls if needed.
 
@@ -304,7 +307,7 @@ Pending scope:
 ### Future Integration TODOs
 
 1. **Task assignment shift warning** — check assignee has overlapping `StudioShiftBlock`; surface warning if no shift covers the show window.
-2. **Show alignment orchestration** — baseline planning warnings are implemented in `/studios/:studioId/shifts`; pending deeper drill-down/actions.
+2. **Show alignment orchestration** — baseline planning warnings and inline drill-down/action tables are implemented in `/studios/:studioId/shifts`; pending dedicated report views.
 3. **Financial aggregation** — baseline planning cost snapshot is implemented in `/studios/:studioId/shifts`; pending richer report views.
 4. **Member availability** — members set availability for admin reference.
 5. **Recurring shift templates** — weekly pattern creation.
