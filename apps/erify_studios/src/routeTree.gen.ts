@@ -31,6 +31,7 @@ import { Route as StudiosStudioIdTaskTemplatesRouteImport } from './routes/studi
 import { Route as StudiosStudioIdShowsRouteImport } from './routes/studios/$studioId/shows'
 import { Route as StudiosStudioIdShiftsRouteImport } from './routes/studios/$studioId/shifts'
 import { Route as StudiosStudioIdMyTasksRouteImport } from './routes/studios/$studioId/my-tasks'
+import { Route as StudiosStudioIdMyShiftsRouteImport } from './routes/studios/$studioId/my-shifts'
 import { Route as StudiosStudioIdDashboardRouteImport } from './routes/studios/$studioId/dashboard'
 import { Route as StudiosStudioIdTaskTemplatesIndexRouteImport } from './routes/studios/$studioId/task-templates/index'
 import { Route as StudiosStudioIdShowsIndexRouteImport } from './routes/studios/$studioId/shows/index'
@@ -154,6 +155,11 @@ const StudiosStudioIdMyTasksRoute = StudiosStudioIdMyTasksRouteImport.update({
   path: '/$studioId/my-tasks',
   getParentRoute: () => StudiosRouteRoute,
 } as any)
+const StudiosStudioIdMyShiftsRoute = StudiosStudioIdMyShiftsRouteImport.update({
+  id: '/$studioId/my-shifts',
+  path: '/$studioId/my-shifts',
+  getParentRoute: () => StudiosRouteRoute,
+} as any)
 const StudiosStudioIdDashboardRoute =
   StudiosStudioIdDashboardRouteImport.update({
     id: '/$studioId/dashboard',
@@ -214,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/system': typeof SystemRouteRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
+  '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/shifts': typeof StudiosStudioIdShiftsRoute
   '/studios/$studioId/shows': typeof StudiosStudioIdShowsRouteWithChildren
@@ -247,6 +254,7 @@ export interface FileRoutesByTo {
   '/system': typeof SystemRouteRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
+  '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/shifts': typeof StudiosStudioIdShiftsRoute
   '/studios/$studioId/tasks': typeof StudiosStudioIdTasksRoute
@@ -279,6 +287,7 @@ export interface FileRoutesById {
   '/system': typeof SystemRouteRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
+  '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/shifts': typeof StudiosStudioIdShiftsRoute
   '/studios/$studioId/shows': typeof StudiosStudioIdShowsRouteWithChildren
@@ -314,6 +323,7 @@ export interface FileRouteTypes {
     | '/system'
     | '/dashboard'
     | '/studios/$studioId/dashboard'
+    | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/shifts'
     | '/studios/$studioId/shows'
@@ -347,6 +357,7 @@ export interface FileRouteTypes {
     | '/system'
     | '/dashboard'
     | '/studios/$studioId/dashboard'
+    | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/shifts'
     | '/studios/$studioId/tasks'
@@ -378,6 +389,7 @@ export interface FileRouteTypes {
     | '/system'
     | '/dashboard'
     | '/studios/$studioId/dashboard'
+    | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/shifts'
     | '/studios/$studioId/shows'
@@ -569,6 +581,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudiosStudioIdMyTasksRouteImport
       parentRoute: typeof StudiosRouteRoute
     }
+    '/studios/$studioId/my-shifts': {
+      id: '/studios/$studioId/my-shifts'
+      path: '/$studioId/my-shifts'
+      fullPath: '/studios/$studioId/my-shifts'
+      preLoaderRoute: typeof StudiosStudioIdMyShiftsRouteImport
+      parentRoute: typeof StudiosRouteRoute
+    }
     '/studios/$studioId/dashboard': {
       id: '/studios/$studioId/dashboard'
       path: '/$studioId/dashboard'
@@ -670,6 +689,7 @@ const StudiosStudioIdTaskTemplatesRouteWithChildren =
 
 interface StudiosRouteRouteChildren {
   StudiosStudioIdDashboardRoute: typeof StudiosStudioIdDashboardRoute
+  StudiosStudioIdMyShiftsRoute: typeof StudiosStudioIdMyShiftsRoute
   StudiosStudioIdMyTasksRoute: typeof StudiosStudioIdMyTasksRoute
   StudiosStudioIdShiftsRoute: typeof StudiosStudioIdShiftsRoute
   StudiosStudioIdShowsRoute: typeof StudiosStudioIdShowsRouteWithChildren
@@ -679,6 +699,7 @@ interface StudiosRouteRouteChildren {
 
 const StudiosRouteRouteChildren: StudiosRouteRouteChildren = {
   StudiosStudioIdDashboardRoute: StudiosStudioIdDashboardRoute,
+  StudiosStudioIdMyShiftsRoute: StudiosStudioIdMyShiftsRoute,
   StudiosStudioIdMyTasksRoute: StudiosStudioIdMyTasksRoute,
   StudiosStudioIdShiftsRoute: StudiosStudioIdShiftsRoute,
   StudiosStudioIdShowsRoute: StudiosStudioIdShowsRouteWithChildren,

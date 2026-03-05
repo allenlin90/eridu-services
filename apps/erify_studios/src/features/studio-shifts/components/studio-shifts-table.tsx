@@ -15,6 +15,7 @@ import {
 import { ShiftRosterCard } from '@/features/studio-shifts/components/shift-roster-card';
 import { ShiftToolbar } from '@/features/studio-shifts/components/shift-toolbar';
 import { StudioShiftFormDialog } from '@/features/studio-shifts/components/studio-shift-form-dialog';
+import { useStudioMemberMap } from '@/features/studio-shifts/hooks/use-studio-member-map';
 import { useStudioShifts } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import type { ShiftFormState } from '@/features/studio-shifts/types/shift-form.types';
 import {
@@ -87,11 +88,7 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     || search.date_to,
   );
 
-  const { data: displayMembersResponse } = useStudioMembershipsQuery(
-    studioId,
-    { page: 1, limit: 200 },
-    { enabled: isStudioAdmin },
-  );
+  const { memberMap } = useStudioMemberMap(studioId, { enabled: isStudioAdmin, limit: 200 });
   const { data: createMemberOptionsResponse, isLoading: isLoadingCreateMemberOptions } = useStudioMembershipsQuery(
     studioId,
     { page: 1, limit: 50, name: createMemberSearch || undefined },
@@ -122,7 +119,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
   const updateShiftMutation = useUpdateStudioShift(studioId);
   const assignDutyManagerMutation = useAssignDutyManager(studioId);
 
-  const displayMembers = useMemo(() => displayMembersResponse?.data ?? [], [displayMembersResponse?.data]);
   const tableMemberOptions = useMemo(() => {
     const rows = tableMemberOptionsResponse?.data ?? [];
     return rows.map((member) => ({
@@ -130,18 +126,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
       label: `${member.user.name} (${member.user.email})`,
     }));
   }, [tableMemberOptionsResponse?.data]);
-
-  const memberMap = useMemo(() => {
-    return new Map(
-      displayMembers.map((member) => [
-        member.user.id,
-        {
-          name: member.user.name,
-          email: member.user.email,
-        },
-      ]),
-    );
-  }, [displayMembers]);
 
   const tableShifts = useMemo(() => {
     return sortShiftsByFirstBlockStart(tableShiftsResponse?.data ?? []);

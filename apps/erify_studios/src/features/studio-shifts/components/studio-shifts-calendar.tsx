@@ -12,18 +12,43 @@ import { Button } from '@eridu/ui';
 
 import '@schedule-x/theme-default/dist/index.css';
 
-import { useStudioMembershipsQuery } from '@/features/memberships/api/get-studio-memberships';
 import { ShiftCalendarCard } from '@/features/studio-shifts/components/shift-calendar-card';
+import { useStudioMemberMap } from '@/features/studio-shifts/hooks/use-studio-member-map';
 import { useStudioShifts } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import { toScheduleXDateTime } from '@/features/studio-shifts/utils/schedule-x.utils';
+import { sortShiftBlocksByStart } from '@/features/studio-shifts/utils/shift-blocks.utils';
 import { formatDate } from '@/features/studio-shifts/utils/shift-form.utils';
 
 export type StudioShiftsCalendarProps = {
   studioId: string;
+  userId?: string;
+  summaryText?: string;
 };
 
-export function StudioShiftsCalendar({ studioId }: StudioShiftsCalendarProps) {
-  const [dateRange, setDateRange] = useState<{ date_from: string; date_to: string } | null>(null);
+export function StudioShiftsCalendar({
+  studioId,
+  userId,
+  summaryText = 'Read-only view of studio shifts. Switch to Table view to manage, create, and filter shifts.',
+}: StudioShiftsCalendarProps) {
+  const [dateRange, setDateRange] = useState<{ date_from: string; date_to: string } | null>(() => {
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(today.getDate() - 1);
+    const end = new Date(today);
+    end.setDate(today.getDate() + 8);
+
+    const toDateString = (value: Date) => {
+      const year = value.getFullYear();
+      const month = String(value.getMonth() + 1).padStart(2, '0');
+      const day = String(value.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    return {
+      date_from: toDateString(start),
+      date_to: toDateString(end),
+    };
+  });
 
   const extractDateString = (value: unknown): string | null => {
     const raw = String(value);
@@ -31,19 +56,28 @@ export function StudioShiftsCalendar({ studioId }: StudioShiftsCalendarProps) {
     return match?.[0] ?? null;
   };
 
-  const { data: displayMembersResponse } = useStudioMembershipsQuery(
-    studioId,
-    { page: 1, limit: 500 },
-    { enabled: true },
-  );
+  const { memberMap } = useStudioMemberMap(studioId, { limit: 500 });
+
+  const calendarRangeLimit = useMemo(() => {
+    if (!dateRange) {
+      return 150;
+    }
+
+    const start = new Date(`${dateRange.date_from}T00:00:00`);
+    const end = new Date(`${dateRange.date_to}T23:59:59`);
+    const daySpan = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+
+    return Math.min(600, Math.max(60, daySpan * 12));
+  }, [dateRange]);
 
   const queryParams = useMemo(() => {
     return {
-      limit: 1000,
+      limit: calendarRangeLimit,
       page: 1,
+      ...(userId ? { user_id: userId } : {}),
       ...(dateRange ? { date_from: dateRange.date_from, date_to: dateRange.date_to } : {}),
     } as const;
-  }, [dateRange]);
+  }, [calendarRangeLimit, dateRange, userId]);
 
   const {
     data: calendarShiftsResponse,
@@ -52,24 +86,13 @@ export function StudioShiftsCalendar({ studioId }: StudioShiftsCalendarProps) {
     refetch,
   } = useStudioShifts(studioId, queryParams, { enabled: true });
 
-  const displayMembers = useMemo(() => displayMembersResponse?.data ?? [], [displayMembersResponse?.data]);
-  const memberMap = useMemo(() => {
-    return new Map(
-      displayMembers.map((member) => [
-        member.user.id,
-        {
-          name: member.user.name,
-          email: member.user.email,
-        },
-      ]),
-    );
-  }, [displayMembers]);
-
   const calendarShifts = useMemo(() => {
     const rows = calendarShiftsResponse?.data ?? [];
     return [...rows].sort((a, b) => {
-      const timeA = a.blocks[0] ? new Date(a.blocks[0].start_time).getTime() : Number.MAX_SAFE_INTEGER;
-      const timeB = b.blocks[0] ? new Date(b.blocks[0].start_time).getTime() : Number.MAX_SAFE_INTEGER;
+      const sortedBlocksA = sortShiftBlocksByStart(a.blocks);
+      const sortedBlocksB = sortShiftBlocksByStart(b.blocks);
+      const timeA = sortedBlocksA[0] ? new Date(sortedBlocksA[0].start_time).getTime() : Number.MAX_SAFE_INTEGER;
+      const timeB = sortedBlocksB[0] ? new Date(sortedBlocksB[0].start_time).getTime() : Number.MAX_SAFE_INTEGER;
       return timeA - timeB;
     });
   }, [calendarShiftsResponse?.data]);
@@ -78,9 +101,7 @@ export function StudioShiftsCalendar({ studioId }: StudioShiftsCalendarProps) {
     return calendarShifts.flatMap((shift) => {
       const user = memberMap.get(shift.user_id);
       const memberName = user?.name ?? shift.user_id;
-      const sortedBlocks = [...shift.blocks].sort(
-        (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
-      );
+      const sortedBlocks = sortShiftBlocksByStart(shift.blocks);
       if (sortedBlocks.length === 0) {
         return [];
       }
@@ -139,7 +160,7 @@ export function StudioShiftsCalendar({ studioId }: StudioShiftsCalendarProps) {
     <div className="grid gap-4 mt-2">
       <div className="flex justify-between items-center bg-muted/20 border rounded-lg px-3 py-2">
         <p className="text-sm text-muted-foreground mr-auto">
-          Read-only view of studio shifts. Switch to Table view to manage, create, and filter shifts.
+          {summaryText}
         </p>
 
         <Button
@@ -158,6 +179,7 @@ export function StudioShiftsCalendar({ studioId }: StudioShiftsCalendarProps) {
         isFetching={isFetchingCalendarShifts}
         shiftCount={calendarEvents.length}
         calendarApp={calendarApp}
+        dateRange={dateRange}
       />
     </div>
   );

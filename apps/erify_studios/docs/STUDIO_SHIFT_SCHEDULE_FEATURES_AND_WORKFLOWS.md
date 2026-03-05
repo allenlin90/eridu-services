@@ -100,14 +100,13 @@ Delivered:
 Design intent:
 - All studio members can see operational schedule context (who is on duty, what’s ongoing/next).
 
-Status: `Implemented` (dashboard scope), `Partial` (shift details scope)
+Status: `Implemented`
 
 Delivered:
 - Dashboard cards for active duty manager and next duty manager.
 - Daily shows list and related operational visibility for studio users.
-
-Partial:
-- Full member-facing shift timeline/detail view is intentionally scoped out from admin shifts route.
+- Dashboard includes "My Upcoming Shifts" section for member-level forward visibility.
+- New read-only member route: `/studios/:studioId/my-shifts` (calendar view scoped to current user).
 
 ### 7. Shows Integration with Shift Operations
 
@@ -173,6 +172,21 @@ Pending scope:
 - `studio-shifts-table` responsibilities were split with shared dialog and pure utils modules.
 - Search/update typing was tightened (removed `any` path in table search/update flow).
 
+6. E2E review follow-up implementation pass (active):
+- Calendar now keeps `ScheduleXCalendar` mounted even with zero blocks in the visible range.
+- Calendar loading and refetch UI is now persistent (summary + spinner + fixed-height skeleton state).
+- Calendar query overfetch was reduced: removed hardcoded `limit: 1000` and switched to range-aware limit sizing.
+- Shift table now uses `TableSkeleton` on initial load and keeps rows visible during background refetch.
+- Shift table now includes `Total Hours` and `Projected Cost` columns and renamed `Time` to `Date / Window`.
+- Single-block rows now display inline time range text instead of `1 block`.
+- FE block validation now sorts form blocks before cross-midnight normalization/payload generation.
+- Shared `sortShiftBlocksByStart`/`sortShiftFormBlocksByStart` helpers were extracted.
+- Shared `useStudioMemberMap` hook was extracted and adopted in calendar/table/dashboard.
+- Dashboard now supports URL-backed day navigation (`date` search param) and rows-per-page control.
+- Shift form now includes per-block inline validation feedback, cross-midnight `+1 day` indicator, and resolved block window preview.
+- Added member-facing `/my-shifts` route reusing `StudioShiftsCalendar` with `user_id` query scoping.
+- Added dashboard "My Upcoming Shifts" card (next 5 shifts from selected operational day).
+
 ## Current Operational Workflows
 
 ### A. Admin Shift Setup Workflow
@@ -200,9 +214,75 @@ Pending scope:
 
 1. Add advanced multi-block editing UX (reorder/drag, richer inline error states).
 2. Add orchestration APIs for:
-- shift timeline aggregation
-- shift/show alignment warnings
+  - shift timeline aggregation
+  - shift/show alignment warnings
 3. Add dedicated FE views for alignment and cost rollups once orchestration APIs exist.
+4. Expand member shift visibility from 7-day preview to optional longer range/date controls if needed.
+
+## E2E Review Findings (March 5, 2026)
+
+### Calendar UX
+
+1. **Calendar disappears on empty range**: Resolved in current branch work. Calendar remains mounted.
+2. **Layout glitch on transitions**: Resolved in current branch work. Fixed-height container + skeleton applied.
+3. **Schedule-X has no built-in loading/transition UI**: Resolved in current branch work. Persistent summary/loading indicators implemented.
+4. **Background refetch flicker**: Resolved in current branch work. Calendar remains visible during refetch.
+5. **Overfetching**: Improved in current branch work. Range-aware query limit now used instead of static `1000`.
+
+### Table UX Improvements
+
+1. **Skeleton loading**: Resolved in current branch work (`TableSkeleton`, limit-aligned rows, `isLoading`/`isFetching` separation).
+2. **Missing columns**: Resolved in current branch work (`Projected Cost`, `Total Hours`).
+3. **Column header clarity**: Rename "Time" to "Date / Window".
+4. **Single-block display**: "1 block" text adds no info — show the time range inline instead.
+
+### Block Ordering & Shift Window Contract
+
+1. **Shift window** derives from blocks: earliest `start_time` → latest `end_time`. No separate start/end on the parent shift.
+2. **Blocks must be time-series ordered** — each block's `start_time` ≥ previous block's `end_time`.
+3. **BE enforces**: `normalizeAndValidateBlocks` sorts by `startTime` before overlap validation ✅.
+4. **FE must sort blocks before API call**: `validateShiftBlocks` processes blocks in array order without sorting. If blocks are entered out of order, the cross-midnight normalization produces incorrect ISO strings. Fix: sort by `startTime` before processing.
+
+### Form Polish
+
+1. **Cross-midnight indicator**: Resolved in current branch work. `+1 day` badge is shown when end time wraps past midnight.
+2. **Inline validation**: Resolved in current branch work. Per-block inline feedback added in form rows.
+3. **Resolved time preview**: Resolved in current branch work. Resolved block timeline preview is shown below block inputs.
+
+### Dashboard UX
+
+1. **Hardcoded date**: `dashboard.tsx` uses `new Date()` with no navigation. Members on midnight shows (after 00:00) see the next day's records with no way to go back.
+2. **Day navigation**: Add simple prev/next day buttons (±1 day). Keep intentionally simple — no date picker, no jump-to-date. Store selected date in URL search params.
+3. **Operational day window**: `00:00 → next day 05:59` is correct but the `6am` cutoff should be documented and potentially configurable.
+4. **Rows per page**: Search schema accepts `limit` (1–100, default 10) but no UI selector exists. Add a rows-per-page dropdown (e.g., 10 / 25 / 50).
+
+### Member Experience
+
+1. **`/shifts` is admin-only by design** — members check from dashboard.
+2. **`/my-shifts` route** — implemented as read-only member calendar using member-scoped shift query.
+3. **Dashboard "My Upcoming Shifts"** — implemented (next 5 upcoming assigned shifts).
+
+### Code Quality
+
+1. **Orphaned `ShiftCreateCard`**: Component exists but is unused. Remove or document if planned for reuse.
+2. **FE types not in `@eridu/api-types`**: `StudioShift`/`StudioShiftBlock` locally defined. Should be shared.
+3. **Repeated block sorting**: 6+ places sort blocks with the same comparator. Extract `sortBlocks` utility.
+4. **Duplicated `memberMap` building**: Calendar and table independently build the same map. Extract shared hook.
+5. **Magic number fetch limits**: `limit: 200` for display members, `limit: 500` for calendar members. Document or derive from studio size.
+
+### Future Integration TODOs
+
+1. **Task assignment shift warning** — check assignee has overlapping `StudioShiftBlock`; surface warning if no shift covers the show window.
+2. **Show alignment orchestration** — idle members and missing shifts against show windows.
+3. **Financial aggregation** — period cost rollups for admin reporting.
+4. **Member availability** — members set availability for admin reference.
+5. **Recurring shift templates** — weekly pattern creation.
+6. **Shift data export** — CSV/Excel for payroll.
+
+### Frontend Test Gaps
+
+- No tests for `validateShiftBlocks`, `combineDateAndTime`, or any frontend utils.
+- No component tests for any shift-related component.
 
 ## Verification Snapshot
 

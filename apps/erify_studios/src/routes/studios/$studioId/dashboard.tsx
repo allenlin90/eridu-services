@@ -13,6 +13,11 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Table,
   TableBody,
   TableCell,
@@ -23,8 +28,9 @@ import {
 
 import { PageLayout } from '@/components/layouts/page-layout';
 import { ShowStandardBadge, ShowStatusBadge } from '@/features/admin/components/show-table-cells';
-import { useStudioMembershipsQuery } from '@/features/memberships/api/get-studio-memberships';
+import { useStudioMemberMap } from '@/features/studio-shifts/hooks/use-studio-member-map';
 import { useDutyManager, useStudioShifts } from '@/features/studio-shifts/hooks/use-studio-shifts';
+import { sortShiftBlocksByStart } from '@/features/studio-shifts/utils/shift-blocks.utils';
 import { formatDate, getShiftWindowLabel, toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
 import { getStudioShows } from '@/features/studio-shows/api/get-studio-shows';
 import { useUserProfile } from '@/lib/hooks/use-user';
@@ -32,6 +38,7 @@ import { useUserProfile } from '@/lib/hooks/use-user';
 const dashboardSearchSchema = z.object({
   page: z.coerce.number().int().min(1).catch(1),
   limit: z.coerce.number().int().min(1).max(100).catch(10),
+  date: z.string().optional(),
 });
 
 export const Route = createFileRoute('/studios/$studioId/dashboard')({
@@ -45,6 +52,14 @@ function addDays(base: Date, days: number): Date {
   return next;
 }
 
+function fromLocalDateInput(value: string): Date {
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date();
+  date.setFullYear(year || date.getFullYear(), (month || 1) - 1, day || 1);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
 function formatTimeHHmm(value: string): string {
   return new Intl.DateTimeFormat('en-US', {
     hour: '2-digit',
@@ -54,10 +69,15 @@ function formatTimeHHmm(value: string): string {
 }
 
 function StudioDashboardPage() {
+  const OPERATIONAL_DAY_END_HOUR = 6;
   const { studioId } = Route.useParams();
   const search = Route.useSearch();
   const navigate = useNavigate();
   const now = new Date();
+  const todayDate = toLocalDateInputValue(now);
+  const selectedDate = /^\d{4}-\d{2}-\d{2}$/.test(search.date ?? '') ? (search.date as string) : todayDate;
+  const isSelectedToday = selectedDate === todayDate;
+
   const showsPage = search.page;
   const showsLimit = search.limit;
   const { data: profile } = useUserProfile();
@@ -68,15 +88,16 @@ function StudioDashboardPage() {
   );
   const isStudioAdmin = activeMembership?.role === STUDIO_ROLE.ADMIN;
 
-  const dayStart = new Date(now);
-  dayStart.setHours(0, 0, 0, 0);
+  const dayStart = fromLocalDateInput(selectedDate);
   const dayEnd = addDays(dayStart, 1);
-  dayEnd.setHours(5, 59, 59, 999);
+  dayEnd.setHours(OPERATIONAL_DAY_END_HOUR - 1, 59, 59, 999);
+  const dutyReferenceTime = isSelectedToday
+    ? undefined
+    : dayStart.toISOString();
 
-  const todayDate = toLocalDateInputValue(now);
-  const previewUntil = toLocalDateInputValue(addDays(now, 7));
+  const previewUntil = toLocalDateInputValue(addDays(dayStart, 7));
 
-  const { data: dutyManager, isLoading: isLoadingDutyManager } = useDutyManager(studioId);
+  const { data: dutyManager, isLoading: isLoadingDutyManager } = useDutyManager(studioId, dutyReferenceTime);
 
   const {
     data: dutyShiftResponse,
@@ -85,11 +106,24 @@ function StudioDashboardPage() {
   } = useStudioShifts(studioId, {
     page: 1,
     limit: 200,
-    date_from: todayDate,
+    date_from: selectedDate,
     date_to: previewUntil,
     is_duty_manager: true,
   });
-  const { data: membershipsResponse } = useStudioMembershipsQuery(studioId, { page: 1, limit: 200 });
+  const {
+    data: myShiftResponse,
+    isLoading: isLoadingMyShifts,
+    isFetching: isFetchingMyShifts,
+  } = useStudioShifts(studioId, {
+    page: 1,
+    limit: 20,
+    date_from: selectedDate,
+    date_to: previewUntil,
+    user_id: profile?.id,
+  }, {
+    enabled: Boolean(profile?.id),
+  });
+  const { memberMap } = useStudioMemberMap(studioId, { limit: 200 });
 
   const {
     data: todayShowsResponse,
@@ -107,28 +141,25 @@ function StudioDashboardPage() {
     enabled: Boolean(studioId),
   });
 
-  const memberMap = useMemo(() => {
-    const rows = membershipsResponse?.data ?? [];
-    return new Map(rows.map((member) => [member.user.id, member.user.name]));
-  }, [membershipsResponse?.data]);
-
   const activeShiftStartMs = dutyManager?.blocks?.[0]
-    ? new Date(dutyManager.blocks[0].start_time).getTime()
+    ? new Date(sortShiftBlocksByStart(dutyManager.blocks)[0].start_time).getTime()
     : null;
 
   const upcomingDutyManagerShifts = (dutyShiftResponse?.data ?? [])
     .filter((shift) => Array.isArray(shift.blocks) && shift.blocks.length > 0)
     .sort((a, b) => {
-      const aStart = a.blocks?.[0]?.start_time
-        ? new Date(a.blocks[0].start_time).getTime()
+      const aSortedBlocks = sortShiftBlocksByStart(a.blocks);
+      const bSortedBlocks = sortShiftBlocksByStart(b.blocks);
+      const aStart = aSortedBlocks[0]?.start_time
+        ? new Date(aSortedBlocks[0].start_time).getTime()
         : Number.MAX_SAFE_INTEGER;
-      const bStart = b.blocks?.[0]?.start_time
-        ? new Date(b.blocks[0].start_time).getTime()
+      const bStart = bSortedBlocks[0]?.start_time
+        ? new Date(bSortedBlocks[0].start_time).getTime()
         : Number.MAX_SAFE_INTEGER;
       return aStart - bStart;
     })
     .filter((shift) => {
-      const firstBlock = shift.blocks?.[0];
+      const firstBlock = sortShiftBlocksByStart(shift.blocks)[0];
       if (!firstBlock) {
         return false;
       }
@@ -142,6 +173,30 @@ function StudioDashboardPage() {
     });
 
   const nextDutyShift = upcomingDutyManagerShifts[0];
+  const myUpcomingShifts = (myShiftResponse?.data ?? [])
+    .filter((shift) => Array.isArray(shift.blocks) && shift.blocks.length > 0)
+    .sort((a, b) => {
+      const aSortedBlocks = sortShiftBlocksByStart(a.blocks);
+      const bSortedBlocks = sortShiftBlocksByStart(b.blocks);
+      const aStart = aSortedBlocks[0]?.start_time
+        ? new Date(aSortedBlocks[0].start_time).getTime()
+        : Number.MAX_SAFE_INTEGER;
+      const bStart = bSortedBlocks[0]?.start_time
+        ? new Date(bSortedBlocks[0].start_time).getTime()
+        : Number.MAX_SAFE_INTEGER;
+      return aStart - bStart;
+    })
+    .filter((shift) => {
+      const firstBlock = sortShiftBlocksByStart(shift.blocks)[0];
+      if (!firstBlock) {
+        return false;
+      }
+
+      const referenceTime = isSelectedToday ? now.getTime() : dayStart.getTime();
+      return new Date(firstBlock.start_time).getTime() >= referenceTime;
+    })
+    .slice(0, 5);
+
   const totalShows = todayShowsResponse?.meta?.total ?? 0;
   const totalShowPages = todayShowsResponse?.meta?.totalPages ?? 1;
   const todayShows = todayShowsResponse?.data ?? [];
@@ -163,19 +218,91 @@ function StudioDashboardPage() {
       description="Daily operational view: shows, active duty manager, and upcoming duty coverage."
     >
       <div className="space-y-4">
+        <Card>
+          <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium">
+                Operational day:
+                {' '}
+                {formatDate(dayStart.toISOString())}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Window: 00:00 to
+                {' '}
+                {OPERATIONAL_DAY_END_HOUR - 1}
+                :59 next day
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  navigate({
+                    to: '/studios/$studioId/dashboard',
+                    params: { studioId },
+                    search: (previous) => ({
+                      ...previous,
+                      page: 1,
+                      date: toLocalDateInputValue(addDays(dayStart, -1)),
+                    }),
+                  })}
+              >
+                Previous Day
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={selectedDate === todayDate}
+                onClick={() =>
+                  navigate({
+                    to: '/studios/$studioId/dashboard',
+                    params: { studioId },
+                    search: (previous) => ({
+                      ...previous,
+                      page: 1,
+                      date: todayDate,
+                    }),
+                  })}
+              >
+                Today
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  navigate({
+                    to: '/studios/$studioId/dashboard',
+                    params: { studioId },
+                    search: (previous) => ({
+                      ...previous,
+                      page: 1,
+                      date: toLocalDateInputValue(addDays(dayStart, 1)),
+                    }),
+                  })}
+              >
+                Next Day
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid gap-4 lg:grid-cols-3">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" />
-                Today&apos;s Shows
+                Operational Day Shows
               </CardTitle>
               <CardDescription>
                 Shows scheduled for
                 {' '}
                 {formatDate(dayStart.toISOString())}
                 {' '}
-                (until 6:00 AM next day).
+                (until
+                {' '}
+                {OPERATIONAL_DAY_END_HOUR}
+                :00 AM next day).
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -199,7 +326,9 @@ function StudioDashboardPage() {
                 Active Duty Manager
               </CardTitle>
               <CardDescription>
-                Current on-shift owner for this studio.
+                {isSelectedToday
+                  ? 'Current on-shift owner for this studio.'
+                  : 'Duty manager at the start of this operational day.'}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -210,7 +339,7 @@ function StudioDashboardPage() {
                 : dutyManager
                   ? (
                       <div className="space-y-1">
-                        <p className="font-medium">{memberMap.get(dutyManager.user_id) ?? dutyManager.user_id}</p>
+                        <p className="font-medium">{memberMap.get(dutyManager.user_id)?.name ?? dutyManager.user_id}</p>
                         <p className="text-sm text-muted-foreground">{getShiftWindowLabel(dutyManager)}</p>
                         <Badge className="mt-1">On Duty</Badge>
                       </div>
@@ -244,7 +373,7 @@ function StudioDashboardPage() {
                 : nextDutyShift
                   ? (
                       <>
-                        <p className="font-medium">{memberMap.get(nextDutyShift.user_id) ?? nextDutyShift.user_id}</p>
+                        <p className="font-medium">{memberMap.get(nextDutyShift.user_id)?.name ?? nextDutyShift.user_id}</p>
                         <p className="text-sm text-muted-foreground">
                           {formatDate(nextDutyShift.date)}
                           {' '}
@@ -255,7 +384,7 @@ function StudioDashboardPage() {
                       </>
                     )
                   : (
-                      <p className="text-sm text-muted-foreground">No upcoming duty manager shift in the next 7 days.</p>
+                      <p className="text-sm text-muted-foreground">No upcoming duty manager shift in the next 7 days from this day.</p>
                     )}
             </CardContent>
           </Card>
@@ -264,9 +393,12 @@ function StudioDashboardPage() {
         <Card>
           <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle>Today&apos;s Show List</CardTitle>
+              <CardTitle>Operational Day Show List</CardTitle>
               <CardDescription>
-                Shared operational-day schedule (00:00 to 05:59 next day).
+                Shared operational-day schedule (00:00 to
+                {' '}
+                {OPERATIONAL_DAY_END_HOUR - 1}
+                :59 next day).
               </CardDescription>
             </div>
             {isStudioAdmin && (
@@ -284,7 +416,7 @@ function StudioDashboardPage() {
                 )
               : todayShows.length === 0
                 ? (
-                    <p className="text-sm text-muted-foreground">No shows scheduled for today.</p>
+                    <p className="text-sm text-muted-foreground">No shows scheduled for this operational day.</p>
                   )
                 : (
                     <div className="overflow-x-auto rounded-md border">
@@ -378,6 +510,31 @@ function StudioDashboardPage() {
                 shows)
               </p>
               <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">Rows</span>
+                  <Select
+                    value={String(showsLimit)}
+                    onValueChange={(value) =>
+                      navigate({
+                        to: '/studios/$studioId/dashboard',
+                        params: { studioId },
+                        search: (previous) => ({
+                          ...previous,
+                          page: 1,
+                          limit: Number(value),
+                        }),
+                      })}
+                  >
+                    <SelectTrigger className="h-8 w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Button
                   size="sm"
                   variant="outline"
@@ -406,6 +563,39 @@ function StudioDashboardPage() {
                 </Button>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>My Upcoming Shifts</CardTitle>
+            <CardDescription>
+              Next 5 assigned shifts from the selected operational day.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {(isLoadingMyShifts || isFetchingMyShifts)
+              ? (
+                  <p className="text-sm text-muted-foreground">Loading your upcoming shifts...</p>
+                )
+              : myUpcomingShifts.length === 0
+                ? (
+                    <p className="text-sm text-muted-foreground">No upcoming assigned shifts in the next 7 days.</p>
+                  )
+                : (
+                    <div className="space-y-2">
+                      {myUpcomingShifts.map((shift) => (
+                        <div key={shift.id} className="rounded-md border p-2">
+                          <p className="text-sm font-medium">{formatDate(shift.date)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {getShiftWindowLabel(shift)}
+                            {' | '}
+                            {shift.status}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
           </CardContent>
         </Card>
       </div>

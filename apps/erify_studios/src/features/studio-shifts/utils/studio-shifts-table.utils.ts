@@ -1,6 +1,7 @@
 import type { GetStudioShiftsParams } from '@/features/studio-shifts/api/get-studio-shifts';
 import type { StudioShift } from '@/features/studio-shifts/api/studio-shifts.types';
 import type { ShiftBlockFormState } from '@/features/studio-shifts/types/shift-form.types';
+import { sortShiftBlocksByStart, sortShiftFormBlocksByStart } from '@/features/studio-shifts/utils/shift-blocks.utils';
 import { combineDateAndTime } from '@/features/studio-shifts/utils/shift-form.utils';
 
 export type ShiftListStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
@@ -28,8 +29,10 @@ export function buildStudioShiftsQueryParams(search: {
 
 export function sortShiftsByFirstBlockStart(shifts: StudioShift[]): StudioShift[] {
   return [...shifts].sort((a, b) => {
-    const timeA = a.blocks[0] ? new Date(a.blocks[0].start_time).getTime() : Number.MAX_SAFE_INTEGER;
-    const timeB = b.blocks[0] ? new Date(b.blocks[0].start_time).getTime() : Number.MAX_SAFE_INTEGER;
+    const sortedBlocksA = sortShiftBlocksByStart(a.blocks);
+    const sortedBlocksB = sortShiftBlocksByStart(b.blocks);
+    const timeA = sortedBlocksA[0] ? new Date(sortedBlocksA[0].start_time).getTime() : Number.MAX_SAFE_INTEGER;
+    const timeB = sortedBlocksB[0] ? new Date(sortedBlocksB[0].start_time).getTime() : Number.MAX_SAFE_INTEGER;
     return timeA - timeB;
   });
 }
@@ -41,8 +44,9 @@ export function validateShiftBlocks(date: string, formBlocks: ShiftBlockFormStat
 
   const blocks: { start_time: string; end_time: string }[] = [];
   let previousEndTime: Date | null = null;
+  const sortedBlocks = sortShiftFormBlocksByStart(formBlocks);
 
-  for (const block of formBlocks) {
+  for (const block of sortedBlocks) {
     if (!block.startTime || !block.endTime) {
       return { error: 'Start time and end time are required for all blocks.', blocks: null };
     }

@@ -180,6 +180,10 @@ describe('useSidebarConfig', () => {
           url: '/studios/studio-1/my-tasks',
         }),
         expect.objectContaining({
+          title: 'My Shifts',
+          url: '/studios/studio-1/my-shifts',
+        }),
+        expect.objectContaining({
           title: 'Shift Schedule',
           url: '/studios/studio-1/shifts',
         }),

@@ -1,7 +1,9 @@
 import { Plus, Trash2 } from 'lucide-react';
+import { useMemo } from 'react';
 
 import {
   AsyncCombobox,
+  Badge,
   Button,
   Checkbox,
   DatePicker,
@@ -16,7 +18,13 @@ import {
 
 import type { Membership } from '@/features/memberships/api/get-memberships';
 import type { ShiftFormState } from '@/features/studio-shifts/types/shift-form.types';
-import { DEFAULT_END_TIME, DEFAULT_START_TIME } from '@/features/studio-shifts/utils/shift-form.utils';
+import { sortShiftFormBlocksByStart } from '@/features/studio-shifts/utils/shift-blocks.utils';
+import {
+  combineDateAndTime,
+  DEFAULT_END_TIME,
+  DEFAULT_START_TIME,
+  formatDateTime,
+} from '@/features/studio-shifts/utils/shift-form.utils';
 
 type ShiftFormFieldsProps = {
   idPrefix: string;
@@ -37,6 +45,63 @@ export function ShiftFormFields({
   onChange,
   includeStatus = false,
 }: ShiftFormFieldsProps) {
+  const blockFeedback = useMemo(() => {
+    const feedbackByBlockId = new Map<string, { inlineError: string | null; endWrapsToNextDay: boolean }>();
+    const previewRows: Array<{ id: string; label: string }> = [];
+
+    if (!formState.date) {
+      for (const block of formState.blocks) {
+        feedbackByBlockId.set(block.id, {
+          inlineError: 'Date is required to resolve block windows.',
+          endWrapsToNextDay: false,
+        });
+      }
+      return { feedbackByBlockId, previewRows };
+    }
+
+    const sortedBlocks = sortShiftFormBlocksByStart(formState.blocks);
+    let previousEndTime: Date | null = null;
+
+    for (const block of sortedBlocks) {
+      if (!block.startTime || !block.endTime) {
+        feedbackByBlockId.set(block.id, {
+          inlineError: 'Start and end time are required.',
+          endWrapsToNextDay: false,
+        });
+        continue;
+      }
+
+      const startDate = new Date(combineDateAndTime(formState.date, block.startTime));
+      const endDate = new Date(combineDateAndTime(formState.date, block.endTime));
+      let endWrapsToNextDay = false;
+
+      while (endDate.getTime() <= startDate.getTime()) {
+        endDate.setDate(endDate.getDate() + 1);
+        endWrapsToNextDay = true;
+      }
+
+      if (previousEndTime) {
+        while (startDate.getTime() < previousEndTime.getTime()) {
+          startDate.setDate(startDate.getDate() + 1);
+          endDate.setDate(endDate.getDate() + 1);
+        }
+      }
+
+      feedbackByBlockId.set(block.id, {
+        inlineError: null,
+        endWrapsToNextDay,
+      });
+      previousEndTime = endDate;
+
+      previewRows.push({
+        id: block.id,
+        label: `${formatDateTime(startDate.toISOString())} -> ${formatDateTime(endDate.toISOString())}`,
+      });
+    }
+
+    return { feedbackByBlockId, previewRows };
+  }, [formState.blocks, formState.date]);
+
   const memberOptions = members.map((member) => ({
     value: member.user.id,
     label: `${member.user.name} (${member.user.email})`,
@@ -131,7 +196,14 @@ export function ShiftFormFields({
                   />
                 </div>
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor={`${idPrefix}-block-${block.id}-end`} className="text-xs">End Time</Label>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={`${idPrefix}-block-${block.id}-end`} className="text-xs">End Time</Label>
+                    {blockFeedback.feedbackByBlockId.get(block.id)?.endWrapsToNextDay && (
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                        +1 day
+                      </Badge>
+                    )}
+                  </div>
                   <Input
                     id={`${idPrefix}-block-${block.id}-end`}
                     type="time"
@@ -161,8 +233,37 @@ export function ShiftFormFields({
                     </Button>
                   </div>
                 )}
+                {blockFeedback.feedbackByBlockId.get(block.id)?.inlineError && (
+                  <p className="w-full text-xs text-destructive">
+                    {blockFeedback.feedbackByBlockId.get(block.id)?.inlineError}
+                  </p>
+                )}
               </div>
             ))}
+          </div>
+
+          <div className="rounded-md border bg-muted/20 p-3">
+            <p className="text-xs font-medium">Resolved Block Window Preview</p>
+            {blockFeedback.previewRows.length === 0
+              ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Fill date and block times to see the resolved timeline.
+                  </p>
+                )
+              : (
+                  <div className="mt-2 space-y-1">
+                    {blockFeedback.previewRows.map((row, index) => (
+                      <p key={row.id} className="text-xs text-muted-foreground">
+                        Block
+                        {' '}
+                        {index + 1}
+                        :
+                        {' '}
+                        {row.label}
+                      </p>
+                    ))}
+                  </div>
+                )}
           </div>
         </div>
 

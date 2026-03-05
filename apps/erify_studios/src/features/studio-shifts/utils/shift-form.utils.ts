@@ -1,5 +1,6 @@
 import type { StudioShift } from '@/features/studio-shifts/api/studio-shifts.types';
 import type { ShiftFormState } from '@/features/studio-shifts/types/shift-form.types';
+import { sortShiftBlocksByStart } from '@/features/studio-shifts/utils/shift-blocks.utils';
 
 export const DEFAULT_START_TIME = '09:00';
 export const DEFAULT_END_TIME = '18:00';
@@ -47,9 +48,7 @@ export function createDefaultFormState(): ShiftFormState {
 }
 
 export function createEditFormState(shift: StudioShift): ShiftFormState {
-  const sortedBlocks = [...shift.blocks].sort(
-    (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
-  );
+  const sortedBlocks = sortShiftBlocksByStart(shift.blocks);
 
   return {
     userId: shift.user_id,
@@ -92,9 +91,7 @@ export function getShiftWindowLabel(shift: StudioShift): string {
   if (shift.blocks.length === 0)
     return 'No shift blocks';
 
-  const sortedBlocks = [...shift.blocks].sort(
-    (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
-  );
+  const sortedBlocks = sortShiftBlocksByStart(shift.blocks);
 
   const firstBlock = sortedBlocks[0];
   const lastBlock = sortedBlocks[sortedBlocks.length - 1];
@@ -105,9 +102,7 @@ export function getShiftWindowLabel(shift: StudioShift): string {
 }
 
 export function getShiftDisplayDate(shift: StudioShift): string {
-  const sortedBlocks = [...shift.blocks].sort(
-    (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
-  );
+  const sortedBlocks = sortShiftBlocksByStart(shift.blocks);
   const firstBlock = sortedBlocks[0];
 
   // Prefer ISO block timestamps as source of truth for date rendering.
@@ -123,9 +118,7 @@ export function getShiftBlockLabels(shift: StudioShift): string[] {
     return [];
   }
 
-  const sortedBlocks = [...shift.blocks].sort(
-    (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
-  );
+  const sortedBlocks = sortShiftBlocksByStart(shift.blocks);
 
   const formatter = new Intl.DateTimeFormat('en-US', {
     month: 'short',
