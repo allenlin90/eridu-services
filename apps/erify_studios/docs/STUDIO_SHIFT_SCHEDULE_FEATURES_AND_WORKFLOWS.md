@@ -138,13 +138,13 @@ Delivered:
   - Operational-day duty-manager gap risk between first and last show of the day.
   - Task-readiness risks: no tasks, unassigned tasks, missing `SETUP`/`ACTIVE`/`CLOSURE`, and missing moderation task on premium shows.
   - Operational day boundary is fixed at `06:00`: show starts before `06:00` are counted toward the previous operational day; `06:00` or later uses the same date.
-- Frontend admin planning cards now consume these endpoints on `/studios/:studioId/shifts` (planning risk warnings + cost snapshot), rather than dashboard.
-- `/studios/:studioId/shifts` now includes planning risk drill-down tables for:
-  - `duty_manager_missing_shows` with direct "Plan Duty Shift" action.
-  - `task_readiness_warnings` with direct "Open Show Tasks" action.
+- Frontend admin planning cards now consume these endpoints on dedicated surfaces:
+  - `/studios/:studioId/shows` for date-range task-readiness summary warnings.
+  - `/studios/:studioId/shifts` for shift cost snapshot.
+- `/studios/:studioId/shows` summary warning card supports date-range querying and focuses on task-readiness metrics (`no tasks`, `unassigned`, required `SETUP`/`ACTIVE`/`CLOSURE`, premium moderation).
 
 Pending scope:
-- Dedicated report pages beyond inline drill-down tables (separate from planning workflow) for richer analytics.
+- Dedicated report pages beyond the summary card (separate from planning workflow) for richer analytics.
 - Task-assignment-time warning integration (check shift coverage during assignee selection).
 
 ## Implementation Timeline (This Branch)
@@ -220,7 +220,7 @@ Pending scope:
 - Dashboard pagination controls now hide the rows-per-page selector on mobile to avoid action-row overflow while preserving next/previous actions.
 - Refactored dashboard/calendar shift timeline handling into shared utilities (`sortShiftsByFirstBlockStart`, `getShiftFirstBlockStartMs`) and replaced repeated hardcoded member/query fetch limits with named constants.
 - Added backend orchestration services/modules and studio routes for `shift-calendar` and `shift-alignment`, including typed query/response schemas and service/controller tests.
-- Added frontend API hooks for `shift-calendar`/`shift-alignment` and admin planning cards in `/studios/:studioId/shifts` for planning risk warnings and shift cost snapshot.
+- Added frontend API hooks for `shift-calendar`/`shift-alignment` and admin planning cards on dedicated surfaces: `/studios/:studioId/shows` (risk warning summary) and `/studios/:studioId/shifts` (cost snapshot).
 
 ## Current Operational Workflows
 
@@ -248,7 +248,7 @@ Pending scope:
 ## Remaining Follow-ups
 
 1. Add advanced multi-block editing UX (reorder/drag, richer inline error states).
-2. Expand from inline drill-down tables to dedicated FE alignment/rollup report views (filterable day/show/task details).
+2. Expand from summary card to dedicated FE alignment/rollup report views (filterable day/show/task details).
 3. Add task assignment workflow warning integration using shift-alignment overlap checks.
 4. Expand member shift visibility from 7-day preview to optional longer range/date controls if needed.
 
@@ -307,7 +307,7 @@ Pending scope:
 ### Future Integration TODOs
 
 1. **Task assignment shift warning** — check assignee has overlapping `StudioShiftBlock`; surface warning if no shift covers the show window.
-2. **Show alignment orchestration** — baseline planning warnings and inline drill-down/action tables are implemented in `/studios/:studioId/shifts`; pending dedicated report views.
+2. **Show alignment orchestration** — baseline planning warning summary is implemented in `/studios/:studioId/shows`; pending dedicated report/drill-down views.
 3. **Financial aggregation** — baseline planning cost snapshot is implemented in `/studios/:studioId/shifts`; pending richer report views.
 4. **Member availability** — members set availability for admin reference.
 5. **Recurring shift templates** — weekly pattern creation.

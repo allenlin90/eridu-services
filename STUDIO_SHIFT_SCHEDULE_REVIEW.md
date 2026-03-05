@@ -85,7 +85,7 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 | Feature                       | Description                                                                                                    | Priority |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------- | -------- |
 | Task assignment shift warning | Check if assignee has overlapping `StudioShiftBlock` during task assignment; show warning if no shift coverage | High     |
-| Show alignment orchestration (FE integration) | Backend `shift-alignment` endpoint is implemented; `/studios/:studioId/shifts` now includes planning warning card + drill-down tables for duty-manager gaps and task-readiness risks with direct actions | High     |
+| Show alignment orchestration (FE integration) | Backend `shift-alignment` endpoint is implemented; `/studios/:studioId/shows` now includes a date-range summary warning card focused on task-readiness metrics | High     |
 | Financial aggregation (FE integration)         | Backend `shift-calendar` endpoint is implemented; admin planning cost snapshot is now in `/studios/:studioId/shifts`, richer report views remain              | Medium   |
 | `/my-shifts` member enhancements | Extend the implemented read-only member calendar with richer range controls and additional filters            | Medium   |
 | Member availability           | Members set availability slots for admin reference during shift creation                                       | Low      |
