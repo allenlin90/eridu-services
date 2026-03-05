@@ -50,28 +50,37 @@ export class StudioShiftRepository extends BaseRepository<
     studioUid: string,
     uid: string,
     data: Prisma.StudioShiftUpdateInput,
+    existingId?: bigint,
   ): Promise<StudioShiftWithRelations | null> {
-    const existing = await this.findByUidInStudio(studioUid, uid);
-    if (!existing) {
+    const targetId = existingId ?? (await this.findByUidInStudio(studioUid, uid))?.id;
+    if (!targetId)
       return null;
-    }
 
     return this.prisma.studioShift.update({
-      where: { id: existing.id },
+      where: { id: targetId },
       data,
       include: defaultShiftInclude,
     });
   }
 
-  async softDeleteInStudio(studioUid: string, uid: string): Promise<StudioShiftWithRelations | null> {
-    const existing = await this.findByUidInStudio(studioUid, uid);
-    if (!existing) {
+  async softDeleteInStudio(studioUid: string, uid: string, existingId?: bigint): Promise<StudioShiftWithRelations | null> {
+    const targetId = existingId ?? (await this.findByUidInStudio(studioUid, uid))?.id;
+    if (!targetId)
       return null;
-    }
+
+    const deletedAt = new Date();
 
     return this.prisma.studioShift.update({
-      where: { id: existing.id },
-      data: { deletedAt: new Date() },
+      where: { id: targetId },
+      data: {
+        deletedAt,
+        blocks: {
+          updateMany: {
+            where: { deletedAt: null },
+            data: { deletedAt },
+          },
+        },
+      },
       include: defaultShiftInclude,
     });
   }

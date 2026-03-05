@@ -189,6 +189,7 @@ Pending scope:
 - Removed unused `ShiftCreateCard` component to reduce dead code in shift feature module.
 - Added shared `StudioShift`/`StudioShiftBlock` API types in `@eridu/api-types/studio-shifts` and adopted them in FE shift API typing.
 - Added FE utility tests for shift schedule helpers (`validateShiftBlocks`, `combineDateAndTime`, sorting/window helpers).
+- Backend quality pass: shift soft-delete now cascades to child blocks, local `JsonValue` alias replaced with `Prisma.JsonValue`, and update/delete now avoid duplicate repository lookup by reusing resolved shift ID.
 
 ## Current Operational Workflows
 
@@ -272,6 +273,7 @@ Pending scope:
 3. **Repeated block sorting**: 6+ places sort blocks with the same comparator. Extract `sortBlocks` utility.
 4. **Duplicated `memberMap` building**: Calendar and table independently build the same map. Extract shared hook.
 5. **Magic number fetch limits**: `limit: 200` for display members, `limit: 500` for calendar members. Document or derive from studio size.
+6. **Backend soft-delete / lookup / JSON typing refinements**: Resolved in current branch work (service/repository improvements applied).
 
 ### Future Integration TODOs
 

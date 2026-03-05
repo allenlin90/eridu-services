@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 
 import type {
   CreateStudioShiftInput,
@@ -12,18 +13,10 @@ import { BaseModelService } from '@/lib/services/base-model.service';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { UtilityService } from '@/utility/utility.service';
 
-type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: JsonValue }
-  | JsonValue[];
-
 type ShiftBlockInput = {
   startTime: Date;
   endTime: Date;
-  metadata: Record<string, JsonValue>;
+  metadata: Record<string, Prisma.JsonValue>;
 };
 
 @Injectable()
@@ -119,7 +112,7 @@ export class StudioShiftService extends BaseModelService {
       : existing.blocks.map((block) => ({
           startTime: block.startTime,
           endTime: block.endTime,
-          metadata: block.metadata as Record<string, JsonValue>,
+          metadata: block.metadata as Record<string, Prisma.JsonValue>,
         }));
 
     const projectedCost = this.calculateProjectedCost(hourlyRate, normalizedBlocks);
@@ -149,7 +142,7 @@ export class StudioShiftService extends BaseModelService {
           })),
         },
       }),
-    });
+    }, existing.id);
   }
 
   async deleteShift(studioId: string, uid: string) {
@@ -158,7 +151,7 @@ export class StudioShiftService extends BaseModelService {
       return null;
     }
 
-    return this.studioShiftRepository.softDeleteInStudio(studioId, uid);
+    return this.studioShiftRepository.softDeleteInStudio(studioId, uid, existing.id);
   }
 
   async findActiveDutyManager(studioId: string, timestamp: Date) {

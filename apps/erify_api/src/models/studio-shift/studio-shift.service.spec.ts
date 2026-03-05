@@ -185,6 +185,7 @@ describe('studioShiftService', () => {
           hourlyRate: '20.00',
           projectedCost: '60.00',
         }),
+        BigInt(1),
       );
     });
   });
