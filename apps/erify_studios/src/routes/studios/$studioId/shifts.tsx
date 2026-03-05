@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { RefreshCw } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
+import type { DateRange } from 'react-day-picker';
 import { z } from 'zod';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
@@ -11,6 +12,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  DatePickerWithRange,
 } from '@eridu/ui';
 
 import { StudioShiftsCalendar } from '@/features/studio-shifts/components/studio-shifts-calendar';
@@ -64,6 +66,12 @@ function StudioShiftsPage() {
     date_to: planningDateTo,
     include_cancelled: false,
   };
+  const planningDateRange: DateRange | undefined = planningDateFrom || planningDateTo
+    ? {
+        from: planningDateFrom ? new Date(`${planningDateFrom}T00:00:00`) : undefined,
+        to: planningDateTo ? new Date(`${planningDateTo}T00:00:00`) : undefined,
+      }
+    : undefined;
   const {
     data: shiftCalendarResponse,
     isLoading: isLoadingShiftCalendar,
@@ -90,6 +98,17 @@ function StudioShiftsPage() {
       }
       return toTableViewSearch(prev);
     }, { replace: false });
+  };
+
+  const handleResetPlanningRange = () => {
+    const nextFrom = today;
+    const nextTo = toLocalDateInputValue(addDays(fromLocalDateInput(nextFrom), 7));
+    updateSearch((previous) => ({
+      ...previous,
+      page: 1,
+      date_from: nextFrom,
+      date_to: nextTo,
+    }));
   };
 
   if (isLoadingProfile) {
@@ -149,23 +168,49 @@ function StudioShiftsPage() {
 
       <div className="grid gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-start justify-between space-y-0">
+          <CardHeader className="gap-3">
             <div className="space-y-1">
               <CardTitle className="text-base">Shift Cost Snapshot</CardTitle>
               <CardDescription>
                 Admin-only cost summary for upcoming shift planning.
               </CardDescription>
             </div>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 shrink-0"
-              onClick={() => void refetchShiftCalendar()}
-              disabled={isFetchingShiftCalendar}
-              aria-label="Refresh shift cost snapshot"
-            >
-              <RefreshCw className={`h-4 w-4 ${isFetchingShiftCalendar ? 'animate-spin' : ''}`} />
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <DatePickerWithRange
+                date={planningDateRange}
+                setDate={(range) => {
+                  const nextFrom = range?.from ? toLocalDateInputValue(range.from) : today;
+                  const nextTo = range?.to
+                    ? toLocalDateInputValue(range.to)
+                    : toLocalDateInputValue(addDays(fromLocalDateInput(nextFrom), 7));
+
+                  updateSearch((previous) => ({
+                    ...previous,
+                    page: 1,
+                    date_from: nextFrom,
+                    date_to: nextTo,
+                  }));
+                }}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetPlanningRange}
+                disabled={isFetchingShiftCalendar}
+              >
+                Next 7 Days
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => void refetchShiftCalendar()}
+                disabled={isFetchingShiftCalendar}
+                aria-label="Refresh shift cost snapshot"
+              >
+                <RefreshCw className={`h-4 w-4 ${isFetchingShiftCalendar ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {(isLoadingShiftCalendar || isFetchingShiftCalendar)

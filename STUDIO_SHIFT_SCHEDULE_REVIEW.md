@@ -97,7 +97,7 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 ### Later Phase
 
 - [ ] **Calendar event interactivity**: Calendar blocks are display-only. Admin: click → open edit dialog. Member: click → read-only detail popover. (Documented in design docs as future improvement.)
-- [ ] **Cost snapshot inline date range**: Admin must change URL params to adjust the window. Add a date-range control on the card.
+- [x] **Cost snapshot inline date range**: Added inline date-range controls on the shift cost snapshot card (with quick reset) so admins can adjust the reporting window directly in UI.
 - [ ] **Calendar jump-to-date**: No quick way to navigate to a specific date.
 - [x] **Utility dedup**: Extracted shared `addDays` / `fromLocalDateInput` / date-param resolver helpers to shift date utils and adopted across `dashboard.tsx`, `shifts.tsx`, and `my-shifts.tsx`.
 - [ ] **Calendar range debounce**: `onRangeUpdate` fires on every navigation → debounce `setDateRange`.
@@ -107,24 +107,24 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 
 ## Future Integration TODOs
 
-| Feature                       | Description                                                                                                    | Priority |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------- | -------- |
-| Task assignment shift warning | Check if assignee has overlapping `StudioShiftBlock` during task assignment; show warning if no shift coverage | High     |
+| Feature                                       | Description                                                                                                                                                    | Priority |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| Task assignment shift warning                 | Check if assignee has overlapping `StudioShiftBlock` during task assignment; show warning if no shift coverage                                                 | High     |
 | Show alignment orchestration (FE integration) | Backend `shift-alignment` endpoint is implemented; `/studios/:studioId/shows` now includes a date-range summary warning card focused on task-readiness metrics | High     |
-| Financial aggregation (FE integration)         | Backend `shift-calendar` endpoint is implemented; admin planning cost snapshot is now in `/studios/:studioId/shifts`, richer report views remain              | Medium   |
-| Member availability           | Members set availability slots for admin reference during shift creation                                       | Low      |
-| Recurring shift templates     | Weekly pattern creation instead of one-off entries                                                             | Low      |
-| Shift data export             | CSV/Excel export for payroll integration                                                                       | Low      |
+| Financial aggregation (FE integration)        | Backend `shift-calendar` endpoint is implemented; admin planning cost snapshot is now in `/studios/:studioId/shifts`, richer report views remain               | Medium   |
+| Member availability                           | Members set availability slots for admin reference during shift creation                                                                                       | Low      |
+| Recurring shift templates                     | Weekly pattern creation instead of one-off entries                                                                                                             | Low      |
+| Shift data export                             | CSV/Excel export for payroll integration                                                                                                                       | Low      |
 
 ---
 
 ## Test Gaps
 
-| Area                 | Existing                                                                                                                                                                   | Missing                                                |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| Service: createShift | ✅ Cost calc, overlap rejection, non-member rejection, cross-midnight and empty-block validation                                                                            | None identified in reviewed scope                      |
-| Service: updateShift | ✅ Duty manager flag preservation, block UID stability/soft-delete behavior, user reassignment rate inheritance                                                             | None identified in reviewed scope                      |
-| Controller           | ✅ Pagination, duty manager, timestamp query, create/update/delete flows, not-found paths                                                                                   | None identified in reviewed scope                      |
-| Orchestration: alignment | ✅ Past-show skip and planning-risk model for duty manager + show task readiness (`SETUP`/`ACTIVE`/`CLOSURE`, premium moderation, unassigned-task checks)           | None identified in reviewed scope                      |
-| FE utils             | ✅ Added coverage for query param mapping, empty-block sorting behavior, cross-midnight sequencing, local time extraction, edit-state defaults, and display date precedence | None identified in reviewed scope                      |
-| FE components        | ✅ Initial coverage for duty manager/calendar cards, table orchestration, form/dialog interactions, and route view-search transition utils                                  | Deep integration coverage across full shift page flows |
+| Area                     | Existing                                                                                                                                                                   | Missing                                                |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Service: createShift     | ✅ Cost calc, overlap rejection, non-member rejection, cross-midnight and empty-block validation                                                                            | None identified in reviewed scope                      |
+| Service: updateShift     | ✅ Duty manager flag preservation, block UID stability/soft-delete behavior, user reassignment rate inheritance                                                             | None identified in reviewed scope                      |
+| Controller               | ✅ Pagination, duty manager, timestamp query, create/update/delete flows, not-found paths                                                                                   | None identified in reviewed scope                      |
+| Orchestration: alignment | ✅ Past-show skip and planning-risk model for duty manager + show task readiness (`SETUP`/`ACTIVE`/`CLOSURE`, premium moderation, unassigned-task checks)                   | None identified in reviewed scope                      |
+| FE utils                 | ✅ Added coverage for query param mapping, empty-block sorting behavior, cross-midnight sequencing, local time extraction, edit-state defaults, and display date precedence | None identified in reviewed scope                      |
+| FE components            | ✅ Initial coverage for duty manager/calendar cards, table orchestration, form/dialog interactions, and route view-search transition utils                                  | Deep integration coverage across full shift page flows |

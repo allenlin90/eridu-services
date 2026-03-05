@@ -202,6 +202,7 @@ Pending scope:
 - Dashboard now supports URL-backed day navigation (`date` search param) and rows-per-page control.
 - Shift form now includes per-block inline validation feedback, cross-midnight `+1 day` indicator, and resolved block window preview.
 - Added member-facing `/my-shifts` route reusing `StudioShiftsCalendar` with user-scoped `/me/shifts` query flow.
+- Added member-facing `/my-shifts` table mode (read-only) with calendar/table toggle, date-range + status filters, and pagination.
 - Added dashboard "My Upcoming Shifts" card (next 5 shifts from selected operational day).
 - Removed unused `ShiftCreateCard` component to reduce dead code in shift feature module.
 - Added shared `StudioShift`/`StudioShiftBlock` API types in `@eridu/api-types/studio-shifts` and adopted them in FE shift API typing.
@@ -222,6 +223,8 @@ Pending scope:
 - Refactored dashboard/calendar shift timeline handling into shared utilities (`sortShiftsByFirstBlockStart`, `getShiftFirstBlockStartMs`) and replaced repeated hardcoded member/query fetch limits with named constants.
 - Added backend orchestration services/modules and studio routes for `shift-calendar` and `shift-alignment`, including typed query/response schemas and service/controller tests.
 - Added frontend API hooks for `shift-calendar`/`shift-alignment` and admin planning cards on dedicated surfaces: `/studios/:studioId/shows` (risk warning summary) and `/studios/:studioId/shifts` (cost snapshot).
+- Shift cost snapshot card now includes an inline date-range picker + reset action, eliminating manual URL edits for planning window changes.
+- Extracted shared date helpers (`addDays`, `fromLocalDateInput`, date param resolver) into `shift-date.utils` and reused across dashboard/shifts/my-shifts routes.
 
 ## Current Operational Workflows
 
