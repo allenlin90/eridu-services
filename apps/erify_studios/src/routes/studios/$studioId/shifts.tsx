@@ -94,6 +94,15 @@ function StudioShiftsPage() {
     isLoading: isLoadingShiftAlignment,
     isFetching: isFetchingShiftAlignment,
   } = useShiftAlignment(studioId, orchestrationQueryParams, { enabled: isStudioAdmin });
+  const missingShiftAssignments = shiftAlignmentResponse?.missing_shift_assignments ?? [];
+  const missingShiftPairCount = missingShiftAssignments.length;
+  const uniqueShowsWithMissingCoverageCount = new Set(
+    missingShiftAssignments.map((assignment) => assignment.show_id),
+  ).size;
+  const uniqueMembersWithMissingCoverageCount = new Set(
+    missingShiftAssignments.map((assignment) => assignment.user_id),
+  ).size;
+  const idleUncoveredSegmentCount = shiftAlignmentResponse?.summary.idle_segments_count ?? 0;
   const shiftCoverageWarningCount = (shiftAlignmentResponse?.summary.idle_segments_count ?? 0)
     + (shiftAlignmentResponse?.summary.missing_shift_count ?? 0);
   const hasShiftCoverageWarnings = shiftCoverageWarningCount > 0;
@@ -202,15 +211,27 @@ function StudioShiftsPage() {
                     <p className="text-2xl font-semibold">{shiftCoverageWarningCount}</p>
                     {hasShiftCoverageWarnings
                       ? (
-                          <p className="text-sm text-amber-700">
-                            {shiftAlignmentResponse?.summary.missing_shift_count ?? 0}
-                            {' '}
-                            missing shift assignments and
-                            {' '}
-                            {shiftAlignmentResponse?.summary.idle_segments_count ?? 0}
-                            {' '}
-                            idle uncovered segments.
-                          </p>
+                          <div className="space-y-1 text-sm text-amber-700">
+                            <p>
+                              {uniqueShowsWithMissingCoverageCount}
+                              {' '}
+                              unique shows with missing coverage
+                            </p>
+                            <p>
+                              {uniqueMembersWithMissingCoverageCount}
+                              {' '}
+                              unique members with missing coverage
+                            </p>
+                            <p>
+                              {missingShiftPairCount}
+                              {' '}
+                              show-member missing coverage pairs and
+                              {' '}
+                              {idleUncoveredSegmentCount}
+                              {' '}
+                              idle uncovered segments.
+                            </p>
+                          </div>
                         )
                       : (
                           <p className="text-sm text-emerald-700">No shift coverage warnings for assigned show members.</p>
