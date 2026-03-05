@@ -38,8 +38,6 @@ import { useStudioMemberMap } from '@/features/studio-shifts/hooks/use-studio-me
 import {
   useDutyManager,
   useMyShifts,
-  useShiftAlignment,
-  useShiftCalendar,
   useStudioShifts,
 } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import { formatDate, getShiftWindowLabel, toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
@@ -152,22 +150,6 @@ function StudioDashboardPage() {
       }),
     enabled: Boolean(studioId),
   });
-  const orchestrationQueryParams = {
-    date_from: selectedDate,
-    date_to: previewUntil,
-    include_cancelled: false,
-  };
-  const {
-    data: shiftCalendarResponse,
-    isLoading: isLoadingShiftCalendar,
-    isFetching: isFetchingShiftCalendar,
-  } = useShiftCalendar(studioId, orchestrationQueryParams, { enabled: isStudioAdmin });
-  const {
-    data: shiftAlignmentResponse,
-    isLoading: isLoadingShiftAlignment,
-    isFetching: isFetchingShiftAlignment,
-  } = useShiftAlignment(studioId, orchestrationQueryParams, { enabled: isStudioAdmin });
-
   const activeShiftStartMs = dutyManager ? getShiftFirstBlockStartMs(dutyManager) : null;
 
   const upcomingDutyManagerShifts = sortShiftsByFirstBlockStart(dutyShiftResponse?.data ?? [])
@@ -201,10 +183,6 @@ function StudioDashboardPage() {
   const totalShows = todayShowsResponse?.meta?.total ?? 0;
   const totalShowPages = todayShowsResponse?.meta?.totalPages ?? 1;
   const todayShows = todayShowsResponse?.data ?? [];
-  const shiftCoverageWarningCount = (shiftAlignmentResponse?.summary.idle_segments_count ?? 0)
-    + (shiftAlignmentResponse?.summary.missing_shift_count ?? 0);
-  const hasShiftCoverageWarnings = shiftCoverageWarningCount > 0;
-
   useEffect(() => {
     if (showsPage > totalShowPages && totalShowPages > 0) {
       void navigate({
@@ -393,103 +371,6 @@ function StudioDashboardPage() {
             </CardContent>
           </Card>
         </div>
-        {isStudioAdmin && (
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div>
-                  <CardTitle className="text-base">Shift Coverage Warnings</CardTitle>
-                  <CardDescription>
-                    Next 7 days from selected operational day.
-                  </CardDescription>
-                </div>
-                <Button asChild size="sm" variant="outline">
-                  <Link to="/studios/$studioId/shifts" params={{ studioId }}>
-                    View Shifts
-                  </Link>
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {(isLoadingShiftAlignment || isFetchingShiftAlignment)
-                  ? (
-                      <p className="text-sm text-muted-foreground">Checking shift/show alignment...</p>
-                    )
-                  : (
-                      <div className="space-y-2">
-                        <p className="text-2xl font-semibold">{shiftCoverageWarningCount}</p>
-                        {hasShiftCoverageWarnings
-                          ? (
-                              <p className="text-sm text-amber-700">
-                                {shiftAlignmentResponse?.summary.missing_shift_count ?? 0}
-                                {' '}
-                                missing shift assignments and
-                                {' '}
-                                {shiftAlignmentResponse?.summary.idle_segments_count ?? 0}
-                                {' '}
-                                idle uncovered segments.
-                              </p>
-                            )
-                          : (
-                              <p className="text-sm text-emerald-700">No shift coverage warnings for assigned show members.</p>
-                            )}
-                      </div>
-                    )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div>
-                  <CardTitle className="text-base">Shift Cost Snapshot</CardTitle>
-                  <CardDescription>
-                    Aggregated projected and approved costs for selected range.
-                  </CardDescription>
-                </div>
-                <Button asChild size="sm" variant="outline">
-                  <Link to="/studios/$studioId/shifts" params={{ studioId }}>
-                    Manage Shifts
-                  </Link>
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {(isLoadingShiftCalendar || isFetchingShiftCalendar)
-                  ? (
-                      <p className="text-sm text-muted-foreground">Aggregating shift costs...</p>
-                    )
-                  : (
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Projected:
-                          {' '}
-                          <span className="font-medium text-foreground">
-                            $
-                            {shiftCalendarResponse?.summary.total_projected_cost ?? '0.00'}
-                          </span>
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Calculated:
-                          {' '}
-                          <span className="font-medium text-foreground">
-                            $
-                            {shiftCalendarResponse?.summary.total_calculated_cost ?? '0.00'}
-                          </span>
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {shiftCalendarResponse?.summary.shift_count ?? 0}
-                          {' '}
-                          shifts ·
-                          {' '}
-                          {shiftCalendarResponse?.summary.total_hours ?? 0}
-                          {' '}
-                          hours
-                        </p>
-                      </div>
-                    )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
         <Card>
           <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>

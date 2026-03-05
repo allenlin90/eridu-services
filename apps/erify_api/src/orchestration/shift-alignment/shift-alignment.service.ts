@@ -92,12 +92,19 @@ export class ShiftAlignmentService {
     }> = [];
 
     let assignedMembersChecked = 0;
+    let showsChecked = 0;
+    const now = new Date();
 
     for (const show of shows as ShowWithAssignments[]) {
       const showWindow = this.clipInterval(show.startTime, show.endTime, window.start, window.end);
       if (!showWindow) {
         continue;
       }
+      if (showWindow.end <= now) {
+        continue;
+      }
+
+      showsChecked += 1;
 
       const assignedUsers = this.getAssignedUsers(show);
       for (const assignedUser of assignedUsers) {
@@ -140,7 +147,7 @@ export class ShiftAlignmentService {
         date_to: window.end.toISOString(),
       },
       summary: {
-        shows_checked: shows.length,
+        shows_checked: showsChecked,
         assigned_members_checked: assignedMembersChecked,
         idle_segments_count: idleSegments.length,
         missing_shift_count: missingShiftAssignments.length,

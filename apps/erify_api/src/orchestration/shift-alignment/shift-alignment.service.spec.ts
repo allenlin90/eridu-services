@@ -26,6 +26,10 @@ describe('shiftAlignmentService', () => {
     service = new ShiftAlignmentService(studioService, studioShiftService, showService);
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should throw when studio does not exist', async () => {
     studioService.findByUid.mockResolvedValue(null);
 
@@ -39,6 +43,7 @@ describe('shiftAlignmentService', () => {
   });
 
   it('should report both idle segments and missing shift assignments', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-03-05T09:00:00.000Z'));
     studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
 
     studioShiftService.findShiftsInWindow.mockResolvedValue([
@@ -103,5 +108,66 @@ describe('shiftAlignmentService', () => {
       show_id: 'show_2',
       user_id: 'user_2',
     }));
+  });
+
+  it('should skip already-ended shows when checking planning coverage', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-03-05T15:00:00.000Z'));
+    studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
+
+    studioShiftService.findShiftsInWindow.mockResolvedValue([
+      {
+        uid: 'ssh_1',
+        user: { uid: 'user_1', name: 'Alice' },
+        blocks: [
+          {
+            uid: 'ssb_1',
+            startTime: new Date('2026-03-05T16:00:00.000Z'),
+            endTime: new Date('2026-03-05T17:00:00.000Z'),
+          },
+        ],
+      },
+    ] as never);
+
+    showService.findMany.mockResolvedValue([
+      {
+        uid: 'show_past',
+        name: 'Past Show',
+        startTime: new Date('2026-03-05T10:00:00.000Z'),
+        endTime: new Date('2026-03-05T11:00:00.000Z'),
+        showMCs: [
+          {
+            mc: {
+              user: { uid: 'user_2', name: 'Bob' },
+            },
+          },
+        ],
+      },
+      {
+        uid: 'show_future',
+        name: 'Future Show',
+        startTime: new Date('2026-03-05T16:00:00.000Z'),
+        endTime: new Date('2026-03-05T17:00:00.000Z'),
+        showMCs: [
+          {
+            mc: {
+              user: { uid: 'user_1', name: 'Alice' },
+            },
+          },
+        ],
+      },
+    ] as never);
+
+    const result = await service.getAlignment('std_1', {
+      dateFrom: new Date('2026-03-05'),
+      dateTo: new Date('2026-03-05'),
+      includeCancelled: false,
+    });
+
+    expect(result.summary.shows_checked).toBe(1);
+    expect(result.summary.assigned_members_checked).toBe(1);
+    expect(result.summary.idle_segments_count).toBe(0);
+    expect(result.summary.missing_shift_count).toBe(0);
+    expect(result.idle_segments).toEqual([]);
+    expect(result.missing_shift_assignments).toEqual([]);
   });
 });

@@ -7,12 +7,15 @@ import {
   Button,
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from '@eridu/ui';
 
 import { StudioShiftsCalendar } from '@/features/studio-shifts/components/studio-shifts-calendar';
 import { StudioShiftsTable } from '@/features/studio-shifts/components/studio-shifts-table';
+import { useShiftAlignment, useShiftCalendar } from '@/features/studio-shifts/hooks/use-studio-shifts';
+import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
 import {
   toCalendarViewSearch,
   toTableViewSearch,
@@ -35,11 +38,31 @@ export const Route = createFileRoute('/studios/$studioId/shifts')({
   component: StudioShiftsPage,
 });
 
+function addDays(base: Date, days: number): Date {
+  const next = new Date(base);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function resolveDateParamOrDefault(value: string | undefined, fallback: string): string {
+  if (!value) {
+    return fallback;
+  }
+
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : fallback;
+}
+
 function StudioShiftsPage() {
   const { studioId } = Route.useParams();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const { data: profile, isLoading: isLoadingProfile } = useUserProfile();
+  const today = toLocalDateInputValue(new Date());
+  const planningDateFrom = resolveDateParamOrDefault(search.date_from, today);
+  const planningDateTo = resolveDateParamOrDefault(
+    search.date_to,
+    toLocalDateInputValue(addDays(new Date(`${planningDateFrom}T00:00:00`), 7)),
+  );
 
   const viewMode = search.view;
 
@@ -48,6 +71,24 @@ function StudioShiftsPage() {
     [profile?.studio_memberships, studioId],
   );
   const isStudioAdmin = activeMembership?.role === STUDIO_ROLE.ADMIN;
+  const orchestrationQueryParams = {
+    date_from: planningDateFrom,
+    date_to: planningDateTo,
+    include_cancelled: false,
+  };
+  const {
+    data: shiftCalendarResponse,
+    isLoading: isLoadingShiftCalendar,
+    isFetching: isFetchingShiftCalendar,
+  } = useShiftCalendar(studioId, orchestrationQueryParams, { enabled: isStudioAdmin });
+  const {
+    data: shiftAlignmentResponse,
+    isLoading: isLoadingShiftAlignment,
+    isFetching: isFetchingShiftAlignment,
+  } = useShiftAlignment(studioId, orchestrationQueryParams, { enabled: isStudioAdmin });
+  const shiftCoverageWarningCount = (shiftAlignmentResponse?.summary.idle_segments_count ?? 0)
+    + (shiftAlignmentResponse?.summary.missing_shift_count ?? 0);
+  const hasShiftCoverageWarnings = shiftCoverageWarningCount > 0;
 
   const updateSearch = useCallback((
     updater: (previous: typeof search) => typeof search,
@@ -105,7 +146,7 @@ function StudioShiftsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Studio Shift Schedule</h1>
           <p className="text-muted-foreground">
-            Manage all studio shifts with calendar and table views.
+            Plan upcoming shifts and control future coverage risk.
           </p>
         </div>
 
@@ -125,6 +166,95 @@ function StudioShiftsPage() {
             Table
           </Button>
         </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-base">Shift Coverage Warnings</CardTitle>
+            <CardDescription>
+              Planning window:
+              {' '}
+              {planningDateFrom}
+              {' '}
+              to
+              {' '}
+              {planningDateTo}
+              {' '}
+              (past shows skipped).
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {(isLoadingShiftAlignment || isFetchingShiftAlignment)
+              ? (
+                  <p className="text-sm text-muted-foreground">Checking shift/show alignment...</p>
+                )
+              : (
+                  <div className="space-y-2">
+                    <p className="text-2xl font-semibold">{shiftCoverageWarningCount}</p>
+                    {hasShiftCoverageWarnings
+                      ? (
+                          <p className="text-sm text-amber-700">
+                            {shiftAlignmentResponse?.summary.missing_shift_count ?? 0}
+                            {' '}
+                            missing shift assignments and
+                            {' '}
+                            {shiftAlignmentResponse?.summary.idle_segments_count ?? 0}
+                            {' '}
+                            idle uncovered segments.
+                          </p>
+                        )
+                      : (
+                          <p className="text-sm text-emerald-700">No shift coverage warnings for assigned show members.</p>
+                        )}
+                  </div>
+                )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-base">Shift Cost Snapshot</CardTitle>
+            <CardDescription>
+              Admin-only cost summary for upcoming shift planning.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {(isLoadingShiftCalendar || isFetchingShiftCalendar)
+              ? (
+                  <p className="text-sm text-muted-foreground">Aggregating shift costs...</p>
+                )
+              : (
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">
+                      Projected:
+                      {' '}
+                      <span className="font-medium text-foreground">
+                        $
+                        {shiftCalendarResponse?.summary.total_projected_cost ?? '0.00'}
+                      </span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Calculated:
+                      {' '}
+                      <span className="font-medium text-foreground">
+                        $
+                        {shiftCalendarResponse?.summary.total_calculated_cost ?? '0.00'}
+                      </span>
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {shiftCalendarResponse?.summary.shift_count ?? 0}
+                      {' '}
+                      shifts ·
+                      {' '}
+                      {shiftCalendarResponse?.summary.total_hours ?? 0}
+                      {' '}
+                      hours
+                    </p>
+                  </div>
+                )}
+          </CardContent>
+        </Card>
       </div>
 
       {viewMode === 'calendar'

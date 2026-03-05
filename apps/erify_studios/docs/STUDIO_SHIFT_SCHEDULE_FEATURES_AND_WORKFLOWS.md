@@ -126,17 +126,18 @@ Design intent:
 - `shift-calendar` orchestration endpoint (timeline + costs)
 - `shift-alignment` endpoint for gaps/missing shifts against show windows
 
-Status: `Implemented (Backend MVP)`
+Status: `Implemented`
 
 Delivered:
 - Dedicated studio-scoped orchestration endpoints were added:
   - `GET /studios/:studioId/shift-calendar`
   - `GET /studios/:studioId/shift-alignment`
 - `shift-calendar` now returns date-window timeline aggregation grouped by day/member, with period summary totals (hours/projected/calculated cost).
-- `shift-alignment` now computes show-window coverage warnings against assigned members (idle uncovered segments + missing shift assignments).
+- `shift-alignment` now computes show-window coverage warnings against assigned members (idle uncovered segments + missing shift assignments), and skips already-ended shows for planning-focused output.
+- Frontend admin planning cards now consume these endpoints on `/studios/:studioId/shifts` (coverage warnings + cost snapshot), rather than dashboard.
 
 Pending scope:
-- Frontend alignment/rollup views and action wiring to consume these orchestration endpoints.
+- Dedicated drill-down/report pages for alignment and financial analysis (separate from planning workflow).
 - Task-assignment-time warning integration (check shift coverage during assignee selection).
 
 ## Implementation Timeline (This Branch)
@@ -212,7 +213,7 @@ Pending scope:
 - Dashboard pagination controls now hide the rows-per-page selector on mobile to avoid action-row overflow while preserving next/previous actions.
 - Refactored dashboard/calendar shift timeline handling into shared utilities (`sortShiftsByFirstBlockStart`, `getShiftFirstBlockStartMs`) and replaced repeated hardcoded member/query fetch limits with named constants.
 - Added backend orchestration services/modules and studio routes for `shift-calendar` and `shift-alignment`, including typed query/response schemas and service/controller tests.
-- Added frontend API hooks for `shift-calendar`/`shift-alignment` and initial admin dashboard cards for coverage warnings and shift cost snapshot consumption.
+- Added frontend API hooks for `shift-calendar`/`shift-alignment` and admin planning cards in `/studios/:studioId/shifts` for coverage warnings and shift cost snapshot.
 
 ## Current Operational Workflows
 
@@ -240,7 +241,7 @@ Pending scope:
 ## Remaining Follow-ups
 
 1. Add advanced multi-block editing UX (reorder/drag, richer inline error states).
-2. Expand from dashboard summary cards to dedicated FE alignment/rollup drill-down views (filterable member/show details).
+2. Expand from shift-schedule planning summary cards to dedicated FE alignment/rollup drill-down views (filterable member/show details).
 3. Add task assignment workflow warning integration using shift-alignment overlap checks.
 4. Expand member shift visibility from 7-day preview to optional longer range/date controls if needed.
 
@@ -299,8 +300,8 @@ Pending scope:
 ### Future Integration TODOs
 
 1. **Task assignment shift warning** — check assignee has overlapping `StudioShiftBlock`; surface warning if no shift covers the show window.
-2. **Show alignment orchestration** — idle members and missing shifts against show windows.
-3. **Financial aggregation** — period cost rollups for admin reporting.
+2. **Show alignment orchestration** — baseline planning warnings are implemented in `/studios/:studioId/shifts`; pending deeper drill-down/actions.
+3. **Financial aggregation** — baseline planning cost snapshot is implemented in `/studios/:studioId/shifts`; pending richer report views.
 4. **Member availability** — members set availability for admin reference.
 5. **Recurring shift templates** — weekly pattern creation.
 6. **Shift data export** — CSV/Excel for payroll.
