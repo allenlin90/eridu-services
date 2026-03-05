@@ -40,6 +40,7 @@ import {
   useMyShifts,
   useStudioShifts,
 } from '@/features/studio-shifts/hooks/use-studio-shifts';
+import { addDays, fromLocalDateInput } from '@/features/studio-shifts/utils/shift-date.utils';
 import { formatDate, getShiftWindowLabel, toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
 import { getShiftFirstBlockStartMs, sortShiftsByFirstBlockStart } from '@/features/studio-shifts/utils/shift-timeline.utils';
 import { getStudioShows } from '@/features/studio-shows/api/get-studio-shows';
@@ -55,20 +56,6 @@ export const Route = createFileRoute('/studios/$studioId/dashboard')({
   component: StudioDashboardPage,
   validateSearch: (search) => dashboardSearchSchema.parse(search),
 });
-
-function addDays(base: Date, days: number): Date {
-  const next = new Date(base);
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
-function fromLocalDateInput(value: string): Date {
-  const [year, month, day] = value.split('-').map(Number);
-  const date = new Date();
-  date.setFullYear(year || date.getFullYear(), (month || 1) - 1, day || 1);
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
 
 function formatTimeHHmm(value: string): string {
   return new Intl.DateTimeFormat('en-US', {

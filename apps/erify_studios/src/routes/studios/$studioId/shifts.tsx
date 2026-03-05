@@ -16,6 +16,7 @@ import {
 import { StudioShiftsCalendar } from '@/features/studio-shifts/components/studio-shifts-calendar';
 import { StudioShiftsTable } from '@/features/studio-shifts/components/studio-shifts-table';
 import { useShiftCalendar } from '@/features/studio-shifts/hooks/use-studio-shifts';
+import { addDays, fromLocalDateInput, resolveDateParamOrDefault } from '@/features/studio-shifts/utils/shift-date.utils';
 import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
 import {
   toCalendarViewSearch,
@@ -38,28 +39,6 @@ export const Route = createFileRoute('/studios/$studioId/shifts')({
   validateSearch: (search) => shiftsSearchSchema.parse(search),
   component: StudioShiftsPage,
 });
-
-function addDays(base: Date, days: number): Date {
-  const next = new Date(base);
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
-function fromLocalDateInput(value: string): Date {
-  const [year, month, day] = value.split('-').map(Number);
-  const date = new Date();
-  date.setFullYear(year || date.getFullYear(), (month || 1) - 1, day || 1);
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
-
-function resolveDateParamOrDefault(value: string | undefined, fallback: string): string {
-  if (!value) {
-    return fallback;
-  }
-
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : fallback;
-}
 
 function StudioShiftsPage() {
   const { studioId } = Route.useParams();
