@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { RefreshCw } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 
@@ -88,11 +89,13 @@ function StudioShiftsPage() {
     data: shiftCalendarResponse,
     isLoading: isLoadingShiftCalendar,
     isFetching: isFetchingShiftCalendar,
+    refetch: refetchShiftCalendar,
   } = useShiftCalendar(studioId, orchestrationQueryParams, { enabled: isStudioAdmin });
   const {
     data: shiftAlignmentResponse,
     isLoading: isLoadingShiftAlignment,
     isFetching: isFetchingShiftAlignment,
+    refetch: refetchShiftAlignment,
   } = useShiftAlignment(studioId, orchestrationQueryParams, { enabled: isStudioAdmin });
   const missingShiftAssignments = shiftAlignmentResponse?.missing_shift_assignments ?? [];
   const missingShiftPairCount = missingShiftAssignments.length;
@@ -187,19 +190,31 @@ function StudioShiftsPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-base">Shift Coverage Warnings</CardTitle>
-            <CardDescription>
-              Planning window:
-              {' '}
-              {planningDateFrom}
-              {' '}
-              to
-              {' '}
-              {planningDateTo}
-              {' '}
-              (past shows skipped).
-            </CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between space-y-0">
+            <div className="space-y-1">
+              <CardTitle className="text-base">Shift Coverage Warnings</CardTitle>
+              <CardDescription>
+                Planning window:
+                {' '}
+                {planningDateFrom}
+                {' '}
+                to
+                {' '}
+                {planningDateTo}
+                {' '}
+                (past shows skipped).
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={() => void refetchShiftAlignment()}
+              disabled={isFetchingShiftAlignment}
+              aria-label="Refresh shift coverage warnings"
+            >
+              <RefreshCw className={`h-4 w-4 ${isFetchingShiftAlignment ? 'animate-spin' : ''}`} />
+            </Button>
           </CardHeader>
           <CardContent>
             {(isLoadingShiftAlignment || isFetchingShiftAlignment)
@@ -242,11 +257,23 @@ function StudioShiftsPage() {
         </Card>
 
         <Card>
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-base">Shift Cost Snapshot</CardTitle>
-            <CardDescription>
-              Admin-only cost summary for upcoming shift planning.
-            </CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between space-y-0">
+            <div className="space-y-1">
+              <CardTitle className="text-base">Shift Cost Snapshot</CardTitle>
+              <CardDescription>
+                Admin-only cost summary for upcoming shift planning.
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={() => void refetchShiftCalendar()}
+              disabled={isFetchingShiftCalendar}
+              aria-label="Refresh shift cost snapshot"
+            >
+              <RefreshCw className={`h-4 w-4 ${isFetchingShiftCalendar ? 'animate-spin' : ''}`} />
+            </Button>
           </CardHeader>
           <CardContent>
             {(isLoadingShiftCalendar || isFetchingShiftCalendar)
