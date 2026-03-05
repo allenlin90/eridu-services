@@ -198,6 +198,7 @@ Pending scope:
 - Expanded studio shift controller tests to cover show/create/update/delete flows and not-found handling on show/update/delete/duty-manager assignment.
 - Added initial FE shift component tests for `CurrentDutyManagerCard` and `ShiftCalendarCard` state rendering.
 - Added initial `StudioShiftsTable` orchestration tests (shift ordering, delete confirmation behavior, create dialog open state, and limit-change wiring).
+- Added `StudioShiftFormDialog` and `ShiftFormFields` interaction tests (submit/cancel/loading behavior, block add defaults, date-required feedback, and cross-midnight `+1 day` indicator).
 
 ## Current Operational Workflows
 
