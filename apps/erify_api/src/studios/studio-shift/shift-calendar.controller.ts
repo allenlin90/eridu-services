@@ -1,5 +1,7 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+
 import { BaseStudioController } from '../base-studio.controller';
 
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
@@ -15,7 +17,7 @@ import {
 import { ShiftAlignmentService } from '@/orchestration/shift-alignment/shift-alignment.service';
 import { ShiftCalendarService } from '@/orchestration/shift-calendar/shift-calendar.service';
 
-@StudioProtected()
+@StudioProtected([STUDIO_ROLE.ADMIN])
 @Controller('studios/:studioId')
 export class ShiftCalendarController extends BaseStudioController {
   constructor(
