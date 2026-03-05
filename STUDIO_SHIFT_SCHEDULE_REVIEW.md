@@ -36,7 +36,7 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 
 - [x] **Shift window** derives from blocks: earliest `start_time` → latest `end_time`. No separate start/end fields on the parent shift.
 - [x] **Blocks must be time-series ordered** in the array — each block's `start_time` must be ≥ the previous block's `end_time`.
-- [ ] **BE enforces**: `normalizeAndValidateBlocks` already sorts by `startTime` before overlap validation ✅.
+- [x] **BE enforces**: `normalizeAndValidateBlocks` already sorts by `startTime` before overlap validation ✅.
 - [x] **FE must sort blocks before API call**: `validateShiftBlocks` currently processes blocks in array order without sorting first. If a user adds blocks out of order in the form, the FE cross-midnight normalization produces incorrect ISO strings. Fix: sort form blocks by `startTime` before processing.
 
 ### Form Polish
@@ -97,8 +97,8 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 
 | Area                 | Existing                                             | Missing                                                      |
 | -------------------- | ---------------------------------------------------- | ------------------------------------------------------------ |
-| Service: createShift | ✅ Cost calc, overlap rejection, non-member rejection | Cross-midnight blocks, empty blocks                          |
-| Service: updateShift | ✅ Duty manager flag preservation                     | Block replacement, user change with rate inheritance         |
+| Service: createShift | ✅ Cost calc, overlap rejection, non-member rejection, cross-midnight and empty-block validation | User change with rate inheritance (update path) |
+| Service: updateShift | ✅ Duty manager flag preservation, block UID stability/soft-delete behavior | User change with rate inheritance         |
 | Controller           | ✅ Pagination, duty manager, timestamp query          | Create/update/delete flows, error cases                      |
 | FE utils             | ✅ Added initial coverage (`validateShiftBlocks`, `combineDateAndTime`, sort/window helpers) | Remaining utility edge cases and timezone variants            |
 | FE components        | ❌ None                                               | All shift-related components                                 |

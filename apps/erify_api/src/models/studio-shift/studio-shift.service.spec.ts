@@ -155,6 +155,53 @@ describe('studioShiftService', () => {
         }),
       ).rejects.toThrow('User must be a member of the studio');
     });
+
+    it('should support cross-midnight blocks when end time is on next day', async () => {
+      membershipService.findOne.mockResolvedValue({
+        baseHourlyRate: { toString: () => '20.00' },
+      } as never);
+      repository.createShift.mockResolvedValue({ uid: 'ssh_1' } as never);
+
+      await service.createShift('std_1', {
+        userId: 'user_1',
+        date: new Date('2026-03-05'),
+        hourlyRate: undefined,
+        blocks: [
+          {
+            startTime: new Date('2026-03-05T22:00:00.000Z'),
+            endTime: new Date('2026-03-06T02:00:00.000Z'),
+            metadata: {},
+          },
+        ],
+        status: undefined,
+        isDutyManager: undefined,
+        isApproved: undefined,
+        calculatedCost: undefined,
+        metadata: {},
+      });
+
+      expect(repository.createShift).toHaveBeenCalledWith(
+        expect.objectContaining({
+          projectedCost: '80.00',
+        }),
+      );
+    });
+
+    it('should reject create when no blocks are provided', async () => {
+      await expect(
+        service.createShift('std_1', {
+          userId: 'user_1',
+          date: new Date('2026-03-05'),
+          hourlyRate: '20.00',
+          blocks: [],
+          status: undefined,
+          isDutyManager: undefined,
+          isApproved: undefined,
+          calculatedCost: undefined,
+          metadata: {},
+        }),
+      ).rejects.toThrow('Shift must contain at least one block');
+    });
   });
 
   describe('updateShift', () => {

@@ -193,6 +193,7 @@ Pending scope:
 - Added dedicated backend endpoint `GET /me/shifts` for member shift queries (no studio admin endpoint reuse for user scope).
 - Added overlap guard on create/update for the same member/studio block window; overlap validation excludes `CANCELLED` shifts.
 - Block update persistence now preserves stable block UIDs with nested upsert and soft-deletes removed blocks instead of full block replacement.
+- Expanded backend service tests to cover cross-midnight block cost calculation and empty-block rejection.
 
 ## Current Operational Workflows
 
