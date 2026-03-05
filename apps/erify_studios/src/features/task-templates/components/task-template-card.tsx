@@ -48,11 +48,6 @@ export function TaskTemplateCard({ template, studioId }: TaskTemplateCardProps) 
         description: `"${template.name}" has been cloned successfully.`,
       });
     },
-    onError: (error) => {
-      toast.error('Error cloning template', {
-        description: error.message,
-      });
-    },
   });
 
   const { mutate: deleteTemplate, isPending: isDeleting } = useDeleteTaskTemplate({
@@ -62,11 +57,6 @@ export function TaskTemplateCard({ template, studioId }: TaskTemplateCardProps) 
         description: `"${template.name}" has been deleted successfully.`,
       });
       setShowDeleteDialog(false);
-    },
-    onError: (error) => {
-      toast.error('Error deleting template', {
-        description: error.message,
-      });
     },
   });
 

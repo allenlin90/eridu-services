@@ -33,8 +33,6 @@ export function useAssignTask({ studioId, showId }: UseAssignTaskProps) {
 
       toast.success('Task assignee updated');
     },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to update task assignee');
-    },
+    ,
   });
 }

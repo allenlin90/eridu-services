@@ -41,8 +41,6 @@ export function useUpdateStudioTask({ studioId, showId }: UseUpdateStudioTaskPro
 
       toast.success('Task updated');
     },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to update task');
-    },
+    ,
   });
 }

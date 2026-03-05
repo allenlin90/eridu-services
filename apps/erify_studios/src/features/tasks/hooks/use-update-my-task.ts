@@ -49,10 +49,7 @@ export function useUpdateMyTask() {
         toast.success('Task updated successfully');
       }
     },
-    onError: (error, variables) => {
-      if (!variables.silent) {
-        toast.error(error.message || 'Failed to update task');
-      }
+    
     },
   });
 }
