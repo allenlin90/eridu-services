@@ -39,7 +39,6 @@ export function useAdminTaskTemplateBindingsQuery(
     queryKey: ['admin-task-templates', 'bindings', templateId, params],
     queryFn: () => getAdminTaskTemplateBindings(templateId!, params),
     enabled: Boolean(templateId),
-    staleTime: 30 * 1000,
     gcTime: 2 * 60 * 1000,
     placeholderData: keepPreviousData,
   });

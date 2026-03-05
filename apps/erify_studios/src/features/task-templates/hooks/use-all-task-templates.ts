@@ -39,7 +39,6 @@ export function useAllTaskTemplates({
       return lastPage.meta.page + 1;
     },
     enabled,
-    staleTime: 5 * 60 * 1000,
   });
 
   // Auto-drain all pages while the dialog is open so "Select all" means all active templates.

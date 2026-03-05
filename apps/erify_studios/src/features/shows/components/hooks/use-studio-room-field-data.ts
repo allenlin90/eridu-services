@@ -12,7 +12,6 @@ export function useStudioRoomFieldData(show: Show | null) {
   const { data: studioRoomsData, isLoading } = useQuery({
     queryKey: ['studio-rooms', 'list', 'all'],
     queryFn: () => getStudioRooms({ limit: 100 }),
-    staleTime: 60 * 60 * 1000, // 1 hour
   });
 
   const options = useMemo(() => {

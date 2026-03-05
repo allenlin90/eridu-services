@@ -34,7 +34,6 @@ export function useAdminTaskTemplatesQuery(params: GetAdminTaskTemplatesParams) 
   return useQuery({
     queryKey: ['admin-task-templates', 'list', params],
     queryFn: () => getAdminTaskTemplates(params),
-    staleTime: 60 * 1000,
     gcTime: 2 * 60 * 1000,
     placeholderData: keepPreviousData,
   });

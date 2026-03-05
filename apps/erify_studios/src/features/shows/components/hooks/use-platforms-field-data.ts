@@ -16,7 +16,6 @@ export function usePlatformsFieldData(show: Show | null, studioId?: string) {
   const { data: platformsData, isLoading } = useQuery({
     queryKey: ['platforms', 'list', studioId ?? 'admin', { name: search }],
     queryFn: () => getPlatforms({ name: search, limit: search ? 20 : 10 }, studioId),
-    staleTime: 15 * 60 * 1000, // 15 minutes
   });
 
   const options = useMemo(() => {

@@ -71,7 +71,6 @@ export function useStudioShows({ studioId }: UseStudioShowsProps) {
         date_to: dateRange?.to?.toISOString(),
         ...filters,
       }),
-    staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
   });
 

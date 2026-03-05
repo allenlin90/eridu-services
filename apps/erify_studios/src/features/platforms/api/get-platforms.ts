@@ -28,7 +28,6 @@ export function usePlatformsQuery(params: GetPlatformsParams) {
   return useQuery({
     queryKey: ['platforms', 'list', params],
     queryFn: () => getPlatforms(params),
-    staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
 }

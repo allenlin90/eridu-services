@@ -32,7 +32,6 @@ export function useStudiosQuery(params: GetStudiosParams) {
   return useQuery({
     queryKey: ['studios', 'list', params],
     queryFn: () => getStudios(params),
-    staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
 }

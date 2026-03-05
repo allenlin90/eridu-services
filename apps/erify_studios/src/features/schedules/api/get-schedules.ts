@@ -28,7 +28,6 @@ export function useSchedulesQuery(params: GetSchedulesParams) {
   return useQuery({
     queryKey: ['schedules', 'list', params],
     queryFn: () => getSchedules(params),
-    staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
 }

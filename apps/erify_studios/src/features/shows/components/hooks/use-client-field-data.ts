@@ -16,7 +16,6 @@ export function useClientFieldData(show: Show | null) {
   const { data: clientsData, isLoading } = useQuery({
     queryKey: ['clients', 'list', { name: search }],
     queryFn: () => getClients({ name: search, limit: search ? 20 : 10 }),
-    staleTime: 15 * 60 * 1000, // 15 minutes
   });
 
   const options = useMemo(() => {

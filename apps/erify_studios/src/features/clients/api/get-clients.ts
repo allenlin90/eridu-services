@@ -32,7 +32,6 @@ export function useClientsQuery(params: GetClientsParams) {
   return useQuery({
     queryKey: ['clients', 'list', params],
     queryFn: () => getClients(params),
-    staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
 }

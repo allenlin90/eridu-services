@@ -113,7 +113,6 @@ function StudioTaskActionSheetBody({
     queryKey: taskId ? studioTaskKeys.detail(studioId, taskId) : studioTaskKeys.all,
     queryFn: () => getStudioTask(studioId, taskId!),
     enabled: open && requiresContent && !!studioId && !!taskId,
-    staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
   });
   const resolvedTask = taskDetail ?? task;
