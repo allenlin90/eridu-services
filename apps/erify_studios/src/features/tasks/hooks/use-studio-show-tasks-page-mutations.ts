@@ -16,6 +16,9 @@ import {
   hasShiftCoverageForWindow,
 } from '@/features/tasks/lib/task-assignment-shift-warning';
 
+const SHIFT_COVERAGE_QUERY_LIMIT = 200;
+const SHIFT_COVERAGE_LOOKBACK_DAYS = 1;
+
 type UseStudioShowTasksPageMutationsProps = {
   studioId: string;
   showId: string;
@@ -59,9 +62,9 @@ export function useStudioShowTasksPageMutations({
         const showEnd = new Date(showWindow.end_time);
         const shifts = await getStudioShifts(studioId, {
           page: 1,
-          limit: 200,
+          limit: SHIFT_COVERAGE_QUERY_LIMIT,
           user_id: assigneeUid,
-          date_from: toLocalDateInputValue(addDays(showStart, -1)),
+          date_from: toLocalDateInputValue(addDays(showStart, -SHIFT_COVERAGE_LOOKBACK_DAYS)),
           date_to: toLocalDateInputValue(showEnd),
         });
 

@@ -18,7 +18,12 @@ import { useStudioMemberMap } from '@/features/studio-shifts/hooks/use-studio-me
 import { useMyShifts, useStudioShifts } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import { toScheduleXDateTime } from '@/features/studio-shifts/utils/schedule-x.utils';
 import { sortShiftBlocksByStart } from '@/features/studio-shifts/utils/shift-blocks.utils';
-import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';
+import {
+  createDefaultShiftCalendarRange,
+  createShiftCalendarJumpRange,
+  extractDateStringFromUnknown,
+  getShiftCalendarRangeLimit,
+} from '@/features/studio-shifts/utils/shift-calendar-range.utils';
 import { formatDate, toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
 import { sortShiftsByFirstBlockStart } from '@/features/studio-shifts/utils/shift-timeline.utils';
 import { useAppDebounce } from '@/lib/hooks/use-app-debounce';
@@ -34,46 +39,16 @@ export function StudioShiftsCalendar({
   summaryText = 'Read-only view of studio shifts. Switch to Table view to manage, create, and filter shifts.',
   queryScope = 'studio',
 }: StudioShiftsCalendarProps) {
-  const [dateRange, setDateRange] = useState<{ date_from: string; date_to: string } | null>(() => {
-    const today = new Date();
-    const start = new Date(today);
-    start.setDate(today.getDate() - 1);
-    const end = new Date(today);
-    end.setDate(today.getDate() + 8);
-
-    const toDateString = (value: Date) => {
-      const year = value.getFullYear();
-      const month = String(value.getMonth() + 1).padStart(2, '0');
-      const day = String(value.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-
-    return {
-      date_from: toDateString(start),
-      date_to: toDateString(end),
-    };
-  });
+  const [dateRange, setDateRange] = useState<{ date_from: string; date_to: string } | null>(
+    () => createDefaultShiftCalendarRange(),
+  );
   const [jumpDate, setJumpDate] = useState(() => toLocalDateInputValue(new Date()));
   const debouncedDateRange = useAppDebounce(dateRange, { delay: 300 });
-
-  const extractDateString = (value: unknown): string | null => {
-    const raw = String(value);
-    const match = raw.match(/\d{4}-\d{2}-\d{2}/);
-    return match?.[0] ?? null;
-  };
 
   const { memberMap } = useStudioMemberMap(studioId, { limit: STUDIO_MEMBER_MAP_CALENDAR_LIMIT });
 
   const calendarRangeLimit = useMemo(() => {
-    if (!debouncedDateRange) {
-      return 150;
-    }
-
-    const start = new Date(`${debouncedDateRange.date_from}T00:00:00`);
-    const end = new Date(`${debouncedDateRange.date_to}T23:59:59`);
-    const daySpan = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-
-    return Math.min(600, Math.max(60, daySpan * 12));
+    return getShiftCalendarRangeLimit(debouncedDateRange);
   }, [debouncedDateRange]);
 
   const queryParams = useMemo(() => {
@@ -155,8 +130,8 @@ export function StudioShiftsCalendar({
     },
     callbacks: {
       onRangeUpdate(range) {
-        const startRaw = extractDateString(range.start);
-        const endRaw = extractDateString(range.end);
+        const startRaw = extractDateStringFromUnknown(range.start);
+        const endRaw = extractDateStringFromUnknown(range.end);
 
         if (!startRaw || !endRaw) {
           return;
@@ -198,11 +173,7 @@ export function StudioShiftsCalendar({
                 return;
               }
 
-              const targetDate = new Date(`${jumpDate}T00:00:00`);
-              setDateRange({
-                date_from: toLocalDateInputValue(addDays(targetDate, -1)),
-                date_to: toLocalDateInputValue(addDays(targetDate, 8)),
-              });
+              setDateRange(createShiftCalendarJumpRange(jumpDate));
             }}
           >
             Jump To Date
