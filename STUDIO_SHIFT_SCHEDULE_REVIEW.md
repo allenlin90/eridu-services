@@ -50,6 +50,7 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 - [x] **Day navigation**: Dashboard date is hardcoded to `new Date()` — members working midnight shows (after 00:00) see the next day's records with no way to view the previous day. Add simple **prev/next day buttons** to navigate by ±1 day. Keep it intentionally simple (no date picker, no jump-to-date). Store the selected date in URL search params so it survives refresh.
 - [x] **Operational day window**: Current window is `00:00 → next day 05:59`. This is correct for the "operational day" concept but the hardcoded `6am` cutoff should be documented and potentially configurable per studio.
 - [x] **Rows per page**: Dashboard search schema accepts `limit` (1–100, default 10) but no UI control exists to change it. Add a rows-per-page selector (e.g., 10 / 25 / 50).
+- [x] **Mobile overflow polish**: Hide rows-per-page dropdown on mobile to keep dashboard pagination action row from overflowing.
 
 ### Member Experience
 

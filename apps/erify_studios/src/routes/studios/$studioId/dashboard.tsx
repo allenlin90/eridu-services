@@ -510,7 +510,7 @@ function StudioDashboardPage() {
                 shows)
               </p>
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
+                <div className="hidden items-center gap-2 sm:flex">
                   <span className="text-muted-foreground">Rows</span>
                   <Select
                     value={String(showsLimit)}

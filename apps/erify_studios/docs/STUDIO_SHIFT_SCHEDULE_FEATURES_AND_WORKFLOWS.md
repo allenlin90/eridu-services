@@ -201,6 +201,7 @@ Pending scope:
 - Added `StudioShiftFormDialog` and `ShiftFormFields` interaction tests (submit/cancel/loading behavior, block add defaults, date-required feedback, and cross-midnight `+1 day` indicator).
 - Extracted shifts route view-toggle search transitions into shared utility functions and added focused tests for calendar/table search state behavior.
 - Expanded FE utility tests for additional edge cases: query param mapping, empty-block ordering fallback, cross-midnight sequential normalization, local-time extraction, edit-form defaults, and block-first display date semantics.
+- Dashboard pagination controls now hide the rows-per-page selector on mobile to avoid action-row overflow while preserving next/previous actions.
 
 ## Current Operational Workflows
 
