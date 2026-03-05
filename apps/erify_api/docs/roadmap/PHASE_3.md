@@ -51,15 +51,15 @@ Phase 3 pivots to deliver the **Ticketing System** (ad-hoc task creation, task r
 
 ### Studio Shift Schedule
 
-- [ ] Define `StudioShiftStatus` Prisma enum (`SCHEDULED`, `COMPLETED`, `CANCELLED`)
-- [ ] `StudioShift` and `StudioShiftBlock` Prisma models + migration
-- [ ] Add `baseHourlyRate Decimal?` to `StudioMembership`
-- [ ] `StudioShiftService` — CRUD, cost auto-calculation, rate copy-on-create
-- [ ] `StudioShiftController` — CRUD endpoints under `/studios/:id/shifts/`
-- [ ] `ShiftCalendarOrchestrationService` — Day/Week/Month timeline views, financial aggregation
-- [ ] `ShiftAlignmentOrchestrationService` — Cross-check shifts against **Shows only** (idle members, missing shifts)
-- [ ] Calendar and alignment controllers
-- [ ] Shared Zod schemas in `@eridu/api-types`
+- [x] Define `StudioShiftStatus` Prisma enum (`SCHEDULED`, `COMPLETED`, `CANCELLED`)
+- [x] `StudioShift` and `StudioShiftBlock` Prisma models + migration
+- [x] Add `baseHourlyRate Decimal?` to `StudioMembership`
+- [x] `StudioShiftService` — CRUD, cost auto-calculation, rate copy-on-create
+- [x] `StudioShiftController` — CRUD endpoints under `/studios/:id/shifts/`
+- [x] `ShiftCalendarOrchestrationService` — Day/Week/Month timeline views, financial aggregation
+- [x] `ShiftAlignmentOrchestrationService` — Cross-check shifts against **Shows only** (idle members, missing shifts)
+- [x] Calendar and alignment controllers
+- [x] Shared Zod schemas in `@eridu/api-types`
 - [ ] Calendar event interactivity (admin edit/member popover) — deferred to Phase 4
 
 ### File Upload System ✅ Implemented (March 2026)
@@ -102,9 +102,9 @@ Material Management has been deferred to reduce scope and ship the ticketing sys
 
 ### Studio Shift Schedule
 
-- [ ] Shift timelines are visible across day, week, and month views.
-- [ ] Cost calculations and administrative overrides trigger correctly.
-- [ ] Show alignment flags members working without shift coverage (shows only).
+- [x] Shift timelines are visible across day, week, and month views.
+- [x] Cost calculations and administrative overrides trigger correctly.
+- [x] Show alignment flags members working without shift coverage (shows only).
 
 ### File Upload ✅
 

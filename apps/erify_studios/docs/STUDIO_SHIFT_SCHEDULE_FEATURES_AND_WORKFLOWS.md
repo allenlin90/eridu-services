@@ -66,7 +66,6 @@ Delivered workflow:
 Partial area:
 - Multi-block authoring UI is implemented for create/edit (add/remove blocks with sequential validation), but advanced authoring is still pending:
   - Drag/reorder UX for blocks.
-  - Rich per-block validation/error surfacing in the form UI.
 
 ### 4. Calendar Rendering Workflow
 
@@ -146,7 +145,6 @@ Delivered:
 
 Pending scope:
 - Dedicated report pages beyond the summary card (separate from planning workflow) for richer analytics.
-- Task-assignment-time warning integration (check shift coverage during assignee selection).
 
 ## Implementation Timeline (This Branch)
 
@@ -280,7 +278,7 @@ Pending scope:
 1. **Shift window** derives from blocks: earliest `start_time` → latest `end_time`. No separate start/end on the parent shift.
 2. **Blocks must be time-series ordered** — each block's `start_time` ≥ previous block's `end_time`.
 3. **BE enforces**: `normalizeAndValidateBlocks` sorts by `startTime` before overlap validation ✅.
-4. **FE must sort blocks before API call**: `validateShiftBlocks` processes blocks in array order without sorting. If blocks are entered out of order, the cross-midnight normalization produces incorrect ISO strings. Fix: sort by `startTime` before processing.
+4. **FE must sort blocks before API call**: Resolved in current branch work. `validateShiftBlocks` now sorts form blocks by `startTime` before cross-midnight normalization.
 
 ### Form Polish
 
