@@ -195,6 +195,7 @@ Pending scope:
 - Block update persistence now preserves stable block UIDs with nested upsert and soft-deletes removed blocks instead of full block replacement.
 - Expanded backend service tests to cover cross-midnight block cost calculation and empty-block rejection.
 - Added backend `updateShift` test coverage for member reassignment with membership-rate inheritance when `hourly_rate` is omitted.
+- Expanded studio shift controller tests to cover show/create/update/delete flows and not-found handling on show/update/delete/duty-manager assignment.
 
 ## Current Operational Workflows
 
