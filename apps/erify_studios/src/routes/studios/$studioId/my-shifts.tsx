@@ -36,7 +36,7 @@ function MyShiftsPage() {
     );
   }
 
-  if (!activeMembership || !profile?.id) {
+  if (!activeMembership) {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <Card>
@@ -63,7 +63,7 @@ function MyShiftsPage() {
       </div>
       <StudioShiftsCalendar
         studioId={studioId}
-        userId={profile.id}
+        queryScope="me"
         summaryText="Read-only view of your assigned shift blocks."
       />
     </div>

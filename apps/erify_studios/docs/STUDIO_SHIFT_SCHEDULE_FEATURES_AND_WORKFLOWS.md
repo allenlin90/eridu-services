@@ -184,12 +184,14 @@ Pending scope:
 - Shared `useStudioMemberMap` hook was extracted and adopted in calendar/table/dashboard.
 - Dashboard now supports URL-backed day navigation (`date` search param) and rows-per-page control.
 - Shift form now includes per-block inline validation feedback, cross-midnight `+1 day` indicator, and resolved block window preview.
-- Added member-facing `/my-shifts` route reusing `StudioShiftsCalendar` with `user_id` query scoping.
+- Added member-facing `/my-shifts` route reusing `StudioShiftsCalendar` with user-scoped `/me/shifts` query flow.
 - Added dashboard "My Upcoming Shifts" card (next 5 shifts from selected operational day).
 - Removed unused `ShiftCreateCard` component to reduce dead code in shift feature module.
 - Added shared `StudioShift`/`StudioShiftBlock` API types in `@eridu/api-types/studio-shifts` and adopted them in FE shift API typing.
 - Added FE utility tests for shift schedule helpers (`validateShiftBlocks`, `combineDateAndTime`, sorting/window helpers).
 - Backend quality pass: shift soft-delete now cascades to child blocks, local `JsonValue` alias replaced with `Prisma.JsonValue`, and update/delete now avoid duplicate repository lookup by reusing resolved shift ID.
+- Added dedicated backend endpoint `GET /me/shifts` for member shift queries (no studio admin endpoint reuse for user scope).
+- Added overlap guard on create/update for the same member/studio block window; overlap validation excludes `CANCELLED` shifts.
 
 ## Current Operational Workflows
 

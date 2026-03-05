@@ -121,6 +121,7 @@ const blockInputSchema = z.object({
 });
 
 const validateUserUid = z.string().startsWith(UserService.UID_PREFIX);
+const validateStudioUid = z.string().startsWith(StudioService.UID_PREFIX);
 
 export const createStudioShiftSchema = z
   .object({
@@ -204,6 +205,28 @@ export const listStudioShiftsQuerySchema = paginationQuerySchema
     includeDeleted: data.include_deleted,
   }));
 
+export const listMyStudioShiftsQuerySchema = paginationQuerySchema
+  .and(
+    z.object({
+      id: z.string().optional(),
+      studio_id: validateStudioUid.optional(),
+      date_from: z.iso.date().optional(),
+      date_to: z.iso.date().optional(),
+      status: studioShiftStatusSchema.optional(),
+      is_duty_manager: z.coerce.boolean().optional(),
+      include_deleted: z.coerce.boolean().default(false),
+    }),
+  )
+  .transform((data) => ({
+    ...data,
+    uid: data.id,
+    studioId: data.studio_id,
+    dateFrom: data.date_from ? new Date(data.date_from) : undefined,
+    dateTo: data.date_to ? new Date(data.date_to) : undefined,
+    isDutyManager: data.is_duty_manager,
+    includeDeleted: data.include_deleted,
+  }));
+
 export const dutyManagerQuerySchema = z.object({
   time: z.iso.datetime().optional(),
 });
@@ -215,11 +238,13 @@ export const assignDutyManagerSchema = z.object({
 export type CreateStudioShiftInput = z.infer<typeof createStudioShiftSchema>;
 export type UpdateStudioShiftInput = z.infer<typeof updateStudioShiftSchema>;
 export type ListStudioShiftsQuery = z.infer<typeof listStudioShiftsQuerySchema>;
+export type ListMyStudioShiftsQuery = z.infer<typeof listMyStudioShiftsQuerySchema>;
 export type AssignDutyManagerInput = z.infer<typeof assignDutyManagerSchema>;
 
 export class CreateStudioShiftDto extends createZodDto(createStudioShiftSchema) {}
 export class UpdateStudioShiftDto extends createZodDto(updateStudioShiftSchema) {}
 export class ListStudioShiftsQueryDto extends createZodDto(listStudioShiftsQuerySchema) {}
+export class ListMyStudioShiftsQueryDto extends createZodDto(listMyStudioShiftsQuerySchema) {}
 export class DutyManagerQueryDto extends createZodDto(dutyManagerQuerySchema) {}
 export class AssignDutyManagerDto extends createZodDto(assignDutyManagerSchema) {}
 export class StudioShiftDto extends createZodDto(studioShiftDto) {}

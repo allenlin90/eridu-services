@@ -149,6 +149,102 @@ export class StudioShiftRepository extends BaseRepository<
     return { data, total };
   }
 
+  async findPaginatedForUser(params: {
+    userUid: string;
+    studioUid?: string;
+    skip: number;
+    take: number;
+    uid?: string;
+    dateFrom?: Date;
+    dateTo?: Date;
+    status?: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
+    isDutyManager?: boolean;
+    includeDeleted?: boolean;
+  }): Promise<{ data: StudioShiftWithRelations[]; total: number }> {
+    const where: Prisma.StudioShiftWhereInput = {
+      user: {
+        uid: params.userUid,
+        ...(params.includeDeleted ? {} : { deletedAt: null }),
+      },
+      ...(params.includeDeleted ? {} : { deletedAt: null }),
+      ...(params.studioUid
+        ? {
+            studio: {
+              uid: params.studioUid,
+              ...(params.includeDeleted ? {} : { deletedAt: null }),
+            },
+          }
+        : {}),
+    };
+
+    if (params.uid) {
+      where.uid = {
+        contains: params.uid,
+        mode: 'insensitive',
+      };
+    }
+
+    if (params.dateFrom || params.dateTo) {
+      where.date = {};
+      if (params.dateFrom)
+        where.date.gte = params.dateFrom;
+      if (params.dateTo)
+        where.date.lte = params.dateTo;
+    }
+
+    if (params.status) {
+      where.status = params.status;
+    }
+
+    if (params.isDutyManager !== undefined) {
+      where.isDutyManager = params.isDutyManager;
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.studioShift.findMany({
+        where,
+        skip: params.skip,
+        take: params.take,
+        orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
+        include: defaultShiftInclude,
+      }),
+      this.prisma.studioShift.count({ where }),
+    ]);
+
+    return { data, total };
+  }
+
+  async findOverlappingShift(params: {
+    studioUid: string;
+    userUid: string;
+    blocks: Array<{ startTime: Date; endTime: Date }>;
+    excludeShiftUid?: string;
+  }): Promise<StudioShiftWithRelations | null> {
+    if (params.blocks.length === 0) {
+      return null;
+    }
+
+    return this.prisma.studioShift.findFirst({
+      where: {
+        studio: { uid: params.studioUid, deletedAt: null },
+        user: { uid: params.userUid, deletedAt: null },
+        deletedAt: null,
+        status: { not: 'CANCELLED' },
+        ...(params.excludeShiftUid ? { uid: { not: params.excludeShiftUid } } : {}),
+        OR: params.blocks.map((block) => ({
+          blocks: {
+            some: {
+              deletedAt: null,
+              startTime: { lt: block.endTime },
+              endTime: { gt: block.startTime },
+            },
+          },
+        })),
+      },
+      include: defaultShiftInclude,
+    });
+  }
+
   async findActiveDutyManager(
     studioUid: string,
     timestamp: Date,

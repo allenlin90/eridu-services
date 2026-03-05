@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 
 import type {
   CreateStudioShiftInput,
+  ListMyStudioShiftsQuery,
   ListStudioShiftsQuery,
   UpdateStudioShiftInput,
 } from './schemas/studio-shift.schema';
@@ -35,6 +36,9 @@ export class StudioShiftService extends BaseModelService {
 
   async createShift(studioId: string, payload: CreateStudioShiftInput) {
     const normalizedBlocks = this.normalizeAndValidateBlocks(payload.blocks);
+    if (payload.status !== 'CANCELLED') {
+      await this.ensureNoOverlapInStudio(studioId, payload.userId, normalizedBlocks);
+    }
     const membership = await this.findStudioMembershipOrThrow(studioId, payload.userId);
 
     const hourlyRate = payload.hourlyRate
@@ -86,6 +90,21 @@ export class StudioShiftService extends BaseModelService {
     });
   }
 
+  async listUserShifts(userUid: string, query: ListMyStudioShiftsQuery) {
+    return this.studioShiftRepository.findPaginatedForUser({
+      userUid,
+      studioUid: query.studioId,
+      skip: query.skip,
+      take: query.take,
+      uid: query.uid,
+      dateFrom: query.dateFrom,
+      dateTo: query.dateTo,
+      status: query.status,
+      isDutyManager: query.isDutyManager,
+      includeDeleted: query.includeDeleted,
+    });
+  }
+
   async updateShift(
     studioId: string,
     uid: string,
@@ -114,6 +133,11 @@ export class StudioShiftService extends BaseModelService {
           endTime: block.endTime,
           metadata: block.metadata as Record<string, Prisma.JsonValue>,
         }));
+
+    const nextStatus = payload.status ?? existing.status;
+    if (nextStatus !== 'CANCELLED') {
+      await this.ensureNoOverlapInStudio(studioId, targetUserId, normalizedBlocks, uid);
+    }
 
     const projectedCost = this.calculateProjectedCost(hourlyRate, normalizedBlocks);
 
@@ -236,5 +260,25 @@ export class StudioShiftService extends BaseModelService {
 
   private generateBlockUid(): string {
     return this.utilityService.generateBrandedId(StudioShiftService.BLOCK_UID_PREFIX);
+  }
+
+  private async ensureNoOverlapInStudio(
+    studioId: string,
+    userUid: string,
+    blocks: ShiftBlockInput[],
+    excludeShiftUid?: string,
+  ) {
+    const overlapping = await this.studioShiftRepository.findOverlappingShift({
+      studioUid: studioId,
+      userUid,
+      blocks,
+      excludeShiftUid,
+    });
+
+    if (overlapping) {
+      throw HttpError.badRequest(
+        'Shift blocks overlap with an existing non-cancelled shift for this user.',
+      );
+    }
   }
 }

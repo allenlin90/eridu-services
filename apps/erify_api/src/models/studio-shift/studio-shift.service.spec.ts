@@ -22,6 +22,8 @@ describe('studioShiftService', () => {
             createShift: jest.fn(),
             findByUidInStudio: jest.fn(),
             findPaginated: jest.fn(),
+            findPaginatedForUser: jest.fn(),
+            findOverlappingShift: jest.fn(),
             updateShift: jest.fn(),
             softDeleteInStudio: jest.fn(),
             findActiveDutyManager: jest.fn(),
@@ -53,6 +55,7 @@ describe('studioShiftService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    repository.findOverlappingShift.mockResolvedValue(null);
   });
 
   describe('createShift', () => {
@@ -100,6 +103,7 @@ describe('studioShiftService', () => {
           user: { connect: { uid: 'user_1' } },
         }),
       );
+      expect(repository.findOverlappingShift).toHaveBeenCalled();
       expect(result).toEqual({ uid: 'ssh_1' });
     });
 
@@ -187,6 +191,32 @@ describe('studioShiftService', () => {
         }),
         BigInt(1),
       );
+      expect(repository.findOverlappingShift).toHaveBeenCalled();
+    });
+
+    it('should skip overlap check when resulting status is CANCELLED', async () => {
+      repository.findByUidInStudio.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'ssh_1',
+        status: 'SCHEDULED',
+        user: { uid: 'user_1' },
+        hourlyRate: { toString: () => '20.00' },
+        blocks: [
+          {
+            startTime: new Date('2026-03-05T09:00:00.000Z'),
+            endTime: new Date('2026-03-05T12:00:00.000Z'),
+            metadata: {},
+          },
+        ],
+      } as never);
+
+      repository.updateShift.mockResolvedValue({ uid: 'ssh_1' } as never);
+
+      await service.updateShift('std_1', 'ssh_1', {
+        status: 'CANCELLED',
+      });
+
+      expect(repository.findOverlappingShift).not.toHaveBeenCalled();
     });
   });
 });

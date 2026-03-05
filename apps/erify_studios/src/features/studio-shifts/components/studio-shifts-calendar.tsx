@@ -14,21 +14,21 @@ import '@schedule-x/theme-default/dist/index.css';
 
 import { ShiftCalendarCard } from '@/features/studio-shifts/components/shift-calendar-card';
 import { useStudioMemberMap } from '@/features/studio-shifts/hooks/use-studio-member-map';
-import { useStudioShifts } from '@/features/studio-shifts/hooks/use-studio-shifts';
+import { useMyShifts, useStudioShifts } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import { toScheduleXDateTime } from '@/features/studio-shifts/utils/schedule-x.utils';
 import { sortShiftBlocksByStart } from '@/features/studio-shifts/utils/shift-blocks.utils';
 import { formatDate } from '@/features/studio-shifts/utils/shift-form.utils';
 
 export type StudioShiftsCalendarProps = {
   studioId: string;
-  userId?: string;
   summaryText?: string;
+  queryScope?: 'studio' | 'me';
 };
 
 export function StudioShiftsCalendar({
   studioId,
-  userId,
   summaryText = 'Read-only view of studio shifts. Switch to Table view to manage, create, and filter shifts.',
+  queryScope = 'studio',
 }: StudioShiftsCalendarProps) {
   const [dateRange, setDateRange] = useState<{ date_from: string; date_to: string } | null>(() => {
     const today = new Date();
@@ -74,17 +74,18 @@ export function StudioShiftsCalendar({
     return {
       limit: calendarRangeLimit,
       page: 1,
-      ...(userId ? { user_id: userId } : {}),
+      ...(queryScope === 'me' ? { studio_id: studioId } : {}),
       ...(dateRange ? { date_from: dateRange.date_from, date_to: dateRange.date_to } : {}),
     } as const;
-  }, [calendarRangeLimit, dateRange, userId]);
+  }, [calendarRangeLimit, dateRange, queryScope, studioId]);
 
-  const {
-    data: calendarShiftsResponse,
-    isLoading: isLoadingCalendarShifts,
-    isFetching: isFetchingCalendarShifts,
-    refetch,
-  } = useStudioShifts(studioId, queryParams, { enabled: true });
+  const studioShiftsQuery = useStudioShifts(studioId, queryParams, { enabled: queryScope === 'studio' });
+  const myShiftsQuery = useMyShifts(queryParams, { enabled: queryScope === 'me' });
+
+  const calendarShiftsResponse = queryScope === 'me' ? myShiftsQuery.data : studioShiftsQuery.data;
+  const isLoadingCalendarShifts = queryScope === 'me' ? myShiftsQuery.isLoading : studioShiftsQuery.isLoading;
+  const isFetchingCalendarShifts = queryScope === 'me' ? myShiftsQuery.isFetching : studioShiftsQuery.isFetching;
+  const refetch = queryScope === 'me' ? myShiftsQuery.refetch : studioShiftsQuery.refetch;
 
   const calendarShifts = useMemo(() => {
     const rows = calendarShiftsResponse?.data ?? [];

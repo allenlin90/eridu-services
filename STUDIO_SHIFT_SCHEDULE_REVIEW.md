@@ -56,13 +56,14 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 - [x] `NEW` **`/my-shifts` route** — read-only calendar view for members to see their own shift schedule (reuse `StudioShiftsCalendar` with member-scoped query)
 - [x] `NEW` **Dashboard "My Upcoming Shifts"** — section showing the member's next N shifts
 - [x] `/shifts` remains admin-only by design — members use dashboard + `/my-shifts`
+- [x] Backed member shift retrieval with dedicated `GET /me/shifts` endpoint (user-scoped)
 
 ### Backend Code Quality
 
 - [x] **Soft-delete cascade**: `softDeleteInStudio` must also soft-delete child `StudioShiftBlock` rows
 - [x] **Double lookup**: `updateShift` does `findByUidInStudio` in both service and repo — refactor to single lookup
 - [ ] **Block UID instability**: Block updates use `deleteMany` + `create`, regenerating UIDs — consider diff-based upsert
-- [ ] **Duplicate shift guard**: No check for overlapping shifts on the same user/date — add service-level validation
+- [x] **Duplicate shift guard**: No check for overlapping shifts on the same user/date — add service-level validation (ignore `CANCELLED` shifts)
 - [x] **Local `JsonValue` type**: Replace with `Prisma.JsonValue`
 
 ### Frontend Code Quality

@@ -29,7 +29,7 @@ import {
 import { PageLayout } from '@/components/layouts/page-layout';
 import { ShowStandardBadge, ShowStatusBadge } from '@/features/admin/components/show-table-cells';
 import { useStudioMemberMap } from '@/features/studio-shifts/hooks/use-studio-member-map';
-import { useDutyManager, useStudioShifts } from '@/features/studio-shifts/hooks/use-studio-shifts';
+import { useDutyManager, useMyShifts, useStudioShifts } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import { sortShiftBlocksByStart } from '@/features/studio-shifts/utils/shift-blocks.utils';
 import { formatDate, getShiftWindowLabel, toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
 import { getStudioShows } from '@/features/studio-shows/api/get-studio-shows';
@@ -114,14 +114,14 @@ function StudioDashboardPage() {
     data: myShiftResponse,
     isLoading: isLoadingMyShifts,
     isFetching: isFetchingMyShifts,
-  } = useStudioShifts(studioId, {
+  } = useMyShifts({
     page: 1,
     limit: 20,
+    studio_id: studioId,
     date_from: selectedDate,
     date_to: previewUntil,
-    user_id: profile?.id,
   }, {
-    enabled: Boolean(profile?.id),
+    enabled: Boolean(studioId),
   });
   const { memberMap } = useStudioMemberMap(studioId, { limit: 200 });
 
