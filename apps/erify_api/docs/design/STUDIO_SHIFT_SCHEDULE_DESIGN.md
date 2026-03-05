@@ -129,7 +129,7 @@ Integrate a Studio-based user shift schedule feature to track part-timer shifts,
 
 ### Future Integration Opportunities (TODO)
 
-1. **Task assignment shift warning** — When assigning a task, check if the assignee has an overlapping `StudioShiftBlock`. Surface a warning if no shift covers the task's show window.
+1. **Task assignment shift warning** — Implemented in studio show-task assignee flow: assignment now checks assignee overlap against `StudioShiftBlock` and surfaces a non-blocking warning if no shift covers the show window.
 2. **Show alignment orchestration** — `shift-alignment` service (design Section 8) for duty-manager and show-task-readiness planning risks.
 3. **Financial aggregation** — `shift-calendar` orchestration service for period cost rollups.
 4. **Calendar event interactivity** — Admin: calendar block click → edit dialog or scroll-to table row. Member: click → read-only detail popover. (Later phase improvement.)

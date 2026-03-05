@@ -253,7 +253,7 @@ Pending scope:
 
 1. Add advanced multi-block editing UX (reorder/drag, richer inline error states).
 2. Expand from summary card to dedicated FE alignment/rollup report views (filterable day/show/task details).
-3. Add task assignment workflow warning integration using shift-alignment overlap checks.
+3. Expand task assignment warning from current show-task assignee flow to additional assignment surfaces if required.
 4. Expand member shift visibility from 7-day preview to optional longer range/date controls if needed.
 
 ## E2E Review Findings (March 5, 2026)
@@ -311,13 +311,12 @@ Pending scope:
 
 ### Future Integration TODOs
 
-1. **Task assignment shift warning** — check assignee has overlapping `StudioShiftBlock`; surface warning if no shift covers the show window.
-2. **Show alignment orchestration** — baseline planning warning summary is implemented in `/studios/:studioId/shows`; pending dedicated report/drill-down views.
-3. **Financial aggregation** — baseline planning cost snapshot is implemented in `/studios/:studioId/shifts`; pending richer report views.
-4. **Calendar event interactivity** — Admin: click → edit dialog. Member: click → read-only detail popover. (Later phase.)
-5. **Member availability** — members set availability for admin reference.
-6. **Recurring shift templates** — weekly pattern creation.
-7. **Shift data export** — CSV/Excel for payroll.
+1. **Show alignment orchestration** — baseline planning warning summary is implemented in `/studios/:studioId/shows`; pending dedicated report/drill-down views.
+2. **Financial aggregation** — baseline planning cost snapshot is implemented in `/studios/:studioId/shifts`; pending richer report views.
+3. **Calendar event interactivity** — Admin: click → edit dialog. Member: click → read-only detail popover. (Later phase.)
+4. **Member availability** — members set availability for admin reference.
+5. **Recurring shift templates** — weekly pattern creation.
+6. **Shift data export** — CSV/Excel for payroll.
 
 ### Frontend Test Gaps
 

@@ -85,6 +85,13 @@ export function useStudioShowTasksPageController({
   } = useStudioShowTasksPageMutations({
     studioId,
     showId,
+    showWindow: showDetails
+      ? {
+          name: showDetails.name,
+          start_time: showDetails.start_time,
+          end_time: showDetails.end_time,
+        }
+      : null,
     onDeleteSuccess: handleDeleteMutationSuccess,
     onOpenTaskActionDraft: openTaskActionDraft,
     onClearTaskActionDraft: clearTaskActionDraft,
