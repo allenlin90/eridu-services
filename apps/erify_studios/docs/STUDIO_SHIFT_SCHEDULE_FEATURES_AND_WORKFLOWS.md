@@ -186,6 +186,7 @@ Pending scope:
 - Shift form now includes per-block inline validation feedback, cross-midnight `+1 day` indicator, and resolved block window preview.
 - Added member-facing `/my-shifts` route reusing `StudioShiftsCalendar` with `user_id` query scoping.
 - Added dashboard "My Upcoming Shifts" card (next 5 shifts from selected operational day).
+- Removed unused `ShiftCreateCard` component to reduce dead code in shift feature module.
 
 ## Current Operational Workflows
 
@@ -264,7 +265,7 @@ Pending scope:
 
 ### Code Quality
 
-1. **Orphaned `ShiftCreateCard`**: Component exists but is unused. Remove or document if planned for reuse.
+1. **Orphaned `ShiftCreateCard`**: Resolved in current branch work. Unused component removed.
 2. **FE types not in `@eridu/api-types`**: `StudioShift`/`StudioShiftBlock` locally defined. Should be shared.
 3. **Repeated block sorting**: 6+ places sort blocks with the same comparator. Extract `sortBlocks` utility.
 4. **Duplicated `memberMap` building**: Calendar and table independently build the same map. Extract shared hook.

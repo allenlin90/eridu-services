@@ -67,7 +67,7 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 
 ### Frontend Code Quality
 
-- [ ] Remove orphaned `ShiftCreateCard` component (unused)
+- [x] Remove orphaned `ShiftCreateCard` component (unused)
 - [x] Extract `sortBlocks` utility (repeated in 6+ places)
 - [x] Extract shared `memberMap` hook (duplicated in calendar and table)
 - [x] Document or replace magic number fetch limits (`200`, `500`, `1000`)
