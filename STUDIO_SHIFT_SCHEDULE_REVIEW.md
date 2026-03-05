@@ -74,7 +74,7 @@ Design and core functionality are solid. The shift/block model, CRUD APIs, duty 
 
 ### Shared Types
 
-- [ ] Add `StudioShift` and `StudioShiftBlock` types to `@eridu/api-types` — currently FE-only
+- [x] Add `StudioShift` and `StudioShiftBlock` types to `@eridu/api-types` — currently FE-only
 
 ---
 

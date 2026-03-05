@@ -187,6 +187,7 @@ Pending scope:
 - Added member-facing `/my-shifts` route reusing `StudioShiftsCalendar` with `user_id` query scoping.
 - Added dashboard "My Upcoming Shifts" card (next 5 shifts from selected operational day).
 - Removed unused `ShiftCreateCard` component to reduce dead code in shift feature module.
+- Added shared `StudioShift`/`StudioShiftBlock` API types in `@eridu/api-types/studio-shifts` and adopted them in FE shift API typing.
 
 ## Current Operational Workflows
 
@@ -266,7 +267,7 @@ Pending scope:
 ### Code Quality
 
 1. **Orphaned `ShiftCreateCard`**: Resolved in current branch work. Unused component removed.
-2. **FE types not in `@eridu/api-types`**: `StudioShift`/`StudioShiftBlock` locally defined. Should be shared.
+2. **FE types not in `@eridu/api-types`**: Resolved in current branch work. Shift types now live in shared `@eridu/api-types/studio-shifts`.
 3. **Repeated block sorting**: 6+ places sort blocks with the same comparator. Extract `sortBlocks` utility.
 4. **Duplicated `memberMap` building**: Calendar and table independently build the same map. Extract shared hook.
 5. **Magic number fetch limits**: `limit: 200` for display members, `limit: 500` for calendar members. Document or derive from studio size.
