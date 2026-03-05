@@ -194,6 +194,7 @@ Pending scope:
 - Added overlap guard on create/update for the same member/studio block window; overlap validation excludes `CANCELLED` shifts.
 - Block update persistence now preserves stable block UIDs with nested upsert and soft-deletes removed blocks instead of full block replacement.
 - Expanded backend service tests to cover cross-midnight block cost calculation and empty-block rejection.
+- Added backend `updateShift` test coverage for member reassignment with membership-rate inheritance when `hourly_rate` is omitted.
 
 ## Current Operational Workflows
 

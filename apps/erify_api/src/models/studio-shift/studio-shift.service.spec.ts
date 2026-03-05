@@ -331,5 +331,51 @@ describe('studioShiftService', () => {
         BigInt(1),
       );
     });
+
+    it('should inherit membership hourly rate when reassigned to another user', async () => {
+      repository.findByUidInStudio.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'ssh_1',
+        status: 'SCHEDULED',
+        user: { uid: 'user_1' },
+        hourlyRate: { toString: () => '20.00' },
+        blocks: [
+          {
+            startTime: new Date('2026-03-05T09:00:00.000Z'),
+            endTime: new Date('2026-03-05T12:00:00.000Z'),
+            metadata: {},
+          },
+        ],
+      } as never);
+      membershipService.findOne.mockResolvedValue({
+        baseHourlyRate: { toString: () => '35.50' },
+      } as never);
+      repository.updateShift.mockResolvedValue({ uid: 'ssh_1' } as never);
+
+      await service.updateShift('std_1', 'ssh_1', {
+        userId: 'user_2',
+      });
+
+      expect(membershipService.findOne).toHaveBeenCalledWith({
+        user: { uid: 'user_2' },
+        studio: { uid: 'std_1' },
+        deletedAt: null,
+      });
+      expect(repository.findOverlappingShift).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userUid: 'user_2',
+        }),
+      );
+      expect(repository.updateShift).toHaveBeenCalledWith(
+        'std_1',
+        'ssh_1',
+        expect.objectContaining({
+          user: { connect: { uid: 'user_2' } },
+          hourlyRate: '35.50',
+          projectedCost: '106.50',
+        }),
+        BigInt(1),
+      );
+    });
   });
 });
