@@ -119,7 +119,6 @@ function MyShiftsPageContent({ studioId }: MyShiftsPageContentProps) {
   return (
     <PageLayout
       title="My Shifts"
-      className="pt-2"
       actions={(
         <MyShiftsViewToggle
           viewMode={viewMode}

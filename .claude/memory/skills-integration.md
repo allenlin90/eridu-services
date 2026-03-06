@@ -42,12 +42,20 @@ Additional frontend guidance (2026-03-06):
 - `.agent/skills/frontend-api-layer/SKILL.md` now requires no FE-side required-data joins across endpoints with mismatched auth scopes.
 - `.agent/skills/frontend-state-management/SKILL.md` now requires scoping timer-driven state updates to the smallest subtree.
 - `.agent/skills/shift-schedule-pattern/SKILL.md` now requires shared operational-day boundary utilities instead of route-local duplicated math.
+- `.agent/skills/shift-schedule-pattern/SKILL.md` and `.agent/skills/frontend-ui-components/SKILL.md` now codify date/time timezone contracts:
+  - parse `YYYY-MM-DD` as local calendar dates,
+  - round-trip `datetime-local` via runtime local wall time -> ISO persistence,
+  - avoid ISO string chopping (`split('T')`, stripping `Z`) for UI conversion.
 
 My-shifts route refactor pattern (2026-03-06):
 - `apps/erify_studios/src/routes/studios/$studioId/my-shifts.tsx` is now a route container with `StudioRouteGuard` (`routeKey=\"myShifts\"`) + URL/search wiring.
 - Query/date derivation moved to `apps/erify_studios/src/features/studio-shifts/hooks/use-my-shifts-page-controller.ts`.
 - Dense table/filter/pagination UI moved to `apps/erify_studios/src/features/studio-shifts/components/my-shifts-table-card.tsx`.
 - Search contract type is centralized in `apps/erify_studios/src/features/studio-shifts/utils/my-shifts-route-search.utils.ts`.
+
+Studios page spacing consistency (2026-03-06):
+- Standardized route/page wrapper top spacing under `SidebarLayoutHeader` to `p-4 pt-2` (instead of mixed `pt-0` overrides).
+- `PageLayout` now follows the same default, and route-level one-off `pt-2` overrides should be removed unless a page has a deliberate exception.
 
 ## Critical Skills Clarifications
 

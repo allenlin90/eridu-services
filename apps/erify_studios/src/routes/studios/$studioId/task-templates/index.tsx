@@ -23,7 +23,7 @@ function TaskTemplatesPage() {
   } = useTaskTemplates({ studioId });
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+    <div className="flex flex-1 flex-col gap-4 p-4 pt-2">
       {/* Header - scrolls normally */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Task Templates</h1>
