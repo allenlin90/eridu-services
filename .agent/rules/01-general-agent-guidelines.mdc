@@ -14,7 +14,7 @@ Before starting ANY task, you MUST check if there are relevant skills in the `.a
 - **Frontend (React)**: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`, `frontend-error-handling`, `frontend-performance`, `frontend-i18n`, `frontend-code-quality`
 - **Architecture & Types**: `design-patterns`, `shared-api-types`, `solid-principles`
 - **Code Quality & Review**: `code-quality`, `engineering-best-practices-enforcer`
-- **Feature-Specific**: `admin-list-pattern`, `studio-list-pattern`, `task-template-builder`, `schedule-continuity-workflow`, `jsonb-analytics-snapshot`
+- **Feature-Specific**: `admin-list-pattern`, `studio-list-pattern`, `task-template-builder`, `schedule-continuity-workflow`, `jsonb-analytics-snapshot`, `shift-schedule-pattern`, `file-upload-presign`
 - **Meta**: `skill-creator`
 
 *If you are unsure of how to build something, look for a skill first.*

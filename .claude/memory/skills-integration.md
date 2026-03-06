@@ -309,10 +309,12 @@ async findPaginated(params: {
 24. **studio-list-pattern** - Studio list pages
 25. **task-template-builder** - Task template UI
 26. **schedule-continuity-workflow** - Schedule update/validate/publish workflow
+27. **shift-schedule-pattern** - Shift CRUD, blocks, calendar/alignment orchestration, duty-manager, task-readiness, FE shift UX
+28. **file-upload-presign** - Presigned R2 upload flow, use case limits, storage routing
 
 ### Meta
-27. **skill-creator** - Creating new skills
-28. **code-quality** - General quality rules
+29. **skill-creator** - Creating new skills
+30. **code-quality** - General quality rules
 
 ## Key Takeaways
 

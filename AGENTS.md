@@ -73,6 +73,8 @@ For Claude Code sessions, the primary configuration lives in `.claude/`. Claude 
   - `task-template-builder`
   - `schedule-continuity-workflow`
   - `jsonb-analytics-snapshot`
+  - `shift-schedule-pattern` (shift CRUD, blocks, calendar/alignment, duty-manager, task-readiness)
+  - `file-upload-presign`
 - Meta/Tooling:
   - `skill-creator`
 - If a listed routing skill is unavailable, discover candidates in `.agent/skills/` and use the closest match.
