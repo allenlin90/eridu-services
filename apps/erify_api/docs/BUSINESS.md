@@ -234,6 +234,9 @@ Core Rules:
   - Shows with start time before `06:00` are counted in the previous operational day.
   - Shows with start time at or after `06:00` are counted in that date's operational day.
 - **Operational day continuity**: for each operational day, duty manager continuity is evaluated from the first show start to the last show end.
+- **Time storage vs presentation**:
+  - Persisted datetimes are UTC/epoch-standardized in DB.
+  - User-facing pages should present times in local runtime timezone.
 - **Task readiness per upcoming show**:
   - Each show must have at least `SETUP`, `ACTIVE`, and `CLOSURE` tasks.
   - Every task should have an assignee.

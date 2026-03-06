@@ -42,7 +42,12 @@ Study these real implementations as the source of truth:
 
 ### Operational Day Boundary
 
-The operational day starts at **06:00 UTC**. Shows before 06:00 belong to the **previous** operational day.
+Backend orchestration and frontend UX intentionally use different boundary semantics:
+
+- **Backend orchestration (`shift-alignment`)**: operational day starts at **06:00 UTC** for consistent risk bucketing.
+- **Frontend route UX (`dashboard`, `my-shifts`)**: operational day windows are computed in **local runtime time** from date inputs, then serialized to ISO for API filters.
+
+This is compatible with the storage rule: DB timestamps are UTC instants; presentation and date-input interpretation are local.
 
 ```typescript
 // Shift-alignment service uses this to bucket shows
@@ -55,13 +60,13 @@ private toOperationalDay(value: Date): string {
 }
 ```
 
-This rule affects:
+Backend 06:00 UTC rule affects:
 - Duty-manager coverage windows (first show → last show per operational day)
-- Dashboard date navigation (day ends at 06:00 next calendar day)
 - Alignment reporting (shows grouped by operational day)
 
 Frontend implementation rule:
 - Reuse shared operational-day utilities (for example, `buildOperationalDayWindow` and shared hour constants in `studio-shifts/utils`) instead of re-implementing day-start/day-end boundary math inside route files.
+- Keep local-day boundary math and display formatting separate from backend UTC bucketing logic.
 
 ### Duty-Manager Coverage
 
@@ -213,7 +218,7 @@ const dashboardSearchSchema = z.object({
 });
 ```
 
-Navigation: simple prev/next day buttons. Operational day end at 06:00 next calendar day.
+Navigation: simple prev/next day buttons. Frontend day window is local-runtime based (ends at local `06:00` next calendar day by default utility constant).
 
 ### Named Constants
 
@@ -257,7 +262,7 @@ Planning-risk analysis for admin warnings:
 
 When implementing shift-related features:
 
-- [ ] Use `OPERATIONAL_DAY_START_HOUR_UTC = 6` for day-boundary logic
+- [ ] Backend orchestration day-bucketing uses `OPERATIONAL_DAY_START_HOUR_UTC = 6`
 - [ ] Blocks are always server-sorted by `startTime` ascending
 - [ ] FE sorts blocks before submitting to API
 - [ ] Overlap guard runs for non-CANCELLED shifts
@@ -267,7 +272,7 @@ When implementing shift-related features:
 - [ ] Cross-midnight blocks are split to per-day timeline segments for Schedule-X
 - [ ] Calendar query limit is derived from view/range bucket (day/week/month), not a single static ceiling
 - [ ] Dashboard date state lives in URL search params
-- [ ] Operational-day boundary math uses shared utility/constant (no duplicated route-local implementations)
+- [ ] Frontend operational-day boundary math uses shared local-time utility/constant (no duplicated route-local implementations)
 - [ ] Named constants used instead of magic numbers
 - [ ] Alignment checks cover both per-show and per-operational-day duty-manager coverage
 - [ ] Task readiness checks include SETUP, ACTIVE, CLOSURE (+ moderation for premium)

@@ -61,6 +61,7 @@ function StudioDashboardPage() {
   const isStudioAdmin = hasAccess('shifts');
 
   const { dayStart, dayStartIso, dayEndIso } = useMemo(
+    // Local-runtime operational day window for dashboard UX; API receives ISO instants.
     () => buildOperationalDayWindow(selectedDate),
     [selectedDate],
   );

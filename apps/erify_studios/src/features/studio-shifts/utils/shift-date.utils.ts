@@ -6,6 +6,13 @@ export function addDays(base: Date, days: number): Date {
 
 export const DEFAULT_OPERATIONAL_DAY_END_HOUR = 6;
 
+/**
+ * Parse `YYYY-MM-DD` as a local-runtime calendar date at local midnight.
+ *
+ * Note:
+ * - DB timestamps are persisted as UTC instants (`toISOString()`).
+ * - FE date-only inputs represent user-local calendar dates, so parsing here must be local.
+ */
 export function fromLocalDateInput(value: string): Date {
   const [year, month, day] = value.split('-').map(Number);
   const date = new Date();
@@ -14,6 +21,13 @@ export function fromLocalDateInput(value: string): Date {
   return date;
 }
 
+/**
+ * Build an operational-day window for frontend UX using local-runtime time.
+ *
+ * This utility intentionally follows local calendar semantics for route/search-driven UI
+ * (dashboard and my-shifts). The resulting ISO strings are UTC instants suitable for API
+ * query params, but the boundary math itself is based on local time.
+ */
 export function buildOperationalDayWindow(
   selectedDate: string,
   endHour: number = DEFAULT_OPERATIONAL_DAY_END_HOUR,

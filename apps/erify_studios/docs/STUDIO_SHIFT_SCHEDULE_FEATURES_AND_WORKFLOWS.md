@@ -136,7 +136,7 @@ Delivered:
   - Duty-manager coverage risk during show windows.
   - Operational-day duty-manager gap risk between first and last show of the day.
   - Task-readiness risks: no tasks, unassigned tasks, missing `SETUP`/`ACTIVE`/`CLOSURE`, and missing moderation task on premium shows.
-  - Operational day boundary is fixed at `06:00`: show starts before `06:00` are counted toward the previous operational day; `06:00` or later uses the same date.
+  - Backend risk-bucketing uses a fixed operational-day boundary (`06:00`) for consistency across orchestration reports.
 - Frontend admin planning cards now consume these endpoints on dedicated surfaces:
   - `/studios/:studioId/shows` for date-range task-readiness summary warnings.
   - `/studios/:studioId/shifts` for shift cost snapshot.
@@ -260,8 +260,10 @@ Pending scope:
 ### C. Data Consistency Workflow
 
 1. Shift times are submitted as ISO strings from runtime `Date`.
-2. UI display converts from stored ISO timestamps to local display time.
-3. Calendar and table both derive timing from block timestamps.
+2. Stored timestamps are UTC instants in DB (epoch/ISO standardization).
+3. UI display converts from stored ISO timestamps to local display time.
+4. Frontend operational-day route windows (`dashboard`, `my-shifts`) are computed in local runtime time, then sent as ISO instants for API filtering.
+5. Calendar and table both derive timing from block timestamps.
 
 ## Remaining Follow-ups
 
