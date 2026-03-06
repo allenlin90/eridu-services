@@ -188,6 +188,34 @@ describe('studioShiftService', () => {
       );
     });
 
+    it('should reject create when user already has an overlapping shift', async () => {
+      membershipService.findOne.mockResolvedValue({
+        baseHourlyRate: { toString: () => '20.00' },
+      } as never);
+
+      repository.findOverlappingShift.mockResolvedValue({ uid: 'ssh_existing' } as never);
+
+      await expect(
+        service.createShift('std_1', {
+          userId: 'user_1',
+          date: new Date('2026-03-05'),
+          hourlyRate: '20.00',
+          blocks: [
+            {
+              startTime: new Date('2026-03-05T09:00:00.000Z'),
+              endTime: new Date('2026-03-05T12:00:00.000Z'),
+              metadata: {},
+            },
+          ],
+          status: undefined,
+          isDutyManager: undefined,
+          isApproved: undefined,
+          calculatedCost: undefined,
+          metadata: {},
+        }),
+      ).rejects.toThrow('Shift blocks overlap with an existing non-cancelled shift for this user.');
+    });
+
     it('should reject create when no blocks are provided', async () => {
       await expect(
         service.createShift('std_1', {
@@ -239,6 +267,38 @@ describe('studioShiftService', () => {
         undefined,
       );
       expect(repository.findOverlappingShift).toHaveBeenCalled();
+    });
+
+    it('should reject update when blocks overlap with an existing non-cancelled shift', async () => {
+      repository.findByUidInStudio.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'ssh_1',
+        status: 'SCHEDULED',
+        user: { uid: 'user_1' },
+        hourlyRate: { toString: () => '20.00' },
+        blocks: [
+          {
+            uid: 'ssb_keep',
+            startTime: new Date('2026-03-05T09:00:00.000Z'),
+            endTime: new Date('2026-03-05T12:00:00.000Z'),
+            metadata: {},
+          },
+        ],
+      } as never);
+
+      repository.findOverlappingShift.mockResolvedValue({ uid: 'ssh_other' } as never);
+
+      await expect(
+        service.updateShift('std_1', 'ssh_1', {
+          blocks: [
+            {
+              startTime: new Date('2026-03-05T10:00:00.000Z'),
+              endTime: new Date('2026-03-05T14:00:00.000Z'),
+              metadata: {},
+            },
+          ],
+        }),
+      ).rejects.toThrow('Shift blocks overlap with an existing non-cancelled shift for this user.');
     });
 
     it('should skip overlap check when resulting status is CANCELLED', async () => {

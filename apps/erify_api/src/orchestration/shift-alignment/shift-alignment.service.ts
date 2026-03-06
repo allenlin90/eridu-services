@@ -38,6 +38,9 @@ type OperationalDayBucket = {
 const REQUIRED_SHOW_TASK_TYPES = ['SETUP', 'ACTIVE', 'CLOSURE'] as const;
 type RequiredTaskType = (typeof REQUIRED_SHOW_TASK_TYPES)[number];
 
+// Convention: shows whose standard name equals this value require a moderation task.
+const PREMIUM_SHOW_STANDARD_NAME = 'premium';
+
 @Injectable()
 export class ShiftAlignmentService {
   private static readonly DEFAULT_WINDOW_DAYS = 7;
@@ -175,7 +178,7 @@ export class ShiftAlignmentService {
           })();
 
       // Premium shows require at least one moderation task.
-      const isPremiumShow = show.standardName.toLowerCase() === 'premium';
+      const isPremiumShow = show.standardName.toLowerCase() === PREMIUM_SHOW_STANDARD_NAME;
       const hasModerationTask = tasks.some((task) => this.isModerationTask(task));
       const missingModerationTask = isPremiumShow && !hasModerationTask;
 
