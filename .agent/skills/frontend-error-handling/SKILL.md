@@ -92,36 +92,57 @@ export class ErrorBoundary extends Component<Props, State> {
 
 ### 3. TanStack Query Error Handling
 
-**Global Handlers (Centralized Toasts)**:
-The project uses `MutationCache` to automatically toast errors for all mutations.
-- **Rule**: Do NOT implement inline `onError: (error) => toast.error(...)` inside component `useMutation` hooks. Rely on the global handler.
+**Global Mutation Toasts (Centralized via `MutationCache`)**:
+The project uses a `MutationCache` `onError` callback in `query-client.ts` to automatically toast errors for all mutations.
 
-To interact with the global handler from a hook, use the `meta` property:
+- **Rule**: Do NOT implement inline `onError: (error) => toast.error(...)` inside `useMutation` hooks. Rely on the global handler.
+
+#### Type-safe meta via `Register` (TanStack Query v5)
+
+Custom meta fields are declared via module augmentation of the `Register` interface. This provides IDE autocomplete for `meta.suppressErrorToast` and `meta.errorMessage`.
 
 ```typescript
-// 1. Standard approach (automatic toast, zero boilerplate)
-const mutation = useMutation({
-  mutationFn: updateTask,
-  // ❌ AVOID: inline toast.error() - relies on global MutationCache
-});
-
-// 2. Custom Global Toast Message
-const mutationWithCustomMessage = useMutation({
-  mutationFn: updateTask,
-  meta: {
-    errorMessage: 'Failed to update this critical task' // Overrides default generic toast message
+// query-client.ts
+declare module '@tanstack/react-query' {
+  // eslint-disable-next-line -- module augmentation requires interface
+  interface Register {
+    defaultError: Error;
+    mutationMeta: {
+      suppressErrorToast?: boolean;
+      errorMessage?: string;
+    };
   }
-});
-
-// 3. Suppress Global Toast
-const silentMutation = useMutation({
-  mutationFn: updateTask,
-  meta: {
-    suppressErrorToast: true // Silences the global toast (e.g., for background autosaves)
-  }
-});
+}
 ```
-// Per-query error handling
+
+> **Important**: TanStack Query v5 infers `MutationMeta` from `Register.mutationMeta`. Do NOT declare a separate `interface MutationMeta` — it causes a "Duplicate identifier" TypeScript error.
+
+#### Controlling global toast behavior
+
+```typescript
+// Default: global toast fires automatically on error (no extra code needed)
+useMutation({ mutationFn: createTask });
+
+// Suppress the toast entirely (e.g. background autosave)
+useMutation({ mutationFn: saveTask, meta: { suppressErrorToast: true } });
+
+// Custom toast message
+useMutation({ mutationFn: deleteTask, meta: { errorMessage: 'Failed to delete task' } });
+```
+
+#### Dynamic suppression for autosave mutations
+
+Mutations that accept a `silent` flag in their variables automatically suppress the global toast:
+
+```typescript
+// The global MutationCache handler checks variables.silent
+mutate({ taskId, data, silent: true }); // ← no toast
+mutate({ taskId, data });               // ← toast fires on error
+```
+
+#### Per-query error handling (component-level)
+
+```typescript
 const { data, error, isError } = useQuery({
   queryKey: ['tasks'],
   queryFn: fetchTasks,
