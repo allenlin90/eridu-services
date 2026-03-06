@@ -1,6 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { z } from 'zod';
 
 import { Button } from '@eridu/ui';
@@ -15,9 +14,13 @@ import {
   OperationalDayShowListCard,
   OperationalDayShowsSummaryCard,
 } from '@/components/studio-dashboard/dashboard-show-sections';
-import { addDays, fromLocalDateInput } from '@/features/studio-shifts/utils/shift-date.utils';
+import {
+  addDays,
+  buildOperationalDayWindow,
+  DEFAULT_OPERATIONAL_DAY_END_HOUR,
+} from '@/features/studio-shifts/utils/shift-date.utils';
 import { formatDate, toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
-import { getStudioShows } from '@/features/studio-shows/api/get-studio-shows';
+import { useDashboardOperationalDayShows } from '@/features/studio-shows/hooks/use-dashboard-operational-day-shows';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
 const DASHBOARD_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -29,7 +32,6 @@ const dashboardSearchSchema = z.object({
 });
 type DashboardSearch = z.infer<typeof dashboardSearchSchema>;
 
-const OPERATIONAL_DAY_END_HOUR = 6;
 const TIME_HH_MM_FORMATTER = new Intl.DateTimeFormat('en-US', {
   hour: '2-digit',
   minute: '2-digit',
@@ -49,14 +51,7 @@ function StudioDashboardPage() {
   const { studioId } = Route.useParams();
   const search = Route.useSearch();
   const navigate = useNavigate();
-  const [nowMs, setNowMs] = useState(() => Date.now());
-
-  useEffect(() => {
-    const timerId = window.setInterval(() => setNowMs(Date.now()), 60_000);
-    return () => window.clearInterval(timerId);
-  }, []);
-
-  const todayDate = toLocalDateInputValue(new Date(nowMs));
+  const todayDate = toLocalDateInputValue(new Date());
   const selectedDate = search.date ?? todayDate;
   const isSelectedToday = selectedDate === todayDate;
 
@@ -65,14 +60,10 @@ function StudioDashboardPage() {
   const { hasAccess } = useStudioAccess(studioId);
   const isStudioAdmin = hasAccess('shifts');
 
-  const dayStart = useMemo(() => fromLocalDateInput(selectedDate), [selectedDate]);
-  const dayEnd = useMemo(() => {
-    const next = addDays(dayStart, 1);
-    next.setHours(OPERATIONAL_DAY_END_HOUR - 1, 59, 59, 999);
-    return next;
-  }, [dayStart]);
-  const dayStartIso = dayStart.toISOString();
-  const dayEndIso = dayEnd.toISOString();
+  const { dayStart, dayStartIso, dayEndIso } = useMemo(
+    () => buildOperationalDayWindow(selectedDate),
+    [selectedDate],
+  );
   const dutyReferenceTime = isSelectedToday ? undefined : dayStartIso;
 
   const previewUntil = useMemo(
@@ -81,25 +72,19 @@ function StudioDashboardPage() {
   );
 
   const {
-    data: todayShowsResponse,
     isLoading: isLoadingTodayShows,
     isFetching: isFetchingTodayShows,
-  } = useQuery({
-    queryKey: ['studio-dashboard', studioId, 'today-shows', dayStartIso, dayEndIso, showsPage, showsLimit],
-    queryFn: () =>
-      getStudioShows(studioId, {
-        page: showsPage,
-        limit: showsLimit,
-        date_from: dayStartIso,
-        date_to: dayEndIso,
-      }),
-    enabled: Boolean(studioId),
+    shows: todayShows,
+    total: totalShows,
+    totalPages: totalShowPages,
+    hasResponse: hasShowsResponse,
+  } = useDashboardOperationalDayShows({
+    studioId,
+    dayStartIso,
+    dayEndIso,
+    page: showsPage,
+    limit: showsLimit,
   });
-
-  const totalShows = todayShowsResponse?.meta?.total ?? 0;
-  const totalShowPages = todayShowsResponse?.meta?.totalPages ?? 1;
-  const todayShows = todayShowsResponse?.data ?? [];
-  const hasShowsResponse = Boolean(todayShowsResponse);
   const isTodayShowsLoading = isLoadingTodayShows || isFetchingTodayShows;
 
   const navigateDashboard = useCallback((
@@ -134,7 +119,7 @@ function StudioDashboardPage() {
       <div className="space-y-4">
         <DashboardDateNavigationCard
           operationalDateLabel={operationalDateLabel}
-          operationalDayEndHour={OPERATIONAL_DAY_END_HOUR}
+          operationalDayEndHour={DEFAULT_OPERATIONAL_DAY_END_HOUR}
           isTodaySelected={isSelectedToday}
           onPreviousDay={() =>
             navigateDashboard((previous) => ({
@@ -159,7 +144,7 @@ function StudioDashboardPage() {
         <div className="grid gap-4 lg:grid-cols-3">
           <OperationalDayShowsSummaryCard
             dateLabel={operationalDateLabel}
-            operationalDayEndHour={OPERATIONAL_DAY_END_HOUR}
+            operationalDayEndHour={DEFAULT_OPERATIONAL_DAY_END_HOUR}
             totalShows={totalShows}
             isLoading={isTodayShowsLoading}
           />
@@ -174,7 +159,7 @@ function StudioDashboardPage() {
         <OperationalDayShowListCard
           studioId={studioId}
           isStudioAdmin={isStudioAdmin}
-          operationalDayEndHour={OPERATIONAL_DAY_END_HOUR}
+          operationalDayEndHour={DEFAULT_OPERATIONAL_DAY_END_HOUR}
           isLoading={isTodayShowsLoading}
           isFetching={isFetchingTodayShows}
           shows={todayShows}
@@ -213,7 +198,6 @@ function StudioDashboardPage() {
             previewUntil={previewUntil}
             isSelectedToday={isSelectedToday}
             dayStartMs={dayStart.getTime()}
-            nowMs={nowMs}
           />
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { AlertTriangle, CheckCircle2, UserCheck, UserMinus } from 'lucide-react';
-import { memo, useMemo } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 import {
   Badge,
@@ -37,7 +37,6 @@ type DashboardMyUpcomingShiftsCardProps = {
   previewUntil: string;
   isSelectedToday: boolean;
   dayStartMs: number;
-  nowMs: number;
 };
 
 export const DashboardDutyCoverageCards = memo(({
@@ -162,8 +161,14 @@ export const DashboardMyUpcomingShiftsCard = memo(({
   previewUntil,
   isSelectedToday,
   dayStartMs,
-  nowMs,
 }: DashboardMyUpcomingShiftsCardProps) => {
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timerId = window.setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => window.clearInterval(timerId);
+  }, []);
+
   const {
     data: myShiftResponse,
     isLoading: isLoadingMyShifts,
