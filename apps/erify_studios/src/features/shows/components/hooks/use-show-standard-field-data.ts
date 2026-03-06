@@ -4,6 +4,8 @@ import { useMemo } from 'react';
 import { getShowStandards } from '@/features/show-standards/api/get-show-standards';
 import type { Show } from '@/features/shows/api/get-shows';
 
+const LOOKUP_STALE_TIME_MS = 60 * 60 * 1000;
+
 /**
  * Network hook for show standard field.
  * Stable list with 1 hour cache.
@@ -12,6 +14,8 @@ export function useShowStandardFieldData(show: Show | null, studioId?: string) {
   const { data: showStandardsData, isLoading } = useQuery({
     queryKey: ['show-standards', 'list', studioId ?? 'admin', 'all'],
     queryFn: () => getShowStandards({ limit: 100 }, studioId),
+    staleTime: LOOKUP_STALE_TIME_MS,
+    gcTime: 2 * 60 * 60 * 1000,
   });
 
   const options = useMemo(() => {

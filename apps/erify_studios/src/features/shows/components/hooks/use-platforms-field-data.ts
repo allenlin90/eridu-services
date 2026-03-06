@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react';
 import { getPlatforms } from '@/features/platforms/api/get-platforms';
 import type { Show } from '@/features/shows/api/get-shows';
 
+const LOOKUP_STALE_TIME_MS = 60 * 60 * 1000;
+
 /**
  * Network hook for platforms field.
  * - Shows 10 placeholder options when no search
@@ -16,6 +18,8 @@ export function usePlatformsFieldData(show: Show | null, studioId?: string) {
   const { data: platformsData, isLoading } = useQuery({
     queryKey: ['platforms', 'list', studioId ?? 'admin', { name: search }],
     queryFn: () => getPlatforms({ name: search, limit: search ? 20 : 10 }, studioId),
+    staleTime: LOOKUP_STALE_TIME_MS,
+    gcTime: 2 * 60 * 60 * 1000,
   });
 
   const options = useMemo(() => {

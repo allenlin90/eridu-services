@@ -9,7 +9,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { BaseStudioController } from '../base-studio.controller';
 
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
-import { ZodPaginatedResponse } from '@/lib/decorators/zod-response.decorator';
+import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { PlatformService } from '@/models/platform/platform.service';
@@ -21,6 +21,9 @@ import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { ListShowTypesQueryDto, showTypeDto } from '@/models/show-type/schemas/show-type.schema';
 import { ShowTypeService } from '@/models/show-type/show-type.service';
 import { StudioService } from '@/models/studio/studio.service';
+import { studioShowLookupsDto } from '@/models/task/schemas/task.schema';
+
+const DEFAULT_LOOKUP_LIMIT = 200;
 
 @ApiTags('Studio Lookup')
 @StudioProtected()
@@ -33,6 +36,26 @@ export class StudioLookupController extends BaseStudioController {
     private readonly platformService: PlatformService,
   ) {
     super();
+  }
+
+  @Get('show-lookups')
+  @ZodResponse(studioShowLookupsDto)
+  async getShowLookups(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
+  ) {
+    const [showTypes, showStandards, showStatuses, platforms] = await Promise.all([
+      this.showTypeService.listShowTypes({ take: DEFAULT_LOOKUP_LIMIT }),
+      this.showStandardService.listShowStandards({ take: DEFAULT_LOOKUP_LIMIT }),
+      this.showStatusService.getShowStatuses({ take: DEFAULT_LOOKUP_LIMIT }),
+      this.platformService.listPlatforms({ take: DEFAULT_LOOKUP_LIMIT }),
+    ]);
+
+    return {
+      show_types: showTypes.data.map((item) => showTypeDto.parse(item)),
+      show_standards: showStandards.data.map((item) => showStandardDto.parse(item)),
+      show_statuses: showStatuses.data.map((item) => showStatusDto.parse(item)),
+      platforms: platforms.data.map((item) => platformDto.parse(item)),
+    };
   }
 
   @Get('show-types')

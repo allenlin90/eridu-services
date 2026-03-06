@@ -4,6 +4,8 @@ import { useMemo } from 'react';
 import { getShowTypes } from '@/features/show-types/api/get-show-types';
 import type { Show } from '@/features/shows/api/get-shows';
 
+const LOOKUP_STALE_TIME_MS = 60 * 60 * 1000;
+
 /**
  * Network hook for show type field.
  * Stable list with 1 hour cache.
@@ -12,6 +14,8 @@ export function useShowTypeFieldData(show: Show | null, studioId?: string) {
   const { data: showTypesData, isLoading } = useQuery({
     queryKey: ['show-types', 'list', studioId ?? 'admin', 'all'],
     queryFn: () => getShowTypes({ limit: 100 }, studioId),
+    staleTime: LOOKUP_STALE_TIME_MS,
+    gcTime: 2 * 60 * 60 * 1000,
   });
 
   const options = useMemo(() => {

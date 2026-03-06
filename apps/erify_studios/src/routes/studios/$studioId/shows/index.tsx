@@ -21,11 +21,8 @@ import {
 } from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
+import { useShowLookupsQuery } from '@/features/shows/api/get-show-lookups';
 import { BulkTaskGenerationDialog } from '@/features/shows/components/bulk-task-generation-dialog';
-import { usePlatformsFieldData } from '@/features/shows/components/hooks/use-platforms-field-data';
-import { useShowStandardFieldData } from '@/features/shows/components/hooks/use-show-standard-field-data';
-import { useShowStatusFieldData } from '@/features/shows/components/hooks/use-show-status-field-data';
-import { useShowTypeFieldData } from '@/features/shows/components/hooks/use-show-type-field-data';
 import { ShowAssignmentDialog } from '@/features/shows/components/show-assignment-dialog';
 import { useShiftAlignment } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
@@ -135,11 +132,7 @@ function StudioShowsPage() {
       .filter((show): show is StudioShow => show !== null);
   }, [selectedShowIds, selectedShowSnapshots, showsById]);
 
-  // Fetch filter options
-  const { options: typeOptions } = useShowTypeFieldData(null, studioId);
-  const { options: standardOptions } = useShowStandardFieldData(null, studioId);
-  const { options: statusOptions } = useShowStatusFieldData(null, studioId);
-  const { options: platformOptions } = usePlatformsFieldData(null, studioId);
+  const { data: showLookups } = useShowLookupsQuery(studioId);
 
   const searchableColumns = useMemo(
     () => [
@@ -162,29 +155,29 @@ function StudioShowsPage() {
         id: 'show_type_name',
         title: 'Show Type',
         type: 'select' as const,
-        options: typeOptions.map((o) => ({ value: o.label, label: o.label })),
+        options: (showLookups?.show_types ?? []).map((o) => ({ value: o.name, label: o.name })),
       },
       {
         id: 'show_standard_name',
         title: 'Show Standard',
         type: 'select' as const,
-        options: standardOptions.map((o) => ({ value: o.label, label: o.label })),
+        options: (showLookups?.show_standards ?? []).map((o) => ({ value: o.name, label: o.name })),
       },
       {
         id: 'show_status_name',
         title: 'Show Status',
         type: 'select' as const,
-        options: statusOptions.map((o) => ({ value: o.label, label: o.label })),
+        options: (showLookups?.show_statuses ?? []).map((o) => ({ value: o.name, label: o.name })),
       },
       {
         id: 'platform_name',
         title: 'Platform',
         type: 'select' as const,
-        options: platformOptions.map((o) => ({ value: o.label, label: o.label })),
+        options: (showLookups?.platforms ?? []).map((o) => ({ value: o.name, label: o.name })),
       },
       { id: 'start_time', title: 'Date', type: 'date-range' as const },
     ],
-    [typeOptions, standardOptions, statusOptions, platformOptions],
+    [showLookups],
   );
 
   const planningDateRange: DateRange | undefined = planningDateFrom || planningDateTo
