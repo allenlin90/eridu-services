@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
-import { TaskType } from '@prisma/client';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { ShowService } from '@/models/show/show.service';
@@ -10,11 +8,14 @@ import { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
 import { TaskService } from '@/models/task/task.service';
 
 type ShiftWithBlocks = Awaited<ReturnType<StudioShiftService['findShiftsInWindow']>>[number];
-type ShowWithPlanningContext = Prisma.ShowGetPayload<{
-  include: {
-    showStandard: true;
-  };
-}>;
+type ShowWithPlanningContext = {
+  id: bigint;
+  uid: string;
+  name: string;
+  startTime: Date;
+  endTime: Date;
+  showStandard: { name: string } | null;
+};
 type TaskWithTargets = Awaited<ReturnType<TaskService['findTasksByShowIds']>>[number];
 
 type TimeInterval = { start: Date; end: Date };
@@ -34,7 +35,8 @@ type OperationalDayBucket = {
   shows: ShowWindow[];
 };
 
-const REQUIRED_SHOW_TASK_TYPES: TaskType[] = [TaskType.SETUP, TaskType.ACTIVE, TaskType.CLOSURE];
+const REQUIRED_SHOW_TASK_TYPES = ['SETUP', 'ACTIVE', 'CLOSURE'] as const;
+type RequiredTaskType = (typeof REQUIRED_SHOW_TASK_TYPES)[number];
 
 @Injectable()
 export class ShiftAlignmentService {
@@ -91,7 +93,7 @@ export class ShiftAlignmentService {
     ]);
 
     const dutyManagerIntervals = this.collectDutyManagerIntervals(shifts, window.start, window.end);
-    const showWindows = this.buildShowWindows(shows as ShowWithPlanningContext[], window.start, window.end, now);
+    const showWindows = this.buildShowWindows(shows as unknown as ShowWithPlanningContext[], window.start, window.end, now);
     const operationalDays = this.groupShowsByOperationalDay(showWindows);
     const taskMapByShowId = await this.buildTaskMapByShowId(showWindows);
 
@@ -119,7 +121,7 @@ export class ShiftAlignmentService {
       show_standard: string;
       has_no_tasks: boolean;
       unassigned_task_count: number;
-      missing_required_task_types: Array<'SETUP' | 'ACTIVE' | 'CLOSURE'>;
+      missing_required_task_types: RequiredTaskType[];
       missing_moderation_task: boolean;
     }> = [];
 

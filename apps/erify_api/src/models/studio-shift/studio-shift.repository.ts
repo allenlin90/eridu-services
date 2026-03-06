@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, StudioShift } from '@prisma/client';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
@@ -24,19 +26,26 @@ export class StudioShiftRepository extends BaseRepository<
   Prisma.StudioShiftUpdateInput,
   Prisma.StudioShiftWhereInput
 > {
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {
     super(new PrismaModelWrapper(prisma.studioShift));
   }
 
+  private get delegate() {
+    return this.txHost.tx.studioShift;
+  }
+
   async createShift(data: Prisma.StudioShiftCreateInput): Promise<StudioShiftWithRelations> {
-    return this.prisma.studioShift.create({
+    return this.delegate.create({
       data,
       include: defaultShiftInclude,
     });
   }
 
   async findByUidInStudio(studioUid: string, uid: string): Promise<StudioShiftWithRelations | null> {
-    return this.prisma.studioShift.findFirst({
+    return this.delegate.findFirst({
       where: {
         uid,
         studio: { uid: studioUid, deletedAt: null },
@@ -56,7 +65,7 @@ export class StudioShiftRepository extends BaseRepository<
     if (!targetId)
       return null;
 
-    return this.prisma.studioShift.update({
+    return this.delegate.update({
       where: { id: targetId },
       data,
       include: defaultShiftInclude,
@@ -70,7 +79,7 @@ export class StudioShiftRepository extends BaseRepository<
 
     const deletedAt = new Date();
 
-    return this.prisma.studioShift.update({
+    return this.delegate.update({
       where: { id: targetId },
       data: {
         deletedAt,
@@ -136,14 +145,14 @@ export class StudioShiftRepository extends BaseRepository<
     }
 
     const [data, total] = await Promise.all([
-      this.prisma.studioShift.findMany({
+      this.delegate.findMany({
         where,
         skip: params.skip,
         take: params.take,
         orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
         include: defaultShiftInclude,
       }),
-      this.prisma.studioShift.count({ where }),
+      this.delegate.count({ where }),
     ]);
 
     return { data, total };
@@ -201,14 +210,14 @@ export class StudioShiftRepository extends BaseRepository<
     }
 
     const [data, total] = await Promise.all([
-      this.prisma.studioShift.findMany({
+      this.delegate.findMany({
         where,
         skip: params.skip,
         take: params.take,
         orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
         include: defaultShiftInclude,
       }),
-      this.prisma.studioShift.count({ where }),
+      this.delegate.count({ where }),
     ]);
 
     return { data, total };
@@ -220,7 +229,7 @@ export class StudioShiftRepository extends BaseRepository<
     end: Date;
     includeCancelled?: boolean;
   }): Promise<StudioShiftWithRelations[]> {
-    return this.prisma.studioShift.findMany({
+    return this.delegate.findMany({
       where: {
         studio: {
           uid: params.studioUid,
@@ -262,7 +271,7 @@ export class StudioShiftRepository extends BaseRepository<
       return null;
     }
 
-    return this.prisma.studioShift.findFirst({
+    return this.delegate.findFirst({
       where: {
         studio: { uid: params.studioUid, deletedAt: null },
         user: { uid: params.userUid, deletedAt: null },
@@ -287,7 +296,7 @@ export class StudioShiftRepository extends BaseRepository<
     studioUid: string,
     timestamp: Date,
   ): Promise<StudioShiftWithRelations | null> {
-    const activeBlock = await this.prisma.studioShiftBlock.findFirst({
+    const activeBlock = await this.txHost.tx.studioShiftBlock.findFirst({
       where: {
         deletedAt: null,
         startTime: { lte: timestamp },
