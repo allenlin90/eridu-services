@@ -3,10 +3,10 @@ import { useCallback, useEffect } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { z } from 'zod';
 
-import { Button } from '@eridu/ui';
-
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
+import { PageLayout } from '@/components/layouts/page-layout';
 import { MyShiftsTableCard } from '@/features/studio-shifts/components/my-shifts-table-card';
+import { MyShiftsViewToggle } from '@/features/studio-shifts/components/my-shifts-view-toggle';
 import { StudioShiftsCalendar } from '@/features/studio-shifts/components/studio-shifts-calendar';
 import { useMyShiftsPageController } from '@/features/studio-shifts/hooks/use-my-shifts-page-controller';
 import type {
@@ -117,75 +117,56 @@ function MyShiftsPageContent({ studioId }: MyShiftsPageContentProps) {
   }, [updateSearch]);
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">My Shifts</h1>
-          <p className="text-muted-foreground">
-            Read-only schedule for your assigned shift blocks.
-          </p>
-        </div>
-        <div className="inline-flex rounded-md border bg-background p-1">
-          <Button
-            size="sm"
-            variant={viewMode === 'calendar' ? 'default' : 'ghost'}
-            onClick={() =>
-              updateSearch((previous) => ({
-                ...previous,
-                view: 'calendar',
-              }), { replace: false })}
-          >
-            Calendar
-          </Button>
-          <Button
-            size="sm"
-            variant={viewMode === 'table' ? 'default' : 'ghost'}
-            onClick={() =>
-              updateSearch((previous) => ({
-                ...previous,
-                view: 'table',
-              }), { replace: false })}
-          >
-            Table
-          </Button>
-        </div>
+    <PageLayout
+      title="My Shifts"
+      className="pt-2"
+      actions={(
+        <MyShiftsViewToggle
+          viewMode={viewMode}
+          onViewModeChange={(mode) =>
+            updateSearch((previous) => ({
+              ...previous,
+              view: mode,
+            }), { replace: false })}
+        />
+      )}
+    >
+      <div className="space-y-4">
+        {viewMode === 'calendar'
+          ? (
+              <StudioShiftsCalendar
+                studioId={studioId}
+                queryScope="me"
+              />
+            )
+          : (
+              <MyShiftsTableCard
+                search={search}
+                shifts={shifts}
+                totalPages={totalPages}
+                total={total}
+                dateRange={dateRange}
+                isLoading={isLoadingMyShifts}
+                isFetching={isFetchingMyShifts}
+                onDateRangeChange={handleDateRangeChange}
+                onStatusChange={handleStatusChange}
+                onRefresh={() => {
+                  void refetchMyShifts();
+                }}
+                onRowsPerPageChange={handleRowsPerPageChange}
+                onPreviousPage={() =>
+                  updateSearch((previous) => ({
+                    ...previous,
+                    page: Math.max(1, previous.page - 1),
+                  }), { replace: false })}
+                onNextPage={() =>
+                  updateSearch((previous) => ({
+                    ...previous,
+                    page: Math.min(totalPages, previous.page + 1),
+                  }), { replace: false })}
+              />
+            )}
       </div>
-
-      {viewMode === 'calendar'
-        ? (
-            <StudioShiftsCalendar
-              studioId={studioId}
-              queryScope="me"
-              summaryText="Read-only view of your assigned shift blocks."
-            />
-          )
-        : (
-            <MyShiftsTableCard
-              search={search}
-              shifts={shifts}
-              totalPages={totalPages}
-              total={total}
-              dateRange={dateRange}
-              isLoading={isLoadingMyShifts}
-              isFetching={isFetchingMyShifts}
-              onDateRangeChange={handleDateRangeChange}
-              onStatusChange={handleStatusChange}
-              onRefresh={() => {
-                void refetchMyShifts();
-              }}
-              onRowsPerPageChange={handleRowsPerPageChange}
-              onPreviousPage={() =>
-                updateSearch((previous) => ({
-                  ...previous,
-                  page: Math.max(1, previous.page - 1),
-                }), { replace: false })}
-              onNextPage={() =>
-                updateSearch((previous) => ({
-                  ...previous,
-                  page: Math.min(totalPages, previous.page + 1),
-                }), { replace: false })}
-            />
-          )}
-    </div>
+    </PageLayout>
   );
 }

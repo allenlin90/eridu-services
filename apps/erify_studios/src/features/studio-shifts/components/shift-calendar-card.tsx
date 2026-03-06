@@ -2,9 +2,10 @@ import 'temporal-polyfill/global';
 
 import type { CalendarApp } from '@schedule-x/calendar';
 import { ScheduleXCalendar } from '@schedule-x/react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 
 import {
+  Button,
   Card,
   CardContent,
   CardDescription,
@@ -19,6 +20,7 @@ type ShiftCalendarCardProps = {
   shiftCount: number;
   calendarApp: CalendarApp | null;
   dateRange: { date_from: string; date_to: string } | null;
+  onRefresh: () => void;
 };
 
 const CALENDAR_SKELETON_ROW_IDS = [
@@ -38,6 +40,7 @@ export function ShiftCalendarCard({
   shiftCount,
   calendarApp,
   dateRange,
+  onRefresh,
 }: ShiftCalendarCardProps) {
   return (
     <Card className="xl:col-span-2">
@@ -59,12 +62,23 @@ export function ShiftCalendarCard({
             block
             {shiftCount === 1 ? '' : 's'}
           </p>
-          {isFetching && (
-            <span className="inline-flex items-center gap-1">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Updating
-            </span>
-          )}
+          <div className="inline-flex items-center gap-2">
+            {isFetching && (
+              <span className="inline-flex items-center gap-1">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Updating
+              </span>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onRefresh}
+              disabled={isFetching}
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
 
         <div className="min-h-[680px] rounded-lg border bg-card p-2 shadow-sm">

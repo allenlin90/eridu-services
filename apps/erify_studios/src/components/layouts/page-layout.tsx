@@ -6,6 +6,7 @@ export type PageLayoutProps = {
   title: string;
   description?: string;
   breadcrumbs?: ReactNode;
+  actions?: ReactNode;
   children: ReactNode;
   className?: string;
 };
@@ -14,6 +15,7 @@ export function PageLayout({
   title,
   description,
   breadcrumbs,
+  actions,
   children,
   className,
 }: PageLayoutProps) {
@@ -30,6 +32,11 @@ export function PageLayout({
               <p className="text-muted-foreground">{description}</p>
             )}
           </div>
+          {actions && (
+            <div className="flex items-center justify-center sm:justify-end">
+              {actions}
+            </div>
+          )}
         </div>
       </div>
 

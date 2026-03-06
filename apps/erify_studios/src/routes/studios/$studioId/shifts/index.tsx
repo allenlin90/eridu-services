@@ -207,7 +207,10 @@ function StudioShiftsPage() {
 
       {viewMode === 'calendar'
         ? (
-            <StudioShiftsCalendar studioId={studioId} />
+            <StudioShiftsCalendar
+              studioId={studioId}
+              summaryText="Read-only view of studio shifts. Switch to Table view to manage, create, and filter shifts."
+            />
           )
         : (
             <StudioShiftsTable

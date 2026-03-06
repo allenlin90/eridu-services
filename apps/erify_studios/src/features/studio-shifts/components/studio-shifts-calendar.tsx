@@ -5,10 +5,7 @@ import {
   viewWeek,
 } from '@schedule-x/calendar';
 import { useNextCalendarApp } from '@schedule-x/react';
-import { RefreshCw } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
-
-import { Button, Input } from '@eridu/ui';
 
 import '@schedule-x/theme-default/dist/index.css';
 
@@ -20,11 +17,10 @@ import { toScheduleXDateTime } from '@/features/studio-shifts/utils/schedule-x.u
 import { sortShiftBlocksByStart } from '@/features/studio-shifts/utils/shift-blocks.utils';
 import {
   createDefaultShiftCalendarRange,
-  createShiftCalendarJumpRange,
   extractDateStringFromUnknown,
   getShiftCalendarRangeLimit,
 } from '@/features/studio-shifts/utils/shift-calendar-range.utils';
-import { formatDate, toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
+import { formatDate } from '@/features/studio-shifts/utils/shift-form.utils';
 import { sortShiftsByFirstBlockStart } from '@/features/studio-shifts/utils/shift-timeline.utils';
 import { useAppDebounce } from '@/lib/hooks/use-app-debounce';
 
@@ -56,13 +52,12 @@ const CALENDAR_CONFIG = {
 
 export function StudioShiftsCalendar({
   studioId,
-  summaryText = 'Read-only view of studio shifts. Switch to Table view to manage, create, and filter shifts.',
+  summaryText,
   queryScope = 'studio',
 }: StudioShiftsCalendarProps) {
   const [dateRange, setDateRange] = useState<{ date_from: string; date_to: string } | null>(
     () => createDefaultShiftCalendarRange(),
   );
-  const [jumpDate, setJumpDate] = useState(() => toLocalDateInputValue(new Date()));
   const debouncedDateRange = useAppDebounce(dateRange, { delay: 300 });
 
   const { memberMap } = useStudioMemberMap(studioId, {
@@ -114,18 +109,6 @@ export function StudioShiftsCalendar({
     });
   }, [calendarShifts, memberMap, queryScope]);
 
-  const selectedDate = useMemo(() => {
-    if (!jumpDate || !globalThis.Temporal?.PlainDate) {
-      return undefined;
-    }
-
-    try {
-      return globalThis.Temporal.PlainDate.from(jumpDate);
-    } catch {
-      return undefined;
-    }
-  }, [jumpDate]);
-
   const handleCalendarRangeUpdate = useCallback((range: { start: unknown; end: unknown }) => {
     const startRaw = extractDateStringFromUnknown(range.start);
     const endRaw = extractDateStringFromUnknown(range.end);
@@ -149,7 +132,6 @@ export function StudioShiftsCalendar({
   const calendarApp = useNextCalendarApp({
     views: CALENDAR_VIEWS,
     defaultView: viewWeek.name,
-    ...(selectedDate ? { selectedDate } : {}),
     events: calendarEvents as unknown as CalendarEvent[],
     calendars: CALENDAR_CONFIG,
     callbacks: {
@@ -158,43 +140,14 @@ export function StudioShiftsCalendar({
   });
 
   return (
-    <div className="grid gap-4 mt-2">
-      <div className="flex flex-col gap-2 bg-muted/20 border rounded-lg px-3 py-2 lg:flex-row lg:items-center">
-        <p className="text-sm text-muted-foreground mr-auto">
-          {summaryText}
-        </p>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            type="date"
-            className="h-8 w-[160px]"
-            value={jumpDate}
-            onChange={(event) => setJumpDate(event.target.value)}
-          />
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              if (!jumpDate) {
-                return;
-              }
-
-              setDateRange(createShiftCalendarJumpRange(jumpDate));
-            }}
-          >
-            Jump To Date
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => void refetch()}
-            disabled={isFetchingCalendarShifts}
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${isFetchingCalendarShifts ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+    <div className="grid gap-4">
+      {summaryText && (
+        <div className="flex flex-col gap-2 rounded-lg border bg-muted/20 px-3 py-2 lg:flex-row lg:items-center">
+          <p className="mr-auto text-sm text-muted-foreground">
+            {summaryText}
+          </p>
         </div>
-      </div>
+      )}
 
       <ShiftCalendarCard
         isLoading={isLoadingCalendarShifts}
@@ -202,6 +155,7 @@ export function StudioShiftsCalendar({
         shiftCount={calendarEvents.length}
         calendarApp={calendarApp}
         dateRange={dateRange}
+        onRefresh={() => void refetch()}
       />
     </div>
   );
