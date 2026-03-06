@@ -43,6 +43,12 @@ Additional frontend guidance (2026-03-06):
 - `.agent/skills/frontend-state-management/SKILL.md` now requires scoping timer-driven state updates to the smallest subtree.
 - `.agent/skills/shift-schedule-pattern/SKILL.md` now requires shared operational-day boundary utilities instead of route-local duplicated math.
 
+My-shifts route refactor pattern (2026-03-06):
+- `apps/erify_studios/src/routes/studios/$studioId/my-shifts.tsx` is now a route container with `StudioRouteGuard` (`routeKey=\"myShifts\"`) + URL/search wiring.
+- Query/date derivation moved to `apps/erify_studios/src/features/studio-shifts/hooks/use-my-shifts-page-controller.ts`.
+- Dense table/filter/pagination UI moved to `apps/erify_studios/src/features/studio-shifts/components/my-shifts-table-card.tsx`.
+- Search contract type is centralized in `apps/erify_studios/src/features/studio-shifts/utils/my-shifts-route-search.utils.ts`.
+
 ## Critical Skills Clarifications
 
 ### service-pattern-nestjs (PRIMARY)
