@@ -90,13 +90,15 @@ function MyShiftsPageContent({ studioId }: MyShiftsPageContentProps) {
   }, [search.page, totalPages, updateSearch]);
 
   const handleDateRangeChange = useCallback((range: DateRange | undefined) => {
+    const effectiveFrom = range?.from ?? new Date(`${today}T00:00:00`);
+    const fallbackTo = addDays(effectiveFrom, 7);
+    const effectiveTo = range?.to ?? fallbackTo;
+
     updateSearch((previous) => ({
       ...previous,
       page: 1,
-      date_from: range?.from ? toLocalDateInputValue(range.from) : today,
-      date_to: range?.to
-        ? toLocalDateInputValue(range.to)
-        : toLocalDateInputValue(addDays(new Date(), 7)),
+      date_from: toLocalDateInputValue(effectiveFrom),
+      date_to: toLocalDateInputValue(effectiveTo),
     }));
   }, [today, updateSearch]);
 
