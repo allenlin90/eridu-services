@@ -292,7 +292,7 @@ function StudioShowsPage() {
                         <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.tasks_unassigned_count ?? 0}</span>
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Shows missing SETUP/ACTIVE/CLOSURE:
+                        Shows missing pre-production/on-air/post-production:
                         {' '}
                         <span className="font-medium text-foreground">{showsMissingRequiredTaskTypes}</span>
                         {' '}
