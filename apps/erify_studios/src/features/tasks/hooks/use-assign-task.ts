@@ -33,6 +33,5 @@ export function useAssignTask({ studioId, showId }: UseAssignTaskProps) {
 
       toast.success('Task assignee updated');
     },
-    ,
   });
 }

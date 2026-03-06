@@ -43,6 +43,5 @@ export function useDeleteTasks({ studioId, showId, onSuccess }: UseDeleteTasksPr
         });
       }
     },
-    ,
   });
 }

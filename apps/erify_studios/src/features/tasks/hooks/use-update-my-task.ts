@@ -49,7 +49,5 @@ export function useUpdateMyTask() {
         toast.success('Task updated successfully');
       }
     },
-    
-    },
   });
 }

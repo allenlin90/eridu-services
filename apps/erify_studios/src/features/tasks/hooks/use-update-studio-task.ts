@@ -41,6 +41,5 @@ export function useUpdateStudioTask({ studioId, showId }: UseUpdateStudioTaskPro
 
       toast.success('Task updated');
     },
-    ,
   });
 }

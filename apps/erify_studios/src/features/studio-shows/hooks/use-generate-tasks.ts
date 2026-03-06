@@ -33,6 +33,5 @@ export function useGenerateTasks({ studioId, onSuccess }: UseGenerateTasksProps)
 
       onSuccess?.();
     },
-    ,
   });
 }

@@ -66,14 +66,22 @@ export const queryClient = new QueryClient({
   }),
   // Global mutation error handler
   mutationCache: new MutationCache({
-    onError: (error, _variables, _context, mutation) => {
+    onError: (error: any, variables, _context, mutation) => {
+      // Support dynamic suppression for autosave mutations
+      if (typeof variables === 'object' && variables !== null && 'silent' in variables && variables.silent) {
+        return;
+      }
+
       if (mutation.meta?.suppressErrorToast === true) {
         return; // Skip global handling
       }
 
       const defaultMessage = 'An error occurred during the operation.';
       const errorMessage =
-        (mutation.meta?.errorMessage as string) || error?.message || defaultMessage;
+        (mutation.meta?.errorMessage as string) ||
+        error?.response?.data?.message ||
+        error?.message ||
+        defaultMessage;
 
       toast.error(errorMessage);
     },

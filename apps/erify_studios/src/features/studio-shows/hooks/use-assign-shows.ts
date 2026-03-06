@@ -40,6 +40,5 @@ export function useAssignShows({ studioId, onSuccess }: UseAssignShowsProps) {
 
       onSuccess?.();
     },
-    ,
   });
 }

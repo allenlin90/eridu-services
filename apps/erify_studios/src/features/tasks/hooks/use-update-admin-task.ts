@@ -15,6 +15,5 @@ export function useUpdateAdminTask() {
       await queryClient.invalidateQueries({ queryKey: adminTasksKeys.all });
       toast.success('Task updated');
     },
-    ,
   });
 }
