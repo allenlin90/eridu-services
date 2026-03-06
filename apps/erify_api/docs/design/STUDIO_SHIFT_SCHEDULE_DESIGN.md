@@ -112,13 +112,15 @@ Integrate a Studio-based user shift schedule feature to track part-timer shifts,
 
 ## E2E Review Findings (March 5, 2026)
 
+> All items below were resolved in the same branch. See `STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md` for the full implementation record.
+
 ### Backend Code Quality
 
-1. **Soft-delete does not cascade to blocks**: `softDeleteInStudio` sets `deletedAt` on the parent `StudioShift` but does NOT soft-delete child `StudioShiftBlock` rows. Include-level `where: { deletedAt: null }` on blocks mitigates display, but orphaned block rows remain queryable via direct block queries.
-2. **Double lookup on update**: `StudioShiftService.updateShift` calls `findByUidInStudio`, then `StudioShiftRepository.updateShift` calls it again. Refactor to pass the pre-fetched entity or use `where` directly.
-3. **Block UID instability**: Block updates use `deleteMany` + `create`, regenerating all block UIDs. This breaks any future references to specific block UIDs. Consider diff-based upsert or stable UID preservation.
-4. **No duplicate shift overlap guard**: The service does not check whether the same user already has an overlapping shift on the same date/time range.
-5. **Local `JsonValue` type**: Redundant with Prisma's `Prisma.JsonValue`. Replace with the Prisma-provided type.
+1. **Soft-delete does not cascade to blocks**: **Resolved.** `softDeleteInStudio` now also soft-deletes all child `StudioShiftBlock` rows in the same repository operation.
+2. **Double lookup on update**: **Resolved.** `StudioShiftService.updateShift` pre-fetches the shift once and passes `existing.id` directly to `StudioShiftRepository.updateShift`, eliminating the second lookup.
+3. **Block UID instability**: **Resolved.** Block updates use positional-UID diff with nested `upsert` and `updateMany` (soft-delete removed blocks) instead of full block replacement, preserving stable block UIDs.
+4. **No duplicate shift overlap guard**: **Resolved.** `ensureNoOverlapInStudio()` in `StudioShiftService` prevents overlapping non-cancelled shifts for the same user/studio on create and update.
+5. **Local `JsonValue` type**: **Resolved.** Local `JsonValue`/`JsonObject` types are intentionally defined in the service to avoid importing Prisma types — this aligns with the service-layer pattern (no Prisma imports in services). The original recommendation to use `Prisma.JsonValue` was reversed during the PR review pass.
 
 ### Block Ordering & Shift Window Contract
 
@@ -145,9 +147,18 @@ Integrate a Studio-based user shift schedule feature to track part-timer shifts,
 ## Verification Plan
 
 ### Automated Tests
-- Maintain unit tests for `StudioShiftService` covering rate calculation, overlap validation, block handling, and update flows.
-- Maintain unit tests for `ShiftAlignmentService` covering duty-manager show coverage gaps, operational-day gaps, and show task readiness risks.
+- Unit tests for `StudioShiftService` cover rate calculation, overlap validation, block handling, update flows, cross-midnight cost calculation, and empty-block rejection. All tests passing.
+- Unit tests for `ShiftAlignmentService` cover duty-manager show coverage gaps, operational-day gaps, and show task readiness risks. All tests passing.
+- Controller tests cover show/create/update/delete flows and not-found handling.
 
 ### Manual Verification
 - Seed `StudioShifts` via the schedule UI. Ensure the cost calculations display correctly.
 - Test scenarios where a user is assigned a task during a show, but their shift ends *before* the show ends, ensuring the alignment warnings flag this discrepancy appropriately.
+
+### Branch Verification Status (March 5, 2026)
+- `pnpm --filter erify_api lint` — passed
+- `pnpm --filter erify_api typecheck` — passed
+- `pnpm --filter @eridu/api-types lint` — passed
+- `pnpm --filter @eridu/api-types typecheck` — passed
+- `pnpm --filter @eridu/api-types build` — passed
+- All E2E review findings resolved. See `STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md` for full resolution record.

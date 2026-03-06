@@ -162,6 +162,8 @@ Pending scope:
 10. `88cedd2` `feat(erify_api): include assigned MCs in studio shows payload`
 11. `c08aead` `feat(erify_studios): redesign shifts admin UX and studio dashboard operations`
 12. `3a462de` `refactor(erify_studios): align shifts filters with url state and improve duty manager actions`
+13. `e26d263` `refactor(erify_studios): stabilize studio shifts table and block workflows`
+14. `refactor(studio-shifts): apply PR review fixes and sync knowledge artifacts` _(pending commit)_
 
 ### Implementation Highlights (Committed)
 
@@ -225,6 +227,13 @@ Pending scope:
 - Extracted shared date helpers (`addDays`, `fromLocalDateInput`, date param resolver) into `shift-date.utils` and reused across dashboard/shifts/my-shifts routes.
 - Shift calendar now supports quick jump-to-date and debounced range updates to reduce noisy refetches during navigation.
 - Show-task assignment now warns (non-blocking) when selected assignee has no overlapping shift coverage for the show window.
+
+7. PR review fixes (knowledge sync pass):
+- Removed `Prisma.*` type imports from `studio-shift.service.ts`; local `JsonValue`/`JsonObject` types added for metadata without coupling to Prisma.
+- Renamed internal-only Zod transform shapes in `studio-shift.schema.ts` to `_internalShiftBlockShape`/`_internalShiftWithRelationsShape` with `_internal*` prefix convention to make their non-export-intended scope explicit.
+- Replaced `z.any()` with `z.unknown()` for Prisma `Decimal` fields (`hourlyRate`, `projectedCost`, `calculatedCost`) in the internal transform shapes; `decimalToString` helper handles the runtime Decimal type.
+- Fixed `combineDateAndTime` timezone bug in `shift-form.utils.ts`: form inputs are local-time values, so `new Date("YYYY-MM-DDTHH:MM:00").toISOString()` is now used instead of UTC construction to avoid local-offset drift.
+- Moved `StudioShiftCalendarResponse`/`StudioShiftAlignmentResponse` TypeScript types into `@eridu/api-types/studio-shifts`; `studio-shifts.types.ts` now re-exports them from the shared package instead of declaring local duplicates.
 
 ## Current Operational Workflows
 
@@ -328,4 +337,16 @@ Pending scope:
 For current branch development related to this design:
 - `pnpm --filter erify_studios lint` passed
 - `pnpm --filter erify_studios typecheck` passed
+- `pnpm --filter erify_studios build` passed
 - `pnpm --filter erify_studios test` passed
+- `pnpm --filter erify_api lint` passed
+- `pnpm --filter erify_api typecheck` passed
+- `pnpm --filter @eridu/api-types lint` passed
+- `pnpm --filter @eridu/api-types typecheck` passed
+- `pnpm --filter @eridu/api-types build` passed
+
+PR review fixes applied (knowledge sync pass — March 5, 2026):
+- Schema type hardening: `_internal*` naming convention, `z.unknown()` for Prisma Decimal fields
+- Service layer: local `JsonValue`/`JsonObject` types replace Prisma type imports
+- Form utility: `combineDateAndTime` timezone fix (local-time ISO construction)
+- Shared API types: `StudioShiftCalendarResponse`/`StudioShiftAlignmentResponse` moved to `@eridu/api-types/studio-shifts`

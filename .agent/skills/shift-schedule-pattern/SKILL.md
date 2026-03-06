@@ -200,6 +200,105 @@ When implementing shift-related features:
 - [ ] Named constants used instead of magic numbers
 - [ ] Alignment checks cover both per-show and per-operational-day duty-manager coverage
 - [ ] Task readiness checks include SETUP, ACTIVE, CLOSURE (+ moderation for premium)
+- [ ] Service metadata types use local `JsonValue`/`JsonObject` (no Prisma imports in service layer)
+- [ ] Internal-only Zod transform shapes use `_internal*` naming prefix
+- [ ] Prisma `Decimal` fields use `z.unknown()` in internal shapes with `decimalToString` helper
+- [ ] Form date+time combination uses local-time `Date` constructor (no `Z` suffix)
+- [ ] Orchestration response types (`StudioShiftCalendarResponse`, `StudioShiftAlignmentResponse`) are sourced from `@eridu/api-types/studio-shifts`
+
+---
+
+## Patterns from PR Review (March 2026)
+
+### Local JSON Types in Service Layer
+
+Services must NOT import `Prisma` types. For metadata fields that accept JSON objects, define local structural types instead:
+
+```typescript
+// In studio-shift.service.ts — NOT from Prisma
+type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
+type JsonObject = { [key: string]: JsonValue };
+
+type ShiftBlockInput = {
+  uid?: string;
+  startTime: Date;
+  endTime: Date;
+  metadata: JsonObject;  // Uses local JsonObject, not Prisma.InputJsonObject
+};
+```
+
+This is structurally compatible with Prisma's `InputJsonValue` and keeps the service layer free of Prisma imports, consistent with the service-pattern-nestjs skill.
+
+### `_internal*` Naming for Transform-Only Zod Shapes
+
+When a Zod shape is used only as an input to `.transform()` in a DTO and should never be used as a response validator or exported type, prefix it with `_internal`:
+
+```typescript
+// Internal transform-only shape — never exposed as a response validator.
+// BigInt PKs/FKs are omitted; only fields consumed by the transform are declared.
+const _internalShiftBlockShape = z.object({
+  uid: z.string(),
+  startTime: z.date(),
+  endTime: z.date(),
+  metadata: z.record(z.string(), z.unknown()),
+  // ...
+});
+```
+
+This makes the intended scope explicit to future readers and signals that the shape is NOT the public API contract.
+
+### `z.unknown()` for Prisma Decimal Fields in Transform Shapes
+
+Prisma `Decimal` fields are a runtime object type, not a primitive. In internal transform shapes, use `z.unknown()` rather than `z.number()` or `z.string()` — then convert via a helper:
+
+```typescript
+// In _internalShiftWithRelationsShape:
+hourlyRate: z.unknown(),      // Prisma Decimal — runtime object
+projectedCost: z.unknown(),
+calculatedCost: z.unknown().nullable(),
+
+// Helper to handle number | string | Prisma.Decimal at runtime:
+function decimalToString(value: unknown): string {
+  if (typeof value === 'number') return value.toFixed(2);
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object' && value !== null && 'toString' in value) {
+    return (value as { toString: () => string }).toString();
+  }
+  return '0.00';
+}
+```
+
+### `combineDateAndTime` — Local-Time ISO Pattern
+
+When a form has separate date (`YYYY-MM-DD`) and time (`HH:MM`) inputs that represent local user time, construct the ISO string as a local-time `Date` to avoid UTC offset drift:
+
+```typescript
+// CORRECT — treats date+time as local browser time, then converts to UTC ISO
+export function combineDateAndTime(date: string, time: string): string {
+  return new Date(`${date}T${time}:00`).toISOString();
+}
+
+// WRONG — UTC construction: midnight UTC ≠ midnight local on any non-UTC machine
+// new Date(`${date}T${time}:00Z`).toISOString()
+```
+
+`Date` constructor with no trailing `Z` parses the string as local time in all modern browsers.
+
+### Shared API Types for Orchestration Responses
+
+Orchestration response types (`StudioShiftCalendarResponse`, `StudioShiftAlignmentResponse`) belong in `@eridu/api-types/studio-shifts`, not in frontend-local type files. The frontend re-exports or uses them directly:
+
+```typescript
+// packages/api-types/src/studio-shifts/types.ts
+export type StudioShiftCalendarResponse = z.infer<typeof shiftCalendarResponseSchema>;
+export type StudioShiftAlignmentResponse = z.infer<typeof shiftAlignmentResponseSchema>;
+
+// apps/erify_studios/src/features/studio-shifts/api/studio-shifts.types.ts
+import type { StudioShiftAlignmentResponse, StudioShiftCalendarResponse } from '@eridu/api-types/studio-shifts';
+export type { StudioShiftAlignmentResponse, StudioShiftCalendarResponse };
+```
+
+This ensures the frontend type is always in sync with the backend schema and avoids duplicated declarations.
 
 ---
 

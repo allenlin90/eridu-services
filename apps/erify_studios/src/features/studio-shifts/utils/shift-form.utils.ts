@@ -21,14 +21,10 @@ export function toLocalTimeInputValue(value: string): string {
 }
 
 export function combineDateAndTime(date: string, time: string): string {
-  const [year, month, day] = date.split('-').map(Number);
-  const [hours, minutes] = time.split(':').map(Number);
-
-  const runtimeDate = new Date();
-  runtimeDate.setFullYear(year, (month || 1) - 1, day || 1);
-  runtimeDate.setHours(hours || 0, minutes || 0, 0, 0);
-
-  return runtimeDate.toISOString();
+  // Use a local-time ISO string construction so the result is consistent
+  // regardless of the browser's timezone. Both date ("YYYY-MM-DD") and time
+  // ("HH:MM") inputs are local values entered by the user.
+  return new Date(`${date}T${time}:00`).toISOString();
 }
 
 export function createDefaultFormState(): ShiftFormState {

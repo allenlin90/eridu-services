@@ -29,32 +29,32 @@ function decimalToString(value: unknown): string {
   return '0.00';
 }
 
-const studioShiftBlockSchema = z.object({
-  id: z.bigint(),
+// Internal transform-only shape — never exposed as a response validator.
+// BigInt PKs/FKs are omitted; only fields consumed by studioShiftDto transform are declared.
+const _internalShiftBlockShape = z.object({
   uid: z.string().startsWith(StudioShiftService.BLOCK_UID_PREFIX),
-  shiftId: z.bigint(),
   startTime: z.date(),
   endTime: z.date(),
-  metadata: z.record(z.string(), z.any()),
+  metadata: z.record(z.string(), z.unknown()),
   createdAt: z.date(),
   updatedAt: z.date(),
   deletedAt: z.date().nullable(),
 });
 
-const studioShiftWithRelationsSchema = z.object({
-  id: z.bigint(),
+// Internal transform-only shape — never exposed as a response validator.
+// BigInt PKs/FKs are omitted; only fields consumed by studioShiftDto transform are declared.
+// Decimal fields use z.unknown() — the decimalToString helper handles the Prisma Decimal runtime type.
+const _internalShiftWithRelationsShape = z.object({
   uid: z.string().startsWith(StudioShiftService.UID_PREFIX),
-  studioId: z.bigint(),
-  userId: z.bigint(),
   date: z.date(),
-  hourlyRate: z.any(),
-  projectedCost: z.any(),
-  calculatedCost: z.any().nullable(),
+  hourlyRate: z.unknown(),
+  projectedCost: z.unknown(),
+  calculatedCost: z.unknown().nullable(),
   isApproved: z.boolean(),
   isDutyManager: z.boolean(),
   status: studioShiftStatusSchema,
-  metadata: z.record(z.string(), z.any()),
-  blocks: z.array(studioShiftBlockSchema),
+  metadata: z.record(z.string(), z.unknown()),
+  blocks: z.array(_internalShiftBlockShape),
   user: z.object({ uid: z.string().startsWith(UserService.UID_PREFIX) }),
   studio: z.object({ uid: z.string().startsWith(StudioService.UID_PREFIX) }),
   createdAt: z.date(),
@@ -88,7 +88,7 @@ const studioShiftApiResponseSchema = z.object({
   updated_at: z.iso.datetime(),
 });
 
-export const studioShiftDto = studioShiftWithRelationsSchema
+export const studioShiftDto = _internalShiftWithRelationsShape
   .transform((obj) => ({
     id: obj.uid,
     studio_id: obj.studio.uid,

@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 
 import type {
   CreateStudioShiftInput,
@@ -14,11 +13,16 @@ import { BaseModelService } from '@/lib/services/base-model.service';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { UtilityService } from '@/utility/utility.service';
 
+// Local JSON types — structurally compatible with Prisma's InputJsonValue so that
+// metadata objects can be passed to the repository without importing Prisma types here.
+type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
+type JsonObject = { [key: string]: JsonValue };
+
 type ShiftBlockInput = {
   uid?: string;
   startTime: Date;
   endTime: Date;
-  metadata: Record<string, Prisma.JsonValue>;
+  metadata: JsonObject;
 };
 
 @Injectable()
@@ -139,7 +143,7 @@ export class StudioShiftService extends BaseModelService {
       : existing.blocks.map((block) => ({
           startTime: block.startTime,
           endTime: block.endTime,
-          metadata: block.metadata as Record<string, Prisma.JsonValue>,
+          metadata: (block.metadata ?? {}) as JsonObject,
         }));
 
     const nextStatus = payload.status ?? existing.status;
@@ -268,15 +272,16 @@ export class StudioShiftService extends BaseModelService {
       uid: string;
       startTime: Date;
       endTime: Date;
-      metadata: Prisma.JsonValue;
+      metadata: unknown;
     }>,
-  ): Prisma.StudioShiftUpdateInput['blocks'] {
+  ) {
     const sortedExistingBlocks = this.normalizeAndValidateBlocks(
       existingBlocks.map((block) => ({
         uid: block.uid,
         startTime: block.startTime,
         endTime: block.endTime,
-        metadata: block.metadata as Record<string, Prisma.JsonValue>,
+        // metadata always defaults to {} in schema — narrowing cast is safe here
+        metadata: (block.metadata ?? {}) as JsonObject,
       })),
     );
 
