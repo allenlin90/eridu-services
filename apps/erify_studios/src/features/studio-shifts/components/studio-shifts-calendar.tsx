@@ -65,7 +65,10 @@ export function StudioShiftsCalendar({
   const [jumpDate, setJumpDate] = useState(() => toLocalDateInputValue(new Date()));
   const debouncedDateRange = useAppDebounce(dateRange, { delay: 300 });
 
-  const { memberMap } = useStudioMemberMap(studioId, { limit: STUDIO_MEMBER_MAP_CALENDAR_LIMIT });
+  const { memberMap } = useStudioMemberMap(studioId, {
+    enabled: queryScope === 'studio',
+    limit: STUDIO_MEMBER_MAP_CALENDAR_LIMIT,
+  });
 
   const calendarRangeLimit = getShiftCalendarRangeLimit(debouncedDateRange);
 
@@ -94,7 +97,7 @@ export function StudioShiftsCalendar({
   const calendarEvents = useMemo(() => {
     return calendarShifts.flatMap((shift) => {
       const user = memberMap.get(shift.user_id);
-      const memberName = user?.name ?? shift.user_id;
+      const memberName = queryScope === 'me' ? 'Me' : (user?.name ?? shift.user_id);
       const sortedBlocks = sortShiftBlocksByStart(shift.blocks);
       if (sortedBlocks.length === 0) {
         return [];
@@ -109,7 +112,7 @@ export function StudioShiftsCalendar({
         description: `${formatDate(block.start_time)} | ${shift.status} | Block ${blockIndex + 1}/${sortedBlocks.length}`,
       }));
     });
-  }, [calendarShifts, memberMap]);
+  }, [calendarShifts, memberMap, queryScope]);
 
   const selectedDate = useMemo(() => {
     if (!jumpDate || !globalThis.Temporal?.PlainDate) {
