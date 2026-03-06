@@ -1,13 +1,10 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo } from 'react';
 import { z } from 'zod';
-
-import { Button } from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
 import {
   DashboardDutyCoverageCards,
-  DashboardMyUpcomingShiftsCard,
 } from '@/components/studio-dashboard/dashboard-coverage-cards';
 import { DashboardDateNavigationCard } from '@/components/studio-dashboard/dashboard-date-navigation-card';
 import {
@@ -181,24 +178,6 @@ function StudioDashboardPage() {
             navigateDashboard((previous) => ({ ...previous, page: Math.min(totalShowPages, showsPage + 1) }))}
         />
 
-        <DashboardMyUpcomingShiftsCard
-          studioId={studioId}
-          selectedDate={selectedDate}
-          previewUntil={previewUntil}
-          isSelectedToday={isSelectedToday}
-          dayStartMs={dayStart.getTime()}
-          viewAllLink={(
-            <Button asChild size="sm" variant="outline">
-              <Link
-                to="/studios/$studioId/my-shifts"
-                params={{ studioId }}
-                search={{ view: 'calendar', page: 1, limit: 20 }}
-              >
-                View All
-              </Link>
-            </Button>
-          )}
-        />
       </div>
     </PageLayout>
   );
