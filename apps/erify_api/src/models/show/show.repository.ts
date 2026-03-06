@@ -16,6 +16,8 @@ export class ShowRepository extends BaseRepository<
   Prisma.ShowUpdateInput,
   Prisma.ShowWhereInput
 > {
+  private static readonly DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
@@ -214,9 +216,7 @@ export class ShowRepository extends BaseRepository<
         where.startTime.gte = new Date(query.start_date_from);
       }
       if (query.start_date_to) {
-        const endDate = new Date(query.start_date_to);
-        endDate.setHours(23, 59, 59, 999);
-        where.startTime.lte = endDate;
+        where.startTime.lte = this.resolveDateToUpperBound(query.start_date_to);
       }
     }
 
@@ -227,9 +227,7 @@ export class ShowRepository extends BaseRepository<
         where.endTime.gte = new Date(query.end_date_from);
       }
       if (query.end_date_to) {
-        const endDate = new Date(query.end_date_to);
-        endDate.setHours(23, 59, 59, 999);
-        where.endTime.lte = endDate;
+        where.endTime.lte = this.resolveDateToUpperBound(query.end_date_to);
       }
     }
 
@@ -340,10 +338,7 @@ export class ShowRepository extends BaseRepository<
     }
 
     if (query.date_from || query.date_to) {
-      const inclusiveDateTo = query.date_to ? new Date(query.date_to) : null;
-      if (inclusiveDateTo) {
-        inclusiveDateTo.setHours(23, 59, 59, 999);
-      }
+      const inclusiveDateTo = query.date_to ? this.resolveDateToUpperBound(query.date_to) : null;
 
       where.startTime = {
         ...(query.date_from && { gte: new Date(query.date_from) }),
@@ -452,5 +447,13 @@ export class ShowRepository extends BaseRepository<
     ]);
 
     return { data, total };
+  }
+
+  private resolveDateToUpperBound(value: string): Date {
+    const parsed = new Date(value);
+    if (ShowRepository.DATE_ONLY_PATTERN.test(value)) {
+      parsed.setHours(23, 59, 59, 999);
+    }
+    return parsed;
   }
 }
