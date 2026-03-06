@@ -4,6 +4,7 @@ import { sortShiftBlocksByStart } from '@/features/studio-shifts/utils/shift-blo
 
 export const DEFAULT_START_TIME = '09:00';
 export const DEFAULT_END_TIME = '18:00';
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export function toLocalDateInputValue(value: Date): string {
   const d = new Date(value);
@@ -68,8 +69,22 @@ export function createEditFormState(shift: StudioShift): ShiftFormState {
   };
 }
 
+function toDisplayDate(value: string): Date {
+  // Date-only values from API (YYYY-MM-DD) represent calendar dates, not UTC instants.
+  // Parse in local runtime time to avoid day-shift in non-UTC timezones.
+  if (DATE_ONLY_PATTERN.test(value)) {
+    const [year, month, day] = value.split('-').map(Number);
+    const localDate = new Date();
+    localDate.setFullYear(year, (month ?? 1) - 1, day ?? 1);
+    localDate.setHours(0, 0, 0, 0);
+    return localDate;
+  }
+
+  return new Date(value);
+}
+
 export function formatDate(value: string): string {
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value));
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(toDisplayDate(value));
 }
 
 export function formatDateTime(value: string): string {

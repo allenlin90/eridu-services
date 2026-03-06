@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   combineDateAndTime,
   createEditFormState,
+  formatDate,
   getShiftDisplayDate,
   getShiftWindowLabel,
   toLocalTimeInputValue,
@@ -134,5 +135,11 @@ describe('getShiftDisplayDate', () => {
 
     expect(label).toContain('2026');
     expect(label).not.toContain('Mar 1');
+  });
+});
+
+describe('formatDate', () => {
+  it('parses date-only values as local calendar date', () => {
+    expect(formatDate('2026-03-05')).toBe('Mar 5, 2026');
   });
 });
