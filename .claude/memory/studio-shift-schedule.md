@@ -23,3 +23,10 @@
 - Shift calendar orchestration endpoint (`shift-calendar`).
 - Shift/show alignment endpoint and warning generation.
 - Dedicated unit tests for shift service and alignment service.
+
+## Recent FE Delivery Notes (2026-03-06)
+
+- Schedule-X calendar timezone is now explicitly set from runtime IANA timezone in shift calendar config to prevent UTC-default rendering drift.
+- Shift block event mapping now preserves instant semantics for ISO timestamps and uses timezone-aware Temporal conversion.
+- Cross-midnight shift blocks are split into single-day timed segments before calendar render so overnight events appear in timeline lanes (not top all-day/date-grid area).
+- Calendar query limits are now view-aware (`day`/`week`/`month`) based on visible range span, reducing over-fetch while maintaining per-query cache reuse (`date_from`, `date_to`, `limit`).

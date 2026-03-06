@@ -1,6 +1,6 @@
 # Studio Shift Schedule Features and Workflows
 
-Last updated: March 5, 2026
+Last updated: March 6, 2026
 Source design: `apps/erify_api/docs/design/STUDIO_SHIFT_SCHEDULE_DESIGN.md`
 Branch: `feat/studio-shift-schedule`
 
@@ -164,6 +164,8 @@ Pending scope:
 12. `3a462de` `refactor(erify_studios): align shifts filters with url state and improve duty manager actions`
 13. `e26d263` `refactor(erify_studios): stabilize studio shifts table and block workflows`
 14. `refactor(studio-shifts): apply PR review fixes and sync knowledge artifacts` _(pending commit)_
+15. `5452af6` `fix(erify_studios): align schedule-x shift rendering with runtime timezone`
+16. `7a82aac` `feat(erify_studios): optimize shift calendar fetch by view range`
 
 ### Implementation Highlights (Committed)
 
@@ -227,6 +229,9 @@ Pending scope:
 - Extracted shared date helpers (`addDays`, `fromLocalDateInput`, date param resolver) into `shift-date.utils` and reused across dashboard/shifts/my-shifts routes.
 - Shift calendar now supports quick jump-to-date and debounced range updates to reduce noisy refetches during navigation.
 - Show-task assignment now warns (non-blocking) when selected assignee has no overlapping shift coverage for the show window.
+- Schedule-X calendar now sets explicit runtime timezone and converts shift block boundaries with Temporal-aware timezone handling to prevent UTC default drift in time-grid rendering.
+- Cross-midnight shift blocks are split into single-day calendar event segments for week/day timeline rendering, preventing timed overnight blocks from falling into the all-day/top date grid band.
+- Calendar query limit sizing is now view-aware via visible range bucketing (`day`/`week`/`month`) to reduce over-fetching while preserving cache reuse per range+limit query key.
 
 7. PR review fixes (knowledge sync pass):
 - Removed `Prisma.*` type imports from `studio-shift.service.ts`; local `JsonValue`/`JsonObject` types added for metadata without coupling to Prisma.
@@ -273,7 +278,7 @@ Pending scope:
 2. **Layout glitch on transitions**: Resolved in current branch work. Fixed-height container + skeleton applied.
 3. **Schedule-X has no built-in loading/transition UI**: Resolved in current branch work. Persistent summary/loading indicators implemented.
 4. **Background refetch flicker**: Resolved in current branch work. Calendar remains visible during refetch.
-5. **Overfetching**: Improved in current branch work. Range-aware query limit now used instead of static `1000`.
+5. **Overfetching**: Improved in current branch work. View-aware range limit now scales by visible calendar window (`day`/`week`/`month`) instead of a broad fixed profile.
 
 ### Table UX Improvements
 

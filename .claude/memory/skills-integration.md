@@ -46,6 +46,10 @@ Additional frontend guidance (2026-03-06):
   - parse `YYYY-MM-DD` as local calendar dates,
   - round-trip `datetime-local` via runtime local wall time -> ISO persistence,
   - avoid ISO string chopping (`split('T')`, stripping `Z`) for UI conversion.
+- `.agent/skills/shift-schedule-pattern/SKILL.md` now also codifies Schedule-X rendering/fetch contracts:
+  - explicitly set calendar timezone in config,
+  - split cross-midnight timed blocks into per-day timeline segments,
+  - derive query `limit` from view/range bucket (`day`/`week`/`month`) instead of static over-fetch ceilings.
 
 My-shifts route refactor pattern (2026-03-06):
 - `apps/erify_studios/src/routes/studios/$studioId/my-shifts.tsx` is now a route container with `StudioRouteGuard` (`routeKey=\"myShifts\"`) + URL/search wiring.

@@ -139,6 +139,35 @@ The `ShiftCalendarCard` always renders the `ScheduleXCalendar` component:
 - Persistent summary bar shows block count + date range
 - `isFetching` triggers a subtle spinner overlay, not a full skeleton replacement
 
+### Schedule-X Timeline Rendering Contract
+
+When mapping shift blocks to `Schedule-X` events:
+
+1. Set calendar `timezone` explicitly (runtime IANA zone) so rendering does not fall back to an unintended default timezone.
+2. Convert block boundaries through Temporal timezone-aware conversion (preserve instant for `Z`/offset inputs).
+3. Split cross-midnight timed blocks into per-day segments before passing to `Schedule-X` so overnight blocks stay in the time-grid timeline instead of being classified into date-grid/all-day rendering.
+
+Pattern:
+
+```typescript
+const calendarTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+
+const calendarApp = useNextCalendarApp({
+  timezone: calendarTimeZone,
+  events: splitCrossMidnightSegments(mappedBlocks),
+  // ...
+});
+```
+
+### View-Aware Calendar Fetch Sizing
+
+Calendar fetch limits must scale with visible range:
+- `day` bucket: low/minimal fetch budget
+- `week` bucket: medium budget
+- `month` bucket: highest budget
+
+Use shared range utilities (`getShiftCalendarViewBucket`, `getShiftCalendarRangeLimit`) to derive query `limit` from range span and keep query-key caching consistent by including `{ date_from, date_to, limit }`.
+
 ### Dashboard Day Navigation
 
 Dashboard uses URL search params for day state:
@@ -199,6 +228,9 @@ When implementing shift-related features:
 - [ ] Overlap guard runs for non-CANCELLED shifts
 - [ ] Block UIDs are preserved via positional matching on update
 - [ ] Calendar component is always mounted (no conditional unmount)
+- [ ] Calendar timezone is explicitly configured (do not rely on library defaults)
+- [ ] Cross-midnight blocks are split to per-day timeline segments for Schedule-X
+- [ ] Calendar query limit is derived from view/range bucket (day/week/month), not a single static ceiling
 - [ ] Dashboard date state lives in URL search params
 - [ ] Operational-day boundary math uses shared utility/constant (no duplicated route-local implementations)
 - [ ] Named constants used instead of magic numbers
