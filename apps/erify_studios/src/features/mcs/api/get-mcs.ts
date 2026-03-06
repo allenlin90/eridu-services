@@ -25,7 +25,6 @@ export function useMcsQuery(params: GetMcsParams) {
   return useQuery({
     queryKey: ['mcs', 'list', params],
     queryFn: () => getMcs(params),
-    staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
 }

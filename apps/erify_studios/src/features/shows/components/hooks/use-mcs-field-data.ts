@@ -16,7 +16,6 @@ export function useMcsFieldData(show: Show | null) {
   const { data: mcsData, isLoading } = useQuery({
     queryKey: ['mcs', 'list', { name: search }],
     queryFn: () => getMcs({ name: search, limit: search ? 20 : 10 }),
-    staleTime: 15 * 60 * 1000, // 15 minutes
   });
 
   const options = useMemo(() => {

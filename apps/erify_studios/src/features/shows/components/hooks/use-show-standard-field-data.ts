@@ -12,7 +12,6 @@ export function useShowStandardFieldData(show: Show | null, studioId?: string) {
   const { data: showStandardsData, isLoading } = useQuery({
     queryKey: ['show-standards', 'list', studioId ?? 'admin', 'all'],
     queryFn: () => getShowStandards({ limit: 100 }, studioId),
-    staleTime: 60 * 60 * 1000, // 1 hour
   });
 
   const options = useMemo(() => {

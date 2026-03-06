@@ -28,7 +28,6 @@ export function useShowTypesQuery(params: GetShowTypesParams) {
   return useQuery({
     queryKey: ['show-types', 'list', params],
     queryFn: () => getShowTypes(params),
-    staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
 }

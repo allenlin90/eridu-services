@@ -1,4 +1,16 @@
-import { QueryCache, QueryClient } from '@tanstack/react-query';
+import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+
+declare module '@tanstack/react-query' {
+  // eslint-disable-next-line -- TanStack query module augmentation requires interface
+  interface Register {
+    defaultError: Error;
+    mutationMeta: {
+      suppressErrorToast?: boolean;
+      errorMessage?: string;
+    };
+  }
+}
 
 /**
  * TanStack Query Client Configuration
@@ -14,11 +26,10 @@ import { QueryCache, QueryClient } from '@tanstack/react-query';
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Data considered fresh for 5 minutes
-      staleTime: 5 * 60 * 1000,
+      // Data is instantly considered stale. This ensures revalidation on mount/focus.
+      staleTime: 0,
 
-      // Cache data for 30 mins (required for persistence)
-      // Data older than this will be garbage collected
+      // Keeps data in cache for instant UI rendering while background fetch runs
       gcTime: 30 * 60 * 1000,
 
       // Retry failed requests (except 4xx errors)
@@ -34,8 +45,7 @@ export const queryClient = new QueryClient({
       // Refetch on window focus in production
       refetchOnWindowFocus: import.meta.env.PROD,
 
-      // Don't refetch on mount if data is fresh
-      refetchOnMount: false,
+      // default behavior is refetchOnMount: true (when stale), keeping implicit to ensure stale-while-revalidate mechanism
 
       // Don't throw errors, handle them in components
       throwOnError: false,
@@ -45,7 +55,7 @@ export const queryClient = new QueryClient({
       retry: 1,
     },
   },
-  // Global error handler
+  // Global query error handler
   queryCache: new QueryCache({
     onError: (error) => {
       // Log errors for monitoring
@@ -53,6 +63,28 @@ export const queryClient = new QueryClient({
 
       // Could integrate with error tracking service (e.g., Sentry)
       // Sentry.captureException(error);
+    },
+  }),
+  // Global mutation error handler
+  mutationCache: new MutationCache({
+    onError: (error: any, variables, _context, mutation) => {
+      // Support dynamic suppression for autosave mutations
+      if (typeof variables === 'object' && variables !== null && 'silent' in variables && variables.silent) {
+        return;
+      }
+
+      if (mutation.meta?.suppressErrorToast === true) {
+        return; // Skip global handling
+      }
+
+      const defaultMessage = 'An error occurred during the operation.';
+      const errorMessage
+        = (mutation.meta?.errorMessage as string)
+        || error?.response?.data?.message
+        || error?.message
+        || defaultMessage;
+
+      toast.error(errorMessage);
     },
   }),
 });

@@ -96,7 +96,6 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
     queryKey: studioTasksKeys.list(studioId, params),
     queryFn: () => getStudioTasks(studioId, params),
     enabled: !!studioId,
-    staleTime: 60 * 1000,
     gcTime: 2 * 60 * 1000,
     placeholderData: keepPreviousData,
   });

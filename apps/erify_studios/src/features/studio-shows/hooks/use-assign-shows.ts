@@ -40,8 +40,5 @@ export function useAssignShows({ studioId, onSuccess }: UseAssignShowsProps) {
 
       onSuccess?.();
     },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to assign tasks');
-    },
   });
 }

@@ -28,7 +28,6 @@ export function useShowStatusesQuery(params: GetShowStatusesParams) {
   return useQuery({
     queryKey: ['show-statuses', 'list', params],
     queryFn: () => getShowStatuses(params),
-    staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
 }

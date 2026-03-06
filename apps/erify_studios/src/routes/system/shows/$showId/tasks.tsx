@@ -50,7 +50,6 @@ function ShowTasks() {
   const { data, isLoading, isFetching } = useQuery({
     queryKey: adminTasksKeys.list(params),
     queryFn: () => getAdminTasks(params),
-    staleTime: 60 * 1000,
     gcTime: 2 * 60 * 1000,
     placeholderData: keepPreviousData,
   });

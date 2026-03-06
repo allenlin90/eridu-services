@@ -12,7 +12,6 @@ export function useShowStatusFieldData(show: Show | null, studioId?: string) {
   const { data: showStatusesData, isLoading } = useQuery({
     queryKey: ['show-statuses', 'list', studioId ?? 'admin', 'all'],
     queryFn: () => getShowStatuses({ limit: 100 }, studioId),
-    staleTime: 60 * 60 * 1000, // 1 hour
   });
 
   const options = useMemo(() => {

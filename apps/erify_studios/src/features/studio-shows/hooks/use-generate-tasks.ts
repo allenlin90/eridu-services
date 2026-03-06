@@ -33,8 +33,5 @@ export function useGenerateTasks({ studioId, onSuccess }: UseGenerateTasksProps)
 
       onSuccess?.();
     },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to generate tasks');
-    },
   });
 }
