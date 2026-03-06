@@ -6,6 +6,7 @@ import {
 } from '@schedule-x/calendar';
 import { useNextCalendarApp } from '@schedule-x/react';
 import { useCallback, useMemo, useState } from 'react';
+import type { Temporal as TemporalNamespace } from 'temporal-polyfill';
 
 import '@schedule-x/theme-default/dist/index.css';
 
@@ -27,11 +28,14 @@ import { useAppDebounce } from '@/lib/hooks/use-app-debounce';
 
 export type StudioShiftsCalendarProps = {
   studioId: string;
-  summaryText?: string;
   queryScope?: 'studio' | 'me';
 };
 
-const CALENDAR_VIEWS = [viewMonthGrid, viewWeek, viewDay];
+const CALENDAR_VIEWS: [typeof viewMonthGrid, ...Array<typeof viewMonthGrid>] = [
+  viewMonthGrid,
+  viewWeek,
+  viewDay,
+];
 const END_OF_DAY_TIME = {
   hour: 23,
   minute: 59,
@@ -42,12 +46,15 @@ const END_OF_DAY_TIME = {
 } as const;
 
 type TimedSegment = {
-  start: Temporal.ZonedDateTime;
-  end: Temporal.ZonedDateTime;
+  start: TemporalNamespace.ZonedDateTime;
+  end: TemporalNamespace.ZonedDateTime;
   index: number;
 };
 
-function splitEventIntoSingleDaySegments(start: Temporal.ZonedDateTime, end: Temporal.ZonedDateTime): TimedSegment[] {
+function splitEventIntoSingleDaySegments(
+  start: TemporalNamespace.ZonedDateTime,
+  end: TemporalNamespace.ZonedDateTime,
+): TimedSegment[] {
   if (end.epochMilliseconds <= start.epochMilliseconds) {
     return [];
   }
@@ -93,7 +100,6 @@ const CALENDAR_CONFIG = {
 
 export function StudioShiftsCalendar({
   studioId,
-  summaryText,
   queryScope = 'studio',
 }: StudioShiftsCalendarProps) {
   const [dateRange, setDateRange] = useState<{ date_from: string; date_to: string } | null>(
@@ -197,14 +203,6 @@ export function StudioShiftsCalendar({
 
   return (
     <div className="grid gap-4">
-      {summaryText && (
-        <div className="flex flex-col gap-2 rounded-lg border bg-muted/20 px-3 py-2 lg:flex-row lg:items-center">
-          <p className="mr-auto text-sm text-muted-foreground">
-            {summaryText}
-          </p>
-        </div>
-      )}
-
       <ShiftCalendarCard
         isLoading={isLoadingCalendarShifts}
         isFetching={isFetchingCalendarShifts}
