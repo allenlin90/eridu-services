@@ -14,8 +14,10 @@ import { StudioService } from '@/models/studio/studio.service';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { TaskTemplateService } from '@/models/task-template/task-template.service';
+import { ShiftAlignmentService } from '@/orchestration/shift-alignment/shift-alignment.service';
 
 type MembershipWithUser = StudioMembership & { user: User };
+type StudioShowsQueryWithAttention = ListStudioShowsQueryTransformed & { show_uids?: string[] };
 
 export type ShowGenerationResult = {
   show_uid: string;
@@ -37,6 +39,7 @@ export class TaskOrchestrationService {
     private readonly taskGenerationProcessor: TaskGenerationProcessor,
     private readonly studioService: StudioService,
     private readonly taskTargetService: TaskTargetService,
+    private readonly shiftAlignmentService: ShiftAlignmentService,
   ) {}
 
   /**
@@ -281,9 +284,28 @@ export class TaskOrchestrationService {
       throw HttpError.notFound('Studio', studioUid);
     }
 
+    let effectiveQuery: StudioShowsQueryWithAttention = query;
+    if (query.needs_attention) {
+      const shiftAlignment = await this.shiftAlignmentService.getAlignment(studioUid, {
+        dateFrom: query.planning_date_from ? new Date(query.planning_date_from) : undefined,
+        dateTo: query.planning_date_to ? new Date(query.planning_date_to) : undefined,
+        includeCancelled: false,
+      });
+      const attentionShowUids = [...new Set(shiftAlignment.task_readiness_warnings.map((warning) => warning.show_id))];
+
+      if (attentionShowUids.length === 0) {
+        return { data: [], total: 0 };
+      }
+
+      effectiveQuery = {
+        ...query,
+        show_uids: attentionShowUids,
+      };
+    }
+
     const { data: shows, total } = await this.showService.findPaginatedWithTaskSummary(
       studio.id,
-      query,
+      effectiveQuery,
     );
 
     const data = shows.map((show) => {

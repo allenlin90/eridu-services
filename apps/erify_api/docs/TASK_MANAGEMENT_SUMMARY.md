@@ -64,7 +64,7 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 | Endpoint                 | Method | Purpose                           |
 | ------------------------ | ------ | --------------------------------- |
 | `/task-templates`        | CRUD   | Template management               |
-| `/shows`                 | GET    | Shows list with task summary      |
+| `/shows`                 | GET    | Shows list with task summary + readiness-aligned `needs_attention` filter |
 | `/shows/:showUid`        | GET    | Show detail                       |
 | `/shows/:showUid/tasks`  | GET    | Tasks for a show                  |
 | `/tasks/generate`        | POST   | Bulk task generation              |
@@ -124,5 +124,19 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 ✅ Action-based workflow endpoints, operator state machine enforcement (admin/manager transition whitelist deferred to Phase 4)  
 ✅ Submission window validation (SETUP before show start, ACTIVE/CLOSURE after show start)  
 ✅ Audit metadata (`task.metadata.audit.last_transition`)
+✅ Studio shows `needs_attention` filtering via shift-alignment readiness warnings (no tasks / unassigned tasks / missing required task types)
 
 **Deferred**: File uploads, smart due dates, progress in API response, WebSocket live sync, offline/PWA, bulk review approve
+
+---
+
+## Studio Shows Attention Filter Contract
+
+`GET /studios/:studioId/shows` supports:
+- `needs_attention=true`
+- `planning_date_from=YYYY-MM-DD`
+- `planning_date_to=YYYY-MM-DD`
+
+Behavior:
+- `needs_attention=true` computes readiness warnings in the planning date range and restricts list results to those show UIDs.
+- This keeps list pagination/filtering server-side while aligning issue detection to the date-scope used by readiness workflows.

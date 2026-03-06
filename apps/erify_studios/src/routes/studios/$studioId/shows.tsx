@@ -12,6 +12,7 @@ const showsSearchSchema = z.object({
   date_from: z.string().optional().catch(undefined),
   date_to: z.string().optional().catch(undefined),
   has_tasks: z.union([z.enum(['true', 'false']), z.boolean()]).optional().catch(undefined),
+  needs_attention: z.union([z.enum(['true', 'false']), z.boolean()]).optional().catch(undefined),
   client_name: z.string().optional().catch(undefined),
   show_type_name: z.string().optional().catch(undefined),
   show_standard_name: z.string().optional().catch(undefined),

@@ -9,6 +9,7 @@ import { StudioModule } from '@/models/studio/studio.module';
 import { TaskModule } from '@/models/task/task.module';
 import { TaskTargetModule } from '@/models/task-target/task-target.module';
 import { TaskTemplateModule } from '@/models/task-template/task-template.module';
+import { ShiftAlignmentModule } from '@/orchestration/shift-alignment/shift-alignment.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { UtilityModule } from '@/utility/utility.module';
 
@@ -22,6 +23,7 @@ import { UtilityModule } from '@/utility/utility.module';
     ShowModule,
     MembershipModule,
     StudioModule,
+    ShiftAlignmentModule,
   ],
   providers: [TaskOrchestrationService, TaskGenerationProcessor],
   exports: [TaskOrchestrationService],

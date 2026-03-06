@@ -83,6 +83,21 @@ Each upcoming show checked for:
 - `missing_required_task_types` — must have `SETUP`, `ACTIVE`, `CLOSURE`
 - `missing_moderation_task` — **premium** shows only (standard name is `'premium'`)
 
+### Studio Shows "Issues" Filter Contract
+
+For the studio shows list (`/studios/$studioId/shows`), the quick `Issues` filter must align with the readiness definition and date scope:
+
+- UI label: short chip (`Issues`) with alert icon.
+- Date alignment: use the same selected scope dates as readiness workflows.
+- Attention definition:
+  - show has no tasks
+  - show has unassigned tasks
+  - show is missing required task types (`SETUP`, `ACTIVE`, `CLOSURE`)
+
+Implementation pattern:
+- FE sends list datetime bounds for show search (`date_from/date_to`) and also sends date-only planning bounds (`planning_date_from/planning_date_to`) when `needs_attention=true`.
+- BE resolves readiness warnings from planning bounds, then constrains paginated show query by warning show UIDs.
+
 ---
 
 ## Shift Block Model

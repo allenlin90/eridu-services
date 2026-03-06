@@ -55,6 +55,14 @@ Review Queue → row actions: Approve (`→ COMPLETED`), Reject (with note, `→
 ### 6. Moderation Loop Execution (Moderator)
 My Tasks → tap moderation task → Task Execution Sheet with **Loop Progress block** → navigate loops via Previous/Next → auto-save per field → Submit for Review when done. See [MODERATION_WORKFLOW.md](./MODERATION_WORKFLOW.md) for full data contract and business rules.
 
+### 7. Shows Issues Triage (Admin)
+Shows list → set scope date range → toggle `Issues` (alert icon chip) in toolbar → list narrows to shows that need task-readiness attention:
+- show has no tasks
+- show has unassigned tasks
+- show is missing required task types (`SETUP`, `ACTIVE`, `CLOSURE`)
+
+The `Issues` filter is scoped to the same selected date range as the shows page scope.
+
 ---
 
 ## Navigation & Studio Context
@@ -104,6 +112,11 @@ My Tasks → tap moderation task → Task Execution Sheet with **Loop Progress b
 | Search           | `search`             | Free text                                        |
 | Sort             | `sort`               | Due date ↑/↓, Recently updated                   |
 | Overdue shortcut | combined             | `due_date_to=today&status=PENDING,IN_PROGRESS`   |
+
+## Shows List Filter Notes
+
+- `Issues` is a dedicated quick filter chip (icon + short label) to avoid long wording in toolbar.
+- The filter definition intentionally mirrors readiness warnings, so the list can be used as the action queue after reviewing snapshot metrics.
 
 ---
 

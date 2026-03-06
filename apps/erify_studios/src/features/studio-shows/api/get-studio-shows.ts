@@ -18,7 +18,10 @@ type GetStudioShowsParams = {
   search?: string;
   date_from?: string;
   date_to?: string;
+  planning_date_from?: string;
+  planning_date_to?: string;
   has_tasks?: boolean;
+  needs_attention?: boolean;
   client_name?: string;
   show_type_name?: string;
   show_standard_name?: string;

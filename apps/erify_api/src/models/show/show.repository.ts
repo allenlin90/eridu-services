@@ -321,6 +321,7 @@ export class ShowRepository extends BaseRepository<
       date_from?: string;
       date_to?: string;
       has_tasks?: boolean;
+      show_uids?: string[];
       client_name?: string;
       show_type_name?: string;
       show_standard_name?: string;
@@ -335,6 +336,10 @@ export class ShowRepository extends BaseRepository<
 
     if (query.search) {
       where.name = { contains: query.search, mode: 'insensitive' };
+    }
+
+    if (query.show_uids && query.show_uids.length > 0) {
+      where.uid = { in: query.show_uids };
     }
 
     if (query.date_from || query.date_to) {

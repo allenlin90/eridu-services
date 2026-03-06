@@ -1,6 +1,7 @@
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
 import type { OnChangeFn, RowSelectionState } from '@tanstack/react-table';
-import { AlertTriangle, ChevronDown, ChevronUp, ListTodo, RefreshCw } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronUp, Info, ListTodo, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 
@@ -19,6 +20,9 @@ import {
   DataTableToolbar,
   DatePickerWithRange,
   Skeleton,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
@@ -26,11 +30,17 @@ import { useShowLookupsQuery } from '@/features/shows/api/get-show-lookups';
 import { BulkTaskGenerationDialog } from '@/features/shows/components/bulk-task-generation-dialog';
 import { ShowAssignmentDialog } from '@/features/shows/components/show-assignment-dialog';
 import { useShiftAlignment } from '@/features/studio-shifts/hooks/use-studio-shifts';
+import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';
 import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
-import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
+import { getStudioShows, type StudioShow } from '@/features/studio-shows/api/get-studio-shows';
 import { SelectedShowsMobileActions } from '@/features/studio-shows/components/selected-shows-mobile-actions';
 import { columns } from '@/features/studio-shows/components/studio-shows-table/columns';
 import { useStudioShows } from '@/features/studio-shows/hooks/use-studio-shows';
+import {
+  normalizeScopeDate,
+  parseScopeDateAsLocal,
+  toShowScopeDateTimeBounds,
+} from '@/features/studio-shows/utils/show-scope.utils';
 
 export const Route = createFileRoute('/studios/$studioId/shows/')({
   component: StudioShowsPage,
@@ -42,18 +52,12 @@ type ScopeRange = {
   date_to?: string;
 };
 
-function addDays(base: Date, days: number): Date {
-  const next = new Date(base);
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
 function getDefaultPlanningRange() {
   const start = new Date();
   const end = addDays(start, 7);
   return {
-    from: toLocalDateInputValue(start),
-    to: toLocalDateInputValue(end),
+    date_from: toLocalDateInputValue(start),
+    date_to: toLocalDateInputValue(end),
   };
 }
 
@@ -64,25 +68,11 @@ function resolveUpdater<T>(updater: T | ((previous: T) => T), previous: T): T {
 }
 
 function parseSearchDate(raw?: string): Date | undefined {
-  if (!raw) {
-    return undefined;
-  }
-
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) {
-    return undefined;
-  }
-
-  return parsed;
+  return parseScopeDateAsLocal(raw);
 }
 
 function toApiDate(raw?: string): string | undefined {
-  const parsed = parseSearchDate(raw);
-  if (!parsed) {
-    return undefined;
-  }
-
-  return toLocalDateInputValue(parsed);
+  return normalizeScopeDate(raw);
 }
 
 function buildScopeRange(range: DateRange | undefined): ScopeRange {
@@ -97,8 +87,8 @@ function buildScopeRange(range: DateRange | undefined): ScopeRange {
   }
 
   return {
-    date_from: fromDate.toISOString(),
-    date_to: toDate.toISOString(),
+    date_from: toLocalDateInputValue(fromDate),
+    date_to: toLocalDateInputValue(toDate),
   };
 }
 
@@ -120,13 +110,10 @@ function StudioShowsPage() {
   const { studioId } = showsRouteApi.useParams();
   const search = showsRouteApi.useSearch();
   const navigate = showsRouteApi.useNavigate();
+  const isNeedsAttentionActive = search.needs_attention === true || search.needs_attention === 'true';
   const [isReadinessSnapshotVisible, setIsReadinessSnapshotVisible] = useState(true);
   const [defaultScopeRange] = useState(() => {
-    const defaultRange = getDefaultPlanningRange();
-    return {
-      date_from: new Date(`${defaultRange.from}T00:00:00`).toISOString(),
-      date_to: new Date(`${defaultRange.to}T23:59:59`).toISOString(),
-    };
+    return getDefaultPlanningRange();
   });
 
   const updateSearch = useCallback((
@@ -237,6 +224,14 @@ function StudioShowsPage() {
           scopeDateFrom={search.date_from}
           scopeDateTo={search.date_to}
           scopeLabel={formatScopeLabel(search.date_from, search.date_to)}
+          needsAttention={isNeedsAttentionActive}
+          onToggleNeedsAttention={() => {
+            updateSearch((previous) => ({
+              ...previous,
+              page: 1,
+              needs_attention: isNeedsAttentionActive ? undefined : true,
+            }));
+          }}
         />
       </div>
     </PageLayout>
@@ -260,6 +255,10 @@ function ShowTaskReadinessSection({
   const planningDateTo = toApiDate(scopeDateTo);
   const hasIncompletePlanningRange = !planningDateFrom || !planningDateTo;
   const hasInvalidPlanningRange = !hasIncompletePlanningRange && planningDateFrom > planningDateTo;
+  const showScopeDateBounds = useMemo(
+    () => toShowScopeDateTimeBounds({ dateFrom: planningDateFrom, dateTo: planningDateTo }),
+    [planningDateFrom, planningDateTo],
+  );
   const alignmentQueryParams = useMemo(() => ({
     ...(planningDateFrom ? { date_from: planningDateFrom } : {}),
     ...(planningDateTo ? { date_to: planningDateTo } : {}),
@@ -279,10 +278,58 @@ function ShowTaskReadinessSection({
     },
   );
 
-  const taskReadinessWarningCount = shiftAlignmentResponse?.task_readiness_warnings.length ?? 0;
-  const showsMissingRequiredTaskTypes = shiftAlignmentResponse?.task_readiness_warnings
-    .filter((warning) => !warning.has_no_tasks && warning.missing_required_task_types.length > 0)
-    .length ?? 0;
+  const {
+    data: showsScopeResponse,
+    isLoading: isLoadingShowsScope,
+    isFetching: isFetchingShowsScope,
+    refetch: refetchShowsScope,
+  } = useQuery({
+    queryKey: ['studio-shows', 'scope-total', studioId, showScopeDateBounds.date_from, showScopeDateBounds.date_to],
+    queryFn: () =>
+      getStudioShows(studioId, {
+        page: 1,
+        limit: 1,
+        date_from: showScopeDateBounds.date_from,
+        date_to: showScopeDateBounds.date_to,
+      }),
+    enabled: !hasIncompletePlanningRange && !hasInvalidPlanningRange,
+  });
+
+  const isLoadingSnapshot = isLoadingShiftAlignment || isLoadingShowsScope;
+  const isFetchingSnapshot = isFetchingShiftAlignment || isFetchingShowsScope;
+  const showsInScopeCount = showsScopeResponse?.meta.total ?? 0;
+  const readinessMetrics = [
+    {
+      label: 'Shows In Scope',
+      value: showsInScopeCount,
+      tooltip: 'All shows currently included by the selected date range. Use this to confirm list coverage.',
+    },
+    {
+      label: 'At Risk',
+      value: shiftAlignmentResponse?.summary.risk_show_count ?? 0,
+      tooltip: 'Shows with at least one readiness issue (coverage gap, missing tasks, or task assignment/type problems). Use this as the top-line risk signal.',
+    },
+    {
+      label: 'Without Tasks',
+      value: shiftAlignmentResponse?.summary.shows_without_tasks_count ?? 0,
+      tooltip: 'Shows that have no tasks at all. Use this to spot planning gaps before execution.',
+    },
+    {
+      label: 'Unassigned Shows',
+      value: shiftAlignmentResponse?.summary.shows_with_unassigned_tasks_count ?? 0,
+      tooltip: 'Shows that contain one or more unassigned tasks. Use this to prioritize assignment actions.',
+    },
+    {
+      label: 'Unassigned Tasks',
+      value: shiftAlignmentResponse?.summary.tasks_unassigned_count ?? 0,
+      tooltip: 'Total number of tasks without an assignee across in-scope shows. Use this to estimate assignment workload.',
+    },
+    {
+      label: 'Missing Required Types',
+      value: shiftAlignmentResponse?.summary.shows_missing_required_tasks_count ?? 0,
+      tooltip: 'Shows missing one or more required task types (SETUP, ACTIVE, CLOSURE). Use this to validate show readiness completeness.',
+    },
+  ];
 
   return (
     <Card>
@@ -291,11 +338,13 @@ function ShowTaskReadinessSection({
           <Button
             variant="outline"
             size="icon"
-            onClick={() => void refetchShiftAlignment()}
-            disabled={!isVisible || isFetchingShiftAlignment || hasIncompletePlanningRange || hasInvalidPlanningRange}
+            onClick={() => {
+              void Promise.all([refetchShiftAlignment(), refetchShowsScope()]);
+            }}
+            disabled={!isVisible || isFetchingSnapshot || hasIncompletePlanningRange || hasInvalidPlanningRange}
             aria-label="Refresh task readiness warnings"
           >
-            <RefreshCw className={`h-4 w-4 ${isFetchingShiftAlignment ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${isFetchingSnapshot ? 'animate-spin' : ''}`} />
           </Button>
           <Button
             variant="outline"
@@ -313,7 +362,9 @@ function ShowTaskReadinessSection({
               Readiness Snapshot
             </CardTitle>
             <CardDescription>
-              Summary for shows in selected scope.
+              Scope-level readiness for operational day range (
+              {formatScopeLabel(planningDateFrom, planningDateTo)}
+              ).
             </CardDescription>
           </div>
         </div>
@@ -329,10 +380,10 @@ function ShowTaskReadinessSection({
           className={`overflow-hidden transition-all duration-300 ease-in-out ${isVisible ? 'max-h-[640px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}
           aria-hidden={!isVisible}
         >
-          {(isLoadingShiftAlignment || isFetchingShiftAlignment)
+          {isLoadingSnapshot || isFetchingSnapshot
             ? (
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                  {['risky', 'without-tasks', 'unassigned-shows', 'unassigned-tasks', 'missing-types'].map((key) => (
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+                  {['shows-in-scope', 'at-risk', 'without-tasks', 'unassigned-shows', 'unassigned-tasks', 'missing-types'].map((key) => (
                     <div key={key} className="rounded-md border p-3 space-y-2">
                       <Skeleton className="h-3 w-24" />
                       <Skeleton className="h-7 w-14" />
@@ -341,26 +392,32 @@ function ShowTaskReadinessSection({
                 </div>
               )
             : (
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                  <div className="rounded-md border p-3">
-                    <p className="text-xs text-muted-foreground">Risky Shows</p>
-                    <p className="text-xl font-semibold">{taskReadinessWarningCount}</p>
-                  </div>
-                  <div className="rounded-md border p-3">
-                    <p className="text-xs text-muted-foreground">Without Tasks</p>
-                    <p className="text-xl font-semibold">{shiftAlignmentResponse?.summary.shows_without_tasks_count ?? 0}</p>
-                  </div>
-                  <div className="rounded-md border p-3">
-                    <p className="text-xs text-muted-foreground">Unassigned Shows</p>
-                    <p className="text-xl font-semibold">{shiftAlignmentResponse?.summary.shows_with_unassigned_tasks_count ?? 0}</p>
-                  </div>
-                  <div className="rounded-md border p-3">
-                    <p className="text-xs text-muted-foreground">Unassigned Tasks</p>
-                    <p className="text-xl font-semibold">{shiftAlignmentResponse?.summary.tasks_unassigned_count ?? 0}</p>
-                  </div>
-                  <div className="rounded-md border p-3">
-                    <p className="text-xs text-muted-foreground">Missing Required Types</p>
-                    <p className="text-xl font-semibold">{showsMissingRequiredTaskTypes}</p>
+                <div className="space-y-3">
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+                    {readinessMetrics.map((metric) => (
+                      <div key={metric.label} className="rounded-md border p-3">
+                        <div className="flex items-center gap-1">
+                          <p className="text-xs text-muted-foreground">{metric.label}</p>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5 text-muted-foreground"
+                                aria-label={`About ${metric.label}`}
+                              >
+                                <Info className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-64 text-xs">
+                              {metric.tooltip}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <p className="text-xl font-semibold">{metric.value}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -375,11 +432,15 @@ function StudioShowsTableSection({
   scopeDateFrom,
   scopeDateTo,
   scopeLabel,
+  needsAttention,
+  onToggleNeedsAttention,
 }: {
   studioId: string;
   scopeDateFrom?: string;
   scopeDateTo?: string;
   scopeLabel: string;
+  needsAttention: boolean;
+  onToggleNeedsAttention: () => void;
 }) {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [bulkGeneratingShows, setBulkGeneratingShows] = useState<StudioShow[] | null>(null);
@@ -397,7 +458,7 @@ function StudioShowsTableSection({
     onColumnFiltersChange,
     sorting,
     onSortingChange,
-  } = useStudioShows({ studioId, dateFrom: scopeDateFrom, dateTo: scopeDateTo });
+  } = useStudioShows({ studioId, dateFrom: scopeDateFrom, dateTo: scopeDateTo, needsAttention });
 
   // Keep lightweight snapshots for selected rows that are not on current page.
   const [selectedShowSnapshots, setSelectedShowSnapshots] = useState<Record<string, StudioShow>>({});
@@ -537,6 +598,16 @@ function StudioShowsTableSection({
             featuredFilterColumns={FEATURED_FILTER_COLUMNS}
             searchPlaceholder="Search shows..."
           >
+            <Button
+              variant="outline"
+              size="sm"
+              className={`gap-1.5 rounded-full ${needsAttention ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100' : ''}`}
+              onClick={onToggleNeedsAttention}
+              aria-pressed={needsAttention}
+            >
+              <AlertTriangle className="h-3.5 w-3.5" />
+              Issues
+            </Button>
             <Button
               variant="outline"
               size="icon"
