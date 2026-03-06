@@ -163,15 +163,13 @@ function StudioDashboardPage() {
             totalShows={totalShows}
             isLoading={isTodayShowsLoading}
           />
-          {isStudioAdmin && (
-            <DashboardDutyCoverageCards
-              studioId={studioId}
-              selectedDate={selectedDate}
-              previewUntil={previewUntil}
-              isSelectedToday={isSelectedToday}
-              dutyReferenceTime={dutyReferenceTime}
-            />
-          )}
+          <DashboardDutyCoverageCards
+            studioId={studioId}
+            selectedDate={selectedDate}
+            previewUntil={previewUntil}
+            isSelectedToday={isSelectedToday}
+            dutyReferenceTime={dutyReferenceTime}
+          />
         </div>
         <OperationalDayShowListCard
           studioId={studioId}

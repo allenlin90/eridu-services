@@ -14,9 +14,7 @@ import {
   DASHBOARD_DUTY_SHIFTS_LIMIT,
   DASHBOARD_MY_SHIFTS_QUERY_LIMIT,
   DASHBOARD_MY_UPCOMING_SHIFTS_LIMIT,
-  STUDIO_MEMBER_MAP_DEFAULT_LIMIT,
 } from '@/features/studio-shifts/constants/studio-shifts.constants';
-import { useStudioMemberMap } from '@/features/studio-shifts/hooks/use-studio-member-map';
 import {
   useDutyManager,
   useMyShifts,
@@ -61,8 +59,6 @@ export const DashboardDutyCoverageCards = memo(({
     date_to: previewUntil,
     is_duty_manager: true,
   });
-  const { memberMap } = useStudioMemberMap(studioId, { limit: STUDIO_MEMBER_MAP_DEFAULT_LIMIT });
-
   const activeShiftStartMs = useMemo(
     () => (dutyManager ? getShiftFirstBlockStartMs(dutyManager) : null),
     [dutyManager],
@@ -107,7 +103,7 @@ export const DashboardDutyCoverageCards = memo(({
             : dutyManager
               ? (
                   <div className="space-y-1">
-                    <p className="font-medium">{memberMap.get(dutyManager.user_id)?.name ?? dutyManager.user_id}</p>
+                    <p className="font-medium">{dutyManager.user_name}</p>
                     <p className="text-sm text-muted-foreground">{getShiftWindowLabel(dutyManager)}</p>
                     <Badge className="mt-1">On Duty</Badge>
                   </div>
@@ -141,7 +137,7 @@ export const DashboardDutyCoverageCards = memo(({
             : nextDutyShift
               ? (
                   <>
-                    <p className="font-medium">{memberMap.get(nextDutyShift.user_id)?.name ?? nextDutyShift.user_id}</p>
+                    <p className="font-medium">{nextDutyShift.user_name}</p>
                     <p className="text-sm text-muted-foreground">
                       {formatDate(nextDutyShift.date)}
                       {' '}

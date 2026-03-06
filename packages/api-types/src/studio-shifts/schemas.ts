@@ -99,6 +99,7 @@ export const studioShiftApiResponseSchema = z.object({
   id: z.string(),
   studio_id: z.string(),
   user_id: z.string(),
+  user_name: z.string(),
   date: z.string(),
   hourly_rate: z.string(),
   projected_cost: z.string(),
