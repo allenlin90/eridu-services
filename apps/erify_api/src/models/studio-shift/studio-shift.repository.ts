@@ -3,9 +3,10 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, StudioShift } from '@prisma/client';
 
+import type { BlocksReplacePayload } from './schemas/studio-shift.schema';
+
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
-import type { BlocksReplacePayload } from './schemas/studio-shift.schema';
 
 const defaultShiftInclude = {
   user: true,
