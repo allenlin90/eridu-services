@@ -2,6 +2,28 @@ import { z } from 'zod';
 
 export const studioShiftStatusSchema = z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']);
 
+/**
+ * Metadata stored on each StudioShiftBlock.
+ *
+ * All fields are optional — blocks carry no required metadata at this time.
+ * Extend this schema when block-level annotations are needed (e.g. break type, handover notes).
+ */
+export const studioShiftBlockMetadataSchema = z.object({
+  /** Free-form admin note for this block, e.g. "Lunch break" or "Handover window". */
+  notes: z.string().optional(),
+});
+
+/**
+ * Metadata stored on a StudioShift (parent record).
+ *
+ * All fields are optional — shifts carry no required metadata at this time.
+ * Extend this schema when shift-level annotations are needed (e.g. payroll notes, source system ID).
+ */
+export const studioShiftMetadataSchema = z.object({
+  /** Free-form admin note for this shift, e.g. "Overtime approved by manager". */
+  notes: z.string().optional(),
+});
+
 export const shiftCalendarResponseSchema = z.object({
   period: z.object({
     date_from: z.string(), // ISO 8601 datetime string
@@ -90,7 +112,7 @@ export const studioShiftBlockApiResponseSchema = z.object({
   id: z.string(),
   start_time: z.string(), // ISO 8601 datetime string
   end_time: z.string(), // ISO 8601 datetime string
-  metadata: z.record(z.string(), z.unknown()),
+  metadata: studioShiftBlockMetadataSchema,
   created_at: z.string(), // ISO 8601 datetime string
   updated_at: z.string(), // ISO 8601 datetime string
 });
@@ -107,7 +129,7 @@ export const studioShiftApiResponseSchema = z.object({
   is_approved: z.boolean(),
   is_duty_manager: z.boolean(),
   status: studioShiftStatusSchema,
-  metadata: z.record(z.string(), z.unknown()),
+  metadata: studioShiftMetadataSchema,
   blocks: z.array(studioShiftBlockApiResponseSchema),
   created_at: z.string(), // ISO 8601 datetime string
   updated_at: z.string(), // ISO 8601 datetime string

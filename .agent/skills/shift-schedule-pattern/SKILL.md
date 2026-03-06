@@ -188,6 +188,7 @@ Magic numbers extracted to `studio-shifts.constants.ts`:
 - `DASHBOARD_MY_SHIFTS_QUERY_LIMIT`
 - `DASHBOARD_MY_UPCOMING_SHIFTS_LIMIT`
 - `STUDIO_MEMBER_MAP_DEFAULT_LIMIT`
+- `STUDIO_MEMBER_MAP_CALENDAR_LIMIT`
 
 ---
 
@@ -335,6 +336,33 @@ export type { StudioShiftAlignmentResponse, StudioShiftCalendarResponse };
 ```
 
 This ensures the frontend type is always in sync with the backend schema and avoids duplicated declarations.
+
+### Typed Metadata Schemas
+
+Each entity with a `metadata: Json` column should have a dedicated Zod schema documenting its known fields. Never use `z.record(z.string(), z.any())` as the public API contract for metadata.
+
+**Pattern** (applied to `StudioShift` and `StudioShiftBlock`):
+
+```typescript
+// In @eridu/api-types/studio-shifts/schemas.ts  ← canonical API contract for frontend
+export const studioShiftBlockMetadataSchema = z.object({
+  notes: z.string().optional(),
+});
+
+export const studioShiftMetadataSchema = z.object({
+  notes: z.string().optional(),
+});
+
+// In backend studio-shift.schema.ts  ← mirrored for input validation and response pipe
+const studioShiftBlockMetadataSchema = z.object({ notes: z.string().optional() });
+const studioShiftMetadataSchema     = z.object({ notes: z.string().optional() });
+```
+
+Rules:
+- **`@eridu/api-types`**: authoritative API contract; export named types (`StudioShiftMetadata`, `StudioShiftBlockMetadata`).
+- **Backend schema file**: mirror the same shape for input validation and the response `.pipe()`.
+- **Internal transform shapes** (`_internal*`): keep `z.record(z.string(), z.unknown())` — these receive raw Prisma `Json` and must accept any stored value before the transform runs.
+- **Extend by adding optional fields** to both schema files when a new metadata use-case is established.
 
 ---
 

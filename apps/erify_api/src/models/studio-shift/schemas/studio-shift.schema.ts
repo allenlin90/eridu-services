@@ -8,6 +8,28 @@ import { UserService } from '@/models/user/user.service';
 
 const studioShiftStatusSchema = z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']);
 
+/**
+ * Metadata stored on each StudioShiftBlock.
+ *
+ * All fields are optional — blocks carry no required metadata at this time.
+ * Extend this schema when block-level annotations are needed (e.g. break type, handover notes).
+ */
+const studioShiftBlockMetadataSchema = z.object({
+  /** Free-form admin note for this block, e.g. "Lunch break" or "Handover window". */
+  notes: z.string().optional(),
+});
+
+/**
+ * Metadata stored on a StudioShift (parent record).
+ *
+ * All fields are optional — shifts carry no required metadata at this time.
+ * Extend this schema when shift-level annotations are needed (e.g. payroll notes, source system ID).
+ */
+const studioShiftMetadataSchema = z.object({
+  /** Free-form admin note for this shift, e.g. "Overtime approved by manager". */
+  notes: z.string().optional(),
+});
+
 function decimalToString(value: unknown): string {
   if (typeof value === 'number') {
     return value.toFixed(2);
@@ -77,13 +99,13 @@ const studioShiftApiResponseSchema = z.object({
   is_approved: z.boolean(),
   is_duty_manager: z.boolean(),
   status: studioShiftStatusSchema,
-  metadata: z.record(z.string(), z.any()),
+  metadata: studioShiftMetadataSchema,
   blocks: z.array(
     z.object({
       id: z.string(),
       start_time: z.iso.datetime(),
       end_time: z.iso.datetime(),
-      metadata: z.record(z.string(), z.any()),
+      metadata: studioShiftBlockMetadataSchema,
       created_at: z.iso.datetime(),
       updated_at: z.iso.datetime(),
     }),
@@ -122,7 +144,7 @@ export const studioShiftDto = _internalShiftWithRelationsShape
 const blockInputSchema = z.object({
   start_time: z.iso.datetime(),
   end_time: z.iso.datetime(),
-  metadata: z.record(z.string(), z.any()).optional(),
+  metadata: studioShiftBlockMetadataSchema.optional(),
 });
 
 const validateUserUid = z.string().startsWith(UserService.UID_PREFIX);
@@ -138,7 +160,7 @@ export const createStudioShiftSchema = z
     is_duty_manager: z.boolean().optional(),
     is_approved: z.boolean().optional(),
     calculated_cost: z.coerce.number().nonnegative().optional(),
-    metadata: z.record(z.string(), z.any()).optional(),
+    metadata: studioShiftMetadataSchema.optional(),
   })
   .transform((data) => ({
     userId: data.user_id,
@@ -166,7 +188,7 @@ export const updateStudioShiftSchema = z
     is_duty_manager: z.boolean().optional(),
     is_approved: z.boolean().optional(),
     calculated_cost: z.union([z.coerce.number().nonnegative(), z.null()]).optional(),
-    metadata: z.record(z.string(), z.any()).optional(),
+    metadata: studioShiftMetadataSchema.optional(),
   })
   .transform((data) => ({
     userId: data.user_id,

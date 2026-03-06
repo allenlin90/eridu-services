@@ -5,10 +5,14 @@ import type {
   shiftCalendarResponseSchema,
   studioShiftApiResponseSchema,
   studioShiftBlockApiResponseSchema,
+  studioShiftBlockMetadataSchema,
+  studioShiftMetadataSchema,
   studioShiftStatusSchema,
 } from './schemas.js';
 
 export type StudioShiftStatus = z.infer<typeof studioShiftStatusSchema>;
+export type StudioShiftBlockMetadata = z.infer<typeof studioShiftBlockMetadataSchema>;
+export type StudioShiftMetadata = z.infer<typeof studioShiftMetadataSchema>;
 export type StudioShiftBlockApiResponse = z.infer<typeof studioShiftBlockApiResponseSchema>;
 export type StudioShiftApiResponse = z.infer<typeof studioShiftApiResponseSchema>;
 export type StudioShiftCalendarResponse = z.infer<typeof shiftCalendarResponseSchema>;
