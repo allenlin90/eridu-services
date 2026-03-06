@@ -169,7 +169,7 @@ export function useShowTypeFieldData(show: Show | null, studioId?: string) {
   return useQuery({
     queryKey: ['show-types', 'list', studioId ?? 'admin', 'all'],  // ← scope discriminator
     queryFn: () => getShowTypes({ limit: 100 }, studioId),
-    staleTime: 60 * 60 * 1000,
+    // staleTime: Infinity // Only set if this is static reference data, otherwise omit to rely on global staleTime: 0
   });
 }
 ```
@@ -231,11 +231,11 @@ export function useUpdateTask(studioId: string) {
   });
 }
 
-// Silent mutation pattern — suppress toasts and cache invalidation for background saves
+// Silent mutation pattern — suppress global error toasts and cache invalidation for background saves
 // Use for autosave / debounced background operations that should not interrupt the user
 //
-// Pattern: add `silent?: boolean` to the variables type, then guard toasts/invalidations
-// with `if (!variables.silent)`. The write-through cache update always runs.
+// Pattern: add `silent?: boolean` to the variables type, guard invalidations with
+// `if (!variables.silent)`, and specify `meta: { suppressErrorToast: true }` natively.
 export function useUpdateMyTask() {
   const queryClient = useQueryClient();
 
@@ -256,12 +256,8 @@ export function useUpdateMyTask() {
         toast.success('Task updated successfully');
       }
     },
-    onError: (error, variables) => {
-      if (!variables.silent) {
-        toast.error(error.message || 'Failed to update task');
-      }
-      // Note: silent errors are swallowed — only use for non-critical background saves
-    },
+    // Override the global error handler dynamically based on the mutation variables if necessary
+    // or just rely on the global generic fallback. No need to rewrite error toasting here!
   });
 }
 ```

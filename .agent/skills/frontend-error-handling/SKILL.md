@@ -92,29 +92,35 @@ export class ErrorBoundary extends Component<Props, State> {
 
 ### 3. TanStack Query Error Handling
 
-Handle query/mutation errors:
+**Global Handlers (Centralized Toasts)**:
+The project uses `MutationCache` to automatically toast errors for all mutations.
+- **Rule**: Do NOT implement inline `onError: (error) => toast.error(...)` inside component `useMutation` hooks. Rely on the global handler.
+
+To interact with the global handler from a hook, use the `meta` property:
 
 ```typescript
-// Global error handler
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      onError: (error) => {
-        if (error instanceof AxiosError) {
-          toast.error(error.response?.data?.message || 'Failed to fetch data');
-        }
-      },
-    },
-    mutations: {
-      onError: (error) => {
-        if (error instanceof AxiosError) {
-          toast.error(error.response?.data?.message || 'Operation failed');
-        }
-      },
-    },
-  },
+// 1. Standard approach (automatic toast, zero boilerplate)
+const mutation = useMutation({
+  mutationFn: updateTask,
+  // ❌ AVOID: inline toast.error() - relies on global MutationCache
 });
 
+// 2. Custom Global Toast Message
+const mutationWithCustomMessage = useMutation({
+  mutationFn: updateTask,
+  meta: {
+    errorMessage: 'Failed to update this critical task' // Overrides default generic toast message
+  }
+});
+
+// 3. Suppress Global Toast
+const silentMutation = useMutation({
+  mutationFn: updateTask,
+  meta: {
+    suppressErrorToast: true // Silences the global toast (e.g., for background autosaves)
+  }
+});
+```
 // Per-query error handling
 const { data, error, isError } = useQuery({
   queryKey: ['tasks'],

@@ -21,10 +21,14 @@ Study these real implementations:
 
 **Use for**: Data from APIs that needs caching, synchronization, and background updates.
 
+**Caching Policy (Stale-While-Revalidate)**:
+The project is configured globally with `staleTime: 0` to enforce a generic stale-while-revalidate pattern.
+- **Rule**: NEVER override `staleTime` on individual `useQuery` hooks unless the data is guaranteed to be static reference data (e.g., country lists, system taxonomies). This ensures users always see fresh data upon navigation while cached data loads instantly in the background.
+
 ```typescript
 import { useQuery, useMutation } from '@tanstack/react-query';
 
-// ✅ GOOD: Server state managed by TanStack Query
+// ✅ GOOD: Relies on global staleTime: 0 default
 const { data, isLoading } = useQuery({
   queryKey: ['tasks', taskId],
   queryFn: () => fetchTask(taskId),
