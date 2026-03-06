@@ -38,6 +38,11 @@ Source of truth:
 - `.agent/rules/01-general-agent-guidelines.mdc`
 - `.agent/workflows/verification.md`
 
+Additional frontend guidance (2026-03-06):
+- `.agent/skills/frontend-api-layer/SKILL.md` now requires no FE-side required-data joins across endpoints with mismatched auth scopes.
+- `.agent/skills/frontend-state-management/SKILL.md` now requires scoping timer-driven state updates to the smallest subtree.
+- `.agent/skills/shift-schedule-pattern/SKILL.md` now requires shared operational-day boundary utilities instead of route-local duplicated math.
+
 ## Critical Skills Clarifications
 
 ### service-pattern-nestjs (PRIMARY)

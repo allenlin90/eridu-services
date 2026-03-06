@@ -60,6 +60,9 @@ This rule affects:
 - Dashboard date navigation (day ends at 06:00 next calendar day)
 - Alignment reporting (shows grouped by operational day)
 
+Frontend implementation rule:
+- Reuse shared operational-day utilities (for example, `buildOperationalDayWindow` and shared hour constants in `studio-shifts/utils`) instead of re-implementing day-start/day-end boundary math inside route files.
+
 ### Duty-Manager Coverage
 
 Two-level check in `ShiftAlignmentService.getAlignment()`:
@@ -197,6 +200,7 @@ When implementing shift-related features:
 - [ ] Block UIDs are preserved via positional matching on update
 - [ ] Calendar component is always mounted (no conditional unmount)
 - [ ] Dashboard date state lives in URL search params
+- [ ] Operational-day boundary math uses shared utility/constant (no duplicated route-local implementations)
 - [ ] Named constants used instead of magic numbers
 - [ ] Alignment checks cover both per-show and per-operational-day duty-manager coverage
 - [ ] Task readiness checks include SETUP, ACTIVE, CLOSURE (+ moderation for premium)

@@ -40,6 +40,22 @@ Backend API
 2. **Type Safety**: Use shared types from `@eridu/api-types`
 3. **Error Handling**: API client handles auth errors, API declarations handle business errors
 4. **Query Keys**: Centralize query keys in API declaration files
+5. **No FE Data Joins for Required Display Fields**: If a view needs stable display fields (e.g. assignee name), the primary API response must include them.
+
+### No FE Data Join Rule (Required)
+
+Do not compose critical list/detail display data by calling a second endpoint and joining on the frontend when:
+- the secondary endpoint has stricter auth than the primary endpoint, or
+- the field is required for normal rendering of the primary feature.
+
+Example anti-pattern:
+- shifts API returns only `user_id`
+- frontend calls memberships API just to map `user_id -> user.name`
+- memberships endpoint is admin-only, so member view breaks with 403
+
+Correct approach:
+- include `user_name` (or equivalent display field) in the primary shifts response contract
+- keep frontend fetch scope to the feature API only
 
 ---
 

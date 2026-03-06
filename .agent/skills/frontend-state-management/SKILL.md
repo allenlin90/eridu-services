@@ -130,6 +130,17 @@ const [now] = useState(() => Date.now());
 
 **When to apply**: Any time you need to capture a timestamp at mount time (e.g., computing relative time for "due soon" badges on list cards).
 
+### Timer State Scope (Frequent Updates)
+
+For interval-driven state (`setInterval`, clock ticks, polling UI timers):
+- Keep timer state in the smallest component subtree that actually needs it.
+- Avoid placing minute/second timers in route/page containers unless the entire page depends on it.
+- Pass derived values downward only when necessary.
+
+Why:
+- Frequent timer updates in top-level route components cause avoidable whole-page re-renders.
+- Localized timer state keeps render impact bounded and reduces regressions during refactors.
+
 ### 4. Global Client State (Zustand)
 
 **Use for**: Truly global state like auth user, theme, sidebar state.
