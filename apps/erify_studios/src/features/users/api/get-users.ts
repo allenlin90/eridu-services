@@ -27,7 +27,6 @@ export function useUsersQuery(params: GetUsersParams) {
   return useQuery({
     queryKey: ['users', 'list', params],
     queryFn: () => getUsers(params),
-    staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
 }

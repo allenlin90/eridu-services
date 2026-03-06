@@ -26,13 +26,11 @@ export function useStudioMembershipsQuery(
   params: GetStudioMembershipsParams,
   options?: {
     enabled?: boolean;
-    staleTime?: number;
   },
 ) {
   return useQuery({
     queryKey: ['studio-memberships', 'list', studioId, params],
     queryFn: () => getStudioMemberships(studioId, params),
-    staleTime: options?.staleTime ?? 5 * 60 * 1000,
     placeholderData: (previousData: MembershipsResponse | undefined) => previousData,
     enabled: Boolean(studioId) && (options?.enabled ?? true),
   });

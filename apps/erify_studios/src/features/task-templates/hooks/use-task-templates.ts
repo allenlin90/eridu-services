@@ -53,7 +53,6 @@ export function useTaskTemplates({ studioId }: UseTaskTemplatesProps): UseTaskTe
         page: pageParam,
       }),
     initialPageParam: 1,
-    staleTime: 5 * 60 * 1000,
     getNextPageParam: (lastPage) => (lastPage.meta.page < lastPage.meta.totalPages ? lastPage.meta.page + 1 : undefined),
   });
 

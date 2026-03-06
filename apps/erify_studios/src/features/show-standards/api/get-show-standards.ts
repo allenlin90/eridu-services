@@ -28,7 +28,6 @@ export function useShowStandardsQuery(params: GetShowStandardsParams) {
   return useQuery({
     queryKey: ['show-standards', 'list', params],
     queryFn: () => getShowStandards(params),
-    staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
 }

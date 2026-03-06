@@ -13,7 +13,6 @@ export function useUserProfile() {
     queryFn: getUserProfile,
     enabled: !!session,
     retry: 1,
-    staleTime: 0,
     gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache for this long when inactive
     refetchOnWindowFocus: true, // Refetch when user comes back to the tab
     refetchOnMount: true, // Refetch when component mounts (if stale)

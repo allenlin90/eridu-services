@@ -53,7 +53,6 @@ export function useShowsQuery(params: GetShowsParams) {
   return useQuery({
     queryKey: ['shows', 'list', params],
     queryFn: () => getShows(params),
-    staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
 }

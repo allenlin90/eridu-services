@@ -24,7 +24,6 @@ export function useStudioShow({
     enabled: enabled && !!studioId && !!showId,
     initialData,
     initialDataUpdatedAt,
-    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 }

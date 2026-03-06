@@ -73,7 +73,6 @@ export function TaskDueDateDialog({
     queryKey: task?.id && studioId ? studioTaskKeys.detail(studioId, task.id) : studioTaskKeys.all,
     queryFn: () => getStudioTask(studioId!, task!.id),
     enabled: shouldFetch,
-    staleTime: 5_000,
     refetchOnWindowFocus: false,
   });
 
@@ -122,7 +121,6 @@ export function TaskDueDateDialog({
       const latestTask = await queryClient.fetchQuery({
         queryKey: studioTaskKeys.detail(studioId, resolvedTask.id),
         queryFn: () => getStudioTask(studioId, resolvedTask.id),
-        staleTime: 0,
       });
       onSave(latestTask.id, nextDueDate, latestTask.version);
     } catch {

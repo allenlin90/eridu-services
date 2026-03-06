@@ -25,7 +25,6 @@ export function useStudioRoomsQuery(params: GetStudioRoomsParams) {
   return useQuery({
     queryKey: ['studio-rooms', 'list', params],
     queryFn: () => getStudioRooms(params),
-    staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
 }

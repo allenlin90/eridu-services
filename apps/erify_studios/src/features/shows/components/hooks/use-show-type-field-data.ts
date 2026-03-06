@@ -12,7 +12,6 @@ export function useShowTypeFieldData(show: Show | null, studioId?: string) {
   const { data: showTypesData, isLoading } = useQuery({
     queryKey: ['show-types', 'list', studioId ?? 'admin', 'all'],
     queryFn: () => getShowTypes({ limit: 100 }, studioId),
-    staleTime: 60 * 60 * 1000, // 1 hour
   });
 
   const options = useMemo(() => {

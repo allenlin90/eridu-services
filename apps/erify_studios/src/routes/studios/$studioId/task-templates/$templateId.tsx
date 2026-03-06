@@ -77,11 +77,6 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
       });
       navigate({ to: '/studios/$studioId/task-templates', params: { studioId } });
     },
-    onError: (error) => {
-      toast.error('Error updating template', {
-        description: error.message,
-      });
-    },
   });
 
   const [errors, setErrors] = useState<Record<string, string[]>>({});

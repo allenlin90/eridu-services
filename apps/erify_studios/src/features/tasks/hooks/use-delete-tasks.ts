@@ -43,8 +43,5 @@ export function useDeleteTasks({ studioId, showId, onSuccess }: UseDeleteTasksPr
         });
       }
     },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to delete tasks');
-    },
   });
 }

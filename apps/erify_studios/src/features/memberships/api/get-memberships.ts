@@ -35,7 +35,6 @@ export function useMembershipsQuery(params: GetMembershipsParams) {
   return useQuery({
     queryKey: ['memberships', 'list', params],
     queryFn: () => getMemberships(params),
-    staleTime: 5 * 60 * 1000,
     placeholderData: (previousData: MembershipsResponse | undefined) => previousData,
   });
 }
