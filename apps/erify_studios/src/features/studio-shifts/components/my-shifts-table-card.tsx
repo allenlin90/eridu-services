@@ -1,4 +1,4 @@
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, ShieldCheck } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
 
 import {
@@ -178,7 +178,15 @@ export function MyShiftsTableCard({
                               {formatProjectedCost(shift)}
                             </TableCell>
                             <TableCell>
-                              <Badge variant="outline">{shift.status}</Badge>
+                              <div className="flex flex-wrap gap-1">
+                                <Badge variant="outline">{shift.status}</Badge>
+                                {shift.is_duty_manager && (
+                                  <Badge variant="secondary" className="px-1.5 py-0 border-amber-200 bg-amber-50 text-amber-700">
+                                    <ShieldCheck className="h-3 w-3 mr-1" />
+                                    Duty
+                                  </Badge>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
                               {formatDateTime(shift.updated_at)}

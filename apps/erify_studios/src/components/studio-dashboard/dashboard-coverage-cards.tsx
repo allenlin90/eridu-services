@@ -1,5 +1,5 @@
-import { AlertTriangle, CheckCircle2, UserCheck, UserMinus } from 'lucide-react';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, CheckCircle2, ShieldCheck, UserCheck, UserMinus } from 'lucide-react';
+import { memo, type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import {
   Badge,
@@ -37,6 +37,7 @@ type DashboardMyUpcomingShiftsCardProps = {
   previewUntil: string;
   isSelectedToday: boolean;
   dayStartMs: number;
+  viewAllLink?: ReactNode;
 };
 
 export const DashboardDutyCoverageCards = memo(({
@@ -161,6 +162,7 @@ export const DashboardMyUpcomingShiftsCard = memo(({
   previewUntil,
   isSelectedToday,
   dayStartMs,
+  viewAllLink,
 }: DashboardMyUpcomingShiftsCardProps) => {
   const [nowMs, setNowMs] = useState(() => Date.now());
 
@@ -202,6 +204,7 @@ export const DashboardMyUpcomingShiftsCard = memo(({
             Next 5 assigned shifts from the selected operational day.
           </CardDescription>
         </div>
+        {viewAllLink}
       </CardHeader>
       <CardContent className="space-y-2">
         {(isLoadingMyShifts || isFetchingMyShifts)
@@ -216,7 +219,15 @@ export const DashboardMyUpcomingShiftsCard = memo(({
                 <div className="space-y-2">
                   {myUpcomingShifts.map((shift) => (
                     <div key={shift.id} className="rounded-md border p-2">
-                      <p className="text-sm font-medium">{formatDate(shift.date)}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{formatDate(shift.date)}</p>
+                        {shift.is_duty_manager && (
+                          <Badge variant="secondary" className="px-1.5 py-0 border-amber-200 bg-amber-50 text-amber-700">
+                            <ShieldCheck className="h-3 w-3 mr-1" />
+                            Duty
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         {getShiftWindowLabel(shift)}
                         {' | '}

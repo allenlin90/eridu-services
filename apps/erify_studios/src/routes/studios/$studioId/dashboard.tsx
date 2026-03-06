@@ -180,8 +180,13 @@ function StudioDashboardPage() {
             navigateDashboard((previous) => ({ ...previous, page: Math.min(totalShowPages, showsPage + 1) }))}
         />
 
-        <div className="space-y-2">
-          <div className="flex justify-end">
+        <DashboardMyUpcomingShiftsCard
+          studioId={studioId}
+          selectedDate={selectedDate}
+          previewUntil={previewUntil}
+          isSelectedToday={isSelectedToday}
+          dayStartMs={dayStart.getTime()}
+          viewAllLink={(
             <Button asChild size="sm" variant="outline">
               <Link
                 to="/studios/$studioId/my-shifts"
@@ -191,15 +196,8 @@ function StudioDashboardPage() {
                 View All
               </Link>
             </Button>
-          </div>
-          <DashboardMyUpcomingShiftsCard
-            studioId={studioId}
-            selectedDate={selectedDate}
-            previewUntil={previewUntil}
-            isSelectedToday={isSelectedToday}
-            dayStartMs={dayStart.getTime()}
-          />
-        </div>
+          )}
+        />
       </div>
     </PageLayout>
   );
