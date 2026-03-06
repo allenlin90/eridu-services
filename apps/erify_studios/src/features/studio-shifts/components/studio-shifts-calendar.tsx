@@ -5,7 +5,7 @@ import {
   viewWeek,
 } from '@schedule-x/calendar';
 import { useNextCalendarApp } from '@schedule-x/react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Temporal as TemporalNamespace } from 'temporal-polyfill';
 
 import '@schedule-x/theme-default/dist/index.css';
@@ -200,6 +200,10 @@ export function StudioShiftsCalendar({
       onRangeUpdate: handleCalendarRangeUpdate,
     },
   });
+
+  useEffect(() => {
+    calendarApp?.events.set(calendarEvents);
+  }, [calendarApp, calendarEvents]);
 
   return (
     <div className="grid gap-4">

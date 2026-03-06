@@ -40,7 +40,6 @@ type ShiftRosterCardProps = {
   limit: number;
   canManageShifts: boolean;
   memberMap: Map<string, MemberInfo>;
-  deleteConfirmShiftId: string | null;
   isMutating: boolean;
   getShiftDisplayDate: (shift: StudioShift) => string;
   getShiftBlockLabels: (shift: StudioShift) => string[];
@@ -64,7 +63,6 @@ export function ShiftRosterCard({
   limit,
   canManageShifts,
   memberMap,
-  deleteConfirmShiftId,
   isMutating,
   getShiftDisplayDate,
   getShiftBlockLabels,
@@ -221,13 +219,9 @@ export function ShiftRosterCard({
                                       </DropdownMenuItem>
                                       <DropdownMenuItem
                                         onClick={() => onDelete(shift.id)}
-                                        className={
-                                          deleteConfirmShiftId === shift.id
-                                            ? 'text-destructive focus:bg-destructive focus:text-destructive-foreground'
-                                            : ''
-                                        }
+                                        className="text-destructive focus:text-destructive"
                                       >
-                                        {deleteConfirmShiftId === shift.id ? 'Confirm Delete' : 'Delete Shift'}
+                                        Delete Shift
                                       </DropdownMenuItem>
                                     </DropdownMenuContent>
                                   </DropdownMenu>

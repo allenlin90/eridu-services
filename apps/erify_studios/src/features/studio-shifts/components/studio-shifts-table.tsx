@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { DeleteConfirmDialog } from '@/features/admin/components';
 import { useStudioMembershipsQuery } from '@/features/memberships/api/get-studio-memberships';
 import { useAssignDutyManager } from '@/features/studio-shifts/api/assign-duty-manager';
 import {
@@ -70,7 +71,7 @@ type ToolbarSearchParams = {
 };
 
 export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearch }: StudioShiftsTableProps) {
-  const [deleteConfirmShiftId, setDeleteConfirmShiftId] = useState<string | null>(null);
+  const [deleteDialogShiftId, setDeleteDialogShiftId] = useState<string | null>(null);
   const [tableMemberSearch, setTableMemberSearch] = useState('');
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -193,15 +194,24 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     }
   }, [createFormState, createShiftMutation]);
 
-  const handleDeleteShift = useCallback(async (shiftId: string) => {
-    if (deleteConfirmShiftId !== shiftId) {
-      setDeleteConfirmShiftId(shiftId);
+  const handleDeleteClick = useCallback((shiftId: string) => {
+    setDeleteDialogShiftId(shiftId);
+  }, []);
+
+  const handleDeleteDialogOpenChange = useCallback((open: boolean) => {
+    if (!open) {
+      setDeleteDialogShiftId(null);
+    }
+  }, []);
+
+  const handleDeleteShift = useCallback(async () => {
+    if (!deleteDialogShiftId) {
       return;
     }
 
-    await deleteShiftMutation.mutateAsync(shiftId);
-    setDeleteConfirmShiftId(null);
-  }, [deleteConfirmShiftId, deleteShiftMutation]);
+    await deleteShiftMutation.mutateAsync(deleteDialogShiftId);
+    setDeleteDialogShiftId(null);
+  }, [deleteDialogShiftId, deleteShiftMutation]);
 
   const handleSetDutyManager = useCallback(async (shiftId: string, isDutyManager: boolean) => {
     await assignDutyManagerMutation.mutateAsync({ shiftId, isDutyManager });
@@ -361,7 +371,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
         limit={search.limit}
         canManageShifts
         memberMap={memberMap}
-        deleteConfirmShiftId={deleteConfirmShiftId}
         isMutating={
           assignDutyManagerMutation.isPending
           || updateShiftMutation.isPending
@@ -373,10 +382,21 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
         getShiftWindowLabel={getShiftWindowLabel}
         onToggleDutyManager={handleSetDutyManager}
         onEdit={handleStartEdit}
-        onDelete={handleDeleteShift}
+        onDelete={handleDeleteClick}
         onPreviousPage={handlePreviousPage}
         onNextPage={handleNextPage}
         onLimitChange={handleLimitChange}
+      />
+
+      <DeleteConfirmDialog
+        open={Boolean(deleteDialogShiftId)}
+        onOpenChange={handleDeleteDialogOpenChange}
+        onConfirm={() => {
+          void handleDeleteShift();
+        }}
+        title="Delete Shift"
+        description="This action cannot be undone. This will permanently delete this shift."
+        isLoading={deleteShiftMutation.isPending}
       />
 
       <StudioShiftFormDialog

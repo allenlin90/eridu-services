@@ -39,6 +39,25 @@ vi.mock('@/features/studio-shifts/api/delete-studio-shift', () => ({
   useDeleteStudioShift: () => ({ mutateAsync: mockDeleteMutateAsync, isPending: false }),
 }));
 
+vi.mock('@/features/admin/components', () => ({
+  DeleteConfirmDialog: ({
+    open,
+    onConfirm,
+  }: {
+    open: boolean;
+    onConfirm: () => void;
+  }) => (
+    <div>
+      <p data-testid="delete-dialog">{open ? 'open' : 'closed'}</p>
+      {open && (
+        <button type="button" onClick={onConfirm}>
+          confirm-delete
+        </button>
+      )}
+    </div>
+  ),
+}));
+
 vi.mock('@/features/studio-shifts/components/shift-toolbar', () => ({
   ShiftToolbar: ({ onCreateClick }: { onCreateClick: () => void }) => (
     <button type="button" onClick={onCreateClick}>
@@ -50,18 +69,15 @@ vi.mock('@/features/studio-shifts/components/shift-toolbar', () => ({
 vi.mock('@/features/studio-shifts/components/shift-roster-card', () => ({
   ShiftRosterCard: ({
     shifts,
-    deleteConfirmShiftId,
     onDelete,
     onLimitChange,
   }: {
     shifts: Array<{ id: string }>;
-    deleteConfirmShiftId: string | null;
     onDelete: (shiftId: string) => void;
     onLimitChange: (limit: number) => void;
   }) => (
     <div>
       <p data-testid="shift-order">{shifts.map((shift) => shift.id).join(',')}</p>
-      <p data-testid="delete-confirm">{deleteConfirmShiftId ?? ''}</p>
       <button type="button" onClick={() => onDelete('ssh_1')}>
         delete-ssh-1
       </button>
@@ -155,7 +171,7 @@ describe('studioShiftsTable', () => {
     expect(screen.getByTestId('shift-order')).toHaveTextContent('ssh_early,ssh_late');
   });
 
-  it('requires double click to confirm delete before mutation', async () => {
+  it('opens delete confirmation dialog before mutation', async () => {
     const user = userEvent.setup();
     mockDeleteMutateAsync.mockResolvedValue(undefined);
     mockUseStudioShifts.mockReturnValue({
@@ -180,9 +196,9 @@ describe('studioShiftsTable', () => {
     await user.click(screen.getByRole('button', { name: 'delete-ssh-1' }));
 
     expect(mockDeleteMutateAsync).not.toHaveBeenCalled();
-    expect(screen.getByTestId('delete-confirm')).toHaveTextContent('ssh_1');
+    expect(screen.getByTestId('delete-dialog')).toHaveTextContent('open');
 
-    await user.click(screen.getByRole('button', { name: 'delete-ssh-1' }));
+    await user.click(screen.getByRole('button', { name: 'confirm-delete' }));
 
     await waitFor(() => {
       expect(mockDeleteMutateAsync).toHaveBeenCalledWith('ssh_1');
