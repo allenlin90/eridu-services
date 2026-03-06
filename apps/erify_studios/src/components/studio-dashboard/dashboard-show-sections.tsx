@@ -111,7 +111,11 @@ export function OperationalDayShowListCard({
         </div>
         {isStudioAdmin && (
           <Button asChild size="sm" variant="outline">
-            <Link to="/studios/$studioId/shifts" params={{ studioId }}>
+            <Link
+              to="/studios/$studioId/shifts"
+              params={{ studioId }}
+              search={{ view: 'calendar', page: 1, limit: 20 }}
+            >
               Manage Shifts
             </Link>
           </Button>

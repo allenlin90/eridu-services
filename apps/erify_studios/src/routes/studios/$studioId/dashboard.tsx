@@ -27,6 +27,7 @@ const dashboardSearchSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).catch(10),
   date: z.string().regex(DASHBOARD_DATE_PATTERN).optional().catch(undefined),
 });
+type DashboardSearch = z.infer<typeof dashboardSearchSchema>;
 
 const OPERATIONAL_DAY_END_HOUR = 6;
 const TIME_HH_MM_FORMATTER = new Intl.DateTimeFormat('en-US', {
@@ -102,13 +103,13 @@ function StudioDashboardPage() {
   const isTodayShowsLoading = isLoadingTodayShows || isFetchingTodayShows;
 
   const navigateDashboard = useCallback((
-    updater: (previous: typeof search) => typeof search,
+    updater: (previous: DashboardSearch) => DashboardSearch,
     options?: { replace?: boolean },
   ) => {
     void navigate({
       to: '/studios/$studioId/dashboard',
       params: { studioId },
-      search: updater,
+      search: (previous) => updater(previous as DashboardSearch),
       replace: options?.replace ?? false,
     });
   }, [navigate, studioId]);
@@ -191,15 +192,19 @@ function StudioDashboardPage() {
               limit: value,
             }))}
           onPreviousPage={() =>
-            navigateDashboard((previous) => ({ ...previous, page: Math.max(1, previous.page - 1) }))}
+            navigateDashboard((previous) => ({ ...previous, page: Math.max(1, showsPage - 1) }))}
           onNextPage={() =>
-            navigateDashboard((previous) => ({ ...previous, page: Math.min(totalShowPages, previous.page + 1) }))}
+            navigateDashboard((previous) => ({ ...previous, page: Math.min(totalShowPages, showsPage + 1) }))}
         />
 
         <div className="space-y-2">
           <div className="flex justify-end">
             <Button asChild size="sm" variant="outline">
-              <Link to="/studios/$studioId/my-shifts" params={{ studioId }}>
+              <Link
+                to="/studios/$studioId/my-shifts"
+                params={{ studioId }}
+                search={{ view: 'calendar', page: 1, limit: 20 }}
+              >
                 View All
               </Link>
             </Button>
