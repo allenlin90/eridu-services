@@ -109,6 +109,11 @@ export function StudioShiftsCalendar({
     });
   }, [calendarShifts, memberMap, queryScope]);
 
+  const calendarTimeZone = useMemo(() => {
+    const detectedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return detectedTimeZone || globalThis.Temporal?.Now.timeZoneId();
+  }, []);
+
   const handleCalendarRangeUpdate = useCallback((range: { start: unknown; end: unknown }) => {
     const startRaw = extractDateStringFromUnknown(range.start);
     const endRaw = extractDateStringFromUnknown(range.end);
@@ -132,6 +137,7 @@ export function StudioShiftsCalendar({
   const calendarApp = useNextCalendarApp({
     views: CALENDAR_VIEWS,
     defaultView: viewWeek.name,
+    ...(calendarTimeZone ? { timezone: calendarTimeZone } : {}),
     events: calendarEvents as unknown as CalendarEvent[],
     calendars: CALENDAR_CONFIG,
     callbacks: {
