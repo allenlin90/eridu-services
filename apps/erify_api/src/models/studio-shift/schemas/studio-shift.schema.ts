@@ -8,6 +8,22 @@ import { UserService } from '@/models/user/user.service';
 
 const studioShiftStatusSchema = z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']);
 
+const booleanQueryParamSchema = z.preprocess((value) => {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true') {
+      return true;
+    }
+    if (normalized === 'false') {
+      return false;
+    }
+  }
+  return value;
+}, z.boolean());
+
 /**
  * Metadata stored on each StudioShiftBlock.
  *
@@ -218,8 +234,8 @@ export const listStudioShiftsQuerySchema = paginationQuerySchema
       date_from: z.iso.date().optional(),
       date_to: z.iso.date().optional(),
       status: studioShiftStatusSchema.optional(),
-      is_duty_manager: z.coerce.boolean().optional(),
-      include_deleted: z.coerce.boolean().default(false),
+      is_duty_manager: booleanQueryParamSchema.optional(),
+      include_deleted: booleanQueryParamSchema.default(false),
     }),
   )
   .transform((data) => ({
@@ -240,8 +256,8 @@ export const listMyStudioShiftsQuerySchema = paginationQuerySchema
       date_from: z.iso.date().optional(),
       date_to: z.iso.date().optional(),
       status: studioShiftStatusSchema.optional(),
-      is_duty_manager: z.coerce.boolean().optional(),
-      include_deleted: z.coerce.boolean().default(false),
+      is_duty_manager: booleanQueryParamSchema.optional(),
+      include_deleted: booleanQueryParamSchema.default(false),
     }),
   )
   .transform((data) => ({
@@ -265,7 +281,7 @@ export const assignDutyManagerSchema = z.object({
 export const shiftCalendarQuerySchema = z.object({
   date_from: z.iso.date().optional(),
   date_to: z.iso.date().optional(),
-  include_cancelled: z.coerce.boolean().default(true),
+  include_cancelled: booleanQueryParamSchema.default(true),
 })
   .transform((data) => ({
     dateFrom: data.date_from ? new Date(data.date_from) : undefined,
@@ -276,7 +292,7 @@ export const shiftCalendarQuerySchema = z.object({
 export const shiftAlignmentQuerySchema = z.object({
   date_from: z.iso.date().optional(),
   date_to: z.iso.date().optional(),
-  include_cancelled: z.coerce.boolean().default(false),
+  include_cancelled: booleanQueryParamSchema.default(false),
 })
   .transform((data) => ({
     dateFrom: data.date_from ? new Date(data.date_from) : undefined,

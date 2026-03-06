@@ -58,6 +58,7 @@ export const DashboardDutyCoverageCards = memo(({
     date_from: selectedDate,
     date_to: previewUntil,
     is_duty_manager: true,
+    status: 'SCHEDULED',
   });
   const activeShiftStartMs = useMemo(
     () => (dutyManager ? getShiftFirstBlockStartMs(dutyManager) : null),
@@ -66,6 +67,9 @@ export const DashboardDutyCoverageCards = memo(({
   const upcomingDutyManagerShifts = useMemo(() => {
     return sortShiftsByFirstBlockStart(dutyShiftResponse?.data ?? [])
       .filter((shift) => {
+        if (shift.status !== 'SCHEDULED') {
+          return false;
+        }
         const shiftStartMs = getShiftFirstBlockStartMs(shift);
         if (shiftStartMs === null) {
           return false;

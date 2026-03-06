@@ -33,7 +33,7 @@ export const Route = createFileRoute('/studios/$studioId/shifts/')({
 
 function getDefaultSummaryPlanningRange() {
   const from = toLocalDateInputValue(new Date());
-  const to = toLocalDateInputValue(addDays(fromLocalDateInput(from), SUMMARY_RANGE_DAYS));
+  const to = toLocalDateInputValue(addDays(fromLocalDateInput(from), SUMMARY_RANGE_DAYS - 1));
   return { from, to };
 }
 
@@ -63,7 +63,7 @@ const ShiftCostSnapshotCard = memo(({ studioId }: { studioId: string }) => {
     const nextFrom = range?.from ? toLocalDateInputValue(range.from) : fallbackFrom;
     const nextTo = range?.to
       ? toLocalDateInputValue(range.to)
-      : toLocalDateInputValue(addDays(fromLocalDateInput(nextFrom), SUMMARY_RANGE_DAYS));
+      : toLocalDateInputValue(addDays(fromLocalDateInput(nextFrom), SUMMARY_RANGE_DAYS - 1));
 
     setPlanningDateFrom(nextFrom);
     setPlanningDateTo(nextTo);
