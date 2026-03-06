@@ -27,6 +27,7 @@ vi.mock('@eridu/ui', () => ({
   SheetHeader: ({ children }: any) => <div>{children}</div>,
   SheetTitle: ({ children }: any) => <h1>{children}</h1>,
   SheetDescription: ({ children }: any) => <p>{children}</p>,
+  Progress: () => <div data-testid="progress" />,
   Label: ({ children, htmlFor }: any) => <label htmlFor={htmlFor}>{children}</label>,
   Textarea: ({ id, value, onChange, placeholder, className }: any) => (
     <textarea
@@ -45,18 +46,23 @@ vi.mock('@eridu/ui', () => ({
 }));
 
 vi.mock('@/components/json-form/json-form', () => ({
-  JsonForm: ({ ref, ..._ }) => {
+  JsonForm: ({ ref, activeGroup }: any) => {
     useImperativeHandle(ref, () => ({
       validateBeforeSubmit: vi.fn().mockResolvedValue({ proof: 'ok' }),
       flushPendingFileUploads: vi.fn().mockResolvedValue({ proof: 'ok' }),
       hasPendingFileUploads: vi.fn().mockReturnValue(false),
       hasBlockingFileIssues: vi.fn().mockReturnValue(false),
     }));
-    return <div data-testid="json-form">mock-form</div>;
+    return (
+      <div data-testid="json-form">
+        mock-form:
+        {activeGroup ?? 'all'}
+      </div>
+    );
   },
 }));
 
-function createTask(): TaskWithRelationsDto {
+function createTask(schema: Record<string, unknown> = { items: [] }): TaskWithRelationsDto {
   return {
     id: 'task_1',
     uid: 'task_1',
@@ -69,9 +75,7 @@ function createTask(): TaskWithRelationsDto {
     created_at: '2026-03-03T00:00:00.000Z',
     updated_at: '2026-03-03T00:00:00.000Z',
     snapshot: {
-      schema: {
-        items: [],
-      },
+      schema,
     },
     show: null,
     template: null,
@@ -131,6 +135,55 @@ describe('studioTaskActionSheet draft clearing', () => {
     });
     await waitFor(() => {
       expect(idb.del).toHaveBeenCalledWith('studio_task_action_draft:task_1:SUBMIT_FOR_REVIEW');
+    });
+  });
+
+  it('uses grouped moderation navigation for looped schema on submit for review', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <StudioTaskActionSheet
+        studioId="studio_1"
+        open
+        task={createTask({
+          items: [
+            {
+              id: 'field_loop_1',
+              key: 'loop_1_note',
+              type: 'text',
+              label: 'Loop 1 Note',
+              required: false,
+              group: 'l1',
+            },
+            {
+              id: 'field_loop_2',
+              key: 'loop_2_note',
+              type: 'text',
+              label: 'Loop 2 Note',
+              required: false,
+              group: 'l2',
+            },
+          ],
+          metadata: {
+            loops: [
+              { id: 'l1', name: 'Loop 1', durationMin: 15 },
+              { id: 'l2', name: 'Loop 2', durationMin: 15 },
+            ],
+          },
+        })}
+        action={TASK_ACTION.SUBMIT_FOR_REVIEW}
+        onOpenChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Loop Progress')).toBeInTheDocument();
+    expect(screen.getByTestId('json-form')).toHaveTextContent('mock-form:l1');
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('json-form')).toHaveTextContent('mock-form:l2');
     });
   });
 });

@@ -11,6 +11,7 @@ import {
 import {
   Button,
   Label,
+  Progress,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -50,6 +51,7 @@ const DEFAULT_UPLOAD_STATE: JsonFormUploadState = {
 };
 const TASK_ACTION_DRAFT_PREFIX = 'studio_task_action_draft';
 const DRAFT_SAVE_DEBOUNCE_MS = 500;
+const DEFAULT_LOOP_DURATION_MIN = 15;
 
 type TaskActionDraftCache = {
   taskId: string;
@@ -58,6 +60,17 @@ type TaskActionDraftCache = {
   baseContent: Record<string, unknown>;
   baseVersion: number;
   updatedAt: string;
+};
+
+type LoopTab = {
+  id: string;
+  name: string;
+  durationMin: number;
+};
+
+type LoopProgress = {
+  completed: number;
+  total: number;
 };
 
 function getTaskActionDraftKey(taskId: string, action: TaskAction): string {
@@ -119,10 +132,81 @@ function StudioTaskActionSheetBody({
   const schema = resolvedTask?.snapshot?.schema
     ? resolveUiSchema(resolvedTask.snapshot.schema)
     : null;
+  const loopTabs = useMemo<LoopTab[]>(() => {
+    if (!schema) {
+      return [];
+    }
+
+    const groups = Array.from(new Set(schema.items.map((item) => item.group).filter((group): group is string => !!group)));
+    if (groups.length === 0) {
+      return [];
+    }
+
+    const metadataLoops = schema.metadata?.loops;
+    if (metadataLoops && metadataLoops.length > 0) {
+      const filteredLoops = metadataLoops
+        .filter((loop) => groups.includes(loop.id))
+        .map((loop) => ({
+          id: loop.id,
+          name: loop.name,
+          durationMin: loop.durationMin,
+        }));
+
+      if (filteredLoops.length > 0) {
+        return filteredLoops;
+      }
+    }
+
+    return groups.map((group) => ({
+      id: group,
+      name: group,
+      durationMin: DEFAULT_LOOP_DURATION_MIN,
+    }));
+  }, [schema]);
+  const [activeGroup, setActiveGroup] = useState<string | undefined>(undefined);
+  const resolvedActiveGroup = useMemo(() => {
+    if (loopTabs.length === 0) {
+      return undefined;
+    }
+    if (activeGroup && loopTabs.some((loop) => loop.id === activeGroup)) {
+      return activeGroup;
+    }
+    return loopTabs[0].id;
+  }, [activeGroup, loopTabs]);
   const content = useMemo(
     () => (isDirty ? (contentDraft ?? {}) : ((resolvedTask?.content as Record<string, unknown> | null) ?? {})),
     [contentDraft, isDirty, resolvedTask?.content],
   );
+  const loopProgressById = useMemo<Record<string, LoopProgress>>(() => {
+    if (!schema) {
+      return {};
+    }
+
+    return schema.items.reduce<Record<string, LoopProgress>>((acc, item) => {
+      if (!item.group) {
+        return acc;
+      }
+
+      if (!acc[item.group]) {
+        acc[item.group] = { completed: 0, total: 0 };
+      }
+
+      const current = acc[item.group];
+      current.total += 1;
+      const value = content[item.key];
+      const isCompleted = value !== undefined && value !== null && (typeof value !== 'string' || value.trim().length > 0);
+      if (isCompleted) {
+        current.completed += 1;
+      }
+
+      return acc;
+    }, {});
+  }, [content, schema]);
+  const activeLoopIndex = loopTabs.findIndex((loop) => loop.id === resolvedActiveGroup);
+  const activeLoop = activeLoopIndex >= 0 ? loopTabs[activeLoopIndex] : undefined;
+  const loopStepProgress = loopTabs.length > 0 && activeLoopIndex >= 0
+    ? ((activeLoopIndex + 1) / loopTabs.length) * 100
+    : 0;
   const resolvedTaskContent = useMemo(
     () => ((resolvedTask?.content as Record<string, unknown> | null) ?? {}),
     [resolvedTask?.content],
@@ -237,19 +321,78 @@ function StudioTaskActionSheetBody({
               )}
               {schema
                 ? (
-                    // activeGroup is intentionally omitted — studio reviewers see all fields
-                    // across all loops at once to have a complete view of the task content.
-                    <JsonForm
-                      ref={jsonFormRef}
-                      schema={schema}
-                      values={content}
-                      uploadTaskId={resolvedTask?.id}
-                      onUploadStateChange={setUploadState}
-                      onChange={(values) => {
-                        setIsDirty(true);
-                        setContentDraft(values);
-                      }}
-                    />
+                    <>
+                      {loopTabs.length > 0 && (
+                        <div className="mb-4 rounded-md border bg-muted/20 p-3">
+                          <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+                            <span>Loop Progress</span>
+                            <span>
+                              {activeLoopIndex + 1}
+                              /
+                              {loopTabs.length}
+                              {' '}
+                              loops
+                            </span>
+                          </div>
+                          <Progress value={loopStepProgress} className="h-1.5" />
+                          <div className="mt-2 rounded-md border bg-background p-2">
+                            <p className="text-sm font-medium">
+                              {activeLoopIndex + 1}
+                              .
+                              {' '}
+                              {activeLoop?.name ?? '-'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Items completed:
+                              {' '}
+                              {(activeLoop ? loopProgressById[activeLoop.id]?.completed : 0) ?? 0}
+                              /
+                              {(activeLoop ? loopProgressById[activeLoop.id]?.total : 0) ?? 0}
+                            </p>
+                          </div>
+                          <div className="mt-3 flex items-center justify-between">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={activeLoopIndex <= 0}
+                              onClick={() => {
+                                if (activeLoopIndex <= 0) {
+                                  return;
+                                }
+                                setActiveGroup(loopTabs[activeLoopIndex - 1]?.id);
+                              }}
+                            >
+                              Previous
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={activeLoopIndex < 0 || activeLoopIndex >= loopTabs.length - 1}
+                              onClick={() => {
+                                if (activeLoopIndex < 0 || activeLoopIndex >= loopTabs.length - 1) {
+                                  return;
+                                }
+                                setActiveGroup(loopTabs[activeLoopIndex + 1]?.id);
+                              }}
+                            >
+                              Next
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      <JsonForm
+                        ref={jsonFormRef}
+                        schema={schema}
+                        values={content}
+                        activeGroup={loopTabs.length > 0 ? resolvedActiveGroup : undefined}
+                        uploadTaskId={resolvedTask?.id}
+                        onUploadStateChange={setUploadState}
+                        onChange={(values) => {
+                          setIsDirty(true);
+                          setContentDraft(values);
+                        }}
+                      />
+                    </>
                   )
                 : (
                     <p className="text-sm text-muted-foreground">
