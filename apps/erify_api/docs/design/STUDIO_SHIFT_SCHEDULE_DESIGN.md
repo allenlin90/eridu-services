@@ -162,3 +162,21 @@ Integrate a Studio-based user shift schedule feature to track part-timer shifts,
 - `pnpm --filter @eridu/api-types typecheck` — passed
 - `pnpm --filter @eridu/api-types build` — passed
 - All E2E review findings resolved. See `STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md` for full resolution record.
+
+## PR Review Bug Fixes (March 6, 2026)
+
+### P1 — FE: Cross-midnight sequential advance applied to same-day overlaps
+
+**File**: `apps/erify_studios/src/features/studio-shifts/utils/studio-shifts-table.utils.ts`
+
+`validateShiftBlocks()` previously ran an unconditional `while` loop to advance a block's dates forward when `startDate < previousEndTime`. This was intended to handle the cross-midnight sequential authoring pattern (a block's time input anchored to the shift date appearing before a previous block's cross-midnight end). However, the loop also silently advanced genuinely overlapping same-day blocks (e.g. `09:00–12:00` followed by `11:00–13:00`) to the next calendar day instead of returning a validation error — producing unintended multi-day shifts with incorrect costs and misleading Schedule-X timeline placement.
+
+**Fix**: The sequential while loop is now gated on `prevBlockCrossedMidnight`. Only when the previous block's `endDate` falls on a different calendar day than its `startDate` can a subsequent block's time be legitimately auto-advanced. Same-day overlapping blocks now correctly return `{ error: 'Time blocks cannot overlap.' }`.
+
+### P2 — BE: Hourly rate re-derived when same `user_id` sent in PATCH body
+
+**File**: `apps/erify_api/src/models/studio-shift/studio-shift.service.ts`
+
+`updateShift()` previously re-derived `hourlyRate` from the member's `baseHourlyRate` whenever `payload.userId` was present, even when the value matched the existing assignee. A PATCH payload like `{ user_id: "...", is_duty_manager: true }` (common for duty-manager toggles) could fail with `"Hourly rate is required"` for members without a `baseHourlyRate`, even though the shift already had a valid stored rate.
+
+**Fix**: Rate re-derivation is now gated on `payload.userId !== existing.user.uid` (an actual user change). Sending the current `user_id` alongside other fields preserves the stored hourly rate unchanged.

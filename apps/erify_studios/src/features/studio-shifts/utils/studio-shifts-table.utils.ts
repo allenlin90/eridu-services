@@ -37,6 +37,13 @@ export function validateShiftBlocks(date: string, formBlocks: ShiftBlockFormStat
 
   const blocks: { start_time: string; end_time: string }[] = [];
   let previousEndTime: Date | null = null;
+  // Tracks whether the previous block's endDate fell on a different calendar day than its
+  // startDate (i.e. it crossed midnight). Only when the previous block crossed midnight is it
+  // valid to auto-advance the current block's dates forward to the next day — that's the
+  // intended "cross-midnight sequential" authoring pattern (e.g. a 03:00–02:00 block followed
+  // by a 04:00–06:00 block that should resolve to the next day).
+  // When the previous block did NOT cross midnight, any overlap is a genuine user error.
+  let prevBlockCrossedMidnight = false;
   const sortedBlocks = sortShiftFormBlocksByStart(formBlocks);
 
   for (const block of sortedBlocks) {
@@ -47,11 +54,23 @@ export function validateShiftBlocks(date: string, formBlocks: ShiftBlockFormStat
     const startDate = new Date(combineDateAndTime(date, block.startTime));
     const endDate = new Date(combineDateAndTime(date, block.endTime));
 
+    // Advance endDate past midnight when end time wraps before start time (single-block
+    // cross-midnight normalization, e.g. 23:00–01:00 → next-day 01:00).
     while (endDate.getTime() <= startDate.getTime()) {
       endDate.setDate(endDate.getDate() + 1);
     }
 
-    if (previousEndTime) {
+    // Detect whether THIS block crosses midnight before any sequential advance.
+    // Adding a day to both startDate and endDate preserves this property, so the
+    // check is invariant to the sequential advance below.
+    const crossesMidnight = startDate.toDateString() !== endDate.toDateString();
+
+    // Sequential cross-midnight advance: only valid when the previous block crossed midnight.
+    // In that case a block time like "04:00" (anchored to the shift date) may legitimately
+    // need to be promoted to the next calendar day to follow the previous block sequentially.
+    // When the previous block did NOT cross midnight, reaching here means the blocks overlap
+    // on the same day — leave startDate untouched so the overlap check below fires correctly.
+    if (previousEndTime && prevBlockCrossedMidnight) {
       while (startDate.getTime() < previousEndTime.getTime()) {
         startDate.setDate(startDate.getDate() + 1);
         endDate.setDate(endDate.getDate() + 1);
@@ -64,6 +83,7 @@ export function validateShiftBlocks(date: string, formBlocks: ShiftBlockFormStat
 
     blocks.push({ start_time: startDate.toISOString(), end_time: endDate.toISOString() });
     previousEndTime = endDate;
+    prevBlockCrossedMidnight = crossesMidnight;
   }
 
   return { error: null, blocks };

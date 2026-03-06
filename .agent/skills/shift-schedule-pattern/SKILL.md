@@ -119,6 +119,20 @@ return {
 };
 ```
 
+### Partial Update — Hourly Rate Re-derivation
+
+On `updateShift`, hourly rate is re-derived from membership **only on an actual user reassignment** (i.e. `payload.userId` is present AND differs from `existing.user.uid`). Sending the current `user_id` alongside other fields (e.g. `is_duty_manager: true`) must not trigger membership lookup or throw `"Hourly rate is required"` — the shift's stored rate is preserved.
+
+```typescript
+const isReassignment = payload.userId && payload.userId !== existing.user.uid;
+if (isReassignment) {
+  const membership = await this.findStudioMembershipOrThrow(studioId, targetUserId);
+  if (!payload.hourlyRate) {
+    hourlyRate = this.resolveMembershipHourlyRateOrThrow(membership.baseHourlyRate);
+  }
+}
+```
+
 ### Overlap Guard
 
 `ensureNoOverlapInStudio()` prevents a user from having overlapping non-cancelled shifts. Skipped when resulting status is `CANCELLED`.
@@ -127,9 +141,29 @@ return {
 
 ## Frontend Contracts
 
-### FE Block Sorting
+### FE Block Sorting and Cross-Midnight Sequential Normalization
 
 Frontend `validateShiftBlocks()` must sort blocks by `startTime` **before** processing to ensure correct cross-midnight normalization and ISO string generation.
+
+Two distinct normalization steps run in sequence per block:
+
+1. **Single-block cross-midnight**: if `endDate <= startDate` (end time wraps past midnight), advance `endDate` by one day. Example: `23:00–01:00` → `March 5 23:00 – March 6 01:00`.
+2. **Sequential cross-midnight advance**: if the **previous** block crossed midnight and `startDate < previousEndTime`, advance both `startDate` and `endDate` forward (day by day until the overlap clears). Example: block A is `03:00–02:00` (→ March 6 02:00); block B entered as `04:00–06:00` initially resolves to March 5 04:00, which is before March 6 02:00 — advancing by one day gives March 6 04:00–06:00, which is correct.
+
+**Critical rule**: the sequential advance only runs when `prevBlockCrossedMidnight` is `true`. When the previous block did NOT cross midnight, any overlap is a genuine user input error and must be surfaced immediately (return `{ error: 'Time blocks cannot overlap.' }`). Applying the advance unconditionally silently converts overlapping same-day inputs (e.g. `09:00–12:00` and `11:00–13:00`) into unintended next-day blocks with wrong costs and incorrect Schedule-X timeline placement.
+
+```typescript
+// prevBlockCrossedMidnight tracks whether previous endDate != previous startDate (calendar day)
+if (previousEndTime && prevBlockCrossedMidnight) {
+  while (startDate.getTime() < previousEndTime.getTime()) {
+    startDate.setDate(startDate.getDate() + 1);
+    endDate.setDate(endDate.getDate() + 1);
+  }
+}
+if (previousEndTime && startDate.getTime() < previousEndTime.getTime()) {
+  return { error: 'Time blocks cannot overlap.', blocks: null };
+}
+```
 
 ### Calendar Card UX
 
@@ -242,6 +276,8 @@ When implementing shift-related features:
 - [ ] Prisma `Decimal` fields use `z.unknown()` in internal shapes with `decimalToString` helper
 - [ ] Form date+time combination uses local-time `Date` constructor (no `Z` suffix)
 - [ ] Orchestration response types (`StudioShiftCalendarResponse`, `StudioShiftAlignmentResponse`) are sourced from `@eridu/api-types/studio-shifts`
+- [ ] FE cross-midnight sequential day-advance is gated on `prevBlockCrossedMidnight` — same-day overlapping blocks must return an error, not silently advance
+- [ ] `updateShift` re-derives hourly rate only when assignee actually changes (`payload.userId !== existing.user.uid`)
 
 ---
 

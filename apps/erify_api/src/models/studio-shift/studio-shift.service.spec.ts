@@ -333,6 +333,43 @@ describe('studioShiftService', () => {
       );
     });
 
+    it('should preserve stored hourly rate when same user_id is sent without hourly_rate', async () => {
+      // Sending the current user_id alongside other fields (e.g. is_duty_manager) is a common
+      // PATCH pattern. It must NOT trigger membership lookup or re-derive the hourly rate —
+      // only an actual user change (different UID) warrants re-derivation.
+      repository.findByUidInStudio.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'ssh_1',
+        status: 'SCHEDULED',
+        user: { uid: 'user_1' },
+        hourlyRate: { toString: () => '20.00' },
+        blocks: [
+          {
+            startTime: new Date('2026-03-05T09:00:00.000Z'),
+            endTime: new Date('2026-03-05T12:00:00.000Z'),
+            metadata: {},
+          },
+        ],
+      } as never);
+      repository.updateShift.mockResolvedValue({ uid: 'ssh_1' } as never);
+
+      await service.updateShift('std_1', 'ssh_1', {
+        userId: 'user_1',
+        isDutyManager: true,
+      });
+
+      expect(membershipService.findOne).not.toHaveBeenCalled();
+      expect(repository.updateShift).toHaveBeenCalledWith(
+        'std_1',
+        'ssh_1',
+        expect.objectContaining({
+          isDutyManager: true,
+          hourlyRate: '20.00',
+        }),
+        BigInt(1),
+      );
+    });
+
     it('should inherit membership hourly rate when reassigned to another user', async () => {
       repository.findByUidInStudio.mockResolvedValue({
         id: BigInt(1),

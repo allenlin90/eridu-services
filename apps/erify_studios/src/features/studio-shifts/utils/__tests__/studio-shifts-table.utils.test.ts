@@ -46,7 +46,10 @@ describe('validateShiftBlocks', () => {
     expect(result.blocks).toBeNull();
   });
 
-  it('rolls subsequent blocks forward when start is earlier than previous end', () => {
+  it('sorts and normalizes blocks so each block starts after the previous ends', () => {
+    // After sorting by startTime string, '00:30' < '23:00' so the 00:30 block comes first.
+    // The 23:00 block crosses midnight (23:00 → next-day 01:00) and naturally follows.
+    // No sequential day-advance is needed — sorting handles the ordering.
     const result = validateShiftBlocks('2026-03-05', [
       { id: '1', startTime: '23:00', endTime: '01:00' },
       { id: '2', startTime: '00:30', endTime: '02:30' },
@@ -58,6 +61,36 @@ describe('validateShiftBlocks', () => {
     expect(new Date(blocks[1].start_time).getTime()).toBeGreaterThanOrEqual(
       new Date(blocks[0].end_time).getTime(),
     );
+  });
+
+  it('advances a sequential block to the next day when the previous block crosses midnight', () => {
+    // Block A: 03:00 → 02:00 (crosses midnight: resolves to March 5 03:00 → March 6 02:00)
+    // Block B: 04:00 → 06:00 (follows on March 6: auto-advanced because Block A crossed midnight)
+    // After sorting by startTime string: '03:00' < '04:00' → [Block A, Block B]
+    const result = validateShiftBlocks('2026-03-05', [
+      { id: '1', startTime: '03:00', endTime: '02:00' },
+      { id: '2', startTime: '04:00', endTime: '06:00' },
+    ]);
+
+    expect(result.error).toBeNull();
+    const blocks = result.blocks ?? [];
+    expect(blocks).toHaveLength(2);
+    // Block B should start after Block A ends (March 6 02:00)
+    expect(new Date(blocks[1].start_time).getTime()).toBeGreaterThanOrEqual(
+      new Date(blocks[0].end_time).getTime(),
+    );
+  });
+
+  it('rejects overlapping same-day blocks with an error instead of silently advancing them', () => {
+    // Block A: 09:00–12:00 and Block B: 11:00–13:00 overlap on the same day.
+    // Block A does NOT cross midnight, so Block B must not be auto-advanced.
+    const result = validateShiftBlocks('2026-03-05', [
+      { id: '1', startTime: '09:00', endTime: '12:00' },
+      { id: '2', startTime: '11:00', endTime: '13:00' },
+    ]);
+
+    expect(result.error).toBe('Time blocks cannot overlap.');
+    expect(result.blocks).toBeNull();
   });
 });
 

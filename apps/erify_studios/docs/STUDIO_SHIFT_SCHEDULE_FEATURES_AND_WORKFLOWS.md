@@ -294,6 +294,12 @@ Pending scope:
 3. **BE enforces**: `normalizeAndValidateBlocks` sorts by `startTime` before overlap validation ✅.
 4. **FE must sort blocks before API call**: Resolved in current branch work. `validateShiftBlocks` now sorts form blocks by `startTime` before cross-midnight normalization.
 
+### PR Review Bug Fixes (March 6, 2026)
+
+1. **FE: Cross-midnight sequential advance applied to same-day overlaps (P1)**: Fixed. `validateShiftBlocks` previously advanced overlapping same-day blocks to the next day instead of returning a validation error, producing unintended multi-day shifts and wrong costs in the calendar. The sequential day-advance is now gated on `prevBlockCrossedMidnight` — it only fires when the previous block actually crossed midnight (legitimate cross-midnight multi-block authoring). Same-day overlapping blocks are now correctly rejected with `"Time blocks cannot overlap."`.
+
+2. **BE: Hourly rate re-derived when same user_id sent in PATCH body (P2)**: Fixed. `updateShift` previously re-derived `hourlyRate` from the member's `baseHourlyRate` whenever `user_id` appeared in the payload, even if the assignee was unchanged. A PATCH sending `{ user_id: "...", is_duty_manager: true }` (no reassignment intent) could fail with `"Hourly rate is required"` for members without `baseHourlyRate`. The re-derivation is now gated on an actual user change (`payload.userId !== existing.user.uid`).
+
 ### Form Polish
 
 1. **Cross-midnight indicator**: Resolved in current branch work. `+1 day` badge is shown when end time wraps past midnight.
@@ -355,3 +361,9 @@ PR review fixes applied (knowledge sync pass — March 5, 2026):
 - Service layer: local `JsonValue`/`JsonObject` types replace Prisma type imports
 - Form utility: `combineDateAndTime` timezone fix (local-time ISO construction)
 - Shared API types: `StudioShiftCalendarResponse`/`StudioShiftAlignmentResponse` moved to `@eridu/api-types/studio-shifts`
+
+PR codex review fixes (March 6, 2026):
+- FE block validation: cross-midnight sequential advance gated on `prevBlockCrossedMidnight` — same-day overlapping blocks now correctly rejected
+- BE update: hourly rate re-derivation gated on actual user reassignment (`payload.userId !== existing.user.uid`)
+- Member shift views: `is_duty_manager` "Duty" badge added to My Shifts table and dashboard My Upcoming Shifts card
+- Dashboard: "View All" link moved into `DashboardMyUpcomingShiftsCard` header via `viewAllLink` render prop

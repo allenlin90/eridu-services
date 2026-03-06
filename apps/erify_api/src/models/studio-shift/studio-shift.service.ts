@@ -131,7 +131,12 @@ export class StudioShiftService extends BaseModelService {
 
     let hourlyRate = payload.hourlyRate ?? existing.hourlyRate.toString();
 
-    if (payload.userId) {
+    // Re-derive hourly rate from membership only on an actual reassignment (different user).
+    // Sending the same user_id in a PATCH payload (e.g. alongside is_duty_manager) must not
+    // trigger membership lookup or throw "Hourly rate is required" for members without a
+    // baseHourlyRate — the shift already has a valid stored rate in that case.
+    const isReassignment = payload.userId && payload.userId !== existing.user.uid;
+    if (isReassignment) {
       const membership = await this.findStudioMembershipOrThrow(studioId, targetUserId);
       if (!payload.hourlyRate) {
         hourlyRate = this.resolveMembershipHourlyRateOrThrow(membership.baseHourlyRate);
