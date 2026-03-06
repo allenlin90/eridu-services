@@ -1,4 +1,4 @@
-import { RotateCw, Search } from 'lucide-react';
+import { RefreshCw, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { Button, Input, type UseTableUrlStateReturn } from '@eridu/ui';
@@ -56,7 +56,7 @@ export function StudioShowsToolbar({ tableState, onRefresh, isRefreshing, total 
       </span>
 
       <Button variant="outline" size="sm" onClick={onRefresh} disabled={isRefreshing}>
-        <RotateCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+        <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
         <span className="sr-only">Refresh</span>
       </Button>
     </div>

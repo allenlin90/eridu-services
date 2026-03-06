@@ -1,4 +1,4 @@
-import { ChevronDown, Filter, MoreVertical, Plus, RotateCw } from 'lucide-react';
+import { ChevronDown, Filter, MoreVertical, Plus, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 
@@ -186,9 +186,15 @@ export function ShiftToolbar({
         <div className="flex items-center gap-2">
           {/* Desktop Actions */}
           <div className="hidden sm:flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={onRefresh} disabled={isRefreshing} className="h-9">
-              <RotateCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="h-9 w-9"
+              aria-label="Refresh shifts"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             </Button>
             <Button size="sm" onClick={onCreateClick} className="h-9">
               <Plus className="mr-2 h-4 w-4" />
@@ -211,7 +217,7 @@ export function ShiftToolbar({
                   Create Shift
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onRefresh} disabled={isRefreshing}>
-                  <RotateCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                   Refresh
                 </DropdownMenuItem>
               </DropdownMenuContent>

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { RotateCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
 import { adaptColumnFiltersChange, adaptPaginationChange, Button, DataTable, DataTablePagination, DataTableToolbar } from '@eridu/ui';
 
@@ -54,12 +54,13 @@ function StudioTasksPage() {
             >
               <Button
                 variant="outline"
-                size="sm"
-                className="h-8 w-full sm:w-auto"
+                size="icon"
+                className="h-8 w-8"
                 onClick={toolbarProps.onRefresh}
+                disabled={tableProps.isFetching}
+                aria-label="Refresh tasks"
               >
-                <RotateCw className="mr-2 h-4 w-4" />
-                Refresh
+                <RefreshCw className={`h-4 w-4 ${tableProps.isFetching ? 'animate-spin' : ''}`} />
               </Button>
             </DataTableToolbar>
           )}

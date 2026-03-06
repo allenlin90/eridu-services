@@ -1,7 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, getRouteApi } from '@tanstack/react-router';
 import type { OnChangeFn, RowSelectionState } from '@tanstack/react-table';
 import { AlertTriangle, ListTodo, RefreshCw } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 
 import {
@@ -34,6 +34,12 @@ import { useStudioShows } from '@/features/studio-shows/hooks/use-studio-shows';
 export const Route = createFileRoute('/studios/$studioId/shows/')({
   component: StudioShowsPage,
 });
+const showsRouteApi = getRouteApi('/studios/$studioId/shows');
+
+type ScopeRange = {
+  date_from?: string;
+  date_to?: string;
+};
 
 function addDays(base: Date, days: number): Date {
   const next = new Date(base);
@@ -56,15 +62,292 @@ function resolveUpdater<T>(updater: T | ((previous: T) => T), previous: T): T {
     : updater;
 }
 
-const QUICK_FILTER_COLUMNS = ['start_time'];
+function parseSearchDate(raw?: string): Date | undefined {
+  if (!raw) {
+    return undefined;
+  }
+
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return undefined;
+  }
+
+  return parsed;
+}
+
+function toApiDate(raw?: string): string | undefined {
+  const parsed = parseSearchDate(raw);
+  if (!parsed) {
+    return undefined;
+  }
+
+  return toLocalDateInputValue(parsed);
+}
+
+function buildScopeRange(range: DateRange | undefined): ScopeRange {
+  const fromDate = range?.from ?? range?.to;
+  const toDate = range?.to ?? range?.from;
+
+  if (!fromDate || !toDate) {
+    return {
+      date_from: undefined,
+      date_to: undefined,
+    };
+  }
+
+  return {
+    date_from: fromDate.toISOString(),
+    date_to: toDate.toISOString(),
+  };
+}
+
+function formatScopeLabel(dateFrom?: string, dateTo?: string): string {
+  const from = toApiDate(dateFrom);
+  const to = toApiDate(dateTo);
+
+  if (!from || !to) {
+    return 'No date scope selected';
+  }
+
+  return `${from} to ${to}`;
+}
+
+const QUICK_FILTER_COLUMNS: string[] = [];
 const FEATURED_FILTER_COLUMNS = ['has_tasks', 'client_name', 'show_status_name'];
 
 function StudioShowsPage() {
-  const { studioId } = Route.useParams();
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [planningDateFrom, setPlanningDateFrom] = useState(() => getDefaultPlanningRange().from);
-  const [planningDateTo, setPlanningDateTo] = useState(() => getDefaultPlanningRange().to);
+  const { studioId } = showsRouteApi.useParams();
+  const search = showsRouteApi.useSearch();
+  const navigate = showsRouteApi.useNavigate();
+  const [defaultScopeRange] = useState(() => {
+    const defaultRange = getDefaultPlanningRange();
+    return {
+      date_from: new Date(`${defaultRange.from}T00:00:00`).toISOString(),
+      date_to: new Date(`${defaultRange.to}T23:59:59`).toISOString(),
+    };
+  });
 
+  const updateSearch = useCallback((
+    updater: (previous: typeof search) => typeof search,
+    options?: { replace?: boolean },
+  ) => {
+    void navigate({
+      to: '/studios/$studioId/shows',
+      params: { studioId },
+      search: updater,
+      replace: options?.replace ?? true,
+    });
+  }, [navigate, studioId]);
+
+  useEffect(() => {
+    if (search.date_from && search.date_to) {
+      return;
+    }
+
+    updateSearch((previous) => ({
+      ...previous,
+      page: 1,
+      date_from: previous.date_from ?? defaultScopeRange.date_from,
+      date_to: previous.date_to ?? defaultScopeRange.date_to,
+    }), { replace: true });
+  }, [defaultScopeRange.date_from, defaultScopeRange.date_to, search.date_from, search.date_to, updateSearch]);
+
+  const scopeDateRange: DateRange | undefined = search.date_from || search.date_to
+    ? {
+        from: parseSearchDate(search.date_from),
+        to: parseSearchDate(search.date_to),
+      }
+    : undefined;
+
+  const handleScopeDateChange = useCallback((range: DateRange | undefined) => {
+    const nextScope = buildScopeRange(range);
+    updateSearch((previous) => ({
+      ...previous,
+      page: 1,
+      date_from: nextScope.date_from,
+      date_to: nextScope.date_to,
+    }));
+  }, [updateSearch]);
+
+  const handleResetScope = useCallback(() => {
+    updateSearch((previous) => ({
+      ...previous,
+      page: 1,
+      date_from: defaultScopeRange.date_from,
+      date_to: defaultScopeRange.date_to,
+    }));
+  }, [defaultScopeRange.date_from, defaultScopeRange.date_to, updateSearch]);
+
+  const handleResetAllFilters = useCallback(() => {
+    updateSearch((previous) => ({
+      ...previous,
+      page: 1,
+      search: undefined,
+      date_from: defaultScopeRange.date_from,
+      date_to: defaultScopeRange.date_to,
+      has_tasks: undefined,
+      client_name: undefined,
+      show_type_name: undefined,
+      show_standard_name: undefined,
+      show_status_name: undefined,
+      platform_name: undefined,
+    }));
+  }, [defaultScopeRange.date_from, defaultScopeRange.date_to, updateSearch]);
+
+  return (
+    <PageLayout
+      title="Shows"
+      description="Monitor task progress and assignments across all your studio shows."
+    >
+      <div className="space-y-4">
+        <Card>
+          <CardHeader className="gap-3">
+            <div className="space-y-1">
+              <CardTitle className="text-base">Scope</CardTitle>
+              <CardDescription>
+                This date range applies to both readiness summary and show list.
+              </CardDescription>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <DatePickerWithRange
+                  date={scopeDateRange}
+                  setDate={handleScopeDateChange}
+                />
+                <Button variant="outline" size="sm" onClick={handleResetScope}>
+                  Next 7 Days
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleResetAllFilters}>
+                  Reset Filters
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Active scope:
+                {' '}
+                {formatScopeLabel(search.date_from, search.date_to)}
+              </p>
+            </div>
+          </CardHeader>
+        </Card>
+
+        <ShowTaskReadinessSection
+          studioId={studioId}
+          scopeDateFrom={search.date_from}
+          scopeDateTo={search.date_to}
+        />
+
+        <StudioShowsTableSection
+          studioId={studioId}
+          scopeLabel={formatScopeLabel(search.date_from, search.date_to)}
+        />
+      </div>
+    </PageLayout>
+  );
+}
+
+function ShowTaskReadinessSection({
+  studioId,
+  scopeDateFrom,
+  scopeDateTo,
+}: {
+  studioId: string;
+  scopeDateFrom?: string;
+  scopeDateTo?: string;
+}) {
+  const planningDateFrom = toApiDate(scopeDateFrom);
+  const planningDateTo = toApiDate(scopeDateTo);
+  const hasIncompletePlanningRange = !planningDateFrom || !planningDateTo;
+  const hasInvalidPlanningRange = !hasIncompletePlanningRange && planningDateFrom > planningDateTo;
+  const alignmentQueryParams = useMemo(() => ({
+    ...(planningDateFrom ? { date_from: planningDateFrom } : {}),
+    ...(planningDateTo ? { date_to: planningDateTo } : {}),
+    include_cancelled: false,
+  }), [planningDateFrom, planningDateTo]);
+
+  const {
+    data: shiftAlignmentResponse,
+    isLoading: isLoadingShiftAlignment,
+    isFetching: isFetchingShiftAlignment,
+    refetch: refetchShiftAlignment,
+  } = useShiftAlignment(
+    studioId,
+    alignmentQueryParams,
+    {
+      enabled: !hasIncompletePlanningRange && !hasInvalidPlanningRange,
+    },
+  );
+
+  const taskReadinessWarningCount = shiftAlignmentResponse?.task_readiness_warnings.length ?? 0;
+  const showsMissingRequiredTaskTypes = shiftAlignmentResponse?.task_readiness_warnings
+    .filter((warning) => !warning.has_no_tasks && warning.missing_required_task_types.length > 0)
+    .length ?? 0;
+
+  return (
+    <Card>
+      <CardHeader className="gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <CardTitle className="text-base flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              Readiness Snapshot
+            </CardTitle>
+            <CardDescription>
+              Summary for shows in selected scope.
+            </CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => void refetchShiftAlignment()}
+            disabled={isFetchingShiftAlignment || hasIncompletePlanningRange || hasInvalidPlanningRange}
+            aria-label="Refresh task readiness warnings"
+          >
+            <RefreshCw className={`h-4 w-4 ${isFetchingShiftAlignment ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+        {hasIncompletePlanningRange && (
+          <p className="text-sm text-muted-foreground">Select a date range to load readiness snapshot.</p>
+        )}
+        {hasInvalidPlanningRange && (
+          <p className="text-sm text-destructive">Scope end date must be on or after start date.</p>
+        )}
+      </CardHeader>
+      <CardContent>
+        {(isLoadingShiftAlignment || isFetchingShiftAlignment)
+          ? (
+              <p className="text-sm text-muted-foreground">Checking show task readiness...</p>
+            )
+          : (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                <div className="rounded-md border p-3">
+                  <p className="text-xs text-muted-foreground">Risky Shows</p>
+                  <p className="text-xl font-semibold">{taskReadinessWarningCount}</p>
+                </div>
+                <div className="rounded-md border p-3">
+                  <p className="text-xs text-muted-foreground">Without Tasks</p>
+                  <p className="text-xl font-semibold">{shiftAlignmentResponse?.summary.shows_without_tasks_count ?? 0}</p>
+                </div>
+                <div className="rounded-md border p-3">
+                  <p className="text-xs text-muted-foreground">Unassigned Shows</p>
+                  <p className="text-xl font-semibold">{shiftAlignmentResponse?.summary.shows_with_unassigned_tasks_count ?? 0}</p>
+                </div>
+                <div className="rounded-md border p-3">
+                  <p className="text-xs text-muted-foreground">Unassigned Tasks</p>
+                  <p className="text-xl font-semibold">{shiftAlignmentResponse?.summary.tasks_unassigned_count ?? 0}</p>
+                </div>
+                <div className="rounded-md border p-3">
+                  <p className="text-xs text-muted-foreground">Missing Required Types</p>
+                  <p className="text-xl font-semibold">{showsMissingRequiredTaskTypes}</p>
+                </div>
+              </div>
+            )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function StudioShowsTableSection({ studioId, scopeLabel }: { studioId: string; scopeLabel: string }) {
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [bulkGeneratingShows, setBulkGeneratingShows] = useState<StudioShow[] | null>(null);
   const [bulkAssigningShows, setBulkAssigningShows] = useState<StudioShow[] | null>(null);
 
@@ -121,6 +404,7 @@ function StudioShowsPage() {
     },
     [rowSelection, showsById],
   );
+
   const clearSelectedShows = useCallback(() => {
     setRowSelection({});
     setSelectedShowSnapshots({});
@@ -175,262 +459,137 @@ function StudioShowsPage() {
         type: 'select' as const,
         options: (showLookups?.platforms ?? []).map((o) => ({ value: o.name, label: o.name })),
       },
-      { id: 'start_time', title: 'Date', type: 'date-range' as const },
     ],
     [showLookups],
   );
 
-  const planningDateRange: DateRange | undefined = planningDateFrom || planningDateTo
-    ? {
-        from: planningDateFrom ? new Date(`${planningDateFrom}T00:00:00`) : undefined,
-        to: planningDateTo ? new Date(`${planningDateTo}T00:00:00`) : undefined,
-      }
-    : undefined;
-  const hasInvalidPlanningRange = planningDateFrom > planningDateTo;
-  const {
-    data: shiftAlignmentResponse,
-    isLoading: isLoadingShiftAlignment,
-    isFetching: isFetchingShiftAlignment,
-    refetch: refetchShiftAlignment,
-  } = useShiftAlignment(
-    studioId,
-    {
-      date_from: planningDateFrom,
-      date_to: planningDateTo,
-      include_cancelled: false,
-    },
-    {
-      enabled: !hasInvalidPlanningRange,
-    },
-  );
-  const taskReadinessWarningCount = shiftAlignmentResponse?.task_readiness_warnings.length ?? 0;
-  const showsMissingRequiredTaskTypes = shiftAlignmentResponse?.task_readiness_warnings
-    .filter((warning) => !warning.has_no_tasks && warning.missing_required_task_types.length > 0)
-    .length ?? 0;
-
-  const handleResetPlanningRange = () => {
-    const nextRange = getDefaultPlanningRange();
-    setPlanningDateFrom(nextRange.from);
-    setPlanningDateTo(nextRange.to);
-  };
-
   return (
-    <PageLayout
-      title="Shows"
-      description="Monitor task progress and assignments across all your studio shows."
-    >
-      <div className="space-y-4">
-        <Card>
-          <CardHeader className="gap-3">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-1">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-600" />
-                  Show Task Readiness Warnings
-                </CardTitle>
-                <CardDescription>
-                  Summary for upcoming shows by date range.
-                </CardDescription>
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <DatePickerWithRange
-                  date={planningDateRange}
-                  setDate={(range) => {
-                    setPlanningDateFrom(range?.from ? toLocalDateInputValue(range.from) : '');
-                    setPlanningDateTo(range?.to ? toLocalDateInputValue(range.to) : '');
-                  }}
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleResetPlanningRange}
-                  disabled={isFetchingShiftAlignment}
-                >
-                  Next 7 Days
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => void refetchShiftAlignment()}
-                  disabled={isFetchingShiftAlignment || hasInvalidPlanningRange}
-                  aria-label="Refresh task readiness warnings"
-                >
-                  <RefreshCw className={`h-4 w-4 ${isFetchingShiftAlignment ? 'animate-spin' : ''}`} />
-                </Button>
-              </div>
-            </div>
-            {hasInvalidPlanningRange && (
-              <p className="text-sm text-destructive">Planning end date must be on or after start date.</p>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {(isLoadingShiftAlignment || isFetchingShiftAlignment)
-              ? (
-                  <p className="text-sm text-muted-foreground">Checking show task readiness...</p>
-                )
-              : (
-                  <div className="space-y-3">
-                    <div className="rounded-md border p-3">
-                      <p className="text-xs text-muted-foreground">Shows With Task Readiness Risks</p>
-                      <p className="text-xl font-semibold">{taskReadinessWarningCount}</p>
-                    </div>
-                    <div className="rounded-md border p-3 space-y-1">
-                      <p className="text-sm font-medium">Task Readiness</p>
-                      <p className="text-sm text-muted-foreground">
-                        Shows without tasks:
-                        {' '}
-                        <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.shows_without_tasks_count ?? 0}</span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Shows with unassigned tasks:
-                        {' '}
-                        <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.shows_with_unassigned_tasks_count ?? 0}</span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Unassigned tasks:
-                        {' '}
-                        <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.tasks_unassigned_count ?? 0}</span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Shows missing pre-production/on-air/post-production:
-                        {' '}
-                        <span className="font-medium text-foreground">{showsMissingRequiredTaskTypes}</span>
-                        {' '}
-                        <span className="text-xs">
-                          (excluding shows with no tasks)
-                        </span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Premium shows missing moderation:
-                        {' '}
-                        <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.premium_shows_missing_moderation_count ?? 0}</span>
-                      </p>
-                    </div>
-                  </div>
-                )}
-          </CardContent>
-        </Card>
+    <>
+      <p className="text-xs text-muted-foreground">
+        Showing shows in scope:
+        {' '}
+        {scopeLabel}
+      </p>
 
-        <DataTable
-          data={shows}
-          columns={columns}
-          isLoading={isLoading}
-          isFetching={isFetching}
-          emptyMessage="No shows found."
-          manualPagination
-          manualFiltering
-          manualSorting
-          pageCount={Math.ceil(total / pagination.pageSize)}
-          paginationState={{
-            pageIndex: pagination.pageIndex,
-            pageSize: pagination.pageSize,
-          }}
-          onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
-          sorting={sorting}
-          onSortingChange={adaptSortingChange(sorting, onSortingChange)}
-          columnFilters={columnFilters}
-          onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
-          enableRowSelection
-          rowSelection={rowSelection}
-          onRowSelectionChange={handleRowSelectionChange}
-          getRowId={(show) => show.id}
-          renderToolbar={(table) => (
-            <DataTableToolbar
-              table={table}
-              searchColumn="name"
-              searchableColumns={searchableColumns}
-              quickFilterColumns={QUICK_FILTER_COLUMNS}
-              featuredFilterColumns={FEATURED_FILTER_COLUMNS}
-              searchPlaceholder="Search shows..."
-            >
-              <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-                Refresh
+      <DataTable
+        data={shows}
+        columns={columns}
+        isLoading={isLoading}
+        isFetching={isFetching}
+        emptyMessage="No shows found."
+        manualPagination
+        manualFiltering
+        manualSorting
+        pageCount={Math.ceil(total / pagination.pageSize)}
+        paginationState={{
+          pageIndex: pagination.pageIndex,
+          pageSize: pagination.pageSize,
+        }}
+        onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
+        sorting={sorting}
+        onSortingChange={adaptSortingChange(sorting, onSortingChange)}
+        columnFilters={columnFilters}
+        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
+        enableRowSelection
+        rowSelection={rowSelection}
+        onRowSelectionChange={handleRowSelectionChange}
+        getRowId={(show) => show.id}
+        renderToolbar={(table) => (
+          <DataTableToolbar
+            table={table}
+            searchColumn="name"
+            searchableColumns={searchableColumns}
+            quickFilterColumns={QUICK_FILTER_COLUMNS}
+            featuredFilterColumns={FEATURED_FILTER_COLUMNS}
+            searchPlaceholder="Search shows..."
+          >
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+              Refresh
+            </Button>
+          </DataTableToolbar>
+        )}
+        renderFooter={() => (
+          <DataTablePagination
+            pagination={{
+              pageIndex: pagination.pageIndex,
+              pageSize: pagination.pageSize,
+              total,
+              pageCount: Math.ceil(total / pagination.pageSize),
+            }}
+            onPaginationChange={onPaginationChange}
+          />
+        )}
+      />
+
+      {selectedShows.length > 0 && (
+        <>
+          <div className="fixed bottom-6 left-1/2 z-50 hidden -translate-x-1/2 items-center justify-between gap-4 rounded-full border bg-slate-900 px-6 py-3 text-slate-50 shadow-lg animate-in slide-in-from-bottom-5 dark:bg-slate-50 dark:text-slate-900 md:flex">
+            <div className="flex items-center gap-2 border-r border-slate-700 pr-4 dark:border-slate-300">
+              <span className="text-sm font-medium">
+                {selectedShows.length}
+                {' '}
+                selected
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                className="rounded-full"
+                onClick={() => setBulkGeneratingShows(selectedShows)}
+              >
+                <ListTodo className="mr-2 h-4 w-4" />
+                Generate Tasks
               </Button>
-            </DataTableToolbar>
-          )}
-          renderFooter={() => (
-            <DataTablePagination
-              pagination={{
-                pageIndex: pagination.pageIndex,
-                pageSize: pagination.pageSize,
-                total,
-                pageCount: Math.ceil(total / pagination.pageSize),
-              }}
-              onPaginationChange={onPaginationChange}
-            />
-          )}
-        />
-
-        {selectedShows.length > 0 && (
-          <>
-            <div className="fixed bottom-6 left-1/2 z-50 hidden -translate-x-1/2 items-center justify-between gap-4 rounded-full border bg-slate-900 px-6 py-3 text-slate-50 shadow-lg animate-in slide-in-from-bottom-5 dark:bg-slate-50 dark:text-slate-900 md:flex">
-              <div className="flex items-center gap-2 border-r border-slate-700 pr-4 dark:border-slate-300">
-                <span className="text-sm font-medium">
-                  {selectedShows.length}
-                  {' '}
-                  selected
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="rounded-full"
-                  onClick={() => setBulkGeneratingShows(selectedShows)}
-                >
-                  <ListTodo className="mr-2 h-4 w-4" />
-                  Generate Tasks
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="rounded-full"
-                  onClick={() => setBulkAssigningShows(selectedShows)}
-                >
-                  Assign Tasks
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="ml-2 rounded-full hover:bg-slate-800 hover:text-white dark:hover:bg-slate-200 dark:hover:text-black"
-                  onClick={clearSelectedShows}
-                >
-                  Cancel
-                </Button>
-              </div>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="rounded-full"
+                onClick={() => setBulkAssigningShows(selectedShows)}
+              >
+                Assign Tasks
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="ml-2 rounded-full hover:bg-slate-800 hover:text-white dark:hover:bg-slate-200 dark:hover:text-black"
+                onClick={clearSelectedShows}
+              >
+                Cancel
+              </Button>
             </div>
-            <SelectedShowsMobileActions
-              selectedCount={selectedShows.length}
-              onGenerate={() => setBulkGeneratingShows(selectedShows)}
-              onAssign={() => setBulkAssigningShows(selectedShows)}
-              onClear={clearSelectedShows}
-            />
-          </>
-        )}
-
-        {bulkGeneratingShows && (
-          <BulkTaskGenerationDialog
-            open={bulkGeneratingShows.length > 0}
-            onOpenChange={(open) => {
-              if (!open)
-                setBulkGeneratingShows(null);
-            }}
-            shows={bulkGeneratingShows}
+          </div>
+          <SelectedShowsMobileActions
+            selectedCount={selectedShows.length}
+            onGenerate={() => setBulkGeneratingShows(selectedShows)}
+            onAssign={() => setBulkAssigningShows(selectedShows)}
+            onClear={clearSelectedShows}
           />
-        )}
+        </>
+      )}
 
-        {bulkAssigningShows && (
-          <ShowAssignmentDialog
-            studioId={studioId}
-            open={bulkAssigningShows.length > 0}
-            onOpenChange={(open) => {
-              if (!open)
-                setBulkAssigningShows(null);
-            }}
-            shows={bulkAssigningShows}
-          />
-        )}
-      </div>
-    </PageLayout>
+      {bulkGeneratingShows && (
+        <BulkTaskGenerationDialog
+          open={bulkGeneratingShows.length > 0}
+          onOpenChange={(open) => {
+            if (!open)
+              setBulkGeneratingShows(null);
+          }}
+          shows={bulkGeneratingShows}
+        />
+      )}
+
+      {bulkAssigningShows && (
+        <ShowAssignmentDialog
+          studioId={studioId}
+          open={bulkAssigningShows.length > 0}
+          onOpenChange={(open) => {
+            if (!open)
+              setBulkAssigningShows(null);
+          }}
+          shows={bulkAssigningShows}
+        />
+      )}
+    </>
   );
 }

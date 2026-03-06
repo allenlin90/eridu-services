@@ -49,7 +49,7 @@ describe('taskTemplatesToolbar', () => {
     );
 
     expect(screen.getByPlaceholderText('Search templates...')).toBeInTheDocument();
-    expect(screen.getByText('Refresh')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Refresh templates' })).toBeInTheDocument();
     expect(screen.getByText('Create Template')).toBeInTheDocument();
   });
 
@@ -63,7 +63,7 @@ describe('taskTemplatesToolbar', () => {
       />,
     );
 
-    await user.click(screen.getByText('Refresh'));
+    await user.click(screen.getByRole('button', { name: 'Refresh templates' }));
     expect(mockOnRefresh).toHaveBeenCalledTimes(1);
   });
 
@@ -94,8 +94,8 @@ describe('taskTemplatesToolbar', () => {
       />,
     );
 
-    const refreshBtn = screen.getByText('Refresh').closest('button');
-    expect(refreshBtn).toBeDisabled();
+    const refreshButton = screen.getByRole('button', { name: 'Refresh templates' });
+    expect(refreshButton).toBeDisabled();
   });
 
   it('debounces search input changes', async () => {

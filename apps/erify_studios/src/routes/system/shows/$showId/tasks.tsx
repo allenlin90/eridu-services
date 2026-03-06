@@ -1,7 +1,7 @@
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import type { ColumnDef, ColumnFiltersState } from '@tanstack/react-table';
-import { Eye, RotateCw } from 'lucide-react';
+import { Eye, RefreshCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -203,12 +203,13 @@ function ShowTasks() {
           >
             <Button
               variant="outline"
-              size="sm"
-              className="h-8 w-full sm:w-auto"
+              size="icon"
+              className="h-8 w-8"
               onClick={handleRefresh}
+              disabled={isFetching}
+              aria-label="Refresh tasks"
             >
-              <RotateCw className="mr-2 h-4 w-4" />
-              Refresh
+              <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             </Button>
           </DataTableToolbar>
         )}

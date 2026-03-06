@@ -70,13 +70,14 @@ export function ShiftCalendarCard({
               </span>
             )}
             <Button
-              size="sm"
+              size="icon"
               variant="outline"
+              className="h-8 w-8"
               onClick={onRefresh}
               disabled={isFetching}
+              aria-label="Refresh shifts"
             >
-              <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-              Refresh
+              <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </div>

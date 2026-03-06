@@ -159,9 +159,15 @@ export function FeatureToolbar({ tableState, onRefresh, isRefreshing, studioId }
 
       {/* Desktop Actions */}
       <div className="hidden md:flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={onRefresh} disabled={isRefreshing}>
-          <RotateCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Refresh
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-9 w-9"
+          onClick={onRefresh}
+          disabled={isRefreshing}
+          aria-label="Refresh data"
+        >
+          <RotateCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
         </Button>
         <Button onClick={handleCreate} size="sm">Create New</Button>
       </div>
@@ -186,7 +192,7 @@ export function FeatureToolbar({ tableState, onRefresh, isRefreshing, studioId }
 **Key Points**:
 - ✅ Debounced search (300ms) with local state for immediate UI updates
 - ✅ Responsive actions: desktop buttons → mobile dropdown
-- ✅ Refresh button uses `isFetching` state (shows spinner during refetch)
+- ✅ Refresh action uses icon-only button + `aria-label` + `isFetching` spinner state
 
 ### 4. Use Infinite Scroll Hook
 

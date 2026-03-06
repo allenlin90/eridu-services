@@ -1,4 +1,4 @@
-import { ChevronDown, RotateCw, Search, X } from 'lucide-react';
+import { ChevronDown, RefreshCw, Search, X } from 'lucide-react';
 
 import type { TaskStatus, TaskType } from '@eridu/api-types/task-management';
 import { TASK_STATUS } from '@eridu/api-types/task-management';
@@ -249,13 +249,13 @@ export function MyTasksToolbar({
           <Button
             type="button"
             variant="outline"
-            size="sm"
-            className="h-8 gap-1 text-xs"
+            size="icon"
+            className="h-8 w-8"
             onClick={onRefresh}
             disabled={isFetching}
+            aria-label="Refresh tasks"
           >
-            <RotateCw className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')} />
-            Refresh
+            <RefreshCw className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')} />
           </Button>
 
           <div className="flex items-center gap-1 rounded-md border p-0.5">

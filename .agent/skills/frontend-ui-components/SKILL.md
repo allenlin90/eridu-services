@@ -43,6 +43,31 @@ import { DatePicker, DateTimePicker } from '@eridu/ui/components/date-picker';
 <input type="date" value={dateStr} />
 ```
 
+#### Refresh Actions
+Use icon-only refresh buttons for data refetch actions to keep toolbar density and interaction patterns consistent.
+
+```typescript
+import { RotateCw } from 'lucide-react';
+import { Button } from '@eridu/ui/components/button';
+
+<Button
+  type="button"
+  variant="outline"
+  size="icon"
+  className="h-9 w-9"
+  onClick={onRefresh}
+  disabled={isRefreshing}
+  aria-label="Refresh data"
+>
+  <RotateCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+</Button>
+```
+
+Notes:
+- Always provide an explicit `aria-label` (for accessibility and stable tests).
+- Keep spinning state on the icon while fetching/refetching.
+- In mobile overflow menus, text labels in dropdown items are still acceptable.
+
 ## Styling Pattern (Tailwind CSS v4)
 
 We use **Tailwind CSS v4** with `clsx` and `tailwind-merge` for conditional styling.

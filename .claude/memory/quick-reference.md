@@ -123,6 +123,28 @@ export function useCreateWidget(studioId: string) {
 
 ---
 
+## 🔄 Refresh Action Pattern (Frontend)
+
+Use icon-only refresh controls for manual refetch actions in toolbars/headers.
+
+```tsx
+<Button
+  type="button"
+  variant="outline"
+  size="icon"
+  className="h-9 w-9"
+  onClick={onRefresh}
+  disabled={isRefreshing}
+  aria-label="Refresh data"
+>
+  <RotateCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+</Button>
+```
+
+Use text labels only for dropdown menu items where needed for mobile action menus.
+
+---
+
 ## 🔐 Adding Authentication to Endpoints
 
 ### Public Endpoint (no auth)

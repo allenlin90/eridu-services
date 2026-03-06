@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { MoreVertical, RotateCw, Search } from 'lucide-react';
+import { MoreVertical, RefreshCw, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import {
@@ -77,12 +77,13 @@ export function TaskTemplatesToolbar({
         <div className="hidden md:flex items-center gap-2">
           <Button
             variant="outline"
-            size="sm"
+            size="icon"
+            className="h-9 w-9"
             onClick={onRefresh}
             disabled={isRefreshing}
+            aria-label="Refresh templates"
           >
-            <RotateCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Refresh
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
           <Button onClick={handleCreate} size="sm">
             Create Template
@@ -100,7 +101,7 @@ export function TaskTemplatesToolbar({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onRefresh} disabled={isRefreshing}>
-                <RotateCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 Refresh
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleCreate}>
