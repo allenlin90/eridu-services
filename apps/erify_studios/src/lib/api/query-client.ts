@@ -2,9 +2,11 @@ import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 declare module '@tanstack/react-query' {
+  // eslint-disable-next-line -- TanStack query module augmentation requires interface
   interface Register {
     defaultError: Error;
   }
+  // eslint-disable-next-line -- TanStack query module augmentation requires interface
   interface MutationMeta {
     suppressErrorToast?: boolean;
     errorMessage?: string;
@@ -77,11 +79,11 @@ export const queryClient = new QueryClient({
       }
 
       const defaultMessage = 'An error occurred during the operation.';
-      const errorMessage =
-        (mutation.meta?.errorMessage as string) ||
-        error?.response?.data?.message ||
-        error?.message ||
-        defaultMessage;
+      const errorMessage
+        = (mutation.meta?.errorMessage as string)
+        || error?.response?.data?.message
+        || error?.message
+        || defaultMessage;
 
       toast.error(errorMessage);
     },
