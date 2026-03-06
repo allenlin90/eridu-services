@@ -21,6 +21,23 @@ For feature delivery, behavior changes, and refactors, run:
 
 This keeps docs, skills, workflows/rules, and memory references aligned with shipped behavior.
 
+## Frontend Route Decomposition Standard (2026-03-06)
+
+For large frontend route components (roughly >200 LOC or mixed concerns), the standard is now:
+
+1. Route file stays as composition boundary (params/search wiring + section assembly).
+2. Extract presentation sections into dedicated components close to the route/feature.
+3. Extract dense query/state derivation into route-specific hooks when needed.
+4. Keep canonical search validation in `validateSearch` schema.
+5. Preserve route-state behavior parity (`page`, `limit`, `date`, filters) and verify with tests.
+
+Source of truth:
+- `.agent/skills/frontend-code-quality/SKILL.md`
+- `.agent/skills/frontend-tech-stack/SKILL.md`
+- `.agent/skills/frontend-testing-patterns/SKILL.md`
+- `.agent/rules/01-general-agent-guidelines.mdc`
+- `.agent/workflows/verification.md`
+
 ## Critical Skills Clarifications
 
 ### service-pattern-nestjs (PRIMARY)

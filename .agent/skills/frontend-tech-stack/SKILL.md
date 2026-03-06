@@ -70,6 +70,24 @@ src/features/awesome-feature/
 
 3. **Shared Code**: Only code used by multiple features should live in the global folders (`src/components/`, `src/hooks/`, etc.).
 
+### Route Composition Boundary
+
+For route-heavy pages (dashboard, list/detail with filters, calendar pages):
+- Keep the route file as a composition boundary, not a monolith.
+- Put route-only presentational sections under the closest feature/component area.
+- Colocate route-specific hooks with the feature they serve.
+
+Example placement for studio dashboard:
+
+```
+src/
+├── routes/studios/$studioId/dashboard.tsx            # route container
+├── components/studio-dashboard/dashboard-*.tsx       # route-specific UI sections
+└── features/studio-shows/hooks/use-*.ts              # server/query hooks
+```
+
+If a route file grows large, extract sections first; if state/query logic is still dense, extract a view-model hook next.
+
 **Preventing Cross-Feature Imports**:
 
 Add this ESLint rule to enforce feature isolation:

@@ -152,6 +152,47 @@ function Dashboard() {
 }
 ```
 
+### Large Route Decomposition Pattern
+
+When a route file grows beyond a maintainable size, split it into clear boundaries:
+
+1. **Route container**: owns router params/search parsing, top-level composition, and guarded wiring.
+2. **Route-specific hooks**: own derived state, query orchestration, and route state transitions.
+3. **Presentation components**: own table/cards/layout rendering with explicit props.
+
+Use this trigger:
+- Route file is over ~200 LOC, or
+- Route mixes 3 or more concerns (search param logic, date/state derivation, query orchestration, complex UI rendering).
+
+Refactor target shape:
+
+```typescript
+// routes/studios/$studioId/dashboard.tsx
+export function DashboardRoute() {
+  const vm = useStudioDashboardViewModel();
+  return (
+    <PageLayout>
+      <DashboardDateNavigationCard {...vm.dateNav} />
+      <OperationalDayShowsSummaryCard {...vm.summary} />
+      <OperationalDayShowListCard {...vm.showList} />
+    </PageLayout>
+  );
+}
+```
+
+```typescript
+// features/studio-dashboard/hooks/use-studio-dashboard-view-model.ts
+export function useStudioDashboardViewModel() {
+  // router state + query orchestration + derived values
+  return { dateNav, summary, showList };
+}
+```
+
+Review expectation:
+1. Validate extraction value (readability, testability, or stable UI contract).
+2. Preserve behavior and URL contracts (search params, pagination, filters).
+3. Avoid cosmetic-only extraction that adds indirection without reducing complexity.
+
 ### Avoid Low-Value Component Extraction
 
 Do not extract a component if it only wraps a single primitive element with fixed styling and one callback, unless there is a clear reuse or complexity need.
@@ -233,5 +274,6 @@ function UserCard({ user }: { user: User }) {
 - [ ] `pnpm test` passes.
 - [ ] Component names match their filenames.
 - [ ] Complex logic extracted to custom hooks.
+- [ ] Large route files (>200 LOC or mixed concerns) are decomposed into container + hooks + presentation components.
 - [ ] Protected studio routes use `StudioRouteGuard` + shared access policy.
 - [ ] Sidebar visibility and route access use the same route-access source.

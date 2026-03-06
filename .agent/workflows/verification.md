@@ -29,6 +29,11 @@ pnpm --filter <app> typecheck
 pnpm --filter <app> test
 ```
 
-4. **Review results** — If any step fails, fix the errors before marking work complete. Re-run the failing step after fixing.
+4. **Refactor parity checks (for feature/refactor work)**
+   - Confirm loading/empty/data UI states still match expected behavior.
+   - Confirm route/search-param behaviors still match expected URL contract.
+   - Confirm pagination/date/filter transitions behave correctly after extraction/decomposition.
+
+5. **Review results** — If any step fails, fix the errors before marking work complete. Re-run the failing step after fixing.
 
 > **Note**: For changes spanning multiple apps or packages (e.g., `@eridu/api-types` + `erify_api`), run verification for each affected package.
