@@ -6,7 +6,7 @@ import {
 } from '@schedule-x/calendar';
 import { useNextCalendarApp } from '@schedule-x/react';
 import { RefreshCw } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Button, Input } from '@eridu/ui';
 
@@ -34,6 +34,26 @@ export type StudioShiftsCalendarProps = {
   queryScope?: 'studio' | 'me';
 };
 
+const CALENDAR_VIEWS = [viewMonthGrid, viewWeek, viewDay];
+const CALENDAR_CONFIG = {
+  'shift': {
+    colorName: 'shift',
+    lightColors: {
+      main: '#1d4ed8',
+      container: '#dbeafe',
+      onContainer: '#1e3a8a',
+    },
+  },
+  'duty-manager': {
+    colorName: 'duty',
+    lightColors: {
+      main: '#b45309',
+      container: '#fef3c7',
+      onContainer: '#78350f',
+    },
+  },
+} as const;
+
 export function StudioShiftsCalendar({
   studioId,
   summaryText = 'Read-only view of studio shifts. Switch to Table view to manage, create, and filter shifts.',
@@ -47,9 +67,7 @@ export function StudioShiftsCalendar({
 
   const { memberMap } = useStudioMemberMap(studioId, { limit: STUDIO_MEMBER_MAP_CALENDAR_LIMIT });
 
-  const calendarRangeLimit = useMemo(() => {
-    return getShiftCalendarRangeLimit(debouncedDateRange);
-  }, [debouncedDateRange]);
+  const calendarRangeLimit = getShiftCalendarRangeLimit(debouncedDateRange);
 
   const queryParams = useMemo(() => {
     return {
@@ -105,49 +123,34 @@ export function StudioShiftsCalendar({
     }
   }, [jumpDate]);
 
+  const handleCalendarRangeUpdate = useCallback((range: { start: unknown; end: unknown }) => {
+    const startRaw = extractDateStringFromUnknown(range.start);
+    const endRaw = extractDateStringFromUnknown(range.end);
+
+    if (!startRaw || !endRaw) {
+      return;
+    }
+
+    setDateRange((previous) => {
+      if (previous?.date_from === startRaw && previous?.date_to === endRaw) {
+        return previous;
+      }
+
+      return {
+        date_from: startRaw,
+        date_to: endRaw,
+      };
+    });
+  }, []);
+
   const calendarApp = useNextCalendarApp({
-    views: [viewMonthGrid, viewWeek, viewDay],
+    views: CALENDAR_VIEWS,
     defaultView: viewWeek.name,
     ...(selectedDate ? { selectedDate } : {}),
     events: calendarEvents as unknown as CalendarEvent[],
-    calendars: {
-      'shift': {
-        colorName: 'shift',
-        lightColors: {
-          main: '#1d4ed8',
-          container: '#dbeafe',
-          onContainer: '#1e3a8a',
-        },
-      },
-      'duty-manager': {
-        colorName: 'duty',
-        lightColors: {
-          main: '#b45309',
-          container: '#fef3c7',
-          onContainer: '#78350f',
-        },
-      },
-    },
+    calendars: CALENDAR_CONFIG,
     callbacks: {
-      onRangeUpdate(range) {
-        const startRaw = extractDateStringFromUnknown(range.start);
-        const endRaw = extractDateStringFromUnknown(range.end);
-
-        if (!startRaw || !endRaw) {
-          return;
-        }
-
-        setDateRange((previous) => {
-          if (previous?.date_from === startRaw && previous?.date_to === endRaw) {
-            return previous;
-          }
-
-          return {
-            date_from: startRaw,
-            date_to: endRaw,
-          };
-        });
-      },
+      onRangeUpdate: handleCalendarRangeUpdate,
     },
   });
 

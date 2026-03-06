@@ -58,6 +58,7 @@ function resolveTemplateSchemaForClone(template: TaskTemplateDto): UiSchema {
 
 export function TaskTemplateCard({ template, studioId }: TaskTemplateCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const updatedAtLabel = format(new Date(template.updated_at), 'MMM d, yyyy');
 
   const { mutate: cloneTemplate, isPending: isCloning } = useCreateTaskTemplate({
     studioId,
@@ -118,7 +119,7 @@ export function TaskTemplateCard({ template, studioId }: TaskTemplateCardProps) 
                 <CardTitle className="line-clamp-1">{template.name}</CardTitle>
                 <CardDescription className="flex items-center gap-2 text-xs">
                   <span>
-                    {`v${template.version} • Updated ${format(new Date(template.updated_at), 'MMM d, yyyy')}`}
+                    {`v${template.version} • Updated ${updatedAtLabel}`}
                   </span>
                 </CardDescription>
               </div>

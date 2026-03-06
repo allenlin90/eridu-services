@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import type { RowSelectionState } from '@tanstack/react-table';
+import type { OnChangeFn, RowSelectionState } from '@tanstack/react-table';
 import { AlertTriangle, ListTodo, RefreshCw } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
@@ -54,6 +54,15 @@ function getDefaultPlanningRange() {
   };
 }
 
+function resolveUpdater<T>(updater: T | ((previous: T) => T), previous: T): T {
+  return typeof updater === 'function'
+    ? (updater as (current: T) => T)(previous)
+    : updater;
+}
+
+const QUICK_FILTER_COLUMNS = ['start_time'];
+const FEATURED_FILTER_COLUMNS = ['has_tasks', 'client_name', 'show_status_name'];
+
 function StudioShowsPage() {
   const { studioId } = Route.useParams();
   const { data: profile } = useUserProfile();
@@ -94,33 +103,38 @@ function StudioShowsPage() {
     [shows],
   );
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelectedShowSnapshots((prev) => {
-      const selectedIds = new Set(selectedShowIds);
-      const next: Record<string, StudioShow> = {};
+  const handleRowSelectionChange = useCallback<OnChangeFn<RowSelectionState>>(
+    (updater) => {
+      const nextSelection = resolveUpdater(updater, rowSelection);
+      const selectedIds = new Set(
+        Object.entries(nextSelection)
+          .filter(([, isSelected]) => isSelected)
+          .map(([id]) => id),
+      );
 
-      Object.entries(prev).forEach(([id, show]) => {
-        if (selectedIds.has(id)) {
-          next[id] = show;
-        }
+      setRowSelection(nextSelection);
+      setSelectedShowSnapshots((previousSnapshots) => {
+        const nextSnapshots: Record<string, StudioShow> = {};
+        selectedIds.forEach((id) => {
+          const show = showsById[id] ?? previousSnapshots[id];
+          if (show) {
+            nextSnapshots[id] = show;
+          }
+        });
+
+        const previousKeys = Object.keys(previousSnapshots);
+        const nextKeys = Object.keys(nextSnapshots);
+        const hasSameStructure = previousKeys.length === nextKeys.length
+          && nextKeys.every((id) => previousSnapshots[id] === nextSnapshots[id]);
+        return hasSameStructure ? previousSnapshots : nextSnapshots;
       });
-
-      selectedShowIds.forEach((id) => {
-        const latestShow = showsById[id];
-        if (latestShow) {
-          next[id] = latestShow;
-        }
-      });
-
-      const prevKeys = Object.keys(prev);
-      const nextKeys = Object.keys(next);
-      const hasSameStructure = prevKeys.length === nextKeys.length
-        && nextKeys.every((id) => prev[id] === next[id]);
-
-      return hasSameStructure ? prev : next;
-    });
-  }, [selectedShowIds, showsById]);
+    },
+    [rowSelection, showsById],
+  );
+  const clearSelectedShows = useCallback(() => {
+    setRowSelection({});
+    setSelectedShowSnapshots({});
+  }, []);
 
   const selectedShows = useMemo(() => {
     return selectedShowIds
@@ -180,8 +194,6 @@ function StudioShowsPage() {
     [typeOptions, standardOptions, statusOptions, platformOptions],
   );
 
-  const quickFilterColumns = ['start_time'];
-  const featuredFilterColumns = ['has_tasks', 'client_name', 'show_status_name'];
   const planningDateRange: DateRange | undefined = planningDateFrom || planningDateTo
     ? {
         from: planningDateFrom ? new Date(`${planningDateFrom}T00:00:00`) : undefined,
@@ -341,15 +353,15 @@ function StudioShowsPage() {
         onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
         enableRowSelection
         rowSelection={rowSelection}
-        onRowSelectionChange={setRowSelection}
+        onRowSelectionChange={handleRowSelectionChange}
         getRowId={(show) => show.id}
         renderToolbar={(table) => (
           <DataTableToolbar
             table={table}
             searchColumn="name"
             searchableColumns={searchableColumns}
-            quickFilterColumns={quickFilterColumns}
-            featuredFilterColumns={featuredFilterColumns}
+            quickFilterColumns={QUICK_FILTER_COLUMNS}
+            featuredFilterColumns={FEATURED_FILTER_COLUMNS}
             searchPlaceholder="Search shows..."
           >
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
@@ -403,7 +415,7 @@ function StudioShowsPage() {
                 size="sm"
                 variant="ghost"
                 className="ml-2 rounded-full hover:bg-slate-800 hover:text-white dark:hover:bg-slate-200 dark:hover:text-black"
-                onClick={() => setRowSelection({})}
+                onClick={clearSelectedShows}
               >
                 Cancel
               </Button>
@@ -413,7 +425,7 @@ function StudioShowsPage() {
             selectedCount={selectedShows.length}
             onGenerate={() => setBulkGeneratingShows(selectedShows)}
             onAssign={() => setBulkAssigningShows(selectedShows)}
-            onClear={() => setRowSelection({})}
+            onClear={clearSelectedShows}
           />
         </>
       )}

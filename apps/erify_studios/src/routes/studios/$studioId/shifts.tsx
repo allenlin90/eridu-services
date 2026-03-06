@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { RefreshCw } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { z } from 'zod';
 
@@ -18,13 +18,15 @@ import {
 import { StudioShiftsCalendar } from '@/features/studio-shifts/components/studio-shifts-calendar';
 import { StudioShiftsTable } from '@/features/studio-shifts/components/studio-shifts-table';
 import { useShiftCalendar } from '@/features/studio-shifts/hooks/use-studio-shifts';
-import { addDays, fromLocalDateInput, resolveDateParamOrDefault } from '@/features/studio-shifts/utils/shift-date.utils';
+import { addDays, fromLocalDateInput } from '@/features/studio-shifts/utils/shift-date.utils';
 import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
 import {
   toCalendarViewSearch,
   toTableViewSearch,
 } from '@/features/studio-shifts/utils/studio-shifts-route-search.utils';
 import { useUserProfile } from '@/lib/hooks/use-user';
+
+const SUMMARY_RANGE_DAYS = 7;
 
 const shiftsSearchSchema = z.object({
   view: z.enum(['calendar', 'table']).catch('calendar'),
@@ -42,30 +44,20 @@ export const Route = createFileRoute('/studios/$studioId/shifts')({
   component: StudioShiftsPage,
 });
 
-function StudioShiftsPage() {
-  const { studioId } = Route.useParams();
-  const search = Route.useSearch();
-  const routeNavigate = Route.useNavigate();
-  const { data: profile, isLoading: isLoadingProfile } = useUserProfile();
-  const today = toLocalDateInputValue(new Date());
-  const planningDateFrom = resolveDateParamOrDefault(search.date_from, today);
-  const planningDateTo = resolveDateParamOrDefault(
-    search.date_to,
-    toLocalDateInputValue(addDays(fromLocalDateInput(planningDateFrom), 7)),
-  );
+function getDefaultSummaryPlanningRange() {
+  const from = toLocalDateInputValue(new Date());
+  const to = toLocalDateInputValue(addDays(fromLocalDateInput(from), SUMMARY_RANGE_DAYS));
+  return { from, to };
+}
 
-  const viewMode = search.view;
-
-  const activeMembership = useMemo(
-    () => profile?.studio_memberships?.find((membership) => membership.studio.uid === studioId),
-    [profile?.studio_memberships, studioId],
-  );
-  const isStudioAdmin = activeMembership?.role === STUDIO_ROLE.ADMIN;
-  const orchestrationQueryParams = {
+const ShiftCostSnapshotCard = memo(({ studioId }: { studioId: string }) => {
+  const [planningDateFrom, setPlanningDateFrom] = useState(() => getDefaultSummaryPlanningRange().from);
+  const [planningDateTo, setPlanningDateTo] = useState(() => getDefaultSummaryPlanningRange().to);
+  const orchestrationQueryParams = useMemo(() => ({
     date_from: planningDateFrom,
     date_to: planningDateTo,
     include_cancelled: false,
-  };
+  }), [planningDateFrom, planningDateTo]);
   const planningDateRange: DateRange | undefined = planningDateFrom || planningDateTo
     ? {
         from: planningDateFrom ? new Date(`${planningDateFrom}T00:00:00`) : undefined,
@@ -77,7 +69,111 @@ function StudioShiftsPage() {
     isLoading: isLoadingShiftCalendar,
     isFetching: isFetchingShiftCalendar,
     refetch: refetchShiftCalendar,
-  } = useShiftCalendar(studioId, orchestrationQueryParams, { enabled: isStudioAdmin });
+  } = useShiftCalendar(studioId, orchestrationQueryParams, { enabled: true });
+
+  const handleSummaryDateRangeChange = useCallback((range: DateRange | undefined) => {
+    const fallbackFrom = toLocalDateInputValue(new Date());
+    const nextFrom = range?.from ? toLocalDateInputValue(range.from) : fallbackFrom;
+    const nextTo = range?.to
+      ? toLocalDateInputValue(range.to)
+      : toLocalDateInputValue(addDays(fromLocalDateInput(nextFrom), SUMMARY_RANGE_DAYS));
+
+    setPlanningDateFrom(nextFrom);
+    setPlanningDateTo(nextTo);
+  }, []);
+
+  const handleResetPlanningRange = useCallback(() => {
+    const nextRange = getDefaultSummaryPlanningRange();
+    setPlanningDateFrom(nextRange.from);
+    setPlanningDateTo(nextRange.to);
+  }, []);
+
+  return (
+    <Card>
+      <CardHeader className="gap-3">
+        <div className="space-y-1">
+          <CardTitle className="text-base">Shift Cost Snapshot</CardTitle>
+          <CardDescription>
+            Admin-only cost summary for upcoming shift planning.
+          </CardDescription>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <DatePickerWithRange
+            date={planningDateRange}
+            setDate={handleSummaryDateRangeChange}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleResetPlanningRange}
+            disabled={isFetchingShiftCalendar}
+          >
+            Next 7 Days
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 shrink-0"
+            onClick={() => void refetchShiftCalendar()}
+            disabled={isFetchingShiftCalendar}
+            aria-label="Refresh shift cost snapshot"
+          >
+            <RefreshCw className={`h-4 w-4 ${isFetchingShiftCalendar ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {(isLoadingShiftCalendar || isFetchingShiftCalendar)
+          ? (
+              <p className="text-sm text-muted-foreground">Aggregating shift costs...</p>
+            )
+          : (
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  Projected:
+                  {' '}
+                  <span className="font-medium text-foreground">
+                    $
+                    {shiftCalendarResponse?.summary.total_projected_cost ?? '0.00'}
+                  </span>
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Calculated:
+                  {' '}
+                  <span className="font-medium text-foreground">
+                    $
+                    {shiftCalendarResponse?.summary.total_calculated_cost ?? '0.00'}
+                  </span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {shiftCalendarResponse?.summary.shift_count ?? 0}
+                  {' '}
+                  shifts ·
+                  {' '}
+                  {shiftCalendarResponse?.summary.total_hours ?? 0}
+                  {' '}
+                  hours
+                </p>
+              </div>
+            )}
+      </CardContent>
+    </Card>
+  );
+});
+
+function StudioShiftsPage() {
+  const { studioId } = Route.useParams();
+  const search = Route.useSearch();
+  const routeNavigate = Route.useNavigate();
+  const { data: profile, isLoading: isLoadingProfile } = useUserProfile();
+
+  const viewMode = search.view;
+
+  const activeMembership = useMemo(
+    () => profile?.studio_memberships?.find((membership) => membership.studio.uid === studioId),
+    [profile?.studio_memberships, studioId],
+  );
+  const isStudioAdmin = activeMembership?.role === STUDIO_ROLE.ADMIN;
 
   const updateSearch = useCallback((
     updater: (previous: typeof search) => typeof search,
@@ -98,17 +194,6 @@ function StudioShiftsPage() {
       }
       return toTableViewSearch(prev);
     }, { replace: false });
-  };
-
-  const handleResetPlanningRange = () => {
-    const nextFrom = today;
-    const nextTo = toLocalDateInputValue(addDays(fromLocalDateInput(nextFrom), 7));
-    updateSearch((previous) => ({
-      ...previous,
-      page: 1,
-      date_from: nextFrom,
-      date_to: nextTo,
-    }));
   };
 
   if (isLoadingProfile) {
@@ -167,87 +252,7 @@ function StudioShiftsPage() {
       </div>
 
       <div className="grid gap-4">
-        <Card>
-          <CardHeader className="gap-3">
-            <div className="space-y-1">
-              <CardTitle className="text-base">Shift Cost Snapshot</CardTitle>
-              <CardDescription>
-                Admin-only cost summary for upcoming shift planning.
-              </CardDescription>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <DatePickerWithRange
-                date={planningDateRange}
-                setDate={(range) => {
-                  const nextFrom = range?.from ? toLocalDateInputValue(range.from) : today;
-                  const nextTo = range?.to
-                    ? toLocalDateInputValue(range.to)
-                    : toLocalDateInputValue(addDays(fromLocalDateInput(nextFrom), 7));
-
-                  updateSearch((previous) => ({
-                    ...previous,
-                    page: 1,
-                    date_from: nextFrom,
-                    date_to: nextTo,
-                  }));
-                }}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleResetPlanningRange}
-                disabled={isFetchingShiftCalendar}
-              >
-                Next 7 Days
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 shrink-0"
-                onClick={() => void refetchShiftCalendar()}
-                disabled={isFetchingShiftCalendar}
-                aria-label="Refresh shift cost snapshot"
-              >
-                <RefreshCw className={`h-4 w-4 ${isFetchingShiftCalendar ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {(isLoadingShiftCalendar || isFetchingShiftCalendar)
-              ? (
-                  <p className="text-sm text-muted-foreground">Aggregating shift costs...</p>
-                )
-              : (
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">
-                      Projected:
-                      {' '}
-                      <span className="font-medium text-foreground">
-                        $
-                        {shiftCalendarResponse?.summary.total_projected_cost ?? '0.00'}
-                      </span>
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Calculated:
-                      {' '}
-                      <span className="font-medium text-foreground">
-                        $
-                        {shiftCalendarResponse?.summary.total_calculated_cost ?? '0.00'}
-                      </span>
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {shiftCalendarResponse?.summary.shift_count ?? 0}
-                      {' '}
-                      shifts ·
-                      {' '}
-                      {shiftCalendarResponse?.summary.total_hours ?? 0}
-                      {' '}
-                      hours
-                    </p>
-                  </div>
-                )}
-          </CardContent>
-        </Card>
+        <ShiftCostSnapshotCard studioId={studioId} />
       </div>
 
       {viewMode === 'calendar'
