@@ -5,6 +5,7 @@ import { Prisma, StudioShift } from '@prisma/client';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
+import type { BlocksReplacePayload } from './schemas/studio-shift.schema';
 
 const defaultShiftInclude = {
   user: true,
@@ -58,16 +59,32 @@ export class StudioShiftRepository extends BaseRepository<
   async updateShift(
     studioUid: string,
     uid: string,
-    data: Prisma.StudioShiftUpdateInput,
+    data: Omit<Prisma.StudioShiftUpdateInput, 'blocks'>,
     existingId?: bigint,
+    blocksPayload?: BlocksReplacePayload,
   ): Promise<StudioShiftWithRelations | null> {
     const targetId = existingId ?? (await this.findByUidInStudio(studioUid, uid))?.id;
     if (!targetId)
       return null;
 
+    const deletedAt = new Date();
+    const blocksUpdate: Prisma.StudioShiftUpdateInput['blocks'] = blocksPayload
+      ? {
+          updateMany: {
+            where: { deletedAt: null, uid: { notIn: blocksPayload.retainedUids } },
+            data: { deletedAt },
+          },
+          upsert: blocksPayload.blocksToUpsert.map((block) => ({
+            where: { uid: block.uid },
+            update: { startTime: block.startTime, endTime: block.endTime, metadata: block.metadata as Prisma.InputJsonValue, deletedAt: null },
+            create: { uid: block.uid, startTime: block.startTime, endTime: block.endTime, metadata: block.metadata as Prisma.InputJsonValue },
+          })),
+        }
+      : undefined;
+
     return this.delegate.update({
       where: { id: targetId },
-      data,
+      data: { ...data, ...(blocksUpdate && { blocks: blocksUpdate }) },
       include: defaultShiftInclude,
     });
   }

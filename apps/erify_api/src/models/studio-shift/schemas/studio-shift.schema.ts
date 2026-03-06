@@ -384,6 +384,17 @@ export const shiftAlignmentDto = z.object({
   })),
 });
 
+/** Domain payload for replacing all blocks on a shift inside repository.updateShift. */
+export type BlocksReplacePayload = {
+  blocksToUpsert: Array<{
+    uid: string;
+    startTime: Date;
+    endTime: Date;
+    metadata: Record<string, unknown>;
+  }>;
+  retainedUids: string[];
+};
+
 export type CreateStudioShiftInput = z.infer<typeof createStudioShiftSchema>;
 export type UpdateStudioShiftInput = z.infer<typeof updateStudioShiftSchema>;
 export type ListStudioShiftsQuery = z.infer<typeof listStudioShiftsQuerySchema>;

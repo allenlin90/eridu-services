@@ -26,8 +26,8 @@ export const studioShiftMetadataSchema = z.object({
 
 export const shiftCalendarResponseSchema = z.object({
   period: z.object({
-    date_from: z.string(), // ISO 8601 datetime string
-    date_to: z.string(), // ISO 8601 datetime string
+    date_from: z.string().datetime(),
+    date_to: z.string().datetime(),
   }),
   summary: z.object({
     shift_count: z.number().int().nonnegative(),
@@ -37,7 +37,7 @@ export const shiftCalendarResponseSchema = z.object({
     total_calculated_cost: z.string(),
   }),
   timeline: z.array(z.object({
-    date: z.string(), // ISO 8601 date string
+    date: z.string(), // ISO 8601 date string (YYYY-MM-DD)
     users: z.array(z.object({
       user_id: z.string(),
       user_name: z.string(),
@@ -53,8 +53,8 @@ export const shiftCalendarResponseSchema = z.object({
         total_hours: z.number().nonnegative(),
         blocks: z.array(z.object({
           block_id: z.string(),
-          start_time: z.string(), // ISO 8601 datetime string
-          end_time: z.string(), // ISO 8601 datetime string
+          start_time: z.string().datetime(),
+          end_time: z.string().datetime(),
           duration_hours: z.number().nonnegative(),
         })),
       })),
@@ -64,8 +64,8 @@ export const shiftCalendarResponseSchema = z.object({
 
 export const shiftAlignmentResponseSchema = z.object({
   period: z.object({
-    date_from: z.string(), // ISO 8601 datetime string
-    date_to: z.string(), // ISO 8601 datetime string
+    date_from: z.string().datetime(),
+    date_to: z.string().datetime(),
   }),
   summary: z.object({
     shows_checked: z.number().int().nonnegative(),
@@ -80,26 +80,26 @@ export const shiftAlignmentResponseSchema = z.object({
     premium_shows_missing_moderation_count: z.number().int().nonnegative(),
   }),
   duty_manager_uncovered_segments: z.array(z.object({
-    operational_day: z.string(), // ISO 8601 date string
-    segment_start: z.string(), // ISO 8601 datetime string
-    segment_end: z.string(), // ISO 8601 datetime string
+    operational_day: z.string(), // ISO 8601 date string (YYYY-MM-DD)
+    segment_start: z.string().datetime(),
+    segment_end: z.string().datetime(),
     duration_minutes: z.number().int().positive(),
-    first_show_start: z.string(), // ISO 8601 datetime string
-    last_show_end: z.string(), // ISO 8601 datetime string
+    first_show_start: z.string().datetime(),
+    last_show_end: z.string().datetime(),
   })),
   duty_manager_missing_shows: z.array(z.object({
     show_id: z.string(),
     show_name: z.string(),
-    show_start: z.string(), // ISO 8601 datetime string
-    show_end: z.string(), // ISO 8601 datetime string
-    operational_day: z.string(), // ISO 8601 date string
+    show_start: z.string().datetime(),
+    show_end: z.string().datetime(),
+    operational_day: z.string(), // ISO 8601 date string (YYYY-MM-DD)
   })),
   task_readiness_warnings: z.array(z.object({
     show_id: z.string(),
     show_name: z.string(),
-    show_start: z.string(), // ISO 8601 datetime string
-    show_end: z.string(), // ISO 8601 datetime string
-    operational_day: z.string(), // ISO 8601 date string
+    show_start: z.string().datetime(),
+    show_end: z.string().datetime(),
+    operational_day: z.string(), // ISO 8601 date string (YYYY-MM-DD)
     show_standard: z.string(),
     has_no_tasks: z.boolean(),
     unassigned_task_count: z.number().int().nonnegative(),
@@ -110,11 +110,11 @@ export const shiftAlignmentResponseSchema = z.object({
 
 export const studioShiftBlockApiResponseSchema = z.object({
   id: z.string(),
-  start_time: z.string(), // ISO 8601 datetime string
-  end_time: z.string(), // ISO 8601 datetime string
+  start_time: z.string().datetime(),
+  end_time: z.string().datetime(),
   metadata: studioShiftBlockMetadataSchema,
-  created_at: z.string(), // ISO 8601 datetime string
-  updated_at: z.string(), // ISO 8601 datetime string
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
 });
 
 export const studioShiftApiResponseSchema = z.object({
@@ -131,6 +131,6 @@ export const studioShiftApiResponseSchema = z.object({
   status: studioShiftStatusSchema,
   metadata: studioShiftMetadataSchema,
   blocks: z.array(studioShiftBlockApiResponseSchema),
-  created_at: z.string(), // ISO 8601 datetime string
-  updated_at: z.string(), // ISO 8601 datetime string
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
 });

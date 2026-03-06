@@ -149,7 +149,7 @@ export function ShiftRosterCard({
                                 <div className="flex items-center gap-2">
                                   <div>
                                     <div className="font-medium text-sm lg:text-base flex items-center">
-                                      {user?.name ?? shift.user_id}
+                                      {shift.user_name}
                                       {shift.is_duty_manager && (
                                         <Badge variant="secondary" className="ml-2 scale-90 px-1.5 py-0 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100">
                                           <ShieldCheck className="h-3 w-3 mr-1" />

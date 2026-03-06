@@ -236,6 +236,7 @@ describe('studioShiftService', () => {
           projectedCost: '60.00',
         }),
         BigInt(1),
+        undefined,
       );
       expect(repository.findOverlappingShift).toHaveBeenCalled();
     });
@@ -303,33 +304,18 @@ describe('studioShiftService', () => {
       expect(repository.updateShift).toHaveBeenCalledWith(
         'std_1',
         'ssh_1',
-        expect.objectContaining({
-          blocks: expect.objectContaining({
-            updateMany: expect.objectContaining({
-              where: {
-                deletedAt: null,
-                uid: {
-                  notIn: ['ssb_keep'],
-                },
-              },
-              data: {
-                deletedAt: expect.any(Date),
-              },
-            }),
-            upsert: [
-              expect.objectContaining({
-                where: {
-                  uid: 'ssb_keep',
-                },
-                update: expect.objectContaining({
-                  startTime: new Date('2026-03-05T09:30:00.000Z'),
-                  endTime: new Date('2026-03-05T12:30:00.000Z'),
-                }),
-              }),
-            ],
-          }),
-        }),
+        expect.not.objectContaining({ blocks: expect.anything() }),
         BigInt(1),
+        {
+          blocksToUpsert: [
+            expect.objectContaining({
+              uid: 'ssb_keep',
+              startTime: new Date('2026-03-05T09:30:00.000Z'),
+              endTime: new Date('2026-03-05T12:30:00.000Z'),
+            }),
+          ],
+          retainedUids: ['ssb_keep'],
+        },
       );
     });
 
@@ -367,6 +353,7 @@ describe('studioShiftService', () => {
           hourlyRate: '20.00',
         }),
         BigInt(1),
+        undefined,
       );
     });
 
@@ -413,6 +400,7 @@ describe('studioShiftService', () => {
           projectedCost: '106.50',
         }),
         BigInt(1),
+        undefined,
       );
     });
   });

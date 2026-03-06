@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import type {
+  BlocksReplacePayload,
   CreateStudioShiftInput,
   ListMyStudioShiftsQuery,
   ListStudioShiftsQuery,
@@ -158,6 +159,10 @@ export class StudioShiftService extends BaseModelService {
 
     const projectedCost = this.calculateProjectedCost(hourlyRate, normalizedBlocks);
 
+    const blocksPayload = payload.blocks
+      ? this.buildBlocksReplacePayload(normalizedBlocks, existing.blocks)
+      : undefined;
+
     return this.studioShiftRepository.updateShift(studioId, uid, {
       ...(payload.userId && { user: { connect: { uid: targetUserId } } }),
       ...(payload.date && { date: payload.date }),
@@ -172,10 +177,7 @@ export class StudioShiftService extends BaseModelService {
       }),
       hourlyRate,
       projectedCost,
-      ...(payload.blocks && {
-        blocks: this.buildBlocksUpdateData(normalizedBlocks, existing.blocks),
-      }),
-    }, existing.id);
+    }, existing.id, blocksPayload);
   }
 
   async deleteShift(studioId: string, uid: string) {
@@ -271,7 +273,7 @@ export class StudioShiftService extends BaseModelService {
     return this.utilityService.generateBrandedId(StudioShiftService.BLOCK_UID_PREFIX);
   }
 
-  private buildBlocksUpdateData(
+  private buildBlocksReplacePayload(
     blocks: ShiftBlockInput[],
     existingBlocks: Array<{
       uid: string;
@@ -279,7 +281,7 @@ export class StudioShiftService extends BaseModelService {
       endTime: Date;
       metadata: unknown;
     }>,
-  ) {
+  ): BlocksReplacePayload {
     const sortedExistingBlocks = this.normalizeAndValidateBlocks(
       existingBlocks.map((block) => ({
         uid: block.uid,
@@ -290,43 +292,16 @@ export class StudioShiftService extends BaseModelService {
       })),
     );
 
-    const blocksWithUid = blocks.map((block, index) => ({
+    const blocksToUpsert = blocks.map((block, index) => ({
       uid: sortedExistingBlocks[index]?.uid ?? this.generateBlockUid(),
       startTime: block.startTime,
       endTime: block.endTime,
       metadata: block.metadata,
     }));
 
-    const retainedUids = blocksWithUid.map((block) => block.uid);
-    const deletedAt = new Date();
-
     return {
-      updateMany: {
-        where: {
-          deletedAt: null,
-          uid: {
-            notIn: retainedUids,
-          },
-        },
-        data: {
-          deletedAt,
-        },
-      },
-      upsert: blocksWithUid.map((block) => ({
-        where: { uid: block.uid },
-        update: {
-          startTime: block.startTime,
-          endTime: block.endTime,
-          metadata: block.metadata,
-          deletedAt: null,
-        },
-        create: {
-          uid: block.uid,
-          startTime: block.startTime,
-          endTime: block.endTime,
-          metadata: block.metadata,
-        },
-      })),
+      blocksToUpsert,
+      retainedUids: blocksToUpsert.map((block) => block.uid),
     };
   }
 
