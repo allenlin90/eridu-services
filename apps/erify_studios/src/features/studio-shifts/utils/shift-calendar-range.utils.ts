@@ -6,12 +6,33 @@ export type ShiftCalendarDateRange = {
   date_to: string;
 };
 
+export type ShiftCalendarViewBucket = 'day' | 'week' | 'month';
+
 const DEFAULT_BUFFER_BEFORE_DAYS = 1;
 const DEFAULT_BUFFER_AFTER_DAYS = 8;
-const CALENDAR_QUERY_LIMIT_FALLBACK = 150;
-const CALENDAR_QUERY_LIMIT_MIN = 60;
-const CALENDAR_QUERY_LIMIT_MAX = 600;
-const CALENDAR_QUERY_EVENTS_PER_DAY = 12;
+const CALENDAR_QUERY_LIMIT_FALLBACK = 90;
+
+const CALENDAR_VIEW_QUERY_PROFILE: Record<ShiftCalendarViewBucket, {
+  min: number;
+  max: number;
+  eventsPerDay: number;
+}> = {
+  day: {
+    min: 24,
+    max: 120,
+    eventsPerDay: 8,
+  },
+  week: {
+    min: 56,
+    max: 260,
+    eventsPerDay: 10,
+  },
+  month: {
+    min: 120,
+    max: 600,
+    eventsPerDay: 12,
+  },
+};
 
 export function extractDateStringFromUnknown(value: unknown): string | null {
   const raw = String(value);
@@ -34,17 +55,37 @@ export function createShiftCalendarJumpRange(jumpDate: string): ShiftCalendarDat
   };
 }
 
-export function getShiftCalendarRangeLimit(range: ShiftCalendarDateRange | null): number {
+function getShiftCalendarDaySpan(range: ShiftCalendarDateRange): number {
+  const start = new Date(`${range.date_from}T00:00:00`);
+  const end = new Date(`${range.date_to}T23:59:59`);
+  return Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+}
+
+export function getShiftCalendarViewBucket(range: ShiftCalendarDateRange | null): ShiftCalendarViewBucket {
+  if (!range) {
+    return 'week';
+  }
+
+  const daySpan = getShiftCalendarDaySpan(range);
+  if (daySpan <= 2) {
+    return 'day';
+  }
+  if (daySpan <= 10) {
+    return 'week';
+  }
+  return 'month';
+}
+
+export function getShiftCalendarRangeLimit(
+  range: ShiftCalendarDateRange | null,
+  viewBucket = getShiftCalendarViewBucket(range),
+): number {
   if (!range) {
     return CALENDAR_QUERY_LIMIT_FALLBACK;
   }
 
-  const start = new Date(`${range.date_from}T00:00:00`);
-  const end = new Date(`${range.date_to}T23:59:59`);
-  const daySpan = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+  const daySpan = getShiftCalendarDaySpan(range);
+  const profile = CALENDAR_VIEW_QUERY_PROFILE[viewBucket];
 
-  return Math.min(
-    CALENDAR_QUERY_LIMIT_MAX,
-    Math.max(CALENDAR_QUERY_LIMIT_MIN, daySpan * CALENDAR_QUERY_EVENTS_PER_DAY),
-  );
+  return Math.min(profile.max, Math.max(profile.min, daySpan * profile.eventsPerDay));
 }

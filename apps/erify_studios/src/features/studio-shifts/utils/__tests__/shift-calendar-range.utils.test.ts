@@ -5,6 +5,7 @@ import {
   createShiftCalendarJumpRange,
   extractDateStringFromUnknown,
   getShiftCalendarRangeLimit,
+  getShiftCalendarViewBucket,
 } from '../shift-calendar-range.utils';
 
 describe('shiftCalendarRangeUtils', () => {
@@ -29,9 +30,17 @@ describe('shiftCalendarRangeUtils', () => {
     });
   });
 
-  it('calculates bounded query limit from range span', () => {
-    expect(getShiftCalendarRangeLimit(null)).toBe(150);
-    expect(getShiftCalendarRangeLimit({ date_from: '2026-03-10', date_to: '2026-03-10' })).toBe(60);
-    expect(getShiftCalendarRangeLimit({ date_from: '2026-01-01', date_to: '2026-06-30' })).toBe(600);
+  it('derives view bucket from visible range span', () => {
+    expect(getShiftCalendarViewBucket(null)).toBe('week');
+    expect(getShiftCalendarViewBucket({ date_from: '2026-03-10', date_to: '2026-03-10' })).toBe('day');
+    expect(getShiftCalendarViewBucket({ date_from: '2026-03-10', date_to: '2026-03-16' })).toBe('week');
+    expect(getShiftCalendarViewBucket({ date_from: '2026-03-01', date_to: '2026-03-31' })).toBe('month');
+  });
+
+  it('calculates bounded query limit using view-aware profiles', () => {
+    expect(getShiftCalendarRangeLimit(null)).toBe(90);
+    expect(getShiftCalendarRangeLimit({ date_from: '2026-03-10', date_to: '2026-03-10' }, 'day')).toBe(24);
+    expect(getShiftCalendarRangeLimit({ date_from: '2026-03-10', date_to: '2026-03-16' }, 'week')).toBe(70);
+    expect(getShiftCalendarRangeLimit({ date_from: '2026-01-01', date_to: '2026-06-30' }, 'month')).toBe(600);
   });
 });

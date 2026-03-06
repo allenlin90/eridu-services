@@ -19,6 +19,7 @@ import {
   createDefaultShiftCalendarRange,
   extractDateStringFromUnknown,
   getShiftCalendarRangeLimit,
+  getShiftCalendarViewBucket,
 } from '@/features/studio-shifts/utils/shift-calendar-range.utils';
 import { formatDate } from '@/features/studio-shifts/utils/shift-form.utils';
 import { sortShiftsByFirstBlockStart } from '@/features/studio-shifts/utils/shift-timeline.utils';
@@ -31,6 +32,46 @@ export type StudioShiftsCalendarProps = {
 };
 
 const CALENDAR_VIEWS = [viewMonthGrid, viewWeek, viewDay];
+const END_OF_DAY_TIME = {
+  hour: 23,
+  minute: 59,
+  second: 59,
+  millisecond: 999,
+  microsecond: 999,
+  nanosecond: 999,
+} as const;
+
+type TimedSegment = {
+  start: Temporal.ZonedDateTime;
+  end: Temporal.ZonedDateTime;
+  index: number;
+};
+
+function splitEventIntoSingleDaySegments(start: Temporal.ZonedDateTime, end: Temporal.ZonedDateTime): TimedSegment[] {
+  if (end.epochMilliseconds <= start.epochMilliseconds) {
+    return [];
+  }
+
+  const segments: TimedSegment[] = [];
+  let cursor = start;
+  let index = 0;
+
+  while (cursor.epochMilliseconds < end.epochMilliseconds) {
+    const currentDayEnd = cursor.with(END_OF_DAY_TIME);
+    const segmentEnd = end.epochMilliseconds <= currentDayEnd.epochMilliseconds ? end : currentDayEnd;
+
+    if (segmentEnd.epochMilliseconds <= cursor.epochMilliseconds) {
+      break;
+    }
+
+    segments.push({ start: cursor, end: segmentEnd, index });
+    cursor = segmentEnd.add({ nanoseconds: 1 });
+    index += 1;
+  }
+
+  return segments;
+}
+
 const CALENDAR_CONFIG = {
   'shift': {
     colorName: 'shift',
@@ -65,7 +106,11 @@ export function StudioShiftsCalendar({
     limit: STUDIO_MEMBER_MAP_CALENDAR_LIMIT,
   });
 
-  const calendarRangeLimit = getShiftCalendarRangeLimit(debouncedDateRange);
+  const calendarViewBucket = useMemo(
+    () => getShiftCalendarViewBucket(debouncedDateRange),
+    [debouncedDateRange],
+  );
+  const calendarRangeLimit = getShiftCalendarRangeLimit(debouncedDateRange, calendarViewBucket);
 
   const queryParams = useMemo(() => {
     return {
@@ -89,7 +134,7 @@ export function StudioShiftsCalendar({
     return sortShiftsByFirstBlockStart(rows);
   }, [calendarShiftsResponse?.data]);
 
-  const calendarEvents = useMemo(() => {
+  const calendarEvents = useMemo<CalendarEvent[]>(() => {
     return calendarShifts.flatMap((shift) => {
       const user = memberMap.get(shift.user_id);
       const memberName = queryScope === 'me' ? 'Me' : (user?.name ?? shift.user_id);
@@ -98,20 +143,25 @@ export function StudioShiftsCalendar({
         return [];
       }
 
-      return sortedBlocks.map((block, blockIndex) => ({
-        id: `${shift.id}-${block.id}`,
-        title: shift.is_duty_manager ? `Duty: ${memberName}` : memberName,
-        start: toScheduleXDateTime(block.start_time),
-        end: toScheduleXDateTime(block.end_time),
-        calendarId: shift.is_duty_manager ? 'duty-manager' : 'shift',
-        description: `${formatDate(block.start_time)} | ${shift.status} | Block ${blockIndex + 1}/${sortedBlocks.length}`,
-      }));
+      return sortedBlocks.flatMap((block, blockIndex) => {
+        const start = toScheduleXDateTime(block.start_time);
+        const end = toScheduleXDateTime(block.end_time);
+        const segments = splitEventIntoSingleDaySegments(start, end);
+
+        return segments.map((segment) => ({
+          id: `${shift.id}-${block.id}-${segment.index}`,
+          title: shift.is_duty_manager ? `Duty: ${memberName}` : memberName,
+          start: segment.start,
+          end: segment.end,
+          calendarId: shift.is_duty_manager ? 'duty-manager' : 'shift',
+          description: `${formatDate(block.start_time)} | ${shift.status} | Block ${blockIndex + 1}/${sortedBlocks.length}`,
+        }));
+      });
     });
   }, [calendarShifts, memberMap, queryScope]);
 
   const calendarTimeZone = useMemo(() => {
-    const detectedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    return detectedTimeZone || globalThis.Temporal?.Now.timeZoneId();
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
   }, []);
 
   const handleCalendarRangeUpdate = useCallback((range: { start: unknown; end: unknown }) => {
@@ -138,7 +188,7 @@ export function StudioShiftsCalendar({
     views: CALENDAR_VIEWS,
     defaultView: viewWeek.name,
     ...(calendarTimeZone ? { timezone: calendarTimeZone } : {}),
-    events: calendarEvents as unknown as CalendarEvent[],
+    events: calendarEvents,
     calendars: CALENDAR_CONFIG,
     callbacks: {
       onRangeUpdate: handleCalendarRangeUpdate,
