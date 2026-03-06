@@ -36,14 +36,18 @@ export function DataTableToolbar<TData>({
       return [];
     return searchableColumns.filter((col) => quickFilterColumns.includes(col.id));
   }, [searchableColumns, quickFilterColumns]);
+  const searchableColumnIds = React.useMemo(
+    () => searchableColumns?.map((column) => column.id) ?? EMPTY_ARRAY,
+    [searchableColumns],
+  );
 
   const activeFilterCount = React.useMemo(() => {
     const filters = table.getState().columnFilters;
     const excludeIds = [primaryColumnId, ...quickFilterColumns].filter(Boolean);
     return filters.filter(
-      (f) => !excludeIds.includes(f.id) && f.value !== undefined && f.value !== '',
+      (f) => searchableColumnIds.includes(f.id) && !excludeIds.includes(f.id) && f.value !== undefined && f.value !== '',
     ).length;
-  }, [table, primaryColumnId, quickFilterColumns]);
+  }, [table, primaryColumnId, quickFilterColumns, searchableColumnIds]);
 
   const popoverExcludeColumns = React.useMemo(() => {
     return [primaryColumnId, ...quickFilterColumns].filter(Boolean) as string[];
@@ -57,19 +61,30 @@ export function DataTableToolbar<TData>({
   );
 
   const handleResetAll = React.useCallback(() => {
-    table.resetColumnFilters();
-  }, [table]);
+    const filters = table.getState().columnFilters;
+    const nextFilters = filters.filter((filter) => {
+      if (!searchableColumnIds.includes(filter.id)) {
+        return true;
+      }
+      return filter.id === primaryColumnId;
+    });
+
+    table.setColumnFilters(nextFilters);
+  }, [primaryColumnId, searchableColumnIds, table]);
 
   const handleResetPopoverFilters = React.useCallback(() => {
     const filters = table.getState().columnFilters;
     const excludeIds = [primaryColumnId, ...quickFilterColumns].filter(Boolean);
-
-    filters.forEach((f) => {
-      if (!excludeIds.includes(f.id)) {
-        table.getColumn(f.id)?.setFilterValue(undefined);
+    const nextFilters = filters.filter((filter) => {
+      if (!searchableColumnIds.includes(filter.id)) {
+        return true;
       }
+
+      return excludeIds.includes(filter.id);
     });
-  }, [table, primaryColumnId, quickFilterColumns]);
+
+    table.setColumnFilters(nextFilters);
+  }, [table, primaryColumnId, quickFilterColumns, searchableColumnIds]);
 
   return (
     <div className="space-y-3">

@@ -18,6 +18,7 @@ import {
   DataTablePagination,
   DataTableToolbar,
   DatePickerWithRange,
+  Skeleton,
 } from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
@@ -233,6 +234,8 @@ function StudioShowsPage() {
 
         <StudioShowsTableSection
           studioId={studioId}
+          scopeDateFrom={search.date_from}
+          scopeDateTo={search.date_to}
           scopeLabel={formatScopeLabel(search.date_from, search.date_to)}
         />
       </div>
@@ -328,7 +331,14 @@ function ShowTaskReadinessSection({
         >
           {(isLoadingShiftAlignment || isFetchingShiftAlignment)
             ? (
-                <p className="text-sm text-muted-foreground">Checking show task readiness...</p>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                  {['risky', 'without-tasks', 'unassigned-shows', 'unassigned-tasks', 'missing-types'].map((key) => (
+                    <div key={key} className="rounded-md border p-3 space-y-2">
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-7 w-14" />
+                    </div>
+                  ))}
+                </div>
               )
             : (
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -360,7 +370,17 @@ function ShowTaskReadinessSection({
   );
 }
 
-function StudioShowsTableSection({ studioId, scopeLabel }: { studioId: string; scopeLabel: string }) {
+function StudioShowsTableSection({
+  studioId,
+  scopeDateFrom,
+  scopeDateTo,
+  scopeLabel,
+}: {
+  studioId: string;
+  scopeDateFrom?: string;
+  scopeDateTo?: string;
+  scopeLabel: string;
+}) {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [bulkGeneratingShows, setBulkGeneratingShows] = useState<StudioShow[] | null>(null);
   const [bulkAssigningShows, setBulkAssigningShows] = useState<StudioShow[] | null>(null);
@@ -377,7 +397,7 @@ function StudioShowsTableSection({ studioId, scopeLabel }: { studioId: string; s
     onColumnFiltersChange,
     sorting,
     onSortingChange,
-  } = useStudioShows({ studioId });
+  } = useStudioShows({ studioId, dateFrom: scopeDateFrom, dateTo: scopeDateTo });
 
   // Keep lightweight snapshots for selected rows that are not on current page.
   const [selectedShowSnapshots, setSelectedShowSnapshots] = useState<Record<string, StudioShow>>({});
@@ -473,7 +493,6 @@ function StudioShowsTableSection({ studioId, scopeLabel }: { studioId: string; s
         type: 'select' as const,
         options: (showLookups?.platforms ?? []).map((o) => ({ value: o.name, label: o.name })),
       },
-      { id: 'start_time', title: 'Date', type: 'date-range' as const },
     ],
     [showLookups],
   );
