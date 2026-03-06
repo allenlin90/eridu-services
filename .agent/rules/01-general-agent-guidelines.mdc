@@ -48,6 +48,7 @@ After feature delivery, behavior changes, or refactors, you MUST sync agent know
 - **Communication:** If uncertain about requirements or if a proposed architecture requires user approval, stop and use `notify_user` to gather feedback.
 - **Frontend Access Control Consistency:** For `erify_studios` studio routes, do not duplicate per-page membership/role checks. Use shared route-access policy + shared guard, and keep sidebar visibility derived from the same policy source.
 - **Frontend Route Wrapper Consistency (MANDATORY):** For route groups with shared page chrome/padding (for example `studios/$studioId/*`, `system/*`), define one parent route layout (`route.tsx`) with `Outlet` and shared wrapper component. Child pages must not hardcode duplicated page wrapper class strings.
+- **Frontend Leaf Header Wrapper Consistency (MANDATORY):** Inside one route set, leaf pages must use the same shared page-shell component (for example: `/system/*` -> `AdminLayout`, `studios/$studioId/*` -> `PageLayout`). Avoid manual duplicated `<h1>` + description blocks in leaf routes.
 - **Frontend Large Route Refactor Checklist (MANDATORY):**
   1. If a route component exceeds ~200 LOC or mixes 3+ concerns, decompose into route container + extracted sections (and hooks when state/query logic is dense).
   2. Keep canonical search param validation in the route schema (`validateSearch`), not ad-hoc fallback logic in render.

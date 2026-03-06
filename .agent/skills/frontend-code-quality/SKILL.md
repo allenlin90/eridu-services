@@ -268,6 +268,8 @@ function UserCard({ user }: { user: User }) {
 - If a parent route exists only for grouping, keep it minimal and move policy checks to the nearest shared parent.
 - Avoid mixing both patterns for the same feature area; prefer a single parent-guard + child-content approach.
 - Route sets may use different shared layout components (for example: `PageContainer` for studio-scoped pages, `AdminLayout` for system pages), but each route set should have one clear reusable wrapper pattern and avoid page-level wrapper duplication.
+- For `erify_studios`, treat `/system/*` as the reference pattern for DRY wrappers: parent route owns access boundary, each leaf page owns content and uses one shared leaf wrapper component.
+- For `studios/$studioId/*`, keep page padding in the parent (`PageContainer`) and use `PageLayout` consistently in leaf pages instead of manual `<h1>`/description blocks.
 
 ## Checklist
 
@@ -278,3 +280,4 @@ function UserCard({ user }: { user: User }) {
 - [ ] Large route files (>200 LOC or mixed concerns) are decomposed into container + hooks + presentation components.
 - [ ] Protected studio routes use `StudioRouteGuard` + shared access policy.
 - [ ] Sidebar visibility and route access use the same route-access source.
+- [ ] Leaf pages in each route set (`/system/*`, `studios/$studioId/*`) use their shared wrapper (`AdminLayout` or `PageLayout`) instead of duplicated page header markup.

@@ -33,6 +33,9 @@ pnpm --filter <app> test
    - Confirm loading/empty/data UI states still match expected behavior.
    - Confirm route/search-param behaviors still match expected URL contract.
    - Confirm pagination/date/filter transitions behave correctly after extraction/decomposition.
+   - Confirm route-layout DRY parity for touched route sets:
+     - parent route owns shared container/guard via `<Outlet />`
+     - leaf pages use the route-set shared page wrapper (for example `AdminLayout` or `PageLayout`) instead of repeated manual header markup.
 
 5. **Review results** — If any step fails, fix the errors before marking work complete. Re-run the failing step after fixing.
 

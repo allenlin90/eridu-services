@@ -13,6 +13,7 @@ import {
   DatePickerWithRange,
 } from '@eridu/ui';
 
+import { PageLayout } from '@/components/layouts/page-layout';
 import { StudioShiftsCalendar } from '@/features/studio-shifts/components/studio-shifts-calendar';
 import { StudioShiftsTable } from '@/features/studio-shifts/components/studio-shifts-table';
 import { useShiftCalendar } from '@/features/studio-shifts/hooks/use-studio-shifts';
@@ -176,14 +177,11 @@ function StudioShiftsPage() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Studio Shift Schedule</h1>
-          <p className="text-muted-foreground">Plan and manage upcoming studio shifts.</p>
-        </div>
-
-        <div className="inline-flex rounded-md border bg-background p-1 shrink-0">
+    <PageLayout
+      title="Studio Shift Schedule"
+      description="Plan and manage upcoming studio shifts."
+      actions={(
+        <div className="inline-flex shrink-0 rounded-md border bg-background p-1">
           <Button
             size="sm"
             variant={viewMode === 'calendar' ? 'default' : 'ghost'}
@@ -199,27 +197,29 @@ function StudioShiftsPage() {
             Table
           </Button>
         </div>
-      </div>
+      )}
+    >
+      <div className="space-y-4">
+        <div className="grid gap-4">
+          <ShiftCostSnapshotCard studioId={studioId} />
+        </div>
 
-      <div className="grid gap-4">
-        <ShiftCostSnapshotCard studioId={studioId} />
+        {viewMode === 'calendar'
+          ? (
+              <StudioShiftsCalendar
+                studioId={studioId}
+                summaryText="Read-only view of studio shifts. Switch to Table view to manage, create, and filter shifts."
+              />
+            )
+          : (
+              <StudioShiftsTable
+                studioId={studioId}
+                isStudioAdmin
+                search={search}
+                updateSearch={updateSearch}
+              />
+            )}
       </div>
-
-      {viewMode === 'calendar'
-        ? (
-            <StudioShiftsCalendar
-              studioId={studioId}
-              summaryText="Read-only view of studio shifts. Switch to Table view to manage, create, and filter shifts."
-            />
-          )
-        : (
-            <StudioShiftsTable
-              studioId={studioId}
-              isStudioAdmin
-              search={search}
-              updateSearch={updateSearch}
-            />
-          )}
-    </div>
+    </PageLayout>
   );
 }

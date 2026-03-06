@@ -34,6 +34,7 @@ Run when any of these are true:
    - Keep paths/references accurate.
    - When frontend access control/navigation behavior changes, document the shared policy location and guard usage so route guard + sidebar visibility remain aligned.
    - When decomposing large routes, document the standard boundary split (route container vs hooks vs presentation sections).
+   - When route-shell consistency changes, document parent layout boundary + leaf wrapper convention (for example `/system/*` + `AdminLayout`, `studios/$studioId/*` + `PageLayout`).
 
 4. **Update workflows/rules when process changed**
    - If this change introduces a repeatable process, update/create `.agent/workflows/*.md`.

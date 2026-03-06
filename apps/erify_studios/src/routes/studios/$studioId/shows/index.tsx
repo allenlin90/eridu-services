@@ -20,6 +20,7 @@ import {
   DatePickerWithRange,
 } from '@eridu/ui';
 
+import { PageLayout } from '@/components/layouts/page-layout';
 import { BulkTaskGenerationDialog } from '@/features/shows/components/bulk-task-generation-dialog';
 import { usePlatformsFieldData } from '@/features/shows/components/hooks/use-platforms-field-data';
 import { useShowStandardFieldData } from '@/features/shows/components/hooks/use-show-standard-field-data';
@@ -221,228 +222,222 @@ function StudioShowsPage() {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Shows</h1>
-        <p className="text-muted-foreground">
-          Monitor task progress and assignments across all your studio shows.
-        </p>
-      </div>
+    <PageLayout
+      title="Shows"
+      description="Monitor task progress and assignments across all your studio shows."
+    >
+      <div className="space-y-4">
+        <Card>
+          <CardHeader className="gap-3">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="space-y-1">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  Show Task Readiness Warnings
+                </CardTitle>
+                <CardDescription>
+                  Summary for upcoming shows by date range.
+                </CardDescription>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <DatePickerWithRange
+                  date={planningDateRange}
+                  setDate={(range) => {
+                    setPlanningDateFrom(range?.from ? toLocalDateInputValue(range.from) : '');
+                    setPlanningDateTo(range?.to ? toLocalDateInputValue(range.to) : '');
+                  }}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetPlanningRange}
+                  disabled={isFetchingShiftAlignment}
+                >
+                  Next 7 Days
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => void refetchShiftAlignment()}
+                  disabled={isFetchingShiftAlignment || hasInvalidPlanningRange}
+                  aria-label="Refresh task readiness warnings"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isFetchingShiftAlignment ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+            </div>
+            {hasInvalidPlanningRange && (
+              <p className="text-sm text-destructive">Planning end date must be on or after start date.</p>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {(isLoadingShiftAlignment || isFetchingShiftAlignment)
+              ? (
+                  <p className="text-sm text-muted-foreground">Checking show task readiness...</p>
+                )
+              : (
+                  <div className="space-y-3">
+                    <div className="rounded-md border p-3">
+                      <p className="text-xs text-muted-foreground">Shows With Task Readiness Risks</p>
+                      <p className="text-xl font-semibold">{taskReadinessWarningCount}</p>
+                    </div>
+                    <div className="rounded-md border p-3 space-y-1">
+                      <p className="text-sm font-medium">Task Readiness</p>
+                      <p className="text-sm text-muted-foreground">
+                        Shows without tasks:
+                        {' '}
+                        <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.shows_without_tasks_count ?? 0}</span>
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Shows with unassigned tasks:
+                        {' '}
+                        <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.shows_with_unassigned_tasks_count ?? 0}</span>
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Unassigned tasks:
+                        {' '}
+                        <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.tasks_unassigned_count ?? 0}</span>
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Shows missing SETUP/ACTIVE/CLOSURE:
+                        {' '}
+                        <span className="font-medium text-foreground">{showsMissingRequiredTaskTypes}</span>
+                        {' '}
+                        <span className="text-xs">
+                          (excluding shows with no tasks)
+                        </span>
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Premium shows missing moderation:
+                        {' '}
+                        <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.premium_shows_missing_moderation_count ?? 0}</span>
+                      </p>
+                    </div>
+                  </div>
+                )}
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="gap-3">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-1">
-              <CardTitle className="text-base flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                Show Task Readiness Warnings
-              </CardTitle>
-              <CardDescription>
-                Summary for upcoming shows by date range.
-              </CardDescription>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <DatePickerWithRange
-                date={planningDateRange}
-                setDate={(range) => {
-                  setPlanningDateFrom(range?.from ? toLocalDateInputValue(range.from) : '');
-                  setPlanningDateTo(range?.to ? toLocalDateInputValue(range.to) : '');
-                }}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleResetPlanningRange}
-                disabled={isFetchingShiftAlignment}
-              >
-                Next 7 Days
+        <DataTable
+          data={shows}
+          columns={columns}
+          isLoading={isLoading}
+          isFetching={isFetching}
+          emptyMessage="No shows found."
+          manualPagination
+          manualFiltering
+          manualSorting
+          pageCount={Math.ceil(total / pagination.pageSize)}
+          paginationState={{
+            pageIndex: pagination.pageIndex,
+            pageSize: pagination.pageSize,
+          }}
+          onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
+          sorting={sorting}
+          onSortingChange={adaptSortingChange(sorting, onSortingChange)}
+          columnFilters={columnFilters}
+          onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
+          enableRowSelection
+          rowSelection={rowSelection}
+          onRowSelectionChange={handleRowSelectionChange}
+          getRowId={(show) => show.id}
+          renderToolbar={(table) => (
+            <DataTableToolbar
+              table={table}
+              searchColumn="name"
+              searchableColumns={searchableColumns}
+              quickFilterColumns={QUICK_FILTER_COLUMNS}
+              featuredFilterColumns={FEATURED_FILTER_COLUMNS}
+              searchPlaceholder="Search shows..."
+            >
+              <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+                Refresh
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => void refetchShiftAlignment()}
-                disabled={isFetchingShiftAlignment || hasInvalidPlanningRange}
-                aria-label="Refresh task readiness warnings"
-              >
-                <RefreshCw className={`h-4 w-4 ${isFetchingShiftAlignment ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
-          </div>
-          {hasInvalidPlanningRange && (
-            <p className="text-sm text-destructive">Planning end date must be on or after start date.</p>
+            </DataTableToolbar>
           )}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {(isLoadingShiftAlignment || isFetchingShiftAlignment)
-            ? (
-                <p className="text-sm text-muted-foreground">Checking show task readiness...</p>
-              )
-            : (
-                <div className="space-y-3">
-                  <div className="rounded-md border p-3">
-                    <p className="text-xs text-muted-foreground">Shows With Task Readiness Risks</p>
-                    <p className="text-xl font-semibold">{taskReadinessWarningCount}</p>
-                  </div>
-                  <div className="rounded-md border p-3 space-y-1">
-                    <p className="text-sm font-medium">Task Readiness</p>
-                    <p className="text-sm text-muted-foreground">
-                      Shows without tasks:
-                      {' '}
-                      <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.shows_without_tasks_count ?? 0}</span>
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Shows with unassigned tasks:
-                      {' '}
-                      <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.shows_with_unassigned_tasks_count ?? 0}</span>
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Unassigned tasks:
-                      {' '}
-                      <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.tasks_unassigned_count ?? 0}</span>
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Shows missing SETUP/ACTIVE/CLOSURE:
-                      {' '}
-                      <span className="font-medium text-foreground">{showsMissingRequiredTaskTypes}</span>
-                      {' '}
-                      <span className="text-xs">
-                        (excluding shows with no tasks)
-                      </span>
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Premium shows missing moderation:
-                      {' '}
-                      <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.premium_shows_missing_moderation_count ?? 0}</span>
-                    </p>
-                  </div>
-                </div>
-              )}
-        </CardContent>
-      </Card>
+          renderFooter={() => (
+            <DataTablePagination
+              pagination={{
+                pageIndex: pagination.pageIndex,
+                pageSize: pagination.pageSize,
+                total,
+                pageCount: Math.ceil(total / pagination.pageSize),
+              }}
+              onPaginationChange={onPaginationChange}
+            />
+          )}
+        />
 
-      {/* Data Table */}
-      <DataTable
-        data={shows}
-        columns={columns}
-        isLoading={isLoading}
-        isFetching={isFetching}
-        emptyMessage="No shows found."
-        manualPagination
-        manualFiltering
-        manualSorting
-        pageCount={Math.ceil(total / pagination.pageSize)}
-        paginationState={{
-          pageIndex: pagination.pageIndex,
-          pageSize: pagination.pageSize,
-        }}
-        onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
-        sorting={sorting}
-        onSortingChange={adaptSortingChange(sorting, onSortingChange)}
-        columnFilters={columnFilters}
-        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
-        enableRowSelection
-        rowSelection={rowSelection}
-        onRowSelectionChange={handleRowSelectionChange}
-        getRowId={(show) => show.id}
-        renderToolbar={(table) => (
-          <DataTableToolbar
-            table={table}
-            searchColumn="name"
-            searchableColumns={searchableColumns}
-            quickFilterColumns={QUICK_FILTER_COLUMNS}
-            featuredFilterColumns={FEATURED_FILTER_COLUMNS}
-            searchPlaceholder="Search shows..."
-          >
-            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-              Refresh
-            </Button>
-          </DataTableToolbar>
+        {selectedShows.length > 0 && (
+          <>
+            <div className="fixed bottom-6 left-1/2 z-50 hidden -translate-x-1/2 items-center justify-between gap-4 rounded-full border bg-slate-900 px-6 py-3 text-slate-50 shadow-lg animate-in slide-in-from-bottom-5 dark:bg-slate-50 dark:text-slate-900 md:flex">
+              <div className="flex items-center gap-2 border-r border-slate-700 pr-4 dark:border-slate-300">
+                <span className="text-sm font-medium">
+                  {selectedShows.length}
+                  {' '}
+                  selected
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="rounded-full"
+                  onClick={() => setBulkGeneratingShows(selectedShows)}
+                >
+                  <ListTodo className="mr-2 h-4 w-4" />
+                  Generate Tasks
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="rounded-full"
+                  onClick={() => setBulkAssigningShows(selectedShows)}
+                >
+                  Assign Tasks
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="ml-2 rounded-full hover:bg-slate-800 hover:text-white dark:hover:bg-slate-200 dark:hover:text-black"
+                  onClick={clearSelectedShows}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+            <SelectedShowsMobileActions
+              selectedCount={selectedShows.length}
+              onGenerate={() => setBulkGeneratingShows(selectedShows)}
+              onAssign={() => setBulkAssigningShows(selectedShows)}
+              onClear={clearSelectedShows}
+            />
+          </>
         )}
-        renderFooter={() => (
-          <DataTablePagination
-            pagination={{
-              pageIndex: pagination.pageIndex,
-              pageSize: pagination.pageSize,
-              total,
-              pageCount: Math.ceil(total / pagination.pageSize),
+
+        {bulkGeneratingShows && (
+          <BulkTaskGenerationDialog
+            open={bulkGeneratingShows.length > 0}
+            onOpenChange={(open) => {
+              if (!open)
+                setBulkGeneratingShows(null);
             }}
-            onPaginationChange={onPaginationChange}
+            shows={bulkGeneratingShows}
           />
         )}
-      />
 
-      {/* Floating Action Bar */}
-      {selectedShows.length > 0 && (
-        <>
-          <div className="fixed bottom-6 left-1/2 z-50 hidden -translate-x-1/2 items-center justify-between gap-4 rounded-full border bg-slate-900 px-6 py-3 text-slate-50 shadow-lg animate-in slide-in-from-bottom-5 dark:bg-slate-50 dark:text-slate-900 md:flex">
-            <div className="flex items-center gap-2 border-r border-slate-700 pr-4 dark:border-slate-300">
-              <span className="text-sm font-medium">
-                {selectedShows.length}
-                {' '}
-                selected
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="rounded-full"
-                onClick={() => setBulkGeneratingShows(selectedShows)}
-              >
-                <ListTodo className="mr-2 h-4 w-4" />
-                Generate Tasks
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                className="rounded-full"
-                onClick={() => setBulkAssigningShows(selectedShows)}
-              >
-                Assign Tasks
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="ml-2 rounded-full hover:bg-slate-800 hover:text-white dark:hover:bg-slate-200 dark:hover:text-black"
-                onClick={clearSelectedShows}
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-          <SelectedShowsMobileActions
-            selectedCount={selectedShows.length}
-            onGenerate={() => setBulkGeneratingShows(selectedShows)}
-            onAssign={() => setBulkAssigningShows(selectedShows)}
-            onClear={clearSelectedShows}
+        {bulkAssigningShows && (
+          <ShowAssignmentDialog
+            studioId={studioId}
+            open={bulkAssigningShows.length > 0}
+            onOpenChange={(open) => {
+              if (!open)
+                setBulkAssigningShows(null);
+            }}
+            shows={bulkAssigningShows}
           />
-        </>
-      )}
-
-      {/* Dialogs */}
-      {bulkGeneratingShows && (
-        <BulkTaskGenerationDialog
-          open={bulkGeneratingShows.length > 0}
-          onOpenChange={(open) => {
-            if (!open)
-              setBulkGeneratingShows(null);
-          }}
-          shows={bulkGeneratingShows}
-        />
-      )}
-
-      {bulkAssigningShows && (
-        <ShowAssignmentDialog
-          studioId={studioId}
-          open={bulkAssigningShows.length > 0}
-          onOpenChange={(open) => {
-            if (!open)
-              setBulkAssigningShows(null);
-          }}
-          shows={bulkAssigningShows}
-        />
-      )}
-    </div>
+        )}
+      </div>
+    </PageLayout>
   );
 }

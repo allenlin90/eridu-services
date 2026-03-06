@@ -321,3 +321,4 @@ async findPaginated(params: {
 3. **Services CANNOT use Prisma** - In method signatures or logic
 4. **Use Parameters<>** - For repository pass-through methods
 5. **Repository builds queries** - Services pass domain filters
+6. **Route-set layout parity matters** - In `erify_studios`, keep parent route wrappers in `route.tsx` with `<Outlet />`, then use one shared leaf wrapper per set (`/system/*` -> `AdminLayout`, `studios/$studioId/*` -> `PageLayout`) instead of manual repeated page headers.
