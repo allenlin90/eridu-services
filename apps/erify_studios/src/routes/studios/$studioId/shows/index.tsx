@@ -1,6 +1,6 @@
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
 import type { OnChangeFn, RowSelectionState } from '@tanstack/react-table';
-import { AlertTriangle, ListTodo, RefreshCw } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronUp, ListTodo, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 
@@ -119,6 +119,7 @@ function StudioShowsPage() {
   const { studioId } = showsRouteApi.useParams();
   const search = showsRouteApi.useSearch();
   const navigate = showsRouteApi.useNavigate();
+  const [isReadinessSnapshotVisible, setIsReadinessSnapshotVisible] = useState(true);
   const [defaultScopeRange] = useState(() => {
     const defaultRange = getDefaultPlanningRange();
     return {
@@ -152,22 +153,36 @@ function StudioShowsPage() {
     }), { replace: true });
   }, [defaultScopeRange.date_from, defaultScopeRange.date_to, search.date_from, search.date_to, updateSearch]);
 
-  const scopeDateRange: DateRange | undefined = search.date_from || search.date_to
-    ? {
-        from: parseSearchDate(search.date_from),
-        to: parseSearchDate(search.date_to),
-      }
-    : undefined;
+  const scopeDateRange = useMemo<DateRange | undefined>(() => {
+    if (!search.date_from && !search.date_to) {
+      return undefined;
+    }
 
-  const handleScopeDateChange = useCallback((range: DateRange | undefined) => {
-    const nextScope = buildScopeRange(range);
+    return {
+      from: parseSearchDate(search.date_from),
+      to: parseSearchDate(search.date_to),
+    };
+  }, [search.date_from, search.date_to]);
+  const [isScopeDatePickerOpen, setIsScopeDatePickerOpen] = useState(false);
+  const [draftScopeDateRange, setDraftScopeDateRange] = useState<DateRange | undefined>(scopeDateRange);
+  const pickerScopeDateRange = isScopeDatePickerOpen ? draftScopeDateRange : scopeDateRange;
+
+  const handleScopeDatePickerOpenChange = useCallback((open: boolean) => {
+    if (open) {
+      setDraftScopeDateRange(scopeDateRange);
+      setIsScopeDatePickerOpen(true);
+      return;
+    }
+
+    setIsScopeDatePickerOpen(false);
+    const nextScope = buildScopeRange(draftScopeDateRange);
     updateSearch((previous) => ({
       ...previous,
       page: 1,
       date_from: nextScope.date_from,
       date_to: nextScope.date_to,
     }));
-  }, [updateSearch]);
+  }, [draftScopeDateRange, scopeDateRange, updateSearch]);
 
   const handleResetScope = useCallback(() => {
     updateSearch((previous) => ({
@@ -175,22 +190,6 @@ function StudioShowsPage() {
       page: 1,
       date_from: defaultScopeRange.date_from,
       date_to: defaultScopeRange.date_to,
-    }));
-  }, [defaultScopeRange.date_from, defaultScopeRange.date_to, updateSearch]);
-
-  const handleResetAllFilters = useCallback(() => {
-    updateSearch((previous) => ({
-      ...previous,
-      page: 1,
-      search: undefined,
-      date_from: defaultScopeRange.date_from,
-      date_to: defaultScopeRange.date_to,
-      has_tasks: undefined,
-      client_name: undefined,
-      show_type_name: undefined,
-      show_standard_name: undefined,
-      show_status_name: undefined,
-      platform_name: undefined,
     }));
   }, [defaultScopeRange.date_from, defaultScopeRange.date_to, updateSearch]);
 
@@ -211,21 +210,15 @@ function StudioShowsPage() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <DatePickerWithRange
-                  date={scopeDateRange}
-                  setDate={handleScopeDateChange}
+                  date={pickerScopeDateRange}
+                  setDate={setDraftScopeDateRange}
+                  open={isScopeDatePickerOpen}
+                  onOpenChange={handleScopeDatePickerOpenChange}
                 />
                 <Button variant="outline" size="sm" onClick={handleResetScope}>
                   Next 7 Days
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleResetAllFilters}>
-                  Reset Filters
-                </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Active scope:
-                {' '}
-                {formatScopeLabel(search.date_from, search.date_to)}
-              </p>
             </div>
           </CardHeader>
         </Card>
@@ -234,6 +227,8 @@ function StudioShowsPage() {
           studioId={studioId}
           scopeDateFrom={search.date_from}
           scopeDateTo={search.date_to}
+          isVisible={isReadinessSnapshotVisible}
+          onToggleVisibility={() => setIsReadinessSnapshotVisible((previous) => !previous)}
         />
 
         <StudioShowsTableSection
@@ -249,10 +244,14 @@ function ShowTaskReadinessSection({
   studioId,
   scopeDateFrom,
   scopeDateTo,
+  isVisible,
+  onToggleVisibility,
 }: {
   studioId: string;
   scopeDateFrom?: string;
   scopeDateTo?: string;
+  isVisible: boolean;
+  onToggleVisibility: () => void;
 }) {
   const planningDateFrom = toApiDate(scopeDateFrom);
   const planningDateTo = toApiDate(scopeDateTo);
@@ -284,8 +283,27 @@ function ShowTaskReadinessSection({
 
   return (
     <Card>
-      <CardHeader className="gap-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <CardHeader className="relative gap-3 pr-24">
+        <div className="absolute right-4 top-4 flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => void refetchShiftAlignment()}
+            disabled={!isVisible || isFetchingShiftAlignment || hasIncompletePlanningRange || hasInvalidPlanningRange}
+            aria-label="Refresh task readiness warnings"
+          >
+            <RefreshCw className={`h-4 w-4 ${isFetchingShiftAlignment ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onToggleVisibility}
+            aria-label={isVisible ? 'Hide readiness snapshot' : 'Show readiness snapshot'}
+          >
+            {isVisible ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        </div>
+        <div className="flex items-start gap-2">
           <div className="space-y-1">
             <CardTitle className="text-base flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-600" />
@@ -295,15 +313,6 @@ function ShowTaskReadinessSection({
               Summary for shows in selected scope.
             </CardDescription>
           </div>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => void refetchShiftAlignment()}
-            disabled={isFetchingShiftAlignment || hasIncompletePlanningRange || hasInvalidPlanningRange}
-            aria-label="Refresh task readiness warnings"
-          >
-            <RefreshCw className={`h-4 w-4 ${isFetchingShiftAlignment ? 'animate-spin' : ''}`} />
-          </Button>
         </div>
         {hasIncompletePlanningRange && (
           <p className="text-sm text-muted-foreground">Select a date range to load readiness snapshot.</p>
@@ -313,34 +322,39 @@ function ShowTaskReadinessSection({
         )}
       </CardHeader>
       <CardContent>
-        {(isLoadingShiftAlignment || isFetchingShiftAlignment)
-          ? (
-              <p className="text-sm text-muted-foreground">Checking show task readiness...</p>
-            )
-          : (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                <div className="rounded-md border p-3">
-                  <p className="text-xs text-muted-foreground">Risky Shows</p>
-                  <p className="text-xl font-semibold">{taskReadinessWarningCount}</p>
+        <div
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${isVisible ? 'max-h-[640px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}
+          aria-hidden={!isVisible}
+        >
+          {(isLoadingShiftAlignment || isFetchingShiftAlignment)
+            ? (
+                <p className="text-sm text-muted-foreground">Checking show task readiness...</p>
+              )
+            : (
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                  <div className="rounded-md border p-3">
+                    <p className="text-xs text-muted-foreground">Risky Shows</p>
+                    <p className="text-xl font-semibold">{taskReadinessWarningCount}</p>
+                  </div>
+                  <div className="rounded-md border p-3">
+                    <p className="text-xs text-muted-foreground">Without Tasks</p>
+                    <p className="text-xl font-semibold">{shiftAlignmentResponse?.summary.shows_without_tasks_count ?? 0}</p>
+                  </div>
+                  <div className="rounded-md border p-3">
+                    <p className="text-xs text-muted-foreground">Unassigned Shows</p>
+                    <p className="text-xl font-semibold">{shiftAlignmentResponse?.summary.shows_with_unassigned_tasks_count ?? 0}</p>
+                  </div>
+                  <div className="rounded-md border p-3">
+                    <p className="text-xs text-muted-foreground">Unassigned Tasks</p>
+                    <p className="text-xl font-semibold">{shiftAlignmentResponse?.summary.tasks_unassigned_count ?? 0}</p>
+                  </div>
+                  <div className="rounded-md border p-3">
+                    <p className="text-xs text-muted-foreground">Missing Required Types</p>
+                    <p className="text-xl font-semibold">{showsMissingRequiredTaskTypes}</p>
+                  </div>
                 </div>
-                <div className="rounded-md border p-3">
-                  <p className="text-xs text-muted-foreground">Without Tasks</p>
-                  <p className="text-xl font-semibold">{shiftAlignmentResponse?.summary.shows_without_tasks_count ?? 0}</p>
-                </div>
-                <div className="rounded-md border p-3">
-                  <p className="text-xs text-muted-foreground">Unassigned Shows</p>
-                  <p className="text-xl font-semibold">{shiftAlignmentResponse?.summary.shows_with_unassigned_tasks_count ?? 0}</p>
-                </div>
-                <div className="rounded-md border p-3">
-                  <p className="text-xs text-muted-foreground">Unassigned Tasks</p>
-                  <p className="text-xl font-semibold">{shiftAlignmentResponse?.summary.tasks_unassigned_count ?? 0}</p>
-                </div>
-                <div className="rounded-md border p-3">
-                  <p className="text-xs text-muted-foreground">Missing Required Types</p>
-                  <p className="text-xl font-semibold">{showsMissingRequiredTaskTypes}</p>
-                </div>
-              </div>
-            )}
+              )}
+        </div>
       </CardContent>
     </Card>
   );
@@ -459,6 +473,7 @@ function StudioShowsTableSection({ studioId, scopeLabel }: { studioId: string; s
         type: 'select' as const,
         options: (showLookups?.platforms ?? []).map((o) => ({ value: o.name, label: o.name })),
       },
+      { id: 'start_time', title: 'Date', type: 'date-range' as const },
     ],
     [showLookups],
   );
@@ -503,8 +518,15 @@ function StudioShowsTableSection({ studioId, scopeLabel }: { studioId: string; s
             featuredFilterColumns={FEATURED_FILTER_COLUMNS}
             searchPlaceholder="Search shows..."
           >
-            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-              Refresh
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              aria-label="Refresh shows list"
+            >
+              <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             </Button>
           </DataTableToolbar>
         )}
