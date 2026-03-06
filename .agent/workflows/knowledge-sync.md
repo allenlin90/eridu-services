@@ -14,6 +14,7 @@ Run when any of these are true:
 2. New feature path, role/policy, or operational runbook was introduced.
 3. Existing implementation/design docs are no longer accurate.
 4. A recurring implementation/review pattern should be reusable by future agents.
+5. A large route/component was decomposed and the extraction pattern should be standardized.
 
 ## Steps
 
@@ -31,6 +32,9 @@ Run when any of these are true:
    - Update the most relevant skill(s) in `.agent/skills/*/SKILL.md`.
    - Capture only stable/reusable guidance (avoid one-off task logs).
    - Keep paths/references accurate.
+   - When frontend access control/navigation behavior changes, document the shared policy location and guard usage so route guard + sidebar visibility remain aligned.
+   - When decomposing large routes, document the standard boundary split (route container vs hooks vs presentation sections).
+   - When route-shell consistency changes, document parent layout boundary + leaf wrapper convention (for example `/system/*` + `AdminLayout`, `studios/$studioId/*` + `PageLayout`).
 
 4. **Update workflows/rules when process changed**
    - If this change introduces a repeatable process, update/create `.agent/workflows/*.md`.
@@ -43,6 +47,7 @@ Run when any of these are true:
 6. **Sanity check links and discoverability**
    - Ensure moved/renamed docs are referenced correctly from READMEs, skills, and related docs.
    - Ensure no stale links to old doc paths remain.
+   - For route policy changes, verify route files and sidebar config both reference the same access policy source.
 
 ## Completion Checklist
 
@@ -52,3 +57,4 @@ Run when any of these are true:
 - [ ] Workflow/rules updated if process changed.
 - [ ] Memory reference updated for durable project knowledge.
 - [ ] Doc/skill links validated.
+- [ ] If large route/component decomposition happened, extraction boundaries are documented for future reuse.

@@ -120,6 +120,7 @@ afterAll(() => server.close());
 - Accessibility (ARIA labels, keyboard navigation)
 - Integration with hooks and context
 - Edge cases and error scenarios
+- Route search-param behavior (page, filters, date) when URL state drives data fetching
 
 ### ❌ DON'T Test
 
@@ -140,6 +141,16 @@ afterAll(() => server.close());
 - [ ] Loading/error/empty states tested
 - [ ] User interactions use `userEvent` (not `fireEvent`)
 - [ ] Async operations use `waitFor` or `findBy*` queries
+- [ ] Refactor parity tests cover route-state behavior (pagination clamp timing, date/query defaults, and navigation callbacks)
+
+## Refactor Parity Suite (Route Decomposition)
+
+When decomposing a large route component, add or update tests that confirm no behavioral regression:
+
+1. Loading/empty/data state rendering still matches previous behavior.
+2. Search-param-driven behavior is preserved (`page`, `limit`, `date`, filter params).
+3. Pagination clamping happens only after data is available, not during initial loading.
+4. Route actions (previous/next page, date navigation) still update URL state correctly.
 
 ---
 

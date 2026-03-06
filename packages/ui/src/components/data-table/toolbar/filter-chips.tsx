@@ -29,6 +29,10 @@ export function FilterChips<TData>({
         // Exclude primary column - it's shown in the search input
         if (f.id === primaryColumnId)
           return false;
+        // Exclude filters not declared as searchable columns
+        const config = searchableColumns.find((c) => c.id === f.id);
+        if (!config)
+          return false;
         // Must have a value
         return f.value !== undefined && f.value !== '';
       })

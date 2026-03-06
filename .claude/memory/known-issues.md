@@ -80,6 +80,16 @@ When in doubt, refer to these files:
 
 ---
 
+## Deferred: StudioShift / StudioShiftBlock missing `version` field (March 2026)
+
+Neither `StudioShift` nor `StudioShiftBlock` has a `version Int @default(1)` column for optimistic locking. Concurrent admin edits to the same shift will silently apply last-write-wins semantics.
+
+**Risk**: Low — concurrent dual-admin edits of the same shift are an unlikely user scenario for this domain.
+**Action**: Add `version` to both models in the next schema migration pass that already requires a migration for another reason. Do not add a standalone migration for this alone.
+**Tracked**: March 2026 — deferred from `feat/studio-shift-schedule` PR review.
+
+---
+
 ## Related Documentation
 
 - [Schema Patterns](./schema-patterns.md) — Three-tier schema architecture

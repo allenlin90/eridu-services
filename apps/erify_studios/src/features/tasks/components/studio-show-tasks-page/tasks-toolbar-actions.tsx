@@ -1,4 +1,4 @@
-import { ListTodo, RotateCw, Trash2, UserRound } from 'lucide-react';
+import { ListTodo, RefreshCw, Trash2, UserRound } from 'lucide-react';
 
 import { Button } from '@eridu/ui';
 
@@ -25,13 +25,13 @@ export function TasksToolbarActions({
     <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
       <Button
         variant="outline"
-        size="sm"
-        className="h-8 w-full sm:w-auto"
+        size="icon"
+        className="h-8 w-8"
         onClick={onRefreshAll}
         disabled={isRefreshing}
+        aria-label="Refresh tasks"
       >
-        <RotateCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-        Refresh
+        <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
       </Button>
       <Button
         variant="outline"

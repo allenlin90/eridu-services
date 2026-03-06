@@ -37,6 +37,9 @@ export class StudioMembershipService extends BaseModelService {
       user: { connect: { uid: payload.userId } },
       studio: { connect: { uid: payload.studioId } },
       role: payload.role,
+      ...(payload.baseHourlyRate !== undefined && {
+        baseHourlyRate: payload.baseHourlyRate,
+      }),
       metadata: payload.metadata ?? {},
     };
 
@@ -51,6 +54,12 @@ export class StudioMembershipService extends BaseModelService {
     include?: T,
   ): ReturnType<StudioMembershipRepository['findByUid']> {
     return this.studioMembershipRepository.findByUid(uid, include);
+  }
+
+  async findOne(
+    ...args: Parameters<StudioMembershipRepository['findOne']>
+  ): ReturnType<StudioMembershipRepository['findOne']> {
+    return this.studioMembershipRepository.findOne(...args);
   }
 
   async getStudioMembershipsByStudio(
@@ -168,6 +177,8 @@ export class StudioMembershipService extends BaseModelService {
 
     if (payload.role !== undefined)
       data.role = payload.role;
+    if (payload.baseHourlyRate !== undefined)
+      data.baseHourlyRate = payload.baseHourlyRate;
     if (payload.metadata !== undefined)
       data.metadata = payload.metadata;
 

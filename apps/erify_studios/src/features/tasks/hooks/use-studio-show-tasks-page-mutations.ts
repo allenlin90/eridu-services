@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { toast } from 'sonner';
 
 import type { TaskAction, TaskWithRelationsDto } from '@eridu/api-types/task-management';
 
@@ -7,10 +8,19 @@ import { useDeleteTasks } from '@/features/tasks/hooks/use-delete-tasks';
 import { useUpdateStudioTask } from '@/features/tasks/hooks/use-update-studio-task';
 import { useUpdateStudioTaskStatus } from '@/features/tasks/hooks/use-update-studio-task-status';
 import { requiresTaskActionSheet } from '@/features/tasks/lib/task-action-sheet';
+import { checkAssigneeShiftCoverageInShowWindow } from '@/features/tasks/lib/task-assignment-shift-coverage';
+import {
+  buildShiftCoverageWarning,
+} from '@/features/tasks/lib/task-assignment-shift-warning';
 
 type UseStudioShowTasksPageMutationsProps = {
   studioId: string;
   showId: string;
+  showWindow: {
+    name: string;
+    start_time: string;
+    end_time: string;
+  } | null;
   onDeleteSuccess: () => void;
   onOpenTaskActionDraft: (task: TaskWithRelationsDto, action: TaskAction) => void;
   onClearTaskActionDraft: () => void;
@@ -20,6 +30,7 @@ type UseStudioShowTasksPageMutationsProps = {
 export function useStudioShowTasksPageMutations({
   studioId,
   showId,
+  showWindow,
   onDeleteSuccess,
   onOpenTaskActionDraft,
   onClearTaskActionDraft,
@@ -38,9 +49,25 @@ export function useStudioShowTasksPageMutations({
   } = useUpdateStudioTaskStatus({ studioId, showId });
   const { mutate: updateTask, isPending: isUpdatingTask } = useUpdateStudioTask({ studioId, showId });
 
-  const handleAssign = useCallback((taskId: string, assigneeUid: string | null) => {
-    assignTask({ taskId, assigneeUid });
-  }, [assignTask]);
+  const handleAssign = useCallback(async (task: TaskWithRelationsDto, assigneeUid: string | null) => {
+    if (assigneeUid && showWindow) {
+      try {
+        const coverageResult = await checkAssigneeShiftCoverageInShowWindow(
+          studioId,
+          assigneeUid,
+          showWindow,
+        );
+
+        if (!coverageResult.hasCoverage && coverageResult.showStart) {
+          toast.warning(buildShiftCoverageWarning(showWindow.name, coverageResult.showStart));
+        }
+      } catch {
+        // Non-blocking warning check: assignment should proceed even if lookup fails.
+      }
+    }
+
+    assignTask({ taskId: task.id, assigneeUid });
+  }, [assignTask, showWindow, studioId]);
   const processingTaskId = updateStatusVariables?.taskId ?? null;
 
   const handleRunAction = useCallback((

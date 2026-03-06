@@ -1,5 +1,5 @@
-import { addDays, addHours, endOfDay, startOfDay } from 'date-fns';
-import { useMemo } from 'react';
+import { addDays, addHours, endOfDay, format, startOfDay } from 'date-fns';
+import { useEffect, useMemo } from 'react';
 
 import type { ListMyTasksQuery, TaskStatus, TaskType } from '@eridu/api-types/task-management';
 import { TASK_STATUS } from '@eridu/api-types/task-management';
@@ -29,7 +29,8 @@ const OVERDUE_STATUS_FILTERS: TaskStatus[] = [
 type SetUrlSearch = (updater: (prev: MyTasksSearch) => MyTasksSearch) => void;
 
 export function useMyTasksFilters(studioId: string, search: MyTasksSearch, setUrlSearch: SetUrlSearch) {
-  const showStartDate = search.show_start_date ?? '';
+  const todayShowStartDate = format(new Date(), 'yyyy-MM-dd');
+  const showStartDate = search.show_start_date ?? todayShowStartDate;
   const selectedStatuses = search.status;
   const selectedTaskTypes = search.task_type;
   const sortBy = search.sort;
@@ -39,6 +40,18 @@ export function useMyTasksFilters(studioId: string, search: MyTasksSearch, setUr
   const limit = search.limit;
   const viewMode = search.view_mode;
   const overdueOnly = search.overdue_only ?? false;
+  const hasCustomShowStartDate = showStartDate !== todayShowStartDate;
+
+  useEffect(() => {
+    if (search.show_start_date) {
+      return;
+    }
+
+    setUrlSearch((prev) => ({
+      ...prev,
+      show_start_date: todayShowStartDate,
+    }));
+  }, [search.show_start_date, setUrlSearch, todayShowStartDate]);
 
   const setShowStartDate = (value: string) => {
     setUrlSearch((prev) => ({
@@ -139,7 +152,7 @@ export function useMyTasksFilters(studioId: string, search: MyTasksSearch, setUr
   const statusModified = selectedStatuses.length !== DEFAULT_STATUS_FILTERS.length
     || !DEFAULT_STATUS_FILTERS.every((s) => selectedStatuses.includes(s));
 
-  const hasActiveFilters = showStartDate.length > 0
+  const hasActiveFilters = hasCustomShowStartDate
     || statusModified
     || selectedTaskTypes.length > 0
     || searchInput.length > 0
@@ -147,7 +160,7 @@ export function useMyTasksFilters(studioId: string, search: MyTasksSearch, setUr
     || limit !== DEFAULT_LIMIT
     || overdueOnly;
 
-  const activeFilterCount = (showStartDate.length > 0 ? 1 : 0)
+  const activeFilterCount = (hasCustomShowStartDate ? 1 : 0)
     + (statusModified ? 1 : 0)
     + selectedTaskTypes.length
     + (sortBy !== DEFAULT_SORT ? 1 : 0)
@@ -162,14 +175,12 @@ export function useMyTasksFilters(studioId: string, search: MyTasksSearch, setUr
       sort: sortBy,
     };
 
-    if (showStartDate) {
-      const selectedDate = new Date(`${showStartDate}T00:00:00`);
-      nextQuery.show_start_from = startOfDay(selectedDate).toISOString();
-      nextQuery.show_start_to = addHours(
-        startOfDay(addDays(selectedDate, 1)),
-        OPERATIONAL_DAY_NEXT_MORNING_CUTOFF_HOURS,
-      ).toISOString();
-    }
+    const selectedDate = new Date(`${showStartDate}T00:00:00`);
+    nextQuery.show_start_from = startOfDay(selectedDate).toISOString();
+    nextQuery.show_start_to = addHours(
+      startOfDay(addDays(selectedDate, 1)),
+      OPERATIONAL_DAY_NEXT_MORNING_CUTOFF_HOURS,
+    ).toISOString();
 
     if (overdueOnly) {
       nextQuery.due_date_to = endOfDay(new Date()).toISOString();
@@ -203,6 +214,7 @@ export function useMyTasksFilters(studioId: string, search: MyTasksSearch, setUr
     query,
     page,
     setPage,
+    hasCustomShowStartDate,
     showStartDate,
     setShowStartDate,
     selectedStatuses,

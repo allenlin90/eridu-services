@@ -42,7 +42,7 @@ function AssigneeCell({
   task: TaskWithRelationsDto;
   getMembers: () => Membership[];
   onSearch: (value: string) => void;
-  onAssign: (taskId: string, assigneeUid: string | null) => void;
+  onAssign: (task: TaskWithRelationsDto, assigneeUid: string | null) => void;
   isAssigning: boolean;
 }) {
   const memberOptions = getMemberOptions(getMembers());
@@ -53,7 +53,7 @@ function AssigneeCell({
       value={currentValue}
       onChange={(val) => {
         if (val !== currentValue) {
-          onAssign(task.id, val === 'unassigned' ? null : val);
+          onAssign(task, val === 'unassigned' ? null : val);
         }
       }}
       onSearch={onSearch}
@@ -230,7 +230,7 @@ function ProcessStatusCell({
 export function getColumns(
   getMembers: () => Membership[],
   onMemberSearch: (value: string) => void,
-  onAssign: (taskId: string, assigneeUid: string | null) => void,
+  onAssign: (task: TaskWithRelationsDto, assigneeUid: string | null) => void,
   isAssigning: boolean,
   onRunAction: (task: TaskWithRelationsDto, action: TaskAction) => void,
   processingTaskId: string | null,

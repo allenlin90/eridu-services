@@ -39,9 +39,9 @@ export class AdminStudioMembershipController extends BaseAdminController {
     'Studio membership created successfully',
   )
   async createStudioMembership(@Body() body: CreateStudioMembershipDto) {
-    const { userId, studioId, role, metadata } = body;
+    const { userId, studioId, role, baseHourlyRate, metadata } = body;
     return this.studioMembershipService.createStudioMembership(
-      { userId, studioId, role, metadata },
+      { userId, studioId, role, baseHourlyRate, metadata },
       {
         user: true,
         studio: true,
@@ -107,10 +107,10 @@ export class AdminStudioMembershipController extends BaseAdminController {
     const membership = await this.studioMembershipService.getStudioMembershipById(id);
     this.ensureResourceExists(membership, 'Studio Membership', id);
 
-    const { userId, studioId, role, metadata } = body;
+    const { userId, studioId, role, baseHourlyRate, metadata } = body;
     return this.studioMembershipService.updateStudioMembership(
       id,
-      { userId, studioId, role, metadata },
+      { userId, studioId, role, baseHourlyRate, metadata },
       {
         user: true,
         studio: true,

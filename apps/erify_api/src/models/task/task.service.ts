@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma, Task } from '@prisma/client';
 import { TaskStatus, TaskType } from '@prisma/client';
 
 import {
@@ -92,8 +93,16 @@ export class TaskService extends BaseModelService {
   }
 
   /** @internal */
-  async findTasksByShowIds(...args: Parameters<TaskRepository['findTasksByShowIds']>): ReturnType<TaskRepository['findTasksByShowIds']> {
-    return this.taskRepository.findTasksByShowIds(...args);
+  async findTasksByShowIds(showIds: bigint[]): Promise<Task[]>;
+  async findTasksByShowIds<T extends Prisma.TaskInclude>(
+    showIds: bigint[],
+    include: T,
+  ): Promise<Array<Prisma.TaskGetPayload<{ include: T }>>>;
+  async findTasksByShowIds(showIds: bigint[], include?: Prisma.TaskInclude) {
+    if (!include) {
+      return this.taskRepository.findTasksByShowIds(showIds);
+    }
+    return this.taskRepository.findTasksByShowIds(showIds, include);
   }
 
   /** @internal */

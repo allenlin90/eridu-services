@@ -17,6 +17,7 @@ vi.mock('lucide-react', () => ({
   MonitorPlay: vi.fn(),
   Ruler: vi.fn(),
   Settings: vi.fn(),
+  ShieldCheck: vi.fn(),
   Shapes: vi.fn(),
   Users: vi.fn(),
   UserSquare2: vi.fn(),
@@ -93,7 +94,7 @@ describe('useSidebarConfig', () => {
         studio_memberships: [
           {
             studio: { uid: 'studio-1', name: 'Studio 1' },
-            role: 'owner',
+            role: 'admin',
           },
           {
             studio: { uid: 'studio-2', name: 'Studio 2' },
@@ -134,7 +135,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
-    expect(result.current.navMain).toHaveLength(3); // Dashboard + System + Studio
+    expect(result.current.navMain).toHaveLength(4); // Dashboard + System + Studio Common + Studio Admin
     expect(result.current.navMain[0]).toEqual({
       title: 'Dashboard',
       url: '/dashboard',
@@ -165,12 +166,12 @@ describe('useSidebarConfig', () => {
       ]),
     });
 
-    expect(result.current.navMain[2]).toEqual({
-      title: 'Studio',
-      url: '/studios',
+    expect(result.current.navMain[2]).toEqual(expect.objectContaining({
+      title: 'Studio Common',
+      url: '/studios/studio-1',
       icon: expect.any(Function),
       isActive: false,
-      items: [
+      items: expect.arrayContaining([
         expect.objectContaining({
           title: 'Dashboard',
           url: '/studios/studio-1/dashboard',
@@ -179,8 +180,29 @@ describe('useSidebarConfig', () => {
           title: 'My Tasks',
           url: '/studios/studio-1/my-tasks',
         }),
-      ],
-    });
+        expect.objectContaining({
+          title: 'My Shifts',
+          url: '/studios/studio-1/my-shifts',
+        }),
+      ]),
+    }));
+
+    expect(result.current.navMain[3]).toEqual(expect.objectContaining({
+      title: 'Studio Admin',
+      url: '/studios/studio-1/admin',
+      icon: expect.any(Function),
+      isActive: false,
+      items: expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Review Queue',
+          url: '/studios/studio-1/tasks?status=REVIEW',
+        }),
+        expect.objectContaining({
+          title: 'Shift Schedule',
+          url: '/studios/studio-1/shifts',
+        }),
+      ]),
+    }));
   });
 
   it('sets system navigation as active when on system routes', () => {
@@ -226,7 +248,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
-    expect(result.current.navMainLabel).toBe('Activities');
+    expect(result.current.navMainLabel).toBe('Workspace');
   });
 
   it('provides logout handler that clears caches and signs out', async () => {

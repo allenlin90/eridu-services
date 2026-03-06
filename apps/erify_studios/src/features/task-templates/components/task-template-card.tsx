@@ -4,7 +4,7 @@ import { Copy, FileText, MoreVertical, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import type { TaskTemplateDto } from '@eridu/api-types/task-management';
+import type { TaskTemplateDto, UiSchema } from '@eridu/api-types/task-management';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,8 +38,27 @@ type TaskTemplateCardProps = {
   studioId: string;
 };
 
+function resolveTemplateSchemaForClone(template: TaskTemplateDto): UiSchema {
+  const rawSchema = template.current_schema as Partial<UiSchema> | undefined;
+  const rawItems = rawSchema?.items;
+
+  const items = Array.isArray(rawItems)
+    ? rawItems.map((item) => ({
+        ...item,
+        // Generate new IDs for cloned fields to avoid collisions.
+        id: crypto.randomUUID(),
+      }))
+    : [];
+
+  return {
+    items,
+    ...(rawSchema?.metadata ? { metadata: rawSchema.metadata } : {}),
+  };
+}
+
 export function TaskTemplateCard({ template, studioId }: TaskTemplateCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const updatedAtLabel = format(new Date(template.updated_at), 'MMM d, yyyy');
 
   const { mutate: cloneTemplate, isPending: isCloning } = useCreateTaskTemplate({
     studioId,
@@ -65,14 +84,7 @@ export function TaskTemplateCard({ template, studioId }: TaskTemplateCardProps) 
       name: `${template.name} (Copy)`,
       description: template.description ?? '',
       task_type: template.task_type,
-      schema: {
-        items: (template.current_schema?.items ?? []).map((item) => ({
-          ...item,
-          // Generate new IDs for the cloned fields to ensure they are unique
-          id: crypto.randomUUID(),
-        })),
-        ...(template.current_schema?.metadata ? { metadata: template.current_schema.metadata } : {}),
-      },
+      schema: resolveTemplateSchemaForClone(template),
     });
   };
 
@@ -97,7 +109,7 @@ export function TaskTemplateCard({ template, studioId }: TaskTemplateCardProps) 
                 <CardTitle className="line-clamp-1">{template.name}</CardTitle>
                 <CardDescription className="flex items-center gap-2 text-xs">
                   <span>
-                    {`v${template.version} • Updated ${format(new Date(template.updated_at), 'MMM d, yyyy')}`}
+                    {`v${template.version} • Updated ${updatedAtLabel}`}
                   </span>
                 </CardDescription>
               </div>

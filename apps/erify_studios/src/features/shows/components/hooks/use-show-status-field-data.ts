@@ -4,6 +4,8 @@ import { useMemo } from 'react';
 import { getShowStatuses } from '@/features/show-statuses/api/get-show-statuses';
 import type { Show } from '@/features/shows/api/get-shows';
 
+const LOOKUP_STALE_TIME_MS = 60 * 60 * 1000;
+
 /**
  * Network hook for show status field.
  * Stable list with 1 hour cache.
@@ -12,6 +14,8 @@ export function useShowStatusFieldData(show: Show | null, studioId?: string) {
   const { data: showStatusesData, isLoading } = useQuery({
     queryKey: ['show-statuses', 'list', studioId ?? 'admin', 'all'],
     queryFn: () => getShowStatuses({ limit: 100 }, studioId),
+    staleTime: LOOKUP_STALE_TIME_MS,
+    gcTime: 2 * 60 * 60 * 1000,
   });
 
   const options = useMemo(() => {

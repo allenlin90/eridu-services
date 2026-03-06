@@ -7,12 +7,14 @@ import { getStudioShows, studioShowsKeys } from '../api/get-studio-shows';
 
 type UseStudioShowsProps = {
   studioId: string;
+  dateFrom?: string;
+  dateTo?: string;
 };
 
 const TABLE_OPTIONS = {
   from: '/studios/$studioId/shows/',
   searchColumnId: 'name',
-  dateColumnId: 'start_time',
+  dateColumnId: '__scope_date__',
   paramNames: {
     search: 'search',
     startDate: 'date_from',
@@ -21,7 +23,7 @@ const TABLE_OPTIONS = {
   defaultSorting: [{ id: 'start_time', desc: true }],
 };
 
-export function useStudioShows({ studioId }: UseStudioShowsProps) {
+export function useStudioShows({ studioId, dateFrom, dateTo }: UseStudioShowsProps) {
   const {
     pagination,
     onPaginationChange,
@@ -33,8 +35,6 @@ export function useStudioShows({ studioId }: UseStudioShowsProps) {
   } = useTableUrlState(TABLE_OPTIONS);
 
   const searchQuery = (columnFilters.find((f) => f.id === 'name')?.value as string) || '';
-  const dateRange = (columnFilters.find((f) => f.id === 'start_time')?.value as { from?: Date; to?: Date }) || undefined;
-
   const filters = useMemo(() => {
     const f: Record<string, string | boolean | undefined> = {};
     columnFilters.forEach((filter) => {
@@ -59,7 +59,8 @@ export function useStudioShows({ studioId }: UseStudioShowsProps) {
       page: pagination.pageIndex,
       limit: pagination.pageSize,
       search: searchQuery,
-      dateRange,
+      date_from: dateFrom,
+      date_to: dateTo,
       ...filters,
     }),
     queryFn: () =>
@@ -67,8 +68,8 @@ export function useStudioShows({ studioId }: UseStudioShowsProps) {
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
         search: searchQuery || undefined,
-        date_from: dateRange?.from?.toISOString(),
-        date_to: dateRange?.to?.toISOString(),
+        date_from: dateFrom,
+        date_to: dateTo,
         ...filters,
       }),
     refetchOnWindowFocus: false,

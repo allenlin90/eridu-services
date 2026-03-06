@@ -6,11 +6,13 @@ import { Spinner } from '@eridu/ui';
 
 import { SidebarLayout } from '@/layouts/sidebar-layout';
 import { authClient, type Session } from '@/lib/auth';
+import { useUserProfile } from '@/lib/hooks/use-user';
 import { SessionProvider, useSession } from '@/lib/session-provider';
 import { NotFoundPage } from '@/pages/not-found-page';
 
 function AuthenticatedLayout() {
   const { session, isLoading, checkSession } = useSession();
+  useUserProfile();
   const [hasCheckedSession, setHasCheckedSession] = useState(false);
 
   // Check session once when component mounts

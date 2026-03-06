@@ -152,6 +152,47 @@ function Dashboard() {
 }
 ```
 
+### Large Route Decomposition Pattern
+
+When a route file grows beyond a maintainable size, split it into clear boundaries:
+
+1. **Route container**: owns router params/search parsing, top-level composition, and guarded wiring.
+2. **Route-specific hooks**: own derived state, query orchestration, and route state transitions.
+3. **Presentation components**: own table/cards/layout rendering with explicit props.
+
+Use this trigger:
+- Route file is over ~200 LOC, or
+- Route mixes 3 or more concerns (search param logic, date/state derivation, query orchestration, complex UI rendering).
+
+Refactor target shape:
+
+```typescript
+// routes/studios/$studioId/dashboard.tsx
+export function DashboardRoute() {
+  const vm = useStudioDashboardViewModel();
+  return (
+    <PageLayout>
+      <DashboardDateNavigationCard {...vm.dateNav} />
+      <OperationalDayShowsSummaryCard {...vm.summary} />
+      <OperationalDayShowListCard {...vm.showList} />
+    </PageLayout>
+  );
+}
+```
+
+```typescript
+// features/studio-dashboard/hooks/use-studio-dashboard-view-model.ts
+export function useStudioDashboardViewModel() {
+  // router state + query orchestration + derived values
+  return { dateNav, summary, showList };
+}
+```
+
+Review expectation:
+1. Validate extraction value (readability, testability, or stable UI contract).
+2. Preserve behavior and URL contracts (search params, pagination, filters).
+3. Avoid cosmetic-only extraction that adds indirection without reducing complexity.
+
 ### Avoid Low-Value Component Extraction
 
 Do not extract a component if it only wraps a single primitive element with fixed styling and one callback, unless there is a clear reuse or complexity need.
@@ -209,6 +250,26 @@ function UserCard({ user }: { user: User }) {
 2.  **Server State separation**: Use TanStack Query for server data; use `React.useState`/`useReducer` only for local UI state.
 3.  **Composition over Inheritance**: Build complex UIs by composing small, focused components.
 4.  **Consistent Code Style**: Use ESLint and Prettier to enforce consistency across the codebase.
+5.  **No repeated magic limits**: Centralize repeated pagination/fetch limits in named constants instead of duplicating raw numbers across routes/components.
+
+## Route Access and Layout Pattern
+
+### Shared Route Access Policy (No Role Check Duplication)
+
+- Define studio route permissions in one central map (`src/lib/constants/studio-route-access.ts`).
+- Use one shared access hook (`useStudioAccess`) and one reusable guard component (`StudioRouteGuard`) for protected route UIs.
+- Do not duplicate `profile?.studio_memberships?.find(...)` role checks in each route page.
+- Sidebar visibility must be derived from the same policy map so navigation and route access stay aligned.
+
+### Route Layout Responsibilities
+
+- Use parent route files with `<Outlet />` as access/layout boundaries when multiple child pages share the same guard or layout.
+- Keep business feature UI and data logic in leaf routes, not in parent layout routes.
+- If a parent route exists only for grouping, keep it minimal and move policy checks to the nearest shared parent.
+- Avoid mixing both patterns for the same feature area; prefer a single parent-guard + child-content approach.
+- Route sets may use different shared layout components (for example: `PageContainer` for studio-scoped pages, `AdminLayout` for system pages), but each route set should have one clear reusable wrapper pattern and avoid page-level wrapper duplication.
+- For `erify_studios`, treat `/system/*` as the reference pattern for DRY wrappers: parent route owns access boundary, each leaf page owns content and uses one shared leaf wrapper component.
+- For `studios/$studioId/*`, keep page padding in the parent (`PageContainer`) and use `PageLayout` consistently in leaf pages instead of manual `<h1>`/description blocks.
 
 ## Checklist
 
@@ -216,3 +277,7 @@ function UserCard({ user }: { user: User }) {
 - [ ] `pnpm test` passes.
 - [ ] Component names match their filenames.
 - [ ] Complex logic extracted to custom hooks.
+- [ ] Large route files (>200 LOC or mixed concerns) are decomposed into container + hooks + presentation components.
+- [ ] Protected studio routes use `StudioRouteGuard` + shared access policy.
+- [ ] Sidebar visibility and route access use the same route-access source.
+- [ ] Leaf pages in each route set (`/system/*`, `studios/$studioId/*`) use their shared wrapper (`AdminLayout` or `PageLayout`) instead of duplicated page header markup.

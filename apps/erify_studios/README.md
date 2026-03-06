@@ -2,7 +2,7 @@
 
 > **TLDR**: Studio admin React app for managing shows, tasks, templates, and schedules. Features: admin CRUD tables (sorting/filtering/URL state), task template builder, bulk task generation, operator task execution (JsonForm), review queue, and studio context switching. Built with TanStack Router + React Query + Vite.
 
-**Current Status**: Phase 1 ✅ - Studio admin UI for managing studios, users, clients, platforms, and system infrastructure with advanced table features
+**Current Status**: Phase 2 ✅ - Studio admin UI + studio-scoped task management (task templates, task execution, shifts, shows per studio)
 
 ## 🚀 Getting Started
 
@@ -70,16 +70,21 @@ When working on erify_studios, refer to these guides:
 
 ### Implemented (Phase 1) ✅
 
+- ✅ **Task Template Builder**: Create and manage task templates with drag-and-drop sections and JSON Form specifications
+- ✅ **Task Management**: Bulk task generation, operator task execution (JsonForm), and moderation review queue
+- ✅ **Studio Shifts**: Studio-scoped shift schedule view
+- ✅ **Studio Shows**: Studio-scoped show list
+- ✅ **My Tasks**: Personal task queue for studio operators
 - ✅ **Admin Dashboard**: Overview of system resources with access control
 - ✅ **Studios Management**: Create and manage broadcast studios
 - ✅ **Users Management**: Create, edit, and manage system users
 - ✅ **Clients Management**: Manage clients and their associations
 - ✅ **MCs Management**: Manage media celebrities/personalities
 - ✅ **Platforms Management**: Configure broadcast platforms
-- ✅ **Show Types & Standards**: Manage show classification and technical standards
+- ✅ **Show Types, Standards & Statuses**: Manage show classification and technical standards
 - ✅ **Studio Memberships**: Assign users to studios with role-based access
 - ✅ **Show Management**: View and manage shows created in the system
-- ✅ **Schedule Management**: View and manage broadcast schedules
+- ✅ **Schedule Management**: View and manage broadcast schedules with snapshot restore
 - ✅ **Advanced Table**: Pagination, sorting, filtering with URL state persistence
 - ✅ **Authentication**: JWT-based session management with admin authorization via `@eridu/auth-sdk`
 - ✅ **Internationalization**: Multi-language support (English, Traditional Chinese, Thai)
@@ -113,20 +118,29 @@ src/
 ├── config/                   # Application configuration
 │   └── sidebar-config.tsx    # Sidebar navigation configuration
 ├── features/                 # Feature modules (business logic)
-│   └── admin/               # Admin features
-│       ├── components/      # Feature-specific reusable components
-│       │   ├── __tests__/   # Component tests
-│       │   ├── admin-form-dialog.tsx
-│       │   ├── admin-layout.tsx
-│       │   ├── admin-table.tsx
-│       │   ├── delete-confirm-dialog.tsx
-│       │   └── index.ts
-│       └── hooks/           # Feature-specific hooks
+│   ├── admin/               # Generic admin table scaffolding
+│   │   ├── components/      # AdminTable, AdminFormDialog, DeleteConfirmDialog, etc.
+│   │   └── hooks/
+│   ├── clients/             # Client management feature
+│   ├── mcs/                 # MC management feature
+│   ├── memberships/         # Studio membership feature
+│   ├── platforms/           # Platform management feature
+│   ├── schedules/           # Schedule management + snapshot restore
+│   ├── show-standards/      # Show standards feature
+│   ├── show-statuses/       # Show statuses feature
+│   ├── show-types/          # Show types feature
+│   ├── shows/               # Show management feature
+│   ├── studio-shifts/       # Studio-scoped shift schedule feature
+│   ├── studio-shows/        # Studio-scoped show list feature
+│   ├── studios/             # Studio management and studio context
+│   ├── task-templates/      # Task template builder (drag-and-drop + JsonForm spec)
+│   ├── tasks/               # Task management (bulk generation, execution, moderation)
+│   └── users/               # User management feature
 ├── i18n/                    # Internationalization
 │   ├── messages/            # Translation files (en.json, zh-TW.json, th.json)
 │   └── index.ts             # i18n exports
 ├── layouts/                 # Layout components
-│   ├── __tests__/           # Layout tests
+│   ├── __tests__/
 │   ├── sidebar-layout.tsx
 │   └── sidebar-layout-header.tsx
 ├── lib/                     # Shared utilities and helpers
@@ -134,7 +148,6 @@ src/
 │   │   ├── admin-resources.ts  # Admin CRUD operations
 │   │   ├── admin.ts         # Admin API client
 │   │   ├── client.ts        # Axios client with auth interceptors
-│   │   ├── index.ts
 │   │   ├── persister.ts     # IndexedDB persister for offline support
 │   │   ├── query-client.ts  # React Query client configuration
 │   │   ├── query-keys.ts    # Query key factory functions
@@ -142,42 +155,55 @@ src/
 │   │   └── user.ts          # User API operations
 │   ├── auth.ts              # Authentication client
 │   ├── hooks/               # Shared React hooks
-│   │   ├── index.ts
 │   │   ├── use-admin-crud.ts # Reusable CRUD operations hook
-│   │   ├── use-is-system-admin.ts # Admin verification hook
-│   │   ├── use-table-url-state.ts # URL state synchronization
-│   │   └── use-user.ts      # Current user hook
+│   │   ├── use-is-system-admin.ts
+│   │   ├── use-table-url-state.ts
+│   │   └── use-user.ts
 │   └── session-provider.tsx # Authentication session provider
 ├── pages/                   # Page-level components (orchestration)
-│   └── not-found-page.tsx   # 404 page
+│   └── not-found-page.tsx
 ├── paraglide/               # Generated i18n files (auto-generated)
-│   ├── messages/            # Compiled translation files
-│   └── registry.js
 ├── router.tsx               # TanStack Router configuration
 ├── routes/                  # TanStack Router routes (thin routing layer)
-│   ├── __root.tsx          # Root route with layout
-│   ├── dashboard.tsx       # Dashboard route
-│   ├── index.tsx           # Root redirect
-│   ├── admin/              # Admin routes
-│   │   ├── route.tsx       # Admin section layout
-│   │   ├── schedules/      # Schedule management routes
-│   │   └── shows/          # Show management routes
-│   └── system/             # System administration routes
-│       ├── route.tsx       # System section layout
-│       ├── clients/        # Client management routes
-│       ├── mcs/            # MC management routes
-│       ├── memberships/    # Membership management routes
-│       ├── platforms/      # Platform management routes
-│       ├── show-standards/ # Show standard management routes
-│       ├── show-types/     # Show type management routes
-│       ├── studios/        # Studio management routes
-│       └── users/          # User management routes
-├── routeTree.gen.ts        # Auto-generated route tree
-├── test/                   # Test utilities and setup
-│   ├── setup.ts            # Test environment setup
-│   └── test-utils.tsx      # Testing utilities
-├── index.css               # Global styles
-└── main.tsx                # Application entry point
+│   ├── __root.tsx
+│   ├── dashboard.tsx
+│   ├── index.tsx
+│   ├── studios/             # Studio-scoped section
+│   │   ├── route.tsx        # Studio layout (validates studio membership)
+│   │   └── $studioId/
+│   │       ├── dashboard.tsx    # Studio dashboard (coverage cards, task-readiness)
+│   │       ├── my-shifts.tsx    # Member's own shift schedule (table + calendar toggle)
+│   │       ├── my-tasks.tsx     # Personal task queue
+│   │       ├── shifts.tsx       # Studio shift schedule (admin: table + calendar)
+│   │       ├── shows.tsx        # Studio show list
+│   │       ├── task-templates.tsx
+│   │       └── tasks.tsx        # Studio tasks (bulk gen, exec, review)
+│   └── system/              # System admin section
+│       ├── route.tsx
+│       ├── clients/
+│       ├── mcs/
+│       ├── memberships/
+│       ├── platforms/
+│       ├── schedules/
+│       │   └── $scheduleId/
+│       │       └── snapshots/   # Schedule snapshot restore
+│       ├── show-standards/
+│       ├── show-statuses/
+│       ├── show-types/
+│       ├── shows/
+│       │   └── $showId/
+│       ├── studios/
+│       │   └── $studioId/
+│       │       └── studio-rooms/
+│       ├── task-templates/  # System-level task template management
+│       ├── tasks/           # System-level task management
+│       └── users/
+├── routeTree.gen.ts         # Auto-generated route tree
+├── test/
+│   ├── setup.ts
+│   └── test-utils.tsx
+├── index.css
+└── main.tsx
 ```
 
 ### Architecture Principles
@@ -217,23 +243,36 @@ Routes (Thin) → Pages (Orchestration) → Features (UI Logic)
 
 The application has two main sections:
 
-#### Admin Routes (`/admin`)
-For managing shows and schedules:
-- `/admin` - Admin dashboard
-- `/admin/shows` - Show management
-- `/admin/schedules` - Schedule management
+#### Studio Routes (`/studios/:studioId`)
+
+Studio-scoped views accessible to studio members:
+- `/studios/:studioId` - Studio dashboard and context
+- `/studios/:studioId/dashboard` - Studio overview
+- `/studios/:studioId/my-tasks` - Personal task queue for the current user
+- `/studios/:studioId/shifts` - Studio shift schedule
+- `/studios/:studioId/shows` - Shows assigned to this studio
+- `/studios/:studioId/task-templates` - Task template list (infinite scroll)
+- `/studios/:studioId/tasks` - Task management (bulk generate, execute, moderate)
 
 #### System Routes (`/system`)
-For system-level administration (requires system admin):
+
+System-level administration (requires system admin):
 - `/system` - System administration hub
 - `/system/studios` - Studio management
+- `/system/studios/:studioId/studio-rooms` - Studio room management
 - `/system/users` - User management
 - `/system/clients` - Client management
 - `/system/mcs` - MC/Personality management
 - `/system/platforms` - Platform management
 - `/system/show-types` - Show type configuration
 - `/system/show-standards` - Show standard configuration
+- `/system/show-statuses` - Show status configuration
 - `/system/memberships` - Studio membership management
+- `/system/shows` - System-wide show management
+- `/system/schedules` - System-wide schedule management
+- `/system/schedules/:scheduleId/snapshots` - Snapshot restore
+- `/system/task-templates` - System-level task template management
+- `/system/tasks` - System-level task management
 
 #### Other Routes
 - `/dashboard` - User dashboard
@@ -584,5 +623,5 @@ See `package.json` for exact versions of:
 
 ---
 
-**Last Updated**: January 2026  
+**Last Updated**: March 2026  
 **Maintainers**: Eridu Services Team

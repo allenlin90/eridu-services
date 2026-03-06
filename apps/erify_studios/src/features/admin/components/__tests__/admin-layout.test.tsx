@@ -20,7 +20,7 @@ vi.mock('@eridu/ui', () => ({
 
 // Mock lucide-react
 vi.mock('lucide-react', () => ({
-  RotateCw: ({ className }: any) => <span data-testid="rotate-icon" className={className}>↻</span>,
+  RefreshCw: ({ className }: any) => <span data-testid="refresh-icon" className={className}>↻</span>,
 }));
 
 const mockedUseIsFetching = vi.mocked(useIsFetching);
@@ -102,7 +102,7 @@ describe('adminLayout', () => {
       </AdminLayout>,
     );
 
-    const refreshButton = screen.getByText('Refresh');
+    const refreshButton = screen.getByRole('button', { name: 'Refresh data' });
     expect(refreshButton).toBeInTheDocument();
 
     fireEvent.click(refreshButton);
@@ -116,7 +116,7 @@ describe('adminLayout', () => {
       </AdminLayout>,
     );
 
-    expect(screen.queryByText('Refresh')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Refresh data' })).not.toBeInTheDocument();
   });
 
   it('refresh button is disabled when fetching', () => {
@@ -133,7 +133,7 @@ describe('adminLayout', () => {
       </AdminLayout>,
     );
 
-    const refreshButton = screen.getByText('Refresh');
+    const refreshButton = screen.getByRole('button', { name: 'Refresh data' });
     expect(refreshButton).toBeDisabled();
 
     mockedUseIsFetching.mockReturnValue(0); // Reset
@@ -153,7 +153,7 @@ describe('adminLayout', () => {
       </AdminLayout>,
     );
 
-    const refreshButton = screen.getByText('Refresh');
+    const refreshButton = screen.getByRole('button', { name: 'Refresh data' });
     expect(refreshButton).not.toBeDisabled();
   });
 
@@ -170,7 +170,7 @@ describe('adminLayout', () => {
       </AdminLayout>,
     );
 
-    const icon = screen.getByTestId('rotate-icon');
+    const icon = screen.getByTestId('refresh-icon');
     expect(icon).toHaveClass('animate-spin');
 
     mockedUseIsFetching.mockReturnValue(0); // Reset
@@ -189,7 +189,7 @@ describe('adminLayout', () => {
       </AdminLayout>,
     );
 
-    const icon = screen.getByTestId('rotate-icon');
+    const icon = screen.getByTestId('refresh-icon');
     expect(icon).not.toHaveClass('animate-spin');
   });
 
@@ -205,7 +205,7 @@ describe('adminLayout', () => {
     );
 
     expect(screen.getByText('Add New')).toBeInTheDocument();
-    expect(screen.getByText('Refresh')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Refresh data' })).toBeInTheDocument();
   });
 
   it('renders breadcrumbs when provided', () => {

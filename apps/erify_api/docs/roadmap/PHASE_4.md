@@ -71,6 +71,13 @@ Example summary fields:
   - validation snapshot at decision time
 - Add metrics for review throughput and rejection patterns.
 
+### 4.1 Studio Shift Calendar Interactivity (Deferred from Phase 3)
+
+- Add interactive calendar events for shift schedule surfaces:
+  - Admin: click event to open shift edit flow (dialog or table-row focus).
+  - Member: click event to open read-only shift detail popover.
+- Keep this as a UX enhancement phase after Phase 3 core shift operations stabilize.
+
 ### 5. Operational Data Warehouse (Datastream + BigQuery)
 
 - **Datastream CDC**: Stream PostgreSQL change data capture (CDC) to BigQuery in near-real-time. Zero code changes in erify_api — reads directly from the DB replication stream.

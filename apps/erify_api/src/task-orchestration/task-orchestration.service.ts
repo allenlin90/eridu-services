@@ -294,6 +294,11 @@ export class TaskOrchestrationService {
       const taskSummaries = show.taskTargets.map((tt) => tt.task);
       return {
         ...baseShow,
+        mcs: (show.showMCs ?? []).map((showMC) => ({
+          mc_id: showMC.mc.uid,
+          mc_name: showMC.mc.name,
+          mc_aliasname: showMC.mc.aliasName,
+        })),
         task_summary: {
           total: taskSummaries.length,
           assigned: taskSummaries.filter((t) => t.assigneeId !== null).length,

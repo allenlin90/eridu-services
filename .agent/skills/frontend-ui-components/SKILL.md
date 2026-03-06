@@ -43,6 +43,76 @@ import { DatePicker, DateTimePicker } from '@eridu/ui/components/date-picker';
 <input type="date" value={dateStr} />
 ```
 
+#### Refresh Actions
+Use icon-only refresh buttons for data refetch actions to keep toolbar density and interaction patterns consistent.
+
+```typescript
+import { RotateCw } from 'lucide-react';
+import { Button } from '@eridu/ui/components/button';
+
+<Button
+  type="button"
+  variant="outline"
+  size="icon"
+  className="h-9 w-9"
+  onClick={onRefresh}
+  disabled={isRefreshing}
+  aria-label="Refresh data"
+>
+  <RotateCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+</Button>
+```
+
+Notes:
+- Always provide an explicit `aria-label` (for accessibility and stable tests).
+- Keep spinning state on the icon while fetching/refetching.
+- In mobile overflow menus, text labels in dropdown items are still acceptable.
+
+#### Collapsible Section Toggle Actions
+For show/hide controls on collapsible UI sections, use a single shared icon pattern across the app:
+- Expanded state: `ChevronUp`
+- Collapsed state: `ChevronDown`
+
+```typescript
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Button } from '@eridu/ui/components/button';
+
+<Button
+  type="button"
+  variant="outline"
+  size="icon"
+  aria-label={isOpen ? 'Collapse section' : 'Expand section'}
+  onClick={toggle}
+>
+  {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+</Button>
+```
+
+Notes:
+- Keep the toggle icon button anchored in a consistent place (prefer top-right of section header) for both desktop and mobile.
+- Do not substitute alternate semantic icons (for example `Eye` / `EyeOff`) for section collapse behavior.
+
+#### Smooth Collapse/Expand Transition (for Toggleable Sections)
+When a section is toggled, prefer smooth animated collapse/expand instead of hard unmount/remount.
+
+```tsx
+<div
+  className={cn(
+    'overflow-hidden transition-all duration-300 ease-in-out',
+    isOpen ? 'max-h-[640px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none',
+  )}
+  aria-hidden={!isOpen}
+>
+  {content}
+</div>
+```
+
+Notes:
+- Keep the content mounted and animate container height/opacity for smoother UX.
+- Use `overflow-hidden` to prevent clipping artifacts during height transition.
+- Include `aria-hidden` when collapsed for better accessibility semantics.
+- Keep duration/easing consistent (`duration-300`, `ease-in-out`) unless a route has an established alternative.
+
 ## Styling Pattern (Tailwind CSS v4)
 
 We use **Tailwind CSS v4** with `clsx` and `tailwind-merge` for conditional styling.

@@ -160,6 +160,17 @@ export const fixtures = {
   },
   studioMemberships: {
     adminMainStudio: 'smb_00000000000000000001',
+    mc1MainStudio: 'smb_00000000000000000002',
+    mc2MainStudio: 'smb_00000000000000000003',
+  },
+  studioShifts: {
+    mc1CurrentDuty: 'ssh_00000000000000000001',
+    mc2CurrentShift: 'ssh_00000000000000000002',
+  },
+  studioShiftBlocks: {
+    mc1CurrentDutyBlockMorning: 'ssb_00000000000000000001',
+    mc1CurrentDutyBlockEvening: 'ssb_00000000000000000002',
+    mc2CurrentShiftBlock: 'ssb_00000000000000000003',
   },
   taskTemplates: {
     template1: 'ttpl_00000000000000000001',

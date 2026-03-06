@@ -46,9 +46,10 @@ graph TB
 
 ## Apps
 
-- **`erify_api`** - REST API service built with NestJS for managing shows, schedules, users, and related entities
+- **`erify_api`** - REST API service built with NestJS for managing shows, schedules, tasks, users, and related entities
 - **`eridu_auth`** - Better Auth service for SSO across all services in the monorepo
 - **`erify_creators`** - React application for managing shows, built with TanStack Router, TypeScript, and Vite
+- **`erify_studios`** - React application for studio admin, task management, and scheduling, built with TanStack Router, TypeScript, and Vite
 
 ### Authentication service
 
@@ -78,10 +79,6 @@ graph TB
   - [x] `erify_creators` app
 - setup CI
   - [ ] Github actions
-
-### Engineering
-
-- [ ] Update `tailwind@4`
 
 ### Git Hooks
 

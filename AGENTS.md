@@ -37,6 +37,8 @@ For Claude Code sessions, the primary configuration lives in `.claude/`. Claude 
 - Prefer bulk DB operations and relation includes over N+1 query patterns.
 - Maintain strict typing. Do not bypass with `any` or `@ts-ignore` unless explicitly requested.
 - Keep internal package dependency spec as `workspace:*`.
+- For large frontend route components (roughly >200 LOC or mixed concerns), decompose into route container + extracted sections/hooks, keep search validation in route schema, and preserve URL behavior parity.
+- For manual frontend refetch actions, use icon-only refresh buttons (`size="icon"`) with explicit `aria-label` and loading spin state; avoid text-labeled `Refresh` buttons.
 
 ## Skill Routing (Use Before Editing)
 - Backend API features (`apps/erify_api`):
@@ -71,6 +73,8 @@ For Claude Code sessions, the primary configuration lives in `.claude/`. Claude 
   - `task-template-builder`
   - `schedule-continuity-workflow`
   - `jsonb-analytics-snapshot`
+  - `shift-schedule-pattern` (shift CRUD, blocks, calendar/alignment, duty-manager, task-readiness)
+  - `file-upload-presign`
 - Meta/Tooling:
   - `skill-creator`
 - If a listed routing skill is unavailable, discover candidates in `.agent/skills/` and use the closest match.

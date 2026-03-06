@@ -219,6 +219,30 @@ Business Rules:
 - **Schedule Naming & Duration**: Schedule names and date ranges can overlap for different packages, events, and campaigns - there are no unique constraints on (name, clientId, startDate, endDate) combinations. Idempotency handling (Phase 2) prevents duplicate schedule creation from retries or concurrent requests.
 - **Client Separation**: Schedules are client-scoped and can be queried by client ID and date range for planning workflows
 
+## Studio shift planning and control
+
+Purpose: Studio-admin planning for upcoming show operations and risk control.
+
+**Phase 3 Feature** — Studio shift planning focuses on future readiness, not historical analytics. Past shows are skipped in planning warnings.
+
+Key Models: `studio_shifts`, `studio_shift_blocks`, `shows`, `tasks`, `task_targets`
+
+Core Rules:
+
+- **Duty manager coverage is show-time critical**: the primary coverage risk is when no duty manager is on shift while a show is happening.
+- **Operational day boundary is 06:00**:
+  - Shows with start time before `06:00` are counted in the previous operational day.
+  - Shows with start time at or after `06:00` are counted in that date's operational day.
+- **Operational day continuity**: for each operational day, duty manager continuity is evaluated from the first show start to the last show end.
+- **Time storage vs presentation**:
+  - Persisted datetimes are UTC/epoch-standardized in DB.
+  - User-facing pages should present times in local runtime timezone.
+- **Task readiness per upcoming show**:
+  - Each show must have at least `SETUP`, `ACTIVE`, and `CLOSURE` tasks.
+  - Every task should have an assignee.
+  - Premium-standard shows must include at least one moderation task.
+- **Planning security and sensitivity**: cost and planning risk summaries are studio-admin scope, while member-facing views remain operational and read-only.
+
 ## Show
 
 Purpose: Central operational record for livestream productions.

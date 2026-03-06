@@ -1,12 +1,12 @@
-# Phase 3: Material Management, Shift Schedules & File Uploads
+# Phase 3: Ticketing System, Shift Schedules & File Uploads
 
-> **TLDR**: 🚧 **In Progress**. File Upload (Cloudflare R2 presigned URLs) implemented March 2026. Material management and studio shift schedules still pending.
+> **TLDR**: 🚧 **In Progress**. File Upload (Cloudflare R2 presigned URLs) implemented March 2026. Studio Shift Schedules implemented March 2026. Ticketing system is the current focus. Material Management deferred to Phase 4.
 
-**Status**: 🚧 In Progress — File Upload complete; Material Management and Shift Schedules pending
+**Status**: 🚧 In Progress — File Upload complete; Studio Shift Schedules complete ✅; Ticketing System in progress
 
 ## Overview
 
-Phase 3 implements the Material Management System, Studio Shift Schedules, and File Uploads (via Cloudflare R2 presigned URLs). This phase builds upon the core functions and Task Management system established in Phase 2.
+Phase 3 pivots to deliver the **Ticketing System** (ad-hoc task creation, task reopening, complex reassignment) and **Studio Shift Schedules**, building on the Task Management foundation from Phase 2. Material Management has been deferred to Phase 4 to unblock pre-production ticketing workflows sooner.
 
 **Timeline**: Dependent on Phase 2 completion
 
@@ -16,20 +16,17 @@ Phase 3 implements the Material Management System, Studio Shift Schedules, and F
 - **[Schedule Planning](../SCHEDULE_PLANNING.md)** - Schedule upload system design
 - **[Studio Shift Schedule Design](../design/STUDIO_SHIFT_SCHEDULE_DESIGN.md)** - Shift data model, services, and alignment logic
 - **[File Upload Design](../design/FILE_UPLOAD_DESIGN.md)** - Presigned URL architecture and storage abstraction
-- **[Material Management Design](../design/MATERIAL_MANAGEMENT_DESIGN.md)** - Material data model, versioning, and platform targeting *(to be written)*
+- **[Ad-hoc Task Ticketing Design](../design/AD_HOC_TASK_TICKETING.md)** - Template-less ticketing design
 
 ## Core Features
 
-### 1. Material Management System
+### 1. Ticketing System
 
-- **CRUD Operations**: Complete material management with client and platform associations
-- **Versioning**: Track material versions with version label strings for history management (no snapshot table — simple in-place updates with version bump)
-- **Platform Targeting**: Materials can be targeted to specific platforms or used across all platforms
-- **Lifecycle Management**: Active/inactive status, expiration date tracking
-- **Show-Material Associations**: Associate materials with shows
-- **File Integration**: Material `resource_url` populated via File Upload System (feature #3)
+- **Ad-hoc Task Ticketing**: Template-less task creation for pre-production one-off requirements (e.g., "adjust the design of the scene"). Reuses existing `Task` model with `snapshotId: null`.
+- **Task Reopening Workflow**: Formal process for reopening `completed` tasks (requiring reason/approval), distinct from simple status updates.
+- **Complex Reassignment Rules**: Advanced validation for reassignment requests based on strict Show status.
 
-> **Prerequisite**: A [Material Management Design Doc](../design/MATERIAL_MANAGEMENT_DESIGN.md) must be written before implementation. Material + File Upload are tightly coupled — the upload flow produces the URLs that materials store.
+> See [Ad-hoc Task Ticketing Design](../design/AD_HOC_TASK_TICKETING.md) for detailed design.
 
 ### 2. Studio Shift Schedule
 
@@ -38,31 +35,32 @@ Phase 3 implements the Material Management System, Studio Shift Schedules, and F
 - **Cost Calculation**: Auto-calculate projected costs based on hourly rates, with manual overrides for admins to approve final payments.
 - **Calendar Views**: Provide Day, Week, and Month timeline views to visualize studio coverage and costs.
 
-### 3. File Upload System
+### 3. File Upload System ✅ Implemented (March 2026)
 
 - **General File Uploads**: Secure upload for materials, tasks (QC screenshots), and other assets
 - **Storage Integration**: Cloudflare R2 integration via Presigned URLs to support variable sizes and high concurrency. Frontend uploads directly to R2, bypassing the backend.
 
 ## Implementation Scope
 
-### Material Management
+### Ticketing System
 
-- [ ] Write [Material Management Design Doc](../design/MATERIAL_MANAGEMENT_DESIGN.md) (prerequisite)
-- [ ] Material, MaterialType, ShowMaterial Prisma models + migration
-- [ ] CRUD operations, versioning (version label), platform targeting
-- [ ] Wire `resource_url` to file upload system
+- [ ] `POST /studios/:studioId/tasks` — ad-hoc task creation (no template, `snapshotId: null`)
+- [ ] Task reopening endpoint with reason/approval flow
+- [ ] Reassignment validation against Show status rules
+- [ ] Shared Zod schemas in `@eridu/api-types` for ticketing contracts
 
 ### Studio Shift Schedule
 
-- [ ] Define `StudioShiftStatus` Prisma enum (`SCHEDULED`, `COMPLETED`, `CANCELLED`)
-- [ ] `StudioShift` and `StudioShiftBlock` Prisma models + migration
-- [ ] Add `baseHourlyRate Decimal?` to `StudioMembership`
-- [ ] `StudioShiftService` — CRUD, cost auto-calculation, rate copy-on-create
-- [ ] `StudioShiftController` — CRUD endpoints under `/studios/:id/shifts/`
-- [ ] `ShiftCalendarOrchestrationService` — Day/Week/Month timeline views, financial aggregation
-- [ ] `ShiftAlignmentOrchestrationService` — Cross-check shifts against **Shows only** (idle members, missing shifts)
-- [ ] Calendar and alignment controllers
-- [ ] Shared Zod schemas in `@eridu/api-types`
+- [x] Define `StudioShiftStatus` Prisma enum (`SCHEDULED`, `COMPLETED`, `CANCELLED`)
+- [x] `StudioShift` and `StudioShiftBlock` Prisma models + migration
+- [x] Add `baseHourlyRate Decimal?` to `StudioMembership`
+- [x] `StudioShiftService` — CRUD, cost auto-calculation, rate copy-on-create
+- [x] `StudioShiftController` — CRUD endpoints under `/studios/:id/shifts/`
+- [x] `ShiftCalendarOrchestrationService` — Day/Week/Month timeline views, financial aggregation
+- [x] `ShiftAlignmentOrchestrationService` — Cross-check shifts against **Shows only** (idle members, missing shifts)
+- [x] Calendar and alignment controllers
+- [x] Shared Zod schemas in `@eridu/api-types`
+- [ ] Calendar event interactivity (admin edit/member popover) — deferred to Phase 4
 
 ### File Upload System ✅ Implemented (March 2026)
 
@@ -76,31 +74,37 @@ Phase 3 implements the Material Management System, Studio Shift Schedules, and F
 - [x] `JsonForm` integration — file field rendering, client-side compression, flush-on-submit
 - [x] `UploadRoutingMetadata` shared type for typed `upload_routing` metadata contract
 
+### Material Management ⏸ Deferred to Phase 4
+
+Material Management has been deferred to reduce scope and ship the ticketing system sooner.
+
+- [ ] Write [Material Management Design Doc](../design/MATERIAL_MANAGEMENT_DESIGN.md) (prerequisite — to be done in Phase 4)
+- [ ] Material, MaterialType, ShowMaterial Prisma models + migration
+- [ ] CRUD operations, versioning (version label), platform targeting
+- [ ] Wire `resource_url` to file upload system
+
 ## Technical Considerations
-
-### Database Design
-
-- **Materials**: Material-client/platform relationships. Simple version label (no snapshot table). `resource_url` stores the R2 CDN path after upload.
-- **Shifts**: `StudioShift` and `StudioShiftBlock` parent-child relationships linked to `User` and `Studio`. `StudioShiftStatus` Prisma enum for DB-level validation. `baseHourlyRate` on `StudioMembership` copied to shift at creation (immutable record pattern).
 
 ### API Design
 
 - RESTful endpoints
 - Expand Parameter support
+- Ticketing: ad-hoc tasks use existing `Task` model — no new DB models required for MVP
 - Presigned URL flow: backend generates short-lived upload URL → frontend uploads directly to R2
 
 ## Success Criteria
 
-### Material Management
+### Ticketing System
 
-- [ ] Complete Material Management System with CRUD, versioning, and platform targeting.
-- [ ] Materials can be associated with shows and have uploaded file URLs.
+- [ ] Studio members can create ad-hoc tasks without a template.
+- [ ] Completed tasks can be formally reopened with a reason.
+- [ ] Reassignment validation enforces Show status rules correctly.
 
 ### Studio Shift Schedule
 
-- [ ] Shift timelines are visible across day, week, and month views.
-- [ ] Cost calculations and administrative overrides trigger correctly.
-- [ ] Show alignment flags members working without shift coverage (shows only).
+- [x] Shift timelines are visible across day, week, and month views.
+- [x] Cost calculations and administrative overrides trigger correctly.
+- [x] Show alignment flags members working without shift coverage (shows only).
 
 ### File Upload ✅
 
@@ -113,9 +117,3 @@ Phase 3 implements the Material Management System, Studio Shift Schedules, and F
 
 - Phase 2 complete: Task Management and Studio association.
 - Cloudflare R2 bucket provisioned with API credentials.
-
-### Advanced Task Management (Deferred from Phase 2)
-
-- **Ad-hoc Task Ticketing**: Template-less task creation for pre-production one-off requirements (e.g., "adjust the design of the scene"). Reuses existing `Task` model with `snapshotId: null`. See [Ad-hoc Task Ticketing Design](../design/AD_HOC_TASK_TICKETING.md).
-- **Task Reopening Workflow**: Formal process for reopening `completed` tasks (requiring reason/approval), distinct from simple status updates.
-- **Complex Reassignment Rules**: Advanced validation for reassignment requests based on strict Show status.

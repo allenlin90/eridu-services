@@ -31,6 +31,9 @@ async function isDatabaseSeeded(): Promise<boolean> {
       users,
       mcs,
       studios,
+      studioMembershipCount,
+      studioShiftCount,
+      studioShiftBlockCount,
       taskTemplateCount,
     ] = await Promise.all([
       prisma.showType.findMany({
@@ -71,6 +74,9 @@ async function isDatabaseSeeded(): Promise<boolean> {
           },
         },
       }),
+      prisma.studioMembership.count(),
+      prisma.studioShift.count(),
+      prisma.studioShiftBlock.count(),
       prisma.taskTemplate.count(),
     ]);
 
@@ -93,6 +99,9 @@ async function isDatabaseSeeded(): Promise<boolean> {
     const hasAllUsers = users >= 31;
     const hasAllMCs = mcs >= 30;
     const hasAllStudios = studios.length === 1;
+    const hasStudioMemberships = studioMembershipCount >= 3;
+    const hasStudioShifts = studioShiftCount >= 2;
+    const hasStudioShiftBlocks = studioShiftBlockCount >= 3;
 
     const hasAllTaskTemplates = taskTemplateCount >= 50;
 
@@ -105,6 +114,9 @@ async function isDatabaseSeeded(): Promise<boolean> {
       && hasAllUsers
       && hasAllMCs
       && hasAllStudios
+      && hasStudioMemberships
+      && hasStudioShifts
+      && hasStudioShiftBlocks
       && hasAllRooms
       && hasAllTaskTemplates;
 
@@ -129,6 +141,15 @@ async function isDatabaseSeeded(): Promise<boolean> {
       console.log(`  - MCs: ${mcs}/30 (${hasAllMCs ? '✅' : '❌'})`);
       console.log(
         `  - Studios: ${studios.length}/1 (${hasAllStudios ? '✅' : '❌'})`,
+      );
+      console.log(
+        `  - StudioMemberships: ${studioMembershipCount}/3 (${hasStudioMemberships ? '✅' : '❌'})`,
+      );
+      console.log(
+        `  - StudioShifts: ${studioShiftCount}/2 (${hasStudioShifts ? '✅' : '❌'})`,
+      );
+      console.log(
+        `  - StudioShiftBlocks: ${studioShiftBlockCount}/3 (${hasStudioShiftBlocks ? '✅' : '❌'})`,
       );
       console.log(`  - Studio Rooms: ${hasAllRooms ? '10/10 ✅' : '❌'}`);
       console.log(
@@ -772,34 +793,200 @@ async function main() {
 
       // Seed StudioMembership data
       console.log('👥 Seeding StudioMembership data...');
-      const existingMembership = await tx.studioMembership.findFirst({
-        where: {
-          userId: adminUser.id, // Admin User
-          studioId: studio.id,
-        },
-      });
+      const mcUser1 = createdUsers[1];
+      const mcUser2 = createdUsers[2];
 
-      if (!existingMembership) {
-        await tx.studioMembership.create({
-          data: {
-            uid: fixtures.studioMemberships.adminMainStudio,
-            userId: adminUser.id, // Admin User has studio membership
+      const membershipSeeds = [
+        {
+          uid: fixtures.studioMemberships.adminMainStudio,
+          userId: adminUser.id,
+          role: 'admin',
+          baseHourlyRate: '40.00',
+          metadata: {
+            joinedDate: new Date().toISOString(),
+            permissions: ['manage_studio', 'manage_rooms', 'view_reports'],
+          },
+          label: `${adminUser.name} -> ${studio.name} (admin)`,
+        },
+        {
+          uid: fixtures.studioMemberships.mc1MainStudio,
+          userId: mcUser1.id,
+          role: 'manager',
+          baseHourlyRate: '25.00',
+          metadata: {
+            joinedDate: new Date().toISOString(),
+            permissions: ['view_schedule', 'manage_tasks'],
+          },
+          label: `${mcUser1.name} -> ${studio.name} (manager)`,
+        },
+        {
+          uid: fixtures.studioMemberships.mc2MainStudio,
+          userId: mcUser2.id,
+          role: 'member',
+          baseHourlyRate: '18.50',
+          metadata: {
+            joinedDate: new Date().toISOString(),
+            permissions: ['view_schedule'],
+          },
+          label: `${mcUser2.name} -> ${studio.name} (member)`,
+        },
+      ] as const;
+
+      for (const membershipSeed of membershipSeeds) {
+        const existingMembership = await tx.studioMembership.findFirst({
+          where: {
+            userId: membershipSeed.userId,
             studioId: studio.id,
-            role: 'admin',
-            metadata: {
-              joinedDate: new Date().toISOString(),
-              permissions: ['manage_studio', 'manage_rooms', 'view_reports'],
-            },
           },
         });
-        console.log(
-          `✅ Created StudioMembership: ${adminUser.name} -> ${studio.name} (admin)`,
-        );
-      } else {
-        console.log(
-          `⏭️  StudioMembership already exists: ${adminUser.name} -> ${studio.name}`,
-        );
+
+        if (existingMembership) {
+          await tx.studioMembership.update({
+            where: { id: existingMembership.id },
+            data: {
+              role: membershipSeed.role,
+              baseHourlyRate: membershipSeed.baseHourlyRate,
+              metadata: membershipSeed.metadata,
+            },
+          });
+          console.log(`♻️  Updated StudioMembership: ${membershipSeed.label}`);
+          continue;
+        }
+
+        await tx.studioMembership.create({
+          data: {
+            uid: membershipSeed.uid,
+            userId: membershipSeed.userId,
+            studioId: studio.id,
+            role: membershipSeed.role,
+            baseHourlyRate: membershipSeed.baseHourlyRate,
+            metadata: membershipSeed.metadata,
+          },
+        });
+        console.log(`✅ Created StudioMembership: ${membershipSeed.label}`);
       }
+
+      // Seed StudioShift data (sample records for local schedule UI/testing)
+      console.log('🗓️ Seeding StudioShift data...');
+      const today = new Date();
+      const scheduleDate = new Date(Date.UTC(
+        today.getUTCFullYear(),
+        today.getUTCMonth(),
+        today.getUTCDate(),
+      ));
+
+      const dutyShiftStart = new Date(scheduleDate);
+      dutyShiftStart.setUTCHours(9, 0, 0, 0);
+      const dutyShiftMid = new Date(scheduleDate);
+      dutyShiftMid.setUTCHours(13, 0, 0, 0);
+      const dutyShiftResume = new Date(scheduleDate);
+      dutyShiftResume.setUTCHours(14, 0, 0, 0);
+      const dutyShiftEnd = new Date(scheduleDate);
+      dutyShiftEnd.setUTCHours(18, 0, 0, 0);
+
+      const memberShiftStart = new Date(scheduleDate);
+      memberShiftStart.setUTCHours(10, 0, 0, 0);
+      const memberShiftEnd = new Date(scheduleDate);
+      memberShiftEnd.setUTCHours(16, 0, 0, 0);
+
+      const shiftSeeds = [
+        {
+          uid: fixtures.studioShifts.mc1CurrentDuty,
+          userId: mcUser1.id,
+          isDutyManager: true,
+          hourlyRate: '25.00',
+          projectedCost: '200.00',
+          blocks: [
+            {
+              uid: fixtures.studioShiftBlocks.mc1CurrentDutyBlockMorning,
+              startTime: dutyShiftStart,
+              endTime: dutyShiftMid,
+            },
+            {
+              uid: fixtures.studioShiftBlocks.mc1CurrentDutyBlockEvening,
+              startTime: dutyShiftResume,
+              endTime: dutyShiftEnd,
+            },
+          ],
+        },
+        {
+          uid: fixtures.studioShifts.mc2CurrentShift,
+          userId: mcUser2.id,
+          isDutyManager: false,
+          hourlyRate: '18.50',
+          projectedCost: '111.00',
+          blocks: [
+            {
+              uid: fixtures.studioShiftBlocks.mc2CurrentShiftBlock,
+              startTime: memberShiftStart,
+              endTime: memberShiftEnd,
+            },
+          ],
+        },
+      ] as const;
+
+      for (const shiftSeed of shiftSeeds) {
+        const existingShift = await tx.studioShift.findUnique({
+          where: { uid: shiftSeed.uid },
+        });
+
+        const shift = existingShift
+          ? await tx.studioShift.update({
+              where: { id: existingShift.id },
+              data: {
+                studioId: studio.id,
+                userId: shiftSeed.userId,
+                date: scheduleDate,
+                hourlyRate: shiftSeed.hourlyRate,
+                projectedCost: shiftSeed.projectedCost,
+                isDutyManager: shiftSeed.isDutyManager,
+                status: 'SCHEDULED',
+                metadata: {},
+              },
+            })
+          : await tx.studioShift.create({
+              data: {
+                uid: shiftSeed.uid,
+                studioId: studio.id,
+                userId: shiftSeed.userId,
+                date: scheduleDate,
+                hourlyRate: shiftSeed.hourlyRate,
+                projectedCost: shiftSeed.projectedCost,
+                isDutyManager: shiftSeed.isDutyManager,
+                status: 'SCHEDULED',
+                metadata: {},
+              },
+            });
+
+        for (const blockSeed of shiftSeed.blocks) {
+          const existingBlock = await tx.studioShiftBlock.findUnique({
+            where: { uid: blockSeed.uid },
+          });
+
+          if (existingBlock) {
+            await tx.studioShiftBlock.update({
+              where: { id: existingBlock.id },
+              data: {
+                shiftId: shift.id,
+                startTime: blockSeed.startTime,
+                endTime: blockSeed.endTime,
+                metadata: {},
+              },
+            });
+          } else {
+            await tx.studioShiftBlock.create({
+              data: {
+                uid: blockSeed.uid,
+                shiftId: shift.id,
+                startTime: blockSeed.startTime,
+                endTime: blockSeed.endTime,
+                metadata: {},
+              },
+            });
+          }
+        }
+      }
+      console.log('✅ Completed seeding studio shifts and shift blocks');
       // Seed TaskTemplate data
       console.log('📝 Seeding TaskTemplate data...');
 

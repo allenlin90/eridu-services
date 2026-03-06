@@ -1,229 +1,68 @@
 # PR Quality Gate - Persistent Memory
 
-## erify_studios Frontend Patterns
+## Index of Topic Files
+- `data-table-patterns.md` — DataTable component, system route migration, admin-table removal
+- `upload-presign-patterns.md` — R2/S3 upload patterns, USE_CASE_RULES, browser-upload package
+- `studio-scoped-patterns.md` — Studio lookup, membership endpoint, IDOR guard, @StudioParam
+- `studio-shift-schedule-patterns.md` — Shift schedule feature patterns (feat/studio-shift-schedule)
+- `moderation-workflow-patterns.md` — Moderation loop, idb-keyval draft persistence
 
-### DataTable Component (components/data-table/)
-- Canonical location: `apps/erify_studios/src/components/data-table/`
-- Exports: `DataTable`, `DataTableCore` (alias), `DataTableToolbar`, `DataTableActions`, `DataTablePagination`, adapters
-- `DataTableCore` is a backward-compat alias for `DataTable` - only exists for test mocks; no production code uses it directly
-- `'use client'` directive is present in `data-table-toolbar.tsx` (inherited from admin-table-toolbar pattern) - this is a Vite app so it is a no-op but consistent with sub-components
-- `data-table-core.tsx` has `eslint-disable-next-line react-hooks/incompatible-library` on line 73 for `useReactTable` - carried over from deleted `admin-table.tsx`, legitimate suppression for known library incompatibility with react-hooks lint plugin
-- Inline `import('@tanstack/react-table').Row<TData>` type references in props are verbose but valid
+## Cross-Cutting Patterns (Quick Reference)
 
-### System Route Migration Pattern
-All system list routes (`/system/users/`, `/system/clients/`, etc.) follow:
-```
-DataTable + DataTableToolbar + adaptPaginationChange + adaptColumnFiltersChange
-+ DataTableActions + DataTablePagination + AdminLayout
-```
-Routes that previously used `AdminTable` from `@/features/admin/components` now import directly from `@/components/data-table`.
-`AdminTable` and `AdminTableToolbar` are fully removed from production code after PR `feat/schedule-show-upload`.
+### Service Layer Rule: No Prisma.* Types
+Services MUST NOT import `Prisma.*` types — including `Prisma.JsonValue`, `Prisma.ShowGetPayload`, etc.
+Use `unknown` or a local structural type alias instead. Only the repository layer can use Prisma types.
+- `studio-shift.service.ts` — CLEAN. No Prisma imports; uses local JsonValue/JsonObject alias and repository pass-through.
+- `shift-alignment.service.ts` — CLEAN (fixed in feat/studio-shift-schedule PR review). Replaced `Prisma.ShowGetPayload<>` with local `ShowWithPlanningContext` interface; replaced `TaskType` enum with `REQUIRED_SHOW_TASK_TYPES` string literal array.
 
-### Action-Sheet Logic Duplication (Known)
-Two hooks define equivalent "requires action sheet" logic:
-- `use-studio-show-tasks-page-mutations.ts`: ACTIONS_REQUIRING_FORM + ACTIONS_REQUIRING_NOTE sets (Set-based)
-- `use-studio-tasks-page-controller.tsx`: `requiresActionSheet` function with === checks
-Both cover the same 4 actions. Could be extracted to a shared util but not a blocker.
+### Schema Layer: Internal BigInt Risk Mitigated
+Previously flagged `studioShiftBlockSchema` with `id: z.bigint()` — this was CORRECTED in the final branch.
+The schema now uses `_internalShiftBlockShape` (prefixed with `_` to signal internal use only) which has no BigInt fields.
+The BigInt PKs exist only in repository code (`StudioShiftWithRelations` type). No public Zod schemas expose BigInt.
 
-### React.ReactNode Without Import
-Files using `React.ReactNode` without importing React:
-- `tasks-table-section.tsx` (line 14), `data-table-actions.tsx` (line 21), `toolbar/types.ts` (line 33)
-This is valid in `react-jsx` JSX mode (tsconfig: `"jsx": "react-jsx"`). Not a bug.
+### @StudioParam() vs @Param() in Studio Controllers
+Established pattern: studio-scoped routes should use `@StudioParam()` to read from `req.studioMembership.studio.uid`.
+`studio-shift.controller.ts` and `shift-calendar.controller.ts` use `@Param('studioId', UidValidationPipe)` instead.
+This is a pattern inconsistency (not a security bypass — StudioProtected guard still validates membership).
+Flagged as warning in all shift controller reviews. **Note**: `@StudioParam()` decorator does not actually exist in the codebase — confirmed false positive. All studio controllers use `@Param('studioId', new UidValidationPipe(...))` consistently.
 
-### tablePagination Object Without useMemo
-`system/shows/$showId/tasks.tsx` and `system/tasks/index.tsx` build `tablePagination` inline without `useMemo`.
-Pre-existing pattern. Minor perf concern but not a blocker.
+### Universal Model Fields: version is mandatory
+All writable models must have `version: number` for optimistic locking.
+`StudioShift` and `StudioShiftBlock` are MISSING this field — introduced in feat/studio-shift-schedule.
+This is technical debt deferred to next migration pass. See `known-issues.md`.
 
-### Test Coverage Gap
-`admin-table.test.tsx` was deleted (5 tests) with no direct replacement for DataTable internals.
-`DataTable` component has no dedicated unit test file.
-Integration tests (users-list.test.tsx, studios/index.test.tsx, data-table-toolbar.test.tsx) provide coverage.
+### Repository Pattern: CLS Transaction Participation
+All repositories must use `this.txHost.tx` (CLS transaction adapter) instead of `this.prisma` directly.
+`StudioShiftRepository` — FIXED in feat/studio-shift-schedule PR review. Now injects `TransactionHost<TransactionalAdapterPrisma>` and uses `this.txHost.tx.*` via a `delegate` getter for all DB calls.
 
-### adaptPaginationChange Guard
-The `!pagination` guard in `adaptPaginationChange` correctly returns `undefined` when pagination is not defined. Routes that always have pagination pass a non-undefined object, so this is fine.
+### buildBlocksReplacePayload: Domain Type Pattern (RESOLVED)
+Previously `buildBlocksUpdateData` constructed a Prisma nested write shape in the service layer.
+FIXED in feat/studio-shift-schedule PR review:
+- Renamed to `buildBlocksReplacePayload`, returns `BlocksReplacePayload` domain type (defined in schema, no Prisma imports)
+- Repository builds the Prisma-specific `{ updateMany, upsert }` shape internally from `blocksPayload`
+- Service never touches Prisma structure; only passes domain objects to repository
 
-### Error Handling Inconsistency in System Routes (Pre-existing Debt)
-Some system routes wrap `mutateAsync` in try/catch with `console.error`, others do not:
-- WITH try/catch: users, studios, clients, mcs, memberships, show-types, show-statuses, show-standards, studio-rooms
-- WITHOUT try/catch: schedules, task-templates, shows ($showId/tasks)
-This inconsistency is pre-existing technical debt. Should eventually be addressed uniformly.
+### combineDateAndTime: Timezone-Correct Implementation (RESOLVED)
+Previous review noted a risk. The actual code is `new Date(`${date}T${time}:00`).toISOString()` which is LOCAL-time parse → UTC.
+This is intentional and correct: user enters local time in form, we convert to UTC for the API.
+`toDisplayDate()` uses `setFullYear`/`setHours` for local-clock display rendering — also intentional (date-only fields for display).
+Both are correct. Remove the timezone-hazard warning from future reviews of this file.
 
-## Known Technical Debt in erify_studios
-- `console.error` in multiple system route delete handlers - pre-existing, inconsistently applied
-- `DataTableCore` alias exported from index - intended for backward compat with test mocks; can be removed once all test mocks are updated
-- `tablePagination` objects built inline (without `useMemo`) in some routes - minor perf concern, pre-existing
-- `requiresActionSheet`/`requiresTaskActionSheet` duplicated between task hooks - should be extracted to shared util
-- Task type label i18n (chore/studios-task-type-ui-labels): ADMIN/ROUTINE/OTHER hardcoded in 4 files instead of using `getTaskTypeLabel()` — see topic file for full list
-- `getTaskTypeOptions()` called inline in component render body without `useMemo` (minor, consistent with project pattern)
+### me/shifts Studio Existence Oracle (RESOLVED)
+Previously `MeShiftsService.listMyShifts` called `studioService.findByUid` and threw 404 for unknown studio.
+FIXED in feat/studio-shift-schedule PR review: check removed entirely. User-scoped DB query naturally returns
+zero rows for an unknown or unrelated studio, so no existence information leaks to authenticated users.
 
-## erify_api Upload / Storage Patterns (feat/file-upload-presign-phase3)
+### useStudioMemberMap Hard Limit
+`STUDIO_MEMBER_MAP_DEFAULT_LIMIT = 200`, calendar uses `STUDIO_MEMBER_MAP_CALENDAR_LIMIT = 500`.
+Shifts belonging to members beyond the limit show no name (silent truncation).
+Fallback behavior: roster card shows `shift.user_name` (always present) and `user?.email ?? 'Member details unavailable'`.
+This is a UX degradation, not a crash — acceptable for now. Flagged as warning.
 
-### Module Structure
-- `StorageService` lives in `apps/erify_api/src/lib/storage/` (shared lib) — not in models/ because it's infrastructure
-- `UploadModule` lives in `apps/erify_api/src/uploads/` (not under models/ - correct, no DB entity)
-- `@eridu/api-types/uploads` subpath added with `presignUploadRequestSchema`, `presignUploadResponseSchema`, `FILE_UPLOAD_USE_CASE`
-
-### Import Convention Violation Found
-All other backend schema/service files import from `@eridu/api-types/<subpath>` (e.g. `@eridu/api-types/task-management`).
-The uploads domain incorrectly uses the barrel `@eridu/api-types` in:
-- `upload.service.ts`, `schemas/upload.schema.ts`, test files
-This is inconsistent with project convention. Should be `@eridu/api-types/uploads`.
-
-### S3Client Singleton Pattern in StorageService
-`StorageService` caches the `S3Client` instance in a private field. This means credentials are read twice on first call — once at the top of `generatePresignedUploadUrl` (validation-only, discarded), then again inside `getS3Client`. This is not a bug (it's defensive validation before calling AWS) but is slightly redundant. Pre-existing acceptable pattern.
-
-### R2 Config: All Optional in env.schema
-All five R2 env vars (`R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_BASE_URL`) are optional in `env.schema.ts`. Runtime errors are thrown in `StorageService.getRequiredConfig()` when actually invoked. This is intentional — allows the API to start without R2 configured. The endpoint has no DB entity, no `deletedAt`/`version`/`metadata` fields needed.
-
-### forcePathStyle on R2
-`S3Client` uses `forcePathStyle: true`. For Cloudflare R2 presigned URLs this is correct — R2 supports path-style requests and the presigned URL generation matches the endpoint pattern.
-
-### file_size: Schema-Level Upper Bound Added in Phase 3
-`presignUploadRequestSchema` uses `z.number().int().positive().max(100 * 1024 * 1024)` — a 100MB hard cap at schema level. Per-use-case limits (10/25/50MB) are additionally enforced in `USE_CASE_RULES` inside `UploadService`. Defense in depth: schema rejects anything over 100MB, service enforces tighter per-use-case limits.
-
-### buildPublicFileUrl (cleaned up in Phase 3)
-`buildPublicFileUrl(objectKey: string)` — unused params were removed in Phase 3. The public URL always uses `R2_PUBLIC_BASE_URL`.
-
-### Task Metadata upload_routing Pattern (NEW in Phase 3)
-`TaskGenerationProcessor.buildShowGeneratedTaskMetadata()` stamps every generated task with:
-```json
-{ "upload_routing": { "source": "show_task_generation", "scope": "show", "material_asset_directory": "<pre-production|mc-review|show-general>" } }
-```
-`UploadService.extractDirectoryFromMetadata()` reads `task.metadata.upload_routing.material_asset_directory` to override the default storage directory. This is an implicit coupling via opaque metadata — not enforced by TypeScript shared type. A shared type constant for the `upload_routing` key structure would be safer long-term.
-
-### SCREENSHOT_MAX_BYTES Compression Target (200KB) vs QC_SCREENSHOT API Limit (200KB)
-In `json-form.tsx`, `SCREENSHOT_MAX_BYTES = 200 * 1024` is the client-side image compression TARGET before upload for MATERIAL_ASSET image fields. The `QC_SCREENSHOT` backend API limit is also 200KB — both are in sync. `QC_SCREENSHOT` is not called from any erify_studios frontend code in Phase 3 (enum exists, but no UI path uses it yet).
-
-### Zod v4 z.url() Usage
-`presignUploadResponseSchema` uses `z.url()` which is a Zod v4 API. Project uses `zod@^4.3.6` in api-types. This is correct and passes typecheck and build. Do not flag as an issue.
-
-### UploadController Extends BaseController (Correct)
-`UploadController` DOES extend `BaseController`. Global guard chain (Throttler → JwtAuth) via `APP_GUARD` in `app.module.ts` covers this controller. No `@StudioProtected` needed — presign is a cross-studio POST action authenticated by JWT.
-
-### mime_type Schema Enum vs image/* in Design Doc
-The `presignUploadRequestSchema` limits `mime_type` to a closed enum: jpeg/png/webp/pdf/mp4. SKILL.md describes MATERIAL_ASSET as `image/*` but the schema is the authoritative gate. Service USE_CASE_RULES list the same 5 types. Both consistent — design doc `image/*` is aspirational shorthand.
-
-### findByUidWithSnapshot Returns Full Task Including metadata
-`TaskRepository.findByUidWithSnapshot` uses `include` (not `select`) for snapshot/targets — all root scalar fields including `metadata` are returned automatically. `UploadService.extractDirectoryFromMetadata` relies on this. Not a bug.
-
-### flushPendingFileUploads Sequential Upload Loop
-Processes uploads sequentially. On failure: throws (remaining uploads abort), failed field stays in `pendingFilesByKey` (user can retry), `uploadingByKey` always reset in `finally`. Intentional and correct.
-
-### JsonForm File Validation — Two-Layer Pattern
-Layer 1 (`onFileSelect`): checks MIME against `SUPPORTED_UPLOAD_MIME_TYPES` + `doesFileMatchAccept` — surfaces via `toast.error` immediately.
-Layer 2 (`flushPendingFileUploads`): re-validates before presign request, throws on failure — callers catch and call `toast.error`.
-
-### QC_SCREENSHOT Not Used in Frontend (Phase 3)
-Commit title `feat(erify_studios): add QC screenshot upload flow in task sheet` is misleading. Frontend uses MATERIAL_ASSET use case only. `QC_SCREENSHOT` enum exists at backend but has no frontend call path yet.
-
-### browser-upload Package: src-direct Export Is Established Pattern
-`@eridu/browser-upload` exports `"default": "./src/index.ts"`. This mirrors `@eridu/ui` (same pattern). Both are Vite-consumed packages resolved via bundler moduleResolution. Do NOT flag src-direct export as a violation for these packages. Worker URL (`new URL('./image-compress.worker.ts', import.meta.url)`) is correctly handled by Vite — confirmed by build output emitting a separate worker chunk. Package is NOT in `optimizeDeps.include` or `exclude` which is correct (worker packages with `import.meta.url` should not be pre-bundled).
-
-### getMaterialAssetImageMaxBytes Naming (Confirmed in Phase 3 Review)
-Returns `min(fieldMax, QC_SCREENSHOT limit = 200KB)`. Name is misleading (sounds like material asset limit = 50MB) but it's the image COMPRESSION TARGET cap, not the upload limit. Both uses in `json-form.tsx` are correct.
-
-### reserveMaterialAssetUploadVersion: $transaction in Repository Is Correct
-`TaskRepository.reserveMaterialAssetUploadVersion()` uses `prisma.$transaction` directly. `@Transactional()` decorator applies only to SERVICE layer. Repository layer uses `prisma.$transaction()` for atomic ops — consistent with all other transactional methods in `task.repository.ts`.
-
-### USE_CASE_RULES in api-types (Phase 3)
-`FILE_UPLOAD_USE_CASE_RULES`, `getUploadMaxFileSizeBytes`, `isUploadMimeTypeAllowed`, `getMaterialAssetImageMaxBytes` live in `packages/api-types/src/uploads/schemas.ts`. Backend imports from `@eridu/api-types/uploads`. Frontend imports from `@eridu/api-types/uploads`. Single source of truth for validation constants — correct pattern.
-
-### Upload Controller: HTTP 201 for Presign POST (Accepted)
-`POST /uploads/presign` returns 201 CREATED. Semantically 200 OK would be more accurate (computed result, no persisted resource), but 201 is consistent with other POST endpoints in the project. Acceptable as-is.
-
-### isSupportedUploadMimeType: Redundant Double-Check (Known Suggestion)
-In `json-form.tsx`, `isSupportedUploadMimeType(value)` checks `MATERIAL_ASSET_ALLOWED_MIME_TYPES.has(value) && isUploadMimeTypeAllowed(MATERIAL_ASSET, value)`. Both checks query the same data structure. The Set.has() is redundant with the includes() inside isUploadMimeTypeAllowed. Minor dead-code smell, not a blocker.
-
-## Studio-Scoped Lookup Pattern (fix/studio-membership-scoped-routes)
-
-### StudioLookupModule Location and Design
-- `apps/erify_api/src/studios/studio-lookup/` holds thin routing adapters for show-types, show-standards, show-statuses, platforms under `/studios/:studioId/`
-- studioId param is validated by UidValidationPipe but intentionally DISCARDED (`_studioId`) — these are global reference data, not studio-scoped data; studioId serves only as auth gate
-- StudioGuard validates user membership in the studio before serving the response — security model is correct
-- Pattern: `@StudioProtected()` on class (any member), studioId validated by pipe but ignored in method body
-
-### Frontend Lookup Hook Dual-Endpoint Pattern
-- `getPlatforms`, `getShowTypes`, `getShowStandards`, `getShowStatuses` all accept optional `studioId?: string`
-- When studioId is present: hits `/studios/:studioId/<resource>`; when absent: hits `/admin/<resource>`
-- Query keys use `studioId ?? 'admin'` as discriminator — prevents cache collisions between studio and admin contexts
-- show-form-fields.tsx uses hooks WITHOUT studioId (always admin path) — safe because ShowUpdateDialog is ONLY used in system (admin) routes, never in studio routes
-- system/shows route uses the hooks without studioId — correct (admin auth context)
-- studios/$studioId/shows route uses hooks WITH studioId — correct (studio auth context)
-
-### Shared memberSearch State Across AssigneeCell Rows (Known Design)
-- `use-studio-show-tasks-page-controller.tsx` holds a single `memberSearch` state and passes `setMemberSearch` to ALL AssigneeCell rows via `onMemberSearch` in getColumns
-- Each AssigneeCell has its own local `inputValue` state in AsyncCombobox, but onSearch is shared
-- Only one popover can be open at a time so shared search state works in practice; edge case: opening row B clears row A's search (acceptable UX tradeoff)
-- `membersRef` pattern: useRef<Membership[]> stores current member list, passed as `() => membersRef.current` getter to getColumns to prevent column re-creation on member data changes
-- `react-hooks/refs` ESLint suppressions are LEGITIMATE — this rule (`eslint-plugin-react-hooks@7.0.1`) flags ref mutation outside useEffect; the pattern here (update ref in render body) is intentional for stable getters in memoized callbacks
-
-### Unstaged Repository Change (name filter)
-- In `fix/studio-membership-scoped-routes`, `studio-membership.repository.ts` has an unstaged `name` filter addition
-- This is the `if (params.name)` filter on `user.name` — it was being added to implement search-by-name but not committed
-- The schema (`listStudioMembershipsFilterSchema`) accepts `name` field; service passes it through; but repository silently ignores it until committed
-- This is pre-existing debt per MEMORY.md ("name filter: accepted by schema, not implemented in repository")
-
-### getMemberOptions Called Per Render in AssigneeCell (Known Perf Note)
-- `getMemberOptions(getMembers())` is called inside AssigneeCell on every render (no useMemo)
-- Maps members array to options array — O(N) per cell per render; with 50 tasks × 50 members = 2500 ops
-- Low-cost string mapping; not a performance blocker but worth noting for large member/task lists
-
-## Studio-Scoped Module Pattern (feat/studio-membership-endpoint)
-
-### StudioMembershipModule Location
-- The NEW studio-scoped controller for memberships lives at `apps/erify_api/src/studios/studio-membership/` (not under `models/`).
-- This is correct: `studios/` sub-modules are thin routing adapters, they import `MembershipModule` from `models/membership/`.
-- Route: `GET /studios/:studioId/studio-memberships` — different from admin `GET /admin/studio-memberships`.
-
-### Double @StudioProtected Is Intentional and Correct
-`BaseStudioController` applies `@StudioProtected()` (no roles = any member).
-Each concrete controller applies its own `@StudioProtected([ROLE])` to tighten.
-`StudioGuard` uses `reflector.getAllAndOverride()` — the METHOD decorator wins over CLASS decorator; CLASS decorator wins over BASE CLASS decorator.
-Net effect: `@StudioProtected([STUDIO_ROLE.ADMIN])` on the controller class overrides the base class `@StudioProtected()`. No double execution issue.
-
-### listStudioMembershipsQuerySchema: studioId from schema transform is IGNORED by controller
-The `listStudioMembershipsQuerySchema` transforms `studio_id` → `studioId`. In the studio-scoped controller, this client-supplied `studioId` is intentionally destructured and discarded (`_ignoredStudioId`), and the route-param `studioId` is substituted. This prevents IDOR — clients cannot query another studio's memberships by passing a different `studio_id`.
-
-### Frontend Query Key Namespace: 'studio-memberships' vs 'memberships'
-- Admin endpoint query key: `['memberships', 'list', params]`
-- Studio-scoped endpoint query key: `['studio-memberships', 'list', studioId, params]`
-These are intentionally different namespaces. Mutations on admin memberships DO invalidate `['memberships']` but NOT `['studio-memberships']`. If an admin creates/updates/deletes a membership while the studio view is open, the studio-membership cache will go stale. This is acceptable for current usage (studio members list is a dropdown, not a live-updated critical view). If real-time consistency becomes important, invalidation should cross namespaces.
-
-### Frontend: get-studio-memberships.ts id param maps to uid filter
-`GetStudioMembershipsParams.id` maps to backend `listStudioMembershipsQuerySchema`'s `id` field which transforms to `uid`. The backend filter does a `contains/insensitive` search on uid — not exact match. This is the established pattern from the admin endpoint.
-
-### name filter: accepted by schema, not implemented in repository
-`listStudioMembershipsFilterSchema` accepts a `name?: string` field. The repository `listStudioMemberships` does not filter by name. This is pre-existing debt carried over from the admin endpoint — the field is silently ignored at query time.
-
-## Upload Routing Refactor (fix: align upload routing with closure workflow)
-
-### CLOSURE override is now the highest-priority routing rule
-`resolveStorageUseCaseForObjectKey` in `upload.service.ts` was refactored so that show-linked CLOSURE tasks ALWAYS resolve to `mc-review`, regardless of metadata. The new priority order:
-1. INSTRUCTION_ASSET → `pre-production` (hardcoded)
-2. Non-MATERIAL_ASSET → use_case lowercased
-3. No taskContext (MATERIAL_ASSET without task) → `single-use`
-4. Show-linked + CLOSURE → `mc-review` (early return before metadata check)
-5. metadata.upload_routing.material_asset_directory → use it
-6. Not show-linked → `single-use`
-7. Show-linked + SETUP → `pre-production`
-8. Show-linked + other → `show-general`
-
-### Dead code: CLOSURE in directoryByTaskType
-After the CLOSURE early-return at step 4, `directoryByTaskType` at line 314-317 still contains `CLOSURE: 'mc-review'`. This entry is unreachable dead code. Minor cleanup candidate but lint does not catch it.
-
-### Missing `options` propagation in use-studio-tasks-page-controller.tsx
-`handleSubmitAction` in `apps/erify_studios/src/features/tasks/hooks/use-studio-tasks-page-controller.tsx` does NOT accept the `options?: { onSuccess?: () => void }` parameter that `StudioTaskActionSheet.onSubmit` now passes. The draft-clearing `onSuccess` callback is silently dropped when `StudioTaskActionSheet` is used from the `/studios/$studioId/tasks` route. TypeScript does not catch this because the prop type constraint is satisfied by the function's declared parameters (extra args are ignored in TS function subtyping). The show-tasks route (`use-studio-show-tasks-page-mutations.ts`) correctly forwards `options?.onSuccess?.()`.
-
-### validateBeforeSubmit: return value is unused by callers
-`JsonFormHandle.validateBeforeSubmit()` returns `Promise<Record<string, unknown>>` (current form values). Both callers — `studio-task-action-sheet.tsx` and `task-execution-sheet.tsx` — discard the return value (use `await` without assignment) and then call `flushPendingFileUploads()` separately. The return value is superfluous on the interface but not harmful. Consider making the return type `Promise<void>` to match actual usage.
-
-### idb-keyval draft persistence pattern
-`studio-task-action-sheet.tsx` uses `idb-keyval` for IndexedDB draft persistence. Key: `studio_task_action_draft:{taskId}:{action}`. Debounce: 500ms. Two-phase: hydrate on open, persist on change, delete on success. `task-execution-sheet.tsx` uses same pattern with key `my_task_execution_draft:{taskId}`.
-
-## Moderation Loop Workflow (feat/moderator-workflow — MERGED)
-See detailed notes in `moderation-workflow-patterns.md`. Key facts:
-- `group` field added to `FieldItemBaseSchema` in `@eridu/api-types` (optional string)
-- Loop metadata stored in `template.snapshot.schema.metadata.loops` (app-layer, opaque to backend)
-- `ProgressBar` at `src/components/progress-bar.tsx` still exists; used by `task-card.tsx` (studio tasks) — NOT dead code
-- Canonical feature doc: `apps/erify_studios/docs/MODERATION_WORKFLOW.md`
-- All PR review issues resolved; see patterns file for full resolution status
+### Known Technical Debt in erify_studios
+- `console.error` in system route delete handlers — pre-existing, inconsistent
+- `DataTableCore` alias in data-table index — for test mocks only
+- `requiresActionSheet` duplicated between task hooks — should extract to shared util
+- Task type label i18n hardcoded in 4 files instead of using `getTaskTypeLabel()`
+- `handleSubmitAction` in `use-studio-tasks-page-controller.tsx` silently drops `options.onSuccess` — pre-existing
+- `StudioShift`/`StudioShiftBlock` missing `version` field — introduced in feat/studio-shift-schedule; deferred

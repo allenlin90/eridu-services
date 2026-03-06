@@ -330,6 +330,23 @@ See [Authentication Guide](docs/design/AUTHORIZATION_GUIDE.md) for details.
 
 **Note**: Snapshots are automatically created when schedule plan documents are updated. They provide immutable version history for audit trails and rollback capabilities.
 
+#### 🗓️ Studio Shifts (`/studios/:studioId/shifts`)
+
+Studio-admin–only shift management (requires `ADMIN` or `MANAGER` role):
+
+- `GET /studios/:studioId/shifts` - List shifts with pagination (filter by user/status/date)
+- `POST /studios/:studioId/shifts` - Create a shift with time blocks
+- `GET /studios/:studioId/shifts/:id` - Get shift by ID
+- `PATCH /studios/:studioId/shifts/:id` - Update shift (blocks, duty-manager flag, status)
+- `DELETE /studios/:studioId/shifts/:id` - Soft delete shift
+- `GET /studios/:studioId/shifts/duty-manager` - Get current duty manager for a timestamp
+- `GET /studios/:studioId/shifts/calendar` - Calendar events for a date range (view-aware limit)
+- `GET /studios/:studioId/shifts/alignment` - Duty-manager coverage + task-readiness risk report
+
+#### 🗓️ My Shifts (`/me/shifts`)
+
+- `GET /me/shifts` - List the authenticated user's own shifts (paginated, filterable by date/studio)
+
 #### 🔐 Backdoor Endpoints (`/backdoor/*`)
 
 Service-to-service API key authenticated endpoints for privileged operations:
@@ -568,11 +585,11 @@ The database schema includes comprehensive models for the full livestream produc
 - **Shows**: Core operational records for livestream productions ✅ (Implemented)
 - **ShowMC & ShowPlatform**: Show relationship management ✅ (Implemented)
 - **Schedules & ScheduleSnapshots**: Collaborative planning system ✅ (Implemented)
-- **Materials & MaterialTypes**: Content assets management (Phase 2)
-- **Tasks & TaskTemplates**: Workflow automation (Phase 3)
-- **Comments**: Collaboration system (Phase 3)
-- **Tags & Taggables**: Flexible categorization (Phase 3)
-- **Audits**: Complete audit trail (Phase 3)
+- **Tasks & TaskTemplates**: Workflow automation ✅ (Implemented — Phase 2)
+- **Materials & MaterialTypes**: Content assets management (Phase 3)
+- **Comments**: Collaboration system (Phase 4)
+- **Tags & Taggables**: Flexible categorization (Phase 4)
+- **Audits**: Complete audit trail (Phase 4)
 
 See the [Business Documentation](docs/BUSINESS.md) for detailed information about the complete system architecture. For implementation status and roadmap, see [Phase 1 Roadmap](docs/roadmap/PHASE_1.md), [Phase 2 Roadmap](docs/roadmap/PHASE_2.md), and [Phase 3 Roadmap](docs/roadmap/PHASE_3.md).
 
@@ -657,12 +674,12 @@ Comprehensive documentation is available in the `docs/` directory. Refer to spec
 
 ### Design
 
-| Document                                                                                   | Status | Description                                                                    |
-| ------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------ |
-| [Authorization Guide](./design/AUTHORIZATION_GUIDE.md)                                     | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
-| [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) | ⏳      | Studio-scoped resolution for cancelled shows                                   |
-| [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                | 📐      | Design for template-less pre-production ticketing using Tasks                  |
-| [Analytics Dashboard Plan](./design/ANALYTICS_DASHBOARD.md)                               | 📐      | Plan for Studio task performance overview using JSONB snapshots                |
+| Document                                                                                               | Status | Description                                                                    |
+| ------------------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------ |
+| [Authorization Guide](docs/design/AUTHORIZATION_GUIDE.md)                                              | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
+| [Pending-Resolution MVP](docs/design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md)           | ⏳      | Studio-scoped resolution for cancelled shows                                   |
+| [Ad-hoc Task Ticketing](docs/design/AD_HOC_TASK_TICKETING.md)                                         | 📐      | Design for template-less pre-production ticketing using Tasks                  |
+| [Analytics Dashboard Plan](docs/design/ANALYTICS_DASHBOARD.md)                                        | 📐      | Plan for Studio task performance overview using JSONB snapshots                |
 
 ### Roadmap
 

@@ -1,5 +1,5 @@
 import { useIsFetching } from '@tanstack/react-query';
-import { RotateCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { Button } from '@eridu/ui';
@@ -47,12 +47,13 @@ export function AdminLayout({
             {onRefresh && (
               <Button
                 variant="outline"
-                size="sm"
+                size="icon"
+                className="h-9 w-9"
                 onClick={onRefresh}
                 disabled={isFetching}
+                aria-label="Refresh data"
               >
-                <RotateCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-                Refresh
+                <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
               </Button>
             )}
             {action && (

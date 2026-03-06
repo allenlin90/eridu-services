@@ -1,6 +1,6 @@
 # Eridu Services Monorepo - Quick Reference
 
-> **Last Updated**: 2026-03-02
+> **Last Updated**: 2026-03-06
 > **Status**: Production codebase — major architectural debt resolved Feb 2026 (see Known Issues)
 
 ## Workflow Rules (MUST FOLLOW)
@@ -11,6 +11,7 @@ Before implementing ANY feature, read the relevant skill from `.agent/skills/<sk
 - Multi-service workflows: `orchestration-service-nestjs`
 - Frontend: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`
 - Full-stack: `admin-list-pattern`, `studio-list-pattern`
+- Shift schedule: `shift-schedule-pattern`
 
 ### Dependency Changes — Full Impact (CRITICAL)
 The cloud build runs `pnpm install --frozen-lockfile`. **`pnpm-lock.yaml` is the authoritative install manifest** — `package.json` alone is not enough. A stale lockfile hard-fails the build before any code runs, which cascades: build fails → deployment blocked → pre-deploy migration never runs → all downstream issues compound.
@@ -297,6 +298,7 @@ const where: Prisma.TaskWhereInput = { ... };
 | **jsonb-analytics-snapshot** | Analytics aggregation with JSONB snapshots | MEDIUM |
 | **schedule-continuity-workflow** | Schedule update/validate/publish workflow | MEDIUM |
 | **file-upload-presign** | Presigned R2 upload flow, use case limits, storage routing | MEDIUM |
+| **shift-schedule-pattern** | Shift CRUD, blocks, calendar/alignment orchestration, duty-manager, task-readiness, FE shift UX | HIGH |
 
 **Full skill list** (29 total): See `.agent/skills/` directory
 

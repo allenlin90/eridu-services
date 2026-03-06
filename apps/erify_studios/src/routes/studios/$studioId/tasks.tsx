@@ -1,83 +1,24 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { RotateCw } from 'lucide-react';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
 
-import { adaptColumnFiltersChange, adaptPaginationChange, Button, DataTable, DataTablePagination, DataTableToolbar } from '@eridu/ui';
-
-import { StudioTaskActionSheet } from '@/features/tasks/components/studio-task-action-sheet';
-import { TaskDueDateDialog } from '@/features/tasks/components/task-due-date-dialog';
-import { studioTaskSearchableColumns } from '@/features/tasks/config/studio-task-columns';
+import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { studioTaskSearchSchema } from '@/features/tasks/config/studio-task-search-schema';
-import { useStudioTasksPageController } from '@/features/tasks/hooks/use-studio-tasks-page-controller';
 
 export const Route = createFileRoute('/studios/$studioId/tasks')({
-  component: StudioTasksPage,
+  component: StudioTasksLayout,
   validateSearch: (search) => studioTaskSearchSchema.parse(search),
 });
 
-function StudioTasksPage() {
+function StudioTasksLayout() {
   const { studioId } = Route.useParams();
-  const { tableProps, toolbarProps, actionSheetProps, dueDateDialogProps } = useStudioTasksPageController({
-    studioId,
-  });
-  const pagination = tableProps.pagination;
-  const { key: actionSheetKey, ...actionSheetRestProps } = actionSheetProps;
-  const { key: dueDateDialogKey, ...dueDateDialogRestProps } = dueDateDialogProps;
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Review Queue</h1>
-        <p className="text-muted-foreground">
-          Review submitted tasks and manage task actions across the studio.
-        </p>
-      </div>
-
-      <DataTable
-        data={tableProps.data}
-        columns={tableProps.columns}
-        isLoading={tableProps.isLoading}
-        isFetching={tableProps.isFetching}
-        emptyMessage={tableProps.emptyMessage}
-        manualPagination
-        manualFiltering
-        pageCount={pagination.pageCount}
-        paginationState={{
-          pageIndex: pagination.pageIndex,
-          pageSize: pagination.pageSize,
-        }}
-        onPaginationChange={adaptPaginationChange(pagination, tableProps.onPaginationChange)}
-        columnFilters={tableProps.columnFilters}
-        onColumnFiltersChange={adaptColumnFiltersChange(tableProps.columnFilters, tableProps.onColumnFiltersChange)}
-        renderToolbar={(table) => (
-          <DataTableToolbar
-            table={table}
-            searchableColumns={studioTaskSearchableColumns}
-            searchColumn={tableProps.searchColumn}
-            searchPlaceholder={tableProps.searchPlaceholder}
-            featuredFilterColumns={[...tableProps.featuredFilterColumns]}
-          >
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-full sm:w-auto"
-              onClick={toolbarProps.onRefresh}
-            >
-              <RotateCw className="mr-2 h-4 w-4" />
-              Refresh
-            </Button>
-          </DataTableToolbar>
-        )}
-        renderFooter={() => (
-          <DataTablePagination
-            pagination={pagination}
-            onPaginationChange={tableProps.onPaginationChange}
-          />
-        )}
-      />
-
-      <StudioTaskActionSheet key={actionSheetKey} {...actionSheetRestProps} />
-
-      <TaskDueDateDialog key={dueDateDialogKey} {...dueDateDialogRestProps} />
-    </div>
+    <StudioRouteGuard
+      studioId={studioId}
+      routeKey="tasks"
+      deniedTitle="Review Queue Access Required"
+      deniedDescription="Only studio managers and admins can access the review queue."
+    >
+      <Outlet />
+    </StudioRouteGuard>
   );
 }

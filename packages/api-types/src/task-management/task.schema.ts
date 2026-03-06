@@ -2,6 +2,10 @@ import { z } from 'zod';
 
 import { UID_PREFIXES } from '../constants.js';
 import { paginationBaseSchema, transformPagination } from '../pagination/index.js';
+import { platformApiResponseSchema } from '../platforms/index.js';
+import { showStandardApiResponseSchema } from '../show-standards/index.js';
+import { showStatusApiResponseSchema } from '../show-statuses/index.js';
+import { showTypeApiResponseSchema } from '../show-types/index.js';
 import { showApiResponseSchema } from '../shows/index.js';
 
 /**
@@ -283,6 +287,11 @@ export type BulkDeleteTasksResponse = z.infer<typeof bulkDeleteTasksResponseSche
  * Show data with task completion summary
  */
 export const showWithTaskSummaryDto = showApiResponseSchema.extend({
+  mcs: z.array(z.object({
+    mc_id: z.string(),
+    mc_name: z.string(),
+    mc_aliasname: z.string(),
+  })).default([]),
   task_summary: z.object({
     total: z.number().int(),
     assigned: z.number().int(),
@@ -292,6 +301,18 @@ export const showWithTaskSummaryDto = showApiResponseSchema.extend({
 });
 
 export type ShowWithTaskSummaryDto = z.infer<typeof showWithTaskSummaryDto>;
+
+/**
+ * Studio show lookup bundle for filter dropdown options.
+ */
+export const studioShowLookupsDto = z.object({
+  show_types: z.array(showTypeApiResponseSchema),
+  show_standards: z.array(showStandardApiResponseSchema),
+  show_statuses: z.array(showStatusApiResponseSchema),
+  platforms: z.array(platformApiResponseSchema),
+});
+
+export type StudioShowLookupsDto = z.infer<typeof studioShowLookupsDto>;
 
 /**
  * Query schema for listing studio shows with task filters

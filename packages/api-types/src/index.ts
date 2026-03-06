@@ -29,6 +29,7 @@ export * from './show-statuses/index.js';
 export * from './show-types/index.js';
 export * from './shows/index.js';
 export * from './studio-rooms/index.js';
+export * from './studio-shifts/index.js';
 export * from './studios/index.js';
 export * from './task-management/index.js';
 export * from './uploads/index.js';

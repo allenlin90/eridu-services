@@ -37,6 +37,11 @@ export function TaskTemplateBuilderPage() {
       });
       navigate({ to: '/studios/$studioId/task-templates', params: { studioId } });
     },
+    onError: (error) => {
+      toast.error('Error creating template', {
+        description: error.message,
+      });
+    },
   });
 
   // Load draft from local storage on mount if no initial data is provided
