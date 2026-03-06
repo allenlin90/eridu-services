@@ -221,7 +221,7 @@ function StudioShowsPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-2">
+    <div className="space-y-4">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Shows</h1>

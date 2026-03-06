@@ -267,6 +267,7 @@ function UserCard({ user }: { user: User }) {
 - Keep business feature UI and data logic in leaf routes, not in parent layout routes.
 - If a parent route exists only for grouping, keep it minimal and move policy checks to the nearest shared parent.
 - Avoid mixing both patterns for the same feature area; prefer a single parent-guard + child-content approach.
+- Route sets may use different shared layout components (for example: `PageContainer` for studio-scoped pages, `AdminLayout` for system pages), but each route set should have one clear reusable wrapper pattern and avoid page-level wrapper duplication.
 
 ## Checklist
 

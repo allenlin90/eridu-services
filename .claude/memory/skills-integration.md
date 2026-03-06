@@ -55,7 +55,10 @@ My-shifts route refactor pattern (2026-03-06):
 
 Studios page spacing consistency (2026-03-06):
 - Standardized route/page wrapper top spacing under `SidebarLayoutHeader` to `p-4 pt-2` (instead of mixed `pt-0` overrides).
-- `PageLayout` now follows the same default, and route-level one-off `pt-2` overrides should be removed unless a page has a deliberate exception.
+- Introduced shared `PageContainer` (`apps/erify_studios/src/components/layouts/page-container.tsx`) as the canonical wrapper to avoid route-level hardcoded wrapper classes.
+- `studios/$studioId/*` uses parent-route wrapper + shared `PageContainer`.
+- `system/*` keeps shared `AdminLayout` pattern.
+- Different route sets may use different shared layouts, but each set should avoid per-page wrapper duplication.
 
 ## Critical Skills Clarifications
 

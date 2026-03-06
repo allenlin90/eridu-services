@@ -176,7 +176,7 @@ function StudioShiftsPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-2">
+    <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Studio Shift Schedule</h1>

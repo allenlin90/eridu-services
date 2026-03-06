@@ -26,7 +26,7 @@ export function StudioRouteGuard({
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-2">
+      <div className="space-y-4">
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">{loadingMessage}</p>
@@ -38,7 +38,7 @@ export function StudioRouteGuard({
 
   if (!hasAccess(routeKey)) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-2">
+      <div className="space-y-4">
         <Card>
           <CardHeader>
             <CardTitle>{deniedTitle}</CardTitle>

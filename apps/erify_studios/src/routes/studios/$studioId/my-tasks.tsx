@@ -31,7 +31,7 @@ function MyTasksPage() {
   const meta = data?.meta;
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-2">
+    <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">My Tasks</h1>
         <p className="text-muted-foreground">

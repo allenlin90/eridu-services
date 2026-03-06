@@ -20,7 +20,7 @@ export function PageLayout({
   className,
 }: PageLayoutProps) {
   return (
-    <div className={cn('flex flex-1 flex-col gap-4 p-4 pt-2', className)}>
+    <div className={cn('flex flex-col gap-4', className)}>
       <div className="flex flex-col gap-4 sticky">
         {breadcrumbs && (
           <div>{breadcrumbs}</div>

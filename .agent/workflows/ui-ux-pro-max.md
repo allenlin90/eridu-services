@@ -194,7 +194,7 @@ These are frequently overlooked issues that make UI look unprofessional:
 | **Floating navbar** | Add `top-4 left-4 right-4` spacing | Stick navbar to `top-0 left-0 right-0` |
 | **Content padding** | Account for fixed navbar height | Let content hide behind fixed elements |
 | **Consistent max-width** | Use same `max-w-6xl` or `max-w-7xl` | Mix different container widths |
-| **Studios page top spacing** | Use `p-4 pt-2` for page wrappers under `SidebarLayoutHeader` | Use `pt-0` and visually attach content to header border |
+| **Route-set wrapper consistency** | Use one shared wrapper/layout per route set (e.g. `PageContainer` for studio-scoped pages, `AdminLayout` for system pages) | Hardcode wrapper class strings per route/page |
 
 ---
 
