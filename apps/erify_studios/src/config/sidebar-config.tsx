@@ -22,7 +22,9 @@ import {
 import type * as React from 'react';
 import { useCallback, useMemo } from 'react';
 
-import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+import type {
+  StudioRole,
+} from '@eridu/api-types/memberships';
 import {
   type AppSidebarProps,
   type SidebarNavItem,
@@ -31,6 +33,7 @@ import {
 } from '@eridu/ui';
 
 import { authClient, type Session } from '@/lib/auth';
+import { hasStudioRouteAccess } from '@/lib/constants/studio-route-access';
 import { useIsSystemAdmin } from '@/lib/hooks/use-is-system-admin';
 import { useStudioTeams } from '@/lib/hooks/use-studio-teams';
 
@@ -155,7 +158,7 @@ function getStudioAdminItems(
 ): SidebarNavItem['items'] {
   const adminItems: SidebarNavItem['items'] = [];
 
-  if (role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER) {
+  if (hasStudioRouteAccess(role as StudioRole, 'tasks')) {
     adminItems.push({
       title: 'Review Queue',
       url: `/studios/${studioId}/tasks?status=REVIEW`,
@@ -163,17 +166,21 @@ function getStudioAdminItems(
     });
   }
 
-  if (role === STUDIO_ROLE.ADMIN) {
+  if (hasStudioRouteAccess(role as StudioRole, 'shifts')) {
     adminItems.push({
       title: 'Shift Schedule',
       url: `/studios/${studioId}/shifts`,
       icon: CalendarDays,
     });
+  }
+  if (hasStudioRouteAccess(role as StudioRole, 'shows')) {
     adminItems.push({
       title: 'Shows',
       url: `/studios/${studioId}/shows`,
       icon: Clapperboard,
     });
+  }
+  if (hasStudioRouteAccess(role as StudioRole, 'taskTemplates')) {
     adminItems.push({
       title: 'Task Templates',
       url: `/studios/${studioId}/task-templates`,

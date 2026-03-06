@@ -31,6 +31,7 @@ Run when any of these are true:
    - Update the most relevant skill(s) in `.agent/skills/*/SKILL.md`.
    - Capture only stable/reusable guidance (avoid one-off task logs).
    - Keep paths/references accurate.
+   - When frontend access control/navigation behavior changes, document the shared policy location and guard usage so route guard + sidebar visibility remain aligned.
 
 4. **Update workflows/rules when process changed**
    - If this change introduces a repeatable process, update/create `.agent/workflows/*.md`.
@@ -43,6 +44,7 @@ Run when any of these are true:
 6. **Sanity check links and discoverability**
    - Ensure moved/renamed docs are referenced correctly from READMEs, skills, and related docs.
    - Ensure no stale links to old doc paths remain.
+   - For route policy changes, verify route files and sidebar config both reference the same access policy source.
 
 ## Completion Checklist
 

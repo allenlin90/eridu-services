@@ -46,3 +46,4 @@ After feature delivery, behavior changes, or refactors, you MUST sync agent know
 - **Type Safety:** Maintain strict typing.
 - **Error Handling:** Use centralized error handling patterns (e.g., `HttpError` utility for backend APIs).
 - **Communication:** If uncertain about requirements or if a proposed architecture requires user approval, stop and use `notify_user` to gather feedback.
+- **Frontend Access Control Consistency:** For `erify_studios` studio routes, do not duplicate per-page membership/role checks. Use shared route-access policy + shared guard, and keep sidebar visibility derived from the same policy source.

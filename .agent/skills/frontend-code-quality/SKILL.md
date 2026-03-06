@@ -211,9 +211,27 @@ function UserCard({ user }: { user: User }) {
 4.  **Consistent Code Style**: Use ESLint and Prettier to enforce consistency across the codebase.
 5.  **No repeated magic limits**: Centralize repeated pagination/fetch limits in named constants instead of duplicating raw numbers across routes/components.
 
+## Route Access and Layout Pattern
+
+### Shared Route Access Policy (No Role Check Duplication)
+
+- Define studio route permissions in one central map (`src/lib/constants/studio-route-access.ts`).
+- Use one shared access hook (`useStudioAccess`) and one reusable guard component (`StudioRouteGuard`) for protected route UIs.
+- Do not duplicate `profile?.studio_memberships?.find(...)` role checks in each route page.
+- Sidebar visibility must be derived from the same policy map so navigation and route access stay aligned.
+
+### Route Layout Responsibilities
+
+- Use parent route files with `<Outlet />` as access/layout boundaries when multiple child pages share the same guard or layout.
+- Keep business feature UI and data logic in leaf routes, not in parent layout routes.
+- If a parent route exists only for grouping, keep it minimal and move policy checks to the nearest shared parent.
+- Avoid mixing both patterns for the same feature area; prefer a single parent-guard + child-content approach.
+
 ## Checklist
 
 - [ ] `pnpm lint` passes without errors.
 - [ ] `pnpm test` passes.
 - [ ] Component names match their filenames.
 - [ ] Complex logic extracted to custom hooks.
+- [ ] Protected studio routes use `StudioRouteGuard` + shared access policy.
+- [ ] Sidebar visibility and route access use the same route-access source.

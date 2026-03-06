@@ -4,7 +4,6 @@ import { AlertTriangle, ListTodo, RefreshCw } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 
-import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
@@ -33,7 +32,6 @@ import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
 import { SelectedShowsMobileActions } from '@/features/studio-shows/components/selected-shows-mobile-actions';
 import { columns } from '@/features/studio-shows/components/studio-shows-table/columns';
 import { useStudioShows } from '@/features/studio-shows/hooks/use-studio-shows';
-import { useUserProfile } from '@/lib/hooks/use-user';
 
 export const Route = createFileRoute('/studios/$studioId/shows/')({
   component: StudioShowsPage,
@@ -65,18 +63,12 @@ const FEATURED_FILTER_COLUMNS = ['has_tasks', 'client_name', 'show_status_name']
 
 function StudioShowsPage() {
   const { studioId } = Route.useParams();
-  const { data: profile } = useUserProfile();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [planningDateFrom, setPlanningDateFrom] = useState(() => getDefaultPlanningRange().from);
   const [planningDateTo, setPlanningDateTo] = useState(() => getDefaultPlanningRange().to);
 
   const [bulkGeneratingShows, setBulkGeneratingShows] = useState<StudioShow[] | null>(null);
   const [bulkAssigningShows, setBulkAssigningShows] = useState<StudioShow[] | null>(null);
-  const activeMembership = useMemo(
-    () => profile?.studio_memberships?.find((membership) => membership.studio.uid === studioId),
-    [profile?.studio_memberships, studioId],
-  );
-  const isStudioAdmin = activeMembership?.role === STUDIO_ROLE.ADMIN;
 
   const {
     shows,
@@ -214,7 +206,7 @@ function StudioShowsPage() {
       include_cancelled: false,
     },
     {
-      enabled: isStudioAdmin && !hasInvalidPlanningRange,
+      enabled: !hasInvalidPlanningRange,
     },
   );
   const taskReadinessWarningCount = shiftAlignmentResponse?.task_readiness_warnings.length ?? 0;
@@ -238,98 +230,96 @@ function StudioShowsPage() {
         </p>
       </div>
 
-      {isStudioAdmin && (
-        <Card>
-          <CardHeader className="gap-3">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-1">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-600" />
-                  Show Task Readiness Warnings
-                </CardTitle>
-                <CardDescription>
-                  Summary for upcoming shows by date range.
-                </CardDescription>
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <DatePickerWithRange
-                  date={planningDateRange}
-                  setDate={(range) => {
-                    setPlanningDateFrom(range?.from ? toLocalDateInputValue(range.from) : '');
-                    setPlanningDateTo(range?.to ? toLocalDateInputValue(range.to) : '');
-                  }}
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleResetPlanningRange}
-                  disabled={isFetchingShiftAlignment}
-                >
-                  Next 7 Days
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => void refetchShiftAlignment()}
-                  disabled={isFetchingShiftAlignment || hasInvalidPlanningRange}
-                  aria-label="Refresh task readiness warnings"
-                >
-                  <RefreshCw className={`h-4 w-4 ${isFetchingShiftAlignment ? 'animate-spin' : ''}`} />
-                </Button>
-              </div>
+      <Card>
+        <CardHeader className="gap-3">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-1">
+              <CardTitle className="text-base flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                Show Task Readiness Warnings
+              </CardTitle>
+              <CardDescription>
+                Summary for upcoming shows by date range.
+              </CardDescription>
             </div>
-            {hasInvalidPlanningRange && (
-              <p className="text-sm text-destructive">Planning end date must be on or after start date.</p>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {(isLoadingShiftAlignment || isFetchingShiftAlignment)
-              ? (
-                  <p className="text-sm text-muted-foreground">Checking show task readiness...</p>
-                )
-              : (
-                  <div className="space-y-3">
-                    <div className="rounded-md border p-3">
-                      <p className="text-xs text-muted-foreground">Shows With Task Readiness Risks</p>
-                      <p className="text-xl font-semibold">{taskReadinessWarningCount}</p>
-                    </div>
-                    <div className="rounded-md border p-3 space-y-1">
-                      <p className="text-sm font-medium">Task Readiness</p>
-                      <p className="text-sm text-muted-foreground">
-                        Shows without tasks:
-                        {' '}
-                        <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.shows_without_tasks_count ?? 0}</span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Shows with unassigned tasks:
-                        {' '}
-                        <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.shows_with_unassigned_tasks_count ?? 0}</span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Unassigned tasks:
-                        {' '}
-                        <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.tasks_unassigned_count ?? 0}</span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Shows missing SETUP/ACTIVE/CLOSURE:
-                        {' '}
-                        <span className="font-medium text-foreground">{showsMissingRequiredTaskTypes}</span>
-                        {' '}
-                        <span className="text-xs">
-                          (excluding shows with no tasks)
-                        </span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Premium shows missing moderation:
-                        {' '}
-                        <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.premium_shows_missing_moderation_count ?? 0}</span>
-                      </p>
-                    </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <DatePickerWithRange
+                date={planningDateRange}
+                setDate={(range) => {
+                  setPlanningDateFrom(range?.from ? toLocalDateInputValue(range.from) : '');
+                  setPlanningDateTo(range?.to ? toLocalDateInputValue(range.to) : '');
+                }}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetPlanningRange}
+                disabled={isFetchingShiftAlignment}
+              >
+                Next 7 Days
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => void refetchShiftAlignment()}
+                disabled={isFetchingShiftAlignment || hasInvalidPlanningRange}
+                aria-label="Refresh task readiness warnings"
+              >
+                <RefreshCw className={`h-4 w-4 ${isFetchingShiftAlignment ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+          </div>
+          {hasInvalidPlanningRange && (
+            <p className="text-sm text-destructive">Planning end date must be on or after start date.</p>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {(isLoadingShiftAlignment || isFetchingShiftAlignment)
+            ? (
+                <p className="text-sm text-muted-foreground">Checking show task readiness...</p>
+              )
+            : (
+                <div className="space-y-3">
+                  <div className="rounded-md border p-3">
+                    <p className="text-xs text-muted-foreground">Shows With Task Readiness Risks</p>
+                    <p className="text-xl font-semibold">{taskReadinessWarningCount}</p>
                   </div>
-                )}
-          </CardContent>
-        </Card>
-      )}
+                  <div className="rounded-md border p-3 space-y-1">
+                    <p className="text-sm font-medium">Task Readiness</p>
+                    <p className="text-sm text-muted-foreground">
+                      Shows without tasks:
+                      {' '}
+                      <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.shows_without_tasks_count ?? 0}</span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Shows with unassigned tasks:
+                      {' '}
+                      <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.shows_with_unassigned_tasks_count ?? 0}</span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Unassigned tasks:
+                      {' '}
+                      <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.tasks_unassigned_count ?? 0}</span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Shows missing SETUP/ACTIVE/CLOSURE:
+                      {' '}
+                      <span className="font-medium text-foreground">{showsMissingRequiredTaskTypes}</span>
+                      {' '}
+                      <span className="text-xs">
+                        (excluding shows with no tasks)
+                      </span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Premium shows missing moderation:
+                      {' '}
+                      <span className="font-medium text-foreground">{shiftAlignmentResponse?.summary.premium_shows_missing_moderation_count ?? 0}</span>
+                    </p>
+                  </div>
+                </div>
+              )}
+        </CardContent>
+      </Card>
 
       {/* Data Table */}
       <DataTable
