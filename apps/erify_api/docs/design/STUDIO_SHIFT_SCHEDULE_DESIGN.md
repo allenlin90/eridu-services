@@ -1,5 +1,7 @@
 # Studio Shift Schedule Integration Plan
 
+> **Status**: Implemented (`feat/studio-shift-schedule`, March 2026). All design items resolved. See "PR Review Bug Fixes" and "E2E Review Findings" sections below for resolution notes.
+
 Integrate a Studio-based user shift schedule feature to track part-timer shifts, support show-planning risk control, manage duty managers, and calculate costs.
 
 ## User Review Required

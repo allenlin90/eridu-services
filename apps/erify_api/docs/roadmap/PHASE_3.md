@@ -1,8 +1,8 @@
 # Phase 3: Ticketing System, Shift Schedules & File Uploads
 
-> **TLDR**: 🚧 **In Progress**. File Upload (Cloudflare R2 presigned URLs) implemented March 2026. Ticketing system and studio shift schedules are the current focus. Material Management deferred to Phase 4.
+> **TLDR**: 🚧 **In Progress**. File Upload (Cloudflare R2 presigned URLs) implemented March 2026. Studio Shift Schedules implemented March 2026. Ticketing system is the current focus. Material Management deferred to Phase 4.
 
-**Status**: 🚧 In Progress — File Upload complete; Ticketing System and Shift Schedules in progress
+**Status**: 🚧 In Progress — File Upload complete; Studio Shift Schedules complete ✅; Ticketing System in progress
 
 ## Overview
 

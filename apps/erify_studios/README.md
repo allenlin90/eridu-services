@@ -171,9 +171,10 @@ src/
 │   ├── studios/             # Studio-scoped section
 │   │   ├── route.tsx        # Studio layout (validates studio membership)
 │   │   └── $studioId/
-│   │       ├── dashboard.tsx    # Studio dashboard
+│   │       ├── dashboard.tsx    # Studio dashboard (coverage cards, task-readiness)
+│   │       ├── my-shifts.tsx    # Member's own shift schedule (table + calendar toggle)
 │   │       ├── my-tasks.tsx     # Personal task queue
-│   │       ├── shifts.tsx       # Studio shift schedule
+│   │       ├── shifts.tsx       # Studio shift schedule (admin: table + calendar)
 │   │       ├── shows.tsx        # Studio show list
 │   │       ├── task-templates.tsx
 │   │       └── tasks.tsx        # Studio tasks (bulk gen, exec, review)

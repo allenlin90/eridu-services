@@ -330,6 +330,23 @@ See [Authentication Guide](docs/design/AUTHORIZATION_GUIDE.md) for details.
 
 **Note**: Snapshots are automatically created when schedule plan documents are updated. They provide immutable version history for audit trails and rollback capabilities.
 
+#### 🗓️ Studio Shifts (`/studios/:studioId/shifts`)
+
+Studio-admin–only shift management (requires `ADMIN` or `MANAGER` role):
+
+- `GET /studios/:studioId/shifts` - List shifts with pagination (filter by user/status/date)
+- `POST /studios/:studioId/shifts` - Create a shift with time blocks
+- `GET /studios/:studioId/shifts/:id` - Get shift by ID
+- `PATCH /studios/:studioId/shifts/:id` - Update shift (blocks, duty-manager flag, status)
+- `DELETE /studios/:studioId/shifts/:id` - Soft delete shift
+- `GET /studios/:studioId/shifts/duty-manager` - Get current duty manager for a timestamp
+- `GET /studios/:studioId/shifts/calendar` - Calendar events for a date range (view-aware limit)
+- `GET /studios/:studioId/shifts/alignment` - Duty-manager coverage + task-readiness risk report
+
+#### 🗓️ My Shifts (`/me/shifts`)
+
+- `GET /me/shifts` - List the authenticated user's own shifts (paginated, filterable by date/studio)
+
 #### 🔐 Backdoor Endpoints (`/backdoor/*`)
 
 Service-to-service API key authenticated endpoints for privileged operations:
