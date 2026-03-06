@@ -39,6 +39,7 @@ function MyTasksPage() {
       <div className="space-y-4">
         <MyTasksToolbar
           showStartDate={filters.showStartDate}
+          hasCustomShowStartDate={filters.hasCustomShowStartDate}
           onShowStartDateChange={filters.setShowStartDate}
           searchInput={filters.searchInput}
           onSearchChange={filters.setSearch}

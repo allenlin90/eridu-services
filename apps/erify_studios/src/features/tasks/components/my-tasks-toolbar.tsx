@@ -39,6 +39,7 @@ const PAGE_SIZE_OPTIONS: MyTaskPageSize[] = [20, 50, 100];
 
 type MyTasksToolbarProps = {
   showStartDate: string;
+  hasCustomShowStartDate: boolean;
   onShowStartDateChange: (value: string) => void;
   searchInput: string;
   onSearchChange: (value: string) => void;
@@ -63,6 +64,7 @@ type MyTasksToolbarProps = {
 
 export function MyTasksToolbar({
   showStartDate,
+  hasCustomShowStartDate,
   onShowStartDateChange,
   searchInput,
   onSearchChange,
@@ -108,7 +110,7 @@ export function MyTasksToolbar({
               onChange={onShowStartDateChange}
               className="h-8 min-w-0 flex-1 text-xs sm:flex-none"
             />
-            {showStartDate && (
+            {hasCustomShowStartDate && (
               <Button
                 type="button"
                 variant="ghost"
