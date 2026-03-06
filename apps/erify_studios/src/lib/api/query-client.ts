@@ -5,11 +5,10 @@ declare module '@tanstack/react-query' {
   // eslint-disable-next-line -- TanStack query module augmentation requires interface
   interface Register {
     defaultError: Error;
-  }
-  // eslint-disable-next-line -- TanStack query module augmentation requires interface
-  interface MutationMeta {
-    suppressErrorToast?: boolean;
-    errorMessage?: string;
+    mutationMeta: {
+      suppressErrorToast?: boolean;
+      errorMessage?: string;
+    };
   }
 }
 
