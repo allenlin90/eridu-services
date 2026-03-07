@@ -97,7 +97,7 @@ For the studio shows list (`/studios/$studioId/shows`), the quick `Issues` filte
 
 Implementation pattern:
 - FE computes show-scope datetime bounds (`date_from/date_to`) with operational-day cutoff behavior (D+1 `05:59` local when applicable), and uses that for table, readiness snapshot, and `needs_attention`.
-- BE resolves readiness warnings from the same datetime bounds and then constrains paginated show query by warning show UIDs.
+- BE resolves readiness warnings from the same datetime bounds and in-scope show set (`match_show_scope=true`), then constrains paginated show query by warning show UIDs.
 - Legacy `planning_date_from/planning_date_to` may remain as fallback input only.
 
 ---

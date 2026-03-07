@@ -62,7 +62,7 @@ Shows list → set scope date range → toggle `Issues` (alert icon chip) in too
 - show is missing required baseline task types (`SETUP`, `CLOSURE`)
 - premium show is missing moderation coverage
 
-The `Issues` filter uses the same datetime window as the shows table query (`date_from/date_to`), including operational-day cutoff behavior (for example D+1 `05:59` local when applied by scope utilities).
+The `Issues` filter uses the same datetime window and same in-scope show set as the shows table query (`date_from/date_to` with backend `match_show_scope=true`), including operational-day cutoff behavior (for example D+1 `05:59` local when applied by scope utilities).
 
 ---
 

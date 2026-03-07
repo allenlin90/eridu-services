@@ -303,6 +303,7 @@ export class TaskOrchestrationService {
         dateToIsDateOnly: Boolean(!query.date_to && query.planning_date_to),
         includeCancelled: false,
         includePast: true,
+        matchShowScope: true,
       });
       const attentionShowUids = [...new Set(shiftAlignment.task_readiness_warnings.map((warning) => warning.show_id))];
 

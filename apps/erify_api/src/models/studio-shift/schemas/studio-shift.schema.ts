@@ -294,6 +294,7 @@ export const shiftAlignmentQuerySchema = z.object({
   date_to: z.union([z.iso.date(), z.iso.datetime()]).optional(),
   include_cancelled: booleanQueryParamSchema.default(false),
   include_past: booleanQueryParamSchema.default(false),
+  match_show_scope: booleanQueryParamSchema.default(false),
 })
   .transform((data) => ({
     dateFrom: data.date_from ? new Date(data.date_from) : undefined,
@@ -302,6 +303,7 @@ export const shiftAlignmentQuerySchema = z.object({
     dateToIsDateOnly: data.date_to ? /^\d{4}-\d{2}-\d{2}$/.test(data.date_to) : false,
     includeCancelled: data.include_cancelled,
     includePast: data.include_past,
+    matchShowScope: data.match_show_scope,
   }));
 
 export const shiftCalendarDto = z.object({

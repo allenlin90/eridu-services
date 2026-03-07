@@ -283,6 +283,7 @@ describe('taskOrchestrationService', () => {
         dateToIsDateOnly: false,
         includeCancelled: false,
         includePast: true,
+        matchShowScope: true,
       });
       expect(showService.findPaginatedWithTaskSummary).toHaveBeenCalledWith(
         BigInt(1),

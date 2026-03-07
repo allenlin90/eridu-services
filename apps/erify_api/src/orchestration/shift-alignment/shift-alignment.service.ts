@@ -95,8 +95,17 @@ export class ShiftAlignmentService {
         where: {
           studio: { uid: studioUid, deletedAt: null },
           deletedAt: null,
-          startTime: { lt: window.end },
-          endTime: { gt: planningStart },
+          ...(query.matchShowScope
+            ? {
+                startTime: {
+                  gte: window.start,
+                  lte: window.end,
+                },
+              }
+            : {
+                startTime: { lt: window.end },
+                endTime: { gt: planningStart },
+              }),
         },
         orderBy: { startTime: 'asc' },
         include: {

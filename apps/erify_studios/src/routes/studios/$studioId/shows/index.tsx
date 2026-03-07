@@ -272,6 +272,7 @@ function ShowTaskReadinessSection({
     ...(showScopeDateBounds.date_to ? { date_to: showScopeDateBounds.date_to } : {}),
     include_cancelled: false,
     include_past: true,
+    match_show_scope: true,
   }), [showScopeDateBounds.date_from, showScopeDateBounds.date_to]);
 
   const {

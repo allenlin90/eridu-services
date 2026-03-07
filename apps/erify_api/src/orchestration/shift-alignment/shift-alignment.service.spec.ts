@@ -47,6 +47,7 @@ describe('shiftAlignmentService', () => {
         dateToIsDateOnly: true,
         includeCancelled: false,
         includePast: false,
+        matchShowScope: false,
       }),
     ).rejects.toThrow('Studio not found');
   });
@@ -140,6 +141,7 @@ describe('shiftAlignmentService', () => {
       dateToIsDateOnly: true,
       includeCancelled: false,
       includePast: false,
+      matchShowScope: false,
     });
 
     expect(result.summary.shows_checked).toBe(2);
@@ -189,6 +191,7 @@ describe('shiftAlignmentService', () => {
       dateToIsDateOnly: true,
       includeCancelled: false,
       includePast: false,
+      matchShowScope: false,
     });
 
     expect(result.summary.shows_checked).toBe(1);
@@ -219,6 +222,7 @@ describe('shiftAlignmentService', () => {
       dateToIsDateOnly: true,
       includeCancelled: false,
       includePast: false,
+      matchShowScope: false,
     });
 
     expect(result.summary.shows_without_tasks_count).toBe(1);
@@ -248,6 +252,7 @@ describe('shiftAlignmentService', () => {
       dateToIsDateOnly: false,
       includeCancelled: false,
       includePast: true,
+      matchShowScope: false,
     });
 
     expect(studioShiftService.findShiftsInWindow).toHaveBeenCalledWith(expect.objectContaining({
@@ -255,6 +260,32 @@ describe('shiftAlignmentService', () => {
       start: dateFrom,
       end: dateTo,
       includeCancelled: false,
+    }));
+  });
+
+  it('should use start-time scope matching when matchShowScope is enabled', async () => {
+    studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
+    studioShiftService.findShiftsInWindow.mockResolvedValue([] as never);
+    showService.findMany.mockResolvedValue([] as never);
+    taskService.findTasksByShowIds.mockResolvedValue([] as never);
+
+    await service.getAlignment('std_1', {
+      dateFrom: new Date('2026-03-07T00:00:00.000Z'),
+      dateTo: new Date('2026-03-07T23:59:59.999Z'),
+      dateFromIsDateOnly: false,
+      dateToIsDateOnly: false,
+      includeCancelled: false,
+      includePast: true,
+      matchShowScope: true,
+    });
+
+    expect(showService.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        startTime: {
+          gte: new Date('2026-03-07T00:00:00.000Z'),
+          lte: new Date('2026-03-07T23:59:59.999Z'),
+        },
+      }),
     }));
   });
 });

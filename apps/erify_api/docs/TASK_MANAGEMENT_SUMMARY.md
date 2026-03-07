@@ -136,6 +136,7 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 - `needs_attention=true`
 - `date_from=<ISO datetime>`
 - `date_to=<ISO datetime>`
+- Alignment guardrail: backend computes readiness with `match_show_scope=true` so issue candidates are derived from the same in-scope show set as table pagination.
 - Optional fallback for legacy clients: `planning_date_from/planning_date_to` (date-only)
 
 Behavior:
