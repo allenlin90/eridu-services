@@ -107,8 +107,8 @@ Integrate a Studio-based user shift schedule feature to track part-timer shifts,
   - Returns planning-risk warnings for:
     1. **Duty manager missing at show time** (critical): Upcoming shows with no overlapping duty-manager shift block.
     2. **Operational day duty-manager gap** (awareness): Uncovered segments between the first and last show in an operational day.
-    3. **Show task readiness**: No tasks, unassigned tasks, missing required `SETUP`/`ACTIVE`/`CLOSURE` tasks, and premium shows missing moderation task.
-  - **Resolved**: For shows with zero tasks, alignment now reports all required task types (`SETUP`/`ACTIVE`/`CLOSURE`) as missing, and flags missing moderation for premium shows.
+    3. **Show task readiness**: No tasks, unassigned tasks, missing required `SETUP`/`CLOSURE` tasks, and premium shows missing moderation task. Note: `ACTIVE` was removed from the required baseline in March 2026; moderation coverage for premium shows is tracked separately via `missing_moderation_task`.
+  - **Resolved**: For shows with zero tasks, alignment now reports all required task types (`SETUP`/`CLOSURE`) as missing, and flags missing moderation for premium shows.
 - **[NEW]** `apps/erify_api/src/controllers/studio-shift/shift-calendar.controller.ts`
   - Exposes `GET /studios/:id/shift-calendar` (for the timeline & costs) and `GET /studios/:id/shift-alignment` (for cross-checking warnings).
 
