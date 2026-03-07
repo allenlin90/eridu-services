@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
 import type { OnChangeFn, RowSelectionState } from '@tanstack/react-table';
 import { AlertTriangle, ListTodo, RefreshCw } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 
 import {
@@ -321,12 +321,19 @@ function ShowTaskReadinessSection({
       }),
     enabled: !hasIncompletePlanningRange && !hasInvalidPlanningRange,
   });
+  const prevRefreshSignal = useRef(refreshSignal);
   useEffect(() => {
+    if (prevRefreshSignal.current === refreshSignal) {
+      return;
+    }
+    prevRefreshSignal.current = refreshSignal;
     if (hasIncompletePlanningRange || hasInvalidPlanningRange) {
       return;
     }
     void refetchShiftAlignment();
-  }, [hasIncompletePlanningRange, hasInvalidPlanningRange, refreshSignal, refetchShiftAlignment]);
+    // Scope changes are already handled by the query key; only manually refetch on mutation signal.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshSignal, refetchShiftAlignment]);
 
   const isLoadingSnapshot = isLoadingShiftAlignment || isLoadingShowsScope;
   const isFetchingSnapshot = isFetchingShiftAlignment || isFetchingShowsScope;
