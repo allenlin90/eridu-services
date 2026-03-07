@@ -44,6 +44,7 @@ describe('shiftAlignmentService', () => {
         dateFrom: new Date('2026-03-05'),
         dateTo: new Date('2026-03-06'),
         includeCancelled: false,
+        includePast: false,
       }),
     ).rejects.toThrow('Studio not found');
   });
@@ -134,6 +135,7 @@ describe('shiftAlignmentService', () => {
       dateFrom: new Date('2026-03-05'),
       dateTo: new Date('2026-03-05'),
       includeCancelled: false,
+      includePast: false,
     });
 
     expect(result.summary.shows_checked).toBe(2);
@@ -147,7 +149,7 @@ describe('shiftAlignmentService', () => {
     }));
     expect(result.task_readiness_warnings[0]).toEqual(expect.objectContaining({
       show_id: 'show_2',
-      missing_required_task_types: ['ACTIVE', 'CLOSURE'],
+      missing_required_task_types: ['CLOSURE'],
       missing_moderation_task: true,
     }));
   });
@@ -180,6 +182,7 @@ describe('shiftAlignmentService', () => {
       dateFrom: new Date('2026-03-05'),
       dateTo: new Date('2026-03-06'),
       includeCancelled: false,
+      includePast: false,
     });
 
     expect(result.summary.shows_checked).toBe(1);
@@ -207,6 +210,7 @@ describe('shiftAlignmentService', () => {
       dateFrom: new Date('2026-03-05'),
       dateTo: new Date('2026-03-05'),
       includeCancelled: false,
+      includePast: false,
     });
 
     expect(result.summary.shows_without_tasks_count).toBe(1);
@@ -215,7 +219,7 @@ describe('shiftAlignmentService', () => {
     expect(result.task_readiness_warnings[0]).toEqual(expect.objectContaining({
       show_id: 'show_no_tasks',
       has_no_tasks: true,
-      missing_required_task_types: ['SETUP', 'ACTIVE', 'CLOSURE'],
+      missing_required_task_types: ['SETUP', 'CLOSURE'],
       missing_moderation_task: true,
     }));
   });

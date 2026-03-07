@@ -293,11 +293,13 @@ export const shiftAlignmentQuerySchema = z.object({
   date_from: z.iso.date().optional(),
   date_to: z.iso.date().optional(),
   include_cancelled: booleanQueryParamSchema.default(false),
+  include_past: booleanQueryParamSchema.default(false),
 })
   .transform((data) => ({
     dateFrom: data.date_from ? new Date(data.date_from) : undefined,
     dateTo: data.date_to ? new Date(data.date_to) : undefined,
     includeCancelled: data.include_cancelled,
+    includePast: data.include_past,
   }));
 
 export const shiftCalendarDto = z.object({

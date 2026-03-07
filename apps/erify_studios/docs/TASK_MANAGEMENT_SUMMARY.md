@@ -59,7 +59,8 @@ My Tasks → tap moderation task → Task Execution Sheet with **Loop Progress b
 Shows list → set scope date range → toggle `Issues` (alert icon chip) in toolbar → list narrows to shows that need task-readiness attention:
 - show has no tasks
 - show has unassigned tasks
-- show is missing required task types (`SETUP`, `ACTIVE`, `CLOSURE`)
+- show is missing required baseline task types (`SETUP`, `CLOSURE`)
+- premium show is missing moderation coverage
 
 The `Issues` filter is scoped to the same selected date range as the shows page scope.
 

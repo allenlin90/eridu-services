@@ -61,19 +61,19 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 
 ### Studio-Scoped (`/studios/:studioId/...`)
 
-| Endpoint                 | Method | Purpose                           |
-| ------------------------ | ------ | --------------------------------- |
-| `/task-templates`        | CRUD   | Template management               |
+| Endpoint                 | Method | Purpose                                                                   |
+| ------------------------ | ------ | ------------------------------------------------------------------------- |
+| `/task-templates`        | CRUD   | Template management                                                       |
 | `/shows`                 | GET    | Shows list with task summary + readiness-aligned `needs_attention` filter |
-| `/shows/:showUid`        | GET    | Show detail                       |
-| `/shows/:showUid/tasks`  | GET    | Tasks for a show                  |
-| `/tasks/generate`        | POST   | Bulk task generation              |
-| `/tasks/assign-shows`    | POST   | Bulk show assignment              |
-| `/tasks/bulk`            | DELETE | Bulk soft-delete tasks            |
-| `/tasks/:taskUid/assign` | PATCH  | Individual reassignment           |
-| `/tasks/:taskUid/action` | PATCH  | Status transition (admin/manager) |
-| `/tasks/:taskUid`        | GET    | Lazy detail with schema           |
-| `/members`               | GET    | Studio members for assignment     |
+| `/shows/:showUid`        | GET    | Show detail                                                               |
+| `/shows/:showUid/tasks`  | GET    | Tasks for a show                                                          |
+| `/tasks/generate`        | POST   | Bulk task generation                                                      |
+| `/tasks/assign-shows`    | POST   | Bulk show assignment                                                      |
+| `/tasks/bulk`            | DELETE | Bulk soft-delete tasks                                                    |
+| `/tasks/:taskUid/assign` | PATCH  | Individual reassignment                                                   |
+| `/tasks/:taskUid/action` | PATCH  | Status transition (admin/manager)                                         |
+| `/tasks/:taskUid`        | GET    | Lazy detail with schema                                                   |
+| `/members`               | GET    | Studio members for assignment                                             |
 
 ### Operator (`/me/...`)
 
@@ -140,3 +140,6 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 Behavior:
 - `needs_attention=true` computes readiness warnings in the planning date range and restricts list results to those show UIDs.
 - This keeps list pagination/filtering server-side while aligning issue detection to the date-scope used by readiness workflows.
+- Readiness baseline for this filter:
+  - Standard shows: missing `SETUP` or `CLOSURE` is an issue.
+  - Premium shows: same baseline plus missing moderation task is an issue.

@@ -80,7 +80,7 @@ Two-level check in `ShiftAlignmentService.getAlignment()`:
 Each upcoming show checked for:
 - `has_no_tasks` — zero tasks linked to show
 - `unassigned_task_count` — tasks with `assigneeId === null`
-- `missing_required_task_types` — must have `SETUP`, `ACTIVE`, `CLOSURE`
+- `missing_required_task_types` — baseline must have `SETUP`, `CLOSURE`
 - `missing_moderation_task` — **premium** shows only (standard name is `'premium'`)
 
 ### Studio Shows "Issues" Filter Contract
@@ -92,7 +92,8 @@ For the studio shows list (`/studios/$studioId/shows`), the quick `Issues` filte
 - Attention definition:
   - show has no tasks
   - show has unassigned tasks
-  - show is missing required task types (`SETUP`, `ACTIVE`, `CLOSURE`)
+  - show is missing required baseline task types (`SETUP`, `CLOSURE`)
+  - premium show is missing moderation coverage
 
 Implementation pattern:
 - FE sends list datetime bounds for show search (`date_from/date_to`) and also sends date-only planning bounds (`planning_date_from/planning_date_to`) when `needs_attention=true`.
@@ -290,7 +291,7 @@ When implementing shift-related features:
 - [ ] Frontend operational-day boundary math uses shared local-time utility/constant (no duplicated route-local implementations)
 - [ ] Named constants used instead of magic numbers
 - [ ] Alignment checks cover both per-show and per-operational-day duty-manager coverage
-- [ ] Task readiness checks include SETUP, ACTIVE, CLOSURE (+ moderation for premium)
+- [ ] Task readiness checks include SETUP, CLOSURE (+ moderation for premium)
 - [ ] Service metadata types use local `JsonValue`/`JsonObject` (no Prisma imports in service layer)
 - [ ] Internal-only Zod transform shapes use `_internal*` naming prefix
 - [ ] Prisma `Decimal` fields use `z.unknown()` in internal shapes with `decimalToString` helper

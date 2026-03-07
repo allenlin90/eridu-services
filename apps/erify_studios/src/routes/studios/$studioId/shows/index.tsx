@@ -112,6 +112,7 @@ function StudioShowsPage() {
   const navigate = showsRouteApi.useNavigate();
   const isNeedsAttentionActive = search.needs_attention === true || search.needs_attention === 'true';
   const [isReadinessSnapshotVisible, setIsReadinessSnapshotVisible] = useState(true);
+  const [snapshotRefreshSignal, setSnapshotRefreshSignal] = useState(0);
   const [defaultScopeRange] = useState(() => {
     return getDefaultPlanningRange();
   });
@@ -180,6 +181,9 @@ function StudioShowsPage() {
       date_to: defaultScopeRange.date_to,
     }));
   }, [defaultScopeRange.date_from, defaultScopeRange.date_to, updateSearch]);
+  const triggerSnapshotRefresh = useCallback(() => {
+    setSnapshotRefreshSignal((previous) => previous + 1);
+  }, []);
 
   return (
     <PageLayout
@@ -215,6 +219,7 @@ function StudioShowsPage() {
           studioId={studioId}
           scopeDateFrom={search.date_from}
           scopeDateTo={search.date_to}
+          refreshSignal={snapshotRefreshSignal}
           isVisible={isReadinessSnapshotVisible}
           onToggleVisibility={() => setIsReadinessSnapshotVisible((previous) => !previous)}
         />
@@ -225,6 +230,7 @@ function StudioShowsPage() {
           scopeDateTo={search.date_to}
           scopeLabel={formatScopeLabel(search.date_from, search.date_to)}
           needsAttention={isNeedsAttentionActive}
+          onShowsMutated={triggerSnapshotRefresh}
           onToggleNeedsAttention={() => {
             updateSearch((previous) => ({
               ...previous,
@@ -242,12 +248,14 @@ function ShowTaskReadinessSection({
   studioId,
   scopeDateFrom,
   scopeDateTo,
+  refreshSignal,
   isVisible,
   onToggleVisibility,
 }: {
   studioId: string;
   scopeDateFrom?: string;
   scopeDateTo?: string;
+  refreshSignal: number;
   isVisible: boolean;
   onToggleVisibility: () => void;
 }) {
@@ -263,6 +271,7 @@ function ShowTaskReadinessSection({
     ...(planningDateFrom ? { date_from: planningDateFrom } : {}),
     ...(planningDateTo ? { date_to: planningDateTo } : {}),
     include_cancelled: false,
+    include_past: true,
   }), [planningDateFrom, planningDateTo]);
 
   const {
@@ -284,7 +293,7 @@ function ShowTaskReadinessSection({
     isFetching: isFetchingShowsScope,
     refetch: refetchShowsScope,
   } = useQuery({
-    queryKey: ['studio-shows', 'scope-total', studioId, showScopeDateBounds.date_from, showScopeDateBounds.date_to],
+    queryKey: ['studio-shows', 'scope-total', studioId, showScopeDateBounds.date_from, showScopeDateBounds.date_to, refreshSignal],
     queryFn: () =>
       getStudioShows(studioId, {
         page: 1,
@@ -294,10 +303,23 @@ function ShowTaskReadinessSection({
       }),
     enabled: !hasIncompletePlanningRange && !hasInvalidPlanningRange,
   });
+  useEffect(() => {
+    if (hasIncompletePlanningRange || hasInvalidPlanningRange) {
+      return;
+    }
+    void Promise.all([refetchShiftAlignment(), refetchShowsScope()]);
+  }, [hasIncompletePlanningRange, hasInvalidPlanningRange, refreshSignal, refetchShiftAlignment, refetchShowsScope]);
 
   const isLoadingSnapshot = isLoadingShiftAlignment || isLoadingShowsScope;
   const isFetchingSnapshot = isFetchingShiftAlignment || isFetchingShowsScope;
   const showsInScopeCount = showsScopeResponse?.meta.total ?? 0;
+  const taskReadinessWarnings = shiftAlignmentResponse?.task_readiness_warnings ?? [];
+  const showsWithIssuesCount = taskReadinessWarnings.length;
+  const showsWithoutTasksCount = taskReadinessWarnings.filter((warning) => warning.has_no_tasks).length;
+  const showsWithUnassignedTasksCount = taskReadinessWarnings.filter((warning) => warning.unassigned_task_count > 0).length;
+  const unassignedTasksCount = taskReadinessWarnings.reduce((total, warning) => total + warning.unassigned_task_count, 0);
+  const showsMissingRequiredTypesCount = taskReadinessWarnings.filter((warning) =>
+    !warning.has_no_tasks && warning.missing_required_task_types.length > 0).length;
   const readinessMetrics = [
     {
       label: 'Shows In Scope',
@@ -305,29 +327,29 @@ function ShowTaskReadinessSection({
       tooltip: 'All shows currently included by the selected date range. Use this to confirm list coverage.',
     },
     {
-      label: 'At Risk',
-      value: shiftAlignmentResponse?.summary.risk_show_count ?? 0,
-      tooltip: 'Shows with at least one readiness issue (coverage gap, missing tasks, or task assignment/type problems). Use this as the top-line risk signal.',
+      label: 'Shows With Issues',
+      value: showsWithIssuesCount,
+      tooltip: 'Shows that match Issues filter criteria (no tasks, unassigned tasks, or missing required task types).',
     },
     {
       label: 'Without Tasks',
-      value: shiftAlignmentResponse?.summary.shows_without_tasks_count ?? 0,
+      value: showsWithoutTasksCount,
       tooltip: 'Shows that have no tasks at all. Use this to spot planning gaps before execution.',
     },
     {
       label: 'Unassigned Shows',
-      value: shiftAlignmentResponse?.summary.shows_with_unassigned_tasks_count ?? 0,
+      value: showsWithUnassignedTasksCount,
       tooltip: 'Shows that contain one or more unassigned tasks. Use this to prioritize assignment actions.',
     },
     {
       label: 'Unassigned Tasks',
-      value: shiftAlignmentResponse?.summary.tasks_unassigned_count ?? 0,
+      value: unassignedTasksCount,
       tooltip: 'Total number of tasks without an assignee across in-scope shows. Use this to estimate assignment workload.',
     },
     {
       label: 'Missing Required Types',
-      value: shiftAlignmentResponse?.summary.shows_missing_required_tasks_count ?? 0,
-      tooltip: 'Shows missing one or more required task types (SETUP, ACTIVE, CLOSURE). Use this to validate show readiness completeness.',
+      value: showsMissingRequiredTypesCount,
+      tooltip: 'Shows that already have tasks but are missing required baseline types (SETUP, CLOSURE). Premium shows also need moderation coverage.',
     },
   ];
 
@@ -433,6 +455,7 @@ function StudioShowsTableSection({
   scopeDateTo,
   scopeLabel,
   needsAttention,
+  onShowsMutated,
   onToggleNeedsAttention,
 }: {
   studioId: string;
@@ -440,6 +463,7 @@ function StudioShowsTableSection({
   scopeDateTo?: string;
   scopeLabel: string;
   needsAttention: boolean;
+  onShowsMutated: () => void;
   onToggleNeedsAttention: () => void;
 }) {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -598,16 +622,25 @@ function StudioShowsTableSection({
             featuredFilterColumns={FEATURED_FILTER_COLUMNS}
             searchPlaceholder="Search shows..."
           >
-            <Button
-              variant="outline"
-              size="sm"
-              className={`gap-1.5 rounded-full ${needsAttention ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100' : ''}`}
-              onClick={onToggleNeedsAttention}
-              aria-pressed={needsAttention}
-            >
-              <AlertTriangle className="h-3.5 w-3.5" />
-              Issues
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`h-9 rounded-full px-3 gap-1.5 ${needsAttention ? 'border-amber-500 bg-amber-500 text-white hover:bg-amber-600 hover:text-white shadow-sm' : ''}`}
+                  onClick={onToggleNeedsAttention}
+                  aria-pressed={needsAttention}
+                  aria-label={needsAttention ? 'Disable issues-only filter' : 'Enable issues-only filter'}
+                >
+                  <AlertTriangle className={`h-3.5 w-3.5 ${needsAttention ? '' : 'text-amber-600'}`} />
+                  <span className="hidden sm:inline">Issues</span>
+                  {needsAttention && <span className="hidden md:inline text-[10px] font-semibold">ON</span>}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-64 text-xs">
+                Show only items with task-readiness issues: no tasks, unassigned tasks, missing SETUP/CLOSURE tasks, or missing moderation on premium shows.
+              </TooltipContent>
+            </Tooltip>
             <Button
               variant="outline"
               size="icon"
@@ -687,6 +720,11 @@ function StudioShowsTableSection({
             if (!open)
               setBulkGeneratingShows(null);
           }}
+          onSuccess={() => {
+            clearSelectedShows();
+            void refetch();
+            onShowsMutated();
+          }}
           shows={bulkGeneratingShows}
         />
       )}
@@ -698,6 +736,11 @@ function StudioShowsTableSection({
           onOpenChange={(open) => {
             if (!open)
               setBulkAssigningShows(null);
+          }}
+          onSuccess={() => {
+            clearSelectedShows();
+            void refetch();
+            onShowsMutated();
           }}
           shows={bulkAssigningShows}
         />

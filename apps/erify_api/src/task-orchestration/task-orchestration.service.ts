@@ -290,6 +290,7 @@ export class TaskOrchestrationService {
         dateFrom: query.planning_date_from ? new Date(query.planning_date_from) : undefined,
         dateTo: query.planning_date_to ? new Date(query.planning_date_to) : undefined,
         includeCancelled: false,
+        includePast: true,
       });
       const attentionShowUids = [...new Set(shiftAlignment.task_readiness_warnings.map((warning) => warning.show_id))];
 

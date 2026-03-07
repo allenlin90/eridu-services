@@ -29,4 +29,5 @@ export type StudioShiftAlignmentQueryParams = {
   date_from?: string;
   date_to?: string;
   include_cancelled?: boolean;
+  include_past?: boolean;
 };

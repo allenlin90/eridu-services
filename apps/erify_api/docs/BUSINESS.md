@@ -238,9 +238,9 @@ Core Rules:
   - Persisted datetimes are UTC/epoch-standardized in DB.
   - User-facing pages should present times in local runtime timezone.
 - **Task readiness per upcoming show**:
-  - Each show must have at least `SETUP`, `ACTIVE`, and `CLOSURE` tasks.
+  - Standard shows must have at least `SETUP` and `CLOSURE` tasks.
+  - Premium shows use the same baseline (`SETUP` + `CLOSURE`) and additionally require at least one moderation task.
   - Every task should have an assignee.
-  - Premium-standard shows must include at least one moderation task.
 - **Planning security and sensitivity**: cost and planning risk summaries are studio-admin scope, while member-facing views remain operational and read-only.
 
 ## Show

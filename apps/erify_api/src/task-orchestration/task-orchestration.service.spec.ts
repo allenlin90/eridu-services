@@ -280,6 +280,7 @@ describe('taskOrchestrationService', () => {
         dateFrom: new Date('2026-03-01'),
         dateTo: new Date('2026-03-07'),
         includeCancelled: false,
+        includePast: true,
       });
       expect(showService.findPaginatedWithTaskSummary).toHaveBeenCalledWith(
         BigInt(1),
