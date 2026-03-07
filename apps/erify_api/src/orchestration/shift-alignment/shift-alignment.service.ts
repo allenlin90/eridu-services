@@ -72,7 +72,12 @@ export class ShiftAlignmentService {
       throw HttpError.notFound('Studio', studioUid);
     }
 
-    const window = this.resolveWindow(query.dateFrom, query.dateTo);
+    const window = this.resolveWindow(
+      query.dateFrom,
+      query.dateTo,
+      query.dateFromIsDateOnly ?? false,
+      query.dateToIsDateOnly ?? false,
+    );
     const now = new Date();
     // Planning is forward-looking: never evaluate ended shows, even if date_from is in the past.
     const planningStart = query.includePast
@@ -407,11 +412,18 @@ export class ShiftAlignmentService {
     return merged;
   }
 
-  private resolveWindow(dateFrom?: Date, dateTo?: Date): { start: Date; end: Date } {
+  private resolveWindow(
+    dateFrom?: Date,
+    dateTo?: Date,
+    dateFromIsDateOnly = false,
+    dateToIsDateOnly = false,
+  ): { start: Date; end: Date } {
     const now = new Date();
-    const start = dateFrom ? this.startOfDay(dateFrom) : this.startOfDay(now);
+    const start = dateFrom
+      ? (dateFromIsDateOnly ? this.startOfDay(dateFrom) : new Date(dateFrom))
+      : this.startOfDay(now);
     const end = dateTo
-      ? this.endOfDay(dateTo)
+      ? (dateToIsDateOnly ? this.endOfDay(dateTo) : new Date(dateTo))
       : this.endOfDay(new Date(start.getTime() + ((ShiftAlignmentService.DEFAULT_WINDOW_DAYS - 1) * 24 * 60 * 60 * 1000)));
 
     if (end < start) {

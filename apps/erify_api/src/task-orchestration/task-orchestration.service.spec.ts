@@ -277,8 +277,10 @@ describe('taskOrchestrationService', () => {
       });
 
       expect(shiftAlignmentService.getAlignment).toHaveBeenCalledWith('std_1', {
-        dateFrom: new Date('2026-03-01'),
-        dateTo: new Date('2026-03-07'),
+        dateFrom: new Date('2026-03-01T00:00:00.000Z'),
+        dateTo: new Date('2026-03-07T23:59:59.999Z'),
+        dateFromIsDateOnly: false,
+        dateToIsDateOnly: false,
         includeCancelled: false,
         includePast: true,
       });

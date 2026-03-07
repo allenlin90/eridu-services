@@ -290,14 +290,16 @@ export const shiftCalendarQuerySchema = z.object({
   }));
 
 export const shiftAlignmentQuerySchema = z.object({
-  date_from: z.iso.date().optional(),
-  date_to: z.iso.date().optional(),
+  date_from: z.union([z.iso.date(), z.iso.datetime()]).optional(),
+  date_to: z.union([z.iso.date(), z.iso.datetime()]).optional(),
   include_cancelled: booleanQueryParamSchema.default(false),
   include_past: booleanQueryParamSchema.default(false),
 })
   .transform((data) => ({
     dateFrom: data.date_from ? new Date(data.date_from) : undefined,
     dateTo: data.date_to ? new Date(data.date_to) : undefined,
+    dateFromIsDateOnly: data.date_from ? /^\d{4}-\d{2}-\d{2}$/.test(data.date_from) : false,
+    dateToIsDateOnly: data.date_to ? /^\d{4}-\d{2}-\d{2}$/.test(data.date_to) : false,
     includeCancelled: data.include_cancelled,
     includePast: data.include_past,
   }));
@@ -381,7 +383,7 @@ export const shiftAlignmentDto = z.object({
     show_standard: z.string(),
     has_no_tasks: z.boolean(),
     unassigned_task_count: z.number().int().nonnegative(),
-    missing_required_task_types: z.array(z.enum(['SETUP', 'ACTIVE', 'CLOSURE'])),
+    missing_required_task_types: z.array(z.enum(['SETUP', 'CLOSURE'])),
     missing_moderation_task: z.boolean(),
   })),
 });

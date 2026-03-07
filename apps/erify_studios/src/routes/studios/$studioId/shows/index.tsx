@@ -268,11 +268,11 @@ function ShowTaskReadinessSection({
     [planningDateFrom, planningDateTo],
   );
   const alignmentQueryParams = useMemo(() => ({
-    ...(planningDateFrom ? { date_from: planningDateFrom } : {}),
-    ...(planningDateTo ? { date_to: planningDateTo } : {}),
+    ...(showScopeDateBounds.date_from ? { date_from: showScopeDateBounds.date_from } : {}),
+    ...(showScopeDateBounds.date_to ? { date_to: showScopeDateBounds.date_to } : {}),
     include_cancelled: false,
     include_past: true,
-  }), [planningDateFrom, planningDateTo]);
+  }), [showScopeDateBounds.date_from, showScopeDateBounds.date_to]);
 
   const {
     data: shiftAlignmentResponse,

@@ -134,12 +134,13 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 
 `GET /studios/:studioId/shows` supports:
 - `needs_attention=true`
-- `planning_date_from=YYYY-MM-DD`
-- `planning_date_to=YYYY-MM-DD`
+- `date_from=<ISO datetime>`
+- `date_to=<ISO datetime>`
+- Optional fallback for legacy clients: `planning_date_from/planning_date_to` (date-only)
 
 Behavior:
-- `needs_attention=true` computes readiness warnings in the planning date range and restricts list results to those show UIDs.
-- This keeps list pagination/filtering server-side while aligning issue detection to the date-scope used by readiness workflows.
+- `needs_attention=true` computes readiness warnings in the same datetime window used by the shows table query and restricts list results to those show UIDs.
+- Shows page business window is operational-day aligned (`date_to` can use D+1 `05:59` local behavior), so readiness and table pagination stay consistent.
 - Readiness baseline for this filter:
   - Standard shows: missing `SETUP` or `CLOSURE` is an issue.
   - Premium shows: same baseline plus missing moderation task is an issue.

@@ -286,9 +286,21 @@ export class TaskOrchestrationService {
 
     let effectiveQuery: StudioShowsQueryWithAttention = query;
     if (query.needs_attention) {
+      const alignmentDateFrom = query.date_from
+        ? new Date(query.date_from)
+        : query.planning_date_from
+          ? new Date(query.planning_date_from)
+          : undefined;
+      const alignmentDateTo = query.date_to
+        ? new Date(query.date_to)
+        : query.planning_date_to
+          ? new Date(query.planning_date_to)
+          : undefined;
       const shiftAlignment = await this.shiftAlignmentService.getAlignment(studioUid, {
-        dateFrom: query.planning_date_from ? new Date(query.planning_date_from) : undefined,
-        dateTo: query.planning_date_to ? new Date(query.planning_date_to) : undefined,
+        dateFrom: alignmentDateFrom,
+        dateTo: alignmentDateTo,
+        dateFromIsDateOnly: Boolean(!query.date_from && query.planning_date_from),
+        dateToIsDateOnly: Boolean(!query.date_to && query.planning_date_to),
         includeCancelled: false,
         includePast: true,
       });

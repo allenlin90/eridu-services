@@ -43,6 +43,8 @@ describe('shiftAlignmentService', () => {
       service.getAlignment('std_missing', {
         dateFrom: new Date('2026-03-05'),
         dateTo: new Date('2026-03-06'),
+        dateFromIsDateOnly: true,
+        dateToIsDateOnly: true,
         includeCancelled: false,
         includePast: false,
       }),
@@ -134,6 +136,8 @@ describe('shiftAlignmentService', () => {
     const result = await service.getAlignment('std_1', {
       dateFrom: new Date('2026-03-05'),
       dateTo: new Date('2026-03-05'),
+      dateFromIsDateOnly: true,
+      dateToIsDateOnly: true,
       includeCancelled: false,
       includePast: false,
     });
@@ -181,6 +185,8 @@ describe('shiftAlignmentService', () => {
     const result = await service.getAlignment('std_1', {
       dateFrom: new Date('2026-03-05'),
       dateTo: new Date('2026-03-06'),
+      dateFromIsDateOnly: true,
+      dateToIsDateOnly: true,
       includeCancelled: false,
       includePast: false,
     });
@@ -209,6 +215,8 @@ describe('shiftAlignmentService', () => {
     const result = await service.getAlignment('std_1', {
       dateFrom: new Date('2026-03-05'),
       dateTo: new Date('2026-03-05'),
+      dateFromIsDateOnly: true,
+      dateToIsDateOnly: true,
       includeCancelled: false,
       includePast: false,
     });
@@ -221,6 +229,32 @@ describe('shiftAlignmentService', () => {
       has_no_tasks: true,
       missing_required_task_types: ['SETUP', 'CLOSURE'],
       missing_moderation_task: true,
+    }));
+  });
+
+  it('should preserve explicit datetime bounds for alignment window', async () => {
+    studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
+    studioShiftService.findShiftsInWindow.mockResolvedValue([] as never);
+    showService.findMany.mockResolvedValue([] as never);
+    taskService.findTasksByShowIds.mockResolvedValue([] as never);
+
+    const dateFrom = new Date('2026-03-06T17:00:00.000Z');
+    const dateTo = new Date('2026-03-07T22:59:59.999Z');
+
+    await service.getAlignment('std_1', {
+      dateFrom,
+      dateTo,
+      dateFromIsDateOnly: false,
+      dateToIsDateOnly: false,
+      includeCancelled: false,
+      includePast: true,
+    });
+
+    expect(studioShiftService.findShiftsInWindow).toHaveBeenCalledWith(expect.objectContaining({
+      studioUid: 'std_1',
+      start: dateFrom,
+      end: dateTo,
+      includeCancelled: false,
     }));
   });
 });

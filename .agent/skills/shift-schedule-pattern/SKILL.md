@@ -88,7 +88,7 @@ Each upcoming show checked for:
 For the studio shows list (`/studios/$studioId/shows`), the quick `Issues` filter must align with the readiness definition and date scope:
 
 - UI label: short chip (`Issues`) with alert icon.
-- Date alignment: use the same selected scope dates as readiness workflows.
+- Date alignment: use the same selected scope window as the shows table query.
 - Attention definition:
   - show has no tasks
   - show has unassigned tasks
@@ -96,8 +96,9 @@ For the studio shows list (`/studios/$studioId/shows`), the quick `Issues` filte
   - premium show is missing moderation coverage
 
 Implementation pattern:
-- FE sends list datetime bounds for show search (`date_from/date_to`) and also sends date-only planning bounds (`planning_date_from/planning_date_to`) when `needs_attention=true`.
-- BE resolves readiness warnings from planning bounds, then constrains paginated show query by warning show UIDs.
+- FE computes show-scope datetime bounds (`date_from/date_to`) with operational-day cutoff behavior (D+1 `05:59` local when applicable), and uses that for table, readiness snapshot, and `needs_attention`.
+- BE resolves readiness warnings from the same datetime bounds and then constrains paginated show query by warning show UIDs.
+- Legacy `planning_date_from/planning_date_to` may remain as fallback input only.
 
 ---
 
@@ -292,6 +293,7 @@ When implementing shift-related features:
 - [ ] Named constants used instead of magic numbers
 - [ ] Alignment checks cover both per-show and per-operational-day duty-manager coverage
 - [ ] Task readiness checks include SETUP, CLOSURE (+ moderation for premium)
+- [ ] Shows table, readiness snapshot, and `needs_attention` all use the same datetime scope window (`date_from/date_to`)
 - [ ] Service metadata types use local `JsonValue`/`JsonObject` (no Prisma imports in service layer)
 - [ ] Internal-only Zod transform shapes use `_internal*` naming prefix
 - [ ] Prisma `Decimal` fields use `z.unknown()` in internal shapes with `decimalToString` helper

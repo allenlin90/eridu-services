@@ -96,6 +96,8 @@ describe('shiftCalendarController', () => {
     const query = {
       dateFrom: new Date('2026-03-05'),
       dateTo: new Date('2026-03-11'),
+      dateFromIsDateOnly: true,
+      dateToIsDateOnly: true,
       includeCancelled: false,
     };
     const result = await controller.showAlignment('std_1', query as never);

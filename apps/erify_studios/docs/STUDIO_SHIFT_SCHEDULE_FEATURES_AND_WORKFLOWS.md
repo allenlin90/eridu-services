@@ -135,12 +135,13 @@ Delivered:
 - `shift-alignment` now computes planning risks for upcoming shows only:
   - Duty-manager coverage risk during show windows.
   - Operational-day duty-manager gap risk between first and last show of the day.
-  - Task-readiness risks: no tasks, unassigned tasks, missing `SETUP`/`ACTIVE`/`CLOSURE`, and missing moderation task on premium shows.
+  - Task-readiness risks: no tasks, unassigned tasks, missing `SETUP`/`CLOSURE`, and missing moderation task on premium shows.
   - Backend risk-bucketing uses a fixed operational-day boundary (`06:00`) for consistency across orchestration reports.
 - Frontend admin planning cards now consume these endpoints on dedicated surfaces:
   - `/studios/:studioId/shows` for date-range task-readiness summary warnings.
   - `/studios/:studioId/shifts` for shift cost snapshot.
-- `/studios/:studioId/shows` summary warning card supports date-range querying and focuses on task-readiness metrics (`no tasks`, `unassigned`, required `SETUP`/`ACTIVE`/`CLOSURE`, premium moderation).
+- `/studios/:studioId/shows` summary warning card supports date-range querying and focuses on task-readiness metrics (`no tasks`, `unassigned`, required `SETUP`/`CLOSURE`, premium moderation).
+- Shows table, readiness snapshot, and `Issues` filter share the same datetime scope window (`date_from/date_to`), including operational-day cutoff behavior from scope utilities (D+1 `05:59` local).
 - Shows task-readiness date range is local UI state (not URL-backed) and includes a quick reset action for the next 7 days.
 
 Pending scope:

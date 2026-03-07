@@ -62,7 +62,7 @@ Shows list → set scope date range → toggle `Issues` (alert icon chip) in too
 - show is missing required baseline task types (`SETUP`, `CLOSURE`)
 - premium show is missing moderation coverage
 
-The `Issues` filter is scoped to the same selected date range as the shows page scope.
+The `Issues` filter uses the same datetime window as the shows table query (`date_from/date_to`), including operational-day cutoff behavior (for example D+1 `05:59` local when applied by scope utilities).
 
 ---
 
@@ -117,7 +117,7 @@ The `Issues` filter is scoped to the same selected date range as the shows page 
 ## Shows List Filter Notes
 
 - `Issues` is a dedicated quick filter chip (icon + short label) to avoid long wording in toolbar.
-- The filter definition intentionally mirrors readiness warnings, so the list can be used as the action queue after reviewing snapshot metrics.
+- The filter definition intentionally mirrors readiness warnings, and both are computed in the same datetime scope as table pagination.
 
 ---
 
