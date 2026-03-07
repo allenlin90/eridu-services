@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 
-const showsSearchSchema = z.object({
+const showsSearchSchema = z.looseObject({
   page: z.coerce.number().int().min(1).catch(1),
   pageSize: z.coerce.number().int().min(1).catch(10),
   sortBy: z.string().optional().catch(undefined),
@@ -18,7 +18,7 @@ const showsSearchSchema = z.object({
   show_standard_name: z.string().optional().catch(undefined),
   show_status_name: z.string().optional().catch(undefined),
   platform_name: z.string().optional().catch(undefined),
-}).passthrough();
+});
 
 export const Route = createFileRoute('/studios/$studioId/shows')({
   validateSearch: (search) => showsSearchSchema.parse(search),
