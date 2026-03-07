@@ -238,9 +238,13 @@ Core Rules:
   - Persisted datetimes are UTC/epoch-standardized in DB.
   - User-facing pages should present times in local runtime timezone.
 - **Task readiness per upcoming show**:
-  - Each show must have at least `SETUP`, `ACTIVE`, and `CLOSURE` tasks.
+  - Standard shows must have at least `SETUP` and `CLOSURE` tasks.
+  - Premium shows use the same baseline (`SETUP` + `CLOSURE`) and additionally require at least one moderation task.
   - Every task should have an assignee.
-  - Premium-standard shows must include at least one moderation task.
+- **Shows page scope contract**:
+  - `/studios/:studioId/shows` table filtering uses datetime `date_from/date_to`.
+  - Readiness metrics and `needs_attention` filtering must use the same datetime window as the table query.
+  - Operational-day UX may pass a `date_to` that extends to D+1 `05:59` (local business-day cutoff).
 - **Planning security and sensitivity**: cost and planning risk summaries are studio-admin scope, while member-facing views remain operational and read-only.
 
 ## Show

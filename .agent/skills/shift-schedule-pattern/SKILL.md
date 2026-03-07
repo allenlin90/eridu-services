@@ -30,6 +30,9 @@ Study these real implementations as the source of truth:
 - **My Shifts**: [my-shifts.tsx](../../../apps/erify_studios/src/routes/studios/$studioId/my-shifts.tsx)
 - **Shared Utils**: [shift-timeline.utils.ts](../../../apps/erify_studios/src/features/studio-shifts/utils/shift-timeline.utils.ts)
 - **Constants**: [studio-shifts.constants.ts](../../../apps/erify_studios/src/features/studio-shifts/constants/studio-shifts.constants.ts)
+- **Show Readiness Triage Panel**: [show-readiness-triage-panel.tsx](../../../apps/erify_studios/src/features/studio-shows/components/show-readiness/show-readiness-triage-panel.tsx)
+- **Show Readiness Utils**: [show-readiness.utils.ts](../../../apps/erify_studios/src/features/studio-shows/utils/show-readiness.utils.ts)
+- **Show Scope Utils**: [show-scope.utils.ts](../../../apps/erify_studios/src/features/studio-shows/utils/show-scope.utils.ts)
 
 ### Design Docs
 - **Backend Design**: [STUDIO_SHIFT_SCHEDULE_DESIGN.md](../../../apps/erify_api/docs/design/STUDIO_SHIFT_SCHEDULE_DESIGN.md)
@@ -80,8 +83,28 @@ Two-level check in `ShiftAlignmentService.getAlignment()`:
 Each upcoming show checked for:
 - `has_no_tasks` — zero tasks linked to show
 - `unassigned_task_count` — tasks with `assigneeId === null`
-- `missing_required_task_types` — must have `SETUP`, `ACTIVE`, `CLOSURE`
+- `missing_required_task_types` — baseline must have `SETUP`, `CLOSURE`
 - `missing_moderation_task` — **premium** shows only (standard name is `'premium'`)
+
+### Studio Shows "Issues" Filter Contract
+
+For the studio shows list (`/studios/$studioId/shows`), the quick `Issues` filter must align with the readiness definition and date scope:
+
+- UI label: short chip (`Issues`) with alert icon.
+- Date alignment: use the same selected scope window as the shows table query.
+- Attention definition:
+  - show has no tasks
+  - show has unassigned tasks
+  - show is missing required baseline task types (`SETUP`, `CLOSURE`)
+  - premium show is missing moderation coverage
+
+Implementation pattern:
+- FE computes show-scope datetime bounds (`date_from/date_to`) via `toShowScopeDateTimeBounds()`, using operational-day cutoff behavior (D+1 `05:59` local), and passes the same bounds to table, Show Readiness panel, and `needs_attention`.
+- BE resolves readiness warnings using `include_past: true` and `match_show_scope: true` so all shows whose `startTime` falls within the selected window are evaluated regardless of whether they have already started. The paginated show query is then constrained to the warning show UIDs.
+- `dateFromIsDateOnly`/`dateToIsDateOnly` flags on `getAlignment()` control whether the service expands bounds to day boundaries or uses the caller's datetime as-is. Pass `false` when sending full ISO datetimes from the FE.
+- Legacy `planning_date_from/planning_date_to` may remain as fallback input only, but must be strict ISO date-only (`YYYY-MM-DD`) and reject invalid values with `400`.
+- Bulk Generate/Assign dialogs should close immediately after user confirmation; keep the selected show set persisted so admins can chain follow-up actions without reselecting.
+- FE scope-total query should refresh via query key changes (for example, include `refreshSignal` in the query key) rather than combining key invalidation with extra effect-driven `refetch()` calls for the same query. Use `useRef` to gate manual `refetch()` calls to signal increments only (not mount or scope changes).
 
 ---
 
@@ -223,11 +246,11 @@ Navigation: simple prev/next day buttons. Frontend day window is local-runtime b
 ### Named Constants
 
 Magic numbers extracted to `studio-shifts.constants.ts`:
-- `DASHBOARD_DUTY_SHIFTS_LIMIT`
-- `DASHBOARD_MY_SHIFTS_QUERY_LIMIT`
-- `DASHBOARD_MY_UPCOMING_SHIFTS_LIMIT`
+- `DASHBOARD_DUTY_SHIFTS_LIMIT` (20 — reduced from 200 in March 2026 ops refactor)
 - `STUDIO_MEMBER_MAP_DEFAULT_LIMIT`
 - `STUDIO_MEMBER_MAP_CALENDAR_LIMIT`
+
+Note: `DASHBOARD_MY_SHIFTS_QUERY_LIMIT` and `DASHBOARD_MY_UPCOMING_SHIFTS_LIMIT` were removed when the "My Upcoming Shifts" dashboard card was removed in the March 2026 ops-improvement refactor.
 
 ---
 
@@ -275,7 +298,8 @@ When implementing shift-related features:
 - [ ] Frontend operational-day boundary math uses shared local-time utility/constant (no duplicated route-local implementations)
 - [ ] Named constants used instead of magic numbers
 - [ ] Alignment checks cover both per-show and per-operational-day duty-manager coverage
-- [ ] Task readiness checks include SETUP, ACTIVE, CLOSURE (+ moderation for premium)
+- [ ] Task readiness checks include SETUP, CLOSURE (+ moderation for premium)
+- [ ] Shows table, Show Readiness panel, and `needs_attention` all use the same datetime scope window (`date_from/date_to`)
 - [ ] Service metadata types use local `JsonValue`/`JsonObject` (no Prisma imports in service layer)
 - [ ] Internal-only Zod transform shapes use `_internal*` naming prefix
 - [ ] Prisma `Decimal` fields use `z.unknown()` in internal shapes with `decimalToString` helper

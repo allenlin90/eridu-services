@@ -1,6 +1,6 @@
 # Studio Shift Schedule Features and Workflows
 
-Last updated: March 6, 2026
+Last updated: March 7, 2026
 Source design: `apps/erify_api/docs/design/STUDIO_SHIFT_SCHEDULE_DESIGN.md`
 Branch: `feat/studio-shift-schedule`
 
@@ -104,8 +104,9 @@ Status: `Implemented`
 Delivered:
 - Dashboard cards for active duty manager and next duty manager.
 - Daily shows list and related operational visibility for studio users.
-- Dashboard includes "My Upcoming Shifts" section for member-level forward visibility.
 - New read-only member route: `/studios/:studioId/my-shifts` (calendar view scoped to current user).
+
+Note: The "My Upcoming Shifts" dashboard card was removed in the operations-improvement refactor (March 2026). Members access their shift history and upcoming shifts via `/my-shifts` directly.
 
 ### 7. Shows Integration with Shift Operations
 
@@ -135,12 +136,19 @@ Delivered:
 - `shift-alignment` now computes planning risks for upcoming shows only:
   - Duty-manager coverage risk during show windows.
   - Operational-day duty-manager gap risk between first and last show of the day.
-  - Task-readiness risks: no tasks, unassigned tasks, missing `SETUP`/`ACTIVE`/`CLOSURE`, and missing moderation task on premium shows.
+  - Task-readiness risks: no tasks, unassigned tasks, missing `SETUP`/`CLOSURE`, and missing moderation task on premium shows.
   - Backend risk-bucketing uses a fixed operational-day boundary (`06:00`) for consistency across orchestration reports.
 - Frontend admin planning cards now consume these endpoints on dedicated surfaces:
   - `/studios/:studioId/shows` for date-range task-readiness summary warnings.
   - `/studios/:studioId/shifts` for shift cost snapshot.
-- `/studios/:studioId/shows` summary warning card supports date-range querying and focuses on task-readiness metrics (`no tasks`, `unassigned`, required `SETUP`/`ACTIVE`/`CLOSURE`, premium moderation).
+- `/studios/:studioId/shows` Show Readiness panel supports date-range querying and uses an admin triage layout:
+  - top summary highlights scope coverage, attention rate, and the current primary action
+  - action buckets split follow-up into task-plan gaps, assignment workload, and missing required coverage
+  - per-bucket drill-down popovers expose affected show names, timing, and issue tags without leaving the page
+  - mobile uses a simplified compact bucket layout; desktop uses full detail cards
+  - bucket-level actions are inspect-only; issues list handoff remains a single summary CTA
+- Shows table, Show Readiness panel, and `Issues` filter share the same datetime scope window (`date_from/date_to`), including operational-day cutoff behavior from scope utilities (D+1 `05:59` local).
+- Readiness scope label formatting shows one date for same-day scopes and `start to end` for multi-day scopes.
 - Shows task-readiness date range is local UI state (not URL-backed) and includes a quick reset action for the next 7 days.
 
 Pending scope:
@@ -318,8 +326,8 @@ Pending scope:
 
 1. **`/shifts` is admin-only by design** — members check from dashboard.
 2. **`/my-shifts` route** — implemented as read-only member calendar using member-scoped shift query.
-3. **Dashboard "My Upcoming Shifts"** — implemented (next 5 upcoming assigned shifts).
-4. **Dashboard "View All" link**: Implemented. "My Upcoming Shifts" now links to `/my-shifts`.
+3. **Dashboard "My Upcoming Shifts"** — ~~implemented~~ subsequently removed (March 2026 ops-improvement refactor). Dashboard no longer shows a per-member upcoming shifts card; members navigate to `/my-shifts` directly.
+4. **Dashboard "View All" link**: Removed along with the upcoming shifts card; `/my-shifts` remains available as a standalone route.
 5. **`/my-shifts` table/list view**: Implemented as read-only table mode alongside calendar, including date-range and status filters with pagination.
 
 ### Code Quality
@@ -364,8 +372,30 @@ PR review fixes applied (knowledge sync pass — March 5, 2026):
 - Form utility: `combineDateAndTime` timezone fix (local-time ISO construction)
 - Shared API types: `StudioShiftCalendarResponse`/`StudioShiftAlignmentResponse` moved to `@eridu/api-types/studio-shifts`
 
+Operations feature improvement (March 7, 2026 — `feat/operations-feature-improvement`):
+- `pnpm --filter erify_studios lint` passed
+- `pnpm --filter erify_studios typecheck` passed
+- `pnpm --filter erify_studios test` passed (383 tests)
+- `pnpm --filter erify_api lint` passed
+- `pnpm --filter erify_api typecheck` passed
+- `pnpm --filter erify_api test` passed (528 tests)
+- `pnpm --filter @eridu/api-types lint` passed
+- `pnpm --filter @eridu/api-types typecheck` passed
+
 PR codex review fixes (March 6, 2026):
 - FE block validation: cross-midnight sequential advance gated on `prevBlockCrossedMidnight` — same-day overlapping blocks now correctly rejected
 - BE update: hourly rate re-derivation gated on actual user reassignment (`payload.userId !== existing.user.uid`)
 - Member shift views: `is_duty_manager` "Duty" badge added to My Shifts table and dashboard My Upcoming Shifts card
 - Dashboard: "View All" link moved into `DashboardMyUpcomingShiftsCard` header via `viewAllLink` render prop
+
+Operations feature improvement (March 7, 2026 — `feat/operations-feature-improvement`):
+- Show Readiness Triage Panel shipped: summary progress bar, three prioritized action buckets (no task plan / unassigned workload / missing required coverage), per-bucket popover drill-down with show-level issue tags
+- `needs_attention` filter: BE resolves readiness warnings via `shift-alignment` with `match_show_scope=true` + `include_past=true`, constrains paginated show query to warning show UIDs; `planning_date_from/planning_date_to` legacy fallback rejects non-ISO-date strings with `400`
+- Show scope datetime bounds (`toShowScopeDateTimeBounds`) now shared between Shows table, Readiness panel, and Issues filter — all queries use the same `date_from/date_to` window with D+1 `05:59` operational-day cutoff
+- `ACTIVE` removed from required task type baseline; required baseline is now `SETUP` + `CLOSURE` only; premium moderation checked separately via `missing_moderation_task`
+- Shift-alignment service extended: `include_past`, `match_show_scope`, `dateFromIsDateOnly`/`dateToIsDateOnly` flags added to `getAlignment()` interface; datetime passthrough (non-date-only) preserves exact caller bounds
+- Scope label formatting shows single date for same-day scopes, `start to end` for multi-day
+- Bulk Generate/Assign dialogs close immediately on user confirmation; row selection preserved for chained follow-up actions
+- Dashboard "My Upcoming Shifts" card removed; `DASHBOARD_DUTY_SHIFTS_LIMIT` reduced from 200 to 20
+- FE scope-total refetch gated to `refreshSignal` changes via `useRef` guard — eliminates duplicate shift-alignment requests on mount and scope changes (Codex P2 fix)
+- `z.passthrough()` replaced with `z.looseObject()` in shows route search schema

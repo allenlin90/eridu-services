@@ -12,6 +12,7 @@ import { StudioService } from '@/models/studio/studio.service';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { TaskTemplateService } from '@/models/task-template/task-template.service';
+import { ShiftAlignmentService } from '@/orchestration/shift-alignment/shift-alignment.service';
 
 describe('taskOrchestrationService', () => {
   let service: TaskOrchestrationService;
@@ -22,6 +23,7 @@ describe('taskOrchestrationService', () => {
   let taskGenerationProcessor: jest.Mocked<TaskGenerationProcessor>;
   let studioService: jest.Mocked<StudioService>;
   let taskTargetService: jest.Mocked<TaskTargetService>;
+  let shiftAlignmentService: jest.Mocked<ShiftAlignmentService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -75,6 +77,12 @@ describe('taskOrchestrationService', () => {
             findByUid: jest.fn(),
           },
         },
+        {
+          provide: ShiftAlignmentService,
+          useValue: {
+            getAlignment: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -86,6 +94,7 @@ describe('taskOrchestrationService', () => {
     taskGenerationProcessor = module.get(TaskGenerationProcessor);
     studioService = module.get(StudioService);
     taskTargetService = module.get(TaskTargetService);
+    shiftAlignmentService = module.get(ShiftAlignmentService);
   });
 
   describe('generateTasksForShows', () => {
@@ -239,6 +248,65 @@ describe('taskOrchestrationService', () => {
         unassigned: 1,
         completed: 1,
       });
+    });
+
+    it('should filter by attention show ids when needs_attention is enabled', async () => {
+      studioService.findByUid.mockResolvedValue({ id: BigInt(1) } as any);
+      shiftAlignmentService.getAlignment.mockResolvedValue({
+        task_readiness_warnings: [
+          { show_id: 'show_1' },
+          { show_id: 'show_2' },
+        ],
+      } as any);
+      showService.findPaginatedWithTaskSummary.mockResolvedValue({
+        data: [],
+        total: 0,
+      } as any);
+
+      await service.getStudioShowsWithTaskSummary('std_1', {
+        page: 1,
+        limit: 10,
+        sort: 'desc',
+        take: 10,
+        skip: 0,
+        needs_attention: true,
+        date_from: '2026-03-01T00:00:00.000Z',
+        date_to: '2026-03-07T23:59:59.999Z',
+        planning_date_from: '2026-03-01',
+        planning_date_to: '2026-03-07',
+      });
+
+      expect(shiftAlignmentService.getAlignment).toHaveBeenCalledWith('std_1', {
+        dateFrom: new Date('2026-03-01T00:00:00.000Z'),
+        dateTo: new Date('2026-03-07T23:59:59.999Z'),
+        dateFromIsDateOnly: false,
+        dateToIsDateOnly: false,
+        includeCancelled: false,
+        includePast: true,
+        matchShowScope: true,
+      });
+      expect(showService.findPaginatedWithTaskSummary).toHaveBeenCalledWith(
+        BigInt(1),
+        expect.objectContaining({
+          show_uids: ['show_1', 'show_2'],
+        }),
+      );
+    });
+
+    it('should reject invalid legacy planning date inputs for needs_attention', async () => {
+      studioService.findByUid.mockResolvedValue({ id: BigInt(1) } as any);
+
+      await expect(service.getStudioShowsWithTaskSummary('std_1', {
+        page: 1,
+        limit: 10,
+        sort: 'desc',
+        take: 10,
+        skip: 0,
+        needs_attention: true,
+        planning_date_from: 'not-a-date',
+      })).rejects.toThrow('planning_date_from must be a valid ISO date (YYYY-MM-DD)');
+
+      expect(shiftAlignmentService.getAlignment).not.toHaveBeenCalled();
     });
   });
 });

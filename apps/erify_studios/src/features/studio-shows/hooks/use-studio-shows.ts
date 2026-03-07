@@ -4,11 +4,13 @@ import { useEffect, useMemo } from 'react';
 import { useTableUrlState } from '@eridu/ui';
 
 import { getStudioShows, studioShowsKeys } from '../api/get-studio-shows';
+import { normalizeScopeDate, toShowScopeDateTimeBounds } from '../utils/show-scope.utils';
 
 type UseStudioShowsProps = {
   studioId: string;
   dateFrom?: string;
   dateTo?: string;
+  needsAttention?: boolean;
 };
 
 const TABLE_OPTIONS = {
@@ -23,7 +25,7 @@ const TABLE_OPTIONS = {
   defaultSorting: [{ id: 'start_time', desc: true }],
 };
 
-export function useStudioShows({ studioId, dateFrom, dateTo }: UseStudioShowsProps) {
+export function useStudioShows({ studioId, dateFrom, dateTo, needsAttention }: UseStudioShowsProps) {
   const {
     pagination,
     onPaginationChange,
@@ -53,14 +55,23 @@ export function useStudioShows({ studioId, dateFrom, dateTo }: UseStudioShowsPro
     });
     return f;
   }, [columnFilters]);
+  const scopeDateBounds = useMemo(
+    () => toShowScopeDateTimeBounds({ dateFrom, dateTo }),
+    [dateFrom, dateTo],
+  );
+  const planningDateFrom = useMemo(() => normalizeScopeDate(dateFrom), [dateFrom]);
+  const planningDateTo = useMemo(() => normalizeScopeDate(dateTo), [dateTo]);
 
   const query = useQuery({
     queryKey: studioShowsKeys.list(studioId, {
       page: pagination.pageIndex,
       limit: pagination.pageSize,
       search: searchQuery,
-      date_from: dateFrom,
-      date_to: dateTo,
+      date_from: scopeDateBounds.date_from,
+      date_to: scopeDateBounds.date_to,
+      planning_date_from: planningDateFrom,
+      planning_date_to: planningDateTo,
+      needs_attention: needsAttention,
       ...filters,
     }),
     queryFn: () =>
@@ -68,8 +79,11 @@ export function useStudioShows({ studioId, dateFrom, dateTo }: UseStudioShowsPro
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
         search: searchQuery || undefined,
-        date_from: dateFrom,
-        date_to: dateTo,
+        date_from: scopeDateBounds.date_from,
+        date_to: scopeDateBounds.date_to,
+        planning_date_from: planningDateFrom,
+        planning_date_to: planningDateTo,
+        needs_attention: needsAttention,
         ...filters,
       }),
     refetchOnWindowFocus: false,

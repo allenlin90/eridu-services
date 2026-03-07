@@ -1,7 +1,8 @@
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
 import type { OnChangeFn, RowSelectionState } from '@tanstack/react-table';
-import { AlertTriangle, ChevronDown, ChevronUp, ListTodo, RefreshCw } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, ListTodo, RefreshCw } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 
 import {
@@ -10,7 +11,6 @@ import {
   adaptSortingChange,
   Button,
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -18,7 +18,9 @@ import {
   DataTablePagination,
   DataTableToolbar,
   DatePickerWithRange,
-  Skeleton,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
@@ -26,11 +28,18 @@ import { useShowLookupsQuery } from '@/features/shows/api/get-show-lookups';
 import { BulkTaskGenerationDialog } from '@/features/shows/components/bulk-task-generation-dialog';
 import { ShowAssignmentDialog } from '@/features/shows/components/show-assignment-dialog';
 import { useShiftAlignment } from '@/features/studio-shifts/hooks/use-studio-shifts';
+import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';
 import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
-import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
+import { getStudioShows, type StudioShow } from '@/features/studio-shows/api/get-studio-shows';
 import { SelectedShowsMobileActions } from '@/features/studio-shows/components/selected-shows-mobile-actions';
+import { ShowReadinessTriagePanel } from '@/features/studio-shows/components/show-readiness/show-readiness-triage-panel';
 import { columns } from '@/features/studio-shows/components/studio-shows-table/columns';
 import { useStudioShows } from '@/features/studio-shows/hooks/use-studio-shows';
+import {
+  normalizeScopeDate,
+  parseScopeDateAsLocal,
+  toShowScopeDateTimeBounds,
+} from '@/features/studio-shows/utils/show-scope.utils';
 
 export const Route = createFileRoute('/studios/$studioId/shows/')({
   component: StudioShowsPage,
@@ -42,18 +51,12 @@ type ScopeRange = {
   date_to?: string;
 };
 
-function addDays(base: Date, days: number): Date {
-  const next = new Date(base);
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
 function getDefaultPlanningRange() {
   const start = new Date();
   const end = addDays(start, 7);
   return {
-    from: toLocalDateInputValue(start),
-    to: toLocalDateInputValue(end),
+    date_from: toLocalDateInputValue(start),
+    date_to: toLocalDateInputValue(end),
   };
 }
 
@@ -64,25 +67,11 @@ function resolveUpdater<T>(updater: T | ((previous: T) => T), previous: T): T {
 }
 
 function parseSearchDate(raw?: string): Date | undefined {
-  if (!raw) {
-    return undefined;
-  }
-
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) {
-    return undefined;
-  }
-
-  return parsed;
+  return parseScopeDateAsLocal(raw);
 }
 
 function toApiDate(raw?: string): string | undefined {
-  const parsed = parseSearchDate(raw);
-  if (!parsed) {
-    return undefined;
-  }
-
-  return toLocalDateInputValue(parsed);
+  return normalizeScopeDate(raw);
 }
 
 function buildScopeRange(range: DateRange | undefined): ScopeRange {
@@ -97,8 +86,8 @@ function buildScopeRange(range: DateRange | undefined): ScopeRange {
   }
 
   return {
-    date_from: fromDate.toISOString(),
-    date_to: toDate.toISOString(),
+    date_from: toLocalDateInputValue(fromDate),
+    date_to: toLocalDateInputValue(toDate),
   };
 }
 
@@ -108,6 +97,10 @@ function formatScopeLabel(dateFrom?: string, dateTo?: string): string {
 
   if (!from || !to) {
     return 'No date scope selected';
+  }
+
+  if (from === to) {
+    return from;
   }
 
   return `${from} to ${to}`;
@@ -120,13 +113,11 @@ function StudioShowsPage() {
   const { studioId } = showsRouteApi.useParams();
   const search = showsRouteApi.useSearch();
   const navigate = showsRouteApi.useNavigate();
+  const isNeedsAttentionActive = search.needs_attention === true || search.needs_attention === 'true';
   const [isReadinessSnapshotVisible, setIsReadinessSnapshotVisible] = useState(true);
+  const [snapshotRefreshSignal, setSnapshotRefreshSignal] = useState(0);
   const [defaultScopeRange] = useState(() => {
-    const defaultRange = getDefaultPlanningRange();
-    return {
-      date_from: new Date(`${defaultRange.from}T00:00:00`).toISOString(),
-      date_to: new Date(`${defaultRange.to}T23:59:59`).toISOString(),
-    };
+    return getDefaultPlanningRange();
   });
 
   const updateSearch = useCallback((
@@ -193,6 +184,9 @@ function StudioShowsPage() {
       date_to: defaultScopeRange.date_to,
     }));
   }, [defaultScopeRange.date_from, defaultScopeRange.date_to, updateSearch]);
+  const triggerSnapshotRefresh = useCallback(() => {
+    setSnapshotRefreshSignal((previous) => previous + 1);
+  }, []);
 
   return (
     <PageLayout
@@ -228,7 +222,18 @@ function StudioShowsPage() {
           studioId={studioId}
           scopeDateFrom={search.date_from}
           scopeDateTo={search.date_to}
+          refreshSignal={snapshotRefreshSignal}
           isVisible={isReadinessSnapshotVisible}
+          needsAttention={isNeedsAttentionActive}
+          onActivateIssuesFilter={() => {
+            if (!isNeedsAttentionActive) {
+              updateSearch((previous) => ({
+                ...previous,
+                page: 1,
+                needs_attention: true,
+              }));
+            }
+          }}
           onToggleVisibility={() => setIsReadinessSnapshotVisible((previous) => !previous)}
         />
 
@@ -237,6 +242,15 @@ function StudioShowsPage() {
           scopeDateFrom={search.date_from}
           scopeDateTo={search.date_to}
           scopeLabel={formatScopeLabel(search.date_from, search.date_to)}
+          needsAttention={isNeedsAttentionActive}
+          onShowsMutated={triggerSnapshotRefresh}
+          onToggleNeedsAttention={() => {
+            updateSearch((previous) => ({
+              ...previous,
+              page: 1,
+              needs_attention: isNeedsAttentionActive ? undefined : true,
+            }));
+          }}
         />
       </div>
     </PageLayout>
@@ -247,24 +261,36 @@ function ShowTaskReadinessSection({
   studioId,
   scopeDateFrom,
   scopeDateTo,
+  refreshSignal,
   isVisible,
+  needsAttention,
+  onActivateIssuesFilter,
   onToggleVisibility,
 }: {
   studioId: string;
   scopeDateFrom?: string;
   scopeDateTo?: string;
+  refreshSignal: number;
   isVisible: boolean;
+  needsAttention: boolean;
+  onActivateIssuesFilter: () => void;
   onToggleVisibility: () => void;
 }) {
   const planningDateFrom = toApiDate(scopeDateFrom);
   const planningDateTo = toApiDate(scopeDateTo);
   const hasIncompletePlanningRange = !planningDateFrom || !planningDateTo;
   const hasInvalidPlanningRange = !hasIncompletePlanningRange && planningDateFrom > planningDateTo;
+  const showScopeDateBounds = useMemo(
+    () => toShowScopeDateTimeBounds({ dateFrom: planningDateFrom, dateTo: planningDateTo }),
+    [planningDateFrom, planningDateTo],
+  );
   const alignmentQueryParams = useMemo(() => ({
-    ...(planningDateFrom ? { date_from: planningDateFrom } : {}),
-    ...(planningDateTo ? { date_to: planningDateTo } : {}),
+    ...(showScopeDateBounds.date_from ? { date_from: showScopeDateBounds.date_from } : {}),
+    ...(showScopeDateBounds.date_to ? { date_to: showScopeDateBounds.date_to } : {}),
     include_cancelled: false,
-  }), [planningDateFrom, planningDateTo]);
+    include_past: true,
+    match_show_scope: true,
+  }), [showScopeDateBounds.date_from, showScopeDateBounds.date_to]);
 
   const {
     data: shiftAlignmentResponse,
@@ -279,94 +305,57 @@ function ShowTaskReadinessSection({
     },
   );
 
-  const taskReadinessWarningCount = shiftAlignmentResponse?.task_readiness_warnings.length ?? 0;
-  const showsMissingRequiredTaskTypes = shiftAlignmentResponse?.task_readiness_warnings
-    .filter((warning) => !warning.has_no_tasks && warning.missing_required_task_types.length > 0)
-    .length ?? 0;
+  const {
+    data: showsScopeResponse,
+    isLoading: isLoadingShowsScope,
+    isFetching: isFetchingShowsScope,
+    refetch: refetchShowsScope,
+  } = useQuery({
+    queryKey: ['studio-shows', 'scope-total', studioId, showScopeDateBounds.date_from, showScopeDateBounds.date_to, refreshSignal],
+    queryFn: () =>
+      getStudioShows(studioId, {
+        page: 1,
+        limit: 1,
+        date_from: showScopeDateBounds.date_from,
+        date_to: showScopeDateBounds.date_to,
+      }),
+    enabled: !hasIncompletePlanningRange && !hasInvalidPlanningRange,
+  });
+  const prevRefreshSignal = useRef(refreshSignal);
+  useEffect(() => {
+    if (prevRefreshSignal.current === refreshSignal) {
+      return;
+    }
+    prevRefreshSignal.current = refreshSignal;
+    if (hasIncompletePlanningRange || hasInvalidPlanningRange) {
+      return;
+    }
+    void refetchShiftAlignment();
+    // Scope changes are already handled by the query key; only manually refetch on mutation signal.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshSignal, refetchShiftAlignment]);
 
+  const isLoadingSnapshot = isLoadingShiftAlignment || isLoadingShowsScope;
+  const isFetchingSnapshot = isFetchingShiftAlignment || isFetchingShowsScope;
+  const showsInScopeCount = showsScopeResponse?.meta.total ?? 0;
+  const taskReadinessWarnings = shiftAlignmentResponse?.task_readiness_warnings ?? [];
   return (
-    <Card>
-      <CardHeader className="relative gap-3 pr-24">
-        <div className="absolute right-4 top-4 flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => void refetchShiftAlignment()}
-            disabled={!isVisible || isFetchingShiftAlignment || hasIncompletePlanningRange || hasInvalidPlanningRange}
-            aria-label="Refresh task readiness warnings"
-          >
-            <RefreshCw className={`h-4 w-4 ${isFetchingShiftAlignment ? 'animate-spin' : ''}`} />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onToggleVisibility}
-            aria-label={isVisible ? 'Hide readiness snapshot' : 'Show readiness snapshot'}
-          >
-            {isVisible ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </Button>
-        </div>
-        <div className="flex items-start gap-2">
-          <div className="space-y-1">
-            <CardTitle className="text-base flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
-              Readiness Snapshot
-            </CardTitle>
-            <CardDescription>
-              Summary for shows in selected scope.
-            </CardDescription>
-          </div>
-        </div>
-        {hasIncompletePlanningRange && (
-          <p className="text-sm text-muted-foreground">Select a date range to load readiness snapshot.</p>
-        )}
-        {hasInvalidPlanningRange && (
-          <p className="text-sm text-destructive">Scope end date must be on or after start date.</p>
-        )}
-      </CardHeader>
-      <CardContent>
-        <div
-          className={`overflow-hidden transition-all duration-300 ease-in-out ${isVisible ? 'max-h-[640px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}
-          aria-hidden={!isVisible}
-        >
-          {(isLoadingShiftAlignment || isFetchingShiftAlignment)
-            ? (
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                  {['risky', 'without-tasks', 'unassigned-shows', 'unassigned-tasks', 'missing-types'].map((key) => (
-                    <div key={key} className="rounded-md border p-3 space-y-2">
-                      <Skeleton className="h-3 w-24" />
-                      <Skeleton className="h-7 w-14" />
-                    </div>
-                  ))}
-                </div>
-              )
-            : (
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                  <div className="rounded-md border p-3">
-                    <p className="text-xs text-muted-foreground">Risky Shows</p>
-                    <p className="text-xl font-semibold">{taskReadinessWarningCount}</p>
-                  </div>
-                  <div className="rounded-md border p-3">
-                    <p className="text-xs text-muted-foreground">Without Tasks</p>
-                    <p className="text-xl font-semibold">{shiftAlignmentResponse?.summary.shows_without_tasks_count ?? 0}</p>
-                  </div>
-                  <div className="rounded-md border p-3">
-                    <p className="text-xs text-muted-foreground">Unassigned Shows</p>
-                    <p className="text-xl font-semibold">{shiftAlignmentResponse?.summary.shows_with_unassigned_tasks_count ?? 0}</p>
-                  </div>
-                  <div className="rounded-md border p-3">
-                    <p className="text-xs text-muted-foreground">Unassigned Tasks</p>
-                    <p className="text-xl font-semibold">{shiftAlignmentResponse?.summary.tasks_unassigned_count ?? 0}</p>
-                  </div>
-                  <div className="rounded-md border p-3">
-                    <p className="text-xs text-muted-foreground">Missing Required Types</p>
-                    <p className="text-xl font-semibold">{showsMissingRequiredTaskTypes}</p>
-                  </div>
-                </div>
-              )}
-        </div>
-      </CardContent>
-    </Card>
+    <ShowReadinessTriagePanel
+      scopeLabel={formatScopeLabel(planningDateFrom, planningDateTo)}
+      showsInScopeCount={showsInScopeCount}
+      taskReadinessWarnings={taskReadinessWarnings}
+      isLoading={isLoadingSnapshot}
+      isFetching={isFetchingSnapshot}
+      isVisible={isVisible}
+      hasIncompletePlanningRange={hasIncompletePlanningRange}
+      hasInvalidPlanningRange={hasInvalidPlanningRange}
+      needsAttentionActive={needsAttention}
+      onRefresh={() => {
+        void Promise.all([refetchShiftAlignment(), refetchShowsScope()]);
+      }}
+      onToggleVisibility={onToggleVisibility}
+      onActivateIssuesFilter={onActivateIssuesFilter}
+    />
   );
 }
 
@@ -375,11 +364,17 @@ function StudioShowsTableSection({
   scopeDateFrom,
   scopeDateTo,
   scopeLabel,
+  needsAttention,
+  onShowsMutated,
+  onToggleNeedsAttention,
 }: {
   studioId: string;
   scopeDateFrom?: string;
   scopeDateTo?: string;
   scopeLabel: string;
+  needsAttention: boolean;
+  onShowsMutated: () => void;
+  onToggleNeedsAttention: () => void;
 }) {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [bulkGeneratingShows, setBulkGeneratingShows] = useState<StudioShow[] | null>(null);
@@ -397,7 +392,7 @@ function StudioShowsTableSection({
     onColumnFiltersChange,
     sorting,
     onSortingChange,
-  } = useStudioShows({ studioId, dateFrom: scopeDateFrom, dateTo: scopeDateTo });
+  } = useStudioShows({ studioId, dateFrom: scopeDateFrom, dateTo: scopeDateTo, needsAttention });
 
   // Keep lightweight snapshots for selected rows that are not on current page.
   const [selectedShowSnapshots, setSelectedShowSnapshots] = useState<Record<string, StudioShow>>({});
@@ -537,6 +532,25 @@ function StudioShowsTableSection({
             featuredFilterColumns={FEATURED_FILTER_COLUMNS}
             searchPlaceholder="Search shows..."
           >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`h-9 rounded-full px-3 gap-1.5 ${needsAttention ? 'border-amber-500 bg-amber-500 text-white hover:bg-amber-600 hover:text-white shadow-sm' : ''}`}
+                  onClick={onToggleNeedsAttention}
+                  aria-pressed={needsAttention}
+                  aria-label={needsAttention ? 'Disable issues-only filter' : 'Enable issues-only filter'}
+                >
+                  <AlertTriangle className={`h-3.5 w-3.5 ${needsAttention ? '' : 'text-amber-600'}`} />
+                  <span className="hidden sm:inline">Issues</span>
+                  {needsAttention && <span className="hidden md:inline text-[10px] font-semibold">ON</span>}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-64 text-xs">
+                Show only items with task-readiness issues: no tasks, unassigned tasks, missing SETUP/CLOSURE tasks, or missing moderation on premium shows.
+              </TooltipContent>
+            </Tooltip>
             <Button
               variant="outline"
               size="icon"
@@ -616,6 +630,10 @@ function StudioShowsTableSection({
             if (!open)
               setBulkGeneratingShows(null);
           }}
+          onSuccess={() => {
+            void refetch();
+            onShowsMutated();
+          }}
           shows={bulkGeneratingShows}
         />
       )}
@@ -627,6 +645,10 @@ function StudioShowsTableSection({
           onOpenChange={(open) => {
             if (!open)
               setBulkAssigningShows(null);
+          }}
+          onSuccess={() => {
+            void refetch();
+            onShowsMutated();
           }}
           shows={bulkAssigningShows}
         />

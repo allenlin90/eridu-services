@@ -35,7 +35,10 @@ type OperationalDayBucket = {
   shows: ShowWindow[];
 };
 
-const REQUIRED_SHOW_TASK_TYPES = ['SETUP', 'ACTIVE', 'CLOSURE'] as const;
+// Required coverage baseline:
+// - Standard shows: SETUP + CLOSURE
+// - Premium shows: SETUP + CLOSURE + moderation task
+const REQUIRED_SHOW_TASK_TYPES = ['SETUP', 'CLOSURE'] as const;
 type RequiredTaskType = (typeof REQUIRED_SHOW_TASK_TYPES)[number];
 
 // Convention: shows whose standard name equals this value require a moderation task.
@@ -69,10 +72,17 @@ export class ShiftAlignmentService {
       throw HttpError.notFound('Studio', studioUid);
     }
 
-    const window = this.resolveWindow(query.dateFrom, query.dateTo);
+    const window = this.resolveWindow(
+      query.dateFrom,
+      query.dateTo,
+      query.dateFromIsDateOnly ?? false,
+      query.dateToIsDateOnly ?? false,
+    );
     const now = new Date();
     // Planning is forward-looking: never evaluate ended shows, even if date_from is in the past.
-    const planningStart = new Date(Math.max(window.start.getTime(), now.getTime()));
+    const planningStart = query.includePast
+      ? window.start
+      : new Date(Math.max(window.start.getTime(), now.getTime()));
 
     const [shifts, shows] = await Promise.all([
       this.studioShiftService.findShiftsInWindow({
@@ -85,8 +95,17 @@ export class ShiftAlignmentService {
         where: {
           studio: { uid: studioUid, deletedAt: null },
           deletedAt: null,
-          startTime: { lt: window.end },
-          endTime: { gt: planningStart },
+          ...(query.matchShowScope
+            ? {
+                startTime: {
+                  gte: window.start,
+                  lte: window.end,
+                },
+              }
+            : {
+                startTime: { lt: window.end },
+                endTime: { gt: planningStart },
+              }),
         },
         orderBy: { startTime: 'asc' },
         include: {
@@ -96,7 +115,13 @@ export class ShiftAlignmentService {
     ]);
 
     const dutyManagerIntervals = this.collectDutyManagerIntervals(shifts, window.start, window.end);
-    const showWindows = this.buildShowWindows(shows as unknown as ShowWithPlanningContext[], window.start, window.end, now);
+    const showWindows = this.buildShowWindows(
+      shows as unknown as ShowWithPlanningContext[],
+      window.start,
+      window.end,
+      now,
+      query.includePast ?? false,
+    );
     const operationalDays = this.groupShowsByOperationalDay(showWindows);
     const taskMapByShowId = await this.buildTaskMapByShowId(showWindows);
 
@@ -169,12 +194,12 @@ export class ShiftAlignmentService {
       const hasNoTasks = tasks.length === 0;
       const unassignedTaskCount = tasks.filter((task) => task.assigneeId === null).length;
       const missingRequiredTaskTypes = hasNoTasks
-        ? REQUIRED_SHOW_TASK_TYPES.map((type) => type as 'SETUP' | 'ACTIVE' | 'CLOSURE')
+        ? REQUIRED_SHOW_TASK_TYPES.map((type) => type as 'SETUP' | 'CLOSURE')
         : (() => {
             const presentTypes = new Set(tasks.map((task) => task.type));
             return REQUIRED_SHOW_TASK_TYPES
               .filter((requiredType) => !presentTypes.has(requiredType))
-              .map((type) => type as 'SETUP' | 'ACTIVE' | 'CLOSURE');
+              .map((type) => type as 'SETUP' | 'CLOSURE');
           })();
 
       // Premium shows require at least one moderation task.
@@ -261,12 +286,13 @@ export class ShiftAlignmentService {
     rangeStart: Date,
     rangeEnd: Date,
     now: Date,
+    includePast: boolean,
   ): ShowWindow[] {
     const windows: ShowWindow[] = [];
 
     for (const show of shows) {
       const clipped = this.clipInterval(show.startTime, show.endTime, rangeStart, rangeEnd);
-      if (!clipped || clipped.end <= now) {
+      if (!clipped || (!includePast && clipped.end <= now)) {
         continue;
       }
 
@@ -395,11 +421,18 @@ export class ShiftAlignmentService {
     return merged;
   }
 
-  private resolveWindow(dateFrom?: Date, dateTo?: Date): { start: Date; end: Date } {
+  private resolveWindow(
+    dateFrom?: Date,
+    dateTo?: Date,
+    dateFromIsDateOnly = false,
+    dateToIsDateOnly = false,
+  ): { start: Date; end: Date } {
     const now = new Date();
-    const start = dateFrom ? this.startOfDay(dateFrom) : this.startOfDay(now);
+    const start = dateFrom
+      ? (dateFromIsDateOnly ? this.startOfDay(dateFrom) : new Date(dateFrom))
+      : this.startOfDay(now);
     const end = dateTo
-      ? this.endOfDay(dateTo)
+      ? (dateToIsDateOnly ? this.endOfDay(dateTo) : new Date(dateTo))
       : this.endOfDay(new Date(start.getTime() + ((ShiftAlignmentService.DEFAULT_WINDOW_DAYS - 1) * 24 * 60 * 60 * 1000)));
 
     if (end < start) {

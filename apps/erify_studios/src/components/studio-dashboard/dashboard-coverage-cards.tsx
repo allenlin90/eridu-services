@@ -1,5 +1,5 @@
-import { AlertTriangle, CheckCircle2, ShieldCheck, UserCheck, UserMinus } from 'lucide-react';
-import { memo, type ReactNode, useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, CheckCircle2, UserCheck, UserMinus } from 'lucide-react';
+import { memo, useMemo } from 'react';
 
 import {
   Badge,
@@ -12,12 +12,9 @@ import {
 
 import {
   DASHBOARD_DUTY_SHIFTS_LIMIT,
-  DASHBOARD_MY_SHIFTS_QUERY_LIMIT,
-  DASHBOARD_MY_UPCOMING_SHIFTS_LIMIT,
 } from '@/features/studio-shifts/constants/studio-shifts.constants';
 import {
   useDutyManager,
-  useMyShifts,
   useStudioShifts,
 } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import { formatDate, getShiftWindowLabel } from '@/features/studio-shifts/utils/shift-form.utils';
@@ -29,15 +26,6 @@ type DashboardDutyCoverageCardsProps = {
   previewUntil: string;
   isSelectedToday: boolean;
   dutyReferenceTime?: string;
-};
-
-type DashboardMyUpcomingShiftsCardProps = {
-  studioId: string;
-  selectedDate: string;
-  previewUntil: string;
-  isSelectedToday: boolean;
-  dayStartMs: number;
-  viewAllLink?: ReactNode;
 };
 
 export const DashboardDutyCoverageCards = memo(({
@@ -157,92 +145,6 @@ export const DashboardDutyCoverageCards = memo(({
         </CardContent>
       </Card>
     </>
-  );
-});
-
-export const DashboardMyUpcomingShiftsCard = memo(({
-  studioId,
-  selectedDate,
-  previewUntil,
-  isSelectedToday,
-  dayStartMs,
-  viewAllLink,
-}: DashboardMyUpcomingShiftsCardProps) => {
-  const [nowMs, setNowMs] = useState(() => Date.now());
-
-  useEffect(() => {
-    const timerId = window.setInterval(() => setNowMs(Date.now()), 60_000);
-    return () => window.clearInterval(timerId);
-  }, []);
-
-  const {
-    data: myShiftResponse,
-    isLoading: isLoadingMyShifts,
-    isFetching: isFetchingMyShifts,
-  } = useMyShifts({
-    page: 1,
-    limit: DASHBOARD_MY_SHIFTS_QUERY_LIMIT,
-    studio_id: studioId,
-    date_from: selectedDate,
-    date_to: previewUntil,
-  }, {
-    enabled: Boolean(studioId),
-  });
-
-  const myUpcomingShifts = useMemo(() => {
-    const referenceTime = isSelectedToday ? nowMs : dayStartMs;
-    return sortShiftsByFirstBlockStart(myShiftResponse?.data ?? [])
-      .filter((shift) => {
-        const shiftStartMs = getShiftFirstBlockStartMs(shift);
-        return shiftStartMs !== null && shiftStartMs >= referenceTime;
-      })
-      .slice(0, DASHBOARD_MY_UPCOMING_SHIFTS_LIMIT);
-  }, [dayStartMs, isSelectedToday, myShiftResponse?.data, nowMs]);
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-3">
-        <div>
-          <CardTitle>My Upcoming Shifts</CardTitle>
-          <CardDescription>
-            Next 5 assigned shifts from the selected operational day.
-          </CardDescription>
-        </div>
-        {viewAllLink}
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {(isLoadingMyShifts || isFetchingMyShifts)
-          ? (
-              <p className="text-sm text-muted-foreground">Loading your upcoming shifts...</p>
-            )
-          : myUpcomingShifts.length === 0
-            ? (
-                <p className="text-sm text-muted-foreground">No upcoming assigned shifts in the next 7 days.</p>
-              )
-            : (
-                <div className="space-y-2">
-                  {myUpcomingShifts.map((shift) => (
-                    <div key={shift.id} className="rounded-md border p-2">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium">{formatDate(shift.date)}</p>
-                        {shift.is_duty_manager && (
-                          <Badge variant="secondary" className="px-1.5 py-0 border-amber-200 bg-amber-50 text-amber-700">
-                            <ShieldCheck className="h-3 w-3 mr-1" />
-                            Duty
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {getShiftWindowLabel(shift)}
-                        {' | '}
-                        {shift.status}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-      </CardContent>
-    </Card>
   );
 });
 

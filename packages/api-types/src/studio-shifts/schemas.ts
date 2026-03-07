@@ -103,7 +103,7 @@ export const shiftAlignmentResponseSchema = z.object({
     show_standard: z.string(),
     has_no_tasks: z.boolean(),
     unassigned_task_count: z.number().int().nonnegative(),
-    missing_required_task_types: z.array(z.enum(['SETUP', 'ACTIVE', 'CLOSURE'])),
+    missing_required_task_types: z.array(z.enum(['SETUP', 'CLOSURE'])),
     missing_moderation_task: z.boolean(),
   })),
 });

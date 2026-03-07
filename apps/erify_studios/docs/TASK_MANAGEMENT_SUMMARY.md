@@ -38,10 +38,10 @@
 ## Key Workflows
 
 ### 1. Bulk Task Generation (Admin)
-Shows list → select shows → "Generate Tasks" → pick templates in dialog → POST `/tasks/generate` → table refreshes
+Shows list → select shows → "Generate Tasks" → pick templates in dialog → confirm action (dialog closes immediately) → POST `/tasks/generate` → table refreshes while selected shows remain selected for follow-up actions
 
 ### 2. Bulk Assignment (Admin)
-Shows list → select shows → "Assign" → pick member → POST `/tasks/assign-shows` → table refreshes
+Shows list → select shows → "Assign" → pick member → confirm action (dialog closes immediately) → POST `/tasks/assign-shows` → table refreshes while selected shows remain selected for follow-up actions
 
 ### 3. Individual Reassignment (Admin)
 Show detail → inline assignee dropdown on task card → PATCH `/tasks/:taskUid/assign` (optimistic update)
@@ -54,6 +54,16 @@ Review Queue → row actions: Approve (`→ COMPLETED`), Reject (with note, `→
 
 ### 6. Moderation Loop Execution (Moderator)
 My Tasks → tap moderation task → Task Execution Sheet with **Loop Progress block** → navigate loops via Previous/Next → auto-save per field → Submit for Review when done. See [MODERATION_WORKFLOW.md](./MODERATION_WORKFLOW.md) for full data contract and business rules.
+
+### 7. Shows Issues Triage (Admin)
+Shows list → set scope date range → toggle `Issues` (alert icon chip) in toolbar → list narrows to shows that need task-readiness attention:
+- show has no tasks
+- show has unassigned tasks
+- show is missing required baseline task types (`SETUP`, `CLOSURE`)
+- premium show is missing moderation coverage
+
+The `Issues` filter uses the same datetime window and same in-scope show set as the shows table query (`date_from/date_to` with backend `match_show_scope=true`), including operational-day cutoff behavior (for example D+1 `05:59` local when applied by scope utilities).
+Readiness scope totals should be refreshed by query-key changes (for example `refreshSignal`) and not duplicated with extra effect-level `refetch()` for the same query key.
 
 ---
 
@@ -104,6 +114,12 @@ My Tasks → tap moderation task → Task Execution Sheet with **Loop Progress b
 | Search           | `search`             | Free text                                        |
 | Sort             | `sort`               | Due date ↑/↓, Recently updated                   |
 | Overdue shortcut | combined             | `due_date_to=today&status=PENDING,IN_PROGRESS`   |
+
+## Shows List Filter Notes
+
+- `Issues` is a dedicated quick filter chip (icon + short label) to avoid long wording in toolbar.
+- The filter definition intentionally mirrors readiness warnings, and both are computed in the same datetime scope as table pagination.
+- Bulk action UX is optimized for repeated operations: after confirming Generate/Assign, dialogs close immediately and current row selection is preserved by default.
 
 ---
 

@@ -327,7 +327,13 @@ export const listStudioShowsQuerySchema = paginationBaseSchema
     platform_name: z.string().optional(),
     date_from: z.string().datetime().optional(),
     date_to: z.string().datetime().optional(),
+    planning_date_from: z.iso.date().optional(),
+    planning_date_to: z.iso.date().optional(),
     has_tasks: z
+      .union([z.boolean(), z.enum(['true', 'false'])])
+      .transform((value) => (typeof value === 'string' ? value === 'true' : value))
+      .optional(),
+    needs_attention: z
       .union([z.boolean(), z.enum(['true', 'false'])])
       .transform((value) => (typeof value === 'string' ? value === 'true' : value))
       .optional(),

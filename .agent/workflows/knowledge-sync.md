@@ -24,8 +24,10 @@ Run when any of these are true:
    - `agent guidance` (skills/workflows/rules/memory)
 
 2. **Update product/technical docs**
-   - Implemented behavior -> `docs/` root.
-   - Design/in-progress proposals -> `docs/design/`.
+   - Implemented behavior -> `docs/` root as a focused feature description (what it does, code refs, key rules). No design rationale.
+   - Design/in-progress proposals -> `docs/design/` only while not yet implemented.
+   - When a design doc is implemented: delete it from `docs/design/`, create or update the canonical feature description at `docs/` root, update `docs/README.md`. Do not keep stubs in `docs/design/`.
+   - Feature descriptions must reference actual source files, not contain inline code examples.
    - Update each app/package `docs/README.md` status/index entries.
 
 3. **Update skills**

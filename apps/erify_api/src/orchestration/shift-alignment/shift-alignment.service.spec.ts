@@ -43,7 +43,11 @@ describe('shiftAlignmentService', () => {
       service.getAlignment('std_missing', {
         dateFrom: new Date('2026-03-05'),
         dateTo: new Date('2026-03-06'),
+        dateFromIsDateOnly: true,
+        dateToIsDateOnly: true,
         includeCancelled: false,
+        includePast: false,
+        matchShowScope: false,
       }),
     ).rejects.toThrow('Studio not found');
   });
@@ -133,7 +137,11 @@ describe('shiftAlignmentService', () => {
     const result = await service.getAlignment('std_1', {
       dateFrom: new Date('2026-03-05'),
       dateTo: new Date('2026-03-05'),
+      dateFromIsDateOnly: true,
+      dateToIsDateOnly: true,
       includeCancelled: false,
+      includePast: false,
+      matchShowScope: false,
     });
 
     expect(result.summary.shows_checked).toBe(2);
@@ -147,7 +155,7 @@ describe('shiftAlignmentService', () => {
     }));
     expect(result.task_readiness_warnings[0]).toEqual(expect.objectContaining({
       show_id: 'show_2',
-      missing_required_task_types: ['ACTIVE', 'CLOSURE'],
+      missing_required_task_types: ['CLOSURE'],
       missing_moderation_task: true,
     }));
   });
@@ -179,7 +187,11 @@ describe('shiftAlignmentService', () => {
     const result = await service.getAlignment('std_1', {
       dateFrom: new Date('2026-03-05'),
       dateTo: new Date('2026-03-06'),
+      dateFromIsDateOnly: true,
+      dateToIsDateOnly: true,
       includeCancelled: false,
+      includePast: false,
+      matchShowScope: false,
     });
 
     expect(result.summary.shows_checked).toBe(1);
@@ -206,7 +218,11 @@ describe('shiftAlignmentService', () => {
     const result = await service.getAlignment('std_1', {
       dateFrom: new Date('2026-03-05'),
       dateTo: new Date('2026-03-05'),
+      dateFromIsDateOnly: true,
+      dateToIsDateOnly: true,
       includeCancelled: false,
+      includePast: false,
+      matchShowScope: false,
     });
 
     expect(result.summary.shows_without_tasks_count).toBe(1);
@@ -215,8 +231,61 @@ describe('shiftAlignmentService', () => {
     expect(result.task_readiness_warnings[0]).toEqual(expect.objectContaining({
       show_id: 'show_no_tasks',
       has_no_tasks: true,
-      missing_required_task_types: ['SETUP', 'ACTIVE', 'CLOSURE'],
+      missing_required_task_types: ['SETUP', 'CLOSURE'],
       missing_moderation_task: true,
+    }));
+  });
+
+  it('should preserve explicit datetime bounds for alignment window', async () => {
+    studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
+    studioShiftService.findShiftsInWindow.mockResolvedValue([] as never);
+    showService.findMany.mockResolvedValue([] as never);
+    taskService.findTasksByShowIds.mockResolvedValue([] as never);
+
+    const dateFrom = new Date('2026-03-06T17:00:00.000Z');
+    const dateTo = new Date('2026-03-07T22:59:59.999Z');
+
+    await service.getAlignment('std_1', {
+      dateFrom,
+      dateTo,
+      dateFromIsDateOnly: false,
+      dateToIsDateOnly: false,
+      includeCancelled: false,
+      includePast: true,
+      matchShowScope: false,
+    });
+
+    expect(studioShiftService.findShiftsInWindow).toHaveBeenCalledWith(expect.objectContaining({
+      studioUid: 'std_1',
+      start: dateFrom,
+      end: dateTo,
+      includeCancelled: false,
+    }));
+  });
+
+  it('should use start-time scope matching when matchShowScope is enabled', async () => {
+    studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
+    studioShiftService.findShiftsInWindow.mockResolvedValue([] as never);
+    showService.findMany.mockResolvedValue([] as never);
+    taskService.findTasksByShowIds.mockResolvedValue([] as never);
+
+    await service.getAlignment('std_1', {
+      dateFrom: new Date('2026-03-07T00:00:00.000Z'),
+      dateTo: new Date('2026-03-07T23:59:59.999Z'),
+      dateFromIsDateOnly: false,
+      dateToIsDateOnly: false,
+      includeCancelled: false,
+      includePast: true,
+      matchShowScope: true,
+    });
+
+    expect(showService.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        startTime: {
+          gte: new Date('2026-03-07T00:00:00.000Z'),
+          lte: new Date('2026-03-07T23:59:59.999Z'),
+        },
+      }),
     }));
   });
 });

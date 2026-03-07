@@ -57,3 +57,20 @@
 - Schedule-X timezone explicitly set from runtime IANA zone
 - Cross-midnight blocks split into per-day segments for timeline rendering
 - Calendar query limit derived from view bucket (day/week/month) instead of static ceiling
+
+## Delta (March 2026 — Shows Issues filter alignment)
+
+- Studio shows route (`/studios/$studioId/shows`) added a compact `Issues` quick filter (alert icon chip).
+- Filter semantics are tied to readiness warnings:
+  - no tasks
+  - unassigned tasks
+  - missing required task types (`SETUP`, `CLOSURE`)
+- API contract update for studio shows listing:
+  - `needs_attention` (boolean)
+  - `planning_date_from`, `planning_date_to` (date-only bounds for readiness orchestration alignment)
+- Backend implementation in `TaskOrchestrationService`:
+  - when `needs_attention=true`, resolve warning show IDs via `ShiftAlignmentService`
+  - apply those show IDs to paginated show query (`show_uids`) so paging remains server-side
+  - validate legacy `planning_date_*` fallback as strict ISO date-only and reject invalid values (`400`)
+- Frontend readiness panel behavior:
+  - scope-total query refresh is key-driven; avoid duplicate effect-level refetch for the same key
