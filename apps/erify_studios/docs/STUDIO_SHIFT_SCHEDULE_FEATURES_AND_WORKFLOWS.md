@@ -144,7 +144,10 @@ Delivered:
   - top summary highlights scope coverage, attention rate, and the current primary action
   - action buckets split follow-up into task-plan gaps, assignment workload, and missing required coverage
   - per-bucket drill-down popovers expose affected show names, timing, and issue tags without leaving the page
+  - mobile uses a simplified compact bucket layout; desktop uses full detail cards
+  - bucket-level actions are inspect-only; issues list handoff remains a single summary CTA
 - Shows table, Show Readiness panel, and `Issues` filter share the same datetime scope window (`date_from/date_to`), including operational-day cutoff behavior from scope utilities (D+1 `05:59` local).
+- Readiness scope label formatting shows one date for same-day scopes and `start to end` for multi-day scopes.
 - Shows task-readiness date range is local UI state (not URL-backed) and includes a quick reset action for the next 7 days.
 
 Pending scope:

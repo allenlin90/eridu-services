@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
 import type { OnChangeFn, RowSelectionState } from '@tanstack/react-table';
-import { AlertTriangle, ChevronDown, ChevronUp, Info, ListTodo, RefreshCw } from 'lucide-react';
+import { AlertTriangle, ListTodo, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 
@@ -11,7 +11,6 @@ import {
   adaptSortingChange,
   Button,
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -19,7 +18,6 @@ import {
   DataTablePagination,
   DataTableToolbar,
   DatePickerWithRange,
-  Skeleton,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -34,6 +32,7 @@ import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';
 import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
 import { getStudioShows, type StudioShow } from '@/features/studio-shows/api/get-studio-shows';
 import { SelectedShowsMobileActions } from '@/features/studio-shows/components/selected-shows-mobile-actions';
+import { ShowReadinessTriagePanel } from '@/features/studio-shows/components/show-readiness/show-readiness-triage-panel';
 import { columns } from '@/features/studio-shows/components/studio-shows-table/columns';
 import { useStudioShows } from '@/features/studio-shows/hooks/use-studio-shows';
 import {
@@ -98,6 +97,10 @@ function formatScopeLabel(dateFrom?: string, dateTo?: string): string {
 
   if (!from || !to) {
     return 'No date scope selected';
+  }
+
+  if (from === to) {
+    return from;
   }
 
   return `${from} to ${to}`;
@@ -221,6 +224,16 @@ function StudioShowsPage() {
           scopeDateTo={search.date_to}
           refreshSignal={snapshotRefreshSignal}
           isVisible={isReadinessSnapshotVisible}
+          needsAttention={isNeedsAttentionActive}
+          onActivateIssuesFilter={() => {
+            if (!isNeedsAttentionActive) {
+              updateSearch((previous) => ({
+                ...previous,
+                page: 1,
+                needs_attention: true,
+              }));
+            }
+          }}
           onToggleVisibility={() => setIsReadinessSnapshotVisible((previous) => !previous)}
         />
 
@@ -250,6 +263,8 @@ function ShowTaskReadinessSection({
   scopeDateTo,
   refreshSignal,
   isVisible,
+  needsAttention,
+  onActivateIssuesFilter,
   onToggleVisibility,
 }: {
   studioId: string;
@@ -257,6 +272,8 @@ function ShowTaskReadinessSection({
   scopeDateTo?: string;
   refreshSignal: number;
   isVisible: boolean;
+  needsAttention: boolean;
+  onActivateIssuesFilter: () => void;
   onToggleVisibility: () => void;
 }) {
   const planningDateFrom = toApiDate(scopeDateFrom);
@@ -315,138 +332,23 @@ function ShowTaskReadinessSection({
   const isFetchingSnapshot = isFetchingShiftAlignment || isFetchingShowsScope;
   const showsInScopeCount = showsScopeResponse?.meta.total ?? 0;
   const taskReadinessWarnings = shiftAlignmentResponse?.task_readiness_warnings ?? [];
-  const showsWithIssuesCount = taskReadinessWarnings.length;
-  const showsWithoutTasksCount = taskReadinessWarnings.filter((warning) => warning.has_no_tasks).length;
-  const showsWithUnassignedTasksCount = taskReadinessWarnings.filter((warning) => warning.unassigned_task_count > 0).length;
-  const unassignedTasksCount = taskReadinessWarnings.reduce((total, warning) => total + warning.unassigned_task_count, 0);
-  const showsMissingRequiredTypesCount = taskReadinessWarnings.filter((warning) =>
-    !warning.has_no_tasks && warning.missing_required_task_types.length > 0).length;
-  const readinessMetrics = [
-    {
-      label: 'Shows In Scope',
-      value: showsInScopeCount,
-      tooltip: 'All shows currently included by the selected date range. Use this to confirm list coverage.',
-    },
-    {
-      label: 'Shows With Issues',
-      value: showsWithIssuesCount,
-      tooltip: 'Shows that match Issues filter criteria (no tasks, unassigned tasks, or missing required task types).',
-    },
-    {
-      label: 'Without Tasks',
-      value: showsWithoutTasksCount,
-      tooltip: 'Shows that have no tasks at all. Use this to spot planning gaps before execution.',
-    },
-    {
-      label: 'Unassigned Shows',
-      value: showsWithUnassignedTasksCount,
-      tooltip: 'Shows that contain one or more unassigned tasks. Use this to prioritize assignment actions.',
-    },
-    {
-      label: 'Unassigned Tasks',
-      value: unassignedTasksCount,
-      tooltip: 'Total number of tasks without an assignee across in-scope shows. Use this to estimate assignment workload.',
-    },
-    {
-      label: 'Missing Required Types',
-      value: showsMissingRequiredTypesCount,
-      tooltip: 'Shows that already have tasks but are missing required baseline types (SETUP, CLOSURE). Premium shows also need moderation coverage.',
-    },
-  ];
-
   return (
-    <Card>
-      <CardHeader className="relative gap-3 pr-24">
-        <div className="absolute right-4 top-4 flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {
-              void Promise.all([refetchShiftAlignment(), refetchShowsScope()]);
-            }}
-            disabled={!isVisible || isFetchingSnapshot || hasIncompletePlanningRange || hasInvalidPlanningRange}
-            aria-label="Refresh task readiness warnings"
-          >
-            <RefreshCw className={`h-4 w-4 ${isFetchingSnapshot ? 'animate-spin' : ''}`} />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onToggleVisibility}
-            aria-label={isVisible ? 'Hide readiness snapshot' : 'Show readiness snapshot'}
-          >
-            {isVisible ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </Button>
-        </div>
-        <div className="flex items-start gap-2">
-          <div className="space-y-1">
-            <CardTitle className="text-base flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
-              Readiness Snapshot
-            </CardTitle>
-            <CardDescription>
-              Scope-level readiness for operational day range (
-              {formatScopeLabel(planningDateFrom, planningDateTo)}
-              ).
-            </CardDescription>
-          </div>
-        </div>
-        {hasIncompletePlanningRange && (
-          <p className="text-sm text-muted-foreground">Select a date range to load readiness snapshot.</p>
-        )}
-        {hasInvalidPlanningRange && (
-          <p className="text-sm text-destructive">Scope end date must be on or after start date.</p>
-        )}
-      </CardHeader>
-      <CardContent>
-        <div
-          className={`overflow-hidden transition-all duration-300 ease-in-out ${isVisible ? 'max-h-[640px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}
-          aria-hidden={!isVisible}
-        >
-          {isLoadingSnapshot || isFetchingSnapshot
-            ? (
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-                  {['shows-in-scope', 'at-risk', 'without-tasks', 'unassigned-shows', 'unassigned-tasks', 'missing-types'].map((key) => (
-                    <div key={key} className="rounded-md border p-3 space-y-2">
-                      <Skeleton className="h-3 w-24" />
-                      <Skeleton className="h-7 w-14" />
-                    </div>
-                  ))}
-                </div>
-              )
-            : (
-                <div className="space-y-3">
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-                    {readinessMetrics.map((metric) => (
-                      <div key={metric.label} className="rounded-md border p-3">
-                        <div className="flex items-center gap-1">
-                          <p className="text-xs text-muted-foreground">{metric.label}</p>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-5 w-5 text-muted-foreground"
-                                aria-label={`About ${metric.label}`}
-                              >
-                                <Info className="h-3.5 w-3.5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-64 text-xs">
-                              {metric.tooltip}
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                        <p className="text-xl font-semibold">{metric.value}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-        </div>
-      </CardContent>
-    </Card>
+    <ShowReadinessTriagePanel
+      scopeLabel={formatScopeLabel(planningDateFrom, planningDateTo)}
+      showsInScopeCount={showsInScopeCount}
+      taskReadinessWarnings={taskReadinessWarnings}
+      isLoading={isLoadingSnapshot}
+      isFetching={isFetchingSnapshot}
+      isVisible={isVisible}
+      hasIncompletePlanningRange={hasIncompletePlanningRange}
+      hasInvalidPlanningRange={hasInvalidPlanningRange}
+      needsAttentionActive={needsAttention}
+      onRefresh={() => {
+        void Promise.all([refetchShiftAlignment(), refetchShowsScope()]);
+      }}
+      onToggleVisibility={onToggleVisibility}
+      onActivateIssuesFilter={onActivateIssuesFilter}
+    />
   );
 }
 

@@ -13,3 +13,4 @@ Implemented/canonical docs stay in `docs/` root. Design/proposal/in-progress doc
 
 1. [Schedule Continuity FE Design](./design/DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md)
 2. [Moderation Workflow Design](./design/MODERATION_WORKFLOW_DESIGN.md) — historical design reference; see canonical doc above
+3. [Show Readiness Triage Panel](./design/DESIGN_FE_SHOW_READINESS_TRIAGE_PANEL.md) — implemented; canonical behavior summarized in [Studio Shift Schedule Features and Workflows](./STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md)
