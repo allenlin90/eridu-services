@@ -4,7 +4,7 @@ This file contains detailed code examples for all controller types. Refer to the
 
 ## Admin Controller Example
 
-**File**: [admin-client.controller.ts](file:///Users/allenlin/Desktop/projects/eridu-services/apps/erify_api/src/admin/clients/admin-client.controller.ts)
+**File**: [admin-client.controller.ts](../../../../apps/erify_api/src/admin/clients/admin-client.controller.ts)
 
 ```typescript
 import { Body, Controller, Delete, Get, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
@@ -61,7 +61,7 @@ export class AdminUserController extends BaseAdminController {
 
 ## Studio Controller Example
 
-**File**: [studio-task-template.controller.ts](file:///Users/allenlin/Desktop/projects/eridu-services/apps/erify_api/src/studios/studio-task-template/studio-task-template.controller.ts)
+**File**: [studio-task-template.controller.ts](../../../../apps/erify_api/src/studios/studio-task-template/studio-task-template.controller.ts)
 
 ```typescript
 import {

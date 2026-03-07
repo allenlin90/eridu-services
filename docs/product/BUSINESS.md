@@ -1,10 +1,10 @@
 # Business Domain Documentation
 
-> **TLDR**: The core domain revolves around **Shows** (live-commerce broadcasts) linked to **Clients**, **MCs**, **Platforms**, and **Studios**. **Schedules** plan shows monthly via Google Sheets. **Tasks** are studio-scoped checklists generated from **TaskTemplates** and assigned to operators. The system is built in 5 phases — Phases 1-2 are complete.
+> **TLDR**: The core domain revolves around **Shows** (live-commerce broadcasts) linked to **Clients**, **MCs**, **Platforms**, and **Studios**. **Schedules** plan shows monthly via Google Sheets. **Tasks** are studio-scoped checklists generated from **TaskTemplates** and assigned to operators. The roadmap now treats Phase 3 as closed infrastructure delivery, with unfinished ticketing/material work moved forward into later phases.
 
-This document provides comprehensive business domain information for the Eridu Services API. For development roadmap and implementation phases, see the [Core Production Management System](./roadmap/PHASE_1.md) documentation.
+This document provides monorepo-level business and product context. It is not owned by a single app. For implementation status, use the [root documentation index](../README.md) and the root roadmap.
 
-> **⚠️ Note**: This document describes the full domain vision across all phases. For current implementation status, see [Phase 1 Roadmap](./roadmap/PHASE_1.md). **Phase 1 models currently implemented**: User, MC, Client, Platform, Show, ShowMC, ShowPlatform, Studio, StudioRoom, ShowType, ShowStatus, ShowStandard, StudioMembership, Schedule, ScheduleSnapshot
+> **⚠️ Note**: This document describes the product/domain vision across phases. For backend-specific implementation details, use `apps/erify_api/docs/`. For frontend workflow behavior, use `apps/erify_studios/docs/`. Legacy phase labels inside individual model sections may lag; the root roadmap remains the source of truth for phase status.
 
 ## Development Approach
 
@@ -12,18 +12,18 @@ The system is being developed in structured phases:
 
 - **Phase 1** ✅: Core Functions — Essential CRUD, show management, schedule planning, JWT auth, StudioMembership-based authorization
 - **Phase 2** ✅: Task Management — Generic "Task as Form" system with templates, snapshots, bulk generation, and operator workflows
-- **Phase 3** (Planned): Material Management, Shift Schedules & File Uploads — Material versioning, studio shifts, Cloudflare R2 presigned uploads
-- **Phase 4** (Planned): Review Quality, Decision Support & Analytics — Review summaries, error hardening, admin transition enforcement, Datastream + BigQuery data warehouse
-- **Phase 5** (Planned): Collaboration, Notifications & Enterprise Scheduling — Tags, comments, audit logging, notifications, chunked uploads
+- **Phase 3** ✅ Closed: Operations foundations — shift schedules and Cloudflare R2 uploads shipped; unfinished ticketing/material scope moved forward
+- **Phase 4** (Planned): P&L Visibility & MC Operations — RBAC roles, bulk MC mapping, MC compensation, show performance metrics, cost aggregation, P&L views
+- **Phase 5** (Deferred): Ticketing, Materials, Collaboration & Scale — ad-hoc ticketing, material management, review hardening, notifications, data warehouse
 
-For detailed implementation plans, see:
+For planning and implementation references, see:
 
-- [Phase 1 Roadmap](./roadmap/PHASE_1.md)
-- [Phase 2 Roadmap](./roadmap/PHASE_2.md)
-- [Phase 3 Roadmap](./roadmap/PHASE_3.md)
-- [Phase 4 Roadmap](./roadmap/PHASE_4.md)
-- [Phase 5 Roadmap](./roadmap/PHASE_5.md)
-- [Schedule Planning](./SCHEDULE_PLANNING.md)
+- [Roadmap Index](../roadmap/README.md)
+- [Phase 3 Summary](../roadmap/PHASE_3.md)
+- [Phase 4 Planning](../roadmap/PHASE_4.md)
+- [Phase 4 PRDs](../prd/README.md)
+- [Phase 5 Deferred Features](../roadmap/PHASE_5.md)
+- [Backend Schedule Planning](../../apps/erify_api/docs/SCHEDULE_PLANNING.md)
 
 # Models
 

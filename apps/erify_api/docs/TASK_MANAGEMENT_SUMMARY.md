@@ -121,12 +121,13 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 
 ✅ Template CRUD, bulk generation, assignment, reassignment, operator tasks  
 ✅ Optimistic locking, advisory locks, soft-delete with resumption  
-✅ Action-based workflow endpoints, operator state machine enforcement (admin/manager transition whitelist deferred to Phase 4)  
+✅ Action-based workflow endpoints, operator state machine enforcement, studio review queue UI in `erify_studios`  
+⚠️ Admin/manager transition whitelist is still not enforced on `/studios/:studioId/tasks/:id/action`  
 ✅ Submission window validation (SETUP before show start, ACTIVE/CLOSURE after show start)  
 ✅ Audit metadata (`task.metadata.audit.last_transition`)
 ✅ Studio shows `needs_attention` filtering via shift-alignment readiness warnings (no tasks / unassigned tasks / missing required task types)
 
-**Deferred**: File uploads, smart due dates, progress in API response, WebSocket live sync, offline/PWA, bulk review approve
+**Deferred**: Ad-hoc ticket creation, formal reopen workflow with approval context, review summary contract, smart due dates, progress in API response, WebSocket live sync, offline/PWA, bulk review approve
 
 ---
 

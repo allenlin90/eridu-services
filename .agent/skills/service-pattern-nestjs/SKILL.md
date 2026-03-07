@@ -443,7 +443,7 @@ async findOne(
 
 🔴 **Critical**: Coordinate multiple services/repositories using Transactions.
 
-See **[Database Patterns](database-patterns/SKILL.md)** for transaction rules.
+See **[Database Patterns](../database-patterns/SKILL.md)** for transaction rules.
 
 ```typescript
 import { Transactional } from '@nestjs-cls/transactional';

@@ -1,6 +1,12 @@
 # erify_studios Documentation
 
-Implemented/canonical docs stay in `docs/` root. Design/proposal/in-progress docs stay in `docs/design/`.
+Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Design/proposal/in-progress docs stay in `apps/erify_studios/docs/design/`. Cross-app roadmap source of truth now lives at [`../../../docs/roadmap/`](../../../docs/roadmap/).
+
+## Cross-App Roadmap
+
+1. [Phase 3 Closure Summary](../../../docs/roadmap/PHASE_3.md)
+2. [Phase 4 Planning](../../../docs/roadmap/PHASE_4.md)
+3. [Phase 5 Deferred Features](../../../docs/roadmap/PHASE_5.md)
 
 ## Canonical Docs
 

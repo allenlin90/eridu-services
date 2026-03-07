@@ -1,7 +1,7 @@
 # Moderation Loop Workflow
 
 > **Status**: Implemented (feat/moderator-workflow, 2026-03)
-> **Design reference**: [docs/design/MODERATION_WORKFLOW_DESIGN.md](./design/MODERATION_WORKFLOW_DESIGN.md)
+> **Design reference**: No dedicated design doc is currently retained; use this file as the canonical workflow reference.
 
 ---
 

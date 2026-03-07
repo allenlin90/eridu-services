@@ -44,7 +44,8 @@ export function Dashboard({ userName }) {
   const title = m['dashboard.title'](); 
 
   // Message with parameters
-  const welcome = m['dashboard.welcomeUser']({ name: userName });
+  const welcomeUserMessage = m['dashboard.welcomeUser'];
+  const welcome = welcomeUserMessage({ name: userName });
 
   return (
     <div>

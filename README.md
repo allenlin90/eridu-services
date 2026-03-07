@@ -44,6 +44,13 @@ graph TB
     style External fill:#f3e5f5,stroke:#9C27B0
 ```
 
+## Documentation
+
+- Monorepo roadmap and product references: [`docs/README.md`](docs/README.md)
+- App-specific implementation docs:
+  - [`apps/erify_api/docs/README.md`](apps/erify_api/docs/README.md)
+  - [`apps/erify_studios/docs/README.md`](apps/erify_studios/docs/README.md)
+
 ## Apps
 
 - **`erify_api`** - REST API service built with NestJS for managing shows, schedules, tasks, users, and related entities

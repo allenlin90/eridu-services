@@ -44,7 +44,7 @@ sequenceDiagram
 | `INSTRUCTION_ASSET` | **50 MB** | `image/*`, `application/pdf`, `video/mp4` | |
 | `MATERIAL_ASSET` | **50 MB** | `image/*`, `application/pdf`, `video/mp4` | Also validates against task snapshot schema |
 
-Rules are enforced in `FILE_UPLOAD_USE_CASE_RULES` constant in [`packages/api-types/src/uploads/schemas.ts`](../../../../packages/api-types/src/uploads/schemas.ts).
+Rules are enforced in `FILE_UPLOAD_USE_CASE_RULES` constant in [`packages/api-types/src/uploads/schemas.ts`](../../../packages/api-types/src/uploads/schemas.ts).
 
 ## Backend Validation Pipeline
 

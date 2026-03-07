@@ -4,7 +4,7 @@ This file contains detailed code examples for service implementation patterns. R
 
 ## Model Service Example
 
-**File**: [task-template.service.ts](file:///Users/allenlin/Desktop/projects/eridu-services/apps/erify_api/src/models/task-template/task-template.service.ts)
+**File**: [task-template.service.ts](../../../../apps/erify_api/src/models/task-template/task-template.service.ts)
 
 ```typescript
 import { Injectable } from '@nestjs/common';
@@ -129,7 +129,7 @@ export class TaskTemplateService extends BaseModelService {
 
 ## Schema File with Payload Types
 
-**File**: [task-template.schema.ts](file:///Users/allenlin/Desktop/projects/eridu-services/apps/erify_api/src/models/task-template/schemas/task-template.schema.ts)
+**File**: [task-template.schema.ts](../../../../apps/erify_api/src/models/task-template/schemas/task-template.schema.ts)
 
 ```typescript
 import { createZodDto } from 'nestjs-zod';
@@ -204,7 +204,7 @@ export class ListTaskTemplatesQueryDto extends createZodDto(
 
 > **Note**: Transactions use the `@Transactional()` decorator via CLS (Continuation-Local Storage).
 > The `PrismaService` is auto-injected into the active transaction context — no `tx` parameter passing.
-> See `database-patterns/SKILL.md` for the full transaction pattern.
+> See [`../database-patterns/SKILL.md`](../../database-patterns/SKILL.md) for the full transaction pattern.
 
 ```typescript
 import { Injectable } from '@nestjs/common';

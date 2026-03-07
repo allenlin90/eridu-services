@@ -1,8 +1,8 @@
-# Architecture Overview
+# System Architecture Overview
 
-> **TLDR**: NestJS modular architecture with three controller scopes (`/admin`, `/studios/:id`, `/me`). Uses Prisma for data access, Zod for validation/serialization, and `@eridu/auth-sdk` for JWT auth. Each domain has its own module with model service → repository → Prisma layers.
+> **TLDR**: Eridu Services is a monorepo with frontend apps, backend services, and shared packages. `erify_api` currently provides the main operational backend using NestJS, Prisma, Zod, and `@eridu/auth-sdk`. This document is the root-level system architecture reference; app-local docs describe implementation details.
 
-> Slim reference for high-level architecture decisions. For implementation patterns, see the **Skills** section below.
+> Root-level reference for high-level architecture decisions and cross-app terminology. For backend implementation patterns, see the skills listed below and the `erify_api` implementation docs.
 
 ---
 
@@ -16,6 +16,15 @@
 | API Contracts | `@eridu/api-types` (Zod schemas)                 |
 | API Docs      | OpenAPI + Scalar UI                              |
 | Monorepo      | Turborepo + pnpm workspaces                      |
+
+## System Boundaries
+
+| Layer | Primary Artifacts | Responsibility |
+| ----- | ----------------- | -------------- |
+| Product / Roadmap | `docs/roadmap`, `docs/product` | Cross-app planning, domain language, phase ownership |
+| Backend | `apps/erify_api`, `apps/eridu_auth` | Operational APIs, auth, persistence, orchestration |
+| Frontend | `apps/erify_studios`, `apps/erify_creators` | User workflows, task/shows UX, operator/admin surfaces |
+| Shared Packages | `packages/*` | Contracts, auth SDK, UI, i18n, TS config |
 
 ## Module Architecture
 
@@ -130,8 +139,7 @@ For detailed implementation patterns, see `.agent/skills/`:
 
 ## Related Documentation
 
-- **[Business Domain](./BUSINESS.md)** — Entity relationships and domain concepts
-- **[Authorization Guide](./design/AUTHORIZATION_GUIDE.md)** — Granular RBAC design proposal (not yet implemented)
-- **[Schedule Planning](./SCHEDULE_PLANNING.md)** — Schedule planning system
-- **[Task Management Summary](./TASK_MANAGEMENT_SUMMARY.md)** — Task management quick-reference
-- **[Roadmap](./roadmap/)** — Phase 1–5 implementation plans
+- **[Business Domain](./BUSINESS.md)** — Product/domain concepts and entity meaning
+- **[Root Roadmap](../roadmap/README.md)** — Cross-app phase ownership
+- **[erify_api Architecture Reference](../../apps/erify_api/docs/README.md)** — Backend implementation docs
+- **[erify_studios Docs](../../apps/erify_studios/docs/README.md)** — Frontend workflow docs

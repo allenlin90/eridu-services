@@ -1,7 +1,6 @@
 ---
 name: jsonb-analytics-snapshot
 description: Defines the JSONB Analytics Snapshot Pattern. This skill should be used when implementing analytics, dashboards, or any feature requiring aggregation of historical/immutable data where high read performance is required.
-license: Complete terms in LICENSE.txt
 ---
 
 # JSONB Analytics Snapshot Pattern

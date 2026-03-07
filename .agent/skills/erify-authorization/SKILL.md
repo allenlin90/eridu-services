@@ -7,17 +7,13 @@ description: Patterns for implementing authorization in erify_api with current S
 
 This skill provides **erify_api-specific** authorization implementation patterns, centered on current `isSystemAdmin` + `StudioMembership` behavior, with planned RBAC patterns kept as future-reference only.
 
-**For general authentication/authorization principles, see**:
-- `authentication-authorization-nestjs` - Comprehensive auth patterns
-- `backend-controller-pattern-nestjs` - Controller patterns with auth decorators
+Read this skill for current `erify_api` authorization behavior first. Load the planned-RBAC sections only when the task is explicitly about future authorization design.
 
-## When to Use This Skill
-
-- Implementing new admin endpoints with permission requirements
-- Adding role-based access control to controllers
-- Designing multi-scope access patterns (studio, client, system-wide)
-- Troubleshooting permission denied errors
-- Extending the permission system with new roles or permissions
+**Related references**
+- [Authorization Guide](../../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md)
+- [Architecture Overview](../../../docs/product/ARCHITECTURE_OVERVIEW.md)
+- `authentication-authorization-nestjs` for broader auth guidance
+- `backend-controller-pattern-nestjs` for controller/decorator usage
 
 ## Implementation Status
 
@@ -52,9 +48,9 @@ Different user types have different access scopes:
 | --------------- | ---------------- | ------------------------------- |
 | MC              | Own shows only   | Via `ShowMC` relationship       |
 | Studio Operator | Studio's rooms   | Via `StudioMembership`          |
-| Content Manager | Specific clients | Via `roles` + client filtering  |
-| System Manager  | All data         | Via `roles: ["system_manager"]` |
-| Read-only Admin | View-only        | Via `roles: ["analyst"]`        |
+| Content Manager | Specific clients | Planned RBAC only               |
+| System Manager  | All data         | Planned RBAC only               |
+| Read-only Admin | View-only        | Planned RBAC only               |
 
 ### 2.1 Workflow Action Authorization
 
@@ -347,5 +343,5 @@ await prisma.user.update({
 
 ## Related Documentation
 
-- [Authorization Guide](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md) *(design-only; may be outdated vs current implementation)*
-- [Architecture Overview](../../apps/erify_api/docs/ARCHITECTURE_OVERVIEW.md)
+- [Authorization Guide](../../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md) *(design-only; may be outdated vs current implementation)*
+- [Architecture Overview](../../../docs/product/ARCHITECTURE_OVERVIEW.md)

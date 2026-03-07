@@ -1,10 +1,10 @@
 # Studio Shift Schedule Features and Workflows
 
 Last updated: March 7, 2026
-Source design: `apps/erify_api/docs/design/STUDIO_SHIFT_SCHEDULE_DESIGN.md`
-Branch: `feat/studio-shift-schedule`
+Source references: `apps/erify_api/docs/STUDIO_SHIFT_SCHEDULE.md`, `docs/roadmap/PHASE_3.md`
+Historical branch context: implementation originally landed through the `feat/studio-shift-schedule` stream
 
-This is the single consolidated record of features and changes implemented from the shift schedule design doc, including committed and in-progress branch work.
+This is the consolidated implementation record for the shipped shift-schedule work across backend and frontend.
 
 ## Status Legend
 

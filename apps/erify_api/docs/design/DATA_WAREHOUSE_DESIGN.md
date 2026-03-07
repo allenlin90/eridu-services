@@ -16,10 +16,9 @@ This document should cover:
    - Shift cost analysis and billing insights
 5. **Access Control**: Who can query BigQuery directly vs. who uses dashboards only. Role-based dashboard access aligned with studio membership roles.
 6. **Infrastructure**: GCP project setup, Datastream service account permissions, BigQuery API quotas, cost estimation
-7. **Migration from In-App Analytics**: Supersedes the `TaskAnalyticsSnapshot` model approach (see [superseded design](./ANALYTICS_DASHBOARD.md))
+7. **Migration from In-App Analytics**: Supersedes the earlier in-app analytics-dashboard proposal; no analytics design doc is currently retained in this folder.
 
 ## Reference
 
-- **[Phase 4 Roadmap](../roadmap/PHASE_4.md)** — Implementation scope and success criteria
-- **[Analytics Dashboard (Superseded)](./ANALYTICS_DASHBOARD.md)** — Original in-app analytics approach (retained for reference)
-- **[Architecture Overview](../ARCHITECTURE_OVERVIEW.md)** — System architecture
+- **[Phase 4 Roadmap](../../../../docs/roadmap/PHASE_4.md)** — Implementation scope and success criteria
+- **[System Architecture Overview](../../../../docs/product/ARCHITECTURE_OVERVIEW.md)** — System architecture

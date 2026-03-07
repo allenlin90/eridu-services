@@ -214,4 +214,4 @@ sequenceDiagram
 
 - [Schedule Continuity](./SCHEDULE_CONTINUITY.md) — Diff + upsert publish, identity preservation
 - [Task Management](./TASK_MANAGEMENT_SUMMARY.md) — Downstream task lifecycle
-- [Business Domain](./BUSINESS.md) — Entity relationships and domain model
+- [Business Domain](../../../docs/product/BUSINESS.md) — Entity relationships and domain model

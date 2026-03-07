@@ -35,9 +35,9 @@ Study these real implementations as the source of truth:
 - **Show Scope Utils**: [show-scope.utils.ts](../../../apps/erify_studios/src/features/studio-shows/utils/show-scope.utils.ts)
 
 ### Design Docs
-- **Backend Design**: [STUDIO_SHIFT_SCHEDULE_DESIGN.md](../../../apps/erify_api/docs/design/STUDIO_SHIFT_SCHEDULE_DESIGN.md)
+- **Backend Canonical Doc**: [STUDIO_SHIFT_SCHEDULE.md](../../../apps/erify_api/docs/STUDIO_SHIFT_SCHEDULE.md)
 - **FE Features & Workflows**: [STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md](../../../apps/erify_studios/docs/STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md)
-- **Business Rules**: [BUSINESS.md](../../../apps/erify_api/docs/BUSINESS.md) — see "Studio shift planning and control"
+- **Business Rules**: [BUSINESS.md](../../../docs/product/BUSINESS.md)
 
 ---
 

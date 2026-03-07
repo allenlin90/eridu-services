@@ -2,7 +2,7 @@
 
 > **TLDR**: NestJS REST API for live-commerce operations — manages shows, schedules, tasks, users, clients, MCs, platforms, and studios. Uses Prisma/PostgreSQL, JWT auth via `@eridu/auth-sdk`, and Zod validation via `@eridu/api-types`. Three controller scopes: `/admin/*` (system admins), `/studios/:id/*` (studio members), `/me/*` (authenticated users).
 
-The API uses JWT validation via `@eridu/auth-sdk` SDK for authentication and StudioMembership model for authorization. For detailed implementation status and roadmap, see [Phase 1 Roadmap](docs/roadmap/PHASE_1.md).
+The API uses JWT validation via `@eridu/auth-sdk` SDK for authentication and StudioMembership model for authorization. For detailed implementation status and roadmap, see [Phase 1 Roadmap](../../docs/roadmap/PHASE_1.md).
 
 ## 🚀 Quick Start
 
@@ -575,8 +575,8 @@ The OpenAPI implementation includes:
 - **Client** ↔ **Show**: One-to-Many
 - **Client** ↔ **Schedule**: One-to-Many
 - **StudioRoom** ↔ **Show**: One-to-Many
-- **Client** ↔ **Material**: One-to-Many (Planned for Phase 3)
-- **Platform** ↔ **Material**: One-to-Many (Planned for Phase 3)
+- **Client** ↔ **Material**: One-to-Many (Planned for Phase 4)
+- **Platform** ↔ **Material**: One-to-Many (Planned for Phase 4)
 
 ### Future Entities (Planned)
 
@@ -586,12 +586,12 @@ The database schema includes comprehensive models for the full livestream produc
 - **ShowMC & ShowPlatform**: Show relationship management ✅ (Implemented)
 - **Schedules & ScheduleSnapshots**: Collaborative planning system ✅ (Implemented)
 - **Tasks & TaskTemplates**: Workflow automation ✅ (Implemented — Phase 2)
-- **Materials & MaterialTypes**: Content assets management (Phase 3)
+- **Materials & MaterialTypes**: Content assets management (Phase 4)
 - **Comments**: Collaboration system (Phase 4)
 - **Tags & Taggables**: Flexible categorization (Phase 4)
 - **Audits**: Complete audit trail (Phase 4)
 
-See the [Business Documentation](docs/BUSINESS.md) for detailed information about the complete system architecture. For implementation status and roadmap, see [Phase 1 Roadmap](docs/roadmap/PHASE_1.md), [Phase 2 Roadmap](docs/roadmap/PHASE_2.md), and [Phase 3 Roadmap](docs/roadmap/PHASE_3.md).
+See the root [Business Documentation](../../docs/product/BUSINESS.md) for cross-app domain context and [System Architecture Overview](../../docs/product/ARCHITECTURE_OVERVIEW.md) for monorepo architecture. Backend implementation history remains under `apps/erify_api/docs/`.
 
 ## 🛠️ Development
 
@@ -678,22 +678,24 @@ Comprehensive documentation is available in the `docs/` directory. Refer to spec
 | ------------------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------ |
 | [Authorization Guide](docs/design/AUTHORIZATION_GUIDE.md)                                              | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
 | [Pending-Resolution MVP](docs/design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md)           | ⏳      | Studio-scoped resolution for cancelled shows                                   |
-| [Ad-hoc Task Ticketing](docs/design/AD_HOC_TASK_TICKETING.md)                                         | 📐      | Design for template-less pre-production ticketing using Tasks                  |
-| [Analytics Dashboard Plan](docs/design/ANALYTICS_DASHBOARD.md)                                        | 📐      | Plan for Studio task performance overview using JSONB snapshots                |
+| [Ad-hoc Task Ticketing](docs/design/AD_HOC_TASK_TICKETING.md)                                         | 📐      | Planned template-less task creation using the existing `Task` model            |
+| [Material Management](docs/design/MATERIAL_MANAGEMENT_DESIGN.md)                                      | 🗓️      | Planned for Phase 4; not implemented in the current schema                     |
+| [Data Warehouse Design](docs/design/DATA_WAREHOUSE_DESIGN.md)                                         | 🗓️      | Planned Datastream + BigQuery architecture for Phase 4 analytics               |
 
 ### Roadmap
 
 | Document                                               | Use When                                                       |
 | ------------------------------------------------------ | -------------------------------------------------------------- |
 | [Documentation Index](docs/README.md)                  | Need a quick overview of all documentation                     |
-| [Architecture Overview](docs/ARCHITECTURE_OVERVIEW.md)  | Creating new modules, understanding dependencies               |
-| [Business Domain](docs/BUSINESS.md)                    | Understanding entity relationships and business rules          |
+| [System Architecture Overview](../../docs/product/ARCHITECTURE_OVERVIEW.md)  | Understanding cross-app architecture and boundaries            |
+| [Business Domain](../../docs/product/BUSINESS.md)                    | Understanding product/domain concepts and business rules          |
 | [Authentication Guide](docs/design/AUTHORIZATION_GUIDE.md)    | Implementing auth patterns and guard usage                     |
 | [Server-to-Server Auth](docs/design/AUTHORIZATION_GUIDE.md) | Adding service-to-service endpoints                            |
 | [Schedule Planning](docs/SCHEDULE_PLANNING.md)         | Working on schedule planning features                          |
-| [Phase 1 Roadmap](docs/roadmap/PHASE_1.md)             | Checking current implementation status ✅                       |
-| [Phase 2 Roadmap](docs/roadmap/PHASE_2.md)             | Understanding planned features                                 |
-| [Phase 3 Roadmap](docs/roadmap/PHASE_3.md)             | Long-term vision and planning                                  |
+| [Phase 1 Roadmap](../../docs/roadmap/PHASE_1.md)       | Core foundation that is fully implemented                      |
+| [Phase 2 Roadmap](../../docs/roadmap/PHASE_2.md)       | Task-management foundation and remaining follow-up context     |
+| [Phase 3 Roadmap](../../docs/roadmap/PHASE_3.md)             | Current cross-app closure summary for Phase 3                  |
+| [Phase 4 Roadmap](../../docs/roadmap/PHASE_4.md)             | Planned review-quality, ticketing, materials, and analytics work |
 | [Manual Testing Guide](manual-test/README.md)          | Running E2E workflows: `pnpm -F erify_api manual:schedule:all` |
 
 ## 🔧 Configuration
@@ -851,7 +853,7 @@ pnpm run test:cov
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is intended to use the MIT license; no local `LICENSE` file is currently present in this workspace.
 
 ## 🙏 Acknowledgments
 
