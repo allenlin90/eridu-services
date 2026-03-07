@@ -140,8 +140,11 @@ Delivered:
 - Frontend admin planning cards now consume these endpoints on dedicated surfaces:
   - `/studios/:studioId/shows` for date-range task-readiness summary warnings.
   - `/studios/:studioId/shifts` for shift cost snapshot.
-- `/studios/:studioId/shows` summary warning card supports date-range querying and focuses on task-readiness metrics (`no tasks`, `unassigned`, required `SETUP`/`CLOSURE`, premium moderation).
-- Shows table, readiness snapshot, and `Issues` filter share the same datetime scope window (`date_from/date_to`), including operational-day cutoff behavior from scope utilities (D+1 `05:59` local).
+- `/studios/:studioId/shows` Show Readiness panel supports date-range querying and uses an admin triage layout:
+  - top summary highlights scope coverage, attention rate, and the current primary action
+  - action buckets split follow-up into task-plan gaps, assignment workload, and missing required coverage
+  - per-bucket drill-down popovers expose affected show names, timing, and issue tags without leaving the page
+- Shows table, Show Readiness panel, and `Issues` filter share the same datetime scope window (`date_from/date_to`), including operational-day cutoff behavior from scope utilities (D+1 `05:59` local).
 - Shows task-readiness date range is local UI state (not URL-backed) and includes a quick reset action for the next 7 days.
 
 Pending scope:

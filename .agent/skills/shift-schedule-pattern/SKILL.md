@@ -96,7 +96,7 @@ For the studio shows list (`/studios/$studioId/shows`), the quick `Issues` filte
   - premium show is missing moderation coverage
 
 Implementation pattern:
-- FE computes show-scope datetime bounds (`date_from/date_to`) with operational-day cutoff behavior (D+1 `05:59` local when applicable), and uses that for table, readiness snapshot, and `needs_attention`.
+- FE computes show-scope datetime bounds (`date_from/date_to`) with operational-day cutoff behavior (D+1 `05:59` local when applicable), and uses that for table, Show Readiness panel, and `needs_attention`.
 - BE resolves readiness warnings from the same datetime bounds and in-scope show set (`match_show_scope=true`), then constrains paginated show query by warning show UIDs.
 - Legacy `planning_date_from/planning_date_to` may remain as fallback input only.
 - Bulk Generate/Assign dialogs should close immediately after user confirmation; keep the selected show set persisted so admins can chain follow-up actions without reselecting.
@@ -294,7 +294,7 @@ When implementing shift-related features:
 - [ ] Named constants used instead of magic numbers
 - [ ] Alignment checks cover both per-show and per-operational-day duty-manager coverage
 - [ ] Task readiness checks include SETUP, CLOSURE (+ moderation for premium)
-- [ ] Shows table, readiness snapshot, and `needs_attention` all use the same datetime scope window (`date_from/date_to`)
+- [ ] Shows table, Show Readiness panel, and `needs_attention` all use the same datetime scope window (`date_from/date_to`)
 - [ ] Service metadata types use local `JsonValue`/`JsonObject` (no Prisma imports in service layer)
 - [ ] Internal-only Zod transform shapes use `_internal*` naming prefix
 - [ ] Prisma `Decimal` fields use `z.unknown()` in internal shapes with `decimalToString` helper
