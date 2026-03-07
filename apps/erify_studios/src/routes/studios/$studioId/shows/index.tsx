@@ -325,8 +325,8 @@ function ShowTaskReadinessSection({
     if (hasIncompletePlanningRange || hasInvalidPlanningRange) {
       return;
     }
-    void Promise.all([refetchShiftAlignment(), refetchShowsScope()]);
-  }, [hasIncompletePlanningRange, hasInvalidPlanningRange, refreshSignal, refetchShiftAlignment, refetchShowsScope]);
+    void refetchShiftAlignment();
+  }, [hasIncompletePlanningRange, hasInvalidPlanningRange, refreshSignal, refetchShiftAlignment]);
 
   const isLoadingSnapshot = isLoadingShiftAlignment || isLoadingShowsScope;
   const isFetchingSnapshot = isFetchingShiftAlignment || isFetchingShowsScope;

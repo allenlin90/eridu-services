@@ -142,6 +142,7 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 Behavior:
 - `needs_attention=true` computes readiness warnings in the same datetime window used by the shows table query and restricts list results to those show UIDs.
 - Shows page business window is operational-day aligned (`date_to` can use D+1 `05:59` local behavior), so readiness and table pagination stay consistent.
+- Legacy fallback `planning_date_from/planning_date_to` accepts ISO date-only (`YYYY-MM-DD`) values; invalid values should be rejected with `400 Bad Request`.
 - Readiness baseline for this filter:
   - Standard shows: missing `SETUP` or `CLOSURE` is an issue.
   - Premium shows: same baseline plus missing moderation task is an issue.

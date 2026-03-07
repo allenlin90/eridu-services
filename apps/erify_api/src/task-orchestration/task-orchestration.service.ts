@@ -288,14 +288,10 @@ export class TaskOrchestrationService {
     if (query.needs_attention) {
       const alignmentDateFrom = query.date_from
         ? new Date(query.date_from)
-        : query.planning_date_from
-          ? new Date(query.planning_date_from)
-          : undefined;
+        : this.parseLegacyPlanningDateOrThrow(query.planning_date_from, 'planning_date_from');
       const alignmentDateTo = query.date_to
         ? new Date(query.date_to)
-        : query.planning_date_to
-          ? new Date(query.planning_date_to)
-          : undefined;
+        : this.parseLegacyPlanningDateOrThrow(query.planning_date_to, 'planning_date_to');
       const shiftAlignment = await this.shiftAlignmentService.getAlignment(studioUid, {
         dateFrom: alignmentDateFrom,
         dateTo: alignmentDateTo,
@@ -367,5 +363,18 @@ export class TaskOrchestrationService {
     return {
       deleted_count: result.count,
     };
+  }
+
+  private parseLegacyPlanningDateOrThrow(value: string | undefined, fieldName: 'planning_date_from' | 'planning_date_to') {
+    if (!value) {
+      return undefined;
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      throw HttpError.badRequest(`${fieldName} must be a valid ISO date (YYYY-MM-DD)`);
+    }
+
+    return parsed;
   }
 }

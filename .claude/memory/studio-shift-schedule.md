@@ -64,10 +64,13 @@
 - Filter semantics are tied to readiness warnings:
   - no tasks
   - unassigned tasks
-  - missing required task types (`SETUP`, `ACTIVE`, `CLOSURE`)
+  - missing required task types (`SETUP`, `CLOSURE`)
 - API contract update for studio shows listing:
   - `needs_attention` (boolean)
   - `planning_date_from`, `planning_date_to` (date-only bounds for readiness orchestration alignment)
 - Backend implementation in `TaskOrchestrationService`:
   - when `needs_attention=true`, resolve warning show IDs via `ShiftAlignmentService`
   - apply those show IDs to paginated show query (`show_uids`) so paging remains server-side
+  - validate legacy `planning_date_*` fallback as strict ISO date-only and reject invalid values (`400`)
+- Frontend readiness panel behavior:
+  - scope-total query refresh is key-driven; avoid duplicate effect-level refetch for the same key

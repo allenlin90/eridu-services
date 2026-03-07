@@ -98,8 +98,9 @@ For the studio shows list (`/studios/$studioId/shows`), the quick `Issues` filte
 Implementation pattern:
 - FE computes show-scope datetime bounds (`date_from/date_to`) with operational-day cutoff behavior (D+1 `05:59` local when applicable), and uses that for table, Show Readiness panel, and `needs_attention`.
 - BE resolves readiness warnings from the same datetime bounds and in-scope show set (`match_show_scope=true`), then constrains paginated show query by warning show UIDs.
-- Legacy `planning_date_from/planning_date_to` may remain as fallback input only.
+- Legacy `planning_date_from/planning_date_to` may remain as fallback input only, but must be strict ISO date-only (`YYYY-MM-DD`) and reject invalid values with `400`.
 - Bulk Generate/Assign dialogs should close immediately after user confirmation; keep the selected show set persisted so admins can chain follow-up actions without reselecting.
+- FE scope-total query should refresh via query key changes (for example `refreshSignal`) rather than combining key invalidation with extra effect-driven `refetch()` calls.
 
 ---
 

@@ -292,5 +292,21 @@ describe('taskOrchestrationService', () => {
         }),
       );
     });
+
+    it('should reject invalid legacy planning date inputs for needs_attention', async () => {
+      studioService.findByUid.mockResolvedValue({ id: BigInt(1) } as any);
+
+      await expect(service.getStudioShowsWithTaskSummary('std_1', {
+        page: 1,
+        limit: 10,
+        sort: 'desc',
+        take: 10,
+        skip: 0,
+        needs_attention: true,
+        planning_date_from: 'not-a-date',
+      })).rejects.toThrow('planning_date_from must be a valid ISO date (YYYY-MM-DD)');
+
+      expect(shiftAlignmentService.getAlignment).not.toHaveBeenCalled();
+    });
   });
 });

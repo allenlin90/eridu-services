@@ -21,6 +21,7 @@ Shipped behavior differences/clarifications:
    - mobile: compact stacked bucket rows
    - desktop: richer 3-column action cards
 4. Bucket actions are intentionally `Inspect` only; the single issues CTA remains in summary.
+5. Scope-total data refresh is key-driven (`refreshSignal` in query key); avoid duplicate effect-level refetches for that same query.
 
 ## 1. Purpose
 
