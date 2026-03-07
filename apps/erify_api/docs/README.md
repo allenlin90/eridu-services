@@ -20,6 +20,7 @@
 | [Schedule Planning](./SCHEDULE_PLANNING.md)                                         | ✅ Phase 1 | JSON planning, snapshots, validation, publishing    |
 | [Schedule Continuity](./SCHEDULE_CONTINUITY.md)                                     | ✅ Core    | Identity-preserving diff+upsert publish             |
 | [Task Management Summary](./TASK_MANAGEMENT_SUMMARY.md)                             | ✅         | Task-as-Form architecture, API surface, workflows   |
+| [Studio Shift Schedule](./STUDIO_SHIFT_SCHEDULE.md)                                 | ✅         | Shift CRUD, calendar, alignment service             |
 | [File Upload (Cloudflare R2)](./FILE_UPLOAD.md)                                     | ✅ Phase 3 | Presigned URL flow, use-case limits, storage routing |
 
 ## Design
@@ -29,8 +30,7 @@
 | [Authorization Guide](./design/AUTHORIZATION_GUIDE.md)                                     | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
 | [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) | ⏳      | Studio-scoped resolution for cancelled shows                                   |
 | [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                | 📐      | Template-less pre-production ticketing using Tasks                             |
-| [Studio Shift Schedule](./design/STUDIO_SHIFT_SCHEDULE_DESIGN.md)                         | ✅ stub  | See [STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md](../erify_studios/docs/STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md) |
-| [Analytics Dashboard](./design/ANALYTICS_DASHBOARD.md)                                    | ⚠️ Superseded | Replaced by Datastream + BigQuery; see [Phase 4](./roadmap/PHASE_4.md)         |
+| Analytics Dashboard                                                                        | ⚠️ Removed | Superseded; replaced by Datastream + BigQuery — see [Phase 4](./roadmap/PHASE_4.md) |
 | [Material Management](./design/MATERIAL_MANAGEMENT_DESIGN.md)                             | ⏳      | To be written (Phase 3 prerequisite)                                           |
 | [Data Warehouse](./design/DATA_WAREHOUSE_DESIGN.md)                                       | ⏳      | Datastream + BigQuery — to be written (Phase 4)                                |
 
