@@ -722,7 +722,6 @@ function StudioShowsTableSection({
               setBulkGeneratingShows(null);
           }}
           onSuccess={() => {
-            clearSelectedShows();
             void refetch();
             onShowsMutated();
           }}
@@ -739,7 +738,6 @@ function StudioShowsTableSection({
               setBulkAssigningShows(null);
           }}
           onSuccess={() => {
-            clearSelectedShows();
             void refetch();
             onShowsMutated();
           }}

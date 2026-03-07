@@ -38,10 +38,10 @@
 ## Key Workflows
 
 ### 1. Bulk Task Generation (Admin)
-Shows list → select shows → "Generate Tasks" → pick templates in dialog → POST `/tasks/generate` → table refreshes
+Shows list → select shows → "Generate Tasks" → pick templates in dialog → confirm action (dialog closes immediately) → POST `/tasks/generate` → table refreshes while selected shows remain selected for follow-up actions
 
 ### 2. Bulk Assignment (Admin)
-Shows list → select shows → "Assign" → pick member → POST `/tasks/assign-shows` → table refreshes
+Shows list → select shows → "Assign" → pick member → confirm action (dialog closes immediately) → POST `/tasks/assign-shows` → table refreshes while selected shows remain selected for follow-up actions
 
 ### 3. Individual Reassignment (Admin)
 Show detail → inline assignee dropdown on task card → PATCH `/tasks/:taskUid/assign` (optimistic update)
@@ -118,6 +118,7 @@ The `Issues` filter uses the same datetime window and same in-scope show set as 
 
 - `Issues` is a dedicated quick filter chip (icon + short label) to avoid long wording in toolbar.
 - The filter definition intentionally mirrors readiness warnings, and both are computed in the same datetime scope as table pagination.
+- Bulk action UX is optimized for repeated operations: after confirming Generate/Assign, dialogs close immediately and current row selection is preserved by default.
 
 ---
 

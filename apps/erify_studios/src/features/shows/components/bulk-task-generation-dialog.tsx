@@ -85,6 +85,8 @@ export function BulkTaskGenerationDialog({
     if (selectedTemplateIds.length === 0 || shows.length === 0)
       return;
 
+    // Close immediately after user confirms; keep selection on page for follow-up actions.
+    handleOpenChange(false);
     generateTasks({
       show_uids: shows.map((s) => s.id),
       template_uids: selectedTemplateIds,
