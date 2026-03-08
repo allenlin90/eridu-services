@@ -4,6 +4,7 @@ import { RouterProvider } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Toaster } from 'sonner';
+import { registerSW } from 'virtual:pwa-register';
 
 import './index.css';
 
@@ -26,3 +27,14 @@ createRoot(document.getElementById('root')!).render(
     </PersistQueryClientProvider>
   </StrictMode>,
 );
+
+const updateSW = registerSW({
+  immediate: false,
+  onRegisterError(error) {
+    console.error('PWA service worker registration failed', error);
+  },
+});
+
+if (import.meta.env.PROD) {
+  void updateSW();
+}

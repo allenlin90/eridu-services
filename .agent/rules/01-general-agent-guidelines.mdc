@@ -11,7 +11,7 @@ Before starting ANY task, you MUST check if there are relevant skills in the `.a
 
 **Common Skill Mappings:**
 - **Backend (NestJS)**: `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `orchestration-service-nestjs`, `erify-authorization`, `authentication-authorization-nestjs`, `database-patterns`, `data-validation`
-- **Frontend (React)**: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`, `frontend-error-handling`, `frontend-performance`, `frontend-i18n`, `frontend-code-quality`
+- **Frontend (React)**: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`, `frontend-error-handling`, `frontend-performance`, `frontend-i18n`, `frontend-code-quality`, `pwa-best-practices`
 - **Architecture & Types**: `design-patterns`, `shared-api-types`, `solid-principles`
 - **Code Quality & Review**: `code-quality`, `engineering-best-practices-enforcer`
 - **Feature-Specific**: `admin-list-pattern`, `studio-list-pattern`, `task-template-builder`, `schedule-continuity-workflow`, `jsonb-analytics-snapshot`, `shift-schedule-pattern`, `file-upload-presign`
@@ -40,6 +40,15 @@ After feature delivery, behavior changes, or refactors, you MUST sync agent know
    - workflows/rules when process became reusable/mandatory
    - memory references in `.claude/memory/` for durable project knowledge
 3. **Goal:** ensure future agents can discover and apply the updated behavior/process without re-deriving context.
+
+
+## 2.2 Frontend PWA Workflow (MANDATORY for PWA changes)
+When enabling or modifying PWA behavior in frontend apps, you MUST follow `.agent/workflows/pwa-migration.md` and the `pwa-best-practices` skill.
+
+Required baseline for PWA tasks:
+- Preserve TanStack Query ownership of API data caching (avoid SW/API double-caching).
+- Keep route URL/search-param behavior parity while introducing PWA support.
+- Run `lint`, `typecheck`, `test`, and `build` for each changed frontend app.
 
 ## 3. General Best Practices
 - **Code Style:** Follow the established patterns in the codebase.

@@ -61,6 +61,7 @@ For Claude Code sessions, the primary configuration lives in `.claude/`. Claude 
   - `frontend-performance`
   - `frontend-i18n`
   - `frontend-code-quality`
+  - `pwa-best-practices` (for PWA setup/migration and SW-query caching boundaries)
 - Architecture and shared contracts:
   - `shared-api-types`
   - `design-patterns`
@@ -85,8 +86,9 @@ For Claude Code sessions, the primary configuration lives in `.claude/`. Claude 
 2. Load relevant skill(s) from `.agent/skills/<skill>/SKILL.md` (both Antigravity and Claude Code read from here).
 3. Read local patterns in the target module before changing code.
 4. Implement minimal change set first; avoid broad refactors unless requested.
-5. Verify each impacted workspace (`.agent/workflows/verification.md`).
-6. For feature/refactor/behavior changes, run knowledge sync (`.agent/workflows/knowledge-sync.md`).
+5. For PWA work in frontend apps, follow `.agent/workflows/pwa-migration.md` in addition to feature-specific skills.
+6. Verify each impacted workspace (`.agent/workflows/verification.md`).
+7. For feature/refactor/behavior changes, run knowledge sync (`.agent/workflows/knowledge-sync.md`).
 
 ## Verification Checklist (Mandatory)
 Run for every changed workspace/package:

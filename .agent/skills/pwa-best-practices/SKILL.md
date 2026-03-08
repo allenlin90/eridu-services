@@ -7,6 +7,34 @@ description: Comprehensive patterns for building high-quality Progressive Web Ap
 
 This skill provides architectural guidelines and patterns for building and maintaining robust PWAs in a modern React ecosystem.
 
+## Monorepo Rollout Intent (Eridu)
+
+Use this skill when introducing or refining PWA support in `apps/erify_studios` and `apps/erify_creators`.
+
+- Prefer an app-by-app rollout with one canonical migration checklist.
+- Start with `erify_studios` as the benchmark implementation.
+- Reuse the same PWA conventions in other FE apps unless there is a documented product constraint.
+- Keep changes incremental: infra/bootstrap first, then offline UX and advanced sync.
+
+## Recommended Rollout Phases
+
+1. **Foundation**
+   - Add and configure `vite-plugin-pwa` in `vite.config.ts`.
+   - Define manifest metadata (name, short_name, theme/background colors, display, icons).
+   - Ensure icon assets exist (including `maskable` variants).
+2. **Runtime Caching Contract**
+   - Cache static assets via Workbox (`StaleWhileRevalidate`/`CacheFirst`).
+   - Keep API traffic `NetworkOnly` when TanStack Query owns API data caching.
+3. **App Integration**
+   - Register SW entry in `src/main.tsx` via `virtual:pwa-register` (or equivalent helper module).
+   - Implement update UX (prompt or auto-update strategy) aligned with product behavior.
+4. **Offline Experience**
+   - Add connectivity status UI.
+   - Add “offline copy” indicators when cached query data is shown.
+5. **Hardening**
+   - Verify installability, update flow, and offline fallback behavior.
+   - Run Lighthouse PWA audits and document deviations.
+
 ## Core Architecture: Segregation of Responsibilities
 
 The most critical principle for long-term PWA health is separating **App Shell** (Assets) from **Data State** (API).
@@ -69,3 +97,26 @@ Use `registerType: 'prompt'` or `registerType: 'autoUpdate'`.
 
 ### 4. Background Sync (Advanced)
 For mutations made while offline, use Workbox Background Sync or TanStack Query's mutation persistence to replay requests when the connection is restored.
+
+## Implementation Guardrails (Eridu FE)
+
+- Keep route URL/search-param behavior unchanged during PWA migration.
+- Avoid coupling SW logic with feature modules; keep PWA bootstrap in app entry + config boundaries.
+- Do not introduce duplicate caches for the same API payload.
+- Keep PWA-specific env/config documented so deployments are deterministic.
+
+## Verification Expectations
+
+For each frontend app changed for PWA work:
+
+1. `pnpm --filter <app> lint`
+2. `pnpm --filter <app> typecheck`
+3. `pnpm --filter <app> test`
+4. `pnpm --filter <app> build`
+
+Also manually verify:
+
+- Browser install prompt / installability.
+- SW update behavior (prompt vs auto) as configured.
+- Offline app-shell loading.
+- Online→offline→online transition for a representative data-heavy screen.

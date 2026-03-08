@@ -89,6 +89,7 @@ When working on erify_studios, refer to these guides:
 - ✅ **Authentication**: JWT-based session management with admin authorization via `@eridu/auth-sdk`
 - ✅ **Internationalization**: Multi-language support (English, Traditional Chinese, Thai)
 - ✅ **Offline Support**: IndexedDB persistence for offline capability
+- ✅ **PWA Foundation**: App-shell service worker + web app manifest (API caching remains TanStack Query + IndexedDB)
 - ✅ **Error Handling**: Global error boundary with recovery options
 - ✅ **Responsive Design**: Mobile-friendly UI with sidebar collapse
 - ✅ **Comprehensive Testing**: Unit and component tests with good coverage
