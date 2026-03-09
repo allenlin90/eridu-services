@@ -59,7 +59,7 @@ function StudioTasksPage() {
                 className="h-8"
                 onClick={() => {
                   navigate({
-                    to: '/studios/$studioId/helpers',
+                    to: '/studios/$studioId/members',
                     params: { studioId },
                   });
                 }}

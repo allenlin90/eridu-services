@@ -126,9 +126,9 @@ function isPathActive(pathname: string, targetUrl: string): boolean {
 }
 
 /**
- * Generates common studio navigation items available to all studio members.
+ * Generates workspace navigation items available to all studio members.
  */
-function getStudioCommonItems(
+function getStudioWorkspaceItems(
   studioId: string,
 ): SidebarNavItem['items'] {
   return [
@@ -167,14 +167,6 @@ function getStudioManagerItems(
     });
   }
 
-  if (hasStudioRouteAccess(role as StudioRole, 'helpers')) {
-    managerItems.push({
-      title: 'Member Roster',
-      url: `/studios/${studioId}/helpers`,
-      icon: Users,
-    });
-  }
-
   if (
     (role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER)
     && hasStudioRouteAccess(role as StudioRole, 'shows')
@@ -183,6 +175,21 @@ function getStudioManagerItems(
       title: 'Show Operations',
       url: `/studios/${studioId}/shows`,
       icon: Clapperboard,
+    });
+  }
+
+  if (hasStudioRouteAccess(role as StudioRole, 'shifts')) {
+    managerItems.push({
+      title: 'Shift Schedule',
+      url: `/studios/${studioId}/shifts`,
+      icon: CalendarDays,
+    });
+  }
+  if (hasStudioRouteAccess(role as StudioRole, 'taskTemplates')) {
+    managerItems.push({
+      title: 'Task Templates',
+      url: `/studios/${studioId}/task-templates`,
+      icon: ClipboardCheck,
     });
   }
 
@@ -198,18 +205,11 @@ function getStudioAdminItems(
 ): SidebarNavItem['items'] {
   const adminItems: SidebarNavItem['items'] = [];
 
-  if (hasStudioRouteAccess(role as StudioRole, 'shifts')) {
+  if (hasStudioRouteAccess(role as StudioRole, 'members')) {
     adminItems.push({
-      title: 'Shift Schedule',
-      url: `/studios/${studioId}/shifts`,
-      icon: CalendarDays,
-    });
-  }
-  if (hasStudioRouteAccess(role as StudioRole, 'taskTemplates')) {
-    adminItems.push({
-      title: 'Task Templates',
-      url: `/studios/${studioId}/task-templates`,
-      icon: ClipboardCheck,
+      title: 'Member Roster',
+      url: `/studios/${studioId}/members`,
+      icon: Users,
     });
   }
 
@@ -284,7 +284,7 @@ export function useSidebarConfig(
       });
     }
     if (activeStudio) {
-      const studioCommonItems = buildActiveItems(getStudioCommonItems(activeStudio.studio.uid));
+      const studioWorkspaceItems = buildActiveItems(getStudioWorkspaceItems(activeStudio.studio.uid));
       const studioManagerItems = buildActiveItems(getStudioManagerItems(activeStudio.studio.uid, activeStudio.role));
       const studioAdminItems = buildActiveItems(getStudioAdminItems(activeStudio.studio.uid, activeStudio.role));
       const studioTalentItems = buildActiveItems(getStudioTalentItems(activeStudio.studio.uid, activeStudio.role));
@@ -293,11 +293,11 @@ export function useSidebarConfig(
         || activeStudio.role === STUDIO_ROLE.ADMIN;
 
       navItems.push({
-        title: 'Studio Common',
+        title: 'Studio Workspace',
         url: `/studios/${activeStudio.studio.uid}`,
         icon: Videotape,
-        isActive: studioCommonItems.some((item) => item.isActive),
-        items: studioCommonItems,
+        isActive: studioWorkspaceItems.some((item) => item.isActive),
+        items: studioWorkspaceItems,
       });
 
       if (studioManagerItems.length > 0) {

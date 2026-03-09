@@ -56,7 +56,7 @@ Source map: `apps/erify_studios/src/lib/constants/studio-route-access.ts`
 | `myTasks`       | `MEMBER`                  | all member+ roles |
 | `myShifts`      | `MEMBER`                  | all member+ roles |
 | `tasks`         | `MANAGER`                 | manager+          |
-| `helpers` (`Member Roster`) | allow-list (`ADMIN`, `MANAGER`) | admin/manager |
+| `members` (`Member Roster`) | `ADMIN` | admin only |
 | `shifts`        | `ADMIN`                   | admin only        |
 | `shows`         | allow-list (`ADMIN`, `MANAGER`) | admin/manager |
 | `creators`      | allow-list (`ADMIN`, `MANAGER`, `TALENT_MANAGER`) | admin/manager/talent-manager |
@@ -67,8 +67,8 @@ Important FE note:
 - New roles (`TALENT_MANAGER`, `DESIGNER`, `MODERATION_MANAGER`) require explicit FE policy mapping before they can be treated as first-class in route-level access.
 
 Current sidebar grouping (FE concern only):
-- `Studio Manager`: manager/admin operational workflows (`Review Queue`, `Member Roster`, `Show Operations`)
-- `Studio Admin`: admin-only workflows (`Shift Schedule`, `Task Templates`)
+- `Studio Manager`: manager/admin operational workflows (`Review Queue`, `Show Operations`, `Shift Schedule`, `Task Templates`)
+- `Studio Admin`: admin-only membership governance (`Member Roster`)
 - `Studio Creators`: creator staffing area with two scoped entries
   - `Creator Roster` on `/studios/:studioId/creators`
   - `Creator Mapping` on `/studios/:studioId/creators/mapping`
@@ -76,7 +76,7 @@ Current sidebar grouping (FE concern only):
 
 Planned Phase 4 extension:
 - Add dedicated FE workflow surfaces for member roster management in studio membership domain.
-- Ownership target remains `ADMIN` and `MANAGER`.
+- FE ownership target is `ADMIN` (member roster route).
 
 ## Related Docs
 

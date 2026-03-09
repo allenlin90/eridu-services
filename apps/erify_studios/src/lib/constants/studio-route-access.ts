@@ -6,7 +6,7 @@ export const STUDIO_ROUTE_ACCESS = {
   myShifts: STUDIO_ROLE.MEMBER,
   tasks: STUDIO_ROLE.MANAGER,
   shifts: STUDIO_ROLE.ADMIN,
-  helpers: STUDIO_ROLE.MANAGER,
+  members: STUDIO_ROLE.ADMIN,
   shows: STUDIO_ROLE.MANAGER,
   creators: STUDIO_ROLE.MANAGER,
   taskTemplates: STUDIO_ROLE.ADMIN,
@@ -17,8 +17,8 @@ export type StudioRouteAccessKey = keyof typeof STUDIO_ROUTE_ACCESS;
 const STUDIO_ROUTE_ROLE_ALLOWLIST: Partial<Record<StudioRouteAccessKey, StudioRole[]>> = {
   // Show operations are manager/admin workflows.
   shows: [STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER],
-  // Helper roster is manager/admin workflow.
-  helpers: [STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER],
+  // Member roster is admin-only workflow.
+  members: [STUDIO_ROLE.ADMIN],
   // Creator mapping is manager/admin/talent-manager.
   creators: [STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER],
 };

@@ -222,6 +222,32 @@ export class UpdateStudioMembershipHelperDto extends createZodDto(
   updateStudioMembershipHelperSchema,
 ) {}
 
+export const listMembershipUserCatalogQuerySchema = z.object({
+  search: z.string().trim().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+
+export class ListMembershipUserCatalogQueryDto extends createZodDto(
+  listMembershipUserCatalogQuerySchema,
+) {
+  declare search: string | undefined;
+  declare limit: number;
+}
+
+export const membershipUserCatalogItemDto = userSchema
+  .transform((obj) => ({
+    id: obj.uid,
+    ext_id: obj.extId,
+    email: obj.email,
+    name: obj.name,
+  }))
+  .pipe(z.object({
+    id: z.string(),
+    ext_id: z.string().nullable(),
+    email: z.email(),
+    name: z.string(),
+  }));
+
 // Service-level internal schemas (camelCase) and assert helpers
 
 export const createStudioMembershipInternalSchema = z

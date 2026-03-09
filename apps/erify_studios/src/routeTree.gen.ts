@@ -33,7 +33,7 @@ import { Route as StudiosStudioIdShowsRouteImport } from './routes/studios/$stud
 import { Route as StudiosStudioIdShiftsRouteImport } from './routes/studios/$studioId/shifts'
 import { Route as StudiosStudioIdMyTasksRouteImport } from './routes/studios/$studioId/my-tasks'
 import { Route as StudiosStudioIdMyShiftsRouteImport } from './routes/studios/$studioId/my-shifts'
-import { Route as StudiosStudioIdHelpersRouteImport } from './routes/studios/$studioId/helpers'
+import { Route as StudiosStudioIdMembersRouteImport } from './routes/studios/$studioId/members'
 import { Route as StudiosStudioIdDashboardRouteImport } from './routes/studios/$studioId/dashboard'
 import { Route as StudiosStudioIdCreatorsRouteImport } from './routes/studios/$studioId/creators'
 import { Route as StudiosStudioIdTasksIndexRouteImport } from './routes/studios/$studioId/tasks/index'
@@ -173,9 +173,9 @@ const StudiosStudioIdMyShiftsRoute = StudiosStudioIdMyShiftsRouteImport.update({
   path: '/my-shifts',
   getParentRoute: () => StudiosStudioIdRouteRoute,
 } as any)
-const StudiosStudioIdHelpersRoute = StudiosStudioIdHelpersRouteImport.update({
-  id: '/helpers',
-  path: '/helpers',
+const StudiosStudioIdMembersRoute = StudiosStudioIdMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
   getParentRoute: () => StudiosStudioIdRouteRoute,
 } as any)
 const StudiosStudioIdDashboardRoute =
@@ -275,7 +275,7 @@ export interface FileRoutesByFullPath {
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
   '/studios/$studioId/creators': typeof StudiosStudioIdCreatorsRouteWithChildren
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
-  '/studios/$studioId/helpers': typeof StudiosStudioIdHelpersRoute
+  '/studios/$studioId/members': typeof StudiosStudioIdMembersRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/shifts': typeof StudiosStudioIdShiftsRouteWithChildren
@@ -316,7 +316,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
-  '/studios/$studioId/helpers': typeof StudiosStudioIdHelpersRoute
+  '/studios/$studioId/members': typeof StudiosStudioIdMembersRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/system/clients': typeof SystemClientsIndexRoute
@@ -355,7 +355,7 @@ export interface FileRoutesById {
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
   '/studios/$studioId/creators': typeof StudiosStudioIdCreatorsRouteWithChildren
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
-  '/studios/$studioId/helpers': typeof StudiosStudioIdHelpersRoute
+  '/studios/$studioId/members': typeof StudiosStudioIdMembersRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/shifts': typeof StudiosStudioIdShiftsRouteWithChildren
@@ -399,7 +399,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId'
     | '/studios/$studioId/creators'
     | '/studios/$studioId/dashboard'
-    | '/studios/$studioId/helpers'
+    | '/studios/$studioId/members'
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/shifts'
@@ -440,7 +440,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/studios/$studioId'
     | '/studios/$studioId/dashboard'
-    | '/studios/$studioId/helpers'
+    | '/studios/$studioId/members'
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/system/clients'
@@ -478,7 +478,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId'
     | '/studios/$studioId/creators'
     | '/studios/$studioId/dashboard'
-    | '/studios/$studioId/helpers'
+    | '/studios/$studioId/members'
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/shifts'
@@ -690,11 +690,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudiosStudioIdMyShiftsRouteImport
       parentRoute: typeof StudiosStudioIdRouteRoute
     }
-    '/studios/$studioId/helpers': {
-      id: '/studios/$studioId/helpers'
-      path: '/helpers'
-      fullPath: '/studios/$studioId/helpers'
-      preLoaderRoute: typeof StudiosStudioIdHelpersRouteImport
+    '/studios/$studioId/members': {
+      id: '/studios/$studioId/members'
+      path: '/members'
+      fullPath: '/studios/$studioId/members'
+      preLoaderRoute: typeof StudiosStudioIdMembersRouteImport
       parentRoute: typeof StudiosStudioIdRouteRoute
     }
     '/studios/$studioId/dashboard': {
@@ -883,7 +883,7 @@ const StudiosStudioIdTasksRouteWithChildren =
 interface StudiosStudioIdRouteRouteChildren {
   StudiosStudioIdCreatorsRoute: typeof StudiosStudioIdCreatorsRouteWithChildren
   StudiosStudioIdDashboardRoute: typeof StudiosStudioIdDashboardRoute
-  StudiosStudioIdHelpersRoute: typeof StudiosStudioIdHelpersRoute
+  StudiosStudioIdMembersRoute: typeof StudiosStudioIdMembersRoute
   StudiosStudioIdMyShiftsRoute: typeof StudiosStudioIdMyShiftsRoute
   StudiosStudioIdMyTasksRoute: typeof StudiosStudioIdMyTasksRoute
   StudiosStudioIdShiftsRoute: typeof StudiosStudioIdShiftsRouteWithChildren
@@ -895,7 +895,7 @@ interface StudiosStudioIdRouteRouteChildren {
 const StudiosStudioIdRouteRouteChildren: StudiosStudioIdRouteRouteChildren = {
   StudiosStudioIdCreatorsRoute: StudiosStudioIdCreatorsRouteWithChildren,
   StudiosStudioIdDashboardRoute: StudiosStudioIdDashboardRoute,
-  StudiosStudioIdHelpersRoute: StudiosStudioIdHelpersRoute,
+  StudiosStudioIdMembersRoute: StudiosStudioIdMembersRoute,
   StudiosStudioIdMyShiftsRoute: StudiosStudioIdMyShiftsRoute,
   StudiosStudioIdMyTasksRoute: StudiosStudioIdMyTasksRoute,
   StudiosStudioIdShiftsRoute: StudiosStudioIdShiftsRouteWithChildren,

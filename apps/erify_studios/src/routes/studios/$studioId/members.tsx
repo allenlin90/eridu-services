@@ -4,19 +4,19 @@ import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { PageLayout } from '@/components/layouts/page-layout';
 import { StudioHelperRosterManager } from '@/features/memberships/components/studio-helper-roster-manager';
 
-export const Route = createFileRoute('/studios/$studioId/helpers')({
-  component: StudioHelpersPage,
+export const Route = createFileRoute('/studios/$studioId/members')({
+  component: StudioMembersPage,
 });
 
-function StudioHelpersPage() {
+function StudioMembersPage() {
   const { studioId } = Route.useParams();
 
   return (
     <StudioRouteGuard
       studioId={studioId}
-      routeKey="helpers"
+      routeKey="members"
       deniedTitle="Member Roster Access Required"
-      deniedDescription="Only studio admins and managers can manage studio memberships."
+      deniedDescription="Only studio admins can manage studio memberships."
     >
       <PageLayout
         title="Member Roster"

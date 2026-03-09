@@ -20,13 +20,16 @@ import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateStudioScopedMembershipDto,
+  ListMembershipUserCatalogQueryDto,
   ListStudioMembershipsQueryDto,
+  membershipUserCatalogItemDto,
   studioMembershipWithRelationsDto,
   UpdateStudioMembershipHelperDto,
   UpdateStudioMembershipRoleDto,
 } from '@/models/membership/schemas/studio-membership.schema';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { StudioService } from '@/models/studio/studio.service';
+import { UserService } from '@/models/user/user.service';
 
 @ApiTags('Studio Memberships')
 @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
@@ -34,8 +37,38 @@ import { StudioService } from '@/models/studio/studio.service';
 export class StudioMembershipController extends BaseStudioController {
   constructor(
     private readonly studioMembershipService: StudioMembershipService,
+    private readonly userService: UserService,
   ) {
     super();
+  }
+
+  @Get('user-catalog')
+  @ApiOperation({ summary: 'List users for studio membership invite combobox' })
+  @ZodResponse(membershipUserCatalogItemDto.array())
+  async listUserCatalog(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: ListMembershipUserCatalogQueryDto,
+  ) {
+    const existingMemberships = await this.studioMembershipService.listStudioMemberships(
+      { studioId, take: 1000, skip: 0 },
+      {},
+    );
+    const existingUserIds = new Set(existingMemberships.data.map((membership) => membership.userId));
+
+    const { data } = await this.userService.listUsers({
+      page: 1,
+      limit: query.limit,
+      take: query.limit,
+      skip: 0,
+      sort: 'asc',
+      name: query.search,
+      email: undefined,
+      uid: undefined,
+      extId: undefined,
+      isSystemAdmin: undefined,
+    });
+
+    return data.filter((user) => !existingUserIds.has(user.id));
   }
 
   @Post()

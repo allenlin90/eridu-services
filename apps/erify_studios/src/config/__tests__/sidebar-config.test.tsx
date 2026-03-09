@@ -135,7 +135,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
-    expect(result.current.navMain).toHaveLength(6); // Dashboard + System + Studio Common + Studio Manager + Studio Admin + Studio Creators
+    expect(result.current.navMain).toHaveLength(6); // Dashboard + System + Studio Workspace + Studio Manager + Studio Admin + Studio Creators
     expect(result.current.navMain[0]).toEqual({
       title: 'Dashboard',
       url: '/dashboard',
@@ -167,7 +167,7 @@ describe('useSidebarConfig', () => {
     });
 
     expect(result.current.navMain[2]).toEqual(expect.objectContaining({
-      title: 'Studio Common',
+      title: 'Studio Workspace',
       url: '/studios/studio-1',
       icon: expect.any(Function),
       isActive: false,
@@ -198,12 +198,16 @@ describe('useSidebarConfig', () => {
           url: '/studios/studio-1/tasks?status=REVIEW',
         }),
         expect.objectContaining({
-          title: 'Member Roster',
-          url: '/studios/studio-1/helpers',
-        }),
-        expect.objectContaining({
           title: 'Show Operations',
           url: '/studios/studio-1/shows',
+        }),
+        expect.objectContaining({
+          title: 'Shift Schedule',
+          url: '/studios/studio-1/shifts',
+        }),
+        expect.objectContaining({
+          title: 'Task Templates',
+          url: '/studios/studio-1/task-templates',
         }),
       ]),
     }));
@@ -215,12 +219,8 @@ describe('useSidebarConfig', () => {
       isActive: false,
       items: expect.arrayContaining([
         expect.objectContaining({
-          title: 'Shift Schedule',
-          url: '/studios/studio-1/shifts',
-        }),
-        expect.objectContaining({
-          title: 'Task Templates',
-          url: '/studios/studio-1/task-templates',
+          title: 'Member Roster',
+          url: '/studios/studio-1/members',
         }),
       ]),
     }));

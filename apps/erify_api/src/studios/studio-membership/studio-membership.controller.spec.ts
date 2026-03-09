@@ -5,6 +5,7 @@ import { StudioMembershipController } from './studio-membership.controller';
 
 import type { ListStudioMembershipsQueryDto } from '@/models/membership/schemas/studio-membership.schema';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
+import { UserService } from '@/models/user/user.service';
 
 describe('studioMembershipController', () => {
   let controller: StudioMembershipController;
@@ -19,6 +20,12 @@ describe('studioMembershipController', () => {
           useValue: {
             listStudioMemberships: jest.fn(),
             toggleTaskHelperStatus: jest.fn(),
+          },
+        },
+        {
+          provide: UserService,
+          useValue: {
+            listUsers: jest.fn(),
           },
         },
       ],

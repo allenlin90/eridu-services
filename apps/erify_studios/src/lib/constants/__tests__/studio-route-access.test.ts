@@ -30,10 +30,10 @@ describe('hasStudioRouteAccess', () => {
     expect(hasStudioRouteAccess(STUDIO_ROLE.TALENT_MANAGER, 'tasks')).toBe(false);
   });
 
-  it('keeps helpers route as manager/admin only', () => {
-    expect(hasStudioRouteAccess(STUDIO_ROLE.MANAGER, 'helpers')).toBe(true);
-    expect(hasStudioRouteAccess(STUDIO_ROLE.ADMIN, 'helpers')).toBe(true);
-    expect(hasStudioRouteAccess(STUDIO_ROLE.MEMBER, 'helpers')).toBe(false);
-    expect(hasStudioRouteAccess(STUDIO_ROLE.TALENT_MANAGER, 'helpers')).toBe(false);
+  it('keeps members route as admin only', () => {
+    expect(hasStudioRouteAccess(STUDIO_ROLE.ADMIN, 'members')).toBe(true);
+    expect(hasStudioRouteAccess(STUDIO_ROLE.MANAGER, 'members')).toBe(false);
+    expect(hasStudioRouteAccess(STUDIO_ROLE.MEMBER, 'members')).toBe(false);
+    expect(hasStudioRouteAccess(STUDIO_ROLE.TALENT_MANAGER, 'members')).toBe(false);
   });
 });

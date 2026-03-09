@@ -129,7 +129,7 @@ Deliverables:
   - Task assignee resolution now uses scoped membership lookup (no studio-wide membership list scan).
 - Frontend baseline implemented:
   - Studio Admin navigation includes dedicated `Member Roster` route:
-    - `/studios/:studioId/helpers`
+    - `/studios/:studioId/members`
   - Member roster management is now route-based (not modal state coupled to review queue).
   - Task assignment comboboxes only list helper-eligible members (plus role-default `ADMIN`/`MANAGER`).
   - Helper roster includes invite-member and role-change actions in-page.
@@ -138,8 +138,7 @@ Deliverables:
     - paginated table parity with search/filter toolbar and pagination footer
     - search-aware empty states
     - clearer action labels and selected-state feedback for onboarding actions
-  - Known issue kept for now:
-    - invite currently requires `user_id` input; searchable user-lookup UX is deferred to follow-up optimization.
+  - Invite flow now uses searchable user lookup combobox (no raw `user_id` input required).
 
 Verify:
 - Role-access tests for member roster endpoints and FE route visibility.

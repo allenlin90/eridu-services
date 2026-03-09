@@ -78,8 +78,8 @@ The dialog includes:
 
 ## Member Roster UX (Task Assignment Domain)
 
-`/studios/$studioId/helpers` uses the same paginated table pattern for consistency:
-- invite member flow (add existing system user into studio membership with role)
+`/studios/$studioId/members` uses the same paginated table pattern for consistency:
+- invite member flow (search existing system users via combobox and add into studio membership with role)
 - searchable member list (name/email)
 - role management (`Change Role`) for existing studio members (admin-only, explicit confirm action)
 - explicit role-default state for `ADMIN`/`MANAGER`

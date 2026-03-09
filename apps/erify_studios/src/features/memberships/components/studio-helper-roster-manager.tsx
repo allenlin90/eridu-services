@@ -8,6 +8,7 @@ import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
+  AsyncCombobox,
   Badge,
   Button,
   Card,
@@ -29,6 +30,7 @@ import {
 import { AdminFormDialog } from '@/features/admin/components';
 import { useCreateStudioMembership } from '@/features/memberships/api/create-studio-membership';
 import { useDeleteStudioMembership } from '@/features/memberships/api/delete-studio-membership';
+import { useMembershipUserCatalog } from '@/features/memberships/api/get-membership-user-catalog';
 import type { Membership } from '@/features/memberships/api/get-memberships';
 import { useStudioMembershipsQuery } from '@/features/memberships/api/get-studio-memberships';
 import { useUpdateStudioMembershipHelper } from '@/features/memberships/api/update-studio-membership-helper';
@@ -66,6 +68,7 @@ export function StudioHelperRosterManager({
   enabled = true,
 }: StudioHelperRosterManagerProps) {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [inviteSearch, setInviteSearch] = useState('');
   const { role: currentRole } = useStudioAccess(studioId);
   const { data: profile } = useUserProfile();
   const canChangeRole = currentRole === STUDIO_ROLE.ADMIN;
@@ -76,7 +79,7 @@ export function StudioHelperRosterManager({
     columnFilters,
     onColumnFiltersChange,
   } = useTableUrlState({
-    from: '/studios/$studioId/helpers',
+    from: '/studios/$studioId/members',
     searchColumnId: 'member_name',
     paramNames: {
       search: 'search',
@@ -99,8 +102,16 @@ export function StudioHelperRosterManager({
   const createMembership = useCreateStudioMembership(studioId);
   const updateRoleMutation = useUpdateStudioMembershipRole(studioId);
   const deleteMembershipMutation = useDeleteStudioMembership(studioId);
+  const userCatalogQuery = useMembershipUserCatalog(studioId, inviteSearch, { enabled: isInviteOpen });
 
   const memberships = useMemo(() => query.data?.data ?? [], [query.data?.data]);
+  const inviteUserOptions = useMemo(
+    () => (userCatalogQuery.data ?? []).map((user) => ({
+      label: `${user.name} (${user.email})`,
+      value: user.id,
+    })),
+    [userCatalogQuery.data],
+  );
   const paginationMeta = query.data?.meta;
   const totalFilteredMembers = paginationMeta?.total ?? 0;
   const isSearching = Boolean(searchTerm?.trim());
@@ -349,7 +360,12 @@ export function StudioHelperRosterManager({
 
       <AdminFormDialog
         open={isInviteOpen}
-        onOpenChange={setIsInviteOpen}
+        onOpenChange={(open) => {
+          setIsInviteOpen(open);
+          if (!open) {
+            setInviteSearch('');
+          }
+        }}
         title="Invite Member to Studio"
         description="Add an existing system user to this studio with a role."
         schema={inviteMemberSchema}
@@ -370,8 +386,19 @@ export function StudioHelperRosterManager({
         fields={[
           {
             name: 'user_id',
-            label: 'User ID',
-            placeholder: 'usr_...',
+            label: 'User',
+            render: (field) => (
+              <AsyncCombobox
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                onSearch={setInviteSearch}
+                options={inviteUserOptions}
+                isLoading={userCatalogQuery.isLoading || userCatalogQuery.isFetching}
+                placeholder="Search users by name..."
+                emptyMessage="No matching users found."
+                disabled={createMembership.isPending}
+              />
+            ),
           },
           {
             name: 'role',
