@@ -26,8 +26,8 @@ import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { CreatorRepository } from '@/models/creator/creator.repository';
 import { CreatorService } from '@/models/creator/creator.service';
 import { ShowService } from '@/models/show/show.service';
-import { ShowMcRepository } from '@/models/show-mc/show-mc.repository';
-import { ShowMcService } from '@/models/show-mc/show-mc.service';
+import { ShowCreatorRepository } from '@/models/show-creator/show-creator.repository';
+import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { StudioService } from '@/models/studio/studio.service';
 
 @StudioProtected()
@@ -36,8 +36,8 @@ export class StudioShowCreatorController extends BaseStudioController {
   constructor(
     private readonly showService: ShowService,
     private readonly creatorRepository: CreatorRepository,
-    private readonly showMcRepository: ShowMcRepository,
-    private readonly showMcService: ShowMcService,
+    private readonly showCreatorRepository: ShowCreatorRepository,
+    private readonly showCreatorService: ShowCreatorService,
   ) {
     super();
   }
@@ -51,7 +51,7 @@ export class StudioShowCreatorController extends BaseStudioController {
   ) {
     const show = await this.resolveShow(showId, studioId);
 
-    const { data, total } = await this.showMcRepository.findPaginated({
+    const { data, total } = await this.showCreatorRepository.findPaginated({
       showId: show.id,
       skip: query.skip,
       take: query.take,
@@ -75,7 +75,7 @@ export class StudioShowCreatorController extends BaseStudioController {
       throw HttpError.notFound('Creator not found');
     }
 
-    const existing = await this.showMcRepository.findMany({
+    const existing = await this.showCreatorRepository.findMany({
       where: { showId: show.id, mcId: creator.id },
     });
     const existingRecord = existing[0];
@@ -85,15 +85,15 @@ export class StudioShowCreatorController extends BaseStudioController {
       if (existingRecord.deletedAt === null) {
         throw HttpError.badRequest('Creator is already assigned to this show');
       }
-      result = await this.showMcRepository.restoreAndUpdateAssignment(existingRecord.id, {
+      result = await this.showCreatorRepository.restoreAndUpdateAssignment(existingRecord.id, {
         note: body.note,
         agreedRate: body.agreed_rate !== undefined ? body.agreed_rate.toFixed(2) : undefined,
         compensationType: body.compensation_type,
         commissionRate: body.commission_rate !== undefined ? body.commission_rate.toFixed(2) : undefined,
       });
     } else {
-      const uid = this.showMcService.generateShowMcUid();
-      result = await this.showMcRepository.createAssignment({
+      const uid = this.showCreatorService.generateShowMcUid();
+      result = await this.showCreatorRepository.createAssignment({
         uid,
         showId: show.id,
         mcId: creator.id,
@@ -104,7 +104,7 @@ export class StudioShowCreatorController extends BaseStudioController {
       });
     }
 
-    return this.showMcRepository.findByUid(result.uid, { show: true, mc: true });
+    return this.showCreatorRepository.findByUid(result.uid, { show: true, mc: true });
   }
 
   @Delete(':creatorId')
@@ -122,7 +122,7 @@ export class StudioShowCreatorController extends BaseStudioController {
       throw HttpError.notFound('Creator not found');
     }
 
-    const assignments = await this.showMcRepository.findMany({
+    const assignments = await this.showCreatorRepository.findMany({
       where: { showId: show.id, mcId: creator.id, deletedAt: null },
       include: { show: true, mc: true },
     });
@@ -132,7 +132,7 @@ export class StudioShowCreatorController extends BaseStudioController {
       throw HttpError.notFound('Creator is not assigned to this show');
     }
 
-    await this.showMcRepository.softDelete({ id: assignment.id });
+    await this.showCreatorRepository.softDelete({ id: assignment.id });
     return assignment;
   }
 
