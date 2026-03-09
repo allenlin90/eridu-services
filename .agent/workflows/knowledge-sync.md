@@ -37,10 +37,14 @@ Run when any of these are true:
    - When frontend access control/navigation behavior changes, document the shared policy location and guard usage so route guard + sidebar visibility remain aligned.
    - When decomposing large routes, document the standard boundary split (route container vs hooks vs presentation sections).
    - When route-shell consistency changes, document parent layout boundary + leaf wrapper convention (for example `/system/*` + `AdminLayout`, `studios/$studioId/*` + `PageLayout`).
+   - When migration SQL is manually customized beyond Prisma-generated output, document the customization pattern and rationale in the relevant database skill.
+   - When schema/service changes require seed updates, document the seed contract explicitly (required reference rows/keys, test-user mapping, fixture UID expectations, manual-test payload assumptions).
 
 4. **Update workflows/rules when process changed**
    - If this change introduces a repeatable process, update/create `.agent/workflows/*.md`.
+   - For Phase 4 schema iterations, keep `.agent/workflows/phase4-hitl-single-migration.md` aligned with runbooks and package scripts.
    - If it should be mandatory, update `.agent/rules/*.md` and `AGENTS.md`.
+   - For migration governance changes, ensure canonical product doc and database skill remain synchronized.
 
 5. **Update memory references**
    - Record durable project knowledge in `.claude/memory/*.md` (choose the most relevant file).
@@ -50,6 +54,10 @@ Run when any of these are true:
    - Ensure moved/renamed docs are referenced correctly from READMEs, skills, and related docs.
    - Ensure no stale links to old doc paths remain.
    - For route policy changes, verify route files and sidebar config both reference the same access policy source.
+   - For schema/service changes, verify docs and scripts stay aligned:
+     - seed runbook (`db:local:refresh`, `db:extid:sync`),
+     - manual-test scripts that parse API DTO responses,
+     - any fixture-driven payload generators.
 
 ## Completion Checklist
 
@@ -60,3 +68,4 @@ Run when any of these are true:
 - [ ] Memory reference updated for durable project knowledge.
 - [ ] Doc/skill links validated.
 - [ ] If large route/component decomposition happened, extraction boundaries are documented for future reuse.
+- [ ] If schema/service changed, seed + fixture/manual-test contracts are updated and cross-referenced.

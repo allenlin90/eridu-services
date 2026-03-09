@@ -46,6 +46,7 @@ After feature delivery, behavior changes, or refactors, you MUST sync agent know
 - **Type Safety:** Maintain strict typing.
 - **Error Handling:** Use centralized error handling patterns (e.g., `HttpError` utility for backend APIs).
 - **Communication:** If uncertain about requirements or if a proposed architecture requires user approval, stop and use `notify_user` to gather feedback.
+- **Framework/Tool Priority (MANDATORY):** Use official framework/tooling first (e.g., `better-auth` + Drizzle flow for `eridu_auth`, Prisma flow for `erify_api`). Only add manual customization when required, with explicit rationale documented in code and docs.
 - **Frontend Access Control Consistency:** For `erify_studios` studio routes, do not duplicate per-page membership/role checks. Use shared route-access policy + shared guard, and keep sidebar visibility derived from the same policy source.
 - **Frontend Refresh Action Consistency (MANDATORY):** For manual data refetch controls in frontend toolbars/headers, use icon-only refresh buttons (`size="icon"`) with explicit `aria-label` and spinning icon state while fetching; avoid text-labeled "Refresh" buttons.
 - **Frontend Collapsible Toggle Consistency (MANDATORY):** For show/hide section toggles in frontend pages, use icon-only toggle buttons with `ChevronUp` (expanded) and `ChevronDown` (collapsed), with explicit `aria-label`. Keep placement consistent across breakpoints (prefer top-right of the section header).

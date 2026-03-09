@@ -86,6 +86,19 @@ Use an action endpoint when any of these apply:
 3. required action context (reason/actor/audit),
 4. deterministic domain error contract for FE workflows.
 
+### 4.2 Bulk Mapping Semantics (`PATCH` vs `PUT`)
+
+For bulk mapping/set endpoints (for example show-to-MC mapping), expose semantics explicitly:
+
+1. `PATCH /.../bulk` for **append/non-destructive** behavior.
+2. `PUT /.../bulk` for **replace/overwrite** behavior.
+
+Do not overload one endpoint with hidden destructive behavior. If both modes are supported:
+
+- keep request payload shape consistent across methods,
+- return operation counters (for example `created`, `skipped`, `removed`, `errors`) so FE can explain impact clearly,
+- keep RBAC guards aligned on both methods unless product policy explicitly differs.
+
 ### 5. Payload Translation & Property Filtering
 
 🔴 **Critical**: Controllers MUST adapt external DTOs to internal Service Payloads and filter unnecessary properties.
@@ -262,7 +275,16 @@ export class ResourceController extends BaseStudioController {
 }
 ```
 
-**Available roles**: `STUDIO_ROLE.ADMIN`, `STUDIO_ROLE.MEMBER`
+**Available roles**: `STUDIO_ROLE.ADMIN`, `STUDIO_ROLE.MANAGER`, `STUDIO_ROLE.MEMBER`, `STUDIO_ROLE.TALENT_MANAGER`, `STUDIO_ROLE.DESIGNER`, `STUDIO_ROLE.MODERATION_MANAGER`
+
+| Role | Typical use |
+|------|-------------|
+| `ADMIN` | Full studio management |
+| `MANAGER` | Operational management (shows, shifts, assignments) |
+| `TALENT_MANAGER` | MC assignment and talent operations |
+| `DESIGNER` | Creative/production access |
+| `MODERATION_MANAGER` | Moderation workflows |
+| `MEMBER` | Read-only / basic studio access |
 
 ### Quick Reference
 

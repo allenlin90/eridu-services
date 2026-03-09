@@ -168,6 +168,17 @@ queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) }
 
 **Rule**: Use `listPrefix` in mutations that change data visible in any list (e.g., assign, generate tasks, bulk delete). Use `list(...)` only in `queryKey` for `useQuery`/`useInfiniteQuery` hooks.
 
+### Bulk Action Method Semantics (`PATCH` Append vs `PUT` Replace)
+
+When backend exposes both append and replace semantics for the same resource:
+
+1. Map FE action mode explicitly to HTTP method (`append -> PATCH`, `replace -> PUT`).
+2. Keep one mutation with explicit `{ mode, data }` input instead of hidden branching in UI components.
+3. Surface impact to users before submit (for example expected add/remove counts).
+4. Invalidate the same list/query scopes for both modes.
+
+This avoids accidental destructive writes and keeps FE behavior aligned with backend contracts.
+
 ### Dual-Endpoint + Query Key Cache Isolation
 
 Some API functions serve **both admin and studio contexts** (e.g., `getShowTypes` hits `/admin/show-types` or `/studios/:studioId/show-types`). The query key **must include the scope** to prevent cache collisions.

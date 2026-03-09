@@ -5,7 +5,7 @@ description: This skill should be used when creating, restructuring, or reviewin
 
 # Monorepo Doc Layering
 
-Use this skill when documentation scope crosses app boundaries, when roadmap ownership is unclear, or when docs are drifting into the wrong layer.
+Use this skill when documentation scope crosses app boundaries, when roadmap ownership is unclear, when docs are drifting into the wrong layer, or when role/access policy documentation needs synchronization.
 
 ## Purpose
 
@@ -35,11 +35,13 @@ Preserve a consistent documentation model in `eridu-services`:
 7. Update the nearest README indexes whenever a doc moves layers.
 8. Remove legacy ownership language that still implies one app owns the product or roadmap.
 9. Run a markdown-link check after reorganization.
+10. For cross-app policy docs (RBAC/route access), maintain one canonical matrix in `docs/product/` and convert duplicate policy tables in app docs to concise links.
 
 ## Placement Rules
 
 - Put cross-app roadmap and phase status in `docs/roadmap/`.
 - Put business, product, domain, and cross-app requirement context in `docs/product/`.
+- Put cross-app role/access policy matrix docs (RBAC) in `docs/product/` and treat them as canonical.
 - Put architecture decision records in `docs/adr/`.
 - Put backend implementation references in `apps/erify_api/docs/`.
 - Put frontend workflow references in `apps/erify_studios/docs/`.
@@ -62,3 +64,4 @@ After doc moves or index updates:
 1. Scan markdown links in touched doc trees.
 2. Check for duplicated ownership language between root docs and app docs.
 3. Confirm phase status appears only in root roadmap docs unless an app file is explicitly marked as archive/history.
+4. If role/access policy changed in code, confirm the canonical matrix (for example `docs/product/ROLE_ACCESS_MATRIX.md`) is updated and app docs link to it instead of duplicating full matrices.

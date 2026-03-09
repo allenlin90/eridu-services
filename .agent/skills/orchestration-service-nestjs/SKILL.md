@@ -13,10 +13,15 @@ Orchestration Services coordinate multiple Model Services for workflows that spa
 
 ## Canonical Examples
 
-Study these real implementations as the source of truth:
+### Complex (with Processor Service)
+Use when the orchestration service calls `@Transactional()` internally from the same class.
 - **Orchestration Service**: [task-orchestration.service.ts](../../../apps/erify_api/src/task-orchestration/task-orchestration.service.ts)
 - **Processor Service**: [task-generation-processor.service.ts](../../../apps/erify_api/src/task-orchestration/task-generation-processor.service.ts)
 - **Module**: [task-orchestration.module.ts](../../../apps/erify_api/src/task-orchestration/task-orchestration.module.ts)
+
+### Simple (no Processor Service)
+Use when the public method IS the transaction boundary, called directly by a controller.
+- **Bulk assignment**: [studio-show-mc.orchestration.service.ts](../../../apps/erify_api/src/studios/studio-show/studio-show-mc.orchestration.service.ts)
 
 ---
 
@@ -49,9 +54,22 @@ OrchestrationService  ← Coordinates workflow, cross-domain validation
             └─→ ModelService D (TaskTargetService)
 ```
 
-### Why a Separate Processor Service?
+### When to Use a Separate Processor Service
 
-`@Transactional()` works via NestJS DI proxy interception. It **cannot** be applied to a method in the same class that calls it. Extract the transactional boundary to a dedicated `*Processor` or `*Writer` service:
+`@Transactional()` works via NestJS DI proxy interception. It **cannot** be applied to a method in the same class that calls it — only extract to a Processor when this applies.
+
+**No Processor needed**: if the transactional method is `public` and only called from a controller (never self-called), apply `@Transactional()` directly on the orchestration service method.
+
+```typescript
+// ✅ Simple case: controller calls bulkAssign → @Transactional() works directly
+@Injectable()
+export class StudioShowMcOrchestrationService {
+  @Transactional()
+  async bulkAssignMcsToShows(studioUid, showUids, mcUids) { ... }
+}
+```
+
+**Processor needed**: when the orchestration service calls `@Transactional()` internally from a private method:
 
 ```typescript
 // ❌ BAD: @Transactional() on a method called from the same service
@@ -378,8 +396,8 @@ for (const item of items) {
 
 ## Checklist
 
-- [ ] OrchestrationService injects only Model Services (no Repository imports)
-- [ ] `@Transactional()` is on the Processor Service, not the Orchestration Service
+- [ ] OrchestrationService injects Model Services; **Repository injection is acceptable only for bulk cross-product pre-fetching** (avoids N+1 that a Model Service loop cannot avoid)
+- [ ] `@Transactional()` placement: on the **Processor Service** if the orchestration calls it internally; directly on the **public orchestration method** if it is only called from a controller
 - [ ] Processor is NOT exported from the module
 - [ ] Idempotency check uses `{ includeDeleted: true }` to catch soft-deleted records
 - [ ] Processor handles three cases: active→skip, soft-deleted→resume, missing→create

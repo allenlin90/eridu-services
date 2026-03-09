@@ -9,6 +9,29 @@ Provides comprehensive guidance for input validation, response serialization, an
 
 ## Core Concepts
 
+## NestJS-Zod Date Compatibility (Critical)
+
+When using `createZodDto()` in `erify_api`, avoid raw/coerced `Date` schemas in API-facing DTO schemas because `nestjs-zod` OpenAPI metadata generation can fail at runtime.
+
+Required pattern for query/input datetime fields:
+
+- Accept ISO string at boundary (`z.iso.datetime()` or `z.iso.date()`).
+- Transform to `Date` only after validation (`.transform((value) => new Date(value))`) when service layer needs `Date`.
+
+Do:
+
+- `date_from: z.iso.datetime().transform((value) => new Date(value))`
+- `date_to: z.iso.datetime().transform((value) => new Date(value))`
+
+Avoid in `createZodDto()` schemas:
+
+- `z.coerce.date()`
+- `z.date()` for API input/query DTO contract fields
+
+Reason:
+
+- `z.coerce.date()`/`z.date()` can pass lint/typecheck but fail during app startup/OpenAPI metadata generation with errors like `Date cannot be represented in JSON Schema`.
+
 **API Contract vs Internal Implementation**:
 
 ```

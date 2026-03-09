@@ -12,8 +12,29 @@ Read this skill for current `erify_api` authorization behavior first. Load the p
 **Related references**
 - [Authorization Guide](../../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md)
 - [Architecture Overview](../../../docs/product/ARCHITECTURE_OVERVIEW.md)
+- [Role Access Matrix](../../../docs/product/ROLE_ACCESS_MATRIX.md)
 - `authentication-authorization-nestjs` for broader auth guidance
 - `backend-controller-pattern-nestjs` for controller/decorator usage
+
+## Policy Documentation Sync (Required)
+
+When changing studio role access behavior, update policy docs in the same PR.
+
+Trigger conditions:
+
+1. Any change to backend studio-scoped guard policy (`@StudioProtected([roles])` or equivalent role gating),
+2. Any frontend studio route access policy change (`studio-route-access.ts`, guard behavior, sidebar policy coupling),
+3. Any feature that changes which roles can view cost/economics/performance data.
+
+Required updates:
+
+1. Update canonical matrix: `docs/product/ROLE_ACCESS_MATRIX.md`,
+2. Ensure app docs reference canonical policy instead of duplicating full role matrices,
+3. Verify role definitions and terminology remain aligned with `packages/api-types/src/memberships/schemas.ts`.
+
+Current caveat to keep explicit in docs:
+
+- Frontend route-level role progression currently uses `MEMBER`, `MANAGER`, `ADMIN` hierarchy only; newer roles (`TALENT_MANAGER`, `DESIGNER`, `MODERATION_MANAGER`) need explicit FE policy mapping before first-class route-level behavior is guaranteed.
 
 ## Implementation Status
 
@@ -24,7 +45,7 @@ Read this skill for current `erify_api` authorization behavior first. Load the p
 | --------------------------------------------- | ------------- | --------------------------------------------- |
 | `isSystemAdmin` bypass                        | ✅ Implemented | `AdminGuard` checks this flag only            |
 | `@AdminProtected()` decorator                 | ✅ Implemented | Global guard in `app.module.ts`               |
-| `@StudioProtected([roles])`                   | ✅ Implemented | ADMIN, MANAGER, MEMBER via `StudioMembership` |
+| `@StudioProtected([roles])`                   | ✅ Implemented | ADMIN, MANAGER, MEMBER, TALENT_MANAGER, DESIGNER, MODERATION_MANAGER |
 | `StudioGuard` with membership check           | ✅ Implemented | Validates studio membership + role            |
 | JSONB `roles` field on User                   | ⏳ Planned     | Not in Prisma schema yet                      |
 | JSONB `permissions` field on User             | ⏳ Planned     | Not in Prisma schema yet                      |
