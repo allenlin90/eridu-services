@@ -11,7 +11,7 @@
 | Layer         | Technology                                       |
 | ------------- | ------------------------------------------------ |
 | Runtime       | Node.js (NestJS)                                 |
-| ORM           | Prisma (PostgreSQL)                              |
+| ORM           | Prisma (`erify_api`), Drizzle (`eridu_auth`)    |
 | Auth          | `@eridu/auth-sdk` (JWT/JWKS), `StudioMembership` |
 | API Contracts | `@eridu/api-types` (Zod schemas)                 |
 | API Docs      | OpenAPI + Scalar UI                              |
@@ -53,7 +53,7 @@ block-beta
     space
     block:db["Database"]
         columns 1
-        PG["PostgreSQL (Prisma migrations)"]
+        PG["PostgreSQL (Prisma + Drizzle migrations)"]
     end
 
     http --> biz
@@ -85,7 +85,7 @@ block-beta
                    │
 ┌──────────────────▼───────────────────────────────┐
 │                Database                          │
-│  PostgreSQL (via Prisma migrations)              │
+│  PostgreSQL (via Prisma + Drizzle migrations)    │
 └──────────────────────────────────────────────────┘
 ```
 

@@ -1,6 +1,8 @@
 # Studio Roles — Use Cases, Views, and Functions
 
 > Scope: `erify_studios` studio-scoped area (`/studios/:studioId/*`) with focus on daily operations and shift scheduling.
+>
+> Canonical RBAC policy reference: [`docs/product/ROLE_ACCESS_MATRIX.md`](../../../docs/product/ROLE_ACCESS_MATRIX.md). This document focuses on frontend use cases and views.
 
 ## Purpose
 
@@ -11,6 +13,7 @@ Define what each studio role can see and do, especially after moving operational
 1. `ADMIN`
 2. `MANAGER`
 3. `MEMBER`
+4. `TALENT_MANAGER`
 
 ## High-Level Principles
 
@@ -20,14 +23,16 @@ Define what each studio role can see and do, especially after moving operational
 
 ## Route Access Matrix
 
-| Route                                    | ADMIN                  | MANAGER                | MEMBER                 | Notes                                     |
-| ---------------------------------------- | ---------------------- | ---------------------- | ---------------------- | ----------------------------------------- |
-| `/studios/:studioId/dashboard`           | View                   | View                   | View                   | Daily operations visibility page          |
-| `/studios/:studioId/my-tasks`            | View/Execute own tasks | View/Execute own tasks | View/Execute own tasks | Personal task workflow                    |
-| `/studios/:studioId/shifts`              | View + Manage          | No access              | No access              | Shift CRUD and duty-manager assignment    |
-| `/studios/:studioId/shows`               | View + Manage          | No access (current)    | No access (current)    | Studio show management remains admin-only |
-| `/studios/:studioId/tasks?status=REVIEW` | View/Review            | View/Review            | No access (current)    | Review queue remains admin/manager        |
-| `/studios/:studioId/task-templates`      | View + Manage          | No access (current)    | No access (current)    | Template management remains admin-only    |
+| Route                                    | ADMIN                  | MANAGER                | MEMBER                 | TALENT_MANAGER          | Notes |
+| ---------------------------------------- | ---------------------- | ---------------------- | ---------------------- | ----------------------- | ----- |
+| `/studios/:studioId/dashboard`           | View                   | View                   | View                   | View                    | Daily operations visibility page |
+| `/studios/:studioId/my-tasks`            | View/Execute own tasks | View/Execute own tasks | View/Execute own tasks | View/Execute own tasks  | Personal task workflow |
+| `/studios/:studioId/shifts`              | View + Manage          | No access              | No access              | No access               | Shift CRUD and duty-manager assignment |
+| `/studios/:studioId/shows`               | View + Manage          | View + Manage          | No access              | No access               | Show operations (task generation/assignment) |
+| `/studios/:studioId/creators`            | View + Manage          | View + Manage          | No access              | View + Manage           | Creator roster (onboard/list/manage studio-scoped creators) |
+| `/studios/:studioId/creators/mapping`    | View + Manage          | View + Manage          | No access              | View + Manage           | Creator-to-show mapping workflow |
+| `/studios/:studioId/tasks?status=REVIEW` | View/Review            | View/Review            | No access              | No access               | Review queue remains admin/manager |
+| `/studios/:studioId/task-templates`      | View + Manage          | No access              | No access              | No access               | Template management remains admin-only |
 
 ## Dashboard View (All Studio Roles)
 
@@ -105,7 +110,7 @@ Define what each studio role can see and do, especially after moving operational
 
 ## Current Known Gaps / Follow-ups
 
-1. Shift route currently denies manager/member at UI level; backend authorization must enforce the same policy.
+1. Shift route currently denies manager/member/talent-manager at UI level; backend authorization must enforce the same policy.
 2. Dashboard currently displays duty manager name by membership lookup; fallback is user ID if lookup misses.
 3. If manager role should later manage shifts, this matrix must be updated together with sidebar and route guard logic.
 

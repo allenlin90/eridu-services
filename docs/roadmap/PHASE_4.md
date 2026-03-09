@@ -1,102 +1,217 @@
 # Phase 4: P&L Visibility & MC Operations
 
-> **Status**: 🗓️ Planning
+> **Status**: ⚠️ Re-baselining in progress (core delivered on 2026-03-07)
 
 ## Goal
 
-Phase 4 makes **show-level profitability visible** by connecting MC talent operations, compensation tracking, and show performance metrics into a unified cost/revenue view.
+Phase 4 makes show-level profitability visible by connecting talent staffing, compensation, and show performance into one operational and financial flow.
 
-> *"Give every role the information and tools they need to coordinate show operations — and make the financial outcome of those operations visible."*
+## Why Re-baseline Now
 
-## Scope
+Core Phase 4 features shipped, but verification found gaps that block final close:
 
-Phase 4 is scoped to the **critical path to P&L**. Features that are valuable but independent of P&L (ad-hoc ticketing, material management) are deferred to a later phase.
+1. MC roster is still global, not studio-scoped.
+2. No explicit creator onboarding flow for studio talent pool management.
+3. Assignment UX still has edge-case defects (for example, combobox behavior around inputs like `mc 1`).
+4. Documentation drift exists between shipped behavior and canonical docs.
 
-## Workstreams
+## Final Phase 4 Scope (Revised)
 
-### 1. RBAC Roles
+### Workstream 1: RBAC and route policy hardening
 
-Add distinct roles to `StudioMembership`: `TALENT_MANAGER`, `DESIGNER`, `MODERATION_MANAGER`. This enables role-specific authorization across Phase 4 endpoints and prepares the access model for future workstreams.
+- Keep current role model (`ADMIN`, `MANAGER`, `MEMBER`, `TALENT_MANAGER`, `DESIGNER`, `MODERATION_MANAGER`).
+- Keep financial overview restricted to `ADMIN` and `MANAGER`.
+- Keep creator staffing actions available to `ADMIN`, `MANAGER`, `TALENT_MANAGER`.
+- Ensure BE guards and FE route policy remain consistent with `ROLE_ACCESS_MATRIX.md`.
 
-PRD: [docs/prd/rbac-roles.md](../prd/rbac-roles.md)
+### Workstream 2: Studio MC roster foundation (`StudioMc`)
 
-### 2. MC Mapping & Talent Operations
+- Add `StudioMc` schema and migration/backfill.
+- Introduce studio-scoped creator pool with `isActive` and studio default compensation.
+- Preserve existing `ShowMC` linkage (no breaking relation refactor).
 
-Bulk MC-to-show assignment so talent managers can efficiently map MCs to shows. Studio-scoped MC endpoints for add/remove on individual shows. MC availability query (conflict check against booked shows).
+Reference design: [STUDIO_MC_ROSTER.md](../proposals/STUDIO_MC_ROSTER.md)
 
-PRD: [docs/prd/mc-mapping.md](../prd/mc-mapping.md)
+### Workstream 3: Creator onboarding workflow (missing today)
 
-### 3. Show Economics & P&L
+Add first-class onboarding flow for studio-scoped creators:
 
-MC compensation model (fixed/commission/hybrid rates). Show performance metrics (GMV, sales, orders on ShowPlatform). Variable cost aggregation per show (MC fees + shift labor). P&L and performance views grouped by show, schedule, or client.
+1. Add creator to studio roster.
+2. Configure studio-level compensation defaults (optional override of global MC defaults).
+3. Set active/inactive roster status.
+4. Use roster members for assignment flows.
 
-PRD: [docs/prd/show-economics.md](../prd/show-economics.md)
+### Workstream 4: Studio membership roster (new scope extension)
 
-## Sequencing
+Add a dedicated studio membership roster flow for helper/task-assignment operations:
 
-```mermaid
-graph LR
-    A["1. RBAC Roles"] --> B["2. MC Mapping"]
-    A --> C["3. MC Compensation"]
-    D["4. Show Perf Metrics"] --> F["6. Cost Aggregation"]
-    C --> F
-    F --> G["7. P&L Views"]
-    D --> H["8. Performance Views"]
-    B --> I["9. MC Mapping UI"]
-    E["5. MC Availability"] --> I
+1. Manage helper-ready studio members in a roster workflow.
+2. Keep this workflow separate from creator roster concerns.
+3. Restrict member roster management to `ADMIN` and `MANAGER`.
+4. Use member roster helper-eligibility in task-assignment readiness and assignee selection flows.
 
-    style G fill:#10B981,color:#fff
-    style H fill:#10B981,color:#fff
-```
+### Workstream 5: Assignment and availability consistency
 
-| Order | Feature                             | Est  |
-| ----- | ----------------------------------- | ---- |
-| 1     | RBAC roles                          | 1-2d |
-| 2     | Bulk MC-to-show mapping (BE)        | 2-3d |
-| 3     | MC compensation model               | 1-2d |
-| 4     | Show performance metrics            | 1-2d |
-| 5     | MC availability query               | 1-2d |
-| 6     | Cost aggregation API                | 3-4d |
-| 7     | P&L views (by show/schedule/client) | 2-3d |
-| 8     | Performance views                   | 2-3d |
-| 9     | MC mapping UI                       | 3-4d |
+- Keep bulk modes:
+  - `PATCH` append
+  - `PUT` replace
+- Align availability with studio roster scope.
+- Fix creator search/mapping UX defects in bulk dialog and show-level mapping.
+- Preserve existing task generation and assignment flows (no behavior regression).
 
-**Estimated total: ~18-27 working days**
+### Workstream 6: Economics alignment and regression safety
 
-## Existing Infrastructure (Phase 4 Builds On)
+- Move compensation fallback from 2-tier to 3-tier:
+  - `ShowMC -> StudioMc -> MC`
+- Keep P&L formulas unchanged.
+- Ensure no economics regression after migration/backfill.
 
-- `StudioShift.hourlyRate`, `projectedCost`, `calculatedCost` — shift costs already modeled
-- `StudioMembership.baseHourlyRate` — member rates already modeled
-- `ShowPlatform.viewerCount` — basic performance tracking exists
-- `ShowMC` join table — MC-show linkage exists (admin-only, single-record)
-- R2 presigned upload infrastructure — shipped in Phase 3
+## Implementation Sequence and Verification Gates
 
-## Resolved Design Decisions
+### Step 1: Data and contract foundation
 
-| Decision               | Answer                                                             |
-| ---------------------- | ------------------------------------------------------------------ |
-| Talent manager role    | `TALENT_MANAGER` via RBAC — distinct from manager, below admin     |
-| MC studio scoping      | MCs not studio-scoped (can work across studios) — future concern   |
-| MC compensation        | Default rate on MC + per-show override on ShowMC                   |
-| Compensation types     | FIXED, COMMISSION, HYBRID                                          |
-| Show performance input | Manual entry first; platform API integration is future             |
-| P&L scope              | Variable costs only (MC fees, shift labor); fixed costs are future |
+Deliverables:
+- `StudioMc` Prisma model.
+- One consolidated Prisma-generated migration for Phase 4 remaining scope, then documented manual SQL adjustments if needed.
+- Backfill SQL for `(studio_id, mc_id)` pairs derived from historical assignments.
 
-## Open PRD Questions
+Verify:
+- `pnpm --filter erify_api lint`
+- `pnpm --filter erify_api typecheck`
+- `pnpm --filter erify_api test`
+- Deterministic local DB cycle:
+  - `pnpm --filter erify_api db:local:refresh`
+  - Optional cross-app auth mapping sync:
+    - `pnpm --filter erify_api db:extid:sync` (pull from auth DB IDs)
+- Migration dry-run on local DB clone and rollback simulation.
 
-Per-workstream questions are tracked in the respective PRD documents.
+### Step 2: Backend roster and onboarding APIs
+
+Deliverables:
+- Studio roster endpoints (list/add/update status/remove).
+- Assignment endpoints updated to respect roster scope.
+- Availability endpoint filtered by roster first, then conflict window.
+- Bulk assignment behavior kept as append/replace with clear response semantics.
+
+Verify:
+- Controller/service/repository tests for roster CRUD and availability filtering.
+- Role-access tests for all new/updated endpoints.
+
+### Step 3: Frontend onboarding and mapping UX
+
+Deliverables:
+- Studio creators routes are purpose-split for clarity:
+  - `/studios/:studioId/creators` for roster onboarding/list management.
+  - `/studios/:studioId/creators/mapping` for show assignment workflows.
+- Roster page supports onboarding lifecycle (add/set defaults/activate/deactivate).
+- Bulk mapping dialog resolves current search and selection clarity issues.
+- Existing assigned creators are visible and actionable for replace/append decisions.
+
+Verify:
+- `pnpm --filter erify_studios lint`
+- `pnpm --filter erify_studios typecheck`
+- `pnpm --filter erify_studios test`
+- Smoke flow: onboard creator -> assign (append/replace) -> confirm show mapping.
+
+### Step 4: Studio member roster for task assignment (new)
+
+Deliverables:
+- Define member roster data model/workflow in studio membership domain.
+- Expose member roster management for `ADMIN` and `MANAGER`.
+- Integrate member-roster helper-eligibility constraints into task assignment readiness and assignment UI.
+- Backend foundation implemented:
+  - `GET /studios/:studioId/studio-memberships` is now `ADMIN`/`MANAGER`.
+  - `POST /studios/:studioId/studio-memberships` supports studio-scoped membership invite/onboarding.
+  - `PATCH /studios/:studioId/studio-memberships/:id/role` supports role change in member roster workflow (`ADMIN` only).
+  - `PATCH /studios/:studioId/studio-memberships/:id/helper` toggles helper readiness in membership metadata.
+  - Task assignment enforcement now requires helper-enabled assignee for non-`ADMIN`/`MANAGER` roles.
+  - Helper toggle applies optimistic-concurrency retry (via `updatedAt` guard) to reduce lost updates on metadata writes.
+  - Task assignee resolution now uses scoped membership lookup (no studio-wide membership list scan).
+- Frontend baseline implemented:
+  - Studio Admin navigation includes dedicated `Member Roster` route:
+    - `/studios/:studioId/helpers`
+  - Member roster management is now route-based (not modal state coupled to review queue).
+  - Task assignment comboboxes only list helper-eligible members (plus role-default `ADMIN`/`MANAGER`).
+  - Helper roster includes invite-member and role-change actions in-page.
+  - Roster UX polish applied for both creator/member roster pages:
+    - simplified action-first layout (summary cards removed)
+    - paginated table parity with search/filter toolbar and pagination footer
+    - search-aware empty states
+    - clearer action labels and selected-state feedback for onboarding actions
+  - Known issue kept for now:
+    - invite currently requires `user_id` input; searchable user-lookup UX is deferred to follow-up optimization.
+
+Verify:
+- Role-access tests for member roster endpoints and FE route visibility.
+- Task-assignment smoke flow using member roster membership.
+
+### Step 5: Economics integration and regression checks
+
+Deliverables:
+- Economics service reads 3-tier fallback.
+- Existing economics APIs remain contract-compatible.
+
+Verify:
+- Economics unit tests for fixed/commission/hybrid scenarios across fallback tiers.
+- Snapshot comparison before/after migration to validate expected parity for unchanged data.
+
+### Step 6: Documentation and knowledge sync close
+
+Deliverables:
+- Canonical docs updated and cross-linked.
+- Skills/rules updated for migration workflow and roster/onboarding patterns.
+
+Verify:
+- `docs/roadmap/PHASE_4.md`
+- `apps/erify_api/docs/MC_OPERATIONS.md`
+- `apps/erify_api/docs/SHOW_ECONOMICS.md`
+- `apps/erify_studios/docs/MC_MAPPING.md`
+- `docs/product/ROLE_ACCESS_MATRIX.md`
+- `docs/product/BUSINESS.md`
+
+## Exit Criteria to Mark Phase 4 Complete
+
+1. Studio-scoped creator roster exists and is used by assignment/availability.
+2. Creator onboarding workflow exists in both BE and FE.
+3. Studio member roster workflow exists for task assignment (`ADMIN`/`MANAGER` owned).
+4. Bulk append/replace behavior is stable and tested.
+5. Economics uses 3-tier fallback without regression in core calculations.
+6. Canonical docs match shipped behavior (no endpoint/method drift).
+
+## Merge Gate Checklist (TODO Before Production Merge)
+
+1. Scope freeze and final diff audit across BE/FE/docs.
+2. Confirm one consolidated branch migration only.
+3. Run full verification:
+   - `pnpm --filter erify_api lint`
+   - `pnpm --filter erify_api typecheck`
+   - `pnpm --filter erify_api test`
+   - `pnpm --filter erify_studios lint`
+   - `pnpm --filter erify_studios typecheck`
+   - `pnpm --filter erify_studios test`
+4. Fresh-env rehearsal:
+   - reset DB, migrate, seed, ext-id sync
+   - smoke test core Phase 4 flows end-to-end
+5. RBAC regression check against `docs/product/ROLE_ACCESS_MATRIX.md`.
+6. API contract sanity check (document all intentional breaking changes).
+7. Migration risk review (data impact, backfill behavior, runtime expectations).
+8. Deployment runbook finalized (downtime steps + rollback/forward-fix plan).
+9. Final docs and skills sync to shipped behavior.
+10. Merge gate sign-off checklist completed by owner(s).
 
 ## Deferred From Phase 4
 
-Features deferred to later phases — see [Phase 5](./PHASE_5.md):
+Features deferred to later phases:
 
 - Ad-hoc ticketing (cross-functional, show/client-targeted tickets)
 - Material management engine (asset versioning, show-material linking)
 - Review quality hardening (transition enforcement, rejection notes)
 - Client self-service (separate FE app)
 
-## Doc Hierarchy
+## Canonical Docs
 
-- **Roadmap** (this file): phase scope, priorities, sequencing
-- **PRDs** ([docs/prd/](../prd/README.md)): user stories, acceptance criteria, product rules
-- **Technical Designs** ([apps/erify_api/docs/design/](../../apps/erify_api/docs/design/README.md)): data models, API contracts, service architecture
+- [MC Operations](../../apps/erify_api/docs/MC_OPERATIONS.md)
+- [Show Economics](../../apps/erify_api/docs/SHOW_ECONOMICS.md)
+- [MC Mapping UI](../../apps/erify_studios/docs/MC_MAPPING.md)
+- [Role Access Matrix](../product/ROLE_ACCESS_MATRIX.md)
+- [Studio MC Roster Proposal](../proposals/STUDIO_MC_ROSTER.md)

@@ -8,6 +8,8 @@ These documents are not all owned by one app, but together they describe the cur
 
 - [Business Domain](./BUSINESS.md)
 - [System Architecture Overview](./ARCHITECTURE_OVERVIEW.md)
+- [Role Access Matrix (Canonical RBAC Reference)](./ROLE_ACCESS_MATRIX.md)
+- [DB Migration Policy](./DB_MIGRATION_POLICY.md)
 
 ## Operations and Workflow References
 

@@ -26,8 +26,7 @@ PRDs are **phase-scoped and transient**:
 
 ## Phase 4 PRDs
 
-| PRD                                   | Workstream                         | Status |
-| ------------------------------------- | ---------------------------------- | ------ |
-| [RBAC Roles](./rbac-roles.md)         | Studio role expansion              | Draft  |
-| [MC Mapping](./mc-mapping.md)         | MC-to-show assignment & talent ops | Draft  |
-| [Show Economics](./show-economics.md) | P&L, compensation, performance     | Draft  |
+Phase 4 is fully delivered. All PRDs have been deleted; shipped behavior is documented in app-local docs:
+- [`apps/erify_api/docs/MC_OPERATIONS.md`](../../apps/erify_api/docs/MC_OPERATIONS.md)
+- [`apps/erify_api/docs/SHOW_ECONOMICS.md`](../../apps/erify_api/docs/SHOW_ECONOMICS.md)
+- [`apps/erify_studios/docs/MC_MAPPING.md`](../../apps/erify_studios/docs/MC_MAPPING.md)
