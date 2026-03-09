@@ -23,8 +23,8 @@ import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
-import { McRepository } from '@/models/mc/mc.repository';
-import { McService } from '@/models/mc/mc.service';
+import { CreatorRepository } from '@/models/creator/creator.repository';
+import { CreatorService } from '@/models/creator/creator.service';
 import { ShowService } from '@/models/show/show.service';
 import { ShowMcRepository } from '@/models/show-mc/show-mc.repository';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
@@ -35,7 +35,7 @@ import { StudioService } from '@/models/studio/studio.service';
 export class StudioShowCreatorController extends BaseStudioController {
   constructor(
     private readonly showService: ShowService,
-    private readonly mcRepository: McRepository,
+    private readonly creatorRepository: CreatorRepository,
     private readonly showMcRepository: ShowMcRepository,
     private readonly showMcService: ShowMcService,
   ) {
@@ -70,7 +70,7 @@ export class StudioShowCreatorController extends BaseStudioController {
   ) {
     const show = await this.resolveShow(showId, studioId);
 
-    const creator = await this.mcRepository.findByUid(body.mc_id);
+    const creator = await this.creatorRepository.findByUid(body.mc_id);
     if (!creator) {
       throw HttpError.notFound('Creator not found');
     }
@@ -113,11 +113,11 @@ export class StudioShowCreatorController extends BaseStudioController {
   async removeCreator(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('showId', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) showId: string,
-    @Param('creatorId', new UidValidationPipe(McService.UID_PREFIX, 'Creator')) creatorId: string,
+    @Param('creatorId', new UidValidationPipe(CreatorService.UID_PREFIX, 'Creator')) creatorId: string,
   ) {
     const show = await this.resolveShow(showId, studioId);
 
-    const creator = await this.mcRepository.findByUid(creatorId);
+    const creator = await this.creatorRepository.findByUid(creatorId);
     if (!creator) {
       throw HttpError.notFound('Creator not found');
     }

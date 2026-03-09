@@ -17,9 +17,9 @@ import { ListStudioMcRosterQueryDto } from './schemas/studio-mc-roster-list.sche
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
-import { McRepository } from '@/models/mc/mc.repository';
-import { McService } from '@/models/mc/mc.service';
-import { mcDto } from '@/models/mc/schemas/mc.schema';
+import { CreatorRepository } from '@/models/creator/creator.repository';
+import { CreatorService } from '@/models/creator/creator.service';
+import { creatorDto } from '@/models/creator/schemas/creator.schema';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioMcService } from '@/models/studio-mc/studio-mc.service';
 
@@ -27,19 +27,19 @@ import { StudioMcService } from '@/models/studio-mc/studio-mc.service';
 @Controller('studios/:studioId/creators')
 export class StudioCreatorController extends BaseStudioController {
   constructor(
-    private readonly mcRepository: McRepository,
+    private readonly creatorRepository: CreatorRepository,
     private readonly studioMcService: StudioMcService,
   ) {
     super();
   }
 
   @Get('availability')
-  @ZodResponse(z.array(mcDto))
+  @ZodResponse(z.array(creatorDto))
   async availability(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: McAvailabilityQueryDto,
   ) {
-    return this.mcRepository.findAvailableMcs(
+    return this.creatorRepository.findAvailableMcs(
       query.date_from,
       query.date_to,
       studioId,
@@ -48,7 +48,7 @@ export class StudioCreatorController extends BaseStudioController {
 
   @Get('catalog')
   @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER])
-  @ZodResponse(z.array(mcDto))
+  @ZodResponse(z.array(creatorDto))
   async catalog(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: StudioMcCatalogQueryDto,
@@ -86,7 +86,7 @@ export class StudioCreatorController extends BaseStudioController {
   @ZodResponse(studioMcRosterItemDto)
   async updateRoster(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
-    @Param('creatorId', new UidValidationPipe(McService.UID_PREFIX, 'Creator')) creatorId: string,
+    @Param('creatorId', new UidValidationPipe(CreatorService.UID_PREFIX, 'Creator')) creatorId: string,
     @Body() body: UpdateStudioMcRosterDto,
   ) {
     return this.studioMcService.updateRoster(studioId, creatorId, body);
@@ -97,7 +97,7 @@ export class StudioCreatorController extends BaseStudioController {
   @ZodResponse(studioMcRosterItemDto)
   async removeFromRoster(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
-    @Param('creatorId', new UidValidationPipe(McService.UID_PREFIX, 'Creator')) creatorId: string,
+    @Param('creatorId', new UidValidationPipe(CreatorService.UID_PREFIX, 'Creator')) creatorId: string,
   ) {
     return this.studioMcService.removeFromRoster(studioId, creatorId);
   }
