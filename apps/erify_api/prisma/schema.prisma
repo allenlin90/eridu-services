@@ -66,7 +66,7 @@ model MC {
   @@index([aliasName])
   @@index([isBanned])
   @@index([deletedAt])
-  @@map("mcs")
+  @@map("creators")
 }
 
 model Client {
@@ -193,7 +193,7 @@ model ShowMC {
   @@index([showId, deletedAt])
   @@index([mcId, deletedAt])
   @@index([mcId, showId, deletedAt]) // MC double-booking queries
-  @@map("show_mcs")
+  @@map("show_creators")
 }
 
 model ShowPlatform {
@@ -269,7 +269,7 @@ model StudioMc {
   @@unique([studioId, mcId])
   @@index([studioId, deletedAt])
   @@index([mcId, deletedAt])
-  @@map("studio_mcs")
+  @@map("studio_creators")
 }
 
 model StudioRoom {
