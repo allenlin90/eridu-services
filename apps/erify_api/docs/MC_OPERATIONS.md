@@ -138,6 +138,20 @@ Roster onboarding flow:
 2. Add selected creator into studio roster (`POST /creators/roster`), creating `StudioMc`.
 3. Manage studio-scoped status/default compensation via roster update endpoints.
 
+### System Admin Creator Catalog
+
+`apps/erify_api/src/admin/creators/admin-creator.controller.ts` (alias)
+
+| Method | Path | Access |
+|--------|------|--------|
+| GET | `/admin/creators` | System Admin |
+| POST | `/admin/creators` | System Admin |
+| GET | `/admin/creators/:id` | System Admin |
+| PATCH | `/admin/creators/:id` | System Admin |
+| DELETE | `/admin/creators/:id` | System Admin |
+
+Legacy compatibility: equivalent `/admin/mcs*` paths remain available.
+
 ## Key Files
 
 | File | Purpose |
