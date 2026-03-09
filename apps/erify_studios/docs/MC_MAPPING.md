@@ -91,4 +91,5 @@ Known issue:
 Legacy compatibility:
 - Show detail route currently remains `/studios/$studioId/shows/$showId/mcs` (UI path compatibility).
 - Backend accepts both `/shows/:showId/creators` (canonical) and `/shows/:showId/mcs` (legacy alias).
-- System admin screen currently remains `/system/mcs` (UI path compatibility), but now calls canonical `/admin/creators` APIs.
+- System admin canonical route is `/system/creators`.
+- Legacy `/system/mcs` route remains as a redirect alias for compatibility.

@@ -262,7 +262,7 @@ System-level administration (requires system admin):
 - `/system/studios/:studioId/studio-rooms` - Studio room management
 - `/system/users` - User management
 - `/system/clients` - Client management
-- `/system/mcs` - MC/Personality management
+- `/system/creators` - Creator/Personality management
 - `/system/platforms` - Platform management
 - `/system/show-types` - Show type configuration
 - `/system/show-standards` - Show standard configuration

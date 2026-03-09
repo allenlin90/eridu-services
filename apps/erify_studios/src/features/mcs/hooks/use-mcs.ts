@@ -18,7 +18,7 @@ export function useMcs() {
     columnFilters,
     onColumnFiltersChange,
   } = useTableUrlState({
-    from: '/system/mcs/',
+    from: '/system/creators/',
     paramNames: {
       search: 'name',
     },

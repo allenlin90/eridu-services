@@ -26,6 +26,7 @@ import { Route as SystemSchedulesIndexRouteImport } from './routes/system/schedu
 import { Route as SystemPlatformsIndexRouteImport } from './routes/system/platforms/index'
 import { Route as SystemMembershipsIndexRouteImport } from './routes/system/memberships/index'
 import { Route as SystemMcsIndexRouteImport } from './routes/system/mcs/index'
+import { Route as SystemCreatorsIndexRouteImport } from './routes/system/creators/index'
 import { Route as SystemClientsIndexRouteImport } from './routes/system/clients/index'
 import { Route as StudiosStudioIdTasksRouteImport } from './routes/studios/$studioId/tasks'
 import { Route as StudiosStudioIdTaskTemplatesRouteImport } from './routes/studios/$studioId/task-templates'
@@ -135,6 +136,11 @@ const SystemMembershipsIndexRoute = SystemMembershipsIndexRouteImport.update({
 const SystemMcsIndexRoute = SystemMcsIndexRouteImport.update({
   id: '/mcs/',
   path: '/mcs/',
+  getParentRoute: () => SystemRouteRoute,
+} as any)
+const SystemCreatorsIndexRoute = SystemCreatorsIndexRouteImport.update({
+  id: '/creators/',
+  path: '/creators/',
   getParentRoute: () => SystemRouteRoute,
 } as any)
 const SystemClientsIndexRoute = SystemClientsIndexRouteImport.update({
@@ -283,6 +289,7 @@ export interface FileRoutesByFullPath {
   '/studios/$studioId/task-templates': typeof StudiosStudioIdTaskTemplatesRouteWithChildren
   '/studios/$studioId/tasks': typeof StudiosStudioIdTasksRouteWithChildren
   '/system/clients': typeof SystemClientsIndexRoute
+  '/system/creators': typeof SystemCreatorsIndexRoute
   '/system/mcs': typeof SystemMcsIndexRoute
   '/system/memberships': typeof SystemMembershipsIndexRoute
   '/system/platforms': typeof SystemPlatformsIndexRoute
@@ -320,6 +327,7 @@ export interface FileRoutesByTo {
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/system/clients': typeof SystemClientsIndexRoute
+  '/system/creators': typeof SystemCreatorsIndexRoute
   '/system/mcs': typeof SystemMcsIndexRoute
   '/system/memberships': typeof SystemMembershipsIndexRoute
   '/system/platforms': typeof SystemPlatformsIndexRoute
@@ -363,6 +371,7 @@ export interface FileRoutesById {
   '/studios/$studioId/task-templates': typeof StudiosStudioIdTaskTemplatesRouteWithChildren
   '/studios/$studioId/tasks': typeof StudiosStudioIdTasksRouteWithChildren
   '/system/clients/': typeof SystemClientsIndexRoute
+  '/system/creators/': typeof SystemCreatorsIndexRoute
   '/system/mcs/': typeof SystemMcsIndexRoute
   '/system/memberships/': typeof SystemMembershipsIndexRoute
   '/system/platforms/': typeof SystemPlatformsIndexRoute
@@ -407,6 +416,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/task-templates'
     | '/studios/$studioId/tasks'
     | '/system/clients'
+    | '/system/creators'
     | '/system/mcs'
     | '/system/memberships'
     | '/system/platforms'
@@ -444,6 +454,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/system/clients'
+    | '/system/creators'
     | '/system/mcs'
     | '/system/memberships'
     | '/system/platforms'
@@ -486,6 +497,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/task-templates'
     | '/studios/$studioId/tasks'
     | '/system/clients/'
+    | '/system/creators/'
     | '/system/mcs/'
     | '/system/memberships/'
     | '/system/platforms/'
@@ -639,6 +651,13 @@ declare module '@tanstack/react-router' {
       path: '/mcs'
       fullPath: '/system/mcs'
       preLoaderRoute: typeof SystemMcsIndexRouteImport
+      parentRoute: typeof SystemRouteRoute
+    }
+    '/system/creators/': {
+      id: '/system/creators/'
+      path: '/creators'
+      fullPath: '/system/creators'
+      preLoaderRoute: typeof SystemCreatorsIndexRouteImport
       parentRoute: typeof SystemRouteRoute
     }
     '/system/clients/': {
@@ -922,6 +941,7 @@ const StudiosRouteRouteWithChildren = StudiosRouteRoute._addFileChildren(
 
 interface SystemRouteRouteChildren {
   SystemClientsIndexRoute: typeof SystemClientsIndexRoute
+  SystemCreatorsIndexRoute: typeof SystemCreatorsIndexRoute
   SystemMcsIndexRoute: typeof SystemMcsIndexRoute
   SystemMembershipsIndexRoute: typeof SystemMembershipsIndexRoute
   SystemPlatformsIndexRoute: typeof SystemPlatformsIndexRoute
@@ -941,6 +961,7 @@ interface SystemRouteRouteChildren {
 
 const SystemRouteRouteChildren: SystemRouteRouteChildren = {
   SystemClientsIndexRoute: SystemClientsIndexRoute,
+  SystemCreatorsIndexRoute: SystemCreatorsIndexRoute,
   SystemMcsIndexRoute: SystemMcsIndexRoute,
   SystemMembershipsIndexRoute: SystemMembershipsIndexRoute,
   SystemPlatformsIndexRoute: SystemPlatformsIndexRoute,

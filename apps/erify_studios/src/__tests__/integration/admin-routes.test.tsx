@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { Route as ClientsRoute } from '../../routes/system/clients';
+import { Route as CreatorsRoute } from '../../routes/system/creators';
 import { Route as McsRoute } from '../../routes/system/mcs';
 import { Route as MembershipsRoute } from '../../routes/system/memberships';
 import { Route as PlatformsRoute } from '../../routes/system/platforms';
@@ -25,6 +26,7 @@ describe('admin routes', () => {
   it('all admin routes are properly created', () => {
     expect(AdminRoute).toBeDefined();
     expect(ClientsRoute).toBeDefined();
+    expect(CreatorsRoute).toBeDefined();
     expect(McsRoute).toBeDefined();
     expect(MembershipsRoute).toBeDefined();
     expect(PlatformsRoute).toBeDefined();
@@ -56,11 +58,11 @@ function ClientsList() {
   );
 }
 
-function McsList() {
+function CreatorsList() {
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight">MCs</h1>
-      <p className="text-muted-foreground">Manage MCs here.</p>
+      <h1 className="text-2xl font-bold tracking-tight">Creators</h1>
+      <p className="text-muted-foreground">Manage creators here.</p>
     </div>
   );
 }
@@ -116,7 +118,7 @@ describe('admin components', () => {
   const adminComponents = [
     { name: 'AdminLayout', Component: AdminLayout, expectedText: 'Admin Content' },
     { name: 'ClientsList', Component: ClientsList, expectedText: 'Clients' },
-    { name: 'McsList', Component: McsList, expectedText: 'MCs' },
+    { name: 'CreatorsList', Component: CreatorsList, expectedText: 'Creators' },
     { name: 'MembershipsList', Component: MembershipsList, expectedText: 'Memberships' },
     { name: 'PlatformsList', Component: PlatformsList, expectedText: 'Platforms' },
     { name: 'ShowStandardsList', Component: ShowStandardsList, expectedText: 'Show Standards' },
@@ -132,7 +134,7 @@ describe('admin components', () => {
         expect(screen.getByText(expectedText)).toBeInTheDocument();
 
         if (name !== 'AdminLayout') {
-          const manageText = name === 'McsList' ? 'Manage MCs here.' : `Manage ${expectedText.toLowerCase()} here.`;
+          const manageText = `Manage ${expectedText.toLowerCase()} here.`;
           expect(screen.getByText(manageText)).toBeInTheDocument();
         }
       });
@@ -144,7 +146,7 @@ describe('admin components', () => {
           const heading = screen.getByRole('heading', { level: 1 });
           expect(heading).toHaveClass('text-2xl', 'font-bold', 'tracking-tight');
 
-          const manageText = name === 'McsList' ? 'Manage MCs here.' : `Manage ${expectedText.toLowerCase()} here.`;
+          const manageText = `Manage ${expectedText.toLowerCase()} here.`;
           const paragraph = screen.getByText(manageText);
           expect(paragraph).toHaveClass('text-muted-foreground');
         });

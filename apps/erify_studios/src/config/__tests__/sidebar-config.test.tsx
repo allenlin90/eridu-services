@@ -152,7 +152,7 @@ describe('useSidebarConfig', () => {
       items: expect.arrayContaining([
         expect.objectContaining({ title: 'Clients', url: '/system/clients' }),
         expect.objectContaining({ title: 'Studios', url: '/system/studios' }),
-        expect.objectContaining({ title: 'MCs', url: '/system/mcs' }),
+        expect.objectContaining({ title: 'Creators', url: '/system/creators' }),
         expect.objectContaining({ title: 'Memberships', url: '/system/memberships' }),
         expect.objectContaining({ title: 'Users', url: '/system/users' }),
         expect.objectContaining({ title: 'Platforms', url: '/system/platforms' }),
