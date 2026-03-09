@@ -18,6 +18,8 @@ export type ShowMc = {
   updated_at: string;
 };
 
+export type ShowCreator = ShowMc;
+
 type PaginatedResponse<T> = {
   data: T[];
   meta: {
@@ -34,6 +36,8 @@ export const showMcKeys = {
     [...showMcKeys.all, studioId, showId, params] as const,
 };
 
+export const showCreatorKeys = showMcKeys;
+
 export async function getShowMcs(
   studioId: string,
   showId: string,
@@ -46,6 +50,8 @@ export async function getShowMcs(
   return response.data;
 }
 
+export const getShowCreators = getShowMcs;
+
 export function useShowMcsQuery(
   studioId: string,
   showId: string,
@@ -57,3 +63,5 @@ export function useShowMcsQuery(
     enabled: Boolean(studioId && showId),
   });
 }
+
+export const useShowCreatorsQuery = useShowMcsQuery;

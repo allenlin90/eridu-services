@@ -38,7 +38,7 @@ export function ShowMcList({ mcs, isLoading, onRemove, isRemoving }: ShowMcListP
   if (mcs.length === 0) {
     return (
       <p className="text-sm text-muted-foreground py-4 text-center">
-        No MCs assigned to this show.
+        No creators assigned to this show.
       </p>
     );
   }
@@ -87,9 +87,9 @@ export function ShowMcList({ mcs, isLoading, onRemove, isRemoving }: ShowMcListP
       <AlertDialog open={confirmMcId !== null} onOpenChange={(open) => !open && setConfirmMcId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove MC from show?</AlertDialogTitle>
+            <AlertDialogTitle>Remove creator from show?</AlertDialogTitle>
             <AlertDialogDescription>
-              This MC will be removed from this show. You can re-assign them later.
+              This creator will be removed from this show. You can re-assign them later.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

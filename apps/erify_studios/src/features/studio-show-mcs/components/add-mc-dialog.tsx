@@ -68,9 +68,9 @@ export function AddMcDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add MC to Show</DialogTitle>
+          <DialogTitle>Add Creator to Show</DialogTitle>
           <DialogDescription>
-            Select an available MC for this show's time slot.
+            Select an available creator for this show's time slot.
           </DialogDescription>
         </DialogHeader>
 
@@ -81,8 +81,8 @@ export function AddMcDialog({
             onSearch={setSearch}
             options={options}
             isLoading={isLoadingMcs}
-            placeholder="Search available MCs..."
-            emptyMessage="No available MCs found for this time slot."
+            placeholder="Search available creators..."
+            emptyMessage="No available creators found for this time slot."
           />
         </div>
 
@@ -91,7 +91,7 @@ export function AddMcDialog({
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={!selectedMcId || isLoading}>
-            {isLoading ? 'Adding...' : 'Add MC'}
+            {isLoading ? 'Adding...' : 'Add Creator'}
           </Button>
         </DialogFooter>
       </DialogContent>

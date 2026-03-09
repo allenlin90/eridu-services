@@ -17,3 +17,5 @@ export function useShowMcs(studioId: string, showId: string) {
     removeMutation,
   };
 }
+
+export const useShowCreators = useShowMcs;
