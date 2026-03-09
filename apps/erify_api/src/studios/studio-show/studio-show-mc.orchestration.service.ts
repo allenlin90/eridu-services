@@ -2,15 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 
 import type {
-  BulkMcAssignmentError,
-  BulkMcAssignmentResponse,
+  BulkCreatorAssignmentError,
+  BulkCreatorAssignmentResponse,
 } from './schemas/studio-show-mc-bulk.schema';
 
 import { HttpError } from '@/lib/errors/http-error.util';
-import { McRepository } from '@/models/mc/mc.repository';
+import { McRepository as CreatorRepository } from '@/models/mc/mc.repository';
 import { ShowService } from '@/models/show/show.service';
-import { ShowMcRepository } from '@/models/show-mc/show-mc.repository';
-import { ShowMcService } from '@/models/show-mc/show-mc.service';
+import { ShowMcRepository as ShowCreatorRepository } from '@/models/show-mc/show-mc.repository';
+import { ShowMcService as ShowCreatorService } from '@/models/show-mc/show-mc.service';
 
 @Injectable()
 export class StudioShowMcOrchestrationService {
@@ -18,41 +18,41 @@ export class StudioShowMcOrchestrationService {
 
   constructor(
     private readonly showService: ShowService,
-    private readonly mcRepository: McRepository,
-    private readonly showMcRepository: ShowMcRepository,
-    private readonly showMcService: ShowMcService,
+    private readonly creatorRepository: CreatorRepository,
+    private readonly showCreatorRepository: ShowCreatorRepository,
+    private readonly showCreatorService: ShowCreatorService,
   ) {}
 
   @Transactional()
-  async bulkAppendMcsToShows(
+  async bulkAppendCreatorsToShows(
     studioUid: string,
     showUids: string[],
-    mcUids: string[],
-  ): Promise<BulkMcAssignmentResponse> {
+    creatorUids: string[],
+  ): Promise<BulkCreatorAssignmentResponse> {
     const uniqueShowUids = this.toUniqueUids(showUids);
-    const uniqueMcUids = this.toUniqueUids(mcUids);
+    const uniqueCreatorUids = this.toUniqueUids(creatorUids);
     const { shows, mcs } = await this.resolveShowsAndMcs(
       studioUid,
       uniqueShowUids,
-      uniqueMcUids,
+      uniqueCreatorUids,
     );
-    return this.appendAssignments(shows, mcs, uniqueShowUids, uniqueMcUids);
+    return this.appendAssignments(shows, mcs, uniqueShowUids, uniqueCreatorUids);
   }
 
   @Transactional()
-  async bulkReplaceMcsToShows(
+  async bulkReplaceCreatorsToShows(
     studioUid: string,
     showUids: string[],
-    mcUids: string[],
-  ): Promise<BulkMcAssignmentResponse> {
+    creatorUids: string[],
+  ): Promise<BulkCreatorAssignmentResponse> {
     const uniqueShowUids = this.toUniqueUids(showUids);
-    const uniqueMcUids = this.toUniqueUids(mcUids);
+    const uniqueCreatorUids = this.toUniqueUids(creatorUids);
     const { shows, mcs } = await this.resolveShowsAndMcs(
       studioUid,
       uniqueShowUids,
-      uniqueMcUids,
+      uniqueCreatorUids,
     );
-    return this.replaceAssignments(shows, mcs, uniqueShowUids, uniqueMcUids);
+    return this.replaceAssignments(shows, mcs, uniqueShowUids, uniqueCreatorUids);
   }
 
   private toUniqueUids(uids: string[]): string[] {
@@ -62,7 +62,7 @@ export class StudioShowMcOrchestrationService {
   private async resolveShowsAndMcs(
     studioUid: string,
     showUids: string[],
-    mcUids: string[],
+    creatorUids: string[],
   ) {
     const shows = await this.showService.findMany({
       where: {
@@ -80,19 +80,19 @@ export class StudioShowMcOrchestrationService {
       );
     }
 
-    // 3. Bulk-fetch MCs by UIDs
-    const mcs = await this.mcRepository.findByUids(mcUids);
+    // 3. Bulk-fetch creators by UIDs
+    const mcs = await this.creatorRepository.findByUids(creatorUids);
 
-    if (mcs.length !== mcUids.length) {
+    if (mcs.length !== creatorUids.length) {
       const foundUids = new Set(mcs.map((m) => m.uid));
-      const missing = mcUids.filter((uid) => !foundUids.has(uid));
-      throw HttpError.badRequest(`MCs not found: ${missing.join(', ')}`);
+      const missing = creatorUids.filter((uid) => !foundUids.has(uid));
+      throw HttpError.badRequest(`Creators not found: ${missing.join(', ')}`);
     }
     return { shows, mcs };
   }
 
   /**
-   * Bulk-assigns MCs to shows idempotently.
+   * Bulk-assigns creators to shows idempotently.
    * - Active assignments are skipped.
    * - Soft-deleted assignments are restored.
    * - Missing assignments are created.
@@ -100,14 +100,14 @@ export class StudioShowMcOrchestrationService {
    */
   private async appendAssignments(
     shows: Awaited<ReturnType<ShowService['findMany']>>,
-    mcs: Awaited<ReturnType<McRepository['findByUids']>>,
+    mcs: Awaited<ReturnType<CreatorRepository['findByUids']>>,
     showUids: string[],
-    mcUids: string[],
-  ): Promise<BulkMcAssignmentResponse> {
+    creatorUids: string[],
+  ): Promise<BulkCreatorAssignmentResponse> {
     const showIds = shows.map((s) => s.id);
     const mcIds = mcs.map((m) => m.id);
 
-    const existingShowMcs = await this.showMcRepository.findMany({
+    const existingShowMcs = await this.showCreatorRepository.findMany({
       where: {
         showId: { in: showIds },
         mcId: { in: mcIds },
@@ -119,32 +119,32 @@ export class StudioShowMcOrchestrationService {
     );
 
     const showByUid = new Map(shows.map((s) => [s.uid, s]));
-    const mcByUid = new Map(mcs.map((m) => [m.uid, m]));
+    const creatorByUid = new Map(mcs.map((m) => [m.uid, m]));
 
     let created = 0;
     let skipped = 0;
-    const errors: BulkMcAssignmentError[] = [];
+    const errors: BulkCreatorAssignmentError[] = [];
 
     for (const showUid of showUids) {
-      for (const mcUid of mcUids) {
+      for (const creatorUid of creatorUids) {
         const show = showByUid.get(showUid)!;
-        const mc = mcByUid.get(mcUid)!;
-        const key = `${show.id}:${mc.id}`;
+        const creator = creatorByUid.get(creatorUid)!;
+        const key = `${show.id}:${creator.id}`;
         const existing = existingMap.get(key);
 
         try {
           if (!existing) {
             // Create new assignment
-            const uid = this.showMcService.generateShowMcUid();
-            await this.showMcRepository.createAssignment({
+            const uid = this.showCreatorService.generateShowMcUid();
+            await this.showCreatorRepository.createAssignment({
               uid,
               showId: show.id,
-              mcId: mc.id,
+              mcId: creator.id,
             });
             created++;
           } else if (existing.deletedAt !== null) {
             // Restore soft-deleted assignment
-            await this.showMcRepository.restoreAndUpdateAssignment(existing.id, {});
+            await this.showCreatorRepository.restoreAndUpdateAssignment(existing.id, {});
             created++;
           } else {
             // Already active — skip
@@ -152,11 +152,11 @@ export class StudioShowMcOrchestrationService {
           }
         } catch (err) {
           this.logger.error(
-            `Failed to assign MC ${mcUid} to show ${showUid}: ${(err as Error).message}`,
+            `Failed to assign creator ${creatorUid} to show ${showUid}: ${(err as Error).message}`,
           );
           errors.push({
             show_id: showUid,
-            mc_id: mcUid,
+            creator_id: creatorUid,
             reason: (err as Error).message,
           });
         }
@@ -167,7 +167,7 @@ export class StudioShowMcOrchestrationService {
   }
 
   /**
-   * Replaces MCs on each show with the provided set.
+   * Replaces creators on each show with the provided set.
    * - Active assignments not in the target set are soft-deleted.
    * - Active assignments in the target set are skipped.
    * - Soft-deleted assignments in the target set are restored.
@@ -175,12 +175,12 @@ export class StudioShowMcOrchestrationService {
    */
   private async replaceAssignments(
     shows: Awaited<ReturnType<ShowService['findMany']>>,
-    mcs: Awaited<ReturnType<McRepository['findByUids']>>,
+    mcs: Awaited<ReturnType<CreatorRepository['findByUids']>>,
     showUids: string[],
-    mcUids: string[],
-  ): Promise<BulkMcAssignmentResponse> {
+    creatorUids: string[],
+  ): Promise<BulkCreatorAssignmentResponse> {
     const showIds = shows.map((s) => s.id);
-    const existingShowMcs = await this.showMcRepository.findMany({
+    const existingShowMcs = await this.showCreatorRepository.findMany({
       where: {
         showId: { in: showIds },
       },
@@ -194,13 +194,13 @@ export class StudioShowMcOrchestrationService {
     });
 
     const showByUid = new Map(shows.map((s) => [s.uid, s]));
-    const mcByUid = new Map(mcs.map((m) => [m.uid, m]));
+    const creatorByUid = new Map(mcs.map((m) => [m.uid, m]));
     const targetMcIdSet = new Set(mcs.map((mc) => mc.id));
 
     let created = 0;
     let skipped = 0;
     let removed = 0;
-    const errors: BulkMcAssignmentError[] = [];
+    const errors: BulkCreatorAssignmentError[] = [];
 
     for (const showUid of showUids) {
       const show = showByUid.get(showUid)!;
@@ -210,38 +210,38 @@ export class StudioShowMcOrchestrationService {
         .map((item) => item.mcId);
 
       if (activeToRemove.length > 0) {
-        await this.showMcRepository.softDeleteByMcIds(show.id, activeToRemove);
+        await this.showCreatorRepository.softDeleteByMcIds(show.id, activeToRemove);
         removed += activeToRemove.length;
       }
 
       const existingByMcId = new Map(existingForShow.map((item) => [item.mcId, item]));
-      for (const mcUid of mcUids) {
-        const mc = mcByUid.get(mcUid)!;
-        const existing = existingByMcId.get(mc.id);
+      for (const creatorUid of creatorUids) {
+        const creator = creatorByUid.get(creatorUid)!;
+        const existing = existingByMcId.get(creator.id);
         try {
           if (!existing) {
-            const uid = this.showMcService.generateShowMcUid();
-            await this.showMcRepository.createAssignment({
+            const uid = this.showCreatorService.generateShowMcUid();
+            await this.showCreatorRepository.createAssignment({
               uid,
               showId: show.id,
-              mcId: mc.id,
+              mcId: creator.id,
             });
             created++;
             continue;
           }
           if (existing.deletedAt !== null) {
-            await this.showMcRepository.restoreAndUpdateAssignment(existing.id, {});
+            await this.showCreatorRepository.restoreAndUpdateAssignment(existing.id, {});
             created++;
             continue;
           }
           skipped++;
         } catch (err) {
           this.logger.error(
-            `Failed to set MC ${mcUid} on show ${showUid}: ${(err as Error).message}`,
+            `Failed to set creator ${creatorUid} on show ${showUid}: ${(err as Error).message}`,
           );
           errors.push({
             show_id: showUid,
-            mc_id: mcUid,
+            creator_id: creatorUid,
             reason: (err as Error).message,
           });
         }

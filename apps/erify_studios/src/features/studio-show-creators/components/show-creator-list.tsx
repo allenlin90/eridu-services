@@ -18,13 +18,13 @@ import {
 import type { ShowCreator } from '../api/get-show-creators';
 
 type ShowCreatorListProps = {
-  mcs: ShowCreator[];
+  creators: ShowCreator[];
   isLoading: boolean;
-  onRemove: (mcId: string) => void;
+  onRemove: (creatorId: string) => void;
   isRemoving: boolean;
 };
 
-export function ShowCreatorList({ mcs, isLoading, onRemove, isRemoving }: ShowCreatorListProps) {
+export function ShowCreatorList({ creators, isLoading, onRemove, isRemoving }: ShowCreatorListProps) {
   const [confirmCreatorId, setConfirmCreatorId] = useState<string | null>(null);
 
   if (isLoading) {
@@ -35,7 +35,7 @@ export function ShowCreatorList({ mcs, isLoading, onRemove, isRemoving }: ShowCr
     );
   }
 
-  if (mcs.length === 0) {
+  if (creators.length === 0) {
     return (
       <p className="text-sm text-muted-foreground py-4 text-center">
         No creators assigned to this show.
@@ -46,27 +46,27 @@ export function ShowCreatorList({ mcs, isLoading, onRemove, isRemoving }: ShowCr
   return (
     <>
       <ul className="divide-y">
-        {mcs.map((mc) => (
-          <li key={mc.id} className="flex items-center justify-between py-3 px-1">
+        {creators.map((creator) => (
+          <li key={creator.id} className="flex items-center justify-between py-3 px-1">
             <div className="space-y-0.5">
-              <span className="text-sm font-medium">{mc.mc_name ?? mc.mc_id}</span>
-              {mc.mc_alias_name && (
+              <span className="text-sm font-medium">{creator.creator_name ?? creator.creator_id}</span>
+              {creator.creator_alias_name && (
                 <span className="text-xs text-muted-foreground ml-2">
                   (
-                  {mc.mc_alias_name}
+                  {creator.creator_alias_name}
                   )
                 </span>
               )}
-              {mc.compensation_type && (
+              {creator.compensation_type && (
                 <Badge variant="outline" className="ml-2 text-xs">
-                  {mc.compensation_type}
+                  {creator.compensation_type}
                 </Badge>
               )}
-              {mc.agreed_rate && (
+              {creator.agreed_rate && (
                 <span className="text-xs text-muted-foreground ml-2">
                   Rate:
                   {' '}
-                  {mc.agreed_rate}
+                  {creator.agreed_rate}
                 </span>
               )}
             </div>
@@ -74,9 +74,9 @@ export function ShowCreatorList({ mcs, isLoading, onRemove, isRemoving }: ShowCr
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-destructive hover:text-destructive"
-              onClick={() => setConfirmCreatorId(mc.mc_id)}
+              onClick={() => setConfirmCreatorId(creator.creator_id)}
               disabled={isRemoving}
-              aria-label={`Remove ${mc.mc_name}`}
+              aria-label={`Remove ${creator.creator_name}`}
             >
               <Trash2 className="h-4 w-4" />
             </Button>

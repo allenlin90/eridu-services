@@ -6,9 +6,9 @@ export type ShowCreator = {
   id: string;
   show_id: string | null;
   show_name: string | null;
-  mc_id: string | null;
-  mc_name: string | null;
-  mc_alias_name: string | null;
+  creator_id: string | null;
+  creator_name: string | null;
+  creator_alias_name: string | null;
   note: string | null;
   agreed_rate: string | null;
   compensation_type: string | null;

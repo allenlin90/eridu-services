@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ShowMC } from '@prisma/client';
 
 import type {
-  CreateShowMcPayload,
-  UpdateShowMcPayload,
+  CreateShowCreatorPayload,
+  UpdateShowCreatorPayload,
 } from './schemas/show-mc.schema';
 import { ShowMcRepository } from './show-mc.repository';
 
@@ -31,12 +31,12 @@ export class ShowMcService extends BaseModelService {
   }
 
   async create(
-    payload: CreateShowMcPayload,
+    payload: CreateShowCreatorPayload,
   ): ReturnType<ShowMcRepository['createByUids']> {
     const uid = this.generateUid();
     return this.showMcRepository.createByUids(uid, {
       showUid: payload.showId,
-      mcUid: payload.mcId,
+      mcUid: payload.creatorId,
       note: payload.note,
       agreedRate: payload.agreedRate,
       compensationType: payload.compensationType,
@@ -69,7 +69,7 @@ export class ShowMcService extends BaseModelService {
 
   async update(
     uid: string,
-    payload: UpdateShowMcPayload,
+    payload: UpdateShowCreatorPayload,
   ): ReturnType<ShowMcRepository['update']> {
     const data: Record<string, any> = {};
 
@@ -88,8 +88,8 @@ export class ShowMcService extends BaseModelService {
       data.show = { connect: { uid: payload.showId } };
     }
 
-    if (payload.mcId !== undefined) {
-      data.mc = { connect: { uid: payload.mcId } };
+    if (payload.creatorId !== undefined) {
+      data.mc = { connect: { uid: payload.creatorId } };
     }
 
     return this.showMcRepository.update({ uid }, data);

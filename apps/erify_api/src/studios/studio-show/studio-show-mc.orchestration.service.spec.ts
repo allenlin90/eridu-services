@@ -52,7 +52,7 @@ describe('studioShowMcOrchestrationService', () => {
     showMcRepository.createAssignment.mockResolvedValue({ id: BigInt(102) });
     showMcRepository.restoreAndUpdateAssignment.mockResolvedValue({ id: BigInt(101) });
 
-    const result = await service.bulkAppendMcsToShows(
+    const result = await service.bulkAppendCreatorsToShows(
       'std_1',
       ['show_1'],
       ['mc_1', 'mc_2', 'mc_3'],
@@ -77,7 +77,7 @@ describe('studioShowMcOrchestrationService', () => {
     showService.findMany.mockResolvedValue([{ id: BigInt(1), uid: 'show_1' }]);
 
     await expect(
-      service.bulkAppendMcsToShows('std_1', ['show_1', 'show_2'], ['mc_1']),
+      service.bulkAppendCreatorsToShows('std_1', ['show_1', 'show_2'], ['mc_1']),
     ).rejects.toMatchObject(HttpError.badRequest('Shows not found or not in this studio: show_2'));
   });
 
@@ -86,7 +86,7 @@ describe('studioShowMcOrchestrationService', () => {
     mcRepository.findByUids.mockResolvedValue([{ id: BigInt(10), uid: 'mc_1' }]);
 
     await expect(
-      service.bulkAppendMcsToShows('std_1', ['show_1'], ['mc_1', 'mc_2']),
+      service.bulkAppendCreatorsToShows('std_1', ['show_1'], ['mc_1', 'mc_2']),
     ).rejects.toMatchObject(HttpError.badRequest('MCs not found: mc_2'));
   });
 
@@ -96,7 +96,7 @@ describe('studioShowMcOrchestrationService', () => {
     showMcRepository.findMany.mockResolvedValue([]);
     showMcRepository.createAssignment.mockResolvedValue({ id: BigInt(100) });
 
-    const result = await service.bulkAppendMcsToShows(
+    const result = await service.bulkAppendCreatorsToShows(
       'std_1',
       ['show_1', 'show_1'],
       ['mc_1', 'mc_1'],
@@ -124,13 +124,13 @@ describe('studioShowMcOrchestrationService', () => {
     showMcRepository.findMany.mockResolvedValue([]);
     showMcRepository.createAssignment.mockRejectedValue(new Error('insert failed'));
 
-    const result = await service.bulkAppendMcsToShows('std_1', ['show_1'], ['mc_1']);
+    const result = await service.bulkAppendCreatorsToShows('std_1', ['show_1'], ['mc_1']);
 
     expect(result.created).toBe(0);
     expect(result.skipped).toBe(0);
     expect(result.removed).toBe(0);
     expect(result.errors).toEqual([
-      { show_id: 'show_1', mc_id: 'mc_1', reason: 'insert failed' },
+      { show_id: 'show_1', creator_id: 'mc_1', reason: 'insert failed' },
     ]);
   });
 
@@ -148,7 +148,7 @@ describe('studioShowMcOrchestrationService', () => {
     showMcRepository.softDeleteByMcIds.mockResolvedValue(undefined);
     showMcRepository.restoreAndUpdateAssignment.mockResolvedValue({ id: BigInt(102) });
 
-    const result = await service.bulkReplaceMcsToShows(
+    const result = await service.bulkReplaceCreatorsToShows(
       'std_1',
       ['show_1'],
       ['mc_1', 'mc_2'],

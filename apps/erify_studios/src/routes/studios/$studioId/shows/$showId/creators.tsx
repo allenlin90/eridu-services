@@ -27,7 +27,7 @@ function ShowCreatorsPage() {
   const { data: show } = useStudioShow({ studioId, showId });
   const { data, isLoading, addMutation, removeMutation } = useShowCreators(studioId, showId);
 
-  const mcs = data?.data ?? [];
+  const creators = data?.data ?? [];
   const backToCreators = search.from === 'creators';
 
   return (
@@ -63,9 +63,9 @@ function ShowCreatorsPage() {
 
       <CardContent>
         <ShowCreatorList
-          mcs={mcs}
+          creators={creators}
           isLoading={isLoading}
-          onRemove={(mcId) => removeMutation.mutate(mcId)}
+          onRemove={(creatorId) => removeMutation.mutate(creatorId)}
           isRemoving={removeMutation.isPending}
         />
       </CardContent>
@@ -77,8 +77,8 @@ function ShowCreatorsPage() {
           studioId={studioId}
           showStartTime={show.start_time}
           showEndTime={show.end_time}
-          onAdd={(mcId) => {
-            addMutation.mutate({ mc_id: mcId });
+          onAdd={(creatorId) => {
+            addMutation.mutate({ creator_id: creatorId });
           }}
           isLoading={addMutation.isPending}
         />

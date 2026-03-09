@@ -14,8 +14,8 @@ import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import { BaseStudioController } from '../base-studio.controller';
 
 import {
-  BulkMcAssignmentDto,
-  bulkMcAssignmentResponseSchema,
+  BulkCreatorAssignmentDto,
+  bulkCreatorAssignmentResponseSchema,
 } from './schemas/studio-show-mc-bulk.schema';
 import { StudioShowMcOrchestrationService } from './studio-show-mc.orchestration.service';
 
@@ -72,29 +72,29 @@ export class StudioShowController extends BaseStudioController {
 
   @Patch('creator-assignments/bulk')
   @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER])
-  @ZodResponse(bulkMcAssignmentResponseSchema)
+  @ZodResponse(bulkCreatorAssignmentResponseSchema)
   async bulkAppendCreators(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
-    @Body() body: BulkMcAssignmentDto,
+    @Body() body: BulkCreatorAssignmentDto,
   ) {
-    return this.studioShowMcOrchestrationService.bulkAppendMcsToShows(
+    return this.studioShowMcOrchestrationService.bulkAppendCreatorsToShows(
       studioId,
       body.show_ids,
-      body.mc_ids,
+      body.creator_ids,
     );
   }
 
   @Put('creator-assignments/bulk')
   @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER])
-  @ZodResponse(bulkMcAssignmentResponseSchema)
+  @ZodResponse(bulkCreatorAssignmentResponseSchema)
   async bulkReplaceCreators(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
-    @Body() body: BulkMcAssignmentDto,
+    @Body() body: BulkCreatorAssignmentDto,
   ) {
-    return this.studioShowMcOrchestrationService.bulkReplaceMcsToShows(
+    return this.studioShowMcOrchestrationService.bulkReplaceCreatorsToShows(
       studioId,
       body.show_ids,
-      body.mc_ids,
+      body.creator_ids,
     );
   }
 }

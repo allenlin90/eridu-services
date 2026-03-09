@@ -8,9 +8,9 @@ import type {
 } from '@/models/show/schemas/show.schema';
 import type {
   CreateShowWithAssignmentsDto,
-  RemoveMcsFromShowDto,
+  RemoveCreatorsFromShowDto,
   RemovePlatformsFromShowDto,
-  ReplaceMcsOnShowDto,
+  ReplaceCreatorsOnShowDto,
   ReplacePlatformsOnShowDto,
   UpdateShowWithAssignmentsDto,
 } from '@/show-orchestration/schemas/show-orchestration.schema';
@@ -25,9 +25,9 @@ describe('adminShowController', () => {
     getPaginatedShowsWithRelations: jest.fn(),
     updateShowWithAssignments: jest.fn(),
     deleteShow: jest.fn(),
-    removeMCsFromShow: jest.fn(),
+    removeCreatorsFromShow: jest.fn(),
     removePlatformsFromShow: jest.fn(),
-    replaceMCsForShow: jest.fn(),
+    replaceCreatorsForShow: jest.fn(),
     replacePlatformsForShow: jest.fn(),
   };
   beforeEach(async () => {
@@ -61,7 +61,7 @@ describe('adminShowController', () => {
         startTime: new Date('2024-01-01T10:00:00Z'),
         endTime: new Date('2024-01-01T12:00:00Z'),
         metadata: {},
-        mcs: [],
+        creators: [],
         platforms: [],
       };
       const createdShow = { uid: 'show_123', ...createDto };
@@ -158,7 +158,7 @@ describe('adminShowController', () => {
       const showId = 'show_123';
       const updateDto = {
         name: 'Updated Show',
-        showMcs: [{ mcId: 'mc_1', note: null, metadata: {} }],
+        showMcs: [{ creatorId: 'mc_1', note: null, metadata: {} }],
         showPlatforms: [
           {
             platformId: 'p_1',
@@ -199,19 +199,19 @@ describe('adminShowController', () => {
     });
   });
 
-  describe('removeMCsFromShow', () => {
+  describe('removeCreatorsFromShow', () => {
     it('should remove MCs from a show', async () => {
       const showId = 'show_123';
-      const removeDto: RemoveMcsFromShowDto = { mcIds: ['mc_1', 'mc_2'] };
+      const removeDto: RemoveCreatorsFromShowDto = { creatorIds: ['mc_1', 'mc_2'] };
 
-      mockShowOrchestrationService.removeMCsFromShow.mockResolvedValue(
+      mockShowOrchestrationService.removeCreatorsFromShow.mockResolvedValue(
         undefined,
       );
 
-      await controller.removeMCsFromShow(showId, removeDto);
+      await controller.removeCreatorsFromShow(showId, removeDto);
       expect(
-        mockShowOrchestrationService.removeMCsFromShow,
-      ).toHaveBeenCalledWith(showId, removeDto.mcIds);
+        mockShowOrchestrationService.removeCreatorsFromShow,
+      ).toHaveBeenCalledWith(showId, removeDto.creatorIds);
     });
   });
 
@@ -233,25 +233,25 @@ describe('adminShowController', () => {
     });
   });
 
-  describe('replaceMCsOnShow', () => {
+  describe('replaceCreatorsOnShow', () => {
     it('should replace MCs on a show', async () => {
       const showId = 'show_123';
-      const replaceDto: ReplaceMcsOnShowDto = {
-        mcs: [{ mcId: 'mc_1', note: null, metadata: {} }],
+      const replaceDto: ReplaceCreatorsOnShowDto = {
+        creators: [{ creatorId: 'mc_1', note: null, metadata: {} }],
       };
       const updatedShow = {
         uid: showId,
-        showMcs: [{ mcId: 'mc_1', note: null, metadata: {} }],
+        showMcs: [{ creatorId: 'mc_1', note: null, metadata: {} }],
       };
 
-      mockShowOrchestrationService.replaceMCsForShow.mockResolvedValue(
+      mockShowOrchestrationService.replaceCreatorsForShow.mockResolvedValue(
         updatedShow as any,
       );
 
-      const result = await controller.replaceMCsOnShow(showId, replaceDto);
+      const result = await controller.replaceCreatorsOnShow(showId, replaceDto);
       expect(
-        mockShowOrchestrationService.replaceMCsForShow,
-      ).toHaveBeenCalledWith(showId, replaceDto.mcs);
+        mockShowOrchestrationService.replaceCreatorsForShow,
+      ).toHaveBeenCalledWith(showId, replaceDto.creators);
       expect(result).toEqual(updatedShow);
     });
   });

@@ -9,18 +9,18 @@ import z from 'zod';
 import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
 
 import { decimalToStringOrNull } from '@/lib/utils/decimal.util';
-import { McService } from '@/models/mc/mc.service';
-import { mcSchema } from '@/models/mc/schemas/mc.schema';
+import { CreatorService } from '@/models/creator/creator.service';
+import { creatorSchema } from '@/models/creator/schemas/creator.schema';
 import { showSchema } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
 
 // Internal schema for database entity
-export const showMcSchema = z.object({
+export const showCreatorSchema = z.object({
   id: z.bigint(),
   uid: z.string().startsWith(ShowMcService.UID_PREFIX),
   showId: z.bigint(),
-  mcId: z.bigint(),
+  creatorId: z.bigint(),
   note: z.string().nullable(),
   agreedRate: z.unknown().nullable(),
   compensationType: z.string().nullable(),
@@ -32,9 +32,9 @@ export const showMcSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const createShowMcSchema = z.object({
+export const createShowCreatorSchema = z.object({
   show_id: z.string().startsWith(ShowService.UID_PREFIX), // UID
-  mc_id: z.string().startsWith(McService.UID_PREFIX), // UID
+  creator_id: z.string().startsWith(CreatorService.UID_PREFIX), // UID
   note: z.string().max(1000).optional(), // Add max length for notes
   agreed_rate: z.coerce.number().positive().optional(),
   compensation_type: z.enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]]).optional(),
@@ -42,9 +42,9 @@ export const createShowMcSchema = z.object({
   metadata: z.record(z.string(), z.any()).optional(),
 });
 
-const transformCreateShowMcSchema = createShowMcSchema.transform((data) => ({
+const transformCreateShowCreatorSchema = createShowCreatorSchema.transform((data) => ({
   showId: data.show_id,
-  mcId: data.mc_id,
+  creatorId: data.creator_id,
   note: data.note,
   agreedRate: data.agreed_rate !== undefined ? data.agreed_rate.toFixed(2) : undefined,
   compensationType: data.compensation_type,
@@ -53,10 +53,10 @@ const transformCreateShowMcSchema = createShowMcSchema.transform((data) => ({
 }));
 
 // API update schema (snake_case input, transforms to camelCase)
-export const updateShowMcSchema = z
+export const updateShowCreatorSchema = z
   .object({
     show_id: z.string().startsWith(ShowService.UID_PREFIX).optional(), // UID
-    mc_id: z.string().startsWith(McService.UID_PREFIX).optional(), // UID
+    creator_id: z.string().startsWith(CreatorService.UID_PREFIX).optional(), // UID
     note: z.string().max(1000).nullable().optional(), // Add max length for notes
     agreed_rate: z.coerce.number().positive().nullable().optional(),
     compensation_type: z.enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]]).nullable().optional(),
@@ -65,7 +65,7 @@ export const updateShowMcSchema = z
   })
   .transform((data) => ({
     showId: data.show_id,
-    mcId: data.mc_id,
+    creatorId: data.creator_id,
     note: data.note,
     agreedRate: data.agreed_rate !== undefined ? (data.agreed_rate === null ? null : data.agreed_rate.toFixed(2)) : undefined,
     compensationType: data.compensation_type,
@@ -73,21 +73,21 @@ export const updateShowMcSchema = z
     metadata: data.metadata,
   }));
 
-// Schema for ShowMC with relations (used in admin endpoints)
-export const showMcWithRelationsSchema = showMcSchema.extend({
+// Schema for ShowCreator with relations (used in admin endpoints)
+export const showCreatorWithRelationsSchema = showCreatorSchema.extend({
   show: showSchema.optional(),
-  mc: mcSchema.optional(),
+  mc: creatorSchema.optional(),
 });
 
 // API output schema (transforms to snake_case)
-export const showMcDto = showMcWithRelationsSchema
+export const showCreatorDto = showCreatorWithRelationsSchema
   .transform((obj) => ({
     id: obj.uid,
     show_id: obj.show?.uid ?? null,
     show_name: obj.show?.name ?? null,
-    mc_id: obj.mc?.uid ?? null,
-    mc_name: obj.mc?.name ?? null,
-    mc_alias_name: obj.mc?.aliasName ?? null,
+    creator_id: obj.mc?.uid ?? null,
+    creator_name: obj.mc?.name ?? null,
+    creator_alias_name: obj.mc?.aliasName ?? null,
     note: obj.note,
     agreed_rate: decimalToStringOrNull(obj.agreedRate),
     compensation_type: obj.compensationType,
@@ -101,9 +101,9 @@ export const showMcDto = showMcWithRelationsSchema
       id: z.string(),
       show_id: z.string().nullable(),
       show_name: z.string().nullable(),
-      mc_id: z.string().nullable(),
-      mc_name: z.string().nullable(),
-      mc_alias_name: z.string().nullable(),
+      creator_id: z.string().nullable(),
+      creator_name: z.string().nullable(),
+      creator_alias_name: z.string().nullable(),
       note: z.string().nullable(),
       agreed_rate: z.string().nullable(),
       compensation_type: z.string().nullable(),
@@ -115,18 +115,18 @@ export const showMcDto = showMcWithRelationsSchema
   );
 
 // DTOs for input/output
-export class CreateShowMcDto extends createZodDto(
-  transformCreateShowMcSchema,
+export class CreateShowCreatorDto extends createZodDto(
+  transformCreateShowCreatorSchema,
 ) {}
-export class UpdateShowMcDto extends createZodDto(updateShowMcSchema) {}
-export class ShowMcDto extends createZodDto(showMcDto) {}
+export class UpdateShowCreatorDto extends createZodDto(updateShowCreatorSchema) {}
+export class ShowCreatorDto extends createZodDto(showCreatorDto) {}
 
 /**
- * Payload for creating a show MC (service layer).
+ * Payload for creating a show Creator (service layer).
  */
-export type CreateShowMcPayload = {
+export type CreateShowCreatorPayload = {
   showId: string;
-  mcId: string;
+  creatorId: string;
   note?: string | null;
   agreedRate?: string;
   compensationType?: string;
@@ -135,11 +135,11 @@ export type CreateShowMcPayload = {
 };
 
 /**
- * Payload for updating a show MC (service layer).
+ * Payload for updating a show Creator (service layer).
  */
-export type UpdateShowMcPayload = {
+export type UpdateShowCreatorPayload = {
   showId?: string;
-  mcId?: string;
+  creatorId?: string;
   note?: string | null;
   agreedRate?: string | null;
   compensationType?: string | null;
@@ -148,9 +148,9 @@ export type UpdateShowMcPayload = {
 };
 
 /**
- * Type-safe filter options for show MCs.
+ * Type-safe filter options for show creators.
  */
-export type ShowMcFilters = {
+export type ShowCreatorFilters = {
   uid?: string;
   showId?: bigint;
   mcId?: bigint;
@@ -160,9 +160,9 @@ export type ShowMcFilters = {
 };
 
 /**
- * Type-safe order by options for show MCs.
+ * Type-safe order by options for show creators.
  */
-export type ShowMcOrderBy = {
+export type ShowCreatorOrderBy = {
   createdAt?: 'asc' | 'desc';
   updatedAt?: 'asc' | 'desc';
 };

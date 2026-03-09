@@ -66,40 +66,40 @@ export function BulkCreatorAssignDialog({
   }
 
   const contextQuery = useQuery({
-    queryKey: ['bulk-mc-context', studioId, availabilityRange?.dateFrom, availabilityRange?.dateTo, selectedShowIds],
+    queryKey: ['bulk-creator-context', studioId, availabilityRange?.dateFrom, availabilityRange?.dateTo, selectedShowIds],
     enabled: open && Boolean(availabilityRange) && selectedShows.length > 0,
     queryFn: async () => {
-      const mcs = await getCreatorAvailability(studioId, availabilityRange!.dateFrom, availabilityRange!.dateTo);
+      const creators = await getCreatorAvailability(studioId, availabilityRange!.dateFrom, availabilityRange!.dateTo);
       const coverageMap = new Map<string, Set<string>>();
       const labelMap = new Map<string, string>();
       selectedShows.forEach((show) => {
         show.mcs.forEach((assignment) => {
-          if (!assignment.mc_id) {
+          if (!assignment.creator_id) {
             return;
           }
-          const existingCoverage = coverageMap.get(assignment.mc_id) ?? new Set<string>();
+          const existingCoverage = coverageMap.get(assignment.creator_id) ?? new Set<string>();
           existingCoverage.add(show.id);
-          coverageMap.set(assignment.mc_id, existingCoverage);
-          if (!labelMap.has(assignment.mc_id)) {
-            const label = assignment.mc_aliasname
-              ? `${assignment.mc_name ?? assignment.mc_id} (${assignment.mc_aliasname})`
-              : (assignment.mc_name ?? assignment.mc_id);
-            labelMap.set(assignment.mc_id, label);
+          coverageMap.set(assignment.creator_id, existingCoverage);
+          if (!labelMap.has(assignment.creator_id)) {
+            const label = assignment.creator_aliasname
+              ? `${assignment.creator_name ?? assignment.creator_id} (${assignment.creator_aliasname})`
+              : (assignment.creator_name ?? assignment.creator_id);
+            labelMap.set(assignment.creator_id, label);
           }
         });
       });
       return {
-        mcs,
+        creators,
         assignmentCoverageByCreatorId: Object.fromEntries(
-          Array.from(coverageMap.entries()).map(([mcId, showIds]) => [mcId, Array.from(showIds)]),
+          Array.from(coverageMap.entries()).map(([creatorId, showIds]) => [creatorId, Array.from(showIds)]),
         ),
         assignmentLabelByCreatorId: Object.fromEntries(labelMap.entries()),
       };
     },
   });
   const availableCreators: CreatorApiResponse[] = useMemo(
-    () => contextQuery.data?.mcs ?? [],
-    [contextQuery.data?.mcs],
+    () => contextQuery.data?.creators ?? [],
+    [contextQuery.data?.creators],
   );
   const assignmentCoverageByCreatorId: Record<string, string[]> = useMemo(
     () => contextQuery.data?.assignmentCoverageByCreatorId ?? {},
@@ -116,19 +116,19 @@ export function BulkCreatorAssignDialog({
   const availableLabelByCreatorId = useMemo(
     () =>
       Object.fromEntries(
-        availableCreators.map((mc) => [
-          mc.id,
-          mc.alias_name ? `${mc.name} (${mc.alias_name})` : mc.name,
+        availableCreators.map((creator) => [
+          creator.id,
+          creator.alias_name ? `${creator.name} (${creator.alias_name})` : creator.name,
         ]),
       ),
     [availableCreators],
   );
   const visibleCreators = useMemo(() => {
-    const matchesSearch = (mc: CreatorApiResponse) => {
+    const matchesSearch = (creator: CreatorApiResponse) => {
       if (!searchTermNormalized) {
         return true;
       }
-      const composite = `${mc.name} ${mc.alias_name ?? ''}`;
+      const composite = `${creator.name} ${creator.alias_name ?? ''}`;
       return normalizeSearchText(composite).includes(searchTermNormalized);
     };
     const filtered = availableCreators.filter(matchesSearch);
@@ -150,16 +150,16 @@ export function BulkCreatorAssignDialog({
     return sorted;
   }, [availableCreators, assignmentCoverageByCreatorId, searchTermNormalized, selectedCreatorIdSet, selectedShowIdSet]);
 
-  const mcOptions = useMemo(
+  const creatorOptions = useMemo(
     () =>
-      visibleCreators.map((mc) => {
-        const coveredShowCount = (assignmentCoverageByCreatorId[mc.id] ?? []).filter((showId) => selectedShowIdSet.has(showId)).length;
+      visibleCreators.map((creator) => {
+        const coveredShowCount = (assignmentCoverageByCreatorId[creator.id] ?? []).filter((showId) => selectedShowIdSet.has(showId)).length;
         const coverageSuffix = coveredShowCount > 0
           ? ` · already on ${coveredShowCount}/${selectedShowsCount} show${selectedShowsCount === 1 ? '' : 's'}`
           : '';
         return {
-          value: mc.id,
-          label: `${mc.alias_name ? `${mc.name} (${mc.alias_name})` : mc.name}${coverageSuffix}`,
+          value: creator.id,
+          label: `${creator.alias_name ? `${creator.name} (${creator.alias_name})` : creator.name}${coverageSuffix}`,
         };
       }),
     [assignmentCoverageByCreatorId, selectedShowIdSet, selectedShowsCount, visibleCreators],
@@ -167,19 +167,19 @@ export function BulkCreatorAssignDialog({
 
   const selectedCreators = useMemo(
     () =>
-      selectedCreatorIds.map((mcId) => ({
-        id: mcId,
-        label: availableLabelByCreatorId[mcId]
-          ?? assignmentLabelByCreatorId[mcId]
-          ?? mcId,
+      selectedCreatorIds.map((creatorId) => ({
+        id: creatorId,
+        label: availableLabelByCreatorId[creatorId]
+          ?? assignmentLabelByCreatorId[creatorId]
+          ?? creatorId,
       })),
     [assignmentLabelByCreatorId, availableLabelByCreatorId, selectedCreatorIds],
   );
 
   const existingAssignedCreators = useMemo(() => {
     const records = Object.entries(assignmentCoverageByCreatorId)
-      .map(([mcId, showIds]) => ({
-        mcId,
+      .map(([creatorId, showIds]) => ({
+        creatorId,
         coveredShowCount: showIds.filter((showId) => selectedShowIdSet.has(showId)).length,
       }))
       .filter((item) => item.coveredShowCount > 0)
@@ -188,11 +188,11 @@ export function BulkCreatorAssignDialog({
   }, [assignmentCoverageByCreatorId, selectedShowIdSet]);
   const impactSummary = useMemo(() => {
     const targetSet = new Set(selectedCreatorIds);
-    const currentlyAssignedInScope = new Set(existingAssignedCreators.map((item) => item.mcId));
-    const addedCount = selectedCreatorIds.filter((mcId) => !currentlyAssignedInScope.has(mcId)).length;
-    const unchangedCount = selectedCreatorIds.filter((mcId) => currentlyAssignedInScope.has(mcId)).length;
+    const currentlyAssignedInScope = new Set(existingAssignedCreators.map((item) => item.creatorId));
+    const addedCount = selectedCreatorIds.filter((creatorId) => !currentlyAssignedInScope.has(creatorId)).length;
+    const unchangedCount = selectedCreatorIds.filter((creatorId) => currentlyAssignedInScope.has(creatorId)).length;
     const removedCount = mode === 'replace'
-      ? Array.from(currentlyAssignedInScope).filter((mcId) => !targetSet.has(mcId)).length
+      ? Array.from(currentlyAssignedInScope).filter((creatorId) => !targetSet.has(creatorId)).length
       : 0;
     return {
       addedCount,
@@ -208,7 +208,7 @@ export function BulkCreatorAssignDialog({
       {
         data: {
           show_ids: selectedShows.map((s) => s.id),
-          mc_ids: selectedCreatorIds,
+          creator_ids: selectedCreatorIds,
         },
         mode,
       },
@@ -234,9 +234,9 @@ export function BulkCreatorAssignDialog({
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Bulk Assign MCs</DialogTitle>
+          <DialogTitle>Bulk Assign Creators</DialogTitle>
           <DialogDescription>
-            Assign MCs to
+            Assign creators to
             {' '}
             {selectedShows.length}
             {' '}
@@ -260,7 +260,7 @@ export function BulkCreatorAssignDialog({
             </Select>
             <p className="text-xs text-muted-foreground">
               {mode === 'replace'
-                ? 'Replace mode overwrites MC mapping for selected shows.'
+                ? 'Replace mode overwrites creator mapping for selected shows.'
                 : 'Append mode keeps current mappings and adds selected creators.'}
             </p>
           </div>
@@ -298,9 +298,9 @@ export function BulkCreatorAssignDialog({
               </p>
               <div className="flex flex-wrap gap-2">
                 {existingAssignedCreators.slice(0, 8).map((item) => {
-                  const label = availableLabelByCreatorId[item.mcId] ?? assignmentLabelByCreatorId[item.mcId] ?? item.mcId;
+                  const label = availableLabelByCreatorId[item.creatorId] ?? assignmentLabelByCreatorId[item.creatorId] ?? item.creatorId;
                   return (
-                    <Badge key={item.mcId} variant="outline">
+                    <Badge key={item.creatorId} variant="outline">
                       {label}
                       {' '}
                       (
@@ -328,7 +328,7 @@ export function BulkCreatorAssignDialog({
             value={selectedCreatorIds}
             onChange={setSelectedCreatorIds}
             onSearch={setSearchTerm}
-            options={mcOptions}
+            options={creatorOptions}
             isLoading={isLoadingContext}
             placeholder="Search creators by name or alias"
             emptyMessage={isLoadingContext ? 'Loading creators...' : 'No creators found for this scope'}
@@ -377,7 +377,7 @@ export function BulkCreatorAssignDialog({
             onClick={handleSubmit}
             disabled={selectedCreatorIds.length === 0 || selectedShows.length === 0 || isPending}
           >
-            {isPending ? 'Assigning...' : `Assign ${selectedCreatorIds.length > 0 ? selectedCreatorIds.length : ''} MC${selectedCreatorIds.length !== 1 ? 's' : ''}`}
+            {isPending ? 'Assigning...' : `Assign ${selectedCreatorIds.length > 0 ? selectedCreatorIds.length : ''} Creator${selectedCreatorIds.length !== 1 ? 's' : ''}`}
           </Button>
         </DialogFooter>
       </DialogContent>

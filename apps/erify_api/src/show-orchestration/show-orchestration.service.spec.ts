@@ -186,7 +186,7 @@ describe('showOrchestrationService', () => {
         startTime: new Date('2024-01-01T10:00:00Z'),
         endTime: new Date('2024-01-01T12:00:00Z'),
         metadata: {},
-        mcs: undefined,
+        creators: undefined,
         platforms: undefined,
       };
 
@@ -278,11 +278,11 @@ describe('showOrchestrationService', () => {
 
     it('should update a show with MC and platform assignments', async () => {
       const uid = 'show_test123';
-      const dto: UpdateShowWithAssignmentsDto = {
+      const dto = {
         name: 'Updated Show Name',
         showMcs: [
           {
-            mcId: 'mc_test123',
+            creatorId: 'mc_test123',
             note: 'Updated note',
             metadata: {},
           },
@@ -296,7 +296,7 @@ describe('showOrchestrationService', () => {
             metadata: {},
           },
         ],
-      } as UpdateShowWithAssignmentsDto;
+      } as unknown as UpdateShowWithAssignmentsDto;
 
       const mockMc = { id: BigInt(1), uid: 'mc_test123', deletedAt: null };
       const mockPlatform = { id: BigInt(1), uid: 'plt_test123', deletedAt: null };
@@ -345,12 +345,12 @@ describe('showOrchestrationService', () => {
 
     it('should throw BadRequestException when endTime is before or equal to startTime', async () => {
       const uid = 'show_test123';
-      const dto: UpdateShowWithAssignmentsDto = {
+      const dto = {
         startTime: new Date('2024-01-01T12:00:00Z'),
         endTime: new Date('2024-01-01T10:00:00Z'),
         showMcs: undefined,
         showPlatforms: undefined,
-      } as UpdateShowWithAssignmentsDto;
+      } as unknown as UpdateShowWithAssignmentsDto;
 
       showService.getShowById.mockResolvedValue(mockShow);
       showService.buildUpdatePayload.mockImplementation(() => {
@@ -383,8 +383,8 @@ describe('showOrchestrationService', () => {
     });
   });
 
-  describe('removeMCsFromShow', () => {
-    it('should remove MCs from show', async () => {
+  describe('removeCreatorsFromShow', () => {
+    it('should remove creators from show', async () => {
       const uid = 'show_test123';
       const mcIds = ['mc_1', 'mc_2'];
       const mockMc1 = { id: BigInt(1), uid: 'mc_1' };
@@ -394,7 +394,7 @@ describe('showOrchestrationService', () => {
       mcRepository.findByUids.mockResolvedValue([mockMc1, mockMc2] as any);
       showMcRepository.softDeleteByMcIds.mockResolvedValue(undefined as any);
 
-      await service.removeMCsFromShow(uid, mcIds);
+      await service.removeCreatorsFromShow(uid, mcIds);
 
       expect(mcRepository.findByUids).toHaveBeenCalledWith(mcIds);
       expect(showMcRepository.softDeleteByMcIds).toHaveBeenCalledWith(
@@ -425,12 +425,12 @@ describe('showOrchestrationService', () => {
     });
   });
 
-  describe('replaceMCsForShow', () => {
-    it('should replace all MCs for a show', async () => {
+  describe('replaceCreatorsForShow', () => {
+    it('should replace all creators for a show', async () => {
       const uid = 'show_test123';
-      const mcs = [
+      const creators = [
         {
-          mcId: 'mc_test123',
+          creatorId: 'mc_test123',
           note: 'Test note',
           metadata: {},
         },
@@ -444,7 +444,7 @@ describe('showOrchestrationService', () => {
       showMcRepository.createAssignment.mockResolvedValue({} as any);
       showRepository.findByUid.mockResolvedValue(mockShow);
 
-      const result = await service.replaceMCsForShow(uid, mcs);
+      const result = await service.replaceCreatorsForShow(uid, creators);
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
       expect(mcRepository.findByUids).toHaveBeenCalledWith(['mc_test123']);

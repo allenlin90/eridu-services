@@ -2,8 +2,8 @@ import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
 import type {
-  CreateShowMcDto,
-  UpdateShowMcDto,
+  CreateShowCreatorDto,
+  UpdateShowCreatorDto,
 } from './schemas/show-mc.schema';
 import { ShowMcRepository } from './show-mc.repository';
 import { ShowMcService } from './show-mc.service';
@@ -48,21 +48,21 @@ describe('showMcService', () => {
 
   describe('create', () => {
     it('returns created show MC', async () => {
-      const dto: CreateShowMcDto = {
+      const dto: CreateShowCreatorDto = {
         showId: 'show_1',
-        mcId: 'mc_1',
+        creatorId: 'mc_1',
         note: 'Main host',
         agreedRate: undefined,
         compensationType: undefined,
         commissionRate: undefined,
         metadata: { role: 'host' },
-      } as CreateShowMcDto;
+      } as CreateShowCreatorDto;
 
       const created = {
         uid: 'show_mc_123',
         id: 1n,
         showId: 1n,
-        mcId: 1n,
+        creatorId: 1n,
         note: dto.note,
         metadata: dto.metadata,
         createdAt: new Date(),
@@ -83,7 +83,7 @@ describe('showMcService', () => {
         'show_mc_123',
         expect.objectContaining({
           showUid: dto.showId,
-          mcUid: dto.mcId,
+          mcUid: dto.creatorId,
           note: dto.note,
           metadata: dto.metadata,
         }),
@@ -92,19 +92,19 @@ describe('showMcService', () => {
     });
 
     it('creates show MC with null note when not provided', async () => {
-      const dto: CreateShowMcDto = {
+      const dto: CreateShowCreatorDto = {
         showId: 'show_1',
-        mcId: 'mc_1',
+        creatorId: 'mc_1',
         agreedRate: undefined,
         compensationType: undefined,
         commissionRate: undefined,
-      } as CreateShowMcDto;
+      } as CreateShowCreatorDto;
 
       const created = {
         uid: 'show_mc_123',
         id: 1n,
         showId: 1n,
-        mcId: 1n,
+        creatorId: 1n,
         note: null,
         metadata: {},
         createdAt: new Date(),
@@ -126,17 +126,17 @@ describe('showMcService', () => {
       expect(result).toEqual(created);
     });
 
-    it('maps P2002 to Conflict when duplicate show-mc combination', async () => {
-      const dto: CreateShowMcDto = {
+    it('maps P2002 to Conflict when duplicate show-creator combination', async () => {
+      const dto: CreateShowCreatorDto = {
         showId: 'show_1',
-        mcId: 'mc_1',
+        creatorId: 'mc_1',
         note: 'Duplicate',
         agreedRate: undefined,
         compensationType: undefined,
         commissionRate: undefined,
-      } as CreateShowMcDto;
+      } as CreateShowCreatorDto;
 
-      const error = createMockUniqueConstraintError(['showId', 'mcId']);
+      const error = createMockUniqueConstraintError(['showId', 'creatorId']);
       (showMcRepositoryMock.createByUids as jest.Mock).mockRejectedValue(error);
 
       await expect(service.create(dto)).rejects.toThrow(error);
@@ -149,7 +149,7 @@ describe('showMcService', () => {
         uid: 'show_mc_123',
         id: 1n,
         showId: 1n,
-        mcId: 1n,
+        creatorId: 1n,
         note: 'Main host',
         metadata: {},
         createdAt: new Date(),
@@ -191,7 +191,7 @@ describe('showMcService', () => {
           uid: 'show_mc_1',
           id: 1n,
           showId: 1n,
-          mcId: 1n,
+          creatorId: 1n,
           note: 'Host',
           metadata: {},
           createdAt: new Date(),
@@ -224,7 +224,7 @@ describe('showMcService', () => {
         uid: 'show_mc_123',
         id: 1n,
         showId: 1n,
-        mcId: 1n,
+        creatorId: 1n,
         note: 'Old note',
         metadata: {},
         createdAt: new Date(),
@@ -235,7 +235,7 @@ describe('showMcService', () => {
       const dto = {
         note: 'Updated note',
         metadata: { role: 'main_host' },
-      } as unknown as UpdateShowMcDto;
+      } as unknown as UpdateShowCreatorDto;
 
       const updated = {
         ...existingShowMc,
@@ -262,7 +262,7 @@ describe('showMcService', () => {
         uid: 'show_mc_123',
         id: 1n,
         showId: 1n,
-        mcId: 1n,
+        creatorId: 1n,
         note: 'Note',
         metadata: {},
         createdAt: new Date(),
@@ -272,13 +272,13 @@ describe('showMcService', () => {
 
       const dto = {
         showId: 'show_2',
-        mcId: 'mc_2',
-      } as unknown as UpdateShowMcDto;
+        creatorId: 'mc_2',
+      } as unknown as UpdateShowCreatorDto;
 
       const updated = {
         ...existingShowMc,
         showId: 2n,
-        mcId: 2n,
+        creatorId: 2n,
       };
 
       (showMcRepositoryMock.update as jest.Mock).mockResolvedValue(updated);
@@ -302,7 +302,7 @@ describe('showMcService', () => {
         uid: 'show_mc_123',
         id: 1n,
         showId: 1n,
-        mcId: 1n,
+        creatorId: 1n,
         note: 'To be deleted',
         metadata: {},
         createdAt: new Date(),

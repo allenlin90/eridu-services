@@ -6,7 +6,7 @@ import { apiClient } from '@/lib/api/client';
 
 export type BulkAssignCreatorsInput = {
   show_ids: string[];
-  mc_ids: string[];
+  creator_ids: string[];
 };
 
 export type BulkAssignMode = 'append' | 'replace';
@@ -15,7 +15,7 @@ export type BulkAssignCreatorsResult = {
   created: number;
   skipped: number;
   removed: number;
-  errors: { show_id: string; mc_id: string; reason: string }[];
+  errors: { show_id: string; creator_id: string; reason: string }[];
 };
 
 export async function bulkAssignCreators(

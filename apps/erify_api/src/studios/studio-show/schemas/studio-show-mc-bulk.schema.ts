@@ -1,33 +1,33 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
-import { McService } from '@/models/mc/mc.service';
+import { CreatorService } from '@/models/creator/creator.service';
 import { ShowService } from '@/models/show/show.service';
 
-export const bulkMcAssignmentInputSchema = z.object({
+export const bulkCreatorAssignmentInputSchema = z.object({
   show_ids: z
     .array(z.string().startsWith(ShowService.UID_PREFIX))
     .min(1, 'At least one show_id is required'),
-  mc_ids: z
-    .array(z.string().startsWith(McService.UID_PREFIX))
-    .min(1, 'At least one mc_id is required'),
+  creator_ids: z
+    .array(z.string().startsWith(CreatorService.UID_PREFIX))
+    .min(1, 'At least one creator_id is required'),
 });
 
-export const bulkMcAssignmentErrorSchema = z.object({
+export const bulkCreatorAssignmentErrorSchema = z.object({
   show_id: z.string(),
-  mc_id: z.string(),
+  creator_id: z.string(),
   reason: z.string(),
 });
 
-export const bulkMcAssignmentResponseSchema = z.object({
+export const bulkCreatorAssignmentResponseSchema = z.object({
   created: z.number().int(),
   skipped: z.number().int(),
   removed: z.number().int(),
-  errors: z.array(bulkMcAssignmentErrorSchema),
+  errors: z.array(bulkCreatorAssignmentErrorSchema),
 });
 
-export class BulkMcAssignmentDto extends createZodDto(bulkMcAssignmentInputSchema) {}
+export class BulkCreatorAssignmentDto extends createZodDto(bulkCreatorAssignmentInputSchema) {}
 
-export type BulkMcAssignmentInput = z.infer<typeof bulkMcAssignmentInputSchema>;
-export type BulkMcAssignmentError = z.infer<typeof bulkMcAssignmentErrorSchema>;
-export type BulkMcAssignmentResponse = z.infer<typeof bulkMcAssignmentResponseSchema>;
+export type BulkCreatorAssignmentInput = z.infer<typeof bulkCreatorAssignmentInputSchema>;
+export type BulkCreatorAssignmentError = z.infer<typeof bulkCreatorAssignmentErrorSchema>;
+export type BulkCreatorAssignmentResponse = z.infer<typeof bulkCreatorAssignmentResponseSchema>;

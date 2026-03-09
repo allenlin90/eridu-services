@@ -14,9 +14,9 @@ import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import { BaseStudioController } from '../base-studio.controller';
 
 import {
-  AddShowMcDto,
-  ListShowMcsQueryDto,
-  showMcDto,
+  AddShowCreatorDto,
+  ListShowCreatorsQueryDto,
+  showCreatorDto,
 } from './schemas/studio-show-mc.schema';
 
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
@@ -43,11 +43,11 @@ export class StudioShowCreatorController extends BaseStudioController {
   }
 
   @Get()
-  @ZodPaginatedResponse(showMcDto)
+  @ZodPaginatedResponse(showCreatorDto)
   async index(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('showId', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) showId: string,
-    @Query() query: ListShowMcsQueryDto,
+    @Query() query: ListShowCreatorsQueryDto,
   ) {
     const show = await this.resolveShow(showId, studioId);
 
@@ -62,15 +62,15 @@ export class StudioShowCreatorController extends BaseStudioController {
 
   @Post()
   @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER])
-  @ZodResponse(showMcDto, HttpStatus.CREATED)
+  @ZodResponse(showCreatorDto, HttpStatus.CREATED)
   async addCreator(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('showId', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) showId: string,
-    @Body() body: AddShowMcDto,
+    @Body() body: AddShowCreatorDto,
   ) {
     const show = await this.resolveShow(showId, studioId);
 
-    const creator = await this.creatorRepository.findByUid(body.mc_id);
+    const creator = await this.creatorRepository.findByUid(body.creator_id);
     if (!creator) {
       throw HttpError.notFound('Creator not found');
     }
@@ -109,7 +109,7 @@ export class StudioShowCreatorController extends BaseStudioController {
 
   @Delete(':creatorId')
   @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER])
-  @ZodResponse(showMcDto)
+  @ZodResponse(showCreatorDto)
   async removeCreator(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('showId', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) showId: string,

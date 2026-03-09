@@ -6,7 +6,7 @@ import { showCreatorKeys } from './get-show-creators';
 import { apiClient } from '@/lib/api/client';
 
 export type AddShowCreatorInput = {
-  mc_id: string;
+  creator_id: string;
   note?: string;
   agreed_rate?: number;
   compensation_type?: string;

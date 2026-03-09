@@ -99,7 +99,7 @@ export class ShowOrchestrationService {
 
     // 2. Sync MC assignments if provided
     if (dto.showMcs) {
-      await this.syncShowMCs(showId, dto.showMcs);
+      await this.syncShowCreators(showId, dto.showMcs);
     }
 
     // 3. Sync platform assignments if provided
@@ -128,13 +128,13 @@ export class ShowOrchestrationService {
    * Removes MCs from a show by soft-deleting the ShowMC records.
    */
   @Transactional()
-  async removeMCsFromShow(uid: string, mcIds: string[]): Promise<void> {
+  async removeCreatorsFromShow(uid: string, creatorIds: string[]): Promise<void> {
     const show = await this.showService.getShowById(uid);
     const showId = show.id;
 
-    const mcs = await this.mcRepository.findByUids(mcIds);
-    const internalMcIds = mcs.map((mc) => mc.id);
-    await this.showMcRepository.softDeleteByMcIds(showId, internalMcIds);
+    const creators = await this.mcRepository.findByUids(creatorIds);
+    const internalCreatorIds = creators.map((mc) => mc.id);
+    await this.showMcRepository.softDeleteByMcIds(showId, internalCreatorIds);
   }
 
   /**
@@ -154,16 +154,16 @@ export class ShowOrchestrationService {
    * Replaces all MCs for a show (sync: removes removed, adds new, restores previously deleted).
    */
   @Transactional()
-  async replaceMCsForShow<T extends ShowInclude = Record<string, never>>(
+  async replaceCreatorsForShow<T extends ShowInclude = Record<string, never>>(
     uid: string,
-    mcs: Array<{ mcId: string; note?: string | null; metadata?: object }>,
+    creators: Array<{ creatorId: string; note?: string | null; metadata?: object }>,
     include?: T,
   ): Promise<Show | ShowWithPayload<T>> {
     const defaultInclude = include || this.getDefaultIncludes();
     const show = await this.showService.getShowById(uid);
     const showId = show.id;
 
-    await this.syncShowMCs(showId, mcs);
+    await this.syncShowCreators(showId, creators);
     return this.showRepository.findByUid(uid, defaultInclude) as Promise<Show | ShowWithPayload<T>>;
   }
 
@@ -214,9 +214,9 @@ export class ShowOrchestrationService {
       showStatus: { connect: { uid: data.showStatusId } },
       showStandard: { connect: { uid: data.showStandardId } },
       showMCs: {
-        create: data.mcs?.map((mc) => ({
+        create: data.creators?.map((mc) => ({
           uid: this.showMcService.generateShowMcUid(),
-          mc: { connect: { uid: mc.mcId } },
+          mc: { connect: { uid: mc.creatorId } },
           note: mc.note ?? null,
           metadata: mc.metadata ?? {},
         })),
@@ -257,30 +257,30 @@ export class ShowOrchestrationService {
    * Syncs MC assignments for a show within the active transaction (via CLS).
    * Validates MCs exist, upserts active assignments, soft-deletes removed ones.
    */
-  private async syncShowMCs(
+  private async syncShowCreators(
     showId: bigint,
-    mcs: Array<{ mcId: string; note?: string | null; metadata?: object }>,
+    creators: Array<{ creatorId: string; note?: string | null; metadata?: object }>,
   ): Promise<void> {
-    const mcUids = mcs.map((m) => m.mcId);
+    const creatorUids = creators.map((m) => m.creatorId);
 
-    const foundMcs = await this.mcRepository.findByUids(mcUids);
-    if (foundMcs.length !== mcUids.length) {
-      const foundUids = foundMcs.map((mc) => mc.uid);
-      const missingUids = mcUids.filter((uid) => !foundUids.includes(uid));
-      throw HttpError.badRequest(`MCs not found: ${missingUids.join(', ')}`);
+    const foundCreators = await this.mcRepository.findByUids(creatorUids);
+    if (foundCreators.length !== creatorUids.length) {
+      const foundUids = foundCreators.map((mc) => mc.uid);
+      const missingUids = creatorUids.filter((uid) => !foundUids.includes(uid));
+      throw HttpError.badRequest(`Creators not found: ${missingUids.join(', ')}`);
     }
 
-    const mcMap = new Map(foundMcs.map((m) => [m.uid, m.id]));
+    const creatorMap = new Map(foundCreators.map((m) => [m.uid, m.id]));
     const existingAssignments = await this.showMcRepository.findMany({ where: { showId } });
-    const processedMcIds = new Set<bigint>();
+    const processedCreatorIds = new Set<bigint>();
 
-    for (const assignment of mcs) {
-      const internalMcId = mcMap.get(assignment.mcId);
-      if (!internalMcId)
+    for (const assignment of creators) {
+      const internalCreatorId = creatorMap.get(assignment.creatorId);
+      if (!internalCreatorId)
         continue;
 
-      processedMcIds.add(internalMcId);
-      const existing = existingAssignments.find((a) => a.mcId === internalMcId);
+      processedCreatorIds.add(internalCreatorId);
+      const existing = existingAssignments.find((a) => a.mcId === internalCreatorId);
 
       if (existing) {
         await this.showMcRepository.restoreAndUpdateAssignment(existing.id, {
@@ -291,7 +291,7 @@ export class ShowOrchestrationService {
         await this.showMcRepository.createAssignment({
           uid: this.showMcService.generateShowMcUid(),
           showId,
-          mcId: internalMcId,
+          mcId: internalCreatorId,
           note: assignment.note ?? null,
           metadata: assignment.metadata ?? {},
         });
@@ -299,7 +299,7 @@ export class ShowOrchestrationService {
     }
 
     const toDelete = existingAssignments.filter(
-      (a) => !processedMcIds.has(a.mcId) && a.deletedAt === null,
+      (a) => !processedCreatorIds.has(a.mcId) && a.deletedAt === null,
     );
     for (const assignment of toDelete) {
       await this.showMcRepository.softDelete({ id: assignment.id });

@@ -33,10 +33,10 @@ export class AdminShowCreatorController extends BaseAdminController {
   @Post()
   @AdminResponse(showCreatorDto, HttpStatus.CREATED, 'Show creator created successfully')
   async createShowCreator(@Body() body: CreateShowCreatorDto) {
-    const { showId, mcId, note, metadata } = body;
+    const { showId, creatorId, note, metadata } = body;
     const showCreator = await this.showCreatorService.create({
       showId,
-      mcId,
+      creatorId,
       note,
       metadata,
     });
@@ -82,10 +82,10 @@ export class AdminShowCreatorController extends BaseAdminController {
     const existing = await this.showCreatorService.findOne(id);
     this.ensureResourceExists(existing, 'ShowCreator', id);
 
-    const { showId, mcId, note, metadata } = body;
+    const { showId, creatorId, note, metadata } = body;
     const showCreator = await this.showCreatorService.update(id, {
       showId,
-      mcId,
+      creatorId,
       note,
       metadata,
     });
