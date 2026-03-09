@@ -27,6 +27,7 @@ import {
 } from '@eridu/ui';
 
 import type { Membership } from '@/features/memberships/api/get-memberships';
+import { isTaskHelperEligibleMember } from '@/features/memberships/lib/task-helper-eligibility';
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 
 type MemberOption = { value: string; label: string };
@@ -124,10 +125,12 @@ function getTaskActionOptions(status: TaskStatus): Array<{ value: TaskAction; la
 }
 
 function getMemberOptions(members: Membership[]): MemberOption[] {
-  return members.map((m) => ({
-    value: m.user.id,
-    label: `${m.user.name} (${m.user.email})`,
-  }));
+  return members
+    .filter((m) => isTaskHelperEligibleMember(m))
+    .map((m) => ({
+      value: m.user.id,
+      label: `${m.user.name} (${m.user.email})`,
+    }));
 }
 
 function formatTransitionAt(value?: string): string {

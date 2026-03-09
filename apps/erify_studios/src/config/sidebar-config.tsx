@@ -22,8 +22,9 @@ import {
 import type * as React from 'react';
 import { useCallback, useMemo } from 'react';
 
-import type {
-  StudioRole,
+import {
+  STUDIO_ROLE,
+  type StudioRole,
 } from '@eridu/api-types/memberships';
 import {
   type AppSidebarProps,
@@ -150,7 +151,46 @@ function getStudioCommonItems(
 }
 
 /**
- * Generates elevated studio navigation items (manager/admin routes).
+ * Generates manager operations navigation items (manager/admin routes).
+ */
+function getStudioManagerItems(
+  studioId: string,
+  role: string,
+): SidebarNavItem['items'] {
+  const managerItems: SidebarNavItem['items'] = [];
+
+  if (hasStudioRouteAccess(role as StudioRole, 'tasks')) {
+    managerItems.push({
+      title: 'Review Queue',
+      url: `/studios/${studioId}/tasks?status=REVIEW`,
+      icon: ClipboardCheck,
+    });
+  }
+
+  if (hasStudioRouteAccess(role as StudioRole, 'helpers')) {
+    managerItems.push({
+      title: 'Member Roster',
+      url: `/studios/${studioId}/helpers`,
+      icon: Users,
+    });
+  }
+
+  if (
+    (role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER)
+    && hasStudioRouteAccess(role as StudioRole, 'shows')
+  ) {
+    managerItems.push({
+      title: 'Show Operations',
+      url: `/studios/${studioId}/shows`,
+      icon: Clapperboard,
+    });
+  }
+
+  return managerItems;
+}
+
+/**
+ * Generates admin-only studio navigation items.
  */
 function getStudioAdminItems(
   studioId: string,
@@ -158,26 +198,11 @@ function getStudioAdminItems(
 ): SidebarNavItem['items'] {
   const adminItems: SidebarNavItem['items'] = [];
 
-  if (hasStudioRouteAccess(role as StudioRole, 'tasks')) {
-    adminItems.push({
-      title: 'Review Queue',
-      url: `/studios/${studioId}/tasks?status=REVIEW`,
-      icon: ClipboardCheck,
-    });
-  }
-
   if (hasStudioRouteAccess(role as StudioRole, 'shifts')) {
     adminItems.push({
       title: 'Shift Schedule',
       url: `/studios/${studioId}/shifts`,
       icon: CalendarDays,
-    });
-  }
-  if (hasStudioRouteAccess(role as StudioRole, 'shows')) {
-    adminItems.push({
-      title: 'Shows',
-      url: `/studios/${studioId}/shows`,
-      icon: Clapperboard,
     });
   }
   if (hasStudioRouteAccess(role as StudioRole, 'taskTemplates')) {
@@ -189,6 +214,31 @@ function getStudioAdminItems(
   }
 
   return adminItems;
+}
+
+/**
+ * Generates talent operations navigation items.
+ */
+function getStudioTalentItems(
+  studioId: string,
+  role: string,
+): SidebarNavItem['items'] {
+  const talentItems: SidebarNavItem['items'] = [];
+
+  if (hasStudioRouteAccess(role as StudioRole, 'creators')) {
+    talentItems.push({
+      title: 'Creator Roster',
+      url: `/studios/${studioId}/creators`,
+      icon: Users,
+    });
+    talentItems.push({
+      title: 'Creator Mapping',
+      url: `/studios/${studioId}/creators/mapping`,
+      icon: Clapperboard,
+    });
+  }
+
+  return talentItems;
 }
 
 /**
@@ -235,7 +285,12 @@ export function useSidebarConfig(
     }
     if (activeStudio) {
       const studioCommonItems = buildActiveItems(getStudioCommonItems(activeStudio.studio.uid));
+      const studioManagerItems = buildActiveItems(getStudioManagerItems(activeStudio.studio.uid, activeStudio.role));
       const studioAdminItems = buildActiveItems(getStudioAdminItems(activeStudio.studio.uid, activeStudio.role));
+      const studioTalentItems = buildActiveItems(getStudioTalentItems(activeStudio.studio.uid, activeStudio.role));
+      const isTalentSectionVisible = activeStudio.role === STUDIO_ROLE.TALENT_MANAGER
+        || activeStudio.role === STUDIO_ROLE.MANAGER
+        || activeStudio.role === STUDIO_ROLE.ADMIN;
 
       navItems.push({
         title: 'Studio Common',
@@ -245,6 +300,16 @@ export function useSidebarConfig(
         items: studioCommonItems,
       });
 
+      if (studioManagerItems.length > 0) {
+        navItems.push({
+          title: 'Studio Manager',
+          url: `/studios/${activeStudio.studio.uid}/manager`,
+          icon: ShieldCheck,
+          isActive: studioManagerItems.some((item) => item.isActive),
+          items: studioManagerItems,
+        });
+      }
+
       if (studioAdminItems.length > 0) {
         navItems.push({
           title: 'Studio Admin',
@@ -252,6 +317,16 @@ export function useSidebarConfig(
           icon: ShieldCheck,
           isActive: studioAdminItems.some((item) => item.isActive),
           items: studioAdminItems,
+        });
+      }
+
+      if (isTalentSectionVisible && studioTalentItems.length > 0) {
+        navItems.push({
+          title: 'Studio Creators',
+          url: `/studios/${activeStudio.studio.uid}/creators`,
+          icon: Users,
+          isActive: studioTalentItems.some((item) => item.isActive),
+          items: studioTalentItems,
         });
       }
     }

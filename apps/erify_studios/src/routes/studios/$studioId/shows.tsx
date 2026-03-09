@@ -12,12 +12,12 @@ const showsSearchSchema = z.looseObject({
   date_from: z.string().optional().catch(undefined),
   date_to: z.string().optional().catch(undefined),
   has_tasks: z.union([z.enum(['true', 'false']), z.boolean()]).optional().catch(undefined),
-  needs_attention: z.union([z.enum(['true', 'false']), z.boolean()]).optional().catch(undefined),
   client_name: z.string().optional().catch(undefined),
   show_type_name: z.string().optional().catch(undefined),
   show_standard_name: z.string().optional().catch(undefined),
   show_status_name: z.string().optional().catch(undefined),
   platform_name: z.string().optional().catch(undefined),
+  needs_attention: z.union([z.enum(['true', 'false']), z.boolean()]).optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/studios/$studioId/shows')({
@@ -33,7 +33,7 @@ function RouteComponent() {
       studioId={studioId}
       routeKey="shows"
       deniedTitle="Shows Access Required"
-      deniedDescription="Only studio admins can access shows management."
+      deniedDescription="Only studio admins, managers, and talent managers can access shows management."
     >
       <Outlet />
     </StudioRouteGuard>

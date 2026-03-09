@@ -30,6 +30,7 @@ import { ShowAssignmentDialog } from '@/features/shows/components/show-assignmen
 import { useShiftAlignment } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';
 import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
+import { BulkMcAssignDialog } from '@/features/studio-show-mcs/components/bulk-mc-assign-dialog';
 import { getStudioShows, type StudioShow } from '@/features/studio-shows/api/get-studio-shows';
 import { SelectedShowsMobileActions } from '@/features/studio-shows/components/selected-shows-mobile-actions';
 import { ShowReadinessTriagePanel } from '@/features/studio-shows/components/show-readiness/show-readiness-triage-panel';
@@ -187,11 +188,10 @@ function StudioShowsPage() {
   const triggerSnapshotRefresh = useCallback(() => {
     setSnapshotRefreshSignal((previous) => previous + 1);
   }, []);
-
   return (
     <PageLayout
       title="Shows"
-      description="Monitor task progress and assignments across all your studio shows."
+      description="Generate and assign tasks across all your studio shows."
     >
       <div className="space-y-4">
         <Card>
@@ -379,6 +379,7 @@ function StudioShowsTableSection({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [bulkGeneratingShows, setBulkGeneratingShows] = useState<StudioShow[] | null>(null);
   const [bulkAssigningShows, setBulkAssigningShows] = useState<StudioShow[] | null>(null);
+  const [bulkMcAssigningShows, setBulkMcAssigningShows] = useState<StudioShow[] | null>(null);
 
   const {
     shows,
@@ -606,6 +607,14 @@ function StudioShowsTableSection({
               </Button>
               <Button
                 size="sm"
+                variant="secondary"
+                className="rounded-full"
+                onClick={() => setBulkMcAssigningShows(selectedShows)}
+              >
+                Assign MCs
+              </Button>
+              <Button
+                size="sm"
                 variant="ghost"
                 className="ml-2 rounded-full hover:bg-slate-800 hover:text-white dark:hover:bg-slate-200 dark:hover:text-black"
                 onClick={clearSelectedShows}
@@ -651,6 +660,23 @@ function StudioShowsTableSection({
             onShowsMutated();
           }}
           shows={bulkAssigningShows}
+        />
+      )}
+
+      {bulkMcAssigningShows && (
+        <BulkMcAssignDialog
+          studioId={studioId}
+          open={bulkMcAssigningShows.length > 0}
+          defaultMode="append"
+          onOpenChange={(open) => {
+            if (!open)
+              setBulkMcAssigningShows(null);
+          }}
+          selectedShows={bulkMcAssigningShows}
+          onSuccess={() => {
+            void refetch();
+            onShowsMutated();
+          }}
         />
       )}
     </>

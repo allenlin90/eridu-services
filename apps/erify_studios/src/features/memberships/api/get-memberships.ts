@@ -6,6 +6,7 @@ import type { PaginatedResponse } from '@/lib/api/admin';
 import { apiClient } from '@/lib/api/client';
 
 export type Membership = MembershipApiResponse & {
+  is_helper?: boolean;
   user: {
     id: string; // user uid
     email: string;

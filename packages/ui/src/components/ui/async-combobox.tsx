@@ -49,12 +49,17 @@ export function AsyncCombobox({
 }: AsyncComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState('');
+  const onSearchRef = React.useRef(onSearch);
 
   const debouncedSearch = useDebounce(inputValue, 300);
 
   React.useEffect(() => {
-    onSearch(debouncedSearch);
-  }, [debouncedSearch, onSearch]);
+    onSearchRef.current = onSearch;
+  }, [onSearch]);
+
+  React.useEffect(() => {
+    onSearchRef.current(debouncedSearch);
+  }, [debouncedSearch]);
 
   const selectedOption = options.find((option) => option.value === value);
 
@@ -148,12 +153,17 @@ export function AsyncMultiCombobox({
 }: AsyncMultiComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState('');
+  const onSearchRef = React.useRef(onSearch);
 
   const debouncedSearch = useDebounce(inputValue, 300);
 
   React.useEffect(() => {
-    onSearch(debouncedSearch);
-  }, [debouncedSearch, onSearch]);
+    onSearchRef.current = onSearch;
+  }, [onSearch]);
+
+  React.useEffect(() => {
+    onSearchRef.current(debouncedSearch);
+  }, [debouncedSearch]);
 
   const handleSelect = (optionValue: string) => {
     const newValue = value.includes(optionValue)

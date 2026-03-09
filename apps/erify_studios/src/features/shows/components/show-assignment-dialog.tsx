@@ -13,6 +13,7 @@ import {
 } from '@eridu/ui';
 
 import { useStudioMembershipsQuery } from '@/features/memberships/api/get-studio-memberships';
+import { isTaskHelperEligibleMember } from '@/features/memberships/lib/task-helper-eligibility';
 import type { ShowSelection } from '@/features/studio-shows/api/get-studio-shows';
 import { useAssignShows } from '@/features/studio-shows/hooks/use-assign-shows';
 
@@ -68,10 +69,12 @@ export function ShowAssignmentDialog({
   });
 
   const memberOptions = useMemo(() => {
-    return members.map((m) => ({
-      value: m.user.id,
-      label: `${m.user.name} (${m.user.email})`,
-    }));
+    return members
+      .filter((m) => isTaskHelperEligibleMember(m))
+      .map((m) => ({
+        value: m.user.id,
+        label: `${m.user.name} (${m.user.email})`,
+      }));
   }, [members]);
 
   const overwriteShowsCount = useMemo(
@@ -143,6 +146,9 @@ export function ShowAssignmentDialog({
               isLoading={isLoadingMembers}
               placeholder="Search a studio member..."
             />
+            <p className="text-xs text-muted-foreground">
+              Only helper-eligible members are listed. Admin and manager are always eligible.
+            </p>
           </div>
 
           {requiresOverwriteConfirmation && (

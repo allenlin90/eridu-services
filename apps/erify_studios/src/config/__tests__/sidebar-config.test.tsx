@@ -135,7 +135,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
-    expect(result.current.navMain).toHaveLength(4); // Dashboard + System + Studio Common + Studio Admin
+    expect(result.current.navMain).toHaveLength(6); // Dashboard + System + Studio Common + Studio Manager + Studio Admin + Studio Creators
     expect(result.current.navMain[0]).toEqual({
       title: 'Dashboard',
       url: '/dashboard',
@@ -188,8 +188,8 @@ describe('useSidebarConfig', () => {
     }));
 
     expect(result.current.navMain[3]).toEqual(expect.objectContaining({
-      title: 'Studio Admin',
-      url: '/studios/studio-1/admin',
+      title: 'Studio Manager',
+      url: '/studios/studio-1/manager',
       icon: expect.any(Function),
       isActive: false,
       items: expect.arrayContaining([
@@ -198,11 +198,90 @@ describe('useSidebarConfig', () => {
           url: '/studios/studio-1/tasks?status=REVIEW',
         }),
         expect.objectContaining({
-          title: 'Shift Schedule',
-          url: '/studios/studio-1/shifts',
+          title: 'Member Roster',
+          url: '/studios/studio-1/helpers',
+        }),
+        expect.objectContaining({
+          title: 'Show Operations',
+          url: '/studios/studio-1/shows',
         }),
       ]),
     }));
+
+    expect(result.current.navMain[4]).toEqual(expect.objectContaining({
+      title: 'Studio Admin',
+      url: '/studios/studio-1/admin',
+      icon: expect.any(Function),
+      isActive: false,
+      items: expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Shift Schedule',
+          url: '/studios/studio-1/shifts',
+        }),
+        expect.objectContaining({
+          title: 'Task Templates',
+          url: '/studios/studio-1/task-templates',
+        }),
+      ]),
+    }));
+
+    expect(result.current.navMain[5]).toEqual(expect.objectContaining({
+      title: 'Studio Creators',
+      url: '/studios/studio-1/creators',
+      icon: expect.any(Function),
+      isActive: false,
+      items: expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Creator Roster',
+          url: '/studios/studio-1/creators',
+        }),
+        expect.objectContaining({
+          title: 'Creator Mapping',
+          url: '/studios/studio-1/creators/mapping',
+        }),
+      ]),
+    }));
+  });
+
+  it('shows talents section for talent manager role', () => {
+    mockUseLocation.mockReturnValue({ pathname: '/studios/studio-1/creators/mapping' });
+    mockUseUserProfile.mockReturnValue({
+      data: {
+        ext_id: 'user-123',
+        id: 'user-123',
+        name: 'John Doe',
+        email: 'john@example.com',
+        image: '/avatars/john.jpg',
+        is_system_admin: false,
+        studio_memberships: [
+          {
+            studio: { uid: 'studio-1', name: 'Studio 1' },
+            role: 'talent_manager',
+          },
+        ],
+        payload: {
+          sub: 'user-123',
+          email: 'john@example.com',
+          activeOrganizationId: 'org-123',
+          activeTeamId: 'team-123',
+        },
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    const { result } = renderHook(() => useSidebarConfig(mockSession));
+
+    const talentsSection = result.current.navMain.find((item) => item.title === 'Studio Creators');
+    expect(talentsSection).toBeDefined();
+    expect(talentsSection?.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ title: 'Creator Roster', url: '/studios/studio-1/creators' }),
+      expect.objectContaining({ title: 'Creator Mapping', url: '/studios/studio-1/creators/mapping' }),
+    ]));
+
+    const studioAdminSection = result.current.navMain.find((item) => item.title === 'Studio Admin');
+    expect(studioAdminSection).toBeUndefined();
   });
 
   it('sets system navigation as active when on system routes', () => {

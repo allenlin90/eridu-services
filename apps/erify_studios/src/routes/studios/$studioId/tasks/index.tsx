@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Users } from 'lucide-react';
 
 import { adaptColumnFiltersChange, adaptPaginationChange, Button, DataTable, DataTablePagination, DataTableToolbar } from '@eridu/ui';
 
@@ -15,6 +15,7 @@ export const Route = createFileRoute('/studios/$studioId/tasks/')({
 
 function StudioTasksPage() {
   const { studioId } = Route.useParams();
+  const navigate = Route.useNavigate();
   const { tableProps, toolbarProps, actionSheetProps, dueDateDialogProps } = useStudioTasksPageController({
     studioId,
   });
@@ -52,6 +53,21 @@ function StudioTasksPage() {
               searchPlaceholder={tableProps.searchPlaceholder}
               featuredFilterColumns={[...tableProps.featuredFilterColumns]}
             >
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8"
+                onClick={() => {
+                  navigate({
+                    to: '/studios/$studioId/helpers',
+                    params: { studioId },
+                  });
+                }}
+              >
+                <Users className="h-4 w-4" />
+                Member Roster
+              </Button>
+
               <Button
                 variant="outline"
                 size="icon"

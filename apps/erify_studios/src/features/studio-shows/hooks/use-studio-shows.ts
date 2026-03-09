@@ -11,21 +11,30 @@ type UseStudioShowsProps = {
   dateFrom?: string;
   dateTo?: string;
   needsAttention?: boolean;
+  routeFrom?: '/studios/$studioId/shows/' | '/studios/$studioId/creators/mapping';
 };
 
-const TABLE_OPTIONS = {
-  from: '/studios/$studioId/shows/',
-  searchColumnId: 'name',
-  dateColumnId: '__scope_date__',
-  paramNames: {
-    search: 'search',
-    startDate: 'date_from',
-    endDate: 'date_to',
-  },
-  defaultSorting: [{ id: 'start_time', desc: true }],
-};
-
-export function useStudioShows({ studioId, dateFrom, dateTo, needsAttention }: UseStudioShowsProps) {
+export function useStudioShows({
+  studioId,
+  dateFrom,
+  dateTo,
+  needsAttention,
+  routeFrom = '/studios/$studioId/shows/',
+}: UseStudioShowsProps) {
+  const tableOptions = useMemo(
+    () => ({
+      from: routeFrom,
+      searchColumnId: 'name',
+      dateColumnId: '__scope_date__',
+      paramNames: {
+        search: 'search',
+        startDate: 'date_from',
+        endDate: 'date_to',
+      },
+      defaultSorting: [{ id: 'start_time', desc: true }],
+    }),
+    [routeFrom],
+  );
   const {
     pagination,
     onPaginationChange,
@@ -34,7 +43,7 @@ export function useStudioShows({ studioId, dateFrom, dateTo, needsAttention }: U
     onColumnFiltersChange,
     sorting,
     onSortingChange,
-  } = useTableUrlState(TABLE_OPTIONS);
+  } = useTableUrlState(tableOptions);
 
   const searchQuery = (columnFilters.find((f) => f.id === 'name')?.value as string) || '';
   const filters = useMemo(() => {

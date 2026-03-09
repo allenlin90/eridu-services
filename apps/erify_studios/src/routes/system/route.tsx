@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router';
 import { Loader2 } from 'lucide-react';
 
+import { PageContainer } from '@/components/layouts/page-container';
 import { useUserProfile } from '@/lib/hooks/use-user';
 import * as m from '@/paraglide/messages';
 
@@ -56,6 +57,8 @@ function AdminLayout() {
   }
 
   return (
-    <Outlet />
+    <PageContainer>
+      <Outlet />
+    </PageContainer>
   );
 }

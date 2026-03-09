@@ -24,6 +24,10 @@ type Membership = MembershipApiResponse;
 type MembershipFormData = z.infer<typeof createMembershipInputSchema>;
 type UpdateMembershipFormData = z.infer<typeof updateMembershipInputSchema>;
 
+function toSelectValue(value: string | undefined) {
+  return value ?? '';
+}
+
 type MembershipCreateDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -61,7 +65,7 @@ export function MembershipCreateDialog({
           label: 'Studio',
           render: (field) => (
             <Select
-              value={field.value}
+              value={toSelectValue(field.value)}
               onValueChange={field.onChange}
               disabled={isLoading || isLoadingStudios}
             >
@@ -83,7 +87,7 @@ export function MembershipCreateDialog({
           label: 'Role',
           render: (field) => (
             <Select
-              value={field.value}
+              value={toSelectValue(field.value)}
               onValueChange={field.onChange}
               disabled={isLoading}
             >
@@ -151,7 +155,7 @@ export function MembershipUpdateDialog({
           label: 'Studio',
           render: (field) => (
             <Select
-              value={field.value}
+              value={toSelectValue(field.value)}
               onValueChange={field.onChange}
               disabled={isLoading || isLoadingStudios}
             >
@@ -173,7 +177,7 @@ export function MembershipUpdateDialog({
           label: 'Role',
           render: (field) => (
             <Select
-              value={field.value}
+              value={toSelectValue(field.value)}
               onValueChange={field.onChange}
               disabled={isLoading}
             >
