@@ -20,7 +20,7 @@ api/
   get-show-mcs.ts          — GET /studios/:studioId/shows/:showId/mcs
   add-show-mc.ts           — POST /studios/:studioId/shows/:showId/mcs
   remove-show-mc.ts        — DELETE /studios/:studioId/shows/:showId/mcs/:mcId
-  get-mc-availability.ts   — GET /studios/:studioId/mcs/availability
+  get-mc-availability.ts   — GET /studios/:studioId/creators/availability
   bulk-assign-mcs.ts       — PATCH/PUT /studios/:studioId/shows/mc-assignments/bulk (append/replace)
 hooks/
   use-show-mcs.ts          — composes query + add + remove into one hook
@@ -47,8 +47,8 @@ components/
 
 Roster page behavior:
 - Roster table uses the shared paginated table UX (search + advanced filters).
-- Search source for onboarding is global creator catalog (`/studios/:studioId/mcs/catalog`).
-- Adding from catalog creates/updates studio membership (`StudioMc`) in `/studios/:studioId/mcs/roster`.
+- Search source for onboarding is global creator catalog (`/studios/:studioId/creators/catalog`).
+- Adding from catalog creates/updates studio membership (`StudioMc`) in `/studios/:studioId/creators/roster`.
 - Roster onboarding UX shows explicit selected creator state and clear/reset action before submit.
 - Table empty states are search-aware (explicit "no results for query" feedback).
 

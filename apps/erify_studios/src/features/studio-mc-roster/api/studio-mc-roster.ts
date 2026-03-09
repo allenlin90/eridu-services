@@ -70,7 +70,7 @@ export function useStudioMcRoster(studioId: string, query: StudioMcRosterListQue
     queryKey: studioMcRosterKeys.list(studioId, query),
     queryFn: async () => {
       const response = await apiClient.get<StudioMcRosterListResponse>(
-        `/studios/${studioId}/mcs/roster`,
+        `/studios/${studioId}/creators/roster`,
         {
           params: {
             page: query.page,
@@ -92,7 +92,7 @@ export function useStudioMcCatalog(studioId: string, search: string) {
     queryKey: studioMcRosterKeys.catalog(studioId, search),
     queryFn: async () => {
       const response = await apiClient.get<CreatorApiResponse[]>(
-        `/studios/${studioId}/mcs/catalog`,
+        `/studios/${studioId}/creators/catalog`,
         { params: { search, limit: 50 } },
       );
       return response.data;
@@ -106,7 +106,7 @@ export function useCreateStudioMcRosterItem(studioId: string) {
   return useMutation({
     mutationFn: async (payload: StudioMcRosterCreateInput) => {
       const response = await apiClient.post<StudioMcRosterItem>(
-        `/studios/${studioId}/mcs/roster`,
+        `/studios/${studioId}/creators/roster`,
         payload,
       );
       return response.data;
@@ -123,7 +123,7 @@ export function useUpdateStudioMcRosterItem(studioId: string) {
   return useMutation({
     mutationFn: async (params: { mcId: string; payload: StudioMcRosterUpdateInput }) => {
       const response = await apiClient.patch<StudioMcRosterItem>(
-        `/studios/${studioId}/mcs/roster/${params.mcId}`,
+        `/studios/${studioId}/creators/roster/${params.mcId}`,
         params.payload,
       );
       return response.data;
@@ -140,7 +140,7 @@ export function useDeleteStudioMcRosterItem(studioId: string) {
   return useMutation({
     mutationFn: async (mcId: string) => {
       const response = await apiClient.delete<StudioMcRosterItem>(
-        `/studios/${studioId}/mcs/roster/${mcId}`,
+        `/studios/${studioId}/creators/roster/${mcId}`,
       );
       return response.data;
     },

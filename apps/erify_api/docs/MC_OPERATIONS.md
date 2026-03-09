@@ -97,15 +97,18 @@ Orchestration service: `apps/erify_api/src/studios/studio-show/studio-show-mc.or
 ### MC Availability
 
 `apps/erify_api/src/studios/studio-mc/studio-mc.controller.ts`
+`apps/erify_api/src/studios/studio-mc/studio-creator.controller.ts` (alias)
 
 | Method | Path | Access |
 |--------|------|--------|
-| GET | `/studios/:studioId/mcs/availability` | All members |
-| GET | `/studios/:studioId/mcs/catalog` | ADMIN, MANAGER, TALENT_MANAGER |
-| GET | `/studios/:studioId/mcs/roster` | ADMIN, MANAGER, TALENT_MANAGER |
-| POST | `/studios/:studioId/mcs/roster` | ADMIN, MANAGER, TALENT_MANAGER |
-| PATCH | `/studios/:studioId/mcs/roster/:mcId` | ADMIN, MANAGER, TALENT_MANAGER |
-| DELETE | `/studios/:studioId/mcs/roster/:mcId` | ADMIN, MANAGER, TALENT_MANAGER |
+| GET | `/studios/:studioId/creators/availability` | All members |
+| GET | `/studios/:studioId/creators/catalog` | ADMIN, MANAGER, TALENT_MANAGER |
+| GET | `/studios/:studioId/creators/roster` | ADMIN, MANAGER, TALENT_MANAGER |
+| POST | `/studios/:studioId/creators/roster` | ADMIN, MANAGER, TALENT_MANAGER |
+| PATCH | `/studios/:studioId/creators/roster/:creatorId` | ADMIN, MANAGER, TALENT_MANAGER |
+| DELETE | `/studios/:studioId/creators/roster/:creatorId` | ADMIN, MANAGER, TALENT_MANAGER |
+
+Legacy compatibility: equivalent `/studios/:studioId/mcs/*` paths are still supported.
 
 Query params: `date_from`, `date_to` (ISO datetime, validated `date_to > date_from`)
 
@@ -116,12 +119,12 @@ Returns MCs that satisfy both constraints:
 Implemented in `apps/erify_api/src/models/mc/mc.repository.ts` (`findAvailableMcs`).
 
 Catalog endpoint:
-- `GET /studios/:studioId/mcs/catalog` lists searchable creator candidates.
+- `GET /studios/:studioId/creators/catalog` lists searchable creator candidates.
 - Default behavior excludes creators already in the studio roster.
 - Optional query: `include_rostered=true`.
 
 Roster list endpoint:
-- `GET /studios/:studioId/mcs/roster` is paginated and filterable.
+- `GET /studios/:studioId/creators/roster` is paginated and filterable.
 - Query params:
   - `page`, `limit`
   - `search` (matches MC uid/name/alias)
@@ -129,8 +132,8 @@ Roster list endpoint:
   - `default_rate_type` (`FIXED|COMMISSION|HYBRID|NONE`)
 
 Roster onboarding flow:
-1. Search in global MC catalog (`/mcs/catalog`).
-2. Add selected MC into studio roster (`POST /mcs/roster`), creating `StudioMc`.
+1. Search in global creator catalog (`/creators/catalog`).
+2. Add selected creator into studio roster (`POST /creators/roster`), creating `StudioMc`.
 3. Manage studio-scoped status/default compensation via roster update endpoints.
 
 ## Key Files

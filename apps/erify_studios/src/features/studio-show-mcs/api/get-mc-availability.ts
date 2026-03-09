@@ -18,7 +18,7 @@ export async function getMcAvailability(
   dateTo: string,
 ): Promise<AvailableMc[]> {
   const response = await apiClient.get<AvailableMc[]>(
-    `/studios/${studioId}/mcs/availability`,
+    `/studios/${studioId}/creators/availability`,
     { params: { date_from: dateFrom, date_to: dateTo } },
   );
   return response.data;
