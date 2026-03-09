@@ -79,7 +79,7 @@ function createCreatorsColumns(studioId: string): ColumnDef<StudioShow>[] {
       cell: ({ row }) => (
         <Button asChild variant="outline" size="sm">
           <Link
-            to="/studios/$studioId/shows/$showId/mcs"
+            to="/studios/$studioId/shows/$showId/creators"
             params={{ studioId, showId: row.original.id }}
             search={{ from: 'creators' }}
           >

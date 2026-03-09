@@ -34,7 +34,7 @@ components/
 
 | Route | File | Description |
 |-------|------|-------------|
-| `/studios/$studioId/shows/$showId/mcs` | `src/routes/studios/$studioId/shows/$showId/mcs.tsx` | Per-show MC management |
+| `/studios/$studioId/shows/$showId/creators` | `src/routes/studios/$studioId/shows/$showId/creators.tsx` | Per-show creator management |
 | `/studios/$studioId/creators` | `src/routes/studios/$studioId/creators/index.tsx` | Roster onboarding and studio-scoped creator listing |
 | `/studios/$studioId/creators/mapping` | `src/routes/studios/$studioId/creators/mapping.tsx` | Bulk creator-to-show mapping |
 
@@ -89,7 +89,8 @@ Known issue:
 - Invite flow currently requires `user_id` (`usr_*`) input instead of searchable user lookup.
 - Keep current approach for now; defer optimization/refactor (indexed search/cache/fulltext strategy) to follow-up iteration.
 Legacy compatibility:
-- Show detail route currently remains `/studios/$studioId/shows/$showId/mcs` (UI path compatibility).
+- Show detail canonical route is `/studios/$studioId/shows/$showId/creators`.
+- Legacy `/studios/$studioId/shows/$showId/mcs` route remains as a redirect alias for compatibility.
 - Backend accepts both `/shows/:showId/creators` (canonical) and `/shows/:showId/mcs` (legacy alias).
 - System admin canonical route is `/system/creators`.
 - Legacy `/system/mcs` route remains as a redirect alias for compatibility.
