@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { AdminClientModule } from './clients/admin-client.module';
+import { AdminCreatorModule } from './creators/admin-creator.module';
 import { AdminMcModule } from './mcs/admin-mc.module';
 import { AdminStudioMembershipModule } from './memberships/admin-studio-membership.module';
 import { AdminPlatformModule } from './platforms/admin-platform.module';
@@ -22,6 +23,7 @@ import { AdminUserModule } from './users/admin-user.module';
   imports: [
     AdminUserModule,
     AdminClientModule,
+    AdminCreatorModule,
     AdminMcModule,
     AdminPlatformModule,
     AdminShowStandardModule,
@@ -41,6 +43,7 @@ import { AdminUserModule } from './users/admin-user.module';
   exports: [
     AdminUserModule,
     AdminClientModule,
+    AdminCreatorModule,
     AdminMcModule,
     AdminPlatformModule,
     AdminShowStandardModule,

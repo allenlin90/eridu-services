@@ -16,6 +16,7 @@ export {
   listMcsFilterSchema as listCreatorsFilterSchema,
   ListMcsQueryDto as ListCreatorsQueryDto,
   listMcsQuerySchema as listCreatorsQuerySchema,
+  UpdateMcDto as UpdateCreatorDto,
   updateMcSchema as updateCreatorSchema,
   updateMcSchema,
 } from '@/models/mc/schemas/mc.schema';
