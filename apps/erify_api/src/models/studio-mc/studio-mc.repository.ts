@@ -206,4 +206,27 @@ export class StudioMcRepository extends BaseRepository<
       data: { deletedAt: new Date() },
     });
   }
+
+  async findDefaultsByStudioIdAndMcIds(
+    studioId: bigint,
+    mcIds: bigint[],
+  ): Promise<Array<Pick<StudioMc, 'mcId' | 'defaultRateType' | 'defaultRate' | 'defaultCommissionRate'>>> {
+    if (mcIds.length === 0) {
+      return [];
+    }
+
+    return this.delegate.findMany({
+      where: {
+        studioId,
+        mcId: { in: mcIds },
+        deletedAt: null,
+      },
+      select: {
+        mcId: true,
+        defaultRateType: true,
+        defaultRate: true,
+        defaultCommissionRate: true,
+      },
+    });
+  }
 }

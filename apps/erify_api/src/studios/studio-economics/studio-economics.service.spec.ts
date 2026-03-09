@@ -60,6 +60,35 @@ describe('studioEconomicsService.computeMcCost', () => {
 
     expect(cost).toBe(350);
   });
+
+  it('falls back to StudioMc defaults before MC defaults', () => {
+    const cost = computeMcCost(
+      [
+        {
+          mcId: BigInt(1),
+          compensationType: null,
+          agreedRate: null,
+          commissionRate: null,
+          mc: {
+            defaultRateType: 'FIXED',
+            defaultRate: '200.00',
+            defaultCommissionRate: '5.00',
+          },
+        },
+      ] as never,
+      1000,
+      new Map([
+        [BigInt(1), {
+          mcId: BigInt(1),
+          defaultRateType: 'FIXED',
+          defaultRate: '300.00',
+          defaultCommissionRate: '10.00',
+        }],
+      ]) as never,
+    );
+
+    expect(cost).toBe(300);
+  });
 });
 
 describe('studioEconomicsService.getPnlView', () => {
@@ -83,11 +112,8 @@ describe('studioEconomicsService.getPnlView', () => {
           { showId: BigInt(3), gmv: '100.00' },
         ]),
       } as never,
-      {
-        findByShowWindow: jest.fn().mockResolvedValue([
-          { calculatedCost: null, projectedCost: '300.00' },
-        ]),
-      } as never,
+      { findDefaultsByStudioIdAndMcIds: jest.fn().mockResolvedValue([]) } as never,
+      { findByShowWindow: jest.fn().mockResolvedValue([{ calculatedCost: null, projectedCost: '300.00' }]) } as never,
     );
 
     const result = await service.getPnlView(
@@ -131,6 +157,7 @@ describe('studioEconomicsService.getShowEconomics', () => {
       { findByStudioAndDateRange: jest.fn() } as never,
       { findMany: jest.fn().mockResolvedValue([]) } as never,
       { findByShow: jest.fn().mockResolvedValue([]) } as never,
+      { findDefaultsByStudioIdAndMcIds: jest.fn().mockResolvedValue([]) } as never,
       studioShiftRepository as never,
     );
 

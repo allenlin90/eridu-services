@@ -149,6 +149,10 @@ Verify:
 Deliverables:
 - Economics service reads 3-tier fallback.
 - Existing economics APIs remain contract-compatible.
+- Backend implemented:
+  - `StudioEconomicsService` now resolves compensation fallback as `ShowMC -> StudioMc -> MC`.
+  - `StudioMc` defaults are batch-loaded once per request window to avoid per-show/per-mc lookup fan-out.
+  - Unit coverage added for StudioMc precedence in compensation calculation.
 
 Verify:
 - Economics unit tests for fixed/commission/hybrid scenarios across fallback tiers.

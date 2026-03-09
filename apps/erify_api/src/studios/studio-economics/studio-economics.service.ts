@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { MC, Show, ShowMC } from '@prisma/client';
+import type { MC, Show, ShowMC, StudioMc } from '@prisma/client';
 
 import type { PerformanceGroupItem, PnlGroupItem, ShowEconomics } from './schemas/studio-economics.schema';
 
@@ -8,6 +8,7 @@ import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
 import { ShowMcRepository } from '@/models/show-mc/show-mc.repository';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
+import { StudioMcRepository } from '@/models/studio-mc/studio-mc.repository';
 import { StudioShiftRepository } from '@/models/studio-shift/studio-shift.repository';
 
 @Injectable()
@@ -17,6 +18,7 @@ export class StudioEconomicsService {
     private readonly showRepository: ShowRepository,
     private readonly showMcRepository: ShowMcRepository,
     private readonly showPlatformRepository: ShowPlatformRepository,
+    private readonly studioMcRepository: StudioMcRepository,
     private readonly studioShiftRepository: StudioShiftRepository,
   ) {}
 
@@ -39,7 +41,8 @@ export class StudioEconomicsService {
       return sum + (sp.gmv ? Number(sp.gmv) : 0);
     }, 0);
 
-    const mcCost = computeMcCost(showMcs, revenue);
+    const studioMcDefaultsByMcId = await this.resolveStudioMcDefaults(show.studioId, showMcs);
+    const mcCost = computeMcCost(showMcs, revenue, studioMcDefaultsByMcId);
 
     const shiftCost = show.studio?.uid
       ? await this.computeShiftCostByStudioUid(show.studio.uid, show.startTime, show.endTime)
@@ -88,6 +91,7 @@ export class StudioEconomicsService {
         ? this.studioShiftRepository.findByShowWindow(studioId, dateFrom, dateTo)
         : Promise.resolve([]),
     ]);
+    const studioMcDefaultsByMcId = await this.resolveStudioMcDefaults(studioId ?? null, allShowMcs);
 
     const platformsByShow = groupByField(allPlatforms, 'showId');
     const mcsByShow = groupByField(allShowMcs, 'showId');
@@ -108,7 +112,7 @@ export class StudioEconomicsService {
       const platforms = platformsByShow.get(show.id) ?? [];
       const showRevenue = platforms.reduce((s, sp) => s + (sp.gmv ? Number(sp.gmv) : 0), 0);
       const showMcs = mcsByShow.get(show.id) ?? [];
-      existing.mc_cost += computeMcCost(showMcs, showRevenue);
+      existing.mc_cost += computeMcCost(showMcs, showRevenue, studioMcDefaultsByMcId);
       existing.revenue += showRevenue;
       existing.show_count += 1;
       groups.set(key, existing);
@@ -264,9 +268,24 @@ export class StudioEconomicsService {
       total_orders: 0,
     };
   }
+
+  private async resolveStudioMcDefaults(
+    studioId: bigint | null,
+    showMcs: ShowMcWithMc[],
+  ): Promise<Map<bigint, StudioMcDefaults>> {
+    if (!studioId || showMcs.length === 0) {
+      return new Map();
+    }
+
+    const mcIds = Array.from(new Set(showMcs.map((sm) => sm.mcId)));
+    const defaults = await this.studioMcRepository.findDefaultsByStudioIdAndMcIds(studioId, mcIds);
+
+    return new Map(defaults.map((item) => [item.mcId, item]));
+  }
 }
 
 type ShowMcWithMc = ShowMC & { mc?: Pick<MC, 'defaultRateType' | 'defaultRate' | 'defaultCommissionRate'> | null };
+type StudioMcDefaults = Pick<StudioMc, 'mcId' | 'defaultRateType' | 'defaultRate' | 'defaultCommissionRate'>;
 type ShowWithGroupingKeys = Show & {
   Schedule?: { uid: string } | null;
   client?: { uid: string } | null;
@@ -278,11 +297,16 @@ type ShowWithGroupingKeys = Show & {
  * - COMMISSION: revenue percentage only (commissionRate -> defaultCommissionRate fallback)
  * - HYBRID: fixed amount + revenue percentage
  */
-export function computeMcCost(showMcs: ShowMcWithMc[], revenue: number): number {
+export function computeMcCost(
+  showMcs: ShowMcWithMc[],
+  revenue: number,
+  studioMcDefaultsByMcId: Map<bigint, StudioMcDefaults> = new Map(),
+): number {
   return showMcs.reduce((sum, sm) => {
-    const type = sm.compensationType ?? sm.mc?.defaultRateType ?? null;
-    const fixedRate = sm.agreedRate ?? sm.mc?.defaultRate ?? null;
-    const commissionRate = sm.commissionRate ?? sm.mc?.defaultCommissionRate ?? null;
+    const studioDefaults = studioMcDefaultsByMcId.get(sm.mcId);
+    const type = sm.compensationType ?? studioDefaults?.defaultRateType ?? sm.mc?.defaultRateType ?? null;
+    const fixedRate = sm.agreedRate ?? studioDefaults?.defaultRate ?? sm.mc?.defaultRate ?? null;
+    const commissionRate = sm.commissionRate ?? studioDefaults?.defaultCommissionRate ?? sm.mc?.defaultCommissionRate ?? null;
 
     if (type === 'COMMISSION') {
       return sum + (commissionRate ? (revenue * Number(commissionRate)) / 100 : 0);

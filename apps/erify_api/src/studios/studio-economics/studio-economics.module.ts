@@ -6,10 +6,11 @@ import { StudioEconomicsService } from './studio-economics.service';
 import { ShowModule } from '@/models/show/show.module';
 import { ShowMcModule } from '@/models/show-mc/show-mc.module';
 import { ShowPlatformModule } from '@/models/show-platform/show-platform.module';
+import { StudioMcModelModule } from '@/models/studio-mc/studio-mc.module';
 import { StudioShiftModule } from '@/models/studio-shift/studio-shift.module';
 
 @Module({
-  imports: [ShowModule, ShowMcModule, ShowPlatformModule, StudioShiftModule],
+  imports: [ShowModule, ShowMcModule, ShowPlatformModule, StudioMcModelModule, StudioShiftModule],
   controllers: [StudioEconomicsController],
   providers: [StudioEconomicsService],
 })

@@ -13,7 +13,7 @@ This is the practical flow for a studio manager using Phase 4 features:
 
 1. Prepare operations inputs
    - Assign MCs to shows (`/studios/:studioId/shows/:showId/mcs` or bulk assignment endpoint).
-   - Set compensation terms (fixed/commission/hybrid fields on MC/ShowMC).
+   - Set compensation terms (fixed/commission/hybrid fields on MC/ShowMC/StudioMc).
    - Maintain studio shifts with projected/calculated costs.
 2. Record show outcomes
    - Enter show-platform performance metrics (`gmv`, `sales`, `orders`, `viewer_count`).
@@ -64,9 +64,10 @@ All monetary fields are `string` (decimal-as-string).
 **Computation:**
 - `revenue` = sum of `ShowPlatform.gmv` for all platforms on the show
 - `mc_cost`:
-  - `FIXED`: `agreedRate ?? MC.defaultRate`
-  - `COMMISSION`: `revenue × (commissionRate ?? MC.defaultCommissionRate) / 100`
+  - `FIXED`: `agreedRate ?? StudioMc.defaultRate ?? MC.defaultRate`
+  - `COMMISSION`: `revenue × (commissionRate ?? StudioMc.defaultCommissionRate ?? MC.defaultCommissionRate) / 100`
   - `HYBRID`: fixed component + commission component
+  - Effective type fallback: `ShowMC.compensationType ?? StudioMc.defaultRateType ?? MC.defaultRateType`
 - `shift_cost` = sum of `StudioShift.calculatedCost ?? projectedCost` where shift date falls within the show's date range
 - `contribution_margin` = `revenue - mc_cost - shift_cost`
 
@@ -109,7 +110,7 @@ Response: array of `{ group_id, group_name, total_viewer_count, total_gmv, total
 |------|---------|
 | `src/studios/studio-economics/studio-economics.controller.ts` | Three economics/performance endpoints |
 | `src/studios/studio-economics/studio-economics.service.ts` | Aggregation logic |
-| `src/studios/studio-economics/studio-economics.module.ts` | Module (imports ShowModule, ShowMcModule, ShowPlatformModule, StudioShiftModule) |
+| `src/studios/studio-economics/studio-economics.module.ts` | Module (imports ShowModule, ShowMcModule, ShowPlatformModule, StudioMcModelModule, StudioShiftModule) |
 | `src/studios/studio-economics/schemas/studio-economics.schema.ts` | Response Zod schemas, `GROUP_BY` constant |
 | `src/models/show/show.repository.ts` | `findByStudioAndDateRange` — bulk-load shows by UID |
 | `src/models/studio-shift/studio-shift.repository.ts` | `findByShowWindow` — shifts in date window |
