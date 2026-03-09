@@ -49,7 +49,7 @@ function ShowMcsPage() {
                   </Link>
                 )}
           </Button>
-          <CardTitle className="text-base">Assigned MCs</CardTitle>
+          <CardTitle className="text-base">Assigned Creators</CardTitle>
         </div>
         <Button
           size="sm"
@@ -57,7 +57,7 @@ function ShowMcsPage() {
           className="gap-1.5"
         >
           <Plus className="h-4 w-4" />
-          Add MC
+          Add Creator
         </Button>
       </CardHeader>
 
