@@ -246,7 +246,6 @@ Note: sync updates `erify_api.users.ext_id` only. It does not modify `eridu_auth
 - `GET /admin/creators/:id` - Get creator by ID
 - `PATCH /admin/creators/:id` - Update creator
 - `DELETE /admin/creators/:id` - Soft delete creator
-- Legacy alias: `/admin/mcs*`
 
 #### 📺 Platforms (`/admin/platforms`)
 

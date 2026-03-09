@@ -18,7 +18,7 @@
     "db:migrate:status": "npx prisma migrate status",
     "db:migrate:deploy": "npx prisma migrate deploy",
     "db:migrate:reset": "npx prisma migrate reset --force",
-    "db:seed": "npx prisma db seed",
+    "db:seed": "pnpm run db:generate && npx prisma db seed",
     "db:local:refresh": "pnpm run db:migrate:reset && pnpm run db:migrate:deploy && pnpm run db:seed",
     "db:extid:sync": "tsx scripts/sync-ext-ids.ts",
     "db:local:refresh:with-ext-sync": "pnpm run db:local:refresh && pnpm run db:extid:sync",

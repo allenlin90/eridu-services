@@ -5,27 +5,27 @@ import { z } from 'zod';
 
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@eridu/ui';
 
-import { AddMcDialog } from '@/features/studio-show-mcs/components/add-mc-dialog';
-import { ShowMcList } from '@/features/studio-show-mcs/components/show-mc-list';
-import { useShowMcs } from '@/features/studio-show-mcs/hooks/use-show-mcs';
+import { AddCreatorDialog } from '@/features/studio-show-creators/components/add-creator-dialog';
+import { ShowCreatorList } from '@/features/studio-show-creators/components/show-creator-list';
+import { useShowCreators } from '@/features/studio-show-creators/hooks/use-show-creators';
 import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
 
-const showMcsSearchSchema = z.object({
+const showCreatorsSearchSchema = z.object({
   from: z.enum(['shows', 'creators']).optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/studios/$studioId/shows/$showId/creators')({
-  validateSearch: (search) => showMcsSearchSchema.parse(search),
-  component: ShowMcsPage,
+  validateSearch: (search) => showCreatorsSearchSchema.parse(search),
+  component: ShowCreatorsPage,
 });
 
-function ShowMcsPage() {
+function ShowCreatorsPage() {
   const { studioId, showId } = Route.useParams();
   const search = Route.useSearch();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const { data: show } = useStudioShow({ studioId, showId });
-  const { data, isLoading, addMutation, removeMutation } = useShowMcs(studioId, showId);
+  const { data, isLoading, addMutation, removeMutation } = useShowCreators(studioId, showId);
 
   const mcs = data?.data ?? [];
   const backToCreators = search.from === 'creators';
@@ -62,7 +62,7 @@ function ShowMcsPage() {
       </CardHeader>
 
       <CardContent>
-        <ShowMcList
+        <ShowCreatorList
           mcs={mcs}
           isLoading={isLoading}
           onRemove={(mcId) => removeMutation.mutate(mcId)}
@@ -71,7 +71,7 @@ function ShowMcsPage() {
       </CardContent>
 
       {show && (
-        <AddMcDialog
+        <AddCreatorDialog
           open={isAddDialogOpen}
           onOpenChange={setIsAddDialogOpen}
           studioId={studioId}

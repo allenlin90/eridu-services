@@ -105,7 +105,7 @@ export class AdminShowController extends BaseAdminController {
     await this.showOrchestrationService.deleteShow(id);
   }
 
-  @Patch(':id/mcs/remove')
+  @Patch(':id/creators/remove')
   @AdminResponse(undefined, HttpStatus.NO_CONTENT)
   async removeMCsFromShow(
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show'))
@@ -128,7 +128,7 @@ export class AdminShowController extends BaseAdminController {
     );
   }
 
-  @Patch(':id/mcs/replace')
+  @Patch(':id/creators/replace')
   @AdminResponse(
     showWithAssignmentsDto,
     HttpStatus.OK,

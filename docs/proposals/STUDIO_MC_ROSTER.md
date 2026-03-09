@@ -60,7 +60,7 @@ Each field resolves independently: the first non-null value wins.
 | Area                    | Current                             | Proposed                                           |
 | ----------------------- | ----------------------------------- | -------------------------------------------------- |
 | Availability query      | Returns all non-booked MCs globally | Filters to MCs in the studio's roster              |
-| MC listing under studio | N/A                                 | `GET /studios/:studioId/mcs` returns roster        |
+| Creator listing under studio | N/A                             | `GET /studios/:studioId/creators` returns roster   |
 | Assignment              | Any MC assignable to any show       | Same, but auto-creates `StudioMc` entry if missing |
 | Compensation defaults   | `ShowMC → MC` (2-tier)              | `ShowMC → StudioMc → MC` (3-tier)                  |
 | P&L calculation         | Unchanged formula                   | Same formula, richer fallback for default rates    |
@@ -111,7 +111,7 @@ The 3-tier fallback produces identical results to the current 2-tier because `St
 | `computeMcCost` fallback            | `studio-economics.service.ts`             | Low — add middle tier lookup |
 | Availability query                  | `mc.repository.ts` (`findAvailableMcs`)   | Low — add roster filter      |
 | Auto-roster on assignment           | `studio-show-mc.orchestration.service.ts` | Low — upsert convenience     |
-| Roster CRUD endpoints               | `studio-mc.controller.ts`                 | Low — new endpoints          |
+| Roster CRUD endpoints               | `studio-creator.controller.ts`                 | Low — new endpoints          |
 
 ## Docs to Update (When Implemented)
 

@@ -4,7 +4,7 @@
  */
 export const ADMIN_RESOURCES = [
   'clients',
-  'mcs',
+  'creators',
   'studio-memberships',
   'platforms',
   'show-standards',
@@ -38,10 +38,10 @@ export const ADMIN_RESOURCE_META: Record<
     plural: 'Clients',
     apiPath: 'clients',
   },
-  'mcs': {
-    singular: 'MC',
-    plural: 'MCs',
-    apiPath: 'mcs',
+  'creators': {
+    singular: 'Creator',
+    plural: 'Creators',
+    apiPath: 'creators',
   },
   'studio-memberships': {
     singular: 'Studio Membership',

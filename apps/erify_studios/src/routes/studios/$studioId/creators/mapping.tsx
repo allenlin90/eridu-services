@@ -16,7 +16,7 @@ import {
 
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { PageLayout } from '@/components/layouts/page-layout';
-import { BulkMcAssignDialog } from '@/features/studio-show-mcs/components/bulk-mc-assign-dialog';
+import { BulkCreatorAssignDialog } from '@/features/studio-show-creators/components/bulk-creator-assign-dialog';
 import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
 import { useStudioShows } from '@/features/studio-shows/hooks/use-studio-shows';
 
@@ -61,8 +61,8 @@ function createCreatorsColumns(studioId: string): ColumnDef<StudioShow>[] {
       cell: ({ row }) => new Date(row.original.start_time).toLocaleString(),
     },
     {
-      id: 'mcs',
-      header: 'MCs',
+      id: 'creators',
+      header: 'Creators',
       cell: ({ row }) => {
         const names = row.original.mcs
           .map((mc) => mc.mc_aliasname || mc.mc_name)
@@ -287,7 +287,7 @@ function StudioCreatorsMappingPage() {
           )}
 
           {bulkAssigningShows && (
-            <BulkMcAssignDialog
+            <BulkCreatorAssignDialog
               studioId={studioId}
               open={bulkAssigningShows.length > 0}
               defaultMode="replace"

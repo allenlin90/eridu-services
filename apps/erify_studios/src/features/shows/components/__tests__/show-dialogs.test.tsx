@@ -28,8 +28,8 @@ vi.mock('@/features/clients/api/get-clients', () => ({
   getClients: vi.fn().mockResolvedValue({ data: [], meta: { total: 0 } }),
 }));
 
-vi.mock('@/features/mcs/api/get-mcs', () => ({
-  getMcs: vi.fn().mockResolvedValue({ data: [], meta: { total: 0 } }),
+vi.mock('@/features/creators/api/get-creators', () => ({
+  getCreators: vi.fn().mockResolvedValue({ data: [], meta: { total: 0 } }),
 }));
 
 vi.mock('@/features/platforms/api/get-platforms', () => ({

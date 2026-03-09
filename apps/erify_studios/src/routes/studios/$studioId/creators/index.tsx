@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { PageLayout } from '@/components/layouts/page-layout';
-import { StudioMcRosterManager } from '@/features/studio-mc-roster/components/studio-mc-roster-manager';
+import { StudioCreatorRosterManager } from '@/features/studio-creator-roster/components/studio-creator-roster-manager';
 
 export const Route = createFileRoute('/studios/$studioId/creators/')({
   component: StudioCreatorsRosterPage,
@@ -22,7 +22,7 @@ function StudioCreatorsRosterPage() {
         title="Creator Roster"
         description="Manage the studio roster before running creator-to-show mapping."
       >
-        <StudioMcRosterManager studioId={studioId} />
+        <StudioCreatorRosterManager studioId={studioId} />
       </PageLayout>
     </StudioRouteGuard>
   );

@@ -13,7 +13,6 @@ This is the practical flow for a studio manager using Phase 4 features:
 
 1. Prepare operations inputs
    - Assign creators to shows (`/studios/:studioId/shows/:showId/creators` or bulk assignment endpoint).
-   - Legacy show path `/studios/:studioId/shows/:showId/mcs` remains available as compatibility alias.
    - Set compensation terms (fixed/commission/hybrid fields on MC/ShowMC/StudioMc).
    - Maintain studio shifts with projected/calculated costs.
 2. Record show outcomes

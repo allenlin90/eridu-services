@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 
 import { StudioShowController } from './studio-show.controller';
 import { StudioShowCreatorController } from './studio-show-creator.controller';
-import { StudioShowMcController } from './studio-show-mc.controller';
 import { StudioShowMcOrchestrationService } from './studio-show-mc.orchestration.service';
 
 import { McModule } from '@/models/mc/mc.module';
@@ -12,7 +11,7 @@ import { TaskOrchestrationModule } from '@/task-orchestration/task-orchestration
 
 @Module({
   imports: [TaskOrchestrationModule, ShowModule, McModule, ShowMcModule],
-  controllers: [StudioShowController, StudioShowMcController, StudioShowCreatorController],
+  controllers: [StudioShowController, StudioShowCreatorController],
   providers: [StudioShowMcOrchestrationService],
 })
 export class StudioShowModule {}

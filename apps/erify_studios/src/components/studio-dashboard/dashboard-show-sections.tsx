@@ -32,7 +32,7 @@ type OperationalDayShowListCardProps = {
   onNextPage: () => void;
 };
 
-function formatShowMcs(show: StudioShow): string {
+function formatShowCreators(show: StudioShow): string {
   if (!show.mcs || show.mcs.length === 0) {
     return '-';
   }
@@ -147,7 +147,7 @@ export function OperationalDayShowListCard({
                     </TableHeader>
                     <TableBody>
                       {shows.map((show) => {
-                        const mcNames = formatShowMcs(show);
+                        const mcNames = formatShowCreators(show);
 
                         return (
                           <TableRow key={show.id}>

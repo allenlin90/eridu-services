@@ -70,10 +70,10 @@ export class StudioShowController extends BaseStudioController {
     return this.taskOrchestrationService.getShowTasks(studioId, id);
   }
 
-  @Patch('mc-assignments/bulk')
+  @Patch('creator-assignments/bulk')
   @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER])
   @ZodResponse(bulkMcAssignmentResponseSchema)
-  async bulkAppendMcs(
+  async bulkAppendCreators(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Body() body: BulkMcAssignmentDto,
   ) {
@@ -84,10 +84,10 @@ export class StudioShowController extends BaseStudioController {
     );
   }
 
-  @Put('mc-assignments/bulk')
+  @Put('creator-assignments/bulk')
   @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER])
   @ZodResponse(bulkMcAssignmentResponseSchema)
-  async bulkReplaceMcs(
+  async bulkReplaceCreators(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Body() body: BulkMcAssignmentDto,
   ) {

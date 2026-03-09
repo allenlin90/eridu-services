@@ -30,7 +30,7 @@ import { ShowAssignmentDialog } from '@/features/shows/components/show-assignmen
 import { useShiftAlignment } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';
 import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
-import { BulkMcAssignDialog } from '@/features/studio-show-mcs/components/bulk-mc-assign-dialog';
+import { BulkCreatorAssignDialog } from '@/features/studio-show-creators/components/bulk-creator-assign-dialog';
 import { getStudioShows, type StudioShow } from '@/features/studio-shows/api/get-studio-shows';
 import { SelectedShowsMobileActions } from '@/features/studio-shows/components/selected-shows-mobile-actions';
 import { ShowReadinessTriagePanel } from '@/features/studio-shows/components/show-readiness/show-readiness-triage-panel';
@@ -379,7 +379,7 @@ function StudioShowsTableSection({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [bulkGeneratingShows, setBulkGeneratingShows] = useState<StudioShow[] | null>(null);
   const [bulkAssigningShows, setBulkAssigningShows] = useState<StudioShow[] | null>(null);
-  const [bulkMcAssigningShows, setBulkMcAssigningShows] = useState<StudioShow[] | null>(null);
+  const [bulkCreatorAssigningShows, setBulkCreatorAssigningShows] = useState<StudioShow[] | null>(null);
 
   const {
     shows,
@@ -609,7 +609,7 @@ function StudioShowsTableSection({
                 size="sm"
                 variant="secondary"
                 className="rounded-full"
-                onClick={() => setBulkMcAssigningShows(selectedShows)}
+                onClick={() => setBulkCreatorAssigningShows(selectedShows)}
               >
                 Assign MCs
               </Button>
@@ -663,16 +663,16 @@ function StudioShowsTableSection({
         />
       )}
 
-      {bulkMcAssigningShows && (
-        <BulkMcAssignDialog
+      {bulkCreatorAssigningShows && (
+        <BulkCreatorAssignDialog
           studioId={studioId}
-          open={bulkMcAssigningShows.length > 0}
+          open={bulkCreatorAssigningShows.length > 0}
           defaultMode="append"
           onOpenChange={(open) => {
             if (!open)
-              setBulkMcAssigningShows(null);
+              setBulkCreatorAssigningShows(null);
           }}
-          selectedShows={bulkMcAssigningShows}
+          selectedShows={bulkCreatorAssigningShows}
           onSuccess={() => {
             void refetch();
             onShowsMutated();

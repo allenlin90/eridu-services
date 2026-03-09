@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { Route as ClientsRoute } from '../../routes/system/clients';
 import { Route as CreatorsRoute } from '../../routes/system/creators';
-import { Route as McsRoute } from '../../routes/system/mcs';
 import { Route as MembershipsRoute } from '../../routes/system/memberships';
 import { Route as PlatformsRoute } from '../../routes/system/platforms';
 // Import routes after mocking
@@ -27,7 +26,6 @@ describe('admin routes', () => {
     expect(AdminRoute).toBeDefined();
     expect(ClientsRoute).toBeDefined();
     expect(CreatorsRoute).toBeDefined();
-    expect(McsRoute).toBeDefined();
     expect(MembershipsRoute).toBeDefined();
     expect(PlatformsRoute).toBeDefined();
     expect(SchedulesRoute).toBeDefined();

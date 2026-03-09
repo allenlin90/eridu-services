@@ -86,9 +86,9 @@ pnpm dev
 ```
 
 Verify key endpoints:
-- `GET /studios/:studioId/mcs/availability?date_from=...&date_to=...`
-- `PATCH /studios/:studioId/shows/mc-assignments/bulk` (append mode)
-- `PUT /studios/:studioId/shows/mc-assignments/bulk` (replace mode)
+- `GET /studios/:studioId/creators/availability?date_from=...&date_to=...`
+- `PATCH /studios/:studioId/shows/creator-assignments/bulk` (append mode)
+- `PUT /studios/:studioId/shows/creator-assignments/bulk` (replace mode)
 - `GET /studios/:studioId/shows/:showId/economics`
 - `GET /studios/:studioId/economics?...`
 - `GET /studios/:studioId/performance?...`

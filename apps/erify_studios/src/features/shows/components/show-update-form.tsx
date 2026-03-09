@@ -8,7 +8,7 @@ import { Button, DialogFooter, Form } from '@eridu/ui';
 
 import {
   ShowClientField,
-  ShowMcsField,
+  ShowCreatorsField,
   ShowNameField,
   ShowPlatformsField,
   ShowStandardField,
@@ -112,7 +112,7 @@ export function ShowUpdateForm({
 
           <ShowStandardField control={form.control} show={show} />
 
-          <ShowMcsField control={form.control} show={show} />
+          <ShowCreatorsField control={form.control} show={show} />
 
           <ShowPlatformsField control={form.control} show={show} />
         </div>

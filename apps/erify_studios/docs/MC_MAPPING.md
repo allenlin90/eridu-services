@@ -1,11 +1,11 @@
-# MC Mapping UI — Shipped Behavior
+# Creator Mapping UI — Shipped Behavior
 
 > **Status**: ✅ Implemented (Phase 4, 2026-03-07)
-> **Phase**: 4 — P&L Visibility & MC Operations
+> **Phase**: 4 — P&L Visibility & Creator Operations
 
 ## What It Does
 
-Allows studio staff to assign MCs to shows individually or in bulk, view currently assigned MCs on a show, and remove assignments — with real-time availability filtering to avoid booking conflicts.
+Allows studio staff to assign creators to shows individually or in bulk, view currently assigned creators on a show, and remove assignments — with real-time availability filtering to avoid booking conflicts.
 
 Creators workflows are split into:
 - roster management on `/creators`
@@ -13,21 +13,21 @@ Creators workflows are split into:
 
 ## Feature Location
 
-`apps/erify_studios/src/features/studio-show-mcs/`
+`apps/erify_studios/src/features/studio-show-creators/`
 
 ```
 api/
-  get-show-mcs.ts          — GET /studios/:studioId/shows/:showId/creators
-  add-show-mc.ts           — POST /studios/:studioId/shows/:showId/creators
-  remove-show-mc.ts        — DELETE /studios/:studioId/shows/:showId/creators/:creatorId
-  get-mc-availability.ts   — GET /studios/:studioId/creators/availability
-  bulk-assign-mcs.ts       — PATCH/PUT /studios/:studioId/shows/mc-assignments/bulk (append/replace)
+  get-show-creators.ts          — GET /studios/:studioId/shows/:showId/creators
+  add-show-creator.ts           — POST /studios/:studioId/shows/:showId/creators
+  remove-show-creator.ts        — DELETE /studios/:studioId/shows/:showId/creators/:creatorId
+  get-creator-availability.ts   — GET /studios/:studioId/creators/availability
+  bulk-assign-creators.ts       — PATCH/PUT /studios/:studioId/shows/creator-assignments/bulk (append/replace)
 hooks/
-  use-show-mcs.ts          — composes query + add + remove into one hook
+  use-show-creators.ts          — composes query + add + remove into one hook
 components/
-  show-mc-list.tsx          — list of assigned MCs with inline remove + confirmation dialog
-  add-mc-dialog.tsx         — MC picker using availability endpoint filtered to show's time window
-  bulk-mc-assign-dialog.tsx — multi-show + multi-MC bulk assignment dialog
+  show-creator-list.tsx          — list of assigned creators with inline remove + confirmation dialog
+  add-creator-dialog.tsx         — Creator picker using availability endpoint filtered to show's time window
+  bulk-creator-assign-dialog.tsx — multi-show + multi-creator bulk assignment dialog
 ```
 
 ## Routes
@@ -42,8 +42,8 @@ components/
 
 - **Creator Roster**: `/studios/$studioId/creators` for onboarding and roster maintenance.
 - **Creator Mapping**: `/studios/$studioId/creators/mapping` for bulk mapping workflows.
-- **Show MC list**: rendered on the show detail MCs route
-- **Bulk assign**: triggered from the shows list floating action bar ("Assign MCs" button appears when shows are selected)
+- **Show creator list**: rendered on the show detail creators route
+- **Bulk assign**: triggered from the shows list floating action bar ("Assign Creators" button appears when shows are selected)
 
 Roster page behavior:
 - Roster table uses the shared paginated table UX (search + advanced filters).
@@ -56,17 +56,17 @@ Roster page behavior:
 
 | Key | Invalidated by |
 |-----|---------------|
-| `['studio-show-mcs', studioId, showId]` | add, remove, bulk assign |
-| `['mc-availability', studioId, dateFrom, dateTo]` | not invalidated (search-driven) |
+| `['studio-show-creators', studioId, showId]` | add, remove, bulk assign |
+| `['creator-availability', studioId, dateFrom, dateTo]` | not invalidated (search-driven) |
 | `['studio-shows', studioId]` | bulk assign |
 
 ## Availability Filtering
 
-`AddMcDialog` passes the show's `start_time` / `end_time` as `date_from` / `date_to` to the availability endpoint. The picker only includes creators who are both:
+`AddCreatorDialog` passes the show's `start_time` / `end_time` as `date_from` / `date_to` to the availability endpoint. The picker only includes creators who are both:
 - active in the selected studio roster
 - not booked on overlapping shows
 
-`BulkMcAssignDialog` preloads availability + existing assignments and supports two explicit bulk modes:
+`BulkCreatorAssignDialog` preloads availability + existing assignments and supports two explicit bulk modes:
 - `Append` (`PATCH`) keeps existing mappings and adds selected creators.
 - `Replace` (`PUT`) overwrites selected shows to the selected creator set.
 
@@ -90,7 +90,5 @@ Known issue:
 - Keep current approach for now; defer optimization/refactor (indexed search/cache/fulltext strategy) to follow-up iteration.
 Legacy compatibility:
 - Show detail canonical route is `/studios/$studioId/shows/$showId/creators`.
-- Legacy `/studios/$studioId/shows/$showId/mcs` route remains as a redirect alias for compatibility.
-- Backend accepts both `/shows/:showId/creators` (canonical) and `/shows/:showId/mcs` (legacy alias).
+- Backend route is `/shows/:showId/creators` (canonical).
 - System admin canonical route is `/system/creators`.
-- Legacy `/system/mcs` route remains as a redirect alias for compatibility.

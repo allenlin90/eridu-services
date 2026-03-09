@@ -24,7 +24,7 @@ flowchart TD
     AllCreated --> ReviewLoop[For each schedule in schedules]
     ReviewLoop --> UpdateSchedule["PATCH /admin/schedules/:id<br/>Update plan_document<br/>Body: plan_document, version<br/>Auto-creates snapshot"]
 
-    UpdateSchedule --> ValidateSchedule["POST /admin/schedules/:id/validate<br/>Check room conflicts,<br/>MC double-booking"]
+    UpdateSchedule --> ValidateSchedule["POST /admin/schedules/:id/validate<br/>Check room conflicts,<br/>creator double-booking"]
 
     ValidateSchedule --> PublishSchedule["POST /admin/schedules/:id/publish<br/>Body: version<br/>Deletes existing shows,<br/>Creates new shows from plan_document"]
 
@@ -74,8 +74,8 @@ flowchart TD
 
 - **`POST /admin/schedules/:id/validate`** - Validate schedule before publish
   - Checks room conflicts within schedule
-  - Checks MC double-booking within schedule
-  - Validates all UIDs exist (client, room, type, status, standard, MCs, platforms)
+  - Checks creator double-booking within schedule
+  - Validates all UIDs exist (client, room, type, status, standard, creators, platforms)
   - Validates time range constraints
 
 #### 4. Publishing Phase
@@ -149,7 +149,7 @@ flowchart TD
 
     UpdateSchedule --> UpdateResult{Update Success?}
     UpdateResult -->|409 Conflict| HandleConflict
-    UpdateResult -->|Success| ValidateSchedule["POST /admin/schedules/:id/validate<br/>Check room conflicts,<br/>MC double-booking"]
+    UpdateResult -->|Success| ValidateSchedule["POST /admin/schedules/:id/validate<br/>Check room conflicts,<br/>creator double-booking"]
 
     ValidateSchedule --> ValidationResult{Validation Passes?}
     ValidationResult -->|No| ShowErrors["Show Validation Errors<br/>Fix in Google Sheets<br/>Update schedule again"]
@@ -233,8 +233,8 @@ flowchart TD
 
 - **`POST /admin/schedules/:id/validate`** - Validate schedule before publish
   - Checks room conflicts within schedule
-  - Checks MC double-booking within schedule
-  - Validates all UIDs exist (client, room, type, status, standard, MCs, platforms)
+  - Checks creator double-booking within schedule
+  - Validates all UIDs exist (client, room, type, status, standard, creators, platforms)
   - Validates time range constraints
 
 **Error Handling**:
@@ -325,7 +325,7 @@ flowchart TD
 
 ### Validation Errors
 
-**When**: Schedule validation fails (room conflicts, MC double-booking, invalid references)
+**When**: Schedule validation fails (room conflicts, creator double-booking, invalid references)
 
 **Recovery**:
 

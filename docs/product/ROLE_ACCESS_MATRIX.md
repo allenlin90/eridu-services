@@ -26,10 +26,10 @@ This matrix is the canonical policy summary. Runtime behavior is always determin
 | Capability / Endpoint Group                                     | ADMIN | MANAGER | MEMBER | TALENT_MANAGER | DESIGNER | MODERATION_MANAGER | Evidence                                                     |
 | --------------------------------------------------------------- | ----- | ------- | ------ | -------------- | -------- | ------------------ | ------------------------------------------------------------ |
 | Studio show list/detail/tasks (`GET /studios/:studioId/shows*`) | Yes   | Yes     | Yes    | Yes            | Yes      | Yes                | Base `@StudioProtected()` on show controller                 |
-| Show MC list (`GET /studios/:studioId/shows/:showId/mcs`)       | Yes   | Yes     | Yes    | Yes            | Yes      | Yes                | Base `@StudioProtected()` on show-MC controller              |
+| Show creator list (`GET /studios/:studioId/shows/:showId/creators`) | Yes | Yes | Yes | Yes | Yes | Yes | Base `@StudioProtected()` on show-creator controller |
 | Show MC add/remove                                              | Yes   | Yes     | No     | Yes            | No       | No                 | `@StudioProtected([ADMIN, MANAGER, TALENT_MANAGER])`         |
 | Bulk MC assignment (append `PATCH`, replace `PUT`)             | Yes   | Yes     | No     | Yes            | No       | No                 | `@StudioProtected([ADMIN, MANAGER, TALENT_MANAGER])`         |
-| MC availability (`GET /studios/:studioId/mcs/availability`)     | Yes   | Yes     | Yes    | Yes            | Yes      | Yes                | Base `@StudioProtected()` on studio-MC controller            |
+| Creator availability (`GET /studios/:studioId/creators/availability`) | Yes | Yes | Yes | Yes | Yes | Yes | Base `@StudioProtected()` on studio-creator controller |
 | Studio membership roster (`GET /studios/:studioId/studio-memberships`) | Yes | Yes | No | No | No | No | `@StudioProtected([ADMIN, MANAGER])` on studio-membership controller |
 | Studio membership invite (`POST /studios/:studioId/studio-memberships`) | Yes | Yes | No | No | No | No | `@StudioProtected([ADMIN, MANAGER])` + studio-scoped create endpoint |
 | Studio membership role update (`PATCH /studios/:studioId/studio-memberships/:id/role`) | Yes | No | No | No | No | No | Method-level `@StudioProtected([ADMIN])` override on role management endpoint |
