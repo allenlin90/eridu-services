@@ -1,9 +1,9 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
-import type { McApiResponse } from '@eridu/api-types/mcs';
+import type { CreatorApiResponse } from '@eridu/api-types/creators';
 import { CopyableText } from '@eridu/ui';
 
-export const mcColumns: ColumnDef<McApiResponse>[] = [
+export const mcColumns: ColumnDef<CreatorApiResponse>[] = [
   {
     accessorKey: 'id',
     header: 'ID',

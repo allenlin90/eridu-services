@@ -4,10 +4,10 @@ import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 
 import type {
-  createMcInputSchema,
-  McApiResponse,
-  updateMcInputSchema,
-} from '@eridu/api-types/mcs';
+  createCreatorInputSchema,
+  CreatorApiResponse,
+  updateCreatorInputSchema,
+} from '@eridu/api-types/creators';
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
@@ -35,9 +35,9 @@ export const Route = createFileRoute('/system/mcs/')({
   validateSearch: (search) => mcsSearchSchema.parse(search),
 });
 
-type Mc = McApiResponse;
-type McFormData = z.infer<typeof createMcInputSchema>;
-type UpdateMcFormData = z.infer<typeof updateMcInputSchema>;
+type Mc = CreatorApiResponse;
+type McFormData = z.infer<typeof createCreatorInputSchema>;
+type UpdateMcFormData = z.infer<typeof updateCreatorInputSchema>;
 
 function McsList() {
   const [deleteId, setDeleteId] = useState<string | null>(null);

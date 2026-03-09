@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api/client';
 
 export async function deleteMc(id: string): Promise<void> {
-  await apiClient.delete(`/admin/mcs/${id}`);
+  await apiClient.delete(`/admin/creators/${id}`);
 }
 
 export function useDeleteMc() {

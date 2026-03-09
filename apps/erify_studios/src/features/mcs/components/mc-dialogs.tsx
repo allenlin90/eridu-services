@@ -1,10 +1,10 @@
 import type { z } from 'zod';
 
-import type { McApiResponse } from '@eridu/api-types/mcs';
+import type { CreatorApiResponse } from '@eridu/api-types/creators';
 import {
-  createMcInputSchema,
-  updateMcInputSchema,
-} from '@eridu/api-types/mcs';
+  createCreatorInputSchema,
+  updateCreatorInputSchema,
+} from '@eridu/api-types/creators';
 import {
   Select,
   SelectContent,
@@ -18,9 +18,9 @@ import {
   DeleteConfirmDialog,
 } from '@/features/admin/components';
 
-type Mc = McApiResponse;
-type McFormData = z.infer<typeof createMcInputSchema>;
-type UpdateMcFormData = z.infer<typeof updateMcInputSchema>;
+type Mc = CreatorApiResponse;
+type McFormData = z.infer<typeof createCreatorInputSchema>;
+type UpdateMcFormData = z.infer<typeof updateCreatorInputSchema>;
 
 type McCreateDialogProps = {
   open: boolean;
@@ -41,7 +41,7 @@ export function McCreateDialog({
       onOpenChange={onOpenChange}
       title="Create MC"
       description="Add a new Master of Ceremonies to the system"
-      schema={createMcInputSchema}
+      schema={createCreatorInputSchema}
       onSubmit={onSubmit}
       isLoading={isLoading}
       fields={[
@@ -84,7 +84,7 @@ export function McUpdateDialog({
       onOpenChange={onOpenChange}
       title="Edit MC"
       description="Update MC information"
-      schema={updateMcInputSchema}
+      schema={updateCreatorInputSchema}
       defaultValues={
         mc
           ? {
