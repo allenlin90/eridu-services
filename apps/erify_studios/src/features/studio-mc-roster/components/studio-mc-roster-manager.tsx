@@ -67,6 +67,7 @@ function formatCompensationType(value: string | null): string {
 }
 
 export function StudioMcRosterManager({ studioId }: StudioMcRosterManagerProps) {
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [catalogSearch, setCatalogSearch] = useState('');
   const [selectedCatalogMcId, setSelectedCatalogMcId] = useState('');
   const [editingItem, setEditingItem] = useState<StudioMcRosterItem | null>(null);
@@ -145,11 +146,6 @@ export function StudioMcRosterManager({ studioId }: StudioMcRosterManagerProps) 
     ? `No creators found for "${rosterSearch}".`
     : 'No creators in this studio roster yet.';
 
-  const visibleActiveCount = useMemo(
-    () => rosterItems.filter((item) => item.is_active).length,
-    [rosterItems],
-  );
-
   const openEditDialog = (item: StudioMcRosterItem) => {
     setEditingItem(item);
     setEditableFields(toEditableDefaults(item));
@@ -172,6 +168,7 @@ export function StudioMcRosterManager({ studioId }: StudioMcRosterManagerProps) 
       { mc_id: selectedCatalogMcId, is_active: true },
       {
         onSuccess: () => {
+          setIsAddDialogOpen(false);
           setSelectedCatalogMcId('');
           setCatalogSearch('');
         },
@@ -296,15 +293,6 @@ export function StudioMcRosterManager({ studioId }: StudioMcRosterManagerProps) 
 
   return (
     <div className="space-y-4">
-      <div className="text-sm text-muted-foreground">
-        {totalFilteredCreators}
-        {' '}
-        creators (
-        {visibleActiveCount}
-        {' '}
-        active on this page)
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Add Creator to Studio Roster</CardTitle>
@@ -312,46 +300,16 @@ export function StudioMcRosterManager({ studioId }: StudioMcRosterManagerProps) 
             Search from global creators and onboard them into this studio roster before mapping.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-2 md:flex-row">
-            <div className="min-w-0 flex-1">
-              <AsyncCombobox
-                value={selectedCatalogMcId}
-                onChange={setSelectedCatalogMcId}
-                onSearch={setCatalogSearch}
-                options={catalogOptions}
-                isLoading={catalogQuery.isLoading || catalogQuery.isFetching}
-                placeholder="Search creators to add..."
-                emptyMessage="No matching creators found."
-                disabled={createRosterItem.isPending}
-              />
-            </div>
-            <Button
-              onClick={handleAddToRoster}
-              disabled={!selectedCatalogMcId || createRosterItem.isPending}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {createRosterItem.isPending ? 'Adding...' : 'Add to Roster'}
-            </Button>
+        <CardContent className="flex items-center justify-between gap-3">
+          <div className="text-sm text-muted-foreground">
+            {totalFilteredCreators}
+            {' '}
+            creators
           </div>
-          {selectedCatalogOption && (
-            <div className="mt-3 flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2 text-sm">
-              <span className="truncate">
-                Selected:
-                {' '}
-                <span className="font-medium">{selectedCatalogOption.label}</span>
-              </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedCatalogMcId('')}
-                disabled={createRosterItem.isPending}
-              >
-                Clear
-              </Button>
-            </div>
-          )}
+          <Button type="button" onClick={() => setIsAddDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Creator
+          </Button>
         </CardContent>
       </Card>
 
@@ -497,6 +455,77 @@ export function StudioMcRosterManager({ studioId }: StudioMcRosterManagerProps) 
             <Button variant="outline" onClick={closeEditDialog}>Cancel</Button>
             <Button onClick={handleSaveDefaults} disabled={updateRosterItem.isPending}>
               Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isAddDialogOpen}
+        onOpenChange={(open) => {
+          setIsAddDialogOpen(open);
+          if (!open) {
+            setSelectedCatalogMcId('');
+            setCatalogSearch('');
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Creator to Studio Roster</DialogTitle>
+            <DialogDescription>
+              Search creators from the global catalog and onboard them into this studio roster.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <AsyncCombobox
+              value={selectedCatalogMcId}
+              onChange={setSelectedCatalogMcId}
+              onSearch={setCatalogSearch}
+              options={catalogOptions}
+              isLoading={catalogQuery.isLoading || catalogQuery.isFetching}
+              placeholder="Search creators to add..."
+              emptyMessage="No matching creators found."
+              disabled={createRosterItem.isPending}
+            />
+
+            {selectedCatalogOption && (
+              <div className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2 text-sm">
+                <span className="truncate">
+                  Selected:
+                  {' '}
+                  <span className="font-medium">{selectedCatalogOption.label}</span>
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedCatalogMcId('')}
+                  disabled={createRosterItem.isPending}
+                >
+                  Clear
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsAddDialogOpen(false);
+                setSelectedCatalogMcId('');
+                setCatalogSearch('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddToRoster}
+              disabled={!selectedCatalogMcId || createRosterItem.isPending}
+            >
+              {createRosterItem.isPending ? 'Adding...' : 'Add to Roster'}
             </Button>
           </DialogFooter>
         </DialogContent>
