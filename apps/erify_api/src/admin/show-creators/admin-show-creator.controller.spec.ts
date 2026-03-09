@@ -45,7 +45,7 @@ describe('adminShowCreatorController', () => {
       const showCreatorWithRelations = {
         ...createdShowCreator,
         show: { uid: 'show_123' },
-        creator: { uid: 'mc_123' },
+        mc: { uid: 'mc_123' },
       };
 
       mockShowCreatorService.create.mockResolvedValue(createdShowCreator as any);
@@ -62,7 +62,7 @@ describe('adminShowCreatorController', () => {
         createdShowCreator.uid,
         {
           show: true,
-          creator: true,
+          mc: true,
         },
       );
       expect(result).toEqual(showCreatorWithRelations);
@@ -118,7 +118,7 @@ describe('adminShowCreatorController', () => {
         showId: 'show_123',
         creatorId: 'mc_123',
         show: { uid: 'show_123' },
-        creator: { uid: 'mc_123' },
+        mc: { uid: 'mc_123' },
       };
 
       mockShowCreatorService.findOne.mockResolvedValue(showCreator as any);
@@ -126,7 +126,7 @@ describe('adminShowCreatorController', () => {
       const result = await controller.getShowCreator(showCreatorId);
       expect(mockShowCreatorService.findOne).toHaveBeenCalledWith(showCreatorId, {
         show: true,
-        creator: true,
+        mc: true,
       });
       expect(result).toEqual(showCreator);
     });
@@ -145,7 +145,7 @@ describe('adminShowCreatorController', () => {
       const showCreatorWithRelations = {
         ...updatedShowCreator,
         show: { uid: 'show_123' },
-        creator: { uid: 'mc_123' },
+        mc: { uid: 'mc_123' },
       };
 
       // First call check existence
@@ -171,7 +171,7 @@ describe('adminShowCreatorController', () => {
         updatedShowCreator.uid,
         {
           show: true,
-          creator: true,
+          mc: true,
         },
       );
       expect(result).toEqual(showCreatorWithRelations);

@@ -81,13 +81,13 @@ describe('studioShowMcOrchestrationService', () => {
     ).rejects.toMatchObject(HttpError.badRequest('Shows not found or not in this studio: show_2'));
   });
 
-  it('throws bad request when at least one MC is missing', async () => {
+  it('throws bad request when at least one creator is missing', async () => {
     showService.findMany.mockResolvedValue([{ id: BigInt(1), uid: 'show_1' }]);
     mcRepository.findByUids.mockResolvedValue([{ id: BigInt(10), uid: 'mc_1' }]);
 
     await expect(
       service.bulkAppendCreatorsToShows('std_1', ['show_1'], ['mc_1', 'mc_2']),
-    ).rejects.toMatchObject(HttpError.badRequest('MCs not found: mc_2'));
+    ).rejects.toMatchObject(HttpError.badRequest('Creators not found: mc_2'));
   });
 
   it('accepts duplicate show and MC UIDs by de-duplicating before validation', async () => {
