@@ -300,16 +300,6 @@ export function useSidebarConfig(
         items: studioWorkspaceItems,
       });
 
-      if (studioManagerItems.length > 0) {
-        navItems.push({
-          title: 'Studio Manager',
-          url: `/studios/${activeStudio.studio.uid}/manager`,
-          icon: ShieldCheck,
-          isActive: studioManagerItems.some((item) => item.isActive),
-          items: studioManagerItems,
-        });
-      }
-
       if (studioAdminItems.length > 0) {
         navItems.push({
           title: 'Studio Admin',
@@ -317,6 +307,16 @@ export function useSidebarConfig(
           icon: ShieldCheck,
           isActive: studioAdminItems.some((item) => item.isActive),
           items: studioAdminItems,
+        });
+      }
+
+      if (studioManagerItems.length > 0) {
+        navItems.push({
+          title: 'Studio Manager',
+          url: `/studios/${activeStudio.studio.uid}/manager`,
+          icon: ShieldCheck,
+          isActive: studioManagerItems.some((item) => item.isActive),
+          items: studioManagerItems,
         });
       }
 

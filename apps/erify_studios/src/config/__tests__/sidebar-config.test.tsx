@@ -135,7 +135,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
-    expect(result.current.navMain).toHaveLength(6); // Dashboard + System + Studio Workspace + Studio Manager + Studio Admin + Studio Creators
+    expect(result.current.navMain).toHaveLength(6); // Dashboard + System + Studio Workspace + Studio Admin + Studio Manager + Studio Creators
     expect(result.current.navMain[0]).toEqual({
       title: 'Dashboard',
       url: '/dashboard',
@@ -188,6 +188,19 @@ describe('useSidebarConfig', () => {
     }));
 
     expect(result.current.navMain[3]).toEqual(expect.objectContaining({
+      title: 'Studio Admin',
+      url: '/studios/studio-1/admin',
+      icon: expect.any(Function),
+      isActive: false,
+      items: expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Member Roster',
+          url: '/studios/studio-1/members',
+        }),
+      ]),
+    }));
+
+    expect(result.current.navMain[4]).toEqual(expect.objectContaining({
       title: 'Studio Manager',
       url: '/studios/studio-1/manager',
       icon: expect.any(Function),
@@ -208,19 +221,6 @@ describe('useSidebarConfig', () => {
         expect.objectContaining({
           title: 'Task Templates',
           url: '/studios/studio-1/task-templates',
-        }),
-      ]),
-    }));
-
-    expect(result.current.navMain[4]).toEqual(expect.objectContaining({
-      title: 'Studio Admin',
-      url: '/studios/studio-1/admin',
-      icon: expect.any(Function),
-      isActive: false,
-      items: expect.arrayContaining([
-        expect.objectContaining({
-          title: 'Member Roster',
-          url: '/studios/studio-1/members',
         }),
       ]),
     }));
