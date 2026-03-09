@@ -51,7 +51,7 @@ describe('mcCreateDialog', () => {
     render(<McCreateDialog {...mockProps} />);
 
     expect(screen.getByTestId('admin-form-dialog')).toBeInTheDocument();
-    expect(screen.getByText('Create MC')).toBeInTheDocument();
+    expect(screen.getByText('Create Creator')).toBeInTheDocument();
   });
 
   it('should not render when closed', () => {
@@ -82,7 +82,7 @@ describe('mcUpdateDialog', () => {
     render(<McUpdateDialog {...mockProps} />);
 
     expect(screen.getByTestId('admin-form-dialog')).toBeInTheDocument();
-    expect(screen.getByText('Edit MC')).toBeInTheDocument();
+    expect(screen.getByText('Edit Creator')).toBeInTheDocument();
   });
 
   it('should not render when mc is null', () => {
@@ -104,7 +104,7 @@ describe('mcDeleteDialog', () => {
     render(<McDeleteDialog {...mockProps} />);
 
     expect(screen.getByTestId('delete-confirm-dialog')).toBeInTheDocument();
-    expect(screen.getByText('Delete MC')).toBeInTheDocument();
+    expect(screen.getByText('Delete Creator')).toBeInTheDocument();
   });
 
   it('should not render when closed', () => {

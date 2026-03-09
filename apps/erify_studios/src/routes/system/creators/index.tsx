@@ -65,7 +65,7 @@ function McsList() {
       await deleteMutation.mutateAsync(deleteId);
       setDeleteId(null);
     } catch (error) {
-      console.error('Failed to delete MC:', error);
+      console.error('Failed to delete creator:', error);
     }
   };
 
@@ -108,10 +108,10 @@ function McsList() {
 
   return (
     <AdminLayout
-      title="MCs"
-      description="Manage Masters of Ceremonies"
+      title="Creators"
+      description="Manage creators"
       action={{
-        label: 'Create MC',
+        label: 'Create Creator',
         onClick: () => setIsCreateDialogOpen(true),
       }}
       onRefresh={handleRefresh}
@@ -122,7 +122,7 @@ function McsList() {
         columns={columnsWithActions}
         isLoading={isLoading}
         isFetching={isFetching}
-        emptyMessage="No MCs found. Create one to get started."
+        emptyMessage="No creators found. Create one to get started."
         manualPagination={!!pagination}
         manualFiltering
         pageCount={pagination?.pageCount}

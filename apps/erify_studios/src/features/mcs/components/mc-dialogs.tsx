@@ -39,8 +39,8 @@ export function McCreateDialog({
     <AdminFormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Create MC"
-      description="Add a new Master of Ceremonies to the system"
+      title="Create Creator"
+      description="Add a new creator to the system"
       schema={createCreatorInputSchema}
       onSubmit={onSubmit}
       isLoading={isLoading}
@@ -48,7 +48,7 @@ export function McCreateDialog({
         {
           name: 'name',
           label: 'Name',
-          placeholder: 'Enter MC name',
+          placeholder: 'Enter creator name',
         },
         {
           name: 'alias_name',
@@ -82,8 +82,8 @@ export function McUpdateDialog({
     <AdminFormDialog
       open={!!mc}
       onOpenChange={onOpenChange}
-      title="Edit MC"
-      description="Update MC information"
+      title="Edit Creator"
+      description="Update creator information"
       schema={updateCreatorInputSchema}
       defaultValues={
         mc
@@ -101,7 +101,7 @@ export function McUpdateDialog({
         {
           name: 'name',
           label: 'Name',
-          placeholder: 'Enter MC name',
+          placeholder: 'Enter creator name',
         },
         {
           name: 'id' as any,
@@ -173,8 +173,8 @@ export function McDeleteDialog({
       open={open}
       onOpenChange={onOpenChange}
       onConfirm={onConfirm}
-      title="Delete MC"
-      description="Are you sure you want to delete this MC? This action cannot be undone."
+      title="Delete Creator"
+      description="Are you sure you want to delete this creator? This action cannot be undone."
       isLoading={isLoading}
     />
   );
