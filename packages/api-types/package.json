@@ -17,6 +17,10 @@
       "types": "./dist/constants.d.ts",
       "default": "./dist/constants.js"
     },
+    "./creators": {
+      "types": "./dist/creators/index.d.ts",
+      "default": "./dist/creators/index.js"
+    },
     "./mcs": {
       "types": "./dist/mcs/index.d.ts",
       "default": "./dist/mcs/index.js"

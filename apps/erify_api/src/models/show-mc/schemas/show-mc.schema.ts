@@ -6,7 +6,7 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
-import { MC_COMPENSATION_TYPE } from '@eridu/api-types/mcs';
+import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
 
 import { decimalToStringOrNull } from '@/lib/utils/decimal.util';
 import { McService } from '@/models/mc/mc.service';
@@ -37,7 +37,7 @@ export const createShowMcSchema = z.object({
   mc_id: z.string().startsWith(McService.UID_PREFIX), // UID
   note: z.string().max(1000).optional(), // Add max length for notes
   agreed_rate: z.coerce.number().positive().optional(),
-  compensation_type: z.enum(Object.values(MC_COMPENSATION_TYPE) as [string, ...string[]]).optional(),
+  compensation_type: z.enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]]).optional(),
   commission_rate: z.coerce.number().min(0).max(100).optional(),
   metadata: z.record(z.string(), z.any()).optional(),
 });
@@ -59,7 +59,7 @@ export const updateShowMcSchema = z
     mc_id: z.string().startsWith(McService.UID_PREFIX).optional(), // UID
     note: z.string().max(1000).nullable().optional(), // Add max length for notes
     agreed_rate: z.coerce.number().positive().nullable().optional(),
-    compensation_type: z.enum(Object.values(MC_COMPENSATION_TYPE) as [string, ...string[]]).nullable().optional(),
+    compensation_type: z.enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]]).nullable().optional(),
     commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })

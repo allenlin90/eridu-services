@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
-import type { McApiResponse } from '@eridu/api-types/mcs';
+import type { CreatorApiResponse } from '@eridu/api-types/creators';
 import {
   AsyncMultiCombobox,
   Badge,
@@ -97,7 +97,7 @@ export function BulkMcAssignDialog({
       };
     },
   });
-  const availableMcs: McApiResponse[] = useMemo(
+  const availableMcs: CreatorApiResponse[] = useMemo(
     () => contextQuery.data?.mcs ?? [],
     [contextQuery.data?.mcs],
   );
@@ -124,7 +124,7 @@ export function BulkMcAssignDialog({
     [availableMcs],
   );
   const visibleMcs = useMemo(() => {
-    const matchesSearch = (mc: McApiResponse) => {
+    const matchesSearch = (mc: CreatorApiResponse) => {
       if (!searchTermNormalized) {
         return true;
       }

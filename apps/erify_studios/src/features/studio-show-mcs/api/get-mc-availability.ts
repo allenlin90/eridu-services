@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 
-import type { McApiResponse } from '@eridu/api-types/mcs';
+import type { CreatorApiResponse } from '@eridu/api-types/creators';
 
 import { apiClient } from '@/lib/api/client';
 
-export type AvailableMc = McApiResponse;
+export type AvailableMc = CreatorApiResponse;
 
 export const mcAvailabilityKeys = {
   all: ['mc-availability'] as const,

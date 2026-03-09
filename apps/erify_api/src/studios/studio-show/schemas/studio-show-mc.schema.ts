@@ -1,7 +1,7 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
-import { MC_COMPENSATION_TYPE } from '@eridu/api-types/mcs';
+import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { McService } from '@/models/mc/mc.service';
@@ -22,7 +22,7 @@ export const addShowMcInputSchema = z.object({
   note: z.string().max(1000).optional(),
   agreed_rate: z.coerce.number().positive().optional(),
   compensation_type: z
-    .enum(Object.values(MC_COMPENSATION_TYPE) as [string, ...string[]])
+    .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
     .optional(),
   commission_rate: z.coerce.number().min(0).max(100).optional(),
 });

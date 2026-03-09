@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Check, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { MC_COMPENSATION_TYPE } from '@eridu/api-types/mcs';
+import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
@@ -358,9 +358,9 @@ export function StudioMcRosterManager({ studioId }: StudioMcRosterManagerProps) 
                     title: 'Compensation Type',
                     type: 'select',
                     options: [
-                      { label: 'FIXED', value: MC_COMPENSATION_TYPE.FIXED },
-                      { label: 'COMMISSION', value: MC_COMPENSATION_TYPE.COMMISSION },
-                      { label: 'HYBRID', value: MC_COMPENSATION_TYPE.HYBRID },
+                      { label: 'FIXED', value: CREATOR_COMPENSATION_TYPE.FIXED },
+                      { label: 'COMMISSION', value: CREATOR_COMPENSATION_TYPE.COMMISSION },
+                      { label: 'HYBRID', value: CREATOR_COMPENSATION_TYPE.HYBRID },
                       { label: 'None', value: 'NONE' },
                     ],
                   },
@@ -417,9 +417,9 @@ export function StudioMcRosterManager({ studioId }: StudioMcRosterManagerProps) 
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="NONE">None</SelectItem>
-                  <SelectItem value={MC_COMPENSATION_TYPE.FIXED}>FIXED</SelectItem>
-                  <SelectItem value={MC_COMPENSATION_TYPE.COMMISSION}>COMMISSION</SelectItem>
-                  <SelectItem value={MC_COMPENSATION_TYPE.HYBRID}>HYBRID</SelectItem>
+                  <SelectItem value={CREATOR_COMPENSATION_TYPE.FIXED}>FIXED</SelectItem>
+                  <SelectItem value={CREATOR_COMPENSATION_TYPE.COMMISSION}>COMMISSION</SelectItem>
+                  <SelectItem value={CREATOR_COMPENSATION_TYPE.HYBRID}>HYBRID</SelectItem>
                 </SelectContent>
               </Select>
             </div>

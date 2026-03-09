@@ -1,7 +1,7 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
-import { MC_COMPENSATION_TYPE } from '@eridu/api-types/mcs';
+import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
 
 import { decimalToStringOrNull } from '@/lib/utils/decimal.util';
 import { McService } from '@/models/mc/mc.service';
@@ -53,7 +53,7 @@ export const studioMcRosterItemDto = studioMcRosterItemSchema
   }));
 
 const compensationTypeSchema = z.enum(
-  Object.values(MC_COMPENSATION_TYPE) as [string, ...string[]],
+  Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]],
 );
 
 export const createStudioMcRosterSchema = z.object({

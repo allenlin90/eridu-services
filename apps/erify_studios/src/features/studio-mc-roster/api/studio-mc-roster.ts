@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { McApiResponse } from '@eridu/api-types/mcs';
+import type { CreatorApiResponse } from '@eridu/api-types/creators';
 import type { PaginationMeta } from '@eridu/api-types/pagination';
 
 import { apiClient } from '@/lib/api/client';
@@ -91,7 +91,7 @@ export function useStudioMcCatalog(studioId: string, search: string) {
   return useQuery({
     queryKey: studioMcRosterKeys.catalog(studioId, search),
     queryFn: async () => {
-      const response = await apiClient.get<McApiResponse[]>(
+      const response = await apiClient.get<CreatorApiResponse[]>(
         `/studios/${studioId}/mcs/catalog`,
         { params: { search, limit: 50 } },
       );
