@@ -84,8 +84,8 @@ POST body accepts optional compensation fields: `agreed_rate`, `compensation_typ
 | PATCH | `/studios/:studioId/shows/creator-assignments/bulk` | ADMIN, MANAGER, TALENT_MANAGER |
 | PUT | `/studios/:studioId/shows/creator-assignments/bulk` | ADMIN, MANAGER, TALENT_MANAGER |
 
-Request: `{ show_ids: string[], mc_ids: string[] }`
-Response: `{ created: N, skipped: N, removed: N, errors: [{ show_id, mc_id, reason }] }`
+Request: `{ show_ids: string[], creator_ids: string[] }`
+Response: `{ created: N, skipped: N, removed: N, errors: [{ show_id, creator_id, reason }] }`
 
 Semantics:
 - `PATCH` append mode: keep existing mappings and add selected creators.
@@ -98,7 +98,6 @@ Orchestration service: `apps/erify_api/src/studios/studio-show/studio-show-mc.or
 ### Creator Availability
 
 `apps/erify_api/src/studios/studio-mc/studio-creator.controller.ts`
-`apps/erify_api/src/studios/studio-mc/studio-creator.controller.ts` (alias)
 
 | Method | Path | Access |
 |--------|------|--------|

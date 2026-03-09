@@ -86,8 +86,8 @@ The dialog includes:
 - explicit helper-eligibility toggle actions (`Enable Helper` / `Disable Helper`) for eligible non-default roles
 
 Known issue:
-- Invite flow currently requires `user_id` (`usr_*`) input instead of searchable user lookup.
-- Keep current approach for now; defer optimization/refactor (indexed search/cache/fulltext strategy) to follow-up iteration.
+- Member invite and creator onboarding use searchable combobox flows.
+- Search performance optimization (indexed search/cache/fulltext strategy) is tracked as a follow-up iteration, not a blocker for Phase 4.
 Legacy compatibility:
 - Show detail canonical route is `/studios/$studioId/shows/$showId/creators`.
 - Backend route is `/shows/:showId/creators` (canonical).

@@ -27,8 +27,8 @@ This matrix is the canonical policy summary. Runtime behavior is always determin
 | --------------------------------------------------------------- | ----- | ------- | ------ | -------------- | -------- | ------------------ | ------------------------------------------------------------ |
 | Studio show list/detail/tasks (`GET /studios/:studioId/shows*`) | Yes   | Yes     | Yes    | Yes            | Yes      | Yes                | Base `@StudioProtected()` on show controller                 |
 | Show creator list (`GET /studios/:studioId/shows/:showId/creators`) | Yes | Yes | Yes | Yes | Yes | Yes | Base `@StudioProtected()` on show-creator controller |
-| Show MC add/remove                                              | Yes   | Yes     | No     | Yes            | No       | No                 | `@StudioProtected([ADMIN, MANAGER, TALENT_MANAGER])`         |
-| Bulk MC assignment (append `PATCH`, replace `PUT`)             | Yes   | Yes     | No     | Yes            | No       | No                 | `@StudioProtected([ADMIN, MANAGER, TALENT_MANAGER])`         |
+| Show creator add/remove                                         | Yes   | Yes     | No     | Yes            | No       | No                 | `@StudioProtected([ADMIN, MANAGER, TALENT_MANAGER])`         |
+| Bulk creator assignment (append `PATCH`, replace `PUT`)        | Yes   | Yes     | No     | Yes            | No       | No                 | `@StudioProtected([ADMIN, MANAGER, TALENT_MANAGER])`         |
 | Creator availability (`GET /studios/:studioId/creators/availability`) | Yes | Yes | Yes | Yes | Yes | Yes | Base `@StudioProtected()` on studio-creator controller |
 | Studio membership roster (`GET /studios/:studioId/studio-memberships`) | Yes | Yes | No | No | No | No | `@StudioProtected([ADMIN, MANAGER])` on studio-membership controller |
 | Studio membership invite (`POST /studios/:studioId/studio-memberships`) | Yes | Yes | No | No | No | No | `@StudioProtected([ADMIN, MANAGER])` + studio-scoped create endpoint |
@@ -37,7 +37,7 @@ This matrix is the canonical policy summary. Runtime behavior is always determin
 | Economics/performance overview endpoints                        | Yes   | Yes     | No     | No             | No       | No                 | `@StudioProtected([ADMIN, MANAGER])` on economics controller |
 
 Notes:
-- Talent managers are intentionally included for MC staffing + compensation/cost inputs.
+- Talent managers are intentionally included for creator staffing + compensation/cost inputs.
 - Talent managers are intentionally excluded from consolidated financial overview endpoints.
 - Task assignment helper-readiness is now enforced in backend task orchestration:
   - assignee must be helper-enabled in studio membership metadata, or
@@ -74,9 +74,8 @@ Current sidebar grouping (FE concern only):
   - `Creator Mapping` on `/studios/:studioId/creators/mapping`
 - The grouping is a UX/navigation concern; backend route permissions remain the canonical enforcement boundary.
 
-Planned Phase 4 extension:
-- Add dedicated FE workflow surfaces for member roster management in studio membership domain.
-- FE ownership target is `ADMIN` (member roster route).
+Phase 4 status:
+- Member roster FE workflow is implemented and scoped to `ADMIN` (`/studios/:studioId/members`).
 
 ## Related Docs
 

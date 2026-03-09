@@ -1,19 +1,19 @@
 # Phase 4: P&L Visibility & MC Operations
 
-> **Status**: ⚠️ Re-baselining in progress (core delivered on 2026-03-07)
+> **Status**: ✅ Functionally complete (close tasks pending production merge checklist)
 
 ## Goal
 
 Phase 4 makes show-level profitability visible by connecting talent staffing, compensation, and show performance into one operational and financial flow.
 
-## Why Re-baseline Now
+## Re-baseline Resolution Summary
 
-Core Phase 4 features shipped, but verification found gaps that block final close:
+Core gaps identified during re-baseline have been implemented:
 
-1. MC roster is still global, not studio-scoped.
-2. No explicit creator onboarding flow for studio talent pool management.
-3. Assignment UX still has edge-case defects (for example, combobox behavior around inputs like `mc 1`).
-4. Documentation drift exists between shipped behavior and canonical docs.
+1. Studio-scoped creator roster foundation (`StudioMc`) is in place.
+2. Creator onboarding flow is implemented in BE + FE.
+3. Assignment UX defects (search/selection/append-replace clarity) were addressed.
+4. Member roster workflow for task-assignment domain is implemented.
 
 ## Final Phase 4 Scope (Revised)
 
@@ -181,7 +181,7 @@ Verify:
 5. Economics uses 3-tier fallback without regression in core calculations.
 6. Canonical docs match shipped behavior (no endpoint/method drift).
 
-## Merge Gate Checklist (TODO Before Production Merge)
+## Merge Gate Checklist (Final Close Before Production Merge)
 
 1. Scope freeze and final diff audit across BE/FE/docs.
 2. Confirm one consolidated branch migration only.
@@ -213,8 +213,8 @@ Features deferred to later phases:
 
 ## Canonical Docs
 
-- [MC Operations](../../apps/erify_api/docs/MC_OPERATIONS.md)
+- [Creator Operations](../../apps/erify_api/docs/MC_OPERATIONS.md)
 - [Show Economics](../../apps/erify_api/docs/SHOW_ECONOMICS.md)
-- [MC Mapping UI](../../apps/erify_studios/docs/MC_MAPPING.md)
+- [Creator Mapping UI](../../apps/erify_studios/docs/MC_MAPPING.md)
 - [Role Access Matrix](../product/ROLE_ACCESS_MATRIX.md)
 - [Studio MC Roster Proposal](../proposals/STUDIO_MC_ROSTER.md)
