@@ -79,7 +79,7 @@ When working on erify_studios, refer to these guides:
 - ✅ **Studios Management**: Create and manage broadcast studios
 - ✅ **Users Management**: Create, edit, and manage system users
 - ✅ **Clients Management**: Manage clients and their associations
-- ✅ **MCs Management**: Manage media celebrities/personalities
+- ✅ **Creators Management**: Manage media celebrities/personalities
 - ✅ **Platforms Management**: Configure broadcast platforms
 - ✅ **Show Types, Standards & Statuses**: Manage show classification and technical standards
 - ✅ **Studio Memberships**: Assign users to studios with role-based access

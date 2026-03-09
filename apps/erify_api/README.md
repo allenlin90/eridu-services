@@ -239,13 +239,14 @@ Note: sync updates `erify_api.users.ext_id` only. It does not modify `eridu_auth
 - `PATCH /admin/clients/:id` - Update client
 - `DELETE /admin/clients/:id` - Soft delete client
 
-#### 🎤 MCs (`/admin/mcs`)
+#### 🎤 Creators (`/admin/creators`)
 
-- `GET /admin/mcs` - List MCs with pagination
-- `POST /admin/mcs` - Create a new MC
-- `GET /admin/mcs/:id` - Get MC by ID
-- `PATCH /admin/mcs/:id` - Update MC
-- `DELETE /admin/mcs/:id` - Soft delete MC
+- `GET /admin/creators` - List creators with pagination
+- `POST /admin/creators` - Create a new creator
+- `GET /admin/creators/:id` - Get creator by ID
+- `PATCH /admin/creators/:id` - Update creator
+- `DELETE /admin/creators/:id` - Soft delete creator
+- Legacy alias: `/admin/mcs*`
 
 #### 📺 Platforms (`/admin/platforms`)
 
@@ -479,7 +480,7 @@ The OpenAPI implementation includes:
 - `metadata` (JSON)
 - `created_at`, `updated_at`, `deleted_at`
 
-#### MC (Master of Ceremonies)
+#### Creator (MC-compatible)
 
 - `id` (Primary Key)
 - `uid` (Unique Identifier)
