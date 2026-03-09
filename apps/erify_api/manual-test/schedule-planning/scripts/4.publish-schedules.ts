@@ -43,17 +43,22 @@ const scheduleDtoResponseSchema = z.object({
   end_date: z.string(),
   status: z.string(),
   published_at: z.string().nullable(),
-  plan_document: z.record(z.string(), z.any()),
+  plan_document: z.record(z.string(), z.any()).optional(),
   version: z.number().int(),
-  metadata: z.record(z.string(), z.any()),
-  client_id: z.string().nullable(),
-  client_name: z.string().nullable(),
-  created_by: z.string().nullable(),
-  created_by_name: z.string().nullable(),
-  published_by: z.string().nullable(),
-  published_by_name: z.string().nullable(),
+  metadata: z.record(z.string(), z.any()).optional(),
+  client_id: z.string().nullable().optional(),
+  client_name: z.string().nullable().optional(),
+  created_by: z.string().nullable().optional(),
+  created_by_name: z.string().nullable().optional(),
+  published_by: z.string().nullable().optional(),
+  published_by_name: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
+});
+
+const publishResponseEnvelopeSchema = z.object({
+  schedule: scheduleDtoResponseSchema,
+  publish_summary: z.record(z.string(), z.any()),
 });
 
 // Infer types from schemas to ensure they match the API exactly
@@ -189,6 +194,7 @@ async function publishSchedule(
   version: number,
 ): Promise<{
   success: boolean;
+  status?: number;
   publishedSchedule?: ScheduleDto;
   error?: string;
 }> {
@@ -200,18 +206,19 @@ async function publishSchedule(
     );
 
     if (response.status === 200) {
-      // Validate response data matches expected schema
-      const parseResult = scheduleDtoResponseSchema.safeParse(response.data);
+      // Publish endpoint returns an envelope: { schedule, publish_summary }
+      const parseResult = publishResponseEnvelopeSchema.safeParse(response.data);
       if (!parseResult.success) {
         return {
           success: false,
           error: `Invalid publish response format: ${parseResult.error.message}`,
         };
       }
-      return { success: true, publishedSchedule: parseResult.data };
+      return { success: true, publishedSchedule: parseResult.data.schedule };
     } else {
       return {
         success: false,
+        status: response.status,
         error: `HTTP ${response.status}: ${JSON.stringify(response.data)}`,
       };
     }
@@ -270,7 +277,7 @@ async function main() {
     if (!currentScheduleResult.success || !currentScheduleResult.schedule) {
       const summary: PublishResultSummary = {
         scheduleId: schedule.id,
-        clientId: schedule.client_id,
+        clientId: schedule.client_id ?? null,
         clientName,
         scheduleName,
         success: false,
@@ -305,16 +312,56 @@ async function main() {
       currentSchedule.version,
     );
 
+    // Handle optimistic-lock race: fetch latest version and retry once.
+    if (!result.success && result.status === 409) {
+      console.warn(
+        `   ⚠️  Version conflict on publish, refetching latest version and retrying once...`,
+      );
+      const latestScheduleResult = await getCurrentSchedule(apiUrl, schedule.id);
+      if (latestScheduleResult.success && latestScheduleResult.schedule) {
+        const latestSchedule = latestScheduleResult.schedule;
+        if (latestSchedule.status !== 'draft') {
+          console.log(
+            `   ⚠️  Schedule is already ${latestSchedule.status} after retry fetch, skipping...`,
+          );
+          continue;
+        }
+        const retriedResult = await publishSchedule(
+          apiUrl,
+          schedule.id,
+          latestSchedule.version,
+        );
+        if (retriedResult.success && retriedResult.publishedSchedule) {
+          const published = retriedResult.publishedSchedule;
+          const summary: PublishResultSummary = {
+            scheduleId: schedule.id,
+            clientId: schedule.client_id ?? null,
+            clientName,
+            scheduleName,
+            success: true,
+            publishedAt: published.published_at ?? null,
+            publishedByName: published.published_by_name ?? null,
+          };
+          publishResults.push(summary);
+          console.log(
+            `   ✅ Published successfully on retry${published.published_at ? ` at ${published.published_at}` : ''}`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          continue;
+        }
+      }
+    }
+
     if (result.success && result.publishedSchedule) {
       const published = result.publishedSchedule;
       const summary: PublishResultSummary = {
         scheduleId: schedule.id,
-        clientId: schedule.client_id,
+        clientId: schedule.client_id ?? null,
         clientName,
         scheduleName,
         success: true,
-        publishedAt: published.published_at,
-        publishedByName: published.published_by_name,
+        publishedAt: published.published_at ?? null,
+        publishedByName: published.published_by_name ?? null,
       };
 
       publishResults.push(summary);
@@ -325,7 +372,7 @@ async function main() {
     } else {
       const summary: PublishResultSummary = {
         scheduleId: schedule.id,
-        clientId: schedule.client_id,
+        clientId: schedule.client_id ?? null,
         clientName,
         scheduleName,
         success: false,

@@ -4,6 +4,14 @@
 
 **Current Status**: Phase 1 ✅ - Email/password authentication with JWT tokens
 
+## Seed Data (Local Integration)
+
+`pnpm db:seed` creates role-testing users used for cross-app identity mapping:
+- `test-user@example.com`
+- `test-admin@example.com`
+- `test-user-2@example.com`
+- `test-user-3@example.com`
+
 ## Quick Start
 
 ```bash

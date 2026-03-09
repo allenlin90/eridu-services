@@ -2,6 +2,8 @@
 
 > **TLDR**: Email/password auth is live (Phase 1). Set the required env vars, run `pnpm db:migrate`, seed test users with `pnpm seed`, and use the API endpoints below. SSO providers (Google, LINE) are configured but not yet enabled.
 
+Migration governance: follow framework/tool-first flow (`better-auth` -> Drizzle tooling), then manual SQL only as documented exception. Canonical policy: `docs/product/DB_MIGRATION_POLICY.md`.
+
 ## Quick Start
 
 ```bash
@@ -122,12 +124,14 @@ pnpm seed
 
 ### Seeded Users
 
+Cross-app role-testing users:
+
 | Email | Password | Role |
 |-------|----------|------|
-| `admin@eridu.com` | `password123` | System Admin |
-| `manager@eridu.com` | `password123` | Studio Manager |
-| `member@eridu.com` | `password123` | Studio Member |
-| `creator@eridu.com` | `password123` | Creator |
+| `test-user@example.com` | `testpassword123` | `user` |
+| `test-admin@example.com` | `testpassword123` | `admin` |
+| `test-user-2@example.com` | `testpassword123` | `user` |
+| `test-user-3@example.com` | `testpassword123` | `user` |
 
 ### Using Seeded Users in Tests
 
@@ -139,8 +143,8 @@ const response = await fetch('http://localhost:3000/api/auth/sign-in/email', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    email: 'admin@eridu.com',
-    password: 'password123',
+    email: 'test-admin@example.com',
+    password: 'testpassword123',
   }),
 });
 const { token } = await response.json();

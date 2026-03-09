@@ -35,6 +35,7 @@ import { fixtures } from '../../../prisma/fixtures';
 
 type ShowPlanItem = {
   tempId: string;
+  externalId: string;
   name: string;
   startTime: string;
   endTime: string;
@@ -335,6 +336,7 @@ function generateShows(
     // Generate show
     const show: ShowPlanItem = {
       tempId: `temp_${Date.now()}_${showIndex}`,
+      externalId: `${clientUid}_show_${showIndex + 1}`,
       name: `${clientName} Show ${showIndex + 1}`,
       startTime: timeSlot.start.toISOString(),
       endTime: timeSlot.end.toISOString(),
@@ -521,6 +523,7 @@ function generateShowsForClient(
     // Generate show for the specific client
     const show: ShowPlanItem = {
       tempId: `temp_${Date.now()}_${showIndex}`,
+      externalId: `${clientUid}_show_${showIndex + 1}`,
       name: `${clientName} Show ${showIndex + 1}`,
       startTime: timeSlot.start.toISOString(),
       endTime: timeSlot.end.toISOString(),
@@ -787,6 +790,7 @@ function generateMultiClientMonthlyOverview(
     // Update client UID for all shows
     clientShows.forEach((show) => {
       show.clientId = clientUid;
+      show.externalId = `${clientUid}_show_${show.name.split(' ').pop()}`;
       show.name = `${clientName} Show ${show.name.split(' ').pop()}`;
     });
 

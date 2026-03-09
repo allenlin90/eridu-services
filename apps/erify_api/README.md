@@ -27,6 +27,12 @@ The API uses JWT validation via `@eridu/auth-sdk` SDK for authentication and Stu
    # Edit .env with your database and configuration settings
    ```
 
+   For cross-app JWT identity mapping after seed, set:
+
+   ```bash
+   ERIDU_AUTH_DATABASE_URL=postgresql://admin:secret@localhost:5432/eridu_auth
+   ```
+
 3. **Set up the database**
 
    ```bash
@@ -86,6 +92,15 @@ pnpm run db:migrate:reset
 
 # Seed database with sample data
 pnpm run db:seed
+
+# Seed now includes baseline schedules + shows (+ MC/platform links) for local testing
+# Manual schedule scripts are optional for high-volume workflow testing only
+
+# Deterministic local cycle (reset -> migrate -> seed)
+pnpm run db:local:refresh
+
+# Optional post-seed ext_id sync from eridu_auth.user.id -> erify_api.users.ext_id
+pnpm run db:extid:sync
 
 # Open Prisma Studio (database GUI)
 pnpm run db:studio
@@ -201,6 +216,12 @@ See [Authentication Guide](docs/design/AUTHORIZATION_GUIDE.md) for details.
 - `GET /me/shows/:show_id` - Get show details for a specific show assigned to the authenticated MC user
 
 **Note**: These endpoints require JWT authentication. The user information is extracted from the JWT token payload using the `@CurrentUser()` decorator, and the `ext_id` field is used to query MC assignments.
+
+For local dev, seeded users include deterministic `ext_id` values.
+If you need to align with real ids from another local auth database:
+- Default: `pnpm run db:extid:sync` (requires `ERIDU_AUTH_DATABASE_URL`)
+
+Note: sync updates `erify_api.users.ext_id` only. It does not modify `eridu_auth.user.id`.
 
 #### 👥 Users (`/admin/users`)
 

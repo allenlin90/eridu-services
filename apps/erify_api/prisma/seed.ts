@@ -21,20 +21,31 @@ const prisma = new PrismaClient({ adapter });
 // Check if database is already seeded with complete reference data
 async function isDatabaseSeeded(): Promise<boolean> {
   try {
+    const now = new Date();
+    const expectedMonthlySeededShows
+      = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0),
+      ).getUTCDate() * 3;
+
     // Check for specific expected records rather than just counts
     const [
       showTypes,
       showStatuses,
       showStandards,
       platforms,
+      cancelledSystemStatus,
       clients,
       users,
       mcs,
       studios,
       studioMembershipCount,
+      studioMcCount,
       studioShiftCount,
       studioShiftBlockCount,
       taskTemplateCount,
+      usersWithExtIdCount,
+      seededScheduleCount,
+      seededShowCount,
     ] = await Promise.all([
       prisma.showType.findMany({
         where: {
@@ -64,6 +75,13 @@ async function isDatabaseSeeded(): Promise<boolean> {
           },
         },
       }),
+      prisma.showStatus.findFirst({
+        where: {
+          systemKey: 'CANCELLED',
+          deletedAt: null,
+        },
+        select: { id: true },
+      }),
       prisma.client.count(),
       prisma.user.count(),
       prisma.mC.count(),
@@ -75,9 +93,32 @@ async function isDatabaseSeeded(): Promise<boolean> {
         },
       }),
       prisma.studioMembership.count(),
+      prisma.studioMc.count(),
       prisma.studioShift.count(),
       prisma.studioShiftBlock.count(),
       prisma.taskTemplate.count(),
+      prisma.user.count({
+        where: {
+          deletedAt: null,
+          extId: { not: null },
+        },
+      }),
+      prisma.schedule.count({
+        where: {
+          uid: {
+            in: Object.values(fixtures.schedules),
+          },
+          deletedAt: null,
+        },
+      }),
+      prisma.show.count({
+        where: {
+          externalId: {
+            startsWith: 'seed_',
+          },
+          deletedAt: null,
+        },
+      }),
     ]);
 
     // Check if studio has all 10 rooms
@@ -95,30 +136,40 @@ async function isDatabaseSeeded(): Promise<boolean> {
     const hasAllShowStatuses = showStatuses.length === 5;
     const hasAllShowStandards = showStandards.length === 2;
     const hasAllPlatforms = platforms.length === 3;
+    const hasCancelledSystemStatus = Boolean(cancelledSystemStatus);
     const hasAllClients = clients >= 50;
     const hasAllUsers = users >= 31;
     const hasAllMCs = mcs >= 30;
     const hasAllStudios = studios.length === 1;
-    const hasStudioMemberships = studioMembershipCount >= 3;
+    const hasStudioMemberships = studioMembershipCount >= 4;
+    const hasStudioMcs = studioMcCount >= 30;
     const hasStudioShifts = studioShiftCount >= 2;
     const hasStudioShiftBlocks = studioShiftBlockCount >= 3;
 
     const hasAllTaskTemplates = taskTemplateCount >= 50;
+    const hasExtIdMappings = usersWithExtIdCount >= 31;
+    const hasSeededSchedules = seededScheduleCount >= Object.values(fixtures.schedules).length;
+    const hasSeededShows = seededShowCount >= expectedMonthlySeededShows;
 
     const isComplete
       = hasAllShowTypes
       && hasAllShowStatuses
       && hasAllShowStandards
       && hasAllPlatforms
+      && hasCancelledSystemStatus
       && hasAllClients
       && hasAllUsers
       && hasAllMCs
       && hasAllStudios
       && hasStudioMemberships
+      && hasStudioMcs
       && hasStudioShifts
       && hasStudioShiftBlocks
       && hasAllRooms
-      && hasAllTaskTemplates;
+      && hasAllTaskTemplates
+      && hasExtIdMappings
+      && hasSeededSchedules
+      && hasSeededShows;
 
     if (!isComplete) {
       console.log('🔍 Incomplete seeding detected:');
@@ -135,6 +186,9 @@ async function isDatabaseSeeded(): Promise<boolean> {
         `  - Platforms: ${platforms.length}/3 (${hasAllPlatforms ? '✅' : '❌'})`,
       );
       console.log(
+        `  - ShowStatus system key CANCELLED: ${hasCancelledSystemStatus ? '✅' : '❌'}`,
+      );
+      console.log(
         `  - Clients: ${clients}/50 (${hasAllClients ? '✅' : '❌'})`,
       );
       console.log(`  - Users: ${users}/31 (${hasAllUsers ? '✅' : '❌'})`);
@@ -143,7 +197,10 @@ async function isDatabaseSeeded(): Promise<boolean> {
         `  - Studios: ${studios.length}/1 (${hasAllStudios ? '✅' : '❌'})`,
       );
       console.log(
-        `  - StudioMemberships: ${studioMembershipCount}/3 (${hasStudioMemberships ? '✅' : '❌'})`,
+        `  - StudioMemberships: ${studioMembershipCount}/4 (${hasStudioMemberships ? '✅' : '❌'})`,
+      );
+      console.log(
+        `  - StudioMCs: ${studioMcCount}/30 (${hasStudioMcs ? '✅' : '❌'})`,
       );
       console.log(
         `  - StudioShifts: ${studioShiftCount}/2 (${hasStudioShifts ? '✅' : '❌'})`,
@@ -154,6 +211,15 @@ async function isDatabaseSeeded(): Promise<boolean> {
       console.log(`  - Studio Rooms: ${hasAllRooms ? '10/10 ✅' : '❌'}`);
       console.log(
         `  - TaskTemplates: ${taskTemplateCount}/50 (${hasAllTaskTemplates ? '✅' : '❌'})`,
+      );
+      console.log(
+        `  - Users with ext_id: ${usersWithExtIdCount}/31 (${hasExtIdMappings ? '✅' : '❌'})`,
+      );
+      console.log(
+        `  - Seeded Schedules: ${seededScheduleCount}/${Object.values(fixtures.schedules).length} (${hasSeededSchedules ? '✅' : '❌'})`,
+      );
+      console.log(
+        `  - Seeded Shows: ${seededShowCount}/${expectedMonthlySeededShows} (${hasSeededShows ? '✅' : '❌'})`,
       );
     }
 
@@ -249,6 +315,7 @@ async function main() {
         },
         {
           name: 'cancelled',
+          systemKey: 'CANCELLED',
           metadata: { description: 'Show was cancelled', order: 5 },
         },
       ];
@@ -257,10 +324,13 @@ async function main() {
         const uidKey = showStatus.name as keyof typeof fixtures.showStatuses;
         await tx.showStatus.upsert({
           where: { name: showStatus.name },
-          update: {},
+          update: showStatus.systemKey
+            ? { systemKey: showStatus.systemKey }
+            : {},
           create: {
             uid: fixtures.showStatuses[uidKey],
             name: showStatus.name,
+            systemKey: showStatus.systemKey,
             metadata: showStatus.metadata,
           },
         });
@@ -594,10 +664,13 @@ async function main() {
       // Admin user
       const adminUser = await tx.user.upsert({
         where: { email: 'admin@example.com' },
-        update: {},
+        update: {
+          extId: 'sso_admin_0001',
+        },
         create: {
           uid: fixtures.users.admin,
           email: 'admin@example.com',
+          extId: 'sso_admin_0001',
           name: 'Admin User',
           isSystemAdmin: true,
           metadata: {
@@ -633,12 +706,16 @@ async function main() {
           = specializations[(i - 1) % specializations.length];
         const experience = `${Math.floor(Math.random() * 10) + 1} years`;
         const uidKey = `mc${i}` as keyof typeof fixtures.users;
+        const extId = `sso_mc_${String(i).padStart(4, '0')}`;
         const mcUser = await tx.user.upsert({
           where: { email: `mcuser${i}@example.com` },
-          update: {},
+          update: {
+            extId,
+          },
           create: {
             uid: fixtures.users[uidKey],
             email: `mcuser${i}@example.com`,
+            extId,
             name: `MC User ${i}`,
             metadata: {
               role: 'MC',
@@ -656,6 +733,77 @@ async function main() {
       console.log(
         `✅ Completed seeding ${createdUsers.length} users (1 admin + 30 MC users)`,
       );
+
+      const studioTestAdminUser = await tx.user.upsert({
+        where: { email: 'test-admin@example.com' },
+        update: {
+          extId: 'sso_test_admin_0001',
+          isSystemAdmin: true,
+        },
+        create: {
+          uid: fixtures.users.testAdmin,
+          email: 'test-admin@example.com',
+          extId: 'sso_test_admin_0001',
+          name: 'Test Admin',
+          isSystemAdmin: true,
+          metadata: {
+            role: 'admin',
+            dataset: 'studio-role-testing',
+          },
+        },
+      });
+
+      const studioTestUser = await tx.user.upsert({
+        where: { email: 'test-user@example.com' },
+        update: {
+          extId: 'sso_test_user_0001',
+        },
+        create: {
+          uid: fixtures.users.testUser,
+          email: 'test-user@example.com',
+          extId: 'sso_test_user_0001',
+          name: 'Test User',
+          metadata: {
+            role: 'user',
+            dataset: 'studio-role-testing',
+          },
+        },
+      });
+
+      const studioTestUser2 = await tx.user.upsert({
+        where: { email: 'test-user-2@example.com' },
+        update: {
+          extId: 'sso_test_user_0002',
+        },
+        create: {
+          uid: fixtures.users.testUser2,
+          email: 'test-user-2@example.com',
+          extId: 'sso_test_user_0002',
+          name: 'Test User 2',
+          metadata: {
+            role: 'user',
+            dataset: 'studio-role-testing',
+          },
+        },
+      });
+
+      const studioTestUser3 = await tx.user.upsert({
+        where: { email: 'test-user-3@example.com' },
+        update: {
+          extId: 'sso_test_user_0003',
+        },
+        create: {
+          uid: fixtures.users.testUser3,
+          email: 'test-user-3@example.com',
+          extId: 'sso_test_user_0003',
+          name: 'Test User 3',
+          metadata: {
+            role: 'user',
+            dataset: 'studio-role-testing',
+          },
+        },
+      });
+      console.log('✅ Created/updated studio role-testing users (test-admin/test-user*)');
 
       // Seed MC data
       console.log('🎤 Seeding MC data...');
@@ -791,44 +939,96 @@ async function main() {
         }
       }
 
+      // Seed StudioMc roster data (studio-scoped creator pool)
+      console.log('🎙️ Seeding StudioMc roster data...');
+      const existingMcs = await tx.mC.findMany({
+        where: { deletedAt: null },
+        select: {
+          id: true,
+          defaultRate: true,
+          defaultRateType: true,
+          defaultCommissionRate: true,
+        },
+        orderBy: { id: 'asc' },
+      });
+
+      for (const [index, mc] of existingMcs.entries()) {
+        const rosterUid = `smc_${String(index + 1).padStart(20, '0')}`;
+        await tx.studioMc.upsert({
+          where: {
+            studioId_mcId: {
+              studioId: studio.id,
+              mcId: mc.id,
+            },
+          },
+          update: {
+            defaultRate: mc.defaultRate,
+            defaultRateType: mc.defaultRateType,
+            defaultCommissionRate: mc.defaultCommissionRate,
+            isActive: true,
+            metadata: {},
+            deletedAt: null,
+          },
+          create: {
+            uid: rosterUid,
+            studioId: studio.id,
+            mcId: mc.id,
+            defaultRate: mc.defaultRate,
+            defaultRateType: mc.defaultRateType,
+            defaultCommissionRate: mc.defaultCommissionRate,
+            isActive: true,
+            metadata: {},
+          },
+        });
+      }
+      console.log(`✅ Completed seeding ${existingMcs.length} StudioMc roster records`);
+
       // Seed StudioMembership data
       console.log('👥 Seeding StudioMembership data...');
-      const mcUser1 = createdUsers[1];
-      const mcUser2 = createdUsers[2];
-
       const membershipSeeds = [
         {
-          uid: fixtures.studioMemberships.adminMainStudio,
-          userId: adminUser.id,
+          uid: fixtures.studioMemberships.testAdminMainStudio,
+          userId: studioTestAdminUser.id,
           role: 'admin',
           baseHourlyRate: '40.00',
           metadata: {
             joinedDate: new Date().toISOString(),
             permissions: ['manage_studio', 'manage_rooms', 'view_reports'],
           },
-          label: `${adminUser.name} -> ${studio.name} (admin)`,
+          label: `${studioTestAdminUser.name} -> ${studio.name} (admin)`,
         },
         {
-          uid: fixtures.studioMemberships.mc1MainStudio,
-          userId: mcUser1.id,
-          role: 'manager',
+          uid: fixtures.studioMemberships.testUserMainStudio,
+          userId: studioTestUser.id,
+          role: 'admin',
           baseHourlyRate: '25.00',
           metadata: {
             joinedDate: new Date().toISOString(),
-            permissions: ['view_schedule', 'manage_tasks'],
+            permissions: ['view_schedule', 'manage_tasks', 'manage_studio'],
           },
-          label: `${mcUser1.name} -> ${studio.name} (manager)`,
+          label: `${studioTestUser.name} -> ${studio.name} (admin)`,
         },
         {
-          uid: fixtures.studioMemberships.mc2MainStudio,
-          userId: mcUser2.id,
+          uid: fixtures.studioMemberships.testUser2MainStudio,
+          userId: studioTestUser2.id,
           role: 'member',
           baseHourlyRate: '18.50',
           metadata: {
             joinedDate: new Date().toISOString(),
             permissions: ['view_schedule'],
           },
-          label: `${mcUser2.name} -> ${studio.name} (member)`,
+          label: `${studioTestUser2.name} -> ${studio.name} (member)`,
+        },
+        {
+          uid: fixtures.studioMemberships.testUser3MainStudio,
+          userId: studioTestUser3.id,
+          role: 'talent_manager',
+          baseHourlyRate: '22.00',
+          metadata: {
+            joinedDate: new Date().toISOString(),
+            permissions: ['view_schedule', 'staffing'],
+          },
+          label: `${studioTestUser3.name} -> ${studio.name} (talent_manager)`,
         },
       ] as const;
 
@@ -888,6 +1088,8 @@ async function main() {
       memberShiftStart.setUTCHours(10, 0, 0, 0);
       const memberShiftEnd = new Date(scheduleDate);
       memberShiftEnd.setUTCHours(16, 0, 0, 0);
+      const mcUser1 = createdUsers[1];
+      const mcUser2 = createdUsers[2];
 
       const shiftSeeds = [
         {
@@ -987,6 +1189,463 @@ async function main() {
         }
       }
       console.log('✅ Completed seeding studio shifts and shift blocks');
+
+      // Seed Schedule + Show data for local testing (replaces manual-test dependency)
+      console.log('📅 Seeding Schedule + Show data...');
+      const scheduleStart = new Date(Date.UTC(
+        today.getUTCFullYear(),
+        today.getUTCMonth(),
+        1,
+        0,
+        0,
+        0,
+        0,
+      ));
+      const scheduleEnd = new Date(Date.UTC(
+        today.getUTCFullYear(),
+        today.getUTCMonth() + 1,
+        0,
+        23,
+        59,
+        59,
+        999,
+      ));
+
+      const clients = await tx.client.findMany({
+        where: {
+          uid: {
+            in: [
+              fixtures.clients.nike,
+              fixtures.clients.adidas,
+              fixtures.clients.puma,
+            ],
+          },
+          deletedAt: null,
+        },
+        select: { id: true, uid: true, name: true },
+      });
+      const clientByUid = new Map(clients.map((client) => [client.uid, client]));
+
+      const rooms = await tx.studioRoom.findMany({
+        where: {
+          uid: {
+            in: [
+              fixtures.studioRooms.roomA,
+              fixtures.studioRooms.roomB,
+              fixtures.studioRooms.roomC,
+            ],
+          },
+          deletedAt: null,
+        },
+        select: { id: true, uid: true },
+      });
+      const roomByUid = new Map(rooms.map((room) => [room.uid, room.id]));
+
+      const showTypeRefs = await tx.showType.findMany({
+        where: {
+          uid: {
+            in: [fixtures.showTypes.bau, fixtures.showTypes.campaign],
+          },
+          deletedAt: null,
+        },
+        select: { id: true, uid: true },
+      });
+      const showTypeByUid = new Map(showTypeRefs.map((type) => [type.uid, type.id]));
+
+      const showStatusRefs = await tx.showStatus.findMany({
+        where: {
+          uid: {
+            in: [
+              fixtures.showStatuses.draft,
+              fixtures.showStatuses.confirmed,
+              fixtures.showStatuses.live,
+            ],
+          },
+          deletedAt: null,
+        },
+        select: { id: true, uid: true },
+      });
+      const showStatusByUid = new Map(showStatusRefs.map((status) => [status.uid, status.id]));
+
+      const showStandardRefs = await tx.showStandard.findMany({
+        where: {
+          uid: {
+            in: [fixtures.showStandards.standard, fixtures.showStandards.premium],
+          },
+          deletedAt: null,
+        },
+        select: { id: true, uid: true },
+      });
+      const showStandardByUid = new Map(showStandardRefs.map((standard) => [standard.uid, standard.id]));
+
+      const mcs = await tx.mC.findMany({
+        where: {
+          uid: {
+            in: [
+              fixtures.mcs.mc1,
+              fixtures.mcs.mc2,
+              fixtures.mcs.mc3,
+              fixtures.mcs.mc4,
+              fixtures.mcs.mc5,
+              fixtures.mcs.mc6,
+              fixtures.mcs.mc7,
+              fixtures.mcs.mc8,
+              fixtures.mcs.mc9,
+            ],
+          },
+          deletedAt: null,
+        },
+        select: { id: true, uid: true },
+      });
+      const mcByUid = new Map(mcs.map((mc) => [mc.uid, mc.id]));
+
+      const platformRefs = await tx.platform.findMany({
+        where: {
+          uid: {
+            in: [
+              fixtures.platforms.shopee,
+              fixtures.platforms.tiktok,
+              fixtures.platforms.lazada,
+            ],
+          },
+          deletedAt: null,
+        },
+        select: { id: true, uid: true },
+      });
+      const platformByUid = new Map(platformRefs.map((platform) => [platform.uid, platform.id]));
+
+      const scheduleSeeds = [
+        {
+          key: 'nikeCurrentMonth',
+          uid: fixtures.schedules.nikeCurrentMonth,
+          clientUid: fixtures.clients.nike,
+          status: 'published',
+        },
+        {
+          key: 'adidasCurrentMonth',
+          uid: fixtures.schedules.adidasCurrentMonth,
+          clientUid: fixtures.clients.adidas,
+          status: 'published',
+        },
+        {
+          key: 'pumaCurrentMonth',
+          uid: fixtures.schedules.pumaCurrentMonth,
+          clientUid: fixtures.clients.puma,
+          status: 'published',
+        },
+      ] as const;
+
+      const scheduleByKey = new Map<string, { id: bigint; clientUid: string }>();
+      for (const scheduleSeed of scheduleSeeds) {
+        const client = clientByUid.get(scheduleSeed.clientUid);
+        if (!client) {
+          throw new Error(`Missing client for schedule seed: ${scheduleSeed.clientUid}`);
+        }
+
+        const seededSchedule = await tx.schedule.upsert({
+          where: { uid: scheduleSeed.uid },
+          update: {
+            name: `${client.name} Schedule - ${scheduleStart.toISOString().split('T')[0]}`,
+            startDate: scheduleStart,
+            endDate: scheduleEnd,
+            status: scheduleSeed.status,
+            publishedAt: scheduleSeed.status === 'published' ? new Date() : null,
+            clientId: client.id,
+            studioId: studio.id,
+            createdBy: adminUser.id,
+            publishedBy: scheduleSeed.status === 'published' ? adminUser.id : null,
+            version: 1,
+            planDocument: {
+              metadata: {
+                source: 'seed',
+                clientName: client.name,
+                dateRange: {
+                  start: scheduleStart.toISOString(),
+                  end: scheduleEnd.toISOString(),
+                },
+              },
+              shows: [],
+            },
+            metadata: {
+              source: 'seed',
+              seeded: true,
+            },
+            deletedAt: null,
+          },
+          create: {
+            uid: scheduleSeed.uid,
+            name: `${client.name} Schedule - ${scheduleStart.toISOString().split('T')[0]}`,
+            startDate: scheduleStart,
+            endDate: scheduleEnd,
+            status: scheduleSeed.status,
+            publishedAt: scheduleSeed.status === 'published' ? new Date() : null,
+            planDocument: {
+              metadata: {
+                source: 'seed',
+                clientName: client.name,
+                dateRange: {
+                  start: scheduleStart.toISOString(),
+                  end: scheduleEnd.toISOString(),
+                },
+              },
+              shows: [],
+            },
+            version: 1,
+            metadata: {
+              source: 'seed',
+              seeded: true,
+            },
+            clientId: client.id,
+            studioId: studio.id,
+            createdBy: adminUser.id,
+            publishedBy: scheduleSeed.status === 'published' ? adminUser.id : null,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        scheduleByKey.set(scheduleSeed.key, {
+          id: seededSchedule.id,
+          clientUid: scheduleSeed.clientUid,
+        });
+      }
+
+      const toShowDate = (day: number, startHour: number, endHour: number) => ({
+        start: new Date(Date.UTC(
+          scheduleStart.getUTCFullYear(),
+          scheduleStart.getUTCMonth(),
+          day,
+          startHour,
+          0,
+          0,
+          0,
+        )),
+        end: new Date(Date.UTC(
+          scheduleStart.getUTCFullYear(),
+          scheduleStart.getUTCMonth(),
+          day,
+          endHour,
+          0,
+          0,
+          0,
+        )),
+      });
+
+      const roomRotation = [
+        fixtures.studioRooms.roomA,
+        fixtures.studioRooms.roomB,
+        fixtures.studioRooms.roomC,
+      ] as const;
+      const showTypeRotation = [
+        fixtures.showTypes.bau,
+        fixtures.showTypes.campaign,
+      ] as const;
+      const showStatusRotation = [
+        fixtures.showStatuses.confirmed,
+        fixtures.showStatuses.live,
+        fixtures.showStatuses.draft,
+      ] as const;
+      const showStandardRotation = [
+        fixtures.showStandards.standard,
+        fixtures.showStandards.premium,
+      ] as const;
+      const monthlyClientSeeds = [
+        { scheduleKey: 'nikeCurrentMonth', clientCode: 'nike' },
+        { scheduleKey: 'adidasCurrentMonth', clientCode: 'adidas' },
+        { scheduleKey: 'pumaCurrentMonth', clientCode: 'puma' },
+      ] as const;
+      const daysInMonth = scheduleEnd.getUTCDate();
+      const showSeeds: Array<{
+        key: string;
+        uid: string;
+        scheduleKey: string;
+        externalId: string;
+        roomUid: string;
+        showTypeUid: string;
+        showStatusUid: string;
+        showStandardUid: string;
+        start: Date;
+        end: Date;
+      }> = [];
+
+      monthlyClientSeeds.forEach((clientSeed, clientIndex) => {
+        for (let day = 1; day <= daysInMonth; day++) {
+          const startHour = 8 + ((day + clientIndex) % 8);
+          const endHour = startHour + 2;
+          const dateWindow = toShowDate(day, startHour, endHour);
+          showSeeds.push({
+            key: `${clientSeed.clientCode}Show${day}`,
+            uid: `show_seed_${clientSeed.clientCode}_${String(day).padStart(2, '0')}`,
+            scheduleKey: clientSeed.scheduleKey,
+            externalId: `seed_${clientSeed.clientCode}_show_${day}`,
+            roomUid: roomRotation[(day + clientIndex) % roomRotation.length],
+            showTypeUid: showTypeRotation[(day + clientIndex) % showTypeRotation.length],
+            showStatusUid: showStatusRotation[(day + clientIndex) % showStatusRotation.length],
+            showStandardUid: showStandardRotation[(day + clientIndex) % showStandardRotation.length],
+            start: dateWindow.start,
+            end: dateWindow.end,
+          });
+        }
+      });
+
+      const showByKey = new Map<string, bigint>();
+      for (const showSeed of showSeeds) {
+        const scheduleRef = scheduleByKey.get(showSeed.scheduleKey);
+        if (!scheduleRef) {
+          throw new Error(`Missing schedule for show seed: ${showSeed.scheduleKey}`);
+        }
+        const client = clientByUid.get(scheduleRef.clientUid);
+        if (!client) {
+          throw new Error(`Missing client for show seed: ${scheduleRef.clientUid}`);
+        }
+
+        const roomId = roomByUid.get(showSeed.roomUid);
+        const showTypeId = showTypeByUid.get(showSeed.showTypeUid);
+        const showStatusId = showStatusByUid.get(showSeed.showStatusUid);
+        const showStandardId = showStandardByUid.get(showSeed.showStandardUid);
+        if (!roomId || !showTypeId || !showStatusId || !showStandardId) {
+          throw new Error(`Missing references for show seed: ${showSeed.uid}`);
+        }
+
+        const seededShow = await tx.show.upsert({
+          where: {
+            clientId_externalId: {
+              clientId: client.id,
+              externalId: showSeed.externalId,
+            },
+          },
+          update: {
+            name: `${client.name} ${showSeed.key}`,
+            startTime: showSeed.start,
+            endTime: showSeed.end,
+            metadata: { source: 'seed', seeded: true },
+            clientId: client.id,
+            studioId: studio.id,
+            studioRoomId: roomId,
+            showTypeId,
+            showStatusId,
+            showStandardId,
+            scheduleId: scheduleRef.id,
+            deletedAt: null,
+          },
+          create: {
+            uid: showSeed.uid,
+            externalId: showSeed.externalId,
+            name: `${client.name} ${showSeed.key}`,
+            startTime: showSeed.start,
+            endTime: showSeed.end,
+            metadata: { source: 'seed', seeded: true },
+            clientId: client.id,
+            studioId: studio.id,
+            studioRoomId: roomId,
+            showTypeId,
+            showStatusId,
+            showStandardId,
+            scheduleId: scheduleRef.id,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        showByKey.set(showSeed.key, seededShow.id);
+      }
+
+      const mcRotation = [
+        fixtures.mcs.mc1,
+        fixtures.mcs.mc2,
+        fixtures.mcs.mc3,
+        fixtures.mcs.mc4,
+        fixtures.mcs.mc5,
+        fixtures.mcs.mc6,
+        fixtures.mcs.mc7,
+        fixtures.mcs.mc8,
+        fixtures.mcs.mc9,
+      ] as const;
+      const showMcSeeds = showSeeds.map((seed, index) => ({
+        showKey: seed.key,
+        mcUid: mcRotation[index % mcRotation.length],
+        uid: `show_mc_seed_${seed.key}`,
+      }));
+
+      for (const seed of showMcSeeds) {
+        const showId = showByKey.get(seed.showKey);
+        const mcId = mcByUid.get(seed.mcUid);
+        if (!showId || !mcId) {
+          throw new Error(`Missing show/mc for show_mc seed: ${seed.uid}`);
+        }
+
+        await tx.showMC.upsert({
+          where: {
+            showId_mcId: {
+              showId,
+              mcId,
+            },
+          },
+          update: {
+            uid: seed.uid,
+            note: 'Seeded assignment',
+            metadata: { source: 'seed', seeded: true },
+            deletedAt: null,
+          },
+          create: {
+            uid: seed.uid,
+            showId,
+            mcId,
+            note: 'Seeded assignment',
+            metadata: { source: 'seed', seeded: true },
+          },
+        });
+      }
+
+      const platformRotation = [
+        fixtures.platforms.shopee,
+        fixtures.platforms.tiktok,
+        fixtures.platforms.lazada,
+      ] as const;
+      const showPlatformSeeds = showSeeds.map((seed, index) => ({
+        showKey: seed.key,
+        platformUid: platformRotation[index % platformRotation.length],
+        uid: `show_plt_seed_${seed.key}`,
+      }));
+
+      for (const seed of showPlatformSeeds) {
+        const showId = showByKey.get(seed.showKey);
+        const platformId = platformByUid.get(seed.platformUid);
+        if (!showId || !platformId) {
+          throw new Error(`Missing show/platform for show_platform seed: ${seed.uid}`);
+        }
+
+        await tx.showPlatform.upsert({
+          where: {
+            showId_platformId: {
+              showId,
+              platformId,
+            },
+          },
+          update: {
+            uid: seed.uid,
+            liveStreamLink: `https://seed.example.com/${seed.showKey}`,
+            platformShowId: `seed_${seed.showKey}`,
+            viewerCount: 0,
+            metadata: { source: 'seed', seeded: true },
+            deletedAt: null,
+          },
+          create: {
+            uid: seed.uid,
+            showId,
+            platformId,
+            liveStreamLink: `https://seed.example.com/${seed.showKey}`,
+            platformShowId: `seed_${seed.showKey}`,
+            viewerCount: 0,
+            metadata: { source: 'seed', seeded: true },
+          },
+        });
+      }
+
+      console.log(`✅ Seeded ${showSeeds.length} shows across ${scheduleSeeds.length} schedules`);
+
       // Seed TaskTemplate data
       console.log('📝 Seeding TaskTemplate data...');
 
