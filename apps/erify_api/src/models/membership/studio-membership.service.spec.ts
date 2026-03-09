@@ -19,7 +19,9 @@ describe('studioMembershipService', () => {
     const mockRepository = {
       findAdminMembershipByExtId: findAdminMembershipByExtIdSpy,
       findByUid: jest.fn(),
+      findOne: jest.fn(),
       listStudioMemberships: jest.fn(),
+      updateMetadataIfUnchanged: jest.fn(),
       updateByUnique: jest.fn(),
       softDeleteByUnique: jest.fn(),
     };
@@ -190,6 +192,46 @@ describe('studioMembershipService', () => {
 
       expect((service as any).studioMembershipRepository.softDeleteByUnique).toHaveBeenCalledWith({ uid });
       expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('toggleTaskHelperStatus', () => {
+    it('should toggle helper flag with optimistic update', async () => {
+      const membership = {
+        uid: 'smb_123',
+        metadata: { existing: 'value' },
+        updatedAt: new Date('2026-03-01T00:00:00.000Z'),
+        user: { uid: 'usr_1' },
+        studio: { uid: 'std_1' },
+      };
+      ((service as any).studioMembershipRepository.findOne as jest.Mock).mockResolvedValue(membership);
+      ((service as any).studioMembershipRepository.updateMetadataIfUnchanged as jest.Mock).mockResolvedValue(1);
+      ((service as any).studioMembershipRepository.findByUid as jest.Mock).mockResolvedValue({
+        ...membership,
+        metadata: { existing: 'value', task_helper_enabled: true },
+      });
+
+      const result = await service.toggleTaskHelperStatus('std_1', 'smb_123', true);
+
+      expect((service as any).studioMembershipRepository.updateMetadataIfUnchanged).toHaveBeenCalledWith(
+        expect.objectContaining({
+          uid: 'smb_123',
+          studioUid: 'std_1',
+          expectedUpdatedAt: membership.updatedAt,
+          metadata: { existing: 'value', task_helper_enabled: true },
+        }),
+      );
+      expect(result).toEqual(expect.objectContaining({
+        metadata: { existing: 'value', task_helper_enabled: true },
+      }));
+    });
+
+    it('should return null when membership is not found in scoped studio', async () => {
+      ((service as any).studioMembershipRepository.findOne as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.toggleTaskHelperStatus('std_1', 'smb_missing', true);
+      expect(result).toBeNull();
+      expect((service as any).studioMembershipRepository.updateMetadataIfUnchanged).not.toHaveBeenCalled();
     });
   });
 });

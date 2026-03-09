@@ -2,6 +2,7 @@ import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
+import { decimalToString } from '@/lib/utils/decimal.util';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
 import { UserService } from '@/models/user/user.service';
@@ -45,27 +46,6 @@ const studioShiftMetadataSchema = z.object({
   /** Free-form admin note for this shift, e.g. "Overtime approved by manager". */
   notes: z.string().optional(),
 });
-
-function decimalToString(value: unknown): string {
-  if (typeof value === 'number') {
-    return value.toFixed(2);
-  }
-
-  if (typeof value === 'string') {
-    return value;
-  }
-
-  if (
-    typeof value === 'object'
-    && value !== null
-    && 'toString' in value
-    && typeof value.toString === 'function'
-  ) {
-    return value.toString();
-  }
-
-  return '0.00';
-}
 
 // Internal transform-only shape — never exposed as a response validator.
 // BigInt PKs/FKs are omitted; only fields consumed by studioShiftDto transform are declared.

@@ -32,18 +32,17 @@ export class ShowMcService extends BaseModelService {
 
   async create(
     payload: CreateShowMcPayload,
-  ): ReturnType<ShowMcRepository['create']> {
+  ): ReturnType<ShowMcRepository['createByUids']> {
     const uid = this.generateUid();
-
-    const data = {
-      note: payload.note ?? null,
-      metadata: payload.metadata ?? {},
-      show: { connect: { uid: payload.showId } },
-      mc: { connect: { uid: payload.mcId } },
-      uid,
-    };
-
-    return this.showMcRepository.create(data);
+    return this.showMcRepository.createByUids(uid, {
+      showUid: payload.showId,
+      mcUid: payload.mcId,
+      note: payload.note,
+      agreedRate: payload.agreedRate,
+      compensationType: payload.compensationType,
+      commissionRate: payload.commissionRate,
+      metadata: payload.metadata,
+    });
   }
 
   async findOne(
@@ -78,6 +77,12 @@ export class ShowMcService extends BaseModelService {
       data.note = payload.note;
     if (payload.metadata !== undefined)
       data.metadata = payload.metadata;
+    if (payload.agreedRate !== undefined)
+      data.agreedRate = payload.agreedRate;
+    if (payload.compensationType !== undefined)
+      data.compensationType = payload.compensationType;
+    if (payload.commissionRate !== undefined)
+      data.commissionRate = payload.commissionRate;
 
     if (payload.showId !== undefined) {
       data.show = { connect: { uid: payload.showId } };

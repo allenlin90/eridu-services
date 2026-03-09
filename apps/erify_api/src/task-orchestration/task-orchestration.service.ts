@@ -2,12 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import type { TaskTemplate, TaskTemplateSnapshot } from '@prisma/client';
 import { StudioMembership, TaskStatus, TaskType, User } from '@prisma/client';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import type { ListStudioShowsQueryTransformed } from '@eridu/api-types/task-management';
 
 import { TaskGenerationProcessor } from './task-generation-processor.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
+import { isStudioMembershipTaskHelper } from '@/models/membership/studio-membership-helper.util';
 import { showDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
@@ -126,16 +128,28 @@ export class TaskOrchestrationService {
   private async resolveStudioMember(
     studioUid: string,
     assigneeUid: string,
+    options?: { requireTaskHelper?: boolean },
   ): Promise<MembershipWithUser> {
-    const { data: memberships } = await this.studioMembershipService.listStudioMemberships(
-      { studioId: studioUid },
+    const membership = await this.studioMembershipService.findOne(
+      {
+        studio: { uid: studioUid },
+        user: { uid: assigneeUid },
+        deletedAt: null,
+      },
       { user: true },
-    );
-    const membership = (memberships as MembershipWithUser[]).find(
-      (m) => m.user?.uid === assigneeUid,
-    );
+    ) as MembershipWithUser | null;
     if (!membership) {
       throw HttpError.badRequest(`User ${assigneeUid} is not a member of studio ${studioUid}`);
+    }
+    const requireTaskHelper = options?.requireTaskHelper ?? false;
+    if (requireTaskHelper) {
+      const isPrivilegedRole = membership.role === STUDIO_ROLE.ADMIN || membership.role === STUDIO_ROLE.MANAGER;
+      const isTaskHelper = isStudioMembershipTaskHelper(membership.metadata as Record<string, unknown>);
+      if (!isPrivilegedRole && !isTaskHelper) {
+        throw HttpError.badRequest(
+          `User ${assigneeUid} is not marked as task-helper in studio ${studioUid}`,
+        );
+      }
     }
     return membership;
   }
@@ -145,7 +159,9 @@ export class TaskOrchestrationService {
    */
   async assignShowsToUser(studioUid: string, showUids: string[], assigneeUid: string) {
     // 1. Validate assignee is a studio member
-    const assigneeMembership = await this.resolveStudioMember(studioUid, assigneeUid);
+    const assigneeMembership = await this.resolveStudioMember(studioUid, assigneeUid, {
+      requireTaskHelper: true,
+    });
 
     // 2. Resolve shows
     const shows = await this.showService.findMany({
@@ -218,7 +234,9 @@ export class TaskOrchestrationService {
     let assigneeUserId: bigint | null = null;
 
     if (assigneeUid) {
-      const assigneeMembership = await this.resolveStudioMember(studioUid, assigneeUid);
+      const assigneeMembership = await this.resolveStudioMember(studioUid, assigneeUid, {
+        requireTaskHelper: true,
+      });
       assigneeUserId = assigneeMembership.userId;
     }
 

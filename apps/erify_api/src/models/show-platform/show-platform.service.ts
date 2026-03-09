@@ -38,6 +38,9 @@ export class ShowPlatformService extends BaseModelService {
       liveStreamLink: payload.liveStreamLink ?? null,
       platformShowId: payload.platformShowId ?? null,
       viewerCount: payload.viewerCount ?? 0,
+      ...(payload.gmv !== undefined && { gmv: payload.gmv }),
+      ...(payload.sales !== undefined && { sales: payload.sales }),
+      ...(payload.orders !== undefined && { orders: payload.orders }),
       metadata: payload.metadata ?? {},
       show: { connect: { uid: payload.showId } },
       platform: { connect: { uid: payload.platformId } },
@@ -88,6 +91,12 @@ export class ShowPlatformService extends BaseModelService {
       data.platformShowId = payload.platformShowId;
     if (payload.viewerCount !== undefined)
       data.viewerCount = payload.viewerCount;
+    if (payload.gmv !== undefined)
+      data.gmv = payload.gmv;
+    if (payload.sales !== undefined)
+      data.sales = payload.sales;
+    if (payload.orders !== undefined)
+      data.orders = payload.orders;
     if (payload.metadata !== undefined)
       data.metadata = payload.metadata;
 

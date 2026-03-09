@@ -10,6 +10,6 @@ import { UtilityModule } from '@/utility/utility.module';
 @Module({
   imports: [PrismaModule, UtilityModule, MembershipModule],
   providers: [StudioShiftService, StudioShiftRepository],
-  exports: [StudioShiftService],
+  exports: [StudioShiftService, StudioShiftRepository],
 })
 export class StudioShiftModule {}

@@ -54,6 +54,9 @@ describe('showPlatformService', () => {
         liveStreamLink: 'https://example.com/stream',
         platformShowId: 'ext_123',
         viewerCount: 100,
+        gmv: undefined,
+        sales: undefined,
+        orders: undefined,
         metadata: { quality: 'HD' },
       } as CreateShowPlatformDto;
 

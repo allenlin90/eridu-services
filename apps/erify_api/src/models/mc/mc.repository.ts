@@ -76,6 +76,9 @@ export class McRepository extends BaseRepository<
       aliasName: payload.aliasName,
       metadata: payload.metadata ?? {},
       ...(payload.userId && { user: { connect: { uid: payload.userId } } }),
+      ...(payload.defaultRate !== undefined && { defaultRate: payload.defaultRate }),
+      ...(payload.defaultRateType !== undefined && { defaultRateType: payload.defaultRateType }),
+      ...(payload.defaultCommissionRate !== undefined && { defaultCommissionRate: payload.defaultCommissionRate }),
     };
 
     return this.delegate.create({ data });
@@ -95,6 +98,12 @@ export class McRepository extends BaseRepository<
       data.isBanned = payload.isBanned;
     if (payload.metadata !== undefined)
       data.metadata = payload.metadata;
+    if (payload.defaultRate !== undefined)
+      data.defaultRate = payload.defaultRate;
+    if (payload.defaultRateType !== undefined)
+      data.defaultRateType = payload.defaultRateType;
+    if (payload.defaultCommissionRate !== undefined)
+      data.defaultCommissionRate = payload.defaultCommissionRate;
 
     if (payload.userId !== undefined) {
       data.user = payload.userId
@@ -146,12 +155,95 @@ export class McRepository extends BaseRepository<
     return this.delegate.findMany(params);
   }
 
+  async findCatalogForStudio(params: {
+    studioUid: string;
+    search?: string;
+    includeRostered?: boolean;
+    limit?: number;
+  }): Promise<MC[]> {
+    const limit = Math.min(params.limit ?? 100, 200);
+    const search = params.search?.trim();
+
+    return this.delegate.findMany({
+      where: {
+        deletedAt: null,
+        ...(params.includeRostered
+          ? {}
+          : {
+              studioMcs: {
+                none: {
+                  deletedAt: null,
+                  studio: {
+                    uid: params.studioUid,
+                    deletedAt: null,
+                  },
+                },
+              },
+            }),
+        ...(search
+          ? {
+              OR: [
+                { uid: { contains: search, mode: 'insensitive' } },
+                { name: { contains: search, mode: 'insensitive' } },
+                { aliasName: { contains: search, mode: 'insensitive' } },
+              ],
+            }
+          : {}),
+      },
+      orderBy: { name: 'asc' },
+      take: limit,
+    });
+  }
+
   /**
    * Find MCs by their UIDs (domain-level, ignores deleted).
    */
   async findByUids(uids: string[]): Promise<MC[]> {
     return this.delegate.findMany({
       where: { uid: { in: uids }, deletedAt: null },
+    });
+  }
+
+  /**
+   * Find MCs not assigned to any show that overlaps the given window.
+   * A show overlaps when: show.startTime < dateTo AND show.endTime > dateFrom.
+   */
+  async findAvailableMcs(
+    dateFrom: Date,
+    dateTo: Date,
+    studioUid?: string,
+  ): Promise<MC[]> {
+    const conflictingMcIds = await this.txHost.tx.showMC.findMany({
+      where: {
+        deletedAt: null,
+        show: {
+          deletedAt: null,
+          startTime: { lt: dateTo },
+          endTime: { gt: dateFrom },
+        },
+      },
+      select: { mcId: true },
+    });
+
+    const bookedIds = conflictingMcIds.map((r) => r.mcId);
+
+    return this.delegate.findMany({
+      where: {
+        deletedAt: null,
+        ...(studioUid && {
+          studioMcs: {
+            some: {
+              deletedAt: null,
+              isActive: true,
+              studio: {
+                uid: studioUid,
+                deletedAt: null,
+              },
+            },
+          },
+        }),
+        ...(bookedIds.length > 0 && { id: { notIn: bookedIds } }),
+      },
     });
   }
 

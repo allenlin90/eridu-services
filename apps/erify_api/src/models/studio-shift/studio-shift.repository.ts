@@ -28,6 +28,8 @@ export class StudioShiftRepository extends BaseRepository<
   Prisma.StudioShiftUpdateInput,
   Prisma.StudioShiftWhereInput
 > {
+  private static readonly OPERATIONAL_DAY_START_HOUR_UTC = 6;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
@@ -335,5 +337,36 @@ export class StudioShiftRepository extends BaseRepository<
     });
 
     return activeBlock?.shift ?? null;
+  }
+
+  /**
+   * Find all shifts for a studio whose date falls within the given window.
+   * Used for economics cost aggregation.
+   */
+  async findByShowWindow(studioId: bigint, dateFrom: Date, dateTo: Date): Promise<StudioShift[]> {
+    const fromOperationalDate = this.toOperationalDate(dateFrom);
+    const toOperationalDate = this.toOperationalDate(dateTo);
+
+    return this.delegate.findMany({
+      where: {
+        studioId,
+        deletedAt: null,
+        status: { not: 'CANCELLED' },
+        date: { gte: fromOperationalDate, lte: toOperationalDate },
+      },
+    });
+  }
+
+  /**
+   * Maps a timestamp to the corresponding operational day date.
+   * Operational day starts at 06:00 UTC and ends at 05:59 UTC next calendar day.
+   */
+  private toOperationalDate(value: Date): Date {
+    const date = new Date(value);
+    if (date.getUTCHours() < StudioShiftRepository.OPERATIONAL_DAY_START_HOUR_UTC) {
+      date.setUTCDate(date.getUTCDate() - 1);
+    }
+    date.setUTCHours(0, 0, 0, 0);
+    return date;
   }
 }

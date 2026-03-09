@@ -118,14 +118,39 @@ export class ShowMcRepository extends BaseRepository<
   }
 
   /**
-   * Creates a ShowMC assignment by internal IDs (domain-level).
-   * Builds Prisma relation syntax internally.
+   * Creates a ShowMC by UID strings (used by service layer to avoid Prisma in service).
    */
+  async createByUids(uid: string, payload: {
+    showUid: string;
+    mcUid: string;
+    note?: string | null;
+    agreedRate?: string;
+    compensationType?: string;
+    commissionRate?: string;
+    metadata?: Record<string, any>;
+  }): Promise<ShowMC> {
+    return this.delegate.create({
+      data: {
+        uid,
+        show: { connect: { uid: payload.showUid } },
+        mc: { connect: { uid: payload.mcUid } },
+        note: payload.note ?? null,
+        ...(payload.agreedRate !== undefined && { agreedRate: payload.agreedRate }),
+        ...(payload.compensationType !== undefined && { compensationType: payload.compensationType }),
+        ...(payload.commissionRate !== undefined && { commissionRate: payload.commissionRate }),
+        metadata: payload.metadata ?? {},
+      },
+    });
+  }
+
   async createAssignment(params: {
     uid: string;
     showId: bigint;
     mcId: bigint;
     note?: string | null;
+    agreedRate?: string;
+    compensationType?: string;
+    commissionRate?: string;
     metadata?: object;
   }): Promise<ShowMC> {
     return this.delegate.create({
@@ -134,6 +159,9 @@ export class ShowMcRepository extends BaseRepository<
         show: { connect: { id: params.showId } },
         mc: { connect: { id: params.mcId } },
         note: params.note ?? null,
+        ...(params.agreedRate !== undefined && { agreedRate: params.agreedRate }),
+        ...(params.compensationType !== undefined && { compensationType: params.compensationType }),
+        ...(params.commissionRate !== undefined && { commissionRate: params.commissionRate }),
         metadata: params.metadata ?? {},
       },
     });
@@ -144,12 +172,18 @@ export class ShowMcRepository extends BaseRepository<
    */
   async restoreAndUpdateAssignment(id: bigint, params: {
     note?: string | null;
+    agreedRate?: string | null;
+    compensationType?: string | null;
+    commissionRate?: string | null;
     metadata?: object;
   }): Promise<ShowMC> {
     return this.delegate.update({
       where: { id },
       data: {
         note: params.note ?? null,
+        ...(params.agreedRate !== undefined && { agreedRate: params.agreedRate }),
+        ...(params.compensationType !== undefined && { compensationType: params.compensationType }),
+        ...(params.commissionRate !== undefined && { commissionRate: params.commissionRate }),
         metadata: params.metadata ?? {},
         deletedAt: null,
       },

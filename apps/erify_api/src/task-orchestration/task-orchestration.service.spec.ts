@@ -63,6 +63,7 @@ describe('taskOrchestrationService', () => {
           provide: StudioMembershipService,
           useValue: {
             listStudioMemberships: jest.fn(),
+            findOne: jest.fn(),
           },
         },
         {
@@ -142,8 +143,11 @@ describe('taskOrchestrationService', () => {
       const showUids = ['show_1', 'show_2'];
       const assigneeUid = 'usr_1';
 
-      studioMembershipService.listStudioMemberships.mockResolvedValue({
-        data: [{ user: { uid: 'usr_1', name: 'John' }, userId: BigInt(1) }],
+      studioMembershipService.findOne.mockResolvedValue({
+        user: { uid: 'usr_1', name: 'John' },
+        userId: BigInt(1),
+        role: 'member',
+        metadata: { task_helper_enabled: true },
       } as any);
       showService.findMany.mockResolvedValue([
         { id: BigInt(10), uid: 'show_1' },
@@ -162,8 +166,39 @@ describe('taskOrchestrationService', () => {
     });
 
     it('should throw error if user is not a studio member', async () => {
-      studioMembershipService.listStudioMemberships.mockResolvedValue({ data: [] } as any);
+      studioMembershipService.findOne.mockResolvedValue(null);
       await expect(service.assignShowsToUser('std_1', ['show_1'], 'usr_1')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw error if member is not task-helper eligible', async () => {
+      studioMembershipService.findOne.mockResolvedValue({
+        user: { uid: 'usr_1', name: 'John' },
+        userId: BigInt(1),
+        role: 'member',
+        metadata: {},
+      } as any);
+
+      await expect(service.assignShowsToUser('std_1', ['show_1'], 'usr_1')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should allow manager assignee without helper metadata', async () => {
+      studioMembershipService.findOne.mockResolvedValue({
+        user: { uid: 'usr_1', name: 'John' },
+        userId: BigInt(1),
+        role: 'manager',
+        metadata: {},
+      } as any);
+      showService.findMany.mockResolvedValue([
+        { id: BigInt(10), uid: 'show_1' },
+      ] as any);
+      taskTargetService.findByShowIds.mockResolvedValue([
+        { taskId: BigInt(100), showId: BigInt(10) },
+      ] as any);
+      taskService.updateAssigneeByTaskIds.mockResolvedValue({ count: 1 } as any);
+
+      const result = await service.assignShowsToUser('std_1', ['show_1'], 'usr_1');
+
+      expect(result.updated_count).toBe(1);
     });
   });
 
@@ -175,8 +210,11 @@ describe('taskOrchestrationService', () => {
 
       taskService.findByUid.mockResolvedValue({ uid: 'task_1', studioId: BigInt(1) } as any);
       studioService.findByUid.mockResolvedValue({ id: BigInt(1) } as any);
-      studioMembershipService.listStudioMemberships.mockResolvedValue({
-        data: [{ user: { uid: 'usr_1' }, userId: BigInt(2) }],
+      studioMembershipService.findOne.mockResolvedValue({
+        user: { uid: 'usr_1' },
+        userId: BigInt(2),
+        role: 'member',
+        metadata: { task_helper_enabled: true },
       } as any);
       taskService.setAssignee.mockResolvedValue({ uid: 'task_1', assigneeId: BigInt(2) } as any);
 
@@ -184,6 +222,19 @@ describe('taskOrchestrationService', () => {
 
       expect(taskService.setAssignee).toHaveBeenCalledWith('task_1', BigInt(2), expect.any(Object));
       expect(result.uid).toBe('task_1');
+    });
+
+    it('should reject non-helper member for task reassignment', async () => {
+      taskService.findByUid.mockResolvedValue({ uid: 'task_1', studioId: BigInt(1) } as any);
+      studioService.findByUid.mockResolvedValue({ id: BigInt(1) } as any);
+      studioMembershipService.findOne.mockResolvedValue({
+        user: { uid: 'usr_1' },
+        userId: BigInt(2),
+        role: 'member',
+        metadata: {},
+      } as any);
+
+      await expect(service.reassignTask('std_1', 'task_1', 'usr_1')).rejects.toThrow(BadRequestException);
     });
 
     it('should throw forbidden if task does not belong to studio', async () => {

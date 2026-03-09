@@ -18,6 +18,7 @@ describe('studioMembershipController', () => {
           provide: StudioMembershipService,
           useValue: {
             listStudioMemberships: jest.fn(),
+            toggleTaskHelperStatus: jest.fn(),
           },
         },
       ],
@@ -58,6 +59,31 @@ describe('studioMembershipController', () => {
         sort: 'desc',
       }),
       { user: true, studio: true },
+    );
+  });
+
+  it('should toggle helper status for membership in studio scope', async () => {
+    const studioId = 'std_00000000000000000001';
+    const membershipId = 'smb_00000000000000000001';
+    const dto = { isHelper: true } as any;
+    const membership = {
+      uid: membershipId,
+      metadata: { existing: 'value' },
+      user: { uid: 'usr_1' },
+      studio: { uid: studioId },
+    };
+
+    studioMembershipService.toggleTaskHelperStatus.mockResolvedValue({
+      ...membership,
+      metadata: { existing: 'value', task_helper_enabled: true },
+    } as any);
+
+    await controller.updateHelperStatus(studioId, membershipId, dto);
+
+    expect(studioMembershipService.toggleTaskHelperStatus).toHaveBeenCalledWith(
+      studioId,
+      membershipId,
+      true,
     );
   });
 });

@@ -217,4 +217,24 @@ export class StudioMembershipRepository extends BaseRepository<
       data: { deletedAt: null },
     });
   }
+
+  async updateMetadataIfUnchanged(params: {
+    uid: string;
+    studioUid: string;
+    expectedUpdatedAt: Date;
+    metadata: Prisma.InputJsonValue;
+  }): Promise<number> {
+    const result = await this.prisma.studioMembership.updateMany({
+      where: {
+        uid: params.uid,
+        studio: { uid: params.studioUid },
+        deletedAt: null,
+        updatedAt: params.expectedUpdatedAt,
+      },
+      data: {
+        metadata: params.metadata,
+      },
+    });
+    return result.count;
+  }
 }

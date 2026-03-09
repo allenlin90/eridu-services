@@ -10,6 +10,9 @@ import {
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
+import {
+  isStudioMembershipTaskHelper,
+} from '@/models/membership/studio-membership-helper.util';
 import { studioSchema } from '@/models/studio/schemas/studio.schema';
 import { StudioService } from '@/models/studio/studio.service';
 import { userDto, userSchema } from '@/models/user/schemas/user.schema';
@@ -18,6 +21,7 @@ import { UserService } from '@/models/user/user.service';
 // Basic validation for UIDs from services
 const validateUserUid = z.string().startsWith(UserService.UID_PREFIX);
 const validateStudioUid = z.string().startsWith(StudioService.UID_PREFIX);
+type MembershipMetadata = Record<string, unknown> | null | undefined;
 
 export const studioMembershipSchema = z.object({
   id: z.bigint(),
@@ -40,6 +44,23 @@ export const createStudioMembershipSchema = createMembershipInputSchema
   .transform((data) => ({
     userId: data.user_id,
     studioId: data.studio_id,
+    role: data.role,
+    ...(data.base_hourly_rate !== undefined && {
+      baseHourlyRate: data.base_hourly_rate.toFixed(2),
+    }),
+    metadata: data.metadata || {},
+  }));
+
+// Studio-scoped create schema (studio_id comes from route param, not request body)
+export const createStudioScopedMembershipSchema = z
+  .object({
+    user_id: validateUserUid,
+    role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
+    base_hourly_rate: z.coerce.number().positive().optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
+  })
+  .transform((data) => ({
+    userId: data.user_id,
     role: data.role,
     ...(data.base_hourly_rate !== undefined && {
       baseHourlyRate: data.base_hourly_rate.toFixed(2),
@@ -74,6 +95,7 @@ export const studioMembershipDto = studioMembershipSchema
     studio_id: null as string | null, // Set to null when studio relation is not loaded (use studioMembershipWithRelationsDto for studio_id)
     role: obj.role,
     base_hourly_rate: obj.baseHourlyRate ? obj.baseHourlyRate.toString() : null,
+    is_helper: isStudioMembershipTaskHelper(obj.metadata as MembershipMetadata),
     metadata: obj.metadata,
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
@@ -81,6 +103,7 @@ export const studioMembershipDto = studioMembershipSchema
   .pipe(
     membershipApiResponseSchema.extend({
       base_hourly_rate: z.string().nullable(),
+      is_helper: z.boolean(),
     }),
   );
 
@@ -115,6 +138,7 @@ export const studioMembershipWithRelationsDto = studioMembershipWithRelationsSch
       studio_id: obj.studio.uid,
       role: obj.role,
       base_hourly_rate: obj.baseHourlyRate ? obj.baseHourlyRate.toString() : null,
+      is_helper: isStudioMembershipTaskHelper(obj.metadata as MembershipMetadata),
       metadata: obj.metadata,
       created_at: obj.createdAt.toISOString(),
       updated_at: obj.updatedAt.toISOString(),
@@ -131,6 +155,7 @@ export const studioMembershipWithRelationsDto = studioMembershipWithRelationsSch
       user_id: z.string(),
       studio_id: z.string(),
       base_hourly_rate: z.string().nullable(),
+      is_helper: z.boolean(),
       user: z.object({
         id: z.string(),
         ext_id: z.string().nullable(),
@@ -157,6 +182,10 @@ export class CreateStudioMembershipDto extends createZodDto(
   createStudioMembershipSchema,
 ) {}
 
+export class CreateStudioScopedMembershipDto extends createZodDto(
+  createStudioScopedMembershipSchema,
+) {}
+
 export type StudioMembershipSchema = z.infer<typeof studioMembershipSchema>;
 
 export class StudioMembershipDto extends createZodDto(studioMembershipDto) {}
@@ -167,6 +196,30 @@ export class StudioMembershipWithRelationsDto extends createZodDto(
 
 export class UpdateStudioMembershipDto extends createZodDto(
   updateStudioMembershipSchema,
+) {}
+
+export const updateStudioMembershipRoleSchema = z
+  .object({
+    role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
+  })
+  .transform((data) => ({
+    role: data.role,
+  }));
+
+export class UpdateStudioMembershipRoleDto extends createZodDto(
+  updateStudioMembershipRoleSchema,
+) {}
+
+export const updateStudioMembershipHelperSchema = z
+  .object({
+    is_helper: z.boolean(),
+  })
+  .transform((data) => ({
+    isHelper: data.is_helper,
+  }));
+
+export class UpdateStudioMembershipHelperDto extends createZodDto(
+  updateStudioMembershipHelperSchema,
 ) {}
 
 // Service-level internal schemas (camelCase) and assert helpers

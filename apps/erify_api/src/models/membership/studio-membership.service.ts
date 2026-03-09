@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { StudioMembership } from '@prisma/client';
+import { Prisma, StudioMembership } from '@prisma/client';
 
 import type {
   CreateStudioMembershipPayload,
@@ -7,13 +7,19 @@ import type {
 } from './schemas/studio-membership.schema';
 import { StudioMembershipRepository } from './studio-membership.repository';
 
+import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { withStudioMembershipTaskHelper } from '@/models/membership/studio-membership-helper.util';
 import { UtilityService } from '@/utility/utility.service';
 
 // Type aliases for better readability and type safety
 type UserId = bigint;
 type StudioId = bigint;
 type StudioMembershipId = bigint;
+type StudioMembershipWithRelations = StudioMembership & {
+  user: Record<string, unknown>;
+  studio: Record<string, unknown>;
+};
 
 @Injectable()
 export class StudioMembershipService extends BaseModelService {
@@ -205,5 +211,52 @@ export class StudioMembershipService extends BaseModelService {
     id: StudioMembershipId,
   ): Promise<StudioMembership> {
     return this.studioMembershipRepository.restoreByUnique({ id });
+  }
+
+  async toggleTaskHelperStatus(
+    studioUid: string,
+    membershipUid: string,
+    isHelper: boolean,
+  ): Promise<StudioMembershipWithRelations | null> {
+    const maxAttempts = 3;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      const current = await this.studioMembershipRepository.findOne(
+        {
+          uid: membershipUid,
+          studio: { uid: studioUid },
+          deletedAt: null,
+        },
+        { user: true, studio: true },
+      ) as StudioMembershipWithRelations | null;
+
+      if (!current) {
+        return null;
+      }
+
+      const metadata = withStudioMembershipTaskHelper(
+        current.metadata as Record<string, unknown> | null | undefined,
+        isHelper,
+      ) as Prisma.InputJsonValue;
+
+      const updatedCount = await this.studioMembershipRepository.updateMetadataIfUnchanged({
+        uid: membershipUid,
+        studioUid,
+        expectedUpdatedAt: current.updatedAt,
+        metadata,
+      });
+
+      if (updatedCount === 1) {
+        const updated = await this.studioMembershipRepository.findByUid(
+          membershipUid,
+          { user: true, studio: true },
+        );
+        return updated as StudioMembershipWithRelations | null;
+      }
+    }
+
+    throw HttpError.conflict(
+      `Studio membership ${membershipUid} was updated concurrently. Please retry.`,
+    );
   }
 }

@@ -6,6 +6,9 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import { MC_COMPENSATION_TYPE } from '@eridu/api-types/mcs';
+
+import { decimalToStringOrNull } from '@/lib/utils/decimal.util';
 import { McService } from '@/models/mc/mc.service';
 import { mcSchema } from '@/models/mc/schemas/mc.schema';
 import { showSchema } from '@/models/show/schemas/show.schema';
@@ -19,6 +22,9 @@ export const showMcSchema = z.object({
   showId: z.bigint(),
   mcId: z.bigint(),
   note: z.string().nullable(),
+  agreedRate: z.unknown().nullable(),
+  compensationType: z.string().nullable(),
+  commissionRate: z.unknown().nullable(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -30,6 +36,9 @@ export const createShowMcSchema = z.object({
   show_id: z.string().startsWith(ShowService.UID_PREFIX), // UID
   mc_id: z.string().startsWith(McService.UID_PREFIX), // UID
   note: z.string().max(1000).optional(), // Add max length for notes
+  agreed_rate: z.coerce.number().positive().optional(),
+  compensation_type: z.enum(Object.values(MC_COMPENSATION_TYPE) as [string, ...string[]]).optional(),
+  commission_rate: z.coerce.number().min(0).max(100).optional(),
   metadata: z.record(z.string(), z.any()).optional(),
 });
 
@@ -37,6 +46,9 @@ const transformCreateShowMcSchema = createShowMcSchema.transform((data) => ({
   showId: data.show_id,
   mcId: data.mc_id,
   note: data.note,
+  agreedRate: data.agreed_rate !== undefined ? data.agreed_rate.toFixed(2) : undefined,
+  compensationType: data.compensation_type,
+  commissionRate: data.commission_rate !== undefined ? data.commission_rate.toFixed(2) : undefined,
   metadata: data.metadata,
 }));
 
@@ -46,12 +58,18 @@ export const updateShowMcSchema = z
     show_id: z.string().startsWith(ShowService.UID_PREFIX).optional(), // UID
     mc_id: z.string().startsWith(McService.UID_PREFIX).optional(), // UID
     note: z.string().max(1000).nullable().optional(), // Add max length for notes
+    agreed_rate: z.coerce.number().positive().nullable().optional(),
+    compensation_type: z.enum(Object.values(MC_COMPENSATION_TYPE) as [string, ...string[]]).nullable().optional(),
+    commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({
     showId: data.show_id,
     mcId: data.mc_id,
     note: data.note,
+    agreedRate: data.agreed_rate !== undefined ? (data.agreed_rate === null ? null : data.agreed_rate.toFixed(2)) : undefined,
+    compensationType: data.compensation_type,
+    commissionRate: data.commission_rate !== undefined ? (data.commission_rate === null ? null : data.commission_rate.toFixed(2)) : undefined,
     metadata: data.metadata,
   }));
 
@@ -71,6 +89,9 @@ export const showMcDto = showMcWithRelationsSchema
     mc_name: obj.mc?.name ?? null,
     mc_alias_name: obj.mc?.aliasName ?? null,
     note: obj.note,
+    agreed_rate: decimalToStringOrNull(obj.agreedRate),
+    compensation_type: obj.compensationType,
+    commission_rate: decimalToStringOrNull(obj.commissionRate),
     metadata: obj.metadata,
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
@@ -84,6 +105,9 @@ export const showMcDto = showMcWithRelationsSchema
       mc_name: z.string().nullable(),
       mc_alias_name: z.string().nullable(),
       note: z.string().nullable(),
+      agreed_rate: z.string().nullable(),
+      compensation_type: z.string().nullable(),
+      commission_rate: z.string().nullable(),
       metadata: z.record(z.string(), z.any()),
       created_at: z.iso.datetime(),
       updated_at: z.iso.datetime(),
@@ -104,6 +128,9 @@ export type CreateShowMcPayload = {
   showId: string;
   mcId: string;
   note?: string | null;
+  agreedRate?: string;
+  compensationType?: string;
+  commissionRate?: string;
   metadata?: Record<string, any>;
 };
 
@@ -114,6 +141,9 @@ export type UpdateShowMcPayload = {
   showId?: string;
   mcId?: string;
   note?: string | null;
+  agreedRate?: string | null;
+  compensationType?: string | null;
+  commissionRate?: string | null;
   metadata?: Record<string, any>;
 };
 

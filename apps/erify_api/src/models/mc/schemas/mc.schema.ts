@@ -13,6 +13,7 @@ import {
 } from '@eridu/api-types/mcs';
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
+import { decimalToStringOrNull } from '@/lib/utils/decimal.util';
 import { McService } from '@/models/mc/mc.service';
 import { userDto, userSchema } from '@/models/user/schemas/user.schema';
 
@@ -23,6 +24,9 @@ export const mcSchema = z.object({
   name: z.string(),
   aliasName: z.string(),
   isBanned: z.boolean(),
+  defaultRate: z.unknown().nullable(),
+  defaultRateType: z.string().nullable(),
+  defaultCommissionRate: z.unknown().nullable(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -34,6 +38,9 @@ export const createMcSchema = createMcInputSchema.transform((data) => ({
   userId: data.user_id ?? null,
   name: data.name,
   aliasName: data.alias_name,
+  defaultRate: data.default_rate !== undefined ? data.default_rate.toFixed(2) : undefined,
+  defaultRateType: data.default_rate_type,
+  defaultCommissionRate: data.default_commission_rate !== undefined ? data.default_commission_rate.toFixed(2) : undefined,
   metadata: data.metadata,
 }));
 
@@ -43,6 +50,9 @@ export const updateMcSchema = updateMcInputSchema.transform((data) => ({
   name: data.name,
   aliasName: data.alias_name,
   isBanned: data.is_banned,
+  defaultRate: data.default_rate !== undefined ? (data.default_rate === null ? null : data.default_rate.toFixed(2)) : undefined,
+  defaultRateType: data.default_rate_type,
+  defaultCommissionRate: data.default_commission_rate !== undefined ? (data.default_commission_rate === null ? null : data.default_commission_rate.toFixed(2)) : undefined,
   metadata: data.metadata,
 }));
 
@@ -53,6 +63,9 @@ export const mcDto = mcSchema
     name: obj.name,
     alias_name: obj.aliasName,
     is_banned: obj.isBanned,
+    default_rate: decimalToStringOrNull(obj.defaultRate),
+    default_rate_type: obj.defaultRateType,
+    default_commission_rate: decimalToStringOrNull(obj.defaultCommissionRate),
     metadata: obj.metadata,
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
@@ -67,6 +80,9 @@ export const mcWithUserSchema = z.object({
   name: z.string(),
   aliasName: z.string(),
   isBanned: z.boolean(),
+  defaultRate: z.unknown().nullable(),
+  defaultRateType: z.string().nullable(),
+  defaultCommissionRate: z.unknown().nullable(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -84,6 +100,9 @@ export const mcWithUserDto = mcWithUserSchema
       name: obj.name,
       alias_name: obj.aliasName,
       is_banned: obj.isBanned,
+      default_rate: decimalToStringOrNull(obj.defaultRate),
+      default_rate_type: obj.defaultRateType,
+      default_commission_rate: decimalToStringOrNull(obj.defaultCommissionRate),
       metadata: obj.metadata,
       created_at: obj.createdAt.toISOString(),
       updated_at: obj.updatedAt.toISOString(),
@@ -150,6 +169,9 @@ export type CreateMcPayload = {
   aliasName: string;
   metadata?: Record<string, any>;
   userId?: string | null;
+  defaultRate?: string;
+  defaultRateType?: string;
+  defaultCommissionRate?: string;
 };
 
 /**
@@ -161,6 +183,9 @@ export type UpdateMcPayload = {
   isBanned?: boolean;
   metadata?: Record<string, any>;
   userId?: string | null;
+  defaultRate?: string | null;
+  defaultRateType?: string | null;
+  defaultCommissionRate?: string | null;
 };
 
 /**

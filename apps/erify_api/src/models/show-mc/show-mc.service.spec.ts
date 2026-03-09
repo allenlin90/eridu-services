@@ -18,6 +18,7 @@ describe('showMcService', () => {
 
   const showMcRepositoryMock: Partial<jest.Mocked<ShowMcRepository>> = {
     create: jest.fn(),
+    createByUids: jest.fn(),
     findByUid: jest.fn(),
     update: jest.fn(),
     softDelete: jest.fn(),
@@ -51,6 +52,9 @@ describe('showMcService', () => {
         showId: 'show_1',
         mcId: 'mc_1',
         note: 'Main host',
+        agreedRate: undefined,
+        compensationType: undefined,
+        commissionRate: undefined,
         metadata: { role: 'host' },
       } as CreateShowMcDto;
 
@@ -66,7 +70,7 @@ describe('showMcService', () => {
         deletedAt: null,
       };
 
-      (showMcRepositoryMock.create as jest.Mock).mockResolvedValue(created);
+      (showMcRepositoryMock.createByUids as jest.Mock).mockResolvedValue(created);
 
       const result = await service.create(dto);
 
@@ -75,13 +79,13 @@ describe('showMcService', () => {
         undefined,
       );
 
-      expect(showMcRepositoryMock.create).toHaveBeenCalledWith(
+      expect(showMcRepositoryMock.createByUids).toHaveBeenCalledWith(
+        'show_mc_123',
         expect.objectContaining({
-          uid: 'show_mc_123',
+          showUid: dto.showId,
+          mcUid: dto.mcId,
           note: dto.note,
           metadata: dto.metadata,
-          show: { connect: { uid: dto.showId } },
-          mc: { connect: { uid: dto.mcId } },
         }),
       );
       expect(result).toEqual(created);
@@ -91,6 +95,9 @@ describe('showMcService', () => {
       const dto: CreateShowMcDto = {
         showId: 'show_1',
         mcId: 'mc_1',
+        agreedRate: undefined,
+        compensationType: undefined,
+        commissionRate: undefined,
       } as CreateShowMcDto;
 
       const created = {
@@ -105,14 +112,15 @@ describe('showMcService', () => {
         deletedAt: null,
       };
 
-      (showMcRepositoryMock.create as jest.Mock).mockResolvedValue(created);
+      (showMcRepositoryMock.createByUids as jest.Mock).mockResolvedValue(created);
 
       const result = await service.create(dto);
 
-      expect(showMcRepositoryMock.create).toHaveBeenCalledWith(
+      expect(showMcRepositoryMock.createByUids).toHaveBeenCalledWith(
+        'show_mc_123',
         expect.objectContaining({
-          note: null,
-          metadata: {},
+          note: undefined,
+          metadata: undefined,
         }),
       );
       expect(result).toEqual(created);
@@ -123,10 +131,13 @@ describe('showMcService', () => {
         showId: 'show_1',
         mcId: 'mc_1',
         note: 'Duplicate',
+        agreedRate: undefined,
+        compensationType: undefined,
+        commissionRate: undefined,
       } as CreateShowMcDto;
 
       const error = createMockUniqueConstraintError(['showId', 'mcId']);
-      (showMcRepositoryMock.create as jest.Mock).mockRejectedValue(error);
+      (showMcRepositoryMock.createByUids as jest.Mock).mockRejectedValue(error);
 
       await expect(service.create(dto)).rejects.toThrow(error);
     });

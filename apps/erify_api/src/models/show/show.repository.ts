@@ -454,6 +454,27 @@ export class ShowRepository extends BaseRepository<
     return { data, total };
   }
 
+  /**
+   * Find all shows for a studio (by UID) within a date window.
+   * Used for economics/performance aggregation.
+   */
+  async findByStudioAndDateRange(
+    studioUid: string,
+    dateFrom: Date,
+    dateTo: Date,
+    include?: Prisma.ShowInclude,
+  ): Promise<Show[]> {
+    return this.delegate.findMany({
+      where: {
+        studio: { uid: studioUid, deletedAt: null },
+        deletedAt: null,
+        startTime: { gte: dateFrom, lte: dateTo },
+      },
+      orderBy: { startTime: 'asc' },
+      ...(include && { include }),
+    });
+  }
+
   private resolveDateToUpperBound(value: string): Date {
     const parsed = new Date(value);
     if (ShowRepository.DATE_ONLY_PATTERN.test(value)) {

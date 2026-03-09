@@ -40,18 +40,25 @@ model User {
 }
 
 model MC {
-  id        BigInt    @id @default(autoincrement())
-  uid       String    @unique
-  name      String
-  aliasName String    @map("alias_name")
-  isBanned  Boolean   @default(false) @map("is_banned")
-  metadata  Json      @default("{}")
-  showMCs   ShowMC[]
-  userId    BigInt?   @unique @map("user_id")
-  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  id                    BigInt    @id @default(autoincrement())
+  uid                   String    @unique
+  name                  String
+  aliasName             String    @map("alias_name")
+  isBanned              Boolean   @default(false) @map("is_banned")
+  // Base fixed amount used by FIXED and HYBRID compensation.
+  defaultRate           Decimal?  @map("default_rate") @db.Decimal(10, 2)
+  // Compensation type options: FIXED | COMMISSION | HYBRID.
+  defaultRateType       String?   @map("default_rate_type")
+  // Commission percent (0-100) used by COMMISSION and HYBRID compensation.
+  defaultCommissionRate Decimal?  @map("default_commission_rate") @db.Decimal(10, 2)
+  metadata              Json      @default("{}")
+  showMCs               ShowMC[]
+  studioMcs             StudioMc[]
+  userId                BigInt?   @unique @map("user_id")
+  user                  User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  deletedAt             DateTime? @map("deleted_at")
 
   @@index([uid])
   @@index([userId])
@@ -160,17 +167,23 @@ model Show {
 }
 
 model ShowMC {
-  id        BigInt    @id @default(autoincrement())
-  uid       String    @unique
-  note      String?
-  metadata  Json      @default("{}")
-  showId    BigInt    @map("show_id")
-  show      Show      @relation(fields: [showId], references: [id], onDelete: Cascade)
-  mcId      BigInt    @map("mc_id")
-  mc        MC        @relation(fields: [mcId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  id               BigInt    @id @default(autoincrement())
+  uid              String    @unique
+  note             String?
+  // Per-show fixed amount override for FIXED and HYBRID compensation.
+  agreedRate       Decimal?  @map("agreed_rate") @db.Decimal(10, 2)
+  // Per-show compensation type override: FIXED | COMMISSION | HYBRID.
+  compensationType String?   @map("compensation_type")
+  // Per-show commission percent (0-100) override for COMMISSION and HYBRID.
+  commissionRate   Decimal?  @map("commission_rate") @db.Decimal(10, 2)
+  metadata         Json      @default("{}")
+  showId           BigInt    @map("show_id")
+  show             Show      @relation(fields: [showId], references: [id], onDelete: Cascade)
+  mcId             BigInt    @map("mc_id")
+  mc               MC        @relation(fields: [mcId], references: [id], onDelete: Cascade)
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
 
   @@unique([showId, mcId])
   @@index([uid])
@@ -189,6 +202,9 @@ model ShowPlatform {
   liveStreamLink String?   @map("live_stream_link") // external link of the live stream e.g., tiktok
   platformShowId String?   @map("platform_show_id") // external id of the platform e.g., tiktok
   viewerCount    Int       @default(0) @map("viewer_count")
+  gmv            Decimal?  @map("gmv") @db.Decimal(14, 2)
+  sales          Decimal?  @map("sales") @db.Decimal(14, 2)
+  orders         Int?      @map("orders")
   metadata       Json      @default("{}")
   showId         BigInt    @map("show_id")
   show           Show      @relation(fields: [showId], references: [id], onDelete: Cascade)
@@ -219,6 +235,7 @@ model Studio {
   schedules         Schedule[]
   studioRooms       StudioRoom[]
   studioMemberships StudioMembership[]
+  studioMcs         StudioMc[]
   taskTemplates     TaskTemplate[]
   tasks             Task[]
   taskTargets       TaskTarget[]
@@ -231,6 +248,28 @@ model Studio {
   @@index([name])
   @@index([deletedAt])
   @@map("studios")
+}
+
+model StudioMc {
+  id                    BigInt    @id @default(autoincrement())
+  uid                   String    @unique
+  studioId              BigInt    @map("studio_id")
+  studio                Studio    @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  mcId                  BigInt    @map("mc_id")
+  mc                    MC        @relation(fields: [mcId], references: [id], onDelete: Cascade)
+  defaultRate           Decimal?  @map("default_rate") @db.Decimal(10, 2)
+  defaultRateType       String?   @map("default_rate_type")
+  defaultCommissionRate Decimal?  @map("default_commission_rate") @db.Decimal(10, 2)
+  isActive              Boolean   @default(true) @map("is_active")
+  metadata              Json      @default("{}")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  deletedAt             DateTime? @map("deleted_at")
+
+  @@unique([studioId, mcId])
+  @@index([studioId, deletedAt])
+  @@index([mcId, deletedAt])
+  @@map("studio_mcs")
 }
 
 model StudioRoom {
@@ -305,7 +344,7 @@ model ShowStandard {
 model StudioMembership {
   id             BigInt    @id @default(autoincrement())
   uid            String    @unique
-  role           String // admin, manager, member
+  role           String // admin, manager, member, talent_manager, designer, moderation_manager
   baseHourlyRate Decimal?  @map("base_hourly_rate") @db.Decimal(10, 2)
   metadata       Json      @default("{}")
   userId         BigInt    @map("user_id")
