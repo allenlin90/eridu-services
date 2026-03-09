@@ -11,7 +11,7 @@ export async function removeShowMc(
   mcId: string,
 ): Promise<ShowMc> {
   const response = await apiClient.delete<ShowMc>(
-    `/studios/${studioId}/shows/${showId}/mcs/${mcId}`,
+    `/studios/${studioId}/shows/${showId}/creators/${mcId}`,
   );
   return response.data;
 }

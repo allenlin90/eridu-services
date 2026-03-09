@@ -1,6 +1,7 @@
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 
 import { StudioShowController } from './studio-show.controller';
+import { StudioShowCreatorController } from './studio-show-creator.controller';
 import { StudioShowMcController } from './studio-show-mc.controller';
 
 import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
@@ -36,6 +37,28 @@ describe('studioShow role access metadata', () => {
     const removeRoles = Reflect.getMetadata(
       STUDIO_ROLES_KEY,
       StudioShowMcController.prototype.removeMc,
+    ) as string[];
+
+    expect(addRoles).toEqual([
+      STUDIO_ROLE.ADMIN,
+      STUDIO_ROLE.MANAGER,
+      STUDIO_ROLE.TALENT_MANAGER,
+    ]);
+    expect(removeRoles).toEqual([
+      STUDIO_ROLE.ADMIN,
+      STUDIO_ROLE.MANAGER,
+      STUDIO_ROLE.TALENT_MANAGER,
+    ]);
+  });
+
+  it('keeps creator alias add/remove endpoints aligned', () => {
+    const addRoles = Reflect.getMetadata(
+      STUDIO_ROLES_KEY,
+      StudioShowCreatorController.prototype.addCreator,
+    ) as string[];
+    const removeRoles = Reflect.getMetadata(
+      STUDIO_ROLES_KEY,
+      StudioShowCreatorController.prototype.removeCreator,
     ) as string[];
 
     expect(addRoles).toEqual([

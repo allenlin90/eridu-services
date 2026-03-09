@@ -40,7 +40,7 @@ export async function getShowMcs(
   params?: { page?: number; limit?: number },
 ): Promise<PaginatedResponse<ShowMc>> {
   const response = await apiClient.get<PaginatedResponse<ShowMc>>(
-    `/studios/${studioId}/shows/${showId}/mcs`,
+    `/studios/${studioId}/shows/${showId}/creators`,
     { params },
   );
   return response.data;

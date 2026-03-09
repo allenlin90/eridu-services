@@ -68,9 +68,11 @@ Decimal fields serialize as `string | null` via `decimalToStringOrNull` (`apps/e
 
 | Method | Path | Access |
 |--------|------|--------|
-| GET | `/studios/:studioId/shows/:showId/mcs` | All members |
-| POST | `/studios/:studioId/shows/:showId/mcs` | ADMIN, MANAGER, TALENT_MANAGER |
-| DELETE | `/studios/:studioId/shows/:showId/mcs/:mcId` | ADMIN, MANAGER, TALENT_MANAGER |
+| GET | `/studios/:studioId/shows/:showId/creators` | All members |
+| POST | `/studios/:studioId/shows/:showId/creators` | ADMIN, MANAGER, TALENT_MANAGER |
+| DELETE | `/studios/:studioId/shows/:showId/creators/:creatorId` | ADMIN, MANAGER, TALENT_MANAGER |
+
+Legacy compatibility: `/studios/:studioId/shows/:showId/mcs*` remains available.
 
 POST body accepts optional compensation fields: `agreed_rate`, `compensation_type`, `commission_rate`.
 

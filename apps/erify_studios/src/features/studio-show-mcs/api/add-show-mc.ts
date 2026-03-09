@@ -19,7 +19,7 @@ export async function addShowMc(
   data: AddShowMcInput,
 ): Promise<ShowMc> {
   const response = await apiClient.post<ShowMc>(
-    `/studios/${studioId}/shows/${showId}/mcs`,
+    `/studios/${studioId}/shows/${showId}/creators`,
     data,
   );
   return response.data;

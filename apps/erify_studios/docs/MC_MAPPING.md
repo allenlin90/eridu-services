@@ -17,9 +17,9 @@ Creators workflows are split into:
 
 ```
 api/
-  get-show-mcs.ts          — GET /studios/:studioId/shows/:showId/mcs
-  add-show-mc.ts           — POST /studios/:studioId/shows/:showId/mcs
-  remove-show-mc.ts        — DELETE /studios/:studioId/shows/:showId/mcs/:mcId
+  get-show-mcs.ts          — GET /studios/:studioId/shows/:showId/creators
+  add-show-mc.ts           — POST /studios/:studioId/shows/:showId/creators
+  remove-show-mc.ts        — DELETE /studios/:studioId/shows/:showId/creators/:creatorId
   get-mc-availability.ts   — GET /studios/:studioId/creators/availability
   bulk-assign-mcs.ts       — PATCH/PUT /studios/:studioId/shows/mc-assignments/bulk (append/replace)
 hooks/
@@ -88,3 +88,6 @@ The dialog includes:
 Known issue:
 - Invite flow currently requires `user_id` (`usr_*`) input instead of searchable user lookup.
 - Keep current approach for now; defer optimization/refactor (indexed search/cache/fulltext strategy) to follow-up iteration.
+Legacy compatibility:
+- Show detail route currently remains `/studios/$studioId/shows/$showId/mcs` (UI path compatibility).
+- Backend accepts both `/shows/:showId/creators` (canonical) and `/shows/:showId/mcs` (legacy alias).
