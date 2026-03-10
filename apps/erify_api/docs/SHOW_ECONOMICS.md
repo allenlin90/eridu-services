@@ -1,7 +1,9 @@
 # Show Economics & P&L — Shipped Behavior
 
-> **Status**: ✅ Implemented (Phase 4, 2026-03-07)
-> **Phase**: 4 — P&L Visibility & MC Operations
+> **Status**: ⚠️ Preview — Backend only (Phase 4, 2026-03-07)
+> **Phase**: 4 — Cost Visibility & MC Operations
+>
+> **Not production-ready**: All three endpoints are implemented and accessible (ADMIN/MANAGER) but have **no UI support** in `erify_studios`. Creator cost setup (MC compensation rates) is fully functional. Revenue input (`gmv`, `sales`, `orders` on ShowPlatform) has no FE input workflow — values must be set via direct API call. Commission/hybrid MC costs show as $0 for any show without recorded revenue. Full P&L with revenue workflow is deferred to Phase 5.
 
 ## What It Does
 

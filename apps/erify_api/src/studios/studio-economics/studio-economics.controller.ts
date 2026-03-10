@@ -27,7 +27,12 @@ export class StudioEconomicsController extends BaseStudioController {
   }
 
   /**
-   * F4.3: Per-show P&L breakdown.
+   * F4.3: Per-show cost breakdown.
+   *
+   * @preview Backend-only. No UI support in erify_studios.
+   * Revenue fields (gmv) read from ShowPlatform but no input workflow exists yet.
+   * Commission/hybrid MC costs show as $0 when no revenue is recorded.
+   * Full P&L with revenue input workflow is deferred to Phase 5.
    */
   @Get('shows/:showId/economics')
   @ZodResponse(showEconomicsSchema)
@@ -39,7 +44,10 @@ export class StudioEconomicsController extends BaseStudioController {
   }
 
   /**
-   * F4.4: Studio-level P&L view grouped by show/schedule/client.
+   * F4.4: Studio-level cost view grouped by show/schedule/client.
+   *
+   * @preview Backend-only. No UI support in erify_studios.
+   * contribution_margin will be misleading until revenue input workflow ships (Phase 5).
    */
   @Get('economics')
   @ZodResponse(pnlResponseSchema)
@@ -52,6 +60,9 @@ export class StudioEconomicsController extends BaseStudioController {
 
   /**
    * F4.5: Studio performance metrics grouped by show/schedule/client.
+   *
+   * @preview Backend-only. No UI support in erify_studios.
+   * gmv/sales/orders fields require manual API entry; no FE input workflow exists yet (Phase 5).
    */
   @Get('performance')
   @ZodResponse(performanceResponseSchema)

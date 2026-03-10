@@ -154,6 +154,8 @@ Deliverables:
   - `StudioMc` defaults are batch-loaded once per request window to avoid per-show/per-mc lookup fan-out.
   - Unit coverage added for StudioMc precedence in compensation calculation.
 
+**Scope note**: Economics endpoints are backend-only (`@preview`). Creator cost setup (MC compensation rates) is fully functional. Revenue input and P&L UI are deferred to Phase 5 — see `SHOW_ECONOMICS.md` for details. Commission/hybrid MC costs will show $0 for shows without recorded revenue until Phase 5 ships.
+
 Verify:
 - Economics unit tests for fixed/commission/hybrid scenarios across fallback tiers.
 - Snapshot comparison before/after migration to validate expected parity for unchanged data.

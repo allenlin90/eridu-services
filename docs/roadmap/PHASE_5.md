@@ -134,6 +134,27 @@ TODOs:
 - Workflow enhancements that do not change backend contracts.
 - Bulk review approve refinements.
 
+### P&L Revenue Workflow — Full P&L Visibility (Phase 4 Deferred)
+
+Context:
+Phase 4 shipped the "L" side (MC compensation costs, shift labor costs) and the economics/performance backend endpoints. The "P" side (revenue input and contribution margin) was deferred because there is no clear data model design, no FE input workflow, and no UI. The economics endpoints are marked `@preview` and commission/hybrid MC costs show as $0 without revenue.
+
+Open design questions to resolve before implementation:
+- **GMV vs Sales distinction**: What does each represent in the live-commerce context? (GMV = total traded value including returns/cancelled orders; Sales = net settled revenue? Needs product definition.)
+- **Revenue ownership model**: Is `ShowPlatform.gmv` the right location, or should financial outcomes live in a separate `ShowPlatformMetrics` table to support corrections, multi-snapshot, and audit trail?
+- **Platform-specific metrics**: TikTok, YouTube, Shopee etc. have different revenue signals (gifting, super chats, ad rev). Should platform-specific extras go in `metadata` or typed columns?
+- **Input workflow**: Who enters revenue and when? Post-show? Real-time? Import from platform API?
+- **Commission cost dependency**: COMMISSION/HYBRID MC cost calculation requires revenue. Without revenue, cost is $0. The economics service already supports this; it just needs a revenue value to be meaningful.
+
+TODOs (once design questions are resolved):
+- Define and document the `gmv` vs `sales` distinction in `docs/product/BUSINESS.md`.
+- Decide: extend `ShowPlatform` with typed columns, or introduce `ShowPlatformMetrics` table for financial outcomes.
+- Add FE input for revenue fields on the show platform form in `erify_studios` (currently only `viewer_count` is editable).
+- Remove `@preview` markers from economics controller once UI ships.
+- Update `SHOW_ECONOMICS.md` status to ✅ Implemented.
+
+Deferred from: Phase 4, March 2026.
+
 ### Frontend API Contract Consistency (Tech Debt)
 
 Context:
