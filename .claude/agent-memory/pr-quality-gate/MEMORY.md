@@ -7,6 +7,15 @@
 - `studio-shift-schedule-patterns.md` — Shift schedule feature patterns (feat/studio-shift-schedule)
 - `moderation-workflow-patterns.md` — Moderation loop, idb-keyval draft persistence
 
+## Review Methodology (CRITICAL)
+
+**Tests confirm intent but do not verify implementation.**
+
+- Always read the actual implementation files. Do not infer correctness from a passing test suite.
+- When a PR includes test changes, read both the test and the code: verify the test would fail if the logic reverted, assertions check arguments (not just call count), and mocks don't mask incorrect query construction.
+- Report a fix as "verified" only after reading the corrected code and confirming the logic is sound.
+- Flag tests updated to match new behavior without clear rationale — that is a coverage regression, not a fix.
+
 ## Cross-Cutting Patterns (Quick Reference)
 
 ### Service Layer Rule: No Prisma.* Types

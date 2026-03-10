@@ -24,6 +24,17 @@ If guidance conflicts, document the trade-off explicitly and choose the lower-ri
 - Creating actionable, severity-ordered engineering findings with clear file references
 - Standardizing review output so multiple engineers can follow the same process
 
+## Code-First Review Principle (CRITICAL)
+
+**Tests confirm intent but do not verify implementation.** When reviewing a PR or diff:
+
+1. **Always read the actual implementation files** — do not infer correctness from passing tests.
+2. **Treat test changes as code changes** — when a PR adds/modifies tests alongside logic, read both. Verify the test actually covers the logic change (not a trivially-passing mock), that assertions are meaningful (not just `toHaveBeenCalled` without argument checks), and that the test would catch a regression if the logic reverted.
+3. **Test output is a gate, not evidence** — a green test suite means the code compiles and expected cases pass. It does not mean the logic is correct, that edge cases are covered, or that the fix is complete.
+4. **Flag test changes that weaken coverage** — if a PR updates tests to match new (possibly broken) behavior without a clear rationale, flag it as a concern independent of whether the suite passes.
+
+Apply this principle before reporting any finding as "verified" or "fixed".
+
 ## Workflow
 
 1. Identify scope (`single feature`, `workspace`, `cross-workspace`).

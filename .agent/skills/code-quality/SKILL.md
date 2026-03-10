@@ -42,6 +42,21 @@ For architecture-specific patterns (N+1 queries, Soft Deletes, etc.), refer to:
 - **Unit Tests**: Test individual classes (Services, Utils) with **mocked dependencies**.
 - **Integration Tests**: Test interactions (Repositories) with **real database/services**.
 
+### Code-First Review Rule (CRITICAL)
+
+**Passing tests do not prove correctness — always verify the implementation directly.**
+
+When reviewing code that includes test changes:
+
+1. Read the implementation file first; form a hypothesis about what the correct behavior should be.
+2. Then read the test file: verify the test would fail if the implementation were wrong (not just that it currently passes).
+3. Watch for these test anti-patterns that give false confidence:
+   - Assertions that only check call count (`toHaveBeenCalled`) without verifying arguments
+   - Mocks that return the "right" value regardless of input, masking incorrect query construction
+   - Tests updated to match new behavior without explaining why the old behavior was wrong
+   - Missing negative/edge-case assertions (e.g., a test that only covers the happy path of a guard)
+4. A test suite passing after a fix **is a gate**, not verification. The fix is verified by reading the corrected code and confirming the logic is sound.
+
 **Example (Unit Test)**:
 ```typescript
 describe('UserService', () => {
