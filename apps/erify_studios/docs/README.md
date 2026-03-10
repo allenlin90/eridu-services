@@ -11,11 +11,12 @@ Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Des
 ## Canonical Docs
 
 1. [Task Management Summary](./TASK_MANAGEMENT_SUMMARY.md)
-2. [Moderation Loop Workflow](./MODERATION_WORKFLOW.md)
-3. [Show Readiness](./SHOW_READINESS.md)
-4. [Studio Role Use Cases and Views](./STUDIO_ROLE_USE_CASES_AND_VIEWS.md)
-5. [Studio Shift Schedule Features and Workflows](./STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md)
-6. [MC Mapping](./MC_MAPPING.md) — ✅ Phase 4
+2. [JsonForm Submission Upload Flow](./JSON_FORM_SUBMISSION_UPLOAD_FLOW.md)
+3. [Moderation Loop Workflow](./MODERATION_WORKFLOW.md)
+4. [Show Readiness](./SHOW_READINESS.md)
+5. [Studio Role Use Cases and Views](./STUDIO_ROLE_USE_CASES_AND_VIEWS.md)
+6. [Studio Shift Schedule Features and Workflows](./STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md)
+7. [MC Mapping](./MC_MAPPING.md) — ✅ Phase 4
 
 ## Design Docs
 

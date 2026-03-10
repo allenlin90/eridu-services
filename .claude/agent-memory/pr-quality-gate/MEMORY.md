@@ -110,3 +110,11 @@ This is a UX degradation, not a crash — acceptable for now. Flagged as warning
 entity types from `@prisma/client` are allowed in services; only `Prisma.XxxInput/WhereInput/etc.` is forbidden.
 
 **`listMembershipUserCatalog` N+1 pattern:** Iterative pagination + per-page membership lookup. Bounded by `limit` (max 50), acceptable for now.
+
+### JsonForm Upload Cache Pattern (confirmed in json-form-upload-fix PR)
+- Two-phase submit: `validateBeforeSubmit()` exempts pending-file fields from blocking Zod errors, then `flushPendingFileUploads()` uploads and writes URLs.
+- Image compression happens at file-select time (stored in `pendingFilesByKey[key].file` as prepared file). The flush path uploads the already-prepared file — no second `prepareImageForUpload` call during submit.
+- `uploadedFileCacheRef` keyed by fieldKey, stores `{ fingerprint, fileUrl }`. Fingerprint = `name:size:type:lastModified`. Cache reuse is safe because the same fingerprint implies same bytes.
+- `clearUploadedFileCache()` must be called only after successful API submit (inside the success branch, not `finally`). Both `task-execution-sheet.tsx` and `studio-task-action-sheet.tsx` follow this correctly.
+- Per-field cache invalidation: when user selects new file or clears a field, `delete uploadedFileCacheRef.current[key]` is called synchronously before setting new pending state.
+- `handleFormChange` wrapper pattern warning: wrapping `useDebounceCallback` result in an inline arrow function creates a new function reference each render. JsonForm's `onChange` useEffect dep on this unstable ref causes form.watch() subscription churn on every parent re-render. Should use `useCallback` for stable identity.

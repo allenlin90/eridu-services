@@ -50,6 +50,7 @@ vi.mock('@/components/json-form/json-form', () => ({
       flushPendingFileUploads: vi.fn().mockResolvedValue(values),
       hasPendingFileUploads: vi.fn().mockReturnValue(false),
       hasBlockingFileIssues: vi.fn().mockReturnValue(false),
+      clearUploadedFileCache: vi.fn(),
     }));
 
     return (

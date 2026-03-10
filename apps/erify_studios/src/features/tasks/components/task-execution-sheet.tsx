@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { del, get, set } from 'idb-keyval';
 import { AlertCircle, AlertTriangle, CheckCircle2, Clock, Send } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useDebounceCallback } from 'usehooks-ts';
 
@@ -404,6 +404,9 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
           ...(nextContent ? { content: nextContent } : {}),
         },
       });
+      if (isSubmitAction) {
+        jsonFormRef.current?.clearUploadedFileCache();
+      }
       void del(draftKey).catch(() => undefined);
       setDraftState(null);
       if (action === 'APPROVE_COMPLETED') {
@@ -414,9 +417,13 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
     }
   };
 
-  const handleFormChange = useDebounceCallback((values: Record<string, unknown>) => {
+  const handleFormChangeDebounced = useDebounceCallback((values: Record<string, unknown>) => {
     setDraftState({ taskId: task.id, content: values, saveState: 'dirty' });
   }, 300);
+
+  const handleFormChange = useCallback((values: Record<string, unknown>) => {
+    handleFormChangeDebounced(values);
+  }, [handleFormChangeDebounced]);
 
   return (
     <>
