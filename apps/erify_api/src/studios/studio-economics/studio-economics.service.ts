@@ -102,6 +102,8 @@ export class StudioEconomicsService {
       groups.set(key, existing);
     }
 
+    // TODO(phase-5): Pro-rata by show count is simplistic — a 1-hour show gets the
+    // same allocation as an 8-hour show. Consider duration-weighted allocation.
     const shiftCostPerShow = totalShiftCost / shows.length;
     const items: PnlGroupItem[] = [];
     let summaryMcCost = 0;
@@ -252,6 +254,10 @@ type ShowWithGroupingKeys = Show & {
  * - FIXED: fixed amount only (agreedRate -> defaultRate fallback)
  * - COMMISSION: revenue percentage only (commissionRate -> defaultCommissionRate fallback)
  * - HYBRID: fixed amount + revenue percentage
+ *
+ * TODO(phase-5): Replace floating-point arithmetic with decimal.js or Prisma-level
+ * aggregation. Current Number() conversions from Decimal(10,2) can accumulate
+ * precision errors in financial reports. Acceptable for Phase 4 preview scope.
  */
 export function computeMcCost(
   showMcs: ShowMcWithMc[],

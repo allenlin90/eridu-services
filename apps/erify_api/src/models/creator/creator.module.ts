@@ -13,4 +13,5 @@ import { UtilityModule } from '@/utility/utility.module';
 })
 export class CreatorModule {}
 
+// TODO(deprecate): Remove MC alias once all consumers migrate to Creator naming
 export { CreatorModule as McModule };

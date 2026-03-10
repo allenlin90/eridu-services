@@ -23,7 +23,6 @@ import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
-import { CreatorRepository } from '@/models/creator/creator.repository';
 import { CreatorService } from '@/models/creator/creator.service';
 import { ShowService } from '@/models/show/show.service';
 import { ShowCreatorRepository } from '@/models/show-creator/show-creator.repository';
@@ -35,7 +34,6 @@ import { StudioService } from '@/models/studio/studio.service';
 export class StudioShowCreatorController extends BaseStudioController {
   constructor(
     private readonly showService: ShowService,
-    private readonly creatorRepository: CreatorRepository,
     private readonly showCreatorRepository: ShowCreatorRepository,
     private readonly showCreatorService: ShowCreatorService,
   ) {
@@ -70,41 +68,12 @@ export class StudioShowCreatorController extends BaseStudioController {
   ) {
     const show = await this.resolveShow(showId, studioId);
 
-    const creator = await this.creatorRepository.findByUid(body.creator_id);
-    if (!creator) {
-      throw HttpError.notFound('Creator not found');
-    }
-
-    const existing = await this.showCreatorRepository.findMany({
-      where: { showId: show.id, mcId: creator.id },
+    return this.showCreatorService.addCreatorToShow(show.id, body.creator_id, {
+      note: body.note,
+      agreedRate: body.agreed_rate,
+      compensationType: body.compensation_type,
+      commissionRate: body.commission_rate,
     });
-    const existingRecord = existing[0];
-
-    let result;
-    if (existingRecord) {
-      if (existingRecord.deletedAt === null) {
-        throw HttpError.badRequest('Creator is already assigned to this show');
-      }
-      result = await this.showCreatorRepository.restoreAndUpdateAssignment(existingRecord.id, {
-        note: body.note,
-        agreedRate: body.agreed_rate !== undefined ? body.agreed_rate.toFixed(2) : undefined,
-        compensationType: body.compensation_type,
-        commissionRate: body.commission_rate !== undefined ? body.commission_rate.toFixed(2) : undefined,
-      });
-    } else {
-      const uid = this.generateShowCreatorUid();
-      result = await this.showCreatorRepository.createAssignment({
-        uid,
-        showId: show.id,
-        mcId: creator.id,
-        note: body.note,
-        agreedRate: body.agreed_rate !== undefined ? body.agreed_rate.toFixed(2) : undefined,
-        compensationType: body.compensation_type,
-        commissionRate: body.commission_rate !== undefined ? body.commission_rate.toFixed(2) : undefined,
-      });
-    }
-
-    return this.showCreatorRepository.findByUid(result.uid, { show: true, mc: true });
   }
 
   @Delete(':creatorId')
@@ -117,27 +86,7 @@ export class StudioShowCreatorController extends BaseStudioController {
   ) {
     const show = await this.resolveShow(showId, studioId);
 
-    const creator = await this.creatorRepository.findByUid(creatorId);
-    if (!creator) {
-      throw HttpError.notFound('Creator not found');
-    }
-
-    const assignments = await this.showCreatorRepository.findMany({
-      where: { showId: show.id, mcId: creator.id, deletedAt: null },
-      include: { show: true, mc: true },
-    });
-
-    const assignment = assignments[0];
-    if (!assignment) {
-      throw HttpError.notFound('Creator is not assigned to this show');
-    }
-
-    await this.showCreatorRepository.softDelete({ id: assignment.id });
-    return assignment;
-  }
-
-  private generateShowCreatorUid(): string {
-    return this.showCreatorService.generateShowCreatorUid();
+    return this.showCreatorService.removeCreatorFromShow(show.id, creatorId);
   }
 
   private async resolveShow(showUid: string, studioUid: string) {

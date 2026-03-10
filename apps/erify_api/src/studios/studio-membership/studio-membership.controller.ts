@@ -74,16 +74,7 @@ export class StudioMembershipController extends BaseStudioController {
     @Param('id', new UidValidationPipe(StudioMembershipService.UID_PREFIX, 'Studio Membership')) id: string,
     @Body() dto: UpdateStudioMembershipRoleDto,
   ) {
-    const { data } = await this.studioMembershipService.listStudioMemberships({
-      studioId,
-      uid: id,
-      take: 1,
-      skip: 0,
-    }, {
-      user: true,
-      studio: true,
-    });
-    const existing = data[0] ?? null;
+    const existing = await this.studioMembershipService.findByStudioAndUid(studioId, id, { user: true, studio: true });
     this.ensureResourceExists(existing, 'Studio Membership', id);
 
     return this.studioMembershipService.updateStudioMembership(
@@ -133,16 +124,7 @@ export class StudioMembershipController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('id', new UidValidationPipe(StudioMembershipService.UID_PREFIX, 'Studio Membership')) id: string,
   ) {
-    const { data } = await this.studioMembershipService.listStudioMemberships({
-      studioId,
-      uid: id,
-      take: 1,
-      skip: 0,
-    }, {
-      user: true,
-      studio: true,
-    });
-    const existing = data[0] ?? null;
+    const existing = await this.studioMembershipService.findByStudioAndUid(studioId, id, { user: true, studio: true });
     this.ensureResourceExists(existing, 'Studio Membership', id);
 
     await this.studioMembershipService.deleteStudioMembership(id);

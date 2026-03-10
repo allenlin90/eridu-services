@@ -80,8 +80,11 @@ export const createStudioCreatorRosterSchema = z.object({
   default_commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
   is_active: z.boolean().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
-}).transform((data) => ({
-  creatorId: data.creator_id ?? data.mc_id ?? '',
+}).refine(
+  (data) => data.creator_id !== undefined || data.mc_id !== undefined,
+  { message: 'Either creator_id or mc_id is required', path: ['creator_id'] },
+).transform((data) => ({
+  creatorId: (data.creator_id ?? data.mc_id)!,
   defaultRate: data.default_rate !== undefined
     ? (data.default_rate === null ? null : data.default_rate.toFixed(2))
     : undefined,
@@ -119,6 +122,7 @@ export class UpdateStudioCreatorRosterDto extends createZodDto(updateStudioCreat
 export type CreateStudioCreatorRosterPayload = z.infer<typeof createStudioCreatorRosterSchema>;
 export type UpdateStudioCreatorRosterPayload = z.infer<typeof updateStudioCreatorRosterSchema>;
 
+// TODO(deprecate): Remove MC aliases once all consumers migrate to Creator naming
 export { studioCreatorRosterItemDto as studioMcRosterItemDto };
 export { createStudioCreatorRosterSchema as createStudioMcRosterSchema };
 export { updateStudioCreatorRosterSchema as updateStudioMcRosterSchema };

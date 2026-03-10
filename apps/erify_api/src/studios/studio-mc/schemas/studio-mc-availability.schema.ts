@@ -25,4 +25,5 @@ export class CreatorAvailabilityPayloadDto extends createZodDto(mcAvailabilityPa
   }[];
 }
 
+// TODO(deprecate): Remove MC alias once all consumers migrate to Creator naming
 export { CreatorAvailabilityPayloadDto as McAvailabilityPayloadDto };

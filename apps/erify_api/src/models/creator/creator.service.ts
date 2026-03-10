@@ -110,4 +110,5 @@ export class CreatorService extends BaseModelService {
   }
 }
 
+// TODO(deprecate): Remove MC alias once all consumers migrate to Creator naming
 export { CreatorService as McService };

@@ -134,6 +134,21 @@ export class StudioMembershipService extends BaseModelService {
     return eligibleUsers;
   }
 
+  async findByStudioAndUid(
+    studioUid: string,
+    membershipUid: string,
+    include?: { user?: boolean; studio?: boolean },
+  ): Promise<StudioMembershipWithRelations | null> {
+    return this.studioMembershipRepository.findOne(
+      {
+        uid: membershipUid,
+        studio: { uid: studioUid },
+        deletedAt: null,
+      },
+      include,
+    ) as Promise<StudioMembershipWithRelations | null>;
+  }
+
   async getStudioMembershipsByStudio(
     studioId: StudioId,
   ): Promise<StudioMembership[]> {

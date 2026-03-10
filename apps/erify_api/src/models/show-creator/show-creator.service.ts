@@ -7,7 +7,9 @@ import type {
 } from './schemas/show-creator.schema';
 import { ShowCreatorRepository } from './show-creator.repository';
 
+import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { CreatorRepository } from '@/models/creator/creator.repository';
 import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
@@ -17,6 +19,7 @@ export class ShowCreatorService extends BaseModelService {
 
   constructor(
     private readonly showCreatorRepository: ShowCreatorRepository,
+    private readonly creatorRepository: CreatorRepository,
     protected readonly utilityService: UtilityService,
   ) {
     super(utilityService);
@@ -100,6 +103,81 @@ export class ShowCreatorService extends BaseModelService {
   async softDelete(uid: string): ReturnType<ShowCreatorRepository['softDelete']> {
     return this.showCreatorRepository.softDelete({ uid });
   }
+
+  /**
+   * Adds a creator to a show, restoring a soft-deleted assignment if one exists.
+   */
+  async addCreatorToShow(
+    showId: bigint,
+    creatorUid: string,
+    params: {
+      note?: string;
+      agreedRate?: number;
+      compensationType?: string;
+      commissionRate?: number;
+    },
+  ): Promise<ShowMC> {
+    const creator = await this.creatorRepository.findByUid(creatorUid);
+    if (!creator) {
+      throw HttpError.notFound('Creator not found');
+    }
+
+    const existing = await this.showCreatorRepository.findMany({
+      where: { showId, mcId: creator.id },
+    });
+    const existingRecord = existing[0];
+
+    const rateFields = {
+      agreedRate: params.agreedRate !== undefined ? params.agreedRate.toFixed(2) : undefined,
+      compensationType: params.compensationType,
+      commissionRate: params.commissionRate !== undefined ? params.commissionRate.toFixed(2) : undefined,
+    };
+
+    if (existingRecord) {
+      if (existingRecord.deletedAt === null) {
+        throw HttpError.badRequest('Creator is already assigned to this show');
+      }
+      const restored = await this.showCreatorRepository.restoreAndUpdateAssignment(existingRecord.id, {
+        note: params.note,
+        ...rateFields,
+      });
+      return (await this.showCreatorRepository.findByUid(restored.uid, { show: true, mc: true }))!;
+    }
+
+    const uid = this.generateUid();
+    const created = await this.showCreatorRepository.createAssignment({
+      uid,
+      showId,
+      mcId: creator.id,
+      note: params.note,
+      ...rateFields,
+    });
+    return (await this.showCreatorRepository.findByUid(created.uid, { show: true, mc: true }))!;
+  }
+
+  /**
+   * Removes a creator from a show by soft-deleting the assignment.
+   */
+  async removeCreatorFromShow(showId: bigint, creatorUid: string): Promise<ShowMC> {
+    const creator = await this.creatorRepository.findByUid(creatorUid);
+    if (!creator) {
+      throw HttpError.notFound('Creator not found');
+    }
+
+    const assignments = await this.showCreatorRepository.findMany({
+      where: { showId, mcId: creator.id, deletedAt: null },
+      include: { show: true, mc: true },
+    });
+
+    const assignment = assignments[0];
+    if (!assignment) {
+      throw HttpError.notFound('Creator is not assigned to this show');
+    }
+
+    await this.showCreatorRepository.softDelete({ id: assignment.id });
+    return assignment;
+  }
 }
 
+// TODO(deprecate): Remove MC alias once all consumers migrate to Creator naming
 export { ShowCreatorService as ShowMcService };

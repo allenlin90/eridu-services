@@ -8,6 +8,7 @@ import type {
 import { ShowMcRepository } from './show-mc.repository';
 import { ShowMcService } from './show-mc.service';
 
+import { CreatorRepository } from '@/models/creator/creator.repository';
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
 import { UtilityService } from '@/utility/utility.service';
 
@@ -26,6 +27,10 @@ describe('showMcService', () => {
     findOne: jest.fn(),
   };
 
+  const creatorRepositoryMock: Partial<jest.Mocked<CreatorRepository>> = {
+    findByUid: jest.fn(),
+  };
+
   const utilityMock: Partial<jest.Mocked<UtilityService>> = {
     generateBrandedId: jest.fn().mockReturnValue('show_mc_123'),
   };
@@ -35,6 +40,7 @@ describe('showMcService', () => {
       providers: [
         ShowMcService,
         { provide: ShowMcRepository, useValue: showMcRepositoryMock },
+        { provide: CreatorRepository, useValue: creatorRepositoryMock },
         { provide: UtilityService, useValue: utilityMock },
       ],
     }).compile();

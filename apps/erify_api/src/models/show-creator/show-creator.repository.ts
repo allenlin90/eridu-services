@@ -212,4 +212,5 @@ export class ShowCreatorRepository extends BaseRepository<
   }
 }
 
+// TODO(deprecate): Remove MC alias once all consumers migrate to Creator naming
 export { ShowCreatorRepository as ShowMcRepository };
