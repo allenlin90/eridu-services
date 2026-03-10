@@ -11,6 +11,7 @@ import { McRepository as CreatorRepository } from '@/models/mc/mc.repository';
 import { ShowService } from '@/models/show/show.service';
 import { ShowMcRepository as ShowCreatorRepository } from '@/models/show-mc/show-mc.repository';
 import { ShowMcService as ShowCreatorService } from '@/models/show-mc/show-mc.service';
+import { StudioMcRepository } from '@/models/studio-mc/studio-mc.repository';
 
 @Injectable()
 export class StudioShowMcOrchestrationService {
@@ -19,6 +20,7 @@ export class StudioShowMcOrchestrationService {
   constructor(
     private readonly showService: ShowService,
     private readonly creatorRepository: CreatorRepository,
+    private readonly studioMcRepository: StudioMcRepository,
     private readonly showCreatorRepository: ShowCreatorRepository,
     private readonly showCreatorService: ShowCreatorService,
   ) {}
@@ -88,6 +90,26 @@ export class StudioShowMcOrchestrationService {
       const missing = creatorUids.filter((uid) => !foundUids.has(uid));
       throw HttpError.badRequest(`Creators not found: ${missing.join(', ')}`);
     }
+
+    const rosterRows = await this.studioMcRepository.findMany({
+      where: {
+        studio: { uid: studioUid, deletedAt: null },
+        mcId: { in: mcs.map((mc) => mc.id) },
+        isActive: true,
+        deletedAt: null,
+      },
+    });
+
+    if (rosterRows.length !== mcs.length) {
+      const rosteredCreatorIds = new Set(rosterRows.map((row) => row.mcId));
+      const unrostered = mcs
+        .filter((creator) => !rosteredCreatorIds.has(creator.id))
+        .map((creator) => creator.uid);
+      throw HttpError.badRequest(
+        `Creators are not active in this studio roster: ${unrostered.join(', ')}`,
+      );
+    }
+
     return { shows, mcs };
   }
 

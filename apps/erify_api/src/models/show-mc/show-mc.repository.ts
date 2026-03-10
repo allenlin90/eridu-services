@@ -180,11 +180,11 @@ export class ShowMcRepository extends BaseRepository<
     return this.delegate.update({
       where: { id },
       data: {
-        note: params.note ?? null,
+        ...(params.note !== undefined && { note: params.note }),
         ...(params.agreedRate !== undefined && { agreedRate: params.agreedRate }),
         ...(params.compensationType !== undefined && { compensationType: params.compensationType }),
         ...(params.commissionRate !== undefined && { commissionRate: params.commissionRate }),
-        metadata: params.metadata ?? {},
+        ...(params.metadata !== undefined && { metadata: params.metadata }),
         deletedAt: null,
       },
     });

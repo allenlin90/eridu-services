@@ -65,6 +65,18 @@ export class StudioMcRepository extends BaseRepository<
       total: number;
     }> {
     const search = params.search?.trim();
+    const mcWhere: Prisma.MCWhereInput = {
+      deletedAt: null,
+      ...(search
+        ? {
+            OR: [
+              { uid: { contains: search, mode: 'insensitive' } },
+              { name: { contains: search, mode: 'insensitive' } },
+              { aliasName: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
 
     const where: Prisma.StudioMcWhereInput = {
       deletedAt: null,
@@ -76,18 +88,7 @@ export class StudioMcRepository extends BaseRepository<
       ...(params.defaultRateType !== undefined && {
         defaultRateType: params.defaultRateType,
       }),
-      ...(search
-        ? {
-            mc: {
-              deletedAt: null,
-              OR: [
-                { uid: { contains: search, mode: 'insensitive' } },
-                { name: { contains: search, mode: 'insensitive' } },
-                { aliasName: { contains: search, mode: 'insensitive' } },
-              ],
-            },
-          }
-        : {}),
+      mc: mcWhere,
     };
 
     const [data, total] = await Promise.all([

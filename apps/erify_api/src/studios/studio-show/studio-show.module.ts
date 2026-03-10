@@ -7,10 +7,11 @@ import { StudioShowMcOrchestrationService } from './studio-show-mc.orchestration
 import { McModule } from '@/models/mc/mc.module';
 import { ShowModule } from '@/models/show/show.module';
 import { ShowMcModule } from '@/models/show-mc/show-mc.module';
+import { StudioMcModelModule } from '@/models/studio-mc/studio-mc.module';
 import { TaskOrchestrationModule } from '@/task-orchestration/task-orchestration.module';
 
 @Module({
-  imports: [TaskOrchestrationModule, ShowModule, McModule, ShowMcModule],
+  imports: [TaskOrchestrationModule, ShowModule, McModule, ShowMcModule, StudioMcModelModule],
   controllers: [StudioShowController, StudioShowCreatorController],
   providers: [StudioShowMcOrchestrationService],
 })

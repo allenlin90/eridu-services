@@ -30,6 +30,12 @@ describe('hasStudioRouteAccess', () => {
     expect(hasStudioRouteAccess(STUDIO_ROLE.TALENT_MANAGER, 'tasks')).toBe(false);
   });
 
+  it('allows non-manager roles to access member-level routes', () => {
+    expect(hasStudioRouteAccess(STUDIO_ROLE.TALENT_MANAGER, 'dashboard')).toBe(true);
+    expect(hasStudioRouteAccess(STUDIO_ROLE.DESIGNER, 'myTasks')).toBe(true);
+    expect(hasStudioRouteAccess(STUDIO_ROLE.MODERATION_MANAGER, 'myShifts')).toBe(true);
+  });
+
   it('keeps members route as admin only', () => {
     expect(hasStudioRouteAccess(STUDIO_ROLE.ADMIN, 'members')).toBe(true);
     expect(hasStudioRouteAccess(STUDIO_ROLE.MANAGER, 'members')).toBe(false);

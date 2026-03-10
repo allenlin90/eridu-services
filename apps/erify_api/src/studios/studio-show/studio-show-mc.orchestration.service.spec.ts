@@ -9,6 +9,7 @@ describe('studioShowMcOrchestrationService', () => {
   let service: StudioShowMcOrchestrationService;
   let showService: { findMany: jest.Mock };
   let mcRepository: { findByUids: jest.Mock };
+  let studioMcRepository: { findMany: jest.Mock };
   let showMcRepository: {
     findMany: jest.Mock;
     createAssignment: jest.Mock;
@@ -20,6 +21,7 @@ describe('studioShowMcOrchestrationService', () => {
   beforeEach(() => {
     showService = { findMany: jest.fn() };
     mcRepository = { findByUids: jest.fn() };
+    studioMcRepository = { findMany: jest.fn() };
     showMcRepository = {
       findMany: jest.fn(),
       createAssignment: jest.fn(),
@@ -31,6 +33,7 @@ describe('studioShowMcOrchestrationService', () => {
     service = new StudioShowMcOrchestrationService(
       showService as never,
       mcRepository as never,
+      studioMcRepository as never,
       showMcRepository as never,
       showMcService as never,
     );
@@ -44,6 +47,11 @@ describe('studioShowMcOrchestrationService', () => {
       { id: BigInt(10), uid: 'mc_1' },
       { id: BigInt(11), uid: 'mc_2' },
       { id: BigInt(12), uid: 'mc_3' },
+    ]);
+    studioMcRepository.findMany.mockResolvedValue([
+      { mcId: BigInt(10) },
+      { mcId: BigInt(11) },
+      { mcId: BigInt(12) },
     ]);
     showMcRepository.findMany.mockResolvedValue([
       { id: BigInt(100), showId: BigInt(1), mcId: BigInt(10), deletedAt: null },
@@ -90,9 +98,27 @@ describe('studioShowMcOrchestrationService', () => {
     ).rejects.toMatchObject(HttpError.badRequest('Creators not found: mc_2'));
   });
 
+  it('throws bad request when at least one creator is not in active studio roster', async () => {
+    showService.findMany.mockResolvedValue([{ id: BigInt(1), uid: 'show_1' }]);
+    mcRepository.findByUids.mockResolvedValue([
+      { id: BigInt(10), uid: 'mc_1' },
+      { id: BigInt(11), uid: 'mc_2' },
+    ]);
+    studioMcRepository.findMany.mockResolvedValue([
+      { mcId: BigInt(10) },
+    ]);
+
+    await expect(
+      service.bulkAppendCreatorsToShows('std_1', ['show_1'], ['mc_1', 'mc_2']),
+    ).rejects.toMatchObject(
+      HttpError.badRequest('Creators are not active in this studio roster: mc_2'),
+    );
+  });
+
   it('accepts duplicate show and MC UIDs by de-duplicating before validation', async () => {
     showService.findMany.mockResolvedValue([{ id: BigInt(1), uid: 'show_1' }]);
     mcRepository.findByUids.mockResolvedValue([{ id: BigInt(10), uid: 'mc_1' }]);
+    studioMcRepository.findMany.mockResolvedValue([{ mcId: BigInt(10) }]);
     showMcRepository.findMany.mockResolvedValue([]);
     showMcRepository.createAssignment.mockResolvedValue({ id: BigInt(100) });
 
@@ -121,6 +147,7 @@ describe('studioShowMcOrchestrationService', () => {
   it('collects per-pair errors instead of throwing', async () => {
     showService.findMany.mockResolvedValue([{ id: BigInt(1), uid: 'show_1' }]);
     mcRepository.findByUids.mockResolvedValue([{ id: BigInt(10), uid: 'mc_1' }]);
+    studioMcRepository.findMany.mockResolvedValue([{ mcId: BigInt(10) }]);
     showMcRepository.findMany.mockResolvedValue([]);
     showMcRepository.createAssignment.mockRejectedValue(new Error('insert failed'));
 
@@ -139,6 +166,10 @@ describe('studioShowMcOrchestrationService', () => {
     mcRepository.findByUids.mockResolvedValue([
       { id: BigInt(10), uid: 'mc_1' },
       { id: BigInt(11), uid: 'mc_2' },
+    ]);
+    studioMcRepository.findMany.mockResolvedValue([
+      { mcId: BigInt(10) },
+      { mcId: BigInt(11) },
     ]);
     showMcRepository.findMany.mockResolvedValue([
       { id: BigInt(100), showId: BigInt(1), mcId: BigInt(12), deletedAt: null }, // remove
