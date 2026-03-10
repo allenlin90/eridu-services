@@ -95,3 +95,12 @@ Neither `StudioShift` nor `StudioShiftBlock` has a `version Int @default(1)` col
 - [Schema Patterns](./schema-patterns.md) — Three-tier schema architecture
 - [Tech Stack](./tech-stack.md) — Module organization standards
 - [Ideal Pattern](./ideal-pattern.md) — Complete model template
+
+---
+
+## ✅ RESOLVED: StudioMc missing `version` field (March 2026)
+
+`StudioMc` now has `version Int @default(1)` — added in `feat/phase-4-p-and-l`.
+Repository exposes two write paths:
+- `updateById`: always increments `version` via `{ increment: 1 }`
+- `updateByIdWithVersionCheck(id, expectedVersion, data)`: enforces CAS via `updateMany` + throws `VersionConflictError` on mismatch

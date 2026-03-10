@@ -97,7 +97,7 @@ File: `apps/erify_api/src/models/show-mc/show-mc.repository.ts`
 `TALENT_MANAGER`, `DESIGNER`, `MODERATION_MANAGER` now mapped in `studio-route-access.ts`. Fixed in commit `ce6b5ed1`.
 
 **Remaining deferred tech debt (not blocking):**
-- `StudioMc` (studio_creators table) missing `version` field — deferred to migration pass
+- `StudioMc` `version` field — RESOLVED: added to schema + migration SQL + `updateById` auto-increments, `updateByIdWithVersionCheck` enforces optimistic locking via `updateMany` + `VersionConflictError`
 - `listUserCatalog` still uses take:1000 + client-side filter — correctness risk at >1000 members (deferred)
 
 **Migration: single consolidated migration for Phase 4**
