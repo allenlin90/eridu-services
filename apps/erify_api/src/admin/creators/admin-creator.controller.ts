@@ -33,12 +33,23 @@ export class AdminCreatorController extends BaseAdminController {
   @Post()
   @AdminResponse(creatorWithUserDto, HttpStatus.CREATED, 'Creator created successfully')
   async createCreator(@Body() body: CreateCreatorDto) {
-    const { name, aliasName, metadata, userId } = body;
+    const {
+      name,
+      aliasName,
+      metadata,
+      userId,
+      defaultRate,
+      defaultRateType,
+      defaultCommissionRate,
+    } = body;
     const creator = await this.creatorService.createCreator({
       name,
       aliasName,
       metadata,
       userId,
+      defaultRate,
+      defaultRateType,
+      defaultCommissionRate,
     });
     return this.creatorService.getCreatorByIdWithUser(creator.uid);
   }
@@ -80,13 +91,25 @@ export class AdminCreatorController extends BaseAdminController {
     const existing = await this.creatorService.getCreatorById(id);
     this.ensureResourceExists(existing, 'Creator', id);
 
-    const { name, aliasName, isBanned, metadata, userId } = body;
+    const {
+      name,
+      aliasName,
+      isBanned,
+      metadata,
+      userId,
+      defaultRate,
+      defaultRateType,
+      defaultCommissionRate,
+    } = body;
     await this.creatorService.updateCreator(id, {
       name,
       aliasName,
       isBanned,
       metadata,
       userId,
+      defaultRate,
+      defaultRateType,
+      defaultCommissionRate,
     });
 
     return this.creatorService.getCreatorByIdWithUser(id);

@@ -5,6 +5,7 @@ import { Prisma, StudioMc } from '@prisma/client';
 
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
+import { expandCreatorUidCandidates } from '@/models/creator/creator-uid.util';
 import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
@@ -127,6 +128,7 @@ export class StudioCreatorRepository extends BaseRepository<
   ): Promise<(StudioMc & {
     mc: { uid: string; name: string; aliasName: string };
   }) | null> {
+    const creatorUidCandidates = expandCreatorUidCandidates(creatorUid);
     return this.delegate.findFirst({
       where: {
         ...(includeDeleted ? {} : { deletedAt: null }),
@@ -135,7 +137,7 @@ export class StudioCreatorRepository extends BaseRepository<
           deletedAt: null,
         },
         mc: {
-          uid: creatorUid,
+          uid: { in: creatorUidCandidates },
           deletedAt: null,
         },
       },

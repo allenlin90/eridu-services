@@ -8,6 +8,7 @@ import type {
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { CreatorRepository } from '@/models/creator/creator.repository';
+import { expandCreatorUidCandidates } from '@/models/creator/creator-uid.util';
 import { ShowService } from '@/models/show/show.service';
 import { ShowCreatorRepository } from '@/models/show-creator/show-creator.repository';
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
@@ -83,10 +84,9 @@ export class StudioShowCreatorOrchestrationService {
     }
 
     const creators = await this.creatorRepository.findByUids(creatorUids);
-
-    if (creators.length !== creatorUids.length) {
-      const foundUids = new Set(creators.map((creator) => creator.uid));
-      const missing = creatorUids.filter((uid) => !foundUids.has(uid));
+    const foundCreatorUids = this.buildFoundCreatorUidSet(creators);
+    const missing = creatorUids.filter((uid) => !foundCreatorUids.has(uid));
+    if (missing.length > 0) {
       throw HttpError.badRequest(`Creators not found: ${missing.join(', ')}`);
     }
 
@@ -133,7 +133,7 @@ export class StudioShowCreatorOrchestrationService {
     );
 
     const showByUid = new Map(shows.map((show) => [show.uid, show]));
-    const creatorByUid = new Map(creators.map((creator) => [creator.uid, creator]));
+    const creatorByUid = this.buildCreatorLookupByUid(creators);
 
     let created = 0;
     let skipped = 0;
@@ -198,7 +198,7 @@ export class StudioShowCreatorOrchestrationService {
     });
 
     const showByUid = new Map(shows.map((show) => [show.uid, show]));
-    const creatorByUid = new Map(creators.map((creator) => [creator.uid, creator]));
+    const creatorByUid = this.buildCreatorLookupByUid(creators);
     const targetCreatorIdSet = new Set(creators.map((creator) => creator.id));
 
     let created = 0;
@@ -257,5 +257,25 @@ export class StudioShowCreatorOrchestrationService {
 
   private generateShowCreatorUid(): string {
     return this.showCreatorService.generateShowCreatorUid();
+  }
+
+  private buildFoundCreatorUidSet(
+    creators: Awaited<ReturnType<CreatorRepository['findByUids']>>,
+  ): Set<string> {
+    return new Set(
+      creators.flatMap((creator) => expandCreatorUidCandidates(creator.uid)),
+    );
+  }
+
+  private buildCreatorLookupByUid(
+    creators: Awaited<ReturnType<CreatorRepository['findByUids']>>,
+  ) {
+    const map = new Map<string, (typeof creators)[number]>();
+    for (const creator of creators) {
+      for (const candidate of expandCreatorUidCandidates(creator.uid)) {
+        map.set(candidate, creator);
+      }
+    }
+    return map;
   }
 }

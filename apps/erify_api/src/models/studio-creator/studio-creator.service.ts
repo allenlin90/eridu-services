@@ -49,10 +49,11 @@ export class StudioCreatorService extends BaseModelService {
     if (!creator) {
       throw HttpError.notFound('Creator not found');
     }
+    const canonicalCreatorUid = creator.uid;
 
     const existing = await this.studioCreatorRepository.findOneByStudioAndCreatorUid(
       studioUid,
-      payload.creatorId,
+      canonicalCreatorUid,
       true,
     );
 
@@ -72,7 +73,7 @@ export class StudioCreatorService extends BaseModelService {
     }
 
     const uid = this.generateUid();
-    return this.studioCreatorRepository.createByUids(uid, studioUid, payload.creatorId, {
+    return this.studioCreatorRepository.createByUids(uid, studioUid, canonicalCreatorUid, {
       defaultRate: payload.defaultRate,
       defaultRateType: payload.defaultRateType,
       defaultCommissionRate: payload.defaultCommissionRate,
