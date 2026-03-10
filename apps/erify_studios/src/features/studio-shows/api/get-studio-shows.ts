@@ -2,7 +2,15 @@ import type { ShowWithTaskSummaryDto } from '@eridu/api-types/task-management';
 
 import { apiClient } from '@/lib/api/client';
 
-export type StudioShow = ShowWithTaskSummaryDto;
+export type StudioShowCreator = {
+  creator_id: string;
+  creator_name: string;
+  creator_alias_name: string;
+};
+
+export type StudioShow = ShowWithTaskSummaryDto & {
+  creators: StudioShowCreator[];
+};
 export type ShowSelection = Pick<StudioShow, 'id' | 'name' | 'task_summary'>;
 
 export const studioShowsKeys = {
@@ -40,6 +48,20 @@ type StudioShowsResponse = {
 };
 
 export async function getStudioShows(studioId: string, params: GetStudioShowsParams): Promise<StudioShowsResponse> {
-  const response = await apiClient.get<StudioShowsResponse>(`/studios/${studioId}/shows`, { params });
-  return response.data;
+  const response = await apiClient.get<{
+    data: ShowWithTaskSummaryDto[];
+    meta: StudioShowsResponse['meta'];
+  }>(`/studios/${studioId}/shows`, { params });
+
+  return {
+    ...response.data,
+    data: response.data.data.map((show) => ({
+      ...show,
+      creators: (show.mcs ?? []).map((assignment) => ({
+        creator_id: assignment.mc_id,
+        creator_name: assignment.mc_name,
+        creator_alias_name: assignment.mc_aliasname,
+      })),
+    })),
+  };
 }

@@ -43,6 +43,7 @@ const ShowTaskGroup = memo(({ group, onTaskSelect }: ShowTaskGroupProps) => {
     && task.status !== TASK_STATUS.COMPLETED
     && new Date(task.due_date) < new Date()).length;
   const showInfo = group.show;
+  const creatorNames = showInfo?.creator_names ?? showInfo?.mc_names ?? [];
 
   return (
     <Card className="overflow-hidden">
@@ -117,10 +118,10 @@ const ShowTaskGroup = memo(({ group, onTaskSelect }: ShowTaskGroupProps) => {
               </p>
             </div>
             <div className="rounded border bg-background px-2 py-1.5 sm:col-span-2 lg:col-span-4">
-              <p className="text-muted-foreground">MCs</p>
-              <p className="truncate font-medium" title={showInfo?.mc_names?.join(', ') || '—'}>
-                {showInfo?.mc_names?.length
-                  ? showInfo.mc_names.join(', ')
+              <p className="text-muted-foreground">Creators</p>
+              <p className="truncate font-medium" title={creatorNames.join(', ') || '—'}>
+                {creatorNames.length
+                  ? creatorNames.join(', ')
                   : '—'}
               </p>
             </div>

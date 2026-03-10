@@ -194,13 +194,14 @@ export class ShowRepository extends BaseRepository<
       };
     }
 
-    // MC filtering (Name)
-    if (query.mc_name) {
+    const creatorNameFilter = query.creator_name ?? query.mc_name;
+    // Creator filtering (Name)
+    if (creatorNameFilter) {
       where.showMCs = {
         some: {
           mc: {
             name: {
-              contains: query.mc_name,
+              contains: creatorNameFilter,
               mode: 'insensitive',
             },
           },

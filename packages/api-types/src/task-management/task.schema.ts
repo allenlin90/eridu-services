@@ -151,6 +151,8 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj) => {
         end_time: s.endTime.toISOString(),
         client_name: s.client?.name ?? null,
         studio_room_name: s.studioRoom?.name ?? null,
+        creator_names: (s.showMCs ?? []).map((item) => item.mc.aliasName || item.mc.name),
+        // Backward-compatible alias for clients that still read mc_names.
         mc_names: (s.showMCs ?? []).map((item) => item.mc.aliasName || item.mc.name),
       };
     }

@@ -8,7 +8,7 @@ import type { Show } from '@/features/shows/api/get-shows';
  * Network hook for creators field.
  * - Shows 10 placeholder options when no search
  * - Allows searching by name
- * - Always includes currently selected MCs at TOP of list (for visibility in dropdown)
+ * - Always includes currently selected creators at TOP of list (for visibility in dropdown)
  */
 export function useCreatorsFieldData(show: Show | null) {
   const [search, setSearch] = useState('');
@@ -22,22 +22,22 @@ export function useCreatorsFieldData(show: Show | null) {
     const fetched = creatorsData?.data?.map((creator) => ({ value: creator.id, label: creator.alias_name || creator.name })) || [];
     const optionsMap = new Map(fetched.map((o) => [o.value, o]));
 
-    // Add selected MCs if not in fetched results
+    // Add selected creators if not in fetched results
     const selectedIds = new Set<string>();
-    show?.mcs?.forEach((mc: any) => {
-      const mcId = mc.mc_id || mc.id;
-      const mcName = mc.mc_name || mc.name || mc.alias_name;
-      if (mcId && mcName) {
-        selectedIds.add(mcId);
-        if (!optionsMap.has(mcId)) {
-          optionsMap.set(mcId, { value: mcId, label: mcName });
+    show?.creators?.forEach((creator: any) => {
+      const creatorId = creator.creator_id || creator.id;
+      const creatorName = creator.creator_name || creator.name || creator.alias_name;
+      if (creatorId && creatorName) {
+        selectedIds.add(creatorId);
+        if (!optionsMap.has(creatorId)) {
+          optionsMap.set(creatorId, { value: creatorId, label: creatorName });
         }
       }
     });
 
     const allOptions = Array.from(optionsMap.values());
 
-    // Put selected MCs at the top so they're visible in dropdown (which only shows first 10)
+    // Put selected creators at the top so they're visible in dropdown (which only shows first 10)
     if (selectedIds.size > 0) {
       const selected = allOptions.filter((o) => selectedIds.has(o.value));
       const unselected = allOptions.filter((o) => !selectedIds.has(o.value));

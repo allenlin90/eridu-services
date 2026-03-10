@@ -66,32 +66,32 @@ export function CreatorCreateDialog({
 }
 
 type CreatorUpdateDialogProps = {
-  mc: Creator | null;
+  creator: Creator | null;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: UpdateCreatorFormData) => Promise<void>;
   isLoading: boolean;
 };
 
 export function CreatorUpdateDialog({
-  mc,
+  creator,
   onOpenChange,
   onSubmit,
   isLoading,
 }: CreatorUpdateDialogProps) {
   return (
     <AdminFormDialog
-      open={!!mc}
+      open={!!creator}
       onOpenChange={onOpenChange}
       title="Edit Creator"
       description="Update creator information"
       schema={updateCreatorInputSchema}
       defaultValues={
-        mc
+        creator
           ? {
-              name: mc.name,
-              alias_name: mc.alias_name,
-              user_id: mc.user_id || undefined,
-              is_banned: mc.is_banned,
+              name: creator.name,
+              alias_name: creator.alias_name,
+              user_id: creator.user_id || undefined,
+              is_banned: creator.is_banned,
             }
           : undefined
       }
@@ -110,11 +110,11 @@ export function CreatorUpdateDialog({
             <div className="flex flex-col gap-2">
               <input
                 className="flex h-9 w-full rounded-md border border-input bg-muted px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                value={mc?.id || ''}
+                value={creator?.id || ''}
                 readOnly
                 onClick={(e) => {
                   e.currentTarget.select();
-                  navigator.clipboard.writeText(mc?.id || '');
+                  navigator.clipboard.writeText(creator?.id || '');
                 }}
                 title="Click to copy ID"
               />

@@ -84,13 +84,13 @@ export function StudioCreatorRosterManager({ studioId }: StudioCreatorRosterMana
     onColumnFiltersChange,
   } = useTableUrlState({
     from: '/studios/$studioId/creators/',
-    searchColumnId: 'mc_name',
+    searchColumnId: 'creator_name',
     paramNames: {
       search: 'search',
     },
   });
 
-  const rosterSearch = (columnFilters.find((filter) => filter.id === 'mc_name')?.value as string | undefined) || undefined;
+  const rosterSearch = (columnFilters.find((filter) => filter.id === 'creator_name')?.value as string | undefined) || undefined;
   const statusFilter = columnFilters.find((filter) => filter.id === 'is_active')?.value as string | undefined;
   const compensationTypeFilter = columnFilters.find((filter) => filter.id === 'default_rate_type')?.value as string | undefined;
   const rosterIsActiveFilter = statusFilter === 'true' ? true : statusFilter === 'false' ? false : undefined;
@@ -130,9 +130,9 @@ export function StudioCreatorRosterManager({ studioId }: StudioCreatorRosterMana
 
   const catalogOptions = useMemo(
     () =>
-      (catalogQuery.data ?? []).map((mc) => ({
-        value: mc.id,
-        label: mc.alias_name ? `${mc.name} (${mc.alias_name})` : mc.name,
+      (catalogQuery.data ?? []).map((creator) => ({
+        value: creator.id,
+        label: creator.alias_name ? `${creator.name} (${creator.alias_name})` : creator.name,
       })),
     [catalogQuery.data],
   );
@@ -165,7 +165,7 @@ export function StudioCreatorRosterManager({ studioId }: StudioCreatorRosterMana
       return;
     }
     createRosterItem.mutate(
-      { mc_id: selectedCatalogCreatorId, is_active: true },
+      { creator_id: selectedCatalogCreatorId, is_active: true },
       {
         onSuccess: () => {
           setIsAddDialogOpen(false);
@@ -178,7 +178,7 @@ export function StudioCreatorRosterManager({ studioId }: StudioCreatorRosterMana
 
   const handleToggleActive = (item: StudioCreatorRosterItem) => {
     updateRosterItem.mutate({
-      mcId: item.mc_id,
+      creatorId: item.creator_id,
       payload: { version: item.version, is_active: !item.is_active },
     });
   };
@@ -193,7 +193,7 @@ export function StudioCreatorRosterManager({ studioId }: StudioCreatorRosterMana
 
     updateRosterItem.mutate(
       {
-        mcId: editingItem.mc_id,
+        creatorId: editingItem.creator_id,
         payload: {
           version: editingItem.version,
           default_rate_type: editableFields.default_rate_type ?? null,
@@ -209,12 +209,12 @@ export function StudioCreatorRosterManager({ studioId }: StudioCreatorRosterMana
 
   const columns: ColumnDef<StudioCreatorRosterItem>[] = [
     {
-      accessorKey: 'mc_name',
+      accessorKey: 'creator_name',
       header: 'Creator',
       cell: ({ row }) => (
         <div>
-          <div className="font-medium">{row.original.mc_name}</div>
-          <div className="text-xs text-muted-foreground">{row.original.mc_alias_name || '—'}</div>
+          <div className="font-medium">{row.original.creator_name}</div>
+          <div className="text-xs text-muted-foreground">{row.original.creator_alias_name || '—'}</div>
         </div>
       ),
     },
@@ -278,7 +278,7 @@ export function StudioCreatorRosterManager({ studioId }: StudioCreatorRosterMana
                     )}
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => deleteRosterItem.mutate(item.mc_id)}
+                onClick={() => deleteRosterItem.mutate(item.creator_id)}
                 disabled={deleteRosterItem.isPending}
                 className="text-red-600 focus:text-red-600"
               >
@@ -341,10 +341,10 @@ export function StudioCreatorRosterManager({ studioId }: StudioCreatorRosterMana
             renderToolbar={(table) => (
               <DataTableToolbar
                 table={table}
-                searchColumn="mc_name"
+                searchColumn="creator_name"
                 searchPlaceholder="Search creators by name or alias..."
                 searchableColumns={[
-                  { id: 'mc_name', title: 'Creator', type: 'text' },
+                  { id: 'creator_name', title: 'Creator', type: 'text' },
                   {
                     id: 'is_active',
                     title: 'Status',

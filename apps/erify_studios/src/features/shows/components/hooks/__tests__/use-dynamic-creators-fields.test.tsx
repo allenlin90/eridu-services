@@ -31,6 +31,7 @@ describe('dynamic Field Hooks (Logic Only)', () => {
     studio_room_id: 'room-selected',
     studio_room_name: 'Selected Room',
     mcs: [{ mc_id: 'mc-selected', mc_name: 'Selected MC', id: '1' }],
+    creators: [{ creator_id: 'mc-selected', creator_name: 'Selected MC', id: '1' }],
     platforms: [{ platform_id: 'platform-selected', platform_name: 'Selected Platform', id: '1' }],
     show_type_id: null,
     show_type_name: null,
@@ -62,7 +63,7 @@ describe('dynamic Field Hooks (Logic Only)', () => {
   });
 
   describe('useCreatorsFieldData', () => {
-    it('should put selected MCs at the top of options', () => {
+    it('should put selected creators at the top of options', () => {
       vi.mocked(ReactQuery.useQuery).mockReturnValue({
         data: { data: [{ id: 'mc-1', alias_name: 'Other MC' }] },
         isLoading: false,

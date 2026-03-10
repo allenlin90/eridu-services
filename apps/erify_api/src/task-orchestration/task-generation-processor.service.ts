@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
-import type { Prisma, Show, TaskTemplate, TaskTemplateSnapshot } from '@prisma/client';
+import type { Show, TaskTemplate, TaskTemplateSnapshot } from '@prisma/client';
 import { TaskStatus, TaskType } from '@prisma/client';
 
 import { TASK_TYPE } from '@eridu/api-types/task-management';
@@ -9,6 +9,9 @@ import type { UploadRoutingMetadata } from '@eridu/api-types/uploads';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { PrismaService } from '@/prisma/prisma.service';
+
+type JsonPrimitive = string | number | boolean;
+type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
 @Injectable()
 export class TaskGenerationProcessor {
@@ -154,7 +157,7 @@ export class TaskGenerationProcessor {
     return show.startTime;
   }
 
-  private buildShowGeneratedTaskMetadata(type: TaskType): Prisma.InputJsonValue {
+  private buildShowGeneratedTaskMetadata(type: TaskType): JsonValue {
     const metadata: UploadRoutingMetadata = {
       upload_routing: {
         source: 'show_task_generation',
@@ -162,7 +165,7 @@ export class TaskGenerationProcessor {
         material_asset_directory: this.resolveMaterialAssetDirectory(type),
       },
     };
-    return metadata as Prisma.InputJsonValue;
+    return metadata as JsonValue;
   }
 
   private resolveMaterialAssetDirectory(type: TaskType): string {

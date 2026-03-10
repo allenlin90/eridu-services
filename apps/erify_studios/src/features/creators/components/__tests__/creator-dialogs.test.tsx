@@ -39,7 +39,7 @@ vi.mock('@/features/admin/components', () => ({
   ),
 }));
 
-describe('mcCreateDialog', () => {
+describe('creatorCreateDialog', () => {
   const mockProps = {
     open: true,
     onOpenChange: vi.fn(),
@@ -61,9 +61,9 @@ describe('mcCreateDialog', () => {
   });
 });
 
-describe('mcUpdateDialog', () => {
+describe('creatorUpdateDialog', () => {
   const mockProps = {
-    mc: {
+    creator: {
       id: 'mc-1',
       name: 'Test MC',
       alias_name: 'TestAlias',
@@ -78,21 +78,21 @@ describe('mcUpdateDialog', () => {
     isLoading: false,
   };
 
-  it('should render when mc is provided', () => {
+  it('should render when creator is provided', () => {
     render(<CreatorUpdateDialog {...mockProps} />);
 
     expect(screen.getByTestId('admin-form-dialog')).toBeInTheDocument();
     expect(screen.getByText('Edit Creator')).toBeInTheDocument();
   });
 
-  it('should not render when mc is null', () => {
-    render(<CreatorUpdateDialog {...mockProps} mc={null} />);
+  it('should not render when creator is null', () => {
+    render(<CreatorUpdateDialog {...mockProps} creator={null} />);
 
     expect(screen.queryByTestId('admin-form-dialog')).not.toBeInTheDocument();
   });
 });
 
-describe('mcDeleteDialog', () => {
+describe('creatorDeleteDialog', () => {
   const mockProps = {
     open: true,
     onOpenChange: vi.fn(),

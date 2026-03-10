@@ -33,11 +33,11 @@ type OperationalDayShowListCardProps = {
 };
 
 function formatShowCreators(show: StudioShow): string {
-  if (!show.mcs || show.mcs.length === 0) {
+  if (!show.creators || show.creators.length === 0) {
     return '-';
   }
 
-  const names = show.mcs.map((mc) => mc.mc_name).filter(Boolean).join(', ');
+  const names = show.creators.map((creator) => creator.creator_name).filter(Boolean).join(', ');
   return names || '-';
 }
 
@@ -139,7 +139,7 @@ export function OperationalDayShowListCard({
                         <TableHead>Studio Room</TableHead>
                         <TableHead>Show Standard</TableHead>
                         <TableHead>Client</TableHead>
-                        <TableHead>MCs</TableHead>
+                        <TableHead>Creators</TableHead>
                         <TableHead>Time</TableHead>
                         <TableHead>Task Summary</TableHead>
                         <TableHead>Status</TableHead>

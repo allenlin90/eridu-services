@@ -10,7 +10,7 @@ import { useUpdateShow } from '@/features/shows/api/update-show';
 type UseShowsParams = {
   name?: string;
   client_name?: string;
-  mc_name?: string;
+  creator_name?: string;
   start_date_from?: string;
   start_date_to?: string;
   sortBy?: string;

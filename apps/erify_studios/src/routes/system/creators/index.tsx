@@ -97,8 +97,8 @@ function CreatorsList() {
       cell: ({ row }) => (
         <DataTableActions
           row={row.original}
-          onEdit={(mc) => setEditingCreator(mc)}
-          onDelete={(mc) => setDeleteId(mc.id)}
+          onEdit={(creator) => setEditingCreator(creator)}
+          onDelete={(creator) => setDeleteId(creator.id)}
         />
       ),
       size: 50,
@@ -160,7 +160,7 @@ function CreatorsList() {
       />
 
       <CreatorUpdateDialog
-        mc={editingCreator}
+        creator={editingCreator}
         onOpenChange={(open) => !open && setEditingCreator(null)}
         onSubmit={handleUpdate}
         isLoading={updateMutation.isPending}

@@ -275,7 +275,7 @@ export const ShowStandardField = memo(({
   );
 });
 
-// MCs Field (with isolated network hook)
+// Creators Field (with isolated network hook)
 export const ShowCreatorsField = memo(({
   control,
   show,
@@ -291,7 +291,7 @@ export const ShowCreatorsField = memo(({
       name="mcs"
       render={({ field }) => (
         <FormItem className="col-span-1 sm:col-span-2">
-          <FormLabel>MCs</FormLabel>
+          <FormLabel>Creators</FormLabel>
           <FormControl>
             <AsyncMultiCombobox
               value={field.value?.map((v: any) => v.mc_id) || []}
@@ -307,7 +307,7 @@ export const ShowCreatorsField = memo(({
               onSearch={setSearch}
               options={options}
               isLoading={isLoading}
-              placeholder="Select MCs"
+              placeholder="Select creators"
             />
           </FormControl>
           <FormMessage />

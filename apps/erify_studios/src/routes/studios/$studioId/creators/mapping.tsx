@@ -65,8 +65,8 @@ function createCreatorsColumns(studioId: string): ColumnDef<StudioShow>[] {
       id: 'creators',
       header: 'Creators',
       cell: ({ row }) => {
-        const names = row.original.mcs
-          .map((mc) => mc.mc_aliasname || mc.mc_name)
+        const names = row.original.creators
+          .map((creator) => creator.creator_alias_name || creator.creator_name)
           .filter(Boolean);
         if (names.length === 0) {
           return <span className="text-muted-foreground">—</span>;

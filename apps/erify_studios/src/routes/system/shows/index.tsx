@@ -57,7 +57,7 @@ function ShowsList() {
   } = useShows({
     name: search.name,
     client_name: search.client_name,
-    mc_name: search.mc_name,
+    creator_name: search.creator_name,
     start_date_from: search.start_date_from,
     start_date_to: search.start_date_to,
     sortBy: search.sortBy,

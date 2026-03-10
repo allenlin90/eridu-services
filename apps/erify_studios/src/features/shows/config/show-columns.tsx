@@ -52,12 +52,12 @@ export const showColumns: ColumnDef<Show>[] = [
     cell: ({ row }) => <ShowStatusBadge status={row.original.show_status_name || 'unknown'} />,
   },
   {
-    id: 'mc_name',
-    header: 'MCs',
+    id: 'creator_name',
+    header: 'Creators',
     cell: ({ row }) => (
       <ItemsList
-        items={row.original.mcs?.map((mc) => mc.mc_name || '').filter((n) => n.length > 0) || []}
-        label="MCs"
+        items={row.original.creators?.map((creator) => creator.creator_name || '').filter((n) => n.length > 0) || []}
+        label="Creators"
       />
     ),
     enableSorting: false,
@@ -105,7 +105,7 @@ export const showSearchableColumns = [
     options: [],
   },
   { id: 'client_name', title: 'Client', type: 'text' as const },
-  { id: 'mc_name', title: 'MC', type: 'text' as const },
+  { id: 'creator_name', title: 'Creator', type: 'text' as const },
   { id: 'start_time', title: 'Date', type: 'date-range' as const },
   { id: 'id', title: 'ID', type: 'text' as const },
 ];

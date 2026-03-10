@@ -69,18 +69,18 @@ export function BulkCreatorAssignDialog({
       const coverageMap = new Map<string, Set<string>>();
       const labelMap = new Map<string, string>();
       selectedShows.forEach((show) => {
-        show.mcs.forEach((assignment) => {
-          if (!assignment.mc_id) {
+        show.creators.forEach((assignment) => {
+          if (!assignment.creator_id) {
             return;
           }
-          const existingCoverage = coverageMap.get(assignment.mc_id) ?? new Set<string>();
+          const existingCoverage = coverageMap.get(assignment.creator_id) ?? new Set<string>();
           existingCoverage.add(show.id);
-          coverageMap.set(assignment.mc_id, existingCoverage);
-          if (!labelMap.has(assignment.mc_id)) {
-            const label = assignment.mc_aliasname
-              ? `${assignment.mc_name ?? assignment.mc_id} (${assignment.mc_aliasname})`
-              : (assignment.mc_name ?? assignment.mc_id);
-            labelMap.set(assignment.mc_id, label);
+          coverageMap.set(assignment.creator_id, existingCoverage);
+          if (!labelMap.has(assignment.creator_id)) {
+            const label = assignment.creator_alias_name
+              ? `${assignment.creator_name ?? assignment.creator_id} (${assignment.creator_alias_name})`
+              : (assignment.creator_name ?? assignment.creator_id);
+            labelMap.set(assignment.creator_id, label);
           }
         });
       });

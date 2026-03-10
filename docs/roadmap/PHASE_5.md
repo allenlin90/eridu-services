@@ -13,11 +13,15 @@ The goal is to preserve context and reasons now, then convert selected items int
 Context:
 Phase 4 delivered the cost side of economics ("L") and roster foundations. Revenue-side P&L workflow ("P") is deferred for redesign in Phase 5. In the same phase, terminology and domain ownership should be normalized so "MC" becomes a creator type/attribute, and "Creator" is the canonical domain name across BE/FE/docs.
 
+Progress note (2026-03-10):
+- Initial compatibility-first refactor started in `erify_studios` show mapping/dashboard flows.
+- Creator-first aliases are now derived from legacy `mcs` payloads in the studio shows API layer.
+
 Checklist:
 - [ ] Confirm canonical naming contract:
   - Replace `MC` naming in app/domain code with `Creator`.
   - Keep "MC" only as business classification (`creatorType` or equivalent).
-  - Publish final naming decision in an ADR (`docs/adr/creator-naming.md`).
+  - [x] Publish final naming decision in an ADR (`docs/adr/0002-creator-naming.md`).
 - [ ] Refactor backend module/service/repository/controller names:
   - `mc` -> `creator`
   - `show-mc` -> `show-creator`

@@ -7,9 +7,9 @@ import { apiClient } from '@/lib/api/client';
 
 export type StudioCreatorRosterItem = {
   id: string;
-  mc_id: string;
-  mc_name: string;
-  mc_alias_name: string;
+  creator_id: string;
+  creator_name: string;
+  creator_alias_name: string;
   default_rate: string | null;
   default_rate_type: string | null;
   default_commission_rate: string | null;
@@ -21,7 +21,7 @@ export type StudioCreatorRosterItem = {
 };
 
 export type StudioCreatorRosterCreateInput = {
-  mc_id: string;
+  creator_id: string;
   default_rate?: number | null;
   default_rate_type?: string | null;
   default_commission_rate?: number | null;
@@ -71,7 +71,14 @@ export function useStudioCreatorRoster(studioId: string, query: StudioCreatorRos
   return useQuery({
     queryKey: studioCreatorRosterKeys.list(studioId, query),
     queryFn: async () => {
-      const response = await apiClient.get<StudioCreatorRosterListResponse>(
+      const response = await apiClient.get<{
+        data: Array<StudioCreatorRosterItem & {
+          mc_id?: string;
+          mc_name?: string;
+          mc_alias_name?: string;
+        }>;
+        meta: PaginationMeta;
+      }>(
         `/studios/${studioId}/creators/roster`,
         {
           params: {
@@ -83,7 +90,15 @@ export function useStudioCreatorRoster(studioId: string, query: StudioCreatorRos
           },
         },
       );
-      return response.data;
+      return {
+        ...response.data,
+        data: response.data.data.map((item) => ({
+          ...item,
+          creator_id: item.creator_id ?? item.mc_id ?? '',
+          creator_name: item.creator_name ?? item.mc_name ?? '',
+          creator_alias_name: item.creator_alias_name ?? item.mc_alias_name ?? '',
+        })),
+      };
     },
     enabled: Boolean(studioId),
   });
@@ -107,11 +122,23 @@ export function useCreateStudioCreatorRosterItem(studioId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: StudioCreatorRosterCreateInput) => {
-      const response = await apiClient.post<StudioCreatorRosterItem>(
+      const response = await apiClient.post<StudioCreatorRosterItem & {
+        mc_id?: string;
+        mc_name?: string;
+        mc_alias_name?: string;
+      }>(
         `/studios/${studioId}/creators/roster`,
-        payload,
+        {
+          ...payload,
+          mc_id: payload.creator_id,
+        },
       );
-      return response.data;
+      return {
+        ...response.data,
+        creator_id: response.data.creator_id ?? response.data.mc_id ?? '',
+        creator_name: response.data.creator_name ?? response.data.mc_name ?? '',
+        creator_alias_name: response.data.creator_alias_name ?? response.data.mc_alias_name ?? '',
+      };
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [...studioCreatorRosterKeys.all, studioId] });
@@ -123,12 +150,21 @@ export function useCreateStudioCreatorRosterItem(studioId: string) {
 export function useUpdateStudioCreatorRosterItem(studioId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { mcId: string; payload: StudioCreatorRosterUpdateInput }) => {
-      const response = await apiClient.patch<StudioCreatorRosterItem>(
-        `/studios/${studioId}/creators/roster/${params.mcId}`,
+    mutationFn: async (params: { creatorId: string; payload: StudioCreatorRosterUpdateInput }) => {
+      const response = await apiClient.patch<StudioCreatorRosterItem & {
+        mc_id?: string;
+        mc_name?: string;
+        mc_alias_name?: string;
+      }>(
+        `/studios/${studioId}/creators/roster/${params.creatorId}`,
         params.payload,
       );
-      return response.data;
+      return {
+        ...response.data,
+        creator_id: response.data.creator_id ?? response.data.mc_id ?? '',
+        creator_name: response.data.creator_name ?? response.data.mc_name ?? '',
+        creator_alias_name: response.data.creator_alias_name ?? response.data.mc_alias_name ?? '',
+      };
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [...studioCreatorRosterKeys.all, studioId] });
@@ -140,11 +176,20 @@ export function useUpdateStudioCreatorRosterItem(studioId: string) {
 export function useDeleteStudioCreatorRosterItem(studioId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (mcId: string) => {
-      const response = await apiClient.delete<StudioCreatorRosterItem>(
-        `/studios/${studioId}/creators/roster/${mcId}`,
+    mutationFn: async (creatorId: string) => {
+      const response = await apiClient.delete<StudioCreatorRosterItem & {
+        mc_id?: string;
+        mc_name?: string;
+        mc_alias_name?: string;
+      }>(
+        `/studios/${studioId}/creators/roster/${creatorId}`,
       );
-      return response.data;
+      return {
+        ...response.data,
+        creator_id: response.data.creator_id ?? response.data.mc_id ?? '',
+        creator_name: response.data.creator_name ?? response.data.mc_name ?? '',
+        creator_alias_name: response.data.creator_alias_name ?? response.data.mc_alias_name ?? '',
+      };
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [...studioCreatorRosterKeys.all, studioId] });

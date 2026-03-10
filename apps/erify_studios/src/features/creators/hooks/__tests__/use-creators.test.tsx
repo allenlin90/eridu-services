@@ -72,7 +72,7 @@ describe('useCreators', () => {
     return Wrapper;
   };
 
-  it('should return mcs data and mutations', () => {
+  it('should return creators data and mutations', () => {
     const { result } = renderHook(() => useCreators(), {
       wrapper: createWrapper(),
     });

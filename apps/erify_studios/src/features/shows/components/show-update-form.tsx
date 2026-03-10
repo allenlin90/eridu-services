@@ -60,10 +60,10 @@ export function ShowUpdateForm({
         show_type_id: show.show_type_id || undefined,
         show_status_id: show.show_status_id || undefined,
         show_standard_id: show.show_standard_id || undefined,
-        mcs: show.mcs?.map((mc: any) => ({
-          mc_id: mc.mc_id || mc.id || '',
-          note: mc.note,
-          metadata: mc.metadata,
+        mcs: show.creators?.map((creator: any) => ({
+          mc_id: creator.creator_id || creator.id || '',
+          note: creator.note,
+          metadata: creator.metadata,
         })) || [],
         platforms: show.platforms?.map((p: any) => ({
           platform_id: p.platform_id || p.id || '',

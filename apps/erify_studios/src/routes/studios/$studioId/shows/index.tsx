@@ -611,7 +611,7 @@ function StudioShowsTableSection({
                 className="rounded-full"
                 onClick={() => setBulkCreatorAssigningShows(selectedShows)}
               >
-                Assign MCs
+                Assign Creators
               </Button>
               <Button
                 size="sm"

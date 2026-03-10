@@ -20,7 +20,7 @@ type AddCreatorDialogProps = {
   studioId: string;
   showStartTime: string;
   showEndTime: string;
-  onAdd: (mcId: string) => void;
+  onAdd: (creatorId: string) => void;
   isLoading: boolean;
 };
 
@@ -41,15 +41,15 @@ export function AddCreatorDialog({
 
   const normalizedSearch = search.toLowerCase().replace(/[^a-z0-9]/g, '');
   const filteredCreators = normalizedSearch
-    ? availableCreators.filter((mc: AvailableCreator) => {
-        const composite = `${mc.name} ${mc.alias_name ?? ''}`;
+    ? availableCreators.filter((creator: AvailableCreator) => {
+        const composite = `${creator.name} ${creator.alias_name ?? ''}`;
         return composite.toLowerCase().replace(/[^a-z0-9]/g, '').includes(normalizedSearch);
       })
     : availableCreators;
 
-  const options = filteredCreators.map((mc: AvailableCreator) => ({
-    value: mc.id,
-    label: mc.alias_name ? `${mc.name} (${mc.alias_name})` : mc.name,
+  const options = filteredCreators.map((creator: AvailableCreator) => ({
+    value: creator.id,
+    label: creator.alias_name ? `${creator.name} (${creator.alias_name})` : creator.name,
   }));
 
   const handleSubmit = () => {
