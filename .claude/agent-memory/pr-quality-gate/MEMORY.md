@@ -89,16 +89,14 @@ This is a UX degradation, not a crash — acceptable for now. Flagged as warning
 - `studio-membership.service.ts` Prisma.InputJsonValue: FIXED (uses local `JsonValue` alias)
 - `mapping.tsx` Badge missing import: FIXED (imported from `@eridu/ui`)
 
-**Remaining Blocking Issues (must fix before merge):**
+**All Blocking Issues RESOLVED (confirmed 2026-03-10 final verification run):**
+- 4 type errors fixed in commit `5ff66bbf`: `tsc --noEmit` passes clean in both apps
+- Vite build (`pnpm --filter erify_studios build`) passes with zero type/lint errors
+- All tests pass: 565/565 (erify_api), 390/391 (1 intentionally skipped) (erify_studios)
 
-1. `tsconfig.app.json` reveals 25 production-file type errors in erify_studios (4 introduced by this branch).
-   Newly introduced errors:
-   - `show-tasks-table/columns.tsx:77` — TASK_ACTION_LABELS missing `SAVE_CONTENT` key (SAVE_CONTENT was added to api-types in this PR but labels map was not updated)
-   - `show-form-fields.tsx:161` — `AsyncCombobox value` prop is `string` but `field.value` (studio_room_id) is `string | null`
-   - `creators/mapping.tsx:105` — Link `search={{ from: 'creators' }}` missing required `page`/`pageSize` from parent `creatorsSearchSchema`
-   - `shows/$showId/creators.tsx:40,46` — Links missing required `search` props for inherited search schemas
-
-2. 1 ESLint warning (not error): `mapping.tsx:81` — `react/no-array-index-key` (using index as key in Badge list)
+**Remaining open (non-blocking):**
+1. ESLint warning (not error): `mapping.tsx:81` — `react/no-array-index-key` (using index as key in Badge list)
+2. `createStudioCreatorRosterSchema` — `creator_id ?? mc_id ?? ''` fallback means both fields optional with no schema refinement requiring at least one; omitting both silently maps to `creatorId: ''` and fails as a confusing 404. Codex flagged as P2. Acceptable for Phase 4 scope; log as Phase 5 debt.
 
 **Architecture status:**
 - Service layer: CLEAN. No Prisma.* input/query types in any new services.
