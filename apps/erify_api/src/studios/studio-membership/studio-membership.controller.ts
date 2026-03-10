@@ -29,16 +29,12 @@ import {
 } from '@/models/membership/schemas/studio-membership.schema';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { StudioService } from '@/models/studio/studio.service';
-import { UserService } from '@/models/user/user.service';
 
 @ApiTags('Studio Memberships')
 @StudioProtected([STUDIO_ROLE.ADMIN])
 @Controller('studios/:studioId/studio-memberships')
 export class StudioMembershipController extends BaseStudioController {
-  constructor(
-    private readonly studioMembershipService: StudioMembershipService,
-    private readonly userService: UserService,
-  ) {
+  constructor(private readonly studioMembershipService: StudioMembershipService) {
     super();
   }
 
@@ -49,34 +45,7 @@ export class StudioMembershipController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: ListMembershipUserCatalogQueryDto,
   ) {
-    const { data } = await this.userService.listUsers({
-      page: 1,
-      limit: query.limit,
-      take: query.limit,
-      skip: 0,
-      sort: 'asc',
-      name: query.search,
-      email: undefined,
-      uid: undefined,
-      extId: undefined,
-      isSystemAdmin: undefined,
-    });
-
-    if (data.length === 0) {
-      return data;
-    }
-
-    const membershipChecks = await Promise.all(
-      data.map((user) =>
-        this.studioMembershipService.findOne({
-          userId: user.id,
-          studio: { uid: studioId, deletedAt: null },
-          deletedAt: null,
-        }),
-      ),
-    );
-
-    return data.filter((_, index) => membershipChecks[index] === null);
+    return this.studioMembershipService.listMembershipUserCatalog(studioId, query);
   }
 
   @Post()

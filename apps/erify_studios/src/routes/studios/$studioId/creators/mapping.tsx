@@ -7,6 +7,7 @@ import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
   adaptSortingChange,
+  Badge,
   Button,
   Checkbox,
   DataTable,

@@ -10,7 +10,6 @@ Operational guide for coding agents in `eridu-services`.
   - `.agent/rules/`
   - `.agent/workflows/verification.md`
   - `.agent/workflows/knowledge-sync.md`
-  - `.agent/workflows/phase4-hitl-single-migration.md` (Phase 4 schema iteration protocol)
 
 ## Claude Code (`.claude/` System)
 

@@ -9,6 +9,7 @@ export type Membership = MembershipApiResponse & {
   is_helper?: boolean;
   user: {
     id: string; // user uid
+    ext_id: string | null;
     email: string;
     name: string;
   };

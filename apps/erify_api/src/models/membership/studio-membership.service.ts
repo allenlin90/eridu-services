@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, StudioMembership } from '@prisma/client';
+import { StudioMembership } from '@prisma/client';
 
 import type {
   CreateStudioMembershipPayload,
@@ -10,12 +10,15 @@ import { StudioMembershipRepository } from './studio-membership.repository';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { withStudioMembershipTaskHelper } from '@/models/membership/studio-membership-helper.util';
+import { UserService } from '@/models/user/user.service';
 import { UtilityService } from '@/utility/utility.service';
 
 // Type aliases for better readability and type safety
 type UserId = bigint;
 type StudioId = bigint;
 type StudioMembershipId = bigint;
+type JsonPrimitive = string | number | boolean;
+type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 type StudioMembershipWithRelations = StudioMembership & {
   user: Record<string, unknown>;
   studio: Record<string, unknown>;
@@ -28,6 +31,7 @@ export class StudioMembershipService extends BaseModelService {
 
   constructor(
     private readonly studioMembershipRepository: StudioMembershipRepository,
+    private readonly userService: UserService,
     protected readonly utilityService: UtilityService,
   ) {
     super(utilityService);
@@ -66,6 +70,68 @@ export class StudioMembershipService extends BaseModelService {
     ...args: Parameters<StudioMembershipRepository['findOne']>
   ): ReturnType<StudioMembershipRepository['findOne']> {
     return this.studioMembershipRepository.findOne(...args);
+  }
+
+  async findMany(
+    ...args: Parameters<StudioMembershipRepository['findMany']>
+  ): ReturnType<StudioMembershipRepository['findMany']> {
+    return this.studioMembershipRepository.findMany(...args);
+  }
+
+  async listMembershipUserCatalog(
+    studioUid: string,
+    query: { search?: string; limit: number },
+  ) {
+    const eligibleUsers: Awaited<ReturnType<UserService['listUsers']>>['data'] = [];
+    const seenUserIds = new Set<string>();
+    const pageSize = query.limit;
+    let page = 1;
+
+    while (eligibleUsers.length < query.limit) {
+      const { data } = await this.userService.listUsers({
+        page,
+        limit: pageSize,
+        take: pageSize,
+        skip: (page - 1) * pageSize,
+        sort: 'asc',
+        name: query.search,
+        email: undefined,
+        uid: undefined,
+        extId: undefined,
+        isSystemAdmin: undefined,
+      });
+
+      if (data.length === 0) {
+        break;
+      }
+
+      const memberships = await this.studioMembershipRepository.findMany({
+        where: {
+          studio: { uid: studioUid, deletedAt: null },
+          userId: { in: data.map((user) => user.id) },
+        },
+      });
+
+      const memberUserIds = new Set(memberships.map((membership) => membership.userId.toString()));
+      for (const user of data) {
+        const userId = user.id.toString();
+        if (memberUserIds.has(userId) || seenUserIds.has(userId)) {
+          continue;
+        }
+        seenUserIds.add(userId);
+        eligibleUsers.push(user);
+        if (eligibleUsers.length === query.limit) {
+          break;
+        }
+      }
+
+      if (data.length < pageSize) {
+        break;
+      }
+      page += 1;
+    }
+
+    return eligibleUsers;
   }
 
   async getStudioMembershipsByStudio(
@@ -237,7 +303,7 @@ export class StudioMembershipService extends BaseModelService {
       const metadata = withStudioMembershipTaskHelper(
         current.metadata as Record<string, unknown> | null | undefined,
         isHelper,
-      ) as Prisma.InputJsonValue;
+      ) as JsonValue;
 
       const updatedCount = await this.studioMembershipRepository.updateMetadataIfUnchanged({
         uid: membershipUid,

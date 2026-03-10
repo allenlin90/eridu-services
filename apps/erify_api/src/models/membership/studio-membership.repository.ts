@@ -11,6 +11,8 @@ import { PrismaService } from '@/prisma/prisma.service';
 // Type aliases for better readability and type safety
 type UserId = Prisma.UserWhereUniqueInput['id'];
 type StudioId = bigint;
+type JsonPrimitive = string | number | boolean;
+type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
 type StudioMembershipWithIncludes<T extends Prisma.StudioMembershipInclude> =
   Prisma.StudioMembershipGetPayload<{
@@ -222,7 +224,7 @@ export class StudioMembershipRepository extends BaseRepository<
     uid: string;
     studioUid: string;
     expectedUpdatedAt: Date;
-    metadata: Prisma.InputJsonValue;
+    metadata: JsonValue;
   }): Promise<number> {
     const result = await this.prisma.studioMembership.updateMany({
       where: {

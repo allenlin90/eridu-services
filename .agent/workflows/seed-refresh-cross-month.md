@@ -90,6 +90,5 @@ If unmatched users remain, fix seed identifiers (email/name contract) rather tha
 ## Related Docs
 
 - `.agent/workflows/verification.md`
-- `.agent/workflows/phase4-hitl-single-migration.md`
 - `docs/product/DB_MIGRATION_POLICY.md`
 - `docs/roadmap/PHASE_4.md`

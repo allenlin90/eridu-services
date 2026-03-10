@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from '@eridu/ui';
 
+import type { AvailabilityWindow } from '../api/get-creator-availability';
 import type { AvailableCreator } from '../api/get-creator-availability';
 import { useCreatorAvailabilityQuery } from '../api/get-creator-availability';
 
@@ -36,11 +37,8 @@ export function AddCreatorDialog({
   const [selectedCreatorId, setSelectedCreatorId] = useState<string>('');
   const [search, setSearch] = useState('');
 
-  const { data: availableCreators = [], isLoading: isLoadingCreators } = useCreatorAvailabilityQuery(
-    studioId,
-    showStartTime,
-    showEndTime,
-  );
+  const availabilityWindows: AvailabilityWindow[] = [{ dateFrom: showStartTime, dateTo: showEndTime }];
+  const { data: availableCreators = [], isLoading: isLoadingCreators } = useCreatorAvailabilityQuery(studioId, availabilityWindows);
 
   const normalizedSearch = search.toLowerCase().replace(/[^a-z0-9]/g, '');
   const filteredCreators = normalizedSearch

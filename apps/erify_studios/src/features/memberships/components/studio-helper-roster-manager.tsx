@@ -395,7 +395,7 @@ export function StudioHelperRosterManager({
           try {
             await createMembership.mutateAsync({
               user_id: data.user_id,
-              role: data.role,
+              role: data.role as (typeof STUDIO_ROLE)[keyof typeof STUDIO_ROLE],
             });
             toast.success('Member invited to studio');
           } catch (error) {

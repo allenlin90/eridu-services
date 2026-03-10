@@ -42,7 +42,6 @@ Run when any of these are true:
 
 4. **Update workflows/rules when process changed**
    - If this change introduces a repeatable process, update/create `.agent/workflows/*.md`.
-   - For Phase 4 schema iterations, keep `.agent/workflows/phase4-hitl-single-migration.md` aligned with runbooks and package scripts.
    - If it should be mandatory, update `.agent/rules/*.md` and `AGENTS.md`.
    - For migration governance changes, ensure canonical product doc and database skill remain synchronized.
 
