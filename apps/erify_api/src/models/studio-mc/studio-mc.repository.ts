@@ -35,6 +35,9 @@ export class StudioMcRepository extends BaseRepository<
           uid: studioUid,
           deletedAt: null,
         },
+        mc: {
+          deletedAt: null,
+        },
       },
       include: {
         mc: {
