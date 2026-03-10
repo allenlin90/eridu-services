@@ -7,8 +7,6 @@ export const showsSearchSchema = z
     name: z.string().optional().catch(undefined),
     client_name: z.string().optional().catch(undefined),
     creator_name: z.string().optional().catch(undefined),
-    // Backward-compatible URL support for legacy mc_name query parameter.
-    mc_name: z.string().optional().catch(undefined),
     start_date_from: z.string().optional().catch(undefined),
     start_date_to: z.string().optional().catch(undefined),
     sortBy: z.string().default('start_time').catch('start_time'),
@@ -17,8 +15,4 @@ export const showsSearchSchema = z
     show_standard_name: z.string().optional().catch(undefined),
     show_status_name: z.string().optional().catch(undefined),
     platform_name: z.string().optional().catch(undefined),
-  })
-  .transform((data) => ({
-    ...data,
-    creator_name: data.creator_name ?? data.mc_name,
-  }));
+  });

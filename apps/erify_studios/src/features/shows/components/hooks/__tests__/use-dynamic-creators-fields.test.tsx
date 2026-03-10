@@ -30,7 +30,6 @@ describe('dynamic Field Hooks (Logic Only)', () => {
     client_name: 'Selected Client',
     studio_room_id: 'room-selected',
     studio_room_name: 'Selected Room',
-    mcs: [{ mc_id: 'mc-selected', mc_name: 'Selected MC', id: '1' }],
     creators: [{ creator_id: 'mc-selected', creator_name: 'Selected MC', id: '1' }],
     platforms: [{ platform_id: 'platform-selected', platform_name: 'Selected Platform', id: '1' }],
     show_type_id: null,

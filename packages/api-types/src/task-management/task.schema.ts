@@ -152,8 +152,6 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj) => {
         client_name: s.client?.name ?? null,
         studio_room_name: s.studioRoom?.name ?? null,
         creator_names: (s.showMCs ?? []).map((item) => item.mc.aliasName || item.mc.name),
-        // Backward-compatible alias for clients that still read mc_names.
-        mc_names: (s.showMCs ?? []).map((item) => item.mc.aliasName || item.mc.name),
       };
     }
   }
@@ -289,10 +287,10 @@ export type BulkDeleteTasksResponse = z.infer<typeof bulkDeleteTasksResponseSche
  * Show data with task completion summary
  */
 export const showWithTaskSummaryDto = showApiResponseSchema.extend({
-  mcs: z.array(z.object({
-    mc_id: z.string(),
-    mc_name: z.string(),
-    mc_aliasname: z.string(),
+  creators: z.array(z.object({
+    creator_id: z.string(),
+    creator_name: z.string(),
+    creator_alias_name: z.string(),
   })).default([]),
   task_summary: z.object({
     total: z.number().int(),

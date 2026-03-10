@@ -98,9 +98,8 @@ export class ShowOrchestrationService {
     await this.showRepository.update({ uid }, updateData);
 
     // 2. Sync creator assignments if provided
-    const showCreators = dto.showCreators ?? dto.showMcs;
-    if (showCreators) {
-      await this.syncShowCreators(showId, showCreators);
+    if (dto.showCreators) {
+      await this.syncShowCreators(showId, dto.showCreators);
     }
 
     // 3. Sync platform assignments if provided

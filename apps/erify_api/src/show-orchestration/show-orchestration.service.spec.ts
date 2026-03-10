@@ -249,7 +249,7 @@ describe('showOrchestrationService', () => {
       const uid = 'show_test123';
       const dto: UpdateShowWithAssignmentsDto = {
         name: 'Updated Show Name',
-        showMcs: undefined,
+        showCreators: undefined,
         showPlatforms: undefined,
       } as UpdateShowWithAssignmentsDto;
 
@@ -266,7 +266,7 @@ describe('showOrchestrationService', () => {
         { uid },
         updatePayload,
       );
-      // Sync methods NOT called since showMcs/showPlatforms are undefined
+      // Sync methods NOT called since showCreators/showPlatforms are undefined
       expect(mcRepository.findByUids).not.toHaveBeenCalled();
       expect(platformRepository.findByUids).not.toHaveBeenCalled();
       expect(showRepository.findByUid).toHaveBeenCalledWith(
@@ -276,11 +276,11 @@ describe('showOrchestrationService', () => {
       expect(result).toEqual(mockShow);
     });
 
-    it('should update a show with MC and platform assignments', async () => {
+    it('should update a show with creator and platform assignments', async () => {
       const uid = 'show_test123';
       const dto = {
         name: 'Updated Show Name',
-        showMcs: [
+        showCreators: [
           {
             creatorId: 'mc_test123',
             note: 'Updated note',
@@ -348,7 +348,7 @@ describe('showOrchestrationService', () => {
       const dto = {
         startTime: new Date('2024-01-01T12:00:00Z'),
         endTime: new Date('2024-01-01T10:00:00Z'),
-        showMcs: undefined,
+        showCreators: undefined,
         showPlatforms: undefined,
       } as unknown as UpdateShowWithAssignmentsDto;
 

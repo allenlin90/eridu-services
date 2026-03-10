@@ -26,6 +26,7 @@ import { useStudioRoomFieldData } from './hooks/use-studio-room-field-data';
 import type { Show } from '@/features/shows/api/get-shows';
 
 type UpdateShowInput = z.infer<typeof updateShowInputSchema>;
+type UpdateShowCreator = NonNullable<UpdateShowInput['creators']>[number];
 
 // Name Field (no network state)
 export const ShowNameField = memo(({
@@ -288,19 +289,19 @@ export const ShowCreatorsField = memo(({
   return (
     <FormField
       control={control}
-      name="mcs"
+      name="creators"
       render={({ field }) => (
         <FormItem className="col-span-1 sm:col-span-2">
           <FormLabel>Creators</FormLabel>
           <FormControl>
             <AsyncMultiCombobox
-              value={field.value?.map((v: any) => v.mc_id) || []}
+              value={field.value?.map((v) => v.creator_id) || []}
               onChange={(ids) => {
                 // Preserve existing metadata if ID exists, else create new
-                const currentCreators = field.value || [];
+                const currentCreators = field.value ?? [];
                 const newCreators = ids.map((id) => {
-                  const existing = currentCreators.find((m: any) => m.mc_id === id);
-                  return existing || { mc_id: id };
+                  const existing = currentCreators.find((creator) => creator.creator_id === id);
+                  return existing ?? ({ creator_id: id } satisfies UpdateShowCreator);
                 });
                 field.onChange(newCreators);
               }}

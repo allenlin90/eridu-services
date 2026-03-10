@@ -57,11 +57,7 @@ export async function getStudioShows(studioId: string, params: GetStudioShowsPar
     ...response.data,
     data: response.data.data.map((show) => ({
       ...show,
-      creators: (show.mcs ?? []).map((assignment) => ({
-        creator_id: assignment.mc_id,
-        creator_name: assignment.mc_name,
-        creator_alias_name: assignment.mc_aliasname,
-      })),
+      creators: show.creators ?? [],
     })),
   };
 }

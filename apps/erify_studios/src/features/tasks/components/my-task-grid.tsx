@@ -43,7 +43,7 @@ const ShowTaskGroup = memo(({ group, onTaskSelect }: ShowTaskGroupProps) => {
     && task.status !== TASK_STATUS.COMPLETED
     && new Date(task.due_date) < new Date()).length;
   const showInfo = group.show;
-  const creatorNames = showInfo?.creator_names ?? showInfo?.mc_names ?? [];
+  const creatorNames = showInfo?.creator_names ?? [];
 
   return (
     <Card className="overflow-hidden">

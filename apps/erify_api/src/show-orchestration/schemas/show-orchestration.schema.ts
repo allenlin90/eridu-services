@@ -10,10 +10,12 @@ import {
 import { createShowCreatorSchema, showCreatorWithRelationsSchema } from '@/models/show-creator/schemas/show-creator.schema';
 import { createShowPlatformSchema, showPlatformWithRelationsSchema } from '@/models/show-platform/schemas/show-platform.schema';
 
+const showCreatorAssignmentSchema = createShowCreatorSchema.omit({ show_id: true });
+
 // Extended schema for show orchestration with creator and platform assignments
 export const createShowWithAssignmentsSchema = createShowSchema.safeExtend({
   // Optional creator assignments
-  creators: z.array(createShowCreatorSchema.omit({ show_id: true })).optional(),
+  creators: z.array(showCreatorAssignmentSchema).optional(),
   // Optional platform assignments
   platforms: z
     .array(createShowPlatformSchema.omit({ show_id: true }))
@@ -52,7 +54,7 @@ const transformCreateShowWithAssignmentsSchema
 // Build update schema from the base object (before refinements) so .partial() is valid in Zod 4.3+
 export const updateShowWithAssignmentsSchema = createShowObjectSchema
   .extend({
-    creators: z.array(createShowCreatorSchema.omit({ show_id: true })).optional(),
+    creators: z.array(showCreatorAssignmentSchema).optional(),
     platforms: z
       .array(createShowPlatformSchema.omit({ show_id: true }))
       .optional(),
@@ -82,12 +84,6 @@ const transformUpdateShowWithAssignmentsSchema
     endTime: data.end_time ? new Date(data.end_time) : undefined,
     metadata: data.metadata,
     showCreators: data.creators?.map((creator) => ({
-      creatorId: creator.creator_id,
-      note: creator.note,
-      metadata: creator.metadata,
-    })),
-    // Backward-compatible alias for existing call sites.
-    showMcs: data.creators?.map((creator) => ({
       creatorId: creator.creator_id,
       note: creator.note,
       metadata: creator.metadata,

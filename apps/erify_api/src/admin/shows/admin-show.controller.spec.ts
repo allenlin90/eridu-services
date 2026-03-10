@@ -137,7 +137,7 @@ describe('adminShowController', () => {
       const show = {
         uid: showId,
         name: 'Test Show',
-        showMcs: [],
+        showCreators: [],
         showPlatforms: [],
       };
 
@@ -158,7 +158,7 @@ describe('adminShowController', () => {
       const showId = 'show_123';
       const updateDto = {
         name: 'Updated Show',
-        showMcs: [{ creatorId: 'mc_1', note: null, metadata: {} }],
+        showCreators: [{ creatorId: 'mc_1', note: null, metadata: {} }],
         showPlatforms: [
           {
             platformId: 'p_1',
@@ -200,7 +200,7 @@ describe('adminShowController', () => {
   });
 
   describe('removeCreatorsFromShow', () => {
-    it('should remove MCs from a show', async () => {
+    it('should remove creators from a show', async () => {
       const showId = 'show_123';
       const removeDto: RemoveCreatorsFromShowDto = { creatorIds: ['mc_1', 'mc_2'] };
 
@@ -234,14 +234,14 @@ describe('adminShowController', () => {
   });
 
   describe('replaceCreatorsOnShow', () => {
-    it('should replace MCs on a show', async () => {
+    it('should replace creators on a show', async () => {
       const showId = 'show_123';
       const replaceDto: ReplaceCreatorsOnShowDto = {
         creators: [{ creatorId: 'mc_1', note: null, metadata: {} }],
       };
       const updatedShow = {
         uid: showId,
-        showMcs: [{ creatorId: 'mc_1', note: null, metadata: {} }],
+        showCreators: [{ creatorId: 'mc_1', note: null, metadata: {} }],
       };
 
       mockShowOrchestrationService.replaceCreatorsForShow.mockResolvedValue(

@@ -43,7 +43,7 @@ export function ShowUpdateForm({
       name: '',
       start_time: '',
       end_time: '',
-      mcs: [],
+      creators: [],
       platforms: [],
     },
   });
@@ -60,8 +60,8 @@ export function ShowUpdateForm({
         show_type_id: show.show_type_id || undefined,
         show_status_id: show.show_status_id || undefined,
         show_standard_id: show.show_standard_id || undefined,
-        mcs: show.creators?.map((creator: any) => ({
-          mc_id: creator.creator_id || creator.id || '',
+        creators: show.creators?.map((creator: any) => ({
+          creator_id: creator.creator_id || creator.id || '',
           note: creator.note,
           metadata: creator.metadata,
         })) || [],
