@@ -75,6 +75,27 @@ When a migration contains manual SQL:
 - Never rewrite/squash migrations already applied in shared environments.
 - Use forward-only migrations for fixes after shared deployment.
 
+## Data-Only Backfills (Migration vs Script)
+
+For data-only changes (no schema diff), pick one delivery path and document the choice:
+
+1. **Migration SQL backfill** (runs automatically in deploy)
+   - Use when every environment must apply the data mutation as part of release rollout.
+2. **Operational script backfill** (manual/controlled execution)
+   - Use when rollout needs explicit operator control, dry-run preview, or staged execution.
+
+Hard rule:
+- Do not ship both a migration SQL backfill and a script-based backfill for the same data mutation in one rollout.
+
+Script requirements:
+- Must support `--dry-run` when practical.
+- Must be idempotent or clearly collision-guarded.
+- Must be referenced in canonical feature docs and release checklist.
+
+Example in this repo:
+- Creator UID prefix transition (`mc_` -> `creator_`) uses script-based backfill via:
+  - `pnpm --filter erify_api db:creator-uid:backfill`
+
 ## Branch-Local Consolidation Rule (Prisma, HITL)
 
 For feature branches that are still local/not merged:

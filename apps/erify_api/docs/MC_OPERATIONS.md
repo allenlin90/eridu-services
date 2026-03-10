@@ -178,3 +178,29 @@ For schema-affecting Phase 4 iterations, use the deterministic cycle:
 1. `pnpm --filter erify_api db:local:refresh`
 2. Optional cross-app auth mapping:
    - `pnpm --filter erify_api db:extid:sync`
+
+## Creator UID Prefix Transition (2026-03-10)
+
+The creator domain now generates new IDs with `creator_` prefix.
+
+- New creator records use `creator_...`.
+- Legacy `mc_...` creator IDs are still accepted at request boundaries during rollout.
+- Validation and lookup compatibility is implemented in:
+  - `apps/erify_api/src/models/creator/creator-uid.util.ts`
+  - `apps/erify_api/src/lib/pipes/uid-validation.pipe.ts`
+  - `apps/erify_api/src/models/creator/creator.repository.ts`
+
+Backfill strategy for current rollout is script-based (not migration-based):
+
+1. Dry run
+   - `pnpm --filter erify_api db:creator-uid:backfill -- --dry-run`
+2. Execute
+   - `pnpm --filter erify_api db:creator-uid:backfill`
+
+Backfill script:
+- `apps/erify_api/scripts/backfill-creator-uids.ts`
+
+Behavior:
+- rewrites `creators.uid` from `mc_...` to `creator_...`
+- preserves old UID in `metadata.legacy_mc_uid`
+- rewrites creator UID references in `schedules.plan_document` and `schedule_snapshots.plan_document`

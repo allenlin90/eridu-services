@@ -23,7 +23,7 @@
 | [Task Management Summary](./TASK_MANAGEMENT_SUMMARY.md)                             | ✅         | Task-as-Form architecture, API surface, workflows   |
 | [Studio Shift Schedule](./STUDIO_SHIFT_SCHEDULE.md)                                 | ✅ Phase 3 | Shift CRUD, duty-manager coverage, calendar, alignment |
 | [File Upload (Cloudflare R2)](./FILE_UPLOAD.md)                                     | ✅ Phase 3 | Presigned URL flow, use-case limits, storage routing |
-| [MC Operations](./MC_OPERATIONS.md)                                                 | ✅ Phase 4 | RBAC roles, MC compensation model, studio MC endpoints, bulk assignment, availability |
+| [Creator Operations](./MC_OPERATIONS.md)                                            | ✅ Phase 4 | RBAC roles, creator compensation model, studio creator endpoints, bulk assignment, availability |
 | [Show Economics](./SHOW_ECONOMICS.md)                                               | ✅ Phase 4 | Show platform metrics, per-show P&L, grouped P&L and performance views |
 | [DB Migration Rehearsal](./DB_MIGRATION_REHEARSAL.md)                               | ✅ Ops     | Production-like local migration rollout checklist (`migrate deploy` flow) |
 | [DB Migration Policy](../../../docs/product/DB_MIGRATION_POLICY.md)                 | ✅ Ops     | Canonical migration governance, tool-first generation, and branch-local consolidation rule |

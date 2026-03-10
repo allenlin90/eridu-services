@@ -211,6 +211,25 @@ Recommended comment format in migration SQL:
 - Update relevant feature docs if behavior/operational impact exists.
 - Keep this skill aligned with any new recurring customization pattern.
 
+### Data-only backfill decision rule
+
+For data-only mutations (no schema change), choose exactly one:
+
+1. Migration SQL backfill (auto-runs in `migrate deploy`)
+2. Operational script backfill (manual execution with dry-run support)
+
+Do not ship both for the same mutation in one rollout.
+
+Use script-based backfill when:
+- rollout needs explicit operator control,
+- dry-run inspection is required,
+- execution timing differs by environment.
+
+If script-based backfill is chosen:
+- expose a dedicated package script command,
+- keep script idempotent or collision-guarded,
+- update canonical feature docs with runbook commands.
+
 ---
 
 ## 11. Seed Contract Compatibility Gate (Required)

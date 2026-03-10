@@ -16,6 +16,10 @@ Phase 4 delivered the cost side of economics ("L") and roster foundations. Reven
 Progress note (2026-03-10):
 - Initial compatibility-first refactor started in `erify_studios` show mapping/dashboard flows.
 - Creator-first aliases are now derived from legacy `mcs` payloads in the studio shows API layer.
+- Backend creator UID transition landed:
+  - New creator IDs are generated as `creator_...`.
+  - Legacy `mc_...` IDs are accepted during rollout via compatibility validation/lookup.
+  - Backfill strategy selected: script-based (`db:creator-uid:backfill`) with dry-run, not migration SQL.
 
 Checklist:
 - [ ] Confirm canonical naming contract:
@@ -29,6 +33,9 @@ Checklist:
 - [ ] Align API schemas and DTO contracts to creator-first naming:
   - Remove response/input field drift (`mcId` vs `creatorId`).
   - Keep temporary backward-compatible request mapping only where required.
+- [x] Align creator UID generation with creator-first naming:
+  - New IDs use `creator_`.
+  - Legacy `mc_` request IDs remain accepted during transition.
 - [ ] Consolidate Prisma/domain naming updates in one branch migration when schema changes are required:
   - No extra standalone migration only for naming.
   - Validate local reset/migrate/seed cycle.
