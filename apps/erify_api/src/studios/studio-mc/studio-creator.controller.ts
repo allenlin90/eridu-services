@@ -23,7 +23,7 @@ import { creatorDto } from '@/models/creator/schemas/creator.schema';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioMcService } from '@/models/studio-mc/studio-mc.service';
 
-@StudioProtected()
+@StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER])
 @Controller('studios/:studioId/creators')
 export class StudioCreatorController extends BaseStudioController {
   constructor(

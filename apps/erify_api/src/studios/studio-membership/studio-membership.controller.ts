@@ -32,7 +32,7 @@ import { StudioService } from '@/models/studio/studio.service';
 import { UserService } from '@/models/user/user.service';
 
 @ApiTags('Studio Memberships')
-@StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+@StudioProtected([STUDIO_ROLE.ADMIN])
 @Controller('studios/:studioId/studio-memberships')
 export class StudioMembershipController extends BaseStudioController {
   constructor(
@@ -49,12 +49,6 @@ export class StudioMembershipController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: ListMembershipUserCatalogQueryDto,
   ) {
-    const existingMemberships = await this.studioMembershipService.listStudioMemberships(
-      { studioId, take: 1000, skip: 0 },
-      {},
-    );
-    const existingUserIds = new Set(existingMemberships.data.map((membership) => membership.userId));
-
     const { data } = await this.userService.listUsers({
       page: 1,
       limit: query.limit,
@@ -68,7 +62,21 @@ export class StudioMembershipController extends BaseStudioController {
       isSystemAdmin: undefined,
     });
 
-    return data.filter((user) => !existingUserIds.has(user.id));
+    if (data.length === 0) {
+      return data;
+    }
+
+    const membershipChecks = await Promise.all(
+      data.map((user) =>
+        this.studioMembershipService.findOne({
+          userId: user.id,
+          studio: { uid: studioId, deletedAt: null },
+          deletedAt: null,
+        }),
+      ),
+    );
+
+    return data.filter((_, index) => membershipChecks[index] === null);
   }
 
   @Post()

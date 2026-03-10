@@ -5,7 +5,7 @@ import { StudioMembershipController } from './studio-membership.controller';
 import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
 
 describe('studioMembership role access metadata', () => {
-  it('allows ADMIN and MANAGER on studio membership helper roster endpoints', () => {
+  it('allows only ADMIN on studio membership helper roster endpoints', () => {
     const classRoles = Reflect.getMetadata(
       STUDIO_ROLES_KEY,
       StudioMembershipController,
@@ -13,7 +13,6 @@ describe('studioMembership role access metadata', () => {
 
     expect(classRoles).toEqual([
       STUDIO_ROLE.ADMIN,
-      STUDIO_ROLE.MANAGER,
     ]);
   });
 

@@ -209,6 +209,15 @@ async create(@Body() dto: CreateTaskDto) {
 }
 ```
 
+### 7.1 Catalog Exclusion Filters Must Not Use Arbitrary Global Caps
+
+When building combobox/catalog endpoints that exclude already-linked records (for example user invite catalogs), avoid fixed prefetch caps such as `take: 1000` on the linked table to compute exclusions.
+
+- ✅ Prefer targeted existence checks scoped to the current candidate set, or repository queries that apply exclusion in DB.
+- ❌ Avoid “load first N linked rows, then filter” when linked table can grow beyond N.
+
+Reason: fixed caps silently re-introduce already-linked entities in large tenants and cause avoidable 4xx conflicts on create.
+
 ---
 
 ## Admin Controllers

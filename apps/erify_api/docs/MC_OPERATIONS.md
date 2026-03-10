@@ -36,10 +36,10 @@ For a manager, Phase 4 usually runs in this order:
 
 Three roles added to `STUDIO_ROLE` in `packages/api-types/src/memberships/schemas.ts`:
 
-| Role | Value |
-|------|-------|
-| `TALENT_MANAGER` | `'talent_manager'` |
-| `DESIGNER` | `'designer'` |
+| Role                 | Value                  |
+| -------------------- | ---------------------- |
+| `TALENT_MANAGER`     | `'talent_manager'`     |
+| `DESIGNER`           | `'designer'`           |
 | `MODERATION_MANAGER` | `'moderation_manager'` |
 
 Guard usage: `@StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER])`
@@ -66,10 +66,10 @@ Decimal fields serialize as `string | null` via `decimalToStringOrNull` (`apps/e
 
 `apps/erify_api/src/studios/studio-show/studio-show-creator.controller.ts`
 
-| Method | Path | Access |
-|--------|------|--------|
-| GET | `/studios/:studioId/shows/:showId/creators` | All members |
-| POST | `/studios/:studioId/shows/:showId/creators` | ADMIN, MANAGER, TALENT_MANAGER |
+| Method | Path                                                   | Access                         |
+| ------ | ------------------------------------------------------ | ------------------------------ |
+| GET    | `/studios/:studioId/shows/:showId/creators`            | ADMIN, MANAGER, TALENT_MANAGER |
+| POST   | `/studios/:studioId/shows/:showId/creators`            | ADMIN, MANAGER, TALENT_MANAGER |
 | DELETE | `/studios/:studioId/shows/:showId/creators/:creatorId` | ADMIN, MANAGER, TALENT_MANAGER |
 
 
@@ -79,10 +79,10 @@ POST body accepts optional compensation fields: `agreed_rate`, `compensation_typ
 
 `apps/erify_api/src/studios/studio-show/studio-show.controller.ts`
 
-| Method | Path | Access |
-|--------|------|--------|
-| PATCH | `/studios/:studioId/shows/creator-assignments/bulk` | ADMIN, MANAGER, TALENT_MANAGER |
-| PUT | `/studios/:studioId/shows/creator-assignments/bulk` | ADMIN, MANAGER, TALENT_MANAGER |
+| Method | Path                                                | Access                         |
+| ------ | --------------------------------------------------- | ------------------------------ |
+| PATCH  | `/studios/:studioId/shows/creator-assignments/bulk` | ADMIN, MANAGER, TALENT_MANAGER |
+| PUT    | `/studios/:studioId/shows/creator-assignments/bulk` | ADMIN, MANAGER, TALENT_MANAGER |
 
 Request: `{ show_ids: string[], creator_ids: string[] }`
 Response: `{ created: N, skipped: N, removed: N, errors: [{ show_id, creator_id, reason }] }`
@@ -99,13 +99,13 @@ Orchestration service: `apps/erify_api/src/studios/studio-show/studio-show-mc.or
 
 `apps/erify_api/src/studios/studio-mc/studio-creator.controller.ts`
 
-| Method | Path | Access |
-|--------|------|--------|
-| GET | `/studios/:studioId/creators/availability` | All members |
-| GET | `/studios/:studioId/creators/catalog` | ADMIN, MANAGER, TALENT_MANAGER |
-| GET | `/studios/:studioId/creators/roster` | ADMIN, MANAGER, TALENT_MANAGER |
-| POST | `/studios/:studioId/creators/roster` | ADMIN, MANAGER, TALENT_MANAGER |
-| PATCH | `/studios/:studioId/creators/roster/:creatorId` | ADMIN, MANAGER, TALENT_MANAGER |
+| Method | Path                                            | Access                         |
+| ------ | ----------------------------------------------- | ------------------------------ |
+| GET    | `/studios/:studioId/creators/availability`      | ADMIN, MANAGER, TALENT_MANAGER |
+| GET    | `/studios/:studioId/creators/catalog`           | ADMIN, MANAGER, TALENT_MANAGER |
+| GET    | `/studios/:studioId/creators/roster`            | ADMIN, MANAGER, TALENT_MANAGER |
+| POST   | `/studios/:studioId/creators/roster`            | ADMIN, MANAGER, TALENT_MANAGER |
+| PATCH  | `/studios/:studioId/creators/roster/:creatorId` | ADMIN, MANAGER, TALENT_MANAGER |
 | DELETE | `/studios/:studioId/creators/roster/:creatorId` | ADMIN, MANAGER, TALENT_MANAGER |
 
 
@@ -139,28 +139,28 @@ Roster onboarding flow:
 
 `apps/erify_api/src/admin/creators/admin-creator.controller.ts` (alias)
 
-| Method | Path | Access |
-|--------|------|--------|
-| GET | `/admin/creators` | System Admin |
-| POST | `/admin/creators` | System Admin |
-| GET | `/admin/creators/:id` | System Admin |
-| PATCH | `/admin/creators/:id` | System Admin |
+| Method | Path                  | Access       |
+| ------ | --------------------- | ------------ |
+| GET    | `/admin/creators`     | System Admin |
+| POST   | `/admin/creators`     | System Admin |
+| GET    | `/admin/creators/:id` | System Admin |
+| PATCH  | `/admin/creators/:id` | System Admin |
 | DELETE | `/admin/creators/:id` | System Admin |
 
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `src/studios/studio-show/studio-show-creator.controller.ts` | Per-show creator endpoints |
-| `src/studios/studio-show/studio-show-mc.orchestration.service.ts` | Bulk assignment orchestration |
-| `src/studios/studio-mc/studio-creator.controller.ts` | Availability endpoint |
-| `src/studios/studio-mc/studio-mc.module.ts` | Studio creator module |
-| `src/models/mc/mc.repository.ts` | `findAvailableMcs` method |
-| `src/models/show-mc/show-mc.repository.ts` | `createByUids`, `createAssignment`, `restoreAndUpdateAssignment` |
-| `src/models/show-mc/show-mc.service.ts` | Service layer (calls `createByUids`) |
-| `packages/api-types/src/mcs/schemas.ts` | `MC_COMPENSATION_TYPE`, `mcApiResponseSchema` |
-| `packages/api-types/src/memberships/schemas.ts` | `STUDIO_ROLE` with new roles |
+| File                                                              | Purpose                                                          |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `src/studios/studio-show/studio-show-creator.controller.ts`       | Per-show creator endpoints                                       |
+| `src/studios/studio-show/studio-show-mc.orchestration.service.ts` | Bulk assignment orchestration                                    |
+| `src/studios/studio-mc/studio-creator.controller.ts`              | Availability endpoint                                            |
+| `src/studios/studio-mc/studio-mc.module.ts`                       | Studio creator module                                            |
+| `src/models/mc/mc.repository.ts`                                  | `findAvailableMcs` method                                        |
+| `src/models/show-mc/show-mc.repository.ts`                        | `createByUids`, `createAssignment`, `restoreAndUpdateAssignment` |
+| `src/models/show-mc/show-mc.service.ts`                           | Service layer (calls `createByUids`)                             |
+| `packages/api-types/src/mcs/schemas.ts`                           | `MC_COMPENSATION_TYPE`, `mcApiResponseSchema`                    |
+| `packages/api-types/src/memberships/schemas.ts`                   | `STUDIO_ROLE` with new roles                                     |
 
 ## Phase 4 Re-baseline Note
 

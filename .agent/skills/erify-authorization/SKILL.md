@@ -36,6 +36,15 @@ Current caveat to keep explicit in docs:
 
 - Frontend route-level role progression currently uses `MEMBER`, `MANAGER`, `ADMIN` hierarchy only; newer roles (`TALENT_MANAGER`, `DESIGNER`, `MODERATION_MANAGER`) need explicit FE policy mapping before first-class route-level behavior is guaranteed.
 
+## Guard Parity Checklist (Backend vs FE)
+
+Use this checklist whenever adding/changing studio-scoped endpoints:
+
+1. Backend guard must be at least as strict as FE route policy for the same workflow.
+2. Do not rely on broad class-level `@StudioProtected()` when any handler returns sensitive staffing/cost/member-governance data; set an explicit role allow-list at class or method level.
+3. If one method needs tighter policy than siblings, keep class-level guard broad enough only for safe handlers and add method-level overrides for restricted handlers.
+4. After guard edits, update `docs/product/ROLE_ACCESS_MATRIX.md` and app workflow docs that list endpoint access.
+
 ## Implementation Status
 
 > [!IMPORTANT]

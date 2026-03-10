@@ -20,7 +20,7 @@ export const showCreatorSchema = z.object({
   id: z.bigint(),
   uid: z.string().startsWith(ShowMcService.UID_PREFIX),
   showId: z.bigint(),
-  creatorId: z.bigint(),
+  mcId: z.bigint(),
   note: z.string().nullable(),
   agreedRate: z.unknown().nullable(),
   compensationType: z.string().nullable(),

@@ -5,6 +5,19 @@ import { StudioCreatorController } from './studio-creator.controller';
 import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
 
 describe('studioMc role access metadata', () => {
+  it('applies ADMIN, MANAGER, and TALENT_MANAGER at controller level', () => {
+    const classRoles = Reflect.getMetadata(
+      STUDIO_ROLES_KEY,
+      StudioCreatorController,
+    ) as string[];
+
+    expect(classRoles).toEqual([
+      STUDIO_ROLE.ADMIN,
+      STUDIO_ROLE.MANAGER,
+      STUDIO_ROLE.TALENT_MANAGER,
+    ]);
+  });
+
   it('allows TALENT_MANAGER for creator roster CRUD endpoints', () => {
     const catalogRoles = Reflect.getMetadata(
       STUDIO_ROLES_KEY,

@@ -30,7 +30,7 @@ import { ShowCreatorRepository } from '@/models/show-creator/show-creator.reposi
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { StudioService } from '@/models/studio/studio.service';
 
-@StudioProtected()
+@StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER])
 @Controller('studios/:studioId/shows/:showId/creators')
 export class StudioShowCreatorController extends BaseStudioController {
   constructor(

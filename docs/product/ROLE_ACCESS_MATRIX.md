@@ -26,14 +26,14 @@ This matrix is the canonical policy summary. Runtime behavior is always determin
 | Capability / Endpoint Group                                     | ADMIN | MANAGER | MEMBER | TALENT_MANAGER | DESIGNER | MODERATION_MANAGER | Evidence                                                     |
 | --------------------------------------------------------------- | ----- | ------- | ------ | -------------- | -------- | ------------------ | ------------------------------------------------------------ |
 | Studio show list/detail/tasks (`GET /studios/:studioId/shows*`) | Yes   | Yes     | Yes    | Yes            | Yes      | Yes                | Base `@StudioProtected()` on show controller                 |
-| Show creator list (`GET /studios/:studioId/shows/:showId/creators`) | Yes | Yes | Yes | Yes | Yes | Yes | Base `@StudioProtected()` on show-creator controller |
+| Show creator list (`GET /studios/:studioId/shows/:showId/creators`) | Yes | Yes | No | Yes | No | No | `@StudioProtected([ADMIN, MANAGER, TALENT_MANAGER])` on show-creator controller |
 | Show creator add/remove                                         | Yes   | Yes     | No     | Yes            | No       | No                 | `@StudioProtected([ADMIN, MANAGER, TALENT_MANAGER])`         |
 | Bulk creator assignment (append `PATCH`, replace `PUT`)        | Yes   | Yes     | No     | Yes            | No       | No                 | `@StudioProtected([ADMIN, MANAGER, TALENT_MANAGER])`         |
-| Creator availability (`GET /studios/:studioId/creators/availability`) | Yes | Yes | Yes | Yes | Yes | Yes | Base `@StudioProtected()` on studio-creator controller |
-| Studio membership roster (`GET /studios/:studioId/studio-memberships`) | Yes | Yes | No | No | No | No | `@StudioProtected([ADMIN, MANAGER])` on studio-membership controller |
-| Studio membership invite (`POST /studios/:studioId/studio-memberships`) | Yes | Yes | No | No | No | No | `@StudioProtected([ADMIN, MANAGER])` + studio-scoped create endpoint |
+| Creator availability (`GET /studios/:studioId/creators/availability`) | Yes | Yes | No | Yes | No | No | `@StudioProtected([ADMIN, MANAGER, TALENT_MANAGER])` on studio-creator controller |
+| Studio membership roster (`GET /studios/:studioId/studio-memberships`) | Yes | No | No | No | No | No | `@StudioProtected([ADMIN])` on studio-membership controller |
+| Studio membership invite (`POST /studios/:studioId/studio-memberships`) | Yes | No | No | No | No | No | `@StudioProtected([ADMIN])` + studio-scoped create endpoint |
 | Studio membership role update (`PATCH /studios/:studioId/studio-memberships/:id/role`) | Yes | No | No | No | No | No | Method-level `@StudioProtected([ADMIN])` override on role management endpoint |
-| Helper roster toggle (`PATCH /studios/:studioId/studio-memberships/:id/helper`) | Yes | Yes | No | No | No | No | `@StudioProtected([ADMIN, MANAGER])` + helper endpoint |
+| Helper roster toggle (`PATCH /studios/:studioId/studio-memberships/:id/helper`) | Yes | No | No | No | No | No | `@StudioProtected([ADMIN])` + helper endpoint |
 | Economics/performance overview endpoints                        | Yes   | Yes     | No     | No             | No       | No                 | `@StudioProtected([ADMIN, MANAGER])` on economics controller |
 
 Notes:
