@@ -10,16 +10,26 @@ import {
 import { createShowCreatorSchema, showCreatorWithRelationsSchema } from '@/models/show-creator/schemas/show-creator.schema';
 import { createShowPlatformSchema, showPlatformWithRelationsSchema } from '@/models/show-platform/schemas/show-platform.schema';
 
-const showCreatorAssignmentSchema = createShowCreatorSchema.omit({ show_id: true });
+// TODO(phase-5): revisit assignment payloads when economics/performance workflow is redesigned.
+const showCreatorAssignmentSchema = createShowCreatorSchema.pick({
+  creator_id: true,
+  note: true,
+  metadata: true,
+});
+const showPlatformAssignmentSchema = createShowPlatformSchema.pick({
+  platform_id: true,
+  live_stream_link: true,
+  platform_show_id: true,
+  viewer_count: true,
+  metadata: true,
+});
 
 // Extended schema for show orchestration with creator and platform assignments
 export const createShowWithAssignmentsSchema = createShowSchema.safeExtend({
   // Optional creator assignments
   creators: z.array(showCreatorAssignmentSchema).optional(),
   // Optional platform assignments
-  platforms: z
-    .array(createShowPlatformSchema.omit({ show_id: true }))
-    .optional(),
+  platforms: z.array(showPlatformAssignmentSchema).optional(),
 });
 
 const transformCreateShowWithAssignmentsSchema
@@ -55,9 +65,7 @@ const transformCreateShowWithAssignmentsSchema
 export const updateShowWithAssignmentsSchema = createShowObjectSchema
   .extend({
     creators: z.array(showCreatorAssignmentSchema).optional(),
-    platforms: z
-      .array(createShowPlatformSchema.omit({ show_id: true }))
-      .optional(),
+    platforms: z.array(showPlatformAssignmentSchema).optional(),
   })
   .partial()
   .refine(
