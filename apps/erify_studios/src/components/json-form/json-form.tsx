@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import type { ControllerRenderProps, FieldValues } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -58,6 +58,7 @@ export type JsonFormHandle = {
   flushPendingFileUploads: () => Promise<Record<string, unknown>>;
   hasPendingFileUploads: () => boolean;
   hasBlockingFileIssues: () => boolean;
+  clearUploadedFileCache: () => void;
 };
 
 type PendingUpload = {
@@ -65,6 +66,12 @@ type PendingUpload = {
   previewUrl: string | null;
   error: string | null;
   isPreparing: boolean;
+};
+
+type UploadedFileCacheEntry = {
+  fingerprint: string;
+  fileUrl: string;
+  uploadTaskId: string;
 };
 
 const DEFAULT_VALUES: Record<string, unknown> = {};
@@ -80,6 +87,16 @@ function isSupportedUploadMimeType(value: string): boolean {
 
 function isLikelyImageUrl(url: string): boolean {
   return /\.(?:png|jpe?g|webp|gif|bmp|svg)(?:\?.*)?$/i.test(url);
+}
+
+function shouldAttemptImagePreview(item: UiSchema['items'][0], currentUrl: string): boolean {
+  if (!currentUrl) {
+    return false;
+  }
+  if (isLikelyImageUrl(currentUrl)) {
+    return true;
+  }
+  return item.validation?.accept?.includes('image/') ?? false;
 }
 
 function releasePendingUploads(map: Record<string, PendingUpload>): void {
@@ -108,7 +125,12 @@ function getFieldMaxHint(item: UiSchema['items'][0], pendingUpload?: PendingUplo
     return formatFileSize(getImageCompressionTargetBytes(fieldMax));
   }
 
-  if (item.validation?.accept?.includes('image/')) {
+  // Image compression is driven by the actual file MIME type (file.type), not the template's
+  // accept field. If the field has no accept restriction, image files could be uploaded and would
+  // be compressed. Show the image cap hint whenever images are possible for this field.
+  const accept = item.validation?.accept;
+  const couldReceiveImages = !accept || accept.includes('image/');
+  if (couldReceiveImages) {
     return `${formatFileSize(fieldMax)} (images capped at ${formatFileSize(getImageCompressionTargetBytes(fieldMax))})`;
   }
   return formatFileSize(fieldMax);
@@ -127,6 +149,10 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
+function getFileFingerprint(file: File): string {
+  return [file.name, file.size, file.type, file.lastModified].join(':');
+}
+
 export const JsonForm = function JsonForm({
   ref,
   schema,
@@ -142,6 +168,7 @@ export const JsonForm = function JsonForm({
   const [uploadingByKey, setUploadingByKey] = useState<Record<string, boolean>>({});
   const [pendingFilesByKey, setPendingFilesByKey] = useState<Record<string, PendingUpload>>({});
   const pendingFilesRef = useRef<Record<string, PendingUpload>>({});
+  const uploadedFileCacheRef = useRef<Record<string, UploadedFileCacheEntry>>({});
 
   const form = useForm<Record<string, unknown>>({
     resolver: zodResolver(zodSchema),
@@ -170,6 +197,11 @@ export const JsonForm = function JsonForm({
       releasePendingUploads(pendingFilesRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    // Reusing cached URLs across task contexts can attach assets to the wrong task.
+    uploadedFileCacheRef.current = {};
+  }, [uploadTaskId]);
 
   useEffect(() => {
     if (onChange) {
@@ -203,111 +235,140 @@ export const JsonForm = function JsonForm({
     });
   }, [onUploadStateChange, pendingFilesByKey]);
 
+  const clearPendingUpload = useCallback((fieldKey: string) => {
+    setPendingFilesByKey((prev) => {
+      const next = { ...prev };
+      const removed = next[fieldKey];
+      if (removed?.previewUrl) {
+        URL.revokeObjectURL(removed.previewUrl);
+      }
+      delete next[fieldKey];
+      return next;
+    });
+  }, []);
+
+  const validateBeforeSubmitInternal = useCallback(async () => {
+    const currentValues = form.getValues();
+
+    // Only exempt file-type fields that have a pending upload — other field types are always blocking.
+    const pendingFileKeys = new Set(
+      Object.keys(pendingFilesByKey).filter((k) => itemsByKey.get(k)?.type === 'file'),
+    );
+
+    const validation = zodSchema.safeParse(currentValues);
+
+    // Filter validation errors: issues on pending file fields are satisfied by the upload
+    // step (flushPendingFileUploads), not by a pre-filled URL. z.url() rejects empty
+    // values, so we must exclude those fields from the blocking check entirely.
+    const blockingIssues = validation.success
+      ? []
+      : validation.error.issues.filter(
+          (issue) => !pendingFileKeys.has(String(issue.path[0] ?? '')),
+        );
+
+    // Scope form.trigger() to non-pending-file fields only. Triggering pending file fields
+    // would set URL errors on them (empty value fails z.url()) and incorrectly block submit.
+    const nonPendingKeys = [...itemsByKey.keys()].filter((k) => !pendingFileKeys.has(k));
+    if (nonPendingKeys.length > 0) {
+      await form.trigger(nonPendingKeys);
+    }
+
+    if (blockingIssues.length > 0) {
+      const firstIssue = blockingIssues[0]?.message;
+      throw new Error(firstIssue ?? 'Please complete required fields before submitting');
+    }
+
+    // Clear any stale RHF errors on pending file fields so they don't show as invalid.
+    if (pendingFileKeys.size > 0) {
+      form.clearErrors([...pendingFileKeys]);
+    }
+  }, [form, itemsByKey, pendingFilesByKey, zodSchema]);
+
+  const flushPendingFileUploadsInternal = useCallback(async () => {
+    if (Object.keys(pendingFilesByKey).length === 0) {
+      return form.getValues();
+    }
+
+    if (!uploadTaskId) {
+      throw new Error('Task context is required for file upload');
+    }
+
+    if (Object.values(pendingFilesByKey).some((upload) => upload.isPreparing)) {
+      throw new Error('Please wait until file preparation is finished');
+    }
+
+    const blockingError = Object.values(pendingFilesByKey).find((upload) => upload.error)?.error;
+    if (blockingError) {
+      throw new Error(blockingError);
+    }
+
+    const entries = Object.entries(pendingFilesByKey);
+    for (const [fieldKey, upload] of entries) {
+      const item = itemsByKey.get(fieldKey);
+      if (!item || item.type !== 'file') {
+        continue;
+      }
+
+      const uploadFile = upload.file;
+      const fingerprint = getFileFingerprint(uploadFile);
+      const cached = uploadedFileCacheRef.current[fieldKey];
+
+      // Flow step 1: if this exact file was already uploaded for this field, reuse the URL.
+      if (cached && cached.fingerprint === fingerprint && cached.uploadTaskId === uploadTaskId) {
+        form.setValue(fieldKey, cached.fileUrl, { shouldDirty: true, shouldValidate: true });
+        clearPendingUpload(fieldKey);
+        continue;
+      }
+
+      // Flow step 2: enforce file policy before requesting presign/upload.
+      if (!isSupportedUploadMimeType(uploadFile.type)) {
+        throw new Error(`Unsupported file type: ${uploadFile.type || 'unknown'}`);
+      }
+      const accept = item.validation?.accept;
+      if (!matchesAcceptRule(uploadFile.type, uploadFile.name, accept)) {
+        throw new Error(`File for '${item.label}' does not match allowed types`);
+      }
+
+      const maxBytesForField = getFieldMaxBytes(item, uploadFile);
+      if (uploadFile.size > maxBytesForField) {
+        throw new Error(getFileTooLargeMessage(item.label, maxBytesForField));
+      }
+
+      // Flow step 3: presign -> direct upload to storage -> write final URL into form state.
+      setUploadingByKey((prev) => ({ ...prev, [fieldKey]: true }));
+      try {
+        const presigned = await requestPresignedUpload({
+          use_case: FILE_UPLOAD_USE_CASE.MATERIAL_ASSET,
+          mime_type: uploadFile.type,
+          file_size: uploadFile.size,
+          file_name: uploadFile.name,
+          task_id: uploadTaskId,
+          field_key: fieldKey,
+        });
+
+        await uploadFileToPresignedUrl(presigned, uploadFile);
+        form.setValue(fieldKey, presigned.file_url, { shouldDirty: true, shouldValidate: true });
+        uploadedFileCacheRef.current[fieldKey] = {
+          fingerprint,
+          fileUrl: presigned.file_url,
+          uploadTaskId,
+        };
+        clearPendingUpload(fieldKey);
+      } finally {
+        setUploadingByKey((prev) => ({ ...prev, [fieldKey]: false }));
+      }
+    }
+
+    return form.getValues();
+  }, [clearPendingUpload, form, itemsByKey, pendingFilesByKey, uploadTaskId]);
+
   useImperativeHandle(ref, () => ({
     async validateBeforeSubmit() {
-      const currentValues = form.getValues();
-      const valuesWithPendingUploads = { ...currentValues };
-      for (const key of Object.keys(pendingFilesByKey)) {
-        const currentValue = valuesWithPendingUploads[key];
-        if (typeof currentValue !== 'string' || currentValue.trim().length === 0) {
-          valuesWithPendingUploads[key] = '__pending_upload__';
-        }
-      }
-
-      const validation = zodSchema.safeParse(valuesWithPendingUploads);
-      if (!validation.success) {
-        await form.trigger();
-        const firstIssue = validation.error.issues[0]?.message;
-        throw new Error(firstIssue ?? 'Please complete required fields before submitting');
-      }
-
-      await form.trigger();
+      // Submission guard: treat pending file fields as satisfiable while still enforcing all other fields.
+      await validateBeforeSubmitInternal();
     },
     async flushPendingFileUploads() {
-      if (Object.keys(pendingFilesByKey).length === 0) {
-        return form.getValues();
-      }
-
-      if (!uploadTaskId) {
-        throw new Error('Task context is required for file upload');
-      }
-
-      if (Object.values(pendingFilesByKey).some((upload) => upload.isPreparing)) {
-        throw new Error('Please wait until file preparation is finished');
-      }
-
-      const blockingError = Object.values(pendingFilesByKey).find((upload) => upload.error)?.error;
-      if (blockingError) {
-        throw new Error(blockingError);
-      }
-
-      const entries = Object.entries(pendingFilesByKey);
-      for (const [fieldKey, upload] of entries) {
-        const item = itemsByKey.get(fieldKey);
-        if (!item || item.type !== 'file') {
-          continue;
-        }
-
-        const file = upload.file;
-        if (!isSupportedUploadMimeType(file.type)) {
-          throw new Error(`Unsupported file type: ${file.type || 'unknown'}`);
-        }
-        const accept = item.validation?.accept;
-        if (!matchesAcceptRule(file.type, file.name, accept)) {
-          throw new Error(`File for '${item.label}' does not match allowed types`);
-        }
-
-        const maxBytesForField = getFieldMaxBytes(item, file);
-
-        const prepared = file.type.startsWith('image/')
-          ? await prepareImageForUpload(file, {
-            targetMaxBytes: maxBytesForField,
-            accept,
-            maxDimension: maxBytesForField <= SCREENSHOT_MAX_BYTES ? 1600 : undefined,
-            preferWorker: true,
-          })
-          : { file, wasCompressed: false, usedWorker: false };
-        const uploadFile = prepared.file;
-
-        if (!matchesAcceptRule(uploadFile.type, uploadFile.name, accept)) {
-          throw new Error(`Compressed file for '${item.label}' does not match allowed types`);
-        }
-        if (uploadFile.size > maxBytesForField) {
-          throw new Error(getFileTooLargeMessage(item.label, maxBytesForField));
-        }
-
-        setUploadingByKey((prev) => ({ ...prev, [fieldKey]: true }));
-        try {
-          const presigned = await requestPresignedUpload({
-            use_case: FILE_UPLOAD_USE_CASE.MATERIAL_ASSET,
-            mime_type: uploadFile.type,
-            file_size: uploadFile.size,
-            file_name: uploadFile.name,
-            task_id: uploadTaskId,
-            field_key: fieldKey,
-          });
-
-          await uploadFileToPresignedUrl(presigned, uploadFile);
-          form.setValue(fieldKey, presigned.file_url, { shouldDirty: true, shouldValidate: true });
-          if (prepared.wasCompressed) {
-            const method = prepared.usedWorker ? ' in background' : '';
-            toast.success(`Compressed '${item.label}' to ${Math.round(uploadFile.size / 1024)} KB${method}`);
-          }
-          setPendingFilesByKey((prev) => {
-            const next = { ...prev };
-            const removed = next[fieldKey];
-            if (removed?.previewUrl) {
-              URL.revokeObjectURL(removed.previewUrl);
-            }
-            delete next[fieldKey];
-            return next;
-          });
-        } finally {
-          setUploadingByKey((prev) => ({ ...prev, [fieldKey]: false }));
-        }
-      }
-
-      return form.getValues();
+      return flushPendingFileUploadsInternal();
     },
     hasPendingFileUploads() {
       return Object.keys(pendingFilesByKey).length > 0;
@@ -315,7 +376,10 @@ export const JsonForm = function JsonForm({
     hasBlockingFileIssues() {
       return Object.values(pendingFilesByKey).some((upload) => upload.isPreparing || !!upload.error);
     },
-  }), [form, itemsByKey, pendingFilesByKey, uploadTaskId, zodSchema]);
+    clearUploadedFileCache() {
+      uploadedFileCacheRef.current = {};
+    },
+  }), [flushPendingFileUploadsInternal, pendingFilesByKey, validateBeforeSubmitInternal]);
 
   const handleSubmit = (data: Record<string, unknown>) => {
     if (onSubmit) {
@@ -375,18 +439,12 @@ export const JsonForm = function JsonForm({
                               isUploading={uploadingByKey[item.key] ?? false}
                               pendingUpload={pendingFilesByKey[item.key]}
                               onClearPendingUpload={() => {
-                                setPendingFilesByKey((prev) => {
-                                  const next = { ...prev };
-                                  const removed = next[item.key];
-                                  if (removed?.previewUrl) {
-                                    URL.revokeObjectURL(removed.previewUrl);
-                                  }
-                                  delete next[item.key];
-                                  return next;
-                                });
+                                clearPendingUpload(item.key);
+                                delete uploadedFileCacheRef.current[item.key];
                               }}
                               onClearCurrentUpload={() => {
                                 field.onChange('');
+                                delete uploadedFileCacheRef.current[item.key];
                               }}
                               onFileSelect={(file) => {
                                 if (!isSupportedUploadMimeType(file.type)) {
@@ -400,6 +458,7 @@ export const JsonForm = function JsonForm({
                                 }
 
                                 const maxBytesForField = getFieldMaxBytes(item, file);
+                                delete uploadedFileCacheRef.current[item.key];
                                 setPendingFilesByKey((prev) => {
                                   const previous = prev[item.key];
                                   if (previous?.previewUrl) {
@@ -541,20 +600,29 @@ function FileFieldRenderer({
   onClearCurrentUpload?: () => void;
   onFileSelect?: (file: File) => void;
 }) {
-  const isCurrentImage = isLikelyImageUrl(currentUrl);
+  const shouldPreviewCurrentImage = shouldAttemptImagePreview(item, currentUrl);
+  const [brokenPreviewUrl, setBrokenPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isBusy = isUploading || pendingUpload?.isPreparing;
+  const isCurrentPreviewBroken = !!currentUrl && brokenPreviewUrl === currentUrl;
 
   if (readOnly) {
     return currentUrl
       ? (
           <div className="space-y-2">
-            {isCurrentImage && (
+            {shouldPreviewCurrentImage && !isCurrentPreviewBroken && (
               <img
                 src={currentUrl}
                 alt={item.label}
                 className="max-h-48 w-auto rounded-md border object-contain"
+                onLoad={() => setBrokenPreviewUrl(null)}
+                onError={() => setBrokenPreviewUrl(currentUrl)}
               />
+            )}
+            {shouldPreviewCurrentImage && isCurrentPreviewBroken && (
+              <p className="text-xs text-amber-700">
+                Image preview unavailable for this link.
+              </p>
             )}
             <a
               href={currentUrl}
@@ -612,12 +680,19 @@ function FileFieldRenderer({
 
       {currentUrl && (
         <div className="space-y-2 rounded-md border p-2">
-          {isCurrentImage && (
+          {shouldPreviewCurrentImage && !isCurrentPreviewBroken && (
             <img
               src={currentUrl}
               alt={item.label}
               className="max-h-48 w-auto rounded-md border object-contain"
+              onLoad={() => setBrokenPreviewUrl(null)}
+              onError={() => setBrokenPreviewUrl(currentUrl)}
             />
+          )}
+          {shouldPreviewCurrentImage && isCurrentPreviewBroken && (
+            <p className="text-xs text-amber-700">
+              Image preview unavailable. File may be missing or link is broken. You can replace and submit again.
+            </p>
           )}
           <a
             href={currentUrl}

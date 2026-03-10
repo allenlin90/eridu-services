@@ -9,15 +9,15 @@ description: Covers the presigned upload system for Cloudflare R2. Use this skil
 
 ## Key Files
 
-| Layer | Path |
-|-------|------|
-| API contract | `packages/api-types/src/uploads/schemas.ts` |
-| Backend service | `apps/erify_api/src/uploads/upload.service.ts` |
-| Backend controller | `apps/erify_api/src/uploads/upload.controller.ts` |
-| Shared browser upload utils | `packages/browser-upload/src/index.ts` |
-| Compression worker | `packages/browser-upload/src/image-compress.worker.ts` |
-| Frontend API utils | `apps/erify_studios/src/features/tasks/api/presign-upload.ts` |
-| Frontend form | `apps/erify_studios/src/components/json-form/json-form.tsx` |
+| Layer                       | Path                                                          |
+| --------------------------- | ------------------------------------------------------------- |
+| API contract                | `packages/api-types/src/uploads/schemas.ts`                   |
+| Backend service             | `apps/erify_api/src/uploads/upload.service.ts`                |
+| Backend controller          | `apps/erify_api/src/uploads/upload.controller.ts`             |
+| Shared browser upload utils | `packages/browser-upload/src/index.ts`                        |
+| Compression worker          | `packages/browser-upload/src/image-compress.worker.ts`        |
+| Frontend API utils          | `apps/erify_studios/src/features/tasks/api/presign-upload.ts` |
+| Frontend form               | `apps/erify_studios/src/components/json-form/json-form.tsx`   |
 
 ## How It Works (Summary)
 
@@ -31,12 +31,12 @@ description: Covers the presigned upload system for Cloudflare R2. Use this skil
 
 ## Use Cases & Limits
 
-| Use Case | Max Size | Allowed MIME Types |
-|----------|:--------:|-------------------|
-| `QC_SCREENSHOT` | 200 KB | `image/jpeg`, `image/png`, `image/webp` |
-| `SCENE_REFERENCE` | 10 MB | `image/jpeg`, `image/png`, `image/webp`, `application/pdf` |
-| `INSTRUCTION_ASSET` | 50 MB | `image/*`, `application/pdf`, `video/mp4` |
-| `MATERIAL_ASSET` | 50 MB | `image/*`, `application/pdf`, `video/mp4` |
+| Use Case            | Max Size | Allowed MIME Types                                         |
+| ------------------- | :------: | ---------------------------------------------------------- |
+| `QC_SCREENSHOT`     |  200 KB  | `image/jpeg`, `image/png`, `image/webp`                    |
+| `SCENE_REFERENCE`   |  10 MB   | `image/jpeg`, `image/png`, `image/webp`, `application/pdf` |
+| `INSTRUCTION_ASSET` |  50 MB   | `image/*`, `application/pdf`, `video/mp4`                  |
+| `MATERIAL_ASSET`    |  50 MB   | `image/*`, `application/pdf`, `video/mp4`                  |
 
 Defined in `FILE_UPLOAD_USE_CASE_RULES` in `packages/api-types/src/uploads/schemas.ts`. **When changing limits, update this table and the design doc.**
 
@@ -63,6 +63,19 @@ Special case: `INSTRUCTION_ASSET` (non-material use case) is currently routed to
 - Worker-first native compression (`Web Worker` + `OffscreenCanvas`) with main-thread canvas fallback
 - Scale [1→0.6] and quality [0.9→0.34]
 - Hard client-side size check after compression; throws before calling presign API if still too large
+
+## Frontend Submit Gating (JsonForm)
+
+`JsonForm` submit flow is split into two explicit phases:
+1. `validateBeforeSubmit()` validates the full form but ignores required-file errors only for file fields with pending uploads.
+2. `flushPendingFileUploads()` uploads pending files, writes resulting URL values back into form state, and returns final content for submit payloads.
+
+Additional rules:
+- Pending entries with `isPreparing` or `error` must block submit.
+- Image preparation occurs on file selection; submit path should upload the prepared file already stored in pending state.
+- Uploaded file URL cache (by per-field fingerprint `name:size:type:lastModified`) can reuse URLs and skip duplicate uploads within one form session.
+- Keep upload cache across retries/partial-success uploads, and clear it only after successful submit API completion.
+- Per-field cache entries should still be removed when that field file is replaced/cleared.
 
 ## Checklist: Adding a New Use Case
 

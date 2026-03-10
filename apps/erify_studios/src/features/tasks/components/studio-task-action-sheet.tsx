@@ -482,6 +482,9 @@ function StudioTaskActionSheetBody({
                 noteValue,
                 {
                   onSuccess: () => {
+                    if (requiresContent) {
+                      jsonFormRef.current?.clearUploadedFileCache();
+                    }
                     if (requiresContent && draftKey) {
                       void del(draftKey).catch(() => undefined);
                     }
