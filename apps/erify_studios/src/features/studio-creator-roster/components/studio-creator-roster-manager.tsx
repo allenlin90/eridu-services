@@ -179,7 +179,7 @@ export function StudioCreatorRosterManager({ studioId }: StudioCreatorRosterMana
   const handleToggleActive = (item: StudioCreatorRosterItem) => {
     updateRosterItem.mutate({
       mcId: item.mc_id,
-      payload: { is_active: !item.is_active },
+      payload: { version: item.version, is_active: !item.is_active },
     });
   };
 
@@ -195,6 +195,7 @@ export function StudioCreatorRosterManager({ studioId }: StudioCreatorRosterMana
       {
         mcId: editingItem.mc_id,
         payload: {
+          version: editingItem.version,
           default_rate_type: editableFields.default_rate_type ?? null,
           default_rate: defaultRate ? Number(defaultRate) : null,
           default_commission_rate: defaultCommissionRate

@@ -14,6 +14,7 @@ const studioMcRosterItemSchema = z.object({
   defaultRateType: z.string().nullable(),
   defaultCommissionRate: z.unknown().nullable(),
   isActive: z.boolean(),
+  version: z.number().int().positive(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -34,6 +35,7 @@ export const studioMcRosterItemDto = studioMcRosterItemSchema
     default_rate_type: obj.defaultRateType,
     default_commission_rate: decimalToStringOrNull(obj.defaultCommissionRate),
     is_active: obj.isActive,
+    version: obj.version,
     metadata: obj.metadata,
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
@@ -47,6 +49,7 @@ export const studioMcRosterItemDto = studioMcRosterItemSchema
     default_rate_type: z.string().nullable(),
     default_commission_rate: z.string().nullable(),
     is_active: z.boolean(),
+    version: z.number().int().positive(),
     metadata: z.record(z.string(), z.any()),
     created_at: z.iso.datetime(),
     updated_at: z.iso.datetime(),
@@ -77,12 +80,14 @@ export const createStudioMcRosterSchema = z.object({
 }));
 
 export const updateStudioMcRosterSchema = z.object({
+  version: z.number().int().positive(),
   default_rate: z.coerce.number().positive().nullable().optional(),
   default_rate_type: compensationTypeSchema.nullable().optional(),
   default_commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
   is_active: z.boolean().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
 }).transform((data) => ({
+  version: data.version,
   defaultRate: data.default_rate !== undefined
     ? (data.default_rate === null ? null : data.default_rate.toFixed(2))
     : undefined,

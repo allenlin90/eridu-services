@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { McRepository } from '@/models/mc/mc.repository';
 import { StudioMcRepository } from '@/models/studio-mc/studio-mc.repository';
@@ -106,7 +107,20 @@ export class StudioMcService extends BaseModelService {
     if (payload.metadata !== undefined)
       data.metadata = payload.metadata;
 
-    return this.studioMcRepository.updateById(existing.id, data);
+    try {
+      return await this.studioMcRepository.updateByIdWithVersionCheck(
+        existing.id,
+        payload.version,
+        data,
+      );
+    } catch (error) {
+      if (error instanceof VersionConflictError) {
+        throw HttpError.conflict(
+          `Studio creator roster ${existing.uid} has been updated by another user. Please refresh and retry.`,
+        );
+      }
+      throw error;
+    }
   }
 
   async removeFromRoster(studioUid: string, mcUid: string) {

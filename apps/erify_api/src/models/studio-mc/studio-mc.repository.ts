@@ -3,6 +3,7 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, StudioMc } from '@prisma/client';
 
+import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
@@ -188,7 +189,53 @@ export class StudioMcRepository extends BaseRepository<
   ): Promise<StudioMc & { mc: { uid: string; name: string; aliasName: string } }> {
     return this.delegate.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        version: { increment: 1 },
+      },
+      include: {
+        mc: {
+          select: {
+            uid: true,
+            name: true,
+            aliasName: true,
+          },
+        },
+      },
+    });
+  }
+
+  async updateByIdWithVersionCheck(
+    id: bigint,
+    expectedVersion: number,
+    data: Prisma.StudioMcUpdateInput,
+  ): Promise<StudioMc & { mc: { uid: string; name: string; aliasName: string } }> {
+    const result = await this.delegate.updateMany({
+      where: {
+        id,
+        version: expectedVersion,
+        deletedAt: null,
+      },
+      data: {
+        ...data,
+        version: { increment: 1 },
+      },
+    });
+
+    if (result.count === 0) {
+      const current = await this.delegate.findFirst({
+        where: { id },
+        select: { version: true },
+      });
+      throw new VersionConflictError(
+        'Studio roster member was modified by another request',
+        expectedVersion,
+        current?.version ?? expectedVersion,
+      );
+    }
+
+    return this.delegate.findFirstOrThrow({
+      where: { id },
       include: {
         mc: {
           select: {

@@ -8,8 +8,10 @@ function createPrismaStudioMcDelegateMock() {
   return {
     create: jest.fn(),
     findFirst: jest.fn(),
+    findFirstOrThrow: jest.fn(),
     findMany: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
     delete: jest.fn(),
     count: jest.fn(),
   };
@@ -66,5 +68,38 @@ describe('studioMcRepository', () => {
     };
     expect(where.mc?.deletedAt).toBeNull();
     expect(where.mc?.OR).toHaveLength(3);
+  });
+
+  it('increments version on updateById', async () => {
+    prismaStudioMcDelegate.update.mockResolvedValue({ id: BigInt(1) });
+
+    await repository.updateById(BigInt(1), { isActive: false });
+
+    expect(prismaStudioMcDelegate.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: BigInt(1) },
+      data: expect.objectContaining({
+        isActive: false,
+        version: { increment: 1 },
+      }),
+    }));
+  });
+
+  it('updates with version check and increments version', async () => {
+    prismaStudioMcDelegate.updateMany.mockResolvedValue({ count: 1 });
+    prismaStudioMcDelegate.findFirstOrThrow.mockResolvedValue({ id: BigInt(1) });
+
+    await repository.updateByIdWithVersionCheck(BigInt(1), 3, { isActive: false });
+
+    expect(prismaStudioMcDelegate.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: BigInt(1),
+        version: 3,
+        deletedAt: null,
+      },
+      data: {
+        isActive: false,
+        version: { increment: 1 },
+      },
+    });
   });
 });

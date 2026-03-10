@@ -63,6 +63,7 @@ CREATE TABLE "studio_creators" (
   "default_rate_type" TEXT,
   "default_commission_rate" DECIMAL(10,2),
   "is_active" BOOLEAN NOT NULL DEFAULT true,
+  "version" INTEGER NOT NULL DEFAULT 1,
   "metadata" JSONB NOT NULL DEFAULT '{}',
   "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updated_at" TIMESTAMP(3) NOT NULL,

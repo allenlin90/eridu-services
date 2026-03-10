@@ -14,6 +14,7 @@ export type StudioCreatorRosterItem = {
   default_rate_type: string | null;
   default_commission_rate: string | null;
   is_active: boolean;
+  version: number;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -29,6 +30,7 @@ export type StudioCreatorRosterCreateInput = {
 };
 
 export type StudioCreatorRosterUpdateInput = {
+  version: number;
   default_rate?: number | null;
   default_rate_type?: string | null;
   default_commission_rate?: number | null;

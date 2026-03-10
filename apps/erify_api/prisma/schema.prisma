@@ -261,6 +261,7 @@ model StudioMc {
   defaultRateType       String?   @map("default_rate_type")
   defaultCommissionRate Decimal?  @map("default_commission_rate") @db.Decimal(10, 2)
   isActive              Boolean   @default(true) @map("is_active")
+  version               Int       @default(1)
   metadata              Json      @default("{}")
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
