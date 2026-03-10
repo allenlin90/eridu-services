@@ -15,8 +15,8 @@ export const STUDIO_ROUTE_ACCESS = {
 export type StudioRouteAccessKey = keyof typeof STUDIO_ROUTE_ACCESS;
 
 const STUDIO_ROUTE_ROLE_ALLOWLIST: Partial<Record<StudioRouteAccessKey, StudioRole[]>> = {
-  // Show operations are manager/admin workflows.
-  shows: [STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER],
+  // Show operations are manager/admin/talent-manager workflows.
+  shows: [STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER],
   // Member roster is admin-only workflow.
   members: [STUDIO_ROLE.ADMIN],
   // Creator mapping is manager/admin/talent-manager.

@@ -8,7 +8,7 @@ describe('hasStudioRouteAccess', () => {
   it('allows admin, manager, and talent manager on shows route', () => {
     expect(hasStudioRouteAccess(STUDIO_ROLE.ADMIN, 'shows')).toBe(true);
     expect(hasStudioRouteAccess(STUDIO_ROLE.MANAGER, 'shows')).toBe(true);
-    expect(hasStudioRouteAccess(STUDIO_ROLE.TALENT_MANAGER, 'shows')).toBe(false);
+    expect(hasStudioRouteAccess(STUDIO_ROLE.TALENT_MANAGER, 'shows')).toBe(true);
   });
 
   it('denies member/designer/moderation manager on shows route', () => {

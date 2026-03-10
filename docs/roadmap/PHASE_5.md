@@ -203,6 +203,20 @@ TODOs (once design questions are resolved):
 - Remove `@preview` markers from economics controller once UI ships.
 - Update `SHOW_ECONOMICS.md` status to ✅ Implemented.
 
+Carry-over concerns to evaluate during Phase 5 implementation of the "P" side:
+- **Schema validation contract (`createStudioCreatorRosterSchema`)**:
+  - Current behavior can return `404` when both `creator_id` and `mc_id` are missing (falls through to lookup with empty ID).
+  - Phase 5 decision: either keep as explicit debt with rationale, or tighten schema to return `400` for missing identifier input.
+- **Bulk creator assignment write pattern**:
+  - Current implementation is `O(n×m)` with sequential writes per show/creator pair and no request-size max guard.
+  - Phase 5 decision: define acceptable throughput bounds and add max-items guard and/or batched strategy if P&L workflows increase assignment volume.
+- **P&L shift-cost distribution model**:
+  - Current grouped P&L view evenly distributes total shift cost across shows in range.
+  - Treat as known simplification unless product/accounting rules require per-show attribution changes during Phase 5.
+- **Legacy compatibility barrel cleanup**:
+  - `studio-show-mc.orchestration.service.ts` is currently a compatibility re-export.
+  - Remove only after all imports/consumers migrate to creator-first module names.
+
 Deferred from: Phase 4, March 2026.
 
 ### Frontend API Contract Consistency (Tech Debt)
