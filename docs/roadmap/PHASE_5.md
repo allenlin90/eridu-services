@@ -1,17 +1,24 @@
 # Phase 5: Parking Lot and TODO Backlog
 
 > **Status**: Deferred / parking lot
-> **Planning stance**: Keep context and rationale; defer detailed execution planning until Phase 4 is complete.
+> **Planning stance**: Keep backlog context and rationale here; promote only the items that become necessary after the Phase 4 merge baseline stabilizes.
 
 ## Purpose
 
-Phase 5 is a backlog of valuable follow-up initiatives that are intentionally deferred while Phase 4 is still in progress.
-The goal is to preserve context and reasons now, then convert selected items into proper scoped plans later.
+Phase 5 is a backlog of valuable follow-up initiatives that remain intentionally deferred while the Phase 4 merge baseline is still settling.
+The goal is to preserve context and rationale now, then promote only the items that have clear owners, sequencing, and exit criteria.
 
-## Phase 5 Checklist: MC -> Creator Consolidation
+Two items are expected to promote first once the current merge train lands cleanly:
+
+- finish the canonical `creator` naming transition and deprecate legacy `mc` compatibility layers,
+- redesign and deliver the revenue-side P&L workflow that Phase 4 intentionally deferred.
+
+## Priority Carry-Over: Canonical Creator Naming and Legacy `mc` Deprecation
 
 Context:
-Phase 4 delivered the cost side of economics ("L") and roster foundations. Revenue-side P&L workflow ("P") is deferred for redesign in Phase 5. In the same phase, terminology and domain ownership should be normalized so "MC" becomes a creator type/attribute, and "Creator" is the canonical domain name across BE/FE/docs.
+The code reaching `master` already contains a compatibility-first partial refactor. Creator-first UIDs, DTO aliases, and parts of the studio UI are in place, but the repo still has mixed `mc` / `creator` naming across backend modules, package exports, schemas, docs, and tests.
+
+Phase 5 should treat completion of that transition as a named workstream, not as incidental cleanup. The objective is to make `Creator` the canonical term everywhere user-facing and developer-facing, while keeping legacy `mc` compatibility only where it is temporarily required for rollout safety.
 
 Progress note (2026-03-10):
 - Initial compatibility-first refactor started in `erify_studios` show mapping/dashboard flows.
@@ -20,35 +27,47 @@ Progress note (2026-03-10):
   - New creator IDs are generated as `creator_...`.
   - Legacy `mc_...` IDs are accepted during rollout via compatibility validation/lookup.
   - Backfill strategy selected: script-based (`db:creator-uid:backfill`) with dry-run, not migration SQL.
+- Accepted ADR published: `docs/adr/0002-creator-naming.md`.
 
-Checklist:
-- [ ] Confirm canonical naming contract:
-  - Replace `MC` naming in app/domain code with `Creator`.
-  - Keep "MC" only as business classification (`creatorType` or equivalent).
-  - [x] Publish final naming decision in an ADR (`docs/adr/0002-creator-naming.md`).
-- [ ] Refactor backend module/service/repository/controller names:
+Phase 5 naming contract:
+- `Creator` is the canonical domain term across BE, FE, shared packages, docs, and new code.
+- `MC` remains only as business classification metadata (`creatorType` or equivalent), or in explicitly historical references.
+- Legacy `mc_*` fields, package entrypoints, and module aliases are temporary compatibility surfaces and must be marked as deprecated until removed.
+- Avoid a big-bang persistence rename. Internal Prisma/model/table renames should happen only when bundled with a necessary schema change and verified end-to-end.
+
+Implementation checklist:
+- [ ] Freeze new legacy naming at the boundary:
+  - No new modules, DTOs, exports, hooks, routes, or docs should introduce fresh `mc`-first naming.
+  - Compatibility code must be clearly marked as deprecated and point to the creator-first replacement.
+- [ ] Complete backend module/import consolidation:
   - `mc` -> `creator`
   - `show-mc` -> `show-creator`
   - `studio-mc` -> `studio-creator`
+  - Keep temporary re-export barrels only where needed to avoid breaking the merge baseline.
 - [ ] Align API schemas and DTO contracts to creator-first naming:
-  - Remove response/input field drift (`mcId` vs `creatorId`).
-  - Keep temporary backward-compatible request mapping only where required.
+  - Remove canonical field drift (`mcId` vs `creatorId`, `mc_*` vs `creator_*`).
+  - Keep request/response alias mapping only at compatibility boundaries, with a tracked removal target.
 - [x] Align creator UID generation with creator-first naming:
   - New IDs use `creator_`.
   - Legacy `mc_` request IDs remain accepted during transition.
-- [ ] Consolidate Prisma/domain naming updates in one branch migration when schema changes are required:
-  - No extra standalone migration only for naming.
-  - Validate local reset/migrate/seed cycle.
-- [ ] Update frontend feature modules and API layer:
-  - Rename route/features/components/query keys to creator-first terms.
-  - Keep URL/search behavior parity unless explicitly changed.
-- [ ] Re-validate RBAC parity after renaming:
-  - Studio creator roster, show creator assignment, and economics access rules.
-- [ ] Update all canonical docs and skills:
-  - `apps/erify_api/docs/MC_OPERATIONS.md` (or renamed equivalent)
-  - `apps/erify_studios/docs/MC_MAPPING.md` (or renamed equivalent)
+- [ ] Define the legacy compatibility window and removal gate:
+  - Keep `mc` aliases only until FE + BE + shared package consumers are fully migrated.
+  - Record the cutover condition for deleting compatibility exports, DTO aliases, and shim modules.
+- [ ] Consolidate persistence/schema naming decisions with real schema work:
+  - Do not create a standalone migration only to rename legacy `MC` / `ShowMC` / `StudioMc` internals.
+  - If a future schema migration already touches those domains, evaluate whether internal model/table naming should move to creator-first at the same time.
+  - Validate local reset/migrate/seed/backfill flow if that bundled rename ever happens.
+- [ ] Complete frontend and package cleanup:
+  - Rename feature modules, hooks, query keys, route copy, and API clients to creator-first terms.
+  - Keep URL/search behavior parity unless there is an explicit product reason to change it.
+  - Deprecate legacy package entrypoints such as `@eridu/api-types/mcs` before eventual removal.
+- [ ] Re-validate authorization and behavior parity after renaming:
+  - Studio creator roster, show creator assignment, creator availability, and economics access rules.
+- [ ] Update canonical docs and agent knowledge:
+  - `apps/erify_api/docs/MC_OPERATIONS.md` or its creator-first replacement
+  - `apps/erify_studios/docs/MC_MAPPING.md` or its creator-first replacement
   - `docs/roadmap/PHASE_4.md`, `docs/roadmap/PHASE_5.md`
-  - Relevant `.agent/skills/*` references to old MC terminology.
+  - Relevant `.agent/skills/*`, workflows, and package READMEs that still instruct `mc` terminology
 - [ ] Run required verification gates before merge:
   - `pnpm --filter erify_api lint`
   - `pnpm --filter erify_api typecheck`
@@ -56,7 +75,10 @@ Checklist:
   - `pnpm --filter erify_studios lint`
   - `pnpm --filter erify_studios typecheck`
   - `pnpm --filter erify_studios test`
-- [ ] Remove temporary compatibility shims after FE/BE rollout alignment and confirm no remaining MC domain references outside historical migration/docs context.
+  - Add `build` verification for any package/app whose public exports or wiring changed
+- [ ] Remove temporary compatibility shims after rollout alignment:
+  - Delete legacy alias exports, DTO aliases, and compatibility barrels once no active consumers require them.
+  - Confirm no remaining `MC` domain references outside historical schema names, migration history, or archived documentation.
 
 ## Deferred Workstreams (Context + TODOs)
 
@@ -127,13 +149,13 @@ TODOs:
   - deep-link routing into relevant pages,
   - permission/preferences handling.
 
-### Creator App Expansion (MCs and Creators)
+### Creator App Expansion
 
 Context:
-Phase 4 introduced studio-scoped/grouped structures. Creator-facing workflows should align with that model.
+Phase 4 introduced studio-scoped/grouped structures. Creator-facing workflows should align with that model and finish the creator-first terminology shift.
 
 TODOs:
-- Expand creator app capabilities for MCs and creators by studio scope.
+- Expand creator app capabilities for creator users by studio scope.
 - Keep data and actions grouped/scoped per studio as defined in Phase 4.
 - Add role-aware visibility and operational views for assignments, schedules, and tasks.
 
@@ -163,14 +185,14 @@ TODOs:
 - Data warehouse follow-up (Datastream + BigQuery).
 - Formal reopen workflow with approval chain.
 
-### MC HR & Operations
+### Creator HR & Operations
 
 Context:
 People operations and cost inputs are required for long-term scheduling quality and financial visibility.
 
 TODOs:
-- MC HRMS (leaves, unavailability input).
-- MC profile/HR separation table (grooming, styling, briefing records).
+- Creator HRMS (leaves, unavailability input).
+- Creator profile/HR separation table (grooming, styling, briefing records).
 - Platform API integrations for auto-populating show performance data.
 - Fixed cost tracking (rent, equipment depreciation).
 
@@ -187,18 +209,20 @@ TODOs:
 ### P&L Revenue Workflow — Full P&L Visibility (Phase 4 Deferred)
 
 Context:
-Phase 4 shipped the "L" side (MC compensation costs, shift labor costs) and the economics/performance backend endpoints. The "P" side (revenue input and contribution margin) was deferred because there is no clear data model design, no FE input workflow, and no UI. The economics endpoints are marked `@preview` and commission/hybrid MC costs show as $0 without revenue.
+Phase 4 shipped the "L" side (creator compensation costs, shift labor costs) and the economics/performance backend endpoints. The "P" side (revenue input and contribution margin) was deferred because there is no clear data model design, no FE input workflow, and no UI. The economics endpoints are marked `@preview` and commission/hybrid creator costs show as $0 without revenue.
 
 Open design questions to resolve before implementation:
 - **GMV vs Sales distinction**: What does each represent in the live-commerce context? (GMV = total traded value including returns/cancelled orders; Sales = net settled revenue? Needs product definition.)
 - **Revenue ownership model**: Is `ShowPlatform.gmv` the right location, or should financial outcomes live in a separate `ShowPlatformMetrics` table to support corrections, multi-snapshot, and audit trail?
 - **Platform-specific metrics**: TikTok, YouTube, Shopee etc. have different revenue signals (gifting, super chats, ad rev). Should platform-specific extras go in `metadata` or typed columns?
 - **Input workflow**: Who enters revenue and when? Post-show? Real-time? Import from platform API?
-- **Commission cost dependency**: COMMISSION/HYBRID MC cost calculation requires revenue. Without revenue, cost is $0. The economics service already supports this; it just needs a revenue value to be meaningful.
+- **Numerical precision strategy**: Revenue, rate, commission, margin, and aggregate P&L calculations should move to `big.js`-based arithmetic instead of plain JS floating-point math.
+- **Commission cost dependency**: COMMISSION/HYBRID creator cost calculation requires revenue. Without revenue, cost is $0. The economics service already supports this; it just needs a revenue value to be meaningful.
 
 TODOs (once design questions are resolved):
 - Define and document the `gmv` vs `sales` distinction in `docs/product/BUSINESS.md`.
 - Decide: extend `ShowPlatform` with typed columns, or introduce `ShowPlatformMetrics` table for financial outcomes.
+- Introduce `big.js` as the standard financial arithmetic library for backend economics calculations and any frontend financial summaries that must match backend totals.
 - Add FE input for revenue fields on the show platform form in `erify_studios` (currently only `viewer_count` is editable).
 - Remove `@preview` markers from economics controller once UI ships.
 - Update `SHOW_ECONOMICS.md` status to ✅ Implemented.
@@ -213,6 +237,9 @@ Carry-over concerns to evaluate during Phase 5 implementation of the "P" side:
 - **P&L shift-cost distribution model**:
   - Current grouped P&L view evenly distributes total shift cost across shows in range.
   - Treat as known simplification unless product/accounting rules require per-show attribution changes during Phase 5.
+- **Floating-point precision risk**:
+  - Current financial calculations still rely on JS `number` arithmetic in parts of the economics flow.
+  - Phase 5 should replace those paths with `big.js`-backed helpers before P&L is treated as production-grade financial reporting.
 - **Legacy compatibility barrel cleanup**:
   - `studio-show-mc.orchestration.service.ts` is currently a compatibility re-export.
   - Remove only after all imports/consumers migrate to creator-first module names.

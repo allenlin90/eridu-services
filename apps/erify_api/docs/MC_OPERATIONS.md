@@ -204,3 +204,45 @@ Behavior:
 - rewrites `creators.uid` from `mc_...` to `creator_...`
 - preserves old UID in `metadata.legacy_mc_uid`
 - rewrites creator UID references in `schedules.plan_document` and `schedule_snapshots.plan_document`
+
+## Studio Creator Roster Bootstrap Backfill (2026-03-10)
+
+The initial `studio_creators` bootstrap is script-based (not migration-based).
+
+Rationale:
+- keep schema deploy separate from data backfill,
+- support dry-run preview before writing,
+- give operators an explicit post-merge checklist for rollout.
+
+Backfill strategy:
+
+1. Dry run
+   - `pnpm --filter erify_api db:studio-creator:backfill -- --dry-run`
+2. Execute
+   - `pnpm --filter erify_api db:studio-creator:backfill`
+
+Backfill script:
+- `apps/erify_api/scripts/backfill-studio-creators.ts`
+
+Behavior:
+- derives distinct `(studio_id, creator_id)` pairs from non-deleted historical `show_creators` assignments,
+- inserts missing `studio_creators` rows only,
+- copies creator-level default compensation into the studio roster seed row,
+- skips rows that already exist, including soft-deleted historical roster rows.
+
+## Post-Merge Rollout Checklist (Current Branch -> `master`)
+
+Run these in order after this branch is merged and before treating the rollout as complete:
+
+1. Apply pending schema migrations
+   - `pnpm --filter erify_api db:migrate:deploy`
+2. Backfill studio creator roster from historical assignments
+   - `pnpm --filter erify_api db:studio-creator:backfill -- --dry-run`
+   - `pnpm --filter erify_api db:studio-creator:backfill`
+3. Backfill creator UID prefixes
+   - `pnpm --filter erify_api db:creator-uid:backfill -- --dry-run`
+   - `pnpm --filter erify_api db:creator-uid:backfill`
+
+Notes:
+- `db:migrate:deploy` applies each migration once per database; it does not re-run already applied migrations.
+- Both backfill scripts are intended to be operator-controlled follow-up steps after schema deploy.

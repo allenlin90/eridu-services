@@ -77,7 +77,23 @@ pnpm db:migrate:status
 Expected after deploy:
 - Database is up to date (no pending migrations).
 
-## 4) Runtime Smoke Checks
+## 4) Run Required Post-Deploy Backfills
+
+For the current Phase 4 rollout, data backfills are operator-controlled scripts:
+
+```bash
+pnpm db:studio-creator:backfill -- --dry-run
+pnpm db:studio-creator:backfill
+pnpm db:creator-uid:backfill -- --dry-run
+pnpm db:creator-uid:backfill
+```
+
+Expected:
+- Studio creator roster rows are bootstrapped from historical show assignments.
+- Creator UID prefixes are rewritten from `mc_` to `creator_`.
+- Re-running the scripts should be safe because they are idempotent.
+
+## 5) Runtime Smoke Checks
 
 Start API:
 
@@ -93,7 +109,7 @@ Verify key endpoints:
 - `GET /studios/:studioId/economics?...`
 - `GET /studios/:studioId/performance?...`
 
-## 5) Failure Handling Rule
+## 6) Failure Handling Rule
 
 - Do not edit already-applied migrations in shared/prod-like environments.
 - Fix forward with a new migration.

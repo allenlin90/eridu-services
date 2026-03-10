@@ -22,6 +22,7 @@
     "db:local:refresh": "pnpm run db:migrate:reset && pnpm run db:migrate:deploy && pnpm run db:seed",
     "db:extid:sync": "tsx scripts/sync-ext-ids.ts",
     "db:creator-uid:backfill": "tsx scripts/backfill-creator-uids.ts",
+    "db:studio-creator:backfill": "tsx scripts/backfill-studio-creators.ts",
     "db:local:refresh:with-ext-sync": "pnpm run db:local:refresh && pnpm run db:extid:sync",
     "db:studio": "npx prisma studio",
     "db:generate": "npx prisma generate",

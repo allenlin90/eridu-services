@@ -95,6 +95,8 @@ Script requirements:
 Example in this repo:
 - Creator UID prefix transition (`mc_` -> `creator_`) uses script-based backfill via:
   - `pnpm --filter erify_api db:creator-uid:backfill`
+- Studio creator roster bootstrap from historical show assignments uses script-based backfill via:
+  - `pnpm --filter erify_api db:studio-creator:backfill`
 
 ## Branch-Local Consolidation Rule (Prisma, HITL)
 

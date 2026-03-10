@@ -255,7 +255,7 @@ type ShowWithGroupingKeys = Show & {
  * - COMMISSION: revenue percentage only (commissionRate -> defaultCommissionRate fallback)
  * - HYBRID: fixed amount + revenue percentage
  *
- * TODO(phase-5): Replace floating-point arithmetic with decimal.js or Prisma-level
+ * TODO(phase-5): Replace floating-point arithmetic with big.js-backed helpers or Prisma-level
  * aggregation. Current Number() conversions from Decimal(10,2) can accumulate
  * precision errors in financial reports. Acceptable for Phase 4 preview scope.
  */

@@ -33,4 +33,4 @@ App-local docs (`apps/*/docs/`) own **shipped behavior** and **technical design*
 
 - Phase 3: Closed by scope reset. Delivered work summarized in [Phase 3](./roadmap/PHASE_3.md).
 - Phase 4: P&L Visibility & MC Operations — scoped to the critical path to show-level profitability in [Phase 4](./roadmap/PHASE_4.md).
-- Phase 5: Deferred / parking lot including ticketing, materials, and collaboration in [Phase 5](./roadmap/PHASE_5.md).
+- Phase 5: Deferred backlog plus creator naming consolidation and other parking-lot work in [Phase 5](./roadmap/PHASE_5.md).

@@ -90,37 +90,6 @@ ALTER TABLE "studio_creators"
   FOREIGN KEY ("mc_id") REFERENCES "creators"("id")
   ON DELETE CASCADE ON UPDATE CASCADE;
 
--- CUSTOM SQL START: backfill studio_creators from existing show_creators assignments
--- Rationale: bootstrap studio-scoped creator roster with historical assignments.
-INSERT INTO "studio_creators" (
-  "uid",
-  "studio_id",
-  "mc_id",
-  "default_rate",
-  "default_rate_type",
-  "default_commission_rate",
-  "is_active",
-  "metadata",
-  "updated_at"
-)
-SELECT
-  'smc_' || lpad(row_number() OVER (ORDER BY pairs.studio_id, pairs.mc_id)::text, 20, '0') AS "uid",
-  pairs.studio_id,
-  pairs.mc_id,
-  c.default_rate,
-  c.default_rate_type,
-  c.default_commission_rate,
-  true,
-  '{}'::jsonb,
-  CURRENT_TIMESTAMP
-FROM (
-  SELECT DISTINCT s.studio_id, sc.mc_id
-  FROM "show_creators" sc
-  INNER JOIN "shows" s ON s.id = sc.show_id
-  WHERE sc.deleted_at IS NULL
-    AND s.deleted_at IS NULL
-    AND s.studio_id IS NOT NULL
-) pairs
-INNER JOIN "creators" c ON c.id = pairs.mc_id
-ON CONFLICT ("studio_id", "mc_id") DO NOTHING;
--- CUSTOM SQL END
+-- Studio creator roster bootstrap intentionally runs via operational script:
+-- `pnpm --filter erify_api db:studio-creator:backfill`
+-- Rationale: requires dry-run/operator-controlled execution during rollout.
