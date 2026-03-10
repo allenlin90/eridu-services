@@ -11,8 +11,7 @@ import {
   DialogTitle,
 } from '@eridu/ui';
 
-import type { AvailabilityWindow } from '../api/get-creator-availability';
-import type { AvailableCreator } from '../api/get-creator-availability';
+import type { AvailabilityWindow, AvailableCreator } from '../api/get-creator-availability';
 import { useCreatorAvailabilityQuery } from '../api/get-creator-availability';
 
 type AddCreatorDialogProps = {

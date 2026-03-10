@@ -75,39 +75,53 @@ This is a UX degradation, not a crash — acceptable for now. Flagged as warning
 - Task type label i18n hardcoded in 4 files instead of using `getTaskTypeLabel()`
 - `handleSubmitAction` in `use-studio-tasks-page-controller.tsx` silently drops `options.onSuccess` — pre-existing
 - `StudioShift`/`StudioShiftBlock` missing `version` field — introduced in feat/studio-shift-schedule; deferred
-- `StudioMc` (studio_creators table) missing `version` field — introduced in feat/phase-4-p-and-l; deferred
+- `StudioMc` (studio_creators table) `version` field — RESOLVED in feat/phase-4-p-and-l: present in schema + migration + `updateById` auto-increments + `updateByIdWithVersionCheck` enforces optimistic locking
 
-### Phase 4 (feat/phase-4-p-and-l): MERGED — Resolved Issues
+### Phase 4 (feat/phase-4-p-and-l): UNDER REVIEW — New Blocking Issues Found
 
-All 3 original blocking issues were fixed in commit `a6cc9b02`:
+Previously known backend fixes from commit `a6cc9b02` confirmed correct:
+- StudioMc soft-deleted creator leak: FIXED
+- Bulk assignment roster scope enforcement: FIXED
+- Bulk assign restore field clearing: FIXED
+- FE STUDIO_ROLE_LEVEL gaps: FIXED
 
-**FIXED: StudioMc Repository soft-deleted creator leak**
-`mcWhere` object (with `deletedAt: null`) now always applies unconditionally, not just in the search branch.
-File: `apps/erify_api/src/models/studio-mc/studio-mc.repository.ts`
+**New Blocking Issues Found in Final PR Review (2026-03-10):**
 
-**FIXED: Bulk assignment roster scope enforcement**
-After resolving creators by UIDs, orchestration service now cross-checks active `StudioMc` rows for the requesting studio. Throws `HttpError.badRequest` with unrostered creator UIDs listed.
-File: `apps/erify_api/src/studios/studio-show/studio-show-mc.orchestration.service.ts`
+**BLOCKING: `tsconfig.app.json` reveals 48 production-file type errors in erify_studios**
+- `pnpm --filter erify_studios typecheck` uses root `tsconfig.json --noEmit` which DOES NOT catch these errors.
+- Running `tsc -p tsconfig.app.json` in erify_studios reveals 48 errors in production files (non-test).
+- Root cause: the "mc → creator" field rename was partially applied in the FE layer.
 
-**FIXED: Bulk assign restore field clearing**
-`restoreAndUpdateAssignment` now uses conditional spread (`...(params.note !== undefined && { note: params.note })`) so omitted fields are not overwritten.
-File: `apps/erify_api/src/models/show-mc/show-mc.repository.ts`
+**BLOCKING: `bulk-creator-assign-dialog.tsx` — stale field access after rename**
+Accesses `assignment.creator_id`, `assignment.creator_name`, `assignment.creator_aliasname` but
+`ShowWithTaskSummaryDto.mcs` still has `mc_id`, `mc_name`, `mc_aliasname` fields. Runtime crash on bulk dialog open.
+File: `apps/erify_studios/src/features/studio-show-creators/components/bulk-creator-assign-dialog.tsx:73-83`
 
-**FIXED: FE route access — new roles added to STUDIO_ROLE_LEVEL**
-`TALENT_MANAGER`, `DESIGNER`, `MODERATION_MANAGER` now mapped in `studio-route-access.ts`. Fixed in commit `ce6b5ed1`.
+**BLOCKING: `add-creator-dialog.tsx` — arity mismatch**
+`useCreatorAvailabilityQuery(studioId, showStartTime, showEndTime)` called with 3 args but function signature
+only accepts `(studioId, windows: AvailabilityWindow[])` (2 args). Runtime crash on dialog mount.
+File: `apps/erify_studios/src/features/studio-show-creators/components/add-creator-dialog.tsx:42`
 
-**Remaining deferred tech debt (not blocking):**
-- `StudioMc` `version` field — RESOLVED: added to schema + migration SQL + `updateById` auto-increments, `updateByIdWithVersionCheck` enforces optimistic locking via `updateMany` + `VersionConflictError`
-- `listUserCatalog` still uses take:1000 + client-side filter — correctness risk at >1000 members (deferred)
+**BLOCKING: `studio-helper-roster-manager.tsx` — missing `ext_id` on FE Membership type**
+Accesses `membership.user.ext_id` (lines 164, 267) but `Membership.user` type in `get-memberships.ts`
+only declares `{ id, email, name }`. BE schema includes `ext_id` but FE type doesn't expose it.
+File: `apps/erify_studios/src/features/memberships/components/studio-helper-roster-manager.tsx`
 
-**Migration: single consolidated migration for Phase 4**
-`apps/erify_api/prisma/migrations/20260309140327_phase4_economics_foundation/migration.sql` contains all Phase 4 schema changes:
-- Table renames: `mcs`→`creators`, `show_mcs`→`show_creators` (non-destructive, with constraint/index renames)
-- `ShowPlatform` new columns: `gmv`, `sales`, `orders`
-- `MC`/`ShowMC` new compensation columns
-- `StudioMc` (studio_creators) new table
-- Backfill SQL: `studio_creators` seeded from historical show assignments
-One migration only — confirmed consolidated.
+**BLOCKING: `studio-membership.service.ts` uses `Prisma.InputJsonValue` (service layer violation)**
+`toggleTaskHelperStatus()` casts metadata to `Prisma.InputJsonValue` at line 246. Repository signature for
+`updateMetadataIfUnchanged` takes `metadata: Prisma.InputJsonValue` — the Prisma type leaks to the service.
+Service should cast to `unknown` or define a local `JsonValue` alias instead.
+File: `apps/erify_api/src/models/membership/studio-membership.service.ts:246`
+
+**BLOCKED: `mapping.tsx` — `Badge` used without import**
+`Badge` is used in creators column cells (lines 80-90) but not imported from `@eridu/ui`.
+Typecheck and Vite build pass due to module bundling quirks, but the component reference is undefined at runtime.
+File: `apps/erify_studios/src/routes/studios/$studioId/creators/mapping.tsx:80-90`
+
+**Deferred tech debt (not blocking):**
+- `listUserCatalog` N+1 DB pattern — bounded by max 50 limit, acceptable
+- `StudioMc` `version` field — confirmed present in schema, migration SQL, and enforced in repository
 
 **Economics service: StudioMc import**
-`StudioEconomicsService` imports `StudioMc` type from `@prisma/client` for the `resolveStudioMcDefaults` helper parameter type. This is acceptable — entity types from `@prisma/client` are allowed in services; only `Prisma.XxxInput/WhereInput/etc.` construction is forbidden.
+`StudioEconomicsService` imports `StudioMc` type from `@prisma/client` for `resolveStudioMcDefaults`. ACCEPTABLE —
+entity types from `@prisma/client` are allowed in services; only `Prisma.XxxInput/WhereInput/etc.` is forbidden.
