@@ -8,6 +8,45 @@
 Phase 5 is a backlog of valuable follow-up initiatives that are intentionally deferred while Phase 4 is still in progress.
 The goal is to preserve context and reasons now, then convert selected items into proper scoped plans later.
 
+## Phase 5 Checklist: MC -> Creator Consolidation
+
+Context:
+Phase 4 delivered the cost side of economics ("L") and roster foundations. Revenue-side P&L workflow ("P") is deferred for redesign in Phase 5. In the same phase, terminology and domain ownership should be normalized so "MC" becomes a creator type/attribute, and "Creator" is the canonical domain name across BE/FE/docs.
+
+Checklist:
+- [ ] Confirm canonical naming contract:
+  - Replace `MC` naming in app/domain code with `Creator`.
+  - Keep "MC" only as business classification (`creatorType` or equivalent).
+  - Publish final naming decision in an ADR (`docs/adr/creator-naming.md`).
+- [ ] Refactor backend module/service/repository/controller names:
+  - `mc` -> `creator`
+  - `show-mc` -> `show-creator`
+  - `studio-mc` -> `studio-creator`
+- [ ] Align API schemas and DTO contracts to creator-first naming:
+  - Remove response/input field drift (`mcId` vs `creatorId`).
+  - Keep temporary backward-compatible request mapping only where required.
+- [ ] Consolidate Prisma/domain naming updates in one branch migration when schema changes are required:
+  - No extra standalone migration only for naming.
+  - Validate local reset/migrate/seed cycle.
+- [ ] Update frontend feature modules and API layer:
+  - Rename route/features/components/query keys to creator-first terms.
+  - Keep URL/search behavior parity unless explicitly changed.
+- [ ] Re-validate RBAC parity after renaming:
+  - Studio creator roster, show creator assignment, and economics access rules.
+- [ ] Update all canonical docs and skills:
+  - `apps/erify_api/docs/MC_OPERATIONS.md` (or renamed equivalent)
+  - `apps/erify_studios/docs/MC_MAPPING.md` (or renamed equivalent)
+  - `docs/roadmap/PHASE_4.md`, `docs/roadmap/PHASE_5.md`
+  - Relevant `.agent/skills/*` references to old MC terminology.
+- [ ] Run required verification gates before merge:
+  - `pnpm --filter erify_api lint`
+  - `pnpm --filter erify_api typecheck`
+  - `pnpm --filter erify_api test`
+  - `pnpm --filter erify_studios lint`
+  - `pnpm --filter erify_studios typecheck`
+  - `pnpm --filter erify_studios test`
+- [ ] Remove temporary compatibility shims after FE/BE rollout alignment and confirm no remaining MC domain references outside historical migration/docs context.
+
 ## Deferred Workstreams (Context + TODOs)
 
 ### Cross-Functional Ticketing
