@@ -6,7 +6,6 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
-import { decimalToStringOrNull } from '@/lib/utils/decimal.util';
 import { PlatformService } from '@/models/platform/platform.service';
 import { platformSchema } from '@/models/platform/schemas/platform.schema';
 import { showSchema } from '@/models/show/schemas/show.schema';
@@ -22,9 +21,9 @@ export const showPlatformSchema = z.object({
   liveStreamLink: z.string().nullable(),
   platformShowId: z.string().nullable(),
   viewerCount: z.number().int(),
-  gmv: z.unknown().nullable(),
-  sales: z.unknown().nullable(),
-  orders: z.number().int().nullable(),
+  gmv: z.number().nullable().optional(),
+  sales: z.number().nullable().optional(),
+  orders: z.number().int().nullable().optional(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -46,9 +45,9 @@ export const createShowPlatformSchema = z.object({
     .int()
     .min(0, 'Viewer count cannot be negative')
     .optional(),
-  gmv: z.coerce.number().min(0).optional(),
-  sales: z.coerce.number().min(0).optional(),
-  orders: z.number().int().min(0).optional(),
+  gmv: z.number().nonnegative('GMV cannot be negative').optional(),
+  sales: z.number().nonnegative('Sales cannot be negative').optional(),
+  orders: z.number().int().nonnegative('Orders cannot be negative').optional(),
   metadata: z.record(z.string(), z.any()).optional(),
 });
 
@@ -59,8 +58,8 @@ const transformCreateShowPlatformSchema = createShowPlatformSchema.transform(
     liveStreamLink: data.live_stream_link,
     platformShowId: data.platform_show_id,
     viewerCount: data.viewer_count,
-    gmv: data.gmv !== undefined ? data.gmv.toFixed(2) : undefined,
-    sales: data.sales !== undefined ? data.sales.toFixed(2) : undefined,
+    gmv: data.gmv,
+    sales: data.sales,
     orders: data.orders,
     metadata: data.metadata,
   }),
@@ -82,9 +81,9 @@ export const updateShowPlatformSchema = z
       .int()
       .min(0, 'Viewer count cannot be negative')
       .optional(),
-    gmv: z.coerce.number().min(0).nullable().optional(),
-    sales: z.coerce.number().min(0).nullable().optional(),
-    orders: z.number().int().min(0).nullable().optional(),
+    gmv: z.number().nonnegative('GMV cannot be negative').optional(),
+    sales: z.number().nonnegative('Sales cannot be negative').optional(),
+    orders: z.number().int().nonnegative('Orders cannot be negative').optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({
@@ -93,8 +92,8 @@ export const updateShowPlatformSchema = z
     liveStreamLink: data.live_stream_link,
     platformShowId: data.platform_show_id,
     viewerCount: data.viewer_count ?? 0,
-    gmv: data.gmv !== undefined ? (data.gmv === null ? null : data.gmv.toFixed(2)) : undefined,
-    sales: data.sales !== undefined ? (data.sales === null ? null : data.sales.toFixed(2)) : undefined,
+    gmv: data.gmv,
+    sales: data.sales,
     orders: data.orders,
     metadata: data.metadata,
   }));
@@ -116,9 +115,9 @@ export const showPlatformDto = showPlatformWithRelationsSchema
     live_stream_link: obj.liveStreamLink,
     platform_show_id: obj.platformShowId,
     viewer_count: obj.viewerCount,
-    gmv: decimalToStringOrNull(obj.gmv),
-    sales: decimalToStringOrNull(obj.sales),
-    orders: obj.orders,
+    gmv: obj.gmv ?? null,
+    sales: obj.sales ?? null,
+    orders: obj.orders ?? null,
     metadata: obj.metadata,
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
@@ -133,8 +132,8 @@ export const showPlatformDto = showPlatformWithRelationsSchema
       live_stream_link: z.string().nullable(),
       platform_show_id: z.string().nullable(),
       viewer_count: z.number().int(),
-      gmv: z.string().nullable(),
-      sales: z.string().nullable(),
+      gmv: z.number().nullable(),
+      sales: z.number().nullable(),
       orders: z.number().int().nullable(),
       metadata: z.record(z.string(), z.any()),
       created_at: z.iso.datetime(),
@@ -160,9 +159,9 @@ export type CreateShowPlatformPayload = {
   liveStreamLink?: string | null;
   platformShowId?: string | null;
   viewerCount?: number;
-  gmv?: string;
-  sales?: string;
-  orders?: number;
+  gmv?: number | null;
+  sales?: number | null;
+  orders?: number | null;
   metadata?: Record<string, any>;
 };
 
@@ -175,8 +174,8 @@ export type UpdateShowPlatformPayload = {
   liveStreamLink?: string | null;
   platformShowId?: string | null;
   viewerCount?: number;
-  gmv?: string | null;
-  sales?: string | null;
+  gmv?: number | null;
+  sales?: number | null;
   orders?: number | null;
   metadata?: Record<string, any>;
 };

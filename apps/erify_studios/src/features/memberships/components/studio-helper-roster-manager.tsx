@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { RefreshCw, Trash2 } from 'lucide-react';
+import { HelpCircle, RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -24,6 +24,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
   useTableUrlState,
 } from '@eridu/ui';
 
@@ -202,7 +206,25 @@ export function StudioHelperRosterManager({
     {
       id: 'eligibility',
       accessorFn: (row) => (isTaskHelperEligibleMember(row) ? 'eligible' : 'not_eligible'),
-      header: 'Helper Eligibility',
+      header: () => (
+        <div className="flex items-center gap-1.5">
+          <span>Helper Eligibility</span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-sm">
+                <p>
+                  Helpers are members eligible for task assignments.
+                  Admins and Managers are always eligible.
+                  Other roles (like Talent Managers) must be explicitly enabled here.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      ),
       cell: ({ row }) => {
         const membership = row.original;
         const isRoleDefault = membership.role === 'admin' || membership.role === 'manager';

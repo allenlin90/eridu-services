@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import type { CreatorApiResponse } from '@eridu/api-types/creators';
 import {
@@ -20,7 +21,7 @@ import {
 } from '@eridu/ui';
 
 import { type BulkAssignMode, useBulkAssignCreators } from '../api/bulk-assign-creators';
-import { getCreatorAvailability } from '../api/get-creator-availability';
+import { type AvailabilityWindow, getCreatorAvailability } from '../api/get-creator-availability';
 
 import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
 
@@ -50,15 +51,10 @@ export function BulkCreatorAssignDialog({
   const selectedShowsCount = selectedShows.length;
   const selectedShowIds = useMemo(() => selectedShows.map((show) => show.id), [selectedShows]);
   const selectedShowIdSet = useMemo(() => new Set(selectedShowIds), [selectedShowIds]);
-  const availabilityRange = useMemo(() => {
-    const startTimes = selectedShows.map((s) => s.start_time).filter(Boolean) as string[];
-    const endTimes = selectedShows.map((s) => s.end_time).filter(Boolean) as string[];
-    const dateFrom = startTimes.sort()[0];
-    const dateTo = endTimes.sort().at(-1);
-    if (!dateFrom || !dateTo) {
-      return null;
-    }
-    return { dateFrom, dateTo };
+  const availabilityWindows = useMemo<AvailabilityWindow[]>(() => {
+    return selectedShows
+      .filter((s) => s.start_time && s.end_time)
+      .map((s) => ({ dateFrom: s.start_time, dateTo: s.end_time }));
   }, [selectedShows]);
 
   function normalizeSearchText(value: string): string {
@@ -66,10 +62,10 @@ export function BulkCreatorAssignDialog({
   }
 
   const contextQuery = useQuery({
-    queryKey: ['bulk-creator-context', studioId, availabilityRange?.dateFrom, availabilityRange?.dateTo, selectedShowIds],
-    enabled: open && Boolean(availabilityRange) && selectedShows.length > 0,
+    queryKey: ['bulk-creator-context', studioId, availabilityWindows, selectedShowIds],
+    enabled: open && availabilityWindows.length > 0 && selectedShows.length > 0,
     queryFn: async () => {
-      const creators = await getCreatorAvailability(studioId, availabilityRange!.dateFrom, availabilityRange!.dateTo);
+      const creators = await getCreatorAvailability(studioId, availabilityWindows);
       const coverageMap = new Map<string, Set<string>>();
       const labelMap = new Map<string, string>();
       selectedShows.forEach((show) => {
@@ -213,9 +209,18 @@ export function BulkCreatorAssignDialog({
         mode,
       },
       {
-        onSuccess: () => {
+        onSuccess: (response) => {
           setSelectedCreatorIds([]);
           onOpenChange(false);
+
+          if (response.errors && response.errors.length > 0) {
+            toast.warning(`Assigned creators with ${response.errors.length} error(s)`, {
+              description: `Successfully added ${response.created}, but skipped ${response.errors.length} due to conflicts or limits.`,
+            });
+          } else {
+            toast.success('Successfully assigned creators');
+          }
+
           onSuccess();
         },
       },

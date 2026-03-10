@@ -10,8 +10,6 @@ export const showEconomicsSchema = z.object({
   mc_cost: z.string(),
   shift_cost: z.string(),
   total_variable_cost: z.string(),
-  revenue: z.string(),
-  contribution_margin: z.string(),
 });
 
 export type ShowEconomics = z.infer<typeof showEconomicsSchema>;
@@ -44,8 +42,6 @@ export const pnlGroupItemSchema = z.object({
   show_count: z.number().int(),
   total_mc_cost: z.string(),
   total_shift_cost: z.string(),
-  total_revenue: z.string(),
-  contribution_margin: z.string(),
 });
 
 export type PnlGroupItem = z.infer<typeof pnlGroupItemSchema>;
@@ -76,9 +72,6 @@ export const performanceGroupItemSchema = z.object({
   group_name: z.string().nullable(),
   show_count: z.number().int(),
   total_viewer_count: z.number().int(),
-  total_gmv: z.string(),
-  total_sales: z.string(),
-  total_orders: z.number().int(),
 });
 
 export type PerformanceGroupItem = z.infer<typeof performanceGroupItemSchema>;

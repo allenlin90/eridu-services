@@ -6,32 +6,34 @@ import { apiClient } from '@/lib/api/client';
 
 export type AvailableCreator = CreatorApiResponse;
 
+export type AvailabilityWindow = { dateFrom: string; dateTo: string };
+
 export const creatorAvailabilityKeys = {
   all: ['creator-availability'] as const,
-  list: (studioId: string, dateFrom: string, dateTo: string) =>
-    [...creatorAvailabilityKeys.all, studioId, dateFrom, dateTo] as const,
+  list: (studioId: string, windows: AvailabilityWindow[]) =>
+    [...creatorAvailabilityKeys.all, studioId, windows] as const,
 };
 
 export async function getCreatorAvailability(
   studioId: string,
-  dateFrom: string,
-  dateTo: string,
+  windows: AvailabilityWindow[],
 ): Promise<AvailableCreator[]> {
-  const response = await apiClient.get<AvailableCreator[]>(
-    `/studios/${studioId}/creators/availability`,
-    { params: { date_from: dateFrom, date_to: dateTo } },
+  const response = await apiClient.post<AvailableCreator[]>(
+    `/studios/${studioId}/creators/availability:check`,
+    {
+      windows: windows.map((w) => ({ date_from: w.dateFrom, date_to: w.dateTo })),
+    },
   );
   return response.data;
 }
 
 export function useCreatorAvailabilityQuery(
   studioId: string,
-  dateFrom: string | undefined,
-  dateTo: string | undefined,
+  windows: AvailabilityWindow[],
 ) {
   return useQuery({
-    queryKey: creatorAvailabilityKeys.list(studioId, dateFrom ?? '', dateTo ?? ''),
-    queryFn: () => getCreatorAvailability(studioId, dateFrom!, dateTo!),
-    enabled: Boolean(studioId && dateFrom && dateTo),
+    queryKey: creatorAvailabilityKeys.list(studioId, windows),
+    queryFn: () => getCreatorAvailability(studioId, windows),
+    enabled: Boolean(studioId && windows.length > 0),
   });
 }

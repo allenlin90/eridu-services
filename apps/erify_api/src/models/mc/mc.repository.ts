@@ -205,21 +205,35 @@ export class McRepository extends BaseRepository<
   }
 
   /**
-   * Find MCs not assigned to any show that overlaps the given window.
-   * A show overlaps when: show.startTime < dateTo AND show.endTime > dateFrom.
+   * Find MCs not assigned to any show that overlaps the given windows.
+   * A show overlaps a window when: show.startTime < window.dateTo AND show.endTime > window.dateFrom.
    */
   async findAvailableMcs(
-    dateFrom: Date,
-    dateTo: Date,
+    windows: { dateFrom: Date; dateTo: Date }[],
     studioUid?: string,
   ): Promise<MC[]> {
+    if (windows.length === 0) {
+      return this.delegate.findMany({
+        where: {
+          deletedAt: null,
+          ...(studioUid && {
+            studioMcs: {
+              some: { deletedAt: null, isActive: true, studio: { uid: studioUid, deletedAt: null } },
+            },
+          }),
+        },
+      });
+    }
+
     const conflictingMcIds = await this.txHost.tx.showMC.findMany({
       where: {
         deletedAt: null,
         show: {
           deletedAt: null,
-          startTime: { lt: dateTo },
-          endTime: { gt: dateFrom },
+          OR: windows.map((w) => ({
+            startTime: { lt: w.dateTo },
+            endTime: { gt: w.dateFrom },
+          })),
         },
       },
       select: { mcId: true },

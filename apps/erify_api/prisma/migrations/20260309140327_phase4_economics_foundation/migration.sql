@@ -3,12 +3,6 @@
   Manual SQL is applied only where Prisma cannot express non-destructive table renames.
 */
 
--- AlterTable
-ALTER TABLE "show_platforms"
-  ADD COLUMN "gmv" DECIMAL(14,2),
-  ADD COLUMN "orders" INTEGER,
-  ADD COLUMN "sales" DECIMAL(14,2);
-
 -- CUSTOM SQL START: non-destructive MC->creator table/index/constraint renames
 -- Rationale: preserve existing data and references while aligning naming to creator terminology.
 ALTER TABLE "mcs" RENAME TO "creators";

@@ -20,7 +20,7 @@ api/
   get-show-creators.ts          — GET /studios/:studioId/shows/:showId/creators
   add-show-creator.ts           — POST /studios/:studioId/shows/:showId/creators
   remove-show-creator.ts        — DELETE /studios/:studioId/shows/:showId/creators/:creatorId
-  get-creator-availability.ts   — GET /studios/:studioId/creators/availability
+  get-creator-availability.ts   — POST /studios/:studioId/creators/availability:check (supports discrete time windows)
   bulk-assign-creators.ts       — PATCH/PUT /studios/:studioId/shows/creator-assignments/bulk (append/replace)
 hooks/
   use-show-creators.ts          — composes query + add + remove into one hook
@@ -57,7 +57,7 @@ Roster page behavior:
 | Key | Invalidated by |
 |-----|---------------|
 | `['studio-show-creators', studioId, showId]` | add, remove, bulk assign |
-| `['creator-availability', studioId, dateFrom, dateTo]` | not invalidated (search-driven) |
+| `['creator-availability', studioId, windows]` | not invalidated (search-driven) |
 | `['studio-shows', studioId]` | bulk assign |
 
 ## Availability Filtering

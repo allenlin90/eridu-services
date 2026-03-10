@@ -3,11 +3,11 @@
 > **Status**: ⚠️ Preview — Backend only (Phase 4, 2026-03-07)
 > **Phase**: 4 — Cost Visibility & MC Operations
 >
-> **Not production-ready**: All three endpoints are implemented and accessible (ADMIN/MANAGER) but have **no UI support** in `erify_studios`. Creator cost setup (MC compensation rates) is fully functional. Revenue input (`gmv`, `sales`, `orders` on ShowPlatform) has no FE input workflow — values must be set via direct API call. Commission/hybrid MC costs show as $0 for any show without recorded revenue. Full P&L with revenue workflow is deferred to Phase 5.
+> **Not production-ready**: All three endpoints are implemented and accessible (ADMIN/MANAGER) but have **no UI support** in `erify_studios`. Creator cost setup (MC compensation rates) is fully functional. Revenue tracking (`gmv`, `sales`) and P&L margin visibility are deferred to Phase 5 — there is no revenue input workflow yet. Commission/hybrid MC cost calculations return $0 since there is no recorded revenue. Full P&L with revenue workflow is deferred to Phase 5.
 
 ## What It Does
 
-Aggregates MC compensation costs, shift labor costs, and platform revenue to produce per-show P&L and studio-wide grouped performance/profitability views.
+Aggregates MC compensation costs and shift labor costs to produce per-show cost visibility and studio-wide grouped cost/performance views. Revenue input and margin calculation are deferred to Phase 5.
 
 ## Manager E2E Workflow
 
@@ -17,28 +17,15 @@ This is the practical flow for a studio manager using Phase 4 features:
    - Assign creators to shows (`/studios/:studioId/shows/:showId/creators` or bulk assignment endpoint).
    - Set compensation terms (fixed/commission/hybrid fields on MC/ShowMC/StudioMc).
    - Maintain studio shifts with projected/calculated costs.
-2. Record show outcomes
-   - Enter show-platform performance metrics (`gmv`, `sales`, `orders`, `viewer_count`).
-3. Inspect single-show unit economics
-   - Call `GET /studios/:studioId/shows/:showId/economics` to see one show’s variable-cost contribution.
-4. Compare groups in a date window
+2. Inspect single-show cost breakdown
+   - Call `GET /studios/:studioId/shows/:showId/economics` to see one show’s variable-cost breakdown.
+3. Compare cost groups in a date window
    - Call `GET /studios/:studioId/economics?group_by=show|schedule|client&date_from=...&date_to=...`.
-   - Use grouped rows to compare which buckets are profitable/unprofitable.
-5. Inspect topline performance without cost
-   - Call `GET /studios/:studioId/performance?...` for traffic and commerce totals.
+   - Use grouped rows to compare MC cost and shift cost by group.
+4. Inspect topline viewer performance
+   - Call `GET /studios/:studioId/performance?...` for viewer count totals grouped by show/schedule/client.
 
 This is a management reporting layer (operational decision support), not a statutory accounting ledger.
-
-## Data Model Additions
-
-### Show Platform Metrics (`ShowPlatform`)
-
-New nullable fields on `ShowPlatform` (`prisma/schema.prisma`):
-- `gmv Decimal?` — gross merchandise value
-- `sales Decimal?` — net sales
-- `orders Int?` — order count
-
-These are manually entered; platform API integration is deferred.
 
 ## API Endpoints
 
@@ -58,20 +45,19 @@ Access note:
 
 Response:
 ```
-{ show_id, mc_cost, shift_cost, total_variable_cost, revenue, contribution_margin }
+{ show_id, mc_cost, shift_cost, total_variable_cost }
 ```
 
 All monetary fields are `string` (decimal-as-string).
 
 **Computation:**
-- `revenue` = sum of `ShowPlatform.gmv` for all platforms on the show
 - `mc_cost`:
   - `FIXED`: `agreedRate ?? StudioMc.defaultRate ?? MC.defaultRate`
-  - `COMMISSION`: `revenue × (commissionRate ?? StudioMc.defaultCommissionRate ?? MC.defaultCommissionRate) / 100`
-  - `HYBRID`: fixed component + commission component
+  - `COMMISSION`: `0` (no revenue recorded yet — deferred to Phase 5)
+  - `HYBRID`: fixed component only (commission component = 0)
   - Effective type fallback: `ShowMC.compensationType ?? StudioMc.defaultRateType ?? MC.defaultRateType`
 - `shift_cost` = sum of `StudioShift.calculatedCost ?? projectedCost` where shift date falls within the show's date range
-- `contribution_margin` = `revenue - mc_cost - shift_cost`
+- `total_variable_cost` = `mc_cost + shift_cost`
 
 ### P&L Views (grouped)
 
@@ -79,7 +65,7 @@ All monetary fields are `string` (decimal-as-string).
 |--------|------|
 | GET | `/studios/:studioId/economics?group_by=show\|schedule\|client&date_from=...&date_to=...` |
 
-Response: array of `{ group_id, group_name, total_mc_cost, total_shift_cost, total_revenue, contribution_margin, show_count }` plus a `summary` aggregate.
+Response: array of `{ group_id, group_name, show_count, total_mc_cost, total_shift_cost }` plus a `summary` aggregate.
 
 Bulk-loads shows, ShowMC records, ShowPlatform records, and shifts for the date range in parallel (no N+1).
 
@@ -104,7 +90,7 @@ Why: this keeps grouped margins comparable without forcing a one-shift-to-one-sh
 |--------|------|
 | GET | `/studios/:studioId/performance?group_by=show\|schedule\|client&date_from=...&date_to=...` |
 
-Response: array of `{ group_id, group_name, total_viewer_count, total_gmv, total_sales, total_orders }`.
+Response: array of `{ group_id, group_name, show_count, total_viewer_count }` plus a `summary` aggregate.
 
 ## Key Files
 
@@ -127,9 +113,8 @@ Response: array of `{ group_id, group_name, total_viewer_count, total_gmv, total
 
 ## Metric Glossary
 
-- `revenue`: GMV total for selected show/group/window.
-- `mc_cost`: MC compensation cost based on effective compensation type and rates.
+- `mc_cost`: MC compensation cost based on effective compensation type and rates. COMMISSION/HYBRID returns $0 until revenue tracking ships in Phase 5.
 - `shift_cost` (per-show endpoint): full shift cost associated with the show time window.
 - `total_shift_cost` (grouped endpoint): allocated share of date-window shift cost for that group.
 - `total_variable_cost`: `mc_cost + shift_cost` (per-show endpoint).
-- `contribution_margin`: `revenue - variable_cost` for the same scope.
+- `total_viewer_count`: sum of `ShowPlatform.viewerCount` across all platforms for the group.

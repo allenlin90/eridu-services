@@ -68,9 +68,29 @@ function createCreatorsColumns(studioId: string): ColumnDef<StudioShow>[] {
           .map((mc) => mc.mc_aliasname || mc.mc_name)
           .filter(Boolean);
         if (names.length === 0) {
-          return '—';
+          return <span className="text-muted-foreground">—</span>;
         }
-        return names.join(', ');
+
+        const displayNames = names.slice(0, 2);
+        const remainingCount = names.length - 2;
+
+        return (
+          <div className="flex flex-wrap gap-1">
+            {displayNames.map((name, index) => (
+              <Badge key={index} variant="secondary" className="font-normal truncate max-w-[120px]" title={name}>
+                {name}
+              </Badge>
+            ))}
+            {remainingCount > 0 && (
+              <Badge variant="outline" className="font-normal" title={names.slice(2).join(', ')}>
+                +
+                {remainingCount}
+                {' '}
+                more
+              </Badge>
+            )}
+          </div>
+        );
       },
     },
     {

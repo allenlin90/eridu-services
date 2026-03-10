@@ -32,32 +32,22 @@ export class StudioEconomicsService {
       throw HttpError.forbidden('Show does not belong to this studio');
     }
 
-    const [showMcs, showPlatforms] = await Promise.all([
-      this.showMcRepository.findMany({ where: { showId: show.id, deletedAt: null }, include: { mc: true } }),
-      this.showPlatformRepository.findByShow(show.id),
-    ]);
-
-    const revenue = showPlatforms.reduce((sum, sp) => {
-      return sum + (sp.gmv ? Number(sp.gmv) : 0);
-    }, 0);
+    const showMcs = await this.showMcRepository.findMany({ where: { showId: show.id, deletedAt: null }, include: { mc: true } });
 
     const studioMcDefaultsByMcId = await this.resolveStudioMcDefaults(show.studioId, showMcs);
-    const mcCost = computeMcCost(showMcs, revenue, studioMcDefaultsByMcId);
+    const mcCost = computeMcCost(showMcs, 0, studioMcDefaultsByMcId);
 
     const shiftCost = show.studio?.uid
       ? await this.computeShiftCostByStudioUid(show.studio.uid, show.startTime, show.endTime)
       : 0;
 
     const totalVariableCost = mcCost + shiftCost;
-    const contributionMargin = revenue - totalVariableCost;
 
     return {
       show_id: show.uid,
       mc_cost: mcCost.toFixed(2),
       shift_cost: shiftCost.toFixed(2),
       total_variable_cost: totalVariableCost.toFixed(2),
-      revenue: revenue.toFixed(2),
-      contribution_margin: contributionMargin.toFixed(2),
     };
   }
 
@@ -84,20 +74,18 @@ export class StudioEconomicsService {
     const showIds = shows.map((s) => s.id);
     const studioId = shows[0]?.studioId;
 
-    const [allShowMcs, allPlatforms, allShifts] = await Promise.all([
+    const [allShowMcs, allShifts] = await Promise.all([
       this.showMcRepository.findMany({ where: { showId: { in: showIds }, deletedAt: null }, include: { mc: true } }),
-      this.showPlatformRepository.findByShowIds(showIds),
       studioId
         ? this.studioShiftRepository.findByShowWindow(studioId, dateFrom, dateTo)
         : Promise.resolve([]),
     ]);
     const studioMcDefaultsByMcId = await this.resolveStudioMcDefaults(studioId ?? null, allShowMcs);
 
-    const platformsByShow = groupByField(allPlatforms, 'showId');
     const mcsByShow = groupByField(allShowMcs, 'showId');
     const totalShiftCost = allShifts.reduce((sum, s) => sum + Number(s.calculatedCost ?? s.projectedCost), 0);
 
-    const groups = new Map<string, { group_id: string | null; group_name: string | null; show_count: number; mc_cost: number; revenue: number }>();
+    const groups = new Map<string, { group_id: string | null; group_name: string | null; show_count: number; mc_cost: number }>();
 
     for (const show of shows) {
       const groupId = resolveGroupId(show, groupBy);
@@ -107,13 +95,9 @@ export class StudioEconomicsService {
         group_name: resolveGroupName(show, groupBy),
         show_count: 0,
         mc_cost: 0,
-        revenue: 0,
       };
-      const platforms = platformsByShow.get(show.id) ?? [];
-      const showRevenue = platforms.reduce((s, sp) => s + (sp.gmv ? Number(sp.gmv) : 0), 0);
       const showMcs = mcsByShow.get(show.id) ?? [];
-      existing.mc_cost += computeMcCost(showMcs, showRevenue, studioMcDefaultsByMcId);
-      existing.revenue += showRevenue;
+      existing.mc_cost += computeMcCost(showMcs, 0, studioMcDefaultsByMcId);
       existing.show_count += 1;
       groups.set(key, existing);
     }
@@ -121,35 +105,27 @@ export class StudioEconomicsService {
     const shiftCostPerShow = totalShiftCost / shows.length;
     const items: PnlGroupItem[] = [];
     let summaryMcCost = 0;
-    let summaryRevenue = 0;
     let summaryShowCount = 0;
 
     for (const g of groups.values()) {
       const groupShiftCost = shiftCostPerShow * g.show_count;
-      const margin = g.revenue - g.mc_cost - groupShiftCost;
       items.push({
         group_id: g.group_id,
         group_name: g.group_name,
         show_count: g.show_count,
         total_mc_cost: g.mc_cost.toFixed(2),
         total_shift_cost: groupShiftCost.toFixed(2),
-        total_revenue: g.revenue.toFixed(2),
-        contribution_margin: margin.toFixed(2),
       });
       summaryMcCost += g.mc_cost;
-      summaryRevenue += g.revenue;
       summaryShowCount += g.show_count;
     }
 
-    const summaryMargin = summaryRevenue - summaryMcCost - totalShiftCost;
     return {
       items,
       summary: {
         show_count: summaryShowCount,
         total_mc_cost: summaryMcCost.toFixed(2),
         total_shift_cost: totalShiftCost.toFixed(2),
-        total_revenue: summaryRevenue.toFixed(2),
-        contribution_margin: summaryMargin.toFixed(2),
       },
     };
   }
@@ -183,9 +159,6 @@ export class StudioEconomicsService {
       group_name: string | null;
       show_count: number;
       total_viewer_count: number;
-      total_gmv: number;
-      total_sales: number;
-      total_orders: number;
     }>();
 
     for (const show of shows) {
@@ -196,17 +169,11 @@ export class StudioEconomicsService {
         group_name: resolveGroupName(show, groupBy),
         show_count: 0,
         total_viewer_count: 0,
-        total_gmv: 0,
-        total_sales: 0,
-        total_orders: 0,
       };
 
       const platforms = platformsByShow.get(show.id) ?? [];
       for (const sp of platforms) {
         existing.total_viewer_count += sp.viewerCount ?? 0;
-        existing.total_gmv += sp.gmv ? Number(sp.gmv) : 0;
-        existing.total_sales += sp.sales ? Number(sp.sales) : 0;
-        existing.total_orders += sp.orders ?? 0;
       }
       existing.show_count += 1;
       groups.set(key, existing);
@@ -217,20 +184,14 @@ export class StudioEconomicsService {
       group_name: g.group_name,
       show_count: g.show_count,
       total_viewer_count: g.total_viewer_count,
-      total_gmv: g.total_gmv.toFixed(2),
-      total_sales: g.total_sales.toFixed(2),
-      total_orders: g.total_orders,
     }));
 
     const summary = items.reduce(
       (acc, item) => ({
         show_count: acc.show_count + item.show_count,
         total_viewer_count: acc.total_viewer_count + item.total_viewer_count,
-        total_gmv: (Number.parseFloat(acc.total_gmv) + Number.parseFloat(item.total_gmv)).toFixed(2),
-        total_sales: (Number.parseFloat(acc.total_sales) + Number.parseFloat(item.total_sales)).toFixed(2),
-        total_orders: acc.total_orders + item.total_orders,
       }),
-      { show_count: 0, total_viewer_count: 0, total_gmv: '0.00', total_sales: '0.00', total_orders: 0 },
+      { show_count: 0, total_viewer_count: 0 },
     );
 
     return { items, summary };
@@ -254,8 +215,6 @@ export class StudioEconomicsService {
       show_count: 0,
       total_mc_cost: '0.00',
       total_shift_cost: '0.00',
-      total_revenue: '0.00',
-      contribution_margin: '0.00',
     };
   }
 
@@ -263,9 +222,6 @@ export class StudioEconomicsService {
     return {
       show_count: 0,
       total_viewer_count: 0,
-      total_gmv: '0.00',
-      total_sales: '0.00',
-      total_orders: 0,
     };
   }
 

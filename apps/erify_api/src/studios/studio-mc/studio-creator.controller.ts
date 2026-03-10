@@ -5,7 +5,7 @@ import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 
 import { BaseStudioController } from '../base-studio.controller';
 
-import { McAvailabilityQueryDto } from './schemas/studio-mc-availability.schema';
+import { McAvailabilityPayloadDto } from './schemas/studio-mc-availability.schema';
 import { StudioMcCatalogQueryDto } from './schemas/studio-mc-catalog.schema';
 import {
   CreateStudioMcRosterDto,
@@ -33,15 +33,19 @@ export class StudioCreatorController extends BaseStudioController {
     super();
   }
 
-  @Get('availability')
+  @Post('availability:check')
   @ZodResponse(z.array(creatorDto))
   async availability(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
-    @Query() query: McAvailabilityQueryDto,
+    @Body() body: McAvailabilityPayloadDto,
   ) {
+    const windows = body.windows.map((w) => ({
+      dateFrom: w.date_from,
+      dateTo: w.date_to,
+    }));
+
     return this.creatorRepository.findAvailableMcs(
-      query.date_from,
-      query.date_to,
+      windows,
       studioId,
     );
   }

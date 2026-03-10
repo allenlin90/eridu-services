@@ -202,9 +202,6 @@ model ShowPlatform {
   liveStreamLink String?   @map("live_stream_link") // external link of the live stream e.g., tiktok
   platformShowId String?   @map("platform_show_id") // external id of the platform e.g., tiktok
   viewerCount    Int       @default(0) @map("viewer_count")
-  gmv            Decimal?  @map("gmv") @db.Decimal(14, 2)
-  sales          Decimal?  @map("sales") @db.Decimal(14, 2)
-  orders         Int?      @map("orders")
   metadata       Json      @default("{}")
   showId         BigInt    @map("show_id")
   show           Show      @relation(fields: [showId], references: [id], onDelete: Cascade)

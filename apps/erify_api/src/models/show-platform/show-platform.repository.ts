@@ -161,9 +161,6 @@ export class ShowPlatformRepository extends BaseRepository<
     liveStreamLink?: string | null;
     platformShowId?: string | null;
     viewerCount?: number;
-    gmv?: string;
-    sales?: string;
-    orders?: number;
     metadata?: object;
   }): Promise<ShowPlatform> {
     return this.delegate.create({
@@ -174,9 +171,6 @@ export class ShowPlatformRepository extends BaseRepository<
         liveStreamLink: params.liveStreamLink ?? null,
         platformShowId: params.platformShowId ?? null,
         viewerCount: params.viewerCount ?? 0,
-        ...(params.gmv !== undefined && { gmv: params.gmv }),
-        ...(params.sales !== undefined && { sales: params.sales }),
-        ...(params.orders !== undefined && { orders: params.orders }),
         metadata: params.metadata ?? {},
       },
     });
@@ -189,9 +183,6 @@ export class ShowPlatformRepository extends BaseRepository<
     liveStreamLink?: string | null;
     platformShowId?: string | null;
     viewerCount?: number;
-    gmv?: string | null;
-    sales?: string | null;
-    orders?: number | null;
     metadata?: object;
   }): Promise<ShowPlatform> {
     return this.delegate.update({
@@ -200,9 +191,6 @@ export class ShowPlatformRepository extends BaseRepository<
         liveStreamLink: params.liveStreamLink,
         platformShowId: params.platformShowId,
         viewerCount: params.viewerCount,
-        ...(params.gmv !== undefined && { gmv: params.gmv }),
-        ...(params.sales !== undefined && { sales: params.sales }),
-        ...(params.orders !== undefined && { orders: params.orders }),
         metadata: params.metadata,
         deletedAt: null,
       },
