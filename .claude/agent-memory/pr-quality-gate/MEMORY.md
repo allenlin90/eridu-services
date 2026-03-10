@@ -66,3 +66,39 @@ This is a UX degradation, not a crash — acceptable for now. Flagged as warning
 - Task type label i18n hardcoded in 4 files instead of using `getTaskTypeLabel()`
 - `handleSubmitAction` in `use-studio-tasks-page-controller.tsx` silently drops `options.onSuccess` — pre-existing
 - `StudioShift`/`StudioShiftBlock` missing `version` field — introduced in feat/studio-shift-schedule; deferred
+- `StudioMc` (studio_creators table) missing `version` field — introduced in feat/phase-4-p-and-l; deferred
+
+### Phase 4 (feat/phase-4-p-and-l): MERGED — Resolved Issues
+
+All 3 original blocking issues were fixed in commit `a6cc9b02`:
+
+**FIXED: StudioMc Repository soft-deleted creator leak**
+`mcWhere` object (with `deletedAt: null`) now always applies unconditionally, not just in the search branch.
+File: `apps/erify_api/src/models/studio-mc/studio-mc.repository.ts`
+
+**FIXED: Bulk assignment roster scope enforcement**
+After resolving creators by UIDs, orchestration service now cross-checks active `StudioMc` rows for the requesting studio. Throws `HttpError.badRequest` with unrostered creator UIDs listed.
+File: `apps/erify_api/src/studios/studio-show/studio-show-mc.orchestration.service.ts`
+
+**FIXED: Bulk assign restore field clearing**
+`restoreAndUpdateAssignment` now uses conditional spread (`...(params.note !== undefined && { note: params.note })`) so omitted fields are not overwritten.
+File: `apps/erify_api/src/models/show-mc/show-mc.repository.ts`
+
+**FIXED: FE route access — new roles added to STUDIO_ROLE_LEVEL**
+`TALENT_MANAGER`, `DESIGNER`, `MODERATION_MANAGER` now mapped in `studio-route-access.ts`. Fixed in commit `ce6b5ed1`.
+
+**Remaining deferred tech debt (not blocking):**
+- `StudioMc` (studio_creators table) missing `version` field — deferred to migration pass
+- `listUserCatalog` still uses take:1000 + client-side filter — correctness risk at >1000 members (deferred)
+
+**Migration: single consolidated migration for Phase 4**
+`apps/erify_api/prisma/migrations/20260309140327_phase4_economics_foundation/migration.sql` contains all Phase 4 schema changes:
+- Table renames: `mcs`→`creators`, `show_mcs`→`show_creators` (non-destructive, with constraint/index renames)
+- `ShowPlatform` new columns: `gmv`, `sales`, `orders`
+- `MC`/`ShowMC` new compensation columns
+- `StudioMc` (studio_creators) new table
+- Backfill SQL: `studio_creators` seeded from historical show assignments
+One migration only — confirmed consolidated.
+
+**Economics service: StudioMc import**
+`StudioEconomicsService` imports `StudioMc` type from `@prisma/client` for the `resolveStudioMcDefaults` helper parameter type. This is acceptable — entity types from `@prisma/client` are allowed in services; only `Prisma.XxxInput/WhereInput/etc.` construction is forbidden.
