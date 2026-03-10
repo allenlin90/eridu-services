@@ -13,12 +13,12 @@ import { CreatorService } from '@/models/creator/creator.service';
 import { creatorSchema } from '@/models/creator/schemas/creator.schema';
 import { showSchema } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
-import { ShowMcService } from '@/models/show-mc/show-mc.service';
+import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 
 // Internal schema for database entity
 export const showCreatorSchema = z.object({
   id: z.bigint(),
-  uid: z.string().startsWith(ShowMcService.UID_PREFIX),
+  uid: z.string().startsWith(ShowCreatorService.UID_PREFIX),
   showId: z.bigint(),
   mcId: z.bigint(),
   note: z.string().nullable(),
@@ -34,7 +34,7 @@ export const showCreatorSchema = z.object({
 // API input schema (snake_case input, transforms to camelCase)
 export const createShowCreatorSchema = z.object({
   show_id: z.string().startsWith(ShowService.UID_PREFIX), // UID
-  creator_id: z.string().startsWith(CreatorService.UID_PREFIX), // UID
+  creator_id: z.string().refine(CreatorService.isValidCreatorUid, 'Invalid creator ID'), // UID
   note: z.string().max(1000).optional(), // Add max length for notes
   agreed_rate: z.coerce.number().positive().optional(),
   compensation_type: z.enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]]).optional(),
@@ -56,7 +56,10 @@ const transformCreateShowCreatorSchema = createShowCreatorSchema.transform((data
 export const updateShowCreatorSchema = z
   .object({
     show_id: z.string().startsWith(ShowService.UID_PREFIX).optional(), // UID
-    creator_id: z.string().startsWith(CreatorService.UID_PREFIX).optional(), // UID
+    creator_id: z
+      .string()
+      .refine(CreatorService.isValidCreatorUid, 'Invalid creator ID')
+      .optional(), // UID
     note: z.string().max(1000).nullable().optional(), // Add max length for notes
     agreed_rate: z.coerce.number().positive().nullable().optional(),
     compensation_type: z.enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]]).nullable().optional(),

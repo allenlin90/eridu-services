@@ -14,12 +14,12 @@ describe('adminCreatorController', () => {
   let controller: AdminCreatorController;
 
   const mockCreatorService = {
-    listMcs: jest.fn(),
-    createMc: jest.fn(),
-    getMcById: jest.fn(),
-    getMcByIdWithUser: jest.fn(),
-    updateMc: jest.fn(),
-    deleteMc: jest.fn(),
+    listCreators: jest.fn(),
+    createCreator: jest.fn(),
+    getCreatorById: jest.fn(),
+    getCreatorByIdWithUser: jest.fn(),
+    updateCreator: jest.fn(),
+    deleteCreator: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -45,18 +45,18 @@ describe('adminCreatorController', () => {
       const createdCreator = { uid: 'mc_123', ...createDto };
       const creatorWithUser = { ...createdCreator, user: { uid: 'user_123' } };
 
-      mockCreatorService.createMc.mockResolvedValue(createdCreator as any);
-      mockCreatorService.getMcByIdWithUser.mockResolvedValue(creatorWithUser as any);
+      mockCreatorService.createCreator.mockResolvedValue(createdCreator as any);
+      mockCreatorService.getCreatorByIdWithUser.mockResolvedValue(creatorWithUser as any);
 
       const result = await controller.createCreator(createDto);
 
-      expect(mockCreatorService.createMc).toHaveBeenCalledWith({
+      expect(mockCreatorService.createCreator).toHaveBeenCalledWith({
         name: createDto.name,
         aliasName: createDto.aliasName,
         metadata: createDto.metadata,
         userId: createDto.userId,
       });
-      expect(mockCreatorService.getMcByIdWithUser).toHaveBeenCalledWith('mc_123');
+      expect(mockCreatorService.getCreatorByIdWithUser).toHaveBeenCalledWith('mc_123');
       expect(result).toEqual(creatorWithUser);
     });
   });
@@ -75,11 +75,11 @@ describe('adminCreatorController', () => {
         { uid: 'mc_2', userId: 'user_2' },
       ];
 
-      mockCreatorService.listMcs.mockResolvedValue({ data: creators, total: 2 } as any);
+      mockCreatorService.listCreators.mockResolvedValue({ data: creators, total: 2 } as any);
 
       const result = await controller.getCreators(query);
 
-      expect(mockCreatorService.listMcs).toHaveBeenCalledWith({
+      expect(mockCreatorService.listCreators).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
         name: query.name,
@@ -107,11 +107,11 @@ describe('adminCreatorController', () => {
       const creatorId = 'mc_123';
       const creator = { uid: creatorId, userId: 'user_123' };
 
-      mockCreatorService.getMcByIdWithUser.mockResolvedValue(creator as any);
+      mockCreatorService.getCreatorByIdWithUser.mockResolvedValue(creator as any);
 
       const result = await controller.getCreator(creatorId);
 
-      expect(mockCreatorService.getMcByIdWithUser).toHaveBeenCalledWith(creatorId);
+      expect(mockCreatorService.getCreatorByIdWithUser).toHaveBeenCalledWith(creatorId);
       expect(result).toEqual(creator);
     });
   });
@@ -124,21 +124,21 @@ describe('adminCreatorController', () => {
       const updatedCreator = { ...existingCreator, ...updateDto };
       const creatorWithUser = { ...updatedCreator, user: { uid: 'user_123' } };
 
-      mockCreatorService.getMcById.mockResolvedValue(existingCreator as any);
-      mockCreatorService.updateMc.mockResolvedValue(updatedCreator as any);
-      mockCreatorService.getMcByIdWithUser.mockResolvedValue(creatorWithUser as any);
+      mockCreatorService.getCreatorById.mockResolvedValue(existingCreator as any);
+      mockCreatorService.updateCreator.mockResolvedValue(updatedCreator as any);
+      mockCreatorService.getCreatorByIdWithUser.mockResolvedValue(creatorWithUser as any);
 
       const result = await controller.updateCreator(creatorId, updateDto);
 
-      expect(mockCreatorService.getMcById).toHaveBeenCalledWith(creatorId);
-      expect(mockCreatorService.updateMc).toHaveBeenCalledWith(creatorId, {
+      expect(mockCreatorService.getCreatorById).toHaveBeenCalledWith(creatorId);
+      expect(mockCreatorService.updateCreator).toHaveBeenCalledWith(creatorId, {
         name: updateDto.name,
         aliasName: updateDto.aliasName,
         isBanned: updateDto.isBanned,
         metadata: updateDto.metadata,
         userId: updateDto.userId,
       });
-      expect(mockCreatorService.getMcByIdWithUser).toHaveBeenCalledWith(creatorId);
+      expect(mockCreatorService.getCreatorByIdWithUser).toHaveBeenCalledWith(creatorId);
       expect(result).toEqual(creatorWithUser);
     });
   });
@@ -148,13 +148,13 @@ describe('adminCreatorController', () => {
       const creatorId = 'mc_123';
       const existingCreator = { uid: creatorId };
 
-      mockCreatorService.getMcById.mockResolvedValue(existingCreator as any);
-      mockCreatorService.deleteMc.mockResolvedValue(undefined);
+      mockCreatorService.getCreatorById.mockResolvedValue(existingCreator as any);
+      mockCreatorService.deleteCreator.mockResolvedValue(undefined);
 
       await controller.deleteCreator(creatorId);
 
-      expect(mockCreatorService.getMcById).toHaveBeenCalledWith(creatorId);
-      expect(mockCreatorService.deleteMc).toHaveBeenCalledWith(creatorId);
+      expect(mockCreatorService.getCreatorById).toHaveBeenCalledWith(creatorId);
+      expect(mockCreatorService.deleteCreator).toHaveBeenCalledWith(creatorId);
     });
   });
 });

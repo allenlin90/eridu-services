@@ -2,15 +2,15 @@ import { Module } from '@nestjs/common';
 
 import { ShowOrchestrationService } from './show-orchestration.service';
 
-import { McModule } from '@/models/mc/mc.module';
+import { CreatorModule } from '@/models/creator/creator.module';
 import { PlatformModule } from '@/models/platform/platform.module';
 import { ShowModule } from '@/models/show/show.module';
-import { ShowMcModule } from '@/models/show-mc/show-mc.module';
+import { ShowCreatorModule } from '@/models/show-creator/show-creator.module';
 import { ShowPlatformModule } from '@/models/show-platform/show-platform.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 
 @Module({
-  imports: [PrismaModule, ShowModule, ShowMcModule, ShowPlatformModule, McModule, PlatformModule],
+  imports: [PrismaModule, ShowModule, ShowCreatorModule, ShowPlatformModule, CreatorModule, PlatformModule],
   providers: [ShowOrchestrationService],
   exports: [ShowOrchestrationService],
 })

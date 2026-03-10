@@ -12,9 +12,10 @@ import {
 import { ValidationService } from './validation.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { expandCreatorUidCandidates } from '@/models/creator/creator-uid.util';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ShowService } from '@/models/show/show.service';
-import { ShowMcService } from '@/models/show-mc/show-mc.service';
+import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { UtilityService } from '@/utility/utility.service';
@@ -64,7 +65,7 @@ export class PublishingService {
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
     private readonly scheduleService: ScheduleService,
     private readonly showService: ShowService,
-    private readonly showMcService: ShowMcService,
+    private readonly showCreatorService: ShowCreatorService,
     private readonly showPlatformService: ShowPlatformService,
     private readonly validationService: ValidationService,
     private readonly utilityService: UtilityService,
@@ -475,7 +476,7 @@ export class PublishingService {
       return;
     }
 
-    const existingShowMcs = await tx.showMC.findMany({
+    const existingShowCreators = await tx.showMC.findMany({
       where: { showId: { in: showIds } },
       select: {
         id: true,
@@ -500,11 +501,11 @@ export class PublishingService {
       },
     });
 
-    const showMcByShowId = new Map<bigint, typeof existingShowMcs>();
-    existingShowMcs.forEach((row) => {
-      const list = showMcByShowId.get(row.showId) || [];
+    const showCreatorByShowId = new Map<bigint, typeof existingShowCreators>();
+    existingShowCreators.forEach((row) => {
+      const list = showCreatorByShowId.get(row.showId) || [];
       list.push(row);
-      showMcByShowId.set(row.showId, list);
+      showCreatorByShowId.set(row.showId, list);
     });
 
     const showPlatformByShowId = new Map<bigint, typeof existingShowPlatforms>();
@@ -515,28 +516,28 @@ export class PublishingService {
     });
 
     for (const [showId, incoming] of incomingByShowId.entries()) {
-      const incomingMcById = new Map<bigint, { note: string | undefined }>();
-      (incoming.source.mcs || []).forEach((mc) => {
-        const mcId = uidMaps.mcs.get(mc.mcId);
-        if (!mcId) {
+      const incomingCreatorById = new Map<bigint, { note: string | undefined }>();
+      (incoming.source.mcs || []).forEach((creator) => {
+        const creatorId = uidMaps.mcs.get(creator.mcId);
+        if (!creatorId) {
           return;
         }
-        incomingMcById.set(mcId, { note: mc.note });
+        incomingCreatorById.set(creatorId, { note: creator.note });
       });
 
-      const existingMcs = showMcByShowId.get(showId) || [];
-      const existingMcByMcId = new Map(existingMcs.map((mc) => [mc.mcId, mc]));
+      const existingCreators = showCreatorByShowId.get(showId) || [];
+      const existingCreatorById = new Map(existingCreators.map((creator) => [creator.mcId, creator]));
 
-      for (const [mcId, incomingMc] of incomingMcById.entries()) {
-        const existing = existingMcByMcId.get(mcId);
+      for (const [creatorId, incomingCreator] of incomingCreatorById.entries()) {
+        const existing = existingCreatorById.get(creatorId);
 
         if (!existing) {
           await tx.showMC.create({
             data: {
-              uid: this.showMcService.generateShowMcUid(),
+              uid: this.generateShowCreatorUid(),
               showId,
-              mcId,
-              note: incomingMc.note,
+              mcId: creatorId,
+              note: incomingCreator.note,
               metadata: {},
             },
           });
@@ -549,7 +550,7 @@ export class PublishingService {
             where: { id: existing.id },
             data: {
               deletedAt: null,
-              note: incomingMc.note,
+              note: incomingCreator.note,
               metadata: {},
             },
           });
@@ -557,32 +558,32 @@ export class PublishingService {
           continue;
         }
 
-        if ((existing.note || null) !== (incomingMc.note || null)) {
+        if ((existing.note || null) !== (incomingCreator.note || null)) {
           await tx.showMC.update({
             where: { id: existing.id },
             data: {
-              note: incomingMc.note,
+              note: incomingCreator.note,
             },
           });
           summary.mc_links_updated += 1;
         }
       }
 
-      const staleMcIds = existingMcs
-        .filter((mc) => mc.deletedAt === null && !incomingMcById.has(mc.mcId))
-        .map((mc) => mc.id);
+      const staleCreatorLinkIds = existingCreators
+        .filter((creator) => creator.deletedAt === null && !incomingCreatorById.has(creator.mcId))
+        .map((creator) => creator.id);
 
-      if (staleMcIds.length > 0) {
+      if (staleCreatorLinkIds.length > 0) {
         await tx.showMC.updateMany({
           where: {
-            id: { in: staleMcIds },
+            id: { in: staleCreatorLinkIds },
             deletedAt: null,
           },
           data: {
             deletedAt: new Date(),
           },
         });
-        summary.mc_links_removed += staleMcIds.length;
+        summary.mc_links_removed += staleCreatorLinkIds.length;
       }
 
       const incomingPlatformById = new Map<bigint, {
@@ -729,7 +730,7 @@ export class PublishingService {
     const showTypeUids = new Set<string>();
     const showStatusUids = new Set<string>();
     const showStandardUids = new Set<string>();
-    const mcUids = new Set<string>();
+    const creatorUids = new Set<string>();
     const platformUids = new Set<string>();
 
     if (schedule.studio?.uid) {
@@ -743,7 +744,12 @@ export class PublishingService {
       show.showTypeId && showTypeUids.add(show.showTypeId);
       show.showStatusId && showStatusUids.add(show.showStatusId);
       show.showStandardId && showStandardUids.add(show.showStandardId);
-      (show.mcs || []).forEach((mc) => mc.mcId && mcUids.add(mc.mcId));
+      (show.mcs || []).forEach((creator) => {
+        if (!creator.mcId) {
+          return;
+        }
+        expandCreatorUidCandidates(creator.mcId).forEach((uid) => creatorUids.add(uid));
+      });
       (show.platforms || []).forEach((platform) =>
         platform.platformId && platformUids.add(platform.platformId),
       );
@@ -756,7 +762,7 @@ export class PublishingService {
       showTypes,
       showStatuses,
       showStandards,
-      mcs,
+      creators,
       platforms,
     ] = await Promise.all([
       tx.client.findMany({
@@ -784,7 +790,7 @@ export class PublishingService {
         select: { id: true, uid: true },
       }),
       tx.mC.findMany({
-        where: { uid: { in: Array.from(mcUids) }, deletedAt: null },
+        where: { uid: { in: Array.from(creatorUids) }, deletedAt: null },
         select: { id: true, uid: true },
       }),
       tx.platform.findMany({
@@ -793,6 +799,13 @@ export class PublishingService {
       }),
     ]);
 
+    const creatorMap = new Map<string, bigint>();
+    creators.forEach((creator) => {
+      expandCreatorUidCandidates(creator.uid).forEach((uid) => {
+        creatorMap.set(uid, creator.id);
+      });
+    });
+
     return {
       clients: new Map(clients.map((c) => [c.uid, c.id])),
       studios: new Map(studios.map((s) => [s.uid, s.id])),
@@ -800,8 +813,12 @@ export class PublishingService {
       showTypes: new Map(showTypes.map((t) => [t.uid, t.id])),
       showStatuses: new Map(showStatuses.map((s) => [s.uid, s.id])),
       showStandards: new Map(showStandards.map((s) => [s.uid, s.id])),
-      mcs: new Map(mcs.map((m) => [m.uid, m.id])),
+      mcs: creatorMap,
       platforms: new Map(platforms.map((p) => [p.uid, p.id])),
     };
+  }
+
+  private generateShowCreatorUid(): string {
+    return this.showCreatorService.generateShowCreatorUid();
   }
 }

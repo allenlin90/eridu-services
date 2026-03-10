@@ -34,19 +34,19 @@ export class AdminCreatorController extends BaseAdminController {
   @AdminResponse(creatorWithUserDto, HttpStatus.CREATED, 'Creator created successfully')
   async createCreator(@Body() body: CreateCreatorDto) {
     const { name, aliasName, metadata, userId } = body;
-    const creator = await this.creatorService.createMc({
+    const creator = await this.creatorService.createCreator({
       name,
       aliasName,
       metadata,
       userId,
     });
-    return this.creatorService.getMcByIdWithUser(creator.uid);
+    return this.creatorService.getCreatorByIdWithUser(creator.uid);
   }
 
   @Get()
   @AdminPaginatedResponse(creatorWithUserDto, 'List of creators with pagination')
   async getCreators(@Query() query: ListCreatorsQueryDto) {
-    const { data, total } = await this.creatorService.listMcs({
+    const { data, total } = await this.creatorService.listCreators({
       skip: query.skip,
       take: query.take,
       name: query.name,
@@ -62,10 +62,10 @@ export class AdminCreatorController extends BaseAdminController {
   @Get(':id')
   @AdminResponse(creatorWithUserDto, HttpStatus.OK, 'Creator details')
   async getCreator(
-    @Param('id', new UidValidationPipe(CreatorService.UID_PREFIX, 'Creator'))
+    @Param('id', new UidValidationPipe(CreatorService.VALID_UID_PREFIXES, 'Creator'))
     id: string,
   ) {
-    const creator = await this.creatorService.getMcByIdWithUser(id);
+    const creator = await this.creatorService.getCreatorByIdWithUser(id);
     this.ensureResourceExists(creator, 'Creator', id);
     return creator;
   }
@@ -73,15 +73,15 @@ export class AdminCreatorController extends BaseAdminController {
   @Patch(':id')
   @AdminResponse(creatorWithUserDto, HttpStatus.OK, 'Creator updated successfully')
   async updateCreator(
-    @Param('id', new UidValidationPipe(CreatorService.UID_PREFIX, 'Creator'))
+    @Param('id', new UidValidationPipe(CreatorService.VALID_UID_PREFIXES, 'Creator'))
     id: string,
     @Body() body: UpdateCreatorDto,
   ) {
-    const existing = await this.creatorService.getMcById(id);
+    const existing = await this.creatorService.getCreatorById(id);
     this.ensureResourceExists(existing, 'Creator', id);
 
     const { name, aliasName, isBanned, metadata, userId } = body;
-    await this.creatorService.updateMc(id, {
+    await this.creatorService.updateCreator(id, {
       name,
       aliasName,
       isBanned,
@@ -89,18 +89,18 @@ export class AdminCreatorController extends BaseAdminController {
       userId,
     });
 
-    return this.creatorService.getMcByIdWithUser(id);
+    return this.creatorService.getCreatorByIdWithUser(id);
   }
 
   @Delete(':id')
   @AdminResponse(undefined, HttpStatus.NO_CONTENT)
   async deleteCreator(
-    @Param('id', new UidValidationPipe(CreatorService.UID_PREFIX, 'Creator'))
+    @Param('id', new UidValidationPipe(CreatorService.VALID_UID_PREFIXES, 'Creator'))
     id: string,
   ) {
-    const existing = await this.creatorService.getMcById(id);
+    const existing = await this.creatorService.getCreatorById(id);
     this.ensureResourceExists(existing, 'Creator', id);
 
-    await this.creatorService.deleteMc(id);
+    await this.creatorService.deleteCreator(id);
   }
 }

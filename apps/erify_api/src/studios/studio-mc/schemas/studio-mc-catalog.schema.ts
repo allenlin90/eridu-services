@@ -11,8 +11,10 @@ export const studioMcCatalogQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(100),
 });
 
-export class StudioMcCatalogQueryDto extends createZodDto(studioMcCatalogQuerySchema) {
+export class StudioCreatorCatalogQueryDto extends createZodDto(studioMcCatalogQuerySchema) {
   declare search?: string;
   declare include_rostered: boolean;
   declare limit: number;
 }
+
+export { StudioCreatorCatalogQueryDto as StudioMcCatalogQueryDto };

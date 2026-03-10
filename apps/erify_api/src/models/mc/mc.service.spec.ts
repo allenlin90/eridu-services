@@ -21,11 +21,12 @@ describe('mcService', () => {
     mcRepositoryMock = createMockRepository<McRepository>({
       findByUserUid: jest.fn(),
       findByUserIdentifier: jest.fn(),
-      createMc: jest.fn(),
-      updateByUid: jest.fn(),
+      findByUid: jest.fn(),
+      createCreator: jest.fn(),
+      updateCreatorByUid: jest.fn(),
       findPaginated: jest.fn(),
     });
-    utilityMock = createMockUtilityService('mc_123');
+    utilityMock = createMockUtilityService('creator_123');
 
     const module = await createModelServiceTestModule({
       serviceClass: McService,
@@ -41,27 +42,27 @@ describe('mcService', () => {
     setupTestMocks();
   });
 
-  it('createMc returns created mc', async () => {
+  it('createCreator returns created creator', async () => {
     const payload = {
       name: 'MC A',
       aliasName: 'A',
       metadata: {},
       userId: null,
     };
-    const created = { uid: 'mc_123', ...payload } as const;
-    (mcRepositoryMock.createMc as jest.Mock).mockResolvedValue(created);
+    const created = { uid: 'creator_123', ...payload } as const;
+    (mcRepositoryMock.createCreator as jest.Mock).mockResolvedValue(created);
 
-    const result = await service.createMc(payload);
+    const result = await service.createCreator(payload);
 
-    expect(utilityMock.generateBrandedId).toHaveBeenCalledWith('mc', undefined);
-    expect(mcRepositoryMock.createMc).toHaveBeenCalledWith({
+    expect(utilityMock.generateBrandedId).toHaveBeenCalledWith('creator', undefined);
+    expect(mcRepositoryMock.createCreator).toHaveBeenCalledWith({
       ...payload,
-      uid: 'mc_123',
+      uid: 'creator_123',
     });
     expect(result).toEqual(created);
   });
 
-  it('createMc maps P2002 to Conflict', async () => {
+  it('createCreator maps P2002 to Conflict', async () => {
     const payload = {
       name: 'MC A',
       aliasName: 'A',
@@ -69,12 +70,12 @@ describe('mcService', () => {
       userId: null,
     };
     const error = createMockUniqueConstraintError(['uid']);
-    (mcRepositoryMock.createMc as jest.Mock).mockRejectedValue(error);
+    (mcRepositoryMock.createCreator as jest.Mock).mockRejectedValue(error);
 
-    await expect(service.createMc(payload)).rejects.toThrow(error);
+    await expect(service.createCreator(payload)).rejects.toThrow(error);
   });
 
-  it('createMc throws when user already has an MC', async () => {
+  it('createCreator throws when user already has a creator', async () => {
     const payload = {
       name: 'MC A',
       aliasName: 'A',
@@ -84,19 +85,19 @@ describe('mcService', () => {
       uid: 'mc_existing',
     });
 
-    await expect(service.createMc(payload)).rejects.toThrow(
-      'user is already a mc',
+    await expect(service.createCreator(payload)).rejects.toThrow(
+      'user is already a creator',
     );
   });
 
-  it('getMcById returns null if not found', async () => {
+  it('getCreatorById returns null if not found', async () => {
     (mcRepositoryMock.findByUid as jest.Mock).mockResolvedValue(null);
 
-    const result = await service.getMcById('mc_404');
+    const result = await service.getCreatorById('mc_404');
     expect(result).toBeNull();
   });
 
-  it('updateMc calls repository updateByUid', async () => {
+  it('updateCreator calls repository updateCreatorByUid', async () => {
     const payload = {
       name: 'MC A',
       aliasName: 'mc-a',
@@ -105,15 +106,16 @@ describe('mcService', () => {
       metadata: {},
     };
     const updated = { uid: 'mc_1', ...payload };
-    (mcRepositoryMock.updateByUid as jest.Mock).mockResolvedValue(updated);
+    (mcRepositoryMock.findByUid as jest.Mock).mockResolvedValue({ uid: 'mc_1' });
+    (mcRepositoryMock.updateCreatorByUid as jest.Mock).mockResolvedValue(updated);
 
-    const result = await service.updateMc('mc_1', payload);
+    const result = await service.updateCreator('mc_1', payload);
 
-    expect(mcRepositoryMock.updateByUid).toHaveBeenCalledWith('mc_1', payload);
+    expect(mcRepositoryMock.updateCreatorByUid).toHaveBeenCalledWith('mc_1', payload);
     expect(result).toEqual(updated);
   });
 
-  it('updateMc throws when user already assigned to another MC', async () => {
+  it('updateCreator throws when user already assigned to another creator', async () => {
     const payload = {
       name: 'MC A',
       userId: 'user_123',
@@ -122,12 +124,12 @@ describe('mcService', () => {
       uid: 'mc_other',
     });
 
-    await expect(service.updateMc('mc_1', payload)).rejects.toThrow(
-      'user is already a mc',
+    await expect(service.updateCreator('mc_1', payload)).rejects.toThrow(
+      'user is already a creator',
     );
   });
 
-  it('updateMc allows same user for same MC', async () => {
+  it('updateCreator allows same user for same creator', async () => {
     const payload = {
       name: 'MC A',
       userId: 'user_123',
@@ -136,17 +138,19 @@ describe('mcService', () => {
       uid: 'mc_1',
     });
     const updated = { uid: 'mc_1', ...payload };
-    (mcRepositoryMock.updateByUid as jest.Mock).mockResolvedValue(updated);
+    (mcRepositoryMock.findByUid as jest.Mock).mockResolvedValue({ uid: 'mc_1' });
+    (mcRepositoryMock.updateCreatorByUid as jest.Mock).mockResolvedValue(updated);
 
-    const result = await service.updateMc('mc_1', payload);
+    const result = await service.updateCreator('mc_1', payload);
     expect(result).toEqual(updated);
   });
 
-  it('deleteMc soft deletes', async () => {
+  it('deleteCreator soft deletes', async () => {
     const deleted = { uid: 'mc_1', deletedAt: new Date() };
+    (mcRepositoryMock.findByUid as jest.Mock).mockResolvedValue({ uid: 'mc_1' });
     (mcRepositoryMock.softDelete as jest.Mock).mockResolvedValue(deleted);
 
-    const result = await service.deleteMc('mc_1');
+    const result = await service.deleteCreator('mc_1');
 
     expect(mcRepositoryMock.softDelete).toHaveBeenCalledWith({ uid: 'mc_1' });
     expect(result).toEqual(deleted);

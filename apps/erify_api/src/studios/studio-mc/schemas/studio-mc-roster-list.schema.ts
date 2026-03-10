@@ -24,7 +24,7 @@ export const listStudioMcRosterQuerySchema = paginationBaseSchema
     };
   });
 
-export class ListStudioMcRosterQueryDto extends createZodDto(listStudioMcRosterQuerySchema) {
+export class ListStudioCreatorRosterQueryDto extends createZodDto(listStudioMcRosterQuerySchema) {
   declare page: number;
   declare limit: number;
   declare take: number;
@@ -34,4 +34,6 @@ export class ListStudioMcRosterQueryDto extends createZodDto(listStudioMcRosterQ
   declare defaultRateType: 'FIXED' | 'COMMISSION' | 'HYBRID' | null | undefined;
 }
 
-export type ListStudioMcRosterQueryPayload = z.infer<typeof listStudioMcRosterQuerySchema>;
+export type ListStudioCreatorRosterQueryPayload = z.infer<typeof listStudioMcRosterQuerySchema>;
+export { ListStudioCreatorRosterQueryDto as ListStudioMcRosterQueryDto };
+export type ListStudioMcRosterQueryPayload = ListStudioCreatorRosterQueryPayload;

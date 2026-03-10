@@ -14,7 +14,7 @@ import { ValidationService } from './validation.service';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
 import { ShowService } from '@/models/show/show.service';
-import { ShowMcService } from '@/models/show-mc/show-mc.service';
+import { ShowCreatorService } from '@/models/show-mc/show-mc.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UtilityService } from '@/utility/utility.service';
@@ -57,14 +57,14 @@ describe('publishingService', () => {
   let scheduleService: jest.Mocked<ScheduleService>;
   let scheduleSnapshotService: jest.Mocked<ScheduleSnapshotService>;
   let showService: jest.Mocked<ShowService>;
-  let showMcService: jest.Mocked<ShowMcService>;
+  let showCreatorService: jest.Mocked<ShowCreatorService>;
   let showPlatformService: jest.Mocked<ShowPlatformService>;
   let validationService: jest.Mocked<ValidationService>;
   let getScheduleByIdMock: jest.Mock;
   let validateScheduleMock: jest.Mock;
   let createScheduleSnapshotMock: jest.Mock;
   let generateShowUidMock: jest.Mock;
-  let generateShowMcUidMock: jest.Mock;
+  let generateShowCreatorUidMock: jest.Mock;
   let generateShowPlatformUidMock: jest.Mock;
   // mockTransactionClient is declared at file scope (above) — reassigned per test in beforeEach
 
@@ -265,9 +265,9 @@ describe('publishingService', () => {
           },
         },
         {
-          provide: ShowMcService,
+          provide: ShowCreatorService,
           useValue: {
-            generateShowMcUid: jest.fn(),
+            generateShowCreatorUid: jest.fn(),
           },
         },
         {
@@ -295,7 +295,7 @@ describe('publishingService', () => {
     scheduleService = module.get(ScheduleService);
     scheduleSnapshotService = module.get(ScheduleSnapshotService);
     showService = module.get(ShowService);
-    showMcService = module.get(ShowMcService);
+    showCreatorService = module.get(ShowCreatorService);
     showPlatformService = module.get(ShowPlatformService);
     validationService = module.get(ValidationService);
 
@@ -304,7 +304,7 @@ describe('publishingService', () => {
     validateScheduleMock = validationService.validateSchedule as jest.Mock;
     createScheduleSnapshotMock = scheduleSnapshotService.createScheduleSnapshot as jest.Mock;
     generateShowUidMock = showService.generateShowUid as jest.Mock;
-    generateShowMcUidMock = showMcService.generateShowMcUid as jest.Mock;
+    generateShowCreatorUidMock = showCreatorService.generateShowCreatorUid as jest.Mock;
     generateShowPlatformUidMock = showPlatformService.generateShowPlatformUid as jest.Mock;
   });
 
@@ -390,7 +390,7 @@ describe('publishingService', () => {
       generateShowUidMock
         .mockReturnValueOnce('show_test123')
         .mockReturnValueOnce('show_test456');
-      generateShowMcUidMock.mockReturnValue('showmc_test123');
+      generateShowCreatorUidMock.mockReturnValue('showmc_test123');
       generateShowPlatformUidMock.mockReturnValue('showplatform_test123');
     });
 
@@ -611,7 +611,7 @@ describe('publishingService', () => {
       });
       expect(mockTransactionClient.mC.findMany).toHaveBeenCalledWith({
         where: {
-          uid: { in: ['mc_test123'] },
+          uid: { in: ['mc_test123', 'creator_test123'] },
           deletedAt: null,
         },
         select: { id: true, uid: true },

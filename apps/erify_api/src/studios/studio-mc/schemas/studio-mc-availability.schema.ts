@@ -18,9 +18,11 @@ export const mcAvailabilityPayloadSchema = z.object({
     .max(100, 'Cannot check more than 100 time windows at once'),
 });
 
-export class McAvailabilityPayloadDto extends createZodDto(mcAvailabilityPayloadSchema) {
+export class CreatorAvailabilityPayloadDto extends createZodDto(mcAvailabilityPayloadSchema) {
   declare windows: {
     date_from: Date;
     date_to: Date;
   }[];
 }
+
+export { CreatorAvailabilityPayloadDto as McAvailabilityPayloadDto };

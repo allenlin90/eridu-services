@@ -13,7 +13,7 @@ import {
 } from '@eridu/api-types/users';
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
-import { McService } from '@/models/mc/mc.service';
+import { CreatorService } from '@/models/creator/creator.service';
 import { UserService } from '@/models/user/user.service';
 
 export const userSchema = z.object({
@@ -42,7 +42,7 @@ export const userWithMcSchema = z.object({
   updatedAt: z.date(),
   mc: z.object({
     id: z.bigint(),
-    uid: z.string().startsWith(McService.UID_PREFIX),
+    uid: z.string().refine(CreatorService.isValidCreatorUid, 'Invalid creator ID'),
     userId: z.bigint().nullable(),
     name: z.string(),
     aliasName: z.string(),

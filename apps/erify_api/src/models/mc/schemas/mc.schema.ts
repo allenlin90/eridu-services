@@ -14,12 +14,12 @@ import {
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { decimalToStringOrNull } from '@/lib/utils/decimal.util';
-import { McService } from '@/models/mc/mc.service';
+import { CreatorService } from '@/models/creator/creator.service';
 import { userDto, userSchema } from '@/models/user/schemas/user.schema';
 
 export const mcSchema = z.object({
   id: z.bigint(),
-  uid: z.string().startsWith(McService.UID_PREFIX),
+  uid: z.string().refine(CreatorService.isValidCreatorUid, 'Invalid creator ID'),
   userId: z.bigint().nullable(),
   name: z.string(),
   aliasName: z.string(),
@@ -75,7 +75,7 @@ export const mcDto = mcSchema
 // Schema for MC with user data (used in admin endpoints)
 export const mcWithUserSchema = z.object({
   id: z.bigint(),
-  uid: z.string().startsWith(McService.UID_PREFIX),
+  uid: z.string().refine(CreatorService.isValidCreatorUid, 'Invalid creator ID'),
   userId: z.bigint().nullable(),
   name: z.string(),
   aliasName: z.string(),

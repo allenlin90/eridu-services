@@ -17,7 +17,7 @@ import {
   AddShowCreatorDto,
   ListShowCreatorsQueryDto,
   showCreatorDto,
-} from './schemas/studio-show-mc.schema';
+} from './schemas/studio-show-creator.schema';
 
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
@@ -92,7 +92,7 @@ export class StudioShowCreatorController extends BaseStudioController {
         commissionRate: body.commission_rate !== undefined ? body.commission_rate.toFixed(2) : undefined,
       });
     } else {
-      const uid = this.showCreatorService.generateShowMcUid();
+      const uid = this.generateShowCreatorUid();
       result = await this.showCreatorRepository.createAssignment({
         uid,
         showId: show.id,
@@ -113,7 +113,7 @@ export class StudioShowCreatorController extends BaseStudioController {
   async removeCreator(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('showId', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) showId: string,
-    @Param('creatorId', new UidValidationPipe(CreatorService.UID_PREFIX, 'Creator')) creatorId: string,
+    @Param('creatorId', new UidValidationPipe(CreatorService.VALID_UID_PREFIXES, 'Creator')) creatorId: string,
   ) {
     const show = await this.resolveShow(showId, studioId);
 
@@ -134,6 +134,10 @@ export class StudioShowCreatorController extends BaseStudioController {
 
     await this.showCreatorRepository.softDelete({ id: assignment.id });
     return assignment;
+  }
+
+  private generateShowCreatorUid(): string {
+    return this.showCreatorService.generateShowCreatorUid();
   }
 
   private async resolveShow(showUid: string, studioUid: string) {

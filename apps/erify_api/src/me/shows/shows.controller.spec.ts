@@ -24,8 +24,8 @@ describe('showsController', () => {
   const mockShowWithRelations = showMockFactory.withRelations() as any;
 
   const mockShowsService = {
-    getShowsForMcUser: jest.fn(),
-    getShowForMcUser: jest.fn(),
+    getShowsForCreatorUser: jest.fn(),
+    getShowForCreatorUser: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -69,14 +69,14 @@ describe('showsController', () => {
         hasPreviousPage: false,
       });
 
-      mockShowsService.getShowsForMcUser.mockResolvedValue({
+      mockShowsService.getShowsForCreatorUser.mockResolvedValue({
         shows,
         total,
       });
 
       const result = await controller.getShows(user, query);
 
-      expect(mockShowsService.getShowsForMcUser).toHaveBeenCalledWith(
+      expect(mockShowsService.getShowsForCreatorUser).toHaveBeenCalledWith(
         userIdentifier,
         query,
       );
@@ -113,14 +113,14 @@ describe('showsController', () => {
         hasPreviousPage: true,
       });
 
-      mockShowsService.getShowsForMcUser.mockResolvedValue({
+      mockShowsService.getShowsForCreatorUser.mockResolvedValue({
         shows,
         total,
       });
 
       const result = await controller.getShows(user, query);
 
-      expect(mockShowsService.getShowsForMcUser).toHaveBeenCalledWith(
+      expect(mockShowsService.getShowsForCreatorUser).toHaveBeenCalledWith(
         userIdentifier,
         query,
       );
@@ -148,7 +148,7 @@ describe('showsController', () => {
         hasPreviousPage: false,
       });
 
-      mockShowsService.getShowsForMcUser.mockResolvedValue({
+      mockShowsService.getShowsForCreatorUser.mockResolvedValue({
         shows: [],
         total: 0,
       });
@@ -169,13 +169,13 @@ describe('showsController', () => {
         id: userIdentifier,
       });
 
-      mockShowsService.getShowForMcUser.mockResolvedValue(
+      mockShowsService.getShowForCreatorUser.mockResolvedValue(
         mockShowWithRelations,
       );
 
       const result = await controller.getShow(user, showId);
 
-      expect(mockShowsService.getShowForMcUser).toHaveBeenCalledWith(
+      expect(mockShowsService.getShowForCreatorUser).toHaveBeenCalledWith(
         userIdentifier,
         showId,
       );
@@ -191,13 +191,13 @@ describe('showsController', () => {
         id: userIdentifier,
       });
 
-      mockShowsService.getShowForMcUser.mockResolvedValue(
+      mockShowsService.getShowForCreatorUser.mockResolvedValue(
         mockShowWithRelations,
       );
 
       const result = await controller.getShow(user, showId);
 
-      expect(mockShowsService.getShowForMcUser).toHaveBeenCalledWith(
+      expect(mockShowsService.getShowForCreatorUser).toHaveBeenCalledWith(
         userIdentifier,
         showId,
       );

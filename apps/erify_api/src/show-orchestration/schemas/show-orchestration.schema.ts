@@ -7,12 +7,12 @@ import {
   showDto,
   showWithRelationsSchema,
 } from '@/models/show/schemas/show.schema';
-import { createShowCreatorSchema, showCreatorWithRelationsSchema } from '@/models/show-mc/schemas/show-mc.schema';
+import { createShowCreatorSchema, showCreatorWithRelationsSchema } from '@/models/show-creator/schemas/show-creator.schema';
 import { createShowPlatformSchema, showPlatformWithRelationsSchema } from '@/models/show-platform/schemas/show-platform.schema';
 
-// Extended schema for show orchestration with MC and platform assignments
+// Extended schema for show orchestration with creator and platform assignments
 export const createShowWithAssignmentsSchema = createShowSchema.safeExtend({
-  // Optional MC assignments
+  // Optional creator assignments
   creators: z.array(createShowCreatorSchema.omit({ show_id: true })).optional(),
   // Optional platform assignments
   platforms: z
@@ -33,7 +33,7 @@ const transformCreateShowWithAssignmentsSchema
     startTime: new Date(data.start_time),
     endTime: new Date(data.end_time),
     metadata: data.metadata,
-    // MC assignments
+    // Creator assignments
     creators: data.creators?.map((creator) => ({
       creatorId: creator.creator_id,
       note: creator.note,
@@ -81,6 +81,12 @@ const transformUpdateShowWithAssignmentsSchema
     startTime: data.start_time ? new Date(data.start_time) : undefined,
     endTime: data.end_time ? new Date(data.end_time) : undefined,
     metadata: data.metadata,
+    showCreators: data.creators?.map((creator) => ({
+      creatorId: creator.creator_id,
+      note: creator.note,
+      metadata: creator.metadata,
+    })),
+    // Backward-compatible alias for existing call sites.
     showMcs: data.creators?.map((creator) => ({
       creatorId: creator.creator_id,
       note: creator.note,
@@ -95,7 +101,7 @@ const transformUpdateShowWithAssignmentsSchema
     })),
   }));
 
-// Extended schema for show with all relations including MCs and platforms
+// Extended schema for show with all relations including creators and platforms
 export const showWithAllRelationsSchema = showWithRelationsSchema.extend({
   showMCs: z.array(showCreatorWithRelationsSchema.omit({ show: true })).optional(),
   showPlatforms: z
@@ -111,7 +117,7 @@ export const showWithAssignmentsDto = showWithAllRelationsSchema.transform(
 
     return {
       ...baseShowData,
-      // MC assignments
+      // Creator assignments
       creators: obj.showMCs?.map((showCreator) => ({
         id: showCreator.uid,
         creator_id: showCreator.mc?.uid,

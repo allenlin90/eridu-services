@@ -28,12 +28,12 @@ import { ShowService } from '@/models/show/show.service';
 /**
  * Shows Controller
  *
- * User-scoped endpoint for MC users to query their assigned shows.
+ * User-scoped endpoint for creator users to query their assigned shows.
  * Authentication is handled by JWT guard requiring valid tokens.
  *
  * Endpoints:
- * - GET /me/shows - List shows assigned to the authenticated MC user
- * - GET /me/shows/:show_id - Get details of a specific show assigned to the authenticated MC user
+ * - GET /me/shows - List shows assigned to the authenticated creator user
+ * - GET /me/shows/:show_id - Get details of a specific show assigned to the authenticated creator user
  */
 @Controller('me/shows')
 export class ShowsController {
@@ -43,7 +43,7 @@ export class ShowsController {
   @HttpCode(HttpStatus.OK)
   @ApiZodResponse(
     createPaginatedResponseSchema(showDto),
-    'List of shows assigned to the authenticated MC user',
+    'List of shows assigned to the authenticated creator user',
   )
   @ZodSerializerDto(createPaginatedResponseSchema(showDto))
   async getShows(
@@ -51,11 +51,7 @@ export class ShowsController {
     @Query() query: ListShowsQueryDto,
   ) {
     const userIdentifier = user.ext_id;
-
-    const { shows, total } = await this.showsService.getShowsForMcUser(
-      userIdentifier,
-      query,
-    );
+    const { shows, total } = await this.showsService.getShowsForCreatorUser(userIdentifier, query);
 
     const meta = createPaginationMeta(query.page, query.limit, total);
 
@@ -67,7 +63,7 @@ export class ShowsController {
 
   @Get(':show_id')
   @HttpCode(HttpStatus.OK)
-  @ApiZodResponse(showDto, 'Show details assigned to the authenticated MC user')
+  @ApiZodResponse(showDto, 'Show details assigned to the authenticated creator user')
   @ZodSerializerDto(showDto)
   async getShow(
     @CurrentUser() user: AuthenticatedUser,
@@ -75,11 +71,7 @@ export class ShowsController {
     showId: string,
   ) {
     const userIdentifier = user.ext_id;
-
-    const show = await this.showsService.getShowForMcUser(
-      userIdentifier,
-      showId,
-    );
+    const show = await this.showsService.getShowForCreatorUser(userIdentifier, showId);
 
     return show;
   }

@@ -12,7 +12,7 @@ import {
 import { UserRepository } from './user.repository';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { McService } from '@/models/mc/mc.service';
+import { CreatorService } from '@/models/creator/creator.service';
 import { UtilityService } from '@/utility/utility.service';
 
 /**
@@ -48,7 +48,7 @@ export class UserService extends BaseModelService {
             name: mc.name,
             aliasName: mc.aliasName,
             metadata: mc.metadata ?? {},
-            uid: this.utilityService.generateBrandedId(McService.UID_PREFIX),
+            uid: this.utilityService.generateBrandedId(CreatorService.UID_PREFIX),
           },
         },
       }),

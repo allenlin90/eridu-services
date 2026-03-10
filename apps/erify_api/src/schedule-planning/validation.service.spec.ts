@@ -762,7 +762,7 @@ describe('validationService', () => {
 
       expect(mockPrismaClient.mC.findMany).toHaveBeenCalledWith({
         where: {
-          uid: { in: ['mc_test123'] },
+          uid: { in: ['mc_test123', 'creator_test123'] },
           deletedAt: null,
         },
         select: { id: true, uid: true },

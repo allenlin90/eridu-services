@@ -14,9 +14,9 @@ describe('studioShowMcOrchestrationService', () => {
     findMany: jest.Mock;
     createAssignment: jest.Mock;
     restoreAndUpdateAssignment: jest.Mock;
-    softDeleteByMcIds: jest.Mock;
+    softDeleteByCreatorIds: jest.Mock;
   };
-  let showMcService: { generateShowMcUid: jest.Mock };
+  let showMcService: { generateShowCreatorUid: jest.Mock };
 
   beforeEach(() => {
     showService = { findMany: jest.fn() };
@@ -26,9 +26,9 @@ describe('studioShowMcOrchestrationService', () => {
       findMany: jest.fn(),
       createAssignment: jest.fn(),
       restoreAndUpdateAssignment: jest.fn(),
-      softDeleteByMcIds: jest.fn(),
+      softDeleteByCreatorIds: jest.fn(),
     };
-    showMcService = { generateShowMcUid: jest.fn().mockReturnValue('show_mc_new') };
+    showMcService = { generateShowCreatorUid: jest.fn().mockReturnValue('show_mc_new') };
 
     service = new StudioShowMcOrchestrationService(
       showService as never,
@@ -176,7 +176,7 @@ describe('studioShowMcOrchestrationService', () => {
       { id: BigInt(101), showId: BigInt(1), mcId: BigInt(10), deletedAt: null }, // keep
       { id: BigInt(102), showId: BigInt(1), mcId: BigInt(11), deletedAt: new Date() }, // restore
     ]);
-    showMcRepository.softDeleteByMcIds.mockResolvedValue(undefined);
+    showMcRepository.softDeleteByCreatorIds.mockResolvedValue(undefined);
     showMcRepository.restoreAndUpdateAssignment.mockResolvedValue({ id: BigInt(102) });
 
     const result = await service.bulkReplaceCreatorsToShows(
@@ -185,7 +185,7 @@ describe('studioShowMcOrchestrationService', () => {
       ['mc_1', 'mc_2'],
     );
 
-    expect(showMcRepository.softDeleteByMcIds).toHaveBeenCalledWith(
+    expect(showMcRepository.softDeleteByCreatorIds).toHaveBeenCalledWith(
       BigInt(1),
       [BigInt(12)],
     );

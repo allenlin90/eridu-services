@@ -4,12 +4,12 @@ import z from 'zod';
 import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
 
 import { decimalToStringOrNull } from '@/lib/utils/decimal.util';
-import { McService } from '@/models/mc/mc.service';
-import { StudioMcService } from '@/models/studio-mc/studio-mc.service';
+import { CreatorService } from '@/models/creator/creator.service';
+import { StudioCreatorService } from '@/models/studio-creator/studio-creator.service';
 
 const studioMcRosterItemSchema = z.object({
   id: z.bigint(),
-  uid: z.string().startsWith(StudioMcService.UID_PREFIX),
+  uid: z.string().startsWith(StudioCreatorService.UID_PREFIX),
   defaultRate: z.unknown().nullable(),
   defaultRateType: z.string().nullable(),
   defaultCommissionRate: z.unknown().nullable(),
@@ -19,15 +19,19 @@ const studioMcRosterItemSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   mc: z.object({
-    uid: z.string().startsWith(McService.UID_PREFIX),
+    uid: z.string().refine(CreatorService.isValidCreatorUid, 'Invalid creator ID'),
     name: z.string(),
     aliasName: z.string(),
   }),
 });
 
-export const studioMcRosterItemDto = studioMcRosterItemSchema
+export const studioCreatorRosterItemDto = studioMcRosterItemSchema
   .transform((obj) => ({
     id: obj.uid,
+    creator_id: obj.mc.uid,
+    creator_name: obj.mc.name,
+    creator_alias_name: obj.mc.aliasName,
+    // Backward-compatible aliases.
     mc_id: obj.mc.uid,
     mc_name: obj.mc.name,
     mc_alias_name: obj.mc.aliasName,
@@ -42,6 +46,9 @@ export const studioMcRosterItemDto = studioMcRosterItemSchema
   }))
   .pipe(z.object({
     id: z.string(),
+    creator_id: z.string(),
+    creator_name: z.string(),
+    creator_alias_name: z.string(),
     mc_id: z.string(),
     mc_name: z.string(),
     mc_alias_name: z.string(),
@@ -59,15 +66,22 @@ const compensationTypeSchema = z.enum(
   Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]],
 );
 
-export const createStudioMcRosterSchema = z.object({
-  mc_id: z.string().startsWith(McService.UID_PREFIX),
+export const createStudioCreatorRosterSchema = z.object({
+  creator_id: z
+    .string()
+    .refine(CreatorService.isValidCreatorUid, 'Invalid creator ID')
+    .optional(),
+  mc_id: z
+    .string()
+    .refine(CreatorService.isValidCreatorUid, 'Invalid creator ID')
+    .optional(),
   default_rate: z.coerce.number().positive().nullable().optional(),
   default_rate_type: compensationTypeSchema.nullable().optional(),
   default_commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
   is_active: z.boolean().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
 }).transform((data) => ({
-  mcId: data.mc_id,
+  creatorId: data.creator_id ?? data.mc_id ?? '',
   defaultRate: data.default_rate !== undefined
     ? (data.default_rate === null ? null : data.default_rate.toFixed(2))
     : undefined,
@@ -79,7 +93,7 @@ export const createStudioMcRosterSchema = z.object({
   metadata: data.metadata,
 }));
 
-export const updateStudioMcRosterSchema = z.object({
+export const updateStudioCreatorRosterSchema = z.object({
   version: z.number().int().positive(),
   default_rate: z.coerce.number().positive().nullable().optional(),
   default_rate_type: compensationTypeSchema.nullable().optional(),
@@ -99,8 +113,16 @@ export const updateStudioMcRosterSchema = z.object({
   metadata: data.metadata,
 }));
 
-export class CreateStudioMcRosterDto extends createZodDto(createStudioMcRosterSchema) {}
-export class UpdateStudioMcRosterDto extends createZodDto(updateStudioMcRosterSchema) {}
+export class CreateStudioCreatorRosterDto extends createZodDto(createStudioCreatorRosterSchema) {}
+export class UpdateStudioCreatorRosterDto extends createZodDto(updateStudioCreatorRosterSchema) {}
 
-export type CreateStudioMcRosterPayload = z.infer<typeof createStudioMcRosterSchema>;
-export type UpdateStudioMcRosterPayload = z.infer<typeof updateStudioMcRosterSchema>;
+export type CreateStudioCreatorRosterPayload = z.infer<typeof createStudioCreatorRosterSchema>;
+export type UpdateStudioCreatorRosterPayload = z.infer<typeof updateStudioCreatorRosterSchema>;
+
+export { studioCreatorRosterItemDto as studioMcRosterItemDto };
+export { createStudioCreatorRosterSchema as createStudioMcRosterSchema };
+export { updateStudioCreatorRosterSchema as updateStudioMcRosterSchema };
+export { CreateStudioCreatorRosterDto as CreateStudioMcRosterDto };
+export { UpdateStudioCreatorRosterDto as UpdateStudioMcRosterDto };
+export type CreateStudioMcRosterPayload = CreateStudioCreatorRosterPayload;
+export type UpdateStudioMcRosterPayload = UpdateStudioCreatorRosterPayload;

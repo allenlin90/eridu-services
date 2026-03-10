@@ -1,14 +1,4 @@
-import { Module } from '@nestjs/common';
-
-import { ShowMcRepository } from './show-mc.repository';
-import { ShowMcService } from './show-mc.service';
-
-import { PrismaModule } from '@/prisma/prisma.module';
-import { UtilityModule } from '@/utility/utility.module';
-
-@Module({
-  imports: [PrismaModule, UtilityModule],
-  providers: [ShowMcService, ShowMcRepository],
-  exports: [ShowMcService, ShowMcRepository],
-})
-export class ShowMcModule {}
+export {
+  ShowCreatorModule,
+  ShowCreatorModule as ShowMcModule,
+} from '@/models/show-creator/show-creator.module';

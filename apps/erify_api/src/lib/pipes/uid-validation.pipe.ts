@@ -15,7 +15,7 @@ import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 @Injectable()
 export class UidValidationPipe implements PipeTransform<string, string> {
   constructor(
-    private readonly expectedPrefix: string,
+    private readonly expectedPrefix: string | readonly string[],
     private readonly modelName: string,
   ) {}
 
@@ -27,12 +27,16 @@ export class UidValidationPipe implements PipeTransform<string, string> {
       });
     }
 
-    // Normalize prefix: add underscore if not already present
-    const normalizedPrefix = this.expectedPrefix.endsWith('_')
+    const normalizedPrefixes = (Array.isArray(this.expectedPrefix)
       ? this.expectedPrefix
-      : `${this.expectedPrefix}_`;
+      : [this.expectedPrefix]).map((prefix) =>
+      prefix.endsWith('_') ? prefix : `${prefix}_`,
+    );
 
-    if (!value.startsWith(normalizedPrefix)) {
+    const matchedPrefix = normalizedPrefixes.find((prefix) =>
+      value.startsWith(prefix),
+    );
+    if (!matchedPrefix) {
       throw new BadRequestException({
         statusCode: 400,
         message: `Invalid ${this.modelName} ID`,
@@ -40,7 +44,7 @@ export class UidValidationPipe implements PipeTransform<string, string> {
     }
 
     // Basic validation: ensure there's content after the prefix
-    const contentAfterPrefix = value.substring(normalizedPrefix.length);
+    const contentAfterPrefix = value.substring(matchedPrefix.length);
     if (!contentAfterPrefix) {
       throw new BadRequestException({
         statusCode: 400,

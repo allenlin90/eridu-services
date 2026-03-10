@@ -6,9 +6,9 @@ import type { PerformanceGroupItem, PnlGroupItem, ShowEconomics } from './schema
 import { HttpError } from '@/lib/errors/http-error.util';
 import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
-import { ShowMcRepository } from '@/models/show-mc/show-mc.repository';
+import { ShowCreatorRepository } from '@/models/show-creator/show-creator.repository';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
-import { StudioMcRepository } from '@/models/studio-mc/studio-mc.repository';
+import { StudioCreatorRepository } from '@/models/studio-creator/studio-creator.repository';
 import { StudioShiftRepository } from '@/models/studio-shift/studio-shift.repository';
 
 @Injectable()
@@ -16,9 +16,9 @@ export class StudioEconomicsService {
   constructor(
     private readonly showService: ShowService,
     private readonly showRepository: ShowRepository,
-    private readonly showMcRepository: ShowMcRepository,
+    private readonly showCreatorRepository: ShowCreatorRepository,
     private readonly showPlatformRepository: ShowPlatformRepository,
-    private readonly studioMcRepository: StudioMcRepository,
+    private readonly studioCreatorRepository: StudioCreatorRepository,
     private readonly studioShiftRepository: StudioShiftRepository,
   ) {}
 
@@ -32,10 +32,10 @@ export class StudioEconomicsService {
       throw HttpError.forbidden('Show does not belong to this studio');
     }
 
-    const showMcs = await this.showMcRepository.findMany({ where: { showId: show.id, deletedAt: null }, include: { mc: true } });
+    const showCreators = await this.showCreatorRepository.findMany({ where: { showId: show.id, deletedAt: null }, include: { mc: true } });
 
-    const studioMcDefaultsByMcId = await this.resolveStudioMcDefaults(show.studioId, showMcs);
-    const mcCost = computeMcCost(showMcs, 0, studioMcDefaultsByMcId);
+    const studioCreatorDefaultsByCreatorId = await this.resolveStudioCreatorDefaults(show.studioId, showCreators);
+    const mcCost = computeMcCost(showCreators, 0, studioCreatorDefaultsByCreatorId);
 
     const shiftCost = show.studio?.uid
       ? await this.computeShiftCostByStudioUid(show.studio.uid, show.startTime, show.endTime)
@@ -74,15 +74,15 @@ export class StudioEconomicsService {
     const showIds = shows.map((s) => s.id);
     const studioId = shows[0]?.studioId;
 
-    const [allShowMcs, allShifts] = await Promise.all([
-      this.showMcRepository.findMany({ where: { showId: { in: showIds }, deletedAt: null }, include: { mc: true } }),
+    const [allShowCreators, allShifts] = await Promise.all([
+      this.showCreatorRepository.findMany({ where: { showId: { in: showIds }, deletedAt: null }, include: { mc: true } }),
       studioId
         ? this.studioShiftRepository.findByShowWindow(studioId, dateFrom, dateTo)
         : Promise.resolve([]),
     ]);
-    const studioMcDefaultsByMcId = await this.resolveStudioMcDefaults(studioId ?? null, allShowMcs);
+    const studioCreatorDefaultsByCreatorId = await this.resolveStudioCreatorDefaults(studioId ?? null, allShowCreators);
 
-    const mcsByShow = groupByField(allShowMcs, 'showId');
+    const creatorsByShow = groupByField(allShowCreators, 'showId');
     const totalShiftCost = allShifts.reduce((sum, s) => sum + Number(s.calculatedCost ?? s.projectedCost), 0);
 
     const groups = new Map<string, { group_id: string | null; group_name: string | null; show_count: number; mc_cost: number }>();
@@ -96,8 +96,8 @@ export class StudioEconomicsService {
         show_count: 0,
         mc_cost: 0,
       };
-      const showMcs = mcsByShow.get(show.id) ?? [];
-      existing.mc_cost += computeMcCost(showMcs, 0, studioMcDefaultsByMcId);
+      const showCreators = creatorsByShow.get(show.id) ?? [];
+      existing.mc_cost += computeMcCost(showCreators, 0, studioCreatorDefaultsByCreatorId);
       existing.show_count += 1;
       groups.set(key, existing);
     }
@@ -225,16 +225,16 @@ export class StudioEconomicsService {
     };
   }
 
-  private async resolveStudioMcDefaults(
+  private async resolveStudioCreatorDefaults(
     studioId: bigint | null,
-    showMcs: ShowMcWithMc[],
+    showCreators: ShowMcWithMc[],
   ): Promise<Map<bigint, StudioMcDefaults>> {
-    if (!studioId || showMcs.length === 0) {
+    if (!studioId || showCreators.length === 0) {
       return new Map();
     }
 
-    const mcIds = Array.from(new Set(showMcs.map((sm) => sm.mcId)));
-    const defaults = await this.studioMcRepository.findDefaultsByStudioIdAndMcIds(studioId, mcIds);
+    const creatorIds = Array.from(new Set(showCreators.map((sm) => sm.mcId)));
+    const defaults = await this.studioCreatorRepository.findDefaultsByStudioIdAndMcIds(studioId, creatorIds);
 
     return new Map(defaults.map((item) => [item.mcId, item]));
   }

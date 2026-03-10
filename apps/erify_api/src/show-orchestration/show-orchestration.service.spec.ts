@@ -100,7 +100,7 @@ describe('showOrchestrationService', () => {
         {
           provide: ShowMcService,
           useValue: {
-            generateShowMcUid: jest.fn(),
+            generateShowCreatorUid: jest.fn(),
           },
         },
         {
@@ -125,7 +125,7 @@ describe('showOrchestrationService', () => {
             restoreAndUpdateAssignment: jest.fn(),
             softDelete: jest.fn(),
             softDeleteAllByShowId: jest.fn(),
-            softDeleteByMcIds: jest.fn(),
+            softDeleteByCreatorIds: jest.fn(),
           },
         },
         {
@@ -309,7 +309,7 @@ describe('showOrchestrationService', () => {
       mcRepository.findByUids.mockResolvedValue([mockMc] as any);
       showMcRepository.findMany.mockResolvedValue([]);
       showMcRepository.createAssignment.mockResolvedValue({} as any);
-      showMcService.generateShowMcUid.mockReturnValue('show_mc_new');
+      showMcService.generateShowCreatorUid.mockReturnValue('show_mc_new');
       platformRepository.findByUids.mockResolvedValue([mockPlatform] as any);
       showPlatformRepository.findMany.mockResolvedValue([]);
       showPlatformRepository.createAssignment.mockResolvedValue({} as any);
@@ -392,12 +392,12 @@ describe('showOrchestrationService', () => {
 
       showService.getShowById.mockResolvedValue(mockShow);
       mcRepository.findByUids.mockResolvedValue([mockMc1, mockMc2] as any);
-      showMcRepository.softDeleteByMcIds.mockResolvedValue(undefined as any);
+      showMcRepository.softDeleteByCreatorIds.mockResolvedValue(undefined as any);
 
       await service.removeCreatorsFromShow(uid, mcIds);
 
       expect(mcRepository.findByUids).toHaveBeenCalledWith(mcIds);
-      expect(showMcRepository.softDeleteByMcIds).toHaveBeenCalledWith(
+      expect(showMcRepository.softDeleteByCreatorIds).toHaveBeenCalledWith(
         mockShow.id,
         [BigInt(1), BigInt(2)],
       );
@@ -438,7 +438,7 @@ describe('showOrchestrationService', () => {
       const mockMc = { id: BigInt(1), uid: 'mc_test123', deletedAt: null };
 
       showService.getShowById.mockResolvedValue(mockShow);
-      showMcService.generateShowMcUid.mockReturnValue('show_mc_new');
+      showMcService.generateShowCreatorUid.mockReturnValue('show_mc_new');
       mcRepository.findByUids.mockResolvedValue([mockMc] as any);
       showMcRepository.findMany.mockResolvedValue([]);
       showMcRepository.createAssignment.mockResolvedValue({} as any);

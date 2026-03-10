@@ -342,12 +342,19 @@ export class TaskOrchestrationService {
 
       // prisma include type complexity
       const taskSummaries = show.taskTargets.map((tt) => tt.task);
+      const creators = (show.showMCs ?? []).map((showCreator) => ({
+        creator_id: showCreator.mc.uid,
+        creator_name: showCreator.mc.name,
+        creator_aliasname: showCreator.mc.aliasName,
+      }));
       return {
         ...baseShow,
-        mcs: (show.showMCs ?? []).map((showMC) => ({
-          mc_id: showMC.mc.uid,
-          mc_name: showMC.mc.name,
-          mc_aliasname: showMC.mc.aliasName,
+        creators,
+        // Backward-compatible alias.
+        mcs: creators.map((creator) => ({
+          mc_id: creator.creator_id,
+          mc_name: creator.creator_name,
+          mc_aliasname: creator.creator_aliasname,
         })),
         task_summary: {
           total: taskSummaries.length,

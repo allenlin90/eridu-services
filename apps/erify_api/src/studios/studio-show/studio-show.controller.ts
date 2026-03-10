@@ -16,8 +16,8 @@ import { BaseStudioController } from '../base-studio.controller';
 import {
   BulkCreatorAssignmentDto,
   bulkCreatorAssignmentResponseSchema,
-} from './schemas/studio-show-mc-bulk.schema';
-import { StudioShowMcOrchestrationService } from './studio-show-mc.orchestration.service';
+} from './schemas/studio-show-creator-bulk.schema';
+import { StudioShowCreatorOrchestrationService } from './studio-show-creator.orchestration.service';
 
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
@@ -37,7 +37,7 @@ import { TaskOrchestrationService } from '@/task-orchestration/task-orchestratio
 export class StudioShowController extends BaseStudioController {
   constructor(
     private readonly taskOrchestrationService: TaskOrchestrationService,
-    private readonly studioShowMcOrchestrationService: StudioShowMcOrchestrationService,
+    private readonly studioShowCreatorOrchestrationService: StudioShowCreatorOrchestrationService,
   ) {
     super();
   }
@@ -77,7 +77,7 @@ export class StudioShowController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Body() body: BulkCreatorAssignmentDto,
   ) {
-    return this.studioShowMcOrchestrationService.bulkAppendCreatorsToShows(
+    return this.studioShowCreatorOrchestrationService.bulkAppendCreatorsToShows(
       studioId,
       body.show_ids,
       body.creator_ids,
@@ -91,7 +91,7 @@ export class StudioShowController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Body() body: BulkCreatorAssignmentDto,
   ) {
-    return this.studioShowMcOrchestrationService.bulkReplaceCreatorsToShows(
+    return this.studioShowCreatorOrchestrationService.bulkReplaceCreatorsToShows(
       studioId,
       body.show_ids,
       body.creator_ids,

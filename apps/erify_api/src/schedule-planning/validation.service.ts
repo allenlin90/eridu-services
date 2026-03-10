@@ -10,6 +10,7 @@ import {
   ValidationResult,
 } from './schemas/schedule-planning.schema';
 
+import { expandCreatorUidCandidates } from '@/models/creator/creator-uid.util';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UtilityService } from '@/utility/utility.service';
 
@@ -606,7 +607,12 @@ export class ValidationService {
       show.showTypeId && showTypeUids.add(show.showTypeId);
       show.showStatusId && showStatusUids.add(show.showStatusId);
       show.showStandardId && showStandardUids.add(show.showStandardId);
-      (show.mcs || []).forEach((mc) => mc.mcId && mcUids.add(mc.mcId));
+      (show.mcs || []).forEach((mc) => {
+        if (!mc.mcId) {
+          return;
+        }
+        expandCreatorUidCandidates(mc.mcId).forEach((uid) => mcUids.add(uid));
+      });
       (show.platforms || []).forEach((platform) =>
         platform.platformId && platformUids.add(platform.platformId),
       );
@@ -674,7 +680,12 @@ export class ValidationService {
     const showStandardMap = new Map<string, bigint>(
       showStandards.map((s) => [s.uid, s.id]),
     );
-    const mcMap = new Map<string, bigint>(mcs.map((m) => [m.uid, m.id]));
+    const mcMap = new Map<string, bigint>();
+    mcs.forEach((mc) => {
+      expandCreatorUidCandidates(mc.uid).forEach((uid) => {
+        mcMap.set(uid, mc.id);
+      });
+    });
     const platformMap = new Map<string, bigint>(
       platforms.map((p) => [p.uid, p.id]),
     );
