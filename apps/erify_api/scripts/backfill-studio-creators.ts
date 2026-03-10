@@ -54,8 +54,8 @@ async function main() {
 
   const candidatePairs = await prisma.$queryRaw<CandidatePair[]>`
     SELECT DISTINCT
-      s.id AS "studioId",
-      s.uid AS "studioUid",
+      st.id AS "studioId",
+      st.uid AS "studioUid",
       c.id AS "mcId",
       c.uid AS "creatorUid",
       c.default_rate::text AS "defaultRate",
@@ -64,10 +64,13 @@ async function main() {
     FROM "show_creators" sc
     INNER JOIN "shows" s
       ON s.id = sc.show_id
+    INNER JOIN "studios" st
+      ON st.id = s.studio_id
     INNER JOIN "creators" c
       ON c.id = sc.mc_id
     WHERE sc.deleted_at IS NULL
       AND s.deleted_at IS NULL
+      AND st.deleted_at IS NULL
       AND c.deleted_at IS NULL
       AND s.studio_id IS NOT NULL
   `;
@@ -112,13 +115,11 @@ async function main() {
 
   await prisma.$transaction(async (tx) => {
     for (const pair of rowsToInsert) {
-      const studioId = normalizeBigInt(pair.studioId);
-      const mcId = normalizeBigInt(pair.mcId);
       await tx.studioMc.create({
         data: {
           uid: generateStudioCreatorUid(),
-          studio: { connect: { id: studioId } },
-          mc: { connect: { id: mcId } },
+          studio: { connect: { uid: pair.studioUid } },
+          mc: { connect: { uid: pair.creatorUid } },
           ...(pair.defaultRate !== null && { defaultRate: pair.defaultRate }),
           defaultRateType: pair.defaultRateType,
           ...(pair.defaultCommissionRate !== null && { defaultCommissionRate: pair.defaultCommissionRate }),
