@@ -37,13 +37,13 @@ function ShowCreatorsPage() {
           <Button asChild variant="outline" size="sm" className="gap-1.5">
             {backToCreators
               ? (
-                  <Link to="/studios/$studioId/creators/mapping" params={{ studioId }}>
+                  <Link to="/studios/$studioId/creators/mapping" params={{ studioId }} search={{ page: 1, pageSize: 10 }}>
                     <ArrowLeft className="h-4 w-4" />
                     Back to Creator Mapping
                   </Link>
                 )
               : (
-                  <Link to="/studios/$studioId/shows" params={{ studioId }}>
+                  <Link to="/studios/$studioId/shows" params={{ studioId }} search={{ page: 1, pageSize: 10 }}>
                     <ArrowLeft className="h-4 w-4" />
                     Back to Shows
                   </Link>

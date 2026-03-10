@@ -102,7 +102,7 @@ function createCreatorsColumns(studioId: string): ColumnDef<StudioShow>[] {
           <Link
             to="/studios/$studioId/shows/$showId/creators"
             params={{ studioId, showId: row.original.id }}
-            search={{ from: 'creators' }}
+            search={{ from: 'creators', page: 1, pageSize: 10 }}
           >
             Manage
           </Link>

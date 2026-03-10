@@ -82,6 +82,7 @@ const TASK_ACTION_LABELS: Record<TaskAction, string> = {
   [TASK_ACTION.MARK_BLOCKED]: 'Mark as Blocked',
   [TASK_ACTION.CLOSE_TASK]: 'Close Task',
   [TASK_ACTION.REOPEN_TASK]: 'Reopen Task',
+  [TASK_ACTION.SAVE_CONTENT]: 'Save Content',
 };
 
 function getActionLabel(action: TaskAction): string {
