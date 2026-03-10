@@ -77,51 +77,38 @@ This is a UX degradation, not a crash — acceptable for now. Flagged as warning
 - `StudioShift`/`StudioShiftBlock` missing `version` field — introduced in feat/studio-shift-schedule; deferred
 - `StudioMc` (studio_creators table) `version` field — RESOLVED in feat/phase-4-p-and-l: present in schema + migration + `updateById` auto-increments + `updateByIdWithVersionCheck` enforces optimistic locking
 
-### Phase 4 (feat/phase-4-p-and-l): UNDER REVIEW — New Blocking Issues Found
+### Phase 4 (feat/phase-4-p-and-l): FINAL REVIEW COMPLETED 2026-03-10
 
-Previously known backend fixes from commit `a6cc9b02` confirmed correct:
+**All previously noted blocking issues RESOLVED:**
 - StudioMc soft-deleted creator leak: FIXED
 - Bulk assignment roster scope enforcement: FIXED
 - Bulk assign restore field clearing: FIXED
 - FE STUDIO_ROLE_LEVEL gaps: FIXED
+- `add-creator-dialog.tsx` arity mismatch: FIXED (now calls `useCreatorAvailabilityQuery(studioId, windows)` correctly)
+- `studio-helper-roster-manager.tsx` missing `ext_id`: FIXED (now declared in `Membership.user` type)
+- `studio-membership.service.ts` Prisma.InputJsonValue: FIXED (uses local `JsonValue` alias)
+- `mapping.tsx` Badge missing import: FIXED (imported from `@eridu/ui`)
 
-**New Blocking Issues Found in Final PR Review (2026-03-10):**
+**Remaining Blocking Issues (must fix before merge):**
 
-**BLOCKING: `tsconfig.app.json` reveals 48 production-file type errors in erify_studios**
-- `pnpm --filter erify_studios typecheck` uses root `tsconfig.json --noEmit` which DOES NOT catch these errors.
-- Running `tsc -p tsconfig.app.json` in erify_studios reveals 48 errors in production files (non-test).
-- Root cause: the "mc → creator" field rename was partially applied in the FE layer.
+1. `tsconfig.app.json` reveals 25 production-file type errors in erify_studios (4 introduced by this branch).
+   Newly introduced errors:
+   - `show-tasks-table/columns.tsx:77` — TASK_ACTION_LABELS missing `SAVE_CONTENT` key (SAVE_CONTENT was added to api-types in this PR but labels map was not updated)
+   - `show-form-fields.tsx:161` — `AsyncCombobox value` prop is `string` but `field.value` (studio_room_id) is `string | null`
+   - `creators/mapping.tsx:105` — Link `search={{ from: 'creators' }}` missing required `page`/`pageSize` from parent `creatorsSearchSchema`
+   - `shows/$showId/creators.tsx:40,46` — Links missing required `search` props for inherited search schemas
 
-**BLOCKING: `bulk-creator-assign-dialog.tsx` — stale field access after rename**
-Accesses `assignment.creator_id`, `assignment.creator_name`, `assignment.creator_aliasname` but
-`ShowWithTaskSummaryDto.mcs` still has `mc_id`, `mc_name`, `mc_aliasname` fields. Runtime crash on bulk dialog open.
-File: `apps/erify_studios/src/features/studio-show-creators/components/bulk-creator-assign-dialog.tsx:73-83`
+2. 1 ESLint warning (not error): `mapping.tsx:81` — `react/no-array-index-key` (using index as key in Badge list)
 
-**BLOCKING: `add-creator-dialog.tsx` — arity mismatch**
-`useCreatorAvailabilityQuery(studioId, showStartTime, showEndTime)` called with 3 args but function signature
-only accepts `(studioId, windows: AvailabilityWindow[])` (2 args). Runtime crash on dialog mount.
-File: `apps/erify_studios/src/features/studio-show-creators/components/add-creator-dialog.tsx:42`
-
-**BLOCKING: `studio-helper-roster-manager.tsx` — missing `ext_id` on FE Membership type**
-Accesses `membership.user.ext_id` (lines 164, 267) but `Membership.user` type in `get-memberships.ts`
-only declares `{ id, email, name }`. BE schema includes `ext_id` but FE type doesn't expose it.
-File: `apps/erify_studios/src/features/memberships/components/studio-helper-roster-manager.tsx`
-
-**BLOCKING: `studio-membership.service.ts` uses `Prisma.InputJsonValue` (service layer violation)**
-`toggleTaskHelperStatus()` casts metadata to `Prisma.InputJsonValue` at line 246. Repository signature for
-`updateMetadataIfUnchanged` takes `metadata: Prisma.InputJsonValue` — the Prisma type leaks to the service.
-Service should cast to `unknown` or define a local `JsonValue` alias instead.
-File: `apps/erify_api/src/models/membership/studio-membership.service.ts:246`
-
-**BLOCKED: `mapping.tsx` — `Badge` used without import**
-`Badge` is used in creators column cells (lines 80-90) but not imported from `@eridu/ui`.
-Typecheck and Vite build pass due to module bundling quirks, but the component reference is undefined at runtime.
-File: `apps/erify_studios/src/routes/studios/$studioId/creators/mapping.tsx:80-90`
-
-**Deferred tech debt (not blocking):**
-- `listUserCatalog` N+1 DB pattern — bounded by max 50 limit, acceptable
-- `StudioMc` `version` field — confirmed present in schema, migration SQL, and enforced in repository
+**Architecture status:**
+- Service layer: CLEAN. No Prisma.* input/query types in any new services.
+- Repository layer: CLEAN. All use `txHost.tx` delegate pattern.
+- Migration SQL: Table renames + column adds are non-destructive. Backfill uses sequential UIDs
+  (`smc_` + zero-padded number) in migration for initial roster bootstrap — not nanoid format.
+  This is a WARNING (not blocking): backfill script will create proper UIDs for new records.
 
 **Economics service: StudioMc import**
-`StudioEconomicsService` imports `StudioMc` type from `@prisma/client` for `resolveStudioMcDefaults`. ACCEPTABLE —
+`StudioEconomicsService` imports `StudioMc`, `MC`, `ShowMC` entity types from `@prisma/client`. ACCEPTABLE —
 entity types from `@prisma/client` are allowed in services; only `Prisma.XxxInput/WhereInput/etc.` is forbidden.
+
+**`listMembershipUserCatalog` N+1 pattern:** Iterative pagination + per-page membership lookup. Bounded by `limit` (max 50), acceptable for now.
