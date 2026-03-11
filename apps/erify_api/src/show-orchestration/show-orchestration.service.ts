@@ -142,18 +142,16 @@ export class ShowOrchestrationService {
   @Transactional()
   async removeMCsFromShow(uid: string, mcIds: string[]): Promise<void> {
     const show = await this.showService.getShowById(uid);
-    const showId = show.id;
-
-    const mcs = await this.mcRepository.findByUids(mcIds);
-    const internalMcIds = mcs.map((mc) => mc.id);
-    await this.showMcRepository.softDeleteByMcIds(showId, internalMcIds);
+    await this.removeShowMcAssignmentsByUids(show.id, mcIds);
   }
 
+  @Transactional()
   async removeCreatorsFromShow(
     uid: string,
     creatorIds: string[],
   ): Promise<void> {
-    await this.removeMCsFromShow(uid, creatorIds);
+    const show = await this.showService.getShowById(uid);
+    await this.removeShowMcAssignmentsByUids(show.id, creatorIds);
   }
 
   /**
@@ -186,18 +184,23 @@ export class ShowOrchestrationService {
     return this.showRepository.findByUid(uid, defaultInclude) as Promise<Show | ShowWithPayload<T>>;
   }
 
+  @Transactional()
   async replaceCreatorsForShow<T extends ShowInclude = Record<string, never>>(
     uid: string,
     creators: CreatorAssignmentPayload[],
     include?: T,
   ): Promise<Show | ShowWithPayload<T>> {
+    const defaultInclude = include || this.getDefaultIncludes();
+    const show = await this.showService.getShowById(uid);
+    const showId = show.id;
     const mcAssignments: McAssignmentPayload[] = creators.map((creator) => ({
       mcId: creator.creatorId,
       note: creator.note,
       metadata: creator.metadata,
     }));
 
-    return this.replaceMCsForShow(uid, mcAssignments, include);
+    await this.syncShowMCs(showId, mcAssignments, 'Creators');
+    return this.showRepository.findByUid(uid, defaultInclude) as Promise<Show | ShowWithPayload<T>>;
   }
 
   /**
@@ -293,6 +296,7 @@ export class ShowOrchestrationService {
   private async syncShowMCs(
     showId: bigint,
     mcs: McAssignmentPayload[],
+    missingEntityLabel = 'MCs',
   ): Promise<void> {
     const mcUids = mcs.map((m) => m.mcId);
 
@@ -300,7 +304,7 @@ export class ShowOrchestrationService {
     if (foundMcs.length !== mcUids.length) {
       const foundUids = foundMcs.map((mc) => mc.uid);
       const missingUids = mcUids.filter((uid) => !foundUids.includes(uid));
-      throw HttpError.badRequest(`MCs not found: ${missingUids.join(', ')}`);
+      throw HttpError.badRequest(`${missingEntityLabel} not found: ${missingUids.join(', ')}`);
     }
 
     const mcMap = new Map(foundMcs.map((m) => [m.uid, m.id]));
@@ -337,6 +341,15 @@ export class ShowOrchestrationService {
     for (const assignment of toDelete) {
       await this.showMcRepository.softDelete({ id: assignment.id });
     }
+  }
+
+  private async removeShowMcAssignmentsByUids(
+    showId: bigint,
+    mcUids: string[],
+  ): Promise<void> {
+    const mcs = await this.mcRepository.findByUids(mcUids);
+    const internalMcIds = mcs.map((mc) => mc.id);
+    await this.showMcRepository.softDeleteByMcIds(showId, internalMcIds);
   }
 
   /**

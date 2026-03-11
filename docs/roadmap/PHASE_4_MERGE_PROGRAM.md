@@ -178,6 +178,9 @@ This file is the cross-session source of truth for slicing that work into review
   - Add creator-first studio task-summary parity:
     - `studios/:studioId/shows` task-summary query supports `creator_name` alias (`mc_name` retained)
     - task-summary show payload emits `creators[]` alongside legacy `mcs[]`
+  - Harden creator route orchestration parity:
+    - `removeCreatorsFromShow` / `replaceCreatorsForShow` run as first-class transactional paths
+    - creator route replacement errors now return creator-labeled not-found messages
   - Add creator aliases on user payload contracts:
     - `create user` accepts `creator` input alias (legacy `mc` retained)
     - `user-with-mc` response emits `creator` alongside legacy `mc`
