@@ -74,3 +74,9 @@ This is a UX degradation, not a crash — acceptable for now. Flagged as warning
 - `clearUploadedFileCache()` must be called only after successful API submit (inside the success branch, not `finally`). Both `task-execution-sheet.tsx` and `studio-task-action-sheet.tsx` follow this correctly.
 - Per-field cache invalidation: when user selects new file or clears a field, `delete uploadedFileCacheRef.current[key]` is called synchronously before setting new pending state.
 - `handleFormChange` wrapper pattern warning: wrapping `useDebounceCallback` result in an inline arrow function creates a new function reference each render. JsonForm's `onChange` useEffect dep on this unstable ref causes form.watch() subscription churn on every parent re-render. Should use `useCallback` for stable identity.
+
+### Phase 4 Merge Program Policy (2026-03-11)
+- Cross-session tracker: `docs/roadmap/PHASE_4_MERGE_PROGRAM.md`
+- Merge strategy: scope-first branches from `master`, using `feat/phase-4-p-and-l` as reference only
+- Policy: direct `mc` -> `creator` cutover is preferred (alpha/low-traffic), avoid adding new compatibility layers
+- PR standard: one topic per PR, explicit in-scope/out-of-scope/rollback, verify touched workspaces before merge

@@ -1,0 +1,114 @@
+# DB Migration Policy
+
+Canonical migration governance for backend workspaces:
+- `erify_api` (`Prisma`)
+- `eridu_auth` (`Drizzle` + `better-auth`)
+
+## Goals
+
+- Keep schema history trustworthy and reproducible.
+- Prevent AI/manual drift from framework/tool state.
+- Make manual SQL exceptions explicit and auditable.
+
+## Framework-First Rule
+
+- Always use official framework/tooling first.
+- For `eridu_auth`, `better-auth` is the primary framework for auth-domain schema behavior.
+- Generate/derive schema and migrations from official tooling before any manual SQL edits.
+
+## Required Workflow by Workspace
+
+### A) `erify_api` (Prisma)
+
+1. Update Prisma schema (`apps/erify_api/prisma/schema.prisma`).
+2. Generate migration:
+   - `pnpm --filter erify_api prisma migrate dev --name <descriptive_name>`
+3. Verify state:
+   - `pnpm --filter erify_api prisma migrate status`
+
+### B) `eridu_auth` (better-auth + Drizzle)
+
+1. Update auth framework/schema intent first (Better Auth config/schema source).
+2. Generate/refresh Better Auth schema artifact when needed:
+   - `pnpm --filter eridu_auth auth:schema`
+3. Generate Drizzle migration from schema diff:
+   - `pnpm --filter eridu_auth db:generate`
+4. Verify migration state/check:
+   - `pnpm --filter eridu_auth db:check`
+
+## Hard Rules
+
+- Do not create a new migration file manually from scratch.
+- New migration directories/files must be tool-generated (Prisma/Drizzle).
+- If generated SQL is insufficient, edit the generated migration in-place only.
+- Prefer scoped migrations over branch-wide consolidation: multiple tool-generated migrations are valid when they map clearly to logical changes and deployment units.
+
+## Manual SQL Customization (Allowed with Guardrails)
+
+Manual SQL is allowed only when official tooling cannot express required behavior (example: partial indexes, triggers, advanced constraints).
+
+When customization is added:
+
+1. Add inline SQL comments around the custom block.
+2. Explain why generated SQL was insufficient.
+3. Record operational/rollback notes if needed.
+
+Recommended SQL comment format:
+
+```sql
+-- CUSTOM SQL START: <short reason>
+-- Tool-generated SQL cannot express <capability>; applying manual SQL.
+...custom statements...
+-- CUSTOM SQL END
+```
+
+## Documentation Sync Requirement
+
+When a migration contains manual SQL:
+
+- Update this doc with the rationale/pattern if it introduces reusable guidance.
+- Update relevant feature docs if behavior or operations are impacted.
+- Update `.agent/skills/database-patterns/SKILL.md` if the pattern should guide future implementations.
+
+## Deployment Safety
+
+- Never rewrite/squash migrations already applied in shared environments.
+- Use forward-only migrations for fixes after shared deployment.
+
+## Data-Only Backfills (Migration vs Script)
+
+For data-only changes (no schema diff), pick one delivery path and document the choice:
+
+1. **Migration SQL backfill** (runs automatically in deploy)
+   - Use when every environment must apply the data mutation as part of release rollout.
+2. **Operational script backfill** (manual/controlled execution)
+   - Use when rollout needs explicit operator control, dry-run preview, or staged execution.
+
+Hard rule:
+- Do not ship both a migration SQL backfill and a script-based backfill for the same data mutation in one rollout.
+
+Script requirements:
+- Must support `--dry-run` when practical.
+- Must be idempotent or clearly collision-guarded.
+- Must be referenced in canonical feature docs and release checklist.
+
+Example in this repo:
+- Creator UID prefix transition (`mc_` -> `creator_`) uses script-based backfill via:
+  - `pnpm --filter erify_api db:creator-uid:backfill`
+- Studio creator roster bootstrap from historical show assignments uses script-based backfill via:
+  - `pnpm --filter erify_api db:studio-creator:backfill`
+
+## Branch-Local Scoping Rule (Prisma, HITL)
+
+For feature branches that are still local/not merged:
+
+1. Keep all base migrations from `master` untouched.
+2. Keep migrations granular and descriptive by logical change/deployment scope.
+3. You may rewrite unpublished local migrations if needed, but this is optional and should not reduce review clarity.
+4. Rebuild local state via:
+   - `pnpm --filter erify_api db:migrate:reset`
+   - `pnpm --filter erify_api db:migrate:deploy`
+   - `pnpm --filter erify_api db:seed`
+
+This scoping rule is branch-local only. Shared/staging/production environments remain forward-only.
+Once a migration has been applied to a shared environment, never edit or squash it; add a new migration for corrections.

@@ -164,6 +164,116 @@ async processEntity(entityId: bigint) {
 
 ---
 
+## 10. Migration Generation and SQL Customization Policy
+
+**Rule**: New migration files must come from official tooling first, then optionally be customized.
+
+- `erify_api` (Prisma):
+  - `pnpm --filter erify_api prisma migrate dev --name <descriptive_name>` (development)
+  - `pnpm --filter erify_api prisma migrate deploy` (apply existing migrations)
+- `eridu_auth` (better-auth + Drizzle):
+  - run Better Auth schema generation first when auth schema intent changed:
+    - `pnpm --filter eridu_auth auth:schema`
+  - then generate/check via Drizzle:
+    - `pnpm --filter eridu_auth db:generate`
+    - `pnpm --filter eridu_auth db:check`
+- Never create a new migration file manually from scratch.
+- If tooling cannot express required SQL (partial index, trigger, advanced constraint), edit the generated migration file in-place.
+- Prefer migration scoping over consolidation:
+  - Multiple tool-generated migrations are valid when they map cleanly to logical changes and deployment scopes.
+  - Keep migration names descriptive to match PR/release intent.
+  - If a migration is already applied in any shared environment, do not rewrite/squash/reorder it.
+  - Use forward-only follow-up migrations for fixes after shared deployment.
+- Manual SQL blocks must include explicit comments that explain:
+  - what is customized,
+  - why tool-generated SQL was insufficient,
+  - rollback/operational notes if relevant.
+
+For deterministic local Prisma validation cycles:
+
+```bash
+pnpm --filter erify_api db:local:refresh
+```
+
+If cross-app auth mapping requires `ext_id` synchronization after seed:
+
+```bash
+pnpm --filter erify_api db:extid:sync
+```
+
+Recommended comment format in migration SQL:
+
+```sql
+-- CUSTOM SQL START: <short reason>
+-- Tool-generated SQL cannot express <capability>; applying manual SQL.
+...custom statements...
+-- CUSTOM SQL END
+```
+
+**Documentation sync is mandatory** when custom SQL exists:
+- Update `docs/product/DB_MIGRATION_POLICY.md` with the customization rationale.
+- Update relevant feature docs if behavior/operational impact exists.
+- Keep this skill aligned with any new recurring customization pattern.
+
+### Data-only backfill decision rule
+
+For data-only mutations (no schema change), choose exactly one:
+
+1. Migration SQL backfill (auto-runs in `migrate deploy`)
+2. Operational script backfill (manual execution with dry-run support)
+
+Do not ship both for the same mutation in one rollout.
+
+Use script-based backfill when:
+- rollout needs explicit operator control,
+- dry-run inspection is required,
+- execution timing differs by environment.
+
+If script-based backfill is chosen:
+- expose a dedicated package script command,
+- keep script idempotent or collision-guarded,
+- update canonical feature docs with runbook commands.
+
+---
+
+## 11. Seed Contract Compatibility Gate (Required)
+
+**Rule**: Any schema or service contract change must include a seed/fixture compatibility review.
+
+Why:
+- Local verification, manual test workflows, and cross-app auth mapping depend on seeded reference data.
+- Missing seed updates can create false runtime conflicts (for example missing `systemKey`, stale fixture IDs, or payload fields not present in generated test data).
+
+Required checks when changing schema/service behavior:
+
+1. **Reference data parity**
+   - If logic looks up status/type rows by key/name, ensure seed writes both required fields.
+   - If introducing a required field, seed must backfill/update existing rows on rerun.
+
+2. **Seed completeness gates**
+   - Update seed "already seeded" checks to include newly required records/keys.
+   - Prevent stale DB states from being marked complete.
+
+3. **Fixture/manual-test parity**
+   - Update fixture-based payload generators when required API fields change.
+   - Ensure manual test scripts parse actual API DTO/envelope responses (not internal schemas).
+
+4. **Deterministic verification**
+```bash
+pnpm --filter erify_api db:local:refresh
+pnpm --filter erify_api manual:schedule:generate
+```
+   - If local API is running:
+```bash
+pnpm --filter erify_api manual:schedule:all
+```
+
+Policy:
+- If mismatch is only in seed/manual-test tooling, fix those first.
+- Do not change production service logic unless shipped behavior itself is incorrect.
+
+---
+
 ## Related Skills
 
 - **[Repository Pattern](../repository-pattern-nestjs/SKILL.md)**: How to wrap these patterns in a reusable class.

@@ -8,7 +8,8 @@ This folder is the source of truth for phase planning across the monorepo.
 2. [Phase 2](./PHASE_2.md) — Closed task-management foundation phase
 3. [Phase 3](./PHASE_3.md) — Closure summary of delivered work after scope reset
 4. [Phase 4](./PHASE_4.md) — P&L Visibility & MC Operations (active planning)
-5. [Phase 5](./PHASE_5.md) — Deferred features / parking lot
+5. [Phase 5](./PHASE_5.md) — Deferred backlog plus creator naming consolidation carry-over
+6. [Phase 4 Merge Program](./PHASE_4_MERGE_PROGRAM.md) — Scope-first master merge plan for `feat/phase-4-p-and-l`
 
 ## Rules
 
