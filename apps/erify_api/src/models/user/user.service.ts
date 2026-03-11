@@ -120,8 +120,13 @@ export class UserService extends BaseModelService {
     return this.userRepository.findByUid(uid);
   }
 
-  async findUserById(uid: string): Promise<User | null> {
-    return this.userRepository.findByUid(uid);
+  /**
+   * @internal
+   */
+  findUserById(
+    ...args: Parameters<UserRepository['findByUid']>
+  ): ReturnType<UserRepository['findByUid']> {
+    return this.userRepository.findByUid(...args);
   }
 
   async getUserByExtId(extId: string): Promise<User | null> {

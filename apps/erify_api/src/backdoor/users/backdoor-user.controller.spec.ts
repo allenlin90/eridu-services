@@ -19,6 +19,7 @@ describe('backdoorUserController', () => {
   const mockUserService = {
     createUser: jest.fn(),
     createUsersBulk: jest.fn(),
+    findUserById: jest.fn(),
     updateUser: jest.fn(),
   };
 
@@ -75,11 +76,13 @@ describe('backdoorUserController', () => {
       };
 
       mockUserService.createUser.mockResolvedValue(createdUser);
+      mockUserService.findUserById.mockResolvedValue({ ...createdUser, mc: null });
 
       const result = await controller.createUser(createDto);
 
       expect(mockUserService.createUser).toHaveBeenCalledWith(createDto);
-      expect(result).toEqual(createdUser);
+      expect(mockUserService.findUserById).toHaveBeenCalledWith(createdUser.uid, { mc: true });
+      expect(result).toEqual({ ...createdUser, mc: null });
     });
 
     it('should handle user creation with MC', async () => {
@@ -123,10 +126,12 @@ describe('backdoorUserController', () => {
       };
 
       mockUserService.createUser.mockResolvedValue(createdUser as any);
+      mockUserService.findUserById.mockResolvedValue(createdUser as any);
 
       const result = await controller.createUser(createDto);
 
       expect(mockUserService.createUser).toHaveBeenCalledWith(createDto);
+      expect(mockUserService.findUserById).toHaveBeenCalledWith(createdUser.uid, { mc: true });
       expect(result).toEqual(createdUser);
     });
   });
@@ -186,10 +191,15 @@ describe('backdoorUserController', () => {
       }));
 
       mockUserService.createUsersBulk.mockResolvedValue(createdUsers);
+      mockUserService.findUserById
+        .mockResolvedValueOnce(createdUsers[0] as any)
+        .mockResolvedValueOnce(createdUsers[1] as any);
 
       const result = await controller.createUsersBulk(bulkDto);
 
       expect(mockUserService.createUsersBulk).toHaveBeenCalledWith(userData);
+      expect(mockUserService.findUserById).toHaveBeenNthCalledWith(1, 'user_0', { mc: true });
+      expect(mockUserService.findUserById).toHaveBeenNthCalledWith(2, 'user_1', { mc: true });
       expect(result).toEqual(createdUsers);
     });
   });
