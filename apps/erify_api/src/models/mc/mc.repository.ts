@@ -6,6 +6,7 @@ import { MC, Prisma } from '@prisma/client';
 import type { CreateMcPayload, UpdateMcPayload } from './schemas/mc.schema';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
+import { expandCreatorUidCandidates } from '@/models/creator/creator-uid.util';
 import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
@@ -33,8 +34,9 @@ export class McRepository extends BaseRepository<
     uid: string,
     include?: T,
   ): Promise<Prisma.MCGetPayload<{ include: T }> | MC | null> {
+    const uidCandidates = expandCreatorUidCandidates(uid);
     return this.delegate.findFirst({
-      where: { uid, deletedAt: null } as Prisma.MCWhereInput,
+      where: { uid: { in: uidCandidates }, deletedAt: null } as Prisma.MCWhereInput,
       ...(include && { include }),
     }) as unknown as Promise<Prisma.MCGetPayload<{ include: T }> | MC | null>;
   }
@@ -74,6 +76,9 @@ export class McRepository extends BaseRepository<
       uid: payload.uid,
       name: payload.name,
       aliasName: payload.aliasName,
+      ...(payload.defaultRate !== undefined && { defaultRate: payload.defaultRate }),
+      ...(payload.defaultRateType !== undefined && { defaultRateType: payload.defaultRateType }),
+      ...(payload.defaultCommissionRate !== undefined && { defaultCommissionRate: payload.defaultCommissionRate }),
       metadata: payload.metadata ?? {},
       ...(payload.userId && { user: { connect: { uid: payload.userId } } }),
     };
@@ -85,6 +90,7 @@ export class McRepository extends BaseRepository<
    * Update MC by UID with optional user relation changes.
    */
   async updateByUid(uid: string, payload: UpdateMcPayload): Promise<MC> {
+    const existing = await this.findByUid(uid);
     const data: Prisma.MCUpdateInput = {};
 
     if (payload.name !== undefined)
@@ -93,6 +99,12 @@ export class McRepository extends BaseRepository<
       data.aliasName = payload.aliasName;
     if (payload.isBanned !== undefined)
       data.isBanned = payload.isBanned;
+    if (payload.defaultRate !== undefined)
+      data.defaultRate = payload.defaultRate;
+    if (payload.defaultRateType !== undefined)
+      data.defaultRateType = payload.defaultRateType;
+    if (payload.defaultCommissionRate !== undefined)
+      data.defaultCommissionRate = payload.defaultCommissionRate;
     if (payload.metadata !== undefined)
       data.metadata = payload.metadata;
 
@@ -103,7 +115,10 @@ export class McRepository extends BaseRepository<
     }
 
     return this.delegate.update({
-      where: { uid, deletedAt: null },
+      where: {
+        uid: existing?.uid ?? uid,
+        deletedAt: null,
+      },
       data,
     });
   }
@@ -150,8 +165,11 @@ export class McRepository extends BaseRepository<
    * Find MCs by their UIDs (domain-level, ignores deleted).
    */
   async findByUids(uids: string[]): Promise<MC[]> {
+    const uidCandidates = Array.from(
+      new Set(uids.flatMap((uid) => expandCreatorUidCandidates(uid))),
+    );
     return this.delegate.findMany({
-      where: { uid: { in: uids }, deletedAt: null },
+      where: { uid: { in: uidCandidates }, deletedAt: null },
     });
   }
 

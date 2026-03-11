@@ -41,7 +41,7 @@ manual-test/
 
 ```bash
 # Full reset cycle (recommended for repeatable local verification):
-# db refresh -> ext-id sync -> payload generate -> upload/validate/publish
+# db refresh -> ext-id sync -> prisma generate -> backfills -> payload generate -> upload/validate/publish
 pnpm run manual:schedule:refresh-and-run
 
 # Full reset cycle with custom payload size
@@ -55,7 +55,7 @@ pnpm run manual:schedule:regen-and-run
 
 **Scripts**:
 
-- `manual:schedule:refresh-and-run` - Full local cycle (refresh, sync, generate, run all)
+- `manual:schedule:refresh-and-run` - Full local cycle (refresh, sync, prisma generate, backfills, generate, run all)
 - `manual:schedule:regen-and-run` - Fast rerun using current DB
 - `manual:schedule:generate` - Generate payloads
 - `manual:schedule:create` - Create schedules

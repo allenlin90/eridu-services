@@ -143,6 +143,7 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj) => {
   if (obj.targets && obj.targets.length > 0) {
     const s = obj.targets[0]?.show;
     if (s) {
+      const creatorNames = (s.showMCs ?? []).map((item) => item.mc.aliasName || item.mc.name);
       show = {
         id: s.uid,
         external_id: s.externalId ?? s.uid,
@@ -151,7 +152,8 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj) => {
         end_time: s.endTime.toISOString(),
         client_name: s.client?.name ?? null,
         studio_room_name: s.studioRoom?.name ?? null,
-        mc_names: (s.showMCs ?? []).map((item) => item.mc.aliasName || item.mc.name),
+        creator_names: creatorNames,
+        mc_names: creatorNames,
       };
     }
   }
@@ -286,19 +288,51 @@ export type BulkDeleteTasksResponse = z.infer<typeof bulkDeleteTasksResponseSche
 /**
  * Show data with task completion summary
  */
-export const showWithTaskSummaryDto = showApiResponseSchema.extend({
-  mcs: z.array(z.object({
-    mc_id: z.string(),
-    mc_name: z.string(),
-    mc_aliasname: z.string(),
-  })).default([]),
-  task_summary: z.object({
-    total: z.number().int(),
-    assigned: z.number().int(),
-    unassigned: z.number().int(),
-    completed: z.number().int(),
-  }),
+const showSummaryMcSchema = z.object({
+  mc_id: z.string(),
+  mc_name: z.string(),
+  mc_aliasname: z.string(),
 });
+
+const showSummaryCreatorSchema = z.object({
+  creator_id: z.string(),
+  creator_name: z.string(),
+  creator_alias_name: z.string(),
+});
+
+export const showWithTaskSummaryDto = showApiResponseSchema
+  .extend({
+    mcs: z.array(showSummaryMcSchema).default([]),
+    creators: z.array(showSummaryCreatorSchema).optional(),
+    task_summary: z.object({
+      total: z.number().int(),
+      assigned: z.number().int(),
+      unassigned: z.number().int(),
+      completed: z.number().int(),
+    }),
+  })
+  .transform((obj) => {
+    const creators = obj.creators
+      ?? obj.mcs.map((mc) => ({
+        creator_id: mc.mc_id,
+        creator_name: mc.mc_name,
+        creator_alias_name: mc.mc_aliasname,
+      }));
+
+    const mcs = obj.mcs.length > 0
+      ? obj.mcs
+      : creators.map((creator) => ({
+          mc_id: creator.creator_id,
+          mc_name: creator.creator_name,
+          mc_aliasname: creator.creator_alias_name,
+        }));
+
+    return {
+      ...obj,
+      creators,
+      mcs,
+    };
+  });
 
 export type ShowWithTaskSummaryDto = z.infer<typeof showWithTaskSummaryDto>;
 

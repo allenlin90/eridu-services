@@ -13,16 +13,43 @@ import {
 } from '@eridu/api-types/mcs';
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
-import { McService } from '@/models/mc/mc.service';
+import { isCreatorUid } from '@/models/creator/creator-uid.util';
 import { userDto, userSchema } from '@/models/user/schemas/user.schema';
+
+function decimalToString(value: unknown): string | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === 'number') {
+    return value.toFixed(2);
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (
+    typeof value === 'object'
+    && 'toString' in value
+    && typeof value.toString === 'function'
+  ) {
+    return value.toString();
+  }
+
+  return null;
+}
 
 export const mcSchema = z.object({
   id: z.bigint(),
-  uid: z.string().startsWith(McService.UID_PREFIX),
+  uid: z.string().refine(isCreatorUid, 'Invalid creator/mc UID'),
   userId: z.bigint().nullable(),
   name: z.string(),
   aliasName: z.string(),
   isBanned: z.boolean(),
+  defaultRate: z.unknown().nullable(),
+  defaultRateType: z.string().nullable(),
+  defaultCommissionRate: z.unknown().nullable(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -34,6 +61,9 @@ export const createMcSchema = createMcInputSchema.transform((data) => ({
   userId: data.user_id ?? null,
   name: data.name,
   aliasName: data.alias_name,
+  defaultRate: data.default_rate?.toFixed(2),
+  defaultRateType: data.default_rate_type,
+  defaultCommissionRate: data.default_commission_rate?.toFixed(2),
   metadata: data.metadata,
 }));
 
@@ -43,6 +73,22 @@ export const updateMcSchema = updateMcInputSchema.transform((data) => ({
   name: data.name,
   aliasName: data.alias_name,
   isBanned: data.is_banned,
+  defaultRate:
+    data.default_rate === undefined
+      ? undefined
+      : data.default_rate === null
+        ? null
+        : data.default_rate.toFixed(2),
+  defaultRateType:
+    data.default_rate_type === undefined
+      ? undefined
+      : data.default_rate_type,
+  defaultCommissionRate:
+    data.default_commission_rate === undefined
+      ? undefined
+      : data.default_commission_rate === null
+        ? null
+        : data.default_commission_rate.toFixed(2),
   metadata: data.metadata,
 }));
 
@@ -53,6 +99,9 @@ export const mcDto = mcSchema
     name: obj.name,
     alias_name: obj.aliasName,
     is_banned: obj.isBanned,
+    default_rate: decimalToString(obj.defaultRate),
+    default_rate_type: obj.defaultRateType,
+    default_commission_rate: decimalToString(obj.defaultCommissionRate),
     metadata: obj.metadata,
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
@@ -62,11 +111,14 @@ export const mcDto = mcSchema
 // Schema for MC with user data (used in admin endpoints)
 export const mcWithUserSchema = z.object({
   id: z.bigint(),
-  uid: z.string().startsWith(McService.UID_PREFIX),
+  uid: z.string().refine(isCreatorUid, 'Invalid creator/mc UID'),
   userId: z.bigint().nullable(),
   name: z.string(),
   aliasName: z.string(),
   isBanned: z.boolean(),
+  defaultRate: z.unknown().nullable(),
+  defaultRateType: z.string().nullable(),
+  defaultCommissionRate: z.unknown().nullable(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -84,6 +136,9 @@ export const mcWithUserDto = mcWithUserSchema
       name: obj.name,
       alias_name: obj.aliasName,
       is_banned: obj.isBanned,
+      default_rate: decimalToString(obj.defaultRate),
+      default_rate_type: obj.defaultRateType,
+      default_commission_rate: decimalToString(obj.defaultCommissionRate),
       metadata: obj.metadata,
       created_at: obj.createdAt.toISOString(),
       updated_at: obj.updatedAt.toISOString(),
@@ -148,6 +203,9 @@ export class ListMcsQueryDto extends createZodDto(listMcsQuerySchema) {
 export type CreateMcPayload = {
   name: string;
   aliasName: string;
+  defaultRate?: string;
+  defaultRateType?: string;
+  defaultCommissionRate?: string;
   metadata?: Record<string, any>;
   userId?: string | null;
 };
@@ -159,6 +217,9 @@ export type UpdateMcPayload = {
   name?: string;
   aliasName?: string;
   isBanned?: boolean;
+  defaultRate?: string | null;
+  defaultRateType?: string | null;
+  defaultCommissionRate?: string | null;
   metadata?: Record<string, any>;
   userId?: string | null;
 };

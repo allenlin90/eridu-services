@@ -6,7 +6,7 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
-import { McService } from '@/models/mc/mc.service';
+import { isCreatorUid } from '@/models/creator/creator-uid.util';
 import { mcSchema } from '@/models/mc/schemas/mc.schema';
 import { showSchema } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
@@ -28,7 +28,7 @@ export const showMcSchema = z.object({
 // API input schema (snake_case input, transforms to camelCase)
 export const createShowMcSchema = z.object({
   show_id: z.string().startsWith(ShowService.UID_PREFIX), // UID
-  mc_id: z.string().startsWith(McService.UID_PREFIX), // UID
+  mc_id: z.string().refine(isCreatorUid, 'Invalid creator/mc UID'), // UID
   note: z.string().max(1000).optional(), // Add max length for notes
   metadata: z.record(z.string(), z.any()).optional(),
 });
@@ -44,7 +44,7 @@ const transformCreateShowMcSchema = createShowMcSchema.transform((data) => ({
 export const updateShowMcSchema = z
   .object({
     show_id: z.string().startsWith(ShowService.UID_PREFIX).optional(), // UID
-    mc_id: z.string().startsWith(McService.UID_PREFIX).optional(), // UID
+    mc_id: z.string().refine(isCreatorUid, 'Invalid creator/mc UID').optional(), // UID
     note: z.string().max(1000).nullable().optional(), // Add max length for notes
     metadata: z.record(z.string(), z.any()).optional(),
   })

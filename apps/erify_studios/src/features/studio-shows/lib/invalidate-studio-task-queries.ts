@@ -15,20 +15,15 @@ export async function invalidateStudioTaskQueries({
   showIds = [],
 }: InvalidateStudioTaskQueriesParams) {
   const uniqueShowIds = [...new Set(showIds)];
-  const cachedShowTaskKeys = uniqueShowIds
-    .map((showId) => showTasksKeys.list(studioId, showId))
-    .filter((queryKey) => queryClient.getQueryState(queryKey));
-
   await queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) });
 
-  await Promise.all(
-    cachedShowTaskKeys.map((queryKey) =>
-      queryClient.refetchQueries({
-        queryKey,
-        exact: true,
-        type: 'all',
-      })),
-  );
+  await Promise.all(uniqueShowIds.map((showId) =>
+    queryClient.invalidateQueries({
+      queryKey: showTasksKeys.list(studioId, showId),
+      exact: true,
+      // Avoid fetching inactive cache entries that may not carry a queryFn.
+      refetchType: 'active',
+    })));
 }
 
 type RefetchStudioShowListsContainingShowParams = {

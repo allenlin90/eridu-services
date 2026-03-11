@@ -104,6 +104,15 @@ export const updateShowInputSchema = z
     start_time: z.iso.datetime().optional(), // ISO 8601 datetime string
     end_time: z.iso.datetime().optional(), // ISO 8601 datetime string
     metadata: z.record(z.string(), z.any()).optional(),
+    creators: z
+      .array(
+        z.object({
+          creator_id: z.string(),
+          note: z.string().optional(),
+          metadata: z.record(z.string(), z.any()).optional(),
+        }),
+      )
+      .optional(),
     mcs: z
       .array(
         z.object({

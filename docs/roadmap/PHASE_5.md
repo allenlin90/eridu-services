@@ -221,12 +221,17 @@ Open design questions to resolve before implementation:
 - **Input workflow**: Who enters revenue and when? Post-show? Real-time? Import from platform API?
 - **Numerical precision strategy**: Revenue, rate, commission, margin, and aggregate P&L calculations should move to `big.js`-based arithmetic instead of plain JS floating-point math.
 - **Commission cost dependency**: COMMISSION/HYBRID creator cost calculation requires revenue. Without revenue, cost is $0. The economics service already supports this; it just needs a revenue value to be meaningful.
+- **Compensation extensibility model**: current schema covers base fixed/commission/hybrid inputs, but not additional components (bonus, OT, special allocations). Decide whether these should be modeled as additive cost items (recommended) instead of overloading base rate fields.
 
 TODOs (once design questions are resolved):
 - Define and document the `gmv` vs `sales` distinction in `docs/product/BUSINESS.md`.
 - Decide: extend `ShowPlatform` with typed columns, or introduce `ShowPlatformMetrics` table for financial outcomes.
 - Introduce `big.js` as the standard financial arithmetic library for backend economics calculations and any frontend financial summaries that must match backend totals.
 - Add FE input for revenue fields on the show platform form in `erify_studios` (currently only `viewer_count` is editable).
+- Design and implement additive creator cost components (deferred until after Phase 4 cutover baseline):
+  - add a dedicated cost-item model for per-show creator adjustments (bonus, OT, special allocation, and future types),
+  - define calculation contract: `base compensation + sum(cost items)`,
+  - support auditability fields (who/when/reason/metadata) for each cost item.
 - Remove `@preview` markers from economics controller once UI ships.
 - Update `SHOW_ECONOMICS.md` status to ✅ Implemented.
 
@@ -246,6 +251,8 @@ Carry-over concerns to evaluate during Phase 5 implementation of the "P" side:
 - **Legacy compatibility barrel cleanup**:
   - `studio-show-mc.orchestration.service.ts` is currently a compatibility re-export.
   - Remove only after all imports/consumers migrate to creator-first module names.
+- **Cutover scope protection**:
+  - Keep compensation model redesign (bonus/OT/special allocations) out of current Phase 4 cutover PRs to avoid mixing rename/refactor risk with business-rule redesign.
 
 Deferred from: Phase 4, March 2026.
 

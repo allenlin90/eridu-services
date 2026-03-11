@@ -21,11 +21,12 @@ describe('mcService', () => {
     mcRepositoryMock = createMockRepository<McRepository>({
       findByUserUid: jest.fn(),
       findByUserIdentifier: jest.fn(),
+      findByUid: jest.fn(),
       createMc: jest.fn(),
       updateByUid: jest.fn(),
       findPaginated: jest.fn(),
     });
-    utilityMock = createMockUtilityService('mc_123');
+    utilityMock = createMockUtilityService('creator_123');
 
     const module = await createModelServiceTestModule({
       serviceClass: McService,
@@ -48,15 +49,15 @@ describe('mcService', () => {
       metadata: {},
       userId: null,
     };
-    const created = { uid: 'mc_123', ...payload } as const;
+    const created = { uid: 'creator_123', ...payload } as const;
     (mcRepositoryMock.createMc as jest.Mock).mockResolvedValue(created);
 
     const result = await service.createMc(payload);
 
-    expect(utilityMock.generateBrandedId).toHaveBeenCalledWith('mc', undefined);
+    expect(utilityMock.generateBrandedId).toHaveBeenCalledWith('creator', undefined);
     expect(mcRepositoryMock.createMc).toHaveBeenCalledWith({
       ...payload,
-      uid: 'mc_123',
+      uid: 'creator_123',
     });
     expect(result).toEqual(created);
   });
@@ -142,13 +143,29 @@ describe('mcService', () => {
     expect(result).toEqual(updated);
   });
 
+  it('updateMc allows legacy/current prefix pair for same MC', async () => {
+    const payload = {
+      name: 'MC A',
+      userId: 'user_123',
+    };
+    (mcRepositoryMock.findByUserUid as jest.Mock).mockResolvedValue({
+      uid: 'creator_1',
+    });
+    const updated = { uid: 'creator_1', ...payload };
+    (mcRepositoryMock.updateByUid as jest.Mock).mockResolvedValue(updated);
+
+    const result = await service.updateMc('mc_1', payload);
+    expect(result).toEqual(updated);
+  });
+
   it('deleteMc soft deletes', async () => {
     const deleted = { uid: 'mc_1', deletedAt: new Date() };
+    (mcRepositoryMock.findByUid as jest.Mock).mockResolvedValue({ uid: 'creator_1' });
     (mcRepositoryMock.softDelete as jest.Mock).mockResolvedValue(deleted);
 
     const result = await service.deleteMc('mc_1');
 
-    expect(mcRepositoryMock.softDelete).toHaveBeenCalledWith({ uid: 'mc_1' });
+    expect(mcRepositoryMock.softDelete).toHaveBeenCalledWith({ uid: 'creator_1' });
     expect(result).toEqual(deleted);
   });
 });

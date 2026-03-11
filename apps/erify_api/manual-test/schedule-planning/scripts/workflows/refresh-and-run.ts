@@ -6,8 +6,10 @@
  * Workflow:
  * 1. Refresh local DB (migrate reset + deploy + seed)
  * 2. Sync ext IDs from eridu_auth -> erify_api
- * 3. Generate schedule payloads
- * 4. Run schedule workflow (upload -> validate -> publish)
+ * 3. Regenerate Prisma Client from current schema
+ * 4. Run all required cutover backfills
+ * 5. Generate schedule payloads
+ * 6. Run schedule workflow (upload -> validate -> publish)
  *
  * Usage:
  *   pnpm run manual:schedule:refresh-and-run
@@ -111,7 +113,7 @@ function main() {
   console.log('🚀 Starting full schedule manual workflow...');
   console.log(`   API URL: ${args.apiUrl}`);
   console.log(
-    `   DB refresh: ${args.skipDbRefresh ? 'skipped' : 'enabled'} | Ext ID sync: ${args.skipExtSync ? 'skipped' : 'enabled'} | Payload generate: ${args.skipGenerate ? 'skipped' : 'enabled'}`,
+    `   DB refresh: ${args.skipDbRefresh ? 'skipped' : 'enabled'} | Ext ID sync: ${args.skipExtSync ? 'skipped' : 'enabled'} | Prisma generate: enabled | Backfills: enabled | Payload generate: ${args.skipGenerate ? 'skipped' : 'enabled'}`,
   );
 
   if (!args.skipDbRefresh) {
@@ -121,6 +123,10 @@ function main() {
   if (!args.skipExtSync) {
     runStep('Sync ext IDs from eridu_auth', 'pnpm run db:extid:sync', projectRoot);
   }
+
+  runStep('Regenerate Prisma Client', 'pnpm run db:generate', projectRoot);
+  runStep('Backfill creator UIDs', 'pnpm run db:creator-uid:backfill', projectRoot);
+  runStep('Backfill studio creator roster', 'pnpm run db:studio-creator:backfill', projectRoot);
 
   if (!args.skipGenerate) {
     const generateArgs: string[] = [];

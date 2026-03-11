@@ -16,6 +16,7 @@ import {
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
+import { CREATOR_UID_PREFIX } from '@/models/creator/creator-uid.util';
 import { McService } from '@/models/mc/mc.service';
 import {
   CreateMcDto,
@@ -33,12 +34,23 @@ export class AdminMcController extends BaseAdminController {
   @Post()
   @AdminResponse(mcWithUserDto, HttpStatus.CREATED, 'MC created successfully')
   async createMc(@Body() body: CreateMcDto) {
-    const { name, aliasName, metadata, userId } = body;
+    const {
+      name,
+      aliasName,
+      metadata,
+      userId,
+      defaultRate,
+      defaultRateType,
+      defaultCommissionRate,
+    } = body;
     const mc = await this.mcService.createMc({
       name,
       aliasName,
       metadata,
       userId,
+      ...(defaultRate !== undefined && { defaultRate }),
+      ...(defaultRateType !== undefined && { defaultRateType }),
+      ...(defaultCommissionRate !== undefined && { defaultCommissionRate }),
     });
     return this.mcService.getMcByIdWithUser(mc.uid);
   }
@@ -62,7 +74,10 @@ export class AdminMcController extends BaseAdminController {
   @Get(':id')
   @AdminResponse(mcWithUserDto, HttpStatus.OK, 'MC details')
   async getMc(
-    @Param('id', new UidValidationPipe(McService.UID_PREFIX, 'MC'))
+    @Param(
+      'id',
+      new UidValidationPipe([McService.UID_PREFIX, CREATOR_UID_PREFIX], 'MC'),
+    )
     id: string,
   ) {
     const mc = await this.mcService.getMcByIdWithUser(id);
@@ -73,7 +88,10 @@ export class AdminMcController extends BaseAdminController {
   @Patch(':id')
   @AdminResponse(mcWithUserDto, HttpStatus.OK, 'MC updated successfully')
   async updateMc(
-    @Param('id', new UidValidationPipe(McService.UID_PREFIX, 'MC'))
+    @Param(
+      'id',
+      new UidValidationPipe([McService.UID_PREFIX, CREATOR_UID_PREFIX], 'MC'),
+    )
     id: string,
     @Body() body: UpdateMcDto,
   ) {
@@ -81,13 +99,25 @@ export class AdminMcController extends BaseAdminController {
     const existing = await this.mcService.getMcById(id);
     this.ensureResourceExists(existing, 'MC', id);
 
-    const { name, aliasName, isBanned, metadata, userId } = body;
+    const {
+      name,
+      aliasName,
+      isBanned,
+      metadata,
+      userId,
+      defaultRate,
+      defaultRateType,
+      defaultCommissionRate,
+    } = body;
     await this.mcService.updateMc(id, {
       name,
       aliasName,
       isBanned,
       metadata,
       userId,
+      ...(defaultRate !== undefined && { defaultRate }),
+      ...(defaultRateType !== undefined && { defaultRateType }),
+      ...(defaultCommissionRate !== undefined && { defaultCommissionRate }),
     });
 
     return this.mcService.getMcByIdWithUser(id);
@@ -96,7 +126,10 @@ export class AdminMcController extends BaseAdminController {
   @Delete(':id')
   @AdminResponse(undefined, HttpStatus.NO_CONTENT)
   async deleteMc(
-    @Param('id', new UidValidationPipe(McService.UID_PREFIX, 'MC'))
+    @Param(
+      'id',
+      new UidValidationPipe([McService.UID_PREFIX, CREATOR_UID_PREFIX], 'MC'),
+    )
     id: string,
   ) {
     // Check existence first

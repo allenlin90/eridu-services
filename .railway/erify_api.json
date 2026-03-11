@@ -11,7 +11,11 @@
     ]
   },
   "deploy": {
-    "preDeployCommand": ["pnpm --filter erify_api db:migrate:deploy"], 
+    "preDeployCommand": [
+      "pnpm --filter erify_api db:migrate:deploy",
+      "pnpm --filter erify_api db:creator-uid:backfill",
+      "pnpm --filter erify_api db:studio-creator:backfill"
+    ],
     "startCommand": "pnpm --filter erify_api start:prod",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 100,

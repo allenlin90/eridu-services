@@ -9,12 +9,13 @@ import { McRepository } from './mc.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { CREATOR_UID_PREFIX, toCreatorUid } from '@/models/creator/creator-uid.util';
 import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
 export class McService extends BaseModelService {
   static readonly UID_PREFIX = 'mc';
-  protected readonly uidPrefix = McService.UID_PREFIX;
+  protected readonly uidPrefix = CREATOR_UID_PREFIX;
 
   constructor(
     private readonly mcRepository: McRepository,
@@ -75,7 +76,10 @@ export class McService extends BaseModelService {
     // Check if user is already assigned to another MC
     if (payload.userId) {
       const existing = await this.mcRepository.findByUserUid(payload.userId);
-      if (existing && existing.uid !== uid) {
+      if (
+        existing
+        && toCreatorUid(existing.uid) !== toCreatorUid(uid)
+      ) {
         throw HttpError.badRequest('user is already a mc');
       }
     }
@@ -83,9 +87,8 @@ export class McService extends BaseModelService {
     return this.mcRepository.updateByUid(uid, payload);
   }
 
-  deleteMc(
-    uid: string,
-  ): ReturnType<McRepository['softDelete']> {
-    return this.mcRepository.softDelete({ uid });
+  async deleteMc(uid: string): Promise<MC> {
+    const existing = await this.mcRepository.findByUid(uid);
+    return this.mcRepository.softDelete({ uid: existing?.uid ?? uid });
   }
 }

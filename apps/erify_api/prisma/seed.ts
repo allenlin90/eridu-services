@@ -30,6 +30,7 @@ async function isDatabaseSeeded(): Promise<boolean> {
       clients,
       users,
       mcs,
+      canonicalCreatorUids,
       studios,
       studioMembershipCount,
       studioShiftCount,
@@ -67,6 +68,12 @@ async function isDatabaseSeeded(): Promise<boolean> {
       prisma.client.count(),
       prisma.user.count(),
       prisma.mC.count(),
+      prisma.mC.count({
+        where: {
+          uid: { startsWith: 'creator_' },
+          deletedAt: null,
+        },
+      }),
       prisma.studio.findMany({
         where: {
           name: {
@@ -98,6 +105,7 @@ async function isDatabaseSeeded(): Promise<boolean> {
     const hasAllClients = clients >= 50;
     const hasAllUsers = users >= 35;
     const hasAllMCs = mcs >= 30;
+    const hasCanonicalCreatorUids = canonicalCreatorUids >= 30;
     const hasAllStudios = studios.length === 1;
     const hasStudioMemberships = studioMembershipCount >= 7;
     const hasStudioShifts = studioShiftCount >= 2;
@@ -113,6 +121,7 @@ async function isDatabaseSeeded(): Promise<boolean> {
       && hasAllClients
       && hasAllUsers
       && hasAllMCs
+      && hasCanonicalCreatorUids
       && hasAllStudios
       && hasStudioMemberships
       && hasStudioShifts
@@ -139,6 +148,9 @@ async function isDatabaseSeeded(): Promise<boolean> {
       );
       console.log(`  - Users: ${users}/35 (${hasAllUsers ? '✅' : '❌'})`);
       console.log(`  - MCs: ${mcs}/30 (${hasAllMCs ? '✅' : '❌'})`);
+      console.log(
+        `  - Canonical creator UIDs: ${canonicalCreatorUids}/30 (${hasCanonicalCreatorUids ? '✅' : '❌'})`,
+      );
       console.log(
         `  - Studios: ${studios.length}/1 (${hasAllStudios ? '✅' : '❌'})`,
       );
@@ -782,16 +794,26 @@ async function main() {
               },
             },
           });
-          if (i % 10 === 0) {
-            console.log(`✅ Created ${i} MCs...`);
-          }
         } else {
-          if (i % 10 === 0) {
-            console.log(`⏭️  ${i} MCs already exist...`);
-          }
+          await tx.mC.update({
+            where: { id: existingMc.id },
+            data: {
+              uid: fixtures.mcs[uidKey],
+              aliasName,
+              userId: mcUser.id,
+              metadata: {
+                specialization,
+                experience,
+              },
+            },
+          });
+        }
+
+        if (i % 10 === 0) {
+          console.log(`✅ Created/updated ${i} MCs...`);
         }
       }
-      console.log(`✅ Completed seeding 30 MCs (all linked to MC users)`);
+      console.log(`✅ Completed seeding 30 MCs (canonical creator UIDs, all linked to MC users)`);
 
       // Seed Studio data
       console.log('🎬 Seeding Studio data...');
