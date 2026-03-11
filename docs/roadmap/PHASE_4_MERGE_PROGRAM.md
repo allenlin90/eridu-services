@@ -160,6 +160,16 @@ This file is the cross-session source of truth for slicing that work into review
   - `S5`: planned (post-cutover)
   - `S6`: planned (post-cutover)
   - `S7`: planned (post-cutover)
+- **S2 in-progress slice (backend route/contract cutover)**:
+  - Add creator-first admin route aliases:
+    - `admin/creators` (alias of `admin/mcs`)
+    - `admin/show-creators` (alias of `admin/show-mcs`)
+    - `admin/shows/:id/creators/remove`
+    - `admin/shows/:id/creators/replace`
+  - Add creator-first DTO aliases for show orchestration payloads:
+    - request aliases: `creator_ids`, `creators[].creator_id`
+    - response alias: `creators[]` alongside legacy `mcs[]`
+  - Keep legacy `mc` routes/contracts available during S2/S3 transition; final removal remains S4 gate.
 - **S1 landed commits (latest first)**:
   - `25fd985e` feat(erify_api): canonicalize seeded mc uids to creator prefix
   - `8e64efbe` fix(studios): avoid refetching inactive show-task queries without queryFn
@@ -223,3 +233,4 @@ This file is the cross-session source of truth for slicing that work into review
 - 2026-03-11: Switched to one-scope-at-a-time branch hygiene; removed inactive local cutover branches and kept only active `S2` branch.
 - 2026-03-11: Branch split updated: current implementation branch renamed to `cutover/s1-creator-cutover-data-contracts`; separate `cutover/s2-backend-creator-domain-cutover` branch recreated for next scope.
 - 2026-03-11: Added S1 hotfix/rollback runbook to support fast incident response after merge.
+- 2026-03-11: S2 started with backend creator-first admin route aliases and show-orchestration creator DTO aliases (legacy `mc` routes retained for transition safety).

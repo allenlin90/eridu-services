@@ -25,7 +25,7 @@ import {
   UpdateMcDto,
 } from '@/models/mc/schemas/mc.schema';
 
-@Controller('admin/mcs')
+@Controller(['admin/mcs', 'admin/creators'])
 export class AdminMcController extends BaseAdminController {
   constructor(private readonly mcService: McService) {
     super();

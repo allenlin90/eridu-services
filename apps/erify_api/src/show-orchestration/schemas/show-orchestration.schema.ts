@@ -14,6 +14,14 @@ import { createShowPlatformSchema, showPlatformWithRelationsSchema } from '@/mod
 export const createShowWithAssignmentsSchema = createShowSchema.safeExtend({
   // Optional MC assignments
   mcs: z.array(createShowMcSchema.omit({ show_id: true })).optional(),
+  // Optional creator assignments (creator-first alias)
+  creators: z.array(
+    z.object({
+      creator_id: z.string(),
+      note: z.string().nullable().optional(),
+      metadata: z.record(z.string(), z.any()).optional(),
+    }),
+  ).optional(),
   // Optional platform assignments
   platforms: z
     .array(createShowPlatformSchema.omit({ show_id: true }))
@@ -21,38 +29,53 @@ export const createShowWithAssignmentsSchema = createShowSchema.safeExtend({
 });
 
 const transformCreateShowWithAssignmentsSchema
-  = createShowWithAssignmentsSchema.transform((data) => ({
-    // Base show data
-    clientId: data.client_id,
-    studioRoomId: data.studio_room_id,
-    studioId: data.studio_id,
-    showTypeId: data.show_type_id,
-    showStatusId: data.show_status_id,
-    showStandardId: data.show_standard_id,
-    name: data.name,
-    startTime: new Date(data.start_time),
-    endTime: new Date(data.end_time),
-    metadata: data.metadata,
-    // MC assignments
-    mcs: data.mcs?.map((mc) => ({
-      mcId: mc.mc_id,
+  = createShowWithAssignmentsSchema.transform((data) => {
+    const creatorAssignments = data.creators ?? data.mcs?.map((mc) => ({
+      creator_id: mc.mc_id,
       note: mc.note,
       metadata: mc.metadata,
-    })),
-    // Platform assignments
-    platforms: data.platforms?.map((platform) => ({
-      platformId: platform.platform_id,
-      liveStreamLink: platform.live_stream_link,
-      platformShowId: platform.platform_show_id,
-      viewerCount: platform.viewer_count,
-      metadata: platform.metadata,
-    })),
-  }));
+    }));
+
+    return {
+      // Base show data
+      clientId: data.client_id,
+      studioRoomId: data.studio_room_id,
+      studioId: data.studio_id,
+      showTypeId: data.show_type_id,
+      showStatusId: data.show_status_id,
+      showStandardId: data.show_standard_id,
+      name: data.name,
+      startTime: new Date(data.start_time),
+      endTime: new Date(data.end_time),
+      metadata: data.metadata,
+      // Creator assignments (normalized to show-mc payload for current service contract)
+      mcs: creatorAssignments?.map((creator) => ({
+        mcId: creator.creator_id,
+        note: creator.note,
+        metadata: creator.metadata,
+      })),
+      // Platform assignments
+      platforms: data.platforms?.map((platform) => ({
+        platformId: platform.platform_id,
+        liveStreamLink: platform.live_stream_link,
+        platformShowId: platform.platform_show_id,
+        viewerCount: platform.viewer_count,
+        metadata: platform.metadata,
+      })),
+    };
+  });
 
 // Build update schema from the base object (before refinements) so .partial() is valid in Zod 4.3+
 export const updateShowWithAssignmentsSchema = createShowObjectSchema
   .extend({
     mcs: z.array(createShowMcSchema.omit({ show_id: true })).optional(),
+    creators: z.array(
+      z.object({
+        creator_id: z.string(),
+        note: z.string().nullable().optional(),
+        metadata: z.record(z.string(), z.any()).optional(),
+      }),
+    ).optional(),
     platforms: z
       .array(createShowPlatformSchema.omit({ show_id: true }))
       .optional(),
@@ -69,31 +92,39 @@ export const updateShowWithAssignmentsSchema = createShowObjectSchema
   );
 
 const transformUpdateShowWithAssignmentsSchema
-  = updateShowWithAssignmentsSchema.transform((data) => ({
-    // Base show data
-    clientId: data.client_id,
-    studioRoomId: data.studio_room_id,
-    studioId: data.studio_id,
-    showTypeId: data.show_type_id,
-    showStatusId: data.show_status_id,
-    showStandardId: data.show_standard_id,
-    name: data.name,
-    startTime: data.start_time ? new Date(data.start_time) : undefined,
-    endTime: data.end_time ? new Date(data.end_time) : undefined,
-    metadata: data.metadata,
-    showMcs: data.mcs?.map((mc) => ({
-      mcId: mc.mc_id,
+  = updateShowWithAssignmentsSchema.transform((data) => {
+    const creatorAssignments = data.creators ?? data.mcs?.map((mc) => ({
+      creator_id: mc.mc_id,
       note: mc.note,
       metadata: mc.metadata,
-    })),
-    showPlatforms: data.platforms?.map((platform) => ({
-      platformId: platform.platform_id,
-      liveStreamLink: platform.live_stream_link,
-      platformShowId: platform.platform_show_id,
-      viewerCount: platform.viewer_count,
-      metadata: platform.metadata,
-    })),
-  }));
+    }));
+
+    return {
+      // Base show data
+      clientId: data.client_id,
+      studioRoomId: data.studio_room_id,
+      studioId: data.studio_id,
+      showTypeId: data.show_type_id,
+      showStatusId: data.show_status_id,
+      showStandardId: data.show_standard_id,
+      name: data.name,
+      startTime: data.start_time ? new Date(data.start_time) : undefined,
+      endTime: data.end_time ? new Date(data.end_time) : undefined,
+      metadata: data.metadata,
+      showMcs: creatorAssignments?.map((creator) => ({
+        mcId: creator.creator_id,
+        note: creator.note,
+        metadata: creator.metadata,
+      })),
+      showPlatforms: data.platforms?.map((platform) => ({
+        platformId: platform.platform_id,
+        liveStreamLink: platform.live_stream_link,
+        platformShowId: platform.platform_show_id,
+        viewerCount: platform.viewer_count,
+        metadata: platform.metadata,
+      })),
+    };
+  });
 
 // Extended schema for show with all relations including MCs and platforms
 export const showWithAllRelationsSchema = showWithRelationsSchema.extend({
@@ -108,17 +139,27 @@ export const showWithAssignmentsDto = showWithAllRelationsSchema.transform(
   (obj) => {
     // Get the base show data from the existing showDto transform
     const baseShowData = showDto.parse(obj);
+    const creatorAssignments = obj.showMCs?.map((showMc) => ({
+      id: showMc.uid,
+      creator_id: showMc.mc?.uid,
+      creator_name: showMc.mc?.name,
+      creator_alias_name: showMc.mc?.aliasName,
+      note: showMc.note,
+      metadata: showMc.metadata,
+    }));
 
     return {
       ...baseShowData,
-      // MC assignments
-      mcs: obj.showMCs?.map((showMc) => ({
-        id: showMc.uid,
-        mc_id: showMc.mc?.uid,
-        mc_name: showMc.mc?.name,
-        mc_alias_name: showMc.mc?.aliasName,
-        note: showMc.note,
-        metadata: showMc.metadata,
+      // Creator assignments (canonical)
+      creators: creatorAssignments,
+      // MC assignments (legacy alias)
+      mcs: creatorAssignments?.map((creator) => ({
+        id: creator.id,
+        mc_id: creator.creator_id,
+        mc_name: creator.creator_name,
+        mc_alias_name: creator.creator_alias_name,
+        note: creator.note,
+        metadata: creator.metadata,
       })),
       // Platform assignments
       platforms: obj.showPlatforms?.map((showPlatform) => ({
@@ -151,6 +192,11 @@ export const removeMcsFromShowSchema = z.object({
   mc_ids: z.array(z.string()).min(1, 'At least one MC ID is required'),
 });
 
+// Schema for removing creators from a show (creator-first alias)
+export const removeCreatorsFromShowSchema = z.object({
+  creator_ids: z.array(z.string()).min(1, 'At least one creator ID is required'),
+});
+
 // Schema for removing platforms from a show
 export const removePlatformsFromShowSchema = z.object({
   platform_ids: z
@@ -163,6 +209,17 @@ export const replaceMcsOnShowSchema = z.object({
   mcs: z.array(
     z.object({
       mc_id: z.string(),
+      note: z.string().nullable().optional(),
+      metadata: z.record(z.string(), z.any()).optional(),
+    }),
+  ),
+});
+
+// Schema for replacing creators on a show (creator-first alias)
+export const replaceCreatorsOnShowSchema = z.object({
+  creators: z.array(
+    z.object({
+      creator_id: z.string(),
       note: z.string().nullable().optional(),
       metadata: z.record(z.string(), z.any()).optional(),
     }),
@@ -187,6 +244,10 @@ export type RemoveMcsFromShowTransformed = {
   mcIds: string[];
 };
 
+export type RemoveCreatorsFromShowTransformed = {
+  creatorIds: string[];
+};
+
 export type RemovePlatformsFromShowTransformed = {
   platformIds: string[];
 };
@@ -199,6 +260,16 @@ export type ReplaceMcItem = {
 
 export type ReplaceMcsOnShowTransformed = {
   mcs: ReplaceMcItem[];
+};
+
+export type ReplaceCreatorItem = {
+  creatorId: string;
+  note?: string | null;
+  metadata?: object;
+};
+
+export type ReplaceCreatorsOnShowTransformed = {
+  creators: ReplaceCreatorItem[];
 };
 
 export type ReplacePlatformItem = {
@@ -222,6 +293,14 @@ export class RemoveMcsFromShowDto extends createZodDto(
   declare mcIds: string[];
 }
 
+export class RemoveCreatorsFromShowDto extends createZodDto(
+  removeCreatorsFromShowSchema.transform((data) => ({
+    creatorIds: data.creator_ids,
+  })),
+) {
+  declare creatorIds: string[];
+}
+
 export class RemovePlatformsFromShowDto extends createZodDto(
   removePlatformsFromShowSchema.transform((data) => ({
     platformIds: data.platform_ids,
@@ -241,6 +320,22 @@ export class ReplaceMcsOnShowDto extends createZodDto(
 ) {
   declare mcs: Array<{
     mcId: string;
+    note: string | null;
+    metadata: Record<string, any>;
+  }>;
+}
+
+export class ReplaceCreatorsOnShowDto extends createZodDto(
+  replaceCreatorsOnShowSchema.transform((data) => ({
+    creators: data.creators.map((creator) => ({
+      creatorId: creator.creator_id,
+      note: creator.note ?? null,
+      metadata: creator.metadata ?? {},
+    })),
+  })),
+) {
+  declare creators: Array<{
+    creatorId: string;
     note: string | null;
     metadata: Record<string, any>;
   }>;

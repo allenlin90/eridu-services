@@ -8,8 +8,10 @@ import type {
 } from '@/models/show/schemas/show.schema';
 import type {
   CreateShowWithAssignmentsDto,
+  RemoveCreatorsFromShowDto,
   RemoveMcsFromShowDto,
   RemovePlatformsFromShowDto,
+  ReplaceCreatorsOnShowDto,
   ReplaceMcsOnShowDto,
   ReplacePlatformsOnShowDto,
   UpdateShowWithAssignmentsDto,
@@ -215,6 +217,24 @@ describe('adminShowController', () => {
     });
   });
 
+  describe('removeCreatorsFromShow', () => {
+    it('should remove creators from a show', async () => {
+      const showId = 'show_123';
+      const removeDto: RemoveCreatorsFromShowDto = {
+        creatorIds: ['creator_1', 'creator_2'],
+      };
+
+      mockShowOrchestrationService.removeMCsFromShow.mockResolvedValue(
+        undefined,
+      );
+
+      await controller.removeCreatorsFromShow(showId, removeDto);
+      expect(
+        mockShowOrchestrationService.removeMCsFromShow,
+      ).toHaveBeenCalledWith(showId, removeDto.creatorIds);
+    });
+  });
+
   describe('removePlatformsFromShow', () => {
     it('should remove platforms from a show', async () => {
       const showId = 'show_123';
@@ -252,6 +272,31 @@ describe('adminShowController', () => {
       expect(
         mockShowOrchestrationService.replaceMCsForShow,
       ).toHaveBeenCalledWith(showId, replaceDto.mcs);
+      expect(result).toEqual(updatedShow);
+    });
+  });
+
+  describe('replaceCreatorsOnShow', () => {
+    it('should replace creators on a show', async () => {
+      const showId = 'show_123';
+      const replaceDto: ReplaceCreatorsOnShowDto = {
+        creators: [{ creatorId: 'creator_1', note: null, metadata: {} }],
+      };
+      const updatedShow = {
+        uid: showId,
+        showMcs: [{ mcId: 'creator_1', note: null, metadata: {} }],
+      };
+
+      mockShowOrchestrationService.replaceMCsForShow.mockResolvedValue(
+        updatedShow as any,
+      );
+
+      const result = await controller.replaceCreatorsOnShow(showId, replaceDto);
+      expect(
+        mockShowOrchestrationService.replaceMCsForShow,
+      ).toHaveBeenCalledWith(showId, [
+        { mcId: 'creator_1', note: null, metadata: {} },
+      ]);
       expect(result).toEqual(updatedShow);
     });
   });
