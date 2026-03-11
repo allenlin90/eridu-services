@@ -175,6 +175,9 @@ This file is the cross-session source of truth for slicing that work into review
   - Add creator-named orchestration methods (`removeCreatorsFromShow`, `replaceCreatorsForShow`) and route wiring.
   - Add creator-first show list filter alias support:
     - `creator_name` query alias for admin/studio show search (legacy `mc_name` retained)
+  - Add creator-first studio task-summary parity:
+    - `studios/:studioId/shows` task-summary query supports `creator_name` alias (`mc_name` retained)
+    - task-summary show payload emits `creators[]` alongside legacy `mcs[]`
   - Keep legacy `mc` routes/contracts available during S2/S3 transition; final removal remains S4 gate.
 - **S1 landed commits (latest first)**:
   - `25fd985e` feat(erify_api): canonicalize seeded mc uids to creator prefix

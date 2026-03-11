@@ -323,6 +323,8 @@ export class ShowRepository extends BaseRepository<
       date_to?: string;
       has_tasks?: boolean;
       show_uids?: string[];
+      creator_name?: string;
+      mc_name?: string;
       client_name?: string;
       show_type_name?: string;
       show_standard_name?: string;
@@ -374,6 +376,22 @@ export class ShowRepository extends BaseRepository<
       where.client = {
         name: { contains: query.client_name, mode: 'insensitive' },
         deletedAt: null,
+      };
+    }
+
+    // Creator filtering (Name) with legacy MC alias fallback
+    const creatorName = query.creator_name ?? query.mc_name;
+    if (creatorName) {
+      where.showMCs = {
+        some: {
+          mc: {
+            name: {
+              contains: creatorName,
+              mode: 'insensitive',
+            },
+          },
+          deletedAt: null,
+        },
       };
     }
 

@@ -321,15 +321,21 @@ export class TaskOrchestrationService {
     const data = shows.map((show) => {
       // Map base show fields using shared showDto logic
       const baseShow = showDto.parse(show);
+      const creators = (show.showMCs ?? []).map((showMC) => ({
+        creator_id: showMC.mc.uid,
+        creator_name: showMC.mc.name,
+        creator_alias_name: showMC.mc.aliasName,
+      }));
 
       // prisma include type complexity
       const taskSummaries = show.taskTargets.map((tt) => tt.task);
       return {
         ...baseShow,
-        mcs: (show.showMCs ?? []).map((showMC) => ({
-          mc_id: showMC.mc.uid,
-          mc_name: showMC.mc.name,
-          mc_aliasname: showMC.mc.aliasName,
+        creators,
+        mcs: creators.map((creator) => ({
+          mc_id: creator.creator_id,
+          mc_name: creator.creator_name,
+          mc_aliasname: creator.creator_alias_name,
         })),
         task_summary: {
           total: taskSummaries.length,

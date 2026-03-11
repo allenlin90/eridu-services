@@ -354,6 +354,8 @@ export type StudioShowLookupsDto = z.infer<typeof studioShowLookupsDto>;
 export const listStudioShowsQuerySchema = paginationBaseSchema
   .extend({
     search: z.string().optional(),
+    creator_name: z.string().optional(),
+    mc_name: z.string().optional(),
     client_name: z.string().optional(),
     show_type_name: z.string().optional(),
     show_standard_name: z.string().optional(),
