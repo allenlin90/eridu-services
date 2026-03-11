@@ -15,10 +15,9 @@ This file is the cross-session source of truth for slicing that work into review
 - No cherry-pick replay, no bulk file copy, no direct patch lift from that branch.
 - Re-implement each scoped change on cutover/post-cutover branches based on current decisions.
 - Use the feature branch only to check proven patterns, edge cases, and expected behavior.
-- Build a dedicated integration branch from `master`: `release/phase4-creator-cutover`.
-- Build each scope branch from the integration branch.
-- Scope PRs target the integration branch (not `master`).
-- Merge to `master` at the end of `S4` (cutover-only gate).
+- Build each scope branch from current `master`.
+- Scope PRs target `master` directly (one-by-one).
+- Merge to `master` after each scope is smoke-green (do not wait for `S4` batch merge).
 - Start post-cutover product work from refreshed branches after `S4` is merged to `master`.
 - One PR = one topic with explicit non-goals and rollback plan.
 - **Direct cutover policy (alpha environment)**:
@@ -34,10 +33,9 @@ This file is the cross-session source of truth for slicing that work into review
 ## Branch Topology
 
 - **Reference only**: `feat/phase-4-p-and-l`
-- **Cutover integration branch**: `release/phase4-creator-cutover`
 - **Active scope branch policy (one-by-one)**:
   - Keep only one active scope branch locally at a time (current: `cutover/s2-backend-creator-domain-cutover`).
-  - Create the next scope branch only when previous scope is integrated into `release/phase4-creator-cutover`.
+  - Create the next scope branch only when previous scope is merged into `master`.
   - Delete completed/inactive scope branches to reduce branch noise.
 - **Planned cutover scope branch names (create on demand)**:
   - `cutover/s1-creator-cutover-data-contracts` (completed)
@@ -151,13 +149,12 @@ This file is the cross-session source of truth for slicing that work into review
 
 ## Execution Tracker
 
-- **Cutover integration branch**: `release/phase4-creator-cutover`
-- **Current active scope**: `S1` merge/deploy readiness
-- **Master merge gate**: S1-S4 only (cutover scopes)
+- **Current active scope**: `S2` backend creator domain cutover
+- **Master merge gate**: per-scope merge allowed once smoke-green
 - **Post-cutover start gate**: begin `S5` only after `S4` is merged to `master`
 - **Current status by scope**:
-  - `S1`: completed (2026-03-11)
-  - `S2`: queued (separate branch ready)
+  - `S1`: merged to `master` and deployed (2026-03-11)
+  - `S2`: active
   - `S3`: pending
   - `S4`: pending
   - `S5`: planned (post-cutover)
@@ -218,6 +215,7 @@ This file is the cross-session source of truth for slicing that work into review
 ## Session Handoff Log
 
 - 2026-03-11: Switched strategy to integration-branch flow (`release/phase4-creator-cutover`) with scoped PRs merged there, then one final squash PR to `master`.
+- 2026-03-11: Switched from integration-branch flow to direct scoped merges into `master` (S1 merged/deployed first to reduce hotfix risk).
 - 2026-03-11: Deleted temporary `merge/*` helper branches; standardized cutover scope branches under `cutover/*`.
 - 2026-03-11: Pre-S1 UI hotfix merged to `master` (`a2f0fded`) for `/system/*` page padding parity.
 - 2026-03-11: Merge program initialized. Policy set to direct creator cutover (no compatibility phase-out by default).
