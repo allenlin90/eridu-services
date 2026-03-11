@@ -124,24 +124,17 @@ This file is the cross-session source of truth for slicing that work into review
 - `S7` Docs / Agent / Memory Sync.
 - Additional non-cutover role/product expansions.
 
-## S1 Incident Preparedness
-
-- Runbook: [PHASE_4_S1_HOTFIX_ROLLBACK.md](./PHASE_4_S1_HOTFIX_ROLLBACK.md)
-- Policy:
-  - Prefer roll-forward hotfix first.
-  - Use new rollback migration only when roll-forward cannot restore service quickly.
-
 ## Post-S4 Cleanup Checklist (Tech Debt Control)
 
 - Trigger: immediately after `S4` is merged to `master` and cutover rollout is stable.
 - Deployment config cleanup:
   - [x] Reverted `.railway/erify_api.json` `preDeployCommand` back to migrate-only on 2026-03-11 (post-S1 deployment stabilization).
-  - Remove temporary cutover wording from deployment/runbook docs.
+  - [x] Removed temporary cutover runbook references after stabilization (`PHASE_4_S1_HOTFIX_ROLLBACK.md` retired on 2026-03-11).
 - Script and command cleanup:
   - Remove temporary rollout-only command chains if no longer needed.
   - Keep backfill scripts only if retained as support tooling; otherwise archive/remove.
 - Verification cleanup gate:
-  - Run smoke on `/system/mcs`, `/admin/mcs`, and task assignment flow after cleanup.
+  - Run smoke on `/system/creators`, `/admin/creators`, and task assignment flow after cleanup.
   - Confirm no deploy-step dependency remains on one-time cutover operations.
 - Done when:
   - Deploy pipeline is back to steady-state (no cutover-only hooks).
