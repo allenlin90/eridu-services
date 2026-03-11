@@ -481,7 +481,7 @@ describe('validationService', () => {
       );
     });
 
-    it('should validate MC reference existence', async () => {
+    it('should validate creator reference existence', async () => {
       mockPrismaClient.mC.findMany.mockResolvedValue([]);
 
       const result = await service.validateSchedule(mockScheduleData);
@@ -490,7 +490,37 @@ describe('validationService', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'reference_not_found',
-          message: 'MC with ID mc_test123 not found',
+          message: 'Creator with ID mc_test123 not found',
+          showIndex: 0,
+          showTempId: 'temp_1',
+        }),
+      );
+    });
+
+    it('should validate creator reference existence from creators payload', async () => {
+      mockPrismaClient.mC.findMany.mockResolvedValue([]);
+
+      const scheduleWithCreatorPayload = {
+        ...mockScheduleData,
+        planDocument: {
+          ...mockValidPlanDocument,
+          shows: [
+            {
+              ...mockValidPlanDocument.shows[0],
+              creators: [{ creatorId: 'mc_test123', note: 'Creator Note 1' }],
+              mcs: undefined,
+            },
+          ],
+        },
+      };
+
+      const result = await service.validateSchedule(scheduleWithCreatorPayload);
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          type: 'reference_not_found',
+          message: 'Creator with ID mc_test123 not found',
           showIndex: 0,
           showTempId: 'temp_1',
         }),
@@ -608,7 +638,7 @@ describe('validationService', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should detect MC double-booking within schedule', async () => {
+    it('should detect creator double-booking within schedule', async () => {
       // Mock isTimeOverlapping to return true for overlapping times
       _utilityService.isTimeOverlapping.mockReturnValue(true);
 
@@ -645,7 +675,7 @@ describe('validationService', () => {
         expect.objectContaining({
           type: 'internal_conflict',
           message:
-            'MC mc_test123 is assigned to overlapping shows "Test Show 1" and "Test Show 2"',
+            'Creator mc_test123 is assigned to overlapping shows "Test Show 1" and "Test Show 2"',
           showIndex: 0,
           showTempId: 'temp_1',
         }),
@@ -1105,7 +1135,49 @@ describe('validationService', () => {
         expect.objectContaining({
           type: 'internal_conflict',
           message:
-            'MC mc_test123 is assigned to overlapping shows "Show 1" and "Show 2"',
+            'Creator mc_test123 is assigned to overlapping shows "Show 1" and "Show 2"',
+        }),
+      );
+    });
+
+    it('should detect creator double-booking when only creators payload is provided', async () => {
+      _utilityService.isTimeOverlapping.mockReturnValue(true);
+
+      const creatorConflictSchedule = {
+        ...mockScheduleData,
+        planDocument: {
+          ...mockValidPlanDocument,
+          shows: [
+            {
+              ...mockValidPlanDocument.shows[0],
+              creators: [{ creatorId: 'mc_test123', note: 'Creator 1' }],
+              mcs: undefined,
+              startTime: '2024-01-01T10:00:00Z',
+              endTime: '2024-01-01T12:00:00Z',
+            },
+            {
+              ...mockValidPlanDocument.shows[1],
+              creators: [{ creatorId: 'mc_test123', note: 'Creator 2' }],
+              mcs: undefined,
+              startTime: '2024-01-01T11:00:00Z',
+              endTime: '2024-01-01T13:00:00Z',
+            },
+          ],
+        },
+      };
+
+      mockPrismaClient.mC.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'mc_test123' },
+      ]);
+
+      const result = await service.validateSchedule(creatorConflictSchedule);
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          type: 'internal_conflict',
+          message:
+            'Creator mc_test123 is assigned to overlapping shows "Test Show 1" and "Test Show 2"',
         }),
       );
     });

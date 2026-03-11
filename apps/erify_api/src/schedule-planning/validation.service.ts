@@ -21,6 +21,19 @@ export class ValidationService {
     public readonly utilityService: UtilityService,
   ) {}
 
+  private getCreatorAssignments(
+    show: ShowPlanItem,
+  ): Array<{ creatorId: string; note?: string }> {
+    if (show.creators && show.creators.length > 0) {
+      return show.creators;
+    }
+
+    return (show.mcs || []).map((mc) => ({
+      creatorId: mc.mcId,
+      note: mc.note,
+    }));
+  }
+
   /**
    * Validates an entire schedule including all shows in the plan document.
    *
@@ -316,12 +329,12 @@ export class ValidationService {
       });
     }
 
-    // Validate MCs
-    for (const mc of show.mcs || []) {
-      if (mc.mcId && !uidMaps.mcs.has(mc.mcId)) {
+    // Validate creators
+    for (const creator of this.getCreatorAssignments(show)) {
+      if (creator.creatorId && !uidMaps.mcs.has(creator.creatorId)) {
         errors.push({
           type: 'reference_not_found',
-          message: `MC with ID ${mc.mcId} not found`,
+          message: `Creator with ID ${creator.creatorId} not found`,
           showIndex,
           showTempId: show.tempId,
         });
@@ -417,18 +430,20 @@ export class ValidationService {
       }
     }
 
-    // Check MC double-booking within schedule
+    // Check creator double-booking within schedule
     for (let i = 0; i < shows.length; i++) {
       const show1 = shows[i];
       for (let j = i + 1; j < shows.length; j++) {
         const show2 = shows[j];
-        const commonMcUids = (show1.mcs || [])
-          .map((mc) => mc.mcId)
-          .filter((mcId) =>
-            (show2.mcs || []).some((mc) => mc.mcId === mcId),
+        const show1Creators = this.getCreatorAssignments(show1);
+        const show2Creators = this.getCreatorAssignments(show2);
+        const commonCreatorUids = show1Creators
+          .map((creator) => creator.creatorId)
+          .filter((creatorId) =>
+            show2Creators.some((creator) => creator.creatorId === creatorId),
           );
 
-        for (const mcUid of commonMcUids) {
+        for (const creatorUid of commonCreatorUids) {
           if (
             this.utilityService.isTimeOverlapping(
               show1.startTime,
@@ -439,7 +454,7 @@ export class ValidationService {
           ) {
             errors.push({
               type: 'internal_conflict',
-              message: `MC ${mcUid} is assigned to overlapping shows "${show1.name}" and "${show2.name}"`,
+              message: `Creator ${creatorUid} is assigned to overlapping shows "${show1.name}" and "${show2.name}"`,
               showIndex: i,
               showTempId: show1.tempId,
             });
@@ -510,7 +525,7 @@ export class ValidationService {
   }
 
   /**
-   * Checks MC availability by querying existing show-MC assignments.
+   * Checks creator availability by querying existing show-creator assignments.
    * Excludes shows from the current schedule being validated (only checks conflicts with other schedules).
    *
    * @deprecated Phase 1: Cross-schedule validation is deferred to Phase 2.
@@ -596,7 +611,7 @@ export class ValidationService {
     const showTypeUids = new Set<string>();
     const showStatusUids = new Set<string>();
     const showStandardUids = new Set<string>();
-    const mcUids = new Set<string>();
+    const creatorUids = new Set<string>();
     const platformUids = new Set<string>();
     const existingShowIds = new Set<string>();
 
@@ -606,7 +621,9 @@ export class ValidationService {
       show.showTypeId && showTypeUids.add(show.showTypeId);
       show.showStatusId && showStatusUids.add(show.showStatusId);
       show.showStandardId && showStandardUids.add(show.showStandardId);
-      (show.mcs || []).forEach((mc) => mc.mcId && mcUids.add(mc.mcId));
+      this.getCreatorAssignments(show).forEach((creator) =>
+        creator.creatorId && creatorUids.add(creator.creatorId),
+      );
       (show.platforms || []).forEach((platform) =>
         platform.platformId && platformUids.add(platform.platformId),
       );
@@ -645,7 +662,7 @@ export class ValidationService {
         select: { id: true, uid: true },
       }),
       prismaClient.mC.findMany({
-        where: { uid: { in: Array.from(mcUids) }, deletedAt: null },
+        where: { uid: { in: Array.from(creatorUids) }, deletedAt: null },
         select: { id: true, uid: true },
       }),
       prismaClient.platform.findMany({

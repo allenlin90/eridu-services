@@ -184,6 +184,9 @@ This file is the cross-session source of truth for slicing that work into review
   - Add creator aliases in schedule-planning contracts:
     - plan document accepts `creators[]` assignments and normalizes to legacy `mcs[]`
     - publish summary emits `creator_links_*` alongside legacy `mc_links_*`
+  - Add creator-first schedule validation parity:
+    - validation accepts creator-only assignments (`creators[]`) without requiring legacy `mcs[]`
+    - validation messages use creator-first wording (legacy DB/UID internals remain unchanged)
   - Keep legacy `mc` routes/contracts available during S2/S3 transition; final removal remains S4 gate.
 - **S1 landed commits (latest first)**:
   - `25fd985e` feat(erify_api): canonicalize seeded mc uids to creator prefix
