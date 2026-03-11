@@ -166,6 +166,10 @@ export const fixtures = {
     adminMainStudio: 'smb_00000000000000000001',
     mc1MainStudio: 'smb_00000000000000000002',
     mc2MainStudio: 'smb_00000000000000000003',
+    testAdminMainStudio: 'smb_00000000000000000004',
+    testUserMainStudio: 'smb_00000000000000000005',
+    testUser2MainStudio: 'smb_00000000000000000006',
+    testUser3MainStudio: 'smb_00000000000000000007',
   },
   studioShifts: {
     mc1CurrentDuty: 'ssh_00000000000000000001',

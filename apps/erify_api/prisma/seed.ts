@@ -99,7 +99,7 @@ async function isDatabaseSeeded(): Promise<boolean> {
     const hasAllUsers = users >= 35;
     const hasAllMCs = mcs >= 30;
     const hasAllStudios = studios.length === 1;
-    const hasStudioMemberships = studioMembershipCount >= 3;
+    const hasStudioMemberships = studioMembershipCount >= 7;
     const hasStudioShifts = studioShiftCount >= 2;
     const hasStudioShiftBlocks = studioShiftBlockCount >= 3;
 
@@ -143,7 +143,7 @@ async function isDatabaseSeeded(): Promise<boolean> {
         `  - Studios: ${studios.length}/1 (${hasAllStudios ? '✅' : '❌'})`,
       );
       console.log(
-        `  - StudioMemberships: ${studioMembershipCount}/3 (${hasStudioMemberships ? '✅' : '❌'})`,
+        `  - StudioMemberships: ${studioMembershipCount}/7 (${hasStudioMemberships ? '✅' : '❌'})`,
       );
       console.log(
         `  - StudioShifts: ${studioShiftCount}/2 (${hasStudioShifts ? '✅' : '❌'})`,
@@ -224,6 +224,7 @@ async function main() {
       const showStatuses = [
         {
           name: 'draft',
+          systemKey: 'DRAFT',
           metadata: {
             description: 'Show is in draft state, not yet confirmed',
             order: 1,
@@ -231,6 +232,7 @@ async function main() {
         },
         {
           name: 'confirmed',
+          systemKey: 'CONFIRMED',
           metadata: {
             description: 'Show is confirmed and ready to go live',
             order: 2,
@@ -238,6 +240,7 @@ async function main() {
         },
         {
           name: 'live',
+          systemKey: 'LIVE',
           metadata: {
             description: 'Show is currently live/streaming',
             order: 3,
@@ -245,10 +248,12 @@ async function main() {
         },
         {
           name: 'completed',
+          systemKey: 'COMPLETED',
           metadata: { description: 'Show has finished successfully', order: 4 },
         },
         {
           name: 'cancelled',
+          systemKey: 'CANCELLED',
           metadata: { description: 'Show was cancelled', order: 5 },
         },
       ];
@@ -257,9 +262,13 @@ async function main() {
         const uidKey = showStatus.name as keyof typeof fixtures.showStatuses;
         await tx.showStatus.upsert({
           where: { name: showStatus.name },
-          update: {},
+          update: {
+            systemKey: showStatus.systemKey,
+            metadata: showStatus.metadata,
+          },
           create: {
             uid: fixtures.showStatuses[uidKey],
+            systemKey: showStatus.systemKey,
             name: showStatus.name,
             metadata: showStatus.metadata,
           },
@@ -611,7 +620,7 @@ async function main() {
       });
       console.log(`✅ Created/updated Admin User: ${adminUser.name}`);
 
-      await tx.user.upsert({
+      const testAdminUser = await tx.user.upsert({
         where: { email: 'test-admin@example.com' },
         update: {
           extId: 'sso_test_admin_0001',
@@ -630,7 +639,7 @@ async function main() {
         },
       });
 
-      await tx.user.upsert({
+      const testUser = await tx.user.upsert({
         where: { email: 'test-user@example.com' },
         update: {
           extId: 'sso_test_user_0001',
@@ -647,7 +656,7 @@ async function main() {
         },
       });
 
-      await tx.user.upsert({
+      const testUser2 = await tx.user.upsert({
         where: { email: 'test-user-2@example.com' },
         update: {
           extId: 'sso_test_user_0002',
@@ -664,7 +673,7 @@ async function main() {
         },
       });
 
-      await tx.user.upsert({
+      const testUser3 = await tx.user.upsert({
         where: { email: 'test-user-3@example.com' },
         update: {
           extId: 'sso_test_user_0003',
@@ -903,6 +912,54 @@ async function main() {
             permissions: ['view_schedule'],
           },
           label: `${mcUser2.name} -> ${studio.name} (member)`,
+        },
+        {
+          uid: fixtures.studioMemberships.testAdminMainStudio,
+          userId: testAdminUser.id,
+          role: 'admin',
+          baseHourlyRate: '35.00',
+          metadata: {
+            joinedDate: new Date().toISOString(),
+            permissions: ['manage_studio', 'manage_rooms', 'manage_members'],
+            source: 'seed-role-testing',
+          },
+          label: `${testAdminUser.name} -> ${studio.name} (admin)`,
+        },
+        {
+          uid: fixtures.studioMemberships.testUserMainStudio,
+          userId: testUser.id,
+          role: 'manager',
+          baseHourlyRate: '22.00',
+          metadata: {
+            joinedDate: new Date().toISOString(),
+            permissions: ['view_schedule', 'manage_tasks'],
+            source: 'seed-role-testing',
+          },
+          label: `${testUser.name} -> ${studio.name} (manager)`,
+        },
+        {
+          uid: fixtures.studioMemberships.testUser2MainStudio,
+          userId: testUser2.id,
+          role: 'member',
+          baseHourlyRate: '18.00',
+          metadata: {
+            joinedDate: new Date().toISOString(),
+            permissions: ['view_schedule'],
+            source: 'seed-role-testing',
+          },
+          label: `${testUser2.name} -> ${studio.name} (member)`,
+        },
+        {
+          uid: fixtures.studioMemberships.testUser3MainStudio,
+          userId: testUser3.id,
+          role: 'member',
+          baseHourlyRate: '18.00',
+          metadata: {
+            joinedDate: new Date().toISOString(),
+            permissions: ['view_schedule'],
+            source: 'seed-role-testing',
+          },
+          label: `${testUser3.name} -> ${studio.name} (member)`,
         },
       ] as const;
 

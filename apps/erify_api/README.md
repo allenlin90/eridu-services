@@ -654,6 +654,9 @@ apps/erify_api/
 Test complex E2E workflows to understand realistic usage patterns:
 
 ```bash
+# Schedule Planning full reset cycle (refresh db + sync ext ids + generate + run all)
+pnpm -F erify_api manual:schedule:refresh-and-run
+
 # Schedule Planning workflow (create, validate, publish)
 pnpm -F erify_api manual:schedule:all
 

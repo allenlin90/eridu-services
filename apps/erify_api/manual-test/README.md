@@ -40,26 +40,29 @@ manual-test/
 **Quick Start**:
 
 ```bash
-# Generate payloads (default: 50 shows per client for all 50 clients = 2500 total)
-pnpm run manual:schedule:generate
+# Full reset cycle (recommended for repeatable local verification):
+# db refresh -> ext-id sync -> payload generate -> upload/validate/publish
+pnpm run manual:schedule:refresh-and-run
 
-# Or specify custom number
-pnpm run manual:schedule:generate -- --shows=1000 --clients=10
+# Full reset cycle with custom payload size
+pnpm run manual:schedule:refresh-and-run -- --shows=1000 --clients=10
 
-# Run complete workflow
-pnpm run manual:schedule:all
+# Fast rerun on existing DB (skip refresh + ext-id sync)
+pnpm run manual:schedule:regen-and-run
 ```
 
 **Documentation**: See [schedule-planning/README.md](./schedule-planning/README.md) and [schedule-planning/GOOGLE_SHEETS_WORKFLOW.md](./schedule-planning/GOOGLE_SHEETS_WORKFLOW.md)
 
 **Scripts**:
 
-- `test:generate:schedule-payload` - Generate test payloads
-- `test:create:schedules` - Create schedules
-- `test:upload:schedule-plans` - Upload plan documents
-- `test:validate:schedules` - Validate schedules
-- `test:publish:schedules` - Publish schedules
-- `test:schedule:all` - Run all steps
+- `manual:schedule:refresh-and-run` - Full local cycle (refresh, sync, generate, run all)
+- `manual:schedule:regen-and-run` - Fast rerun using current DB
+- `manual:schedule:generate` - Generate payloads
+- `manual:schedule:create` - Create schedules
+- `manual:schedule:upload` - Upload plan documents
+- `manual:schedule:validate` - Validate schedules
+- `manual:schedule:publish` - Publish schedules
+- `manual:schedule:all` - Run upload -> validate -> publish
 
 ### 2. Backdoor API Flow
 

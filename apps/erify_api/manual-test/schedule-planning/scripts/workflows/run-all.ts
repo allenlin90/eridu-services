@@ -4,17 +4,16 @@
  * Script to run the complete schedule planning workflow
  *
  * This script orchestrates the complete schedule planning workflow:
- * 1. Create schedules (one per client)
- * 2. Upload schedule plan documents
- * 3. Validate all schedules
- * 4. Publish validated schedules
+ * 1. Ensure schedules exist and upload schedule plan documents
+ * 2. Validate all schedules
+ * 3. Publish validated schedules
  *
  * Usage:
  *   # Run complete workflow with default API URL
- *   pnpm run test:schedule:all
+ *   pnpm run manual:schedule:all
  *
  *   # Custom API base URL
- *   pnpm run test:schedule:all -- --api-url=http://localhost:3000
+ *   pnpm run manual:schedule:all -- --api-url=http://localhost:3000
  *
  * Note: This script runs all steps sequentially. If any step fails,
  * the script will exit with an error code.

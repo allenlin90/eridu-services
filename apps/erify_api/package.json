@@ -39,6 +39,8 @@
     "manual:schedule:validate": "ts-node -r tsconfig-paths/register manual-test/schedule-planning/scripts/3.validate-schedules.ts",
     "manual:schedule:publish": "ts-node -r tsconfig-paths/register manual-test/schedule-planning/scripts/4.publish-schedules.ts",
     "manual:schedule:all": "ts-node -r tsconfig-paths/register manual-test/schedule-planning/scripts/workflows/run-all.ts",
+    "manual:schedule:refresh-and-run": "ts-node -r tsconfig-paths/register manual-test/schedule-planning/scripts/workflows/refresh-and-run.ts",
+    "manual:schedule:regen-and-run": "pnpm run manual:schedule:refresh-and-run -- --skip-db-refresh --skip-ext-sync",
     "manual:backdoor:create-users": "ts-node -r tsconfig-paths/register manual-test/backdoor/scripts/1.create-users.ts",
     "manual:backdoor:update-users": "ts-node -r tsconfig-paths/register manual-test/backdoor/scripts/2.update-users.ts",
     "manual:backdoor:create-memberships": "ts-node -r tsconfig-paths/register manual-test/backdoor/scripts/3.create-memberships.ts",
