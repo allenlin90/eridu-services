@@ -132,6 +132,7 @@ describe('dataTableToolbar', () => {
       })) as any,
       getColumn: vi.fn(() => mockColumn),
       resetColumnFilters: vi.fn(),
+      setColumnFilters: vi.fn(),
     };
   });
 
@@ -303,7 +304,7 @@ describe('dataTableToolbar', () => {
     const resetButtons = screen.getAllByText('Reset');
     fireEvent.click(resetButtons[resetButtons.length - 1]);
 
-    expect(mockTable.resetColumnFilters).toHaveBeenCalled();
+    expect(mockTable.setColumnFilters).toHaveBeenCalledWith([]);
   });
 
   it('renders date range filter for date-range type', () => {
