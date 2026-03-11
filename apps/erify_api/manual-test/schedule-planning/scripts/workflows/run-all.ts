@@ -54,6 +54,7 @@ function runScript(
   scriptPath: string,
   apiUrl: string,
   stepName: string,
+  args?: string[],
 ): { success: boolean; output: string } {
   console.log(`\n${'='.repeat(60)}`);
   console.log(`📋 Step: ${stepName}`);
@@ -75,8 +76,9 @@ function runScript(
     const projectRoot = path.resolve(__dirname, '../../../../');
     // Pass environment variables to child process
     const env = { ...process.env };
+    const extraArgs = args && args.length > 0 ? ` ${args.join(' ')}` : '';
     const output = execSync(
-      `ts-node -r tsconfig-paths/register "${fullPath}" --api-url=${apiUrl}`,
+      `ts-node -r tsconfig-paths/register "${fullPath}" --api-url=${apiUrl}${extraArgs}`,
       {
         cwd: projectRoot,
         encoding: 'utf-8',
@@ -98,19 +100,15 @@ function main() {
   console.log('🚀 Starting complete schedule planning workflow...');
   console.log(`   API URL: ${apiUrl}`);
   console.log(`\nThis will run the following steps:`);
-  console.log(`   1. Create schedules (bulk create)`);
-  console.log(`   2. Upload schedule plan documents`);
-  console.log(`   3. Validate all schedules`);
-  console.log(`   4. Publish validated schedules`);
+  console.log(`   1. Ensure schedules + overwrite plan documents`);
+  console.log(`   2. Validate all schedules`);
+  console.log(`   3. Publish validated schedules`);
 
   const steps = [
     {
-      script: '1.create-schedules.ts',
-      name: 'Create Schedules',
-    },
-    {
       script: '2.upload-schedule-plan-documents.ts',
-      name: 'Upload Schedule Plan Documents',
+      name: 'Ensure Schedules + Upload Plan Documents',
+      args: ['--create-schedules'],
     },
     {
       script: '3.validate-schedules.ts',
@@ -125,7 +123,7 @@ function main() {
   const results: Array<{ name: string; success: boolean }> = [];
 
   for (const step of steps) {
-    const result = runScript(step.script, apiUrl, step.name);
+    const result = runScript(step.script, apiUrl, step.name, step.args);
     results.push({ name: step.name, success: result.success });
 
     if (!result.success) {

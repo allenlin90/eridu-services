@@ -96,7 +96,7 @@ async function isDatabaseSeeded(): Promise<boolean> {
     const hasAllShowStandards = showStandards.length === 2;
     const hasAllPlatforms = platforms.length === 3;
     const hasAllClients = clients >= 50;
-    const hasAllUsers = users >= 31;
+    const hasAllUsers = users >= 35;
     const hasAllMCs = mcs >= 30;
     const hasAllStudios = studios.length === 1;
     const hasStudioMemberships = studioMembershipCount >= 3;
@@ -137,7 +137,7 @@ async function isDatabaseSeeded(): Promise<boolean> {
       console.log(
         `  - Clients: ${clients}/50 (${hasAllClients ? '✅' : '❌'})`,
       );
-      console.log(`  - Users: ${users}/31 (${hasAllUsers ? '✅' : '❌'})`);
+      console.log(`  - Users: ${users}/35 (${hasAllUsers ? '✅' : '❌'})`);
       console.log(`  - MCs: ${mcs}/30 (${hasAllMCs ? '✅' : '❌'})`);
       console.log(
         `  - Studios: ${studios.length}/1 (${hasAllStudios ? '✅' : '❌'})`,
@@ -594,10 +594,13 @@ async function main() {
       // Admin user
       const adminUser = await tx.user.upsert({
         where: { email: 'admin@example.com' },
-        update: {},
+        update: {
+          extId: 'sso_admin_0001',
+        },
         create: {
           uid: fixtures.users.admin,
           email: 'admin@example.com',
+          extId: 'sso_admin_0001',
           name: 'Admin User',
           isSystemAdmin: true,
           metadata: {
@@ -607,6 +610,77 @@ async function main() {
         },
       });
       console.log(`✅ Created/updated Admin User: ${adminUser.name}`);
+
+      await tx.user.upsert({
+        where: { email: 'test-admin@example.com' },
+        update: {
+          extId: 'sso_test_admin_0001',
+          isSystemAdmin: true,
+        },
+        create: {
+          uid: fixtures.users.testAdmin,
+          email: 'test-admin@example.com',
+          extId: 'sso_test_admin_0001',
+          name: 'Test Admin',
+          isSystemAdmin: true,
+          metadata: {
+            role: 'admin',
+            dataset: 'studio-role-testing',
+          },
+        },
+      });
+
+      await tx.user.upsert({
+        where: { email: 'test-user@example.com' },
+        update: {
+          extId: 'sso_test_user_0001',
+        },
+        create: {
+          uid: fixtures.users.testUser,
+          email: 'test-user@example.com',
+          extId: 'sso_test_user_0001',
+          name: 'Test User',
+          metadata: {
+            role: 'user',
+            dataset: 'studio-role-testing',
+          },
+        },
+      });
+
+      await tx.user.upsert({
+        where: { email: 'test-user-2@example.com' },
+        update: {
+          extId: 'sso_test_user_0002',
+        },
+        create: {
+          uid: fixtures.users.testUser2,
+          email: 'test-user-2@example.com',
+          extId: 'sso_test_user_0002',
+          name: 'Test User 2',
+          metadata: {
+            role: 'user',
+            dataset: 'studio-role-testing',
+          },
+        },
+      });
+
+      await tx.user.upsert({
+        where: { email: 'test-user-3@example.com' },
+        update: {
+          extId: 'sso_test_user_0003',
+        },
+        create: {
+          uid: fixtures.users.testUser3,
+          email: 'test-user-3@example.com',
+          extId: 'sso_test_user_0003',
+          name: 'Test User 3',
+          metadata: {
+            role: 'user',
+            dataset: 'studio-role-testing',
+          },
+        },
+      });
+      console.log('✅ Created/updated studio role-testing users (test-admin/test-user*)');
 
       // 30 MC users
       const createdUsers: User[] = [adminUser];
@@ -654,7 +728,7 @@ async function main() {
         }
       }
       console.log(
-        `✅ Completed seeding ${createdUsers.length} users (1 admin + 30 MC users)`,
+        `✅ Completed seeding ${createdUsers.length + 4} users (1 admin + 30 MC users + 4 role-test users)`,
       );
 
       // Seed MC data

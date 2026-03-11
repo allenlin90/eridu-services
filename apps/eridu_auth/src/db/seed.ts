@@ -23,10 +23,11 @@ if (!env.DB_SEEDING) {
  * Usage:
  *   pnpm db:seed
  *
- * Test users created:
- * - test-user@example.com (password: testpassword123) - Regular user
- * - test-admin@example.com (password: testpassword123) - Admin user
- * - test-user-2@example.com (password: testpassword123) - Regular user
+ * Cross-app role-testing users created:
+ * - test-user@example.com
+ * - test-admin@example.com
+ * - test-user-2@example.com
+ * - test-user-3@example.com
  */
 
 type TestUser = {
@@ -55,6 +56,13 @@ const TEST_USERS: TestUser[] = [
   {
     email: 'test-user-2@example.com',
     name: 'Test User 2',
+    password: 'testpassword123',
+    role: 'user',
+    emailVerified: true,
+  },
+  {
+    email: 'test-user-3@example.com',
+    name: 'Test User 3',
     password: 'testpassword123',
     role: 'user',
     emailVerified: true,
