@@ -28,7 +28,21 @@ schedule-planning/
 
 ## Quick Start
 
-### 1. Generate Test Payloads
+### 1. Full Reset + Run (Recommended)
+
+```bash
+# Full local cycle:
+# db refresh -> ext-id sync -> payload generate -> upload/validate/publish
+pnpm run manual:schedule:refresh-and-run
+
+# Full cycle with custom payload size
+pnpm run manual:schedule:refresh-and-run -- --shows=1000 --clients=10
+
+# Fast rerun (skip db refresh + ext-id sync)
+pnpm run manual:schedule:regen-and-run
+```
+
+### 2. Generate Test Payloads (Manual Control)
 
 **Default Behavior**:
 
@@ -58,25 +72,24 @@ pnpm run manual:schedule:generate -- --shows=100
 - The `02-update-schedule.json` and `update-payloads/*.json` files will contain the specified number of shows
 - After publishing, you'll have the full number of shows in the database
 
-### 2. Run Complete Workflow
+### 3. Run Complete Workflow
 
 ```bash
 # Run all steps sequentially
-pnpm run test:schedule:all
+pnpm run manual:schedule:all
 
 # Or run steps individually:
-pnpm run test:create:schedules
-pnpm run test:upload:schedule-plans
-pnpm run test:validate:schedules
-pnpm run test:publish:schedules
+pnpm run manual:schedule:create
+pnpm run manual:schedule:upload
+pnpm run manual:schedule:validate
+pnpm run manual:schedule:publish
 ```
 
 ## Workflow Steps
 
-1. **Create Schedules** - Create empty schedules for each client
-2. **Upload Plan Documents** - Upload schedule plan documents from Google Sheets
-3. **Validate Schedules** - Validate schedules for conflicts and errors
-4. **Publish Schedules** - Publish validated schedules to create shows
+1. **Ensure + Upload Plan Documents** - Ensure schedules exist and upload plan documents
+2. **Validate Schedules** - Validate schedules for conflicts and errors
+3. **Publish Schedules** - Publish validated schedules to create shows
 
 ## Documentation
 

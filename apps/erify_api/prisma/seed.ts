@@ -96,10 +96,10 @@ async function isDatabaseSeeded(): Promise<boolean> {
     const hasAllShowStandards = showStandards.length === 2;
     const hasAllPlatforms = platforms.length === 3;
     const hasAllClients = clients >= 50;
-    const hasAllUsers = users >= 31;
+    const hasAllUsers = users >= 35;
     const hasAllMCs = mcs >= 30;
     const hasAllStudios = studios.length === 1;
-    const hasStudioMemberships = studioMembershipCount >= 3;
+    const hasStudioMemberships = studioMembershipCount >= 7;
     const hasStudioShifts = studioShiftCount >= 2;
     const hasStudioShiftBlocks = studioShiftBlockCount >= 3;
 
@@ -137,13 +137,13 @@ async function isDatabaseSeeded(): Promise<boolean> {
       console.log(
         `  - Clients: ${clients}/50 (${hasAllClients ? '✅' : '❌'})`,
       );
-      console.log(`  - Users: ${users}/31 (${hasAllUsers ? '✅' : '❌'})`);
+      console.log(`  - Users: ${users}/35 (${hasAllUsers ? '✅' : '❌'})`);
       console.log(`  - MCs: ${mcs}/30 (${hasAllMCs ? '✅' : '❌'})`);
       console.log(
         `  - Studios: ${studios.length}/1 (${hasAllStudios ? '✅' : '❌'})`,
       );
       console.log(
-        `  - StudioMemberships: ${studioMembershipCount}/3 (${hasStudioMemberships ? '✅' : '❌'})`,
+        `  - StudioMemberships: ${studioMembershipCount}/7 (${hasStudioMemberships ? '✅' : '❌'})`,
       );
       console.log(
         `  - StudioShifts: ${studioShiftCount}/2 (${hasStudioShifts ? '✅' : '❌'})`,
@@ -224,6 +224,7 @@ async function main() {
       const showStatuses = [
         {
           name: 'draft',
+          systemKey: 'DRAFT',
           metadata: {
             description: 'Show is in draft state, not yet confirmed',
             order: 1,
@@ -231,6 +232,7 @@ async function main() {
         },
         {
           name: 'confirmed',
+          systemKey: 'CONFIRMED',
           metadata: {
             description: 'Show is confirmed and ready to go live',
             order: 2,
@@ -238,6 +240,7 @@ async function main() {
         },
         {
           name: 'live',
+          systemKey: 'LIVE',
           metadata: {
             description: 'Show is currently live/streaming',
             order: 3,
@@ -245,10 +248,12 @@ async function main() {
         },
         {
           name: 'completed',
+          systemKey: 'COMPLETED',
           metadata: { description: 'Show has finished successfully', order: 4 },
         },
         {
           name: 'cancelled',
+          systemKey: 'CANCELLED',
           metadata: { description: 'Show was cancelled', order: 5 },
         },
       ];
@@ -257,9 +262,13 @@ async function main() {
         const uidKey = showStatus.name as keyof typeof fixtures.showStatuses;
         await tx.showStatus.upsert({
           where: { name: showStatus.name },
-          update: {},
+          update: {
+            systemKey: showStatus.systemKey,
+            metadata: showStatus.metadata,
+          },
           create: {
             uid: fixtures.showStatuses[uidKey],
+            systemKey: showStatus.systemKey,
             name: showStatus.name,
             metadata: showStatus.metadata,
           },
@@ -594,10 +603,13 @@ async function main() {
       // Admin user
       const adminUser = await tx.user.upsert({
         where: { email: 'admin@example.com' },
-        update: {},
+        update: {
+          extId: 'sso_admin_0001',
+        },
         create: {
           uid: fixtures.users.admin,
           email: 'admin@example.com',
+          extId: 'sso_admin_0001',
           name: 'Admin User',
           isSystemAdmin: true,
           metadata: {
@@ -607,6 +619,77 @@ async function main() {
         },
       });
       console.log(`✅ Created/updated Admin User: ${adminUser.name}`);
+
+      const testAdminUser = await tx.user.upsert({
+        where: { email: 'test-admin@example.com' },
+        update: {
+          extId: 'sso_test_admin_0001',
+          isSystemAdmin: true,
+        },
+        create: {
+          uid: fixtures.users.testAdmin,
+          email: 'test-admin@example.com',
+          extId: 'sso_test_admin_0001',
+          name: 'Test Admin',
+          isSystemAdmin: true,
+          metadata: {
+            role: 'admin',
+            dataset: 'studio-role-testing',
+          },
+        },
+      });
+
+      const testUser = await tx.user.upsert({
+        where: { email: 'test-user@example.com' },
+        update: {
+          extId: 'sso_test_user_0001',
+        },
+        create: {
+          uid: fixtures.users.testUser,
+          email: 'test-user@example.com',
+          extId: 'sso_test_user_0001',
+          name: 'Test User',
+          metadata: {
+            role: 'user',
+            dataset: 'studio-role-testing',
+          },
+        },
+      });
+
+      const testUser2 = await tx.user.upsert({
+        where: { email: 'test-user-2@example.com' },
+        update: {
+          extId: 'sso_test_user_0002',
+        },
+        create: {
+          uid: fixtures.users.testUser2,
+          email: 'test-user-2@example.com',
+          extId: 'sso_test_user_0002',
+          name: 'Test User 2',
+          metadata: {
+            role: 'user',
+            dataset: 'studio-role-testing',
+          },
+        },
+      });
+
+      const testUser3 = await tx.user.upsert({
+        where: { email: 'test-user-3@example.com' },
+        update: {
+          extId: 'sso_test_user_0003',
+        },
+        create: {
+          uid: fixtures.users.testUser3,
+          email: 'test-user-3@example.com',
+          extId: 'sso_test_user_0003',
+          name: 'Test User 3',
+          metadata: {
+            role: 'user',
+            dataset: 'studio-role-testing',
+          },
+        },
+      });
+      console.log('✅ Created/updated studio role-testing users (test-admin/test-user*)');
 
       // 30 MC users
       const createdUsers: User[] = [adminUser];
@@ -654,7 +737,7 @@ async function main() {
         }
       }
       console.log(
-        `✅ Completed seeding ${createdUsers.length} users (1 admin + 30 MC users)`,
+        `✅ Completed seeding ${createdUsers.length + 4} users (1 admin + 30 MC users + 4 role-test users)`,
       );
 
       // Seed MC data
@@ -829,6 +912,54 @@ async function main() {
             permissions: ['view_schedule'],
           },
           label: `${mcUser2.name} -> ${studio.name} (member)`,
+        },
+        {
+          uid: fixtures.studioMemberships.testAdminMainStudio,
+          userId: testAdminUser.id,
+          role: 'admin',
+          baseHourlyRate: '35.00',
+          metadata: {
+            joinedDate: new Date().toISOString(),
+            permissions: ['manage_studio', 'manage_rooms', 'manage_members'],
+            source: 'seed-role-testing',
+          },
+          label: `${testAdminUser.name} -> ${studio.name} (admin)`,
+        },
+        {
+          uid: fixtures.studioMemberships.testUserMainStudio,
+          userId: testUser.id,
+          role: 'manager',
+          baseHourlyRate: '22.00',
+          metadata: {
+            joinedDate: new Date().toISOString(),
+            permissions: ['view_schedule', 'manage_tasks'],
+            source: 'seed-role-testing',
+          },
+          label: `${testUser.name} -> ${studio.name} (manager)`,
+        },
+        {
+          uid: fixtures.studioMemberships.testUser2MainStudio,
+          userId: testUser2.id,
+          role: 'member',
+          baseHourlyRate: '18.00',
+          metadata: {
+            joinedDate: new Date().toISOString(),
+            permissions: ['view_schedule'],
+            source: 'seed-role-testing',
+          },
+          label: `${testUser2.name} -> ${studio.name} (member)`,
+        },
+        {
+          uid: fixtures.studioMemberships.testUser3MainStudio,
+          userId: testUser3.id,
+          role: 'member',
+          baseHourlyRate: '18.00',
+          metadata: {
+            joinedDate: new Date().toISOString(),
+            permissions: ['view_schedule'],
+            source: 'seed-role-testing',
+          },
+          label: `${testUser3.name} -> ${studio.name} (member)`,
         },
       ] as const;
 

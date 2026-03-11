@@ -35,7 +35,6 @@ import {
   PaginatedResponse,
 } from '@/lib/pagination/pagination.schema';
 import {
-  bulkCreateScheduleResultSchema,
   updateScheduleSchema,
 } from '@/models/schedule/schemas/schedule.schema';
 
@@ -53,25 +52,44 @@ const scheduleDtoResponseSchema = z.object({
   end_date: z.string(),
   status: z.string(),
   published_at: z.string().nullable(),
-  plan_document: z.record(z.string(), z.any()),
+  plan_document: z.record(z.string(), z.any()).optional(),
   version: z.number().int(),
-  metadata: z.record(z.string(), z.any()),
-  client_id: z.string().nullable(),
-  client_name: z.string().nullable(),
-  created_by: z.string().nullable(),
-  created_by_name: z.string().nullable(),
-  published_by: z.string().nullable(),
-  published_by_name: z.string().nullable(),
+  metadata: z.record(z.string(), z.any()).optional(),
+  client_id: z.string().nullable().optional(),
+  client_name: z.string().nullable().optional(),
+  created_by: z.string().nullable().optional(),
+  created_by_name: z.string().nullable().optional(),
+  published_by: z.string().nullable().optional(),
+  published_by_name: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });
 
 // Infer types from schemas to ensure they match the API exactly
 type ScheduleDto = z.infer<typeof scheduleDtoResponseSchema>;
-type BulkCreateScheduleResultDto = z.infer<
-  typeof bulkCreateScheduleResultSchema
->;
 type UpdateScheduleInputDto = z.input<typeof updateScheduleSchema>;
+
+const bulkCreateScheduleResultResponseSchema = z.object({
+  total: z.number().int(),
+  successful: z.number().int(),
+  failed: z.number().int(),
+  results: z.array(
+    z.object({
+      index: z.number().int().optional(),
+      schedule_id: z.string().nullable(),
+      client_id: z.string().nullable(),
+      client_name: z.string().nullable(),
+      success: z.boolean(),
+      error: z.string().nullable(),
+      error_code: z.string().nullable(),
+    }),
+  ),
+  successful_schedules: z.array(scheduleDtoResponseSchema).optional(),
+});
+
+type BulkCreateScheduleResultDto = z.infer<
+  typeof bulkCreateScheduleResultResponseSchema
+>;
 
 const API_HOST = process.env.API_HOST || 'localhost';
 const PORT = process.env.PORT || 3000;
@@ -83,6 +101,7 @@ const BASE_URL = '/google-sheets/schedules';
 interface UpdateResult {
   clientId: string;
   scheduleId: string;
+  version: number;
   clientName: string;
   success: boolean;
   error?: string;
@@ -98,6 +117,11 @@ interface UpdatePayloadJson {
   };
   version: number;
 }
+
+type ScheduleRef = {
+  id: string;
+  version: number;
+};
 
 // Parse command line arguments
 function parseArgs(): {
@@ -121,7 +145,7 @@ function parseArgs(): {
 }
 
 // Create schedules via bulk endpoint
-async function createSchedules(apiUrl: string): Promise<Map<string, string>> {
+async function createSchedules(apiUrl: string): Promise<Map<string, ScheduleRef>> {
   const bulkCreatePath = path.join(
     __dirname,
     '../payloads/01-bulk-create-schedule.json',
@@ -152,20 +176,22 @@ async function createSchedules(apiUrl: string): Promise<Map<string, string>> {
   }
 
   // Validate response data matches expected schema
-  const parseResult = bulkCreateScheduleResultSchema.safeParse(response.data);
+  const parseResult = bulkCreateScheduleResultResponseSchema.safeParse(
+    response.data,
+  );
   if (!parseResult.success) {
     throw new Error(
       `Invalid response format: ${parseResult.error.message} - ${JSON.stringify(response.data)}`,
     );
   }
   const result = parseResult.data;
-  const scheduleMap = new Map<string, string>(); // client_id -> schedule_id
+  const scheduleMap = new Map<string, ScheduleRef>(); // client_id -> { id, version }
 
   // Map from results array
   if (result.results) {
     for (const r of result.results) {
       if (r.success && r.schedule_id && r.client_id) {
-        scheduleMap.set(r.client_id, r.schedule_id);
+        scheduleMap.set(r.client_id, { id: r.schedule_id, version: 1 });
       }
     }
   }
@@ -175,7 +201,10 @@ async function createSchedules(apiUrl: string): Promise<Map<string, string>> {
     for (const schedule of result.successful_schedules) {
       if (schedule.id && schedule.client_id) {
         if (!scheduleMap.has(schedule.client_id)) {
-          scheduleMap.set(schedule.client_id, schedule.id);
+          scheduleMap.set(schedule.client_id, {
+            id: schedule.id,
+            version: schedule.version,
+          });
         }
       }
     }
@@ -193,7 +222,7 @@ async function createSchedules(apiUrl: string): Promise<Map<string, string>> {
 }
 
 // Get all schedules for the current month
-async function getSchedules(apiUrl: string): Promise<Map<string, string>> {
+async function getSchedules(apiUrl: string): Promise<Map<string, ScheduleRef>> {
   const now = new Date();
   const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
   const endDate = new Date(
@@ -236,11 +265,14 @@ async function getSchedules(apiUrl: string): Promise<Map<string, string>> {
   }
   const paginatedResponse = parseResult.data;
   const schedules = paginatedResponse.data || [];
-  const scheduleMap = new Map<string, string>(); // client_id -> schedule_id
+  const scheduleMap = new Map<string, ScheduleRef>(); // client_id -> { id, version }
 
   for (const schedule of schedules) {
     if (schedule.id && schedule.client_id) {
-      scheduleMap.set(schedule.client_id, schedule.id);
+      scheduleMap.set(schedule.client_id, {
+        id: schedule.id,
+        version: schedule.version,
+      });
     }
   }
 
@@ -304,13 +336,15 @@ async function main() {
   console.log(`   API URL: ${apiUrl}`);
   console.log(`   Create schedules first: ${shouldCreate ? 'Yes' : 'No'}\n`);
 
-  let scheduleMap: Map<string, string>;
+  let scheduleMap: Map<string, ScheduleRef>;
 
   // Step 1: Create schedules or get existing ones
   if (shouldCreate) {
-    scheduleMap = await createSchedules(apiUrl);
+    await createSchedules(apiUrl);
     // Wait a bit for schedules to be fully created
     await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Always resolve against current DB state so reruns can overwrite existing schedules.
+    scheduleMap = await getSchedules(apiUrl);
   } else {
     scheduleMap = await getSchedules(apiUrl);
   }
@@ -362,13 +396,14 @@ async function main() {
     const clientId = `client_000000000000000000${clientNumber}`;
 
     // Find corresponding schedule ID
-    const scheduleId = scheduleMap.get(clientId);
-    if (!scheduleId) {
+    const scheduleRef = scheduleMap.get(clientId);
+    if (!scheduleRef) {
       console.warn(
         `⚠️  No schedule found for client ${clientId} (file: ${file})`,
       );
       continue;
     }
+    const { id: scheduleId, version: currentVersion } = scheduleRef;
 
     // Load update payload
     const updatePayloadPath = path.join(updatePayloadsDir, file);
@@ -379,7 +414,7 @@ async function main() {
     // Use snake_case format as expected by the API schema
     const updatePayload: UpdateScheduleInputDto = {
       plan_document: updatePayloadJson.plan_document,
-      version: updatePayloadJson.version,
+      version: currentVersion,
     };
 
     // Extract client name from payload metadata
@@ -399,6 +434,7 @@ async function main() {
       updateResults.push({
         clientId,
         scheduleId,
+        version: currentVersion,
         clientName,
         success: true,
         showsCount: result.showsCount ?? showsCount,
@@ -410,6 +446,7 @@ async function main() {
       updateResults.push({
         clientId,
         scheduleId,
+        version: currentVersion,
         clientName,
         success: false,
         error: result.error,

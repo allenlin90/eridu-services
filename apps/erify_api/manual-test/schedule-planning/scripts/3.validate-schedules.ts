@@ -41,15 +41,15 @@ const scheduleDtoResponseSchema = z.object({
   end_date: z.string(),
   status: z.string(),
   published_at: z.string().nullable(),
-  plan_document: z.record(z.string(), z.any()),
+  plan_document: z.record(z.string(), z.any()).optional(),
   version: z.number().int(),
-  metadata: z.record(z.string(), z.any()),
-  client_id: z.string().nullable(),
-  client_name: z.string().nullable(),
-  created_by: z.string().nullable(),
-  created_by_name: z.string().nullable(),
-  published_by: z.string().nullable(),
-  published_by_name: z.string().nullable(),
+  metadata: z.record(z.string(), z.any()).optional(),
+  client_id: z.string().nullable().optional(),
+  client_name: z.string().nullable().optional(),
+  created_by: z.string().nullable().optional(),
+  created_by_name: z.string().nullable().optional(),
+  published_by: z.string().nullable().optional(),
+  published_by_name: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -226,7 +226,7 @@ async function main() {
       const validation = result.validationResult;
       const summary: ValidationResultSummary = {
         scheduleId: schedule.id,
-        clientId: schedule.client_id,
+        clientId: schedule.client_id ?? null,
         clientName,
         scheduleName,
         isValid: validation.isValid,
@@ -261,7 +261,7 @@ async function main() {
     } else {
       const summary: ValidationResultSummary = {
         scheduleId: schedule.id,
-        clientId: schedule.client_id,
+        clientId: schedule.client_id ?? null,
         clientName,
         scheduleName,
         isValid: false,

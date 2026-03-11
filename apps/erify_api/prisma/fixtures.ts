@@ -110,6 +110,10 @@ export const fixtures = {
     mc28: 'user_00000000000000000029',
     mc29: 'user_00000000000000000030',
     mc30: 'user_00000000000000000031',
+    testAdmin: 'user_00000000000000000032',
+    testUser: 'user_00000000000000000033',
+    testUser2: 'user_00000000000000000034',
+    testUser3: 'user_00000000000000000035',
   },
   mcs: {
     mc1: 'mc_00000000000000000001',
@@ -162,6 +166,10 @@ export const fixtures = {
     adminMainStudio: 'smb_00000000000000000001',
     mc1MainStudio: 'smb_00000000000000000002',
     mc2MainStudio: 'smb_00000000000000000003',
+    testAdminMainStudio: 'smb_00000000000000000004',
+    testUserMainStudio: 'smb_00000000000000000005',
+    testUser2MainStudio: 'smb_00000000000000000006',
+    testUser3MainStudio: 'smb_00000000000000000007',
   },
   studioShifts: {
     mc1CurrentDuty: 'ssh_00000000000000000001',

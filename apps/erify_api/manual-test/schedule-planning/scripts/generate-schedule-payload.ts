@@ -35,6 +35,7 @@ import { fixtures } from '../../../prisma/fixtures';
 
 type ShowPlanItem = {
   tempId: string;
+  externalId: string;
   name: string;
   startTime: string;
   endTime: string;
@@ -145,7 +146,7 @@ function getStudioRoomUids(): string[] {
   return Object.values(fixtures.studioRooms);
 }
 
-// Get all MC UIDs
+// Get all creator UIDs
 function getMcUids(): string[] {
   return Object.values(fixtures.mcs);
 }
@@ -176,7 +177,7 @@ function isTimeOverlapping(
   return start1.getTime() < end2.getTime() && start2.getTime() < end1.getTime();
 }
 
-// Generate shows with no MC overlaps or room conflicts
+// Generate shows with no creator overlaps or room conflicts
 function generateShows(
   numShows: number,
   startDate: Date,
@@ -189,7 +190,7 @@ function generateShows(
   const mcUids = getMcUids();
   const platformUids = getPlatformUids();
 
-  // Track MC schedules to avoid overlaps
+  // Track creator schedules to avoid overlaps
   const mcSchedules: Map<string, Array<{ start: Date; end: Date }>> = new Map();
   mcUids.forEach((mcUid) => mcSchedules.set(mcUid, []));
 
@@ -244,7 +245,7 @@ function generateShows(
     );
   }
 
-  // Check if a time slot is available for MCs
+  // Check if a time slot is available for creators
   function areMcAvailable(mcUids: string[], start: Date, end: Date): boolean {
     return mcUids.every((mcUid) => {
       const schedules = mcSchedules.get(mcUid) || [];
@@ -254,7 +255,7 @@ function generateShows(
     });
   }
 
-  // Find available time slot for a room and MCs
+  // Find available time slot for a room and creators
   function findAvailableTimeSlot(
     roomUid: string,
     mcUids: string[],
@@ -302,9 +303,9 @@ function generateShows(
         .replace(/^./, (str) => str.toUpperCase())
         .trim() || 'Nike';
 
-    // Select room, MCs, and platforms
+    // Select room, creators, and platforms
     const roomUid = randomElement(roomUids);
-    const numMc = Math.floor(Math.random() * 3) + 1; // 1-3 MCs
+    const numMc = Math.floor(Math.random() * 3) + 1; // 1-3 creators
     const selectedMcUids = randomElements(mcUids, numMc);
     const numPlatforms = Math.floor(Math.random() * 2) + 1; // 1-2 platforms
     const selectedPlatformUids = randomElements(platformUids, numPlatforms);
@@ -335,6 +336,7 @@ function generateShows(
     // Generate show
     const show: ShowPlanItem = {
       tempId: `temp_${Date.now()}_${showIndex}`,
+      externalId: `${clientUid}_show_${showIndex + 1}`,
       name: `${clientName} Show ${showIndex + 1}`,
       startTime: timeSlot.start.toISOString(),
       endTime: timeSlot.end.toISOString(),
@@ -347,7 +349,7 @@ function generateShows(
       studioId: Math.random() > 0.5 ? randomElement(studioUids) : undefined,
       mcs: selectedMcUids.map((mcUid) => ({
         mcId: mcUid,
-        note: `MC assignment for ${clientName} Show ${showIndex + 1}`,
+        note: `Creator assignment for ${clientName} Show ${showIndex + 1}`,
       })),
       platforms: selectedPlatformUids.map((platformUid, idx) => ({
         platformId: platformUid,
@@ -389,7 +391,7 @@ function generateShowsForClient(
   const mcUids = getMcUids();
   const platformUids = getPlatformUids();
 
-  // Track MC schedules to avoid overlaps
+  // Track creator schedules to avoid overlaps
   const mcSchedules: Map<string, Array<{ start: Date; end: Date }>> = new Map();
   mcUids.forEach((mcUid) => mcSchedules.set(mcUid, []));
 
@@ -444,7 +446,7 @@ function generateShowsForClient(
     );
   }
 
-  // Check if a time slot is available for MCs
+  // Check if a time slot is available for creators
   function areMcAvailable(mcUids: string[], start: Date, end: Date): boolean {
     return mcUids.every((mcUid) => {
       const schedules = mcSchedules.get(mcUid) || [];
@@ -454,7 +456,7 @@ function generateShowsForClient(
     });
   }
 
-  // Find available time slot for a room and MCs
+  // Find available time slot for a room and creators
   function findAvailableTimeSlot(
     roomUid: string,
     mcUids: string[],
@@ -488,9 +490,9 @@ function generateShowsForClient(
   while (shows.length < numShows && attempts < maxAttempts) {
     attempts++;
 
-    // Select room, MCs, and platforms
+    // Select room, creators, and platforms
     const roomUid = randomElement(roomUids);
-    const numMc = Math.floor(Math.random() * 3) + 1; // 1-3 MCs
+    const numMc = Math.floor(Math.random() * 3) + 1; // 1-3 creators
     const selectedMcUids = randomElements(mcUids, numMc);
     const numPlatforms = Math.floor(Math.random() * 2) + 1; // 1-2 platforms
     const selectedPlatformUids = randomElements(platformUids, numPlatforms);
@@ -521,6 +523,7 @@ function generateShowsForClient(
     // Generate show for the specific client
     const show: ShowPlanItem = {
       tempId: `temp_${Date.now()}_${showIndex}`,
+      externalId: `${clientUid}_show_${showIndex + 1}`,
       name: `${clientName} Show ${showIndex + 1}`,
       startTime: timeSlot.start.toISOString(),
       endTime: timeSlot.end.toISOString(),
@@ -531,7 +534,7 @@ function generateShowsForClient(
       showStandardId: weightedRandom(showStandardWeights).uid,
       mcs: selectedMcUids.map((mcUid) => ({
         mcId: mcUid,
-        note: `MC assignment for ${clientName} Show ${showIndex + 1}`,
+        note: `Creator assignment for ${clientName} Show ${showIndex + 1}`,
       })),
       platforms: selectedPlatformUids.map((platformUid, idx) => ({
         platformId: platformUid,
@@ -787,6 +790,7 @@ function generateMultiClientMonthlyOverview(
     // Update client UID for all shows
     clientShows.forEach((show) => {
       show.clientId = clientUid;
+      show.externalId = `${clientUid}_show_${show.name.split(' ').pop()}`;
       show.name = `${clientName} Show ${show.name.split(' ').pop()}`;
     });
 
@@ -1044,7 +1048,7 @@ function main() {
     console.log(
       `   2. For each schedule, PATCH /admin/schedules/:id with update-payloads/*.json`,
     );
-    console.log(`   - No MC overlaps (MC double-booking prevented)`);
+    console.log(`   - No creator overlaps (creator double-booking prevented)`);
     console.log(`   - No room conflicts`);
     console.log(`   - All shows within schedule date range`);
   } else {
@@ -1129,7 +1133,7 @@ function main() {
     console.log(`   - Shows per client: ~${showsPerClient}`);
     console.log(`   - Schedules: 1 (single monthly overview)`);
     console.log(`   - Chunked payloads: ${chunkedShows.length}`);
-    console.log(`   - No MC overlaps (MC double-booking prevented)`);
+    console.log(`   - No creator overlaps (creator double-booking prevented)`);
     console.log(`   - No room conflicts`);
     console.log(`   - All shows within schedule date range`);
     console.log(
