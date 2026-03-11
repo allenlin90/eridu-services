@@ -181,6 +181,9 @@ This file is the cross-session source of truth for slicing that work into review
   - Add creator aliases on user payload contracts:
     - `create user` accepts `creator` input alias (legacy `mc` retained)
     - `user-with-mc` response emits `creator` alongside legacy `mc`
+  - Add creator aliases in schedule-planning contracts:
+    - plan document accepts `creators[]` assignments and normalizes to legacy `mcs[]`
+    - publish summary emits `creator_links_*` alongside legacy `mc_links_*`
   - Keep legacy `mc` routes/contracts available during S2/S3 transition; final removal remains S4 gate.
 - **S1 landed commits (latest first)**:
   - `25fd985e` feat(erify_api): canonicalize seeded mc uids to creator prefix

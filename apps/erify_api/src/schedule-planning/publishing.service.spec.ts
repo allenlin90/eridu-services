@@ -407,7 +407,19 @@ describe('publishingService', () => {
         uid: mockSchedule.uid,
         startDate: mockSchedule.startDate,
         endDate: mockSchedule.endDate,
-        planDocument: mockSchedule.planDocument,
+        planDocument: expect.objectContaining({
+          metadata: expect.any(Object),
+          shows: expect.arrayContaining([
+            expect.objectContaining({
+              externalId: 'show_temp_1',
+              creators: expect.any(Array),
+            }),
+            expect.objectContaining({
+              externalId: 'show_temp_2',
+              creators: expect.any(Array),
+            }),
+          ]),
+        }),
         clientId: mockSchedule.clientId,
       });
 
