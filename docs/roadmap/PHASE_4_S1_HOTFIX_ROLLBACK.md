@@ -3,6 +3,10 @@
 > Scope: creator cutover `S1` only (`mc -> creator` data/contracts foundation)
 > Last updated: 2026-03-11
 
+Note:
+- S1 backfill scripts were one-time rollout tooling and have been removed after deployment stabilization.
+- References to those commands in this runbook are historical for incident timeline/context.
+
 ## Objective
 
 Provide a fast, low-risk incident path for production after `S1` merge/deploy:
@@ -82,4 +86,3 @@ Run and confirm:
 - Incident commander: on-call backend owner
 - DB migration owner: `erify_api` backend owner
 - Smoke-test owner: studio frontend + backend pairing
-

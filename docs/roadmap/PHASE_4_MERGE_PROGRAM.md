@@ -135,7 +135,7 @@ This file is the cross-session source of truth for slicing that work into review
 
 - Trigger: immediately after `S4` is merged to `master` and cutover rollout is stable.
 - Deployment config cleanup:
-  - Revert `.railway/erify_api.json` `preDeployCommand` back to migrate-only.
+  - [x] Reverted `.railway/erify_api.json` `preDeployCommand` back to migrate-only on 2026-03-11 (post-S1 deployment stabilization).
   - Remove temporary cutover wording from deployment/runbook docs.
 - Script and command cleanup:
   - Remove temporary rollout-only command chains if no longer needed.
@@ -191,15 +191,15 @@ This file is the cross-session source of truth for slicing that work into review
   - `pnpm --filter erify_api db:studio-creator:backfill` => `Studio roster rows to backfill: 0`
   - `pnpm --filter erify_api manual:schedule:generate -- --shows=2 --clients=2` => payload generation succeeded
   - Note: API/FE interactive smoke remains required per environment before cutover merge to `master`.
-- **S1 CD / rollout order (required)**:
-  - Cutover deploy gate (pre-deploy hook) must run in order:  
+- **S1 CD / rollout order (historical, completed)**:
+  - Cutover deploy gate (pre-deploy hook) was executed in order during S1 rollout:  
     `pnpm --filter erify_api db:migrate:deploy`  
     `pnpm --filter erify_api db:creator-uid:backfill`  
     `pnpm --filter erify_api db:studio-creator:backfill`
-  - This prevents app start before cutover backfills are complete.
-  - After creator cutover rollout is fully stable, revert pre-deploy back to migrate-only.
+  - This prevented app start before cutover backfills were complete.
+  - Current steady-state pre-deploy is migrate-only:
+    `pnpm --filter erify_api db:migrate:deploy`
   - Prisma Client generation stays in build (`pnpm --filter erify_api build` already runs `db:generate`).
-  - Start schedule/manual processing only after pre-deploy backfill gate succeeds.
 
 ## PR Definition of Done (every scope)
 
