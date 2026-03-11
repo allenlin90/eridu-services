@@ -20,6 +20,12 @@ This file is the cross-session source of truth for slicing that work into review
 
 ## Scope Queue
 
+### P0. System Route Layout Padding Hotfix (Completed)
+- **Branch**: `merge/pre-s1-system-layout-padding` (merged, branch deleted)
+- **Merged to master**: `a2f0fded` on 2026-03-11
+- **Target areas**: `apps/erify_studios/src/routes/system/route.tsx` page container wrapper.
+- **Reason**: restore expected `/system/*` page padding before starting scoped phase-4 merge slices.
+
 ### S1. Creator Naming Cutover: Data + Contracts
 - **Branch**: `merge/s1-creator-cutover-data-contracts`
 - **Depends on**: none
@@ -85,4 +91,6 @@ This file is the cross-session source of truth for slicing that work into review
 
 ## Session Handoff Log
 
+- 2026-03-11: Pre-S1 UI hotfix merged to `master` (`a2f0fded`) for `/system/*` page padding parity.
+- 2026-03-11: Reset `merge/s1-creator-cutover-data-contracts` and `merge/s2-backend-creator-domain-cutover` to current `master` baseline.
 - 2026-03-11: Merge program initialized. Policy set to direct creator cutover (no compatibility phase-out by default).
