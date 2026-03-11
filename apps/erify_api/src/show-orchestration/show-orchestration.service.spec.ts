@@ -425,6 +425,20 @@ describe('showOrchestrationService', () => {
     });
   });
 
+  describe('removeCreatorsFromShow', () => {
+    it('should remove creators from show via MC pathway', async () => {
+      const uid = 'show_test123';
+      const creatorIds = ['creator_1', 'creator_2'];
+      const removeMcsSpy = jest
+        .spyOn(service, 'removeMCsFromShow')
+        .mockResolvedValue(undefined);
+
+      await service.removeCreatorsFromShow(uid, creatorIds);
+
+      expect(removeMcsSpy).toHaveBeenCalledWith(uid, creatorIds);
+    });
+  });
+
   describe('replaceMCsForShow', () => {
     it('should replace all MCs for a show', async () => {
       const uid = 'show_test123';
@@ -460,6 +474,31 @@ describe('showOrchestrationService', () => {
       expect(showRepository.findByUid).toHaveBeenCalledWith(
         uid,
         expect.any(Object),
+      );
+      expect(result).toEqual(mockShow);
+    });
+  });
+
+  describe('replaceCreatorsForShow', () => {
+    it('should replace creators for a show via MC pathway', async () => {
+      const uid = 'show_test123';
+      const creators = [
+        {
+          creatorId: 'creator_test123',
+          note: 'Creator note',
+          metadata: {},
+        },
+      ];
+      const replaceMcsSpy = jest
+        .spyOn(service, 'replaceMCsForShow')
+        .mockResolvedValue(mockShow as any);
+
+      const result = await service.replaceCreatorsForShow(uid, creators);
+
+      expect(replaceMcsSpy).toHaveBeenCalledWith(
+        uid,
+        [{ mcId: 'creator_test123', note: 'Creator note', metadata: {} }],
+        undefined,
       );
       expect(result).toEqual(mockShow);
     });

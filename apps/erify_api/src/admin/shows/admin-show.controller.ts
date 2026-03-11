@@ -124,7 +124,10 @@ export class AdminShowController extends BaseAdminController {
     id: string,
     @Body() body: RemoveCreatorsFromShowDto,
   ) {
-    await this.showOrchestrationService.removeMCsFromShow(id, body.creatorIds);
+    await this.showOrchestrationService.removeCreatorsFromShow(
+      id,
+      body.creatorIds,
+    );
   }
 
   @Patch(':id/platforms/remove')
@@ -165,15 +168,9 @@ export class AdminShowController extends BaseAdminController {
     id: string,
     @Body() body: ReplaceCreatorsOnShowDto,
   ) {
-    const creatorAssignments = body.creators.map((creator) => ({
-      mcId: creator.creatorId,
-      note: creator.note,
-      metadata: creator.metadata,
-    }));
-
-    return await this.showOrchestrationService.replaceMCsForShow(
+    return await this.showOrchestrationService.replaceCreatorsForShow(
       id,
-      creatorAssignments,
+      body.creators,
     );
   }
 

@@ -169,6 +169,10 @@ This file is the cross-session source of truth for slicing that work into review
   - Add creator-first DTO aliases for show orchestration payloads:
     - request aliases: `creator_ids`, `creators[].creator_id`
     - response alias: `creators[]` alongside legacy `mcs[]`
+  - Add creator-first alias support for show-creator payload contract:
+    - `admin/show-creators` accepts `creator_id` input alias
+    - show-creator response includes `creator_id`, `creator_name`, `creator_alias_name` alongside legacy `mc_*`
+  - Add creator-named orchestration methods (`removeCreatorsFromShow`, `replaceCreatorsForShow`) and route wiring.
   - Keep legacy `mc` routes/contracts available during S2/S3 transition; final removal remains S4 gate.
 - **S1 landed commits (latest first)**:
   - `25fd985e` feat(erify_api): canonicalize seeded mc uids to creator prefix
@@ -234,3 +238,4 @@ This file is the cross-session source of truth for slicing that work into review
 - 2026-03-11: Branch split updated: current implementation branch renamed to `cutover/s1-creator-cutover-data-contracts`; separate `cutover/s2-backend-creator-domain-cutover` branch recreated for next scope.
 - 2026-03-11: Added S1 hotfix/rollback runbook to support fast incident response after merge.
 - 2026-03-11: S2 started with backend creator-first admin route aliases and show-orchestration creator DTO aliases (legacy `mc` routes retained for transition safety).
+- 2026-03-11: Extended S2 with creator-first show-creator payload aliases and creator-named orchestration service methods.

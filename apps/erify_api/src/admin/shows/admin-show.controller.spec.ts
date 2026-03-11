@@ -28,8 +28,10 @@ describe('adminShowController', () => {
     updateShowWithAssignments: jest.fn(),
     deleteShow: jest.fn(),
     removeMCsFromShow: jest.fn(),
+    removeCreatorsFromShow: jest.fn(),
     removePlatformsFromShow: jest.fn(),
     replaceMCsForShow: jest.fn(),
+    replaceCreatorsForShow: jest.fn(),
     replacePlatformsForShow: jest.fn(),
   };
   beforeEach(async () => {
@@ -224,13 +226,13 @@ describe('adminShowController', () => {
         creatorIds: ['creator_1', 'creator_2'],
       };
 
-      mockShowOrchestrationService.removeMCsFromShow.mockResolvedValue(
+      mockShowOrchestrationService.removeCreatorsFromShow.mockResolvedValue(
         undefined,
       );
 
       await controller.removeCreatorsFromShow(showId, removeDto);
       expect(
-        mockShowOrchestrationService.removeMCsFromShow,
+        mockShowOrchestrationService.removeCreatorsFromShow,
       ).toHaveBeenCalledWith(showId, removeDto.creatorIds);
     });
   });
@@ -287,16 +289,14 @@ describe('adminShowController', () => {
         showMcs: [{ mcId: 'creator_1', note: null, metadata: {} }],
       };
 
-      mockShowOrchestrationService.replaceMCsForShow.mockResolvedValue(
+      mockShowOrchestrationService.replaceCreatorsForShow.mockResolvedValue(
         updatedShow as any,
       );
 
       const result = await controller.replaceCreatorsOnShow(showId, replaceDto);
       expect(
-        mockShowOrchestrationService.replaceMCsForShow,
-      ).toHaveBeenCalledWith(showId, [
-        { mcId: 'creator_1', note: null, metadata: {} },
-      ]);
+        mockShowOrchestrationService.replaceCreatorsForShow,
+      ).toHaveBeenCalledWith(showId, replaceDto.creators);
       expect(result).toEqual(updatedShow);
     });
   });

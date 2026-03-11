@@ -19,6 +19,18 @@ import { ShowMcService } from '@/models/show-mc/show-mc.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 
+type McAssignmentPayload = {
+  mcId: string;
+  note?: string | null;
+  metadata?: object;
+};
+
+type CreatorAssignmentPayload = {
+  creatorId: string;
+  note?: string | null;
+  metadata?: object;
+};
+
 @Injectable()
 export class ShowOrchestrationService {
   constructor(
@@ -137,6 +149,13 @@ export class ShowOrchestrationService {
     await this.showMcRepository.softDeleteByMcIds(showId, internalMcIds);
   }
 
+  async removeCreatorsFromShow(
+    uid: string,
+    creatorIds: string[],
+  ): Promise<void> {
+    await this.removeMCsFromShow(uid, creatorIds);
+  }
+
   /**
    * Removes platforms from a show by soft-deleting the ShowPlatform records.
    */
@@ -156,7 +175,7 @@ export class ShowOrchestrationService {
   @Transactional()
   async replaceMCsForShow<T extends ShowInclude = Record<string, never>>(
     uid: string,
-    mcs: Array<{ mcId: string; note?: string | null; metadata?: object }>,
+    mcs: McAssignmentPayload[],
     include?: T,
   ): Promise<Show | ShowWithPayload<T>> {
     const defaultInclude = include || this.getDefaultIncludes();
@@ -165,6 +184,20 @@ export class ShowOrchestrationService {
 
     await this.syncShowMCs(showId, mcs);
     return this.showRepository.findByUid(uid, defaultInclude) as Promise<Show | ShowWithPayload<T>>;
+  }
+
+  async replaceCreatorsForShow<T extends ShowInclude = Record<string, never>>(
+    uid: string,
+    creators: CreatorAssignmentPayload[],
+    include?: T,
+  ): Promise<Show | ShowWithPayload<T>> {
+    const mcAssignments: McAssignmentPayload[] = creators.map((creator) => ({
+      mcId: creator.creatorId,
+      note: creator.note,
+      metadata: creator.metadata,
+    }));
+
+    return this.replaceMCsForShow(uid, mcAssignments, include);
   }
 
   /**
@@ -259,7 +292,7 @@ export class ShowOrchestrationService {
    */
   private async syncShowMCs(
     showId: bigint,
-    mcs: Array<{ mcId: string; note?: string | null; metadata?: object }>,
+    mcs: McAssignmentPayload[],
   ): Promise<void> {
     const mcUids = mcs.map((m) => m.mcId);
 
