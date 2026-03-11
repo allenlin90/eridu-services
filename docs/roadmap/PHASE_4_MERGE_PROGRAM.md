@@ -149,18 +149,18 @@ This file is the cross-session source of truth for slicing that work into review
 
 ## Execution Tracker
 
-- **Current active scope**: `S2` backend creator domain cutover
+- **Current active scope**: `S2` backend creator domain cutover (merge-ready)
 - **Master merge gate**: per-scope merge allowed once smoke-green
 - **Post-cutover start gate**: begin `S5` only after `S4` is merged to `master`
 - **Current status by scope**:
   - `S1`: merged to `master` and deployed (2026-03-11)
-  - `S2`: active
+  - `S2`: merge-ready (verification + smoke-green on 2026-03-11)
   - `S3`: pending
   - `S4`: pending
   - `S5`: planned (post-cutover)
   - `S6`: planned (post-cutover)
   - `S7`: planned (post-cutover)
-- **S2 in-progress slice (backend route/contract cutover)**:
+- **S2 delivered scope (backend route/contract cutover)**:
   - Add creator-first admin route aliases:
     - `admin/creators` (alias of `admin/mcs`)
     - `admin/show-creators` (alias of `admin/show-mcs`)
@@ -191,6 +191,30 @@ This file is the cross-session source of truth for slicing that work into review
     - validation accepts creator-only assignments (`creators[]`) without requiring legacy `mcs[]`
     - validation messages use creator-first wording (legacy DB/UID internals remain unchanged)
   - Keep legacy `mc` routes/contracts available during S2/S3 transition; final removal remains S4 gate.
+- **S2 landed commits (latest first)**:
+  - `a407092c` fix(manual-test): send origin header in auth login smoke script
+  - `ffdf7401` refactor(cutover-s2): make creator orchestration paths first-class
+  - `044a6b82` feat(cutover-s2): make schedule validation creator-first with mc fallback
+  - `9551ebdf` feat(cutover-s2): add creator aliases in schedule planning contracts
+  - `1f5fa71e` fix(cutover-s2): hydrate backdoor users before creator/mc serialization
+  - `8df88a39` feat(cutover-s2): add creator aliases for user payloads
+  - `cda4fecc` feat(cutover-s2): add creator aliases to studio show task summary
+  - `d02b49c7` feat(show): add creator_name query alias with mc_name compatibility
+  - `3391f260` refactor(erify_api): add creator-first show-creator payload and service aliases
+  - `0f3380a8` feat(erify_api): add creator-first admin route and assignment DTO aliases
+- **S2 sign-off evidence (2026-03-11)**:
+  - Verification gates passed:
+  - `pnpm --filter @eridu/api-types lint`
+  - `pnpm --filter @eridu/api-types typecheck`
+  - `pnpm --filter @eridu/api-types test`
+  - `pnpm --filter erify_api lint`
+  - `pnpm --filter erify_api typecheck`
+  - `pnpm --filter erify_api test`
+  - Runtime smoke passed:
+  - `manual:schedule:regen-and-run` succeeded end-to-end (upload/validate/publish).
+  - Admin creator route smoke succeeded:
+  - `/admin/shows/:id/creators/replace` (success + creator-not-found path)
+  - `/admin/shows/:id/creators/remove`
 - **S1 landed commits (latest first)**:
   - `25fd985e` feat(erify_api): canonicalize seeded mc uids to creator prefix
   - `8e64efbe` fix(studios): avoid refetching inactive show-task queries without queryFn
