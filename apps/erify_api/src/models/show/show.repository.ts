@@ -194,13 +194,14 @@ export class ShowRepository extends BaseRepository<
       };
     }
 
-    // MC filtering (Name)
-    if (query.mc_name) {
+    // Creator filtering (Name) with legacy MC alias fallback
+    const creatorName = query.creator_name ?? query.mc_name;
+    if (creatorName) {
       where.showMCs = {
         some: {
           mc: {
             name: {
-              contains: query.mc_name,
+              contains: creatorName,
               mode: 'insensitive',
             },
           },

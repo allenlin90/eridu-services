@@ -44,6 +44,8 @@ export const listShowsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).optional().default(10),
   name: z.string().optional(),
+  creator_name: z.string().optional(),
+  mc_name: z.string().optional(),
   client_id: z
     .union([
       z.string().startsWith(UID_PREFIXES.CLIENT),

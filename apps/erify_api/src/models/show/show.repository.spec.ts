@@ -77,4 +77,31 @@ describe('showRepository', () => {
     const where = txShowDelegate.findMany.mock.calls[0][0].where as { startTime?: { lte?: Date } };
     expect(where.startTime?.lte?.toISOString()).toBe(startDateTo);
   });
+
+  it('maps creator_name filter to show creator relation search', async () => {
+    txShowDelegate.count.mockResolvedValue(0);
+    txShowDelegate.findMany.mockResolvedValue([]);
+
+    await repository.findPaginated({
+      page: 1,
+      limit: 10,
+      take: 10,
+      skip: 0,
+      sort: 'desc',
+      include_deleted: false,
+      order_by: 'created_at',
+      order_direction: 'desc',
+      creator_name: 'alice',
+    } as never);
+
+    expect(txShowDelegate.findMany).toHaveBeenCalledTimes(1);
+    const where = txShowDelegate.findMany.mock.calls[0][0].where as {
+      showMCs?: {
+        some?: {
+          mc?: { name?: { contains?: string } };
+        };
+      };
+    };
+    expect(where.showMCs?.some?.mc?.name?.contains).toBe('alice');
+  });
 });

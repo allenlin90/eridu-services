@@ -173,6 +173,8 @@ This file is the cross-session source of truth for slicing that work into review
     - `admin/show-creators` accepts `creator_id` input alias
     - show-creator response includes `creator_id`, `creator_name`, `creator_alias_name` alongside legacy `mc_*`
   - Add creator-named orchestration methods (`removeCreatorsFromShow`, `replaceCreatorsForShow`) and route wiring.
+  - Add creator-first show list filter alias support:
+    - `creator_name` query alias for admin/studio show search (legacy `mc_name` retained)
   - Keep legacy `mc` routes/contracts available during S2/S3 transition; final removal remains S4 gate.
 - **S1 landed commits (latest first)**:
   - `25fd985e` feat(erify_api): canonicalize seeded mc uids to creator prefix
@@ -239,3 +241,4 @@ This file is the cross-session source of truth for slicing that work into review
 - 2026-03-11: Added S1 hotfix/rollback runbook to support fast incident response after merge.
 - 2026-03-11: S2 started with backend creator-first admin route aliases and show-orchestration creator DTO aliases (legacy `mc` routes retained for transition safety).
 - 2026-03-11: Extended S2 with creator-first show-creator payload aliases and creator-named orchestration service methods.
+- 2026-03-11: Added creator-first show list query alias (`creator_name`) with legacy `mc_name` compatibility.

@@ -208,6 +208,7 @@ export const showDto = showWithRelationsSchema
 export const listShowsFilterSchema = z.object({
   name: z.string().optional(),
   client_name: z.string().optional(),
+  creator_name: z.string().optional(),
   mc_name: z.string().optional(),
   client_id: z
     .union([
@@ -245,6 +246,7 @@ export class ListShowsQueryDto extends createZodDto(listShowsQuerySchema) {
   declare sort: 'asc' | 'desc';
   declare name?: string;
   declare client_name?: string;
+  declare creator_name?: string;
   declare mc_name?: string;
   declare client_id?: string | string[];
   declare start_date_from?: string;
