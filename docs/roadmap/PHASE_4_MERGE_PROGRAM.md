@@ -178,6 +178,9 @@ This file is the cross-session source of truth for slicing that work into review
   - Add creator-first studio task-summary parity:
     - `studios/:studioId/shows` task-summary query supports `creator_name` alias (`mc_name` retained)
     - task-summary show payload emits `creators[]` alongside legacy `mcs[]`
+  - Add creator aliases on user payload contracts:
+    - `create user` accepts `creator` input alias (legacy `mc` retained)
+    - `user-with-mc` response emits `creator` alongside legacy `mc`
   - Keep legacy `mc` routes/contracts available during S2/S3 transition; final removal remains S4 gate.
 - **S1 landed commits (latest first)**:
   - `25fd985e` feat(erify_api): canonicalize seeded mc uids to creator prefix
