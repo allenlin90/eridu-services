@@ -149,12 +149,12 @@ This file is the cross-session source of truth for slicing that work into review
 
 ## Execution Tracker
 
-- **Current active scope**: `S2` backend creator domain cutover (merge-ready)
+- **Current active scope**: `S3` studios frontend creator cutover (pending start)
 - **Master merge gate**: per-scope merge allowed once smoke-green
 - **Post-cutover start gate**: begin `S5` only after `S4` is merged to `master`
 - **Current status by scope**:
   - `S1`: merged to `master` and deployed (2026-03-11)
-  - `S2`: merge-ready (verification + smoke-green on 2026-03-11)
+  - `S2`: merged to `master` (local merge on 2026-03-11; deploy pending)
   - `S3`: pending
   - `S4`: pending
   - `S5`: planned (post-cutover)
@@ -281,3 +281,4 @@ This file is the cross-session source of truth for slicing that work into review
 - 2026-03-11: S2 started with backend creator-first admin route aliases and show-orchestration creator DTO aliases (legacy `mc` routes retained for transition safety).
 - 2026-03-11: Extended S2 with creator-first show-creator payload aliases and creator-named orchestration service methods.
 - 2026-03-11: Added creator-first show list query alias (`creator_name`) with legacy `mc_name` compatibility.
+- 2026-03-11: S2 merged into local `master`; tracker updated and next scope shifted to `S3`.
