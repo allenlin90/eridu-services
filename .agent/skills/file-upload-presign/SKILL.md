@@ -48,7 +48,7 @@ The `upload_routing` metadata key is typed as `UploadRoutingMetadata` (exported 
 
 Storage directory is resolved in this priority order:
 
-1. Show-linked + `task.type === CLOSURE` → force `mc-review`
+1. Show-linked + `task.type === CLOSURE` → force `mc-review` (legacy R2 directory name; not renamed to avoid storage migration)
 2. `task.metadata.upload_routing.material_asset_directory` — if present, use it directly
 3. No show-linked target → `single-use`
 4. Show-linked + `task.type === SETUP` → `pre-production`

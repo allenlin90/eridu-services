@@ -44,13 +44,13 @@ Read this skill for current `erify_api` authorization behavior first. Load the p
 
 Different user types have different access scopes:
 
-| User Type       | Access Scope     | Implementation                  |
-| --------------- | ---------------- | ------------------------------- |
-| MC              | Own shows only   | Via `ShowMC` relationship       |
-| Studio Operator | Studio's rooms   | Via `StudioMembership`          |
-| Content Manager | Specific clients | Planned RBAC only               |
-| System Manager  | All data         | Planned RBAC only               |
-| Read-only Admin | View-only        | Planned RBAC only               |
+| User Type       | Access Scope     | Implementation                          |
+| --------------- | ---------------- | --------------------------------------- |
+| Creator         | Own shows only   | Via `ShowMC` relationship (DB internal) |
+| Studio Operator | Studio's rooms   | Via `StudioMembership`                  |
+| Content Manager | Specific clients | Planned RBAC only                       |
+| System Manager  | All data         | Planned RBAC only                       |
+| Read-only Admin | View-only        | Planned RBAC only                       |
 
 ### 2.1 Workflow Action Authorization
 

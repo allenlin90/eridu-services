@@ -101,7 +101,8 @@ an orchestration service, add a method to the model service instead.
 **Join/Association Table modules**: Follow the same rule.
 - Add a service even if it's thin (it generates UIDs and exposes the repo methods)
 - Export only the service
-- Examples: ShowMcModule, ShowPlatformModule, TaskTargetModule
+- Examples: ShowMcModule (DB-level: `ShowMC` Prisma model, API surface uses "creator"), ShowPlatformModule, TaskTargetModule
+- **Naming note**: Some model-layer modules retain legacy DB names (e.g. `ShowMcModule` / `ShowMcService`) while the API surface and admin routes use creator-first naming (`/admin/show-creators`). This is intentional — the Prisma model is `ShowMC`, and renaming it would require a migration.
 
 **Reference/Lookup table modules**: Same rule.
 - Examples: ShowStandardModule, ShowStatusModule, ShowTypeModule
@@ -122,7 +123,7 @@ Fold into the parent module when:
 - Only created/deleted within a single transaction owned by the parent
 
 Examples:
-- ShowMcModule (separate) → has restore/cascade methods, note field
+- ShowMcModule (separate) → has restore/cascade methods, note field (DB model: `ShowMC`; API surface: "show-creator")
 - ShowPlatformModule (separate) → has liveStreamLink, viewerCount
 - TaskTargetModule (separate) → simple join, but kept separate for consistency
 

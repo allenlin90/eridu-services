@@ -14,6 +14,7 @@ Before implementing ANY feature, read the relevant skill from `.agent/skills/<sk
 - Frontend: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`
 - Full-stack: `admin-list-pattern`, `studio-list-pattern`
 - Shift schedule: `shift-schedule-pattern`
+- Domain cutover: `domain-refactor-cutover-strategy`, `data-compatibility-migration`
 
 ### Dependency Changes — Full Impact (CRITICAL)
 The cloud build runs `pnpm install --frozen-lockfile`. **`pnpm-lock.yaml` is the authoritative install manifest** — `package.json` alone is not enough. A stale lockfile hard-fails the build before any code runs, which cascades: build fails → deployment blocked → pre-deploy migration never runs → all downstream issues compound.
@@ -306,8 +307,10 @@ const where: Prisma.TaskWhereInput = { ... };
 | **backend-testing-patterns** | Jest-based NestJS tests: service, controller, guard, orchestration; project test helpers in `src/testing/` | HIGH |
 | **observability-logging** | NestJS Logger usage, log levels, what to never log, structured message format, BullMQ processor logging | MEDIUM |
 | **secure-coding-practices** | Per-feature security checklist: input validation, ID exposure, SQL injection, studio scoping, secrets, rate limiting | HIGH |
+| **domain-refactor-cutover-strategy** | Multi-phase domain rename playbook: scope isolation, contract-first ordering, alias vs. direct cutover, stabilization | MEDIUM |
+| **data-compatibility-migration** | Frontend dual-field fallback helpers for API contract migrations, centralized accessor pattern, lifecycle rules | MEDIUM |
 
-**Full skill list** (34 total): See `.agent/skills/` directory
+**Full skill list** (36 total): See `.agent/skills/` directory
 
 ### Memory Files (Supplementary - `.claude/memory/`)
 | File | Purpose | When to Use |

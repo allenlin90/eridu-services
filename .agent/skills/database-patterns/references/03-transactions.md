@@ -9,14 +9,14 @@ import { Transactional } from '@nestjs-cls/transactional';
 export class ShowOrchestrationService {
   constructor(
     private readonly showService: ShowService,
-    private readonly showMcService: ShowMcService,
+    private readonly showMcService: ShowMcService, // DB-level service (Prisma model: ShowMC)
   ) {}
 
   @Transactional()
-  async createShowWithMcs(data: CreateShowWithMcsPayload) {
+  async createShowWithAssignments(data: CreateShowWithAssignmentsPayload) {
     // No `tx` passed — CLS propagates it to all repository calls automatically
     const show = await this.showService.createShow(data);
-    await this.showMcService.createMany(show.id, data.mcs);
+    await this.showMcService.createMany(show.id, data.creators);
     return show;
   }
 }
