@@ -34,12 +34,12 @@ This file is the cross-session source of truth for slicing that work into review
 
 - **Reference only**: `feat/phase-4-p-and-l`
 - **Active scope branch policy (one-by-one)**:
-  - Keep only one active scope branch locally at a time (current: `cutover/s2-backend-creator-domain-cutover`).
+  - Keep only one active scope branch locally at a time (current: `cutover/s3-studios-frontend-creator-cutover`).
   - Create the next scope branch only when previous scope is merged into `master`.
   - Delete completed/inactive scope branches to reduce branch noise.
 - **Planned cutover scope branch names (create on demand)**:
   - `cutover/s1-creator-cutover-data-contracts` (completed)
-  - `cutover/s2-backend-creator-domain-cutover` (active)
+  - `cutover/s2-backend-creator-domain-cutover` (completed)
   - `cutover/s3-studios-frontend-creator-cutover`
   - `cutover/s4-membership-mapping-stabilization`
 - **Planned post-cutover branch names (create on demand after S4->master)**:
