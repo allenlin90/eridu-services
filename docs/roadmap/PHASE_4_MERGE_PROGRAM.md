@@ -149,17 +149,22 @@ This file is the cross-session source of truth for slicing that work into review
 
 ## Execution Tracker
 
-- **Current active scope**: `S3` studios frontend creator cutover (in progress)
+- **Current active scope**: `S4` cutover stabilization + parity hardening (ready to merge)
 - **Master merge gate**: per-scope merge allowed once smoke-green
 - **Post-cutover start gate**: begin `S5` only after `S4` is merged to `master`
 - **Current status by scope**:
   - `S1`: merged to `master` and deployed (2026-03-11)
   - `S2`: merged to `master` and deployed (2026-03-11)
-  - `S3`: in progress
-  - `S4`: pending
+  - `S3`: merged to `master` and deployed (2026-03-11)
+  - `S4`: ready to merge to `master` (verification complete on 2026-03-11)
   - `S5`: planned (post-cutover)
   - `S6`: planned (post-cutover)
   - `S7`: planned (post-cutover)
+- **S4 kickoff slices (stabilization-only)**
+  - `S4-A` Compatibility contraction: completed.
+  - `S4-B` Backend contract tightening: completed.
+  - `S4-C` Membership/assignment parity: completed.
+  - `S4-D` Cutover cleanup: completed (verification + merge-readiness sign-off).
 - **S3 progress (frontend creator-first cutover)**
   - System admin route switched from `/system/mcs` to `/system/creators`.
   - Sidebar/nav updated from **MCs** to **Creators**.
@@ -193,6 +198,74 @@ This file is the cross-session source of truth for slicing that work into review
   - Show update dialog preserves selected creators (creator-first payload with compatibility fallback read).
   - Studio dashboard operational-day show list renders creator names.
   - `/studios/:studioId/my-tasks` show-group details render creators without MC-labeled UI.
+- **S4 progress (stabilization + parity hardening)**
+  - `S4-A` started on `cutover/s4-membership-mapping-stabilization`.
+  - Removed remaining `mc/mcs` fallback reads from active `erify_studios` runtime code.
+  - Tightened creator utility mapping to creator-first fields only (`creator_id`, `creator_name`, `creator_names`).
+  - Removed legacy `mcs` fallback field from studios show API local type.
+  - Added/updated utility tests to lock creator-first behavior.
+  - `S4-B` route contraction started:
+  - removed legacy admin aliases `/admin/mcs` and `/admin/show-mcs`.
+  - removed legacy show assignment endpoints `PATCH /admin/shows/:id/mcs/remove` and `PATCH /admin/shows/:id/mcs/replace`.
+  - retained creator-first endpoints only for these admin surfaces.
+  - removed legacy `mc_name` query alias from show filtering contracts/repository (creator-first `creator_name` is now canonical).
+  - removed legacy show-orchestration remove/replace `mcs` DTO aliases and service aliases (`removeMCsFromShow`, `replaceMCsForShow`).
+  - removed legacy `mcs` input alias from show create/update assignment contracts (creator assignments are creator-only at API boundary).
+  - removed legacy `mcs` output alias from show orchestration responses (`showWithAssignmentsDto` now emits `creators[]` only).
+  - removed legacy `mc_id` input alias and legacy `mc_*` output aliases from show-creator contract (`admin/show-creators` is creator-only).
+  - removed legacy `mc` alias from backdoor user create payload contract and `user-with-mc` DTO output (creator-only API boundary).
+  - removed legacy task-summary aliases (`mcs`, `mc_names`) from task contracts and studio task-orchestration responses.
+  - removed legacy `mcs[]` schedule-planning plan-document alias at API boundary (creator-only `creators[]` accepted).
+  - aligned schedule validation/publishing flows to consume `creators[]` plan assignments end-to-end (DB `showMC` internals unchanged).
+  - removed legacy `mc_links_*` publish-summary aliases (creator-only `creator_links_*` counters at API boundary).
+  - `S4-C` parity hardening started:
+  - user creation payload/DTO symbols are now creator-first in admin/backdoor APIs (Prisma `mc` relation internals unchanged).
+  - removed remaining `userWithMc*` DTO symbol naming in favor of `userWithCreator*`.
+  - switched creator model schema contracts to import from `@eridu/api-types/creators` (no runtime imports remain on `@eridu/api-types/mcs`).
+  - removed legacy `@eridu/api-types/mcs` package entrypoint and alias schemas from shared contracts.
+  - renamed admin backend module paths to creator-first structure (`admin/creators/*`, `admin/show-creators/*`) and aligned controller/module symbols.
+  - renamed show-orchestration internal assignment payload fields to creator-first naming (`creators`, `showCreators`, `creatorId`) while keeping DB `showMC` persistence internals unchanged.
+  - renamed schedule-planning internal lookup variable naming from `mcs` to `creators` for creator-first consistency (no behavior change).
+  - updated schedule-planning manual payload generator to emit `creators[].creatorId`.
+  - Verification passed on branch:
+  - `pnpm --filter erify_studios lint`
+  - `pnpm --filter erify_studios typecheck`
+  - `pnpm --filter erify_studios test`
+  - `pnpm --filter erify_studios build`
+  - `pnpm --filter @eridu/api-types lint`
+  - `pnpm --filter @eridu/api-types typecheck`
+  - `pnpm --filter @eridu/api-types test`
+  - `pnpm --filter erify_api lint`
+  - `pnpm --filter erify_api typecheck`
+  - `pnpm --filter erify_api test -- admin-show.controller.spec.ts admin-creator.controller.spec.ts admin-show-creator.controller.spec.ts`
+  - `pnpm --filter erify_api test -- admin-show.controller.spec.ts show.repository.spec.ts`
+  - `pnpm --filter erify_api test -- admin-show.controller.spec.ts show-orchestration.service.spec.ts`
+  - `pnpm --filter erify_api test -- admin-show.controller.spec.ts admin-show-creator.controller.spec.ts show-orchestration.service.spec.ts`
+  - `pnpm --filter erify_api test -- admin-show.controller.spec.ts admin-show-creator.controller.spec.ts show-orchestration.service.spec.ts backdoor-user.controller.spec.ts user.schema.spec.ts`
+  - `pnpm --filter erify_api test -- show-orchestration.service.spec.ts admin-show.controller.spec.ts`
+  - `pnpm --filter erify_api test -- validation.service.spec.ts publishing.service.spec.ts schedule-planning.service.spec.ts schedule-planning.schema.spec.ts`
+  - `pnpm --filter erify_api test -- schedule-planning.schema.spec.ts validation.service.spec.ts publishing.service.spec.ts schedule-planning.service.spec.ts schedule.service.spec.ts`
+  - `pnpm --filter erify_api test -- schedule-planning.schema.spec.ts publishing.service.spec.ts schedule-planning.service.spec.ts admin-schedule.controller.spec.ts`
+  - `pnpm --filter erify_api test -- user.schema.spec.ts user.service.spec.ts admin-user.controller.spec.ts backdoor-user.controller.spec.ts`
+  - `pnpm --filter erify_api test -- admin-creator.controller.spec.ts mc.service.spec.ts`
+  - `pnpm --filter @eridu/api-types lint`
+  - `pnpm --filter @eridu/api-types typecheck`
+  - `pnpm --filter @eridu/api-types build`
+  - `pnpm --filter erify_api test`
+  - `pnpm --filter erify_api build`
+  - `pnpm --filter erify_api test -- task-orchestration.service.spec.ts`
+  - `pnpm --filter erify_studios lint`
+  - `pnpm --filter erify_studios typecheck`
+  - `pnpm --filter erify_studios test`
+  - `pnpm --filter erify_studios build`
+- **S4 final merge-readiness check (2026-03-11)**
+  - Branch `cutover/s4-membership-mapping-stabilization` is clean and ahead of `master` by 17 commits.
+  - Legacy runtime route/import cleanup confirmed:
+  - no `/admin/mcs` route wiring
+  - no `/admin/show-mcs` route wiring
+  - no `@eridu/api-types/mcs` import usage
+  - no `userWithMc*` DTO symbol usage
+  - Remaining `mc/mcs` mentions in active runtime are explicit reject-legacy guards only (`z.never`) for schedule-planning payload compatibility enforcement.
 - **S2 delivered scope (backend route/contract cutover)**:
   - Add creator-first admin route aliases:
     - `admin/creators` (alias of `admin/mcs`)
@@ -317,3 +390,21 @@ This file is the cross-session source of truth for slicing that work into review
 - 2026-03-11: S2 merged into local `master`; tracker updated and next scope shifted to `S3`.
 - 2026-03-11: S3 route/module cutover landed in `erify_studios` (`/system/creators`, `features/creators/*`, creator-first query keys/endpoints).
 - 2026-03-11: S3 compatibility hardening landed with centralized fallback helper (`src/lib/creator-utils.ts`) and dedicated utility tests.
+- 2026-03-11: S3 confirmed healthy on production; S4 branch started (`cutover/s4-membership-mapping-stabilization`) for stabilization/parity hardening.
+- 2026-03-11: S4-A contraction landed in `erify_studios`: active runtime reads are creator-only (`creator_*`) with verification green.
+- 2026-03-11: S4-B route contraction removed legacy admin aliases (`/admin/mcs`, `/admin/show-mcs`) and legacy show `mcs` assignment endpoints.
+- 2026-03-11: S4-B query contraction removed legacy `mc_name` show-filter alias from shared schemas and repository logic.
+- 2026-03-11: S4-B removed legacy show-orchestration `mcs` DTO/service aliases; creator remove/replace paths are now canonical.
+- 2026-03-11: S4-B removed legacy `mcs` input alias from show create/update assignment contracts (`creators[]` only at API boundary).
+- 2026-03-11: S4-B removed legacy `mcs`/`mc_*` aliases from show orchestration and show-creator API outputs; `admin/show-creators` contract is creator-only.
+- 2026-03-11: S4-B removed legacy `mc` alias from user creation/backdoor payload contracts and `userWithMc` DTO output.
+- 2026-03-11: S4-B removed legacy task-summary aliases (`mcs`, `mc_names`) from task contracts and studio task-orchestration output.
+- 2026-03-11: S4-B removed legacy schedule-planning `mcs[]` payload alias; plan docs and manual payload generator are now creator-only (`creators[]`).
+- 2026-03-11: S4-B removed legacy schedule publish-summary `mc_links_*` aliases; creator-only counters are now canonical.
+- 2026-03-11: S4-C started with user/admin/backdoor creator-first naming parity: removed `userWithMc*` symbols and switched user creation payload internals from `mc` to `creator` (DB relation unchanged).
+- 2026-03-11: S4-C updated creator model schema contracts to source from `@eridu/api-types/creators`; runtime `@eridu/api-types/mcs` imports are now eliminated.
+- 2026-03-11: S4-C removed legacy shared contract export path `@eridu/api-types/mcs` and deleted alias schema files from `packages/api-types/src/mcs`.
+- 2026-03-11: S4-C renamed admin backend module paths/symbols from `mcs/show-mcs` to `creators/show-creators` to remove lingering MC naming in active API module structure.
+- 2026-03-11: S4-C renamed show-orchestration internal assignment payload fields from `mcs/showMcs/mcId` to creator-first naming (`creators/showCreators/creatorId`) with unchanged DB persistence model.
+- 2026-03-11: S4-C renamed schedule-planning internal lookup variables from `mcs` to `creators` (behavior unchanged, creator-first readability only).
+- 2026-03-11: S4-D final cleanup/check completed; full lint/typecheck/test/build gates passed for `@eridu/api-types`, `erify_api`, and `erify_studios`; branch marked ready to merge to `master`.

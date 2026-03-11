@@ -7,10 +7,10 @@ import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
 import {
-  createMcInputSchema,
-  mcApiResponseSchema,
-  updateMcInputSchema,
-} from '@eridu/api-types/mcs';
+  createCreatorInputSchema,
+  creatorApiResponseSchema,
+  updateCreatorInputSchema,
+} from '@eridu/api-types/creators';
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { isCreatorUid } from '@/models/creator/creator-uid.util';
@@ -57,7 +57,7 @@ export const mcSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const createMcSchema = createMcInputSchema.transform((data) => ({
+export const createMcSchema = createCreatorInputSchema.transform((data) => ({
   userId: data.user_id ?? null,
   name: data.name,
   aliasName: data.alias_name,
@@ -68,7 +68,7 @@ export const createMcSchema = createMcInputSchema.transform((data) => ({
 }));
 
 // API input schema (snake_case input, transforms to camelCase)
-export const updateMcSchema = updateMcInputSchema.transform((data) => ({
+export const updateMcSchema = updateCreatorInputSchema.transform((data) => ({
   userId: data.user_id ?? null,
   name: data.name,
   aliasName: data.alias_name,
@@ -106,7 +106,7 @@ export const mcDto = mcSchema
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
   }))
-  .pipe(mcApiResponseSchema);
+  .pipe(creatorApiResponseSchema);
 
 // Schema for MC with user data (used in admin endpoints)
 export const mcWithUserSchema = z.object({
@@ -146,7 +146,7 @@ export const mcWithUserDto = mcWithUserSchema
     };
   })
   .pipe(
-    mcApiResponseSchema.extend({
+    creatorApiResponseSchema.extend({
       user: z
         .object({
           id: z.string(),

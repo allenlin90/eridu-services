@@ -1,7 +1,7 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
-import { AdminShowMcController } from './admin-show-mc.controller';
+import { AdminShowCreatorController } from './admin-show-creator.controller';
 
 import type { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import type {
@@ -10,8 +10,8 @@ import type {
 } from '@/models/show-mc/schemas/show-mc.schema';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
 
-describe('adminShowMcController', () => {
-  let controller: AdminShowMcController;
+describe('adminShowCreatorController', () => {
+  let controller: AdminShowCreatorController;
 
   const mockShowMcService = {
     create: jest.fn(),
@@ -23,11 +23,11 @@ describe('adminShowMcController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [AdminShowMcController],
+      controllers: [AdminShowCreatorController],
       providers: [{ provide: ShowMcService, useValue: mockShowMcService }],
     }).compile();
 
-    controller = module.get<AdminShowMcController>(AdminShowMcController);
+    controller = module.get<AdminShowCreatorController>(AdminShowCreatorController);
   });
 
   beforeEach(() => {

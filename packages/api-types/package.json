@@ -21,10 +21,6 @@
       "types": "./dist/creators/index.d.ts",
       "default": "./dist/creators/index.js"
     },
-    "./mcs": {
-      "types": "./dist/mcs/index.d.ts",
-      "default": "./dist/mcs/index.js"
-    },
     "./pagination": {
       "types": "./dist/pagination/index.d.ts",
       "default": "./dist/pagination/index.js"

@@ -5,7 +5,7 @@ import {
 
 describe('schedulePlanningSchema', () => {
   describe('planDocumentSchema', () => {
-    it('normalizes creators[] to legacy mcs[] when only creator assignments are provided', () => {
+    it('keeps creators[] assignments in creator-only payload', () => {
       const parsed = planDocumentSchema.parse({
         metadata: {
           lastEditedBy: 'user_1',
@@ -33,11 +33,11 @@ describe('schedulePlanningSchema', () => {
       });
 
       expect(parsed.shows[0].creators).toEqual([{ creatorId: 'mc_1', note: 'Lead' }]);
-      expect(parsed.shows[0].mcs).toEqual([{ mcId: 'mc_1', note: 'Lead' }]);
+      expect(parsed.shows[0]).not.toHaveProperty('mcs');
     });
 
-    it('normalizes legacy mcs[] to creators[] when only mc assignments are provided', () => {
-      const parsed = planDocumentSchema.parse({
+    it('rejects legacy mcs[] assignments at API boundary', () => {
+      const result = planDocumentSchema.safeParse({
         metadata: {
           lastEditedBy: 'user_1',
           lastEditedAt: '2026-03-11T00:00:00.000Z',
@@ -63,22 +63,21 @@ describe('schedulePlanningSchema', () => {
         ],
       });
 
-      expect(parsed.shows[0].mcs).toEqual([{ mcId: 'mc_1', note: 'Lead' }]);
-      expect(parsed.shows[0].creators).toEqual([{ creatorId: 'mc_1', note: 'Lead' }]);
+      expect(result.success).toBe(false);
     });
   });
 
   describe('publishScheduleSummarySchema', () => {
-    it('derives creator links from legacy mc links', () => {
+    it('accepts creator-only publish summary', () => {
       const parsed = publishScheduleSummarySchema.parse({
         shows_created: 1,
         shows_updated: 2,
         shows_cancelled: 0,
         shows_pending_resolution: 0,
         shows_restored: 0,
-        mc_links_added: 3,
-        mc_links_updated: 4,
-        mc_links_removed: 5,
+        creator_links_added: 3,
+        creator_links_updated: 4,
+        creator_links_removed: 5,
         platform_links_added: 1,
         platform_links_updated: 1,
         platform_links_removed: 0,
@@ -89,24 +88,22 @@ describe('schedulePlanningSchema', () => {
       expect(parsed.creator_links_removed).toBe(5);
     });
 
-    it('derives legacy mc links from creator links', () => {
-      const parsed = publishScheduleSummarySchema.parse({
+    it('rejects legacy mc_links aliases at API boundary', () => {
+      const result = publishScheduleSummarySchema.safeParse({
         shows_created: 1,
         shows_updated: 2,
         shows_cancelled: 0,
         shows_pending_resolution: 0,
         shows_restored: 0,
-        creator_links_added: 6,
-        creator_links_updated: 7,
-        creator_links_removed: 8,
+        mc_links_added: 6,
+        mc_links_updated: 7,
+        mc_links_removed: 8,
         platform_links_added: 1,
         platform_links_updated: 1,
         platform_links_removed: 0,
       });
 
-      expect(parsed.mc_links_added).toBe(6);
-      expect(parsed.mc_links_updated).toBe(7);
-      expect(parsed.mc_links_removed).toBe(8);
+      expect(result.success).toBe(false);
     });
   });
 });

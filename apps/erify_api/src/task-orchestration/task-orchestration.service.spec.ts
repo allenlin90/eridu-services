@@ -264,13 +264,6 @@ describe('taskOrchestrationService', () => {
           creator_alias_name: 'Alice A',
         },
       ]);
-      expect(result.data[0].mcs).toEqual([
-        {
-          mc_id: 'mc_1',
-          mc_name: 'Alice',
-          mc_aliasname: 'Alice A',
-        },
-      ]);
     });
 
     it('should filter by attention show ids when needs_attention is enabled', async () => {

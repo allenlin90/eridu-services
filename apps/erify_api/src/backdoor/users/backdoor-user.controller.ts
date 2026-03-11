@@ -19,7 +19,7 @@ import {
   CreateUserDto,
   UpdateUserDto,
   userDto,
-  userWithMcDto,
+  userWithCreatorDto,
 } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
 
@@ -44,29 +44,29 @@ export class BackdoorUserController extends BaseBackdoorController {
   }
 
   @Post()
-  @ZodResponse(userWithMcDto, HttpStatus.CREATED, 'User created successfully')
+  @ZodResponse(userWithCreatorDto, HttpStatus.CREATED, 'User created successfully')
   async createUser(@Body() body: CreateUserDto) {
     const createdUser = await this.userService.createUser(body);
-    const userWithMc = await this.userService.findUserById(createdUser.uid, { mc: true });
+    const userWithCreator = await this.userService.findUserById(createdUser.uid, { mc: true });
 
-    if (!userWithMc) {
+    if (!userWithCreator) {
       throw HttpError.notFound('User', createdUser.uid);
     }
 
-    return userWithMc;
+    return userWithCreator;
   }
 
   @Post('bulk')
-  @ZodResponse(z.array(userWithMcDto), HttpStatus.CREATED, 'Users created successfully')
+  @ZodResponse(z.array(userWithCreatorDto), HttpStatus.CREATED, 'Users created successfully')
   async createUsersBulk(@Body() body: BulkCreateUserDto) {
     const createdUsers = await this.userService.createUsersBulk(body.data);
     const hydratedUsers = await Promise.all(
       createdUsers.map(async (user) => {
-        const userWithMc = await this.userService.findUserById(user.uid, { mc: true });
-        if (!userWithMc) {
+        const userWithCreator = await this.userService.findUserById(user.uid, { mc: true });
+        if (!userWithCreator) {
           throw HttpError.notFound('User', user.uid);
         }
-        return userWithMc;
+        return userWithCreator;
       }),
     );
 

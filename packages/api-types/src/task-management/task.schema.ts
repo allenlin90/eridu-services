@@ -153,7 +153,6 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj) => {
         client_name: s.client?.name ?? null,
         studio_room_name: s.studioRoom?.name ?? null,
         creator_names: creatorNames,
-        mc_names: creatorNames,
       };
     }
   }
@@ -288,12 +287,6 @@ export type BulkDeleteTasksResponse = z.infer<typeof bulkDeleteTasksResponseSche
 /**
  * Show data with task completion summary
  */
-const showSummaryMcSchema = z.object({
-  mc_id: z.string(),
-  mc_name: z.string(),
-  mc_aliasname: z.string(),
-});
-
 const showSummaryCreatorSchema = z.object({
   creator_id: z.string(),
   creator_name: z.string(),
@@ -302,36 +295,13 @@ const showSummaryCreatorSchema = z.object({
 
 export const showWithTaskSummaryDto = showApiResponseSchema
   .extend({
-    mcs: z.array(showSummaryMcSchema).default([]),
-    creators: z.array(showSummaryCreatorSchema).optional(),
+    creators: z.array(showSummaryCreatorSchema).default([]),
     task_summary: z.object({
       total: z.number().int(),
       assigned: z.number().int(),
       unassigned: z.number().int(),
       completed: z.number().int(),
     }),
-  })
-  .transform((obj) => {
-    const creators = obj.creators
-      ?? obj.mcs.map((mc) => ({
-        creator_id: mc.mc_id,
-        creator_name: mc.mc_name,
-        creator_alias_name: mc.mc_aliasname,
-      }));
-
-    const mcs = obj.mcs.length > 0
-      ? obj.mcs
-      : creators.map((creator) => ({
-          mc_id: creator.creator_id,
-          mc_name: creator.creator_name,
-          mc_aliasname: creator.creator_alias_name,
-        }));
-
-    return {
-      ...obj,
-      creators,
-      mcs,
-    };
   });
 
 export type ShowWithTaskSummaryDto = z.infer<typeof showWithTaskSummaryDto>;
@@ -355,7 +325,6 @@ export const listStudioShowsQuerySchema = paginationBaseSchema
   .extend({
     search: z.string().optional(),
     creator_name: z.string().optional(),
-    mc_name: z.string().optional(),
     client_name: z.string().optional(),
     show_type_name: z.string().optional(),
     show_standard_name: z.string().optional(),

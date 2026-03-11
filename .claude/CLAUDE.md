@@ -9,6 +9,8 @@
 Before implementing ANY feature, read the relevant skill from `.agent/skills/<skill-name>/SKILL.md`. **Common mappings:**
 - Backend: `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `erify-authorization`, `database-patterns`, `data-validation`
 - Multi-service workflows: `orchestration-service-nestjs`
+- Backend testing: `backend-testing-patterns`
+- Security: `secure-coding-practices`
 - Frontend: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`
 - Full-stack: `admin-list-pattern`, `studio-list-pattern`
 - Shift schedule: `shift-schedule-pattern`
@@ -301,8 +303,11 @@ const where: Prisma.TaskWhereInput = { ... };
 | **shift-schedule-pattern** | Shift CRUD, blocks, calendar/alignment orchestration, duty-manager, task-readiness, FE shift UX | HIGH |
 | **soft-delete-restore** | Restore workflow for soft-deleted records: repository, service, controller, version behavior, dependency checks | MEDIUM |
 | **api-performance-optimization** | Lean select/include, N+1 audit, aggregation strategy, bulk write guards, pagination caps, query logging | MEDIUM |
+| **backend-testing-patterns** | Jest-based NestJS tests: service, controller, guard, orchestration; project test helpers in `src/testing/` | HIGH |
+| **observability-logging** | NestJS Logger usage, log levels, what to never log, structured message format, BullMQ processor logging | MEDIUM |
+| **secure-coding-practices** | Per-feature security checklist: input validation, ID exposure, SQL injection, studio scoping, secrets, rate limiting | HIGH |
 
-**Full skill list** (31 total): See `.agent/skills/` directory
+**Full skill list** (34 total): See `.agent/skills/` directory
 
 ### Memory Files (Supplementary - `.claude/memory/`)
 | File | Purpose | When to Use |

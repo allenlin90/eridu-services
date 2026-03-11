@@ -25,15 +25,15 @@ import {
   UpdateMcDto,
 } from '@/models/mc/schemas/mc.schema';
 
-@Controller(['admin/mcs', 'admin/creators'])
-export class AdminMcController extends BaseAdminController {
+@Controller('admin/creators')
+export class AdminCreatorController extends BaseAdminController {
   constructor(private readonly mcService: McService) {
     super();
   }
 
   @Post()
-  @AdminResponse(mcWithUserDto, HttpStatus.CREATED, 'MC created successfully')
-  async createMc(@Body() body: CreateMcDto) {
+  @AdminResponse(mcWithUserDto, HttpStatus.CREATED, 'Creator created successfully')
+  async createCreator(@Body() body: CreateMcDto) {
     const {
       name,
       aliasName,
@@ -43,7 +43,7 @@ export class AdminMcController extends BaseAdminController {
       defaultRateType,
       defaultCommissionRate,
     } = body;
-    const mc = await this.mcService.createMc({
+    const creator = await this.mcService.createMc({
       name,
       aliasName,
       metadata,
@@ -52,12 +52,12 @@ export class AdminMcController extends BaseAdminController {
       ...(defaultRateType !== undefined && { defaultRateType }),
       ...(defaultCommissionRate !== undefined && { defaultCommissionRate }),
     });
-    return this.mcService.getMcByIdWithUser(mc.uid);
+    return this.mcService.getMcByIdWithUser(creator.uid);
   }
 
   @Get()
-  @AdminPaginatedResponse(mcWithUserDto, 'List of MCs with pagination')
-  async getMcs(@Query() query: ListMcsQueryDto) {
+  @AdminPaginatedResponse(mcWithUserDto, 'List of creators with pagination')
+  async getCreators(@Query() query: ListMcsQueryDto) {
     const { data, total } = await this.mcService.listMcs({
       skip: query.skip,
       take: query.take,
@@ -72,32 +72,32 @@ export class AdminMcController extends BaseAdminController {
   }
 
   @Get(':id')
-  @AdminResponse(mcWithUserDto, HttpStatus.OK, 'MC details')
-  async getMc(
+  @AdminResponse(mcWithUserDto, HttpStatus.OK, 'Creator details')
+  async getCreator(
     @Param(
       'id',
-      new UidValidationPipe([McService.UID_PREFIX, CREATOR_UID_PREFIX], 'MC'),
+      new UidValidationPipe([McService.UID_PREFIX, CREATOR_UID_PREFIX], 'Creator'),
     )
     id: string,
   ) {
-    const mc = await this.mcService.getMcByIdWithUser(id);
-    this.ensureResourceExists(mc, 'MC', id);
-    return mc;
+    const creator = await this.mcService.getMcByIdWithUser(id);
+    this.ensureResourceExists(creator, 'Creator', id);
+    return creator;
   }
 
   @Patch(':id')
-  @AdminResponse(mcWithUserDto, HttpStatus.OK, 'MC updated successfully')
-  async updateMc(
+  @AdminResponse(mcWithUserDto, HttpStatus.OK, 'Creator updated successfully')
+  async updateCreator(
     @Param(
       'id',
-      new UidValidationPipe([McService.UID_PREFIX, CREATOR_UID_PREFIX], 'MC'),
+      new UidValidationPipe([McService.UID_PREFIX, CREATOR_UID_PREFIX], 'Creator'),
     )
     id: string,
     @Body() body: UpdateMcDto,
   ) {
     // Check existence first
     const existing = await this.mcService.getMcById(id);
-    this.ensureResourceExists(existing, 'MC', id);
+    this.ensureResourceExists(existing, 'Creator', id);
 
     const {
       name,
@@ -125,16 +125,16 @@ export class AdminMcController extends BaseAdminController {
 
   @Delete(':id')
   @AdminResponse(undefined, HttpStatus.NO_CONTENT)
-  async deleteMc(
+  async deleteCreator(
     @Param(
       'id',
-      new UidValidationPipe([McService.UID_PREFIX, CREATOR_UID_PREFIX], 'MC'),
+      new UidValidationPipe([McService.UID_PREFIX, CREATOR_UID_PREFIX], 'Creator'),
     )
     id: string,
   ) {
     // Check existence first
     const existing = await this.mcService.getMcById(id);
-    this.ensureResourceExists(existing, 'MC', id);
+    this.ensureResourceExists(existing, 'Creator', id);
 
     await this.mcService.deleteMc(id);
   }

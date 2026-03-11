@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 
 import { AdminClientModule } from './clients/admin-client.module';
-import { AdminMcModule } from './mcs/admin-mc.module';
+import { AdminCreatorModule } from './creators/admin-creator.module';
 import { AdminStudioMembershipModule } from './memberships/admin-studio-membership.module';
 import { AdminPlatformModule } from './platforms/admin-platform.module';
 import { AdminScheduleModule } from './schedules/admin-schedule.module';
-import { AdminShowMcModule } from './show-mcs/admin-show-mc.module';
+import { AdminShowCreatorModule } from './show-creators/admin-show-creator.module';
 import { AdminShowPlatformModule } from './show-platforms/admin-show-platform.module';
 import { AdminShowStandardModule } from './show-standards/admin-show-standard.module';
 import { AdminShowStatusModule } from './show-statuses/admin-show-status.module';
@@ -22,13 +22,13 @@ import { AdminUserModule } from './users/admin-user.module';
   imports: [
     AdminUserModule,
     AdminClientModule,
-    AdminMcModule,
+    AdminCreatorModule,
     AdminPlatformModule,
     AdminShowStandardModule,
     AdminShowStatusModule,
     AdminShowTypeModule,
     AdminShowModule,
-    AdminShowMcModule,
+    AdminShowCreatorModule,
     AdminShowPlatformModule,
     AdminStudioModule,
     AdminStudioRoomModule,
@@ -41,13 +41,13 @@ import { AdminUserModule } from './users/admin-user.module';
   exports: [
     AdminUserModule,
     AdminClientModule,
-    AdminMcModule,
+    AdminCreatorModule,
     AdminPlatformModule,
     AdminShowStandardModule,
     AdminShowStatusModule,
     AdminShowTypeModule,
     AdminShowModule,
-    AdminShowMcModule,
+    AdminShowCreatorModule,
     AdminShowPlatformModule,
     AdminStudioModule,
     AdminStudioRoomModule,

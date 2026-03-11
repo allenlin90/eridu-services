@@ -1,7 +1,7 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
-import { AdminMcController } from './admin-mc.controller';
+import { AdminCreatorController } from './admin-creator.controller';
 
 import { McService } from '@/models/mc/mc.service';
 import type {
@@ -10,8 +10,8 @@ import type {
   UpdateMcDto,
 } from '@/models/mc/schemas/mc.schema';
 
-describe('adminMcController', () => {
-  let controller: AdminMcController;
+describe('adminCreatorController', () => {
+  let controller: AdminCreatorController;
 
   const mockMcService = {
     listMcs: jest.fn(),
@@ -23,19 +23,19 @@ describe('adminMcController', () => {
   };
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [AdminMcController],
+      controllers: [AdminCreatorController],
       providers: [{ provide: McService, useValue: mockMcService }],
     }).compile();
 
-    controller = module.get<AdminMcController>(AdminMcController);
+    controller = module.get<AdminCreatorController>(AdminCreatorController);
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('createMc', () => {
-    it('should create an MC and return with user', async () => {
+  describe('createCreator', () => {
+    it('should create a creator and return with user', async () => {
       const createDto: CreateMcDto = {
         name: 'Test MC',
         userId: 'user_123',
@@ -47,7 +47,7 @@ describe('adminMcController', () => {
       mockMcService.createMc.mockResolvedValue(createdMc as any);
       mockMcService.getMcByIdWithUser.mockResolvedValue(mcWithUser as any);
 
-      const result = await controller.createMc(createDto);
+      const result = await controller.createCreator(createDto);
 
       expect(mockMcService.createMc).toHaveBeenCalledWith({
         name: createDto.name,
@@ -60,8 +60,8 @@ describe('adminMcController', () => {
     });
   });
 
-  describe('getMcs', () => {
-    it('should return paginated list of MCs', async () => {
+  describe('getCreators', () => {
+    it('should return paginated list of creators', async () => {
       const query: ListMcsQueryDto = {
         page: 1,
         limit: 10,
@@ -85,7 +85,7 @@ describe('adminMcController', () => {
 
       mockMcService.listMcs.mockResolvedValue({ data: mcs, total } as any);
 
-      const result = await controller.getMcs(query);
+      const result = await controller.getCreators(query);
       expect(mockMcService.listMcs).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
@@ -101,7 +101,7 @@ describe('adminMcController', () => {
       });
     });
 
-    it('should filter MCs by name and aliasName', async () => {
+    it('should filter creators by name and aliasName', async () => {
       const query: ListMcsQueryDto = {
         page: 1,
         limit: 10,
@@ -118,7 +118,7 @@ describe('adminMcController', () => {
 
       mockMcService.listMcs.mockResolvedValue({ data: mcs, total } as any);
 
-      await controller.getMcs(query);
+      await controller.getCreators(query);
       expect(mockMcService.listMcs).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
@@ -131,21 +131,21 @@ describe('adminMcController', () => {
     });
   });
 
-  describe('getMc', () => {
-    it('should return an MC by id', async () => {
+  describe('getCreator', () => {
+    it('should return a creator by id', async () => {
       const mcId = 'mc_123';
       const mc = { uid: mcId, userId: 'user_123' };
 
       mockMcService.getMcByIdWithUser.mockResolvedValue(mc as any);
 
-      const result = await controller.getMc(mcId);
+      const result = await controller.getCreator(mcId);
       expect(mockMcService.getMcByIdWithUser).toHaveBeenCalledWith(mcId);
       expect(result).toEqual(mc);
     });
   });
 
-  describe('updateMc', () => {
-    it('should update an MC and return with user', async () => {
+  describe('updateCreator', () => {
+    it('should update a creator and return with user', async () => {
       const mcId = 'mc_123';
       const updateDto: UpdateMcDto = { name: 'Updated' } as UpdateMcDto;
       const existingMc = { uid: mcId, name: 'Old' };
@@ -156,7 +156,7 @@ describe('adminMcController', () => {
       mockMcService.updateMc.mockResolvedValue(updatedMc as any);
       mockMcService.getMcByIdWithUser.mockResolvedValue(mcWithUser as any);
 
-      const result = await controller.updateMc(mcId, updateDto);
+      const result = await controller.updateCreator(mcId, updateDto);
 
       expect(mockMcService.getMcById).toHaveBeenCalledWith(mcId);
       expect(mockMcService.updateMc).toHaveBeenCalledWith(mcId, {
@@ -171,15 +171,15 @@ describe('adminMcController', () => {
     });
   });
 
-  describe('deleteMc', () => {
-    it('should delete an MC', async () => {
+  describe('deleteCreator', () => {
+    it('should delete a creator', async () => {
       const mcId = 'mc_123';
       const existingMc = { uid: mcId };
 
       mockMcService.getMcById.mockResolvedValue(existingMc as any);
       mockMcService.deleteMc.mockResolvedValue(undefined);
 
-      await controller.deleteMc(mcId);
+      await controller.deleteCreator(mcId);
       expect(mockMcService.getMcById).toHaveBeenCalledWith(mcId);
       expect(mockMcService.deleteMc).toHaveBeenCalledWith(mcId);
     });

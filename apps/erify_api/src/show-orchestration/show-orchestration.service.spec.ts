@@ -186,7 +186,7 @@ describe('showOrchestrationService', () => {
         startTime: new Date('2024-01-01T10:00:00Z'),
         endTime: new Date('2024-01-01T12:00:00Z'),
         metadata: {},
-        mcs: undefined,
+        creators: undefined,
         platforms: undefined,
       };
 
@@ -249,7 +249,7 @@ describe('showOrchestrationService', () => {
       const uid = 'show_test123';
       const dto: UpdateShowWithAssignmentsDto = {
         name: 'Updated Show Name',
-        showMcs: undefined,
+        showCreators: undefined,
         showPlatforms: undefined,
       } as UpdateShowWithAssignmentsDto;
 
@@ -266,7 +266,7 @@ describe('showOrchestrationService', () => {
         { uid },
         updatePayload,
       );
-      // Sync methods NOT called since showMcs/showPlatforms are undefined
+      // Sync methods NOT called since showCreators/showPlatforms are undefined
       expect(mcRepository.findByUids).not.toHaveBeenCalled();
       expect(platformRepository.findByUids).not.toHaveBeenCalled();
       expect(showRepository.findByUid).toHaveBeenCalledWith(
@@ -280,9 +280,9 @@ describe('showOrchestrationService', () => {
       const uid = 'show_test123';
       const dto: UpdateShowWithAssignmentsDto = {
         name: 'Updated Show Name',
-        showMcs: [
+        showCreators: [
           {
-            mcId: 'mc_test123',
+            creatorId: 'mc_test123',
             note: 'Updated note',
             metadata: {},
           },
@@ -348,7 +348,7 @@ describe('showOrchestrationService', () => {
       const dto: UpdateShowWithAssignmentsDto = {
         startTime: new Date('2024-01-01T12:00:00Z'),
         endTime: new Date('2024-01-01T10:00:00Z'),
-        showMcs: undefined,
+        showCreators: undefined,
         showPlatforms: undefined,
       } as UpdateShowWithAssignmentsDto;
 
@@ -380,27 +380,6 @@ describe('showOrchestrationService', () => {
       expect(showRepository.softDelete).toHaveBeenCalledWith({ uid });
       expect(showMcRepository.softDeleteAllByShowId).toHaveBeenCalledWith(mockShow.id);
       expect(showPlatformRepository.softDeleteAllByShowId).toHaveBeenCalledWith(mockShow.id);
-    });
-  });
-
-  describe('removeMCsFromShow', () => {
-    it('should remove MCs from show', async () => {
-      const uid = 'show_test123';
-      const mcIds = ['mc_1', 'mc_2'];
-      const mockMc1 = { id: BigInt(1), uid: 'mc_1' };
-      const mockMc2 = { id: BigInt(2), uid: 'mc_2' };
-
-      showService.getShowById.mockResolvedValue(mockShow);
-      mcRepository.findByUids.mockResolvedValue([mockMc1, mockMc2] as any);
-      showMcRepository.softDeleteByMcIds.mockResolvedValue(undefined as any);
-
-      await service.removeMCsFromShow(uid, mcIds);
-
-      expect(mcRepository.findByUids).toHaveBeenCalledWith(mcIds);
-      expect(showMcRepository.softDeleteByMcIds).toHaveBeenCalledWith(
-        mockShow.id,
-        [BigInt(1), BigInt(2)],
-      );
     });
   });
 
@@ -444,46 +423,6 @@ describe('showOrchestrationService', () => {
         mockShow.id,
         [BigInt(1), BigInt(2)],
       );
-    });
-  });
-
-  describe('replaceMCsForShow', () => {
-    it('should replace all MCs for a show', async () => {
-      const uid = 'show_test123';
-      const mcs = [
-        {
-          mcId: 'mc_test123',
-          note: 'Test note',
-          metadata: {},
-        },
-      ];
-      const mockMc = { id: BigInt(1), uid: 'mc_test123', deletedAt: null };
-
-      showService.getShowById.mockResolvedValue(mockShow);
-      showMcService.generateShowMcUid.mockReturnValue('show_mc_new');
-      mcRepository.findByUids.mockResolvedValue([mockMc] as any);
-      showMcRepository.findMany.mockResolvedValue([]);
-      showMcRepository.createAssignment.mockResolvedValue({} as any);
-      showRepository.findByUid.mockResolvedValue(mockShow);
-
-      const result = await service.replaceMCsForShow(uid, mcs);
-
-      expect(showService.getShowById).toHaveBeenCalledWith(uid);
-      expect(mcRepository.findByUids).toHaveBeenCalledWith(['mc_test123']);
-      expect(showMcRepository.createAssignment).toHaveBeenCalledWith(
-        expect.objectContaining({
-          uid: 'show_mc_new',
-          showId: mockShow.id,
-          mcId: BigInt(1),
-          note: 'Test note',
-          metadata: {},
-        }),
-      );
-      expect(showRepository.findByUid).toHaveBeenCalledWith(
-        uid,
-        expect.any(Object),
-      );
-      expect(result).toEqual(mockShow);
     });
   });
 

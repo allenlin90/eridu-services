@@ -91,9 +91,9 @@ describe('publishingService', () => {
         showTypeId: 'sht_test123',
         showStatusId: 'shst_test123',
         showStandardId: 'shsd_test123',
-        mcs: [
+        creators: [
           {
-            mcId: 'mc_test123',
+            creatorId: 'mc_test123',
             note: 'MC Note 1',
           },
         ],
@@ -117,7 +117,7 @@ describe('publishingService', () => {
         showTypeId: 'sht_test123',
         showStatusId: 'shst_test123',
         showStandardId: 'shsd_test123',
-        mcs: [],
+        creators: [],
         platforms: [],
       },
     ],
@@ -645,7 +645,7 @@ describe('publishingService', () => {
           shows: [
             {
               ...mockPlanDocument.shows[0],
-              mcs: [],
+              creators: [],
               platforms: [],
             },
           ],
@@ -676,9 +676,9 @@ describe('publishingService', () => {
           shows: [
             {
               ...mockPlanDocument.shows[0],
-              mcs: [
-                { mcId: 'mc_test123', note: 'MC 1' },
-                { mcId: 'mc_test456', note: 'MC 2' },
+              creators: [
+                { creatorId: 'mc_test123', note: 'MC 1' },
+                { creatorId: 'mc_test456', note: 'MC 2' },
               ],
               platforms: [
                 {
@@ -804,7 +804,7 @@ describe('publishingService', () => {
           shows: [
             {
               ...mockPlanDocument.shows[0],
-              mcs: [{ mcId: undefined }, { mcId: 'mc_test123' }] as any,
+              creators: [{ creatorId: undefined }, { creatorId: 'mc_test123' }] as any,
               studioRoomId: undefined,
             },
           ],

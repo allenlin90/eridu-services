@@ -194,14 +194,13 @@ export class ShowRepository extends BaseRepository<
       };
     }
 
-    // Creator filtering (Name) with legacy MC alias fallback
-    const creatorName = query.creator_name ?? query.mc_name;
-    if (creatorName) {
+    // Creator filtering (Name)
+    if (query.creator_name) {
       where.showMCs = {
         some: {
           mc: {
             name: {
-              contains: creatorName,
+              contains: query.creator_name,
               mode: 'insensitive',
             },
           },
@@ -324,7 +323,6 @@ export class ShowRepository extends BaseRepository<
       has_tasks?: boolean;
       show_uids?: string[];
       creator_name?: string;
-      mc_name?: string;
       client_name?: string;
       show_type_name?: string;
       show_standard_name?: string;
@@ -379,14 +377,13 @@ export class ShowRepository extends BaseRepository<
       };
     }
 
-    // Creator filtering (Name) with legacy MC alias fallback
-    const creatorName = query.creator_name ?? query.mc_name;
-    if (creatorName) {
+    // Creator filtering (Name)
+    if (query.creator_name) {
       where.showMCs = {
         some: {
           mc: {
             name: {
-              contains: creatorName,
+              contains: query.creator_name,
               mode: 'insensitive',
             },
           },

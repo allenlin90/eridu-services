@@ -87,9 +87,9 @@ describe('validationService', () => {
         showTypeId: 'sht_test123',
         showStatusId: 'shst_test123',
         showStandardId: 'shsd_test123',
-        mcs: [
+        creators: [
           {
-            mcId: 'mc_test123',
+            creatorId: 'mc_test123',
             note: 'MC Note 1',
           },
         ],
@@ -113,7 +113,7 @@ describe('validationService', () => {
         showTypeId: 'sht_test123',
         showStatusId: 'shst_test123',
         showStandardId: 'shsd_test123',
-        mcs: [],
+        creators: [],
         platforms: [],
       },
     ],
@@ -243,7 +243,7 @@ describe('validationService', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should fail fast when MC payload entries are malformed', async () => {
+    it('should fail fast when creator payload entries are malformed', async () => {
       // Clone the mock data to avoid mutating shared state
       // Clone the mock data using spread to avoid BigInt serialization issues and mutation
       const schedule = {
@@ -256,8 +256,8 @@ describe('validationService', () => {
       const show = schedule.planDocument.shows[0];
 
       // Simulate partial objects that might cause undefined values in collection
-      // specifically for mcs array items where mcId might be missing/undefined if malformed
-      show.mcs = [{ mcId: undefined }, { mcId: 'mc_valid' }] as any;
+      // specifically for creators array items where creatorId might be missing/undefined if malformed
+      show.creators = [{ creatorId: undefined }, { creatorId: 'mc_valid' }] as any;
 
       // Setup successful mocks for everything else
       const validClient = [{ id: 1n, uid: show.clientId }];
@@ -280,7 +280,7 @@ describe('validationService', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'missing_field',
-          message: expect.stringContaining('shows.0.mcs.0.mcId'),
+          message: expect.stringContaining('shows.0.creators.0.creatorId'),
           showIndex: 0,
         }),
       );
@@ -508,7 +508,6 @@ describe('validationService', () => {
             {
               ...mockValidPlanDocument.shows[0],
               creators: [{ creatorId: 'mc_test123', note: 'Creator Note 1' }],
-              mcs: undefined,
             },
           ],
         },
@@ -649,13 +648,13 @@ describe('validationService', () => {
           shows: [
             {
               ...mockValidPlanDocument.shows[0],
-              mcs: [{ mcId: 'mc_test123', note: 'MC 1' }],
+              creators: [{ creatorId: 'mc_test123', note: 'MC 1' }],
               startTime: '2024-01-01T10:00:00Z',
               endTime: '2024-01-01T12:00:00Z',
             },
             {
               ...mockValidPlanDocument.shows[1],
-              mcs: [{ mcId: 'mc_test123', note: 'MC 2' }], // Same MC
+              creators: [{ creatorId: 'mc_test123', note: 'MC 2' }], // Same MC
               startTime: '2024-01-01T11:00:00Z', // Overlapping time
               endTime: '2024-01-01T13:00:00Z',
             },
@@ -739,7 +738,7 @@ describe('validationService', () => {
               showTypeId: 'sht_test123',
               showStatusId: 'shst_test123',
               showStandardId: 'shsd_test123',
-              mcs: [],
+              creators: [],
               platforms: [],
             },
           ],
@@ -826,7 +825,7 @@ describe('validationService', () => {
               showTypeId: 'sht_test123',
               showStatusId: 'shst_test123',
               showStandardId: 'shsd_test123',
-              mcs: [],
+              creators: [],
               platforms: [],
             },
           ],
@@ -1010,7 +1009,7 @@ describe('validationService', () => {
           shows: [
             {
               ...mockValidPlanDocument.shows[0],
-              mcs: undefined,
+              creators: undefined,
               platforms: undefined,
             } as any,
           ],
@@ -1042,7 +1041,7 @@ describe('validationService', () => {
               showTypeId: 'sht_test123',
               showStatusId: 'shst_test123',
               showStandardId: 'shsd_test123',
-              mcs: [],
+              creators: [],
               platforms: [],
             },
           ],
@@ -1063,9 +1062,9 @@ describe('validationService', () => {
           shows: [
             {
               ...mockValidPlanDocument.shows[0],
-              mcs: [
-                { mcId: 'mc_test123', note: 'MC 1' },
-                { mcId: 'mc_test456', note: 'MC 2' },
+              creators: [
+                { creatorId: 'mc_test123', note: 'MC 1' },
+                { creatorId: 'mc_test456', note: 'MC 2' },
               ],
             },
           ],
@@ -1103,7 +1102,7 @@ describe('validationService', () => {
               showTypeId: 'sht_test123',
               showStatusId: 'shst_test123',
               showStandardId: 'shsd_test123',
-              mcs: [{ mcId: 'mc_test123', note: 'MC 1' }],
+              creators: [{ creatorId: 'mc_test123', note: 'MC 1' }],
               platforms: [],
             },
             {
@@ -1117,7 +1116,7 @@ describe('validationService', () => {
               showTypeId: 'sht_test123',
               showStatusId: 'shst_test123',
               showStandardId: 'shsd_test123',
-              mcs: [{ mcId: 'mc_test123', note: 'MC 1' }], // Same MC
+              creators: [{ creatorId: 'mc_test123', note: 'MC 1' }], // Same MC
               platforms: [],
             },
           ],
@@ -1151,14 +1150,12 @@ describe('validationService', () => {
             {
               ...mockValidPlanDocument.shows[0],
               creators: [{ creatorId: 'mc_test123', note: 'Creator 1' }],
-              mcs: undefined,
               startTime: '2024-01-01T10:00:00Z',
               endTime: '2024-01-01T12:00:00Z',
             },
             {
               ...mockValidPlanDocument.shows[1],
               creators: [{ creatorId: 'mc_test123', note: 'Creator 2' }],
-              mcs: undefined,
               startTime: '2024-01-01T11:00:00Z',
               endTime: '2024-01-01T13:00:00Z',
             },

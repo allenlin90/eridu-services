@@ -63,7 +63,7 @@ Implementation checklist:
 - [ ] Complete frontend and package cleanup:
   - Rename feature modules, hooks, query keys, route copy, and API clients to creator-first terms.
   - Keep URL/search behavior parity unless there is an explicit product reason to change it.
-  - Remove legacy package entrypoints such as `@eridu/api-types/mcs` when no active import remains.
+  - Remove legacy package entrypoints such as `@eridu/api-types/mcs` when no active import remains. (completed on 2026-03-11)
 - [ ] Re-validate authorization and behavior parity after renaming:
   - Studio creator roster, show creator assignment, creator availability, and economics access rules.
 - [ ] Update canonical docs and agent knowledge:

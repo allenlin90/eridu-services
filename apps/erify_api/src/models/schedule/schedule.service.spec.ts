@@ -635,7 +635,7 @@ describe('scheduleService', () => {
         showTypeId: 'sht_001',
         showStatusId: 'shst_001',
         showStandardId: 'shsd_001',
-        mcs: [],
+        creators: [],
         platforms: [],
         metadata: {},
       },

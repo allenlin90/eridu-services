@@ -13,11 +13,6 @@ import { ShowTypeService } from '@/models/show-type/show-type.service';
 import { StudioService } from '@/models/studio/studio.service';
 
 // ShowPlanItem schema for plan document
-export const showPlanItemMcSchema = z.object({
-  mcId: z.string(),
-  note: z.string().optional(),
-});
-
 export const showPlanItemCreatorSchema = z.object({
   creatorId: z.string(),
   note: z.string().optional(),
@@ -45,7 +40,8 @@ export const showPlanItemSchema = z
     showStatusId: z.string().startsWith(ShowStatusService.UID_PREFIX),
     showStandardId: z.string().startsWith(ShowStandardService.UID_PREFIX),
     creators: z.array(showPlanItemCreatorSchema).optional(),
-    mcs: z.array(showPlanItemMcSchema).optional(),
+    // Explicitly reject legacy payload alias at API boundary during S4 cutover.
+    mcs: z.never().optional(),
     platforms: z.array(showPlanItemPlatformSchema).optional().default([]),
     metadata: z.record(z.string(), z.any()).optional(),
   })
@@ -58,22 +54,11 @@ export const showPlanItemSchema = z
       });
     }
   })
-  .transform(({ external_id, externalId, creators, mcs, ...rest }) => {
-    const normalizedCreators = creators ?? mcs?.map((mc) => ({
-      creatorId: mc.mcId,
-      note: mc.note,
-    })) ?? [];
-
-    const normalizedMcs = mcs ?? creators?.map((creator) => ({
-      mcId: creator.creatorId,
-      note: creator.note,
-    })) ?? [];
-
+  .transform(({ external_id, externalId, creators, ...rest }) => {
     return {
       ...rest,
       externalId: externalId ?? external_id!,
-      creators: normalizedCreators,
-      mcs: normalizedMcs,
+      creators: creators ?? [],
     };
   })
   .refine((data) => new Date(data.endTime) > new Date(data.startTime), {
@@ -121,7 +106,6 @@ export const validationResultSchema = z.object({
       type: z.enum([
         'time_range',
         'room_conflict',
-        'mc_double_booking',
         'creator_double_booking',
         'reference_not_found',
         'internal_conflict',
@@ -149,14 +133,14 @@ export class RestoreFromSnapshotDto extends createZodDto(
 type InferredShowPlanItem = z.infer<typeof showPlanItemSchema>;
 export type ShowPlanItem = Omit<
   InferredShowPlanItem,
-  'tempId' | 'existingShowId' | 'studioId' | 'studioRoomId' | 'metadata' | 'creators'
+  'tempId' | 'existingShowId' | 'studioId' | 'studioRoomId' | 'metadata'
 > & {
   tempId?: string;
   existingShowId?: string;
   studioId?: string;
   studioRoomId?: string;
   metadata?: Record<string, any>;
-  creators?: InferredShowPlanItem['creators'];
+  creators: InferredShowPlanItem['creators'];
 };
 
 export type PlanDocument = Omit<z.infer<typeof planDocumentSchema>, 'shows'> & {

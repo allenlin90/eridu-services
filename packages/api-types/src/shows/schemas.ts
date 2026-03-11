@@ -45,7 +45,6 @@ export const listShowsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).optional().default(10),
   name: z.string().optional(),
   creator_name: z.string().optional(),
-  mc_name: z.string().optional(),
   client_id: z
     .union([
       z.string().startsWith(UID_PREFIXES.CLIENT),
@@ -110,15 +109,6 @@ export const updateShowInputSchema = z
       .array(
         z.object({
           creator_id: z.string(),
-          note: z.string().optional(),
-          metadata: z.record(z.string(), z.any()).optional(),
-        }),
-      )
-      .optional(),
-    mcs: z
-      .array(
-        z.object({
-          mc_id: z.string(),
           note: z.string().optional(),
           metadata: z.record(z.string(), z.any()).optional(),
         }),

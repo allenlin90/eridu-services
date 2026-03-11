@@ -236,9 +236,6 @@ export class PublishingService {
       shows_cancelled: 0,
       shows_pending_resolution: 0,
       shows_restored: 0,
-      mc_links_added: 0,
-      mc_links_updated: 0,
-      mc_links_removed: 0,
       creator_links_added: 0,
       creator_links_updated: 0,
       creator_links_removed: 0,
@@ -518,32 +515,31 @@ export class PublishingService {
     });
 
     for (const [showId, incoming] of incomingByShowId.entries()) {
-      const incomingMcById = new Map<bigint, { note: string | undefined }>();
-      (incoming.source.mcs || []).forEach((mc) => {
-        const mcId = uidMaps.mcs.get(mc.mcId);
-        if (!mcId) {
+      const incomingCreatorById = new Map<bigint, { note: string | undefined }>();
+      (incoming.source.creators || []).forEach((creator) => {
+        const creatorInternalId = uidMaps.creators.get(creator.creatorId);
+        if (!creatorInternalId) {
           return;
         }
-        incomingMcById.set(mcId, { note: mc.note });
+        incomingCreatorById.set(creatorInternalId, { note: creator.note });
       });
 
       const existingMcs = showMcByShowId.get(showId) || [];
       const existingMcByMcId = new Map(existingMcs.map((mc) => [mc.mcId, mc]));
 
-      for (const [mcId, incomingMc] of incomingMcById.entries()) {
-        const existing = existingMcByMcId.get(mcId);
+      for (const [creatorId, incomingCreator] of incomingCreatorById.entries()) {
+        const existing = existingMcByMcId.get(creatorId);
 
         if (!existing) {
           await tx.showMC.create({
             data: {
               uid: this.showMcService.generateShowMcUid(),
               showId,
-              mcId,
-              note: incomingMc.note,
+              mcId: creatorId,
+              note: incomingCreator.note,
               metadata: {},
             },
           });
-          summary.mc_links_added += 1;
           summary.creator_links_added += 1;
           continue;
         }
@@ -553,29 +549,27 @@ export class PublishingService {
             where: { id: existing.id },
             data: {
               deletedAt: null,
-              note: incomingMc.note,
+              note: incomingCreator.note,
               metadata: {},
             },
           });
-          summary.mc_links_added += 1;
           summary.creator_links_added += 1;
           continue;
         }
 
-        if ((existing.note || null) !== (incomingMc.note || null)) {
+        if ((existing.note || null) !== (incomingCreator.note || null)) {
           await tx.showMC.update({
             where: { id: existing.id },
             data: {
-              note: incomingMc.note,
+              note: incomingCreator.note,
             },
           });
-          summary.mc_links_updated += 1;
           summary.creator_links_updated += 1;
         }
       }
 
       const staleMcIds = existingMcs
-        .filter((mc) => mc.deletedAt === null && !incomingMcById.has(mc.mcId))
+        .filter((mc) => mc.deletedAt === null && !incomingCreatorById.has(mc.mcId))
         .map((mc) => mc.id);
 
       if (staleMcIds.length > 0) {
@@ -588,7 +582,6 @@ export class PublishingService {
             deletedAt: new Date(),
           },
         });
-        summary.mc_links_removed += staleMcIds.length;
         summary.creator_links_removed += staleMcIds.length;
       }
 
@@ -736,7 +729,7 @@ export class PublishingService {
     const showTypeUids = new Set<string>();
     const showStatusUids = new Set<string>();
     const showStandardUids = new Set<string>();
-    const mcUids = new Set<string>();
+    const creatorUids = new Set<string>();
     const platformUids = new Set<string>();
 
     if (schedule.studio?.uid) {
@@ -750,7 +743,9 @@ export class PublishingService {
       show.showTypeId && showTypeUids.add(show.showTypeId);
       show.showStatusId && showStatusUids.add(show.showStatusId);
       show.showStandardId && showStandardUids.add(show.showStandardId);
-      (show.mcs || []).forEach((mc) => mc.mcId && mcUids.add(mc.mcId));
+      (show.creators || []).forEach((creator) =>
+        creator.creatorId && creatorUids.add(creator.creatorId),
+      );
       (show.platforms || []).forEach((platform) =>
         platform.platformId && platformUids.add(platform.platformId),
       );
@@ -763,7 +758,7 @@ export class PublishingService {
       showTypes,
       showStatuses,
       showStandards,
-      mcs,
+      creators,
       platforms,
     ] = await Promise.all([
       tx.client.findMany({
@@ -791,7 +786,7 @@ export class PublishingService {
         select: { id: true, uid: true },
       }),
       tx.mC.findMany({
-        where: { uid: { in: Array.from(mcUids) }, deletedAt: null },
+        where: { uid: { in: Array.from(creatorUids) }, deletedAt: null },
         select: { id: true, uid: true },
       }),
       tx.platform.findMany({
@@ -807,7 +802,7 @@ export class PublishingService {
       showTypes: new Map(showTypes.map((t) => [t.uid, t.id])),
       showStatuses: new Map(showStatuses.map((s) => [s.uid, s.id])),
       showStandards: new Map(showStandards.map((s) => [s.uid, s.id])),
-      mcs: new Map(mcs.map((m) => [m.uid, m.id])),
+      creators: new Map(creators.map((creator) => [creator.uid, creator.id])),
       platforms: new Map(platforms.map((p) => [p.uid, p.id])),
     };
   }

@@ -33,14 +33,14 @@ export class AdminUserController extends BaseAdminController {
   @Post()
   @AdminResponse(adminUserDto, HttpStatus.CREATED, 'User created successfully')
   async createUser(@Body() body: CreateUserDto) {
-    const { extId, email, name, profileUrl, metadata, mc } = body;
+    const { extId, email, name, profileUrl, metadata, creator } = body;
     return this.userService.createUser({
       extId,
       email,
       name,
       profileUrl,
       metadata,
-      mc,
+      creator,
     });
   }
 

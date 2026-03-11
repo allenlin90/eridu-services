@@ -29,8 +29,8 @@ export const userSchema = z.object({
   updatedAt: z.date(),
 });
 
-// Schema for User with MC relation
-export const userWithMcSchema = z.object({
+// Schema for User with creator relation (stored on Prisma as `mc`)
+export const userWithCreatorSchema = z.object({
   id: z.bigint(),
   uid: z.string().startsWith(UserService.UID_PREFIX),
   extId: z.string().nullable(),
@@ -54,8 +54,8 @@ export const userWithMcSchema = z.object({
   }).nullable(),
 });
 
-// Schema for nested MC creation (simplified from McModule)
-const createNestedMcSchema = z
+// Schema for nested creator creation (simplified from McModule)
+const createNestedCreatorSchema = z
   .object({
     name: z.string().min(1, 'MC name is required'),
     alias_name: z.string().optional(),
@@ -67,7 +67,7 @@ const createNestedMcSchema = z
     metadata: data.metadata,
   }));
 
-export type CreateNestedMcSchema = z.infer<typeof createNestedMcSchema>;
+export type CreateNestedCreatorSchema = z.infer<typeof createNestedCreatorSchema>;
 
 // API input schema (snake_case input, transforms to camelCase)
 export const createUserSchema = z
@@ -77,8 +77,9 @@ export const createUserSchema = z
     name: z.string().min(1, 'User name is required'),
     profile_url: z.url().optional(),
     metadata: z.record(z.string(), z.any()).optional(),
-    creator: createNestedMcSchema.optional(),
-    mc: createNestedMcSchema.optional(),
+    creator: createNestedCreatorSchema.optional(),
+    // Explicitly reject legacy alias at API boundary during S4 cutover.
+    mc: z.never().optional(),
   })
   .transform((data) => ({
     extId: data.ext_id ?? null,
@@ -86,7 +87,7 @@ export const createUserSchema = z
     name: data.name,
     profileUrl: data.profile_url ?? null,
     metadata: data.metadata,
-    mc: data.creator ?? data.mc,
+    creator: data.creator,
   }));
 
 export const bulkCreateUserSchema = z.object({
@@ -158,8 +159,8 @@ export const adminUserDto = userSchema
   }))
   .pipe(adminUserApiResponseSchema);
 
-// User DTO with MC data when available
-export const userWithMcDto = userWithMcSchema
+// User DTO with creator data when available
+export const userWithCreatorDto = userWithCreatorSchema
   .transform((obj) => {
     const creator = obj.mc
       ? {
@@ -182,7 +183,6 @@ export const userWithMcDto = userWithMcSchema
       created_at: obj.createdAt.toISOString(),
       updated_at: obj.updatedAt.toISOString(),
       creator,
-      mc: creator,
     };
   })
   .pipe(
@@ -195,15 +195,6 @@ export const userWithMcDto = userWithMcSchema
       created_at: z.iso.datetime(),
       updated_at: z.iso.datetime(),
       creator: z.object({
-        id: z.string(),
-        name: z.string(),
-        alias_name: z.string(),
-        is_banned: z.boolean(),
-        metadata: z.record(z.string(), z.any()),
-        created_at: z.iso.datetime(),
-        updated_at: z.iso.datetime(),
-      }).nullable(),
-      mc: z.object({
         id: z.string(),
         name: z.string(),
         alias_name: z.string(),
@@ -228,7 +219,7 @@ export class UserDto extends createZodDto(userDto) {}
 
 export class AdminUserDto extends createZodDto(adminUserDto) {}
 
-export class UserWithMcDto extends createZodDto(userWithMcDto) {}
+export class UserWithCreatorDto extends createZodDto(userWithCreatorDto) {}
 
 export class UpdateUserDto extends createZodDto(updateUserSchema) {}
 
@@ -281,7 +272,7 @@ export type CreateUserPayload = {
   name: string;
   profileUrl: string | null;
   metadata?: Record<string, any>;
-  mc?: {
+  creator?: {
     name: string;
     aliasName: string;
     metadata?: Record<string, any>;

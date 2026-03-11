@@ -24,14 +24,7 @@ export class ValidationService {
   private getCreatorAssignments(
     show: ShowPlanItem,
   ): Array<{ creatorId: string; note?: string }> {
-    if (show.creators && show.creators.length > 0) {
-      return show.creators;
-    }
-
-    return (show.mcs || []).map((mc) => ({
-      creatorId: mc.mcId,
-      note: mc.note,
-    }));
+    return show.creators || [];
   }
 
   /**
@@ -133,7 +126,7 @@ export class ValidationService {
       }
     }
 
-    // Check for internal conflicts (room and MC double-booking within schedule)
+    // Check for internal conflicts (room and creator double-booking within schedule)
     // Phase 1: Only validates conflicts within the schedule itself (per-client).
     // Cross-schedule validation (conflicts with other published schedules) is deferred to Phase 2.
     const conflictErrors = this.checkInternalConflicts(shows);
@@ -331,7 +324,7 @@ export class ValidationService {
 
     // Validate creators
     for (const creator of this.getCreatorAssignments(show)) {
-      if (creator.creatorId && !uidMaps.mcs.has(creator.creatorId)) {
+      if (creator.creatorId && !uidMaps.creators.has(creator.creatorId)) {
         errors.push({
           type: 'reference_not_found',
           message: `Creator with ID ${creator.creatorId} not found`,
@@ -353,7 +346,7 @@ export class ValidationService {
       }
     }
 
-    // Note: Room and MC availability checks against existing published shows are disabled
+    // Note: Room and creator availability checks against existing published shows are disabled
     // for Phase 1 per design doc - we only validate conflicts within the schedule itself.
     // Cross-schedule validation (conflicts with other published schedules) is deferred to Phase 2.
     //
@@ -396,7 +389,7 @@ export class ValidationService {
   }
 
   /**
-   * Checks for internal conflicts within the schedule (room and MC conflicts).
+   * Checks for internal conflicts within the schedule (room and creator conflicts).
    * Phase 1: Only validates conflicts within the schedule itself (per-client validation).
    * Cross-schedule validation (conflicts with other published schedules) is deferred to Phase 2.
    */
@@ -601,7 +594,7 @@ export class ValidationService {
       showTypes: Map<string, bigint>;
       showStatuses: Map<string, bigint>;
       showStandards: Map<string, bigint>;
-      mcs: Map<string, bigint>;
+      creators: Map<string, bigint>;
       platforms: Map<string, bigint>;
       existingShows: Map<string, bigint>;
     }> {
@@ -637,7 +630,7 @@ export class ValidationService {
       showTypes,
       showStatuses,
       showStandards,
-      mcs,
+      creators,
       platforms,
       existingShows,
     ] = await Promise.all([
@@ -691,7 +684,9 @@ export class ValidationService {
     const showStandardMap = new Map<string, bigint>(
       showStandards.map((s) => [s.uid, s.id]),
     );
-    const mcMap = new Map<string, bigint>(mcs.map((m) => [m.uid, m.id]));
+    const creatorMap = new Map<string, bigint>(
+      creators.map((creator) => [creator.uid, creator.id]),
+    );
     const platformMap = new Map<string, bigint>(
       platforms.map((p) => [p.uid, p.id]),
     );
@@ -705,7 +700,7 @@ export class ValidationService {
       showTypes: showTypeMap,
       showStatuses: showStatusMap,
       showStandards: showStandardMap,
-      mcs: mcMap,
+      creators: creatorMap,
       platforms: platformMap,
       existingShows: existingShowMap,
     };

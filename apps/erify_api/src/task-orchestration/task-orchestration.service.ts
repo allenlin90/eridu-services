@@ -332,11 +332,6 @@ export class TaskOrchestrationService {
       return {
         ...baseShow,
         creators,
-        mcs: creators.map((creator) => ({
-          mc_id: creator.creator_id,
-          mc_name: creator.creator_name,
-          mc_aliasname: creator.creator_alias_name,
-        })),
         task_summary: {
           total: taskSummaries.length,
           assigned: taskSummaries.filter((t) => t.assigneeId !== null).length,

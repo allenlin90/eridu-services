@@ -21,10 +21,8 @@ import { ShowService } from '@/models/show/show.service';
 import {
   CreateShowWithAssignmentsDto,
   RemoveCreatorsFromShowDto,
-  RemoveMcsFromShowDto,
   RemovePlatformsFromShowDto,
   ReplaceCreatorsOnShowDto,
-  ReplaceMcsOnShowDto,
   ReplacePlatformsOnShowDto,
   showWithAssignmentsDto,
   UpdateShowWithAssignmentsDto,
@@ -107,16 +105,6 @@ export class AdminShowController extends BaseAdminController {
     await this.showOrchestrationService.deleteShow(id);
   }
 
-  @Patch(':id/mcs/remove')
-  @AdminResponse(undefined, HttpStatus.NO_CONTENT)
-  async removeMCsFromShow(
-    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show'))
-    id: string,
-    @Body() body: RemoveMcsFromShowDto,
-  ) {
-    await this.showOrchestrationService.removeMCsFromShow(id, body.mcIds);
-  }
-
   @Patch(':id/creators/remove')
   @AdminResponse(undefined, HttpStatus.NO_CONTENT)
   async removeCreatorsFromShow(
@@ -141,20 +129,6 @@ export class AdminShowController extends BaseAdminController {
       id,
       body.platformIds,
     );
-  }
-
-  @Patch(':id/mcs/replace')
-  @AdminResponse(
-    showWithAssignmentsDto,
-    HttpStatus.OK,
-    'MCs replaced on show successfully',
-  )
-  async replaceMCsOnShow(
-    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show'))
-    id: string,
-    @Body() body: ReplaceMcsOnShowDto,
-  ) {
-    return await this.showOrchestrationService.replaceMCsForShow(id, body.mcs);
   }
 
   @Patch(':id/creators/replace')

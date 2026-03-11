@@ -58,7 +58,7 @@ describe('backdoorUserController', () => {
         metadata: {},
         extId: null,
         profileUrl: null,
-        mc: undefined,
+        creator: undefined,
       };
       const createdUser: User = {
         id: BigInt(1),
@@ -85,14 +85,14 @@ describe('backdoorUserController', () => {
       expect(result).toEqual({ ...createdUser, mc: null });
     });
 
-    it('should handle user creation with MC', async () => {
+    it('should handle user creation with creator', async () => {
       const createDto: CreateUserDto = {
         email: 'mc@example.com',
         name: 'MC User',
         extId: null,
         profileUrl: null,
         metadata: {},
-        mc: {
+        creator: {
           name: 'MC One',
           aliasName: 'MC One',
           metadata: {},
@@ -145,7 +145,7 @@ describe('backdoorUserController', () => {
           extId: null,
           profileUrl: null,
           metadata: {},
-          mc: undefined,
+          creator: undefined,
         },
         {
           email: 'user2@example.com',
@@ -153,7 +153,7 @@ describe('backdoorUserController', () => {
           extId: null,
           profileUrl: null,
           metadata: {},
-          mc: {
+          creator: {
             name: 'MC',
             aliasName: 'MC',
             metadata: {},
@@ -174,14 +174,14 @@ describe('backdoorUserController', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
-        mc: dto.mc
+        mc: dto.creator
           ? {
               id: BigInt(i),
               uid: `mc_${i}`,
-              name: dto.mc.name,
-              aliasName: dto.mc.aliasName,
+              name: dto.creator.name,
+              aliasName: dto.creator.aliasName,
               isBanned: false,
-              metadata: dto.mc.metadata as Prisma.JsonObject,
+              metadata: dto.creator.metadata as Prisma.JsonObject,
               createdAt: new Date(),
               updatedAt: new Date(),
               deletedAt: null,

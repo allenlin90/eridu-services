@@ -24,14 +24,14 @@ import {
 } from '@/models/show-mc/schemas/show-mc.schema';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
 
-@Controller(['admin/show-mcs', 'admin/show-creators'])
-export class AdminShowMcController extends BaseAdminController {
+@Controller('admin/show-creators')
+export class AdminShowCreatorController extends BaseAdminController {
   constructor(private readonly showMcService: ShowMcService) {
     super();
   }
 
   @Post()
-  @AdminResponse(showMcDto, HttpStatus.CREATED, 'Show MC created successfully')
+  @AdminResponse(showMcDto, HttpStatus.CREATED, 'Show creator assignment created successfully')
   async createShowMc(@Body() body: CreateShowMcDto) {
     const { showId, mcId, note, metadata } = body;
     const showMc = await this.showMcService.create({
@@ -47,7 +47,7 @@ export class AdminShowMcController extends BaseAdminController {
   }
 
   @Get()
-  @AdminPaginatedResponse(showMcDto, 'List of show MCs with pagination')
+  @AdminPaginatedResponse(showMcDto, 'List of show creator assignments with pagination')
   async getShowMcs(@Query() query: PaginationQueryDto) {
     const { data, total } = await this.showMcService.findPaginated({
       skip: query.skip,
@@ -59,9 +59,9 @@ export class AdminShowMcController extends BaseAdminController {
   }
 
   @Get(':id')
-  @AdminResponse(showMcDto, HttpStatus.OK, 'Show MC details')
+  @AdminResponse(showMcDto, HttpStatus.OK, 'Show creator assignment details')
   async getShowMc(
-    @Param('id', new UidValidationPipe(ShowMcService.UID_PREFIX, 'Show MC'))
+    @Param('id', new UidValidationPipe(ShowMcService.UID_PREFIX, 'Show creator assignment'))
     id: string,
   ) {
     const showMc = await this.showMcService.findOne(id, {
@@ -73,9 +73,9 @@ export class AdminShowMcController extends BaseAdminController {
   }
 
   @Patch(':id')
-  @AdminResponse(showMcDto, HttpStatus.OK, 'Show MC updated successfully')
+  @AdminResponse(showMcDto, HttpStatus.OK, 'Show creator assignment updated successfully')
   async updateShowMc(
-    @Param('id', new UidValidationPipe(ShowMcService.UID_PREFIX, 'Show MC'))
+    @Param('id', new UidValidationPipe(ShowMcService.UID_PREFIX, 'Show creator assignment'))
     id: string,
     @Body() body: UpdateShowMcDto,
   ) {
@@ -99,7 +99,7 @@ export class AdminShowMcController extends BaseAdminController {
   @Delete(':id')
   @AdminResponse(undefined, HttpStatus.NO_CONTENT)
   async deleteShowMc(
-    @Param('id', new UidValidationPipe(ShowMcService.UID_PREFIX, 'Show MC'))
+    @Param('id', new UidValidationPipe(ShowMcService.UID_PREFIX, 'Show creator assignment'))
     id: string,
   ) {
     const showMc = await this.showMcService.findOne(id);

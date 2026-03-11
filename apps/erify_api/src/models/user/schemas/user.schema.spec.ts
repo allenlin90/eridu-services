@@ -1,8 +1,8 @@
-import { createUserSchema, userWithMcDto } from './user.schema';
+import { createUserSchema, userWithCreatorDto } from './user.schema';
 
 describe('userSchema', () => {
   describe('createUserSchema', () => {
-    it('maps creator input alias to internal mc payload', () => {
+    it('maps creator input alias to internal creator payload', () => {
       const parsed = createUserSchema.parse({
         email: 'creator@example.com',
         name: 'Creator User',
@@ -13,39 +13,31 @@ describe('userSchema', () => {
         },
       });
 
-      expect(parsed.mc).toEqual({
+      expect(parsed.creator).toEqual({
         name: 'Creator One',
         aliasName: 'Creator Alias',
         metadata: { source: 'test' },
       });
     });
 
-    it('prioritizes creator alias when both creator and mc are provided', () => {
-      const parsed = createUserSchema.parse({
+    it('rejects legacy mc input alias', () => {
+      const result = createUserSchema.safeParse({
         email: 'creator@example.com',
         name: 'Creator User',
-        creator: {
-          name: 'Creator Name',
-          alias_name: 'Creator Alias',
-        },
         mc: {
           name: 'Legacy MC Name',
           alias_name: 'Legacy MC Alias',
         },
       });
 
-      expect(parsed.mc).toEqual({
-        name: 'Creator Name',
-        aliasName: 'Creator Alias',
-        metadata: undefined,
-      });
+      expect(result.success).toBe(false);
     });
   });
 
-  describe('userWithMcDto', () => {
-    it('emits creator and legacy mc aliases from the same relation payload', () => {
+  describe('userWithCreatorDto', () => {
+    it('emits creator payload only', () => {
       const now = new Date('2026-03-11T12:00:00.000Z');
-      const dto = userWithMcDto.parse({
+      const dto = userWithCreatorDto.parse({
         id: BigInt(1),
         uid: 'user_123',
         extId: 'ext_123',
@@ -78,7 +70,7 @@ describe('userSchema', () => {
         created_at: now.toISOString(),
         updated_at: now.toISOString(),
       });
-      expect(dto.mc).toEqual(dto.creator);
+      expect(dto).not.toHaveProperty('mc');
     });
   });
 });

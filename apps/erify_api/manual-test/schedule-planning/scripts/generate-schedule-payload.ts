@@ -45,8 +45,8 @@ type ShowPlanItem = {
   showTypeId: string;
   showStatusId: string;
   showStandardId: string;
-  mcs: Array<{
-    mcId: string;
+  creators: Array<{
+    creatorId: string;
     note?: string;
   }>;
   platforms: Array<{
@@ -347,8 +347,8 @@ function generateShows(
       showStandardId: weightedRandom(showStandardWeights).uid,
       // 50% of shows will have explicit studio assignment, 50% will inherit from schedule
       studioId: Math.random() > 0.5 ? randomElement(studioUids) : undefined,
-      mcs: selectedMcUids.map((mcUid) => ({
-        mcId: mcUid,
+      creators: selectedMcUids.map((mcUid) => ({
+        creatorId: mcUid,
         note: `Creator assignment for ${clientName} Show ${showIndex + 1}`,
       })),
       platforms: selectedPlatformUids.map((platformUid, idx) => ({
@@ -532,8 +532,8 @@ function generateShowsForClient(
       showTypeId: weightedRandom(showTypeWeights).uid,
       showStatusId: weightedRandom(showStatusWeights).uid,
       showStandardId: weightedRandom(showStandardWeights).uid,
-      mcs: selectedMcUids.map((mcUid) => ({
-        mcId: mcUid,
+      creators: selectedMcUids.map((mcUid) => ({
+        creatorId: mcUid,
         note: `Creator assignment for ${clientName} Show ${showIndex + 1}`,
       })),
       platforms: selectedPlatformUids.map((platformUid, idx) => ({

@@ -36,18 +36,18 @@ export class UserService extends BaseModelService {
   async createUser(
     payload: CreateUserPayload,
   ): Promise<User> {
-    const { mc, ...userData } = payload;
+    const { creator, ...userData } = payload;
     const uid = this.generateUid();
 
     return this.userRepository.create({
       ...userData,
       uid,
-      ...(mc && {
+      ...(creator && {
         mc: {
           create: {
-            name: mc.name,
-            aliasName: mc.aliasName,
-            metadata: mc.metadata ?? {},
+            name: creator.name,
+            aliasName: creator.aliasName,
+            metadata: creator.metadata ?? {},
             uid: this.utilityService.generateBrandedId(CREATOR_UID_PREFIX),
           },
         },
@@ -56,39 +56,39 @@ export class UserService extends BaseModelService {
   }
 
   async createUsersBulk(payloads: CreateUserPayload[]): Promise<User[]> {
-    const { usersWithMc, usersWithoutMc }
-      = this.separateUsersByMcPresence(payloads);
+    const { usersWithCreator, usersWithoutCreator }
+      = this.separateUsersByCreatorPresence(payloads);
 
     const [bulkCreatedUsers, individualCreatedUsers] = await Promise.all([
-      this.createUsersWithoutMc(usersWithoutMc),
-      this.createUsersWithMc(usersWithMc),
+      this.createUsersWithoutCreator(usersWithoutCreator),
+      this.createUsersWithCreator(usersWithCreator),
     ]);
 
     return [...bulkCreatedUsers, ...individualCreatedUsers];
   }
 
-  private separateUsersByMcPresence(payloads: CreateUserPayload[]) {
+  private separateUsersByCreatorPresence(payloads: CreateUserPayload[]) {
     return payloads.reduce(
       (acc, user) => {
-        if (user.mc) {
-          acc.usersWithMc.push(user);
+        if (user.creator) {
+          acc.usersWithCreator.push(user);
         } else {
-          acc.usersWithoutMc.push(user);
+          acc.usersWithoutCreator.push(user);
         }
         return acc;
       },
       {
-        usersWithMc: [] as CreateUserPayload[],
-        usersWithoutMc: [] as CreateUserPayload[],
+        usersWithCreator: [] as CreateUserPayload[],
+        usersWithoutCreator: [] as CreateUserPayload[],
       },
     );
   }
 
-  private async createUsersWithoutMc(users: CreateUserPayload[]): Promise<User[]> {
+  private async createUsersWithoutCreator(users: CreateUserPayload[]): Promise<User[]> {
     if (users.length === 0)
       return [];
 
-    const createInputs = users.map(({ mc: _mc, ...userData }) => ({
+    const createInputs = users.map(({ creator: _creator, ...userData }) => ({
       ...userData,
       uid: this.generateUid(),
     }));
@@ -96,7 +96,7 @@ export class UserService extends BaseModelService {
     return this.userRepository.createManyAndReturn(createInputs);
   }
 
-  private async createUsersWithMc(users: CreateUserPayload[]): Promise<User[]> {
+  private async createUsersWithCreator(users: CreateUserPayload[]): Promise<User[]> {
     if (users.length === 0)
       return [];
 

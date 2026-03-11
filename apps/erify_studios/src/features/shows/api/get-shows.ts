@@ -7,7 +7,6 @@ import { apiClient } from '@/lib/api/client';
 
 export type Show = ShowApiResponse & {
   creators?: { id: string; creator_id: string; creator_name: string }[];
-  mcs?: { id: string; mc_id: string; mc_name: string }[];
   platforms: { id: string; platform_id: string; platform_name: string }[];
 };
 

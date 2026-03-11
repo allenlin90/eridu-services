@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 
-import { AdminMcController } from './admin-mc.controller';
+import { AdminCreatorController } from './admin-creator.controller';
 
 import { McModule } from '@/models/mc/mc.module';
 import { UtilityModule } from '@/utility/utility.module';
 
 @Module({
   imports: [McModule, UtilityModule],
-  controllers: [AdminMcController],
+  controllers: [AdminCreatorController],
 })
-export class AdminMcModule {}
+export class AdminCreatorModule {}

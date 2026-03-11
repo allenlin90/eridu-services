@@ -244,6 +244,26 @@ function UserCard({ user }: { user: User }) {
 }
 ```
 
+## Conditional Rendering — Always Use Ternary
+
+**Rule**: Use explicit ternary operators instead of `&&` for conditional rendering. The `&&` operator renders the left operand when falsy, causing `0` and `NaN` to appear as text in the DOM.
+
+```tsx
+// ❌ Bug: renders "0" in the DOM when count is 0
+{count && <Badge>{count}</Badge>}
+
+// ✅ Safe: nothing renders when count is 0
+{count > 0 ? <Badge>{count}</Badge> : null}
+
+// ❌ Bug: renders "NaN" if value is NaN
+{value && <Stat>{value}</Stat>}
+
+// ✅ Safe: explicit boolean check
+{value != null && !isNaN(value) ? <Stat>{value}</Stat> : null}
+```
+
+This applies everywhere in JSX — component slots, list renders, and inline conditionals.
+
 ## General Best Practices
 
 1.  **Strict Props**: Define specific interfaces for props, avoid `any` or broad `object` types.
@@ -277,6 +297,7 @@ function UserCard({ user }: { user: User }) {
 - [ ] `pnpm test` passes.
 - [ ] Component names match their filenames.
 - [ ] Complex logic extracted to custom hooks.
+- [ ] Conditional rendering uses ternary (`condition ? <A /> : null`), not `&&` with numeric/nullable conditions.
 - [ ] Large route files (>200 LOC or mixed concerns) are decomposed into container + hooks + presentation components.
 - [ ] Protected studio routes use `StudioRouteGuard` + shared access policy.
 - [ ] Sidebar visibility and route access use the same route-access source.

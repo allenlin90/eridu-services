@@ -44,35 +44,18 @@ export const schedulePublishSummarySchema = z
     shows_cancelled: z.number().int().nonnegative(),
     shows_pending_resolution: z.number().int().nonnegative(),
     shows_restored: z.number().int().nonnegative(),
-    mc_links_added: z.number().int().nonnegative().optional(),
-    mc_links_updated: z.number().int().nonnegative().optional(),
-    mc_links_removed: z.number().int().nonnegative().optional(),
-    creator_links_added: z.number().int().nonnegative().optional(),
-    creator_links_updated: z.number().int().nonnegative().optional(),
-    creator_links_removed: z.number().int().nonnegative().optional(),
+    creator_links_added: z.number().int().nonnegative(),
+    creator_links_updated: z.number().int().nonnegative(),
+    creator_links_removed: z.number().int().nonnegative(),
+    // Explicitly reject legacy aliases during S4 cutover.
+    mc_links_added: z.never().optional(),
+    mc_links_updated: z.never().optional(),
+    mc_links_removed: z.never().optional(),
     platform_links_added: z.number().int().nonnegative(),
     platform_links_updated: z.number().int().nonnegative(),
     platform_links_removed: z.number().int().nonnegative(),
   })
-  .transform((obj) => {
-    const creatorLinksAdded = obj.creator_links_added ?? obj.mc_links_added ?? 0;
-    const creatorLinksUpdated = obj.creator_links_updated ?? obj.mc_links_updated ?? 0;
-    const creatorLinksRemoved = obj.creator_links_removed ?? obj.mc_links_removed ?? 0;
-
-    const mcLinksAdded = obj.mc_links_added ?? creatorLinksAdded;
-    const mcLinksUpdated = obj.mc_links_updated ?? creatorLinksUpdated;
-    const mcLinksRemoved = obj.mc_links_removed ?? creatorLinksRemoved;
-
-    return {
-      ...obj,
-      mc_links_added: mcLinksAdded,
-      mc_links_updated: mcLinksUpdated,
-      mc_links_removed: mcLinksRemoved,
-      creator_links_added: creatorLinksAdded,
-      creator_links_updated: creatorLinksUpdated,
-      creator_links_removed: creatorLinksRemoved,
-    };
-  })
+  .transform(({ mc_links_added: _mcLinksAdded, mc_links_updated: _mcLinksUpdated, mc_links_removed: _mcLinksRemoved, ...summary }) => summary)
   .pipe(
     z.object({
       shows_created: z.number().int().nonnegative(),
@@ -80,9 +63,6 @@ export const schedulePublishSummarySchema = z
       shows_cancelled: z.number().int().nonnegative(),
       shows_pending_resolution: z.number().int().nonnegative(),
       shows_restored: z.number().int().nonnegative(),
-      mc_links_added: z.number().int().nonnegative(),
-      mc_links_updated: z.number().int().nonnegative(),
-      mc_links_removed: z.number().int().nonnegative(),
       creator_links_added: z.number().int().nonnegative(),
       creator_links_updated: z.number().int().nonnegative(),
       creator_links_removed: z.number().int().nonnegative(),
