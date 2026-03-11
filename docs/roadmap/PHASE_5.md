@@ -30,7 +30,7 @@ Progress note (2026-03-10):
 - Initial creator refactor started in `erify_studios` show mapping/dashboard flows.
 - Backend creator UID transition landed:
   - New creator IDs are generated as `creator_...`.
-  - Backfill strategy selected: script-based (`db:creator-uid:backfill`) with dry-run, not migration SQL.
+  - Backfill strategy used for rollout: one-time script-based cutover (now retired after stabilization).
 - Accepted ADR published: `docs/adr/0002-creator-naming.md`.
 
 Phase 5 naming contract:

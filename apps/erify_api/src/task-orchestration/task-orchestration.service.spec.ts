@@ -231,6 +231,15 @@ describe('taskOrchestrationService', () => {
             createdAt: now,
             updatedAt: now,
             deletedAt: null,
+            showMCs: [
+              {
+                mc: {
+                  uid: 'mc_1',
+                  name: 'Alice',
+                  aliasName: 'Alice A',
+                },
+              },
+            ],
             taskTargets: [
               { task: { status: TaskStatus.COMPLETED, assigneeId: BigInt(1) } },
               { task: { status: TaskStatus.PENDING, assigneeId: null } },
@@ -248,6 +257,20 @@ describe('taskOrchestrationService', () => {
         unassigned: 1,
         completed: 1,
       });
+      expect(result.data[0].creators).toEqual([
+        {
+          creator_id: 'mc_1',
+          creator_name: 'Alice',
+          creator_alias_name: 'Alice A',
+        },
+      ]);
+      expect(result.data[0].mcs).toEqual([
+        {
+          mc_id: 'mc_1',
+          mc_name: 'Alice',
+          mc_aliasname: 'Alice A',
+        },
+      ]);
     });
 
     it('should filter by attention show ids when needs_attention is enabled', async () => {

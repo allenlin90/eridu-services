@@ -19,6 +19,18 @@ import { ShowMcService } from '@/models/show-mc/show-mc.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 
+type McAssignmentPayload = {
+  mcId: string;
+  note?: string | null;
+  metadata?: object;
+};
+
+type CreatorAssignmentPayload = {
+  creatorId: string;
+  note?: string | null;
+  metadata?: object;
+};
+
 @Injectable()
 export class ShowOrchestrationService {
   constructor(
@@ -130,11 +142,16 @@ export class ShowOrchestrationService {
   @Transactional()
   async removeMCsFromShow(uid: string, mcIds: string[]): Promise<void> {
     const show = await this.showService.getShowById(uid);
-    const showId = show.id;
+    await this.removeShowMcAssignmentsByUids(show.id, mcIds);
+  }
 
-    const mcs = await this.mcRepository.findByUids(mcIds);
-    const internalMcIds = mcs.map((mc) => mc.id);
-    await this.showMcRepository.softDeleteByMcIds(showId, internalMcIds);
+  @Transactional()
+  async removeCreatorsFromShow(
+    uid: string,
+    creatorIds: string[],
+  ): Promise<void> {
+    const show = await this.showService.getShowById(uid);
+    await this.removeShowMcAssignmentsByUids(show.id, creatorIds);
   }
 
   /**
@@ -156,7 +173,7 @@ export class ShowOrchestrationService {
   @Transactional()
   async replaceMCsForShow<T extends ShowInclude = Record<string, never>>(
     uid: string,
-    mcs: Array<{ mcId: string; note?: string | null; metadata?: object }>,
+    mcs: McAssignmentPayload[],
     include?: T,
   ): Promise<Show | ShowWithPayload<T>> {
     const defaultInclude = include || this.getDefaultIncludes();
@@ -164,6 +181,25 @@ export class ShowOrchestrationService {
     const showId = show.id;
 
     await this.syncShowMCs(showId, mcs);
+    return this.showRepository.findByUid(uid, defaultInclude) as Promise<Show | ShowWithPayload<T>>;
+  }
+
+  @Transactional()
+  async replaceCreatorsForShow<T extends ShowInclude = Record<string, never>>(
+    uid: string,
+    creators: CreatorAssignmentPayload[],
+    include?: T,
+  ): Promise<Show | ShowWithPayload<T>> {
+    const defaultInclude = include || this.getDefaultIncludes();
+    const show = await this.showService.getShowById(uid);
+    const showId = show.id;
+    const mcAssignments: McAssignmentPayload[] = creators.map((creator) => ({
+      mcId: creator.creatorId,
+      note: creator.note,
+      metadata: creator.metadata,
+    }));
+
+    await this.syncShowMCs(showId, mcAssignments, 'Creators');
     return this.showRepository.findByUid(uid, defaultInclude) as Promise<Show | ShowWithPayload<T>>;
   }
 
@@ -259,7 +295,8 @@ export class ShowOrchestrationService {
    */
   private async syncShowMCs(
     showId: bigint,
-    mcs: Array<{ mcId: string; note?: string | null; metadata?: object }>,
+    mcs: McAssignmentPayload[],
+    missingEntityLabel = 'MCs',
   ): Promise<void> {
     const mcUids = mcs.map((m) => m.mcId);
 
@@ -267,7 +304,7 @@ export class ShowOrchestrationService {
     if (foundMcs.length !== mcUids.length) {
       const foundUids = foundMcs.map((mc) => mc.uid);
       const missingUids = mcUids.filter((uid) => !foundUids.includes(uid));
-      throw HttpError.badRequest(`MCs not found: ${missingUids.join(', ')}`);
+      throw HttpError.badRequest(`${missingEntityLabel} not found: ${missingUids.join(', ')}`);
     }
 
     const mcMap = new Map(foundMcs.map((m) => [m.uid, m.id]));
@@ -304,6 +341,15 @@ export class ShowOrchestrationService {
     for (const assignment of toDelete) {
       await this.showMcRepository.softDelete({ id: assignment.id });
     }
+  }
+
+  private async removeShowMcAssignmentsByUids(
+    showId: bigint,
+    mcUids: string[],
+  ): Promise<void> {
+    const mcs = await this.mcRepository.findByUids(mcUids);
+    const internalMcIds = mcs.map((mc) => mc.id);
+    await this.showMcRepository.softDeleteByMcIds(showId, internalMcIds);
   }
 
   /**

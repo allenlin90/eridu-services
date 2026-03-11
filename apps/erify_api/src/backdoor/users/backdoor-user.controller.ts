@@ -11,6 +11,7 @@ import z from 'zod';
 
 import { BaseBackdoorController } from '@/backdoor/base-backdoor.controller';
 import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
+import { HttpError } from '@/lib/errors/http-error.util';
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
@@ -44,14 +45,32 @@ export class BackdoorUserController extends BaseBackdoorController {
 
   @Post()
   @ZodResponse(userWithMcDto, HttpStatus.CREATED, 'User created successfully')
-  createUser(@Body() body: CreateUserDto) {
-    return this.userService.createUser(body);
+  async createUser(@Body() body: CreateUserDto) {
+    const createdUser = await this.userService.createUser(body);
+    const userWithMc = await this.userService.findUserById(createdUser.uid, { mc: true });
+
+    if (!userWithMc) {
+      throw HttpError.notFound('User', createdUser.uid);
+    }
+
+    return userWithMc;
   }
 
   @Post('bulk')
   @ZodResponse(z.array(userWithMcDto), HttpStatus.CREATED, 'Users created successfully')
-  createUsersBulk(@Body() body: BulkCreateUserDto) {
-    return this.userService.createUsersBulk(body.data);
+  async createUsersBulk(@Body() body: BulkCreateUserDto) {
+    const createdUsers = await this.userService.createUsersBulk(body.data);
+    const hydratedUsers = await Promise.all(
+      createdUsers.map(async (user) => {
+        const userWithMc = await this.userService.findUserById(user.uid, { mc: true });
+        if (!userWithMc) {
+          throw HttpError.notFound('User', user.uid);
+        }
+        return userWithMc;
+      }),
+    );
+
+    return hydratedUsers;
   }
 
   @Patch(':id')

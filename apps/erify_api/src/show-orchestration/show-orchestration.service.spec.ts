@@ -425,6 +425,28 @@ describe('showOrchestrationService', () => {
     });
   });
 
+  describe('removeCreatorsFromShow', () => {
+    it('should remove creators from show', async () => {
+      const uid = 'show_test123';
+      const creatorIds = ['creator_1', 'creator_2'];
+      const mockCreator1 = { id: BigInt(1), uid: 'creator_1' };
+      const mockCreator2 = { id: BigInt(2), uid: 'creator_2' };
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      mcRepository.findByUids.mockResolvedValue([mockCreator1, mockCreator2] as any);
+      showMcRepository.softDeleteByMcIds.mockResolvedValue(undefined as any);
+
+      await service.removeCreatorsFromShow(uid, creatorIds);
+
+      expect(showService.getShowById).toHaveBeenCalledWith(uid);
+      expect(mcRepository.findByUids).toHaveBeenCalledWith(creatorIds);
+      expect(showMcRepository.softDeleteByMcIds).toHaveBeenCalledWith(
+        mockShow.id,
+        [BigInt(1), BigInt(2)],
+      );
+    });
+  });
+
   describe('replaceMCsForShow', () => {
     it('should replace all MCs for a show', async () => {
       const uid = 'show_test123';
@@ -462,6 +484,68 @@ describe('showOrchestrationService', () => {
         expect.any(Object),
       );
       expect(result).toEqual(mockShow);
+    });
+  });
+
+  describe('replaceCreatorsForShow', () => {
+    it('should replace creators for a show', async () => {
+      const uid = 'show_test123';
+      const creators = [
+        {
+          creatorId: 'creator_test123',
+          note: 'Creator note',
+          metadata: {},
+        },
+      ];
+      const mockCreator = {
+        id: BigInt(1),
+        uid: 'creator_test123',
+        deletedAt: null,
+      };
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      showMcService.generateShowMcUid.mockReturnValue('show_mc_new');
+      mcRepository.findByUids.mockResolvedValue([mockCreator] as any);
+      showMcRepository.findMany.mockResolvedValue([]);
+      showMcRepository.createAssignment.mockResolvedValue({} as any);
+      showRepository.findByUid.mockResolvedValue(mockShow);
+
+      const result = await service.replaceCreatorsForShow(uid, creators);
+
+      expect(showService.getShowById).toHaveBeenCalledWith(uid);
+      expect(mcRepository.findByUids).toHaveBeenCalledWith(['creator_test123']);
+      expect(showMcRepository.createAssignment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          uid: 'show_mc_new',
+          showId: mockShow.id,
+          mcId: BigInt(1),
+          note: 'Creator note',
+          metadata: {},
+        }),
+      );
+      expect(showRepository.findByUid).toHaveBeenCalledWith(
+        uid,
+        expect.any(Object),
+      );
+      expect(result).toEqual(mockShow);
+    });
+
+    it('should return creator-labeled not-found error for creator replacement', async () => {
+      const uid = 'show_test123';
+      const creators = [
+        {
+          creatorId: 'creator_missing',
+          note: null,
+          metadata: {},
+        },
+      ];
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      mcRepository.findByUids.mockResolvedValue([]);
+
+      await expect(service.replaceCreatorsForShow(uid, creators)).rejects.toThrow(
+        'Creators not found: creator_missing',
+      );
     });
   });
 

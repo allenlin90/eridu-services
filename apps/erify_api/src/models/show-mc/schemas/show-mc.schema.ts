@@ -28,29 +28,38 @@ export const showMcSchema = z.object({
 // API input schema (snake_case input, transforms to camelCase)
 export const createShowMcSchema = z.object({
   show_id: z.string().startsWith(ShowService.UID_PREFIX), // UID
-  mc_id: z.string().refine(isCreatorUid, 'Invalid creator/mc UID'), // UID
+  mc_id: z.string().refine(isCreatorUid, 'Invalid creator/mc UID').optional(), // UID
+  creator_id: z.string().refine(isCreatorUid, 'Invalid creator/mc UID').optional(), // UID alias
   note: z.string().max(1000).optional(), // Add max length for notes
   metadata: z.record(z.string(), z.any()).optional(),
 });
 
-const transformCreateShowMcSchema = createShowMcSchema.transform((data) => ({
-  showId: data.show_id,
-  mcId: data.mc_id,
-  note: data.note,
-  metadata: data.metadata,
-}));
+const transformCreateShowMcSchema = createShowMcSchema.transform((data) => {
+  const mcId = data.creator_id ?? data.mc_id;
+  if (!mcId) {
+    throw new Error('Either mc_id or creator_id is required');
+  }
+
+  return {
+    showId: data.show_id,
+    mcId,
+    note: data.note,
+    metadata: data.metadata,
+  };
+});
 
 // API update schema (snake_case input, transforms to camelCase)
 export const updateShowMcSchema = z
   .object({
     show_id: z.string().startsWith(ShowService.UID_PREFIX).optional(), // UID
     mc_id: z.string().refine(isCreatorUid, 'Invalid creator/mc UID').optional(), // UID
+    creator_id: z.string().refine(isCreatorUid, 'Invalid creator/mc UID').optional(), // UID alias
     note: z.string().max(1000).nullable().optional(), // Add max length for notes
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({
     showId: data.show_id,
-    mcId: data.mc_id,
+    mcId: data.creator_id ?? data.mc_id,
     note: data.note,
     metadata: data.metadata,
   }));
@@ -67,6 +76,9 @@ export const showMcDto = showMcWithRelationsSchema
     id: obj.uid,
     show_id: obj.show?.uid ?? null,
     show_name: obj.show?.name ?? null,
+    creator_id: obj.mc?.uid ?? null,
+    creator_name: obj.mc?.name ?? null,
+    creator_alias_name: obj.mc?.aliasName ?? null,
     mc_id: obj.mc?.uid ?? null,
     mc_name: obj.mc?.name ?? null,
     mc_alias_name: obj.mc?.aliasName ?? null,
@@ -80,6 +92,9 @@ export const showMcDto = showMcWithRelationsSchema
       id: z.string(),
       show_id: z.string().nullable(),
       show_name: z.string().nullable(),
+      creator_id: z.string().nullable(),
+      creator_name: z.string().nullable(),
+      creator_alias_name: z.string().nullable(),
       mc_id: z.string().nullable(),
       mc_name: z.string().nullable(),
       mc_alias_name: z.string().nullable(),

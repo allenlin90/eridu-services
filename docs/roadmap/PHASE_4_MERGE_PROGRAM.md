@@ -15,10 +15,9 @@ This file is the cross-session source of truth for slicing that work into review
 - No cherry-pick replay, no bulk file copy, no direct patch lift from that branch.
 - Re-implement each scoped change on cutover/post-cutover branches based on current decisions.
 - Use the feature branch only to check proven patterns, edge cases, and expected behavior.
-- Build a dedicated integration branch from `master`: `release/phase4-creator-cutover`.
-- Build each scope branch from the integration branch.
-- Scope PRs target the integration branch (not `master`).
-- Merge to `master` at the end of `S4` (cutover-only gate).
+- Build each scope branch from current `master`.
+- Scope PRs target `master` directly (one-by-one).
+- Merge to `master` after each scope is smoke-green (do not wait for `S4` batch merge).
 - Start post-cutover product work from refreshed branches after `S4` is merged to `master`.
 - One PR = one topic with explicit non-goals and rollback plan.
 - **Direct cutover policy (alpha environment)**:
@@ -34,10 +33,9 @@ This file is the cross-session source of truth for slicing that work into review
 ## Branch Topology
 
 - **Reference only**: `feat/phase-4-p-and-l`
-- **Cutover integration branch**: `release/phase4-creator-cutover`
 - **Active scope branch policy (one-by-one)**:
   - Keep only one active scope branch locally at a time (current: `cutover/s2-backend-creator-domain-cutover`).
-  - Create the next scope branch only when previous scope is integrated into `release/phase4-creator-cutover`.
+  - Create the next scope branch only when previous scope is merged into `master`.
   - Delete completed/inactive scope branches to reduce branch noise.
 - **Planned cutover scope branch names (create on demand)**:
   - `cutover/s1-creator-cutover-data-contracts` (completed)
@@ -137,7 +135,7 @@ This file is the cross-session source of truth for slicing that work into review
 
 - Trigger: immediately after `S4` is merged to `master` and cutover rollout is stable.
 - Deployment config cleanup:
-  - Revert `.railway/erify_api.json` `preDeployCommand` back to migrate-only.
+  - [x] Reverted `.railway/erify_api.json` `preDeployCommand` back to migrate-only on 2026-03-11 (post-S1 deployment stabilization).
   - Remove temporary cutover wording from deployment/runbook docs.
 - Script and command cleanup:
   - Remove temporary rollout-only command chains if no longer needed.
@@ -151,18 +149,72 @@ This file is the cross-session source of truth for slicing that work into review
 
 ## Execution Tracker
 
-- **Cutover integration branch**: `release/phase4-creator-cutover`
-- **Current active scope**: `S1` merge/deploy readiness
-- **Master merge gate**: S1-S4 only (cutover scopes)
+- **Current active scope**: `S2` backend creator domain cutover (merge-ready)
+- **Master merge gate**: per-scope merge allowed once smoke-green
 - **Post-cutover start gate**: begin `S5` only after `S4` is merged to `master`
 - **Current status by scope**:
-  - `S1`: completed (2026-03-11)
-  - `S2`: queued (separate branch ready)
+  - `S1`: merged to `master` and deployed (2026-03-11)
+  - `S2`: merge-ready (verification + smoke-green on 2026-03-11)
   - `S3`: pending
   - `S4`: pending
   - `S5`: planned (post-cutover)
   - `S6`: planned (post-cutover)
   - `S7`: planned (post-cutover)
+- **S2 delivered scope (backend route/contract cutover)**:
+  - Add creator-first admin route aliases:
+    - `admin/creators` (alias of `admin/mcs`)
+    - `admin/show-creators` (alias of `admin/show-mcs`)
+    - `admin/shows/:id/creators/remove`
+    - `admin/shows/:id/creators/replace`
+  - Add creator-first DTO aliases for show orchestration payloads:
+    - request aliases: `creator_ids`, `creators[].creator_id`
+    - response alias: `creators[]` alongside legacy `mcs[]`
+  - Add creator-first alias support for show-creator payload contract:
+    - `admin/show-creators` accepts `creator_id` input alias
+    - show-creator response includes `creator_id`, `creator_name`, `creator_alias_name` alongside legacy `mc_*`
+  - Add creator-named orchestration methods (`removeCreatorsFromShow`, `replaceCreatorsForShow`) and route wiring.
+  - Add creator-first show list filter alias support:
+    - `creator_name` query alias for admin/studio show search (legacy `mc_name` retained)
+  - Add creator-first studio task-summary parity:
+    - `studios/:studioId/shows` task-summary query supports `creator_name` alias (`mc_name` retained)
+    - task-summary show payload emits `creators[]` alongside legacy `mcs[]`
+  - Harden creator route orchestration parity:
+    - `removeCreatorsFromShow` / `replaceCreatorsForShow` run as first-class transactional paths
+    - creator route replacement errors now return creator-labeled not-found messages
+  - Add creator aliases on user payload contracts:
+    - `create user` accepts `creator` input alias (legacy `mc` retained)
+    - `user-with-mc` response emits `creator` alongside legacy `mc`
+  - Add creator aliases in schedule-planning contracts:
+    - plan document accepts `creators[]` assignments and normalizes to legacy `mcs[]`
+    - publish summary emits `creator_links_*` alongside legacy `mc_links_*`
+  - Add creator-first schedule validation parity:
+    - validation accepts creator-only assignments (`creators[]`) without requiring legacy `mcs[]`
+    - validation messages use creator-first wording (legacy DB/UID internals remain unchanged)
+  - Keep legacy `mc` routes/contracts available during S2/S3 transition; final removal remains S4 gate.
+- **S2 landed commits (latest first)**:
+  - `a407092c` fix(manual-test): send origin header in auth login smoke script
+  - `ffdf7401` refactor(cutover-s2): make creator orchestration paths first-class
+  - `044a6b82` feat(cutover-s2): make schedule validation creator-first with mc fallback
+  - `9551ebdf` feat(cutover-s2): add creator aliases in schedule planning contracts
+  - `1f5fa71e` fix(cutover-s2): hydrate backdoor users before creator/mc serialization
+  - `8df88a39` feat(cutover-s2): add creator aliases for user payloads
+  - `cda4fecc` feat(cutover-s2): add creator aliases to studio show task summary
+  - `d02b49c7` feat(show): add creator_name query alias with mc_name compatibility
+  - `3391f260` refactor(erify_api): add creator-first show-creator payload and service aliases
+  - `0f3380a8` feat(erify_api): add creator-first admin route and assignment DTO aliases
+- **S2 sign-off evidence (2026-03-11)**:
+  - Verification gates passed:
+  - `pnpm --filter @eridu/api-types lint`
+  - `pnpm --filter @eridu/api-types typecheck`
+  - `pnpm --filter @eridu/api-types test`
+  - `pnpm --filter erify_api lint`
+  - `pnpm --filter erify_api typecheck`
+  - `pnpm --filter erify_api test`
+  - Runtime smoke passed:
+  - `manual:schedule:regen-and-run` succeeded end-to-end (upload/validate/publish).
+  - Admin creator route smoke succeeded:
+  - `/admin/shows/:id/creators/replace` (success + creator-not-found path)
+  - `/admin/shows/:id/creators/remove`
 - **S1 landed commits (latest first)**:
   - `25fd985e` feat(erify_api): canonicalize seeded mc uids to creator prefix
   - `8e64efbe` fix(studios): avoid refetching inactive show-task queries without queryFn
@@ -194,15 +246,15 @@ This file is the cross-session source of truth for slicing that work into review
   - `pnpm --filter erify_api db:studio-creator:backfill` => `Studio roster rows to backfill: 0`
   - `pnpm --filter erify_api manual:schedule:generate -- --shows=2 --clients=2` => payload generation succeeded
   - Note: API/FE interactive smoke remains required per environment before cutover merge to `master`.
-- **S1 CD / rollout order (required)**:
-  - Cutover deploy gate (pre-deploy hook) must run in order:  
+- **S1 CD / rollout order (historical, completed)**:
+  - Cutover deploy gate (pre-deploy hook) was executed in order during S1 rollout:  
     `pnpm --filter erify_api db:migrate:deploy`  
     `pnpm --filter erify_api db:creator-uid:backfill`  
     `pnpm --filter erify_api db:studio-creator:backfill`
-  - This prevents app start before cutover backfills are complete.
-  - After creator cutover rollout is fully stable, revert pre-deploy back to migrate-only.
+  - This prevented app start before cutover backfills were complete.
+  - Current steady-state pre-deploy is migrate-only:
+    `pnpm --filter erify_api db:migrate:deploy`
   - Prisma Client generation stays in build (`pnpm --filter erify_api build` already runs `db:generate`).
-  - Start schedule/manual processing only after pre-deploy backfill gate succeeds.
 
 ## PR Definition of Done (every scope)
 
@@ -218,6 +270,7 @@ This file is the cross-session source of truth for slicing that work into review
 ## Session Handoff Log
 
 - 2026-03-11: Switched strategy to integration-branch flow (`release/phase4-creator-cutover`) with scoped PRs merged there, then one final squash PR to `master`.
+- 2026-03-11: Switched from integration-branch flow to direct scoped merges into `master` (S1 merged/deployed first to reduce hotfix risk).
 - 2026-03-11: Deleted temporary `merge/*` helper branches; standardized cutover scope branches under `cutover/*`.
 - 2026-03-11: Pre-S1 UI hotfix merged to `master` (`a2f0fded`) for `/system/*` page padding parity.
 - 2026-03-11: Merge program initialized. Policy set to direct creator cutover (no compatibility phase-out by default).
@@ -225,3 +278,6 @@ This file is the cross-session source of truth for slicing that work into review
 - 2026-03-11: Switched to one-scope-at-a-time branch hygiene; removed inactive local cutover branches and kept only active `S2` branch.
 - 2026-03-11: Branch split updated: current implementation branch renamed to `cutover/s1-creator-cutover-data-contracts`; separate `cutover/s2-backend-creator-domain-cutover` branch recreated for next scope.
 - 2026-03-11: Added S1 hotfix/rollback runbook to support fast incident response after merge.
+- 2026-03-11: S2 started with backend creator-first admin route aliases and show-orchestration creator DTO aliases (legacy `mc` routes retained for transition safety).
+- 2026-03-11: Extended S2 with creator-first show-creator payload aliases and creator-named orchestration service methods.
+- 2026-03-11: Added creator-first show list query alias (`creator_name`) with legacy `mc_name` compatibility.

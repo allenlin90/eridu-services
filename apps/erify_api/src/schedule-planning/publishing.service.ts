@@ -239,6 +239,9 @@ export class PublishingService {
       mc_links_added: 0,
       mc_links_updated: 0,
       mc_links_removed: 0,
+      creator_links_added: 0,
+      creator_links_updated: 0,
+      creator_links_removed: 0,
       platform_links_added: 0,
       platform_links_updated: 0,
       platform_links_removed: 0,
@@ -541,6 +544,7 @@ export class PublishingService {
             },
           });
           summary.mc_links_added += 1;
+          summary.creator_links_added += 1;
           continue;
         }
 
@@ -554,6 +558,7 @@ export class PublishingService {
             },
           });
           summary.mc_links_added += 1;
+          summary.creator_links_added += 1;
           continue;
         }
 
@@ -565,6 +570,7 @@ export class PublishingService {
             },
           });
           summary.mc_links_updated += 1;
+          summary.creator_links_updated += 1;
         }
       }
 
@@ -583,6 +589,7 @@ export class PublishingService {
           },
         });
         summary.mc_links_removed += staleMcIds.length;
+        summary.creator_links_removed += staleMcIds.length;
       }
 
       const incomingPlatformById = new Map<bigint, {

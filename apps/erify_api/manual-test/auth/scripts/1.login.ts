@@ -26,12 +26,14 @@ import * as path from 'path';
 // Parse command line arguments
 function parseArgs(): {
   authUrl: string;
+  origin?: string;
   email?: string;
   password?: string;
 } {
   const args = process.argv.slice(2);
   // Use ERIDU_AUTH_URL from environment, fallback to default
   let authUrl = process.env.ERIDU_AUTH_URL || 'http://localhost:3000';
+  let origin: string | undefined = process.env.ERIDU_AUTH_ORIGIN;
   let email: string | undefined;
   let password: string | undefined;
 
@@ -41,6 +43,10 @@ function parseArgs(): {
       authUrl = arg.split('=')[1];
     } else if (arg === '--auth-url' && i + 1 < args.length) {
       authUrl = args[i + 1];
+    } else if (arg.startsWith('--origin=')) {
+      origin = arg.split('=')[1];
+    } else if (arg === '--origin' && i + 1 < args.length) {
+      origin = args[i + 1];
     } else if (arg.startsWith('--email=')) {
       email = arg.split('=')[1];
     } else if (arg === '--email' && i + 1 < args.length) {
@@ -52,7 +58,7 @@ function parseArgs(): {
     }
   }
 
-  return { authUrl, email, password };
+  return { authUrl, origin, email, password };
 }
 
 // Load login payload
@@ -78,14 +84,17 @@ function loadLoginPayload(email?: string, password?: string) {
  */
 export async function performLogin(
   authUrl: string,
+  originInput?: string,
   email?: string,
   password?: string,
 ): Promise<string> {
   const payload = loadLoginPayload(email, password);
   const endpoint = `${authUrl}/api/auth/sign-in/email`;
+  const origin = originInput || new URL(authUrl).origin;
 
   console.log('🔐 Logging in to eridu_auth service...');
   console.log(`📡 Endpoint: POST ${endpoint}`);
+  console.log(`🌐 Origin: ${origin}`);
   console.log(`👤 Email: ${payload.email}`);
 
   try {
@@ -93,6 +102,7 @@ export async function performLogin(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Origin: origin,
       },
       credentials: 'include', // Include cookies
       body: JSON.stringify(payload),
@@ -124,6 +134,7 @@ export async function performLogin(
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        Origin: origin,
         ...(cookies ? { Cookie: cookies } : {}),
       },
       credentials: 'include', // Include cookies from sign-in
@@ -163,8 +174,8 @@ export async function performLogin(
 
 // Standalone execution function
 async function login() {
-  const { authUrl, email, password } = parseArgs();
-  const token = await performLogin(authUrl, email, password);
+  const { authUrl, origin, email, password } = parseArgs();
+  const token = await performLogin(authUrl, origin, email, password);
   console.log('\n✨ Login completed successfully');
   console.log('\n💡 Next step: Test /me endpoint');
   console.log(`   pnpm run manual:auth:test-me -- --token=${token}`);

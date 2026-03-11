@@ -24,7 +24,7 @@ import {
 } from '@/models/show-mc/schemas/show-mc.schema';
 import { ShowMcService } from '@/models/show-mc/show-mc.service';
 
-@Controller('admin/show-mcs')
+@Controller(['admin/show-mcs', 'admin/show-creators'])
 export class AdminShowMcController extends BaseAdminController {
   constructor(private readonly showMcService: ShowMcService) {
     super();

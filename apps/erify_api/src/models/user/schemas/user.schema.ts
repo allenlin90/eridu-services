@@ -77,6 +77,7 @@ export const createUserSchema = z
     name: z.string().min(1, 'User name is required'),
     profile_url: z.url().optional(),
     metadata: z.record(z.string(), z.any()).optional(),
+    creator: createNestedMcSchema.optional(),
     mc: createNestedMcSchema.optional(),
   })
   .transform((data) => ({
@@ -85,7 +86,7 @@ export const createUserSchema = z
     name: data.name,
     profileUrl: data.profile_url ?? null,
     metadata: data.metadata,
-    mc: data.mc,
+    mc: data.creator ?? data.mc,
   }));
 
 export const bulkCreateUserSchema = z.object({
@@ -159,15 +160,8 @@ export const adminUserDto = userSchema
 
 // User DTO with MC data when available
 export const userWithMcDto = userWithMcSchema
-  .transform((obj) => ({
-    id: obj.uid,
-    ext_id: obj.extId,
-    email: obj.email,
-    name: obj.name,
-    profile_url: obj.profileUrl,
-    created_at: obj.createdAt.toISOString(),
-    updated_at: obj.updatedAt.toISOString(),
-    mc: obj.mc
+  .transform((obj) => {
+    const creator = obj.mc
       ? {
           id: obj.mc.uid,
           name: obj.mc.name,
@@ -177,8 +171,20 @@ export const userWithMcDto = userWithMcSchema
           created_at: obj.mc.createdAt.toISOString(),
           updated_at: obj.mc.updatedAt.toISOString(),
         }
-      : null,
-  }))
+      : null;
+
+    return {
+      id: obj.uid,
+      ext_id: obj.extId,
+      email: obj.email,
+      name: obj.name,
+      profile_url: obj.profileUrl,
+      created_at: obj.createdAt.toISOString(),
+      updated_at: obj.updatedAt.toISOString(),
+      creator,
+      mc: creator,
+    };
+  })
   .pipe(
     z.object({
       id: z.string(),
@@ -188,6 +194,15 @@ export const userWithMcDto = userWithMcSchema
       profile_url: z.url().nullable(),
       created_at: z.iso.datetime(),
       updated_at: z.iso.datetime(),
+      creator: z.object({
+        id: z.string(),
+        name: z.string(),
+        alias_name: z.string(),
+        is_banned: z.boolean(),
+        metadata: z.record(z.string(), z.any()),
+        created_at: z.iso.datetime(),
+        updated_at: z.iso.datetime(),
+      }).nullable(),
       mc: z.object({
         id: z.string(),
         name: z.string(),

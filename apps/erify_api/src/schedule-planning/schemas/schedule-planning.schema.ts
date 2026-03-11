@@ -18,6 +18,11 @@ export const showPlanItemMcSchema = z.object({
   note: z.string().optional(),
 });
 
+export const showPlanItemCreatorSchema = z.object({
+  creatorId: z.string(),
+  note: z.string().optional(),
+});
+
 export const showPlanItemPlatformSchema = z.object({
   platformId: z.string(),
   liveStreamLink: z.string().optional(),
@@ -39,7 +44,8 @@ export const showPlanItemSchema = z
     showTypeId: z.string().startsWith(ShowTypeService.UID_PREFIX),
     showStatusId: z.string().startsWith(ShowStatusService.UID_PREFIX),
     showStandardId: z.string().startsWith(ShowStandardService.UID_PREFIX),
-    mcs: z.array(showPlanItemMcSchema).optional().default([]),
+    creators: z.array(showPlanItemCreatorSchema).optional(),
+    mcs: z.array(showPlanItemMcSchema).optional(),
     platforms: z.array(showPlanItemPlatformSchema).optional().default([]),
     metadata: z.record(z.string(), z.any()).optional(),
   })
@@ -52,10 +58,24 @@ export const showPlanItemSchema = z
       });
     }
   })
-  .transform(({ external_id, externalId, ...rest }) => ({
-    ...rest,
-    externalId: externalId ?? external_id!,
-  }))
+  .transform(({ external_id, externalId, creators, mcs, ...rest }) => {
+    const normalizedCreators = creators ?? mcs?.map((mc) => ({
+      creatorId: mc.mcId,
+      note: mc.note,
+    })) ?? [];
+
+    const normalizedMcs = mcs ?? creators?.map((creator) => ({
+      mcId: creator.creatorId,
+      note: creator.note,
+    })) ?? [];
+
+    return {
+      ...rest,
+      externalId: externalId ?? external_id!,
+      creators: normalizedCreators,
+      mcs: normalizedMcs,
+    };
+  })
   .refine((data) => new Date(data.endTime) > new Date(data.startTime), {
     message: 'End time must be after start time',
     path: ['endTime'],
@@ -102,6 +122,7 @@ export const validationResultSchema = z.object({
         'time_range',
         'room_conflict',
         'mc_double_booking',
+        'creator_double_booking',
         'reference_not_found',
         'internal_conflict',
         'missing_field',
@@ -128,13 +149,14 @@ export class RestoreFromSnapshotDto extends createZodDto(
 type InferredShowPlanItem = z.infer<typeof showPlanItemSchema>;
 export type ShowPlanItem = Omit<
   InferredShowPlanItem,
-  'tempId' | 'existingShowId' | 'studioId' | 'studioRoomId' | 'metadata'
+  'tempId' | 'existingShowId' | 'studioId' | 'studioRoomId' | 'metadata' | 'creators'
 > & {
   tempId?: string;
   existingShowId?: string;
   studioId?: string;
   studioRoomId?: string;
   metadata?: Record<string, any>;
+  creators?: InferredShowPlanItem['creators'];
 };
 
 export type PlanDocument = Omit<z.infer<typeof planDocumentSchema>, 'shows'> & {

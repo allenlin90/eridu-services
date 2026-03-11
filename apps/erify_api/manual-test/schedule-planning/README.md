@@ -32,7 +32,7 @@ schedule-planning/
 
 ```bash
 # Full local cycle:
-# db refresh -> ext-id sync -> prisma generate -> backfills -> payload generate -> upload/validate/publish
+# db refresh -> ext-id sync -> prisma generate -> payload generate -> upload/validate/publish
 pnpm run manual:schedule:refresh-and-run
 
 # Full cycle with custom payload size

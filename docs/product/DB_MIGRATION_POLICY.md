@@ -93,10 +93,9 @@ Script requirements:
 - Must be referenced in canonical feature docs and release checklist.
 
 Example in this repo:
-- Creator UID prefix transition (`mc_` -> `creator_`) uses script-based backfill via:
-  - `pnpm --filter erify_api db:creator-uid:backfill`
-- Studio creator roster bootstrap from historical show assignments uses script-based backfill via:
-  - `pnpm --filter erify_api db:studio-creator:backfill`
+- Creator UID prefix transition (`mc_` -> `creator_`) used one-time script-based backfill during S1 rollout.
+- Studio creator roster bootstrap from historical show assignments used one-time script-based backfill during S1 rollout.
+- These rollout-only scripts were intentionally removed after stabilization.
 
 ## Branch-Local Scoping Rule (Prisma, HITL)
 
