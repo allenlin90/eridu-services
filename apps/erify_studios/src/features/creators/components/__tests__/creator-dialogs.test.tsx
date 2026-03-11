@@ -2,10 +2,10 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-  McCreateDialog,
-  McDeleteDialog,
-  McUpdateDialog,
-} from '../mc-dialogs';
+  CreatorCreateDialog,
+  CreatorDeleteDialog,
+  CreatorUpdateDialog,
+} from '../creator-dialogs';
 
 // Mock UI components
 vi.mock('@eridu/ui', () => ({
@@ -39,7 +39,7 @@ vi.mock('@/features/admin/components', () => ({
   ),
 }));
 
-describe('mcCreateDialog', () => {
+describe('creatorCreateDialog', () => {
   const mockProps = {
     open: true,
     onOpenChange: vi.fn(),
@@ -48,24 +48,24 @@ describe('mcCreateDialog', () => {
   };
 
   it('should render when open', () => {
-    render(<McCreateDialog {...mockProps} />);
+    render(<CreatorCreateDialog {...mockProps} />);
 
     expect(screen.getByTestId('admin-form-dialog')).toBeInTheDocument();
-    expect(screen.getByText('Create MC')).toBeInTheDocument();
+    expect(screen.getByText('Create Creator')).toBeInTheDocument();
   });
 
   it('should not render when closed', () => {
-    render(<McCreateDialog {...mockProps} open={false} />);
+    render(<CreatorCreateDialog {...mockProps} open={false} />);
 
     expect(screen.queryByTestId('admin-form-dialog')).not.toBeInTheDocument();
   });
 });
 
-describe('mcUpdateDialog', () => {
+describe('creatorUpdateDialog', () => {
   const mockProps = {
-    mc: {
-      id: 'mc-1',
-      name: 'Test MC',
+    creator: {
+      id: 'creator-1',
+      name: 'Test Creator',
       alias_name: 'TestAlias',
       user_id: 'user-123',
       is_banned: false,
@@ -78,21 +78,21 @@ describe('mcUpdateDialog', () => {
     isLoading: false,
   };
 
-  it('should render when mc is provided', () => {
-    render(<McUpdateDialog {...mockProps} />);
+  it('should render when creator is provided', () => {
+    render(<CreatorUpdateDialog {...mockProps} />);
 
     expect(screen.getByTestId('admin-form-dialog')).toBeInTheDocument();
-    expect(screen.getByText('Edit MC')).toBeInTheDocument();
+    expect(screen.getByText('Edit Creator')).toBeInTheDocument();
   });
 
-  it('should not render when mc is null', () => {
-    render(<McUpdateDialog {...mockProps} mc={null} />);
+  it('should not render when creator is null', () => {
+    render(<CreatorUpdateDialog {...mockProps} creator={null} />);
 
     expect(screen.queryByTestId('admin-form-dialog')).not.toBeInTheDocument();
   });
 });
 
-describe('mcDeleteDialog', () => {
+describe('creatorDeleteDialog', () => {
   const mockProps = {
     open: true,
     onOpenChange: vi.fn(),
@@ -101,14 +101,14 @@ describe('mcDeleteDialog', () => {
   };
 
   it('should render when open', () => {
-    render(<McDeleteDialog {...mockProps} />);
+    render(<CreatorDeleteDialog {...mockProps} />);
 
     expect(screen.getByTestId('delete-confirm-dialog')).toBeInTheDocument();
-    expect(screen.getByText('Delete MC')).toBeInTheDocument();
+    expect(screen.getByText('Delete Creator')).toBeInTheDocument();
   });
 
   it('should not render when closed', () => {
-    render(<McDeleteDialog {...mockProps} open={false} />);
+    render(<CreatorDeleteDialog {...mockProps} open={false} />);
 
     expect(screen.queryByTestId('delete-confirm-dialog')).not.toBeInTheDocument();
   });

@@ -25,7 +25,7 @@ import { Route as SystemShowStandardsIndexRouteImport } from './routes/system/sh
 import { Route as SystemSchedulesIndexRouteImport } from './routes/system/schedules/index'
 import { Route as SystemPlatformsIndexRouteImport } from './routes/system/platforms/index'
 import { Route as SystemMembershipsIndexRouteImport } from './routes/system/memberships/index'
-import { Route as SystemMcsIndexRouteImport } from './routes/system/mcs/index'
+import { Route as SystemCreatorsIndexRouteImport } from './routes/system/creators/index'
 import { Route as SystemClientsIndexRouteImport } from './routes/system/clients/index'
 import { Route as StudiosStudioIdTasksRouteImport } from './routes/studios/$studioId/tasks'
 import { Route as StudiosStudioIdTaskTemplatesRouteImport } from './routes/studios/$studioId/task-templates'
@@ -127,9 +127,9 @@ const SystemMembershipsIndexRoute = SystemMembershipsIndexRouteImport.update({
   path: '/memberships/',
   getParentRoute: () => SystemRouteRoute,
 } as any)
-const SystemMcsIndexRoute = SystemMcsIndexRouteImport.update({
-  id: '/mcs/',
-  path: '/mcs/',
+const SystemCreatorsIndexRoute = SystemCreatorsIndexRouteImport.update({
+  id: '/creators/',
+  path: '/creators/',
   getParentRoute: () => SystemRouteRoute,
 } as any)
 const SystemClientsIndexRoute = SystemClientsIndexRouteImport.update({
@@ -248,7 +248,7 @@ export interface FileRoutesByFullPath {
   '/studios/$studioId/task-templates': typeof StudiosStudioIdTaskTemplatesRouteWithChildren
   '/studios/$studioId/tasks': typeof StudiosStudioIdTasksRouteWithChildren
   '/system/clients': typeof SystemClientsIndexRoute
-  '/system/mcs': typeof SystemMcsIndexRoute
+  '/system/creators': typeof SystemCreatorsIndexRoute
   '/system/memberships': typeof SystemMembershipsIndexRoute
   '/system/platforms': typeof SystemPlatformsIndexRoute
   '/system/schedules': typeof SystemSchedulesIndexRoute
@@ -281,7 +281,7 @@ export interface FileRoutesByTo {
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/system/clients': typeof SystemClientsIndexRoute
-  '/system/mcs': typeof SystemMcsIndexRoute
+  '/system/creators': typeof SystemCreatorsIndexRoute
   '/system/memberships': typeof SystemMembershipsIndexRoute
   '/system/platforms': typeof SystemPlatformsIndexRoute
   '/system/schedules': typeof SystemSchedulesIndexRoute
@@ -319,7 +319,7 @@ export interface FileRoutesById {
   '/studios/$studioId/task-templates': typeof StudiosStudioIdTaskTemplatesRouteWithChildren
   '/studios/$studioId/tasks': typeof StudiosStudioIdTasksRouteWithChildren
   '/system/clients/': typeof SystemClientsIndexRoute
-  '/system/mcs/': typeof SystemMcsIndexRoute
+  '/system/creators/': typeof SystemCreatorsIndexRoute
   '/system/memberships/': typeof SystemMembershipsIndexRoute
   '/system/platforms/': typeof SystemPlatformsIndexRoute
   '/system/schedules/': typeof SystemSchedulesIndexRoute
@@ -358,7 +358,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/task-templates'
     | '/studios/$studioId/tasks'
     | '/system/clients'
-    | '/system/mcs'
+    | '/system/creators'
     | '/system/memberships'
     | '/system/platforms'
     | '/system/schedules'
@@ -391,7 +391,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/system/clients'
-    | '/system/mcs'
+    | '/system/creators'
     | '/system/memberships'
     | '/system/platforms'
     | '/system/schedules'
@@ -428,7 +428,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/task-templates'
     | '/studios/$studioId/tasks'
     | '/system/clients/'
-    | '/system/mcs/'
+    | '/system/creators/'
     | '/system/memberships/'
     | '/system/platforms/'
     | '/system/schedules/'
@@ -573,11 +573,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SystemMembershipsIndexRouteImport
       parentRoute: typeof SystemRouteRoute
     }
-    '/system/mcs/': {
-      id: '/system/mcs/'
-      path: '/mcs'
-      fullPath: '/system/mcs'
-      preLoaderRoute: typeof SystemMcsIndexRouteImport
+    '/system/creators/': {
+      id: '/system/creators/'
+      path: '/creators'
+      fullPath: '/system/creators'
+      preLoaderRoute: typeof SystemCreatorsIndexRouteImport
       parentRoute: typeof SystemRouteRoute
     }
     '/system/clients/': {
@@ -804,7 +804,7 @@ const StudiosRouteRouteWithChildren = StudiosRouteRoute._addFileChildren(
 
 interface SystemRouteRouteChildren {
   SystemClientsIndexRoute: typeof SystemClientsIndexRoute
-  SystemMcsIndexRoute: typeof SystemMcsIndexRoute
+  SystemCreatorsIndexRoute: typeof SystemCreatorsIndexRoute
   SystemMembershipsIndexRoute: typeof SystemMembershipsIndexRoute
   SystemPlatformsIndexRoute: typeof SystemPlatformsIndexRoute
   SystemSchedulesIndexRoute: typeof SystemSchedulesIndexRoute
@@ -823,7 +823,7 @@ interface SystemRouteRouteChildren {
 
 const SystemRouteRouteChildren: SystemRouteRouteChildren = {
   SystemClientsIndexRoute: SystemClientsIndexRoute,
-  SystemMcsIndexRoute: SystemMcsIndexRoute,
+  SystemCreatorsIndexRoute: SystemCreatorsIndexRoute,
   SystemMembershipsIndexRoute: SystemMembershipsIndexRoute,
   SystemPlatformsIndexRoute: SystemPlatformsIndexRoute,
   SystemSchedulesIndexRoute: SystemSchedulesIndexRoute,

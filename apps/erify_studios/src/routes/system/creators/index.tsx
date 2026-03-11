@@ -4,10 +4,10 @@ import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 
 import type {
-  createMcInputSchema,
-  McApiResponse,
-  updateMcInputSchema,
-} from '@eridu/api-types/mcs';
+  createCreatorInputSchema,
+  CreatorApiResponse,
+  updateCreatorInputSchema,
+} from '@eridu/api-types/creators';
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
@@ -19,30 +19,30 @@ import {
 
 import { AdminLayout } from '@/features/admin/components';
 import {
-  McCreateDialog,
-  McDeleteDialog,
-  McUpdateDialog,
-} from '@/features/mcs/components/mc-dialogs';
+  CreatorCreateDialog,
+  CreatorDeleteDialog,
+  CreatorUpdateDialog,
+} from '@/features/creators/components/creator-dialogs';
 import {
-  mcColumns,
-  mcSearchableColumns,
-} from '@/features/mcs/config/mc-columns';
-import { mcsSearchSchema } from '@/features/mcs/config/mc-search-schema';
-import { useMcs } from '@/features/mcs/hooks/use-mcs';
+  creatorColumns,
+  creatorSearchableColumns,
+} from '@/features/creators/config/creator-columns';
+import { creatorsSearchSchema } from '@/features/creators/config/creators-search-schema';
+import { useCreators } from '@/features/creators/hooks/use-creators';
 
-export const Route = createFileRoute('/system/mcs/')({
-  component: McsList,
-  validateSearch: (search) => mcsSearchSchema.parse(search),
+export const Route = createFileRoute('/system/creators/')({
+  component: CreatorsList,
+  validateSearch: (search) => creatorsSearchSchema.parse(search),
 });
 
-type Mc = McApiResponse;
-type McFormData = z.infer<typeof createMcInputSchema>;
-type UpdateMcFormData = z.infer<typeof updateMcInputSchema>;
+type Creator = CreatorApiResponse;
+type CreatorFormData = z.infer<typeof createCreatorInputSchema>;
+type UpdateCreatorFormData = z.infer<typeof updateCreatorInputSchema>;
 
-function McsList() {
+function CreatorsList() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [editingMc, setEditingMc] = useState<Mc | null>(null);
+  const [editingCreator, setEditingCreator] = useState<Creator | null>(null);
 
   const {
     data,
@@ -55,7 +55,7 @@ function McsList() {
     updateMutation,
     deleteMutation,
     handleRefresh,
-  } = useMcs();
+  } = useCreators();
 
   const handleDelete = async () => {
     if (!deleteId)
@@ -65,20 +65,20 @@ function McsList() {
       await deleteMutation.mutateAsync(deleteId);
       setDeleteId(null);
     } catch (error) {
-      console.error('Failed to delete MC:', error);
+      console.error('Failed to delete creator:', error);
     }
   };
 
-  const handleCreate = async (data: McFormData) => {
+  const handleCreate = async (data: CreatorFormData) => {
     await createMutation.mutateAsync(data);
     setIsCreateDialogOpen(false);
   };
 
-  const handleUpdate = async (data: UpdateMcFormData) => {
-    if (!editingMc)
+  const handleUpdate = async (data: UpdateCreatorFormData) => {
+    if (!editingCreator)
       return;
-    await updateMutation.mutateAsync({ id: editingMc.id, data });
-    setEditingMc(null);
+    await updateMutation.mutateAsync({ id: editingCreator.id, data });
+    setEditingCreator(null);
   };
 
   const pagination = data?.meta
@@ -90,39 +90,39 @@ function McsList() {
       }
     : undefined;
 
-  const columnsWithActions = useMemo<ColumnDef<Mc>[]>(() => [
-    ...mcColumns,
+  const columnsWithActions = useMemo<ColumnDef<Creator>[]>(() => [
+    ...creatorColumns,
     {
       id: 'actions',
       cell: ({ row }) => (
         <DataTableActions
           row={row.original}
-          onEdit={(mc) => setEditingMc(mc)}
-          onDelete={(mc) => setDeleteId(mc.id)}
+          onEdit={(creator) => setEditingCreator(creator)}
+          onDelete={(creator) => setDeleteId(creator.id)}
         />
       ),
       size: 50,
       enableHiding: false,
-    } as ColumnDef<Mc>,
+    } as ColumnDef<Creator>,
   ], []);
 
   return (
     <AdminLayout
-      title="MCs"
-      description="Manage Masters of Ceremonies"
+      title="Creators"
+      description="Manage creators"
       action={{
-        label: 'Create MC',
+        label: 'Create Creator',
         onClick: () => setIsCreateDialogOpen(true),
       }}
       onRefresh={handleRefresh}
-      refreshQueryKey={['mcs']}
+      refreshQueryKey={['creators']}
     >
       <DataTable
         data={data?.data || []}
         columns={columnsWithActions}
         isLoading={isLoading}
         isFetching={isFetching}
-        emptyMessage="No MCs found. Create one to get started."
+        emptyMessage="No creators found. Create one to get started."
         manualPagination={!!pagination}
         manualFiltering
         pageCount={pagination?.pageCount}
@@ -138,7 +138,7 @@ function McsList() {
         renderToolbar={(table) => (
           <DataTableToolbar
             table={table}
-            searchableColumns={mcSearchableColumns}
+            searchableColumns={creatorSearchableColumns}
             searchPlaceholder="Search by name..."
           />
         )}
@@ -152,21 +152,21 @@ function McsList() {
           : null}
       />
 
-      <McCreateDialog
+      <CreatorCreateDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         onSubmit={handleCreate}
         isLoading={createMutation.isPending}
       />
 
-      <McUpdateDialog
-        mc={editingMc}
-        onOpenChange={(open) => !open && setEditingMc(null)}
+      <CreatorUpdateDialog
+        creator={editingCreator}
+        onOpenChange={(open) => !open && setEditingCreator(null)}
         onSubmit={handleUpdate}
         isLoading={updateMutation.isPending}
       />
 
-      <McDeleteDialog
+      <CreatorDeleteDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
         onConfirm={handleDelete}

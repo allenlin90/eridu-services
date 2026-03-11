@@ -11,6 +11,7 @@ import {
   ShowTypeBadge,
 } from '@/features/admin/components/show-table-cells';
 import type { Show } from '@/features/shows/api/get-shows';
+import { getCreatorNames } from '@/lib/creator-utils';
 
 export const showColumns: ColumnDef<Show>[] = [
   {
@@ -52,14 +53,12 @@ export const showColumns: ColumnDef<Show>[] = [
     cell: ({ row }) => <ShowStatusBadge status={row.original.show_status_name || 'unknown'} />,
   },
   {
-    id: 'mc_name',
-    header: 'MCs',
-    cell: ({ row }) => (
-      <ItemsList
-        items={row.original.mcs?.map((mc) => mc.mc_name || '').filter((n) => n.length > 0) || []}
-        label="MCs"
-      />
-    ),
+    id: 'creator_name',
+    header: 'Creators',
+    cell: ({ row }) => {
+      const creatorNames = getCreatorNames(row.original);
+      return <ItemsList items={creatorNames} label="Creators" />;
+    },
     enableSorting: false,
   },
   {
@@ -105,7 +104,7 @@ export const showSearchableColumns = [
     options: [],
   },
   { id: 'client_name', title: 'Client', type: 'text' as const },
-  { id: 'mc_name', title: 'MC', type: 'text' as const },
+  { id: 'creator_name', title: 'Creator', type: 'text' as const },
   { id: 'start_time', title: 'Date', type: 'date-range' as const },
   { id: 'id', title: 'ID', type: 'text' as const },
 ];

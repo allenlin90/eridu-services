@@ -79,7 +79,7 @@ When working on erify_studios, refer to these guides:
 - ✅ **Studios Management**: Create and manage broadcast studios
 - ✅ **Users Management**: Create, edit, and manage system users
 - ✅ **Clients Management**: Manage clients and their associations
-- ✅ **MCs Management**: Manage media celebrities/personalities
+- ✅ **Creators Management**: Manage creator entities and profiles
 - ✅ **Platforms Management**: Configure broadcast platforms
 - ✅ **Show Types, Standards & Statuses**: Manage show classification and technical standards
 - ✅ **Studio Memberships**: Assign users to studios with role-based access
@@ -122,7 +122,7 @@ src/
 │   │   ├── components/      # AdminTable, AdminFormDialog, DeleteConfirmDialog, etc.
 │   │   └── hooks/
 │   ├── clients/             # Client management feature
-│   ├── mcs/                 # MC management feature
+│   ├── creators/            # Creator management feature
 │   ├── memberships/         # Studio membership feature
 │   ├── platforms/           # Platform management feature
 │   ├── schedules/           # Schedule management + snapshot restore
@@ -181,7 +181,7 @@ src/
 │   └── system/              # System admin section
 │       ├── route.tsx
 │       ├── clients/
-│       ├── mcs/
+│       ├── creators/
 │       ├── memberships/
 │       ├── platforms/
 │       ├── schedules/
@@ -262,7 +262,7 @@ System-level administration (requires system admin):
 - `/system/studios/:studioId/studio-rooms` - Studio room management
 - `/system/users` - User management
 - `/system/clients` - Client management
-- `/system/mcs` - MC/Personality management
+- `/system/creators` - Creator management
 - `/system/platforms` - Platform management
 - `/system/show-types` - Show type configuration
 - `/system/show-standards` - Show standard configuration
@@ -607,7 +607,7 @@ When implementing admin features:
 ### Known Issues & Future Work
 
 See [`docs/TODO.md`](./docs/TODO.md) for tracked enhancements:
-- MC user association UI improvements (search/autocomplete)
+- Creator user association UI improvements (search/autocomplete)
 - Pagination and filtering enhancements
 - Duplicate user prevention
 

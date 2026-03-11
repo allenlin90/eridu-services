@@ -6,7 +6,8 @@ import type { PaginatedResponse } from '@/lib/api/admin';
 import { apiClient } from '@/lib/api/client';
 
 export type Show = ShowApiResponse & {
-  mcs: { id: string; mc_id: string; mc_name: string }[];
+  creators?: { id: string; creator_id: string; creator_name: string }[];
+  mcs?: { id: string; mc_id: string; mc_name: string }[];
   platforms: { id: string; platform_id: string; platform_name: string }[];
 };
 
@@ -17,7 +18,7 @@ export type GetShowsParams = {
   limit?: number;
   name?: string;
   client_name?: string;
-  mc_name?: string;
+  creator_name?: string;
   start_date_from?: string;
   start_date_to?: string;
   sortBy?: string;
@@ -35,7 +36,7 @@ export async function getShows(params: GetShowsParams): Promise<ShowsResponse> {
       limit: params.limit,
       name: params.name,
       client_name: params.client_name,
-      mc_name: params.mc_name,
+      creator_name: params.creator_name,
       start_date_from: params.start_date_from,
       start_date_to: params.start_date_to,
       order_by: params.sortBy,

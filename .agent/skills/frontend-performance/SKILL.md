@@ -131,7 +131,8 @@ function VirtualList({ items }: { items: Item[] }) {
 
 **Analyze bundle**:
 ```bash
-npm run build -- --analyze
+pnpm --filter erify_studios build
+# Then inspect dist/ with vite-bundle-visualizer or rollup-plugin-visualizer output
 ```
 
 **Tree-shaking**: Import only what you need:
@@ -150,7 +151,7 @@ import * as UI from '@eridu/ui';
 - [ ] Routes are code-split (automatic with TanStack Router)
 - [ ] Heavy components use `lazy()` + `Suspense`
 - [ ] Expensive computations use `useMemo`
-- [ ] Callbacks use `useCallback` when passed to memoized children
+- [ ] `useCallback` used only when identity stability is provably required (memoized child, hook dep semantics, or multi-site reuse) — default to inline handlers; see `engineering-best-practices-enforcer` for the full decision rule
 - [ ] List items use `React.memo`
 - [ ] Long lists (>100 items) use virtual scrolling
 - [ ] Images use `loading="lazy"`

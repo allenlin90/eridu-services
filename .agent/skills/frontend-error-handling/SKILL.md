@@ -43,52 +43,37 @@ apiClient.interceptors.response.use(
 );
 ```
 
-### 2. Error Boundaries (Component Tree)
+### 2. Route-Level Error Handling (TanStack Router — Primary Pattern)
 
-Catch rendering errors:
+TanStack Router renders the route's `errorComponent` when a loader or component throws. This is the **primary** error boundary for route-level failures — use it before reaching for a manual class-based boundary.
+
+```typescript
+// Route definition
+export const Route = createFileRoute('/studios/$studioId/tasks')({
+  component: TasksPage,
+  errorComponent: RouteError,  // <── project-wide shared component
+});
+```
+
+The shared `RouteError` component lives at [route-error.tsx](../../../apps/erify_studios/src/components/route-error.tsx).
+
+### 2b. Error Boundaries (Subtree Fallback)
+
+For subtrees inside a route that need isolated error containment, use the `react-error-boundary` package:
 
 ```tsx
-import { Component, type ReactNode } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 
-interface Props {
-  children: ReactNode;
-  fallback?: ReactNode;
-}
-
-interface State {
-  hasError: boolean;
-  error?: Error;
-}
-
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
-    // Send to error tracking service
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback || (
-        <div className="flex flex-col items-center justify-center h-screen">
-          <h2>Something went wrong</h2>
-          <button onClick={() => window.location.reload()}>Reload page</button>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
+function TaskListSection() {
+  return (
+    <ErrorBoundary fallback={<p className="text-destructive">Failed to load tasks.</p>}>
+      <TaskList />
+    </ErrorBoundary>
+  );
 }
 ```
+
+Avoid writing class-based `ErrorBoundary` implementations from scratch — `react-error-boundary` handles the class component requirement internally and is React 19-compatible.
 
 ### 3. TanStack Query Error Handling
 

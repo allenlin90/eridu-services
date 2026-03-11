@@ -28,8 +28,8 @@ vi.mock('@/features/clients/api/get-clients', () => ({
   getClients: vi.fn().mockResolvedValue({ data: [], meta: { total: 0 } }),
 }));
 
-vi.mock('@/features/mcs/api/get-mcs', () => ({
-  getMcs: vi.fn().mockResolvedValue({ data: [], meta: { total: 0 } }),
+vi.mock('@/features/creators/api/get-creators', () => ({
+  getCreators: vi.fn().mockResolvedValue({ data: [], meta: { total: 0 } }),
 }));
 
 vi.mock('@/features/platforms/api/get-platforms', () => ({
@@ -90,7 +90,7 @@ describe('showUpdateDialog', () => {
       show_standard_name: null,
       start_time: '2024-01-01T10:00:00Z',
       end_time: '2024-01-01T12:00:00Z',
-      mcs: [{ mc_name: 'MC 1', mc_id: 'mc-1', id: '1' }],
+      creators: [{ creator_name: 'Creator 1', creator_id: 'creator-1', id: '1' }],
       platforms: [{ platform_name: 'Platform 1', platform_id: 'p-1', id: '1' }],
       metadata: {},
       created_at: '2024-01-01',

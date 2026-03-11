@@ -1,9 +1,9 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
-import type { McApiResponse } from '@eridu/api-types/mcs';
+import type { CreatorApiResponse } from '@eridu/api-types/creators';
 import { CopyableText } from '@eridu/ui';
 
-export const mcColumns: ColumnDef<McApiResponse>[] = [
+export const creatorColumns: ColumnDef<CreatorApiResponse>[] = [
   {
     accessorKey: 'id',
     header: 'ID',
@@ -29,7 +29,7 @@ export const mcColumns: ColumnDef<McApiResponse>[] = [
   },
 ];
 
-export const mcSearchableColumns = [
+export const creatorSearchableColumns = [
   { id: 'name', title: 'Name' },
   { id: 'alias_name', title: 'Alias' },
   { id: 'id', title: 'ID' },

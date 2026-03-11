@@ -3,12 +3,12 @@ import { useEffect } from 'react';
 
 import { useTableUrlState } from '@eridu/ui';
 
-import { useCreateMc } from '@/features/mcs/api/create-mc';
-import { useDeleteMc } from '@/features/mcs/api/delete-mc';
-import { useMcsQuery } from '@/features/mcs/api/get-mcs';
-import { useUpdateMc } from '@/features/mcs/api/update-mc';
+import { useCreateCreator } from '@/features/creators/api/create-creator';
+import { useDeleteCreator } from '@/features/creators/api/delete-creator';
+import { useCreatorsQuery } from '@/features/creators/api/get-creators';
+import { useUpdateCreator } from '@/features/creators/api/update-creator';
 
-export function useMcs() {
+export function useCreators() {
   const queryClient = useQueryClient();
 
   const {
@@ -18,7 +18,7 @@ export function useMcs() {
     columnFilters,
     onColumnFiltersChange,
   } = useTableUrlState({
-    from: '/system/mcs/',
+    from: '/system/creators/',
     paramNames: {
       search: 'name',
     },
@@ -31,7 +31,7 @@ export function useMcs() {
   const idFilter = columnFilters.find((filter) => filter.id === 'id')
     ?.value as string | undefined;
 
-  const { data, isLoading, isFetching } = useMcsQuery({
+  const { data, isLoading, isFetching } = useCreatorsQuery({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     name: nameFilter,
@@ -45,13 +45,13 @@ export function useMcs() {
     }
   }, [data?.meta?.totalPages, setPageCount]);
 
-  const createMutation = useCreateMc();
-  const updateMutation = useUpdateMc();
-  const deleteMutation = useDeleteMc();
+  const createMutation = useCreateCreator();
+  const updateMutation = useUpdateCreator();
+  const deleteMutation = useDeleteCreator();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({
-      queryKey: ['mcs'],
+      queryKey: ['creators'],
     });
   };
 

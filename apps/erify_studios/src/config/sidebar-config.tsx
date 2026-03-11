@@ -53,8 +53,8 @@ const SYSTEM_NAV_ITEMS: SidebarNavItem['items'] = [
     icon: Warehouse,
   },
   {
-    title: 'MCs',
-    url: '/system/mcs',
+    title: 'Creators',
+    url: '/system/creators',
     icon: MonitorPlay,
   },
   {

@@ -16,7 +16,7 @@ import {
 } from '@eridu/ui';
 
 import { useClientFieldData } from './hooks/use-client-field-data';
-import { useMcsFieldData } from './hooks/use-mcs-field-data';
+import { useCreatorsFieldData } from './hooks/use-creators-field-data';
 import { usePlatformsFieldData } from './hooks/use-platforms-field-data';
 import { useShowStandardFieldData } from './hooks/use-show-standard-field-data';
 import { useShowStatusFieldData } from './hooks/use-show-status-field-data';
@@ -275,39 +275,39 @@ export const ShowStandardField = memo(({
   );
 });
 
-// MCs Field (with isolated network hook)
-export const ShowMcsField = memo(({
+// Creators Field (with isolated network hook)
+export const ShowCreatorsField = memo(({
   control,
   show,
 }: {
   control: Control<UpdateShowInput>;
   show: Show | null;
 }) => {
-  const { options, isLoading, setSearch } = useMcsFieldData(show);
+  const { options, isLoading, setSearch } = useCreatorsFieldData(show);
 
   return (
     <FormField
       control={control}
-      name="mcs"
+      name="creators"
       render={({ field }) => (
         <FormItem className="col-span-1 sm:col-span-2">
-          <FormLabel>MCs</FormLabel>
+          <FormLabel>Creators</FormLabel>
           <FormControl>
             <AsyncMultiCombobox
-              value={field.value?.map((v: any) => v.mc_id) || []}
+              value={field.value?.map((v: any) => v.creator_id) || []}
               onChange={(ids) => {
                 // Preserve existing metadata if ID exists, else create new
-                const currentMcs = field.value || [];
-                const newMcs = ids.map((id) => {
-                  const existing = currentMcs.find((m: any) => m.mc_id === id);
-                  return existing || { mc_id: id };
+                const currentCreators = field.value || [];
+                const newCreators = ids.map((id) => {
+                  const existing = currentCreators.find((creator: any) => creator.creator_id === id);
+                  return existing || { creator_id: id };
                 });
-                field.onChange(newMcs);
+                field.onChange(newCreators);
               }}
               onSearch={setSearch}
               options={options}
               isLoading={isLoading}
-              placeholder="Select MCs"
+              placeholder="Select creators"
             />
           </FormControl>
           <FormMessage />

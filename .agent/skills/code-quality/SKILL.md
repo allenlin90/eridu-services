@@ -16,9 +16,10 @@ For architecture-specific patterns (N+1 queries, Soft Deletes, etc.), refer to:
 
 **Before marking any task as complete**:
 
-- [ ] Ensure `pnpm lint` passes (no ESLint rule disables).
-- [ ] Ensure `pnpm test` passes (new features have tests).
-- [ ] Ensure `pnpm build` succeeds (no TypeScript errors).
+- [ ] `pnpm --filter <app> lint` passes (no ESLint rule disables).
+- [ ] `pnpm --filter <app> typecheck` passes.
+- [ ] `pnpm --filter <app> build` succeeds — mandatory, stricter than typecheck alone.
+- [ ] `pnpm --filter <app> test` passes (new features have tests).
 - [ ] **Avoid** `any` / `unknown` types (maintain strict type safety).
 - [ ] **Remove** `console.log` statements (use a dedicated logger).
 - [ ] Ensure error messages are clear and actionable.
@@ -47,7 +48,7 @@ For architecture-specific patterns (N+1 queries, Soft Deletes, etc.), refer to:
 describe('UserService', () => {
   it('should return user when found', async () => {
     // 1. Arrange (Mock dependencies)
-    const mockRepo = { findByUid: jest.fn().mockResolvedValue(user) };
+    const mockRepo = { findByUid: vi.fn().mockResolvedValue(user) };  // Vitest — not jest.fn()
     const service = new UserService(mockRepo as any);
  
     // 2. Act

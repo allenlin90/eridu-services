@@ -299,8 +299,10 @@ const where: Prisma.TaskWhereInput = { ... };
 | **schedule-continuity-workflow** | Schedule update/validate/publish workflow | MEDIUM |
 | **file-upload-presign** | Presigned R2 upload flow, use case limits, storage routing | MEDIUM |
 | **shift-schedule-pattern** | Shift CRUD, blocks, calendar/alignment orchestration, duty-manager, task-readiness, FE shift UX | HIGH |
+| **soft-delete-restore** | Restore workflow for soft-deleted records: repository, service, controller, version behavior, dependency checks | MEDIUM |
+| **api-performance-optimization** | Lean select/include, N+1 audit, aggregation strategy, bulk write guards, pagination caps, query logging | MEDIUM |
 
-**Full skill list** (29 total): See `.agent/skills/` directory
+**Full skill list** (31 total): See `.agent/skills/` directory
 
 ### Memory Files (Supplementary - `.claude/memory/`)
 | File | Purpose | When to Use |

@@ -14,6 +14,7 @@ import { TaskExecutionSheet } from './task-execution-sheet';
 
 import { ResponsiveCardGrid } from '@/components/responsive-card-grid';
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
+import { getCreatorNameSummary } from '@/lib/creator-utils';
 
 export type MyTaskGridProps = {
   tasks: TaskWithRelationsDto[];
@@ -43,6 +44,7 @@ const ShowTaskGroup = memo(({ group, onTaskSelect }: ShowTaskGroupProps) => {
     && task.status !== TASK_STATUS.COMPLETED
     && new Date(task.due_date) < new Date()).length;
   const showInfo = group.show;
+  const creatorNames = getCreatorNameSummary(showInfo);
 
   return (
     <Card className="overflow-hidden">
@@ -117,10 +119,10 @@ const ShowTaskGroup = memo(({ group, onTaskSelect }: ShowTaskGroupProps) => {
               </p>
             </div>
             <div className="rounded border bg-background px-2 py-1.5 sm:col-span-2 lg:col-span-4">
-              <p className="text-muted-foreground">MCs</p>
-              <p className="truncate font-medium" title={showInfo?.mc_names?.join(', ') || '—'}>
-                {showInfo?.mc_names?.length
-                  ? showInfo.mc_names.join(', ')
+              <p className="text-muted-foreground">Creators</p>
+              <p className="truncate font-medium" title={creatorNames.length > 0 ? creatorNames.join(', ') : '—'}>
+                {creatorNames.length > 0
+                  ? creatorNames.join(', ')
                   : '—'}
               </p>
             </div>

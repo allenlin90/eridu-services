@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useMcs } from '../use-mcs';
+import { useCreators } from '../use-creators';
 
 // Mock useTableUrlState
 vi.mock('@eridu/ui', () => ({
@@ -21,8 +21,8 @@ vi.mock('@eridu/ui', () => ({
 }));
 
 // Mock the explicit API hooks
-vi.mock('@/features/mcs/api/get-mcs', () => ({
-  useMcsQuery: vi.fn(() => ({
+vi.mock('@/features/creators/api/get-creators', () => ({
+  useCreatorsQuery: vi.fn(() => ({
     data: {
       data: [],
       meta: { page: 1, limit: 10, total: 0, totalPages: 1 },
@@ -32,28 +32,28 @@ vi.mock('@/features/mcs/api/get-mcs', () => ({
   })),
 }));
 
-vi.mock('@/features/mcs/api/create-mc', () => ({
-  useCreateMc: vi.fn(() => ({
+vi.mock('@/features/creators/api/create-creator', () => ({
+  useCreateCreator: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
 }));
 
-vi.mock('@/features/mcs/api/update-mc', () => ({
-  useUpdateMc: vi.fn(() => ({
+vi.mock('@/features/creators/api/update-creator', () => ({
+  useUpdateCreator: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
 }));
 
-vi.mock('@/features/mcs/api/delete-mc', () => ({
-  useDeleteMc: vi.fn(() => ({
+vi.mock('@/features/creators/api/delete-creator', () => ({
+  useDeleteCreator: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
 }));
 
-describe('useMcs', () => {
+describe('useCreators', () => {
   const createWrapper = () => {
     const queryClient = new QueryClient({
       defaultOptions: {
@@ -72,8 +72,8 @@ describe('useMcs', () => {
     return Wrapper;
   };
 
-  it('should return mcs data and mutations', () => {
-    const { result } = renderHook(() => useMcs(), {
+  it('should return creators data and mutations', () => {
+    const { result } = renderHook(() => useCreators(), {
       wrapper: createWrapper(),
     });
 
@@ -85,7 +85,7 @@ describe('useMcs', () => {
   });
 
   it('should provide pagination controls', () => {
-    const { result } = renderHook(() => useMcs(), {
+    const { result } = renderHook(() => useCreators(), {
       wrapper: createWrapper(),
     });
 
@@ -94,7 +94,7 @@ describe('useMcs', () => {
   });
 
   it('should provide filter controls', () => {
-    const { result } = renderHook(() => useMcs(), {
+    const { result } = renderHook(() => useCreators(), {
       wrapper: createWrapper(),
     });
 
@@ -103,7 +103,7 @@ describe('useMcs', () => {
   });
 
   it('should provide handleRefresh function', () => {
-    const { result } = renderHook(() => useMcs(), {
+    const { result } = renderHook(() => useCreators(), {
       wrapper: createWrapper(),
     });
 

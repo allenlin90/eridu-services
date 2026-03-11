@@ -8,7 +8,7 @@ import { Button, DialogFooter, Form } from '@eridu/ui';
 
 import {
   ShowClientField,
-  ShowMcsField,
+  ShowCreatorsField,
   ShowNameField,
   ShowPlatformsField,
   ShowStandardField,
@@ -20,6 +20,7 @@ import {
 
 import type { Show } from '@/features/shows/api/get-shows';
 import { useUpdateShow } from '@/features/shows/api/update-show';
+import { getCreatorCollection, getCreatorId } from '@/lib/creator-utils';
 
 type ShowUpdateFormProps = {
   show: Show | null;
@@ -43,7 +44,7 @@ export function ShowUpdateForm({
       name: '',
       start_time: '',
       end_time: '',
-      mcs: [],
+      creators: [],
       platforms: [],
     },
   });
@@ -60,10 +61,10 @@ export function ShowUpdateForm({
         show_type_id: show.show_type_id || undefined,
         show_status_id: show.show_status_id || undefined,
         show_standard_id: show.show_standard_id || undefined,
-        mcs: show.mcs?.map((mc: any) => ({
-          mc_id: mc.mc_id || mc.id || '',
-          note: mc.note,
-          metadata: mc.metadata,
+        creators: getCreatorCollection(show).map((creator) => ({
+          creator_id: getCreatorId(creator) || '',
+          note: creator.note,
+          metadata: creator.metadata,
         })) || [],
         platforms: show.platforms?.map((p: any) => ({
           platform_id: p.platform_id || p.id || '',
@@ -112,7 +113,7 @@ export function ShowUpdateForm({
 
           <ShowStandardField control={form.control} show={show} />
 
-          <ShowMcsField control={form.control} show={show} />
+          <ShowCreatorsField control={form.control} show={show} />
 
           <ShowPlatformsField control={form.control} show={show} />
         </div>

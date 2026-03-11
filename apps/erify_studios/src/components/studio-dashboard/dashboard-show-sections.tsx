@@ -7,6 +7,7 @@ import { TaskSummaryInline } from './dashboard-coverage-cards';
 
 import { ShowStandardBadge, ShowStatusBadge } from '@/features/admin/components/show-table-cells';
 import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
+import { getCreatorNames } from '@/lib/creator-utils';
 
 type OperationalDayShowsSummaryCardProps = {
   dateLabel: string;
@@ -32,12 +33,13 @@ type OperationalDayShowListCardProps = {
   onNextPage: () => void;
 };
 
-function formatShowMcs(show: StudioShow): string {
-  if (!show.mcs || show.mcs.length === 0) {
+function formatShowCreators(show: StudioShow): string {
+  const creatorNames = getCreatorNames(show);
+  if (creatorNames.length === 0) {
     return '-';
   }
 
-  const names = show.mcs.map((mc) => mc.mc_name).filter(Boolean).join(', ');
+  const names = creatorNames.join(', ');
   return names || '-';
 }
 
@@ -139,7 +141,7 @@ export function OperationalDayShowListCard({
                         <TableHead>Studio Room</TableHead>
                         <TableHead>Show Standard</TableHead>
                         <TableHead>Client</TableHead>
-                        <TableHead>MCs</TableHead>
+                        <TableHead>Creators</TableHead>
                         <TableHead>Time</TableHead>
                         <TableHead>Task Summary</TableHead>
                         <TableHead>Status</TableHead>
@@ -147,7 +149,7 @@ export function OperationalDayShowListCard({
                     </TableHeader>
                     <TableBody>
                       {shows.map((show) => {
-                        const mcNames = formatShowMcs(show);
+                        const creatorNames = formatShowCreators(show);
 
                         return (
                           <TableRow key={show.id}>
@@ -158,10 +160,10 @@ export function OperationalDayShowListCard({
                             </TableCell>
                             <TableCell>{show.client_name ?? '-'}</TableCell>
                             <TableCell>
-                              {mcNames !== '-'
+                              {creatorNames !== '-'
                                 ? (
-                                    <span className="block max-w-60 truncate" title={mcNames}>
-                                      {mcNames}
+                                    <span className="block max-w-60 truncate" title={creatorNames}>
+                                      {creatorNames}
                                     </span>
                                   )
                                 : '-'}

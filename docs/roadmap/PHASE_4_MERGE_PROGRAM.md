@@ -149,17 +149,50 @@ This file is the cross-session source of truth for slicing that work into review
 
 ## Execution Tracker
 
-- **Current active scope**: `S3` studios frontend creator cutover (pending start)
+- **Current active scope**: `S3` studios frontend creator cutover (in progress)
 - **Master merge gate**: per-scope merge allowed once smoke-green
 - **Post-cutover start gate**: begin `S5` only after `S4` is merged to `master`
 - **Current status by scope**:
   - `S1`: merged to `master` and deployed (2026-03-11)
-  - `S2`: merged to `master` (local merge on 2026-03-11; deploy pending)
-  - `S3`: pending
+  - `S2`: merged to `master` and deployed (2026-03-11)
+  - `S3`: in progress
   - `S4`: pending
   - `S5`: planned (post-cutover)
   - `S6`: planned (post-cutover)
   - `S7`: planned (post-cutover)
+- **S3 progress (frontend creator-first cutover)**
+  - System admin route switched from `/system/mcs` to `/system/creators`.
+  - Sidebar/nav updated from **MCs** to **Creators**.
+  - Creator management API calls switched to creator-first endpoints (`/admin/creators`).
+  - Creator management query keys switched to `['creators', ...]`.
+  - Internal studios module naming cut over from `features/mcs/*` to `features/creators/*` (API hooks, dialogs, table config, tests).
+  - Legacy fallback field reads (`mcs`, `mc_*`, `mc_names`) are centralized in `erify_studios/src/lib/creator-utils.ts` instead of scattered active UI code.
+  - Show admin list filter switched to `creator_name` (replacing active `mc_name` usage).
+  - Show edit form now submits `creators[]` (creator-first payload) with legacy `mcs[]` read fallback.
+  - Studio task/show UIs now display **Creators** labels with legacy data fallback (`mc_*`) where needed.
+  - Verification passed on branch:
+  - `pnpm --filter erify_studios lint`
+  - `pnpm --filter erify_studios typecheck`
+  - `pnpm --filter erify_studios test`
+  - `pnpm --filter erify_studios build`
+- **S3 landed commits (latest first)**:
+  - `fb732652` test(cutover-s3): cover creator compatibility fallback helpers
+  - `190149f4` refactor(cutover-s3): centralize creator fallback mapping in studios frontend
+  - `3791b3d0` docs(cutover-s3): update studios creator route/module references
+  - `b35753b8` refactor(cutover-s3): rename studios creator module from mcs to creators
+  - `f0f2fec8` feat(cutover-s3): switch studios creator surfaces to creator-first naming
+- **S3 sign-off evidence (2026-03-11)**:
+  - Verification gates passed:
+  - `pnpm --filter erify_studios lint`
+  - `pnpm --filter erify_studios typecheck`
+  - `pnpm --filter erify_studios test`
+  - `pnpm --filter erify_studios build`
+  - Manual smoke checklist:
+  - `/system/creators` loads and CRUD actions work for system admin.
+  - `/system/shows` creator search uses `creator_name` filter successfully.
+  - Show update dialog preserves selected creators (creator-first payload with compatibility fallback read).
+  - Studio dashboard operational-day show list renders creator names.
+  - `/studios/:studioId/my-tasks` show-group details render creators without MC-labeled UI.
 - **S2 delivered scope (backend route/contract cutover)**:
   - Add creator-first admin route aliases:
     - `admin/creators` (alias of `admin/mcs`)
@@ -282,3 +315,5 @@ This file is the cross-session source of truth for slicing that work into review
 - 2026-03-11: Extended S2 with creator-first show-creator payload aliases and creator-named orchestration service methods.
 - 2026-03-11: Added creator-first show list query alias (`creator_name`) with legacy `mc_name` compatibility.
 - 2026-03-11: S2 merged into local `master`; tracker updated and next scope shifted to `S3`.
+- 2026-03-11: S3 route/module cutover landed in `erify_studios` (`/system/creators`, `features/creators/*`, creator-first query keys/endpoints).
+- 2026-03-11: S3 compatibility hardening landed with centralized fallback helper (`src/lib/creator-utils.ts`) and dedicated utility tests.

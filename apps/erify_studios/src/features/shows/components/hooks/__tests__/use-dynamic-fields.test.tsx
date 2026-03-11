@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { useClientFieldData } from '../use-client-field-data';
-import { useMcsFieldData } from '../use-mcs-field-data';
+import { useCreatorsFieldData } from '../use-creators-field-data';
 import { usePlatformsFieldData } from '../use-platforms-field-data';
 import { useStudioRoomFieldData } from '../use-studio-room-field-data';
 
@@ -30,7 +30,7 @@ describe('dynamic Field Hooks (Logic Only)', () => {
     client_name: 'Selected Client',
     studio_room_id: 'room-selected',
     studio_room_name: 'Selected Room',
-    mcs: [{ mc_id: 'mc-selected', mc_name: 'Selected MC', id: '1' }],
+    creators: [{ creator_id: 'creator-selected', creator_name: 'Selected Creator', id: '1' }],
     platforms: [{ platform_id: 'platform-selected', platform_name: 'Selected Platform', id: '1' }],
     show_type_id: null,
     show_type_name: null,
@@ -61,17 +61,17 @@ describe('dynamic Field Hooks (Logic Only)', () => {
     });
   });
 
-  describe('useMcsFieldData', () => {
-    it('should put selected MCs at the top of options', () => {
+  describe('useCreatorsFieldData', () => {
+    it('should put selected creators at the top of options', () => {
       vi.mocked(ReactQuery.useQuery).mockReturnValue({
-        data: { data: [{ id: 'mc-1', alias_name: 'Other MC' }] },
+        data: { data: [{ id: 'creator-1', alias_name: 'Other Creator' }] },
         isLoading: false,
       } as any);
 
-      const { result } = renderHook(() => useMcsFieldData(mockShow));
+      const { result } = renderHook(() => useCreatorsFieldData(mockShow));
 
       expect(result.current.options.length).toBe(2);
-      expect(result.current.options[0]).toEqual({ value: 'mc-selected', label: 'Selected MC' });
+      expect(result.current.options[0]).toEqual({ value: 'creator-selected', label: 'Selected Creator' });
     });
   });
 
