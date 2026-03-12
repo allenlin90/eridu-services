@@ -5,7 +5,7 @@ import type { UtilityService } from '@/utility/utility.service';
  * such as UID generation and CRUD patterns.
  *
  * This class is specifically designed for services that manage single entities
- * with direct database operations (User, Client, MC, Platform, Show, etc.).
+ * with direct database operations (User, Client, Creator, Platform, Show, etc.).
  *
  * Child classes MUST:
  * 1. Define a static `UID_PREFIX` constant for schema validation

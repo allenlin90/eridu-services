@@ -196,9 +196,9 @@ export class ShowRepository extends BaseRepository<
 
     // Creator filtering (Name)
     if (query.creator_name) {
-      where.showMCs = {
+      where.showCreators = {
         some: {
-          mc: {
+          creator: {
             name: {
               contains: query.creator_name,
               mode: 'insensitive',
@@ -379,9 +379,9 @@ export class ShowRepository extends BaseRepository<
 
     // Creator filtering (Name)
     if (query.creator_name) {
-      where.showMCs = {
+      where.showCreators = {
         some: {
-          mc: {
+          creator: {
             name: {
               contains: query.creator_name,
               mode: 'insensitive',
@@ -434,13 +434,13 @@ export class ShowRepository extends BaseRepository<
           showType: true,
           showStatus: true,
           showStandard: true,
-          showMCs: {
+          showCreators: {
             where: {
               deletedAt: null,
-              mc: { deletedAt: null },
+              creator: { deletedAt: null },
             },
             include: {
-              mc: {
+              creator: {
                 select: {
                   uid: true,
                   name: true,

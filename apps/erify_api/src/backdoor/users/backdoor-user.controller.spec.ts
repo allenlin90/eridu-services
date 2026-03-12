@@ -76,33 +76,33 @@ describe('backdoorUserController', () => {
       };
 
       mockUserService.createUser.mockResolvedValue(createdUser);
-      mockUserService.findUserById.mockResolvedValue({ ...createdUser, mc: null });
+      mockUserService.findUserById.mockResolvedValue({ ...createdUser, creator: null });
 
       const result = await controller.createUser(createDto);
 
       expect(mockUserService.createUser).toHaveBeenCalledWith(createDto);
-      expect(mockUserService.findUserById).toHaveBeenCalledWith(createdUser.uid, { mc: true });
-      expect(result).toEqual({ ...createdUser, mc: null });
+      expect(mockUserService.findUserById).toHaveBeenCalledWith(createdUser.uid, { creator: true });
+      expect(result).toEqual({ ...createdUser, creator: null });
     });
 
     it('should handle user creation with creator', async () => {
       const createDto: CreateUserDto = {
-        email: 'mc@example.com',
-        name: 'MC User',
+        email: 'creator@example.com',
+        name: 'Creator User',
         extId: null,
         profileUrl: null,
         metadata: {},
         creator: {
-          name: 'MC One',
-          aliasName: 'MC One',
+          name: 'Creator One',
+          aliasName: 'Creator One',
           metadata: {},
         },
       };
       const createdUser = {
         id: BigInt(1),
         uid: 'user_456',
-        email: 'mc@example.com',
-        name: 'MC User',
+        email: 'creator@example.com',
+        name: 'Creator User',
         extId: null,
         isBanned: false,
         isSystemAdmin: false,
@@ -111,11 +111,11 @@ describe('backdoorUserController', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
-        mc: {
+        creator: {
           id: BigInt(1),
-          uid: 'mc_123',
-          name: 'MC One',
-          aliasName: 'MC One',
+          uid: 'creator_123',
+          name: 'Creator One',
+          aliasName: 'Creator One',
           isBanned: false,
           metadata: {},
           createdAt: new Date(),
@@ -131,7 +131,7 @@ describe('backdoorUserController', () => {
       const result = await controller.createUser(createDto);
 
       expect(mockUserService.createUser).toHaveBeenCalledWith(createDto);
-      expect(mockUserService.findUserById).toHaveBeenCalledWith(createdUser.uid, { mc: true });
+      expect(mockUserService.findUserById).toHaveBeenCalledWith(createdUser.uid, { creator: true });
       expect(result).toEqual(createdUser);
     });
   });
@@ -154,8 +154,8 @@ describe('backdoorUserController', () => {
           profileUrl: null,
           metadata: {},
           creator: {
-            name: 'MC',
-            aliasName: 'MC',
+            name: 'Creator',
+            aliasName: 'Creator',
             metadata: {},
           },
         },
@@ -174,10 +174,10 @@ describe('backdoorUserController', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
-        mc: dto.creator
+        creator: dto.creator
           ? {
               id: BigInt(i),
-              uid: `mc_${i}`,
+              uid: `creator_${i}`,
               name: dto.creator.name,
               aliasName: dto.creator.aliasName,
               isBanned: false,
@@ -198,8 +198,8 @@ describe('backdoorUserController', () => {
       const result = await controller.createUsersBulk(bulkDto);
 
       expect(mockUserService.createUsersBulk).toHaveBeenCalledWith(userData);
-      expect(mockUserService.findUserById).toHaveBeenNthCalledWith(1, 'user_0', { mc: true });
-      expect(mockUserService.findUserById).toHaveBeenNthCalledWith(2, 'user_1', { mc: true });
+      expect(mockUserService.findUserById).toHaveBeenNthCalledWith(1, 'user_0', { creator: true });
+      expect(mockUserService.findUserById).toHaveBeenNthCalledWith(2, 'user_1', { creator: true });
       expect(result).toEqual(createdUsers);
     });
   });

@@ -14,7 +14,7 @@ import { ValidationService } from './validation.service';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ShowService } from '@/models/show/show.service';
-import { ShowMcService } from '@/models/show-mc/show-mc.service';
+import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { UtilityService } from '@/utility/utility.service';
@@ -64,7 +64,7 @@ export class PublishingService {
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
     private readonly scheduleService: ScheduleService,
     private readonly showService: ShowService,
-    private readonly showMcService: ShowMcService,
+    private readonly showCreatorService: ShowCreatorService,
     private readonly showPlatformService: ShowPlatformService,
     private readonly validationService: ValidationService,
     private readonly utilityService: UtilityService,
@@ -475,12 +475,12 @@ export class PublishingService {
       return;
     }
 
-    const existingShowMcs = await tx.showMC.findMany({
+    const existingShowCreators = await tx.showCreator.findMany({
       where: { showId: { in: showIds } },
       select: {
         id: true,
         showId: true,
-        mcId: true,
+        creatorId: true,
         note: true,
         metadata: true,
         deletedAt: true,
@@ -500,11 +500,11 @@ export class PublishingService {
       },
     });
 
-    const showMcByShowId = new Map<bigint, typeof existingShowMcs>();
-    existingShowMcs.forEach((row) => {
-      const list = showMcByShowId.get(row.showId) || [];
+    const showCreatorByShowId = new Map<bigint, typeof existingShowCreators>();
+    existingShowCreators.forEach((row) => {
+      const list = showCreatorByShowId.get(row.showId) || [];
       list.push(row);
-      showMcByShowId.set(row.showId, list);
+      showCreatorByShowId.set(row.showId, list);
     });
 
     const showPlatformByShowId = new Map<bigint, typeof existingShowPlatforms>();
@@ -524,18 +524,20 @@ export class PublishingService {
         incomingCreatorById.set(creatorInternalId, { note: creator.note });
       });
 
-      const existingMcs = showMcByShowId.get(showId) || [];
-      const existingMcByMcId = new Map(existingMcs.map((mc) => [mc.mcId, mc]));
+      const existingCreators = showCreatorByShowId.get(showId) || [];
+      const existingCreatorById = new Map(
+        existingCreators.map((creator) => [creator.creatorId, creator]),
+      );
 
       for (const [creatorId, incomingCreator] of incomingCreatorById.entries()) {
-        const existing = existingMcByMcId.get(creatorId);
+        const existing = existingCreatorById.get(creatorId);
 
         if (!existing) {
-          await tx.showMC.create({
+          await tx.showCreator.create({
             data: {
-              uid: this.showMcService.generateShowMcUid(),
+              uid: this.showCreatorService.generateShowCreatorUid(),
               showId,
-              mcId: creatorId,
+              creatorId,
               note: incomingCreator.note,
               metadata: {},
             },
@@ -545,7 +547,7 @@ export class PublishingService {
         }
 
         if (existing.deletedAt) {
-          await tx.showMC.update({
+          await tx.showCreator.update({
             where: { id: existing.id },
             data: {
               deletedAt: null,
@@ -558,7 +560,7 @@ export class PublishingService {
         }
 
         if ((existing.note || null) !== (incomingCreator.note || null)) {
-          await tx.showMC.update({
+          await tx.showCreator.update({
             where: { id: existing.id },
             data: {
               note: incomingCreator.note,
@@ -568,21 +570,21 @@ export class PublishingService {
         }
       }
 
-      const staleMcIds = existingMcs
-        .filter((mc) => mc.deletedAt === null && !incomingCreatorById.has(mc.mcId))
-        .map((mc) => mc.id);
+      const staleCreatorIds = existingCreators
+        .filter((creator) => creator.deletedAt === null && !incomingCreatorById.has(creator.creatorId))
+        .map((creator) => creator.id);
 
-      if (staleMcIds.length > 0) {
-        await tx.showMC.updateMany({
+      if (staleCreatorIds.length > 0) {
+        await tx.showCreator.updateMany({
           where: {
-            id: { in: staleMcIds },
+            id: { in: staleCreatorIds },
             deletedAt: null,
           },
           data: {
             deletedAt: new Date(),
           },
         });
-        summary.creator_links_removed += staleMcIds.length;
+        summary.creator_links_removed += staleCreatorIds.length;
       }
 
       const incomingPlatformById = new Map<bigint, {
@@ -785,7 +787,7 @@ export class PublishingService {
         where: { uid: { in: Array.from(showStandardUids) }, deletedAt: null },
         select: { id: true, uid: true },
       }),
-      tx.mC.findMany({
+      tx.creator.findMany({
         where: { uid: { in: Array.from(creatorUids) }, deletedAt: null },
         select: { id: true, uid: true },
       }),

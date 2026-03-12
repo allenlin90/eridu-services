@@ -7,12 +7,12 @@ import { ClsPluginTransactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { ClsModule } from 'nestjs-cls';
 
-import { McRepository } from '@/models/mc/mc.repository';
+import { CreatorRepository } from '@/models/creator/creator.repository';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
-import { ShowMcRepository } from '@/models/show-mc/show-mc.repository';
-import { ShowMcService } from '@/models/show-mc/show-mc.service';
+import { ShowCreatorRepository } from '@/models/show-creator/show-creator.repository';
+import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -36,11 +36,11 @@ class MockPrismaModule {}
 describe('showOrchestrationService', () => {
   let service: ShowOrchestrationService;
   let showService: jest.Mocked<ShowService>;
-  let showMcService: jest.Mocked<ShowMcService>;
+  let showCreatorService: jest.Mocked<ShowCreatorService>;
   let showPlatformService: jest.Mocked<ShowPlatformService>;
   let showRepository: jest.Mocked<ShowRepository>;
-  let showMcRepository: jest.Mocked<ShowMcRepository>;
-  let mcRepository: jest.Mocked<McRepository>;
+  let showCreatorRepository: jest.Mocked<ShowCreatorRepository>;
+  let creatorRepository: jest.Mocked<CreatorRepository>;
   let showPlatformRepository: jest.Mocked<ShowPlatformRepository>;
   let platformRepository: jest.Mocked<PlatformRepository>;
 
@@ -98,9 +98,9 @@ describe('showOrchestrationService', () => {
           },
         },
         {
-          provide: ShowMcService,
+          provide: ShowCreatorService,
           useValue: {
-            generateShowMcUid: jest.fn(),
+            generateShowCreatorUid: jest.fn(),
           },
         },
         {
@@ -118,18 +118,18 @@ describe('showOrchestrationService', () => {
           },
         },
         {
-          provide: ShowMcRepository,
+          provide: ShowCreatorRepository,
           useValue: {
             findMany: jest.fn(),
             createAssignment: jest.fn(),
             restoreAndUpdateAssignment: jest.fn(),
             softDelete: jest.fn(),
             softDeleteAllByShowId: jest.fn(),
-            softDeleteByMcIds: jest.fn(),
+            softDeleteByCreatorIds: jest.fn(),
           },
         },
         {
-          provide: McRepository,
+          provide: CreatorRepository,
           useValue: {
             findByUids: jest.fn(),
           },
@@ -156,11 +156,11 @@ describe('showOrchestrationService', () => {
 
     service = module.get<ShowOrchestrationService>(ShowOrchestrationService);
     showService = module.get<ShowService>(ShowService) as jest.Mocked<ShowService>;
-    showMcService = module.get<ShowMcService>(ShowMcService) as jest.Mocked<ShowMcService>;
+    showCreatorService = module.get<ShowCreatorService>(ShowCreatorService) as jest.Mocked<ShowCreatorService>;
     showPlatformService = module.get<ShowPlatformService>(ShowPlatformService) as jest.Mocked<ShowPlatformService>;
     showRepository = module.get<ShowRepository>(ShowRepository) as jest.Mocked<ShowRepository>;
-    showMcRepository = module.get<ShowMcRepository>(ShowMcRepository) as jest.Mocked<ShowMcRepository>;
-    mcRepository = module.get<McRepository>(McRepository) as jest.Mocked<McRepository>;
+    showCreatorRepository = module.get<ShowCreatorRepository>(ShowCreatorRepository) as jest.Mocked<ShowCreatorRepository>;
+    creatorRepository = module.get<CreatorRepository>(CreatorRepository) as jest.Mocked<CreatorRepository>;
     showPlatformRepository = module.get<ShowPlatformRepository>(ShowPlatformRepository) as jest.Mocked<ShowPlatformRepository>;
     platformRepository = module.get<PlatformRepository>(PlatformRepository) as jest.Mocked<PlatformRepository>;
   });
@@ -236,7 +236,7 @@ describe('showOrchestrationService', () => {
           showType: true,
           showStatus: true,
           showStandard: true,
-          showMCs: expect.any(Object),
+          showCreators: expect.any(Object),
           showPlatforms: expect.any(Object),
         }),
       });
@@ -267,7 +267,7 @@ describe('showOrchestrationService', () => {
         updatePayload,
       );
       // Sync methods NOT called since showCreators/showPlatforms are undefined
-      expect(mcRepository.findByUids).not.toHaveBeenCalled();
+      expect(creatorRepository.findByUids).not.toHaveBeenCalled();
       expect(platformRepository.findByUids).not.toHaveBeenCalled();
       expect(showRepository.findByUid).toHaveBeenCalledWith(
         uid,
@@ -276,13 +276,13 @@ describe('showOrchestrationService', () => {
       expect(result).toEqual(mockShow);
     });
 
-    it('should update a show with MC and platform assignments', async () => {
+    it('should update a show with Creator and platform assignments', async () => {
       const uid = 'show_test123';
       const dto: UpdateShowWithAssignmentsDto = {
         name: 'Updated Show Name',
         showCreators: [
           {
-            creatorId: 'mc_test123',
+            creatorId: 'creator_test123',
             note: 'Updated note',
             metadata: {},
           },
@@ -298,7 +298,7 @@ describe('showOrchestrationService', () => {
         ],
       } as UpdateShowWithAssignmentsDto;
 
-      const mockMc = { id: BigInt(1), uid: 'mc_test123', deletedAt: null };
+      const mockMc = { id: BigInt(1), uid: 'creator_test123', deletedAt: null };
       const mockPlatform = { id: BigInt(1), uid: 'plt_test123', deletedAt: null };
       const updatePayload = { name: 'Updated Show Name' };
 
@@ -306,10 +306,10 @@ describe('showOrchestrationService', () => {
       showService.buildUpdatePayload.mockReturnValue(updatePayload);
       showRepository.update.mockResolvedValue(mockShow);
       showRepository.findByUid.mockResolvedValue(mockShow);
-      mcRepository.findByUids.mockResolvedValue([mockMc] as any);
-      showMcRepository.findMany.mockResolvedValue([]);
-      showMcRepository.createAssignment.mockResolvedValue({} as any);
-      showMcService.generateShowMcUid.mockReturnValue('show_mc_new');
+      creatorRepository.findByUids.mockResolvedValue([mockMc] as any);
+      showCreatorRepository.findMany.mockResolvedValue([]);
+      showCreatorRepository.createAssignment.mockResolvedValue({} as any);
+      showCreatorService.generateShowCreatorUid.mockReturnValue('show_mc_new');
       platformRepository.findByUids.mockResolvedValue([mockPlatform] as any);
       showPlatformRepository.findMany.mockResolvedValue([]);
       showPlatformRepository.createAssignment.mockResolvedValue({} as any);
@@ -322,12 +322,12 @@ describe('showOrchestrationService', () => {
         { uid },
         updatePayload,
       );
-      expect(mcRepository.findByUids).toHaveBeenCalledWith(['mc_test123']);
-      expect(showMcRepository.createAssignment).toHaveBeenCalledWith(
+      expect(creatorRepository.findByUids).toHaveBeenCalledWith(['creator_test123']);
+      expect(showCreatorRepository.createAssignment).toHaveBeenCalledWith(
         expect.objectContaining({
           uid: 'show_mc_new',
           showId: mockShow.id,
-          mcId: BigInt(1),
+          creatorId: BigInt(1),
           note: 'Updated note',
           metadata: {},
         }),
@@ -371,14 +371,14 @@ describe('showOrchestrationService', () => {
       const uid = 'show_test123';
       showService.getShowById.mockResolvedValue(mockShow);
       showRepository.softDelete.mockResolvedValue(mockShow);
-      showMcRepository.softDeleteAllByShowId.mockResolvedValue(undefined as any);
+      showCreatorRepository.softDeleteAllByShowId.mockResolvedValue(undefined as any);
       showPlatformRepository.softDeleteAllByShowId.mockResolvedValue(undefined as any);
 
       await service.deleteShow(uid);
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
       expect(showRepository.softDelete).toHaveBeenCalledWith({ uid });
-      expect(showMcRepository.softDeleteAllByShowId).toHaveBeenCalledWith(mockShow.id);
+      expect(showCreatorRepository.softDeleteAllByShowId).toHaveBeenCalledWith(mockShow.id);
       expect(showPlatformRepository.softDeleteAllByShowId).toHaveBeenCalledWith(mockShow.id);
     });
   });
@@ -412,14 +412,14 @@ describe('showOrchestrationService', () => {
       const mockCreator2 = { id: BigInt(2), uid: 'creator_2' };
 
       showService.getShowById.mockResolvedValue(mockShow);
-      mcRepository.findByUids.mockResolvedValue([mockCreator1, mockCreator2] as any);
-      showMcRepository.softDeleteByMcIds.mockResolvedValue(undefined as any);
+      creatorRepository.findByUids.mockResolvedValue([mockCreator1, mockCreator2] as any);
+      showCreatorRepository.softDeleteByCreatorIds.mockResolvedValue(undefined as any);
 
       await service.removeCreatorsFromShow(uid, creatorIds);
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
-      expect(mcRepository.findByUids).toHaveBeenCalledWith(creatorIds);
-      expect(showMcRepository.softDeleteByMcIds).toHaveBeenCalledWith(
+      expect(creatorRepository.findByUids).toHaveBeenCalledWith(creatorIds);
+      expect(showCreatorRepository.softDeleteByCreatorIds).toHaveBeenCalledWith(
         mockShow.id,
         [BigInt(1), BigInt(2)],
       );
@@ -443,21 +443,21 @@ describe('showOrchestrationService', () => {
       };
 
       showService.getShowById.mockResolvedValue(mockShow);
-      showMcService.generateShowMcUid.mockReturnValue('show_mc_new');
-      mcRepository.findByUids.mockResolvedValue([mockCreator] as any);
-      showMcRepository.findMany.mockResolvedValue([]);
-      showMcRepository.createAssignment.mockResolvedValue({} as any);
+      showCreatorService.generateShowCreatorUid.mockReturnValue('show_mc_new');
+      creatorRepository.findByUids.mockResolvedValue([mockCreator] as any);
+      showCreatorRepository.findMany.mockResolvedValue([]);
+      showCreatorRepository.createAssignment.mockResolvedValue({} as any);
       showRepository.findByUid.mockResolvedValue(mockShow);
 
       const result = await service.replaceCreatorsForShow(uid, creators);
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
-      expect(mcRepository.findByUids).toHaveBeenCalledWith(['creator_test123']);
-      expect(showMcRepository.createAssignment).toHaveBeenCalledWith(
+      expect(creatorRepository.findByUids).toHaveBeenCalledWith(['creator_test123']);
+      expect(showCreatorRepository.createAssignment).toHaveBeenCalledWith(
         expect.objectContaining({
           uid: 'show_mc_new',
           showId: mockShow.id,
-          mcId: BigInt(1),
+          creatorId: BigInt(1),
           note: 'Creator note',
           metadata: {},
         }),
@@ -480,7 +480,7 @@ describe('showOrchestrationService', () => {
       ];
 
       showService.getShowById.mockResolvedValue(mockShow);
-      mcRepository.findByUids.mockResolvedValue([]);
+      creatorRepository.findByUids.mockResolvedValue([]);
 
       await expect(service.replaceCreatorsForShow(uid, creators)).rejects.toThrow(
         'Creators not found: creator_missing',

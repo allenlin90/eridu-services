@@ -8,80 +8,7 @@
 Phase 5 is a backlog of valuable follow-up initiatives that remain intentionally deferred while the Phase 4 merge baseline is still settling.
 The goal is to preserve context and rationale now, then promote only the items that have clear owners, sequencing, and exit criteria.
 
-Two items are expected to promote first once the current merge train lands cleanly:
-
-- finish the canonical `creator` naming transition and deprecate legacy `mc` compatibility layers,
-- redesign and deliver the revenue-side P&L workflow that Phase 4 intentionally deferred.
-
-## Priority Carry-Over: Canonical Creator Naming and Legacy `mc` Deprecation
-
-Context:
-The Phase 4 branch contains a large creator refactor plus workflow updates that need controlled merge slicing. The codebase still has mixed `mc` / `creator` naming across backend modules, package exports, schemas, docs, and tests.
-
-Phase 5 treats completion of that transition as a named workstream, not incidental cleanup. The objective is to make `Creator` canonical everywhere user-facing and developer-facing.
-
-Policy update (2026-03-11):
-- Environment is alpha and low-traffic.
-- Creator rename/refactor should use direct cutover by default.
-- Do not introduce new compatibility layers unless a hard blocker is discovered.
-- Merge slicing plan is tracked in `docs/roadmap/PHASE_4_MERGE_PROGRAM.md`.
-
-Progress note (2026-03-10):
-- Initial creator refactor started in `erify_studios` show mapping/dashboard flows.
-- Backend creator UID transition landed:
-  - New creator IDs are generated as `creator_...`.
-  - Backfill strategy used for rollout: one-time script-based cutover (now retired after stabilization).
-- Accepted ADR published: `docs/adr/0002-creator-naming.md`.
-
-Phase 5 naming contract:
-- `Creator` is the canonical domain term across BE, FE, shared packages, docs, and new code.
-- `MC` remains only as business classification metadata (`creatorType` or equivalent), or in explicitly historical references.
-- Legacy `mc_*` fields, package entrypoints, and module aliases should be removed in merge scopes, not expanded.
-- Persistence/model/table renames are acceptable when bundled with the scoped merge unit and verified end-to-end.
-
-Implementation checklist:
-- [ ] Freeze new legacy naming at the boundary:
-  - No new modules, DTOs, exports, hooks, routes, or docs should introduce fresh `mc`-first naming.
-  - New compatibility aliases are disallowed by default.
-- [ ] Complete backend module/import consolidation:
-  - `mc` -> `creator`
-  - `show-mc` -> `show-creator`
-  - `studio-mc` -> `studio-creator`
-  - Remove legacy re-export barrels when touched by scope work.
-- [ ] Align API schemas and DTO contracts to creator-first naming:
-  - Remove canonical field drift (`mcId` vs `creatorId`, `mc_*` vs `creator_*`).
-  - Use direct creator-first request/response contracts for active APIs.
-- [x] Align creator UID generation with creator-first naming:
-  - New IDs use `creator_`.
-  - Legacy data normalization is handled via one-time backfill/migration tooling, not long-lived runtime aliases.
-- [ ] Enforce direct-cutover merge boundaries:
-  - Each merge scope must be reviewable and revertable.
-  - Prefer branch-per-scope to multi-topic merge bundles.
-- [ ] Consolidate persistence/schema naming decisions with real schema work:
-  - Schema rename work can ship directly when isolated to a clear scope.
-  - Validate local reset/migrate/seed/backfill flow in the same scope.
-- [ ] Complete frontend and package cleanup:
-  - Rename feature modules, hooks, query keys, route copy, and API clients to creator-first terms.
-  - Keep URL/search behavior parity unless there is an explicit product reason to change it.
-  - Remove legacy package entrypoints such as `@eridu/api-types/mcs` when no active import remains. (completed on 2026-03-11)
-- [ ] Re-validate authorization and behavior parity after renaming:
-  - Studio creator roster, show creator assignment, creator availability, and economics access rules.
-- [ ] Update canonical docs and agent knowledge:
-  - `apps/erify_api/docs/MC_OPERATIONS.md` or its creator-first replacement
-  - `apps/erify_studios/docs/MC_MAPPING.md` or its creator-first replacement
-  - `docs/roadmap/PHASE_4.md`, `docs/roadmap/PHASE_5.md`
-  - Relevant `.agent/skills/*`, workflows, and package READMEs that still instruct `mc` terminology
-- [ ] Run required verification gates before merge:
-  - `pnpm --filter erify_api lint`
-  - `pnpm --filter erify_api typecheck`
-  - `pnpm --filter erify_api test`
-  - `pnpm --filter erify_studios lint`
-  - `pnpm --filter erify_studios typecheck`
-  - `pnpm --filter erify_studios test`
-  - Add `build` verification for any package/app whose public exports or wiring changed
-- [ ] Remove remaining compatibility shims in final cutover scopes:
-  - Delete legacy alias exports, DTO aliases, and compatibility barrels in runtime paths.
-  - Confirm no remaining `MC` domain references outside historical schema names, migration history, or archived documentation.
+The P&L revenue workflow is the primary item expected to promote first once the Phase 4 baseline stabilizes — it is the only remaining major workstream from Phase 4 with no implementation yet.
 
 ## Deferred Workstreams (Context + TODOs)
 
@@ -155,7 +82,7 @@ TODOs:
 ### Creator App Expansion
 
 Context:
-Phase 4 introduced studio-scoped/grouped structures. Creator-facing workflows should align with that model and finish the creator-first terminology shift.
+Phase 4 introduced studio-scoped/grouped structures and completed the creator-first terminology shift. Creator-facing workflows should align with that model.
 
 TODOs:
 - Expand creator app capabilities for creator users by studio scope.
@@ -202,14 +129,14 @@ TODOs:
 ### Lower-Priority UX Refinements
 
 Context:
-Useful improvements that should not interrupt Phase 4 delivery.
+Useful improvements with no hard dependency on new backend contracts.
 
 TODOs:
 - Non-essential shift calendar interaction polish.
 - Workflow enhancements that do not change backend contracts.
 - Bulk review approve refinements.
 
-### P&L Revenue Workflow — Full P&L Visibility (Phase 4 Deferred)
+### P&L Revenue Workflow — Full P&L Visibility
 
 Context:
 Phase 4 shipped the "L" side (creator compensation costs, shift labor costs) and the economics/performance backend endpoints. The "P" side (revenue input and contribution margin) was deferred because there is no clear data model design, no FE input workflow, and no UI. The economics endpoints are marked `@preview` and commission/hybrid creator costs show as $0 without revenue.
@@ -228,7 +155,7 @@ TODOs (once design questions are resolved):
 - Decide: extend `ShowPlatform` with typed columns, or introduce `ShowPlatformMetrics` table for financial outcomes.
 - Introduce `big.js` as the standard financial arithmetic library for backend economics calculations and any frontend financial summaries that must match backend totals.
 - Add FE input for revenue fields on the show platform form in `erify_studios` (currently only `viewer_count` is editable).
-- Design and implement additive creator cost components (deferred until after Phase 4 cutover baseline):
+- Design and implement additive creator cost components:
   - add a dedicated cost-item model for per-show creator adjustments (bonus, OT, special allocation, and future types),
   - define calculation contract: `base compensation + sum(cost items)`,
   - support auditability fields (who/when/reason/metadata) for each cost item.
@@ -237,7 +164,7 @@ TODOs (once design questions are resolved):
 
 Carry-over concerns to evaluate during Phase 5 implementation of the "P" side:
 - **Schema validation contract (`createStudioCreatorRosterSchema`)**:
-  - Current behavior can return `404` when both `creator_id` and `mc_id` are missing (falls through to lookup with empty ID).
+  - Current behavior can return `404` when `creator_id` is missing (falls through to lookup with empty ID).
   - Phase 5 decision: either keep as explicit debt with rationale, or tighten schema to return `400` for missing identifier input.
 - **Bulk creator assignment write pattern**:
   - Current implementation is `O(n×m)` with sequential writes per show/creator pair and no request-size max guard.
@@ -248,13 +175,29 @@ Carry-over concerns to evaluate during Phase 5 implementation of the "P" side:
 - **Floating-point precision risk**:
   - Current financial calculations still rely on JS `number` arithmetic in parts of the economics flow.
   - Phase 5 should replace those paths with `big.js`-backed helpers before P&L is treated as production-grade financial reporting.
-- **Legacy compatibility barrel cleanup**:
-  - `studio-show-mc.orchestration.service.ts` is currently a compatibility re-export.
-  - Remove only after all imports/consumers migrate to creator-first module names.
-- **Cutover scope protection**:
-  - Keep compensation model redesign (bonus/OT/special allocations) out of current Phase 4 cutover PRs to avoid mixing rename/refactor risk with business-rule redesign.
 
 Deferred from: Phase 4, March 2026.
+
+### Full-Text Search and Attribute Filtering
+
+Context:
+Current search across `erify_api` is limited to simple LIKE/iLike queries on individual fields. As entity counts grow (creators, shows, tasks, templates, studio members), users need richer search — both relevance-ranked text search and structured attribute filtering similar to the Elasticsearch filter DSL (e.g. `creator_type:host status:active studio_id:x`). The goal is to support compound, attribute-scoped queries without requiring a full external search engine unless warranted.
+
+Open design questions to resolve before implementation:
+- **Engine choice**: Is PostgreSQL native FTS (`tsvector` / `tsquery` + GIN indexes) sufficient, or does query volume and ranking complexity justify a dedicated engine (e.g. Typesense, Meilisearch)?
+- **Filter DSL surface**: Should structured attribute filtering be exposed as typed query params (`?creator_type=host&status=active`) or as a unified filter string parsed server-side? Which approach maps better to the frontend filter UX?
+- **Index strategy**: Which entities are high-value search targets? Candidates: `Creator`, `Show`, `Task`, `TaskTemplate`, `StudioMember`. What columns belong in the search index vs. staying filter-only?
+- **Ranking and relevance**: Is keyword relevance ranking needed, or is filtered + paginated list sufficient for the current use cases?
+- **Sync strategy**: If an external engine is chosen, how are index writes kept in sync with Prisma mutations (synchronous, event-driven, or scheduled reconciliation)?
+
+TODOs (once design questions are resolved):
+- Identify high-value search surfaces and define per-entity field coverage (full-text fields vs. filterable attributes).
+- Define the attribute filter contract: field names, supported operators, and how they map to Prisma `where` clauses or search engine filter syntax.
+- Prototype PostgreSQL FTS on the highest-volume entity (likely `Creator` or `Task`) to establish a latency and relevance baseline before evaluating external engines.
+- Design a backend filter-parsing layer that translates structured attribute queries into typed, validated Prisma filters — preventing injection and maintaining schema alignment.
+- Add GIN indexes for any `tsvector` columns and composite indexes for high-cardinality filter combinations.
+- Expose unified search/filter endpoints per entity, aligned with the existing admin/studio route patterns.
+- Update frontend filter UIs to drive structured attribute queries rather than raw text searches where appropriate.
 
 ### Frontend API Contract Consistency (Tech Debt)
 
@@ -280,11 +223,11 @@ TODOs:
 ### StudioShift / StudioShiftBlock Optimistic Versioning (Schema Tech Debt)
 
 Context:
-`StudioShift` and `StudioShiftBlock` are missing the universal `version Int @default(1)` field required for optimistic locking. Concurrent admin edits to the same shift currently resolve as last-write-wins with no conflict detection. `StudioMc` (studio_creators) already received this field in Phase 4.
+`StudioShift` and `StudioShiftBlock` are missing the universal `version Int @default(1)` field required for optimistic locking. Concurrent admin edits to the same shift currently resolve as last-write-wins with no conflict detection. `StudioCreator` (studio_creators) already received this field in Phase 4.
 
 TODOs:
 - Add `version Int @default(1)` to both `StudioShift` and `StudioShiftBlock` in the next migration that already requires a schema change for this domain. Do not create a standalone migration for this alone.
-- Expose `updateByIdWithVersionCheck` in `StudioShiftRepository` following the same CAS pattern as `StudioMcRepository` (uses `updateMany` + `VersionConflictError` on `count === 0`).
+- Expose `updateByIdWithVersionCheck` in `StudioShiftRepository` following the same CAS pattern as `StudioCreatorRepository` (uses `updateMany` + `VersionConflictError` on `count === 0`).
 - Update `StudioShiftService` callers that need version-guarded writes to use the new method.
 
 Deferred from: `feat/studio-shift-schedule` PR review, March 2026.

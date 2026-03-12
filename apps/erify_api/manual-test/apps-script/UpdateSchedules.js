@@ -290,7 +290,7 @@ function parseShowFromRow(row, platformMap) {
     tiktok_ticket_id,
     show_status,
     studio_rooms,
-    mcs,
+    creators,
     note
   ] = row;
 
@@ -304,13 +304,13 @@ function parseShowFromRow(row, platformMap) {
     ids: { tiktok: tiktok_ticket_id, shopee: shopee_ticket_id, lazada: lazada_ticket_id }
   });
 
-  // Parse Lists (MC)
+  // Parse Lists (Creator)
   const parseList = (str) => {
     if (!str) return [];
     return str.toString().split(',').map(s => s.trim()).filter(Boolean);
   };
 
-  const mcList = parseList(mcs).map(uid => ({ mcId: uid }));
+  const creatorList = parseList(creators).map(uid => ({ creatorId: uid }));
   
   // Helper to resolve UID from Map (Name -> UID) or use raw if it looks like a UID
   const resolveValue = (raw, map, defaultUid) => {
@@ -357,7 +357,7 @@ function parseShowFromRow(row, platformMap) {
       showTypeId: showTypeId,
       showStatusId: showStatusId,
       showStandardId: showStandardId,
-      mcs: mcList,
+      creators: creatorList,
       platforms: platformList, 
       metadata: { note: note || '' }, 
     };
@@ -473,7 +473,7 @@ function validateRows(rows) {
     // 12: tiktok_ticket_id
     // 13: show_status
     // 14: studio_room
-    // 15: mcs
+    // 15: creators
     // 16: note
     
     const scheduleId = row[1] ? row[1].toString().trim() : '';
@@ -490,7 +490,7 @@ function validateRows(rows) {
     const tiktokTicketId = row[12];
     const showStatus = row[13];
     const studioRoom = row[14];
-    // const mcs = row[15];
+    // const creators = row[15];
     // const note = row[16];
 
     const isEmptyRow = !scheduleId && !showId && !client && !platforms && !date;

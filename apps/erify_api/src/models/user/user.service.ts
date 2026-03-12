@@ -43,7 +43,7 @@ export class UserService extends BaseModelService {
       ...userData,
       uid,
       ...(creator && {
-        mc: {
+        creator: {
           create: {
             name: creator.name,
             aliasName: creator.aliasName,

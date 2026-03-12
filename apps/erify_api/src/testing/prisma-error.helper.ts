@@ -38,7 +38,7 @@ export function createMockPrismaError(
  * @example
  * ```typescript
  * const error = createMockUniqueConstraintError(['email']);
- * const error2 = createMockUniqueConstraintError(['showId', 'mcId'], 'ShowMC');
+ * const error2 = createMockUniqueConstraintError(['showId', 'creatorId'], 'ShowCreator');
  * ```
  */
 export function createMockUniqueConstraintError(
@@ -61,7 +61,7 @@ export function createMockUniqueConstraintError(
  * @example
  * ```typescript
  * const error = createMockRecordNotFoundError('User');
- * const error2 = createMockRecordNotFoundError('MC', 'No MC record found');
+ * const error2 = createMockRecordNotFoundError('Creator', 'No Creator record found');
  * ```
  */
 export function createMockRecordNotFoundError(

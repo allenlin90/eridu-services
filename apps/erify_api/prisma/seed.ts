@@ -67,8 +67,8 @@ async function isDatabaseSeeded(): Promise<boolean> {
       }),
       prisma.client.count(),
       prisma.user.count(),
-      prisma.mC.count(),
-      prisma.mC.count({
+      prisma.creator.count(),
+      prisma.creator.count({
         where: {
           uid: { startsWith: 'creator_' },
           deletedAt: null,
@@ -703,7 +703,7 @@ async function main() {
       });
       console.log('✅ Created/updated studio role-testing users (test-admin/test-user*)');
 
-      // 30 MC users
+      // 30 Creator users
       const createdUsers: User[] = [adminUser];
       const specializations = [
         'Fashion Shows',
@@ -734,9 +734,9 @@ async function main() {
           create: {
             uid: fixtures.users[uidKey],
             email: `mcuser${i}@example.com`,
-            name: `MC User ${i}`,
+            name: `Creator User ${i}`,
             metadata: {
-              role: 'MC',
+              role: 'Creator',
               department: 'Entertainment',
               specialization,
               experience,
@@ -745,15 +745,15 @@ async function main() {
         });
         createdUsers.push(mcUser);
         if (i % 10 === 0) {
-          console.log(`✅ Created/updated ${i} MC users...`);
+          console.log(`✅ Created/updated ${i} Creator users...`);
         }
       }
       console.log(
-        `✅ Completed seeding ${createdUsers.length + 4} users (1 admin + 30 MC users + 4 role-test users)`,
+        `✅ Completed seeding ${createdUsers.length + 4} users (1 admin + 30 Creator users + 4 role-test users)`,
       );
 
-      // Seed MC data
-      console.log('🎤 Seeding MC data...');
+      // Seed Creator data
+      console.log('🎤 Seeding Creator data...');
       const mcSpecializations = [
         'Fashion Shows',
         'Tech Product Launches',
@@ -767,22 +767,22 @@ async function main() {
         'Health & Wellness',
       ];
 
-      // Create 30 MCs, each linked to one of the 30 MC users (skip admin user at index 0)
+      // Create 30 MCs, each linked to one of the 30 Creator users (skip admin user at index 0)
       for (let i = 1; i <= 30; i++) {
         const specialization
           = mcSpecializations[(i - 1) % mcSpecializations.length];
         const experience = `${Math.floor(Math.random() * 10) + 1} years`;
-        const mcName = `MC ${i}`;
-        const aliasName = `MC${i}`;
+        const mcName = `Creator ${i}`;
+        const aliasName = `Creator${i}`;
         const mcUser = createdUsers[i]; // Skip admin at index 0
         const uidKey = `mc${i}` as keyof typeof fixtures.mcs;
 
-        const existingMc = await tx.mC.findFirst({
+        const existingMc = await tx.creator.findFirst({
           where: { name: mcName },
         });
 
         if (!existingMc) {
-          await tx.mC.create({
+          await tx.creator.create({
             data: {
               uid: fixtures.mcs[uidKey],
               name: mcName,
@@ -795,7 +795,7 @@ async function main() {
             },
           });
         } else {
-          await tx.mC.update({
+          await tx.creator.update({
             where: { id: existingMc.id },
             data: {
               uid: fixtures.mcs[uidKey],
@@ -813,7 +813,7 @@ async function main() {
           console.log(`✅ Created/updated ${i} MCs...`);
         }
       }
-      console.log(`✅ Completed seeding 30 MCs (canonical creator UIDs, all linked to MC users)`);
+      console.log(`✅ Completed seeding 30 MCs (canonical creator UIDs, all linked to Creator users)`);
 
       // Seed Studio data
       console.log('🎬 Seeding Studio data...');

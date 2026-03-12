@@ -47,15 +47,10 @@ export const schedulePublishSummarySchema = z
     creator_links_added: z.number().int().nonnegative(),
     creator_links_updated: z.number().int().nonnegative(),
     creator_links_removed: z.number().int().nonnegative(),
-    // Explicitly reject legacy aliases during S4 cutover.
-    mc_links_added: z.never().optional(),
-    mc_links_updated: z.never().optional(),
-    mc_links_removed: z.never().optional(),
     platform_links_added: z.number().int().nonnegative(),
     platform_links_updated: z.number().int().nonnegative(),
     platform_links_removed: z.number().int().nonnegative(),
   })
-  .transform(({ mc_links_added: _mcLinksAdded, mc_links_updated: _mcLinksUpdated, mc_links_removed: _mcLinksRemoved, ...summary }) => summary)
   .pipe(
     z.object({
       shows_created: z.number().int().nonnegative(),

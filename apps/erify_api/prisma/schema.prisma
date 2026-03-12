@@ -18,7 +18,7 @@ model User {
   isSystemAdmin      Boolean            @default(false) @map("is_system_admin") // System-level admin flag
   profileUrl         String?            @map("profile_url")
   metadata           Json               @default("{}")
-  mc                 MC? // Optional MC profile linkage
+  creator            Creator? // Optional creator profile linkage
   studioMemberships  StudioMembership[]
   studioShifts       StudioShift[]
   schedules          Schedule[]         @relation("ScheduleCreator")
@@ -39,26 +39,26 @@ model User {
   @@map("users")
 }
 
-model MC {
-  id                    BigInt    @id @default(autoincrement())
-  uid                   String    @unique
+model Creator {
+  id                    BigInt          @id @default(autoincrement())
+  uid                   String          @unique
   name                  String
-  aliasName             String    @map("alias_name")
-  isBanned              Boolean   @default(false) @map("is_banned")
+  aliasName             String          @map("alias_name")
+  isBanned              Boolean         @default(false) @map("is_banned")
   // Base fixed amount used by FIXED and HYBRID compensation.
-  defaultRate           Decimal?  @map("default_rate") @db.Decimal(10, 2)
+  defaultRate           Decimal?        @map("default_rate") @db.Decimal(10, 2)
   // Compensation type options: FIXED | COMMISSION | HYBRID.
-  defaultRateType       String?   @map("default_rate_type")
+  defaultRateType       String?         @map("default_rate_type")
   // Commission percent (0-100) used by COMMISSION and HYBRID compensation.
-  defaultCommissionRate Decimal?  @map("default_commission_rate") @db.Decimal(10, 2)
-  metadata              Json      @default("{}")
-  showMCs               ShowMC[]
-  studioMcs             StudioMc[]
-  userId                BigInt?   @unique @map("user_id")
-  user                  User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
-  deletedAt             DateTime? @map("deleted_at")
+  defaultCommissionRate Decimal?        @map("default_commission_rate") @db.Decimal(10, 2)
+  metadata              Json            @default("{}")
+  showCreators          ShowCreator[]
+  studioCreators        StudioCreator[]
+  userId                BigInt?         @unique @map("user_id")
+  user                  User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+  deletedAt             DateTime?       @map("deleted_at")
 
   @@index([uid])
   @@index([userId])
@@ -129,7 +129,7 @@ model Show {
   showStandard   ShowStandard   @relation(fields: [showStandardId], references: [id])
   scheduleId     BigInt?        @map("schedule_id")
   Schedule       Schedule?      @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  showMCs        ShowMC[]
+  showCreators   ShowCreator[]
   showPlatforms  ShowPlatform[]
   taskTargets    TaskTarget[]
   createdAt      DateTime       @default(now()) @map("created_at")
@@ -166,7 +166,7 @@ model Show {
   @@map("shows")
 }
 
-model ShowMC {
+model ShowCreator {
   id               BigInt    @id @default(autoincrement())
   uid              String    @unique
   note             String?
@@ -179,20 +179,20 @@ model ShowMC {
   metadata         Json      @default("{}")
   showId           BigInt    @map("show_id")
   show             Show      @relation(fields: [showId], references: [id], onDelete: Cascade)
-  mcId             BigInt    @map("mc_id")
-  mc               MC        @relation(fields: [mcId], references: [id], onDelete: Cascade)
+  creatorId        BigInt    @map("mc_id")
+  creator          Creator   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
   deletedAt        DateTime? @map("deleted_at")
 
-  @@unique([showId, mcId])
+  @@unique([showId, creatorId])
   @@index([uid])
   @@index([showId])
-  @@index([mcId])
+  @@index([creatorId])
   @@index([deletedAt])
   @@index([showId, deletedAt])
-  @@index([mcId, deletedAt])
-  @@index([mcId, showId, deletedAt]) // MC double-booking queries
+  @@index([creatorId, deletedAt])
+  @@index([creatorId, showId, deletedAt]) // MC double-booking queries
   @@map("show_creators")
 }
 
@@ -232,7 +232,7 @@ model Studio {
   schedules         Schedule[]
   studioRooms       StudioRoom[]
   studioMemberships StudioMembership[]
-  studioMcs         StudioMc[]
+  studioCreators    StudioCreator[]
   taskTemplates     TaskTemplate[]
   tasks             Task[]
   taskTargets       TaskTarget[]
@@ -247,13 +247,13 @@ model Studio {
   @@map("studios")
 }
 
-model StudioMc {
+model StudioCreator {
   id                    BigInt    @id @default(autoincrement())
   uid                   String    @unique
   studioId              BigInt    @map("studio_id")
   studio                Studio    @relation(fields: [studioId], references: [id], onDelete: Cascade)
-  mcId                  BigInt    @map("mc_id")
-  mc                    MC        @relation(fields: [mcId], references: [id], onDelete: Cascade)
+  creatorId             BigInt    @map("mc_id")
+  creator               Creator   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   defaultRate           Decimal?  @map("default_rate") @db.Decimal(10, 2)
   defaultRateType       String?   @map("default_rate_type")
   defaultCommissionRate Decimal?  @map("default_commission_rate") @db.Decimal(10, 2)
@@ -264,9 +264,9 @@ model StudioMc {
   updatedAt             DateTime  @updatedAt @map("updated_at")
   deletedAt             DateTime? @map("deleted_at")
 
-  @@unique([studioId, mcId])
+  @@unique([studioId, creatorId])
   @@index([studioId, deletedAt])
-  @@index([mcId, deletedAt])
+  @@index([creatorId, deletedAt])
   @@map("studio_creators")
 }
 

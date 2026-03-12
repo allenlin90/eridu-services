@@ -67,7 +67,7 @@ describe('adminShowController', () => {
       const createdShow = { uid: 'show_123', ...createDto };
       const showWithRelations = {
         ...createdShow,
-        showMCs: [],
+        showCreators: [],
         showPlatforms: [],
       };
 
@@ -158,7 +158,7 @@ describe('adminShowController', () => {
       const showId = 'show_123';
       const updateDto = {
         name: 'Updated Show',
-        showCreators: [{ creatorId: 'mc_1', note: null, metadata: {} }],
+        showCreators: [{ creatorId: 'creator_1', note: null, metadata: {} }],
         showPlatforms: [
           {
             platformId: 'p_1',

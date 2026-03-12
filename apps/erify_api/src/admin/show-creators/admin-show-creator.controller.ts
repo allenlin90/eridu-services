@@ -18,38 +18,38 @@ import {
 import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
-  CreateShowMcDto,
-  showMcDto,
-  UpdateShowMcDto,
-} from '@/models/show-mc/schemas/show-mc.schema';
-import { ShowMcService } from '@/models/show-mc/show-mc.service';
+  CreateShowCreatorDto,
+  showCreatorDto,
+  UpdateShowCreatorDto,
+} from '@/models/show-creator/schemas/show-creator.schema';
+import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 
 @Controller('admin/show-creators')
 export class AdminShowCreatorController extends BaseAdminController {
-  constructor(private readonly showMcService: ShowMcService) {
+  constructor(private readonly showCreatorService: ShowCreatorService) {
     super();
   }
 
   @Post()
-  @AdminResponse(showMcDto, HttpStatus.CREATED, 'Show creator assignment created successfully')
-  async createShowMc(@Body() body: CreateShowMcDto) {
-    const { showId, mcId, note, metadata } = body;
-    const showMc = await this.showMcService.create({
+  @AdminResponse(showCreatorDto, HttpStatus.CREATED, 'Show creator assignment created successfully')
+  async createShowCreator(@Body() body: CreateShowCreatorDto) {
+    const { showId, creatorId, note, metadata } = body;
+    const showCreator = await this.showCreatorService.create({
       showId,
-      mcId,
+      creatorId,
       note,
       metadata,
     });
-    return this.showMcService.findOne(showMc.uid, {
+    return this.showCreatorService.findOne(showCreator.uid, {
       show: true,
-      mc: true,
+      creator: true,
     });
   }
 
   @Get()
-  @AdminPaginatedResponse(showMcDto, 'List of show creator assignments with pagination')
-  async getShowMcs(@Query() query: PaginationQueryDto) {
-    const { data, total } = await this.showMcService.findPaginated({
+  @AdminPaginatedResponse(showCreatorDto, 'List of show creator assignments with pagination')
+  async getShowCreators(@Query() query: PaginationQueryDto) {
+    const { data, total } = await this.showCreatorService.findPaginated({
       skip: query.skip,
       take: query.take,
       orderBy: { createdAt: query.sort === 'asc' ? 'asc' : 'desc' },
@@ -59,51 +59,51 @@ export class AdminShowCreatorController extends BaseAdminController {
   }
 
   @Get(':id')
-  @AdminResponse(showMcDto, HttpStatus.OK, 'Show creator assignment details')
-  async getShowMc(
-    @Param('id', new UidValidationPipe(ShowMcService.UID_PREFIX, 'Show creator assignment'))
+  @AdminResponse(showCreatorDto, HttpStatus.OK, 'Show creator assignment details')
+  async getShowCreator(
+    @Param('id', new UidValidationPipe(ShowCreatorService.UID_PREFIX, 'Show creator assignment'))
     id: string,
   ) {
-    const showMc = await this.showMcService.findOne(id, {
+    const showCreator = await this.showCreatorService.findOne(id, {
       show: true,
-      mc: true,
+      creator: true,
     });
-    this.ensureResourceExists(showMc, 'ShowMC', id);
-    return showMc;
+    this.ensureResourceExists(showCreator, 'ShowCreator', id);
+    return showCreator;
   }
 
   @Patch(':id')
-  @AdminResponse(showMcDto, HttpStatus.OK, 'Show creator assignment updated successfully')
-  async updateShowMc(
-    @Param('id', new UidValidationPipe(ShowMcService.UID_PREFIX, 'Show creator assignment'))
+  @AdminResponse(showCreatorDto, HttpStatus.OK, 'Show creator assignment updated successfully')
+  async updateShowCreator(
+    @Param('id', new UidValidationPipe(ShowCreatorService.UID_PREFIX, 'Show creator assignment'))
     id: string,
-    @Body() body: UpdateShowMcDto,
+    @Body() body: UpdateShowCreatorDto,
   ) {
-    const existing = await this.showMcService.findOne(id);
-    this.ensureResourceExists(existing, 'ShowMC', id);
+    const existing = await this.showCreatorService.findOne(id);
+    this.ensureResourceExists(existing, 'ShowCreator', id);
 
-    const { showId, mcId, note, metadata } = body;
-    const showMc = await this.showMcService.update(id, {
+    const { showId, creatorId, note, metadata } = body;
+    const showCreator = await this.showCreatorService.update(id, {
       showId,
-      mcId,
+      creatorId,
       note,
       metadata,
     });
     // Fetch with relations for proper serialization
-    return this.showMcService.findOne(showMc.uid, {
+    return this.showCreatorService.findOne(showCreator.uid, {
       show: true,
-      mc: true,
+      creator: true,
     });
   }
 
   @Delete(':id')
   @AdminResponse(undefined, HttpStatus.NO_CONTENT)
-  async deleteShowMc(
-    @Param('id', new UidValidationPipe(ShowMcService.UID_PREFIX, 'Show creator assignment'))
+  async deleteShowCreator(
+    @Param('id', new UidValidationPipe(ShowCreatorService.UID_PREFIX, 'Show creator assignment'))
     id: string,
   ) {
-    const showMc = await this.showMcService.findOne(id);
-    this.ensureResourceExists(showMc, 'ShowMC', id);
-    await this.showMcService.softDelete(id);
+    const showCreator = await this.showCreatorService.findOne(id);
+    this.ensureResourceExists(showCreator, 'ShowCreator', id);
+    await this.showCreatorService.softDelete(id);
   }
 }

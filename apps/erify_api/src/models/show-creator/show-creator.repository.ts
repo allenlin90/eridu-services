@@ -1,40 +1,40 @@
 import { Injectable } from '@nestjs/common';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
-import { Prisma, ShowMC } from '@prisma/client';
+import { Prisma, ShowCreator } from '@prisma/client';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
-type ShowMCWithIncludes<T extends Prisma.ShowMCInclude> =
-  Prisma.ShowMCGetPayload<{
+type ShowCreatorWithIncludes<T extends Prisma.ShowCreatorInclude> =
+  Prisma.ShowCreatorGetPayload<{
     include: T;
   }>;
 
-// Custom model wrapper that implements IBaseModel with ShowMCWhereInput
+// Custom model wrapper that implements IBaseModel with ShowCreatorWhereInput
 
 @Injectable()
-export class ShowMcRepository extends BaseRepository<
-  ShowMC,
-  Prisma.ShowMCCreateInput,
-  Prisma.ShowMCUpdateInput,
-  Prisma.ShowMCWhereInput
+export class ShowCreatorRepository extends BaseRepository<
+  ShowCreator,
+  Prisma.ShowCreatorCreateInput,
+  Prisma.ShowCreatorUpdateInput,
+  Prisma.ShowCreatorWhereInput
 > {
   constructor(
     private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {
-    super(new PrismaModelWrapper(prisma.showMC));
+    super(new PrismaModelWrapper(prisma.showCreator));
   }
 
   private get delegate() {
-    return this.txHost.tx.showMC;
+    return this.txHost.tx.showCreator;
   }
 
-  async findByUid<T extends Prisma.ShowMCInclude = Record<string, never>>(
+  async findByUid<T extends Prisma.ShowCreatorInclude = Record<string, never>>(
     uid: string,
     include?: T,
-  ): Promise<ShowMC | ShowMCWithIncludes<T> | null> {
+  ): Promise<ShowCreator | ShowCreatorWithIncludes<T> | null> {
     return this.delegate.findFirst({
       where: { uid, deletedAt: null },
       ...(include && { include }),
@@ -45,13 +45,13 @@ export class ShowMcRepository extends BaseRepository<
     skip?: number;
     take?: number;
     showId?: bigint;
-    mcId?: bigint;
+    creatorId?: bigint;
     includeDeleted?: boolean;
-    orderBy?: Prisma.ShowMCOrderByWithRelationInput;
-  }): Promise<{ data: ShowMC[]; total: number }> {
-    const { skip, take, showId, mcId, includeDeleted, orderBy } = params;
+    orderBy?: Prisma.ShowCreatorOrderByWithRelationInput;
+  }): Promise<{ data: ShowCreator[]; total: number }> {
+    const { skip, take, showId, creatorId, includeDeleted, orderBy } = params;
 
-    const where: Prisma.ShowMCWhereInput = {};
+    const where: Prisma.ShowCreatorWhereInput = {};
 
     if (!includeDeleted) {
       where.deletedAt = null;
@@ -61,8 +61,8 @@ export class ShowMcRepository extends BaseRepository<
       where.showId = showId;
     }
 
-    if (mcId) {
-      where.mcId = mcId;
+    if (creatorId) {
+      where.creatorId = creatorId;
     }
 
     const delegate = this.delegate;
@@ -75,7 +75,7 @@ export class ShowMcRepository extends BaseRepository<
         orderBy,
         include: {
           show: true,
-          mc: true,
+          creator: true,
         },
       }),
       delegate.count({ where }),
@@ -84,26 +84,26 @@ export class ShowMcRepository extends BaseRepository<
     return { data, total };
   }
 
-  async create(data: Prisma.ShowMCCreateInput, include?: Record<string, any>): Promise<ShowMC> {
+  async create(data: Prisma.ShowCreatorCreateInput, include?: Record<string, any>): Promise<ShowCreator> {
     return this.delegate.create({ data, ...(include && { include }) });
   }
 
-  async update(where: Prisma.ShowMCWhereUniqueInput, data: Prisma.ShowMCUpdateInput, include?: Record<string, any>): Promise<ShowMC> {
+  async update(where: Prisma.ShowCreatorWhereUniqueInput, data: Prisma.ShowCreatorUpdateInput, include?: Record<string, any>): Promise<ShowCreator> {
     return this.delegate.update({ where, data, ...(include && { include }) });
   }
 
-  async updateMany(where: Prisma.ShowMCWhereInput, data: Prisma.ShowMCUpdateManyMutationInput): Promise<Prisma.BatchPayload> {
+  async updateMany(where: Prisma.ShowCreatorWhereInput, data: Prisma.ShowCreatorUpdateManyMutationInput): Promise<Prisma.BatchPayload> {
     return this.delegate.updateMany({ where, data });
   }
 
-  async softDelete(where: Prisma.ShowMCWhereUniqueInput): Promise<ShowMC> {
+  async softDelete(where: Prisma.ShowCreatorWhereUniqueInput): Promise<ShowCreator> {
     return this.delegate.update({
       where,
       data: { deletedAt: new Date() },
     });
   }
 
-  async restore(where: Prisma.ShowMCWhereUniqueInput): Promise<ShowMC> {
+  async restore(where: Prisma.ShowCreatorWhereUniqueInput): Promise<ShowCreator> {
     return this.delegate.update({
       where,
       data: { deletedAt: null },
@@ -111,28 +111,28 @@ export class ShowMcRepository extends BaseRepository<
   }
 
   async findMany(params: {
-    where?: Prisma.ShowMCWhereInput;
-    include?: Prisma.ShowMCInclude;
-  }): Promise<ShowMC[]> {
+    where?: Prisma.ShowCreatorWhereInput;
+    include?: Prisma.ShowCreatorInclude;
+  }): Promise<ShowCreator[]> {
     return this.delegate.findMany(params);
   }
 
   /**
-   * Creates a ShowMC assignment by internal IDs (domain-level).
+   * Creates a ShowCreator assignment by internal IDs (domain-level).
    * Builds Prisma relation syntax internally.
    */
   async createAssignment(params: {
     uid: string;
     showId: bigint;
-    mcId: bigint;
+    creatorId: bigint;
     note?: string | null;
     metadata?: object;
-  }): Promise<ShowMC> {
+  }): Promise<ShowCreator> {
     return this.delegate.create({
       data: {
         uid: params.uid,
         show: { connect: { id: params.showId } },
-        mc: { connect: { id: params.mcId } },
+        creator: { connect: { id: params.creatorId } },
         note: params.note ?? null,
         metadata: params.metadata ?? {},
       },
@@ -140,12 +140,12 @@ export class ShowMcRepository extends BaseRepository<
   }
 
   /**
-   * Restores a soft-deleted ShowMC assignment and updates its fields, identified by internal ID.
+   * Restores a soft-deleted ShowCreator assignment and updates its fields, identified by internal ID.
    */
   async restoreAndUpdateAssignment(id: bigint, params: {
     note?: string | null;
     metadata?: object;
-  }): Promise<ShowMC> {
+  }): Promise<ShowCreator> {
     return this.delegate.update({
       where: { id },
       data: {
@@ -157,7 +157,7 @@ export class ShowMcRepository extends BaseRepository<
   }
 
   /**
-   * Soft-deletes all ShowMC records for a given show (domain-level).
+   * Soft-deletes all ShowCreator records for a given show (domain-level).
    */
   async softDeleteAllByShowId(showId: bigint): Promise<void> {
     await this.delegate.updateMany({
@@ -167,11 +167,11 @@ export class ShowMcRepository extends BaseRepository<
   }
 
   /**
-   * Soft-deletes ShowMC records by internal MC IDs for a given show (domain-level).
+   * Soft-deletes ShowCreator records by internal Creator IDs for a given show (domain-level).
    */
-  async softDeleteByMcIds(showId: bigint, mcIds: bigint[]): Promise<void> {
+  async softDeleteByCreatorIds(showId: bigint, creatorIds: bigint[]): Promise<void> {
     await this.delegate.updateMany({
-      where: { showId, mcId: { in: mcIds }, deletedAt: null },
+      where: { showId, creatorId: { in: creatorIds }, deletedAt: null },
       data: { deletedAt: new Date() },
     });
   }

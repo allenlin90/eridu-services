@@ -231,10 +231,10 @@ describe('taskOrchestrationService', () => {
             createdAt: now,
             updatedAt: now,
             deletedAt: null,
-            showMCs: [
+            showCreators: [
               {
-                mc: {
-                  uid: 'mc_1',
+                creator: {
+                  uid: 'creator_1',
                   name: 'Alice',
                   aliasName: 'Alice A',
                 },
@@ -259,7 +259,7 @@ describe('taskOrchestrationService', () => {
       });
       expect(result.data[0].creators).toEqual([
         {
-          creator_id: 'mc_1',
+          creator_id: 'creator_1',
           creator_name: 'Alice',
           creator_alias_name: 'Alice A',
         },

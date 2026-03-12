@@ -80,8 +80,8 @@ implements ExceptionFilter<Prisma.PrismaClientKnownRequestError> {
     }
 
     // Composite unique constraints (e.g., show + mc, show + platform)
-    if (fields.includes('showId') && fields.includes('mcId')) {
-      return 'This MC is already assigned to this show';
+    if (fields.includes('showId') && fields.includes('creatorId')) {
+      return 'This Creator is already assigned to this show';
     }
 
     if (fields.includes('showId') && fields.includes('platformId')) {
@@ -201,9 +201,9 @@ implements ExceptionFilter<Prisma.PrismaClientKnownRequestError> {
     const modelMessages: Record<string, string> = {
       User: 'User not found',
       Client: 'Client not found',
-      MC: 'MC not found',
+      Creator: 'Creator not found',
       Show: 'Show not found',
-      ShowMC: 'Show MC assignment not found',
+      ShowCreator: 'Show Creator assignment not found',
       ShowPlatform: 'Show platform assignment not found',
       Studio: 'Studio not found',
       StudioRoom: 'Studio room not found',

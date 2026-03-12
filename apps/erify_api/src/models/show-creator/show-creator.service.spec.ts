@@ -2,21 +2,21 @@ import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
 import type {
-  CreateShowMcDto,
-  UpdateShowMcDto,
-} from './schemas/show-mc.schema';
-import { ShowMcRepository } from './show-mc.repository';
-import { ShowMcService } from './show-mc.service';
+  CreateShowCreatorDto,
+  UpdateShowCreatorDto,
+} from './schemas/show-creator.schema';
+import { ShowCreatorRepository } from './show-creator.repository';
+import { ShowCreatorService } from './show-creator.service';
 
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
 import { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
-describe('showMcService', () => {
-  let service: ShowMcService;
+describe('showCreatorService', () => {
+  let service: ShowCreatorService;
 
-  const showMcRepositoryMock: Partial<jest.Mocked<ShowMcRepository>> = {
+  const showCreatorRepositoryMock: Partial<jest.Mocked<ShowCreatorRepository>> = {
     create: jest.fn(),
     findByUid: jest.fn(),
     update: jest.fn(),
@@ -32,13 +32,13 @@ describe('showMcService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        ShowMcService,
-        { provide: ShowMcRepository, useValue: showMcRepositoryMock },
+        ShowCreatorService,
+        { provide: ShowCreatorRepository, useValue: showCreatorRepositoryMock },
         { provide: UtilityService, useValue: utilityMock },
       ],
     }).compile();
 
-    service = module.get<ShowMcService>(ShowMcService);
+    service = module.get<ShowCreatorService>(ShowCreatorService);
   });
 
   beforeEach(() => {
@@ -46,19 +46,19 @@ describe('showMcService', () => {
   });
 
   describe('create', () => {
-    it('returns created show MC', async () => {
-      const dto: CreateShowMcDto = {
+    it('returns created show Creator', async () => {
+      const dto: CreateShowCreatorDto = {
         showId: 'show_1',
-        mcId: 'mc_1',
+        creatorId: 'creator_1',
         note: 'Main host',
         metadata: { role: 'host' },
-      } as CreateShowMcDto;
+      } as CreateShowCreatorDto;
 
       const created = {
         uid: 'show_mc_123',
         id: 1n,
         showId: 1n,
-        mcId: 1n,
+        creatorId: 1n,
         note: dto.note,
         metadata: dto.metadata,
         createdAt: new Date(),
@@ -66,7 +66,7 @@ describe('showMcService', () => {
         deletedAt: null,
       };
 
-      (showMcRepositoryMock.create as jest.Mock).mockResolvedValue(created);
+      (showCreatorRepositoryMock.create as jest.Mock).mockResolvedValue(created);
 
       const result = await service.create(dto);
 
@@ -75,29 +75,29 @@ describe('showMcService', () => {
         undefined,
       );
 
-      expect(showMcRepositoryMock.create).toHaveBeenCalledWith(
+      expect(showCreatorRepositoryMock.create).toHaveBeenCalledWith(
         expect.objectContaining({
           uid: 'show_mc_123',
           note: dto.note,
           metadata: dto.metadata,
           show: { connect: { uid: dto.showId } },
-          mc: { connect: { uid: dto.mcId } },
+          creator: { connect: { uid: dto.creatorId } },
         }),
       );
       expect(result).toEqual(created);
     });
 
-    it('creates show MC with null note when not provided', async () => {
-      const dto: CreateShowMcDto = {
+    it('creates show Creator with null note when not provided', async () => {
+      const dto: CreateShowCreatorDto = {
         showId: 'show_1',
-        mcId: 'mc_1',
-      } as CreateShowMcDto;
+        creatorId: 'creator_1',
+      } as CreateShowCreatorDto;
 
       const created = {
         uid: 'show_mc_123',
         id: 1n,
         showId: 1n,
-        mcId: 1n,
+        creatorId: 1n,
         note: null,
         metadata: {},
         createdAt: new Date(),
@@ -105,11 +105,11 @@ describe('showMcService', () => {
         deletedAt: null,
       };
 
-      (showMcRepositoryMock.create as jest.Mock).mockResolvedValue(created);
+      (showCreatorRepositoryMock.create as jest.Mock).mockResolvedValue(created);
 
       const result = await service.create(dto);
 
-      expect(showMcRepositoryMock.create).toHaveBeenCalledWith(
+      expect(showCreatorRepositoryMock.create).toHaveBeenCalledWith(
         expect.objectContaining({
           note: null,
           metadata: {},
@@ -118,55 +118,55 @@ describe('showMcService', () => {
       expect(result).toEqual(created);
     });
 
-    it('maps P2002 to Conflict when duplicate show-mc combination', async () => {
-      const dto: CreateShowMcDto = {
+    it('maps P2002 to Conflict when duplicate show-creator combination', async () => {
+      const dto: CreateShowCreatorDto = {
         showId: 'show_1',
-        mcId: 'mc_1',
+        creatorId: 'creator_1',
         note: 'Duplicate',
-      } as CreateShowMcDto;
+      } as CreateShowCreatorDto;
 
-      const error = createMockUniqueConstraintError(['showId', 'mcId']);
-      (showMcRepositoryMock.create as jest.Mock).mockRejectedValue(error);
+      const error = createMockUniqueConstraintError(['showId', 'creatorId']);
+      (showCreatorRepositoryMock.create as jest.Mock).mockRejectedValue(error);
 
       await expect(service.create(dto)).rejects.toThrow(error);
     });
   });
 
   describe('findOne', () => {
-    it('returns show MC with includes', async () => {
-      const showMc = {
+    it('returns show Creator with includes', async () => {
+      const showCreator = {
         uid: 'show_mc_123',
         id: 1n,
         showId: 1n,
-        mcId: 1n,
+        creatorId: 1n,
         note: 'Main host',
         metadata: {},
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
         show: { uid: 'show_1', name: 'Morning Show' },
-        mc: { uid: 'mc_1', name: 'John Doe', aliasName: 'Johnny' },
+        creator: { uid: 'creator_1', name: 'John Doe', aliasName: 'Johnny' },
       };
 
-      (showMcRepositoryMock.findByUid as jest.Mock).mockResolvedValue(showMc);
+      (showCreatorRepositoryMock.findByUid as jest.Mock).mockResolvedValue(showCreator);
 
       const result = await service.findOne('show_mc_123', {
         show: true,
-        mc: true,
+        creator: true,
       });
 
-      expect(showMcRepositoryMock.findByUid).toHaveBeenCalledWith(
+      expect(showCreatorRepositoryMock.findByUid).toHaveBeenCalledWith(
         'show_mc_123',
         {
           show: true,
-          mc: true,
+          creator: true,
         },
       );
-      expect(result).toEqual(showMc);
+      expect(result).toEqual(showCreator);
     });
 
-    it('returns null when show MC does not exist', async () => {
-      (showMcRepositoryMock.findByUid as jest.Mock).mockResolvedValue(null);
+    it('returns null when show Creator does not exist', async () => {
+      (showCreatorRepositoryMock.findByUid as jest.Mock).mockResolvedValue(null);
 
       const result = await service.findOne('show_mc_404');
       expect(result).toBeNull();
@@ -174,13 +174,13 @@ describe('showMcService', () => {
   });
 
   describe('findPaginated', () => {
-    it('returns array of show MCs', async () => {
-      const showMcs = [
+    it('returns array of show creators', async () => {
+      const showCreators = [
         {
           uid: 'show_mc_1',
           id: 1n,
           showId: 1n,
-          mcId: 1n,
+          creatorId: 1n,
           note: 'Host',
           metadata: {},
           createdAt: new Date(),
@@ -189,8 +189,8 @@ describe('showMcService', () => {
         },
       ];
 
-      (showMcRepositoryMock.findPaginated as jest.Mock).mockResolvedValue({
-        data: showMcs,
+      (showCreatorRepositoryMock.findPaginated as jest.Mock).mockResolvedValue({
+        data: showCreators,
         total: 1,
       });
 
@@ -199,21 +199,21 @@ describe('showMcService', () => {
         take: 10,
       });
 
-      expect(showMcRepositoryMock.findPaginated).toHaveBeenCalledWith({
+      expect(showCreatorRepositoryMock.findPaginated).toHaveBeenCalledWith({
         skip: 0,
         take: 10,
       });
-      expect(result).toEqual({ data: showMcs, total: 1 });
+      expect(result).toEqual({ data: showCreators, total: 1 });
     });
   });
 
   describe('update', () => {
-    it('returns updated show MC', async () => {
+    it('returns updated show Creator', async () => {
       const existingShowMc = {
         uid: 'show_mc_123',
         id: 1n,
         showId: 1n,
-        mcId: 1n,
+        creatorId: 1n,
         note: 'Old note',
         metadata: {},
         createdAt: new Date(),
@@ -224,7 +224,7 @@ describe('showMcService', () => {
       const dto = {
         note: 'Updated note',
         metadata: { role: 'main_host' },
-      } as unknown as UpdateShowMcDto;
+      } as unknown as UpdateShowCreatorDto;
 
       const updated = {
         ...existingShowMc,
@@ -232,11 +232,11 @@ describe('showMcService', () => {
         metadata: { role: 'main_host' },
       };
 
-      (showMcRepositoryMock.update as jest.Mock).mockResolvedValue(updated);
+      (showCreatorRepositoryMock.update as jest.Mock).mockResolvedValue(updated);
 
       const result = await service.update('show_mc_123', dto);
 
-      expect(showMcRepositoryMock.update).toHaveBeenCalledWith(
+      expect(showCreatorRepositoryMock.update).toHaveBeenCalledWith(
         { uid: 'show_mc_123' },
         expect.objectContaining({
           note: 'Updated note',
@@ -246,12 +246,12 @@ describe('showMcService', () => {
       expect(result).toEqual(updated);
     });
 
-    it('updates show and MC relationships', async () => {
+    it('updates show and Creator relationships', async () => {
       const existingShowMc = {
         uid: 'show_mc_123',
         id: 1n,
         showId: 1n,
-        mcId: 1n,
+        creatorId: 1n,
         note: 'Note',
         metadata: {},
         createdAt: new Date(),
@@ -261,24 +261,24 @@ describe('showMcService', () => {
 
       const dto = {
         showId: 'show_2',
-        mcId: 'mc_2',
-      } as unknown as UpdateShowMcDto;
+        creatorId: 'creator_2',
+      } as unknown as UpdateShowCreatorDto;
 
       const updated = {
         ...existingShowMc,
         showId: 2n,
-        mcId: 2n,
+        creatorId: 2n,
       };
 
-      (showMcRepositoryMock.update as jest.Mock).mockResolvedValue(updated);
+      (showCreatorRepositoryMock.update as jest.Mock).mockResolvedValue(updated);
 
       const result = await service.update('show_mc_123', dto);
 
-      expect(showMcRepositoryMock.update).toHaveBeenCalledWith(
+      expect(showCreatorRepositoryMock.update).toHaveBeenCalledWith(
         { uid: 'show_mc_123' },
         expect.objectContaining({
           show: { connect: { uid: 'show_2' } },
-          mc: { connect: { uid: 'mc_2' } },
+          creator: { connect: { uid: 'creator_2' } },
         }),
       );
       expect(result).toEqual(updated);
@@ -286,12 +286,12 @@ describe('showMcService', () => {
   });
 
   describe('softDelete', () => {
-    it('soft deletes show MC', async () => {
+    it('soft deletes show Creator', async () => {
       const existingShowMc = {
         uid: 'show_mc_123',
         id: 1n,
         showId: 1n,
-        mcId: 1n,
+        creatorId: 1n,
         note: 'To be deleted',
         metadata: {},
         createdAt: new Date(),
@@ -301,13 +301,13 @@ describe('showMcService', () => {
 
       const deletedShowMc = { ...existingShowMc, deletedAt: new Date() };
 
-      (showMcRepositoryMock.softDelete as jest.Mock).mockResolvedValue(
+      (showCreatorRepositoryMock.softDelete as jest.Mock).mockResolvedValue(
         deletedShowMc,
       );
 
       const result = await service.softDelete('show_mc_123');
 
-      expect(showMcRepositoryMock.softDelete).toHaveBeenCalledWith({
+      expect(showCreatorRepositoryMock.softDelete).toHaveBeenCalledWith({
         uid: 'show_mc_123',
       });
       expect(result).toEqual(deletedShowMc);

@@ -47,7 +47,7 @@ export class BackdoorUserController extends BaseBackdoorController {
   @ZodResponse(userWithCreatorDto, HttpStatus.CREATED, 'User created successfully')
   async createUser(@Body() body: CreateUserDto) {
     const createdUser = await this.userService.createUser(body);
-    const userWithCreator = await this.userService.findUserById(createdUser.uid, { mc: true });
+    const userWithCreator = await this.userService.findUserById(createdUser.uid, { creator: true });
 
     if (!userWithCreator) {
       throw HttpError.notFound('User', createdUser.uid);
@@ -62,7 +62,7 @@ export class BackdoorUserController extends BaseBackdoorController {
     const createdUsers = await this.userService.createUsersBulk(body.data);
     const hydratedUsers = await Promise.all(
       createdUsers.map(async (user) => {
-        const userWithCreator = await this.userService.findUserById(user.uid, { mc: true });
+        const userWithCreator = await this.userService.findUserById(user.uid, { creator: true });
         if (!userWithCreator) {
           throw HttpError.notFound('User', user.uid);
         }

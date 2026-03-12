@@ -40,9 +40,9 @@ function decimalToString(value: unknown): string | null {
   return null;
 }
 
-export const mcSchema = z.object({
+export const creatorSchema = z.object({
   id: z.bigint(),
-  uid: z.string().refine(isCreatorUid, 'Invalid creator/mc UID'),
+  uid: z.string().refine(isCreatorUid, 'Invalid creator UID'),
   userId: z.bigint().nullable(),
   name: z.string(),
   aliasName: z.string(),
@@ -57,7 +57,7 @@ export const mcSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const createMcSchema = createCreatorInputSchema.transform((data) => ({
+export const createCreatorSchema = createCreatorInputSchema.transform((data) => ({
   userId: data.user_id ?? null,
   name: data.name,
   aliasName: data.alias_name,
@@ -68,7 +68,7 @@ export const createMcSchema = createCreatorInputSchema.transform((data) => ({
 }));
 
 // API input schema (snake_case input, transforms to camelCase)
-export const updateMcSchema = updateCreatorInputSchema.transform((data) => ({
+export const updateCreatorSchema = updateCreatorInputSchema.transform((data) => ({
   userId: data.user_id ?? null,
   name: data.name,
   aliasName: data.alias_name,
@@ -92,10 +92,10 @@ export const updateMcSchema = updateCreatorInputSchema.transform((data) => ({
   metadata: data.metadata,
 }));
 
-export const mcDto = mcSchema
+export const creatorDto = creatorSchema
   .transform((obj) => ({
     id: obj.uid,
-    user_id: null as string | null, // Set to null when user relation is not loaded (use mcWithUserDto for user_id)
+    user_id: null as string | null, // Set to null when user relation is not loaded (use creatorWithUserDto for user_id)
     name: obj.name,
     alias_name: obj.aliasName,
     is_banned: obj.isBanned,
@@ -108,10 +108,10 @@ export const mcDto = mcSchema
   }))
   .pipe(creatorApiResponseSchema);
 
-// Schema for MC with user data (used in admin endpoints)
-export const mcWithUserSchema = z.object({
+// Schema for Creator with user data (used in admin endpoints)
+export const creatorWithUserSchema = z.object({
   id: z.bigint(),
-  uid: z.string().refine(isCreatorUid, 'Invalid creator/mc UID'),
+  uid: z.string().refine(isCreatorUid, 'Invalid creator UID'),
   userId: z.bigint().nullable(),
   name: z.string(),
   aliasName: z.string(),
@@ -126,8 +126,8 @@ export const mcWithUserSchema = z.object({
   user: userSchema.nullable(),
 });
 
-// Transform MC with user to API format
-export const mcWithUserDto = mcWithUserSchema
+// Transform Creator with user to API format
+export const creatorWithUserDto = creatorWithUserSchema
   .transform((obj) => {
     const parsedUser = obj.user ? userDto.parse(obj.user) : null;
     return {
@@ -162,21 +162,21 @@ export const mcWithUserDto = mcWithUserSchema
   );
 
 // DTOs for input/output
-export class CreateMcDto extends createZodDto(createMcSchema) {}
-export class UpdateMcDto extends createZodDto(updateMcSchema) {}
-export class McDto extends createZodDto(mcDto) {}
-export class McWithUserDto extends createZodDto(mcWithUserDto) {}
+export class CreateCreatorDto extends createZodDto(createCreatorSchema) {}
+export class UpdateCreatorDto extends createZodDto(updateCreatorSchema) {}
+export class CreatorDto extends createZodDto(creatorDto) {}
+export class CreatorWithUserDto extends createZodDto(creatorWithUserDto) {}
 
-// MC list filter schema
-export const listMcsFilterSchema = z.object({
+// Creator list filter schema
+export const listCreatorsFilterSchema = z.object({
   name: z.string().optional(),
   alias_name: z.string().optional(),
   id: z.string().optional(),
   include_deleted: z.coerce.boolean().default(false),
 });
 
-export const listMcsQuerySchema = paginationQuerySchema
-  .and(listMcsFilterSchema)
+export const listCreatorsQuerySchema = paginationQuerySchema
+  .and(listCreatorsFilterSchema)
   .transform((data) => {
     const { id, alias_name, ...rest } = data;
     return {
@@ -186,7 +186,7 @@ export const listMcsQuerySchema = paginationQuerySchema
     };
   });
 
-export class ListMcsQueryDto extends createZodDto(listMcsQuerySchema) {
+export class ListCreatorsQueryDto extends createZodDto(listCreatorsQuerySchema) {
   declare page: number;
   declare limit: number;
   declare take: number;
@@ -198,9 +198,9 @@ export class ListMcsQueryDto extends createZodDto(listMcsQuerySchema) {
 }
 
 /**
- * Payload for creating an MC (service layer).
+ * Payload for creating a creator (service layer).
  */
-export type CreateMcPayload = {
+export type CreateCreatorPayload = {
   name: string;
   aliasName: string;
   defaultRate?: string;
@@ -211,9 +211,9 @@ export type CreateMcPayload = {
 };
 
 /**
- * Payload for updating an MC (service layer).
+ * Payload for updating a creator (service layer).
  */
-export type UpdateMcPayload = {
+export type UpdateCreatorPayload = {
   name?: string;
   aliasName?: string;
   isBanned?: boolean;
@@ -225,9 +225,9 @@ export type UpdateMcPayload = {
 };
 
 /**
- * Type-safe order by options for MCs.
+ * Type-safe order by options for creators.
  */
-export type McOrderBy = {
+export type CreatorOrderBy = {
   name?: 'asc' | 'desc';
   aliasName?: 'asc' | 'desc';
   createdAt?: 'asc' | 'desc';

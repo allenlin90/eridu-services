@@ -3,28 +3,28 @@ import { Test } from '@nestjs/testing';
 
 import { AdminCreatorController } from './admin-creator.controller';
 
-import { McService } from '@/models/mc/mc.service';
+import { CreatorService } from '@/models/creator/creator.service';
 import type {
-  CreateMcDto,
-  ListMcsQueryDto,
-  UpdateMcDto,
-} from '@/models/mc/schemas/mc.schema';
+  CreateCreatorDto,
+  ListCreatorsQueryDto,
+  UpdateCreatorDto,
+} from '@/models/creator/schemas/creator.schema';
 
 describe('adminCreatorController', () => {
   let controller: AdminCreatorController;
 
-  const mockMcService = {
-    listMcs: jest.fn(),
-    createMc: jest.fn(),
-    getMcById: jest.fn(),
-    getMcByIdWithUser: jest.fn(),
-    updateMc: jest.fn(),
-    deleteMc: jest.fn(),
+  const mockCreatorService = {
+    listCreators: jest.fn(),
+    createCreator: jest.fn(),
+    getCreatorById: jest.fn(),
+    getCreatorByIdWithUser: jest.fn(),
+    updateCreator: jest.fn(),
+    deleteCreator: jest.fn(),
   };
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminCreatorController],
-      providers: [{ provide: McService, useValue: mockMcService }],
+      providers: [{ provide: CreatorService, useValue: mockCreatorService }],
     }).compile();
 
     controller = module.get<AdminCreatorController>(AdminCreatorController);
@@ -36,42 +36,42 @@ describe('adminCreatorController', () => {
 
   describe('createCreator', () => {
     it('should create a creator and return with user', async () => {
-      const createDto: CreateMcDto = {
-        name: 'Test MC',
+      const createDto: CreateCreatorDto = {
+        name: 'Test Creator',
         userId: 'user_123',
         metadata: {},
-      } as CreateMcDto;
-      const createdMc = { uid: 'mc_123', ...createDto };
-      const mcWithUser = { ...createdMc, user: { uid: 'user_123' } };
+      } as CreateCreatorDto;
+      const createdCreator = { uid: 'creator_123', ...createDto };
+      const creatorWithUser = { ...createdCreator, user: { uid: 'user_123' } };
 
-      mockMcService.createMc.mockResolvedValue(createdMc as any);
-      mockMcService.getMcByIdWithUser.mockResolvedValue(mcWithUser as any);
+      mockCreatorService.createCreator.mockResolvedValue(createdCreator as any);
+      mockCreatorService.getCreatorByIdWithUser.mockResolvedValue(creatorWithUser as any);
 
       const result = await controller.createCreator(createDto);
 
-      expect(mockMcService.createMc).toHaveBeenCalledWith({
+      expect(mockCreatorService.createCreator).toHaveBeenCalledWith({
         name: createDto.name,
         aliasName: createDto.aliasName,
         metadata: createDto.metadata,
         userId: createDto.userId,
       });
-      expect(mockMcService.getMcByIdWithUser).toHaveBeenCalledWith('mc_123');
-      expect(result).toEqual(mcWithUser);
+      expect(mockCreatorService.getCreatorByIdWithUser).toHaveBeenCalledWith('creator_123');
+      expect(result).toEqual(creatorWithUser);
     });
   });
 
   describe('getCreators', () => {
     it('should return paginated list of creators', async () => {
-      const query: ListMcsQueryDto = {
+      const query: ListCreatorsQueryDto = {
         page: 1,
         limit: 10,
         skip: 0,
         take: 10,
         include_deleted: false,
-      } as ListMcsQueryDto;
-      const mcs = [
-        { uid: 'mc_1', userId: 'user_1' },
-        { uid: 'mc_2', userId: 'user_2' },
+      } as ListCreatorsQueryDto;
+      const creators = [
+        { uid: 'creator_1', userId: 'user_1' },
+        { uid: 'creator_2', userId: 'user_2' },
       ];
       const total = 2;
       const paginationMeta = {
@@ -83,10 +83,10 @@ describe('adminCreatorController', () => {
         hasPreviousPage: false,
       };
 
-      mockMcService.listMcs.mockResolvedValue({ data: mcs, total } as any);
+      mockCreatorService.listCreators.mockResolvedValue({ data: creators, total } as any);
 
       const result = await controller.getCreators(query);
-      expect(mockMcService.listMcs).toHaveBeenCalledWith({
+      expect(mockCreatorService.listCreators).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
         name: query.name,
@@ -96,13 +96,13 @@ describe('adminCreatorController', () => {
         includeUser: true,
       });
       expect(result).toEqual({
-        data: mcs,
+        data: creators,
         meta: paginationMeta,
       });
     });
 
     it('should filter creators by name and aliasName', async () => {
-      const query: ListMcsQueryDto = {
+      const query: ListCreatorsQueryDto = {
         page: 1,
         limit: 10,
         skip: 0,
@@ -110,16 +110,16 @@ describe('adminCreatorController', () => {
         name: 'test',
         aliasName: 'alias',
         include_deleted: false,
-      } as ListMcsQueryDto;
-      const mcs = [
-        { uid: 'mc_1', userId: 'user_1', name: 'test', aliasName: 'alias' },
+      } as ListCreatorsQueryDto;
+      const creators = [
+        { uid: 'creator_1', userId: 'user_1', name: 'test', aliasName: 'alias' },
       ];
       const total = 1;
 
-      mockMcService.listMcs.mockResolvedValue({ data: mcs, total } as any);
+      mockCreatorService.listCreators.mockResolvedValue({ data: creators, total } as any);
 
       await controller.getCreators(query);
-      expect(mockMcService.listMcs).toHaveBeenCalledWith({
+      expect(mockCreatorService.listCreators).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
         name: query.name,
@@ -133,55 +133,55 @@ describe('adminCreatorController', () => {
 
   describe('getCreator', () => {
     it('should return a creator by id', async () => {
-      const mcId = 'mc_123';
-      const mc = { uid: mcId, userId: 'user_123' };
+      const creatorId = 'creator_123';
+      const creator = { uid: creatorId, userId: 'user_123' };
 
-      mockMcService.getMcByIdWithUser.mockResolvedValue(mc as any);
+      mockCreatorService.getCreatorByIdWithUser.mockResolvedValue(creator as any);
 
-      const result = await controller.getCreator(mcId);
-      expect(mockMcService.getMcByIdWithUser).toHaveBeenCalledWith(mcId);
-      expect(result).toEqual(mc);
+      const result = await controller.getCreator(creatorId);
+      expect(mockCreatorService.getCreatorByIdWithUser).toHaveBeenCalledWith(creatorId);
+      expect(result).toEqual(creator);
     });
   });
 
   describe('updateCreator', () => {
     it('should update a creator and return with user', async () => {
-      const mcId = 'mc_123';
-      const updateDto: UpdateMcDto = { name: 'Updated' } as UpdateMcDto;
-      const existingMc = { uid: mcId, name: 'Old' };
-      const updatedMc = { ...existingMc, ...updateDto };
-      const mcWithUser = { ...updatedMc, user: { uid: 'user_123' } };
+      const creatorId = 'creator_123';
+      const updateDto: UpdateCreatorDto = { name: 'Updated' } as UpdateCreatorDto;
+      const existingCreator = { uid: creatorId, name: 'Old' };
+      const updatedCreator = { ...existingCreator, ...updateDto };
+      const creatorWithUser = { ...updatedCreator, user: { uid: 'user_123' } };
 
-      mockMcService.getMcById.mockResolvedValue(existingMc as any);
-      mockMcService.updateMc.mockResolvedValue(updatedMc as any);
-      mockMcService.getMcByIdWithUser.mockResolvedValue(mcWithUser as any);
+      mockCreatorService.getCreatorById.mockResolvedValue(existingCreator as any);
+      mockCreatorService.updateCreator.mockResolvedValue(updatedCreator as any);
+      mockCreatorService.getCreatorByIdWithUser.mockResolvedValue(creatorWithUser as any);
 
-      const result = await controller.updateCreator(mcId, updateDto);
+      const result = await controller.updateCreator(creatorId, updateDto);
 
-      expect(mockMcService.getMcById).toHaveBeenCalledWith(mcId);
-      expect(mockMcService.updateMc).toHaveBeenCalledWith(mcId, {
+      expect(mockCreatorService.getCreatorById).toHaveBeenCalledWith(creatorId);
+      expect(mockCreatorService.updateCreator).toHaveBeenCalledWith(creatorId, {
         name: updateDto.name,
         aliasName: updateDto.aliasName,
         isBanned: updateDto.isBanned,
         metadata: updateDto.metadata,
         userId: updateDto.userId,
       });
-      expect(mockMcService.getMcByIdWithUser).toHaveBeenCalledWith(mcId);
-      expect(result).toEqual(mcWithUser);
+      expect(mockCreatorService.getCreatorByIdWithUser).toHaveBeenCalledWith(creatorId);
+      expect(result).toEqual(creatorWithUser);
     });
   });
 
   describe('deleteCreator', () => {
     it('should delete a creator', async () => {
-      const mcId = 'mc_123';
-      const existingMc = { uid: mcId };
+      const creatorId = 'creator_123';
+      const existingCreator = { uid: creatorId };
 
-      mockMcService.getMcById.mockResolvedValue(existingMc as any);
-      mockMcService.deleteMc.mockResolvedValue(undefined);
+      mockCreatorService.getCreatorById.mockResolvedValue(existingCreator as any);
+      mockCreatorService.deleteCreator.mockResolvedValue(undefined);
 
-      await controller.deleteCreator(mcId);
-      expect(mockMcService.getMcById).toHaveBeenCalledWith(mcId);
-      expect(mockMcService.deleteMc).toHaveBeenCalledWith(mcId);
+      await controller.deleteCreator(creatorId);
+      expect(mockCreatorService.getCreatorById).toHaveBeenCalledWith(creatorId);
+      expect(mockCreatorService.deleteCreator).toHaveBeenCalledWith(creatorId);
     });
   });
 });

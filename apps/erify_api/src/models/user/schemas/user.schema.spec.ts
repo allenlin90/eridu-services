@@ -25,8 +25,8 @@ describe('userSchema', () => {
         email: 'creator@example.com',
         name: 'Creator User',
         mc: {
-          name: 'Legacy MC Name',
-          alias_name: 'Legacy MC Alias',
+          name: 'Legacy Creator Name',
+          alias_name: 'Legacy Creator Alias',
         },
       });
 
@@ -47,9 +47,9 @@ describe('userSchema', () => {
         metadata: {},
         createdAt: now,
         updatedAt: now,
-        mc: {
+        creator: {
           id: BigInt(2),
-          uid: 'mc_123',
+          uid: 'creator_123',
           userId: BigInt(1),
           name: 'Creator One',
           aliasName: 'Creator Alias',
@@ -62,7 +62,7 @@ describe('userSchema', () => {
       });
 
       expect(dto.creator).toEqual({
-        id: 'mc_123',
+        id: 'creator_123',
         name: 'Creator One',
         alias_name: 'Creator Alias',
         is_banned: false,

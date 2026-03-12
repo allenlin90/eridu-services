@@ -8,14 +8,14 @@ import {
 } from './schemas/show-orchestration.schema';
 
 import { HttpError } from '@/lib/errors/http-error.util';
-import { McRepository } from '@/models/mc/mc.repository';
+import { CreatorRepository } from '@/models/creator/creator.repository';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import type { ShowInclude, ShowWithPayload } from '@/models/show/schemas/show.schema';
 import { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
 import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
-import { ShowMcRepository } from '@/models/show-mc/show-mc.repository';
-import { ShowMcService } from '@/models/show-mc/show-mc.service';
+import { ShowCreatorRepository } from '@/models/show-creator/show-creator.repository';
+import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 
@@ -29,11 +29,11 @@ type CreatorAssignmentPayload = {
 export class ShowOrchestrationService {
   constructor(
     private readonly showService: ShowService,
-    private readonly showMcService: ShowMcService,
+    private readonly showCreatorService: ShowCreatorService,
     private readonly showPlatformService: ShowPlatformService,
     private readonly showRepository: ShowRepository,
-    private readonly showMcRepository: ShowMcRepository,
-    private readonly mcRepository: McRepository,
+    private readonly showCreatorRepository: ShowCreatorRepository,
+    private readonly creatorRepository: CreatorRepository,
     private readonly showPlatformRepository: ShowPlatformRepository,
     private readonly platformRepository: PlatformRepository,
   ) {}
@@ -126,7 +126,7 @@ export class ShowOrchestrationService {
     const showId = show.id;
 
     await this.showRepository.softDelete({ uid });
-    await this.showMcRepository.softDeleteAllByShowId(showId);
+    await this.showCreatorRepository.softDeleteAllByShowId(showId);
     await this.showPlatformRepository.softDeleteAllByShowId(showId);
   }
 
@@ -211,10 +211,10 @@ export class ShowOrchestrationService {
       showType: { connect: { uid: data.showTypeId } },
       showStatus: { connect: { uid: data.showStatusId } },
       showStandard: { connect: { uid: data.showStandardId } },
-      showMCs: {
+      showCreators: {
         create: data.creators?.map((creator) => ({
-          uid: this.showMcService.generateShowMcUid(),
-          mc: { connect: { uid: creator.creatorId } },
+          uid: this.showCreatorService.generateShowCreatorUid(),
+          creator: { connect: { uid: creator.creatorId } },
           note: creator.note ?? null,
           metadata: creator.metadata ?? {},
         })),
@@ -240,8 +240,8 @@ export class ShowOrchestrationService {
       showType: true,
       showStatus: true,
       showStandard: true,
-      showMCs: {
-        include: { mc: true },
+      showCreators: {
+        include: { creator: true },
         where: { deletedAt: null },
       },
       showPlatforms: {
@@ -262,7 +262,7 @@ export class ShowOrchestrationService {
   ): Promise<void> {
     const creatorUids = creators.map((c) => c.creatorId);
 
-    const foundCreators = await this.mcRepository.findByUids(creatorUids);
+    const foundCreators = await this.creatorRepository.findByUids(creatorUids);
     if (foundCreators.length !== creatorUids.length) {
       const foundUids = foundCreators.map((creator) => creator.uid);
       const missingUids = creatorUids.filter((uid) => !foundUids.includes(uid));
@@ -270,7 +270,7 @@ export class ShowOrchestrationService {
     }
 
     const creatorMap = new Map(foundCreators.map((creator) => [creator.uid, creator.id]));
-    const existingAssignments = await this.showMcRepository.findMany({ where: { showId } });
+    const existingAssignments = await this.showCreatorRepository.findMany({ where: { showId } });
     const processedCreatorIds = new Set<bigint>();
 
     for (const assignment of creators) {
@@ -279,18 +279,18 @@ export class ShowOrchestrationService {
         continue;
 
       processedCreatorIds.add(internalCreatorId);
-      const existing = existingAssignments.find((a) => a.mcId === internalCreatorId);
+      const existing = existingAssignments.find((a) => a.creatorId === internalCreatorId);
 
       if (existing) {
-        await this.showMcRepository.restoreAndUpdateAssignment(existing.id, {
+        await this.showCreatorRepository.restoreAndUpdateAssignment(existing.id, {
           note: assignment.note ?? null,
           metadata: assignment.metadata ?? (existing.metadata as object) ?? {},
         });
       } else {
-        await this.showMcRepository.createAssignment({
-          uid: this.showMcService.generateShowMcUid(),
+        await this.showCreatorRepository.createAssignment({
+          uid: this.showCreatorService.generateShowCreatorUid(),
           showId,
-          mcId: internalCreatorId,
+          creatorId: internalCreatorId,
           note: assignment.note ?? null,
           metadata: assignment.metadata ?? {},
         });
@@ -298,10 +298,10 @@ export class ShowOrchestrationService {
     }
 
     const toDelete = existingAssignments.filter(
-      (a) => !processedCreatorIds.has(a.mcId) && a.deletedAt === null,
+      (a) => !processedCreatorIds.has(a.creatorId) && a.deletedAt === null,
     );
     for (const assignment of toDelete) {
-      await this.showMcRepository.softDelete({ id: assignment.id });
+      await this.showCreatorRepository.softDelete({ id: assignment.id });
     }
   }
 
@@ -309,9 +309,9 @@ export class ShowOrchestrationService {
     showId: bigint,
     creatorUids: string[],
   ): Promise<void> {
-    const creators = await this.mcRepository.findByUids(creatorUids);
+    const creators = await this.creatorRepository.findByUids(creatorUids);
     const internalCreatorIds = creators.map((creator) => creator.id);
-    await this.showMcRepository.softDeleteByMcIds(showId, internalCreatorIds);
+    await this.showCreatorRepository.softDeleteByCreatorIds(showId, internalCreatorIds);
   }
 
   /**

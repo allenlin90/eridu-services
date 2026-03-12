@@ -259,7 +259,7 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   @ApiOperation({
     summary: 'Validate schedule',
     description:
-      'Validate schedule before publishing. Checks for room conflicts, MC double-bookings, invalid UIDs, and time range constraints.',
+      'Validate schedule before publishing. Checks for room conflicts, Creator double-bookings, invalid UIDs, and time range constraints.',
   })
   @HttpCode(HttpStatus.OK)
   @ApiZodResponse(

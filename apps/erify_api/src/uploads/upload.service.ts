@@ -248,7 +248,7 @@ export class UploadService {
       uid?: unknown;
       externalId?: unknown;
       client?: { name?: unknown } | null;
-      showMCs?: Array<{ mc?: { name?: unknown; aliasName?: unknown } | null }> | null;
+      showCreators?: Array<{ creator?: { name?: unknown; aliasName?: unknown } | null }> | null;
     };
 
     const uid = typeof rawShow.uid === 'string' ? rawShow.uid : null;
@@ -256,14 +256,14 @@ export class UploadService {
       return null;
     }
 
-    const mcNames = Array.isArray(rawShow.showMCs)
-      ? rawShow.showMCs
-          .map((showMc) => {
-            const alias = showMc?.mc && typeof showMc.mc.aliasName === 'string'
-              ? showMc.mc.aliasName
+    const mcNames = Array.isArray(rawShow.showCreators)
+      ? rawShow.showCreators
+          .map((showCreator) => {
+            const alias = showCreator?.creator && typeof showCreator.creator.aliasName === 'string'
+              ? showCreator.creator.aliasName
               : null;
-            const name = showMc?.mc && typeof showMc.mc.name === 'string'
-              ? showMc.mc.name
+            const name = showCreator?.creator && typeof showCreator.creator.name === 'string'
+              ? showCreator.creator.name
               : null;
             return alias ?? name;
           })

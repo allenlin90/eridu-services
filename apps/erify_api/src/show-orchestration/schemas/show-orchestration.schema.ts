@@ -7,7 +7,7 @@ import {
   showDto,
   showWithRelationsSchema,
 } from '@/models/show/schemas/show.schema';
-import { showMcWithRelationsSchema } from '@/models/show-mc/schemas/show-mc.schema';
+import { showCreatorWithRelationsSchema } from '@/models/show-creator/schemas/show-creator.schema';
 import { createShowPlatformSchema, showPlatformWithRelationsSchema } from '@/models/show-platform/schemas/show-platform.schema';
 
 // Extended schema for show orchestration with creator and platform assignments
@@ -117,7 +117,7 @@ const transformUpdateShowWithAssignmentsSchema
 
 // Extended schema for show with all relations including creators and platforms
 export const showWithAllRelationsSchema = showWithRelationsSchema.extend({
-  showMCs: z.array(showMcWithRelationsSchema.omit({ show: true })).optional(),
+  showCreators: z.array(showCreatorWithRelationsSchema.omit({ show: true })).optional(),
   showPlatforms: z
     .array(showPlatformWithRelationsSchema.omit({ show: true }))
     .optional(),
@@ -128,13 +128,13 @@ export const showWithAssignmentsDto = showWithAllRelationsSchema.transform(
   (obj) => {
     // Get the base show data from the existing showDto transform
     const baseShowData = showDto.parse(obj);
-    const creatorAssignments = obj.showMCs?.map((showMc) => ({
-      id: showMc.uid,
-      creator_id: showMc.mc?.uid,
-      creator_name: showMc.mc?.name,
-      creator_alias_name: showMc.mc?.aliasName,
-      note: showMc.note,
-      metadata: showMc.metadata,
+    const creatorAssignments = obj.showCreators?.map((showCreator) => ({
+      id: showCreator.uid,
+      creator_id: showCreator.creator?.uid,
+      creator_name: showCreator.creator?.name,
+      creator_alias_name: showCreator.creator?.aliasName,
+      note: showCreator.note,
+      metadata: showCreator.metadata,
     }));
 
     return {

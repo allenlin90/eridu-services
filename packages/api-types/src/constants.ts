@@ -9,10 +9,7 @@ export const UID_PREFIXES = {
   CLIENT: 'client',
   STUDIO: 'std',
   STUDIO_ROOM: 'srm',
-  // Canonical naming moving forward.
   CREATOR: 'creator',
-  // Backward-compatible alias.
-  MC: 'mc',
   PLATFORM: 'plt',
   SHOW_TYPE: 'sht',
   SHOW_STATUS: 'shst',

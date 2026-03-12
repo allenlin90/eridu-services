@@ -19,7 +19,7 @@ let mockTransactionClient: {
   showType: { findMany: jest.Mock };
   showStatus: { findMany: jest.Mock };
   showStandard: { findMany: jest.Mock };
-  mC: { findMany: jest.Mock };
+  creator: { findMany: jest.Mock };
   show: { findMany: jest.Mock };
   platform: { findMany: jest.Mock };
 };
@@ -31,7 +31,7 @@ const mockPrismaClient = {
   showType: { findMany: jest.fn() },
   showStatus: { findMany: jest.fn() },
   showStandard: { findMany: jest.fn() },
-  mC: { findMany: jest.fn() },
+  creator: { findMany: jest.fn() },
   show: { findMany: jest.fn() },
   platform: { findMany: jest.fn() },
 };
@@ -48,7 +48,7 @@ const mockPrismaServiceValue = {
   showStatus: mockPrismaClient.showStatus,
   showStandard: mockPrismaClient.showStandard,
   show: mockPrismaClient.show,
-  mC: mockPrismaClient.mC,
+  creator: mockPrismaClient.creator,
   platform: mockPrismaClient.platform,
 };
 
@@ -89,8 +89,8 @@ describe('validationService', () => {
         showStandardId: 'shsd_test123',
         creators: [
           {
-            creatorId: 'mc_test123',
-            note: 'MC Note 1',
+            creatorId: 'creator_test123',
+            note: 'Creator Note 1',
           },
         ],
         platforms: [
@@ -172,7 +172,7 @@ describe('validationService', () => {
       showType: { findMany: jest.fn() },
       showStatus: { findMany: jest.fn() },
       showStandard: { findMany: jest.fn() },
-      mC: { findMany: jest.fn() },
+      creator: { findMany: jest.fn() },
       show: { findMany: jest.fn() },
       platform: { findMany: jest.fn() },
     };
@@ -195,7 +195,7 @@ describe('validationService', () => {
       const defaultShowTypeMock = [{ id: BigInt(1), uid: 'sht_test123' }];
       const defaultShowStatusMock = [{ id: BigInt(1), uid: 'shst_test123' }];
       const defaultShowStandardMock = [{ id: BigInt(1), uid: 'shsd_test123' }];
-      const defaultMcMock = [{ id: BigInt(1), uid: 'mc_test123' }];
+      const defaultMcMock = [{ id: BigInt(1), uid: 'creator_test123' }];
       const defaultPlatformMock = [{ id: BigInt(1), uid: 'platform_test123' }];
 
       // Setup both transaction and direct prisma client mocks
@@ -215,7 +215,7 @@ describe('validationService', () => {
         defaultShowStandardMock,
       );
       mockTransactionClient.show.findMany.mockResolvedValue([]);
-      mockTransactionClient.mC.findMany.mockResolvedValue(defaultMcMock);
+      mockTransactionClient.creator.findMany.mockResolvedValue(defaultMcMock);
       mockTransactionClient.platform.findMany.mockResolvedValue(
         defaultPlatformMock,
       );
@@ -232,7 +232,7 @@ describe('validationService', () => {
         defaultShowStandardMock,
       );
       mockPrismaClient.show.findMany.mockResolvedValue([]);
-      mockPrismaClient.mC.findMany.mockResolvedValue(defaultMcMock);
+      mockPrismaClient.creator.findMany.mockResolvedValue(defaultMcMock);
       mockPrismaClient.platform.findMany.mockResolvedValue(defaultPlatformMock);
     });
 
@@ -257,7 +257,7 @@ describe('validationService', () => {
 
       // Simulate partial objects that might cause undefined values in collection
       // specifically for creators array items where creatorId might be missing/undefined if malformed
-      show.creators = [{ creatorId: undefined }, { creatorId: 'mc_valid' }] as any;
+      show.creators = [{ creatorId: undefined }, { creatorId: 'creator_valid' }] as any;
 
       // Setup successful mocks for everything else
       const validClient = [{ id: 1n, uid: show.clientId }];
@@ -268,8 +268,8 @@ describe('validationService', () => {
       mockPrismaClient.showStandard.findMany.mockResolvedValue([{ id: 1n, uid: show.showStandardId }] as any);
       mockPrismaClient.platform.findMany.mockResolvedValue([]);
 
-      // Should query only for 'mc_valid', filtering out undefined
-      mockPrismaClient.mC.findMany.mockResolvedValue([{ id: 2n, uid: 'mc_valid' }] as any);
+      // Should query only for 'creator_valid', filtering out undefined
+      mockPrismaClient.creator.findMany.mockResolvedValue([{ id: 2n, uid: 'creator_valid' }] as any);
 
       // Clear platforms to avoid unrelated errors
       show.platforms = [];
@@ -482,7 +482,7 @@ describe('validationService', () => {
     });
 
     it('should validate creator reference existence', async () => {
-      mockPrismaClient.mC.findMany.mockResolvedValue([]);
+      mockPrismaClient.creator.findMany.mockResolvedValue([]);
 
       const result = await service.validateSchedule(mockScheduleData);
 
@@ -490,7 +490,7 @@ describe('validationService', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'reference_not_found',
-          message: 'Creator with ID mc_test123 not found',
+          message: 'Creator with ID creator_test123 not found',
           showIndex: 0,
           showTempId: 'temp_1',
         }),
@@ -498,7 +498,7 @@ describe('validationService', () => {
     });
 
     it('should validate creator reference existence from creators payload', async () => {
-      mockPrismaClient.mC.findMany.mockResolvedValue([]);
+      mockPrismaClient.creator.findMany.mockResolvedValue([]);
 
       const scheduleWithCreatorPayload = {
         ...mockScheduleData,
@@ -507,7 +507,7 @@ describe('validationService', () => {
           shows: [
             {
               ...mockValidPlanDocument.shows[0],
-              creators: [{ creatorId: 'mc_test123', note: 'Creator Note 1' }],
+              creators: [{ creatorId: 'creator_test123', note: 'Creator Note 1' }],
             },
           ],
         },
@@ -519,7 +519,7 @@ describe('validationService', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'reference_not_found',
-          message: 'Creator with ID mc_test123 not found',
+          message: 'Creator with ID creator_test123 not found',
           showIndex: 0,
           showTempId: 'temp_1',
         }),
@@ -648,13 +648,13 @@ describe('validationService', () => {
           shows: [
             {
               ...mockValidPlanDocument.shows[0],
-              creators: [{ creatorId: 'mc_test123', note: 'MC 1' }],
+              creators: [{ creatorId: 'creator_test123', note: 'Creator 1' }],
               startTime: '2024-01-01T10:00:00Z',
               endTime: '2024-01-01T12:00:00Z',
             },
             {
               ...mockValidPlanDocument.shows[1],
-              creators: [{ creatorId: 'mc_test123', note: 'MC 2' }], // Same MC
+              creators: [{ creatorId: 'creator_test123', note: 'Creator 2' }], // Same Creator
               startTime: '2024-01-01T11:00:00Z', // Overlapping time
               endTime: '2024-01-01T13:00:00Z',
             },
@@ -662,9 +662,9 @@ describe('validationService', () => {
         },
       };
 
-      // Mock MC lookup
-      mockTransactionClient.mC.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'mc_test123' },
+      // Mock Creator lookup
+      mockTransactionClient.creator.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'creator_test123' },
       ]);
 
       const result = await service.validateSchedule(conflictingSchedule);
@@ -674,7 +674,7 @@ describe('validationService', () => {
         expect.objectContaining({
           type: 'internal_conflict',
           message:
-            'Creator mc_test123 is assigned to overlapping shows "Test Show 1" and "Test Show 2"',
+            'Creator creator_test123 is assigned to overlapping shows "Test Show 1" and "Test Show 2"',
           showIndex: 0,
           showTempId: 'temp_1',
         }),
@@ -765,7 +765,7 @@ describe('validationService', () => {
       expect(mockPrismaClient.showType.findMany).toHaveBeenCalled();
       expect(mockPrismaClient.showStatus.findMany).toHaveBeenCalled();
       expect(mockPrismaClient.showStandard.findMany).toHaveBeenCalled();
-      expect(mockPrismaClient.mC.findMany).toHaveBeenCalled();
+      expect(mockPrismaClient.creator.findMany).toHaveBeenCalled();
       expect(mockPrismaClient.platform.findMany).toHaveBeenCalled();
     });
 
@@ -789,9 +789,9 @@ describe('validationService', () => {
         select: { id: true, uid: true },
       });
 
-      expect(mockPrismaClient.mC.findMany).toHaveBeenCalledWith({
+      expect(mockPrismaClient.creator.findMany).toHaveBeenCalledWith({
         where: {
-          uid: { in: ['mc_test123'] },
+          uid: { in: ['creator_test123'] },
           deletedAt: null,
         },
         select: { id: true, uid: true },
@@ -960,7 +960,7 @@ describe('validationService', () => {
       const defaultShowTypeMock = [{ id: BigInt(1), uid: 'sht_test123' }];
       const defaultShowStatusMock = [{ id: BigInt(1), uid: 'shst_test123' }];
       const defaultShowStandardMock = [{ id: BigInt(1), uid: 'shsd_test123' }];
-      const defaultMcMock = [{ id: BigInt(1), uid: 'mc_test123' }];
+      const defaultMcMock = [{ id: BigInt(1), uid: 'creator_test123' }];
       const defaultPlatformMock = [{ id: BigInt(1), uid: 'platform_test123' }];
 
       // Setup both transaction and direct prisma client mocks
@@ -980,7 +980,7 @@ describe('validationService', () => {
         defaultShowStandardMock,
       );
       mockTransactionClient.show.findMany.mockResolvedValue([]);
-      mockTransactionClient.mC.findMany.mockResolvedValue(defaultMcMock);
+      mockTransactionClient.creator.findMany.mockResolvedValue(defaultMcMock);
       mockTransactionClient.platform.findMany.mockResolvedValue(
         defaultPlatformMock,
       );
@@ -997,7 +997,7 @@ describe('validationService', () => {
         defaultShowStandardMock,
       );
       mockPrismaClient.show.findMany.mockResolvedValue([]);
-      mockPrismaClient.mC.findMany.mockResolvedValue(defaultMcMock);
+      mockPrismaClient.creator.findMany.mockResolvedValue(defaultMcMock);
       mockPrismaClient.platform.findMany.mockResolvedValue(defaultPlatformMock);
     });
 
@@ -1063,17 +1063,17 @@ describe('validationService', () => {
             {
               ...mockValidPlanDocument.shows[0],
               creators: [
-                { creatorId: 'mc_test123', note: 'MC 1' },
-                { creatorId: 'mc_test456', note: 'MC 2' },
+                { creatorId: 'creator_test123', note: 'Creator 1' },
+                { creatorId: 'creator_test456', note: 'Creator 2' },
               ],
             },
           ],
         },
       };
 
-      mockPrismaClient.mC.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'mc_test123' },
-        { id: BigInt(2), uid: 'mc_test456' },
+      mockPrismaClient.creator.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'creator_test123' },
+        { id: BigInt(2), uid: 'creator_test456' },
       ]);
 
       const result = await service.validateSchedule(multiMcSchedule);
@@ -1102,7 +1102,7 @@ describe('validationService', () => {
               showTypeId: 'sht_test123',
               showStatusId: 'shst_test123',
               showStandardId: 'shsd_test123',
-              creators: [{ creatorId: 'mc_test123', note: 'MC 1' }],
+              creators: [{ creatorId: 'creator_test123', note: 'Creator 1' }],
               platforms: [],
             },
             {
@@ -1116,15 +1116,15 @@ describe('validationService', () => {
               showTypeId: 'sht_test123',
               showStatusId: 'shst_test123',
               showStandardId: 'shsd_test123',
-              creators: [{ creatorId: 'mc_test123', note: 'MC 1' }], // Same MC
+              creators: [{ creatorId: 'creator_test123', note: 'Creator 1' }], // Same Creator
               platforms: [],
             },
           ],
         },
       };
 
-      mockPrismaClient.mC.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'mc_test123' },
+      mockPrismaClient.creator.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'creator_test123' },
       ]);
 
       const result = await service.validateSchedule(multiMcConflictSchedule);
@@ -1134,7 +1134,7 @@ describe('validationService', () => {
         expect.objectContaining({
           type: 'internal_conflict',
           message:
-            'Creator mc_test123 is assigned to overlapping shows "Show 1" and "Show 2"',
+            'Creator creator_test123 is assigned to overlapping shows "Show 1" and "Show 2"',
         }),
       );
     });
@@ -1149,13 +1149,13 @@ describe('validationService', () => {
           shows: [
             {
               ...mockValidPlanDocument.shows[0],
-              creators: [{ creatorId: 'mc_test123', note: 'Creator 1' }],
+              creators: [{ creatorId: 'creator_test123', note: 'Creator 1' }],
               startTime: '2024-01-01T10:00:00Z',
               endTime: '2024-01-01T12:00:00Z',
             },
             {
               ...mockValidPlanDocument.shows[1],
-              creators: [{ creatorId: 'mc_test123', note: 'Creator 2' }],
+              creators: [{ creatorId: 'creator_test123', note: 'Creator 2' }],
               startTime: '2024-01-01T11:00:00Z',
               endTime: '2024-01-01T13:00:00Z',
             },
@@ -1163,8 +1163,8 @@ describe('validationService', () => {
         },
       };
 
-      mockPrismaClient.mC.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'mc_test123' },
+      mockPrismaClient.creator.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'creator_test123' },
       ]);
 
       const result = await service.validateSchedule(creatorConflictSchedule);
@@ -1174,7 +1174,7 @@ describe('validationService', () => {
         expect.objectContaining({
           type: 'internal_conflict',
           message:
-            'Creator mc_test123 is assigned to overlapping shows "Test Show 1" and "Test Show 2"',
+            'Creator creator_test123 is assigned to overlapping shows "Test Show 1" and "Test Show 2"',
         }),
       );
     });

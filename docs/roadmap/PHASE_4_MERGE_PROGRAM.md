@@ -1,7 +1,7 @@
 # Phase 4 to Master: Scope-First Merge Program
 
-> **Status**: Active execution plan
-> **Last updated**: 2026-03-11
+> **Status**: S4 complete, final pre-merge cleanup in progress
+> **Last updated**: 2026-03-12
 
 ## Why this exists
 
@@ -30,18 +30,24 @@ This file is the cross-session source of truth for slicing that work into review
 - **Dependency policy**:
   - Economics scope starts only after mapping/assignment foundation is landed.
 
+## Naming Alignment Rule
+
+- Canonical domain entity is `Creator`; `MC` is a creator type/classification.
+- API/UI/shared contracts must remain creator-first.
+- Storage compatibility names (`mc_id`, legacy index/constraint tokens) may remain via `@map/@@map` until dedicated DB cleanup scope.
+
 ## Branch Topology
 
 - **Reference only**: `feat/phase-4-p-and-l`
 - **Active scope branch policy (one-by-one)**:
-  - Keep only one active scope branch locally at a time (current: `cutover/s3-studios-frontend-creator-cutover`).
+  - Keep only one active scope branch locally at a time (current: `refactor/app-layer-creator-schema-migration`).
   - Create the next scope branch only when previous scope is merged into `master`.
   - Delete completed/inactive scope branches to reduce branch noise.
 - **Planned cutover scope branch names (create on demand)**:
   - `cutover/s1-creator-cutover-data-contracts` (completed)
   - `cutover/s2-backend-creator-domain-cutover` (completed)
-  - `cutover/s3-studios-frontend-creator-cutover`
-  - `cutover/s4-membership-mapping-stabilization`
+  - `cutover/s3-studios-frontend-creator-cutover` (completed)
+  - `cutover/s4-membership-mapping-stabilization` (completed)
 - **Planned post-cutover branch names (create on demand after S4->master)**:
   - `post-cutover/s5-mapping-assignment-foundation`
   - `post-cutover/s6-economics-preview-and-ops`
@@ -142,17 +148,32 @@ This file is the cross-session source of truth for slicing that work into review
 
 ## Execution Tracker
 
-- **Current active scope**: `S4` cutover stabilization + parity hardening (ready to merge)
+- **Current active scope**: final Phase 4 creator app-layer cleanup (`refactor/app-layer-creator-schema-migration`)
 - **Master merge gate**: per-scope merge allowed once smoke-green
-- **Post-cutover start gate**: begin `S5` only after `S4` is merged to `master`
+- **Post-cutover start gate**: satisfied (`S4` merged to `master`)
 - **Current status by scope**:
   - `S1`: merged to `master` and deployed (2026-03-11)
   - `S2`: merged to `master` and deployed (2026-03-11)
   - `S3`: merged to `master` and deployed (2026-03-11)
-  - `S4`: ready to merge to `master` (verification complete on 2026-03-11)
-  - `S5`: planned (post-cutover)
+  - `S4`: merged to `master` and deployed (2026-03-11)
+  - `S5`: pending (post-cutover feature scope; not started on this branch)
   - `S6`: planned (post-cutover)
   - `S7`: planned (post-cutover)
+- **Final cutover cleanup progress (2026-03-12)**:
+  - Prisma app-layer model symbols aligned to creator-first naming:
+    - `MC` -> `Creator`
+    - `ShowMC` -> `ShowCreator`
+    - `StudioMc` -> `StudioCreator`
+  - Backend module/file paths aligned to creator-first naming:
+    - `src/models/mc/*` -> `src/models/creator/*`
+    - `src/models/show-mc/*` -> `src/models/show-creator/*`
+  - Internal service/controller method names updated to creator-first terminology (`getShowsForCreatorUser`, `createShowCreator`, etc.).
+  - DB schema compatibility preserved via `@map/@@map` (no rewrite of applied migrations).
+  - Verification passed: `pnpm --force --filter erify_api lint`, `typecheck`, `test`, `build`.
+  - Verification passed: `pnpm --force --filter @eridu/api-types lint`, `typecheck`, `test`, `build`.
+  - Verification passed: `pnpm --force --filter erify_studios lint`, `typecheck`, `test`, `build`.
+  - Verification passed: `pnpm --force --filter erify_creators lint`, `typecheck`, `test`, `build`.
+  - Merge readiness: green (pending final merge approval).
 - **S4 kickoff slices (stabilization-only)**
   - `S4-A` Compatibility contraction: completed.
   - `S4-B` Backend contract tightening: completed.
@@ -240,7 +261,7 @@ This file is the cross-session source of truth for slicing that work into review
   - `pnpm --filter erify_api test -- schedule-planning.schema.spec.ts validation.service.spec.ts publishing.service.spec.ts schedule-planning.service.spec.ts schedule.service.spec.ts`
   - `pnpm --filter erify_api test -- schedule-planning.schema.spec.ts publishing.service.spec.ts schedule-planning.service.spec.ts admin-schedule.controller.spec.ts`
   - `pnpm --filter erify_api test -- user.schema.spec.ts user.service.spec.ts admin-user.controller.spec.ts backdoor-user.controller.spec.ts`
-  - `pnpm --filter erify_api test -- admin-creator.controller.spec.ts mc.service.spec.ts`
+  - `pnpm --filter erify_api test -- admin-creator.controller.spec.ts creator.service.spec.ts`
   - `pnpm --filter @eridu/api-types lint`
   - `pnpm --filter @eridu/api-types typecheck`
   - `pnpm --filter @eridu/api-types build`

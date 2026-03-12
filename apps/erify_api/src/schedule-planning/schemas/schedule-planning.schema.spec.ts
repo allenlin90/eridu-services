@@ -27,12 +27,12 @@ describe('schedulePlanningSchema', () => {
             showTypeId: 'sht_123',
             showStatusId: 'shst_123',
             showStandardId: 'shsd_123',
-            creators: [{ creatorId: 'mc_1', note: 'Lead' }],
+            creators: [{ creatorId: 'creator_1', note: 'Lead' }],
           },
         ],
       });
 
-      expect(parsed.shows[0].creators).toEqual([{ creatorId: 'mc_1', note: 'Lead' }]);
+      expect(parsed.shows[0].creators).toEqual([{ creatorId: 'creator_1', note: 'Lead' }]);
       expect(parsed.shows[0]).not.toHaveProperty('mcs');
     });
 
@@ -58,7 +58,7 @@ describe('schedulePlanningSchema', () => {
             showTypeId: 'sht_123',
             showStatusId: 'shst_123',
             showStandardId: 'shsd_123',
-            mcs: [{ mcId: 'mc_1', note: 'Lead' }],
+            mcs: [{ creatorId: 'creator_1', note: 'Lead' }],
           },
         ],
       });

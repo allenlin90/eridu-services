@@ -1,30 +1,30 @@
 import { Injectable } from '@nestjs/common';
 
 import { HttpError } from '@/lib/errors/http-error.util';
-import { McService } from '@/models/mc/mc.service';
+import { CreatorService } from '@/models/creator/creator.service';
 import { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 
 @Injectable()
 export class ShowsService {
   constructor(
-    private readonly mcService: McService,
+    private readonly creatorService: CreatorService,
     private readonly showService: ShowService,
   ) {}
 
   /**
-   * Gets shows assigned to the MC linked to the given user identifier.
-   * @param userIdentifier - The user identifier (uid or extId string) from JWT to find the associated MC
+   * Gets shows assigned to the Creator linked to the given user identifier.
+   * @param userIdentifier - The user identifier (uid or extId string) from JWT to find the associated Creator
    * @param query - Query parameters including pagination, filters, and sorting
    * @returns Object containing shows array and total count
    */
-  async getShowsForMcUser(
+  async getShowsForCreatorUser(
     userIdentifier: string,
     query: ListShowsQueryDto,
   ) {
-    const mc = await this.findMcByUserIdentifier(userIdentifier);
+    const creator = await this.findCreatorByUserIdentifier(userIdentifier);
 
-    const where = this.buildShowWhereClause(mc.id, query);
+    const where = this.buildShowWhereClause(creator.id, query);
     const orderBy = this.buildOrderByClause(query);
     const include = this.buildShowInclude();
 
@@ -46,21 +46,21 @@ export class ShowsService {
   }
 
   /**
-   * Gets a specific show assigned to the MC linked to the given user identifier.
-   * @param userIdentifier - The user identifier (uid or extId string) from JWT to find the associated MC
+   * Gets a specific show assigned to the Creator linked to the given user identifier.
+   * @param userIdentifier - The user identifier (uid or extId string) from JWT to find the associated Creator
    * @param showId - The show UID to retrieve
    * @returns Show details with related entities
    */
-  async getShowForMcUser(userIdentifier: string, showId: string) {
-    const mc = await this.findMcByUserIdentifier(userIdentifier);
+  async getShowForCreatorUser(userIdentifier: string, showId: string) {
+    const creator = await this.findCreatorByUserIdentifier(userIdentifier);
 
-    // Build where clause with MC filter and specific show ID
+    // Build where clause with Creator filter and specific show ID
     const where = {
       uid: showId,
       deletedAt: null,
-      showMCs: {
+      showCreators: {
         some: {
-          mcId: mc.id,
+          creatorId: creator.id,
           deletedAt: null,
         },
       },
@@ -68,7 +68,7 @@ export class ShowsService {
 
     const include = this.buildShowInclude();
 
-    // Query show directly with MC filter to ensure it's assigned to this MC
+    // Query show directly with Creator filter to ensure it's assigned to this Creator
     const shows = await this.showService.getShows(
       {
         where,
@@ -85,38 +85,38 @@ export class ShowsService {
   }
 
   /**
-   * Finds MC by user identifier (uid or extId) and throws error if not found.
+   * Finds Creator by user identifier (uid or extId) and throws error if not found.
    * @param userIdentifier - The user identifier (uid or extId string) from JWT
-   * @returns MC entity
-   * @throws HttpError.notFound if MC is not found
+   * @returns Creator entity
+   * @throws HttpError.notFound if Creator is not found
    */
-  private async findMcByUserIdentifier(userIdentifier: string) {
+  private async findCreatorByUserIdentifier(userIdentifier: string) {
     // The JWT guard sets request.user.id as a string (uid or extId), not the bigint id
-    const mc = await this.mcService.getMcByUserIdentifier(userIdentifier);
+    const creator = await this.creatorService.getCreatorByUserIdentifier(userIdentifier);
 
-    if (!mc) {
-      throw HttpError.notFound('MC', `for user ${userIdentifier}`);
+    if (!creator) {
+      throw HttpError.notFound('Creator', `for user ${userIdentifier}`);
     }
 
-    return mc;
+    return creator;
   }
 
   /**
-   * Builds the where clause for querying shows assigned to a specific MC.
-   * @param mcId - The MC's bigint ID
+   * Builds the where clause for querying shows assigned to a specific Creator.
+   * @param creatorId - The Creator's bigint ID
    * @param query - Query parameters with filters
    */
   private buildShowWhereClause(
-    mcId: bigint,
+    creatorId: bigint,
     query: Pick<
       ListShowsQueryDto,
       'name' | 'start_date_from' | 'start_date_to' | 'end_date_from' | 'end_date_to' | 'include_deleted'
     >,
   ) {
     const where: Parameters<ShowService['getShows']>[0]['where'] = {
-      showMCs: {
+      showCreators: {
         some: {
-          mcId,
+          creatorId,
           deletedAt: null,
         },
       },

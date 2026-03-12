@@ -29,7 +29,7 @@ export const userSchema = z.object({
   updatedAt: z.date(),
 });
 
-// Schema for User with creator relation (stored on Prisma as `mc`)
+// Schema for User with creator relation
 export const userWithCreatorSchema = z.object({
   id: z.bigint(),
   uid: z.string().startsWith(UserService.UID_PREFIX),
@@ -40,9 +40,9 @@ export const userWithCreatorSchema = z.object({
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
-  mc: z.object({
+  creator: z.object({
     id: z.bigint(),
-    uid: z.string().refine(isCreatorUid, 'Invalid creator/mc UID'),
+    uid: z.string().refine(isCreatorUid, 'Invalid creator UID'),
     userId: z.bigint().nullable(),
     name: z.string(),
     aliasName: z.string(),
@@ -54,10 +54,10 @@ export const userWithCreatorSchema = z.object({
   }).nullable(),
 });
 
-// Schema for nested creator creation (simplified from McModule)
+// Schema for nested creator creation (simplified from CreatorModule)
 const createNestedCreatorSchema = z
   .object({
-    name: z.string().min(1, 'MC name is required'),
+    name: z.string().min(1, 'Creator name is required'),
     alias_name: z.string().optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
@@ -162,15 +162,15 @@ export const adminUserDto = userSchema
 // User DTO with creator data when available
 export const userWithCreatorDto = userWithCreatorSchema
   .transform((obj) => {
-    const creator = obj.mc
+    const creator = obj.creator
       ? {
-          id: obj.mc.uid,
-          name: obj.mc.name,
-          alias_name: obj.mc.aliasName,
-          is_banned: obj.mc.isBanned,
-          metadata: obj.mc.metadata,
-          created_at: obj.mc.createdAt.toISOString(),
-          updated_at: obj.mc.updatedAt.toISOString(),
+          id: obj.creator.uid,
+          name: obj.creator.name,
+          alias_name: obj.creator.aliasName,
+          is_banned: obj.creator.isBanned,
+          metadata: obj.creator.metadata,
+          created_at: obj.creator.createdAt.toISOString(),
+          updated_at: obj.creator.updatedAt.toISOString(),
         }
       : null;
 

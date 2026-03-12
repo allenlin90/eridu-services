@@ -527,19 +527,19 @@ export class ValidationService {
   private async checkMcAvailability(
     show: ShowPlanItem,
     mcUid: string,
-    mcId: bigint,
+    creatorId: bigint,
     scheduleId: bigint,
     prismaClient: Prisma.TransactionClient | PrismaService,
   ): Promise<string[]> {
     const startTime = new Date(show.startTime);
     const endTime = new Date(show.endTime);
 
-    // Find all shows where this MC is assigned and time overlaps
+    // Find all shows where this Creator is assigned and time overlaps
     const conflictingShows = await prismaClient.show.findMany({
       where: {
-        showMCs: {
+        showCreators: {
           some: {
-            mcId,
+            creatorId,
             deletedAt: null,
           },
         },
@@ -654,7 +654,7 @@ export class ValidationService {
         where: { uid: { in: Array.from(showStandardUids) }, deletedAt: null },
         select: { id: true, uid: true },
       }),
-      prismaClient.mC.findMany({
+      prismaClient.creator.findMany({
         where: { uid: { in: Array.from(creatorUids) }, deletedAt: null },
         select: { id: true, uid: true },
       }),

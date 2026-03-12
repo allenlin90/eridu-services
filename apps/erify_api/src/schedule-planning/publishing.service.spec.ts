@@ -14,7 +14,7 @@ import { ValidationService } from './validation.service';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
 import { ShowService } from '@/models/show/show.service';
-import { ShowMcService } from '@/models/show-mc/show-mc.service';
+import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UtilityService } from '@/utility/utility.service';
@@ -23,7 +23,7 @@ import { UtilityService } from '@/utility/utility.service';
 let mockTransactionClient: {
   $executeRaw: jest.Mock;
   show: { createMany: jest.Mock; findMany: jest.Mock; update: jest.Mock };
-  showMC: { findMany: jest.Mock; create: jest.Mock; update: jest.Mock; updateMany: jest.Mock };
+  showCreator: { findMany: jest.Mock; create: jest.Mock; update: jest.Mock; updateMany: jest.Mock };
   showPlatform: { findMany: jest.Mock; create: jest.Mock; update: jest.Mock; updateMany: jest.Mock };
   taskTarget: { findFirst: jest.Mock; findMany: jest.Mock; updateMany: jest.Mock };
   task: { updateMany: jest.Mock };
@@ -34,7 +34,7 @@ let mockTransactionClient: {
   showType: { findMany: jest.Mock };
   showStatus: { findMany: jest.Mock; upsert: jest.Mock };
   showStandard: { findMany: jest.Mock };
-  mC: { findMany: jest.Mock };
+  creator: { findMany: jest.Mock };
   platform: { findMany: jest.Mock };
 };
 
@@ -57,14 +57,14 @@ describe('publishingService', () => {
   let scheduleService: jest.Mocked<ScheduleService>;
   let scheduleSnapshotService: jest.Mocked<ScheduleSnapshotService>;
   let showService: jest.Mocked<ShowService>;
-  let showMcService: jest.Mocked<ShowMcService>;
+  let showCreatorService: jest.Mocked<ShowCreatorService>;
   let showPlatformService: jest.Mocked<ShowPlatformService>;
   let validationService: jest.Mocked<ValidationService>;
   let getScheduleByIdMock: jest.Mock;
   let validateScheduleMock: jest.Mock;
   let createScheduleSnapshotMock: jest.Mock;
   let generateShowUidMock: jest.Mock;
-  let generateShowMcUidMock: jest.Mock;
+  let generateShowCreatorUidMock: jest.Mock;
   let generateShowPlatformUidMock: jest.Mock;
   // mockTransactionClient is declared at file scope (above) — reassigned per test in beforeEach
 
@@ -93,8 +93,8 @@ describe('publishingService', () => {
         showStandardId: 'shsd_test123',
         creators: [
           {
-            creatorId: 'mc_test123',
-            note: 'MC Note 1',
+            creatorId: 'creator_test123',
+            note: 'Creator Note 1',
           },
         ],
         platforms: [
@@ -179,7 +179,7 @@ describe('publishingService', () => {
         findMany: jest.fn(),
         update: jest.fn(),
       },
-      showMC: {
+      showCreator: {
         findMany: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
@@ -221,7 +221,7 @@ describe('publishingService', () => {
       showStandard: {
         findMany: jest.fn(),
       },
-      mC: {
+      creator: {
         findMany: jest.fn(),
       },
       platform: {
@@ -265,9 +265,9 @@ describe('publishingService', () => {
           },
         },
         {
-          provide: ShowMcService,
+          provide: ShowCreatorService,
           useValue: {
-            generateShowMcUid: jest.fn(),
+            generateShowCreatorUid: jest.fn(),
           },
         },
         {
@@ -295,7 +295,7 @@ describe('publishingService', () => {
     scheduleService = module.get(ScheduleService);
     scheduleSnapshotService = module.get(ScheduleSnapshotService);
     showService = module.get(ShowService);
-    showMcService = module.get(ShowMcService);
+    showCreatorService = module.get(ShowCreatorService);
     showPlatformService = module.get(ShowPlatformService);
     validationService = module.get(ValidationService);
 
@@ -304,7 +304,7 @@ describe('publishingService', () => {
     validateScheduleMock = validationService.validateSchedule as jest.Mock;
     createScheduleSnapshotMock = scheduleSnapshotService.createScheduleSnapshot as jest.Mock;
     generateShowUidMock = showService.generateShowUid as jest.Mock;
-    generateShowMcUidMock = showMcService.generateShowMcUid as jest.Mock;
+    generateShowCreatorUidMock = showCreatorService.generateShowCreatorUid as jest.Mock;
     generateShowPlatformUidMock = showPlatformService.generateShowPlatformUid as jest.Mock;
   });
 
@@ -336,16 +336,16 @@ describe('publishingService', () => {
           { id: BigInt(1), clientId: BigInt(1), externalId: 'show_temp_1' },
           { id: BigInt(2), clientId: BigInt(1), externalId: 'show_temp_2' },
         ]);
-      mockTransactionClient.showMC.findMany.mockResolvedValue([]);
+      mockTransactionClient.showCreator.findMany.mockResolvedValue([]);
       mockTransactionClient.showPlatform.findMany.mockResolvedValue([]);
       mockTransactionClient.taskTarget.findFirst.mockResolvedValue(null);
       mockTransactionClient.taskTarget.findMany.mockResolvedValue([]);
       mockTransactionClient.taskTarget.updateMany.mockResolvedValue({ count: 0 });
       mockTransactionClient.task.updateMany.mockResolvedValue({ count: 0 });
       mockTransactionClient.show.update.mockResolvedValue({});
-      mockTransactionClient.showMC.create.mockResolvedValue({});
-      mockTransactionClient.showMC.update.mockResolvedValue({});
-      mockTransactionClient.showMC.updateMany.mockResolvedValue({ count: 0 });
+      mockTransactionClient.showCreator.create.mockResolvedValue({});
+      mockTransactionClient.showCreator.update.mockResolvedValue({});
+      mockTransactionClient.showCreator.updateMany.mockResolvedValue({ count: 0 });
       mockTransactionClient.showPlatform.create.mockResolvedValue({});
       mockTransactionClient.showPlatform.update.mockResolvedValue({});
       mockTransactionClient.showPlatform.updateMany.mockResolvedValue({ count: 0 });
@@ -379,8 +379,8 @@ describe('publishingService', () => {
       mockTransactionClient.showStandard.findMany.mockResolvedValue([
         { id: BigInt(1), uid: 'shsd_test123' },
       ]);
-      mockTransactionClient.mC.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'mc_test123' },
+      mockTransactionClient.creator.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'creator_test123' },
       ]);
       mockTransactionClient.platform.findMany.mockResolvedValue([
         { id: BigInt(1), uid: 'platform_test123' },
@@ -390,7 +390,7 @@ describe('publishingService', () => {
       generateShowUidMock
         .mockReturnValueOnce('show_test123')
         .mockReturnValueOnce('show_test456');
-      generateShowMcUidMock.mockReturnValue('showmc_test123');
+      generateShowCreatorUidMock.mockReturnValue('showmc_test123');
       generateShowPlatformUidMock.mockReturnValue('showplatform_test123');
     });
 
@@ -452,14 +452,14 @@ describe('publishingService', () => {
       expect(mockTransactionClient.show.createMany).toHaveBeenCalledTimes(1);
       expect(mockTransactionClient.show.findMany).toHaveBeenCalledTimes(2);
 
-      // Verify ShowMC creation was called
-      expect(mockTransactionClient.showMC.create).toHaveBeenCalledTimes(1);
-      const showMCCall = mockTransactionClient.showMC.create.mock
+      // Verify ShowCreator creation was called
+      expect(mockTransactionClient.showCreator.create).toHaveBeenCalledTimes(1);
+      const showMCCall = mockTransactionClient.showCreator.create.mock
         .calls[0] as unknown as [
-        { data: { mcId: bigint; note: string } },
+        { data: { creatorId: bigint; note: string } },
       ];
-      expect(showMCCall[0].data.mcId).toBe(BigInt(1));
-      expect(showMCCall[0].data.note).toBe('MC Note 1');
+      expect(showMCCall[0].data.creatorId).toBe(BigInt(1));
+      expect(showMCCall[0].data.note).toBe('Creator Note 1');
 
       // Verify ShowPlatform creation was called
       expect(
@@ -621,9 +621,9 @@ describe('publishingService', () => {
         },
         select: { id: true, uid: true },
       });
-      expect(mockTransactionClient.mC.findMany).toHaveBeenCalledWith({
+      expect(mockTransactionClient.creator.findMany).toHaveBeenCalledWith({
         where: {
-          uid: { in: ['mc_test123'] },
+          uid: { in: ['creator_test123'] },
           deletedAt: null,
         },
         select: { id: true, uid: true },
@@ -661,8 +661,8 @@ describe('publishingService', () => {
 
       await service.publish(scheduleUid, version, userId);
 
-      // Verify ShowMC and ShowPlatform create are not called when empty
-      expect(mockTransactionClient.showMC.create).not.toHaveBeenCalled();
+      // Verify ShowCreator and ShowPlatform create are not called when empty
+      expect(mockTransactionClient.showCreator.create).not.toHaveBeenCalled();
       expect(
         mockTransactionClient.showPlatform.create,
       ).not.toHaveBeenCalled();
@@ -677,8 +677,8 @@ describe('publishingService', () => {
             {
               ...mockPlanDocument.shows[0],
               creators: [
-                { creatorId: 'mc_test123', note: 'MC 1' },
-                { creatorId: 'mc_test456', note: 'MC 2' },
+                { creatorId: 'creator_test123', note: 'Creator 1' },
+                { creatorId: 'creator_test456', note: 'Creator 2' },
               ],
               platforms: [
                 {
@@ -698,9 +698,9 @@ describe('publishingService', () => {
       };
       getScheduleByIdMock.mockResolvedValue(scheduleWithMultipleRelations);
 
-      mockTransactionClient.mC.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'mc_test123' },
-        { id: BigInt(2), uid: 'mc_test456' },
+      mockTransactionClient.creator.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'creator_test123' },
+        { id: BigInt(2), uid: 'creator_test456' },
       ]);
       mockTransactionClient.platform.findMany.mockResolvedValue([
         { id: BigInt(1), uid: 'platform_test123' },
@@ -715,8 +715,8 @@ describe('publishingService', () => {
 
       await service.publish(scheduleUid, version, userId);
 
-      // Verify ShowMC creation with 2 items
-      expect(mockTransactionClient.showMC.create).toHaveBeenCalledTimes(2);
+      // Verify ShowCreator creation with 2 items
+      expect(mockTransactionClient.showCreator.create).toHaveBeenCalledTimes(2);
 
       // Verify ShowPlatform creation with 2 items
       expect(
@@ -768,7 +768,7 @@ describe('publishingService', () => {
       expect(createScheduleSnapshotMock).not.toHaveBeenCalled();
       expect(mockTransactionClient.show.createMany).toHaveBeenCalled();
       expect(mockTransactionClient.show.findMany).toHaveBeenCalled();
-      expect(mockTransactionClient.showMC.create).toHaveBeenCalled();
+      expect(mockTransactionClient.showCreator.create).toHaveBeenCalled();
       expect(mockTransactionClient.showPlatform.create).toHaveBeenCalled();
       expect(mockTransactionClient.schedule.update).toHaveBeenCalled();
     });
@@ -788,7 +788,7 @@ describe('publishingService', () => {
       const result = await service.publish(scheduleUid, version, userId);
 
       expect(mockTransactionClient.show.createMany).not.toHaveBeenCalled();
-      expect(mockTransactionClient.showMC.create).not.toHaveBeenCalled();
+      expect(mockTransactionClient.showCreator.create).not.toHaveBeenCalled();
       expect(
         mockTransactionClient.showPlatform.create,
       ).not.toHaveBeenCalled();
@@ -804,7 +804,7 @@ describe('publishingService', () => {
           shows: [
             {
               ...mockPlanDocument.shows[0],
-              creators: [{ creatorId: undefined }, { creatorId: 'mc_test123' }] as any,
+              creators: [{ creatorId: undefined }, { creatorId: 'creator_test123' }] as any,
               studioRoomId: undefined,
             },
           ],

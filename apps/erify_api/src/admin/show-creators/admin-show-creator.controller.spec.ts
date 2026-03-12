@@ -5,15 +5,15 @@ import { AdminShowCreatorController } from './admin-show-creator.controller';
 
 import type { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import type {
-  CreateShowMcDto,
-  UpdateShowMcDto,
-} from '@/models/show-mc/schemas/show-mc.schema';
-import { ShowMcService } from '@/models/show-mc/show-mc.service';
+  CreateShowCreatorDto,
+  UpdateShowCreatorDto,
+} from '@/models/show-creator/schemas/show-creator.schema';
+import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 
 describe('adminShowCreatorController', () => {
   let controller: AdminShowCreatorController;
 
-  const mockShowMcService = {
+  const mockShowCreatorService = {
     create: jest.fn(),
     findOne: jest.fn(),
     findPaginated: jest.fn(),
@@ -24,7 +24,7 @@ describe('adminShowCreatorController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminShowCreatorController],
-      providers: [{ provide: ShowMcService, useValue: mockShowMcService }],
+      providers: [{ provide: ShowCreatorService, useValue: mockShowCreatorService }],
     }).compile();
 
     controller = module.get<AdminShowCreatorController>(AdminShowCreatorController);
@@ -34,38 +34,38 @@ describe('adminShowCreatorController', () => {
     jest.clearAllMocks();
   });
 
-  describe('createShowMc', () => {
-    it('should create a show MC', async () => {
-      const createDto: CreateShowMcDto = {
+  describe('createShowCreator', () => {
+    it('should create a show Creator', async () => {
+      const createDto: CreateShowCreatorDto = {
         showId: 'show_123',
-        mcId: 'mc_123',
+        creatorId: 'creator_123',
         metadata: {},
-      } as CreateShowMcDto;
-      const createdShowMc = { uid: 'show_mc_123', ...createDto };
-      const showMcWithRelations = {
-        ...createdShowMc,
+      } as CreateShowCreatorDto;
+      const createdShowCreator = { uid: 'show_mc_123', ...createDto };
+      const showCreatorWithRelations = {
+        ...createdShowCreator,
         show: { uid: 'show_123' },
-        mc: { uid: 'mc_123' },
+        creator: { uid: 'creator_123' },
       };
 
-      mockShowMcService.create.mockResolvedValue(createdShowMc as any);
-      mockShowMcService.findOne.mockResolvedValue(showMcWithRelations as any);
+      mockShowCreatorService.create.mockResolvedValue(createdShowCreator as any);
+      mockShowCreatorService.findOne.mockResolvedValue(showCreatorWithRelations as any);
 
-      const result = await controller.createShowMc(createDto);
-      expect(mockShowMcService.create).toHaveBeenCalledWith(createDto);
-      expect(mockShowMcService.findOne).toHaveBeenCalledWith(
-        createdShowMc.uid,
+      const result = await controller.createShowCreator(createDto);
+      expect(mockShowCreatorService.create).toHaveBeenCalledWith(createDto);
+      expect(mockShowCreatorService.findOne).toHaveBeenCalledWith(
+        createdShowCreator.uid,
         {
           show: true,
-          mc: true,
+          creator: true,
         },
       );
-      expect(result).toEqual(showMcWithRelations);
+      expect(result).toEqual(showCreatorWithRelations);
     });
   });
 
-  describe('getShowMcs', () => {
-    it('should return paginated list of show MCs', async () => {
+  describe('getShowCreators', () => {
+    it('should return paginated list of show creators', async () => {
       const query: PaginationQueryDto = {
         page: 1,
         limit: 10,
@@ -73,9 +73,9 @@ describe('adminShowCreatorController', () => {
         take: 10,
         sort: 'desc',
       };
-      const showMcs = [
-        { uid: 'show_mc_1', showId: 'show_1', mcId: 'mc_1' },
-        { uid: 'show_mc_2', showId: 'show_2', mcId: 'mc_2' },
+      const showCreators = [
+        { uid: 'show_mc_1', showId: 'show_1', creatorId: 'creator_1' },
+        { uid: 'show_mc_2', showId: 'show_2', creatorId: 'creator_2' },
       ];
       const total = 2;
       const paginationMeta = {
@@ -87,96 +87,96 @@ describe('adminShowCreatorController', () => {
         hasPreviousPage: false,
       };
 
-      mockShowMcService.findPaginated.mockResolvedValue({
-        data: showMcs,
+      mockShowCreatorService.findPaginated.mockResolvedValue({
+        data: showCreators,
         total,
       });
 
-      const result = await controller.getShowMcs(query);
-      expect(mockShowMcService.findPaginated).toHaveBeenCalledWith({
+      const result = await controller.getShowCreators(query);
+      expect(mockShowCreatorService.findPaginated).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
         orderBy: { createdAt: 'desc' },
       });
       expect(result).toEqual({
-        data: showMcs,
+        data: showCreators,
         meta: paginationMeta,
       });
     });
   });
 
-  describe('getShowMc', () => {
-    it('should return a show MC by id', async () => {
-      const showMcId = 'show_mc_123';
-      const showMc = {
-        uid: showMcId,
+  describe('getShowCreator', () => {
+    it('should return a show Creator by id', async () => {
+      const showCreatorId = 'show_mc_123';
+      const showCreator = {
+        uid: showCreatorId,
         showId: 'show_123',
-        mcId: 'mc_123',
+        creatorId: 'creator_123',
         show: { uid: 'show_123' },
-        mc: { uid: 'mc_123' },
+        creator: { uid: 'creator_123' },
       };
 
-      mockShowMcService.findOne.mockResolvedValue(showMc as any);
+      mockShowCreatorService.findOne.mockResolvedValue(showCreator as any);
 
-      const result = await controller.getShowMc(showMcId);
-      expect(mockShowMcService.findOne).toHaveBeenCalledWith(showMcId, {
+      const result = await controller.getShowCreator(showCreatorId);
+      expect(mockShowCreatorService.findOne).toHaveBeenCalledWith(showCreatorId, {
         show: true,
-        mc: true,
+        creator: true,
       });
-      expect(result).toEqual(showMc);
+      expect(result).toEqual(showCreator);
     });
 
-    it('should throw if show MC not found', async () => {
-      mockShowMcService.findOne.mockResolvedValue(null);
-      await expect(controller.getShowMc('show_mc_404')).rejects.toThrow();
+    it('should throw if show Creator not found', async () => {
+      mockShowCreatorService.findOne.mockResolvedValue(null);
+      await expect(controller.getShowCreator('show_mc_404')).rejects.toThrow();
     });
   });
 
-  describe('updateShowMc', () => {
-    it('should update a show MC', async () => {
-      const showMcId = 'show_mc_123';
-      const updateDto: UpdateShowMcDto = { metadata: {} } as UpdateShowMcDto;
-      const updatedShowMc = { uid: showMcId, ...updateDto };
-      const showMcWithRelations = {
-        ...updatedShowMc,
+  describe('updateShowCreator', () => {
+    it('should update a show Creator', async () => {
+      const showCreatorId = 'show_mc_123';
+      const updateDto: UpdateShowCreatorDto = { metadata: {} } as UpdateShowCreatorDto;
+      const updatedShowCreator = { uid: showCreatorId, ...updateDto };
+      const showCreatorWithRelations = {
+        ...updatedShowCreator,
         show: { uid: 'show_123' },
-        mc: { uid: 'mc_123' },
+        creator: { uid: 'creator_123' },
       };
 
       // First call check existence
-      mockShowMcService.findOne
-        .mockResolvedValueOnce({ uid: showMcId } as any)
+      mockShowCreatorService.findOne
+        .mockResolvedValueOnce({ uid: showCreatorId } as any)
         // Second call for return value
-        .mockResolvedValueOnce(showMcWithRelations as any);
+        .mockResolvedValueOnce(showCreatorWithRelations as any);
 
-      mockShowMcService.update.mockResolvedValue(updatedShowMc as any);
+      mockShowCreatorService.update.mockResolvedValue(updatedShowCreator as any);
 
-      const result = await controller.updateShowMc(showMcId, updateDto);
+      const result = await controller.updateShowCreator(showCreatorId, updateDto);
 
-      expect(mockShowMcService.update).toHaveBeenCalledWith(
-        showMcId,
+      expect(mockShowCreatorService.update).toHaveBeenCalledWith(
+        showCreatorId,
         updateDto,
       );
-      expect(mockShowMcService.findOne).toHaveBeenCalledWith(
-        updatedShowMc.uid,
+      expect(mockShowCreatorService.findOne).toHaveBeenCalledWith(
+        updatedShowCreator.uid,
         {
           show: true,
-          mc: true,
+          creator: true,
         },
       );
-      expect(result).toEqual(showMcWithRelations);
+      expect(result).toEqual(showCreatorWithRelations);
     });
   });
 
-  describe('deleteShowMc', () => {
-    it('should delete a show MC', async () => {
-      const showMcId = 'show_mc_123';
+  describe('deleteShowCreator', () => {
+    it('should delete a show Creator', async () => {
+      const showCreatorId = 'show_mc_123';
 
-      mockShowMcService.findOne.mockResolvedValue({ uid: showMcId } as any);
-      mockShowMcService.softDelete.mockResolvedValue(undefined);
+      mockShowCreatorService.findOne.mockResolvedValue({ uid: showCreatorId } as any);
+      mockShowCreatorService.softDelete.mockResolvedValue(undefined);
 
-      await controller.deleteShowMc(showMcId);
-      expect(mockShowMcService.softDelete).toHaveBeenCalledWith(showMcId);
+      await controller.deleteShowCreator(showCreatorId);
+      expect(mockShowCreatorService.softDelete).toHaveBeenCalledWith(showCreatorId);
     });
   });
 });

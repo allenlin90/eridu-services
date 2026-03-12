@@ -7,17 +7,17 @@ import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
 import { isCreatorUid } from '@/models/creator/creator-uid.util';
-import { mcSchema } from '@/models/mc/schemas/mc.schema';
+import { creatorSchema } from '@/models/creator/schemas/creator.schema';
 import { showSchema } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
-import { ShowMcService } from '@/models/show-mc/show-mc.service';
+import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 
 // Internal schema for database entity
-export const showMcSchema = z.object({
+export const showCreatorSchema = z.object({
   id: z.bigint(),
-  uid: z.string().startsWith(ShowMcService.UID_PREFIX),
+  uid: z.string().startsWith(ShowCreatorService.UID_PREFIX),
   showId: z.bigint(),
-  mcId: z.bigint(),
+  creatorId: z.bigint(),
   note: z.string().nullable(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
@@ -26,50 +26,50 @@ export const showMcSchema = z.object({
 });
 
 // API input schema (snake_case input, transforms to camelCase)
-export const createShowMcSchema = z.object({
+export const createShowCreatorSchema = z.object({
   show_id: z.string().startsWith(ShowService.UID_PREFIX), // UID
-  creator_id: z.string().refine(isCreatorUid, 'Invalid creator/mc UID'), // UID
+  creator_id: z.string().refine(isCreatorUid, 'Invalid creator UID'), // UID
   note: z.string().max(1000).optional(), // Add max length for notes
   metadata: z.record(z.string(), z.any()).optional(),
 });
 
-const transformCreateShowMcSchema = createShowMcSchema.transform((data) => ({
+const transformCreateShowCreatorSchema = createShowCreatorSchema.transform((data) => ({
   showId: data.show_id,
-  mcId: data.creator_id,
+  creatorId: data.creator_id,
   note: data.note,
   metadata: data.metadata,
 }));
 
 // API update schema (snake_case input, transforms to camelCase)
-export const updateShowMcSchema = z
+export const updateShowCreatorSchema = z
   .object({
     show_id: z.string().startsWith(ShowService.UID_PREFIX).optional(), // UID
-    creator_id: z.string().refine(isCreatorUid, 'Invalid creator/mc UID').optional(), // UID
+    creator_id: z.string().refine(isCreatorUid, 'Invalid creator UID').optional(), // UID
     note: z.string().max(1000).nullable().optional(), // Add max length for notes
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({
     showId: data.show_id,
-    mcId: data.creator_id,
+    creatorId: data.creator_id,
     note: data.note,
     metadata: data.metadata,
   }));
 
-// Schema for ShowMC with relations (used in admin endpoints)
-export const showMcWithRelationsSchema = showMcSchema.extend({
+// Schema for ShowCreator with relations (used in admin endpoints)
+export const showCreatorWithRelationsSchema = showCreatorSchema.extend({
   show: showSchema.optional(),
-  mc: mcSchema.optional(),
+  creator: creatorSchema.optional(),
 });
 
 // API output schema (transforms to snake_case)
-export const showMcDto = showMcWithRelationsSchema
+export const showCreatorDto = showCreatorWithRelationsSchema
   .transform((obj) => ({
     id: obj.uid,
     show_id: obj.show?.uid ?? null,
     show_name: obj.show?.name ?? null,
-    creator_id: obj.mc?.uid ?? null,
-    creator_name: obj.mc?.name ?? null,
-    creator_alias_name: obj.mc?.aliasName ?? null,
+    creator_id: obj.creator?.uid ?? null,
+    creator_name: obj.creator?.name ?? null,
+    creator_alias_name: obj.creator?.aliasName ?? null,
     note: obj.note,
     metadata: obj.metadata,
     created_at: obj.createdAt.toISOString(),
@@ -91,48 +91,48 @@ export const showMcDto = showMcWithRelationsSchema
   );
 
 // DTOs for input/output
-export class CreateShowMcDto extends createZodDto(
-  transformCreateShowMcSchema,
+export class CreateShowCreatorDto extends createZodDto(
+  transformCreateShowCreatorSchema,
 ) {}
-export class UpdateShowMcDto extends createZodDto(updateShowMcSchema) {}
-export class ShowMcDto extends createZodDto(showMcDto) {}
+export class UpdateShowCreatorDto extends createZodDto(updateShowCreatorSchema) {}
+export class ShowCreatorDto extends createZodDto(showCreatorDto) {}
 
 /**
- * Payload for creating a show MC (service layer).
+ * Payload for creating a show Creator (service layer).
  */
-export type CreateShowMcPayload = {
+export type CreateShowCreatorPayload = {
   showId: string;
-  mcId: string;
+  creatorId: string;
   note?: string | null;
   metadata?: Record<string, any>;
 };
 
 /**
- * Payload for updating a show MC (service layer).
+ * Payload for updating a show Creator (service layer).
  */
-export type UpdateShowMcPayload = {
+export type UpdateShowCreatorPayload = {
   showId?: string;
-  mcId?: string;
+  creatorId?: string;
   note?: string | null;
   metadata?: Record<string, any>;
 };
 
 /**
- * Type-safe filter options for show MCs.
+ * Type-safe filter options for show creators.
  */
-export type ShowMcFilters = {
+export type ShowCreatorFilters = {
   uid?: string;
   showId?: bigint;
-  mcId?: bigint;
+  creatorId?: bigint;
   show?: { uid: string };
-  mc?: { uid: string };
+  creator?: { uid: string };
   deletedAt?: Date | null;
 };
 
 /**
- * Type-safe order by options for show MCs.
+ * Type-safe order by options for show creators.
  */
-export type ShowMcOrderBy = {
+export type ShowCreatorOrderBy = {
   createdAt?: 'asc' | 'desc';
   updatedAt?: 'asc' | 'desc';
 };

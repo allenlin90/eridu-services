@@ -31,7 +31,7 @@ export class TaskRepository extends BaseRepository<
 
   async findByUidWithSnapshot(
     uid: string,
-  ): Promise<(Task & { snapshot: TaskTemplateSnapshot | null; targets: { show: { id: bigint; uid: string; externalId: string | null; studioId: bigint | null; startTime: Date; endTime: Date; client: { name: string } | null; showMCs: { mc: { name: string; aliasName: string } }[] } | null }[] }) | null> {
+  ): Promise<(Task & { snapshot: TaskTemplateSnapshot | null; targets: { show: { id: bigint; uid: string; externalId: string | null; studioId: bigint | null; startTime: Date; endTime: Date; client: { name: string } | null; showCreators: { creator: { name: string; aliasName: string } }[] } | null }[] }) | null> {
     return this.model.findFirst({
       where: { uid, deletedAt: null },
       include: {
@@ -52,10 +52,10 @@ export class TaskRepository extends BaseRepository<
                     name: true,
                   },
                 },
-                showMCs: {
+                showCreators: {
                   where: { deletedAt: null },
                   include: {
-                    mc: {
+                    creator: {
                       select: {
                         name: true,
                         aliasName: true,
@@ -68,7 +68,7 @@ export class TaskRepository extends BaseRepository<
           },
         },
       },
-    }) as Promise<(Task & { snapshot: TaskTemplateSnapshot | null; targets: { show: { id: bigint; uid: string; externalId: string | null; studioId: bigint | null; startTime: Date; endTime: Date; client: { name: string } | null; showMCs: { mc: { name: string; aliasName: string } }[] } | null }[] }) | null>;
+    }) as Promise<(Task & { snapshot: TaskTemplateSnapshot | null; targets: { show: { id: bigint; uid: string; externalId: string | null; studioId: bigint | null; startTime: Date; endTime: Date; client: { name: string } | null; showCreators: { creator: { name: string; aliasName: string } }[] } | null }[] }) | null>;
   }
 
   async findByUidWithRelations(
@@ -86,7 +86,7 @@ export class TaskRepository extends BaseRepository<
         endTime: Date;
         client: { name: string } | null;
         studioRoom: { name: string } | null;
-        showMCs: { mc: { name: string; aliasName: string } }[];
+        showCreators: { creator: { name: string; aliasName: string } }[];
       } | null;
     }[];
   }) | null> {
@@ -116,10 +116,10 @@ export class TaskRepository extends BaseRepository<
                     name: true,
                   },
                 },
-                showMCs: {
+                showCreators: {
                   where: { deletedAt: null },
                   include: {
-                    mc: {
+                    creator: {
                       select: {
                         name: true,
                         aliasName: true,
@@ -144,7 +144,7 @@ export class TaskRepository extends BaseRepository<
           endTime: Date;
           client: { name: string } | null;
           studioRoom: { name: string } | null;
-          showMCs: { mc: { name: string; aliasName: string } }[];
+          showCreators: { creator: { name: string; aliasName: string } }[];
         } | null;
       }[];
     }) | null>;
@@ -164,7 +164,7 @@ export class TaskRepository extends BaseRepository<
         endTime: Date;
         client: { name: string } | null;
         studioRoom: { name: string } | null;
-        showMCs: { mc: { name: string; aliasName: string } }[];
+        showCreators: { creator: { name: string; aliasName: string } }[];
       } | null;
     }[];
   }) | null> {
@@ -194,10 +194,10 @@ export class TaskRepository extends BaseRepository<
                     name: true,
                   },
                 },
-                showMCs: {
+                showCreators: {
                   where: { deletedAt: null },
                   include: {
-                    mc: {
+                    creator: {
                       select: {
                         name: true,
                         aliasName: true,
@@ -222,7 +222,7 @@ export class TaskRepository extends BaseRepository<
           endTime: Date;
           client: { name: string } | null;
           studioRoom: { name: string } | null;
-          showMCs: { mc: { name: string; aliasName: string } }[];
+          showCreators: { creator: { name: string; aliasName: string } }[];
         } | null;
       }[];
     }) | null>;
@@ -643,10 +643,10 @@ export class TaskRepository extends BaseRepository<
                       name: true,
                     },
                   },
-                  showMCs: {
+                  showCreators: {
                     where: { deletedAt: null },
                     include: {
-                      mc: {
+                      creator: {
                         select: {
                           name: true,
                           aliasName: true,
@@ -943,10 +943,10 @@ export class TaskRepository extends BaseRepository<
                       name: true,
                     },
                   },
-                  showMCs: {
+                  showCreators: {
                     where: { deletedAt: null },
                     include: {
-                      mc: {
+                      creator: {
                         select: {
                           name: true,
                           aliasName: true,

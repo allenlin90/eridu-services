@@ -16,24 +16,23 @@ import {
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
-import { CREATOR_UID_PREFIX } from '@/models/creator/creator-uid.util';
-import { McService } from '@/models/mc/mc.service';
+import { CreatorService } from '@/models/creator/creator.service';
 import {
-  CreateMcDto,
-  ListMcsQueryDto,
-  mcWithUserDto,
-  UpdateMcDto,
-} from '@/models/mc/schemas/mc.schema';
+  CreateCreatorDto,
+  creatorWithUserDto,
+  ListCreatorsQueryDto,
+  UpdateCreatorDto,
+} from '@/models/creator/schemas/creator.schema';
 
 @Controller('admin/creators')
 export class AdminCreatorController extends BaseAdminController {
-  constructor(private readonly mcService: McService) {
+  constructor(private readonly creatorService: CreatorService) {
     super();
   }
 
   @Post()
-  @AdminResponse(mcWithUserDto, HttpStatus.CREATED, 'Creator created successfully')
-  async createCreator(@Body() body: CreateMcDto) {
+  @AdminResponse(creatorWithUserDto, HttpStatus.CREATED, 'Creator created successfully')
+  async createCreator(@Body() body: CreateCreatorDto) {
     const {
       name,
       aliasName,
@@ -43,7 +42,7 @@ export class AdminCreatorController extends BaseAdminController {
       defaultRateType,
       defaultCommissionRate,
     } = body;
-    const creator = await this.mcService.createMc({
+    const creator = await this.creatorService.createCreator({
       name,
       aliasName,
       metadata,
@@ -52,13 +51,13 @@ export class AdminCreatorController extends BaseAdminController {
       ...(defaultRateType !== undefined && { defaultRateType }),
       ...(defaultCommissionRate !== undefined && { defaultCommissionRate }),
     });
-    return this.mcService.getMcByIdWithUser(creator.uid);
+    return this.creatorService.getCreatorByIdWithUser(creator.uid);
   }
 
   @Get()
-  @AdminPaginatedResponse(mcWithUserDto, 'List of creators with pagination')
-  async getCreators(@Query() query: ListMcsQueryDto) {
-    const { data, total } = await this.mcService.listMcs({
+  @AdminPaginatedResponse(creatorWithUserDto, 'List of creators with pagination')
+  async getCreators(@Query() query: ListCreatorsQueryDto) {
+    const { data, total } = await this.creatorService.listCreators({
       skip: query.skip,
       take: query.take,
       name: query.name,
@@ -72,31 +71,31 @@ export class AdminCreatorController extends BaseAdminController {
   }
 
   @Get(':id')
-  @AdminResponse(mcWithUserDto, HttpStatus.OK, 'Creator details')
+  @AdminResponse(creatorWithUserDto, HttpStatus.OK, 'Creator details')
   async getCreator(
     @Param(
       'id',
-      new UidValidationPipe([McService.UID_PREFIX, CREATOR_UID_PREFIX], 'Creator'),
+      new UidValidationPipe(CreatorService.UID_PREFIX, 'Creator'),
     )
     id: string,
   ) {
-    const creator = await this.mcService.getMcByIdWithUser(id);
+    const creator = await this.creatorService.getCreatorByIdWithUser(id);
     this.ensureResourceExists(creator, 'Creator', id);
     return creator;
   }
 
   @Patch(':id')
-  @AdminResponse(mcWithUserDto, HttpStatus.OK, 'Creator updated successfully')
+  @AdminResponse(creatorWithUserDto, HttpStatus.OK, 'Creator updated successfully')
   async updateCreator(
     @Param(
       'id',
-      new UidValidationPipe([McService.UID_PREFIX, CREATOR_UID_PREFIX], 'Creator'),
+      new UidValidationPipe(CreatorService.UID_PREFIX, 'Creator'),
     )
     id: string,
-    @Body() body: UpdateMcDto,
+    @Body() body: UpdateCreatorDto,
   ) {
     // Check existence first
-    const existing = await this.mcService.getMcById(id);
+    const existing = await this.creatorService.getCreatorById(id);
     this.ensureResourceExists(existing, 'Creator', id);
 
     const {
@@ -109,7 +108,7 @@ export class AdminCreatorController extends BaseAdminController {
       defaultRateType,
       defaultCommissionRate,
     } = body;
-    await this.mcService.updateMc(id, {
+    await this.creatorService.updateCreator(id, {
       name,
       aliasName,
       isBanned,
@@ -120,7 +119,7 @@ export class AdminCreatorController extends BaseAdminController {
       ...(defaultCommissionRate !== undefined && { defaultCommissionRate }),
     });
 
-    return this.mcService.getMcByIdWithUser(id);
+    return this.creatorService.getCreatorByIdWithUser(id);
   }
 
   @Delete(':id')
@@ -128,14 +127,14 @@ export class AdminCreatorController extends BaseAdminController {
   async deleteCreator(
     @Param(
       'id',
-      new UidValidationPipe([McService.UID_PREFIX, CREATOR_UID_PREFIX], 'Creator'),
+      new UidValidationPipe(CreatorService.UID_PREFIX, 'Creator'),
     )
     id: string,
   ) {
     // Check existence first
-    const existing = await this.mcService.getMcById(id);
+    const existing = await this.creatorService.getCreatorById(id);
     this.ensureResourceExists(existing, 'Creator', id);
 
-    await this.mcService.deleteMc(id);
+    await this.creatorService.deleteCreator(id);
   }
 }

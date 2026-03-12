@@ -321,10 +321,10 @@ export class TaskOrchestrationService {
     const data = shows.map((show) => {
       // Map base show fields using shared showDto logic
       const baseShow = showDto.parse(show);
-      const creators = (show.showMCs ?? []).map((showMC) => ({
-        creator_id: showMC.mc.uid,
-        creator_name: showMC.mc.name,
-        creator_alias_name: showMC.mc.aliasName,
+      const creators = (show.showCreators ?? []).map((showCreator) => ({
+        creator_id: showCreator.creator.uid,
+        creator_name: showCreator.creator.name,
+        creator_alias_name: showCreator.creator.aliasName,
       }));
 
       // prisma include type complexity

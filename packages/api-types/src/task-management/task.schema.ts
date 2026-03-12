@@ -125,8 +125,8 @@ export const taskWithRelationsSchema = taskSchema.extend({
       studioRoom: z.object({
         name: z.string(),
       }).nullable().optional(),
-      showMCs: z.array(z.object({
-        mc: z.object({
+      showCreators: z.array(z.object({
+        creator: z.object({
           name: z.string(),
           aliasName: z.string(),
         }),
@@ -143,7 +143,9 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj) => {
   if (obj.targets && obj.targets.length > 0) {
     const s = obj.targets[0]?.show;
     if (s) {
-      const creatorNames = (s.showMCs ?? []).map((item) => item.mc.aliasName || item.mc.name);
+      const creatorNames = (s.showCreators ?? []).map(
+        (item) => item.creator.aliasName || item.creator.name,
+      );
       show = {
         id: s.uid,
         external_id: s.externalId ?? s.uid,

@@ -1,11 +1,11 @@
 import { NotFoundException } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
-import type { MC, Show } from '@prisma/client';
+import type { Creator, Show } from '@prisma/client';
 
 import { ShowsService } from './shows.service';
 
-import { McService } from '@/models/mc/mc.service';
+import { CreatorService } from '@/models/creator/creator.service';
 import type { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 
@@ -26,11 +26,11 @@ describe('showsService', () => {
     deletedAt: null,
   };
 
-  const mockMc: MC = {
+  const mockMc: Creator = {
     id: BigInt(1),
-    uid: 'mc_test123',
-    name: 'Test MC',
-    aliasName: 'Test MC Alias',
+    uid: 'creator_test123',
+    name: 'Test Creator',
+    aliasName: 'Test Creator Alias',
     isBanned: false,
     defaultRate: null,
     defaultRateType: null,
@@ -115,12 +115,12 @@ describe('showsService', () => {
     showPlatforms: [],
   };
 
-  const mockMcService = {
-    listMcs: jest.fn() as jest.MockedFunction<McService['listMcs']>,
-    getMcByUserIdentifier: jest.fn() as jest.MockedFunction<
-      McService['getMcByUserIdentifier']
+  const mockCreatorService = {
+    listCreators: jest.fn() as jest.MockedFunction<CreatorService['listCreators']>,
+    getCreatorByUserIdentifier: jest.fn() as jest.MockedFunction<
+      CreatorService['getCreatorByUserIdentifier']
     >,
-  } as jest.Mocked<Pick<McService, 'listMcs' | 'getMcByUserIdentifier'>>;
+  } as jest.Mocked<Pick<CreatorService, 'listCreators' | 'getCreatorByUserIdentifier'>>;
 
   const mockShowService = {
     getShows: jest.fn() as jest.MockedFunction<ShowService['getShows']>,
@@ -132,8 +132,8 @@ describe('showsService', () => {
       providers: [
         ShowsService,
         {
-          provide: McService,
-          useValue: mockMcService,
+          provide: CreatorService,
+          useValue: mockCreatorService,
         },
         {
           provide: ShowService,
@@ -153,8 +153,8 @@ describe('showsService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('getShowsForMcUser', () => {
-    it('should return shows assigned to MC user by uid', async () => {
+  describe('getShowsForCreatorUser', () => {
+    it('should return shows assigned to Creator user by uid', async () => {
       const userIdentifier = 'user_test123';
       const params: ListShowsQueryDto = {
         page: 1,
@@ -168,22 +168,22 @@ describe('showsService', () => {
         uid: undefined,
       };
 
-      mockMcService.getMcByUserIdentifier.mockResolvedValue(mockMc);
+      mockCreatorService.getCreatorByUserIdentifier.mockResolvedValue(mockMc);
       mockShowService.getShows.mockResolvedValue([mockShowWithRelations]);
       mockShowService.countShows.mockResolvedValue(1);
 
-      const result = await service.getShowsForMcUser(userIdentifier, params);
+      const result = await service.getShowsForCreatorUser(userIdentifier, params);
 
-      expect(mockMcService.getMcByUserIdentifier).toHaveBeenCalledWith(
+      expect(mockCreatorService.getCreatorByUserIdentifier).toHaveBeenCalledWith(
         userIdentifier,
       );
       expect(mockShowService.getShows).toHaveBeenCalledWith(
         {
           where: {
             deletedAt: null,
-            showMCs: {
+            showCreators: {
               some: {
-                mcId: mockMc.id,
+                creatorId: mockMc.id,
                 deletedAt: null,
               },
             },
@@ -202,9 +202,9 @@ describe('showsService', () => {
       );
       expect(mockShowService.countShows).toHaveBeenCalledWith({
         deletedAt: null,
-        showMCs: {
+        showCreators: {
           some: {
-            mcId: mockMc.id,
+            creatorId: mockMc.id,
             deletedAt: null,
           },
         },
@@ -215,7 +215,7 @@ describe('showsService', () => {
       });
     });
 
-    it('should return shows assigned to MC user by extId', async () => {
+    it('should return shows assigned to Creator user by extId', async () => {
       const userIdentifier = 'ext_test123';
       const params: ListShowsQueryDto = {
         page: 1,
@@ -229,13 +229,13 @@ describe('showsService', () => {
         uid: undefined,
       };
 
-      mockMcService.getMcByUserIdentifier.mockResolvedValue(mockMc);
+      mockCreatorService.getCreatorByUserIdentifier.mockResolvedValue(mockMc);
       mockShowService.getShows.mockResolvedValue([mockShowWithRelations]);
       mockShowService.countShows.mockResolvedValue(1);
 
-      const result = await service.getShowsForMcUser(userIdentifier, params);
+      const result = await service.getShowsForCreatorUser(userIdentifier, params);
 
-      expect(mockMcService.getMcByUserIdentifier).toHaveBeenCalledWith(
+      expect(mockCreatorService.getCreatorByUserIdentifier).toHaveBeenCalledWith(
         userIdentifier,
       );
       expect(result).toEqual({
@@ -258,11 +258,11 @@ describe('showsService', () => {
         uid: undefined,
       };
 
-      mockMcService.getMcByUserIdentifier.mockResolvedValue(mockMc);
+      mockCreatorService.getCreatorByUserIdentifier.mockResolvedValue(mockMc);
       mockShowService.getShows.mockResolvedValue([mockShowWithRelations]);
       mockShowService.countShows.mockResolvedValue(1);
 
-      await service.getShowsForMcUser(userIdentifier, params);
+      await service.getShowsForCreatorUser(userIdentifier, params);
 
       expect(mockShowService.getShows).toHaveBeenCalled();
       const callArgs = mockShowService.getShows.mock.calls[0] as [
@@ -286,11 +286,11 @@ describe('showsService', () => {
         uid: undefined,
       };
 
-      mockMcService.getMcByUserIdentifier.mockResolvedValue(mockMc);
+      mockCreatorService.getCreatorByUserIdentifier.mockResolvedValue(mockMc);
       mockShowService.getShows.mockResolvedValue([]);
       mockShowService.countShows.mockResolvedValue(0);
 
-      const result = await service.getShowsForMcUser(userIdentifier, params);
+      const result = await service.getShowsForCreatorUser(userIdentifier, params);
 
       expect(mockShowService.getShows).toHaveBeenCalled();
       const callArgs = mockShowService.getShows.mock.calls[0] as [
@@ -310,7 +310,7 @@ describe('showsService', () => {
       });
     });
 
-    it('should throw NotFoundException when MC is not found', async () => {
+    it('should throw NotFoundException when Creator is not found', async () => {
       const userIdentifier = 'user_notfound';
       const params: ListShowsQueryDto = {
         page: 1,
@@ -324,28 +324,28 @@ describe('showsService', () => {
         uid: undefined,
       };
 
-      mockMcService.getMcByUserIdentifier.mockResolvedValue(null);
+      mockCreatorService.getCreatorByUserIdentifier.mockResolvedValue(null);
 
       await expect(
-        service.getShowsForMcUser(userIdentifier, params),
+        service.getShowsForCreatorUser(userIdentifier, params),
       ).rejects.toThrow(NotFoundException);
       await expect(
-        service.getShowsForMcUser(userIdentifier, params),
-      ).rejects.toThrow(`MC not found with id for user ${userIdentifier}`);
+        service.getShowsForCreatorUser(userIdentifier, params),
+      ).rejects.toThrow(`Creator not found with id for user ${userIdentifier}`);
     });
   });
 
-  describe('getShowForMcUser', () => {
-    it('should return a specific show assigned to MC user', async () => {
+  describe('getShowForCreatorUser', () => {
+    it('should return a specific show assigned to Creator user', async () => {
       const userIdentifier = 'user_test123';
       const showId = 'show_test123';
 
-      mockMcService.getMcByUserIdentifier.mockResolvedValue(mockMc);
+      mockCreatorService.getCreatorByUserIdentifier.mockResolvedValue(mockMc);
       mockShowService.getShows.mockResolvedValue([mockShowWithRelations]);
 
-      const result = await service.getShowForMcUser(userIdentifier, showId);
+      const result = await service.getShowForCreatorUser(userIdentifier, showId);
 
-      expect(mockMcService.getMcByUserIdentifier).toHaveBeenCalledWith(
+      expect(mockCreatorService.getCreatorByUserIdentifier).toHaveBeenCalledWith(
         userIdentifier,
       );
       expect(mockShowService.getShows).toHaveBeenCalledWith(
@@ -353,9 +353,9 @@ describe('showsService', () => {
           where: {
             deletedAt: null,
             uid: showId,
-            showMCs: {
+            showCreators: {
               some: {
-                mcId: mockMc.id,
+                creatorId: mockMc.id,
                 deletedAt: null,
               },
             },
@@ -377,42 +377,42 @@ describe('showsService', () => {
       const userIdentifier = 'user_test123';
       const showId = 'show_notfound';
 
-      mockMcService.getMcByUserIdentifier.mockResolvedValue(mockMc);
+      mockCreatorService.getCreatorByUserIdentifier.mockResolvedValue(mockMc);
       mockShowService.getShows.mockResolvedValue([]);
 
       await expect(
-        service.getShowForMcUser(userIdentifier, showId),
+        service.getShowForCreatorUser(userIdentifier, showId),
       ).rejects.toThrow(NotFoundException);
       await expect(
-        service.getShowForMcUser(userIdentifier, showId),
+        service.getShowForCreatorUser(userIdentifier, showId),
       ).rejects.toThrow('Show not found with id show_notfound');
     });
 
-    it('should throw NotFoundException when show is not assigned to MC', async () => {
+    it('should throw NotFoundException when show is not assigned to Creator', async () => {
       const userIdentifier = 'user_test123';
       const showId = 'show_test123';
 
-      mockMcService.getMcByUserIdentifier.mockResolvedValue(mockMc);
-      // Show exists but not assigned to this MC (empty result due to showMCs filter)
+      mockCreatorService.getCreatorByUserIdentifier.mockResolvedValue(mockMc);
+      // Show exists but not assigned to this Creator (empty result due to showCreators filter)
       mockShowService.getShows.mockResolvedValue([]);
 
       await expect(
-        service.getShowForMcUser(userIdentifier, showId),
+        service.getShowForCreatorUser(userIdentifier, showId),
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw NotFoundException when MC is not found', async () => {
+    it('should throw NotFoundException when Creator is not found', async () => {
       const userIdentifier = 'user_notfound';
       const showId = 'show_test123';
 
-      mockMcService.getMcByUserIdentifier.mockResolvedValue(null);
+      mockCreatorService.getCreatorByUserIdentifier.mockResolvedValue(null);
 
       await expect(
-        service.getShowForMcUser(userIdentifier, showId),
+        service.getShowForCreatorUser(userIdentifier, showId),
       ).rejects.toThrow(NotFoundException);
       await expect(
-        service.getShowForMcUser(userIdentifier, showId),
-      ).rejects.toThrow('MC not found with id for user user_notfound');
+        service.getShowForCreatorUser(userIdentifier, showId),
+      ).rejects.toThrow('Creator not found with id for user user_notfound');
     });
   });
 });

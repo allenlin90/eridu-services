@@ -96,13 +96,13 @@ describe('showRepository', () => {
 
     expect(txShowDelegate.findMany).toHaveBeenCalledTimes(1);
     const where = txShowDelegate.findMany.mock.calls[0][0].where as {
-      showMCs?: {
+      showCreators?: {
         some?: {
-          mc?: { name?: { contains?: string } };
+          creator?: { name?: { contains?: string } };
         };
       };
     };
-    expect(where.showMCs?.some?.mc?.name?.contains).toBe('alice');
+    expect(where.showCreators?.some?.creator?.name?.contains).toBe('alice');
   });
 
   it('maps creator_name filter to studio task-summary creator relation search', async () => {
@@ -117,12 +117,12 @@ describe('showRepository', () => {
 
     expect(txShowDelegate.count).toHaveBeenCalledTimes(1);
     const where = txShowDelegate.count.mock.calls[0][0].where as {
-      showMCs?: {
+      showCreators?: {
         some?: {
-          mc?: { name?: { contains?: string } };
+          creator?: { name?: { contains?: string } };
         };
       };
     };
-    expect(where.showMCs?.some?.mc?.name?.contains).toBe('alice');
+    expect(where.showCreators?.some?.creator?.name?.contains).toBe('alice');
   });
 });

@@ -39,7 +39,7 @@ describe('uploadService', () => {
             uid: 'show_1',
             externalId: 'SHOW-001',
             client: { name: 'Acme Client' },
-            showMCs: [{ mc: { aliasName: 'MC Alpha', name: 'MC Alpha' } }],
+            showCreators: [{ creator: { aliasName: 'Creator Alpha', name: 'Creator Alpha' } }],
           },
         }],
         snapshot: {
@@ -159,9 +159,9 @@ describe('uploadService', () => {
           uid: 'show_1',
           externalId: 'SHOW-CLOSE',
           client: { name: 'Mega Client' },
-          showMCs: [
-            { mc: { aliasName: 'MC One', name: 'MC One' } },
-            { mc: { aliasName: null, name: 'MC Two' } },
+          showCreators: [
+            { creator: { aliasName: 'Creator One', name: 'Creator One' } },
+            { creator: { aliasName: null, name: 'Creator Two' } },
           ],
         },
       }],
@@ -282,7 +282,7 @@ describe('uploadService', () => {
           uid: 'show_1',
           externalId: 'SHOW-WARDROBE',
           client: { name: 'Acme' },
-          showMCs: [{ mc: { aliasName: 'MC Prime', name: 'MC Prime' } }],
+          showCreators: [{ creator: { aliasName: 'Creator Prime', name: 'Creator Prime' } }],
         },
       }],
       metadata: { upload_routing: { material_asset_directory: 'wardrobe-archive' } },
@@ -346,7 +346,7 @@ describe('uploadService', () => {
           uid: 'show_1',
           externalId: 'SHOW-CLOSE',
           client: { name: 'Acme' },
-          showMCs: [{ mc: { aliasName: 'MC Prime', name: 'MC Prime' } }],
+          showCreators: [{ creator: { aliasName: 'Creator Prime', name: 'Creator Prime' } }],
         },
       }],
       metadata: { upload_routing: { material_asset_directory: 'show-general' } },
@@ -394,7 +394,7 @@ describe('uploadService', () => {
           uid: 'show_1',
           externalId: null,
           client: { name: 'Acme' },
-          showMCs: [{ mc: { aliasName: 'MC Prime', name: 'MC Prime' } }],
+          showCreators: [{ creator: { aliasName: 'Creator Prime', name: 'Creator Prime' } }],
         },
       }],
       snapshot: {
