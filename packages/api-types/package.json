@@ -49,6 +49,10 @@
       "types": "./dist/shows/index.d.ts",
       "default": "./dist/shows/index.js"
     },
+    "./studio-creators": {
+      "types": "./dist/studio-creators/index.d.ts",
+      "default": "./dist/studio-creators/index.js"
+    },
     "./studio-shifts": {
       "types": "./dist/studio-shifts/index.d.ts",
       "default": "./dist/studio-shifts/index.js"

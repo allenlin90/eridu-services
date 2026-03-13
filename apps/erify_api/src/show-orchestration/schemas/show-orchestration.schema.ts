@@ -1,6 +1,9 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
+
+import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import {
   createShowObjectSchema,
   createShowSchema,
@@ -17,6 +20,11 @@ export const createShowWithAssignmentsSchema = createShowSchema.safeExtend({
     z.object({
       creator_id: z.string(),
       note: z.string().nullable().optional(),
+      agreed_rate: z.coerce.number().positive().optional(),
+      compensation_type: z
+        .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
+        .optional(),
+      commission_rate: z.coerce.number().min(0).max(100).optional(),
       metadata: z.record(z.string(), z.any()).optional(),
     }),
   ).optional(),
@@ -46,6 +54,9 @@ const transformCreateShowWithAssignmentsSchema
       creators: creatorAssignments?.map((creator) => ({
         creatorId: creator.creator_id,
         note: creator.note,
+        agreedRate: creator.agreed_rate?.toFixed(2),
+        compensationType: creator.compensation_type,
+        commissionRate: creator.commission_rate?.toFixed(2),
         metadata: creator.metadata,
       })),
       // Platform assignments
@@ -66,6 +77,12 @@ export const updateShowWithAssignmentsSchema = createShowObjectSchema
       z.object({
         creator_id: z.string(),
         note: z.string().nullable().optional(),
+        agreed_rate: z.coerce.number().positive().nullable().optional(),
+        compensation_type: z
+          .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
+          .nullable()
+          .optional(),
+        commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
         metadata: z.record(z.string(), z.any()).optional(),
       }),
     ).optional(),
@@ -103,6 +120,19 @@ const transformUpdateShowWithAssignmentsSchema
       showCreators: creatorAssignments?.map((creator) => ({
         creatorId: creator.creator_id,
         note: creator.note,
+        agreedRate:
+          creator.agreed_rate === undefined
+            ? undefined
+            : creator.agreed_rate === null
+              ? null
+              : creator.agreed_rate.toFixed(2),
+        compensationType: creator.compensation_type,
+        commissionRate:
+          creator.commission_rate === undefined
+            ? undefined
+            : creator.commission_rate === null
+              ? null
+              : creator.commission_rate.toFixed(2),
         metadata: creator.metadata,
       })),
       showPlatforms: data.platforms?.map((platform) => ({
@@ -134,6 +164,9 @@ export const showWithAssignmentsDto = showWithAllRelationsSchema.transform(
       creator_name: showCreator.creator?.name,
       creator_alias_name: showCreator.creator?.aliasName,
       note: showCreator.note,
+      agreed_rate: decimalToString(showCreator.agreedRate),
+      compensation_type: showCreator.compensationType,
+      commission_rate: decimalToString(showCreator.commissionRate),
       metadata: showCreator.metadata,
     }));
 
@@ -183,6 +216,12 @@ export const replaceCreatorsOnShowSchema = z.object({
     z.object({
       creator_id: z.string(),
       note: z.string().nullable().optional(),
+      agreed_rate: z.coerce.number().positive().nullable().optional(),
+      compensation_type: z
+        .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
+        .nullable()
+        .optional(),
+      commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
       metadata: z.record(z.string(), z.any()).optional(),
     }),
   ),
@@ -212,8 +251,11 @@ export type RemovePlatformsFromShowTransformed = {
 
 export type ReplaceCreatorItem = {
   creatorId: string;
-  note?: string | null;
-  metadata?: object;
+  note: string | null;
+  agreedRate: string | null;
+  compensationType: string | null;
+  commissionRate: string | null;
+  metadata: object;
 };
 
 export type ReplaceCreatorsOnShowTransformed = {
@@ -254,6 +296,9 @@ export class ReplaceCreatorsOnShowDto extends createZodDto(
     creators: data.creators.map((creator) => ({
       creatorId: creator.creator_id,
       note: creator.note ?? null,
+      agreedRate: creator.agreed_rate == null ? null : creator.agreed_rate.toFixed(2),
+      compensationType: creator.compensation_type ?? null,
+      commissionRate: creator.commission_rate == null ? null : creator.commission_rate.toFixed(2),
       metadata: creator.metadata ?? {},
     })),
   })),
@@ -261,6 +306,9 @@ export class ReplaceCreatorsOnShowDto extends createZodDto(
   declare creators: Array<{
     creatorId: string;
     note: string | null;
+    agreedRate: string | null;
+    compensationType: string | null;
+    commissionRate: string | null;
     metadata: Record<string, any>;
   }>;
 }

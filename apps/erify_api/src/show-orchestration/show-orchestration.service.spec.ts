@@ -21,6 +21,7 @@ import type {
   UpdateShowWithAssignmentsDto,
 } from '@/show-orchestration/schemas/show-orchestration.schema';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
+import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
 
 // Mock PrismaService module for ClsPluginTransactional (must be exported from a @Module to satisfy useExisting)
 const mockPrismaForCls = {
@@ -284,6 +285,9 @@ describe('showOrchestrationService', () => {
           {
             creatorId: 'creator_test123',
             note: 'Updated note',
+            agreedRate: '120.00',
+            compensationType: 'FIXED',
+            commissionRate: '5.00',
             metadata: {},
           },
         ],
@@ -329,6 +333,9 @@ describe('showOrchestrationService', () => {
           showId: mockShow.id,
           creatorId: BigInt(1),
           note: 'Updated note',
+          agreedRate: '120.00',
+          compensationType: 'FIXED',
+          commissionRate: '5.00',
           metadata: {},
         }),
       );
@@ -426,6 +433,159 @@ describe('showOrchestrationService', () => {
     });
   });
 
+  describe('bulkAssignCreatorsToShow', () => {
+    it('should create, restore, skip, and report failures', async () => {
+      const uid = 'show_test123';
+      const creators = [
+        {
+          creatorId: 'creator_new',
+          note: 'New creator',
+          agreedRate: '120.00',
+          compensationType: 'FIXED',
+          commissionRate: '5.00',
+          metadata: { source: 'bulk' },
+        },
+        {
+          creatorId: 'creator_active',
+          note: null,
+          metadata: {},
+        },
+        {
+          creatorId: 'creator_deleted',
+          note: 'Restore creator',
+          compensationType: 'COMMISSION',
+          commissionRate: '10.00',
+          metadata: { source: 'restore' },
+        },
+        {
+          creatorId: 'creator_missing',
+          note: null,
+          metadata: {},
+        },
+        {
+          creatorId: 'creator_new',
+          note: 'duplicate',
+          metadata: {},
+        },
+      ];
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      creatorRepository.findByUids.mockResolvedValue([
+        { id: BigInt(1), uid: 'creator_new' },
+        { id: BigInt(2), uid: 'creator_active' },
+        { id: BigInt(3), uid: 'creator_deleted' },
+      ] as any);
+      showCreatorRepository.findMany.mockResolvedValue([
+        { id: BigInt(22), showId: mockShow.id, creatorId: BigInt(2), deletedAt: null, metadata: {} },
+        { id: BigInt(33), showId: mockShow.id, creatorId: BigInt(3), deletedAt: new Date(), metadata: {} },
+      ] as any);
+      showCreatorService.generateShowCreatorUid.mockReturnValue('show_mc_new_bulk');
+      showCreatorRepository.createAssignment.mockResolvedValue({} as any);
+      showCreatorRepository.restoreAndUpdateAssignment.mockResolvedValue({} as any);
+
+      const result = await service.bulkAssignCreatorsToShow(uid, creators as any);
+
+      expect(showCreatorRepository.createAssignment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          uid: 'show_mc_new_bulk',
+          showId: mockShow.id,
+          creatorId: BigInt(1),
+          note: 'New creator',
+          agreedRate: '120.00',
+          compensationType: 'FIXED',
+          commissionRate: '5.00',
+          metadata: { source: 'bulk' },
+        }),
+      );
+      expect(showCreatorRepository.restoreAndUpdateAssignment).toHaveBeenCalledWith(
+        BigInt(33),
+        {
+          note: 'Restore creator',
+          agreedRate: undefined,
+          compensationType: 'COMMISSION',
+          commissionRate: '10.00',
+          metadata: { source: 'restore' },
+        },
+      );
+      expect(result).toEqual({
+        assigned: 2,
+        skipped: 1,
+        failed: [
+          { creatorId: 'creator_missing', reason: 'Creator not found' },
+          { creatorId: 'creator_new', reason: 'Duplicate creator_id in request' },
+        ],
+      });
+    });
+
+    it('should return zero summary for empty payload', async () => {
+      const uid = 'show_test123';
+      showService.getShowById.mockResolvedValue(mockShow);
+
+      const result = await service.bulkAssignCreatorsToShow(uid, []);
+      expect(result).toEqual({ assigned: 0, skipped: 0, failed: [] });
+      expect(creatorRepository.findByUids).not.toHaveBeenCalled();
+      expect(showCreatorRepository.createAssignment).not.toHaveBeenCalled();
+    });
+
+    it('should convert create-assignment failures into failed summary rows', async () => {
+      const uid = 'show_test123';
+      const creators = [
+        {
+          creatorId: 'creator_new',
+          note: null,
+          metadata: {},
+        },
+      ];
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      creatorRepository.findByUids.mockResolvedValue([
+        { id: BigInt(1), uid: 'creator_new' },
+      ] as any);
+      showCreatorRepository.findMany.mockResolvedValue([]);
+      showCreatorService.generateShowCreatorUid.mockReturnValue('show_mc_new_bulk');
+      showCreatorRepository.createAssignment.mockRejectedValue(new Error('insert failed'));
+
+      const result = await service.bulkAssignCreatorsToShow(uid, creators as any);
+
+      expect(result).toEqual({
+        assigned: 0,
+        skipped: 0,
+        failed: [
+          { creatorId: 'creator_new', reason: 'Failed to assign creator' },
+        ],
+      });
+    });
+
+    it('should treat unique conflict during create as skipped', async () => {
+      const uid = 'show_test123';
+      const creators = [
+        {
+          creatorId: 'creator_new',
+          note: null,
+          metadata: {},
+        },
+      ];
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      creatorRepository.findByUids.mockResolvedValue([
+        { id: BigInt(1), uid: 'creator_new' },
+      ] as any);
+      showCreatorRepository.findMany.mockResolvedValue([]);
+      showCreatorService.generateShowCreatorUid.mockReturnValue('show_mc_new_bulk');
+      showCreatorRepository.createAssignment.mockRejectedValue(
+        createMockUniqueConstraintError(['showId', 'creatorId'], 'ShowCreator'),
+      );
+
+      const result = await service.bulkAssignCreatorsToShow(uid, creators as any);
+
+      expect(result).toEqual({
+        assigned: 0,
+        skipped: 1,
+        failed: [],
+      });
+    });
+  });
+
   describe('replaceCreatorsForShow', () => {
     it('should replace creators for a show', async () => {
       const uid = 'show_test123';
@@ -433,6 +593,9 @@ describe('showOrchestrationService', () => {
         {
           creatorId: 'creator_test123',
           note: 'Creator note',
+          agreedRate: '150.00',
+          compensationType: 'HYBRID',
+          commissionRate: '12.50',
           metadata: {},
         },
       ];
@@ -459,6 +622,9 @@ describe('showOrchestrationService', () => {
           showId: mockShow.id,
           creatorId: BigInt(1),
           note: 'Creator note',
+          agreedRate: '150.00',
+          compensationType: 'HYBRID',
+          commissionRate: '12.50',
           metadata: {},
         }),
       );
@@ -485,6 +651,56 @@ describe('showOrchestrationService', () => {
       await expect(service.replaceCreatorsForShow(uid, creators)).rejects.toThrow(
         'Creators not found: creator_missing',
       );
+    });
+
+    it('should restore existing creator assignment with compensation fields', async () => {
+      const uid = 'show_test123';
+      const creators = [
+        {
+          creatorId: 'creator_test123',
+          note: 'Restored note',
+          agreedRate: '180.00',
+          compensationType: 'COMMISSION',
+          commissionRate: '20.00',
+          metadata: { source: 'sync' },
+        },
+      ];
+      const mockCreator = {
+        id: BigInt(1),
+        uid: 'creator_test123',
+        deletedAt: null,
+      };
+      const existingAssignment = {
+        id: BigInt(99),
+        showId: mockShow.id,
+        creatorId: BigInt(1),
+        note: null,
+        agreedRate: null,
+        compensationType: null,
+        commissionRate: null,
+        metadata: {},
+        deletedAt: new Date(),
+      };
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      creatorRepository.findByUids.mockResolvedValue([mockCreator] as any);
+      showCreatorRepository.findMany.mockResolvedValue([existingAssignment] as any);
+      showCreatorRepository.restoreAndUpdateAssignment.mockResolvedValue({} as any);
+      showRepository.findByUid.mockResolvedValue(mockShow);
+
+      await service.replaceCreatorsForShow(uid, creators);
+
+      expect(showCreatorRepository.restoreAndUpdateAssignment).toHaveBeenCalledWith(
+        BigInt(99),
+        {
+          note: 'Restored note',
+          agreedRate: '180.00',
+          compensationType: 'COMMISSION',
+          commissionRate: '20.00',
+          metadata: { source: 'sync' },
+        },
+      );
+      expect(showCreatorRepository.createAssignment).not.toHaveBeenCalled();
     });
   });
 
@@ -525,6 +741,52 @@ describe('showOrchestrationService', () => {
         expect.any(Object),
       );
       expect(result).toEqual(mockShow);
+    });
+  });
+
+  describe('listCreatorsForShow', () => {
+    it('should return creator list for show assignments', async () => {
+      showService.getShowById.mockResolvedValue({
+        ...mockShow,
+        showCreators: [
+          {
+            id: 1n,
+            uid: 'show_creator_1',
+            note: 'Primary',
+            agreedRate: '100.00',
+            compensationType: 'FIXED',
+            commissionRate: null,
+            metadata: { source: 'manual' },
+            showId: mockShow.id,
+            creatorId: 2n,
+            createdAt: new Date('2026-03-13T10:00:00.000Z'),
+            updatedAt: new Date('2026-03-13T10:00:00.000Z'),
+            deletedAt: null,
+            creator: {
+              uid: 'creator_1',
+              name: 'Alice',
+              aliasName: 'Ali',
+            },
+          },
+        ],
+      } as unknown as Show);
+
+      const result = await service.listCreatorsForShow(mockShow.uid);
+
+      expect(showService.getShowById).toHaveBeenCalledWith(
+        mockShow.uid,
+        expect.objectContaining({
+          showCreators: expect.any(Object),
+        }),
+      );
+      expect(result).toEqual([
+        expect.objectContaining({
+          creatorId: 'creator_1',
+          creatorName: 'Alice',
+          creatorAliasName: 'Ali',
+          note: 'Primary',
+        }),
+      ]);
     });
   });
 });

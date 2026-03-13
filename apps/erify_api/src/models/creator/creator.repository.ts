@@ -168,6 +168,107 @@ export class CreatorRepository extends BaseRepository<
     });
   }
 
+  async findCatalogForStudio(params: {
+    studioUid: string;
+    search?: string;
+    includeRostered?: boolean;
+    limit?: number;
+  }): Promise<Array<{
+      uid: string;
+      name: string;
+      aliasName: string;
+      isRostered: boolean;
+    }>> {
+    const search = params.search?.trim();
+    const where: Prisma.CreatorWhereInput = {
+      deletedAt: null,
+      ...(search
+        ? {
+            OR: [
+              { uid: { contains: search, mode: 'insensitive' } },
+              { name: { contains: search, mode: 'insensitive' } },
+              { aliasName: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+      ...(!params.includeRostered && {
+        studioCreators: {
+          none: {
+            deletedAt: null,
+            studio: {
+              uid: params.studioUid,
+              deletedAt: null,
+            },
+          },
+        },
+      }),
+    };
+
+    const creators = await this.delegate.findMany({
+      where,
+      take: params.limit ?? 50,
+      orderBy: [{ name: 'asc' }],
+      select: {
+        uid: true,
+        name: true,
+        aliasName: true,
+        studioCreators: {
+          where: {
+            deletedAt: null,
+            studio: {
+              uid: params.studioUid,
+              deletedAt: null,
+            },
+          },
+          select: { id: true },
+          take: 1,
+        },
+      },
+    });
+
+    return creators.map((creator) => ({
+      uid: creator.uid,
+      name: creator.name,
+      aliasName: creator.aliasName,
+      isRostered: creator.studioCreators.length > 0,
+    }));
+  }
+
+  async findAvailableForStudioWindow(params: {
+    dateFrom: Date;
+    dateTo: Date;
+    search?: string;
+    limit?: number;
+  }): Promise<Array<{
+      uid: string;
+      name: string;
+      aliasName: string;
+    }>> {
+    // TODO(phase-5): restore strict overlap-based availability constraints.
+    // Current behavior is intentionally loose to support broad creator discovery in mapping flows.
+    return this.delegate.findMany({
+      where: {
+        deletedAt: null,
+        ...(params.search
+          ? {
+              OR: [
+                { uid: { contains: params.search, mode: 'insensitive' } },
+                { name: { contains: params.search, mode: 'insensitive' } },
+                { aliasName: { contains: params.search, mode: 'insensitive' } },
+              ],
+            }
+          : {}),
+      },
+      take: params.limit ?? 50,
+      orderBy: [{ name: 'asc' }],
+      select: {
+        uid: true,
+        name: true,
+        aliasName: true,
+      },
+    });
+  }
+
   private buildWhereClause(params: {
     name?: string;
     aliasName?: string;

@@ -126,6 +126,9 @@ export class ShowCreatorRepository extends BaseRepository<
     showId: bigint;
     creatorId: bigint;
     note?: string | null;
+    agreedRate?: string | null;
+    compensationType?: string | null;
+    commissionRate?: string | null;
     metadata?: object;
   }): Promise<ShowCreator> {
     return this.delegate.create({
@@ -134,6 +137,9 @@ export class ShowCreatorRepository extends BaseRepository<
         show: { connect: { id: params.showId } },
         creator: { connect: { id: params.creatorId } },
         note: params.note ?? null,
+        agreedRate: params.agreedRate ?? null,
+        compensationType: params.compensationType ?? null,
+        commissionRate: params.commissionRate ?? null,
         metadata: params.metadata ?? {},
       },
     });
@@ -144,15 +150,29 @@ export class ShowCreatorRepository extends BaseRepository<
    */
   async restoreAndUpdateAssignment(id: bigint, params: {
     note?: string | null;
+    agreedRate?: string | null;
+    compensationType?: string | null;
+    commissionRate?: string | null;
     metadata?: object;
   }): Promise<ShowCreator> {
+    const data: Prisma.ShowCreatorUpdateInput = {
+      deletedAt: null,
+    };
+
+    if (params.note !== undefined)
+      data.note = params.note;
+    if (params.agreedRate !== undefined)
+      data.agreedRate = params.agreedRate;
+    if (params.compensationType !== undefined)
+      data.compensationType = params.compensationType;
+    if (params.commissionRate !== undefined)
+      data.commissionRate = params.commissionRate;
+    if (params.metadata !== undefined)
+      data.metadata = params.metadata;
+
     return this.delegate.update({
       where: { id },
-      data: {
-        note: params.note ?? null,
-        metadata: params.metadata ?? {},
-        deletedAt: null,
-      },
+      data,
     });
   }
 

@@ -8,6 +8,7 @@ import {
 } from './schemas/show-orchestration.schema';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 import { CreatorRepository } from '@/models/creator/creator.repository';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import type { ShowInclude, ShowWithPayload } from '@/models/show/schemas/show.schema';
@@ -22,7 +23,30 @@ import { ShowPlatformService } from '@/models/show-platform/show-platform.servic
 type CreatorAssignmentPayload = {
   creatorId: string;
   note?: string | null;
+  agreedRate?: string | null;
+  compensationType?: string | null;
+  commissionRate?: string | null;
   metadata?: object;
+};
+
+type BulkAssignCreatorsResult = {
+  assigned: number;
+  skipped: number;
+  failed: Array<{
+    creatorId: string;
+    reason: string;
+  }>;
+};
+
+type ShowCreatorListItem = {
+  creatorId: string;
+  creatorName: string;
+  creatorAliasName: string;
+  note: string | null;
+  agreedRate: unknown | null;
+  compensationType: string | null;
+  commissionRate: unknown | null;
+  metadata: Record<string, unknown>;
 };
 
 @Injectable()
@@ -139,6 +163,129 @@ export class ShowOrchestrationService {
     await this.removeShowCreatorAssignmentsByUids(show.id, creatorIds);
   }
 
+  async bulkAssignCreatorsToShow(
+    uid: string,
+    creators: CreatorAssignmentPayload[],
+  ): Promise<BulkAssignCreatorsResult> {
+    const show = await this.showService.getShowById(uid);
+    const showId = show.id;
+    if (creators.length === 0) {
+      return { assigned: 0, skipped: 0, failed: [] };
+    }
+
+    const uniqueCreatorUids = [...new Set(creators.map((creator) => creator.creatorId))];
+    const foundCreators = await this.creatorRepository.findByUids(uniqueCreatorUids);
+    const creatorUidToIdMap = new Map(foundCreators.map((creator) => [creator.uid, creator.id]));
+
+    const existingAssignments = await this.showCreatorRepository.findMany({
+      where: {
+        showId,
+        creatorId: {
+          in: foundCreators.map((creator) => creator.id),
+        },
+      },
+    });
+    const existingByCreatorId = new Map(existingAssignments.map((assignment) => [assignment.creatorId, assignment]));
+    const processedCreatorUids = new Set<string>();
+    const result: BulkAssignCreatorsResult = { assigned: 0, skipped: 0, failed: [] };
+
+    for (const creator of creators) {
+      if (processedCreatorUids.has(creator.creatorId)) {
+        result.failed.push({
+          creatorId: creator.creatorId,
+          reason: 'Duplicate creator_id in request',
+        });
+        continue;
+      }
+      processedCreatorUids.add(creator.creatorId);
+
+      const internalCreatorId = creatorUidToIdMap.get(creator.creatorId);
+      if (!internalCreatorId) {
+        result.failed.push({
+          creatorId: creator.creatorId,
+          reason: 'Creator not found',
+        });
+        continue;
+      }
+
+      const existingAssignment = existingByCreatorId.get(internalCreatorId);
+      if (existingAssignment?.deletedAt === null) {
+        result.skipped += 1;
+        continue;
+      }
+
+      try {
+        if (existingAssignment) {
+          await this.showCreatorRepository.restoreAndUpdateAssignment(existingAssignment.id, {
+            note: creator.note ?? null,
+            agreedRate: creator.agreedRate,
+            compensationType: creator.compensationType,
+            commissionRate: creator.commissionRate,
+            metadata: creator.metadata ?? (existingAssignment.metadata as object) ?? {},
+          });
+        } else {
+          await this.showCreatorRepository.createAssignment({
+            uid: this.showCreatorService.generateShowCreatorUid(),
+            showId,
+            creatorId: internalCreatorId,
+            note: creator.note ?? null,
+            agreedRate: creator.agreedRate ?? null,
+            compensationType: creator.compensationType ?? null,
+            commissionRate: creator.commissionRate ?? null,
+            metadata: creator.metadata ?? {},
+          });
+        }
+      } catch (error) {
+        if (this.isPrismaUniqueConstraintError(error)) {
+          // Duplicate assignment race: treat as skipped/idempotent-safe.
+          result.skipped += 1;
+          continue;
+        }
+
+        result.failed.push({
+          creatorId: creator.creatorId,
+          reason: this.resolveCreatorAssignmentErrorReason(error),
+        });
+        continue;
+      }
+
+      result.assigned += 1;
+    }
+
+    return result;
+  }
+
+  async listCreatorsForShow(uid: string): Promise<ShowCreatorListItem[]> {
+    const show = await this.showService.getShowById(uid, {
+      showCreators: {
+        where: {
+          deletedAt: null,
+          creator: { deletedAt: null },
+        },
+        include: {
+          creator: {
+            select: {
+              uid: true,
+              name: true,
+              aliasName: true,
+            },
+          },
+        },
+      },
+    });
+
+    return (show.showCreators ?? []).map((showCreator) => ({
+      creatorId: showCreator.creator.uid,
+      creatorName: showCreator.creator.name,
+      creatorAliasName: showCreator.creator.aliasName,
+      note: showCreator.note,
+      agreedRate: showCreator.agreedRate ?? null,
+      compensationType: showCreator.compensationType ?? null,
+      commissionRate: showCreator.commissionRate ?? null,
+      metadata: (showCreator.metadata as Record<string, unknown>) ?? {},
+    }));
+  }
+
   /**
    * Removes platforms from a show by soft-deleting the ShowPlatform records.
    */
@@ -163,6 +310,26 @@ export class ShowOrchestrationService {
     const showId = show.id;
     await this.syncShowCreators(showId, creators);
     return this.showRepository.findByUid(uid, defaultInclude) as Promise<Show | ShowWithPayload<T>>;
+  }
+
+  private resolveCreatorAssignmentErrorReason(error: unknown): string {
+    if (this.isPrismaKnownRequestError(error)) {
+      return 'Database error while assigning creator';
+    }
+    return 'Failed to assign creator';
+  }
+
+  private isPrismaKnownRequestError(error: unknown): error is { code: string } {
+    return (
+      typeof error === 'object'
+      && error !== null
+      && 'code' in error
+      && typeof (error as { code?: unknown }).code === 'string'
+    );
+  }
+
+  private isPrismaUniqueConstraintError(error: unknown): boolean {
+    return this.isPrismaKnownRequestError(error) && error.code === PRISMA_ERROR.UniqueConstraint;
   }
 
   /**
@@ -216,6 +383,9 @@ export class ShowOrchestrationService {
           uid: this.showCreatorService.generateShowCreatorUid(),
           creator: { connect: { uid: creator.creatorId } },
           note: creator.note ?? null,
+          agreedRate: creator.agreedRate ?? null,
+          compensationType: creator.compensationType ?? null,
+          commissionRate: creator.commissionRate ?? null,
           metadata: creator.metadata ?? {},
         })),
       },
@@ -284,6 +454,9 @@ export class ShowOrchestrationService {
       if (existing) {
         await this.showCreatorRepository.restoreAndUpdateAssignment(existing.id, {
           note: assignment.note ?? null,
+          agreedRate: assignment.agreedRate,
+          compensationType: assignment.compensationType,
+          commissionRate: assignment.commissionRate,
           metadata: assignment.metadata ?? (existing.metadata as object) ?? {},
         });
       } else {
@@ -292,6 +465,9 @@ export class ShowOrchestrationService {
           showId,
           creatorId: internalCreatorId,
           note: assignment.note ?? null,
+          agreedRate: assignment.agreedRate ?? null,
+          compensationType: assignment.compensationType ?? null,
+          commissionRate: assignment.commissionRate ?? null,
           metadata: assignment.metadata ?? {},
         });
       }

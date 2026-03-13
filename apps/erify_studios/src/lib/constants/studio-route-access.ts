@@ -1,22 +1,54 @@
 import { STUDIO_ROLE, type StudioRole } from '@eridu/api-types/memberships';
 
 export const STUDIO_ROUTE_ACCESS = {
-  dashboard: STUDIO_ROLE.MEMBER,
-  myTasks: STUDIO_ROLE.MEMBER,
-  myShifts: STUDIO_ROLE.MEMBER,
-  tasks: STUDIO_ROLE.MANAGER,
-  shifts: STUDIO_ROLE.ADMIN,
-  shows: STUDIO_ROLE.ADMIN,
-  taskTemplates: STUDIO_ROLE.ADMIN,
-} as const satisfies Record<string, StudioRole>;
+  dashboard: [
+    STUDIO_ROLE.MEMBER,
+    STUDIO_ROLE.DESIGNER,
+    STUDIO_ROLE.MODERATION_MANAGER,
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.TALENT_MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
+  myTasks: [
+    STUDIO_ROLE.MEMBER,
+    STUDIO_ROLE.DESIGNER,
+    STUDIO_ROLE.MODERATION_MANAGER,
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.TALENT_MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
+  myShifts: [
+    STUDIO_ROLE.MEMBER,
+    STUDIO_ROLE.DESIGNER,
+    STUDIO_ROLE.MODERATION_MANAGER,
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.TALENT_MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
+  reviewQueue: [
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
+  shifts: [
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
+  shows: [
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
+  taskTemplates: [
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
+  creatorMapping: [
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.TALENT_MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
+} as const satisfies Record<string, readonly StudioRole[]>;
 
 export type StudioRouteAccessKey = keyof typeof STUDIO_ROUTE_ACCESS;
-
-const STUDIO_ROLE_LEVEL: Record<StudioRole, number> = {
-  [STUDIO_ROLE.MEMBER]: 1,
-  [STUDIO_ROLE.MANAGER]: 2,
-  [STUDIO_ROLE.ADMIN]: 3,
-};
 
 export function hasStudioRouteAccess(
   role: StudioRole | null | undefined,
@@ -26,6 +58,5 @@ export function hasStudioRouteAccess(
     return false;
   }
 
-  const requiredRole = STUDIO_ROUTE_ACCESS[routeKey];
-  return STUDIO_ROLE_LEVEL[role] >= STUDIO_ROLE_LEVEL[requiredRole];
+  return STUDIO_ROUTE_ACCESS[routeKey].includes(role);
 }

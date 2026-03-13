@@ -17,7 +17,7 @@ import {
 import { ShiftAlignmentService } from '@/orchestration/shift-alignment/shift-alignment.service';
 import { ShiftCalendarService } from '@/orchestration/shift-calendar/shift-calendar.service';
 
-@StudioProtected([STUDIO_ROLE.ADMIN])
+@StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
 @Controller('studios/:studioId')
 export class ShiftCalendarController extends BaseStudioController {
   constructor(

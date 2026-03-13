@@ -1,20 +1,20 @@
 # PRD: Show Economics & P&L
 
 > **Status**: Draft
-> **Phase**: 4 — P&L Visibility & MC Operations
+> **Phase**: 4 — P&L Visibility & Creator Operations
 > **Workstream**: 3
-> **Depends on**: [MC Mapping](./mc-mapping.md) (MC compensation requires MC-show linkage)
+> **Depends on**: [Creator Mapping](./creator-mapping.md) (compensation requires creator-show linkage)
 
 ## Problem
 
 The studio has no visibility into show-level profitability. Key questions unanswered today:
 
-- *"What did this show cost us in MC fees and shift labor?"*
+- *"What did this show cost us in creator fees and shift labor?"*
 - *"What's the P&L for this client this month?"*
 - *"Which shows are profitable vs. loss-making?"*
 - *"What's the GMV and sales performance by platform for this schedule?"*
 
-Show performance data (views, GMV, sales) and MC compensation are tracked outside the system, making financial analysis manual and unreliable.
+Show performance data (views, GMV, sales) and creator compensation are tracked outside the system, making financial analysis manual and unreliable.
 
 ## Users
 
@@ -24,64 +24,47 @@ Show performance data (views, GMV, sales) and MC compensation are tracked outsid
 
 ## Existing Infrastructure
 
-| Model | Fields | Status |
-|-------|--------|--------|
-| `StudioShift` | `hourlyRate`, `projectedCost`, `calculatedCost` | ✅ Exists |
-| `StudioMembership` | `baseHourlyRate` | ✅ Exists |
-| `ShowPlatform` | `viewerCount` | ✅ Exists (no GMV/sales) |
-| `MC` / `ShowMC` | No compensation fields | ❌ Gap |
+| Model                     | Fields                                          | Status                  |
+| ------------------------- | ----------------------------------------------- | ----------------------- |
+| `StudioShift`             | `hourlyRate`, `projectedCost`, `calculatedCost` | ✅ Exists                |
+| `StudioMembership`        | `baseHourlyRate`                                | ✅ Exists                |
+| `ShowPlatform`            | `viewerCount`                                   | ✅ Exists (no GMV/sales) |
+| `Creator` / `ShowCreator` | No compensation fields                          | ❌ Gap                   |
 
 ## Requirements
 
-### MC compensation model
+### Baseline (in scope now)
 
-1. MC default rate: `MC.defaultHourlyRate` or `MC.defaultFixedFee`
-2. Compensation type: enum (`FIXED`, `COMMISSION`, `HYBRID`)
-3. Per-show override: `ShowMC.agreedRate`, `ShowMC.compensationType`
-4. If per-show rate is null, fall back to MC default
-5. Commission rate (percentage) for commission/hybrid types
+1. Keep schema/contract extensions that support creator compensation inputs (`agreedRate`, `compensationType`, `commissionRate`) without requiring full profit-rule execution yet.
+2. Show-level baseline variable cost = creator costs + shift labor costs.
+3. Creator baseline cost per show uses current agreed/default rate handling only.
+4. Shift baseline cost per show uses existing shift cost fields for overlapping show windows.
+5. API baseline: `GET /studios/:studioId/shows/:showUid/economics` for cost visibility.
+6. Grouped baseline economics read: `GET /studios/:studioId/economics?group_by=show|schedule|client&date_from=...&date_to=...`.
 
-### Show performance metrics
+### Deferred (future profit module, not Phase 4 baseline)
 
-1. Extend `ShowPlatform` with: `gmv` (Decimal), `sales` (Decimal), `orders` (Int)
-2. Manual input via admin/studio endpoints (platform API integration is future)
-3. Performance data is per-platform per-show
-
-### Cost aggregation
-
-1. Show-level variable cost = MC costs + shift labor costs
-2. MC cost per show: sum of agreed rates for all ShowMC records
-3. Shift cost per show: sum of StudioShift costs for shifts overlapping show time window
-4. API: `GET /studios/:studioId/shows/:showUid/economics`
-
-### P&L views
-
-1. `GET /studios/:studioId/economics?group_by=show|schedule|client&date_from=...&date_to=...`
-2. Per group: total variable cost, total revenue (GMV), contribution margin
-3. Filterable by date range, client, show type
-4. API-first — frontend P&L dashboard is follow-up
-
-### Performance views
-
-1. `GET /studios/:studioId/performance?group_by=show|schedule|client&date_from=...&date_to=...`
-2. Aggregated: total views, total GMV, total sales, total orders
-3. Powers BD/commerce reporting
+1. Complex/hybrid compensation execution.
+2. Bonus and post-show adjustments.
+3. Tiered or volume-based commission formulas.
+4. Fully dynamic formula/rule configuration by planner/admin.
+5. Full profit/performance aggregation dependency on GMV/sales/traffic inputs.
 
 ## Acceptance Criteria
 
-- [ ] MC compensation type and rates configurable per MC and per show
-- [ ] Show performance metrics (GMV, sales, orders) can be entered per platform
-- [ ] Show economics endpoint returns MC cost + shift cost + revenue breakdown
-- [ ] P&L view aggregates by show/schedule/client over a date range
-- [ ] Performance view aggregates metrics by show/schedule/client
+- [ ] Show economics endpoint returns baseline creator cost + shift cost.
+- [ ] Grouped economics endpoint returns baseline cost totals by show/schedule/client.
+- [ ] Compensation input fields are accepted/persisted for forward compatibility.
+- [ ] No bonus/tiered/hybrid rule execution is required in this phase.
 
 ## Product Decisions
 
-- **Variable costs only** — fixed costs (rent, equipment) are future
-- **Manual performance input** — platform API integration is future
-- **MC rate precedence**: ShowMC.agreedRate overrides MC.defaultRate
-- **P&L = revenue (GMV) minus variable cost (MC + shift)**
+- **Baseline variable costs only** — fixed costs (rent, equipment) are future.
+- **Complex compensation is deferred** — bonus/tiered/hybrid rule engines are not part of baseline.
+- **Creator rate precedence**: `ShowCreator.agreedRate` overrides creator defaults.
+- **No compensation logic in metadata** — `metadata` is descriptive only, not executable financial rules.
 
 ## Design Reference
 
-- Technical design: TBD → `apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md`
+- Backend feature doc: `apps/erify_api/docs/PHASE_4_PNL_BACKEND.md`
+- Frontend feature doc: `apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md`

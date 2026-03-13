@@ -16,9 +16,11 @@ Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Des
 4. [Show Readiness](./SHOW_READINESS.md)
 5. [Studio Role Use Cases and Views](./STUDIO_ROLE_USE_CASES_AND_VIEWS.md)
 6. [Studio Shift Schedule Features and Workflows](./STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md)
+7. [Phase 4 P&L Frontend](./PHASE_4_PNL_FRONTEND.md)
 
 ## Design Docs
 
 Active (in progress):
 
 1. [Schedule Continuity FE Design](./design/DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — ⏳ In Progress
+2. [Task Submission Reporting & Export](./design/TASK_SUBMISSION_REPORTING_DESIGN.md) — 📐 Planned manager-facing submitted-task reporting/export

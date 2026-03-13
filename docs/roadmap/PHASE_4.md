@@ -1,109 +1,59 @@
 # Phase 4: P&L Visibility & Creator Operations
 
-> **Status**: 🚧 Active execution
+> **Status**: ✅ Completed (creator mapping + assignment delivered; economics redesign deferred to next phase)
+> **Primary tracker**: This file (`PHASE_4.md`)
 
 ## Goal
 
-Phase 4 makes **show-level profitability visible** by connecting creator operations, compensation tracking, and show performance metrics into a unified cost/revenue view.
+Deliver creator mapping + assignment foundations on top of the creator-first baseline, with economics redesign deferred to next phase.
 
-> *"Give every role the information and tools they need to coordinate show operations — and make the financial outcome of those operations visible."*
+## Phase 4 Baseline
 
-## Scope
+- Creator naming cutover/renaming/refactoring is a **completed prerequisite inside Phase 4** and is merged to `master`.
+- Phase 4 deliverable is the creator mapping + assignment foundation (BE/FE + smoke stabilization).
+- Economics implementation is intentionally deferred to next phase redesign scope.
 
-Phase 4 is scoped to the **critical path to P&L**. Features that are valuable but independent of P&L (ad-hoc ticketing, material management) are deferred to a later phase.
+## Phase 4 Delivery Summary
 
-### Naming Boundary
+### 1. Creator Mapping + Assignment (Done)
 
-- Domain terminology is creator-first across API/UI/shared contracts.
-- `MC` is treated as a creator classification/business type, not the primary domain entity.
-- Prisma model symbols are now creator-first (`Creator`, `ShowCreator`, `StudioCreator`).
-- Physical DB compatibility fields/tables can still retain legacy names via `@map/@@map` (for example `mc_id`) until a dedicated storage cleanup scope.
+- Studio-level creator mapping contracts and endpoints are implemented.
+- Show-level creator assignment flows (single-show and bulk workflows) are implemented.
+- Mapping behavior and smoke coverage are stabilized for merge to `master`.
 
-## Workstreams
+### 2. Economics Baseline (Deferred)
 
-### 1. RBAC Roles
+- Economics redesign and implementation moved to next phase.
+- Revenue/performance-driven profit logic remains deferred.
 
-Add distinct roles to `StudioMembership`: `TALENT_MANAGER`, `DESIGNER`, `MODERATION_MANAGER`. This enables role-specific authorization across Phase 4 endpoints and prepares the access model for future workstreams.
+### 3. Docs / Agent / Memory Sync (Done)
 
-PRD: [docs/prd/rbac-roles.md](../prd/rbac-roles.md)
+- Roadmap and app-local design docs aligned with delivered mapping scope and deferred economics scope.
 
-### 2. Creator Mapping & Talent Operations
+## Architecture Guardrails (Phase 4 Baseline)
 
-Bulk creator-to-show assignment so talent managers can efficiently map creators to shows. Studio-scoped creator endpoints for add/remove on individual shows. Creator availability query (conflict check against booked shows).
+- Finance arithmetic must live in dedicated economics domain services/calculators.
+- Controllers must stay transport-focused (authz, DTO parsing, response shaping only).
+- Orchestration services may coordinate flows but must not own financial formulas.
+- `metadata` is not a compensation rule engine and must not store executable bonus logic.
+- Complex compensation (bonus, post-show adjustments, tiered/volume commission, hybrid rule sets) is explicitly deferred.
 
-PRD: [docs/prd/mc-mapping.md](../prd/mc-mapping.md) (creator mapping domain)
+## Canonical Specs (PRD + BE/FE Feature Docs)
 
-### 3. Show Economics & P&L
+| Scope                            | PRD                                             | Backend Doc                                                                       | Frontend Doc                                                                                           |
+| -------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Roles & authorization foundation | [rbac-roles.md](../prd/rbac-roles.md)           | [AUTHORIZATION_GUIDE.md](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md) | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) |
+| Creator mapping & assignment     | [creator-mapping.md](../prd/creator-mapping.md) | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md)        | [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md)                       |
+| Show economics baseline          | [show-economics.md](../prd/show-economics.md)   | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md)        | [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md)                       |
 
-Creator compensation model (fixed/commission/hybrid rates). Show performance metrics (GMV, sales, orders on ShowPlatform). Variable cost aggregation per show (creator fees + shift labor). P&L and performance views grouped by show, schedule, or client.
+## Out of Scope for Phase 4
 
-PRD: [docs/prd/show-economics.md](../prd/show-economics.md)
+- Economics redesign/implementation (moved to [Phase 5](./PHASE_5.md) planning scope).
+- Ticketing/material management and unrelated backlog tracks (see [Phase 5](./PHASE_5.md)).
+- Advanced profit engine and complex compensation policies.
 
-## Sequencing
+## Definition of Done (Phase 4)
 
-```mermaid
-graph LR
-    A["1. RBAC Roles"] --> B["2. Creator Mapping"]
-    A --> C["3. Creator Compensation"]
-    D["4. Show Perf Metrics"] --> F["6. Cost Aggregation"]
-    C --> F
-    F --> G["7. P&L Views"]
-    D --> H["8. Performance Views"]
-    B --> I["9. Creator Mapping UI"]
-    E["5. Creator Availability"] --> I
-
-    style G fill:#10B981,color:#fff
-    style H fill:#10B981,color:#fff
-```
-
-| Order | Feature                             | Est  |
-| ----- | ----------------------------------- | ---- |
-| 1     | RBAC roles                          | 1-2d |
-| 2     | Bulk creator-to-show mapping (BE)   | 2-3d |
-| 3     | Creator compensation model          | 1-2d |
-| 4     | Show performance metrics            | 1-2d |
-| 5     | Creator availability query          | 1-2d |
-| 6     | Cost aggregation API                | 3-4d |
-| 7     | P&L views (by show/schedule/client) | 2-3d |
-| 8     | Performance views                   | 2-3d |
-| 9     | Creator mapping UI                  | 3-4d |
-
-**Estimated total: ~18-27 working days**
-
-## Existing Infrastructure (Phase 4 Builds On)
-
-- `StudioShift.hourlyRate`, `projectedCost`, `calculatedCost` — shift costs already modeled
-- `StudioMembership.baseHourlyRate` — member rates already modeled
-- `ShowPlatform.viewerCount` — basic performance tracking exists
-- `show_creators` join table — creator-show linkage exists
-- R2 presigned upload infrastructure — shipped in Phase 3
-
-## Resolved Design Decisions
-
-| Decision               | Answer                                                             |
-| ---------------------- | ------------------------------------------------------------------ |
-| Talent manager role    | `TALENT_MANAGER` via RBAC — distinct from manager, below admin     |
-| Creator studio scoping | Creators not studio-scoped (can work across studios) — future concern |
-| Creator compensation   | Default rate on creator + per-show override on show-creator mapping |
-| Compensation types     | FIXED, COMMISSION, HYBRID                                          |
-| Show performance input | Manual entry first; platform API integration is future             |
-| P&L scope              | Variable costs only (creator fees, shift labor); fixed costs are future |
-
-## Open PRD Questions
-
-Per-workstream questions are tracked in the respective PRD documents.
-
-## Deferred From Phase 4
-
-Features deferred to later phases — see [Phase 5](./PHASE_5.md):
-
-- Ad-hoc ticketing (cross-functional, show/client-targeted tickets)
-- Material management engine (asset versioning, show-material linking)
-- Review quality hardening (transition enforcement, rejection notes)
-- Client self-service (separate FE app)
-
-## Doc Hierarchy
-
-- **Roadmap** (this file): phase scope, priorities, sequencing
-- **PRDs** ([docs/prd/](../prd/README.md)): user stories, acceptance criteria, product rules
-- **Technical Designs** ([apps/erify_api/docs/design/](../../apps/erify_api/docs/design/README.md)): data models, API contracts, service architecture
+- Mapping/assignment flow is stable and merged-ready.
+- Creator mapping PRD intent and BE/FE design docs are synced and traceable by route/contract.
+- Economics work is explicitly deferred to next phase redesign and tracked in Phase 5 backlog.

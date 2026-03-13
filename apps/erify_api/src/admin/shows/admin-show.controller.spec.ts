@@ -239,7 +239,14 @@ describe('adminShowController', () => {
     it('should replace creators on a show', async () => {
       const showId = 'show_123';
       const replaceDto: ReplaceCreatorsOnShowDto = {
-        creators: [{ creatorId: 'creator_1', note: null, metadata: {} }],
+        creators: [{
+          creatorId: 'creator_1',
+          note: null,
+          agreedRate: null,
+          compensationType: null,
+          commissionRate: null,
+          metadata: {},
+        }],
       };
       const updatedShow = {
         uid: showId,

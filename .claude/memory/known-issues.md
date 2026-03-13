@@ -6,10 +6,10 @@
 
 As of Feb 2026, the major service-layer violations have been resolved. The patterns are now stable.
 
-## Merge Program Note (March 2026)
+## Phase 4 Completion Note (March 2026)
 
-- Phase 4 merge execution is now tracked in `docs/roadmap/PHASE_4_MERGE_PROGRAM.md`.
-- Merge policy changed to direct creator cutover by default (alpha environment, low external-user risk).
+- Phase 4 (creator mapping + assignment) is complete and merged.
+- Merge policy was direct creator cutover (alpha environment, low external-user risk).
 - New temporary `mc` compatibility layers should not be introduced unless a blocker is explicitly documented.
 
 > **Note**: `CLAUDE.md` previously stated "14/18 models violate patterns" — this was accurate

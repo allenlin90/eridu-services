@@ -21,7 +21,9 @@ type GetStudioShowsParams = {
   planning_date_from?: string;
   planning_date_to?: string;
   has_tasks?: boolean;
+  has_creators?: boolean;
   needs_attention?: boolean;
+  creator_name?: string;
   client_name?: string;
   show_type_name?: string;
   show_standard_name?: string;

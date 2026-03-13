@@ -28,13 +28,13 @@ export function ShowHeaderSection({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-4">
           <Link to="/studios/$studioId/shows" params={{ studioId }}>
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-xl font-bold tracking-tight">
               {isLoadingShow && !showDetails ? 'Loading show...' : (showDetails?.name ?? 'Show Tasks')}
             </h1>

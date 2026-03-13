@@ -27,7 +27,7 @@ import {
 } from '@/models/task-template/schemas/task-template.schema';
 import { TaskTemplateService } from '@/models/task-template/task-template.service';
 
-@StudioProtected([STUDIO_ROLE.ADMIN])
+@StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
 @Controller('studios/:studioId/task-templates')
 export class StudioTaskTemplateController extends BaseStudioController {
   constructor(private readonly taskTemplateService: TaskTemplateService) {

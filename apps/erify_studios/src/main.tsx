@@ -3,6 +3,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { RouterProvider } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Toaster } from 'sonner';
 
 import './index.css';
 
@@ -19,6 +20,7 @@ createRoot(document.getElementById('root')!).render(
       persistOptions={{ persister }}
     >
       <RouterProvider router={router} />
+      <Toaster position="top-right" richColors />
       {/* DevTools only in development */}
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </PersistQueryClientProvider>

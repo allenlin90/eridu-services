@@ -28,6 +28,7 @@ export * from './show-standards/index.js';
 export * from './show-statuses/index.js';
 export * from './show-types/index.js';
 export * from './shows/index.js';
+export * from './studio-creators/index.js';
 export * from './studio-rooms/index.js';
 export * from './studio-shifts/index.js';
 export * from './studios/index.js';

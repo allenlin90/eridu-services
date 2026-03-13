@@ -51,6 +51,9 @@ describe('showCreatorService', () => {
         showId: 'show_1',
         creatorId: 'creator_1',
         note: 'Main host',
+        agreedRate: '150.00',
+        compensationType: 'FIXED',
+        commissionRate: '8.50',
         metadata: { role: 'host' },
       } as CreateShowCreatorDto;
 
@@ -79,6 +82,9 @@ describe('showCreatorService', () => {
         expect.objectContaining({
           uid: 'show_mc_123',
           note: dto.note,
+          agreedRate: dto.agreedRate,
+          compensationType: dto.compensationType,
+          commissionRate: dto.commissionRate,
           metadata: dto.metadata,
           show: { connect: { uid: dto.showId } },
           creator: { connect: { uid: dto.creatorId } },
@@ -223,6 +229,9 @@ describe('showCreatorService', () => {
 
       const dto = {
         note: 'Updated note',
+        agreedRate: '180.00',
+        compensationType: 'COMMISSION',
+        commissionRate: '12.00',
         metadata: { role: 'main_host' },
       } as unknown as UpdateShowCreatorDto;
 
@@ -240,6 +249,9 @@ describe('showCreatorService', () => {
         { uid: 'show_mc_123' },
         expect.objectContaining({
           note: 'Updated note',
+          agreedRate: '180.00',
+          compensationType: 'COMMISSION',
+          commissionRate: '12.00',
           metadata: { role: 'main_host' },
         }),
       );

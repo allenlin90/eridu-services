@@ -158,10 +158,10 @@ function getStudioAdminItems(
 ): SidebarNavItem['items'] {
   const adminItems: SidebarNavItem['items'] = [];
 
-  if (hasStudioRouteAccess(role as StudioRole, 'tasks')) {
+  if (hasStudioRouteAccess(role as StudioRole, 'reviewQueue')) {
     adminItems.push({
       title: 'Review Queue',
-      url: `/studios/${studioId}/tasks?status=REVIEW`,
+      url: `/studios/${studioId}/review-queue`,
       icon: ClipboardCheck,
     });
   }
@@ -173,6 +173,7 @@ function getStudioAdminItems(
       icon: CalendarDays,
     });
   }
+
   if (hasStudioRouteAccess(role as StudioRole, 'shows')) {
     adminItems.push({
       title: 'Shows',
@@ -180,6 +181,7 @@ function getStudioAdminItems(
       icon: Clapperboard,
     });
   }
+
   if (hasStudioRouteAccess(role as StudioRole, 'taskTemplates')) {
     adminItems.push({
       title: 'Task Templates',
@@ -189,6 +191,26 @@ function getStudioAdminItems(
   }
 
   return adminItems;
+}
+
+/**
+ * Generates creator-related studio navigation items.
+ */
+function getStudioCreatorItems(
+  studioId: string,
+  role: string,
+): SidebarNavItem['items'] {
+  const creatorItems: SidebarNavItem['items'] = [];
+
+  if (hasStudioRouteAccess(role as StudioRole, 'creatorMapping')) {
+    creatorItems.push({
+      title: 'Creator Mapping',
+      url: `/studios/${studioId}/creator-mapping`,
+      icon: MonitorPlay,
+    });
+  }
+
+  return creatorItems;
 }
 
 /**
@@ -236,6 +258,7 @@ export function useSidebarConfig(
     if (activeStudio) {
       const studioCommonItems = buildActiveItems(getStudioCommonItems(activeStudio.studio.uid));
       const studioAdminItems = buildActiveItems(getStudioAdminItems(activeStudio.studio.uid, activeStudio.role));
+      const studioCreatorItems = buildActiveItems(getStudioCreatorItems(activeStudio.studio.uid, activeStudio.role));
 
       navItems.push({
         title: 'Studio Common',
@@ -252,6 +275,16 @@ export function useSidebarConfig(
           icon: ShieldCheck,
           isActive: studioAdminItems.some((item) => item.isActive),
           items: studioAdminItems,
+        });
+      }
+
+      if (studioCreatorItems.length > 0) {
+        navItems.push({
+          title: 'Creators',
+          url: `/studios/${activeStudio.studio.uid}/creator-mapping`,
+          icon: Users,
+          isActive: studioCreatorItems.some((item) => item.isActive),
+          items: studioCreatorItems,
         });
       }
     }

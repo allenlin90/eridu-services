@@ -12,7 +12,7 @@
 | --------------------------------------------------- | ------ | ------------------------------------------------- |
 | [System Architecture Overview](../../../docs/product/ARCHITECTURE_OVERVIEW.md) | ✅      | Root-level cross-app architecture overview |
 | [Business Domain](../../../docs/product/BUSINESS.md)                    | ✅      | Root-level business/domain model and product context |
-| [Role Access Matrix](../../../docs/product/ROLE_ACCESS_MATRIX.md)       | ✅      | Canonical cross-app role access matrix (backend + frontend) |
+| [RBAC Roles PRD](../../../docs/prd/rbac-roles.md)                       | 📐      | Phase-scoped role expansion and access intent |
 
 ## Features
 
@@ -23,9 +23,7 @@
 | [Task Management Summary](./TASK_MANAGEMENT_SUMMARY.md)                             | ✅         | Task-as-Form architecture, API surface, workflows   |
 | [Studio Shift Schedule](./STUDIO_SHIFT_SCHEDULE.md)                                 | ✅ Phase 3 | Shift CRUD, duty-manager coverage, calendar, alignment |
 | [File Upload (Cloudflare R2)](./FILE_UPLOAD.md)                                     | ✅ Phase 3 | Presigned URL flow, use-case limits, storage routing |
-| [Creator Operations](./MC_OPERATIONS.md)                                            | ✅ Phase 4 | RBAC roles, creator compensation model, studio creator endpoints, bulk assignment, availability |
-| [Show Economics](./SHOW_ECONOMICS.md)                                               | ✅ Phase 4 | Show platform metrics, per-show P&L, grouped P&L and performance views |
-| [DB Migration Rehearsal](./DB_MIGRATION_REHEARSAL.md)                               | ✅ Ops     | Production-like local migration rollout checklist (`migrate deploy` flow) |
+| [Phase 4 P&L Backend](./PHASE_4_PNL_BACKEND.md)                                     | ⏳ Phase 4 | Creator mapping contracts, assignment foundation, economics API plan |
 | [DB Migration Policy](../../../docs/product/DB_MIGRATION_POLICY.md)                 | ✅ Ops     | Canonical migration governance, tool-first generation, and branch-local scoping rule |
 
 ## Design
@@ -35,6 +33,7 @@
 | [Authorization Guide](./design/AUTHORIZATION_GUIDE.md)                                     | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
 | [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) | ⏳      | Studio-scoped resolution for cancelled shows                                   |
 | [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                | 📐      | Planned template-less task creation using the existing `Task` model            |
+| [Task Submission Reporting & Export](./design/TASK_SUBMISSION_REPORTING_DESIGN.md)        | 📐      | Planned studio-scoped submitted-task report definitions and batched query API  |
 | Analytics Dashboard                                                                        | ⚠️ Removed | Superseded by Datastream + BigQuery planning in [Phase 4](../../../docs/roadmap/PHASE_4.md) |
 | [Material Management](./design/MATERIAL_MANAGEMENT_DESIGN.md)                             | 🗓️      | Planned for Phase 4; not implemented in the current schema                     |
 | [Data Warehouse](./design/DATA_WAREHOUSE_DESIGN.md)                                       | 🗓️      | Planned Datastream + BigQuery architecture for Phase 4                         |
@@ -46,7 +45,7 @@
 | [Phase 1 Overall](../../../docs/roadmap/PHASE_1.md) | ✅      | Closed foundation phase |
 | [Phase 2 Overall](../../../docs/roadmap/PHASE_2.md) | ✅      | Closed task-management foundation phase |
 | [Phase 3 Overall](../../../docs/roadmap/PHASE_3.md) | ✅      | Closed summary after scope reset |
-| [Phase 4 Overall](../../../docs/roadmap/PHASE_4.md) | ⏳      | Re-baselining close criteria: roster scope + onboarding + regression hardening |
+| [Phase 4 Overall](../../../docs/roadmap/PHASE_4.md) | ⏳      | P&L implementation on top of completed creator cutover baseline |
 | [Phase 5 Overall](../../../docs/roadmap/PHASE_5.md) | 🗓️      | Deferred / parking lot features |
 
 ## Quick Start

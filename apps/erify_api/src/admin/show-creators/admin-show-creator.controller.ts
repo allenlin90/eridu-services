@@ -33,13 +33,26 @@ export class AdminShowCreatorController extends BaseAdminController {
   @Post()
   @AdminResponse(showCreatorDto, HttpStatus.CREATED, 'Show creator assignment created successfully')
   async createShowCreator(@Body() body: CreateShowCreatorDto) {
-    const { showId, creatorId, note, metadata } = body;
+    const {
+      showId,
+      creatorId,
+      note,
+      agreedRate,
+      compensationType,
+      commissionRate,
+      metadata,
+    } = body;
+
     const showCreator = await this.showCreatorService.create({
       showId,
       creatorId,
       note,
+      agreedRate,
+      compensationType,
+      commissionRate,
       metadata,
     });
+
     return this.showCreatorService.findOne(showCreator.uid, {
       show: true,
       creator: true,
@@ -82,14 +95,26 @@ export class AdminShowCreatorController extends BaseAdminController {
     const existing = await this.showCreatorService.findOne(id);
     this.ensureResourceExists(existing, 'ShowCreator', id);
 
-    const { showId, creatorId, note, metadata } = body;
+    const {
+      showId,
+      creatorId,
+      note,
+      agreedRate,
+      compensationType,
+      commissionRate,
+      metadata,
+    } = body;
+
     const showCreator = await this.showCreatorService.update(id, {
       showId,
       creatorId,
       note,
+      agreedRate,
+      compensationType,
+      commissionRate,
       metadata,
     });
-    // Fetch with relations for proper serialization
+
     return this.showCreatorService.findOne(showCreator.uid, {
       show: true,
       creator: true,

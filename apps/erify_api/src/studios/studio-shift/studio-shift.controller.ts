@@ -68,7 +68,7 @@ export class StudioShiftController extends BaseStudioController {
   }
 
   @Post()
-  @StudioProtected([STUDIO_ROLE.ADMIN])
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @ZodResponse(studioShiftDto, HttpStatus.CREATED)
   async create(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
@@ -78,7 +78,7 @@ export class StudioShiftController extends BaseStudioController {
   }
 
   @Patch(':id')
-  @StudioProtected([STUDIO_ROLE.ADMIN])
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @ZodResponse(studioShiftDto)
   async update(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
@@ -91,7 +91,7 @@ export class StudioShiftController extends BaseStudioController {
   }
 
   @Delete(':id')
-  @StudioProtected([STUDIO_ROLE.ADMIN])
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @ZodResponse(undefined, HttpStatus.NO_CONTENT)
   async delete(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
@@ -102,7 +102,7 @@ export class StudioShiftController extends BaseStudioController {
   }
 
   @Patch(':id/duty-manager')
-  @StudioProtected([STUDIO_ROLE.ADMIN])
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @ZodResponse(studioShiftDto)
   async assignDutyManager(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,

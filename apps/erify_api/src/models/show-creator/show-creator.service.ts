@@ -37,6 +37,9 @@ export class ShowCreatorService extends BaseModelService {
 
     const data = {
       note: payload.note ?? null,
+      agreedRate: payload.agreedRate ?? null,
+      compensationType: payload.compensationType ?? null,
+      commissionRate: payload.commissionRate ?? null,
       metadata: payload.metadata ?? {},
       show: { connect: { uid: payload.showId } },
       creator: { connect: { uid: payload.creatorId } },
@@ -76,6 +79,12 @@ export class ShowCreatorService extends BaseModelService {
 
     if (payload.note !== undefined)
       data.note = payload.note;
+    if (payload.agreedRate !== undefined)
+      data.agreedRate = payload.agreedRate;
+    if (payload.compensationType !== undefined)
+      data.compensationType = payload.compensationType;
+    if (payload.commissionRate !== undefined)
+      data.commissionRate = payload.commissionRate;
     if (payload.metadata !== undefined)
       data.metadata = payload.metadata;
 

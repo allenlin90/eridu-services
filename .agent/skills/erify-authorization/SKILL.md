@@ -20,16 +20,47 @@ Read this skill for current `erify_api` authorization behavior first. Load the p
 > [!IMPORTANT]
 > **Not all patterns in this skill are implemented.** Check the status below before using a pattern.
 
-| Pattern                                       | Status        | Notes                                         |
-| --------------------------------------------- | ------------- | --------------------------------------------- |
-| `isSystemAdmin` bypass                        | ✅ Implemented | `AdminGuard` checks this flag only            |
-| `@AdminProtected()` decorator                 | ✅ Implemented | Global guard in `app.module.ts`               |
-| `@StudioProtected([roles])`                   | ✅ Implemented | ADMIN, MANAGER, MEMBER via `StudioMembership` |
-| `StudioGuard` with membership check           | ✅ Implemented | Validates studio membership + role            |
-| JSONB `roles` field on User                   | ⏳ Planned     | Not in Prisma schema yet                      |
-| JSONB `permissions` field on User             | ⏳ Planned     | Not in Prisma schema yet                      |
-| `ROLE_PERMISSIONS` mapping                    | ⏳ Planned     | AdminGuard does not expand roles              |
-| Granular permission strings (`module:action`) | ⏳ Planned     | Not implemented                               |
+| Pattern                                       | Status        | Notes                                                                         |
+| --------------------------------------------- | ------------- | ----------------------------------------------------------------------------- |
+| `isSystemAdmin` bypass                        | ✅ Implemented | `AdminGuard` checks this flag only                                            |
+| `@AdminProtected()` decorator                 | ✅ Implemented | Global guard in `app.module.ts`                                               |
+| `@StudioProtected([roles])`                   | ✅ Implemented | All 6 roles via `StudioMembership` (see role model below)                     |
+| `StudioGuard` with membership check           | ✅ Implemented | Validates studio membership + role via `getAllAndOverride` (method > class)    |
+| JSONB `roles` field on User                   | ⏳ Planned     | Not in Prisma schema yet                                                      |
+| JSONB `permissions` field on User             | ⏳ Planned     | Not in Prisma schema yet                                                      |
+| `ROLE_PERMISSIONS` mapping                    | ⏳ Planned     | AdminGuard does not expand roles                                              |
+| Granular permission strings (`module:action`) | ⏳ Planned     | Not implemented                                                               |
+
+## Studio Role Model
+
+`StudioMembership.role` has 6 values. Use this table as the canonical access reference:
+
+| Role                 | Scope                                                                 | Can manage memberships |
+| -------------------- | --------------------------------------------------------------------- | ---------------------- |
+| `ADMIN`              | Full access — all studio features including membership management     | ✅ Yes                  |
+| `MANAGER`            | Full access — all studio features **except** membership management    | ❌ No                   |
+| `TALENT_MANAGER`     | Creator mapping only — catalog, roster, availability, show assignment | ❌ No                   |
+| `DESIGNER`           | Dashboard, own tasks, own shifts only                                 | ❌ No                   |
+| `MODERATION_MANAGER` | Dashboard, own tasks, own shifts only                                 | ❌ No                   |
+| `MEMBER`             | Dashboard, own tasks, own shifts only                                 | ❌ No                   |
+
+### Backend endpoint role conventions
+
+```typescript
+// Read endpoints — all studio members (no explicit roles = member+)
+@StudioProtected()
+
+// Read/write endpoints for creator catalog/roster/availability and creator mapping ops
+@StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER])
+
+// Write endpoints open to manager-level ops (tasks, shifts, shows/task context)
+@StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+
+// Admin-only (membership management, destructive ops)
+@StudioProtected([STUDIO_ROLE.ADMIN])
+```
+
+> `getAllAndOverride` means method-level `@StudioProtected` always wins over class-level. The class sets the default; methods narrow or expand as needed.
 
 ## Core Principles
 
@@ -44,13 +75,15 @@ Read this skill for current `erify_api` authorization behavior first. Load the p
 
 Different user types have different access scopes:
 
-| User Type       | Access Scope     | Implementation                          |
-| --------------- | ---------------- | --------------------------------------- |
-| Creator         | Own shows only   | Via `ShowMC` relationship (DB internal) |
-| Studio Operator | Studio's rooms   | Via `StudioMembership`                  |
-| Content Manager | Specific clients | Planned RBAC only                       |
-| System Manager  | All data         | Planned RBAC only                       |
-| Read-only Admin | View-only        | Planned RBAC only                       |
+| User Type                              | Access Scope                                   | Implementation                          |
+| -------------------------------------- | ---------------------------------------------- | --------------------------------------- |
+| Creator                                | Own shows only                                 | Via `ShowMC` relationship (DB internal) |
+| Studio ADMIN                           | All studio features + membership management    | Via `StudioMembership` role             |
+| Studio MANAGER                         | All studio features (no membership management) | Via `StudioMembership` role             |
+| Studio TALENT_MANAGER                  | Creator mapping, catalog, roster, availability | Via `StudioMembership` role             |
+| Studio DESIGNER / MODERATION_MANAGER  | Own tasks and shifts only                      | Via `StudioMembership` role             |
+| Studio MEMBER                          | Own tasks and shifts only                      | Via `StudioMembership` role             |
+| Content Manager / System Manager       | Planned RBAC only                              | Not implemented                         |
 
 ### 2.1 Workflow Action Authorization
 

@@ -27,7 +27,7 @@
 | 3.3.3 | Show Detail / Tasks    | `/studios/$studioId/shows/$showUid/tasks` | Admin        | ✅       |
 | 3.4   | My Tasks               | `/studios/$studioId/my-tasks`             | All          | ✅       |
 | 3.5   | Task Execution Sheet   | Sheet overlay                             | Operator     | ✅       |
-| 3.6   | Task Review Queue      | `/studios/$studioId/tasks?status=REVIEW`  | Admin        | ✅       |
+| 3.6   | Task Review Queue      | `/studios/$studioId/review-queue`         | Admin/Manager| ✅       |
 | 3.7   | All Tasks Dashboard    | Studio-scoped                             | Admin        | Planned |
 | 3.8   | System Tasks           | `/system/tasks`                           | System Admin | ✅       |
 | 3.9   | System Show Statuses   | `/system/show-statuses`                   | System Admin | ✅      |

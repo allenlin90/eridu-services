@@ -1,6 +1,6 @@
 # Product Requirement Documents
 
-PRDs define user-facing requirements for each workstream in the **active phase**. Each PRD covers user stories, acceptance criteria, and product rules. Technical designs live in app-local docs.
+PRDs define user-facing requirements for each workstream in the **current or next promoted phase**. Each PRD covers user stories, acceptance criteria, and product rules. Technical designs live in app-local docs.
 
 ## Doc Flow
 
@@ -29,5 +29,11 @@ PRDs are **phase-scoped and transient**:
 | PRD                                   | Workstream                         | Status |
 | ------------------------------------- | ---------------------------------- | ------ |
 | [RBAC Roles](./rbac-roles.md)         | Studio role expansion              | Draft  |
-| [MC Mapping](./mc-mapping.md)         | MC-to-show assignment & talent ops | Draft  |
+| [Creator Mapping](./creator-mapping.md) | Creator-to-show assignment & talent ops | Draft  |
 | [Show Economics](./show-economics.md) | P&L, compensation, performance     | Draft  |
+
+## Phase 5 Candidate PRDs
+
+| PRD | Workstream | Status |
+| --- | --- | --- |
+| [Task Submission Reporting & Export](./task-submission-reporting.md) | Submitted-task review, manager reporting, and client-side export | Draft |

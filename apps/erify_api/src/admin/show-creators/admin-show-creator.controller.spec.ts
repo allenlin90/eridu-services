@@ -39,6 +39,9 @@ describe('adminShowCreatorController', () => {
       const createDto: CreateShowCreatorDto = {
         showId: 'show_123',
         creatorId: 'creator_123',
+        agreedRate: '150.00',
+        compensationType: 'FIXED',
+        commissionRate: '10.00',
         metadata: {},
       } as CreateShowCreatorDto;
       const createdShowCreator = { uid: 'show_mc_123', ...createDto };
@@ -135,7 +138,12 @@ describe('adminShowCreatorController', () => {
   describe('updateShowCreator', () => {
     it('should update a show Creator', async () => {
       const showCreatorId = 'show_mc_123';
-      const updateDto: UpdateShowCreatorDto = { metadata: {} } as UpdateShowCreatorDto;
+      const updateDto: UpdateShowCreatorDto = {
+        agreedRate: '200.00',
+        compensationType: 'HYBRID',
+        commissionRate: '15.00',
+        metadata: {},
+      } as UpdateShowCreatorDto;
       const updatedShowCreator = { uid: showCreatorId, ...updateDto };
       const showCreatorWithRelations = {
         ...updatedShowCreator,

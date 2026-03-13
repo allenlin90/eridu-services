@@ -321,6 +321,7 @@ export class ShowRepository extends BaseRepository<
       date_from?: string;
       date_to?: string;
       has_tasks?: boolean;
+      has_creators?: boolean;
       show_uids?: string[];
       creator_name?: string;
       client_name?: string;
@@ -377,19 +378,57 @@ export class ShowRepository extends BaseRepository<
       };
     }
 
-    // Creator filtering (Name)
-    if (query.creator_name) {
-      where.showCreators = {
-        some: {
-          creator: {
-            name: {
-              contains: query.creator_name,
-              mode: 'insensitive',
+    const creatorFilters: Prisma.ShowWhereInput[] = [];
+    if (query.has_creators !== undefined) {
+      if (query.has_creators) {
+        creatorFilters.push({
+          showCreators: {
+            some: {
+              deletedAt: null,
+              creator: { deletedAt: null },
             },
           },
-          deletedAt: null,
+        });
+      } else {
+        creatorFilters.push({
+          showCreators: {
+            none: {
+              deletedAt: null,
+              creator: { deletedAt: null },
+            },
+          },
+        });
+      }
+    }
+
+    // Creator filtering (Name)
+    if (query.creator_name) {
+      creatorFilters.push({
+        showCreators: {
+          some: {
+            deletedAt: null,
+            creator: {
+              deletedAt: null,
+              name: {
+                contains: query.creator_name,
+                mode: 'insensitive',
+              },
+            },
+          },
         },
-      };
+      });
+    }
+
+    if (creatorFilters.length > 0) {
+      const existingAndClauses = Array.isArray(where.AND)
+        ? where.AND
+        : where.AND
+          ? [where.AND]
+          : [];
+      where.AND = [
+        ...existingAndClauses,
+        ...creatorFilters,
+      ];
     }
 
     if (query.show_type_name) {

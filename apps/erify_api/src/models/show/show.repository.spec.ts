@@ -117,12 +117,90 @@ describe('showRepository', () => {
 
     expect(txShowDelegate.count).toHaveBeenCalledTimes(1);
     const where = txShowDelegate.count.mock.calls[0][0].where as {
-      showCreators?: {
-        some?: {
-          creator?: { name?: { contains?: string } };
+      AND?: Array<{
+        showCreators?: {
+          some?: {
+            creator?: { name?: { contains?: string } };
+          };
         };
-      };
+      }>;
     };
-    expect(where.showCreators?.some?.creator?.name?.contains).toBe('alice');
+    const creatorFilter = where.AND?.find((clause) => clause.showCreators?.some?.creator?.name?.contains !== undefined);
+    expect(creatorFilter?.showCreators?.some?.creator?.name?.contains).toBe('alice');
+  });
+
+  it('maps has_creators=true to studio task-summary show creator existence filter', async () => {
+    txShowDelegate.count.mockResolvedValue(0);
+    txShowDelegate.findMany.mockResolvedValue([]);
+
+    await repository.findPaginatedWithTaskSummary(BigInt(1), {
+      has_creators: true,
+      skip: 0,
+      take: 10,
+    });
+
+    expect(txShowDelegate.count).toHaveBeenCalledTimes(1);
+    const where = txShowDelegate.count.mock.calls[0][0].where as {
+      AND?: Array<{
+        showCreators?: {
+          some?: {
+            deletedAt?: null;
+          };
+        };
+      }>;
+    };
+    const existsFilter = where.AND?.find((clause) => clause.showCreators?.some !== undefined);
+    expect(existsFilter?.showCreators?.some?.deletedAt).toBeNull();
+  });
+
+  it('maps has_creators=false to studio task-summary missing creator mapping filter', async () => {
+    txShowDelegate.count.mockResolvedValue(0);
+    txShowDelegate.findMany.mockResolvedValue([]);
+
+    await repository.findPaginatedWithTaskSummary(BigInt(1), {
+      has_creators: false,
+      skip: 0,
+      take: 10,
+    });
+
+    expect(txShowDelegate.count).toHaveBeenCalledTimes(1);
+    const where = txShowDelegate.count.mock.calls[0][0].where as {
+      AND?: Array<{
+        showCreators?: {
+          none?: {
+            deletedAt?: null;
+          };
+        };
+      }>;
+    };
+    const missingFilter = where.AND?.find((clause) => clause.showCreators?.none !== undefined);
+    expect(missingFilter?.showCreators?.none?.deletedAt).toBeNull();
+  });
+
+  it('combines has_creators and creator_name filters in studio task-summary queries', async () => {
+    txShowDelegate.count.mockResolvedValue(0);
+    txShowDelegate.findMany.mockResolvedValue([]);
+
+    await repository.findPaginatedWithTaskSummary(BigInt(1), {
+      has_creators: true,
+      creator_name: 'alice',
+      skip: 0,
+      take: 10,
+    });
+
+    expect(txShowDelegate.count).toHaveBeenCalledTimes(1);
+    const where = txShowDelegate.count.mock.calls[0][0].where as {
+      AND?: Array<{
+        showCreators?: {
+          some?: {
+            creator?: { name?: { contains?: string } };
+          };
+        };
+      }>;
+    };
+    const creatorExistsFilter = where.AND?.find((clause) => clause.showCreators?.some?.creator?.name === undefined);
+    const creatorNameFilter = where.AND?.find((clause) => clause.showCreators?.some?.creator?.name?.contains === 'alice');
+    expect(creatorExistsFilter?.showCreators?.some).toBeDefined();
+    expect(creatorNameFilter?.showCreators?.some?.creator?.name?.contains).toBe('alice');
   });
 });

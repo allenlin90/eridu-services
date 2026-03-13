@@ -139,13 +139,23 @@ When `@StudioProtected()` is used, membership is attached:
 interface StudioMembership {
   id: bigint;
   uid: string;
-  role: string;        // 'admin' | 'manager' | 'member'
+  role: string;        // 'admin' | 'manager' | 'talent_manager' | 'designer' | 'moderation_manager' | 'member'
   userId: bigint;
   studioId: bigint;
   user: User;
   studio: Studio;
 }
 ```
+
+### Phase 4 Role/Route Notes (current)
+
+- Studio review queue route: `/studios/:studioId/review-queue` (replaces legacy `/tasks?status=REVIEW` route)
+- Creator mapping routes (fully implemented):
+  - `/studios/$studioId/creator-mapping` (mapping list with bulk assign entry point)
+  - `/studios/$studioId/creator-mapping/$showId` (show-level creator add/remove)
+- Creator mapping API endpoints (guarded by `@StudioProtected([ADMIN, MANAGER, TALENT_MANAGER])`):
+  - `GET /studios/:studioId/shows/:showId/creators`
+  - `POST /studios/:studioId/shows/:showId/creators/bulk-assign`
 
 ## Guard Implementation Pattern
 

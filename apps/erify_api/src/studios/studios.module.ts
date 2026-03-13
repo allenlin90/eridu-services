@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { StudioCreatorApiModule } from './studio-creator/studio-creator.module';
 import { StudioLookupModule } from './studio-lookup/studio-lookup.module';
 import { StudioMembershipModule } from './studio-membership/studio-membership.module';
 import { StudioShiftApiModule } from './studio-shift/studio-shift.module';
@@ -10,6 +11,7 @@ import { StudioTaskTemplateModule } from './studio-task-template/studio-task-tem
 @Module({
   imports: [
     StudioLookupModule,
+    StudioCreatorApiModule,
     StudioMembershipModule,
     StudioShiftApiModule,
     StudioTaskTemplateModule,

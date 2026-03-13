@@ -13,32 +13,9 @@ import {
 } from '@eridu/api-types/creators';
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
+import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import { isCreatorUid } from '@/models/creator/creator-uid.util';
 import { userDto, userSchema } from '@/models/user/schemas/user.schema';
-
-function decimalToString(value: unknown): string | null {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  if (typeof value === 'number') {
-    return value.toFixed(2);
-  }
-
-  if (typeof value === 'string') {
-    return value;
-  }
-
-  if (
-    typeof value === 'object'
-    && 'toString' in value
-    && typeof value.toString === 'function'
-  ) {
-    return value.toString();
-  }
-
-  return null;
-}
 
 export const creatorSchema = z.object({
   id: z.bigint(),

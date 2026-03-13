@@ -1,6 +1,6 @@
 # Business Domain Documentation
 
-> **TLDR**: The core domain revolves around **Shows** (live-commerce broadcasts) linked to **Clients**, **MCs**, **Platforms**, and **Studios**. **Schedules** plan shows monthly via Google Sheets. **Tasks** are studio-scoped checklists generated from **TaskTemplates** and assigned to operators. The roadmap now treats Phase 3 as closed infrastructure delivery, with unfinished ticketing/material work moved forward into later phases.
+> **TLDR**: The core domain revolves around **Shows** (live-commerce broadcasts) linked to **Clients**, **Creators**, **Platforms**, and **Studios**. **Schedules** plan shows monthly via Google Sheets. **Tasks** are studio-scoped checklists generated from **TaskTemplates** and assigned to operators. The roadmap treats Phase 3 as closed infrastructure delivery, with unfinished ticketing/material work moved forward into later phases.
 
 This document provides monorepo-level business and product context. It is not owned by a single app. For implementation status, use the [root documentation index](../README.md) and the root roadmap.
 
@@ -13,7 +13,7 @@ The system is being developed in structured phases:
 - **Phase 1** ✅: Core Functions — Essential CRUD, show management, schedule planning, JWT auth, StudioMembership-based authorization
 - **Phase 2** ✅: Task Management — Generic "Task as Form" system with templates, snapshots, bulk generation, and operator workflows
 - **Phase 3** ✅ Closed: Operations foundations — shift schedules and Cloudflare R2 uploads shipped; unfinished ticketing/material scope moved forward
-- **Phase 4** (Planned): P&L Visibility & MC Operations — RBAC roles, bulk MC mapping, MC compensation, show performance metrics, cost aggregation, P&L views
+- **Phase 4** (Active): P&L Visibility & Creator Operations — RBAC roles, creator mapping/assignment, creator compensation, show performance metrics, cost aggregation, P&L views
 - **Phase 5** (Deferred): Ticketing, Materials, Collaboration & Scale — ad-hoc ticketing, material management, review hardening, notifications, data warehouse
 
 For planning and implementation references, see:

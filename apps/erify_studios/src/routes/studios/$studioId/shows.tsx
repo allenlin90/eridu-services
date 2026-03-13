@@ -33,7 +33,7 @@ function RouteComponent() {
       studioId={studioId}
       routeKey="shows"
       deniedTitle="Shows Access Required"
-      deniedDescription="Only studio admins can access shows management."
+      deniedDescription="Only studio admins and managers can access shows."
     >
       <Outlet />
     </StudioRouteGuard>

@@ -18,4 +18,5 @@ export const UID_PREFIXES = {
   TASK_TEMPLATE: 'ttpl',
   TASK: 'task',
   TASK_TARGET: 'ttgt',
+  STUDIO_CREATOR: 'smc',
 } as const;

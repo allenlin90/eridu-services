@@ -25,7 +25,7 @@ Different user types have different access scopes:
 
 | User Type           | Access Scope     | Implementation                  |
 | ------------------- | ---------------- | ------------------------------- |
-| **MC**              | Own shows only   | Via `ShowMC` relationship       |
+| **Creator**         | Own shows only   | Via `ShowCreator` relationship  |
 | **Studio Operator** | Studio's rooms   | Via `StudioMembership`          |
 | **Content Manager** | Specific clients | Via `roles` + client filtering  |
 | **System Manager**  | All data         | Via `roles: ["system_manager"]` |

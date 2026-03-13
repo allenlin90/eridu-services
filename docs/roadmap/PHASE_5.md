@@ -8,7 +8,68 @@
 Phase 5 is a backlog of valuable follow-up initiatives that remain intentionally deferred while the Phase 4 merge baseline is still settling.
 The goal is to preserve context and rationale now, then promote only the items that have clear owners, sequencing, and exit criteria.
 
-The P&L revenue workflow is the primary item expected to promote first once the Phase 4 baseline stabilizes — it is the only remaining major workstream from Phase 4 with no implementation yet.
+The P&L revenue workflow and task submission reporting/export are the two most likely items to promote first once the Phase 4 baseline stabilizes.
+In parallel, this phase also tracks carry-over merge gaps from `feat/phase-4-p-and-l` that were implemented there but are not yet represented in the current baseline.
+
+## Merge-Gap Carry-Over (from `feat/phase-4-p-and-l`)
+
+Context:
+The historical Phase 4 feature branch accumulated multiple implemented workflows in one large PR. Some of those workflows were not merged into the current baseline branch and are also not explicitly tracked in this Phase 5 parking lot.
+
+### Studio Member Roster / Membership Governance
+
+Context:
+The current baseline has `/system/memberships` for admin management plus studio-scoped membership read APIs. The feature branch also introduced a dedicated studio-scoped member roster workflow (`/studios/:studioId/members`) with invite/search, role updates, removal, and helper eligibility toggles.
+
+TODOs:
+- Decide whether studio membership management remains system-admin-only (`/system/memberships`) or should also ship as a studio-scoped roster surface.
+- Reconcile API contract scope for `/studios/:studioId/studio-memberships`, including/excluding `user-catalog`, create, role update, helper toggle, and delete operations.
+- Align route guards/sidebar policy and role matrices for any retained member-roster route.
+- Add BE/FE tests for membership mutation paths and role-based access.
+- Update role-policy documentation to reflect the final source of truth.
+
+### Studio Creator Roster Management (CRUD + Defaults)
+
+Context:
+Current baseline creator roster coverage is read-oriented (`catalog`, `roster`, `availability`). The feature branch additionally implemented creator roster CRUD patterns: onboarding from catalog, active/inactive management, studio-specific default compensation fields, and optimistic-version updates.
+
+TODOs:
+- Decide whether Phase 5 should promote full creator roster CRUD as a first-class studio workflow (`/studios/:studioId/creators`).
+- Define canonical write contract for roster mutation (`add`, `update`, `remove`) and version-conflict handling semantics.
+- Align creator roster UX with creator-mapping UX so roster state and mapping behavior remain consistent.
+- Add BE/FE tests for roster mutation, optimistic concurrency conflicts, and compensation-default propagation behavior.
+
+### Canonical Creator Naming and Legacy `mc` Deprecation
+
+Context:
+Creator-first naming is partially complete, but compatibility aliases and mixed `mc`/`creator` naming still exist across modules, exports, schemas, and docs.
+
+TODOs:
+- Define compatibility-window and removal-gate criteria for legacy `mc` aliases.
+- Complete creator-first naming consolidation across backend modules, shared package exports, frontend routes/hooks, and docs.
+- Keep migration/backfill strategy explicit for UID and alias cutover paths.
+- Remove deprecated compatibility shims once consumers are fully migrated.
+
+### Task Helper Eligibility and Assignment Gating
+
+Context:
+The feature branch introduced helper eligibility controls on studio memberships and task-assignment eligibility enforcement. This behavior is not currently called out in Phase 5 despite being a distinct policy/workflow decision.
+
+TODOs:
+- Decide whether task-helper eligibility remains part of studio-membership metadata policy.
+- If retained, define canonical API + UI behavior for helper toggle and conflict-safe updates.
+- Define task-assignment error contract when assignee is not helper-eligible.
+- Add policy tests and documentation updates for helper-aware assignment workflows.
+
+### Economics Baseline Reconciliation
+
+Context:
+The feature branch included economics/performance endpoint implementation details, while current baseline docs and code status differ across files/branches. This drift should be reconciled before promoting P&L follow-up work.
+
+TODOs:
+- Reconcile current-baseline status for economics/performance endpoint availability and branch parity.
+- Align Phase 4/Phase 5 status wording and linked docs so rollout state is unambiguous.
+- Keep P&L “P-side” planning scoped to confirmed baseline behavior after reconciliation.
 
 ## Deferred Workstreams (Context + TODOs)
 
@@ -82,7 +143,7 @@ TODOs:
 ### Creator App Expansion
 
 Context:
-Phase 4 introduced studio-scoped/grouped structures and completed the creator-first terminology shift. Creator-facing workflows should align with that model.
+Phase 4 introduced studio-scoped/grouped structures and started the creator-first terminology shift. Creator-facing workflows should align with that model while finishing remaining naming compatibility cleanup.
 
 TODOs:
 - Expand creator app capabilities for creator users by studio scope.
@@ -126,6 +187,22 @@ TODOs:
 - Platform API integrations for auto-populating show performance data.
 - Fixed cost tracking (rent, equipment depreciation).
 
+### Creator Availability Logic Hardening
+
+Context:
+`/studios/:studioId/creators/availability` is currently intentionally loose to preserve discoverability in creator-mapping flows (especially search). Strict assignability semantics (overlap conflicts, roster policy, and currently-assigned handling) were deferred because requirements are still ambiguous.
+
+TODOs:
+- Define explicit endpoint semantics for discovery mode (broad searchable list) and strict-assignable mode (enforced overlap/eligibility constraints).
+- Decide conflict handling for creators already assigned to the target show vs. assigned to overlapping shows.
+- Decide whether roster membership should be optional, required, or policy-driven by studio settings.
+- Coordinate strict-mode behavior with creator roster activation/defaults decisions from the merge-gap carry-over item.
+- Add conflict metadata contract for FE (for example `is_conflicted`, `conflict_reason`) if strict mode is introduced.
+- Align FE add-creator UX to chosen mode(s), including copy, filtering behavior, and empty-state messaging.
+- Add BE/FE tests that lock expected behavior for search + assignment edge cases.
+
+Deferred from: creator-mapping parity stabilization, March 2026.
+
 ### Lower-Priority UX Refinements
 
 Context:
@@ -160,23 +237,55 @@ TODOs (once design questions are resolved):
   - define calculation contract: `base compensation + sum(cost items)`,
   - support auditability fields (who/when/reason/metadata) for each cost item.
 - Remove `@preview` markers from economics controller once UI ships.
-- Update `SHOW_ECONOMICS.md` status to ✅ Implemented.
+- Update `apps/erify_api/docs/PHASE_4_PNL_BACKEND.md` status to ✅ Implemented once shipped.
 
 Carry-over concerns to evaluate during Phase 5 implementation of the "P" side:
 - **Schema validation contract (`createStudioCreatorRosterSchema`)**:
   - Current behavior can return `404` when `creator_id` is missing (falls through to lookup with empty ID).
   - Phase 5 decision: either keep as explicit debt with rationale, or tighten schema to return `400` for missing identifier input.
 - **Bulk creator assignment write pattern**:
-  - Current implementation is `O(n×m)` with sequential writes per show/creator pair and no request-size max guard.
-  - Phase 5 decision: define acceptable throughput bounds and add max-items guard and/or batched strategy if P&L workflows increase assignment volume.
+  - Current implementation is `O(n×m)` with sequential writes per show/creator pair. Request-size caps are now in place (`BULK_ASSIGN_MAX_CREATORS_PER_SHOW = 50`, `BULK_ASSIGN_MAX_SHOWS = 20`).
+  - Phase 5 decision: define acceptable throughput bounds and add concurrency cap via `p-limit` or batched strategy if P&L workflows increase assignment volume beyond current limits.
 - **P&L shift-cost distribution model**:
   - Current grouped P&L view evenly distributes total shift cost across shows in range.
   - Treat as known simplification unless product/accounting rules require per-show attribution changes during Phase 5.
 - **Floating-point precision risk**:
   - Current financial calculations still rely on JS `number` arithmetic in parts of the economics flow.
   - Phase 5 should replace those paths with `big.js`-backed helpers before P&L is treated as production-grade financial reporting.
+- **Baseline status drift (economics/performance endpoints)**:
+  - Endpoint rollout status differs between branches/docs and can lead to planning assumptions that do not match current baseline reality.
+  - Phase 5 should reconcile branch/doc status first, then finalize promotion sequencing for P&L follow-up.
 
 Deferred from: Phase 4, March 2026.
+
+### Task Submission Reporting & Export
+
+Context:
+Managers need a way to review and export submitted task data across many shows without generating throwaway report files in cloud storage.
+Primary examples are moderation KPI rollups (`GMV`, `views`, show performance metrics) and premium-show QC review using post-production upload URLs.
+
+Reference docs:
+- [PRD: Task Submission Reporting & Export](../prd/task-submission-reporting.md)
+- [Backend design](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)
+- [Frontend design](../../apps/erify_studios/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)
+
+Open design questions to resolve before implementation:
+- **Review grain vs export grain**: should the manager preview be show-centric while export remains task/snapshot-centric?
+- **Compatibility grouping**: grouping by `task_type + version` alone is unsafe because snapshot versions are local to each template; should the partition key be `template_uid + snapshot_version` or a future schema fingerprint?
+- **Submitted-state contract**: should the default source states be `REVIEW + COMPLETED + CLOSED`, and do we need a typed `submitted_at` column instead of relying on metadata transitions?
+- **Definition storage**: should saved report definitions be persisted server-side as JSON while fetched datasets remain client-cached in IndexedDB only?
+- **Multi-output export UX**: for incompatible snapshot groups, should CSV export produce multiple files while XLSX uses one workbook with multiple sheets?
+- **File URL stability**: if uploaded assets ever move to signed/expiring URLs, should reports export stable asset identifiers instead of raw URLs?
+
+TODOs:
+- Add studio-scoped source-catalog endpoints for reportable task templates/snapshot versions and field metadata.
+- Add saved report-definition CRUD endpoints that persist only JSON selections and scope filters.
+- Add batched query endpoint returning show metadata plus compatibility-grouped submitted-task rows.
+- Keep report materialization on the client and cache fetched batches in IndexedDB for rerun/review.
+- Support numeric summaries for selected number fields and link-based review for file/url fields.
+- Export CSV for compatible datasets and support XLSX multi-sheet output for multi-group results.
+
+Deferred from: Phase 4 wrap-up follow-up, March 2026.
 
 ### Full-Text Search and Attribute Filtering
 

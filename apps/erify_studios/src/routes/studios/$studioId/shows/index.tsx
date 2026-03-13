@@ -40,6 +40,7 @@ import {
   parseScopeDateAsLocal,
   toShowScopeDateTimeBounds,
 } from '@/features/studio-shows/utils/show-scope.utils';
+import { resolveUpdater } from '@/lib/table-state.utils';
 
 export const Route = createFileRoute('/studios/$studioId/shows/')({
   component: StudioShowsPage,
@@ -58,12 +59,6 @@ function getDefaultPlanningRange() {
     date_from: toLocalDateInputValue(start),
     date_to: toLocalDateInputValue(end),
   };
-}
-
-function resolveUpdater<T>(updater: T | ((previous: T) => T), previous: T): T {
-  return typeof updater === 'function'
-    ? (updater as (current: T) => T)(previous)
-    : updater;
 }
 
 function parseSearchDate(raw?: string): Date | undefined {
