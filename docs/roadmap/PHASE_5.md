@@ -270,21 +270,32 @@ Reference docs:
 - [Backend design](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)
 - [Frontend design](../../apps/erify_studios/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)
 
-Open design questions to resolve before implementation:
-- **Review grain vs export grain**: should the manager preview be show-centric while export remains task/snapshot-centric?
-- **Compatibility grouping**: grouping by `task_type + version` alone is unsafe because snapshot versions are local to each template; should the partition key be `template_uid + snapshot_version` or a future schema fingerprint?
-- **Submitted-state contract**: should the default source states be `REVIEW + COMPLETED + CLOSED`, and do we need a typed `submitted_at` column instead of relying on metadata transitions?
-- **Definition storage**: should saved report definitions be persisted server-side as JSON while fetched datasets remain client-cached in IndexedDB only?
-- **Multi-output export UX**: for incompatible snapshot groups, should CSV export produce multiple files while XLSX uses one workbook with multiple sheets?
-- **File URL stability**: if uploaded assets ever move to signed/expiring URLs, should reports export stable asset identifiers instead of raw URLs?
+Resolved design questions:
+- **Review grain vs export grain**: Review is show-centric (one row per show); export is snapshot-centric (partitioned by `template_uid + snapshot_version`). Decided in PRD and both design docs.
+- **Compatibility grouping**: Partition key is `template_uid + snapshot_version` for MVP. Schema fingerprint (`schema_signature`) deferred to milestone 2 to collapse structurally identical snapshots.
+- **Submitted-state contract**: Default source states are `REVIEW + COMPLETED + CLOSED`. A typed `submitted_at` column will be added to the `Task` model, with historical backfill from audit metadata. On resubmission, `submitted_at` is overwritten with the latest submission time.
+- **Result storage**: Server-side PostgreSQL JSONB (`TaskReportResult` model). Evaluated four approaches (FE-only IndexedDB, PostgreSQL JSONB, Redis, Redis+PostgreSQL) — chose PostgreSQL JSONB for cross-device access, zero new infrastructure, and simple single-row-read access pattern. See [BE design section 4.4.1](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md) for comparison matrix.
+- **FE/BE workload balance**: BE owns query execution, page accumulation (internal batching), result storage, and summary computation. FE owns display merging, rendering, and CSV/XLSX export serialization. IndexedDB is an optional FE speed cache, not primary persistence.
+- **Definition storage**: Server-side JSON definitions. Saved definitions are milestone 2; milestone 1 uses inline definitions only. Each definition links to its latest stored result for instant cross-device access.
+- **Multi-output export UX**: Multiple CSVs for incompatible groups, or one XLSX workbook with multiple sheets. Partition splits are always made visible to managers before download.
+- **File URL stability**: Export raw URLs now. If signed URLs are introduced later, add re-sign endpoints and display warnings before export.
+
+Additional design decisions documented during review:
+- **Task-to-show join**: Tasks connect to shows via polymorphic `TaskTarget` (`targetType = SHOW`), not a direct FK. The report generation iterates through `TaskTarget`; only show-targeted tasks are reportable.
+- **Duplicate-source UX**: Multiple submitted tasks for the same show + partition appear as separate rows with warning badges. Export includes all rows.
+- **Role-based source visibility**: Deferred to milestone 2. MVP grants all permitted roles access to all templates.
+- **XLSX library**: ExcelJS (~300KB, MIT) recommended over SheetJS for licensing and size. Lazy-loaded from the export action.
+- **Pagination**: Standard offset-based (`page` + `limit`) for list endpoints. Report generation uses internal batching (batch size 200) — no client-facing pagination for the report query itself. Result list and definition list endpoints use existing `paginationQuerySchema`.
+- **Scope flexibility**: Date range is a filter, not a hard cap. Managers may query a full quarter or 6 months. The system handles large result sets through internal batching, not by rejecting wide date ranges. At least one scope filter is required to prevent unscoped full-studio scans.
+- **Result lifecycle**: One active result per definition (previous soft-deleted on re-run). Results expire after 24h (warning shown, still accessible). Soft-deleted results hard-deleted after 30 days.
+- **No Redis for MVP**: PostgreSQL JSONB is sufficient. Redis can be added as a transparent read-through cache in milestone BE-3 if result reads become a bottleneck.
 
 TODOs:
-- Add studio-scoped source-catalog endpoints for reportable task templates/snapshot versions and field metadata.
-- Add saved report-definition CRUD endpoints that persist only JSON selections and scope filters.
-- Add batched query endpoint returning show metadata plus compatibility-grouped submitted-task rows.
-- Keep report materialization on the client and cache fetched batches in IndexedDB for rerun/review.
-- Support numeric summaries for selected number fields and link-based review for file/url fields.
-- Export CSV for compatible datasets and support XLSX multi-sheet output for multi-group results.
+- **BE Milestone 1** (Core workflow): `submittedAt` migration + backfill, source catalog endpoint, report generation endpoint (`POST /task-reports/run`) with `TaskTarget` join and internal batch processing, result retrieval endpoint (`GET /task-report-results/:uid`), inline definition support.
+- **BE Milestone 2** (Persistence + polish): Saved definition CRUD with latest `result_uid` linkage, result list endpoint, result cleanup job, role-aware source catalog filtering, `schema_signature` for cross-version partition merging.
+- **BE Milestone 3** (Scale, if needed): Async result generation (202 + polling), Redis read-through cache, server-side CSV/XLSX export endpoint, result compression.
+- **FE Milestone 1** (Core workflow): Source catalog + inline column picker, scope filters with URL state, "Run Report" action + result retrieval, show-centric preview with pre-computed summaries, freshness badge, duplicate-source warnings, CSV export from stored JSON.
+- **FE Milestone 2** (Persistence + polish): Saved definition panel with latest result linkage, XLSX multi-sheet export (lazy-loaded ExcelJS), optional IndexedDB cache for offline speed, role-aware source defaults, richer QC link previews, result list view.
 
 Deferred from: Phase 4 wrap-up follow-up, March 2026.
 
