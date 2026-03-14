@@ -18,6 +18,19 @@ vi.mock('@tanstack/react-router', async () => {
   };
 });
 
+vi.mock('@/paraglide/messages.js', () => ({
+  'table.name': () => 'Name',
+  'table.client': () => 'Client',
+  'table.studioRoom': () => 'Studio Room',
+  'table.date': () => 'Date',
+  'table.startTime': () => 'Start Time',
+  'table.endTime': () => 'End Time',
+  'shows.noResults': () => 'No results.',
+  'shows.searchPlaceholder': () => 'Search by name...',
+  'shows.resetButton': () => 'Reset',
+  'shows.refresh': () => 'Refresh',
+}));
+
 const mockShows: ShowApiResponse[] = [
   {
     id: '1',

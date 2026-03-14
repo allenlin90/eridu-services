@@ -11,6 +11,23 @@ vi.mock('@tanstack/react-router', () => ({
   ),
 }));
 
+vi.mock('@/paraglide/messages.js', () => ({
+  'shows.title': () => 'Shows',
+  'shows.basicInformation': () => 'Basic Information',
+  'shows.typeLabel': () => 'Type:',
+  'shows.statusLabel': () => 'Status:',
+  'shows.standard': () => 'Standard',
+  'shows.clientAndStudio': () => 'Client & Studio',
+  'shows.client': () => 'Client',
+  'shows.studioRoom': () => 'Studio Room',
+  'shows.schedule': () => 'Schedule',
+  'shows.startLabel': () => 'Start:',
+  'shows.endLabel': () => 'End:',
+  'shows.metadata': () => 'Metadata',
+  'shows.createdLabel': () => 'Created:',
+  'shows.updatedLabel': () => 'Updated:',
+}));
+
 const mockShow: Show = {
   id: '1',
   name: 'Test Show',
