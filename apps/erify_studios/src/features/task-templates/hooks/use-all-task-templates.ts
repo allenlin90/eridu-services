@@ -1,8 +1,11 @@
+import type { InfiniteData } from '@tanstack/react-query';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 
-import { getTaskTemplates } from '../api/get-task-templates';
+import { getTaskTemplates, type GetTaskTemplatesResponse } from '../api/get-task-templates';
 import { taskTemplateQueryKeys } from '../api/task-template-query-keys';
+
+import { compactInfiniteTaskTemplatePages } from './task-template-cache-utils';
 
 type UseAllTaskTemplatesProps = {
   studioId: string;
@@ -68,6 +71,10 @@ export function useAllTaskTemplates({
 
     const queryState = queryClient.getQueryState(pickerQueryKey);
     if (queryState?.isInvalidated) {
+      queryClient.setQueryData<InfiniteData<GetTaskTemplatesResponse>>(
+        pickerQueryKey,
+        compactInfiniteTaskTemplatePages,
+      );
       void refetch();
     }
   }, [enabled, pickerQueryKey, queryClient, refetch]);

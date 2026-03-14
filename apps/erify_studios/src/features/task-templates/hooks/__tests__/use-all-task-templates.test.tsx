@@ -5,11 +5,13 @@ import { useAllTaskTemplates } from '../use-all-task-templates';
 
 const mockUseInfiniteQuery = vi.fn();
 const mockGetQueryState = vi.fn();
+const mockSetQueryData = vi.fn();
 
 vi.mock('@tanstack/react-query', () => ({
   useInfiniteQuery: (options: any) => mockUseInfiniteQuery(options),
   useQueryClient: () => ({
     getQueryState: mockGetQueryState,
+    setQueryData: mockSetQueryData,
   }),
 }));
 
@@ -41,9 +43,10 @@ describe('useAllTaskTemplates', () => {
     );
   });
 
-  it('refetches once when picker cache was explicitly invalidated', async () => {
+  it('compacts pages before refetching when picker cache was invalidated', async () => {
     const refetch = vi.fn().mockResolvedValue(undefined);
     mockGetQueryState.mockReturnValue({ isInvalidated: true });
+    mockSetQueryData.mockReset();
     mockUseInfiniteQuery.mockReturnValue({
       data: { pages: [] },
       isLoading: false,
@@ -56,6 +59,10 @@ describe('useAllTaskTemplates', () => {
     renderHook(() => useAllTaskTemplates({ studioId: 'std_1', enabled: true }));
 
     await waitFor(() => {
+      expect(mockSetQueryData).toHaveBeenCalledWith(
+        ['task-templates', 'list', 'std_1', 'all-picker', { search: undefined, pageSize: 100 }],
+        expect.any(Function),
+      );
       expect(refetch).toHaveBeenCalledTimes(1);
     });
   });
