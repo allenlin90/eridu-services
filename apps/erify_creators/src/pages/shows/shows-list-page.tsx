@@ -2,11 +2,14 @@ import type { ColumnFiltersState, PaginationState, SortingState } from '@tanstac
 import { useEffect } from 'react';
 import type { DateRange } from 'react-day-picker';
 
-import { LoadingPage, PageTransition, useTableUrlState } from '@eridu/ui';
+import { LoadingPage } from '@eridu/ui';
 
+import { PageContainer } from '@/components/layouts/page-container';
+import { PageLayout } from '@/components/layouts/page-layout';
 import { useMyShows } from '@/features/shows/api/shows.api';
 import { columns } from '@/features/shows/components/columns';
 import { ShowsTable } from '@/features/shows/components/shows-table';
+import { useShowsTableState } from '@/features/shows/hooks/use-shows-table-state';
 import * as m from '@/paraglide/messages.js';
 
 /**
@@ -27,7 +30,7 @@ export function ShowsListPage() {
     onSortingChange,
     onColumnFiltersChange,
     setPageCount,
-  } = useTableUrlState({ from: '/shows/' });
+  } = useShowsTableState();
 
   // Extract filters for API
   const dateRange = columnFilters.find((filter: { id: string; value: unknown }) => filter.id === 'start_time')
@@ -79,23 +82,22 @@ export function ShowsListPage() {
   }
 
   return (
-    <PageTransition className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{m['shows.title']()}</h1>
-      </div>
-      <ShowsTable
-        columns={columns}
-        data={data?.data ?? []}
-        pageCount={data?.meta?.totalPages ?? -1}
-        pagination={pagination as PaginationState}
-        onPaginationChange={onPaginationChange}
-        sorting={sorting as SortingState}
-        onSortingChange={onSortingChange}
-        columnFilters={columnFilters as ColumnFiltersState}
-        onColumnFiltersChange={onColumnFiltersChange}
-        isLoading={isLoading}
-        isFetching={isFetching}
-      />
-    </PageTransition>
+    <PageContainer>
+      <PageLayout title={m['shows.title']()}>
+        <ShowsTable
+          columns={columns}
+          data={data?.data ?? []}
+          pageCount={data?.meta?.totalPages ?? -1}
+          pagination={pagination as PaginationState}
+          onPaginationChange={onPaginationChange}
+          sorting={sorting as SortingState}
+          onSortingChange={onSortingChange}
+          columnFilters={columnFilters as ColumnFiltersState}
+          onColumnFiltersChange={onColumnFiltersChange}
+          isLoading={isLoading}
+          isFetching={isFetching}
+        />
+      </PageLayout>
+    </PageContainer>
   );
 }

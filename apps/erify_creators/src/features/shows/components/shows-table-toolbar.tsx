@@ -86,13 +86,13 @@ export function ShowsTableToolbar<TData>({
       </div>
       <Button
         variant="outline"
-        size="sm"
-        className="ml-auto h-9"
+        size="icon"
+        className="ml-auto h-9 w-9"
         onClick={handleRefresh}
         disabled={isFetching}
+        aria-label={m['shows.refresh']?.() ?? 'Refresh assigned shows'}
       >
-        <RotateCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-        {m['shows.refresh']?.() ?? 'Refresh'}
+        <RotateCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
       </Button>
     </div>
   );

@@ -58,7 +58,7 @@ export function ShowDetailView({ show }: ShowDetailProps) {
                 to="/shows"
                 search={{
                   page: 1,
-                  pageSize: 10,
+                  limit: 10,
                 }}
               >
                 {m['shows.title']()}
