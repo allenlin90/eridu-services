@@ -18,10 +18,10 @@ export function useAllTaskTemplates({
   enabled = true,
 }: UseAllTaskTemplatesProps) {
   const queryClient = useQueryClient();
-  const pickerQueryKey = taskTemplateQueryKeys.allPicker(studioId, {
-    search,
-    pageSize,
-  });
+  const pickerQueryKey = useMemo(
+    () => taskTemplateQueryKeys.allPicker(studioId, { search, pageSize }),
+    [studioId, search, pageSize],
+  );
 
   const {
     data,

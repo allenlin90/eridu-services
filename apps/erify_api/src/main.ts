@@ -18,8 +18,9 @@ async function bootstrap() {
   });
   const configService = app.get<ConfigService<Env>>(ConfigService);
   const bodyLimit = configService.getOrThrow('BODY_PARSER_LIMIT');
-  // Required for accurate req.ip behind load balancers / ingress proxies.
-  app.set('trust proxy', true);
+  // Trust one proxy hop (ingress / load balancer) for accurate req.ip.
+  // Using `1` instead of `true` prevents X-Forwarded-For spoofing through extra hops.
+  app.set('trust proxy', 1);
   app.use(json({ limit: bodyLimit }));
   app.use(urlencoded({ extended: true, limit: bodyLimit }));
   app.useLogger(app.get(Logger));

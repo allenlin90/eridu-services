@@ -39,9 +39,10 @@ export function useTaskTemplates({ studioId }: UseTaskTemplatesProps): UseTaskTe
 
   // Extract search query from columnFilters
   const searchQuery = (columnFilters.find((f) => f.id === 'name')?.value as string) || '';
-  const listQueryKey = taskTemplateQueryKeys.list(studioId, {
-    search: searchQuery,
-  });
+  const listQueryKey = useMemo(
+    () => taskTemplateQueryKeys.list(studioId, { search: searchQuery }),
+    [studioId, searchQuery],
+  );
 
   const {
     data,
