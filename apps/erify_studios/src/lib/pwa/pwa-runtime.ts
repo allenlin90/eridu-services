@@ -1,11 +1,11 @@
 import { registerSW } from 'virtual:pwa-register';
 
 const UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
-const CONTROLLER_CHANGE_RELOAD_FLAG = 'erify_studios_pwa_controller_change_reloaded';
 
 let activeRegistration: ServiceWorkerRegistration | null = null;
 let updateIntervalId: number | null = null;
 let hasControllerChangeListener = false;
+let isReloadingForControllerChange = false;
 
 function isPwaRuntimeSupported() {
   return typeof window !== 'undefined' && 'serviceWorker' in navigator;
@@ -17,12 +17,11 @@ function installControllerChangeReloadGuard() {
   }
 
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    const hasReloaded = sessionStorage.getItem(CONTROLLER_CHANGE_RELOAD_FLAG) === '1';
-    if (hasReloaded) {
+    if (isReloadingForControllerChange) {
       return;
     }
 
-    sessionStorage.setItem(CONTROLLER_CHANGE_RELOAD_FLAG, '1');
+    isReloadingForControllerChange = true;
     window.location.reload();
   });
 
@@ -104,8 +103,8 @@ export async function recoverPwaShell(options?: { reload?: boolean }) {
       await Promise.all(cacheKeys.map((cacheKey) => caches.delete(cacheKey)));
     }
 
-    sessionStorage.removeItem(CONTROLLER_CHANGE_RELOAD_FLAG);
     activeRegistration = null;
+    isReloadingForControllerChange = false;
 
     if (updateIntervalId !== null) {
       window.clearInterval(updateIntervalId);

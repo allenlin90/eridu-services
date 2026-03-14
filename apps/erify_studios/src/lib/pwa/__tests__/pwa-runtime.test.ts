@@ -123,7 +123,6 @@ describe('pwaRuntime', () => {
     controllerChangeHandler?.();
 
     expect(reloadSpy).toHaveBeenCalledTimes(1);
-    expect(sessionStorage.getItem('erify_studios_pwa_controller_change_reloaded')).toBe('1');
   });
 
   it('logs registration errors safely', async () => {
