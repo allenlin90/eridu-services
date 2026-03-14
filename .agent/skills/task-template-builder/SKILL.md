@@ -21,13 +21,15 @@ The Task Template Builder uses a **Shared Zod Schema** to ensure frontend and ba
 
 ### 2. Draft Storage (IndexedDB)
 
-To prevent data loss, drafts are saved to **IndexedDB** using `idb-keyval`.
+> **Note**: IndexedDB draft persistence is **not yet implemented** in the template builder. The builder currently holds state in React only (lost on unmount). This section documents the intended pattern for future implementation.
+>
+> `idb-keyval` IS used elsewhere in the codebase — for task execution and action sheet drafts (`task-execution-sheet.tsx`, `studio-task-action-sheet.tsx`) — so the pattern is established and proven.
 
-**Why IndexedDB over localStorage?**
+**Why IndexedDB over localStorage (when implemented)?**
 - **Capacity**: Task templates can be large (HTML descriptions, many fields). localStorage (5MB) runs out quickly.
 - **Async**: Prevents blocking the main thread during auto-save of large objects.
 
-**Implementation**:
+**Intended Implementation**:
 ```typescript
 const DRAFT_KEY = 'task_template_draft';
 
@@ -100,7 +102,7 @@ const payload = {
 ## Checklist
 
 - [ ] Field validation uses shared Zod schema from `@eridu/api-types/task-management`
-- [ ] Drafts are persisted to IndexedDB (not localStorage)
+- [ ] Drafts are persisted to IndexedDB (not localStorage) — **not yet implemented in builder, see §2**
 - [ ] Auto-save uses debounced writes (1s)
 - [ ] `@dnd-kit` items have stable `id` from `crypto.randomUUID()`
 - [ ] Payload is transformed before API submission (empty options filtered)
