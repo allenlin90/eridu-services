@@ -27,9 +27,30 @@ export const queryKeys = {
   shows: {
     all: ['me', 'shows'] as const,
     lists: () => [...queryKeys.shows.all, 'list'] as const,
-    list: (filters: Record<string, any>) =>
-      [...queryKeys.shows.lists(), filters] as const,
+    listPrefix: () => [...queryKeys.shows.lists()] as const,
+    list: (filters?: Record<string, unknown>) =>
+      [...queryKeys.shows.listPrefix(), filters ?? {}] as const,
     details: () => [...queryKeys.shows.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.shows.details(), id] as const,
+  },
+
+  // Future creator-focused economics query key namespace (Phase 4/5 extension seam)
+  economics: {
+    all: ['me', 'economics'] as const,
+    summaries: () => [...queryKeys.economics.all, 'summary'] as const,
+    summary: (scope: { showId?: string; dateFrom?: string; dateTo?: string }) =>
+      [...queryKeys.economics.summaries(), scope] as const,
+    details: () => [...queryKeys.economics.all, 'detail'] as const,
+    detail: (showId: string) => [...queryKeys.economics.details(), showId] as const,
+  },
+
+  // Future creator compensation query key namespace (Phase 4/5 extension seam)
+  compensation: {
+    all: ['me', 'compensation'] as const,
+    lists: () => [...queryKeys.compensation.all, 'list'] as const,
+    list: (scope: { showId?: string; dateFrom?: string; dateTo?: string } = {}) =>
+      [...queryKeys.compensation.lists(), scope] as const,
+    details: () => [...queryKeys.compensation.all, 'detail'] as const,
+    detail: (showId: string) => [...queryKeys.compensation.details(), showId] as const,
   },
 } as const;

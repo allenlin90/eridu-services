@@ -1,3 +1,5 @@
+import { Link } from '@tanstack/react-router';
+import type * as React from 'react';
 import type { ReactNode } from 'react';
 
 import { AppSidebar } from '@eridu/ui';
@@ -12,14 +14,19 @@ type SidebarLayoutProps = {
   children: ReactNode;
 };
 
+// Adapter for TanStack Router's Link to be used in generic UI components
+function RouterLink({ href, ...props }: React.ComponentProps<typeof Link>) {
+  return <Link to={href} {...props} />;
+}
+
 export function SidebarLayout({ children }: SidebarLayoutProps) {
   const { session } = useSession();
   const sidebarConfig = useSidebarConfig(session);
 
   return (
     <SidebarProvider>
-      <AppSidebar {...sidebarConfig} />
-      <SidebarInset>
+      <AppSidebar {...sidebarConfig} linkComponent={RouterLink} />
+      <SidebarInset className="min-w-0">
         <SidebarLayoutHeader />
         {children}
       </SidebarInset>
