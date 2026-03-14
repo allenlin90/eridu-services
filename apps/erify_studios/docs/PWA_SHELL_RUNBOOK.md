@@ -1,0 +1,36 @@
+# PWA Shell Runbook
+
+## Scope
+
+This runbook covers app-shell PWA behavior for `erify_studios`:
+- web app manifest,
+- service worker lifecycle and updates,
+- service worker/cache recovery.
+
+Push notification delivery and advanced offline mutation workflows are intentionally deferred.
+
+## Update Policy
+
+- Update strategy: `autoUpdate` via `vite-plugin-pwa`.
+- Runtime behavior:
+  - service worker registers in production only,
+  - initial + periodic update checks run automatically,
+  - controller change triggers a guarded one-time reload to apply the latest shell.
+- API responses remain `NetworkOnly` in service worker runtime caching to avoid double-caching with TanStack Query persistence.
+
+## Recovery Entry Point
+
+Use `/app-recovery` when app shell updates appear stuck after deployment.
+
+Available actions:
+1. **Check for updates**: trigger immediate service worker update check.
+2. **Reset app shell**: unregister service workers, clear caches, and reload.
+
+## Manual Verification Checklist
+
+1. Open the app in Chromium and install as PWA.
+2. Deploy a new build with changed static assets.
+3. Confirm the app updates to latest shell and reloads cleanly.
+4. Confirm outdated caches are removed.
+5. Use `/app-recovery` reset action and verify app reloads in a clean state.
+

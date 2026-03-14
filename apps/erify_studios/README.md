@@ -63,6 +63,7 @@ When working on erify_studios, refer to these guides:
 | [API Types Docs](../../packages/api-types/README.md)          | Understanding shared schemas and types                                    |
 | [UI Library](../../packages/ui/README.md)                     | Building UI components with shadcn/ui                                     |
 | [i18n Package](../../packages/i18n/README.md)                 | Adding new translations or language support                               |
+| [PWA Shell Runbook](./docs/PWA_SHELL_RUNBOOK.md)              | App shell update behavior, recovery flow, and service worker maintenance  |
 
 **Key Reference**: The [Architecture Principles](#architecture-principles) section below explains the three-layer pattern used throughout this app.
 
@@ -89,7 +90,7 @@ When working on erify_studios, refer to these guides:
 - ✅ **Authentication**: JWT-based session management with admin authorization via `@eridu/auth-sdk`
 - ✅ **Internationalization**: Multi-language support (English, Traditional Chinese, Thai)
 - ✅ **Offline Support**: IndexedDB persistence for offline capability
-- ✅ **PWA Foundation**: App-shell service worker + web app manifest (API caching remains TanStack Query + IndexedDB)
+- ✅ **PWA Shell**: Web manifest + auto-updating service worker with built-in recovery page (`/app-recovery`)
 - ✅ **Error Handling**: Global error boundary with recovery options
 - ✅ **Responsive Design**: Mobile-friendly UI with sidebar collapse
 - ✅ **Comprehensive Testing**: Unit and component tests with good coverage
