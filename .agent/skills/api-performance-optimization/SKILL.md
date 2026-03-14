@@ -112,9 +112,9 @@ const paginationSchema = z.object({
 
 Use `limit` (not `pageSize`) as the canonical query parameter — see Phase 5 tech debt note in `docs/roadmap/PHASE_5.md`.
 
-For large result sets, prefer **cursor-based pagination** over offset:
-- Cursor: stable at high offsets, cheaper for DB.
-- Offset: acceptable for admin views with small total counts.
+Use **offset-based pagination** (`page` + `limit`) as the default — this is the standard pattern across the entire codebase. Both admin lists and studio infinite-scroll lists use offset pagination with `paginationQuerySchema` from `@eridu/api-types/pagination`.
+
+Cursor-based pagination is not currently used in this codebase. If a future use case requires stable iteration at very high offsets (>100k rows), evaluate cursor pagination at that time.
 
 > See [`references/03-pagination-patterns.md`](references/03-pagination-patterns.md) for both patterns with examples.
 
@@ -221,5 +221,5 @@ Document baselines in the relevant technical design doc under `apps/erify_api/do
 
 - **[Database Patterns](../database-patterns/SKILL.md)**: N+1 prevention, bulk ops, `Promise.all` — foundational rules this skill extends.
 - **[Repository Pattern](../repository-pattern-nestjs/SKILL.md)**: Where lean selects and aggregations live.
-- **[Studio List Pattern](../studio-list-pattern/SKILL.md)**: Cursor-based pagination for studio-scoped list views.
+- **[Studio List Pattern](../studio-list-pattern/SKILL.md)**: Offset-based infinite scroll pagination for studio-scoped list views.
 - **[JSONB Analytics Snapshot](../jsonb-analytics-snapshot/SKILL.md)**: When to pre-aggregate vs query live for dashboard reads.

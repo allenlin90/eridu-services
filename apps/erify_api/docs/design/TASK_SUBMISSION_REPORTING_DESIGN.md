@@ -235,7 +235,7 @@ erDiagram
 
 ## 6. Proposed Schema Additions
 
-### 5.1 `Task` model
+### 6.1 `Task` model
 
 Add:
 
@@ -249,7 +249,7 @@ Reason:
 - stable sorting for batched report queries,
 - avoids JSON-metadata queries for core report workflows.
 
-### 5.2 `TaskReportDefinition` model
+### 6.2 `TaskReportDefinition` model
 
 Add a dedicated soft-deletable studio-scoped model.
 
@@ -357,9 +357,9 @@ Key response concepts (result):
 - `row_count`, `partition_count`: quick metadata
 - `generated_at`, `expires_at`: freshness metadata
 
-## 7. Endpoint Plan
+## 8. Endpoint Plan
 
-### 7.1 Source catalog
+### 8.1 Source catalog
 
 `GET /studios/:studioId/task-report-sources`
 
@@ -373,7 +373,7 @@ Access:
 
 - `ADMIN`, `MANAGER`, `MODERATION_MANAGER`
 
-### 7.2 Saved definition CRUD
+### 8.2 Saved definition CRUD
 
 - `GET /studios/:studioId/task-report-definitions`
 - `GET /studios/:studioId/task-report-definitions/:definitionUid`

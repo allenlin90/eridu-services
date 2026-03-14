@@ -93,7 +93,7 @@ Steps:
 
 ## 5. UX Structure
 
-## 5.1 Page sections
+### 5.1 Page sections
 
 Recommended route decomposition:
 
@@ -126,7 +126,7 @@ src/features/task-reports/
 
 Note: `definition-hash.ts` is no longer needed — the BE manages result identity and caching. The FE references results by `result_uid`, not a client-computed hash. `compute-summaries.ts` is available for client-side re-computation (e.g. after column filtering) but summaries are pre-computed by the BE and included in the stored result.
 
-## 5.2 Source selection UX
+### 5.2 Source selection UX
 
 Each source card should show:
 
@@ -142,7 +142,7 @@ Column picker behavior:
 - task-content columns come from snapshot field catalogs,
 - incompatible source groups are surfaced early so managers know export may split.
 
-## 5.3 Preview workspace
+### 5.3 Preview workspace
 
 The preview table is show-centric.
 
@@ -159,7 +159,7 @@ Numeric footer/summary strip should support:
 - sum for selected number columns
 - average for selected number columns
 
-## 5.4 Export UX
+### 5.4 Export UX
 
 Export controls should make partition behavior explicit:
 
