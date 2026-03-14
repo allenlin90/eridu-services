@@ -7,6 +7,8 @@ import { useSidebarConfig } from '../sidebar-config';
 
 import { authClient } from '@/lib/auth';
 
+const mockUseLocation = vi.fn();
+
 // Mock the auth client
 vi.mock('@/lib/auth', () => ({
   authClient: {
@@ -22,6 +24,10 @@ vi.mock('@/lib/api', () => ({
   clearAllCaches: vi.fn(),
 }));
 
+vi.mock('@tanstack/react-router', () => ({
+  useLocation: () => mockUseLocation(),
+}));
+
 // Mock the messages
 vi.mock('@/paraglide/messages.js', () => ({
   'sidebar.activities': vi.fn(() => 'Activities'),
@@ -31,6 +37,7 @@ vi.mock('@/paraglide/messages.js', () => ({
 describe('useSidebarConfig', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseLocation.mockReturnValue({ pathname: '/shows' });
   });
 
   it('returns correct config structure', () => {
@@ -171,5 +178,20 @@ describe('useSidebarConfig', () => {
     const { result } = renderHook(() => useSidebarConfig(session));
 
     expect(result.current.navMainLabel).toBe('Activities');
+  });
+
+  it('marks shows navigation as inactive outside of /shows routes', () => {
+    mockUseLocation.mockReturnValue({ pathname: '/settings' });
+    const session = {
+      user: {
+        name: 'John Doe',
+        email: 'john@example.com',
+        image: '/avatars/john.jpg',
+      },
+    };
+
+    const { result } = renderHook(() => useSidebarConfig(session));
+
+    expect(result.current.navMain[0]?.isActive).toBe(false);
   });
 });

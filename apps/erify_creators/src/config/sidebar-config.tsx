@@ -1,5 +1,7 @@
+import { useLocation } from '@tanstack/react-router';
 import { Command, Video } from 'lucide-react';
 import type * as React from 'react';
+import { useMemo } from 'react';
 
 import type {
   AppSidebarProps,
@@ -18,26 +20,40 @@ const sidebarHeader: SidebarHeaderContent = {
   url: '/',
 };
 
-const sidebarNavItems: SidebarNavItem[] = [
-  {
-    title: m['sidebar.shows'](),
-    url: '/shows',
-    icon: Video,
-    isActive: true,
-    items: [
-      // Shows will be populated dynamically
-      // Example structure:
-      // {
-      //   title: 'Show Name',
-      //   url: '/shows/show-id',
-      // },
-    ],
-  },
-];
+function normalizePath(url: string): string {
+  const [path] = url.split('?');
+  if (!path || path === '/') {
+    return '/';
+  }
+  return path.endsWith('/') ? path.slice(0, -1) : path;
+}
+
+function isPathActive(pathname: string, targetUrl: string): boolean {
+  const current = normalizePath(pathname);
+  const target = normalizePath(targetUrl);
+
+  if (target === '/') {
+    return current === '/';
+  }
+
+  return current === target || current.startsWith(`${target}/`);
+}
 
 export function useSidebarConfig(
   session: Session | null,
 ): Omit<AppSidebarProps, keyof React.ComponentProps<'div'>> {
+  const location = useLocation();
+
+  const sidebarNavItems = useMemo<SidebarNavItem[]>(() => [
+    {
+      title: m['sidebar.shows'](),
+      url: '/shows',
+      icon: Video,
+      isActive: isPathActive(location.pathname, '/shows'),
+      items: [],
+    },
+  ], [location.pathname]);
+
   const handleLogout = async () => {
     // Import clearAllCaches dynamically to avoid circular dependencies
     const { clearAllCaches } = await import('@/lib/api');

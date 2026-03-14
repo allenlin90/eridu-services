@@ -9,19 +9,11 @@ import {
 } from '@eridu/api-types/shows';
 
 import { apiClient } from '@/lib/api/client';
+import { queryKeys } from '@/lib/api/query-keys';
 
 export type ListShowsParams = z.infer<typeof listShowsQuerySchema>;
 export type ShowListResponse = z.infer<typeof showListResponseSchema>;
 export type ShowResponse = z.infer<typeof showApiResponseSchema>;
-
-// Query Keys following the factory pattern
-export const myShowsKeys = {
-  all: ['me', 'shows'] as const,
-  lists: () => [...myShowsKeys.all, 'list'] as const,
-  list: (filters?: Record<string, any>) => [...myShowsKeys.lists(), filters] as const,
-  details: () => [...myShowsKeys.all, 'detail'] as const,
-  detail: (id: string) => [...myShowsKeys.details(), id] as const,
-};
 
 /**
  * Fetch shows list for current user with pagination and filters
@@ -47,7 +39,7 @@ export async function getMyShow(id: string): Promise<ShowResponse> {
  */
 export function useMyShows(params: ListShowsParams) {
   return useQuery({
-    queryKey: myShowsKeys.list(params),
+    queryKey: queryKeys.shows.list(params),
     queryFn: () => getMyShows(params),
     placeholderData: keepPreviousData,
   });
@@ -59,7 +51,7 @@ export function useMyShows(params: ListShowsParams) {
  */
 export function useMyShow(id: string) {
   return useQuery({
-    queryKey: myShowsKeys.detail(id),
+    queryKey: queryKeys.shows.detail(id),
     queryFn: async () => {
       const response = await getMyShow(id);
       return showApiResponseToShow(response);

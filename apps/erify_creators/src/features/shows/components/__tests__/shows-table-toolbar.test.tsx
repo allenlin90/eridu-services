@@ -29,13 +29,15 @@ vi.mock('@/paraglide/messages.js', () => ({
 
 // Mock UI components
 vi.mock('@eridu/ui', () => ({
-  Button: ({ children, onClick, disabled, variant, size, className }: any) => (
+  Button: ({ children, onClick, disabled, variant, size, className, ...rest }: any) => (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
       data-variant={variant}
       data-size={size}
       className={className}
+      {...rest}
     >
       {children}
     </button>
@@ -61,6 +63,7 @@ vi.mock('@eridu/ui', () => ({
     return (
       <div data-testid="date-picker">
         <button
+          type="button"
           onClick={() => onOpenChange(!open)}
           data-testid="date-picker-toggle"
         >
@@ -69,6 +72,7 @@ vi.mock('@eridu/ui', () => ({
         {open && (
           <div data-testid="date-picker-content">
             <button
+              type="button"
               onClick={() => {
                 const newDate = { from: new Date('2024-01-01'), to: new Date('2024-01-31') };
                 setDate(newDate);
@@ -187,11 +191,12 @@ describe('showsTableToolbar', () => {
     });
   });
 
-  it('shows refresh button with correct text', () => {
+  it('uses icon-only refresh button with accessible label', () => {
     render(<ShowsTableToolbar table={mockTable as any} />);
 
     const refreshButton = screen.getByRole('button', { name: /Refresh/i });
-    expect(refreshButton).toHaveTextContent('Refresh');
+    expect(refreshButton).toHaveAttribute('data-size', 'icon');
+    expect(refreshButton).toHaveAttribute('aria-label', 'Refresh');
   });
 
   it('disables refresh button when fetching', () => {
