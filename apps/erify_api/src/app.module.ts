@@ -126,11 +126,11 @@ import { UploadModule } from '@/uploads/upload.module';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: AppThrottlerGuard,
+      useClass: JwtAuthGuard,
     },
     {
       provide: APP_GUARD,
-      useClass: JwtAuthGuard,
+      useClass: AppThrottlerGuard,
     },
     {
       provide: APP_GUARD,
