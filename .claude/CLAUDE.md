@@ -1,6 +1,6 @@
 # Eridu Services Monorepo - Quick Reference
 
-> **Last Updated**: 2026-03-06
+> **Last Updated**: 2026-03-14
 > **Status**: Production codebase — major architectural debt resolved Feb 2026 (see Known Issues)
 
 ## Workflow Rules (MUST FOLLOW)
@@ -319,7 +319,7 @@ const where: Prisma.TaskWhereInput = { ... };
 | **data-compatibility-migration** | Frontend dual-field fallback helpers for API contract migrations, centralized accessor pattern, lifecycle rules | MEDIUM |
 | **pwa-best-practices** | PWA setup/migration, SW caching boundaries, app-shell update/recovery patterns | HIGH |
 
-**Full skill list** (36 total): See `.agent/skills/` directory
+**Full skill list** (41 total): See `.agent/skills/` directory
 
 ### Memory Files (Supplementary - `.claude/memory/`)
 | File | Purpose | When to Use |

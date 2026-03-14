@@ -78,5 +78,5 @@ The final cutover scope removes all backward-compatibility aliases:
 
 ## Reference
 
-- [PHASE_4_MERGE_PROGRAM.md](../../../docs/roadmap/PHASE_4_MERGE_PROGRAM.md) — Execution tracker and session handoff log.
+- [PHASE_4.md](../../../docs/roadmap/PHASE_4.md) — Execution tracker and session handoff log.
 - [data-compatibility-migration](../data-compatibility-migration/SKILL.md) — Frontend fallback patterns during cutover transition.
