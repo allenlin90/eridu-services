@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ClsPluginTransactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { ClsModule } from 'nestjs-cls';
@@ -19,8 +19,10 @@ import { HttpExceptionFilter } from '@/lib/filters/http-exception.filter';
 import { PrismaExceptionFilter } from '@/lib/filters/prisma-exception.filter';
 import { ZodExceptionFilter } from '@/lib/filters/zod-exception.filter';
 import { AdminGuard } from '@/lib/guards/admin.guard';
+import { AppThrottlerGuard } from '@/lib/guards/app-throttler.guard';
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 import { GoogleSheetsApiKeyGuard } from '@/lib/guards/google-sheets-api-key.guard';
+import { READ_BURST_THROTTLE_KEY } from '@/lib/guards/read-burst-throttle.decorator';
 import { StudioGuard } from '@/lib/guards/studio.guard';
 import { OpenAPIModule } from '@/lib/openapi/openapi.module';
 import { MeModule } from '@/me/me.module';
@@ -86,8 +88,26 @@ import { UploadModule } from '@/uploads/upload.module';
 
         return [
           {
+            name: 'default',
             ttl: config.getOrThrow('THROTTLE_TTL'),
             limit: config.getOrThrow('THROTTLE_LIMIT'),
+          },
+          {
+            name: 'readBurst',
+            ttl: config.getOrThrow('THROTTLE_READ_BURST_TTL'),
+            limit: config.getOrThrow('THROTTLE_READ_BURST_LIMIT'),
+            skipIf: (context) => {
+              const handlerEnabled = Reflect.getMetadata(
+                READ_BURST_THROTTLE_KEY,
+                context.getHandler(),
+              );
+              const classEnabled = Reflect.getMetadata(
+                READ_BURST_THROTTLE_KEY,
+                context.getClass(),
+              );
+
+              return !(handlerEnabled || classEnabled);
+            },
           },
         ];
       },
@@ -106,7 +126,7 @@ import { UploadModule } from '@/uploads/upload.module';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: AppThrottlerGuard,
     },
     {
       provide: APP_GUARD,

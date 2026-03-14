@@ -68,6 +68,17 @@ export const envSchema = z.object({
     .int({ message: 'THROTTLE_LIMIT must be an integer' })
     .min(1, { message: 'THROTTLE_LIMIT must be at least 1' })
     .default(10),
+  // Read-burst profile for heavy list endpoints
+  THROTTLE_READ_BURST_TTL: z.coerce
+    .number()
+    .int({ message: 'THROTTLE_READ_BURST_TTL must be an integer' })
+    .min(1000, { message: 'THROTTLE_READ_BURST_TTL must be at least 1000ms' })
+    .default(60000),
+  THROTTLE_READ_BURST_LIMIT: z.coerce
+    .number()
+    .int({ message: 'THROTTLE_READ_BURST_LIMIT must be an integer' })
+    .min(1, { message: 'THROTTLE_READ_BURST_LIMIT must be at least 1' })
+    .default(60),
 
   // Cloudflare R2 (S3-compatible object storage)
   R2_ENDPOINT: z.url({ message: 'R2_ENDPOINT must be a valid URL' }).optional(),
