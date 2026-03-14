@@ -230,6 +230,58 @@ export function useInfiniteScroll<T extends HTMLElement = HTMLDivElement>({
 
 ---
 
+## Query Key Memoization
+
+Query key factory calls (e.g., `taskTemplateQueryKeys.list(studioId, { search })`) create a new array reference on every render. When the query key is used outside the `queryKey` option — such as in a `useEffect` cleanup or a `useCallback` — the new reference causes the effect or callback to re-run on every render.
+
+**Rule**: Wrap query key factory calls in `useMemo` when they are passed to `useEffect`, `useCallback`, or any cache management call outside the `queryKey` option.
+
+```typescript
+// ✅ Stable reference — only changes when studioId or searchQuery changes
+const listQueryKey = useMemo(
+  () => taskTemplateQueryKeys.list(studioId, { search: searchQuery }),
+  [studioId, searchQuery],
+);
+
+useEffect(() => {
+  return () => {
+    queryClient.setQueryData(listQueryKey, compactToFirstPage);
+  };
+}, [listQueryKey, queryClient]);  // ← safe: listQueryKey is stable
+```
+
+## Cache Compaction
+
+On unmount, compact the infinite query cache to page 1 so that remount triggers a single revalidation request instead of re-fetching every accumulated page.
+
+```typescript
+useEffect(() => {
+  return () => {
+    queryClient.setQueryData<InfiniteData<PaginatedResponse<ItemDto>>>(
+      listQueryKey,
+      (data) => (data ? compactToFirstPage(data) : data),
+    );
+  };
+}, [listQueryKey, queryClient]);
+```
+
+**Manual refresh**: Compact first, then refetch — prevents a burst of N page requests:
+
+```typescript
+const handleRefresh = useCallback(() => {
+  queryClient.setQueryData(listQueryKey, (data) =>
+    data ? compactToFirstPage(data) : data,
+  );
+  void query.refetch();
+}, [listQueryKey, query, queryClient]);
+```
+
+Pass `handleRefresh` as `onRefresh` to the toolbar instead of the raw `query.refetch`.
+
+See [`frontend-state-management/references/infinite-cache-patterns.md`](../frontend-state-management/references/infinite-cache-patterns.md) for the full cache helper implementations.
+
+---
+
 ## Query State Ownership Principle
 
 > [!IMPORTANT]
@@ -274,6 +326,9 @@ function PageLayout({ refreshQueryKey }) {
 - [ ] List component uses `useInfiniteScroll` hook
 - [ ] All loading, error, and empty states are handled
 - [ ] Query state ownership principle is followed
+- [ ] Query key factory calls used outside `queryKey` option are wrapped in `useMemo`
+- [ ] `useEffect` cleanup compacts the infinite query cache to page 1 on unmount
+- [ ] Manual refresh handler compacts cache before calling `refetch`
 
 ---
 

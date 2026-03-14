@@ -120,6 +120,26 @@ For large result sets, prefer **cursor-based pagination** over offset:
 
 ---
 
+## 4.1 Read-Burst Throttling
+
+A companion strategy to pagination caps for high-traffic read endpoints. While pagination prevents unbounded result sets, burst throttling prevents excessive request frequency from infinite scroll and search-on-keystroke patterns.
+
+Use the `readBurst` named throttle profile (via `@ReadBurstThrottle()`) for list endpoints that experience burst traffic:
+- Infinite scroll lists where the frontend fires `fetchNextPage` rapidly
+- Search endpoints hit on every keystroke
+- Paginated grids with prev/next navigation
+
+```typescript
+@Get()
+@ReadBurstThrottle()  // ← lenient for burst; default profile still guards mutations
+@ZodPaginatedResponse(taskTemplateDto)
+async list(...) { ... }
+```
+
+See the `backend-controller-pattern-nestjs` skill for the full `@ReadBurstThrottle()` implementation and decision table.
+
+---
+
 ## 5. Parallel Independent Queries
 
 **Rule**: Any two queries with no data dependency between them must run in parallel.

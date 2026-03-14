@@ -450,3 +450,109 @@ export function ResponsiveCardGrid({ children, className }: ResponsiveCardGridPr
   );
 }
 ```
+
+---
+
+## Feature Hook with Query Key Memoization and Cache Compaction
+
+This example extends the basic feature hook to include:
+- `useMemo` around the query key so it's stable in `useEffect` dependencies
+- `useEffect` cleanup that compacts the cache to page 1 on unmount
+- A `handleRefresh` that pre-compacts before calling `refetch`
+
+```typescript
+import { useCallback, useEffect, useMemo } from 'react';
+import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
+import { useTableUrlState, type UseTableUrlStateReturn } from '@eridu/ui';
+import { getTaskTemplates, taskTemplateQueryKeys } from '../api/task-templates.api';
+import type { TaskTemplateDto, PaginatedResponse } from '@eridu/api-types';
+
+type Page = PaginatedResponse<TaskTemplateDto>;
+
+function compactToFirstPage<T>(data: InfiniteData<T>): InfiniteData<T> {
+  return { pages: data.pages.slice(0, 1), pageParams: data.pageParams.slice(0, 1) };
+}
+
+type UseTaskTemplatesReturn = {
+  tableState: UseTableUrlStateReturn;
+  items: TaskTemplateDto[];
+  total: number;
+  isLoading: boolean;
+  isFetching: boolean;
+  isError: boolean;
+  isFetchingNextPage: boolean;
+  hasNextPage: boolean;
+  fetchNextPage: () => void;
+  onRefresh: () => void;  // ← pre-compacts, then refetches
+};
+
+export function useTaskTemplates({ studioId }: { studioId: string }): UseTaskTemplatesReturn {
+  const queryClient = useQueryClient();
+
+  const tableState = useTableUrlState({
+    from: '/studios/$studioId/task-templates',
+    searchColumnId: 'name',
+    defaultSorting: [{ id: 'updatedAt', desc: true }],
+  });
+
+  const searchQuery =
+    (tableState.columnFilters.find((f) => f.id === 'name')?.value as string) || '';
+
+  // Memoize — stable reference for useEffect dependency array
+  const listQueryKey = useMemo(
+    () => taskTemplateQueryKeys.list(studioId, { search: searchQuery }),
+    [studioId, searchQuery],
+  );
+
+  const query = useInfiniteQuery({
+    queryKey: listQueryKey,
+    queryFn: ({ pageParam, signal }) =>
+      getTaskTemplates(studioId, { cursor: pageParam, limit: 20, name: searchQuery }, { signal }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.meta.nextCursor,
+  });
+
+  // Compact cache to page 1 on unmount — prevents N-page burst revalidation on remount
+  useEffect(() => {
+    return () => {
+      queryClient.setQueryData<InfiniteData<Page>>(
+        listQueryKey,
+        (data) => (data ? compactToFirstPage(data) : data),
+      );
+    };
+  }, [listQueryKey, queryClient]);
+
+  // Pre-compact then refetch — manual refresh only re-fetches page 1
+  const onRefresh = useCallback(() => {
+    queryClient.setQueryData<InfiniteData<Page>>(
+      listQueryKey,
+      (data) => (data ? compactToFirstPage(data) : data),
+    );
+    void query.refetch();
+  }, [listQueryKey, query, queryClient]);
+
+  const items = useMemo(
+    () => query.data?.pages.flatMap((page) => page.data) ?? [],
+    [query.data],
+  );
+
+  return {
+    tableState,
+    items,
+    total: query.data?.pages[0]?.meta.total ?? 0,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    isError: query.isError,
+    isFetchingNextPage: query.isFetchingNextPage,
+    hasNextPage: query.hasNextPage,
+    fetchNextPage: query.fetchNextPage,
+    onRefresh,
+  };
+}
+```
+
+**Key differences from the basic example**:
+- `listQueryKey` is wrapped in `useMemo` — prevents `useEffect` from re-running on every render
+- `useEffect` cleanup calls `compactToFirstPage` — single-page revalidation on remount
+- `onRefresh` compacts then refetches — no burst of N requests on manual refresh
+- `queryFn` destructures and passes `signal` — requests cancelled on component unmount or key change

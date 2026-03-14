@@ -154,6 +154,65 @@ export async function createTaskTemplate(studioId: string, payload: CreateTaskTe
 - ✅ Return typed responses
 - ✅ Handle params and payload transformation
 
+### AbortSignal Handling (Request Cancellation)
+
+TanStack Query passes an `AbortSignal` through the `queryFn` context. Always destructure `{ signal }` (or `{ pageParam, signal }` for infinite queries) and forward it to the API fetcher so in-flight requests are cancelled when the component unmounts or the query key changes.
+
+**API fetcher** — accept an optional `signal` parameter:
+
+```typescript
+export async function getItems(
+  studioId: string,
+  params: { page?: number; limit?: number; name?: string },
+  options?: { signal?: AbortSignal },
+): Promise<PaginatedResponse<ItemDto>> {
+  const { data } = await apiClient.get<PaginatedResponse<ItemDto>>(
+    `/studios/${studioId}/items`,
+    { params, signal: options?.signal },
+  );
+  return data;
+}
+```
+
+**Hook** — pass the signal from TanStack Query context:
+
+```typescript
+useInfiniteQuery({
+  queryKey: itemQueryKeys.list(studioId, { search }),
+  queryFn: ({ pageParam, signal }) =>
+    getItems(studioId, { page: pageParam, limit: 10, name: search }, { signal }),
+  initialPageParam: 1,
+  getNextPageParam: (lastPage) =>
+    lastPage.meta.page < lastPage.meta.totalPages ? lastPage.meta.page + 1 : undefined,
+});
+```
+
+**Rules**:
+- ✅ Always destructure `signal` from `queryFn` context — even if the fetcher signature is optional, pass it through
+- ✅ API fetchers must accept `options?: { signal?: AbortSignal }` and forward to `apiClient.get/post`
+- ✅ This prevents stale responses from appearing after a user navigates away mid-request
+
+### Query Key Memoization
+
+Query key factory calls (e.g., `taskTemplateQueryKeys.list(studioId, { search })`) create a **new array reference on every render**. When used as `useEffect` or `useCallback` dependencies this causes unnecessary re-runs (or ESLint `exhaustive-deps` violations).
+
+**Rule**: Wrap query key factory calls in `useMemo` when they are used outside the `queryKey` option (e.g., in `useEffect` cleanup, `setQueryData`, `invalidateQueries`).
+
+```typescript
+// ✅ Memoize the query key so useEffect only re-runs when studioId or searchQuery changes
+const listQueryKey = useMemo(
+  () => itemQueryKeys.list(studioId, { search: searchQuery }),
+  [studioId, searchQuery],
+);
+
+useEffect(() => () => {
+  // Compact the infinite query cache on unmount — listQueryKey is stable
+  queryClient.setQueryData(listQueryKey, compactPages);
+}, [listQueryKey, queryClient]);
+```
+
+**When to apply**: Any time a query key is used outside the `queryKey` option of `useQuery`/`useInfiniteQuery`.
+
 ### Why `listPrefix` for Mutation Invalidation
 
 When a mutation affects all entries for a scope, invalidating by the exact `list(studioId, filters)` key only clears one cached filter combination. `listPrefix(studioId)` invalidates ALL cached queries for that studio regardless of which filters the user had active:
@@ -291,6 +350,9 @@ export function useUpdateMyTask() {
 - [ ] TanStack Query hooks use query keys from API declarations
 - [ ] Mutations invalidate relevant queries on success
 - [ ] Error handling: API client (auth), components (business logic)
+- [ ] API fetchers accept `options?: { signal?: AbortSignal }` and forward to `apiClient`
+- [ ] `queryFn` destructures and passes `signal` from TanStack Query context
+- [ ] Query key factory calls used outside `queryKey` option are wrapped in `useMemo`
 
 ---
 

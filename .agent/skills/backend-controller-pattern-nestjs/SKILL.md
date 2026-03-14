@@ -507,6 +507,64 @@ export class MeTaskModule {}
 
 ---
 
+## Rate Limiting & Throttle Profiles
+
+### Named Throttle Profiles
+
+The app configures multiple named throttle profiles in `ThrottlerModule.forRoot()`:
+
+| Profile | Purpose |
+|---------|---------|
+| `default` | Strict — applied globally to all routes |
+| `readBurst` | Lenient — for read-heavy endpoints that experience burst traffic |
+
+The `readBurst` profile uses a `skipIf` callback that checks for `READ_BURST_THROTTLE_KEY` metadata on the handler. This means opting in is explicit and safe — undecorated routes always fall under the `default` profile.
+
+### @ReadBurstThrottle() Decorator
+
+A custom `@ReadBurstThrottle()` decorator opts a specific route into the `readBurst` profile while simultaneously skipping the `default` profile:
+
+```typescript
+import { applyDecorators, SetMetadata } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
+
+export const READ_BURST_THROTTLE_KEY = 'readBurstThrottle';
+
+/**
+ * Opts a route into the lenient readBurst throttle profile and skips the strict default profile.
+ * Apply to list endpoints with infinite scroll, search, or rapid pagination.
+ */
+export const ReadBurstThrottle = () =>
+  applyDecorators(
+    SetMetadata(READ_BURST_THROTTLE_KEY, true),
+    SkipThrottle({ default: true }),
+  );
+```
+
+Usage:
+
+```typescript
+@Get()
+@ReadBurstThrottle()  // ← lenient for paginated list with infinite scroll
+@ZodPaginatedResponse(taskTemplateDto)
+async list(
+  @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+  @Query() query: ListTaskTemplatesQueryDto,
+) { ... }
+```
+
+### When to Use
+
+| Apply `@ReadBurstThrottle()` | Keep default throttle |
+|-----------------------------|----------------------|
+| List/index with infinite scroll | Any mutation (POST, PATCH, DELETE) |
+| Search / autocomplete on keystroke | Auth endpoints (login, refresh) |
+| Rapid pagination (prev/next) | Single-resource GET by ID |
+
+**Never skip throttling entirely** — always opt into a named profile. `@SkipThrottle()` without a profile replacement removes all rate limiting and should not appear in production code.
+
+---
+
 ## Related Skills
 
 - **[Service Pattern NestJS](../service-pattern-nestjs/SKILL.md)** - Service layer patterns
@@ -514,3 +572,4 @@ export class MeTaskModule {}
 - **[Data Validation](../data-validation/SKILL.md)** - Input validation and serialization
 - **[Shared API Types](../shared-api-types/SKILL.md)** - API contracts and schemas
 - **[Database Patterns](../database-patterns/SKILL.md)** - Soft delete, transactions
+- **[Secure Coding Practices](../secure-coding-practices/SKILL.md)** - AppThrottlerGuard, trust proxy hardening
