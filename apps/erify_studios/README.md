@@ -57,11 +57,11 @@ When working on erify_studios, refer to these guides:
 | Document                                                      | Use When                                                                  |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | This README                                                   | Understanding project structure, architecture, testing, and setup         |
-| [Copilot Instructions](../../.github/copilot-instructions.md) | Understanding monorepo patterns, conventions, and cross-app communication |
+| [Agent Instructions](../../AGENTS.md)                         | Understanding monorepo patterns, conventions, and cross-app communication |
 | [erify_api Docs](../erify_api/docs/)                          | Working on API integration, understanding backend features                |
 | [Auth SDK Docs](../../packages/auth-sdk/README.md)            | Implementing authentication flows, session management                     |
 | [API Types Docs](../../packages/api-types/README.md)          | Understanding shared schemas and types                                    |
-| [UI Library](../../packages/ui/README.md)                     | Building UI components with shadcn/ui                                     |
+| [UI Library](../../packages/ui/)                              | Building UI components with shadcn/ui                                     |
 | [i18n Package](../../packages/i18n/README.md)                 | Adding new translations or language support                               |
 | [PWA Shell Runbook](./docs/PWA_SHELL_RUNBOOK.md)              | App shell update behavior, recovery flow, and service worker maintenance  |
 
@@ -591,16 +591,16 @@ Paraglide JS integrates with the build process:
 
 ### Architecture & Design
 
-- **[Copilot Instructions](../../.github/copilot-instructions.md)**: Monorepo conventions and patterns
-- **[erify_api Architecture](../erify_api/docs/ARCHITECTURE.md)**: Backend module design
-- **[erify_api Business Logic](../erify_api/docs/BUSINESS.md)**: Entity relationships and soft-delete patterns
+- **[Agent Instructions](../../AGENTS.md)**: Monorepo conventions and patterns
+- **[Product Architecture Overview](../../docs/product/ARCHITECTURE_OVERVIEW.md)**: Cross-app architecture and boundaries
+- **[Product Business Context](../../docs/product/BUSINESS.md)**: Domain entities and business rules
 
 ### Development Workflow
 
 When implementing admin features:
 
 1. **Check API Endpoints**: Review [erify_api docs](../erify_api/docs/) for available admin endpoints
-2. **Understand Data Models**: See [BUSINESS.md](../erify_api/docs/BUSINESS.md) for entity relationships
+2. **Understand Data Models**: See [Business Context](../../docs/product/BUSINESS.md) for entity relationships
 3. **Use Admin CRUD Hook**: Leverage `useAdminCrud()` for generic operations
 4. **Add Table Columns**: Define columns and actions in features
 5. **Test Admin Access**: Verify authorization and access control
@@ -608,7 +608,7 @@ When implementing admin features:
 
 ### Known Issues & Future Work
 
-See [`docs/TODO.md`](./docs/TODO.md) for tracked enhancements:
+See [Phase 5 backlog](../../docs/roadmap/PHASE_5.md) for tracked enhancements:
 - Creator user association UI improvements (search/autocomplete)
 - Pagination and filtering enhancements
 - Duplicate user prevention
@@ -620,7 +620,7 @@ See `package.json` for exact versions of:
 - TanStack Router v1
 - TanStack React Query v5
 - TanStack React Table v8
-- Vite 6
+- Vite 7
 - TypeScript 5
 
 ---

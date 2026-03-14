@@ -5,7 +5,7 @@ Operational guide for coding agents in `eridu-services`.
 ## Scope and Source of Truth
 - This file applies to the entire monorepo.
 - Canonical agent skill location: `.agent/skills/`.
-- Skills should be discovered dynamically from the skills directory; do not maintain a hardcoded inventory in this file.
+- Skills should be discovered dynamically from the skills directory; the routing list below is a convenience map, not the source of truth.
 - Existing house rules and workflows are in:
   - `.agent/rules/`
   - `.agent/workflows/verification.md`

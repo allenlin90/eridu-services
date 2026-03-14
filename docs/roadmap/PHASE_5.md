@@ -129,11 +129,12 @@ TODOs:
 ### Frontend PWA and Push Notifications
 
 Context:
-Field operations need app-like access and timely alerts, especially when users are not actively in the web app.
+`erify_studios` now has an app-shell PWA baseline (manifest, auto-updating service worker, and recovery route).
+Remaining work focuses on rollout parity for other frontend apps and push-notification delivery.
 
 TODOs:
-- Turn frontend apps into downloadable PWAs.
-- Add service-worker strategy for app-shell caching and stable updates.
+- Roll out the same PWA shell conventions to `erify_creators`.
+- Validate deployment/update/recovery behavior in production environments after rollout.
 - Integrate notification system with push notifications:
   - subscription lifecycle (subscribe/unsubscribe/refresh),
   - server-side push delivery pipeline,
