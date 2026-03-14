@@ -17,6 +17,7 @@ vi.mock('lucide-react', () => ({
   MonitorPlay: vi.fn(),
   Ruler: vi.fn(),
   Settings: vi.fn(),
+  ShieldAlert: vi.fn(),
   ShieldCheck: vi.fn(),
   Shapes: vi.fn(),
   Users: vi.fn(),
@@ -135,7 +136,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
-    expect(result.current.navMain).toHaveLength(5); // Dashboard + System + Studio Common + Studio Admin + Creators
+    expect(result.current.navMain).toHaveLength(6); // Dashboard + App Recovery + System + Studio Common + Studio Admin + Creators
     expect(result.current.navMain[0]).toEqual({
       title: 'Dashboard',
       url: '/dashboard',
@@ -145,6 +146,13 @@ describe('useSidebarConfig', () => {
     });
 
     expect(result.current.navMain[1]).toEqual({
+      title: 'App Recovery',
+      url: '/app-recovery',
+      icon: expect.any(Function),
+      isActive: false,
+    });
+
+    expect(result.current.navMain[2]).toEqual({
       title: 'System',
       url: '/system',
       icon: expect.any(Function),
@@ -166,7 +174,7 @@ describe('useSidebarConfig', () => {
       ]),
     });
 
-    expect(result.current.navMain[2]).toEqual(expect.objectContaining({
+    expect(result.current.navMain[3]).toEqual(expect.objectContaining({
       title: 'Studio Common',
       url: '/studios/studio-1',
       icon: expect.any(Function),
@@ -187,7 +195,7 @@ describe('useSidebarConfig', () => {
       ]),
     }));
 
-    expect(result.current.navMain[3]).toEqual(expect.objectContaining({
+    expect(result.current.navMain[4]).toEqual(expect.objectContaining({
       title: 'Studio Admin',
       url: '/studios/studio-1/admin',
       icon: expect.any(Function),
@@ -204,7 +212,7 @@ describe('useSidebarConfig', () => {
       ]),
     }));
 
-    expect(result.current.navMain[4]).toEqual(expect.objectContaining({
+    expect(result.current.navMain[5]).toEqual(expect.objectContaining({
       title: 'Creators',
       url: '/studios/studio-1/creator-mapping',
       icon: expect.any(Function),
@@ -223,7 +231,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
-    expect(result.current.navMain[1].isActive).toBe(true);
+    expect(result.current.navMain[2].isActive).toBe(true);
     expect(result.current.navMain[0].isActive).toBe(false);
   });
 
@@ -233,7 +241,7 @@ describe('useSidebarConfig', () => {
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
     expect(result.current.navMain[0].isActive).toBe(true);
-    expect(result.current.navMain[1].isActive).toBe(false);
+    expect(result.current.navMain[2].isActive).toBe(false);
   });
 
   it('returns user data when session exists', () => {

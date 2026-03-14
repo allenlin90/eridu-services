@@ -4,11 +4,11 @@ import { RouterProvider } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Toaster } from 'sonner';
-import { registerSW } from 'virtual:pwa-register';
 
 import './index.css';
 
 import { createIDBPersister, queryClient } from '@/lib/api';
+import { initializePwaShell } from '@/lib/pwa';
 import { router } from '@/router';
 
 // Create IndexedDB persister for offline support
@@ -28,13 +28,4 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 );
 
-const updateSW = registerSW({
-  immediate: false,
-  onRegisterError(error) {
-    console.error('PWA service worker registration failed', error);
-  },
-});
-
-if (import.meta.env.PROD) {
-  void updateSW();
-}
+initializePwaShell();

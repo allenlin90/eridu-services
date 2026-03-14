@@ -13,6 +13,7 @@ import {
   Ruler,
   Settings,
   Shapes,
+  ShieldAlert,
   ShieldCheck,
   Users,
   UserSquare2,
@@ -241,6 +242,12 @@ export function useSidebarConfig(
         url: `/dashboard`,
         icon: LayoutDashboard,
         isActive: isPathActive(currentPath, '/dashboard'),
+      },
+      {
+        title: 'App Recovery',
+        url: '/app-recovery',
+        icon: ShieldAlert,
+        isActive: isPathActive(currentPath, '/app-recovery'),
       },
     ];
 

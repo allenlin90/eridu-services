@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as AppRecoveryRouteImport } from './routes/app-recovery'
 import { Route as SystemRouteRouteImport } from './routes/system/route'
 import { Route as StudiosRouteRouteImport } from './routes/studios/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -51,6 +52,11 @@ import { Route as StudiosStudioIdShowsShowIdTasksRouteImport } from './routes/st
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRecoveryRoute = AppRecoveryRouteImport.update({
+  id: '/app-recovery',
+  path: '/app-recovery',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SystemRouteRoute = SystemRouteRouteImport.update({
@@ -260,6 +266,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/studios': typeof StudiosRouteRouteWithChildren
   '/system': typeof SystemRouteRouteWithChildren
+  '/app-recovery': typeof AppRecoveryRoute
   '/dashboard': typeof DashboardRoute
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
   '/studios/$studioId/creator-mapping': typeof StudiosStudioIdCreatorMappingRouteWithChildren
@@ -300,6 +307,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/studios': typeof StudiosRouteRouteWithChildren
   '/system': typeof SystemRouteRouteWithChildren
+  '/app-recovery': typeof AppRecoveryRoute
   '/dashboard': typeof DashboardRoute
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
@@ -336,6 +344,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/studios': typeof StudiosRouteRouteWithChildren
   '/system': typeof SystemRouteRouteWithChildren
+  '/app-recovery': typeof AppRecoveryRoute
   '/dashboard': typeof DashboardRoute
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
   '/studios/$studioId/creator-mapping': typeof StudiosStudioIdCreatorMappingRouteWithChildren
@@ -378,6 +387,7 @@ export interface FileRouteTypes {
     | '/'
     | '/studios'
     | '/system'
+    | '/app-recovery'
     | '/dashboard'
     | '/studios/$studioId'
     | '/studios/$studioId/creator-mapping'
@@ -418,6 +428,7 @@ export interface FileRouteTypes {
     | '/'
     | '/studios'
     | '/system'
+    | '/app-recovery'
     | '/dashboard'
     | '/studios/$studioId'
     | '/studios/$studioId/dashboard'
@@ -453,6 +464,7 @@ export interface FileRouteTypes {
     | '/'
     | '/studios'
     | '/system'
+    | '/app-recovery'
     | '/dashboard'
     | '/studios/$studioId'
     | '/studios/$studioId/creator-mapping'
@@ -494,6 +506,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   StudiosRouteRoute: typeof StudiosRouteRouteWithChildren
   SystemRouteRoute: typeof SystemRouteRouteWithChildren
+  AppRecoveryRoute: typeof AppRecoveryRoute
   DashboardRoute: typeof DashboardRoute
 }
 
@@ -504,6 +517,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app-recovery': {
+      id: '/app-recovery'
+      path: '/app-recovery'
+      fullPath: '/app-recovery'
+      preLoaderRoute: typeof AppRecoveryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/system': {
@@ -933,6 +953,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   StudiosRouteRoute: StudiosRouteRouteWithChildren,
   SystemRouteRoute: SystemRouteRouteWithChildren,
+  AppRecoveryRoute: AppRecoveryRoute,
   DashboardRoute: DashboardRoute,
 }
 export const routeTree = rootRouteImport

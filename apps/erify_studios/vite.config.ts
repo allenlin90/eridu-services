@@ -47,10 +47,17 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       injectRegister: false,
-      includeAssets: ['icons/pwa-192.svg', 'icons/pwa-512.svg'],
+      includeAssets: [
+        'icons/favicon.png',
+        'icons/apple-touch-icon.png',
+        'icons/pwa-192.png',
+        'icons/pwa-512.png',
+        'icons/pwa-maskable-512.png',
+      ],
       manifest: {
+        id: '/',
         name: 'Erify Studios',
         short_name: 'Studios',
         description: 'Erify Studios operations workspace',
@@ -61,20 +68,29 @@ export default defineConfig({
         theme_color: '#111827',
         icons: [
           {
-            src: '/icons/pwa-192.svg',
+            src: '/icons/pwa-192.png',
             sizes: '192x192',
-            type: 'image/svg+xml',
+            type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/icons/pwa-512.svg',
+            src: '/icons/pwa-512.png',
             sizes: '512x512',
-            type: 'image/svg+xml',
-            purpose: 'any maskable',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/icons/pwa-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
           },
         ],
       },
       workbox: {
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
         navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [
           {
