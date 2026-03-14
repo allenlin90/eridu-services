@@ -1,8 +1,13 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { Show } from '../../types';
 import { ShowList } from '../show-list';
+
+vi.mock('@/paraglide/messages.js', () => ({
+  'shows.noShows': () => 'No shows found',
+  'shows.typeLabel': () => 'Type:',
+}));
 
 const mockShows: Show[] = [
   {

@@ -14,8 +14,8 @@ import { QueryCache, QueryClient } from '@tanstack/react-query';
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Data considered fresh for 5 minutes
-      staleTime: 5 * 60 * 1000,
+      // Data is instantly considered stale to keep stale-while-revalidate behavior.
+      staleTime: 0,
 
       // Cache data for 30 mins (required for persistence)
       // Data older than this will be garbage collected
@@ -34,8 +34,7 @@ export const queryClient = new QueryClient({
       // Refetch on window focus in production
       refetchOnWindowFocus: import.meta.env.PROD,
 
-      // Don't refetch on mount if data is fresh
-      refetchOnMount: false,
+      // Keep default refetch-on-mount behavior when data is stale.
 
       // Don't throw errors, handle them in components
       throwOnError: false,

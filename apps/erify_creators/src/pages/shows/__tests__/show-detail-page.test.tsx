@@ -16,6 +16,28 @@ vi.mock('@tanstack/react-router', () => ({
   ),
 }));
 
+vi.mock('@/paraglide/messages.js', () => ({
+  'pages.error': () => 'An error occurred',
+  'pages.failedToLoadShowDetails': () => 'Failed to load show details. Please try again.',
+  'pages.showNotFound': () => 'Show Not Found',
+  'pages.showNotFoundMessage': ({ showId }: { showId: string }) =>
+    `The show with ID "${showId}" could not be found.`,
+  'shows.title': () => 'Shows',
+  'shows.basicInformation': () => 'Basic Information',
+  'shows.typeLabel': () => 'Type:',
+  'shows.statusLabel': () => 'Status:',
+  'shows.standard': () => 'Standard',
+  'shows.clientAndStudio': () => 'Client & Studio',
+  'shows.client': () => 'Client',
+  'shows.studioRoom': () => 'Studio Room',
+  'shows.schedule': () => 'Schedule',
+  'shows.startLabel': () => 'Start:',
+  'shows.endLabel': () => 'End:',
+  'shows.metadata': () => 'Metadata',
+  'shows.createdLabel': () => 'Created:',
+  'shows.updatedLabel': () => 'Updated:',
+}));
+
 // Mock the useMyShow hook
 vi.mock('../../../features/shows/api/shows.api', () => ({
   useMyShow: vi.fn(),
