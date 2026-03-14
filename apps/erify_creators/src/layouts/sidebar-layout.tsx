@@ -15,7 +15,7 @@ type SidebarLayoutProps = {
 };
 
 // Adapter for TanStack Router's Link to be used in generic UI components
-function RouterLink({ href, ...props }: React.ComponentProps<typeof Link>) {
+function RouterLink({ href, ...props }: { href: string } & Omit<React.ComponentProps<'a'>, 'href'>) {
   return <Link to={href} {...props} />;
 }
 

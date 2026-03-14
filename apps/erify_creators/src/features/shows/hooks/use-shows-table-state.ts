@@ -40,8 +40,10 @@ export function useShowsTableState(): UseShowsTableStateReturn {
   const navigate = showsRouteApi.useNavigate();
   const [pageCount, setPageCount] = useState<number | undefined>(undefined);
 
+  const needsNormalization = shouldNormalizeShowsSearch(search);
+
   useEffect(() => {
-    if (!shouldNormalizeShowsSearch(search)) {
+    if (!needsNormalization) {
       return;
     }
 
@@ -49,7 +51,7 @@ export function useShowsTableState(): UseShowsTableStateReturn {
       search: (previous: ShowsSearch) => toCanonicalShowsSearch(previous),
       replace: true,
     });
-  }, [navigate, search]);
+  }, [navigate, needsNormalization]);
 
   const limit = resolveShowsLimit(search);
 
