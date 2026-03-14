@@ -1,10 +1,14 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import type { InfiniteData } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import type { TaskTemplateDto } from '@eridu/api-types/task-management';
 import { useTableUrlState, type UseTableUrlStateReturn } from '@eridu/ui';
 
-import { getTaskTemplates } from '../api/get-task-templates';
+import { getTaskTemplates, type GetTaskTemplatesResponse } from '../api/get-task-templates';
+import { taskTemplateQueryKeys } from '../api/task-template-query-keys';
+
+import { compactInfiniteTaskTemplatePages } from './task-template-cache-utils';
 
 type UseTaskTemplatesProps = {
   studioId: string;
@@ -24,6 +28,7 @@ type UseTaskTemplatesReturn = {
 };
 
 export function useTaskTemplates({ studioId }: UseTaskTemplatesProps): UseTaskTemplatesReturn {
+  const queryClient = useQueryClient();
   const tableState = useTableUrlState({
     from: '/studios/$studioId/task-templates',
     searchColumnId: 'name',
@@ -34,6 +39,9 @@ export function useTaskTemplates({ studioId }: UseTaskTemplatesProps): UseTaskTe
 
   // Extract search query from columnFilters
   const searchQuery = (columnFilters.find((f) => f.id === 'name')?.value as string) || '';
+  const listQueryKey = taskTemplateQueryKeys.list(studioId, {
+    search: searchQuery,
+  });
 
   const {
     data,
@@ -45,16 +53,31 @@ export function useTaskTemplates({ studioId }: UseTaskTemplatesProps): UseTaskTe
     isError,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ['task-templates', studioId, searchQuery],
-    queryFn: ({ pageParam }) =>
+    queryKey: listQueryKey,
+    queryFn: ({ pageParam, signal }) =>
       getTaskTemplates(studioId, {
         limit: 10,
         name: searchQuery,
         page: pageParam,
-      }),
+      }, { signal }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => (lastPage.meta.page < lastPage.meta.totalPages ? lastPage.meta.page + 1 : undefined),
   });
+
+  useEffect(() => () => {
+    queryClient.setQueryData<InfiniteData<GetTaskTemplatesResponse>>(
+      listQueryKey,
+      compactInfiniteTaskTemplatePages,
+    );
+  }, [listQueryKey, queryClient]);
+
+  const refetchWithCompaction = useCallback(() => {
+    queryClient.setQueryData<InfiniteData<GetTaskTemplatesResponse>>(
+      listQueryKey,
+      compactInfiniteTaskTemplatePages,
+    );
+    void refetch();
+  }, [listQueryKey, queryClient, refetch]);
 
   const templates = useMemo(
     () => data?.pages.flatMap((page) => page.data) ?? [],
@@ -73,6 +96,6 @@ export function useTaskTemplates({ studioId }: UseTaskTemplatesProps): UseTaskTe
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-    refetch,
+    refetch: refetchWithCompaction,
   };
 }

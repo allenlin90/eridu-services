@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { del, get, set } from 'idb-keyval';
 import { useCallback, useEffect, useState } from 'react';
@@ -20,15 +19,10 @@ export const Route = createFileRoute('/studios/$studioId/task-templates/new')({
 export function TaskTemplateBuilderPage() {
   const { studioId } = Route.useParams();
   const navigate = Route.useNavigate();
-  const queryClient = useQueryClient();
 
   const { mutate: createTemplate, isPending: isSaving } = useCreateTaskTemplate({
     studioId,
     onSuccess: async () => {
-      await queryClient.resetQueries({
-        queryKey: ['task-templates', studioId],
-      });
-
       // Clear draft
       await del(DRAFT_KEY);
 

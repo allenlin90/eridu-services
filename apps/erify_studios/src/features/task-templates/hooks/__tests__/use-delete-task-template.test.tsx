@@ -3,19 +3,20 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { useDeleteTaskTemplate } from '../use-delete-task-template';
 
-// Mock the hooks from TanStack Query
 const mockUseMutation = vi.fn();
+const mockRemoveQueries = vi.fn();
+const mockSetQueriesData = vi.fn();
 const mockInvalidateQueries = vi.fn();
-const mockUseQueryClient = vi.fn(() => ({
-  invalidateQueries: mockInvalidateQueries,
-}));
 
 vi.mock('@tanstack/react-query', () => ({
   useMutation: (options: any) => mockUseMutation(options),
-  useQueryClient: () => mockUseQueryClient(),
+  useQueryClient: () => ({
+    removeQueries: mockRemoveQueries,
+    setQueriesData: mockSetQueriesData,
+    invalidateQueries: mockInvalidateQueries,
+  }),
 }));
 
-// Mock the API function
 vi.mock('../api/delete-task-template', () => ({
   deleteTaskTemplate: vi.fn(),
 }));
@@ -23,9 +24,10 @@ vi.mock('../api/delete-task-template', () => ({
 describe('useDeleteTaskTemplate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockInvalidateQueries.mockResolvedValue(undefined);
   });
 
-  it('should call deleteTaskTemplate and invalidate queries on success', () => {
+  it('removes target item from active caches and invalidates inactive prefixes', () => {
     const mockMutate = vi.fn();
 
     mockUseMutation.mockReturnValue({
@@ -38,8 +40,6 @@ describe('useDeleteTaskTemplate', () => {
     );
 
     expect(result.current.mutate).toBe(mockMutate);
-
-    // Verify useMutation was called with correct configuration
     expect(mockUseMutation).toHaveBeenCalledWith(
       expect.objectContaining({
         mutationFn: expect.any(Function),
@@ -47,13 +47,33 @@ describe('useDeleteTaskTemplate', () => {
       }),
     );
 
-    // Test the onSuccess callback
     const mutationOptions = mockUseMutation.mock.calls[0][0];
-    mutationOptions.onSuccess();
+    mutationOptions.onSuccess(undefined, 'ttpl_1');
 
-    // Verify invalidateQueries was called
+    expect(mockRemoveQueries).toHaveBeenCalledWith({
+      queryKey: ['task-templates', 'detail', 's1', 'ttpl_1'],
+    });
+    expect(mockSetQueriesData).toHaveBeenCalledWith(
+      {
+        queryKey: ['task-templates', 'list', 's1'],
+        type: 'active',
+      },
+      expect.any(Function),
+    );
+    expect(mockSetQueriesData).toHaveBeenCalledWith(
+      {
+        queryKey: ['task-templates', 'list', 's1', 'all-picker'],
+        type: 'active',
+      },
+      expect.any(Function),
+    );
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['task-templates', 's1'],
+      queryKey: ['task-templates', 'list', 's1'],
+      type: 'inactive',
+    });
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['task-templates', 'list', 's1', 'all-picker'],
+      type: 'inactive',
     });
   });
 });
