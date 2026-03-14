@@ -8,9 +8,14 @@ import { apiClient } from '@/lib/api/client';
 
 export type GetTaskTemplatesResponse = PaginatedResponse<TaskTemplateDto>;
 
+type GetTaskTemplatesOptions = {
+  signal?: AbortSignal;
+};
+
 export async function getTaskTemplates(
   studioId: string,
   query: ListTaskTemplatesQuery & { page?: number; limit?: number },
+  options?: GetTaskTemplatesOptions,
 ): Promise<GetTaskTemplatesResponse> {
   const response = await apiClient.get<GetTaskTemplatesResponse>(
     `/studios/${studioId}/task-templates`,
@@ -22,6 +27,7 @@ export async function getTaskTemplates(
         sort: query.sort,
         // Map other query params if needed
       },
+      signal: options?.signal,
     },
   );
   return response.data;

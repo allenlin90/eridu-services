@@ -42,14 +42,6 @@ vi.mock('@tanstack/react-router', () => ({
   Outlet: () => null,
 }));
 
-// Mock react-query
-const mockResetQueries = vi.fn();
-vi.mock('@tanstack/react-query', () => ({
-  useQueryClient: () => ({
-    resetQueries: mockResetQueries,
-  }),
-}));
-
 // Mock useCreateTaskTemplate hook
 const mockCreateTemplate = vi.fn();
 vi.mock('@/features/task-templates/hooks/use-create-task-template', () => ({
@@ -199,9 +191,6 @@ describe('taskTemplateBuilderPage', () => {
     });
 
     // onSuccess flow
-    expect(mockResetQueries).toHaveBeenCalledWith({
-      queryKey: ['task-templates', 'test-studio-id'],
-    });
     expect(idb.del).toHaveBeenCalledWith('task_template_draft');
     expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('Template created'), expect.anything());
     expect(mockNavigate).toHaveBeenCalledWith({

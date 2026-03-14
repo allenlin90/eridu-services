@@ -623,3 +623,57 @@ export function useMultipleTaskTemplates(
   };
 }
 ```
+
+---
+
+## AbortSignal Passthrough Pattern
+
+Use this pattern for all API fetchers that are called from TanStack Query hooks. Forwarding the `signal` lets the browser cancel the XHR/fetch when TanStack Query aborts the query (component unmount, key change, etc.).
+
+### Fetcher with Optional Signal
+
+```typescript
+import { apiClient } from '@/lib/api-client';
+import type { PaginatedResponse, TaskTemplateDto } from '@eridu/api-types';
+
+// Accept signal as an optional second-level options object
+export async function getTaskTemplates(
+  studioId: string,
+  params?: { page?: number; limit?: number; name?: string; cursor?: string },
+  options?: { signal?: AbortSignal },
+): Promise<PaginatedResponse<TaskTemplateDto>> {
+  const { data } = await apiClient.get<PaginatedResponse<TaskTemplateDto>>(
+    `/studios/${studioId}/task-templates`,
+    { params, signal: options?.signal },
+  );
+  return data;
+}
+```
+
+### Infinite Query Hook Passing Signal
+
+```typescript
+import { useInfiniteQuery, useMemo } from '@tanstack/react-query';
+import { getTaskTemplates, taskTemplateKeys } from '../api/task-templates.api';
+
+export function useInfiniteTaskTemplates(studioId: string, search: string) {
+  // Memoize the query key — used outside queryKey option in useEffect cleanup
+  const listQueryKey = useMemo(
+    () => taskTemplateKeys.list(studioId, { search }),
+    [studioId, search],
+  );
+
+  return useInfiniteQuery({
+    queryKey: listQueryKey,
+    // Destructure signal from context and pass to fetcher
+    queryFn: ({ pageParam, signal }) =>
+      getTaskTemplates(
+        studioId,
+        { cursor: pageParam, limit: 20, name: search },
+        { signal },
+      ),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.meta.nextCursor,
+  });
+}
+```

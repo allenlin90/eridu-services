@@ -3,19 +3,20 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { useUpdateTaskTemplate } from '@/features/task-templates/hooks/use-update-task-template';
 
-// Mock the hooks from TanStack Query
 const mockUseMutation = vi.fn();
-const mockResetQueries = vi.fn();
-const mockUseQueryClient = vi.fn(() => ({
-  resetQueries: mockResetQueries,
-}));
+const mockSetQueryData = vi.fn();
+const mockSetQueriesData = vi.fn();
+const mockInvalidateQueries = vi.fn();
 
 vi.mock('@tanstack/react-query', () => ({
   useMutation: (options: any) => mockUseMutation(options),
-  useQueryClient: () => mockUseQueryClient(),
+  useQueryClient: () => ({
+    setQueryData: mockSetQueryData,
+    setQueriesData: mockSetQueriesData,
+    invalidateQueries: mockInvalidateQueries,
+  }),
 }));
 
-// Mock the API function
 vi.mock('@/features/task-templates/api/update-task-template', () => ({
   updateTaskTemplate: vi.fn(),
 }));
@@ -23,9 +24,10 @@ vi.mock('@/features/task-templates/api/update-task-template', () => ({
 describe('useUpdateTaskTemplate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockInvalidateQueries.mockResolvedValue(undefined);
   });
 
-  it('should call updateTaskTemplate and invalidate queries on success', () => {
+  it('updates targeted caches and invalidates inactive prefixes on success', () => {
     const mockMutate = vi.fn();
     const mockMutateAsync = vi.fn();
 
@@ -45,7 +47,6 @@ describe('useUpdateTaskTemplate', () => {
     expect(result.current.mutateAsync).toBe(mockMutateAsync);
     expect(result.current.isSuccess).toBe(true);
 
-    // Verify useMutation was called with correct configuration
     expect(mockUseMutation).toHaveBeenCalledWith(
       expect.objectContaining({
         mutationFn: expect.any(Function),
@@ -53,16 +54,39 @@ describe('useUpdateTaskTemplate', () => {
       }),
     );
 
-    // Test the onSuccess callback
     const mutationOptions = mockUseMutation.mock.calls[0][0];
-    mutationOptions.onSuccess();
+    const updatedTemplate = {
+      id: 't1',
+      name: 'Updated template',
+    };
 
-    // Verify resetQueries was called for both query keys
-    expect(mockResetQueries).toHaveBeenCalledWith({
-      queryKey: ['task-template', 's1', 't1'],
+    mutationOptions.onSuccess(updatedTemplate);
+
+    expect(mockSetQueryData).toHaveBeenCalledWith(
+      ['task-templates', 'detail', 's1', 't1'],
+      updatedTemplate,
+    );
+    expect(mockSetQueriesData).toHaveBeenCalledWith(
+      {
+        queryKey: ['task-templates', 'list', 's1'],
+        type: 'active',
+      },
+      expect.any(Function),
+    );
+    expect(mockSetQueriesData).toHaveBeenCalledWith(
+      {
+        queryKey: ['task-templates', 'list', 's1', 'all-picker'],
+        type: 'active',
+      },
+      expect.any(Function),
+    );
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['task-templates', 'list', 's1'],
+      type: 'inactive',
     });
-    expect(mockResetQueries).toHaveBeenCalledWith({
-      queryKey: ['task-templates', 's1'],
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['task-templates', 'list', 's1', 'all-picker'],
+      type: 'inactive',
     });
   });
 });

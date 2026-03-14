@@ -5,6 +5,15 @@ import type { TaskTemplateDto } from '@eridu/api-types/task-management';
 
 import { TaskTemplateList } from '../task-template-list';
 
+vi.mock('@/paraglide/messages', () => ({
+  task_type_setup: () => 'Pre-production',
+  task_type_active: () => 'On-air',
+  task_type_closure: () => 'Post-production',
+  task_type_admin: () => 'Admin',
+  task_type_routine: () => 'Routine',
+  task_type_other: () => 'Other',
+}));
+
 const MOCK_TEMPLATES: TaskTemplateDto[] = [
   {
     id: 'ttpl_test_1',

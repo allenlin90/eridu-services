@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { UID_PREFIXES } from '../constants.js';
 import {
   paginationBaseSchema,
-  paginationQuerySchema,
   transformPagination,
 } from '../pagination/index.js';
 
@@ -108,10 +107,18 @@ export const listTaskTemplatesFilterSchema = z.object({
 
 export type ListTaskTemplatesFilter = z.infer<typeof listTaskTemplatesFilterSchema>;
 
+const taskTemplatePaginationQuerySchema = paginationBaseSchema
+  .extend({
+    // Guardrail for infinite-scroll revalidation and oversized payloads.
+    limit: z.coerce.number().int().min(1).max(100).optional().default(10),
+    sort: z.enum(['asc', 'desc']).optional().default('desc'),
+  })
+  .transform(transformPagination);
+
 /**
  * Combined pagination and filter schema (before transformation)
  */
-export const listTaskTemplatesQuerySchemaBase = paginationQuerySchema
+export const listTaskTemplatesQuerySchemaBase = taskTemplatePaginationQuerySchema
   .and(listTaskTemplatesFilterSchema);
 
 export const listTaskTemplatesQuerySchema = listTaskTemplatesQuerySchemaBase
