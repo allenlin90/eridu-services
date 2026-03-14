@@ -14,6 +14,8 @@ import { router } from '@/router';
 // Create IndexedDB persister for offline support
 const persister = createIDBPersister();
 
+initializePwaShell();
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <PersistQueryClientProvider
@@ -27,5 +29,3 @@ createRoot(document.getElementById('root')!).render(
     </PersistQueryClientProvider>
   </StrictMode>,
 );
-
-initializePwaShell();

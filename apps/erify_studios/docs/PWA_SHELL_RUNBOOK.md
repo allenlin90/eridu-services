@@ -20,7 +20,7 @@ Push notification delivery and advanced offline mutation workflows are intention
 
 ## Recovery Entry Point
 
-Use `/app-recovery` when app shell updates appear stuck after deployment.
+Navigate to **Settings** (`/settings`) when app shell updates appear stuck after deployment.
 
 Available actions:
 1. **Check for updates**: trigger immediate service worker update check.
@@ -32,5 +32,5 @@ Available actions:
 2. Deploy a new build with changed static assets.
 3. Confirm the app updates to latest shell and reloads cleanly.
 4. Confirm outdated caches are removed.
-5. Use `/app-recovery` reset action and verify app reloads in a clean state.
+5. Use the **Reset App Shell** action in Settings and verify app reloads in a clean state.
 

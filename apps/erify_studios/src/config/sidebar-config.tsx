@@ -1,4 +1,4 @@
-import { useLocation } from '@tanstack/react-router';
+import { useLocation, useNavigate } from '@tanstack/react-router';
 import {
   BadgeCheck,
   Building2,
@@ -13,7 +13,6 @@ import {
   Ruler,
   Settings,
   Shapes,
-  ShieldAlert,
   ShieldCheck,
   Users,
   UserSquare2,
@@ -226,6 +225,7 @@ export function useSidebarConfig(
   const { isSystemAdmin } = useIsSystemAdmin();
   const { teams, activeTeam, activeStudio, handleTeamChange } = useStudioTeams();
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Memoize nav items to prevent unnecessary re-renders
   const sidebarNavItems: SidebarNavItem[] = useMemo(() => {
@@ -242,12 +242,6 @@ export function useSidebarConfig(
         url: `/dashboard`,
         icon: LayoutDashboard,
         isActive: isPathActive(currentPath, '/dashboard'),
-      },
-      {
-        title: 'App Recovery',
-        url: '/app-recovery',
-        icon: ShieldAlert,
-        isActive: isPathActive(currentPath, '/app-recovery'),
       },
     ];
 
@@ -299,6 +293,10 @@ export function useSidebarConfig(
     return navItems;
   }, [activeStudio, isSystemAdmin, location.pathname]);
 
+  const handleSettingsClick = useCallback(() => {
+    void navigate({ to: '/settings' });
+  }, [navigate]);
+
   const handleLogout = useCallback(async () => {
     // Import clearAllCaches dynamically to avoid circular dependencies
     const { clearAllCaches } = await import('@/lib/api');
@@ -332,5 +330,6 @@ export function useSidebarConfig(
     navMainLabel: 'Workspace',
     user,
     onLogout: handleLogout,
+    onSettingsClick: handleSettingsClick,
   };
 }

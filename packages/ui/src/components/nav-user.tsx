@@ -1,6 +1,7 @@
 import {
   ChevronsUpDown,
   LogOut,
+  Settings,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -50,6 +51,7 @@ function getUserInitials(name: string): string {
 export function NavUser({
   user,
   onLogout,
+  onSettingsClick,
 }: {
   user: {
     name: string;
@@ -57,6 +59,7 @@ export function NavUser({
     avatar: string;
   };
   onLogout?: () => void | Promise<void>;
+  onSettingsClick?: () => void;
 }) {
   const { isMobile } = useSidebar();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -113,6 +116,15 @@ export function NavUser({
                 </div>
               </div>
             </DropdownMenuLabel>
+            {onSettingsClick && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onSettingsClick}>
+                  <Settings />
+                  Settings
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
               <LogOut />

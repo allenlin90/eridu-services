@@ -27,7 +27,6 @@ describe('pwaRuntime', () => {
     vi.resetModules();
     vi.clearAllMocks();
     vi.useFakeTimers();
-    sessionStorage.clear();
     (import.meta.env as { PROD: boolean }).PROD = true;
     registerSWMock.mockReturnValue(vi.fn());
   });

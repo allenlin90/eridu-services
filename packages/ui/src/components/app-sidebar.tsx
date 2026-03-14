@@ -48,6 +48,7 @@ export type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   user?: SidebarUser;
   footer?: React.ReactNode;
   onLogout?: () => void | Promise<void>;
+  onSettingsClick?: () => void;
   linkComponent?: React.ElementType;
 };
 
@@ -58,6 +59,7 @@ export function AppSidebar({
   user,
   footer,
   onLogout,
+  onSettingsClick,
   linkComponent,
   ...props
 }: AppSidebarProps) {
@@ -152,7 +154,7 @@ export function AppSidebar({
     if (user) {
       return (
         <SidebarFooter>
-          <NavUser user={user} onLogout={onLogout} />
+          <NavUser user={user} onLogout={onLogout} onSettingsClick={onSettingsClick} />
         </SidebarFooter>
       );
     }
