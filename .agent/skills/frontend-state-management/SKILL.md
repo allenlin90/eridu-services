@@ -212,6 +212,122 @@ const mutation = useMutation({
 
 ---
 
+## Infinite Query Cache Management
+
+Infinite scroll lists accumulate many pages in the TanStack Query cache. Three complementary patterns keep this efficient:
+
+### 1. Cache Compaction on Unmount
+
+When a user navigates away from an infinite list, compact the cached pages to page 1. On return, TanStack Query will revalidate a single page instead of N pages simultaneously.
+
+```typescript
+import { useEffect, useMemo } from 'react';
+import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
+
+// Pure helper — takes InfiniteData and returns a copy with only the first page
+function compactToFirstPage<T>(data: InfiniteData<T>): InfiniteData<T> {
+  return { pages: data.pages.slice(0, 1), pageParams: data.pageParams.slice(0, 1) };
+}
+
+// In the feature hook — compact on unmount
+const listQueryKey = useMemo(
+  () => itemQueryKeys.list(studioId, { search }),
+  [studioId, search],
+);
+
+useEffect(() => {
+  return () => {
+    queryClient.setQueryData<InfiniteData<PaginatedResponse<ItemDto>>>(
+      listQueryKey,
+      (data) => (data ? compactToFirstPage(data) : data),
+    );
+  };
+}, [listQueryKey, queryClient]);
+```
+
+### 2. Targeted Cache Updates (active vs inactive)
+
+After a mutation, update the cache surgically:
+- **Active queries** (currently rendered): update immediately via `setQueriesData` for zero-latency UI feedback
+- **Inactive queries** (other filter combos): invalidate so they refetch on next view
+
+```typescript
+onSuccess: (updatedItem) => {
+  // 1. Patch all active infinite queries immediately
+  queryClient.setQueriesData<InfiniteData<PaginatedResponse<ItemDto>>>(
+    { queryKey: itemQueryKeys.listPrefix(studioId), type: 'active' },
+    (data) => data ? upsertItemInPages(data, updatedItem) : data,
+  );
+  // 2. Background-invalidate inactive queries
+  queryClient.invalidateQueries({
+    queryKey: itemQueryKeys.listPrefix(studioId),
+    type: 'inactive',
+  });
+},
+```
+
+### 3. Immutable Infinite Page Helpers
+
+Create pure utility functions for common cache mutations. These take `InfiniteData<Response>` and return a **new** `InfiniteData<Response>` — never mutate in place.
+
+```typescript
+import type { InfiniteData } from '@tanstack/react-query';
+
+type Page<T> = { data: T[]; meta: { total: number; nextCursor?: string } };
+
+/** Replace or insert an item in the first matching page position */
+export function upsertItemInPages<T extends { uid: string }>(
+  infiniteData: InfiniteData<Page<T>>,
+  item: T,
+): InfiniteData<Page<T>> {
+  let inserted = false;
+  const pages = infiniteData.pages.map((page) => {
+    const idx = page.data.findIndex((i) => i.uid === item.uid);
+    if (idx === -1) return page;
+    inserted = true;
+    return { ...page, data: page.data.map((i) => (i.uid === item.uid ? item : i)) };
+  });
+  // If not found in any page (new item), prepend to first page
+  if (!inserted && pages.length > 0) {
+    pages[0] = { ...pages[0]!, data: [item, ...pages[0]!.data] };
+  }
+  return { ...infiniteData, pages };
+}
+
+/** Remove an item by uid from all pages */
+export function removeItemFromPages<T extends { uid: string }>(
+  infiniteData: InfiniteData<Page<T>>,
+  itemUid: string,
+): InfiniteData<Page<T>> {
+  return {
+    ...infiniteData,
+    pages: infiniteData.pages.map((page) => ({
+      ...page,
+      data: page.data.filter((i) => i.uid !== itemUid),
+    })),
+  };
+}
+
+/** Compact to first page only — use in unmount cleanup */
+export function compactToFirstPage<T>(
+  infiniteData: InfiniteData<T>,
+): InfiniteData<T> {
+  return {
+    pages: infiniteData.pages.slice(0, 1),
+    pageParams: infiniteData.pageParams.slice(0, 1),
+  };
+}
+```
+
+**Rules**:
+- ✅ Always return a new object — never mutate the existing `InfiniteData`
+- ✅ Place helpers in `features/{feature}/lib/cache-helpers.ts`
+- ✅ Use `upsertItemInPages` for create/update, `removeItemFromPages` for delete, `compactToFirstPage` in unmount cleanup
+
+See [`references/infinite-cache-patterns.md`](references/infinite-cache-patterns.md) for a complete integration example.
+
+---
+
 ## Best Practices Checklist
 
 - [ ] Server state managed by TanStack Query
@@ -222,6 +338,9 @@ const mutation = useMutation({
 - [ ] Optimistic updates for mutations
 - [ ] Query invalidation on mutations
 - [ ] Selected item stored as ID, not full object (derive-don't-store)
+- [ ] Infinite query cache compacted to page 1 on unmount
+- [ ] Mutations update active queries immediately, invalidate inactive queries
+- [ ] Infinite page helpers are pure (immutable) functions
 
 ---
 

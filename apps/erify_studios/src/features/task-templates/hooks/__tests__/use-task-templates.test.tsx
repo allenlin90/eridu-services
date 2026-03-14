@@ -1,12 +1,16 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { useTaskTemplates } from '../use-task-templates';
 
 // Mock dependencies
 const mockUseInfiniteQuery = vi.fn();
+const mockSetQueryData = vi.fn();
 vi.mock('@tanstack/react-query', () => ({
   useInfiniteQuery: (options: any) => mockUseInfiniteQuery(options),
+  useQueryClient: () => ({
+    setQueryData: mockSetQueryData,
+  }),
 }));
 
 const mockUseTableUrlState = vi.fn();
@@ -32,6 +36,7 @@ describe('useTaskTemplates', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseTableUrlState.mockReturnValue(defaultTableState);
+    mockSetQueryData.mockReset();
     mockUseInfiniteQuery.mockReturnValue({
       data: {
         pages: [
@@ -83,8 +88,34 @@ describe('useTaskTemplates', () => {
     // Verify useInfiniteQuery was called with correct queryKey including search term
     expect(mockUseInfiniteQuery).toHaveBeenCalledWith(
       expect.objectContaining({
-        queryKey: ['task-templates', 'test-studio', 'search-term'],
+        queryKey: ['task-templates', 'list', 'test-studio', { search: 'search-term' }],
       }),
     );
+  });
+
+  it('compacts cached pages before manual refetch', () => {
+    const mockRefetch = vi.fn();
+    mockUseInfiniteQuery.mockReturnValue({
+      data: { pages: [] },
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: vi.fn(),
+      refetch: mockRefetch,
+    });
+
+    const { result } = renderHook(() => useTaskTemplates({ studioId: 'test-studio' }));
+
+    act(() => {
+      result.current.refetch();
+    });
+
+    expect(mockSetQueryData).toHaveBeenCalledWith(
+      ['task-templates', 'list', 'test-studio', { search: '' }],
+      expect.any(Function),
+    );
+    expect(mockRefetch).toHaveBeenCalledTimes(1);
   });
 });

@@ -126,6 +126,46 @@ login(@Body() dto: LoginDto) { ... }
 login(...) { ... }
 ```
 
+### Custom Throttler Guard (AppThrottlerGuard)
+
+The project uses a custom `AppThrottlerGuard` that extends NestJS's `ThrottlerGuard` and overrides `getTracker()`:
+
+- **Tracks by `user.ext_id + IP`** instead of IP alone
+- Prevents a single user from bypassing their quota by switching IPs or rotating proxies
+- Falls back to `anonymous` + IP for unauthenticated requests
+- Registered as `APP_GUARD` in `app.module.ts` so it applies globally before any other guard
+
+```typescript
+@Injectable()
+export class AppThrottlerGuard extends ThrottlerGuard {
+  protected override async getTracker(req: Record<string, unknown>): Promise<string> {
+    const user = (req as Request).user as AuthenticatedUser | undefined;
+    const ip = (req as Request).ip ?? 'unknown';
+    const userId = user?.ext_id ?? 'anonymous';
+    return `${userId}:${ip}`;
+  }
+}
+```
+
+### Trust Proxy Hardening
+
+Use `app.set('trust proxy', 1)` (single hop) instead of `app.set('trust proxy', true)`.
+
+| Setting | Behavior | Risk |
+|---------|---------|------|
+| `true` | Trusts **all** `X-Forwarded-For` entries | Attacker can spoof IP by prepending extra hops |
+| `1` | Trusts only the **first** hop (load balancer / ingress) | Correct for single-LB deployments |
+
+```typescript
+// ✅ Single-hop trust — correct for one load balancer in front of the app
+app.set('trust proxy', 1);
+
+// ❌ Trusts all X-Forwarded-For headers — spoofable
+app.set('trust proxy', true);
+```
+
+**Rule**: Set `trust proxy` to the exact number of trusted proxies (typically `1` for a single ingress/LB layer). This ensures `req.ip` resolves to the real client IP and the throttler tracks the correct address.
+
 ---
 
 ## 7. Secrets — Environment Variables Only
@@ -178,6 +218,8 @@ Before marking a feature complete, verify:
 - [ ] No secrets in code or committed config
 - [ ] No `console.log` with tokens, passwords, or full request bodies
 - [ ] Auth endpoints retain throttle guards
+- [ ] Read-heavy list endpoints use `@ReadBurstThrottle()`, not `@SkipThrottle()`
+- [ ] `trust proxy` is set to `1`, not `true`
 
 ---
 

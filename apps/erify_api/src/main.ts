@@ -2,6 +2,7 @@ import type { Server } from 'node:http';
 
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { json, urlencoded } from 'express';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
@@ -11,12 +12,15 @@ import { setupOpenAPI } from './lib/openapi/openapi.config';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
     bodyParser: false,
   });
   const configService = app.get<ConfigService<Env>>(ConfigService);
   const bodyLimit = configService.getOrThrow('BODY_PARSER_LIMIT');
+  // Trust one proxy hop (ingress / load balancer) for accurate req.ip.
+  // Using `1` instead of `true` prevents X-Forwarded-For spoofing through extra hops.
+  app.set('trust proxy', 1);
   app.use(json({ limit: bodyLimit }));
   app.use(urlencoded({ extended: true, limit: bodyLimit }));
   app.useLogger(app.get(Logger));

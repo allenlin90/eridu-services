@@ -3,9 +3,15 @@ import { Test } from '@nestjs/testing';
 
 import { StudioTaskTemplateController } from './studio-task-template.controller';
 
+import { READ_BURST_THROTTLE_KEY } from '@/lib/guards/read-burst-throttle.decorator';
 import { StudioService } from '@/models/studio/studio.service';
 import type { ListTaskTemplatesQueryDto } from '@/models/task-template/schemas/task-template.schema';
 import { TaskTemplateService } from '@/models/task-template/task-template.service';
+
+// Mirrors the metadata key set by SkipThrottle({ default: true }):
+// THROTTLER_SKIP ("THROTTLER:SKIP") concatenated with the throttler name ("default").
+// Avoids importing from @nestjs/throttler internal dist path.
+const THROTTLER_SKIP_DEFAULT_KEY = 'THROTTLER:SKIPdefault';
 
 describe('studioTaskTemplateController', () => {
   let controller: StudioTaskTemplateController;
@@ -40,6 +46,13 @@ describe('studioTaskTemplateController', () => {
   });
 
   describe('index', () => {
+    it('opts index route into read-burst profile and skips default throttle profile', () => {
+      const handler = StudioTaskTemplateController.prototype.index;
+
+      expect(Reflect.getMetadata(READ_BURST_THROTTLE_KEY, handler)).toBe(true);
+      expect(Reflect.getMetadata(THROTTLER_SKIP_DEFAULT_KEY, handler)).toBe(true);
+    });
+
     it('should call getTaskTemplates with correct filters', async () => {
       const studioId = 'studio_123';
       const query: ListTaskTemplatesQueryDto = {

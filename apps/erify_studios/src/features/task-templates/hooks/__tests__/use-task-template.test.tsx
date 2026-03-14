@@ -36,7 +36,7 @@ describe('useTaskTemplate', () => {
     expect(result.current.isSuccess).toBe(true);
     expect(mockUseQuery).toHaveBeenCalledWith(
       expect.objectContaining({
-        queryKey: ['task-template', 's1', 't1'],
+        queryKey: ['task-templates', 'detail', 's1', 't1'],
         enabled: true,
       }),
     );
@@ -59,7 +59,7 @@ describe('useTaskTemplate', () => {
     expect(result.current.fetchStatus).toBe('idle');
     expect(mockUseQuery).toHaveBeenCalledWith(
       expect.objectContaining({
-        queryKey: ['task-template', '', ''],
+        queryKey: ['task-templates', 'detail', '', ''],
         enabled: false,
       }),
     );

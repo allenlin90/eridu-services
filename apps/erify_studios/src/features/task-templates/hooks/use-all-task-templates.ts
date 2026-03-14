@@ -1,7 +1,11 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import type { InfiniteData } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 
-import { getTaskTemplates } from '../api/get-task-templates';
+import { getTaskTemplates, type GetTaskTemplatesResponse } from '../api/get-task-templates';
+import { taskTemplateQueryKeys } from '../api/task-template-query-keys';
+
+import { compactInfiniteTaskTemplatePages } from './task-template-cache-utils';
 
 type UseAllTaskTemplatesProps = {
   studioId: string;
@@ -16,22 +20,29 @@ export function useAllTaskTemplates({
   pageSize = 100,
   enabled = true,
 }: UseAllTaskTemplatesProps) {
+  const queryClient = useQueryClient();
+  const pickerQueryKey = useMemo(
+    () => taskTemplateQueryKeys.allPicker(studioId, { search, pageSize }),
+    [studioId, search, pageSize],
+  );
+
   const {
     data,
     isLoading,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
+    refetch,
     ...restQuery
   } = useInfiniteQuery({
-    queryKey: ['task-templates', studioId, 'all', { search, pageSize }],
+    queryKey: pickerQueryKey,
     initialPageParam: 1,
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       getTaskTemplates(studioId, {
         page: pageParam,
         limit: pageSize,
         name: search,
-      }),
+      }, { signal }),
     getNextPageParam: (lastPage) => {
       if (lastPage.meta.page >= lastPage.meta.totalPages) {
         return undefined;
@@ -39,6 +50,9 @@ export function useAllTaskTemplates({
       return lastPage.meta.page + 1;
     },
     enabled,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   // Auto-drain all pages while the dialog is open so "Select all" means all active templates.
@@ -49,6 +63,21 @@ export function useAllTaskTemplates({
 
     void fetchNextPage();
   }, [enabled, fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    const queryState = queryClient.getQueryState(pickerQueryKey);
+    if (queryState?.isInvalidated) {
+      queryClient.setQueryData<InfiniteData<GetTaskTemplatesResponse>>(
+        pickerQueryKey,
+        compactInfiniteTaskTemplatePages,
+      );
+      void refetch();
+    }
+  }, [enabled, pickerQueryKey, queryClient, refetch]);
 
   const allTemplates = useMemo(
     () => data?.pages.flatMap((page) => page.data) ?? [],

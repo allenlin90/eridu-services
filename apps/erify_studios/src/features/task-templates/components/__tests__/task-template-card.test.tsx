@@ -6,6 +6,15 @@ import type { TaskTemplateDto } from '@eridu/api-types/task-management';
 
 import { TaskTemplateCard } from '../task-template-card';
 
+vi.mock('@/paraglide/messages', () => ({
+  task_type_setup: () => 'Pre-production',
+  task_type_active: () => 'On-air',
+  task_type_closure: () => 'Post-production',
+  task_type_admin: () => 'Admin',
+  task_type_routine: () => 'Routine',
+  task_type_other: () => 'Other',
+}));
+
 // Mock Link from @tanstack/react-router
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, to, params, ...props }: any) => (
