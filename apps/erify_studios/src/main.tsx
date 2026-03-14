@@ -8,10 +8,13 @@ import { Toaster } from 'sonner';
 import './index.css';
 
 import { createIDBPersister, queryClient } from '@/lib/api';
+import { initializePwaShell } from '@/lib/pwa';
 import { router } from '@/router';
 
 // Create IndexedDB persister for offline support
 const persister = createIDBPersister();
+
+initializePwaShell();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

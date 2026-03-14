@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import type { Plugin } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
 
 // Plugin to exclude test files from build (only during build, not during tests)
@@ -45,6 +46,63 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      injectRegister: false,
+      includeAssets: [
+        'icons/favicon.png',
+        'icons/apple-touch-icon.png',
+        'icons/pwa-192.png',
+        'icons/pwa-512.png',
+        'icons/pwa-maskable-512.png',
+      ],
+      manifest: {
+        id: '/',
+        name: 'Erify Studios',
+        short_name: 'Studios',
+        description: 'Erify Studios operations workspace',
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        background_color: '#111827',
+        theme_color: '#111827',
+        icons: [
+          {
+            src: '/icons/pwa-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/icons/pwa-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/icons/pwa-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
+      },
+      workbox: {
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        navigateFallbackDenylist: [/^\/api/],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/api'),
+            handler: 'NetworkOnly',
+          },
+        ],
+      },
+      devOptions: {
+        enabled: false,
+      },
+    }),
     // Removed paraglideVitePlugin - using precompile strategy instead of JIT
   ],
   resolve: {

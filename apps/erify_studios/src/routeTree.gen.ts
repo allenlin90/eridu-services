@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as SystemRouteRouteImport } from './routes/system/route'
 import { Route as StudiosRouteRouteImport } from './routes/studios/route'
@@ -48,6 +49,11 @@ import { Route as SystemStudiosStudioIdStudioRoomsIndexRouteImport } from './rou
 import { Route as SystemSchedulesScheduleIdSnapshotsIndexRouteImport } from './routes/system/schedules/$scheduleId/snapshots/index'
 import { Route as StudiosStudioIdShowsShowIdTasksRouteImport } from './routes/studios/$studioId/shows/$showId/tasks'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -261,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/studios': typeof StudiosRouteRouteWithChildren
   '/system': typeof SystemRouteRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/settings': typeof SettingsRoute
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
   '/studios/$studioId/creator-mapping': typeof StudiosStudioIdCreatorMappingRouteWithChildren
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
@@ -301,6 +308,7 @@ export interface FileRoutesByTo {
   '/studios': typeof StudiosRouteRouteWithChildren
   '/system': typeof SystemRouteRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/settings': typeof SettingsRoute
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
@@ -337,6 +345,7 @@ export interface FileRoutesById {
   '/studios': typeof StudiosRouteRouteWithChildren
   '/system': typeof SystemRouteRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/settings': typeof SettingsRoute
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
   '/studios/$studioId/creator-mapping': typeof StudiosStudioIdCreatorMappingRouteWithChildren
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
@@ -379,6 +388,7 @@ export interface FileRouteTypes {
     | '/studios'
     | '/system'
     | '/dashboard'
+    | '/settings'
     | '/studios/$studioId'
     | '/studios/$studioId/creator-mapping'
     | '/studios/$studioId/dashboard'
@@ -419,6 +429,7 @@ export interface FileRouteTypes {
     | '/studios'
     | '/system'
     | '/dashboard'
+    | '/settings'
     | '/studios/$studioId'
     | '/studios/$studioId/dashboard'
     | '/studios/$studioId/my-shifts'
@@ -454,6 +465,7 @@ export interface FileRouteTypes {
     | '/studios'
     | '/system'
     | '/dashboard'
+    | '/settings'
     | '/studios/$studioId'
     | '/studios/$studioId/creator-mapping'
     | '/studios/$studioId/dashboard'
@@ -495,10 +507,18 @@ export interface RootRouteChildren {
   StudiosRouteRoute: typeof StudiosRouteRouteWithChildren
   SystemRouteRoute: typeof SystemRouteRouteWithChildren
   DashboardRoute: typeof DashboardRoute
+  SettingsRoute: typeof SettingsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -934,6 +954,7 @@ const rootRouteChildren: RootRouteChildren = {
   StudiosRouteRoute: StudiosRouteRouteWithChildren,
   SystemRouteRoute: SystemRouteRouteWithChildren,
   DashboardRoute: DashboardRoute,
+  SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

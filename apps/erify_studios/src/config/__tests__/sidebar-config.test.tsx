@@ -141,7 +141,6 @@ describe('useSidebarConfig', () => {
       url: '/dashboard',
       icon: expect.any(Function),
       isActive: true,
-      // items removed as it's not present in the implementation
     });
 
     expect(result.current.navMain[1]).toEqual({

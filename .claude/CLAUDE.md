@@ -11,7 +11,7 @@ Before implementing ANY feature, read the relevant skill from `.agent/skills/<sk
 - Multi-service workflows: `orchestration-service-nestjs`
 - Backend testing: `backend-testing-patterns`
 - Security: `secure-coding-practices`
-- Frontend: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`
+- Frontend: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`, `pwa-best-practices`
 - Full-stack: `admin-list-pattern`, `studio-list-pattern`
 - Shift schedule: `shift-schedule-pattern`
 - Domain cutover: `domain-refactor-cutover-strategy`, `data-compatibility-migration`
@@ -309,6 +309,7 @@ const where: Prisma.TaskWhereInput = { ... };
 | **secure-coding-practices** | Per-feature security checklist: input validation, ID exposure, SQL injection, studio scoping, secrets, rate limiting | HIGH |
 | **domain-refactor-cutover-strategy** | Multi-phase domain rename playbook: scope isolation, contract-first ordering, alias vs. direct cutover, stabilization | MEDIUM |
 | **data-compatibility-migration** | Frontend dual-field fallback helpers for API contract migrations, centralized accessor pattern, lifecycle rules | MEDIUM |
+| **pwa-best-practices** | PWA setup/migration, SW caching boundaries, app-shell update/recovery patterns | HIGH |
 
 **Full skill list** (36 total): See `.agent/skills/` directory
 
