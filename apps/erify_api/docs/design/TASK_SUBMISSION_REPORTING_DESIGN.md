@@ -27,7 +27,7 @@ This design must fit the current task architecture:
 3. Generate and persist complete result snapshots as JSONB for cross-device access and export.
 4. Return compatibility-grouped datasets so exports remain schema-safe.
 5. Reuse existing task/show/client relations instead of introducing a parallel reporting store.
-6. Balance FE/BE workload — backend owns query execution, result accumulation, and summary computation; frontend owns display merging and export serialization.
+6. Balance FE/BE workload — backend owns query execution and result accumulation; frontend owns display merging, export serialization, and any client-side aggregation.
 
 ## 3. Non-Goals
 
@@ -114,7 +114,7 @@ Rationale:
 | Query execution | BE | BE (unchanged) |
 | Page accumulation | FE (`useInfiniteQuery` + IndexedDB) | BE — generates full result internally |
 | Row extraction + partitioning | BE | BE (unchanged) |
-| Numeric summaries | FE (client-side computation) | BE — computed during result generation |
+| Numeric summaries | FE (client-side computation) | FE — from stored result data (deferred from BE scope) |
 | Result persistence | FE (IndexedDB, browser-local) | BE — `TaskReportResult` in PostgreSQL |
 | Cross-device sync | Not supported | BE — result accessible from any device |
 | Staleness detection | FE (24h rule in IndexedDB) | BE — `expiresAt` / `generatedAt` comparison |
@@ -124,33 +124,9 @@ Rationale:
 
 **Key architectural shift**: The BE generates and stores the **complete result** for a report run (iterating through all pages internally), rather than serving individual pages for the FE to accumulate. The FE still does display-layer work (merge, render, export serialization) but no longer manages multi-page accumulation or cross-device caching.
 
-### 4.5 Typed submission timestamp is worth adding
+### 4.5 Submission timestamp — deferred
 
-Current task model has `completedAt`, but not a first-class `submittedAt` for `REVIEW`. Reporting and sorting on "submitted tasks" becomes awkward if this remains buried only in metadata transitions.
-
-Recommended addition:
-
-- `Task.submittedAt DateTime? @map("submitted_at")`
-
-Set when a task transitions into `REVIEW` for the current submission cycle. Keep `completedAt` for approval/final completion.
-
-**Resubmission semantics**: If a task is rejected back to `IN_PROGRESS` and resubmitted, `submittedAt` is overwritten with the latest submission time. This means `submittedAt` always reflects the most recent submission, not the first. The full submission history remains available in `metadata.audit` for audit purposes.
-
-**Historical backfill strategy — best-effort only**: Existing tasks in `REVIEW`, `COMPLETED`, or `CLOSED` status will have `submittedAt = null` after migration. A data backfill can recover timestamps for a minority of tasks, but coverage is limited by what the current code actually writes:
-
-| Path | `metadata.audit.last_transition.at` | `metadata.due_warning.submitted_at` | Recoverable? |
-|---|---|---|---|
-| Studio-sourced status update | ✅ Written (when `auditContext.source === 'studio'`) | Only if overdue | Yes — use `last_transition.at` when `to === REVIEW` |
-| Overdue member submission | ❌ Not written (no audit context in `MeTaskService`) | ✅ Written (when `now > task.dueDate`) | Yes — use `due_warning.submitted_at` |
-| **Non-overdue member submission** | ❌ Not written | ❌ Not written | **No** — no recoverable timestamp |
-
-Non-overdue member submissions (the most common case) have neither field. The `updatedAt` fallback is also unreliable — it changes on any update, not just submission. **The backfill will leave the majority of historical tasks with `submittedAt = null`.** Treat historical `submittedAt` data as sparse, not authoritative.
-
-**Going-forward requirement**: When `submittedAt` is added to the schema, the transition to `REVIEW` must set it in **both** submission paths:
-- `task.service.ts` — already handles studio-sourced updates; add `submittedAt = new Date()` when `payload.status === REVIEW`
-- `me-task.service.ts` — currently passes no audit context; add `submittedAt = new Date()` when action is `SUBMIT_FOR_REVIEW`
-
-The reporting query must treat `null` `submittedAt` as valid (task was submitted before the field existed) and fall back to `updatedAt` for sort ordering, with this fallback flagged as imprecise in API responses.
+> **Deferred to ideation**: A typed `submittedAt` field on `Task` would improve sort ordering and filtering precision, but the backfill coverage for historical tasks is poor (most common submission path writes no recoverable timestamp). For MVP, use `status` filtering (`REVIEW`, `COMPLETED`, `CLOSED`) combined with `updatedAt` for sort ordering. This is imprecise but sufficient for the export use case. See [docs/ideation/submitted-at-state-machine.md](../../../../docs/ideation/submitted-at-state-machine.md) for the full analysis, backfill strategy, and resubmission semantics.
 
 ### 4.6 Show-targeted tasks only
 
@@ -179,6 +155,42 @@ If role-scoped template visibility becomes necessary (e.g. moderation managers s
 - [ ] `.agent/skills/erify-authorization/SKILL.md` — update MODERATION_MANAGER scope description to reflect this intentional expansion
 - [ ] BE tests — cover `MODERATION_MANAGER` access on all five reporting endpoints
 
+### 4.8 Synchronous vs asynchronous generation
+
+MVP uses **synchronous generation** — the `POST /task-reports/run` endpoint generates the complete result within the HTTP request lifecycle and returns the result UID on completion.
+
+#### Why synchronous is sufficient for MVP
+
+| Factor | Assessment |
+|---|---|
+| **Typical result size** | < 2,000 rows — completes in < 3s |
+| **Row cap** | 10,000 — prevents unbounded generation |
+| **User frequency** | Infrequent manager action (not high-concurrency) |
+| **Implementation cost** | Zero — no queue/worker infrastructure needed |
+
+#### Decision gates for async migration
+
+Migrate to async generation (BullMQ worker + 202 Accepted + polling) when **any** of these are true:
+
+1. **P95 generation time exceeds 5 seconds** in production — measured via request duration logging on the `/task-reports/run` endpoint.
+2. **HTTP gateway timeout (30s) is hit** for large studios — indicates the synchronous path cannot complete in time.
+3. **Concurrent generation requests cause DB connection pool pressure** — measured via connection pool wait metrics.
+4. **Product requires removing the 10,000-row cap** — async generation with progress tracking is the prerequisite for uncapped results.
+
+When triggered, the async architecture would be:
+- `POST /task-reports/run` → enqueue BullMQ job → return `202 Accepted` with `result_uid` (status: `GENERATING`)
+- FE polls `GET /task-report-results/:uid` until status transitions to `READY`
+- Worker generates result in background, stores JSONB on completion
+
+See [docs/ideation/bullmq-async-processing.md](../../../../docs/ideation/bullmq-async-processing.md) for the full investigation scope.
+
+#### Mobile / low-bandwidth note
+
+On slow connections (e.g. mobile in studio corners), the bottleneck is **result retrieval** (downloading 100KB–5MB JSON), not generation time. Mitigations:
+- gzip compression on the API response (standard middleware — already available)
+- optional response streaming (`Transfer-Encoding: chunked`) as a future optimization if large JSON responses cause mobile timeouts
+- IndexedDB caching (FE milestone 2) eliminates repeated downloads for the same result
+
 ## 5. Data Model Relationships
 
 ```mermaid
@@ -202,7 +214,6 @@ erDiagram
         BigInt templateId FK
         String status
         Json content
-        DateTime submittedAt "NEW"
         DateTime completedAt
         Int version
         DateTime deletedAt
@@ -232,7 +243,7 @@ erDiagram
         BigInt studioId FK
         BigInt definitionId FK "nullable"
         Json scope "filters used"
-        Json result "shows + partitions + summaries"
+        Json result "shows + partitions"
         Int rowCount
         Int partitionCount
         DateTime generatedAt
@@ -260,21 +271,7 @@ erDiagram
 
 ## 6. Proposed Schema Additions
 
-### 6.1 `Task` model
-
-Add:
-
-- `submittedAt DateTime? @map("submitted_at")`
-- index on `[studioId, submittedAt]`
-- optional index on `[templateId, submittedAt]`
-
-Reason:
-
-- reliable filtering of submitted work,
-- stable sorting for batched report queries,
-- avoids JSON-metadata queries for core report workflows.
-
-### 6.2 `TaskReportDefinition` model
+### 6.1 `TaskReportDefinition` model
 
 Add a dedicated soft-deletable studio-scoped model.
 
@@ -301,7 +298,7 @@ Suggested fields:
 
 Do **not** store generated rows or file URLs here.
 
-### 6.3 `TaskReportResult` model
+### 6.2 `TaskReportResult` model
 
 Add a dedicated model for storing complete report execution results.
 
@@ -312,7 +309,7 @@ Suggested fields:
 - `studioId BigInt`
 - `definitionId BigInt?` (FK → `TaskReportDefinition`, nullable for ad-hoc runs)
 - `scope Json` (the exact filters used for this execution)
-- `result Json` (the full result payload: `shows[]`, `partitions[]`, `summaries`, `scope_summary`)
+- `result Json` (the full result payload: `shows[]`, `partitions[]`, `scope_summary`)
 - `rowCount Int` (quick metadata without parsing JSONB)
 - `partitionCount Int`
 - `generatedAt DateTime`
@@ -327,7 +324,6 @@ Suggested fields:
 
 - `shows[]` — stable show metadata index (same structure as query response)
 - `partitions[]` — compatibility-grouped flat rows with extracted values
-- `summaries` — pre-computed numeric aggregates per partition (count, sum, avg per numeric column)
 - `scope_summary` — human-readable description of the filters used
 
 Indexes:
@@ -360,7 +356,6 @@ Add a new reporting schema module under the task-management domain. Expected DTO
 - `updateTaskReportDefinitionSchema`
 - `taskReportRunRequestSchema`
 - `taskReportResultDto`
-- `taskReportResultSummaryDto`
 - `taskReportPartitionDto`
 - `taskReportColumnDto`
 
@@ -377,7 +372,6 @@ Key response concepts (result):
 - `uid`: result identifier for subsequent retrieval
 - `shows[]`: stable show metadata index
 - `partitions[]`: compatibility-grouped flat rows
-- `summaries`: pre-computed numeric aggregates per partition
 - `scope_summary`: human-readable scope description
 - `row_count`, `partition_count`: quick metadata
 - `generated_at`, `expires_at`: freshness metadata
@@ -472,7 +466,6 @@ Returns the full stored result JSON for client-side display and export. For very
 uid
 shows[]
 partitions[]
-summaries
 scope_summary
 row_count
 partition_count
@@ -499,7 +492,6 @@ Each partition row (inside a stored result) includes:
 - `show_id`
 - `task_uid`
 - `task_status`
-- `submitted_at`
 - `completed_at`
 - `template_uid`
 - `snapshot_version`
@@ -542,11 +534,8 @@ sequenceDiagram
         end
     end
 
-    Note over QS: 4. Compute summaries (count/sum/avg per numeric column)
-    QS->>QS: computeSummaries(partitions)
-
-    Note over QS: 5. Store complete result (atomic)
-    QS->>RS: storeResult({ shows, partitions, summaries, scope_summary, definitionId? })
+    Note over QS: 4. Store complete result (atomic)
+    QS->>RS: storeResult({ shows, partitions, scope_summary, definitionId? })
     Note over RS: @Transactional — INSERT first, then retire predecessor
     RS->>DB: INSERT TaskReportResult (JSONB)
     RS->>DB: Soft-delete previous result (if definition_uid provided, only after INSERT succeeds)
@@ -561,8 +550,8 @@ sequenceDiagram
     Ctrl->>RS: findResult(resultUid)
     RS->>DB: Read stored JSONB
     RS-->>Ctrl: Full result JSON
-    Ctrl-->>FE: { shows[], partitions[], summaries, scope_summary }
-    Note over FE: Merge partitions for display,<br/>render table + summaries,<br/>export CSV/XLSX from stored JSON
+    Ctrl-->>FE: { shows[], partitions[], scope_summary }
+    Note over FE: Merge partitions for display,<br/>export CSV/XLSX from stored JSON
 ```
 
 ### Cross-Device Access Sequence
@@ -605,13 +594,13 @@ sequenceDiagram
    - template/snapshot filters
 6. Iterate all matching tasks in internal batches (`skip`/`take` with batch size 200). Each batch: extract rows, assign partitions, flag duplicates. Accumulate into the result structure.
 7. Join through `TaskTarget` to resolve the associated `Show`. The query must use `task.targets` (with `targetType = SHOW`) to reach show metadata — there is no direct `task.showId` FK.
-8. After all batches: compute numeric summaries, store complete result as `TaskReportResult`.
+8. After all batches: store complete result as `TaskReportResult`.
 
 ### 9.2 Lean select/include
 
 Select only what the client needs:
 
-- task UID, status, submitted/completed timestamps,
+- task UID, status, completed/updated timestamps,
 - template UID/name,
 - snapshot version/schema,
 - `content`,
@@ -680,7 +669,7 @@ The report generation endpoint does **not** expose pagination to the client. Ins
 - Internal batch size: `200` rows per iteration (not configurable by client).
 - Uses `skip`/`take` with the standard Prisma offset pattern.
 - Each batch: extract rows, assign partitions, flag duplicates, accumulate into result.
-- After all batches: compute numeric summaries, store complete result.
+- After all batches: store complete result.
 
 **Task-count guardrail**: If total matching tasks exceeds `10,000`, abort and return an error asking the manager to narrow scope filters. This is a **result-size cap, not a date-range restriction** — managers may query any date range, but if the matched task count within that range exceeds 10,000, the query is rejected. Large studios that routinely exceed this should configure a higher per-studio cap. The 10,000 default can be tuned; async generation (milestone BE-3) removes the need for any hard cap by returning a 202 and polling.
 
@@ -717,7 +706,6 @@ graph TB
             ERV[extract-row-values]
             NFT[normalize-field-type]
             PK[partition-key]
-            CS[compute-summaries]
         end
     end
 
@@ -739,7 +727,6 @@ graph TB
     QS --> ERV
     QS --> NFT
     QS --> PK
-    QS --> CS
 ```
 
 Recommended module split:
@@ -776,13 +763,12 @@ src/models/task-report/
   └── lib/                                  # PORTABLE: pure functions only
       ├── extract-row-values.ts             # snapshot schema + content → flat row
       ├── normalize-field-type.ts           # field type normalization rules
-      ├── partition-key.ts                  # template_uid + snapshot_version grouping
-      └── compute-summaries.ts             # numeric aggregation (count/sum/avg)
+      └── partition-key.ts                  # template_uid + snapshot_version grouping
 ```
 
 `lib/` files must not import NestJS, Prisma, or any app-specific module. They take plain objects as input and return plain objects. This makes future extraction to a shared `@eridu/report-core` package a file move, not a rewrite. Do not extract until a second consumer (e.g. a dedicated reporting service) exists.
 
-Note: `compute-summaries.ts` exists in both BE and FE `lib/` directories. The BE version runs during result generation (pre-computed summaries stored in JSONB). The FE version is available for client-side re-computation if needed (e.g. after column reordering or filtering). If both converge on the same algorithm, extract to a shared package.
+> **Numeric summaries are deferred from BE scope.** The FE handles any aggregation (count, sum, avg) client-side from the stored result data. If pre-computed summaries become a product requirement, they can be added to the result generation pipeline later. See [docs/ideation/task-analytics-summaries.md](../../../../docs/ideation/task-analytics-summaries.md) for the full analysis.
 
 ## 11. Validation and Guardrails
 
@@ -897,11 +883,10 @@ Mitigation:
 
 ### Milestone BE-1 (Core workflow)
 
-1. `submittedAt` migration + historical backfill from audit metadata
-2. source catalog endpoint (templates/snapshots with submitted task counts, field catalogs, `task_type` per entry)
-3. report generation endpoint (`POST /task-reports/run`) with `TaskTarget` join, internal batch processing, and result storage
-4. result retrieval endpoint (`GET /task-report-results/:resultUid`)
-5. inline definition support only (no saved definitions yet — validate the generate-and-retrieve workflow first)
+1. source catalog endpoint (templates/snapshots with submitted task counts, field catalogs, `task_type` per entry)
+2. report generation endpoint (`POST /task-reports/run`) with `TaskTarget` join, internal batch processing, and result storage
+3. result retrieval endpoint (`GET /task-report-results/:resultUid`)
+4. inline definition support only (no saved definitions yet — validate the generate-and-retrieve workflow first)
 
 ### Milestone BE-2 (Persistence + polish)
 
@@ -935,12 +920,9 @@ Targeted tests:
 5. saved definition CRUD respects studio scoping and soft delete
 6. only show-targeted tasks are included; studio-targeted tasks are excluded
 7. tasks with multiple show targets emit one row per show
-8. `submittedAt` backfill correctly extracts timestamps from audit metadata
-9. `submittedAt` is overwritten on resubmission (rejection → resubmit cycle)
-10. `duplicate_source_on_show` flag is set when multiple tasks match same show + partition
-11. result generation stores complete JSONB with correct `rowCount` and `partitionCount`
-12. result retrieval returns stored JSONB without re-querying live data
-13. re-running a definition soft-deletes previous result and creates new one
-14. result `expiresAt` is correctly set to `generatedAt + 24h`
-15. numeric summaries (count, sum, avg) are correctly computed and stored in result
-16. result row cap (10,000) rejects over-scoped queries with descriptive error
+8. `duplicate_source_on_show` flag is set when multiple tasks match same show + partition
+9. result generation stores complete JSONB with correct `rowCount` and `partitionCount`
+10. result retrieval returns stored JSONB without re-querying live data
+11. re-running a definition soft-deletes previous result and creates new one
+12. result `expiresAt` is correctly set to `generatedAt + 24h`
+13. result row cap (10,000) rejects over-scoped queries with descriptive error

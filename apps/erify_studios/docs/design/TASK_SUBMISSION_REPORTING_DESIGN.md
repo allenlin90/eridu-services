@@ -1,6 +1,6 @@
 # Task Submission Reporting & Export — Frontend Design
 
-> **TLDR**: Add a studio-scoped report-builder page where managers choose submitted-task sources and columns, trigger server-side result generation, retrieve stored JSON results for cross-device access, review show-centric tables with pre-computed summaries and QC links, and export client-side CSV/XLSX from the stored JSON.
+> **TLDR**: Add a studio-scoped report-builder page where managers choose submitted-task sources and columns, trigger server-side result generation, retrieve stored JSON results for cross-device access, review show-centric tables with QC links, and export client-side CSV/XLSX from the stored JSON.
 
 ## 1. Purpose
 
@@ -88,7 +88,7 @@ Steps:
 6. Set scope filters (show date range, client, task status, assignee / show)
 7. Click `Run Report` — triggers server-side result generation
 8. Wait for generation to complete (progress indicator), then fetch the stored result
-9. Review show-centric table (blank cells for missing, pre-computed summaries, clickable links)
+9. Review show-centric table (blank cells for missing, clickable links)
 10. Export as CSV or XLSX from the server-stored JSON result
 
 ## 5. UX Structure
@@ -101,7 +101,7 @@ Recommended route decomposition:
 2. `report-definition-panel.tsx` — saved definitions and naming
 3. `report-source-builder.tsx` — source selection + column picker
 4. `report-scope-filters.tsx` — shareable URL-backed filters
-5. `report-workspace-table.tsx` — preview table + summary row
+5. `report-workspace-table.tsx` — preview table
 6. `report-export-bar.tsx` — CSV/XLSX export actions and cache controls
 
 This route will exceed 200 LOC quickly; keep container/orchestration separate from table/export sections.
@@ -117,14 +117,13 @@ src/features/task-reports/
   ├── hooks/                             # React hooks (React-coupled)
   └── lib/                               # PORTABLE: pure functions only
       ├── merge-partitions-to-shows.ts   # partition → show-centric merge
-      ├── compute-summaries.ts           # client-side re-computation if needed
       ├── serialize-csv.ts               # CSV export serializer
       └── serialize-xlsx.ts              # XLSX export serializer
 ```
 
 `lib/` files must not import React, TanStack, or any app-specific module. They take stored result JSON as input and return plain objects/strings. This makes future extraction to a shared `@eridu/report-engine` package a file move, not a rewrite. Do not extract until a second consumer (e.g. `erify_creators`) exists.
 
-Note: `definition-hash.ts` is no longer needed — the BE manages result identity and caching. The FE references results by `result_uid`, not a client-computed hash. `compute-summaries.ts` is available for client-side re-computation (e.g. after column filtering) but summaries are pre-computed by the BE and included in the stored result.
+Note: `definition-hash.ts` is no longer needed — the BE manages result identity and caching. The FE references results by `result_uid`, not a client-computed hash.
 
 ### 5.2 Source selection UX
 
@@ -153,11 +152,7 @@ Each row should be able to display:
 - selected QC link/file fields from post-production task(s)
 - source-status indicators when a selected task is missing or not yet submitted
 
-Numeric footer/summary strip should support:
-
-- count of rows
-- sum for selected number columns
-- average for selected number columns
+> **Numeric summaries deferred**: A footer summary strip (row count, sum, average for numeric columns) is a natural UX enhancement but is deferred from MVP. The stored result contains raw partition data — the FE can compute summaries client-side when this becomes a product requirement. See [docs/ideation/task-analytics-summaries.md](../../../../docs/ideation/task-analytics-summaries.md).
 
 ### 5.4 Export UX
 
@@ -181,7 +176,7 @@ graph TB
     subgraph "Server State (TanStack Query)"
         SRC[Source Catalog<br/>templates + snapshots + field catalogs]
         DEF[Saved Definitions<br/>list + detail + latest result_uid]
-        RES[Stored Result<br/>shows[] + partitions[] + summaries]
+        RES[Stored Result<br/>shows[] + partitions[]]
     end
 
     subgraph "Local Component State"
@@ -321,7 +316,7 @@ graph LR
     subgraph "Server-Stored Result (TaskReportResult)"
         SHOWS[shows index<br/>uid, name, startTime, client]
         PARTS[partitions<br/>template_uid + snapshot_version<br/>→ flat rows with values]
-        SUMS[summaries<br/>pre-computed per partition<br/>count, sum, avg]
+        SUMS[summaries<br/>deferred — FE computes<br/>client-side when needed]
     end
 
     subgraph "Client Processing (lib/)"
@@ -330,7 +325,7 @@ graph LR
 
     subgraph "Preview Display"
         TABLE[Show-Centric Table<br/>one row per show,<br/>columns from all sources]
-        FOOTER[Summary Strip<br/>from pre-computed summaries]
+        FOOTER[Summary Strip<br/>deferred — see ideation]
         WARN[Duplicate Warning<br/>badges + banner]
         FRESH[Freshness Badge<br/>generated_at + expires_at]
     end
@@ -353,15 +348,12 @@ The frontend treats the stored result as three layers:
 
 1. `shows[]` index
 2. `partitions[]` flat rows
-3. `summaries` pre-computed numeric aggregates
 
 Client responsibilities:
 
 1. merge partition rows onto show rows for preview (display concern)
 2. keep partition boundaries for export
-3. display pre-computed summaries from the stored result (no client-side re-computation for standard view)
-4. optionally re-compute summaries client-side if the manager applies local column filters
-5. surface duplicate-source warnings when present in the result
+3. surface duplicate-source warnings when present in the result
 6. display freshness metadata (`generated_at`, `expires_at`) and offer refresh when stale
 7. handle the (rare) case where a single task appears under multiple shows (multi-target tasks) — each show row is independent
 
@@ -447,7 +439,6 @@ This is a data-hygiene signal: managers should investigate whether duplicates re
 1. partition-to-preview merge logic (`merge-partitions-to-shows`)
 2. CSV serializer escaping and array handling (`serialize-csv`)
 3. XLSX multi-sheet structure (`serialize-xlsx`)
-4. client-side summary re-computation (if needed after column filtering)
 
 ### 12.2 Component tests
 
@@ -475,8 +466,7 @@ This is a data-hygiene signal: managers should investigate whether duplicates re
 2. scope filters with URL state
 3. "Run Report" action → trigger BE generation → fetch and display stored result
 4. show-centric preview table with partition merge
-5. pre-computed summary strip (from stored result `summaries`)
-6. freshness badge (`generated_at` / `expires_at`)
+5. freshness badge (`generated_at` / `expires_at`)
 7. duplicate-source warning badges
 8. CSV export from stored JSON
 
