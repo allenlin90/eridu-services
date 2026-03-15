@@ -53,10 +53,11 @@ export function useTaskTemplates({ studioId }: UseTaskTemplatesProps): UseTaskTe
       getTaskTemplates(studioId, {
         limit: 20,
         name: searchQuery,
-        cursor: pageParam,
+        page: pageParam,
       }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.meta.nextCursor,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.meta.page < lastPage.meta.totalPages ? lastPage.meta.page + 1 : undefined,
   });
 
   const items = useMemo(
@@ -507,9 +508,10 @@ export function useTaskTemplates({ studioId }: { studioId: string }): UseTaskTem
   const query = useInfiniteQuery({
     queryKey: listQueryKey,
     queryFn: ({ pageParam, signal }) =>
-      getTaskTemplates(studioId, { cursor: pageParam, limit: 20, name: searchQuery }, { signal }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.meta.nextCursor,
+      getTaskTemplates(studioId, { page: pageParam, limit: 20, name: searchQuery }, { signal }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.meta.page < lastPage.meta.totalPages ? lastPage.meta.page + 1 : undefined,
   });
 
   // Compact cache to page 1 on unmount — prevents N-page burst revalidation on remount

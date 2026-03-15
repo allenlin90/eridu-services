@@ -1,11 +1,11 @@
 ---
 name: studio-list-pattern
-description: Provides patterns for implementing infinite scroll lists with sticky toolbars in Erify Studios. This skill should be used when building studio-scoped list pages with card-based layouts, debounced search, and cursor-based pagination.
+description: Provides patterns for implementing infinite scroll lists with sticky toolbars in Erify Studios. This skill should be used when building studio-scoped list pages with card-based layouts, debounced search, and offset-based pagination via useInfiniteQuery.
 ---
 
 # Studio List Pattern
 
-This skill outlines the standard pattern for implementing infinite scroll lists in the `erify_studios` application. Unlike admin lists (which use server-side pagination with tables), studio lists use cursor-based pagination with card grids.
+This skill outlines the standard pattern for implementing infinite scroll lists in the `erify_studios` application. Unlike admin lists (which use server-side pagination with tables), studio lists use offset-based pagination (`page` + `limit`) with `useInfiniteQuery` for append-friendly infinite scroll card grids.
 
 ## Canonical Examples
 
@@ -21,7 +21,7 @@ Study these real implementations as the source of truth:
 ## Pattern Overview
 
 Studio lists combine several patterns:
-1. **Infinite Scroll**: Cursor-based pagination with Intersection Observer
+1. **Infinite Scroll**: Offset-based pagination (`page` + `limit`) with `useInfiniteQuery` + Intersection Observer
 2. **Sticky Toolbar**: Search and actions remain accessible while scrolling
 3. **Responsive Actions**: Desktop buttons collapse to mobile dropdown
 4. **Debounced Search**: Local state with URL synchronization
@@ -61,12 +61,13 @@ export function useFeature({ studioId }: UseFeatureProps): UseFeatureReturn {
   const { columnFilters } = tableState;
   const searchQuery = (columnFilters.find((f) => f.id === 'name')?.value as string) || '';
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching, isError, refetch } = 
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching, isError, refetch } =
     useInfiniteQuery({
       queryKey: ['feature', studioId, searchQuery],
-      queryFn: ({ pageParam }) => getItems(studioId, { limit: 20, name: searchQuery, cursor: pageParam }),
-      initialPageParam: undefined as string | undefined,
-      getNextPageParam: (lastPage) => lastPage.meta.nextCursor,
+      queryFn: ({ pageParam }) => getItems(studioId, { limit: 20, name: searchQuery, page: pageParam }),
+      initialPageParam: 1,
+      getNextPageParam: (lastPage) =>
+        lastPage.meta.page < lastPage.meta.totalPages ? lastPage.meta.page + 1 : undefined,
     });
 
   const items = useMemo(() => data?.pages.flatMap((page) => page.data) ?? [], [data]);
@@ -77,7 +78,9 @@ export function useFeature({ studioId }: UseFeatureProps): UseFeatureReturn {
 ```
 
 **Key Points**:
-- ✅ Use `useInfiniteQuery` for cursor-based pagination
+- ✅ Use `useInfiniteQuery` with offset-based pagination (`page` + `limit`)
+- ✅ `initialPageParam: 1` — pages start at 1
+- ✅ `getNextPageParam` checks `meta.page < meta.totalPages` to determine if more pages exist
 - ✅ Expose `isFetching` for refresh button state (not just `isLoading`)
 - ✅ Flatten pages into single items array using `useMemo`
 - ✅ Use `useTableUrlState` for URL-synced search
@@ -317,7 +320,7 @@ function PageLayout({ refreshQueryKey }) {
 
 ## Checklist
 
-- [ ] Feature hook uses `useInfiniteQuery` with cursor pagination
+- [ ] Feature hook uses `useInfiniteQuery` with offset pagination (`page` + `limit`)
 - [ ] Hook exposes `isFetching` for refresh button state
 - [ ] Route component uses sticky toolbar pattern with backdrop blur
 - [ ] Toolbar implements responsive actions (desktop buttons → mobile dropdown)

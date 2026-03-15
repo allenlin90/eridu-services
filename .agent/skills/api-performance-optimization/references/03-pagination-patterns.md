@@ -1,8 +1,8 @@
 # Pagination Patterns
 
-## Standard Offset Pagination (Admin / Low-Volume Lists)
+## Standard Offset Pagination (Default — All Lists)
 
-Use offset pagination for admin views where total count is needed and dataset size is bounded.
+Use offset pagination as the **default pattern** for all list endpoints. This is the standard across both admin table views and studio infinite-scroll lists.
 
 ```typescript
 // Schema (api-types)
@@ -32,9 +32,9 @@ return { data, total, page, limit };
 
 ---
 
-## Cursor-Based Pagination (Studio Feeds / Infinite Scroll)
+## Cursor-Based Pagination (Not Currently Used)
 
-Use cursor pagination for infinite-scroll studio views where total count is not required.
+Cursor pagination is documented here for reference but is **not currently used** in the codebase. All studio infinite-scroll lists use offset pagination with `useInfiniteQuery` and `getNextPageParam` based on `meta.page < meta.totalPages`. Consider cursor pagination only if a future use case requires stable iteration at very high offsets (>100k rows).
 
 ```typescript
 // Schema (api-types) — cursor replaces page
