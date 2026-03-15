@@ -20,7 +20,7 @@ type MembershipWithUser = StudioMembership & { user: User };
 type StudioShowsQueryWithAttention = ListStudioShowsQueryTransformed & { show_uids?: string[] };
 
 export type ShowGenerationResult = {
-  show_uid: string;
+  show_id: string;
   status: 'success' | 'skipped' | 'error';
   tasks_created: number;
   tasks_skipped: number;
@@ -101,7 +101,7 @@ export class TaskOrchestrationService {
       } catch (error) {
         this.logger.error(`Failed to generate tasks for show ${show.uid}`, error);
         results.push({
-          show_uid: show.uid,
+          show_id: show.uid,
           status: 'error',
           tasks_created: 0,
           tasks_skipped: 0,

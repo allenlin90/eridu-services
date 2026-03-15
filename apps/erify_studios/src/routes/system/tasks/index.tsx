@@ -61,7 +61,7 @@ function SystemTasksList() {
   const handleReassignShow = async (taskId: string, showUid: string) => {
     await reassignShowMutation.mutateAsync({
       taskId,
-      data: { show_uid: showUid },
+      data: { show_id: showUid },
     });
   };
 

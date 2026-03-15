@@ -109,7 +109,7 @@ describe('taskOrchestrationService', () => {
       taskTemplateService.findAll.mockResolvedValue(mockTemplates as any);
       showService.findMany.mockResolvedValue(mockShows as any);
       taskGenerationProcessor.processShow.mockResolvedValue({
-        show_uid: 'show_1',
+        show_id: 'show_1',
         status: 'success',
         tasks_created: 2,
         tasks_skipped: 0,

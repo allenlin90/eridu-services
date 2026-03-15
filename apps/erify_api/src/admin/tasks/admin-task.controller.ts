@@ -98,7 +98,7 @@ export class AdminTaskController extends BaseAdminController {
     id: string,
     @Body() body: ReassignTaskShowDto,
   ) {
-    const updated = await this.taskService.reassignTaskToShowAsAdmin(id, body.show_uid);
+    const updated = await this.taskService.reassignTaskToShowAsAdmin(id, body.show_id);
     this.ensureResourceExists(updated, 'Task', id);
     return updated;
   }

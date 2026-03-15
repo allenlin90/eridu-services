@@ -88,7 +88,7 @@ export function BulkTaskGenerationDialog({
     // Close immediately after user confirms; keep selection on page for follow-up actions.
     handleOpenChange(false);
     generateTasks({
-      show_uids: shows.map((s) => s.id),
+      show_ids: shows.map((s) => s.id),
       template_uids: selectedTemplateIds,
       due_dates: Object.fromEntries(
         Object.entries(dueDateOverrides)

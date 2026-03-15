@@ -67,7 +67,7 @@ export class StudioTaskController extends BaseStudioController {
   ) {
     return this.taskOrchestrationService.generateTasksForShows(
       studioId,
-      dto.show_uids,
+      dto.show_ids,
       dto.template_uids,
       dto.due_dates,
     );
@@ -81,7 +81,7 @@ export class StudioTaskController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Body() dto: AssignShowsDto,
   ) {
-    return this.taskOrchestrationService.assignShowsToUser(studioId, dto.show_uids, dto.assignee_uid);
+    return this.taskOrchestrationService.assignShowsToUser(studioId, dto.show_ids, dto.assignee_uid);
   }
 
   @ApiOperation({ summary: 'Reassign a single task to a different studio member' })
