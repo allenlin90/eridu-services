@@ -10,6 +10,7 @@ docs/
 ├── workflows/        Cross-feature end-to-end flows (persistent)
 ├── domain/           Business domain model and entity context (persistent)
 ├── engineering/      Architecture overview and engineering policies (persistent)
+├── ideation/         Deferred ideas with preserved reasoning (lifecycle-managed)
 ├── adr/              Architecture decision records (persistent)
 └── README.md         Navigation hub
 
@@ -29,6 +30,12 @@ apps/*/docs/
 - `docs/engineering/` — architecture and policies, updated as conventions change
 - `docs/adr/` — architecture decisions, immutable after acceptance
 - `apps/*/docs/` — shipped behavioral docs for implemented features
+
+### Lifecycle-managed docs (cross-checked, promoted, or dropped)
+- `docs/ideation/` — deferred ideas with preserved reasoning context.
+  When a topic is promoted to a phase → rewrite as a fresh PRD, delete the ideation doc.
+  When a topic is permanently dropped → delete the ideation doc, record in README.
+  Cross-check during design, investigation, and review using `.agent/workflows/ideation-lifecycle.md`.
 
 ### Phase-scoped docs (cleaned up after ship)
 - `docs/prd/` — PRDs are tied to the active phase. When features

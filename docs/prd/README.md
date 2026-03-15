@@ -24,15 +24,6 @@ PRDs are **phase-scoped and transient**:
 
 > PRDs own pre-ship intent. App-local docs own post-ship behavior.
 
-## Phase 4 PRDs
-
-All Phase 4 PRDs are resolved. Shipped behavior is in app-local docs.
-
-| PRD | Status | Canonical Docs |
-| --- | --- | --- |
-| RBAC Roles | ✅ Shipped — deleted | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) |
-| Creator Mapping | ✅ Shipped — deleted | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md), [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md) |
-
 ## Phase 5 PRDs
 
 | PRD | Workstream | Status |
