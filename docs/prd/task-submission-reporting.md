@@ -25,11 +25,13 @@ Studio managers can review submitted tasks one-by-one, but they cannot reliably 
 
 Today the data exists inside `Task.content`, but the system has no manager-facing workflow that can:
 
-1. query a set of target shows by filters (date range, client, standard),
+1. query a set of target shows by scope filters (date range, client, show standard, etc.),
 2. discover which task columns are available on those shows,
-3. join submitted task data across shows into a flat, reviewable table,
-4. persist both the query definition and the materialized result for cross-device reuse, and
-5. export the result as CSV/XLSX without creating server-side file artifacts.
+3. select columns and generate a flat, reviewable table,
+4. slice and sort the generated table client-side for focused review, and
+5. export the result as CSV/XLSX.
+
+The moderation team currently does this on Google Sheets with manual data entry and filter views. This feature replaces that workflow.
 
 ## Users
 
@@ -43,33 +45,62 @@ The workflow is **show-first**: managers start by narrowing the shows they care 
 
 ```mermaid
 flowchart LR
-    A[Filter Shows<br/>date range, client, etc.] --> B[Discover Columns<br/>from tasks on those shows]
-    B --> C[Select Columns]
-    C --> D[Run Report]
-    D --> E[BE generates flat<br/>materialized table JSON]
-    E --> F[FE renders table<br/>+ caches in IndexedDB]
-    F --> G{Export?}
+    A[Filter Shows<br/>date range, client,<br/>show standard, etc.] --> B[Discover Columns<br/>from tasks on those shows]
+    B --> C[Select Columns<br/>= define table schema]
+    C --> S{Save Definition?}
+    S -->|Yes| I[Store as named<br/>personal preset]
+    S -->|No| D
+    I --> D[Run Report<br/>BE generates flat table JSON]
+    D --> F[FE caches + renders table]
+    F --> V[View Filters + Sort<br/>client, status, etc.<br/>instant, no server call]
+    V --> G{Export?}
     G -->|CSV / XLSX| H[Serialize + Download]
-    G -->|Save Definition| I[Store filters + columns]
-    I -.->|Rerun anytime| A
-    I -.->|Any device| F
+    I -.->|Rerun anytime| D
 ```
 
 Steps:
 
-1. **Filter shows** — set scope filters (date range, client, show, assignee, task status). Filters can be single or compound.
+1. **Filter shows** (scope filters) — set date range, client, show standard, show type, and other show-level attributes. These scope filters determine what data the BE generates. At least one scope filter is required.
 2. **Discover columns** — the BE returns which task templates/snapshots have submitted tasks for those filtered shows, plus their field catalogs. Columns are contextual — bound to the actual tasks on the selected shows.
-3. **Select columns** — pick system columns (show name, start time, client) and task-content columns from the discovered catalog.
-4. **Run report** — triggers BE to join submitted task data across matching shows into a flat materialized table JSON.
-5. **Review** — FE renders the materialized table. Each row is one show with selected columns merged from its submitted tasks.
-6. **Export** — FE serializes the table JSON to CSV or XLSX and downloads.
-7. **Save definition** — optionally save the filter + column selection as a named definition for reuse. Definitions support relative date presets (this week, last 7 days, this month) that resolve dynamically at run time.
+3. **Select columns** — pick system columns (show name, start time, client) and task-content columns from the discovered catalog. This defines the target table schema.
+4. **Save definition** (optional) — save the scope filters + column selection as a named personal preset. Definitions can store a default date preset (`this_week`, `this_month`, or absolute dates) that pre-fills on load.
+5. **Run report** — triggers BE to join submitted task data across matching shows into a flat table JSON. The full result is returned inline — no server-side storage.
+6. **Review + view filters** — FE caches and renders the flat table. Managers apply client-side view filters (by client, show status, assignee, room) and column sorting to focus on subsets — all instant, no server round-trip.
+7. **Export** — FE serializes the visible (or full) table to CSV or XLSX and downloads.
+
+## Two-Level Filtering
+
+Filters are split into two tiers:
+
+### Scope filters (server-side — determine what data is generated)
+
+These change the *dataset* the BE produces. Changing a scope filter triggers re-generation.
+
+- `date_from` / `date_to` (or date preset)
+- `show_standard_id` — premium vs standard (affects which templates are in scope)
+- `show_type_id` — different show types have different task structures
+- `submitted_statuses` — default `[REVIEW, COMPLETED, CLOSED]`
+- `source_templates[]` — optional, to narrow to specific task templates
+
+### View filters (client-side — slice the cached dataset)
+
+These refine the *display* without re-querying. Applied instantly on the cached result.
+
+- `client_id` / client name — focus on one client's shows
+- `show_status_id` — live, completed, cancelled
+- `assignee` — filter by task assignee
+- `studio_room_id` — filter by room
+- `platform_name` — filter by platform
+- Text search — search across show name, client, etc.
+- Column sort — sort by any column ascending/descending
+
+The distinction maps to how the moderation team uses Google Sheets: they have one sheet per time range (scope), then use filter views to focus on specific clients or statuses (view filters).
 
 ## Requirements
 
 ### Show-first querying
 
-1. Managers start by filtering shows — date range, client, show, assignee, task status, and other show-level attributes.
+1. Managers start by filtering shows — date range, client, show standard, show type, and other show-level attributes.
 2. Filters can be single or compound. At least one scope filter is required to prevent unscoped full-studio scans.
 3. After shows are filtered, the BE returns a contextual column catalog: only templates/snapshots with submitted tasks on the filtered shows, plus their available fields.
 4. This ensures column options are bound to the actual data — no dead-end selections.
@@ -81,28 +112,31 @@ Steps:
 3. Default source scope is submitted/approved tasks only: `REVIEW`, `COMPLETED`, and `CLOSED`.
 4. Only tasks with show-type targets are included. Tasks targeting studios or other non-show entities (e.g. `ADMIN` type tasks) are excluded.
 
-### Materialized result
+### Generated result
 
 1. The BE joins and aggregates selected columns from submitted tasks into a flat JSON table — one row per show, with selected task-content values merged in.
 2. The result JSON is structured for easy transformation into tabular data (2D arrays for rendering and export).
-3. The result is stored server-side (PostgreSQL JSONB) as a `TaskReportResult` for cross-device access.
+3. The result is returned inline in the API response — **no server-side result storage**. Generation is fast (< 1s typical) and the result is cached on the client.
 4. Missing submissions appear as `null` values in the row; the UI must not silently pretend missing data is zero.
 5. File and URL fields are included as string values (clickable links in the UI, plain URLs in export).
 6. When multiple submitted tasks match the same show and source (duplicate sources), they appear as separate rows with a warning flag — not silently merged.
 
-### Saved definitions with relative date presets
+### Saved definitions (personal presets)
 
-1. Managers can save a named report definition containing selected filters, selected columns, and preferred export settings.
-2. Definitions support **relative date presets** that resolve dynamically at run time:
-   - `this_week` — current week's shows
-   - `last_7_days` — rolling 7-day window
-   - `this_month` — current month
-   - `custom` — absolute date range (explicit `date_from` / `date_to`)
-3. Definitions can be **cloned and edited** — a "Clone" action creates a copy with a new name for the manager to customize.
-4. Saved definitions are persisted as JSON only; the backend must not store pre-generated CSV/XLSX files.
-5. Saved definitions link to their latest result. Opening a saved definition loads the stored result instantly without re-querying.
-6. Stale results (default: 24h after generation) show a warning and offer a one-click refresh.
-7. Only one active result per definition is kept; re-running replaces the previous result.
+1. Managers can save a named definition containing scope filters, selected columns, and optionally a default date preset.
+2. Definitions function as **personal presets** — like Google Sheets filter views. Each manager creates definitions reflecting their review needs.
+3. Definitions can store a default date preset (`this_week`, `this_month`, or explicit dates) that pre-fills the date range on load. The manager can override before running.
+4. Definitions can be **cloned and edited** — a "Clone" action creates a copy with a new name for the manager to customize.
+5. The definition list is the **landing view** of the Task Reports page — managers open a definition and run it, rather than building from scratch each time.
+6. Definitions are persisted as JSON only; the backend does not store generated results.
+
+### Client-side caching and view filters
+
+1. The FE caches recently generated results in memory (TanStack Query). Switching between cached datasets (e.g., different weeks) is instant.
+2. A reasonable cache depth (e.g., last 5 generated datasets) prevents unnecessary re-generation when toggling between scopes.
+3. View filters (client, status, assignee, room, sort, search) are applied client-side on the cached dataset — no server round-trip.
+4. View filter state is independent of the definition — it's ephemeral UI state for the current session.
+5. Submissions change infrequently once completed. Re-generation is needed only when the scope filter changes or the manager explicitly refreshes.
 
 ### Export behavior
 
@@ -110,20 +144,21 @@ Steps:
 2. XLSX export should use the same normalized dataset and support multi-sheet output when multiple compatible groups are present.
 3. Incompatible source groups (different template schemas) must not be silently merged — export splits them into separate sheets/files.
 4. Exported rows include stable show/task metadata plus the selected submitted values.
+5. Export can apply to the full dataset or the currently filtered view.
 
 ## Acceptance Criteria
 
 - [ ] A studio manager can filter shows by date range and client, see which task columns are available, select them, and review the results in one flat table.
 - [ ] A premium-show reviewer can include post-production file/url fields and open those links directly from the review table.
-- [ ] Running a report generates a server-stored JSON result (flat materialized table) that can be retrieved on any authenticated device.
-- [ ] A saved report definition with a relative date preset (e.g. "this week") resolves dynamically on each run.
+- [ ] Running a report returns the full result inline. The FE caches it for instant re-access.
+- [ ] Client-side view filters (client, status, assignee, sort) slice the cached table instantly without server round-trips.
+- [ ] A saved definition pre-fills scope filters and columns. Running it generates fresh data.
 - [ ] Definitions can be cloned and edited to create variations.
-- [ ] A saved definition loads its latest stored result instantly — no re-generation needed unless the manager explicitly refreshes.
+- [ ] Switching between recently generated datasets (e.g., different weeks) is instant from cache.
 - [ ] When selected data comes from incompatible template snapshots, export splits the output into separate sheets/files.
 - [ ] Only show-targeted tasks appear in results; non-show tasks are excluded.
 - [ ] Duplicate submitted tasks for the same show and source are shown as separate rows with a warning indicator.
-- [ ] Stale results display a visible freshness warning with a one-click refresh action.
-- [ ] The same report result is accessible from desktop and mobile browsers.
+- [ ] The table shows row count and generation timestamp for sanity checking.
 - [ ] *(Deferred)* Numeric column summaries (count, sum, average) are a future enhancement. See [ideation/task-analytics-summaries.md](../ideation/task-analytics-summaries.md).
 
 ## Reporting as an Engine
@@ -135,26 +170,29 @@ The engine is intentionally unopinionated about what the submitted fields mean. 
 ## Product Decisions
 
 - **Show-first workflow.** Managers think in terms of "which shows" first. The column catalog is contextual — only columns from tasks that exist on the filtered shows are offered.
+- **Two-level filtering.** Scope filters (server-side) define what data is generated. View filters (client-side) slice the cached dataset for focused review. This mirrors the Google Sheets pattern of one sheet per time range with filter views per client/status.
+- **No server-side result storage.** The generated result is returned inline and cached on the client. Generation is fast (< 1s typical for 500–1000 shows). Re-running is cheap. Server-side result persistence adds complexity (staleness tracking, cleanup jobs, result CRUD) without proportional benefit at this scale.
+- **Definition as personal preset.** Definitions are like Google Sheets filter views — each manager saves their preferred scope + columns. The definition list is the landing page. Date presets pre-fill but can be overridden.
 - **Flat materialized table as the result shape.** The BE produces a joined, show-centric table — not separate partitions that the FE must merge. Column metadata tracks which template/snapshot each column came from, preserving export integrity.
-- **Relative date presets in definitions.** Definitions store the *intent* (`this_week`, `last_7_days`) not resolved dates. The BE resolves at run time. The stored result records the resolved absolute dates.
-- **Server-stored JSON results (PostgreSQL JSONB) are the primary persistence layer.** IndexedDB is an optional FE speed optimization, not the primary cache. See [BE design section 4.4.1](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md) for the comparison matrix.
+- **Date presets are optional in definitions.** `this_week`, `this_month`, or absolute dates. The FE always shows the date picker pre-filled from the definition's default. Managers can override before running.
 - **JSON is the first-class report format.** CSV and XLSX are serialization targets derived from it — no CSV/XLSX files are generated or stored server-side.
 - **File fields export as references, not binaries.** CSV/XLSX output contains URL strings only.
 - **Show-targeted tasks only.** Tasks link to shows via the polymorphic `TaskTarget` model. Only tasks where `targetType = SHOW` are reportable.
+- **Definition before run.** A definition captures the query schema (filters + columns). Saving a definition is a pre-run step — not a post-export action. Running a report either references a saved definition or uses an ad-hoc inline payload.
 - **Clone + edit for definitions.** No new endpoint — FE reads an existing definition and POSTs a copy with a new name.
-- **Studio-scoped.** Definitions and results are bound to one studio. Cross-studio reporting is out of scope.
+- **Studio-scoped.** Definitions are bound to one studio. Cross-studio reporting is out of scope.
 - **Role-based source visibility is deferred to milestone 2.** MVP grants all permitted roles (`ADMIN`, `MANAGER`, `MODERATION_MANAGER`) access to all templates in the studio.
 - **Duplicate-source rows are always visible.** Separate rows with a warning badge.
-- **No external cache layer (Redis) for MVP.** PostgreSQL JSONB is sufficient.
+- **Client-side cache replaces server-side result storage.** TanStack Query in-memory cache holds recently generated datasets. Switching between cached scopes is instant. IndexedDB for cross-session persistence is a future enhancement.
 
 ## Out of Scope
 
+- Server-side result storage (PostgreSQL JSONB, Redis) — generation is fast enough for inline response
 - Server-side CSV/XLSX file generation or cloud-storage report artifacts
-- External cache layers (Redis) for MVP
 - Cross-studio reporting or definition sharing across studios
 - Arbitrary formula builders or BI-style pivot tables
 - Binary attachment packaging inside exported files
-- Scheduled/recurring report generation (deferred — definitions with relative dates enable manual "rerun" for now)
+- Scheduled/recurring report generation (deferred — definitions with date presets enable manual rerun)
 
 ## Architecture Overview
 
@@ -162,48 +200,42 @@ The engine is intentionally unopinionated about what the submitted fields mean. 
 graph TB
     subgraph "erify_studios (Browser)"
         UI[Report Builder UI<br/>show-first workflow]
-        IDB[(IndexedDB Cache<br/>optional speed layer)]
+        CACHE[(TanStack Query Cache<br/>last N generated datasets)]
+        VIEW[View Filters + Sort<br/>client-side slicing]
         CSV[CSV Serializer]
         XLSX[XLSX Serializer]
         UI -->|1. filter shows| API
         UI -->|2. discover columns| API
         UI -->|3. run report| API
-        UI -->|4. fetch result| API
-        UI -->|optional cache| IDB
-        IDB -->|fast restore| UI
-        UI -->|export from JSON| CSV
-        UI -->|export from JSON| XLSX
+        API -->|full result JSON| CACHE
+        CACHE --> VIEW
+        VIEW -->|export from JSON| CSV
+        VIEW -->|export from JSON| XLSX
     end
 
     subgraph "erify_api (Backend)"
         API[Studio Task Report Controller]
-        QS[TaskReportQueryService<br/>Orchestration — generate + store]
+        QS[TaskReportQueryService<br/>Orchestration — generate]
         DS[TaskReportDefinitionService<br/>Definition CRUD]
-        RS[TaskReportResultService<br/>Result CRUD + retrieval]
         TR[TaskRepository<br/>Report Helpers]
         API --> QS
         API --> DS
-        API --> RS
-        QS --> RS
         QS --> TR
     end
 
     subgraph "Database"
         T[Task<br/>content]
         TT[TaskTarget<br/>targetType = SHOW]
-        S[Show<br/>startTime, client]
+        S[Show<br/>startTime, client,<br/>standard, type]
         TS[TaskTemplateSnapshot<br/>schema]
-        TRD[TaskReportDefinition<br/>JSON — filters + columns + presets]
-        TRR[TaskReportResult<br/>JSONB — flat rows + column_map]
+        TRD[TaskReportDefinition<br/>JSON — filters + columns]
         T --- TT
         TT --- S
         T --- TS
-        TRD --- TRR
     end
 
     TR --> T
     DS --> TRD
-    RS --> TRR
 ```
 
 ## Design Reference

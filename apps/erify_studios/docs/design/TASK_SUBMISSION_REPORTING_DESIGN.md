@@ -1,30 +1,32 @@
 # Task Submission Reporting & Export — Frontend Design
 
-> **TLDR**: Add a studio-scoped report-builder page with a show-first workflow: managers filter shows, discover contextual task columns, select columns, trigger server-side generation of a flat materialized table (JSONB), then review and export CSV/XLSX client-side from the stored JSON.
+> **TLDR**: Add a studio-scoped report-builder page with a show-first workflow: managers filter shows, discover contextual task columns, select columns, generate a flat table JSON (returned inline), then cache the result and apply client-side view filters, sorting, and CSV/XLSX export.
 
 ## 1. Purpose
 
-Provide a manager workflow that sits between the current per-task review queue and a future warehouse/reporting stack.
+Provide a manager workflow that sits between the current per-task review queue and a future warehouse/reporting stack. This replaces the moderation team's current Google Sheets workflow where they manually input data and use filter views to review shows by time range.
 
 Primary user outcomes:
 
 1. summarize moderation metrics such as GMV and views across many shows,
 2. review premium-show post-production URLs for QC,
-3. export a reusable spreadsheet from server-stored JSON results — no CSV/XLSX files are generated or stored server-side.
+3. slice and sort the generated table by client, status, or any column — all client-side,
+4. export a reusable spreadsheet — no CSV/XLSX files are generated or stored server-side.
 
 ## 2. Scope
 
 In scope:
 
 1. studio-scoped report builder UI with show-first workflow
-2. show filter controls (date range, client, status, assignee)
+2. scope filter controls (date range, show standard, show type)
 3. contextual column discovery and selection
-4. server-side result generation trigger and retrieval
+4. server-side generation trigger with inline result response
 5. flat table rendering (rows[] ready to display — no client-side merge)
-6. cross-device result access (server-stored JSON, any authenticated device)
-7. client-side CSV export from stored JSON
-8. client-side XLSX export from stored JSON
-9. optional IndexedDB cache for offline speed (not primary persistence)
+6. client-side view filters (client, status, assignee, room, sort, search) on the cached dataset
+7. TanStack Query cache for last N generated datasets (instant switching)
+8. client-side CSV export from cached JSON
+9. client-side XLSX export from cached JSON
+10. saved definitions as the landing view (personal presets)
 
 Out of scope:
 
@@ -32,6 +34,7 @@ Out of scope:
 2. cross-studio reporting
 3. BI dashboards / pivot-table builder
 4. offline task editing changes to existing execution flows
+5. server-side result storage (generation is fast, FE caches)
 
 ## 3. Recommended Route Shape
 
@@ -49,48 +52,50 @@ Rationale:
 
 ```mermaid
 flowchart TD
-    START([Open Task Reports]) --> CHOOSE{New or Saved?}
-    CHOOSE -->|New report| FILTER[Filter Shows<br/>date range, client, status]
-    CHOOSE -->|Saved definition| LOAD[Load Saved Definition]
-    LOAD --> HAS_RESULT{Has stored result?}
-    HAS_RESULT -->|Yes, fresh| REVIEW
-    HAS_RESULT -->|Yes, stale| STALE[Show stale warning<br/>+ offer Refresh]
-    HAS_RESULT -->|No| FILTER
-    STALE -->|Use as-is| REVIEW
-    STALE -->|Refresh| FILTER
+    START([Open Task Reports]) --> LANDING[Definition List<br/>personal presets]
+    LANDING -->|New report| FILTER[Set Scope Filters<br/>date range, show standard,<br/>show type]
+    LANDING -->|Open definition| LOAD[Load Definition<br/>pre-fill scope + columns]
+    LOAD --> PREFILLED{Override scope?}
+    PREFILLED -->|Yes| FILTER
+    PREFILLED -->|No, run as-is| RUN
 
     FILTER --> DISCOVER[Discover Columns<br/>contextual catalog from<br/>tasks on filtered shows]
     DISCOVER --> COLUMNS[Select Columns<br/>system + task-content fields]
-    COLUMNS --> RUN[Run Report<br/>POST /task-reports/run]
-    RUN --> WAIT[Wait for generation<br/>show progress indicator]
-    WAIT --> FETCH[Fetch stored result<br/>GET /task-report-results/:uid]
-    FETCH --> REVIEW[Review Flat Table<br/>one row per show]
+    COLUMNS --> SAVE{Save Definition?}
+    SAVE -->|Yes| DEF[Store as named<br/>personal preset]
+    SAVE -->|No| RUN
+    DEF --> RUN[Run Report<br/>POST /task-reports/run]
+    RUN --> RESULT[FE caches result<br/>in TanStack Query]
+    RESULT --> TABLE[Render Flat Table<br/>one row per show]
 
-    REVIEW --> EXPORT{Export?}
+    TABLE --> VIEW[View Filters + Sort<br/>client, status, assignee,<br/>room — instant, no server call]
+    VIEW --> TABLE
 
-    EXPORT -->|Yes| PARTITION{Single source group?}
-    PARTITION -->|Yes| ONE[One CSV or XLSX sheet]
-    PARTITION -->|No| MULTI[Multiple CSVs or<br/>XLSX with multiple sheets]
-    EXPORT -->|Save for later| SAVE[Save Definition<br/>filters + columns + date preset]
-    SAVE -.->|Rerun anytime| FILTER
+    TABLE --> ACTIONS{Actions}
+    ACTIONS -->|Export| EXPORT[CSV or XLSX<br/>full or filtered view]
+    ACTIONS -->|Edit| COLUMNS
+    ACTIONS -->|Switch scope| FILTER
+    DEF -.->|Rerun anytime| RUN
 
-    style REVIEW fill:#e8f5e9
-    style ONE fill:#e3f2fd
-    style MULTI fill:#fff3e0
+    style TABLE fill:#e8f5e9
+    style EXPORT fill:#e3f2fd
+    style LANDING fill:#f3e5f5
 ```
 
 Steps:
 
-1. Open `Task Reports`
-2. Pick a saved definition or start a new report
-3. If a saved definition has a stored result: load it instantly (cross-device access). If stale, offer refresh.
-4. **Filter shows** — set scope filters (date range, client, status, assignee). At least one filter required.
-5. **Discover columns** — the BE returns a contextual catalog: only templates/snapshots with submitted tasks on the filtered shows, plus their field catalogs.
-6. **Select columns** — pick system columns (show name, start time, client) and task-content columns from the discovered catalog.
-7. Click `Run Report` — triggers server-side result generation.
-8. Wait for generation to complete (progress indicator), then fetch the stored result.
-9. **Review flat table** — one row per show, all selected columns pre-merged by the BE. No client-side partition merge needed.
-10. **Export** as CSV or XLSX from the server-stored JSON result. FE reads `column_map` to split by source group when schemas differ.
+1. Open `Task Reports` — lands on the **definition list** (personal presets)
+2. Open an existing definition (pre-fills scope + columns) or start new
+3. **Set scope filters** — date range, show standard, show type. These determine what data the BE generates. At least one required.
+4. **Discover columns** — BE returns contextual catalog from tasks on filtered shows
+5. **Select columns** — defines the target table schema
+6. **Save definition** (optional) — store as named personal preset before running
+7. **Run report** — BE generates flat table, returns full JSON inline
+8. **FE caches** the result in TanStack Query (last N datasets cached)
+9. **Review flat table** — one row per show, all columns pre-merged by BE
+10. **Apply view filters** — client, status, assignee, room, sort, search — all instant, no server call
+11. **Export** — CSV or XLSX from full or currently filtered view
+12. **Edit** — go back to scope/column selection with state preserved
 
 ## 5. UX Structure
 
@@ -98,12 +103,13 @@ Steps:
 
 Recommended route decomposition:
 
-1. `task-reports/index.tsx` — route container only
-2. `report-definition-panel.tsx` — saved definitions list, naming, clone
-3. `report-show-filters.tsx` — show-first filter controls (date range, client, status)
+1. `task-reports/index.tsx` — route container, manages scope vs result view
+2. `report-definition-list.tsx` — landing view: saved definitions, create new
+3. `report-scope-filters.tsx` — scope filter controls (date range, show standard, show type)
 4. `report-column-picker.tsx` — contextual column selection from discovered catalog
-5. `report-workspace-table.tsx` — flat table display
-6. `report-export-bar.tsx` — CSV/XLSX export actions and cache controls
+5. `report-workspace-table.tsx` — flat table display with view filter toolbar
+6. `report-view-filters.tsx` — client-side filter controls (client, status, assignee, room, sort, search)
+7. `report-export-bar.tsx` — CSV/XLSX export actions
 
 This route will exceed 200 LOC quickly; keep container/orchestration separate from table/export sections.
 
@@ -117,21 +123,21 @@ src/features/task-reports/
   ├── components/                        # UI components (React-coupled)
   ├── hooks/                             # React hooks (React-coupled)
   └── lib/                               # PORTABLE: pure functions only
+      ├── filter-rows.ts                 # Client-side view filter logic
+      ├── sort-rows.ts                   # Client-side column sort
       ├── serialize-csv.ts               # CSV export serializer
       └── serialize-xlsx.ts              # XLSX export serializer
 ```
 
-`lib/` files must not import React, TanStack, or any app-specific module. They take stored result JSON as input and return plain objects/strings. This makes future extraction to a shared `@eridu/report-engine` package a file move, not a rewrite. Do not extract until a second consumer (e.g. `erify_creators`) exists.
-
-**Key simplification**: The BE now produces a flat table (`rows[]` + `columns[]`) — no `merge-partitions-to-shows.ts` is needed. The FE lib only handles export serialization.
+`lib/` files must not import React, TanStack, or any app-specific module. They take result JSON as input and return plain objects/strings.
 
 ### 5.2 Column picker UX
 
-The column picker appears **after** show filters are set. It shows only columns from the contextual catalog — templates/snapshots that actually have submitted tasks on the filtered shows.
+The column picker appears **after** scope filters are set. It shows only columns from the contextual catalog — templates/snapshots that actually have submitted tasks on the filtered shows.
 
 Two column categories:
 
-1. **System columns** (always available): show name, show start time, client, assignee, task status, studio room
+1. **System columns** (always available): show name, show start time, client, assignee, task status, studio room, show standard, show type
 2. **Task-content columns**: sourced from discovered snapshot field catalogs, grouped by template
 
 Each source group should show:
@@ -144,25 +150,40 @@ Each source group should show:
 
 Incompatible source groups (different template schemas) are surfaced early so managers know export may split.
 
-### 5.3 Preview workspace
+### 5.3 Result table
 
-The preview table renders the flat `rows[]` directly — one row per show, with all selected columns.
+The result table renders the flat `rows[]` directly — one row per show, with all selected columns.
 
-Each row displays:
+**Table header**: display `row_count` and `generated_at`. E.g., "487 shows · Generated 2 min ago". This gives immediate confidence that the scope is correct.
 
-- show metadata (system columns)
-- selected task-content values from all submitted tasks on that show
+**View filter toolbar**: positioned above the table. Controls for:
+- client dropdown/search
+- show status filter
+- assignee filter
+- studio room filter
+- text search across all visible columns
+- column sort (click column header to toggle asc/desc)
+
+All view filters are applied client-side on the cached `rows[]`. The table re-renders instantly.
+
+**Cell rendering**:
 - `null` values rendered as blank cells (not zero — missing data must be visually distinct)
 - file/url fields as clickable links
+- numeric fields right-aligned
+- multiselect fields as comma-separated tags
 
-> **Numeric summaries deferred**: A footer summary strip (row count, sum, average for numeric columns) is a natural UX enhancement but is deferred from MVP. The stored result contains raw row data — the FE can compute summaries client-side when this becomes a product requirement. See [docs/ideation/task-analytics-summaries.md](../../../../docs/ideation/task-analytics-summaries.md).
+> **Numeric summaries deferred**: A footer summary strip (row count, sum, average for numeric columns) is a natural UX enhancement but is deferred from MVP. The cached result contains raw row data — the FE can compute summaries client-side when this becomes a product requirement. See [docs/ideation/task-analytics-summaries.md](../../../../docs/ideation/task-analytics-summaries.md).
 
 ### 5.4 Export UX
 
-Export controls use `column_map` from the stored result to determine partition behavior:
+Export controls use `column_map` from the result to determine partition behavior:
 
 - single compatible group → one CSV or one XLSX sheet
 - multiple groups → multiple CSV downloads or one XLSX workbook with multiple sheets
+
+Export options:
+- **Export all** — exports the full dataset (all rows, ignoring view filters)
+- **Export filtered** — exports only the currently visible rows (respects view filters and sort)
 
 Do not hide version splits. Managers need to know when outputs were separated because snapshot schemas differ.
 
@@ -173,174 +194,170 @@ Do not hide version splits. Managers need to know when outputs were separated be
 ```mermaid
 graph TB
     subgraph "URL State (shareable)"
-        URL[Route Search Params<br/>date_from, date_to, client_id,<br/>task_status[], definition_id,<br/>result_id]
+        URL[Route Search Params<br/>date_from, date_to,<br/>show_standard_id, show_type_id,<br/>definition_id]
     end
 
     subgraph "Server State (TanStack Query)"
         SRC[Contextual Source Catalog<br/>templates + snapshots + field catalogs<br/>scoped to filtered shows]
-        DEF[Saved Definitions<br/>list + detail + latest result_uid]
-        RES[Stored Result<br/>rows[] + columns[] + column_map]
+        DEF[Saved Definitions<br/>list + detail]
+        RES[Generated Results<br/>last N cached datasets<br/>keyed by scope hash]
     end
 
     subgraph "Local Component State"
         DRAFT[Draft Configuration<br/>selected columns,<br/>export format, column ordering]
+        VFILT[View Filters<br/>client, status, assignee,<br/>room, sort, search]
     end
 
-    subgraph "IndexedDB (optional speed cache)"
-        IDB[(Result Cache<br/>result_uid → stored JSON)]
-    end
-
-    URL -->|show filters drive| SRC
-    URL -->|result_id drives| RES
+    URL -->|scope filters drive| SRC
+    URL -->|scope drives| RES
     SRC -->|populates| DRAFT
     DEF -->|restores| DRAFT
-    DEF -->|provides result_uid| RES
     DRAFT -->|configures run request| RES
-    RES -->|optional cache| IDB
-    IDB -->|fast restore| RES
+    RES -->|displayed through| VFILT
 ```
 
 ### 6.1 Server state
 
 Use TanStack Query for:
 
-- **contextual source catalog** — `useQuery` (re-fetches when show filters change)
+- **contextual source catalog** — `useQuery` (re-fetches when scope filters change)
 - saved definition list/detail — `useQuery`
 - mutation endpoints for definition CRUD — `useMutation`
-- report generation — `useMutation` (triggers `POST /task-reports/run`, returns `result_uid`)
-- result retrieval — `useQuery` (fetches stored JSON from `GET /task-report-results/:resultUid`)
+- report generation — `useMutation` (returns full result JSON inline)
 
-The source catalog query key must include show filter params so it automatically refetches when filters change:
+The generation mutation caches the result in a query key so it can be re-accessed without re-fetching:
 
 ```typescript
-// Source catalog — contextual to show filters
+// Source catalog — contextual to scope filters
 const sourceCatalogQuery = useQuery({
   queryKey: taskReportSourceKeys.list(studioId, {
-    dateFrom, dateTo, clientId, showIds, submittedStatuses,
+    dateFrom, dateTo, showStandardId, showTypeId, submittedStatuses,
   }),
   queryFn: () => getTaskReportSources(studioId, {
     date_from: dateFrom,
     date_to: dateTo,
-    client_id: clientId,
-    show_ids: showIds,
+    show_standard_id: showStandardId,
+    show_type_id: showTypeId,
     submitted_statuses: submittedStatuses,
   }),
   enabled: hasAtLeastOneFilter,
 });
 
-// Report generation — two-step: mutate then query
+// Report generation — returns full result inline
 const runReportMutation = useMutation({
   mutationFn: (payload: RunReportPayload) =>
     runTaskReport(studioId, payload),
   onSuccess: (data) => {
-    navigate({
-      to: '/studios/$studioId/task-reports',
-      params: { studioId },
-      search: { result_id: data.result_uid },
-    });
+    // Cache the result under a scope-derived query key
+    queryClient.setQueryData(
+      taskReportResultKeys.forScope(studioId, scopeHash),
+      data,
+    );
   },
 });
 
-// Result retrieval — flat table ready to render
+// Cached result — read from cache, no re-fetch
 const resultQuery = useQuery({
-  queryKey: taskReportResultKeys.detail(studioId, resultUid),
-  queryFn: () => getTaskReportResult(studioId, resultUid),
-  enabled: !!resultUid,
+  queryKey: taskReportResultKeys.forScope(studioId, scopeHash),
+  queryFn: () => { throw new Error('Should be populated by mutation'); },
+  enabled: false,  // never auto-fetches — populated by mutation
 });
 ```
 
-**Why not `useInfiniteQuery`**: The BE generates the complete result server-side and stores it as JSONB. The FE fetches the stored result in one request — no page accumulation needed. This eliminates the "Load More" UX complexity and enables cross-device access.
+**Cache depth**: Configure TanStack Query's `gcTime` (garbage collection time) to retain the last ~5 result datasets. Default `gcTime` is 5 minutes; increase to 30 minutes for report results. This allows managers to switch between recent scopes (e.g., last week vs this week) without re-generating.
 
 Do not override the app-wide `staleTime: 0` default unless the source catalog is proven static enough to justify it.
 
 ### 6.2 URL state
 
-Keep shareable scope filters and result reference in the route search schema:
+Keep shareable scope filters in the route search schema:
 
 - `date_from`
 - `date_to`
-- `client_id`
-- `show_ids`
-- `task_status[]`
+- `show_standard_id`
+- `show_type_id`
 - optional `definition_id`
-- optional `result_id` (points to the active result for display)
 
-This preserves back/forward behavior and allows managers to share report views. A URL with `result_id` is a direct link to a stored result — usable on any device.
+This preserves back/forward behavior and allows managers to share scope views. A URL with `definition_id` loads the definition's scope + columns.
 
-> **Shared-link breakage**: Re-running a report soft-deletes the previous result. If a manager shared a URL containing a now-deleted `result_id`, the API returns 410 Gone. The FE must handle this gracefully: detect the 410, strip `result_id` from the URL, navigate to the definition view (using `definition_id` if present), and show a prompt to re-run. Do not surface a raw error page.
+View filters (client, status, sort) are **not** in the URL — they are ephemeral session state.
 
 ### 6.3 Local component state
 
-Use local state for in-progress draft configuration only:
+Use local state for:
 
+**Draft configuration** (pre-run):
 - selected columns (from the contextual catalog)
 - local export format selection
 - UI-only column ordering
 
+**View filters** (post-run):
+- client filter
+- show status filter
+- assignee filter
+- studio room filter
+- sort column + direction
+- search text
+
 Store only stable identifiers in local state where possible (`definitionId`, `columnKey`, `fieldKey`), then derive full objects from query data.
 
-### 6.4 IndexedDB workspace cache (optional)
+### 6.4 IndexedDB for cross-session persistence (milestone 2)
 
-IndexedDB is **not the primary persistence layer**. The server-stored `TaskReportResult` is the source of truth. IndexedDB serves as an optional speed optimization:
+For MVP, TanStack Query in-memory cache is sufficient. Results are lost on page refresh but re-generation is fast (< 1s).
 
-1. After fetching a result from the API, cache the full JSON in IndexedDB keyed by `result_uid`.
-2. On subsequent visits to the same result, load from IndexedDB first (instant), then validate against `generated_at` from a lightweight API call.
-3. If the server result has been refreshed (new `result_uid`), discard the IndexedDB cache and fetch fresh.
+For milestone 2, optionally persist the last N results in IndexedDB using `idb-keyval`:
 
-Reuse the existing repo pattern of `idb-keyval`.
-
-Suggested cache key:
-
-- `task_report_result:${studioId}:${resultUid}`
-
-Behavior:
-
-1. on successful result fetch, write to IndexedDB
-2. on revisit, check IndexedDB first → show instantly with "loaded from cache" badge
-3. validate freshness via lightweight metadata check (result `generated_at`)
-4. allow manual `Clear Cache`
-
-This is a **milestone 2** concern. For MVP, fetch stored results directly from the API on every visit — the single-row JSONB read is fast enough.
+- Cache key: `task_report:${studioId}:${scopeHash}`
+- On page load, hydrate TanStack Query from IndexedDB
+- On generation, write to both TanStack Query and IndexedDB
+- LRU eviction: keep last 5 entries per studio
 
 ## 7. API Layer Plan
 
 Create dedicated task-report API declarations and query keys:
 
-- `get-task-report-sources.ts` (contextual catalog — accepts show filters)
+- `get-task-report-sources.ts` (contextual catalog — accepts scope filters)
 - `get-task-report-definitions.ts`
 - `create-task-report-definition.ts`
 - `update-task-report-definition.ts`
 - `delete-task-report-definition.ts`
-- `run-task-report.ts` (mutation — triggers server-side result generation)
-- `get-task-report-result.ts` (query — fetches stored result by UID)
-- `get-task-report-results.ts` (query — lists recent results)
+- `run-task-report.ts` (mutation — generates and returns full result inline)
 
-Query keys should include studio scope, show filters (for source catalog), and result UID for cache isolation.
+Query keys should include studio scope and scope filters for cache isolation.
 
 Example key families:
 
-- `taskReportSourceKeys.list(studioId, showFilters)` — invalidates when filters change
+- `taskReportSourceKeys.list(studioId, scopeFilters)` — invalidates when scope changes
 - `taskReportDefinitionKeys.list(studioId)`
 - `taskReportDefinitionKeys.detail(studioId, definitionUid)`
-- `taskReportResultKeys.detail(studioId, resultUid)`
-- `taskReportResultKeys.list(studioId, filters)`
+- `taskReportResultKeys.forScope(studioId, scopeHash)` — cached result per scope
 
 ## 8. Client Data Model
 
-### Stored Result-to-Display Data Flow
+### Result-to-Display Data Flow
 
 ```mermaid
 graph LR
-    subgraph "Server-Stored Result (TaskReportResult)"
+    subgraph "Generated Result (inline response)"
         ROWS[rows[]<br/>flat show-centric objects<br/>one row per show]
         COLS[columns[]<br/>ordered descriptors<br/>with source metadata]
         CMAP[column_map<br/>partition grouping<br/>for export splitting]
         WARN[warnings[]<br/>version conflicts,<br/>duplicate flags]
     end
 
-    subgraph "Display (direct render)"
-        TABLE[Flat Table<br/>rows[] → table rows<br/>columns[] → table headers]
-        BADGES[Status Badges<br/>freshness, duplicates,<br/>missing data]
+    subgraph "TanStack Query Cache"
+        CACHE[(Cached Result<br/>keyed by scope hash<br/>last N retained)]
+    end
+
+    subgraph "View Filter Layer (client-side)"
+        FILT[filter-rows<br/>client, status,<br/>assignee, room, search]
+        SORT[sort-rows<br/>any column asc/desc]
+    end
+
+    subgraph "Display"
+        TABLE[Flat Table<br/>filtered + sorted rows<br/>columns as headers]
+        META[Result Metadata<br/>row count, generated_at]
+        BADGES[Warning Badges<br/>duplicates, missing data]
     end
 
     subgraph "Export (lib/)"
@@ -348,18 +365,20 @@ graph LR
         XLSX_S[serialize-xlsx<br/>one sheet per<br/>partition group]
     end
 
-    ROWS --> TABLE
+    ROWS --> CACHE
+    COLS --> CACHE
+    CACHE --> FILT
+    FILT --> SORT
+    SORT --> TABLE
     COLS --> TABLE
     WARN --> BADGES
-    ROWS --> CSV_S
-    COLS --> CSV_S
+    CACHE --> CSV_S
+    CACHE --> XLSX_S
     CMAP --> CSV_S
-    ROWS --> XLSX_S
-    COLS --> XLSX_S
     CMAP --> XLSX_S
 ```
 
-The frontend treats the stored result as a **ready-to-render flat table**:
+The frontend treats the generated result as a **cached dataset for client-side exploration**:
 
 - `rows[]` — flat JSON objects, one per show, keyed by column identifiers
 - `columns[]` — ordered column descriptors (key, label, type, source metadata)
@@ -368,13 +387,15 @@ The frontend treats the stored result as a **ready-to-render flat table**:
 
 Client responsibilities:
 
-1. render `rows[]` directly as table rows and `columns[]` as table headers — no merge step
-2. read `column_map` at export time to group columns by source partition for CSV/XLSX splitting
-3. surface duplicate-source warnings when present in the result
-4. display freshness metadata (`generated_at`, `expires_at`) and offer refresh when stale
-5. handle 410 Gone for deleted results (re-run prompt)
+1. cache the result in TanStack Query (retain last N datasets)
+2. render `rows[]` as table rows and `columns[]` as table headers
+3. apply view filters (client, status, assignee, room, search) on the cached `rows[]`
+4. apply column sort on the filtered rows
+5. read `column_map` at export time to group columns by source partition for CSV/XLSX splitting
+6. surface duplicate-source warnings when present in the result
+7. display result metadata (`row_count`, `generated_at`)
 
-**Key simplification vs partition-merge approach**: The FE no longer accumulates pages, merges partitions, or manages cross-page state. It receives a complete, pre-processed flat table and focuses on display and export serialization.
+**Key simplification**: The FE receives a complete flat table and focuses on **exploration** (filter, sort, search) and **export**. No merge step, no pagination, no server round-trips for view changes.
 
 ## 9. Export Implementation Strategy
 
@@ -390,6 +411,7 @@ Rules:
 - preserve empty string vs `null` distinctions consistently
 - include system columns first, then selected task fields
 - when multiple partition groups exist, generate one CSV per group
+- support "export all" vs "export filtered" modes
 
 ### 9.2 XLSX
 
@@ -427,17 +449,16 @@ Why lazy-load:
 
 Required states:
 
-1. no show filters set — prompt to set at least one filter
-2. no columns discovered — "No submitted tasks found for the selected shows"
-3. no columns selected — disable Run button
-4. result available but stale (past `expires_at`) — show warning badge + "Refresh" button
-5. multi-partition export warning (schema differences between source groups)
-6. duplicate-source-on-show warning (see below)
-7. result generation in progress — show progress indicator
-8. result generation failed — show error with scope details and "Retry" button
-9. result too large (matched task count exceeds the studio's configurable cap, default 10,000) — show error clarifying this is a result-size limit (not a date-range restriction) and suggesting scope narrowing (e.g. narrow date range, filter by client or show)
-10. saved definition has no result yet — show "Run Report" prompt
-11. result deleted (410 Gone) — strip `result_id` from URL, show re-run prompt
+1. no definitions yet — show "Create your first report" prompt
+2. no scope filters set — prompt to set at least one scope filter
+3. no columns discovered — "No submitted tasks found for the selected shows"
+4. no columns selected — disable Run button
+5. view filters produce zero rows — "No shows match the current filters" with clear-filters action
+6. multi-partition export warning (schema differences between source groups)
+7. duplicate-source-on-show warning (see below)
+8. result generation in progress — show progress indicator
+9. result generation failed — show error with scope details and "Retry" button
+10. result too large (matched task count exceeds the studio's configurable cap, default 10,000) — show error clarifying this is a result-size limit (not a date-range restriction) and suggesting scope narrowing
 
 ### 11.1 Duplicate-source-on-show UX
 
@@ -455,56 +476,64 @@ This is a data-hygiene signal: managers should investigate whether duplicates re
 
 ### 12.1 Unit tests
 
-1. CSV serializer escaping, array handling, and partition splitting (`serialize-csv`)
-2. XLSX multi-sheet structure using `column_map` (`serialize-xlsx`)
+1. `filter-rows` — client-side filtering by client, status, assignee, room, search
+2. `sort-rows` — column sort with numeric, string, date, null handling
+3. `serialize-csv` — escaping, array handling, partition splitting, filtered-view export
+4. `serialize-xlsx` — multi-sheet structure using `column_map`
 
 ### 12.2 Component tests
 
-1. show filter controls — at least one filter required, filter change triggers catalog refetch
-2. contextual column picker — shows only columns from discovered catalog
-3. preview table renders flat `rows[]` directly as table rows
-4. blank cells for `null` values (not zero)
-5. file/url cells render clickable links
-6. export controls reflect single-group vs multi-group behavior (from `column_map`)
-7. freshness badge shows correct state (fresh / stale / no result)
-8. stale result shows warning with "Refresh" action
-9. generation progress indicator during `runReport` mutation
+1. definition list as landing view — load, create, delete
+2. scope filter controls — at least one required, filter change triggers catalog refetch
+3. contextual column picker — shows only columns from discovered catalog
+4. result table renders flat `rows[]` directly as table rows
+5. view filter toolbar — client, status, assignee, room, search all apply instantly
+6. column sort — click header toggles asc/desc, null values sort last
+7. blank cells for `null` values (not zero)
+8. file/url cells render clickable links
+9. result metadata header shows row count and generated_at
+10. export controls reflect single-group vs multi-group behavior (from `column_map`)
+11. generation progress indicator during `runReport` mutation
+12. "Edit" action navigates back to builder with state preserved
 
 ### 12.3 Integration tests
 
-1. set show filters → discover columns → select → run → fetch and display flat table
-2. saved definition loads latest stored result on open (cross-device scenario)
-3. re-running a report replaces the displayed result with fresh data
-4. stale result warning triggers re-generation and displays updated result
-5. URL with `result_id` loads the stored result directly (shareable link)
-6. 410 Gone response handled gracefully (strip result_id, show re-run prompt)
+1. set scope filters → discover columns → select → run → display flat table → apply view filters
+2. saved definition pre-fills scope + columns on load
+3. re-running with different scope replaces the cached result
+4. switching between recently generated datasets (different scope) is instant from cache
+5. "Export filtered" respects current view filter state
+6. "Export all" ignores view filters
 
 ## 13. Rollout Recommendation
 
-### Milestone FE-1 (Core workflow validation)
+### Milestone FE-1 (Core workflow + definitions)
 
-1. show filter controls with URL state (date range, client, status)
-2. contextual source catalog fetch (re-fetches when filters change)
-3. inline column picker from discovered catalog
-4. "Run Report" action → trigger BE generation → fetch and display flat table
-5. flat table rendering directly from `rows[]` and `columns[]`
-6. freshness badge (`generated_at` / `expires_at`)
-7. duplicate-source warning badges
-8. CSV export from stored JSON (single partition)
+1. definition list as landing view (list, create, save, load)
+2. scope filter controls with URL state (date range, show standard, show type)
+3. contextual source catalog fetch (re-fetches when scope filters change)
+4. inline column picker from discovered catalog
+5. "Run Report" action → receive inline result → cache in TanStack Query
+6. flat table rendering directly from `rows[]` and `columns[]`
+7. result metadata header (`row_count`, `generated_at`)
+8. client-side view filters (client, status, assignee, room)
+9. client-side column sort (click header)
+10. text search across visible columns
+11. duplicate-source warning badges
+12. CSV export from cached JSON (single partition, full + filtered)
 
-Rationale: validate the core **filter shows → discover columns → select → run → review → export** loop. No saved definitions, no IndexedDB, no multi-partition export — the flat table is the single output.
+Rationale: validate the full **definition → filter shows → discover columns → select → run → review → filter → sort → export** loop. Definitions are included from day one because they are the landing experience and the Google Sheets replacement.
 
-### Milestone FE-2 (Persistence + polish)
+### Milestone FE-2 (Polish + persistence)
 
-1. saved definition panel (list, create, update, delete, clone, rerun) with latest `result_uid` linkage
-2. relative date preset selection in definition save (this_week, last_7_days, this_month, custom)
+1. definition clone and edit
+2. date preset selection in definition save (this_week, this_month, custom)
 3. multi-partition CSV and XLSX export (using `column_map` for sheet splitting)
 4. XLSX multi-sheet export (lazy-loaded ExcelJS)
-5. optional IndexedDB cache for offline speed (cache stored result by `result_uid`)
+5. IndexedDB for cross-session result persistence (last 5 per studio)
 6. richer row details / thumbnail preview for QC links
 7. stronger compatibility warnings and partition labels
 8. role-aware source defaults (e.g. pre-select moderation templates for `MODERATION_MANAGER`)
-9. result list view (recent reports across definitions)
 
 ## 14. Risks and Mitigations
 
@@ -512,25 +541,25 @@ Rationale: validate the core **filter shows → discover columns → select → 
 
 Risk:
 
-- stored results (100KB–5MB JSON) may cause slow rendering or memory pressure in the browser.
+- large results (1,000+ rows, 200KB+ JSON) may cause slow rendering or memory pressure.
 
 Mitigation:
 
 - BE enforces a 10,000-row cap — limits maximum result size,
 - lazy rendering with virtualized table rows (if result exceeds ~500 rows, consider `@tanstack/react-virtual`),
-- export serialization operates on the stored JSON directly — no additional in-memory copies needed.
+- view filters reduce the visible row count, improving render performance.
 
-### 14.2 Result staleness
+### 14.2 Cache invalidation
 
 Risk:
 
-- managers may act on stale results (e.g. tasks approved/rejected since the result was generated).
+- cached results become stale if tasks are submitted/approved between runs.
 
 Mitigation:
 
-- prominent freshness badge showing `generated_at` timestamp,
-- `expires_at` triggers a visual warning (amber badge) when the result is stale,
-- one-click "Refresh" action re-runs the report and replaces the stored result.
+- submissions change infrequently once completed — the typical use case is reviewing historical data,
+- the result metadata shows `generated_at` so the manager knows data freshness,
+- re-running is fast (< 1s) — the manager can always refresh.
 
 ### 14.3 Multi-version confusion
 
@@ -544,23 +573,23 @@ Mitigation:
 - explain the split in the export bar before download,
 - `column_map` metadata makes partition boundaries explicit.
 
-### 14.4 Generation wait time
+### 14.4 Page refresh loses cached results
 
 Risk:
 
-- large reports may take several seconds to generate, leading to perceived unresponsiveness.
+- TanStack Query in-memory cache is lost on page refresh. The manager must re-run.
 
 Mitigation:
 
-- show a progress indicator during generation (spinner + "Generating report..."),
-- for MVP (synchronous generation), typical reports complete in < 3s,
-- if BE adds async generation (milestone BE-3), FE polls `GET /task-report-results/:uid` until status transitions to `READY`.
+- re-generation is fast (< 1s) — acceptable for MVP,
+- IndexedDB persistence (milestone 2) eliminates this issue,
+- saved definitions preserve the scope + columns — only the "Run" click is needed.
 
 ### 14.5 Contextual catalog latency
 
 Risk:
 
-- the source catalog endpoint now queries based on show filters, adding a dependency between filter changes and catalog loading.
+- the source catalog endpoint queries based on scope filters, adding a dependency between filter changes and catalog loading.
 
 Mitigation:
 
@@ -578,10 +607,14 @@ When implemented, verify at minimum:
 
 Manual smoke should cover:
 
-1. set show filters (date range + client) → discover columns → select → run report
-2. verify flat table renders directly from stored result
-3. open the same report on a different device/browser (cross-device access)
-4. verify stale result shows warning and "Refresh" re-generates
-5. export one compatible CSV from stored JSON
-6. export a multi-partition XLSX workbook (milestone FE-2)
-7. change show filters → verify column picker updates contextually
+1. open Task Reports → see definition list as landing page
+2. create a definition → set scope filters → discover columns → select → save → run
+3. verify flat table renders with row count and generated_at in header
+4. apply client filter → table updates instantly without server call
+5. sort by show start time, then by a numeric task-content column
+6. text search across show names
+7. export one compatible CSV (full dataset)
+8. export filtered view CSV (only visible rows)
+9. switch to a different scope (different week) → verify new generation
+10. switch back → verify previous result loads from cache instantly
+11. refresh page → verify definition loads, re-run needed (MVP behavior)
