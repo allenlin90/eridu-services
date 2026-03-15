@@ -52,7 +52,7 @@ Managers want one operational review table per show, but backend export groups m
 1. a top-level show index for client-side joining, and
 2. one or more source partitions keyed by snapshot compatibility.
 
-The client can merge partitions for on-screen review by `show_uid`, but export must keep incompatible partitions separate.
+The client can merge partitions for on-screen review by `show_id`, but export must keep incompatible partitions separate.
 
 ### 4.3 Safe partition key
 
@@ -151,6 +151,8 @@ Tasks with no show-type target are excluded from reporting results entirely. Thi
 ### 4.7 Role-based source visibility
 
 MVP: all permitted roles (`ADMIN`, `MANAGER`, `MODERATION_MANAGER`) see all templates with submitted tasks in the studio.
+
+> **Intentional role boundary expansion**: The current `erify-authorization` skill defines `MODERATION_MANAGER` as scoped to "Dashboard, own tasks, own shifts only." Reporting endpoints intentionally broaden this to cross-show visibility. This is a deliberate product decision — moderation managers need to summarize GMV/views across many shows and cannot do so from the per-task review queue. If this expansion is later revisited, restrict reporting access to `ADMIN` + `MANAGER` only and add a separate moderation-summary workflow.
 
 If role-scoped template visibility becomes necessary (e.g. moderation managers should only see moderation-type templates), add a `template_type` filter to the source catalog endpoint rather than creating separate endpoints per role. The source catalog response should include `task_type` on each template entry so the frontend can implement client-side role-aware defaults (e.g. pre-selecting moderation templates when the current user is a `MODERATION_MANAGER`).
 
@@ -343,7 +345,7 @@ Key request concepts (run report):
 
 - `sources[]`: template-based or snapshot-based selection
 - `columns[]`: selected field keys plus optional display overrides
-- `scope`: show filters (`show_uids`, `date_from`, `date_to`, `client_id`, `show_uid`, etc.)
+- `scope`: show filters (`show_ids`, `date_from`, `date_to`, `client_id`, `show_id`, etc.)
 - `submitted_statuses`: default `[REVIEW, COMPLETED, CLOSED]`
 - `definition_uid` (optional — link result to a saved definition)
 
@@ -381,6 +383,10 @@ Access:
 - `PATCH /studios/:studioId/task-report-definitions/:definitionUid`
 - `DELETE /studios/:studioId/task-report-definitions/:definitionUid`
 
+Access:
+
+- `ADMIN`, `MANAGER`, `MODERATION_MANAGER`
+
 Purpose:
 
 - persist named JSON definitions only,
@@ -390,6 +396,10 @@ Purpose:
 ### 8.3 Report execution (generate result)
 
 `POST /studios/:studioId/task-reports/run`
+
+Access:
+
+- `ADMIN`, `MANAGER`, `MODERATION_MANAGER`
 
 Body accepts either:
 
@@ -403,7 +413,7 @@ This endpoint generates the **complete result** server-side (iterating through a
 ```text
 sources[]
 columns[]
-scope { show_uids?, date_from?, date_to?, client_uid?, submitted_statuses? }
+scope { show_ids?, date_from?, date_to?, client_id?, submitted_statuses? }
 definition_uid?  (optional — links result to saved definition)
 ```
 
@@ -423,6 +433,10 @@ If a `definition_uid` is provided and a previous active result exists for that d
 ### 8.4 Retrieve result
 
 `GET /studios/:studioId/task-report-results/:resultUid`
+
+Access:
+
+- `ADMIN`, `MANAGER`, `MODERATION_MANAGER`
 
 Returns the full stored result JSON for client-side display and export. For very large results, the endpoint supports optional pagination over the `partitions[]` array:
 
@@ -449,13 +463,17 @@ This is the endpoint the FE calls on any device to load a report result. It read
 
 `GET /studios/:studioId/task-report-results`
 
+Access:
+
+- `ADMIN`, `MANAGER`, `MODERATION_MANAGER`
+
 Returns a paginated list of active results for the studio, with summary metadata only (no full result payloads). Useful for the FE to show recent reports and check freshness.
 
 Query params: `definition_uid?` (filter by definition), standard `page` + `limit`.
 
 Each partition row (inside a stored result) includes:
 
-- `show_uid`
+- `show_id`
 - `task_uid`
 - `task_status`
 - `submitted_at`
@@ -497,7 +515,7 @@ sequenceDiagram
         loop Each task in batch
             QS->>QS: extractRowValues(snapshot.schema, task.content)
             QS->>QS: assignPartition(template_uid, snapshot_version)
-            QS->>QS: flagDuplicates(show_uid, partition_key)
+            QS->>QS: flagDuplicates(show_id, partition_key)
         end
     end
 
@@ -552,7 +570,7 @@ sequenceDiagram
 ### 9.1 Scope resolution
 
 1. Validate the report definition.
-2. Require at least one scope filter: `show_uids`, `date_from`, `date_to`, or `client_uid`. The system does not impose hard upper limits on date ranges — managers may query a full quarter or 6 months.
+2. Require at least one scope filter: `show_ids`, `date_from`, `date_to`, or `client_id`. The system does not impose hard upper limits on date ranges — managers may query a full quarter or 6 months.
 3. Resolve template-based sources to matching submitted-task snapshots inside scope.
 4. Count total matching tasks (for progress tracking and guardrail enforcement).
 5. Build a lean Prisma query over `Task` with:
@@ -629,7 +647,7 @@ This keeps export lossless and flags data hygiene issues explicitly.
 
 ### 9.5 Multi-target task handling
 
-If a single task has multiple show-type targets (rare but structurally possible via `TaskTarget`), emit one row per show target. Each row carries the same task UID but different `show_uid`. The `duplicate_source_on_show` flag is independent — it tracks duplicate tasks per show, not duplicate targets per task.
+If a single task has multiple show-type targets (rare but structurally possible via `TaskTarget`), emit one row per show target. Each row carries the same task UID but different `show_id`. The `duplicate_source_on_show` flag is independent — it tracks duplicate tasks per show, not duplicate targets per task.
 
 ### 9.6 Internal batch processing
 
@@ -747,7 +765,7 @@ Note: `compute-summaries.ts` exists in both BE and FE `lib/` directories. The BE
 3. Maximum selected fields per source: recommended `<= 50`
 4. Maximum total result rows: `10,000` (abort with error if exceeded — ask manager to narrow scope)
 5. Internal batch size: `200` rows per iteration during result generation
-6. Require at least one scope filter (`show_uids`, `date_from`, `date_to`, or `client_uid`) to prevent unscoped full-studio scans. No hard upper limit on date ranges — managers may export a quarter or longer.
+6. Require at least one scope filter (`show_uids`, `date_from`, `date_to`, or `client_id`) to prevent unscoped full-studio scans. No hard upper limit on date ranges — managers may export a quarter or longer.
 7. Reject unknown field keys for snapshot-based definitions at validation time
 8. For template-based definitions, allow missing keys in older snapshots but return `null` rather than fabricating values
 9. Result expiry: default `24 hours` after `generatedAt`. Stale results remain accessible but show a warning.
@@ -825,6 +843,29 @@ Mitigation:
 
 - synchronous generation is acceptable for MVP (typical result sets < 2,000 rows complete in < 3s),
 - if generation consistently exceeds 5s, introduce async generation: return `202 Accepted` with a `result_uid`, then poll `GET /task-report-results/:uid` until status transitions from `GENERATING` to `READY`.
+
+### 12.7 Offset-based batching under concurrent writes
+
+Risk:
+
+- the internal `skip`/`take` batch loop uses offset pagination. If new tasks are submitted (or existing tasks change status) while result generation is in progress, rows can shift pages — causing some tasks to be skipped or duplicated across batches.
+
+Mitigation:
+
+- the reporting scope is limited to `REVIEW`, `COMPLETED`, and `CLOSED` tasks. These statuses rarely change mid-generation in practice (a submitted task is unlikely to be re-opened and moved back to `IN_PROGRESS` during the seconds the loop runs), so drift risk is low.
+- if correctness under concurrent writes becomes a requirement, switch the batch loop to keyset/cursor pagination (ordering by `(submittedAt, id)` and using a cursor instead of `skip`) — this is immune to row insertion drift.
+
+### 12.8 Broken shared result links after re-run
+
+Risk:
+
+- re-running a report for a saved definition soft-deletes the previous `TaskReportResult`. Any manager who bookmarked or shared a URL containing the old `result_id` will get a 404 or a "not found" response.
+
+Mitigation:
+
+- `GET /task-report-results/:resultUid` should return a structured 410 Gone response (not a generic 404) that includes the `definition_uid` for the soft-deleted result.
+- the frontend must handle 410 responses gracefully: redirect the user to the definition view and offer a "Run Report" prompt rather than showing a raw error.
+- for milestone 2, consider returning a `successor_result_uid` in the 410 body so the FE can redirect directly to the latest active result for the same definition.
 
 ## 13. Rollout Recommendation
 

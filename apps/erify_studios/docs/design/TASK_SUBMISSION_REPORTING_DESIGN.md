@@ -253,6 +253,8 @@ Keep shareable scope filters and result reference in the route search schema:
 
 This preserves back/forward behavior and allows managers to share report views. A URL with `result_id` is a direct link to a stored result — usable on any device.
 
+> **Shared-link breakage**: Re-running a report soft-deletes the previous result. If a manager shared a URL containing a now-deleted `result_id`, the API returns 410 Gone. The FE must handle this gracefully: detect the 410, strip `result_id` from the URL, navigate to the definition view (using `definition_id` if present), and show a prompt to re-run. Do not surface a raw error page.
+
 ### 6.3 Local component state
 
 Use local state for in-progress draft configuration only:
@@ -323,7 +325,7 @@ graph LR
     end
 
     subgraph "Client Processing (lib/)"
-        MERGE[merge-partitions-to-shows<br/>join rows by show_uid]
+        MERGE[merge-partitions-to-shows<br/>join rows by show_id]
     end
 
     subgraph "Preview Display"
@@ -363,7 +365,7 @@ Client responsibilities:
 6. display freshness metadata (`generated_at`, `expires_at`) and offer refresh when stale
 7. handle the (rare) case where a single task appears under multiple shows (multi-target tasks) — each show row is independent
 
-Note: the backend resolves the `TaskTarget` → `Show` join during result generation, so the stored result contains flat `show_uid` per row. The frontend does not need to understand the polymorphic target model.
+Note: the backend resolves the `TaskTarget` → `Show` join during result generation, so the stored result contains flat `show_id` per row. The frontend does not need to understand the polymorphic target model.
 
 **Key simplification vs FE-heavy approach**: The FE no longer accumulates pages, computes summaries from raw data, or manages cross-page state. It receives a complete, pre-processed result and focuses on display and export serialization.
 

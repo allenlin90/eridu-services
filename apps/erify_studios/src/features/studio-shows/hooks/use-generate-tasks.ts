@@ -20,7 +20,7 @@ export function useGenerateTasks({ studioId, onSuccess }: UseGenerateTasksProps)
       await invalidateStudioTaskQueries({
         queryClient,
         studioId,
-        showIds: variables.show_uids,
+        showIds: variables.show_ids,
       });
 
       const createdCount = response.summary.total_tasks_created;

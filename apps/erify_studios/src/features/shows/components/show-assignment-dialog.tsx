@@ -98,7 +98,7 @@ export function ShowAssignmentDialog({
     // Close immediately after user confirms; keep selection on page for follow-up actions.
     handleOpenChange(false);
     assignShows({
-      show_uids: shows.map((s) => s.id),
+      show_ids: shows.map((s) => s.id),
       assignee_uid: selectedAssignee,
     });
   };

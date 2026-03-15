@@ -189,7 +189,7 @@ export type TaskWithRelationsDto = z.infer<typeof taskWithRelationsDto>;
  * Schema for generating tasks for multiple shows
  */
 export const generateTasksRequestSchema = z.object({
-  show_uids: z.array(z.string().startsWith(UID_PREFIXES.SHOW)).min(1),
+  show_ids: z.array(z.string().startsWith(UID_PREFIXES.SHOW)).min(1),
   template_uids: z.array(z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE)).min(1),
   due_dates: z.record(z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE), z.string().datetime()).optional(),
 });
@@ -200,7 +200,7 @@ export type GenerateTasksRequest = z.infer<typeof generateTasksRequestSchema>;
  * Result of task generation for a single show
  */
 export const generateTasksResultSchema = z.object({
-  show_uid: z.string(),
+  show_id: z.string(),
   status: z.enum(['success', 'error', 'skipped']),
   tasks_created: z.number().int(),
   tasks_skipped: z.number().int(),
@@ -227,7 +227,7 @@ export type GenerateTasksResponse = z.infer<typeof generateTasksResponseSchema>;
  * Schema for assigning shows to a user
  */
 export const assignShowsRequestSchema = z.object({
-  show_uids: z.array(z.string().startsWith(UID_PREFIXES.SHOW)).min(1),
+  show_ids: z.array(z.string().startsWith(UID_PREFIXES.SHOW)).min(1),
   assignee_uid: z.string(),
 });
 
@@ -263,7 +263,7 @@ export type ReassignTaskRequest = z.infer<typeof reassignTaskRequestSchema>;
  * Schema for reassigning a task to another show
  */
 export const reassignTaskShowRequestSchema = z.object({
-  show_uid: z.string().startsWith(UID_PREFIXES.SHOW),
+  show_id: z.string().startsWith(UID_PREFIXES.SHOW),
 });
 
 export type ReassignTaskShowRequest = z.infer<typeof reassignTaskShowRequestSchema>;

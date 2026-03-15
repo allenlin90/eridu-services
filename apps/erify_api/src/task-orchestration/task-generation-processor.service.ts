@@ -111,7 +111,7 @@ export class TaskGenerationProcessor {
     }
 
     return {
-      show_uid: show.uid,
+      show_id: show.uid,
       status: showStatus,
       tasks_created: tasksCreatedForShow,
       tasks_skipped: tasksSkippedForShow,

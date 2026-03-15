@@ -20,7 +20,7 @@ export function useAssignShows({ studioId, onSuccess }: UseAssignShowsProps) {
       await invalidateStudioTaskQueries({
         queryClient,
         studioId,
-        showIds: variables.show_uids,
+        showIds: variables.show_ids,
       });
 
       if (response.updated_count === 0) {

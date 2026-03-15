@@ -184,9 +184,9 @@ export function SystemTaskDetailsDialog({
           </div>
 
           <div className="rounded-md border p-3 space-y-2">
-            <Label htmlFor="show_uid">Move to Show</Label>
+            <Label htmlFor="show_id">Move to Show</Label>
             <Input
-              id="show_uid"
+              id="show_id"
               placeholder="show_xxx..."
               value={showUid}
               onChange={(e) => setShowUid(e.target.value)}
