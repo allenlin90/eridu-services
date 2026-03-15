@@ -61,17 +61,48 @@ Template-based source selection is allowed, but only as a convenience that resol
 The BE produces a **flat, show-centric table** returned directly in the API response:
 
 - `rows[]` — one row per show, with all selected columns merged from submitted tasks. Each row is a flat JSON object keyed by column identifiers.
-- `columns[]` — ordered column descriptors including system columns (show metadata) and task-content columns. Each column records its source template/snapshot for export integrity.
-- `column_map` — maps each column to its source `template_uid` + `snapshot_version`, enabling the FE to split by partition for export without the BE sending separate partition arrays.
+- `columns[]` — ordered column descriptors including system columns (show metadata) and task-content columns. Each column records its source template for export integrity.
+- `column_map` — maps each column to its source `template_uid`, enabling the FE to split by template for export without the BE sending separate partition arrays.
 
 This means:
 
 - **Display**: FE receives a ready-to-render table — no client-side merge needed.
 - **View filters**: FE applies client-side filters (client, status, sort) on the cached result — no server round-trip.
-- **Export**: FE reads `column_map` to group columns by source partition. Compatible columns export to one sheet; incompatible columns split into separate sheets.
+- **Export**: FE reads `column_map` to group columns by source template. Columns from the same template export to one sheet; columns from different templates split into separate sheets.
 - **Transformation**: The flat rows are easily convertible to 2D arrays for tabular rendering and serialization.
 
-When schemas are incompatible (columns from different template versions that can't be merged), the result includes `warnings[]` flagging which columns have version conflicts.
+### 4.3.1 Column key format and cross-version merging
+
+Column keys depend on whether the field is a **standard field** or a **custom field**:
+
+- **Standard fields** (`standard: true` in `snapshot.schema.items`): column key = **`field.key`** (e.g., `gmv`). No template prefix — standard fields merge across all templates.
+- **Custom fields** (`standard` absent or `false`): column key = **`{template_uid}:{field.key}`** (e.g., `tpl_abc123:notes`). Template-scoped — same key in different templates produces separate columns.
+
+This ensures:
+
+- **Standard fields merge across templates.** A `gmv` standard field in 30 different moderation templates produces one `gmv` column. This is the primary mechanism for cross-client reporting.
+- **Same template, different snapshot versions → same column.** Field keys (`key` in `snapshot.schema.items`) are stable across snapshot versions. A field `key: "gmv"` in v1 and `key: "gmv"` in v2 of the same template merge into one column.
+- **Custom fields from different templates → different columns.** Two templates with custom `key: "notes"` produce `tpl_abc123:notes` and `tpl_xyz789:notes` — distinct columns.
+
+Why this works:
+
+- `TaskTemplateSnapshot.schema.items[].key` is the property name used in `Task.content`. It is user-defined (snake_case, regex-enforced), not auto-generated.
+- When a template is updated, a new snapshot is created but existing field keys are stable. Only adding, removing, or reordering fields changes the schema. Old tasks keep their old snapshot — their `content` keys don't change.
+- Adding a new field in a later version means tasks from older versions have `null` for that column — which is the correct behavior.
+
+**Version mismatch handling:**
+
+| Scenario | Example | Result |
+|---|---|---|
+| Standard field, same key across templates | tpl_A: `gmv` (standard), tpl_B: `gmv` (standard) | Merged into one column `gmv` |
+| Standard field, different versions | v1: `gmv` (standard), v2: `gmv` (standard) | Merged into one column `gmv` |
+| Custom field, same template, both versions | v1: `notes`, v2: `notes` | Merged into one column `tpl_abc:notes` |
+| Custom field, added in later version | v1: no `conversion`, v2: `conversion` | One column, v1 tasks show `null` |
+| Custom field, removed in later version | v1: `legacy_field`, v2: no `legacy_field` | One column, v2 tasks show `null` |
+| Custom field, key renamed | v1: `gmv`, v2: `gross_value` | Two separate columns (different keys) |
+| Custom field, same key in different templates | tpl_A: `notes` (custom), tpl_B: `notes` (custom) | Two separate columns (different template_uid prefix) |
+
+**Edge case — field key rename**: If a template creator renames a field key (e.g., `gmv` → `gross_value`), this is a deliberate schema change. Old and new tasks will have different content keys. The report correctly treats them as separate columns. The FE should show both columns with their respective labels, and tasks from the other version will show `null`.
 
 **Why no server-side result storage:**
 
@@ -109,21 +140,89 @@ Filters are split into scope (server) and view (client):
 
 This mirrors the Google Sheets workflow: one sheet per time range (scope), filter views per client/status (view).
 
-### 4.5 Safe partition key (for export grouping)
+### 4.5 Export partition key
 
-Do not group columns by `task.type + snapshot.version` alone. Snapshot versions are local to each template and can collide across unrelated schemas.
+The partition key in `column_map` depends on whether the column is standard or custom:
 
-Safe partition key (used in `column_map`):
+- **Standard fields** → partition key `"_standard"` (shared partition). Standard fields from all templates are grouped together — they never cause export splits.
+- **Custom fields** → partition key `template_uid`. Custom fields from different templates produce separate partitions.
 
-- `template_uid`
-- `snapshot_version`
-- optional future `schema_signature`
+Since field keys are stable across snapshot versions of the same template (see §4.3.1), columns from different versions of the same template merge naturally within their partition.
 
-The partition key is metadata on columns — not a separate data structure. The FE uses it only at export time to split sheets.
+Export behavior:
 
-**Known UX friction (MVP)**: When a manager selects "all versions" of a template, consecutive snapshot versions with identical schemas will produce separate partition groups in `column_map` even though their columns are the same. Adding a `schema_signature` to collapse structurally identical snapshots is the recommended follow-up for milestone 2.
+- Standard fields + custom fields from one template → one CSV/sheet (standard fields are always included in every sheet)
+- Custom fields from template A + custom fields from template B → separate CSV/sheets (each includes the standard field columns)
 
-### 4.6 Date presets in definitions
+This eliminates the previous concern about consecutive snapshot versions producing separate partition groups. No `schema_signature` is needed.
+
+### 4.6 Standard field catalog and backfill
+
+#### 4.6.1 Schema change
+
+`FieldItemBaseSchema` in `@eridu/api-types` gains an optional `standard` property:
+
+```typescript
+standard: z.boolean().optional()
+  .describe('True if this field uses a key from the standard field catalog. Standard fields merge across templates in reports.')
+```
+
+When `standard: true`, the report engine uses `field.key` directly as the column key (no template prefix). The `key` must match one of the canonical standard field keys defined in the studio's standard field catalog.
+
+#### 4.6.2 Standard field catalog
+
+The standard field catalog is a set of pre-defined data collection field definitions with fixed keys. Template authors include standard fields by selecting from the catalog — ensuring consistent keys across all templates.
+
+Examples of standard field keys:
+
+- `gmv` — gross merchandise value
+- `views` — show view count
+- `conversion_rate` — conversion percentage
+- `peak_viewers` — peak concurrent viewers
+- `orders` — order count
+
+The catalog definition and management API are separate from the reporting design. Reporting only depends on the `standard: true` flag and the field `key` — it does not need to know the full catalog.
+
+#### 4.6.3 Backfill migration
+
+Existing ~30 moderation templates have data collection fields with non-standard keys that need alignment.
+
+**Why this is non-trivial**: The report engine discovers columns by reading `snapshot.schema.items[].key` and extracts values from `task.content` using that key. Both must agree. Snapshots are immutable — existing ones cannot be modified. The content validator uses `.strict()` mode, so content keys must exactly match the snapshot schema.
+
+**Migration strategy — application-level script** (not a raw SQL migration):
+
+The backfill must go through application logic because:
+- Snapshot creation uses `TaskTemplateService.updateTemplateWithSnapshot()` which handles version incrementing, schema validation, and the atomic template + snapshot update.
+- `Task.content` is validated against `snapshot.schema` via `buildTaskContentSchema().strict()` — any key rename must keep content in sync with its referenced snapshot.
+- The `standard: true` flag must be validated through `FieldItemBaseSchema`.
+
+Steps:
+
+1. **Define key mapping** — for each template, map existing field keys to standard keys (e.g., `gross_sales` → `gmv`, `view_count` → `views`). This is a manual review step with the moderation team.
+
+2. **Create new snapshots via service** — for each affected template, call `updateTemplateWithSnapshot()` with the updated schema (renamed keys + `standard: true` flag). This creates an immutable new snapshot and increments the version. Old snapshots are preserved.
+
+3. **Migrate Task.content + snapshotId** — for each task referencing an old snapshot of the affected template:
+   - Read the task's current `content` and the old snapshot's key mapping.
+   - Rename keys in `content` to match the new standard keys.
+   - Update `task.snapshotId` to point to the new snapshot so that validation and reporting align.
+   - Write both changes in a single update.
+
+   This is done via a TypeScript migration script using Prisma, **not** a raw SQL migration, because:
+   - The key mapping varies per template and per snapshot version.
+   - Content transformation needs the old→new key map from the schema diff.
+   - Updating `snapshotId` requires knowing the new snapshot's ID (created in step 2).
+
+4. **Verify** — for each migrated task, confirm `task.content` keys match `task.snapshot.schema.items[].key`. Run `buildTaskContentSchema(snapshot.schema).safeParse(task.content)` on a sample to catch mismatches.
+
+**Risk mitigation**:
+- Run as a dry-run first (log changes without writing).
+- Process in batches (e.g., 100 tasks per transaction) with progress logging.
+- Back up `Task.content` values before overwriting (e.g., store original in `task.metadata.pre_standard_content`).
+
+This migration is required before MVP reporting can produce cross-template moderation summaries.
+
+### 4.7 Date presets in definitions
 
 Definitions can optionally store a default date preset that pre-fills the date range on load:
 
@@ -156,11 +255,11 @@ Supported presets:
 
 The BE resolves date presets at run time before executing the query. Presets are a convenience — the `POST /run` endpoint always receives resolved absolute dates (either from preset resolution or direct input).
 
-### 4.7 Submission timestamp — deferred
+### 4.8 Submission timestamp — deferred
 
 > **Deferred to ideation**: A typed `submittedAt` field on `Task` would improve sort ordering and filtering precision, but the backfill coverage for historical tasks is poor. For MVP, use `status` filtering (`REVIEW`, `COMPLETED`, `CLOSED`) combined with `updatedAt` for sort ordering. See [docs/ideation/submitted-at-state-machine.md](../../../../docs/ideation/submitted-at-state-machine.md) for the full analysis.
 
-### 4.8 Show-targeted tasks only
+### 4.9 Show-targeted tasks only
 
 Tasks connect to shows through the polymorphic `TaskTarget` model (`targetType = SHOW`), not a direct foreign key. The reporting query must:
 
@@ -170,7 +269,7 @@ Tasks connect to shows through the polymorphic `TaskTarget` model (`targetType =
 
 Tasks with no show-type target are excluded from reporting results entirely.
 
-### 4.9 Role-based source visibility
+### 4.10 Role-based source visibility
 
 MVP: all permitted roles (`ADMIN`, `MANAGER`, `MODERATION_MANAGER`) see all templates with submitted tasks in the studio.
 
@@ -187,7 +286,7 @@ If role-scoped template visibility becomes necessary, add a `template_type` filt
 - [ ] `.agent/skills/erify-authorization/SKILL.md` — update MODERATION_MANAGER scope description
 - [ ] BE tests — cover `MODERATION_MANAGER` access on all reporting endpoints
 
-### 4.10 Synchronous generation
+### 4.11 Synchronous generation
 
 MVP uses **synchronous generation** — the `POST /task-reports/run` endpoint generates and returns the complete result within the HTTP request lifecycle.
 
@@ -299,7 +398,6 @@ Suggested fields:
 
 - `scope` — scope filters: optional date preset or explicit dates, `show_standard_id`, `show_type_id`, `submitted_statuses`, `source_templates[]`
 - `columns[]` — selected column keys (system + task-content) with optional display ordering
-- `export_preferences` — optional preferred export format
 
 Do **not** store generated rows or result data here.
 
@@ -357,6 +455,29 @@ Access:
 - `ADMIN`, `MANAGER`, `MODERATION_MANAGER`
 
 This endpoint takes scope filters as input, making the column catalog contextual to the manager's show selection. It joins through `TaskTarget` → `Show` to find which templates have submitted tasks for the filtered shows.
+
+**Response shape:**
+
+```text
+sources[]:
+  template_uid         — template identifier
+  template_name        — display name
+  task_type            — from schema.metadata.task_type
+  submitted_task_count — number of submitted tasks for this template in scope
+  fields[]:
+    key                — field key (used in column selection)
+    label              — user-facing label
+    type               — field type (text, number, checkbox, etc.)
+    standard           — true if this is a standard field
+standard_fields[]:     — deduplicated list of standard fields across all sources
+  key
+  label
+  type
+  contributing_template_count — how many templates use this standard field
+  total_task_count            — total submitted tasks across all contributing templates
+```
+
+Standard fields appear both in their source template's `fields[]` (for completeness) and in the top-level `standard_fields[]` (for the FE to render the merged "Standard Fields" group in the column picker).
 
 ### 8.2 Saved definition CRUD
 
@@ -523,11 +644,18 @@ include: {
 For each matched task:
 
 1. read selected field definitions from `snapshot.schema.items`,
-2. pull matching values from `task.content`,
-3. normalize by field type,
-4. **merge into the show's row** — the show row accumulates values from all its submitted tasks.
+2. for each selected field, compute the column key:
+   - **standard field** (`standard: true`): column key = `field.key` (e.g., `gmv`)
+   - **custom field**: column key = `{template_uid}:{field.key}` (e.g., `tpl_abc:notes`)
+3. pull matching values from `task.content` using `field.key`,
+4. normalize by field type,
+5. **merge into the show's row** using the column key — the show row accumulates values from all its submitted tasks.
 
-If a show has submitted tasks from multiple templates, each template's columns appear in the same row under distinct column keys.
+**Standard fields** from different templates merge into the same column. If a show has moderation tasks from two different brand templates, both contributing `gmv` (standard), the values share the column key `gmv`. Since a show typically has one moderation task, this produces one value per show. If multiple tasks contribute to the same standard column on the same show, the duplicate-source handling (§9.4) applies.
+
+**Custom fields** from different templates produce distinct column keys (`tpl_abc:notes` vs `tpl_xyz:notes`) and appear as separate columns.
+
+If a show has submitted tasks from different **versions** of the same template, the field values merge into the same column because the column key is the same regardless of snapshot version. Fields that exist in one version but not another produce `null`.
 
 Normalization rules:
 
@@ -708,8 +836,7 @@ Mitigation: generation is fast (< 1s typical). The FE caches recently generated 
 ### Milestone BE-2 (Polish)
 
 1. role-aware source catalog filtering by `task_type` if product requires it
-2. `schema_signature` on snapshots for cross-version partition merging
-3. `new_columns_available` flag when definition's columns are outdated vs current snapshot
+2. `new_columns_available` flag when definition's columns are outdated vs current snapshot
 4. per-studio configurable row cap
 
 ### Milestone BE-3 (Scale, if needed)

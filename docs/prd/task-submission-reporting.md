@@ -138,6 +138,22 @@ The distinction maps to how the moderation team uses Google Sheets: they have on
 4. View filter state is independent of the definition — it's ephemeral UI state for the current session.
 5. Submissions change infrequently once completed. Re-generation is needed only when the scope filter changes or the manager explicitly refreshes.
 
+### Standard field catalog (cross-template column merging)
+
+Moderation task templates are created per-brand (~30 templates), each with 8–10 data collection fields for metrics like GMV, views, and conversion. These same-purpose fields currently have **different keys** across templates, which means the reporting engine treats them as separate columns — defeating cross-show aggregation.
+
+To enable cross-template column merging:
+
+1. **Standard fields** — pre-defined data collection fields with fixed keys (e.g., `gmv`, `views`, `conversion_rate`). These are maintained as a studio-level catalog. When a template author adds a standard field, it uses the canonical key — not a custom one.
+2. **`standard` flag on field items** — `FieldItemBaseSchema` gains an optional `standard: boolean` property. Fields marked `standard: true` use their `key` directly as the report column key (no template prefix). Fields without the flag (custom fields) continue to use `{template_uid}:{field.key}`.
+3. **Cross-template merging** — when generating a report, standard fields from different templates merge into one column because they share the same key. Custom fields remain template-scoped.
+4. **Backfill migration** — the ~30 existing moderation templates must have their data collection field keys standardized:
+   - Create new snapshots for each affected template with renamed keys and `standard: true` flag (via `updateTemplateWithSnapshot` — snapshots are immutable, old ones are preserved).
+   - Migrate `Task.content` key names and `Task.snapshotId` to point to the new snapshot. This is an application-level script (TypeScript + Prisma), not a raw SQL migration, because the key mapping varies per template and content must stay in sync with its referenced snapshot schema.
+   - Verify migrated tasks pass content validation against the new snapshot.
+
+This is a **requirement for MVP** — without it, the reporting engine cannot produce cross-client moderation summaries, which is the primary use case.
+
 ### Export behavior
 
 1. CSV export is required for compatible result sets.
@@ -159,6 +175,9 @@ The distinction maps to how the moderation team uses Google Sheets: they have on
 - [ ] Only show-targeted tasks appear in results; non-show tasks are excluded.
 - [ ] Duplicate submitted tasks for the same show and source are shown as separate rows with a warning indicator.
 - [ ] The table shows row count and generation timestamp for sanity checking.
+- [ ] Standard fields from different templates merge into a single report column (e.g., `gmv` from 30 moderation templates → one `gmv` column).
+- [ ] Custom (non-standard) fields remain template-scoped — different templates produce separate columns even if keys happen to match.
+- [ ] Existing ~30 moderation templates are backfilled to use standard field keys, with Task.content migrated accordingly.
 - [ ] *(Deferred)* Numeric column summaries (count, sum, average) are a future enhancement. See [ideation/task-analytics-summaries.md](../ideation/task-analytics-summaries.md).
 
 ## Reporting as an Engine
@@ -184,6 +203,7 @@ The engine is intentionally unopinionated about what the submitted fields mean. 
 - **Role-based source visibility is deferred to milestone 2.** MVP grants all permitted roles (`ADMIN`, `MANAGER`, `MODERATION_MANAGER`) access to all templates in the studio.
 - **Duplicate-source rows are always visible.** Separate rows with a warning badge.
 - **Client-side cache replaces server-side result storage.** TanStack Query in-memory cache holds recently generated datasets. Switching between cached scopes is instant. IndexedDB for cross-session persistence is a future enhancement.
+- **Standard field catalog for cross-template merging.** Moderation templates are per-brand (~30 templates) with same-purpose data collection fields. Standard fields use fixed keys (`gmv`, `views`, etc.) so the report engine can merge them into a single column across templates. Custom fields remain template-scoped. This requires a one-time backfill of existing templates.
 
 ## Out of Scope
 

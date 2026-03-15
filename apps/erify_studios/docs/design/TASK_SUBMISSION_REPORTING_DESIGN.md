@@ -135,20 +135,28 @@ src/features/task-reports/
 
 The column picker appears **after** scope filters are set. It shows only columns from the contextual catalog — templates/snapshots that actually have submitted tasks on the filtered shows.
 
-Two column categories:
+Three column categories:
 
 1. **System columns** (always available): show name, show start time, client, assignee, task status, studio room, show standard, show type
-2. **Task-content columns**: sourced from discovered snapshot field catalogs, grouped by template
+2. **Standard fields** (merged across templates): fields marked `standard: true` in the template schema. These appear as a single group regardless of which template they come from (e.g., one `GMV` column, not 30 template-specific `GMV` columns). Standard fields are the primary mechanism for cross-client reporting.
+3. **Custom fields** (template-scoped): non-standard fields grouped by source template. Each template group shows its own custom fields.
 
-Each source group should show:
+The column picker should render standard fields first (as a "Standard Fields" group), then custom fields grouped by template.
+
+Each template group should show:
 
 - template name
 - task type
-- snapshot version or "All matched versions"
 - submitted task count in the contextual catalog
 - selected field count
 
-Incompatible source groups (different template schemas) are surfaced early so managers know export may split.
+Standard fields show:
+
+- field label and key
+- number of templates contributing to this field
+- total submitted task count across all contributing templates
+
+Incompatible source groups (different template schemas) are surfaced early so managers know export may split. Standard fields never cause splits — they merge by design.
 
 ### 5.3 Result table
 
@@ -382,7 +390,7 @@ The frontend treats the generated result as a **cached dataset for client-side e
 
 - `rows[]` — flat JSON objects, one per show, keyed by column identifiers
 - `columns[]` — ordered column descriptors (key, label, type, source metadata)
-- `column_map` — partition grouping used only at export time to split sheets
+- `column_map` — groups columns by source `template_uid` for export sheet splitting. Standard fields (no template prefix) belong to a shared partition and never cause export splits
 - `warnings[]` — version conflicts, duplicate-source flags
 
 Client responsibilities:
