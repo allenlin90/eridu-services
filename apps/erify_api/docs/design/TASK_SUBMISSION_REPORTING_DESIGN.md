@@ -171,7 +171,9 @@ When `standard: true`, the report engine uses `field.key` directly as the column
 
 #### 4.6.2 Standard field catalog
 
-The standard field catalog is a set of pre-defined data collection field definitions with fixed keys. Template authors include standard fields by selecting from the catalog — ensuring consistent keys across all templates.
+The standard field catalog is a set of pre-defined data collection field definitions with fixed keys. It is a **prerequisite for cross-template reporting** — not a separate feature.
+
+**Catalog scope for MVP**: The catalog is a small, stable set of 8–10 fields defined collaboratively with the moderation team. For MVP, the catalog can be stored as a **seed configuration** (a JSON file or DB seed) rather than a full CRUD API. Template authors select standard fields from a picker in the template editor — the picker reads from the catalog and inserts the field with its canonical key and `standard: true`.
 
 Examples of standard field keys:
 
@@ -180,8 +182,17 @@ Examples of standard field keys:
 - `conversion_rate` — conversion percentage
 - `peak_viewers` — peak concurrent viewers
 - `orders` — order count
+- `likes` — like count
+- `comments` — comment count
+- `new_followers` — new follower count
 
-The catalog definition and management API are separate from the reporting design. Reporting only depends on the `standard: true` flag and the field `key` — it does not need to know the full catalog.
+**Template editor integration**: When building a template, the author sees two field sources:
+1. **Standard fields** — pre-defined from the catalog. Selecting one inserts a field with the canonical key, type, and label. The author can customize the label and validation but **cannot change the key** (it's locked to the standard).
+2. **Custom fields** — free-form fields the author defines with their own key.
+
+This ensures standard field keys are consistent across all templates without requiring a full catalog management API. If the catalog needs to grow beyond ~20 fields, add a CRUD API in a future milestone.
+
+**Reporting dependency**: The report engine only depends on the `standard: true` flag and the field `key`. It does not import or query the catalog — it reads the flag from `snapshot.schema.items[]`.
 
 #### 4.6.3 Backfill migration
 
@@ -505,10 +516,12 @@ Access:
 
 - `ADMIN`, `MANAGER`, `MODERATION_MANAGER`
 
-Body accepts either:
+Body is always a **complete, self-contained payload** — the FE resolves the definition into concrete scope + columns before sending:
 
-- inline payload (ad-hoc scope + columns), or
-- `definition_uid` plus optional scope overrides (e.g., different date range).
+- **From definition**: FE loads the definition, pre-fills the form, lets the manager override any field. The run request sends whatever the form shows — not the raw definition.
+- **Ad-hoc**: FE sends scope + columns directly without referencing a definition.
+
+The BE does **not** merge definition + overrides. It receives a fully resolved payload every time. `definition_uid` is optional metadata for audit/logging only — it does not affect generation.
 
 This endpoint:
 
@@ -523,7 +536,7 @@ This endpoint:
 scope { date_preset?, date_from?, date_to?, show_standard_id?, show_type_id?, submitted_statuses? }
 columns[]
 source_templates[]?
-definition_uid?  (optional — for audit trail only)
+definition_uid?  (optional — audit trail only, does not affect generation)
 ```
 
 **Response shape:**
@@ -779,11 +792,16 @@ src/models/task-report/
 
 ## 12. Risks and Mitigations
 
-### 12.1 Template evolution drift
+### 12.1 Template evolution and definition stability
 
-Risk: template-based saved definitions may reference column keys that disappear in later versions.
+Definitions reference **column keys** (e.g., `gmv`, `tpl_abc:notes`), not snapshot versions. Tasks are fixed to their assigned snapshot via `task.snapshotId` — template updates create new snapshots but don't change existing tasks.
 
-Mitigation: return `null` for missing fields and surface compatibility warnings in `warnings[]`.
+This means definitions are inherently stable:
+- Existing tasks' content keys don't change when the template is updated.
+- A column key that matched data before will continue matching after a template update.
+- New fields added in later snapshot versions simply produce `null` for older tasks — correct behavior.
+
+The only scenario where a definition's column becomes empty is if **no tasks** in the scope were created from a snapshot containing that field. This is a scope issue (not a definition issue) and is visible from the result metadata.
 
 ### 12.2 File URL longevity
 
@@ -836,8 +854,7 @@ Mitigation: generation is fast (< 1s typical). The FE caches recently generated 
 ### Milestone BE-2 (Polish)
 
 1. role-aware source catalog filtering by `task_type` if product requires it
-2. `new_columns_available` flag when definition's columns are outdated vs current snapshot
-4. per-studio configurable row cap
+2. per-studio configurable row cap
 
 ### Milestone BE-3 (Scale, if needed)
 

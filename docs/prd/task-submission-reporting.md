@@ -175,6 +175,7 @@ This is a **requirement for MVP** — without it, the reporting engine cannot pr
 - [ ] Only show-targeted tasks appear in results; non-show tasks are excluded.
 - [ ] Duplicate submitted tasks for the same show and source are shown as separate rows with a warning indicator.
 - [ ] The table shows row count and generation timestamp for sanity checking.
+- [ ] Over-scoped queries (> 10,000 matched tasks) return a clear error suggesting scope narrowing — not a timeout or generic failure.
 - [ ] Standard fields from different templates merge into a single report column (e.g., `gmv` from 30 moderation templates → one `gmv` column).
 - [ ] Custom (non-standard) fields remain template-scoped — different templates produce separate columns even if keys happen to match.
 - [ ] Existing ~30 moderation templates are backfilled to use standard field keys, with Task.content migrated accordingly.
@@ -204,6 +205,8 @@ The engine is intentionally unopinionated about what the submitted fields mean. 
 - **Duplicate-source rows are always visible.** Separate rows with a warning badge.
 - **Client-side cache replaces server-side result storage.** TanStack Query in-memory cache holds recently generated datasets. Switching between cached scopes is instant. IndexedDB for cross-session persistence is a future enhancement.
 - **Standard field catalog for cross-template merging.** Moderation templates are per-brand (~30 templates) with same-purpose data collection fields. Standard fields use fixed keys (`gmv`, `views`, etc.) so the report engine can merge them into a single column across templates. Custom fields remain template-scoped. This requires a one-time backfill of existing templates.
+- **Definition is inherently stable.** Definitions reference column keys, not snapshot versions. Tasks are fixed to their assigned snapshot — template updates don't change existing tasks' content keys. Definitions don't become "outdated" because the underlying data doesn't drift.
+- **FE form is the run-time source of truth.** When running from a saved definition, the FE pre-fills the form from the definition's stored scope + columns. The manager can override any field before running. The run request sends whatever the form shows — the BE does not merge definition + overrides.
 
 ## Out of Scope
 

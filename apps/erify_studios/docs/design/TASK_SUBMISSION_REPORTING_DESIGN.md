@@ -143,6 +143,8 @@ Three column categories:
 
 The column picker should render standard fields first (as a "Standard Fields" group), then custom fields grouped by template.
 
+**User-facing explanation**: The "Standard Fields" group header should include a brief description: *"These fields are shared across all templates — selecting one includes data from every template that collects it."* Custom field groups should show: *"These fields are specific to [template name]."* This helps managers understand why GMV appears once (standard) while template-specific notes appear per-template (custom).
+
 Each template group should show:
 
 - template name
@@ -174,6 +176,19 @@ The result table renders the flat `rows[]` directly — one row per show, with a
 
 All view filters are applied client-side on the cached `rows[]`. The table re-renders instantly.
 
+**Default sort order**: The BE returns rows sorted by `show.startTime DESC` (most-recent shows first). This is the initial display order. The manager can re-sort by any column via the column header — this is a client-side re-sort on the cached data, not a server request.
+
+**BE vs FE responsibility boundary for sort and filter**:
+
+| Concern | Owner | Notes |
+|---------|-------|-------|
+| Row order in API response | BE | `show.startTime DESC` — deterministic, stable |
+| Column sort (click header) | FE | Re-sorts cached `rows[]` in memory |
+| View filters (client, status, etc.) | FE | Filters cached `rows[]` in memory |
+| Scope filters (date, show type, etc.) | BE | Triggers re-generation |
+| Text search | FE | Searches across cached row values |
+| Export row order | FE | Matches current sort (filtered view) or BE order (full export) |
+
 **Cell rendering**:
 - `null` values rendered as blank cells (not zero — missing data must be visually distinct)
 - file/url fields as clickable links
@@ -194,6 +209,8 @@ Export options:
 - **Export filtered** — exports only the currently visible rows (respects view filters and sort)
 
 Do not hide version splits. Managers need to know when outputs were separated because snapshot schemas differ.
+
+**Pre-export partition preview**: When the result contains multiple partition groups (from `column_map`), the export bar should show a preview before download: *"This report includes columns from N different templates. Export will create N separate files (CSV) or N sheets (XLSX)."* with a list of partition names. The manager confirms before export proceeds. For single-partition results, export starts immediately with no confirmation.
 
 ## 6. State Management Plan
 
@@ -414,7 +431,7 @@ CSV can be implemented with a small local serializer.
 Rules:
 
 - read `column_map` to determine if a single file or multiple files are needed
-- flatten arrays (`multiselect`) into a deterministic delimiter such as `; `
+- flatten arrays (`multiselect`) into semicolon-space (`; `) — standard CSV convention to avoid conflict with the comma delimiter
 - export file/url fields as URL strings
 - preserve empty string vs `null` distinctions consistently
 - include system columns first, then selected task fields
@@ -446,6 +463,27 @@ Why lazy-load:
 - export is an infrequent manager action,
 - avoids inflating the initial route bundle.
 
+### 9.3 Export serialization with Web Worker
+
+For large datasets (1,000+ rows), CSV and XLSX serialization can block the main thread. Use a Web Worker to run serialization off the main thread:
+
+- Transfer the result JSON to a worker via `postMessage` (structured clone).
+- Worker runs `serialize-csv` or `serialize-xlsx` (from `lib/`) and returns the Blob.
+- Main thread triggers the download from the Blob.
+- Show a progress bar during serialization (the worker can post progress updates).
+
+This follows the same pattern as the existing image compressor in the codebase. For MVP, main-thread serialization is acceptable for typical result sizes (< 500 rows). Add the worker when export performance becomes noticeable.
+
+### 9.4 Generation progress indicator
+
+During `POST /task-reports/run`, show a progress bar or spinner with *"Generating report..."*. Typical generation completes in < 1s, but large scopes (1,000+ shows) may take 2–5s. The progress indicator should:
+
+- appear immediately on "Run Report" click,
+- show an indeterminate progress bar (the BE does not stream progress for synchronous generation),
+- disappear when the response arrives and the table renders.
+
+If async generation is added later (BE milestone 3), the progress bar can switch to determinate mode using job status polling.
+
 ## 10. Link and File Preview Rules
 
 1. URL/file fields render as anchors in the preview table.
@@ -467,6 +505,7 @@ Required states:
 8. result generation in progress — show progress indicator
 9. result generation failed — show error with scope details and "Retry" button
 10. result too large (matched task count exceeds the studio's configurable cap, default 10,000) — show error clarifying this is a result-size limit (not a date-range restriction) and suggesting scope narrowing
+11. multi-target task rows — if a task targets multiple shows (rare), it produces one row per show. The row count may exceed the show count. No special UX needed — this is correct behavior
 
 ### 11.1 Duplicate-source-on-show UX
 
