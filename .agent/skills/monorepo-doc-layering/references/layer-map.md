@@ -8,11 +8,24 @@ Use for monorepo-owned content.
   - phase status
   - active/deferred scope
   - backend/frontend/shared-package coordination
-- `docs/product/`
+- `docs/prd/`
+  - active in-flight requirements for the current phase
+  - deleted or promoted when features ship
+- `docs/features/`
+  - shipped feature specs promoted from PRDs
+  - product decisions, user context, links to technical docs
+  - persistent — updated as features evolve
+- `docs/workflows/`
+  - cross-feature end-to-end flows (actor sequences, data flows, cross-domain dependencies)
+  - persistent — updated as operational flows change
+- `docs/domain/`
   - business domain language
-  - product context
-  - cross-app requirements
+  - entity model and product context
+  - cross-app domain rules
+- `docs/engineering/`
   - system architecture framing
+  - engineering policies and governance
+  - cross-app technical conventions
 - `docs/adr/`
   - architecture decisions
 

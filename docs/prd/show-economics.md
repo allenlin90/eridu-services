@@ -1,9 +1,9 @@
 # PRD: Show Economics & P&L
 
-> **Status**: Draft
-> **Phase**: 4 — P&L Visibility & Creator Operations
-> **Workstream**: 3
-> **Depends on**: [Creator Mapping](./creator-mapping.md) (compensation requires creator-show linkage)
+> **Status**: Active
+> **Phase**: 5 — P&L Baseline & Operations
+> **Workstream**: 1
+> **Depends on**: Creator Mapping — ✅ **Complete** (deployed to master; compensation fields live)
 
 ## Problem
 
@@ -24,20 +24,21 @@ Show performance data (views, GMV, sales) and creator compensation are tracked o
 
 ## Existing Infrastructure
 
-| Model                     | Fields                                          | Status                  |
-| ------------------------- | ----------------------------------------------- | ----------------------- |
-| `StudioShift`             | `hourlyRate`, `projectedCost`, `calculatedCost` | ✅ Exists                |
-| `StudioMembership`        | `baseHourlyRate`                                | ✅ Exists                |
-| `ShowPlatform`            | `viewerCount`                                   | ✅ Exists (no GMV/sales) |
-| `Creator` / `ShowCreator` | No compensation fields                          | ❌ Gap                   |
+| Model              | Fields                                                                                           | Status                  |
+| ------------------ | ------------------------------------------------------------------------------------------------ | ----------------------- |
+| `StudioShift`      | `hourlyRate`, `projectedCost`, `calculatedCost`                                                  | ✅ Exists                |
+| `StudioMembership` | `baseHourlyRate`                                                                                 | ✅ Exists                |
+| `ShowPlatform`     | `viewerCount`                                                                                    | ✅ Exists (no GMV/sales) |
+| `Creator`          | `defaultRate`, `defaultRateType`, `defaultCommissionRate`                                        | ✅ Exists (deployed)     |
+| `ShowCreator`      | `agreedRate`, `compensationType`, `commissionRate` (per-show overrides; unique per show+creator) | ✅ Exists (deployed)     |
 
 ## Requirements
 
 ### Baseline (in scope now)
 
-1. Keep schema/contract extensions that support creator compensation inputs (`agreedRate`, `compensationType`, `commissionRate`) without requiring full profit-rule execution yet.
+1. ~~Schema/contract extensions for creator compensation inputs~~ — ✅ **Done**: `agreedRate`, `compensationType`, `commissionRate` are live on `ShowCreator`; `defaultRate`, `defaultRateType`, `defaultCommissionRate` are live on `Creator`.
 2. Show-level baseline variable cost = creator costs + shift labor costs.
-3. Creator baseline cost per show uses current agreed/default rate handling only.
+3. Creator baseline cost per show: resolve rate using `ShowCreator.agreedRate` → `Creator.defaultRate` precedence. Only `FIXED` type creators contribute to baseline cost (COMMISSION and HYBRID require GMV, which is deferred).
 4. Shift baseline cost per show uses existing shift cost fields for overlapping show windows.
 5. API baseline: `GET /studios/:studioId/shows/:showUid/economics` for cost visibility.
 6. Grouped baseline economics read: `GET /studios/:studioId/economics?group_by=show|schedule|client&date_from=...&date_to=...`.
@@ -54,14 +55,16 @@ Show performance data (views, GMV, sales) and creator compensation are tracked o
 
 - [ ] Show economics endpoint returns baseline creator cost + shift cost.
 - [ ] Grouped economics endpoint returns baseline cost totals by show/schedule/client.
-- [ ] Compensation input fields are accepted/persisted for forward compatibility.
+- [x] Compensation input fields are accepted/persisted (`agreedRate`, `compensationType`, `commissionRate` on `ShowCreator`; defaults on `Creator`). — ✅ Done
 - [ ] No bonus/tiered/hybrid rule execution is required in this phase.
+- [ ] COMMISSION/HYBRID creators are included in response with null/zero cost and a `compensation_type` indicator so callers know cost is partial.
 
 ## Product Decisions
 
 - **Baseline variable costs only** — fixed costs (rent, equipment) are future.
 - **Complex compensation is deferred** — bonus/tiered/hybrid rule engines are not part of baseline.
-- **Creator rate precedence**: `ShowCreator.agreedRate` overrides creator defaults.
+- **Creator rate precedence**: `ShowCreator.agreedRate` → `Creator.defaultRate`. `ShowCreator.compensationType` → `Creator.defaultRateType`.
+- **FIXED-only baseline cost**: only `FIXED` type creators have a computable baseline cost. `COMMISSION` and `HYBRID` types appear in the response with `null` computed cost until GMV inputs are available.
 - **No compensation logic in metadata** — `metadata` is descriptive only, not executable financial rules.
 
 ## Design Reference

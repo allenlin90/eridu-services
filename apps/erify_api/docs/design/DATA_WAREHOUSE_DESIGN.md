@@ -21,4 +21,4 @@ This document should cover:
 ## Reference
 
 - **[Phase 4 Roadmap](../../../../docs/roadmap/PHASE_4.md)** — Implementation scope and success criteria
-- **[System Architecture Overview](../../../../docs/product/ARCHITECTURE_OVERVIEW.md)** — System architecture
+- **[System Architecture Overview](../../../../docs/engineering/ARCHITECTURE_OVERVIEW.md)** — System architecture

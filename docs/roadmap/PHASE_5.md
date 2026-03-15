@@ -1,15 +1,18 @@
 # Phase 5: Parking Lot and TODO Backlog
 
-> **Status**: Deferred / parking lot
-> **Planning stance**: Keep backlog context and rationale here; promote only the items that become necessary after the Phase 4 merge baseline stabilizes.
+> **Status**: Active
+> **Planning stance**: Phase 4 merge baseline is stable on `master`. Economics baseline and task reporting are the two promoted workstreams. All other items remain parking lot until they have clear owners and exit criteria.
 
 ## Purpose
 
-Phase 5 is a backlog of valuable follow-up initiatives that remain intentionally deferred while the Phase 4 merge baseline is still settling.
-The goal is to preserve context and rationale now, then promote only the items that have clear owners, sequencing, and exit criteria.
+Phase 5 has two active workstreams promoted from Phase 4:
 
-The P&L revenue workflow and task submission reporting/export are the two most likely items to promote first once the Phase 4 baseline stabilizes.
-In parallel, this phase also tracks carry-over merge gaps from `feat/phase-4-p-and-l` that were implemented there but are not yet represented in the current baseline.
+1. **Show Economics Baseline** — creator cost + shift cost API endpoints (see [PRD](../prd/show-economics.md))
+2. **Task Submission Reporting & Export** — manager reporting on submitted task data (see [PRD](../prd/task-submission-reporting.md))
+
+All other items below are parking lot — preserved for context, promoted only when they have clear owners, scoped deliverables, and testable exit criteria.
+
+In parallel, this phase tracks carry-over gaps from the Phase 4 feature branch that were not merged into the current `master` baseline.
 
 ## Merge-Gap Carry-Over (from `feat/phase-4-p-and-l`)
 
@@ -61,15 +64,19 @@ TODOs:
 - Define task-assignment error contract when assignee is not helper-eligible.
 - Add policy tests and documentation updates for helper-aware assignment workflows.
 
-### Economics Baseline Reconciliation
+### Economics Baseline (Active — Workstream 1)
 
 Context:
-The feature branch included economics/performance endpoint implementation details, while current baseline docs and code status differ across files/branches. This drift should be reconciled before promoting P&L follow-up work.
+Creator mapping is deployed on `master`. Compensation fields (`agreedRate`, `compensationType`, `commissionRate` on `ShowCreator`; `defaultRate`, `defaultRateType`, `defaultCommissionRate` on `Creator`) are live. The economics API endpoints (cost-side only) are not yet built.
+
+PRD: [show-economics.md](../prd/show-economics.md)
 
 TODOs:
-- Reconcile current-baseline status for economics/performance endpoint availability and branch parity.
-- Align Phase 4/Phase 5 status wording and linked docs so rollout state is unambiguous.
-- Keep P&L “P-side” planning scoped to confirmed baseline behavior after reconciliation.
+- Implement `GET /studios/:studioId/shows/:showUid/economics` — baseline creator cost + shift cost per show.
+- Implement `GET /studios/:studioId/economics?group_by=show|schedule|client&date_from=...&date_to=...` — grouped cost rollups.
+- Rate resolution: `ShowCreator.agreedRate` → `Creator.defaultRate`; `FIXED` type only contributes to cost; `COMMISSION`/`HYBRID` returns `null` cost with `compensation_type` indicator.
+- Shift cost: use existing `StudioShift.calculatedCost` for shifts overlapping the show window.
+- Update `apps/erify_api/docs/PHASE_4_PNL_BACKEND.md` status to ✅ Implemented once shipped.
 
 ## Deferred Workstreams (Context + TODOs)
 
@@ -214,7 +221,7 @@ TODOs:
 - Workflow enhancements that do not change backend contracts.
 - Bulk review approve refinements.
 
-### P&L Revenue Workflow — Full P&L Visibility
+### P&L Revenue Workflow — Full P&L Visibility (Parking Lot)
 
 Context:
 Phase 4 shipped the "L" side (creator compensation costs, shift labor costs) and the economics/performance backend endpoints. The "P" side (revenue input and contribution margin) was deferred because there is no clear data model design, no FE input workflow, and no UI. The economics endpoints are marked `@preview` and commission/hybrid creator costs show as $0 without revenue.
@@ -229,7 +236,7 @@ Open design questions to resolve before implementation:
 - **Compensation extensibility model**: current schema covers base fixed/commission/hybrid inputs, but not additional components (bonus, OT, special allocations). Decide whether these should be modeled as additive cost items (recommended) instead of overloading base rate fields.
 
 TODOs (once design questions are resolved):
-- Define and document the `gmv` vs `sales` distinction in `docs/product/BUSINESS.md`.
+- Define and document the `gmv` vs `sales` distinction in `docs/domain/BUSINESS.md`.
 - Decide: extend `ShowPlatform` with typed columns, or introduce `ShowPlatformMetrics` table for financial outcomes.
 - Introduce `big.js` as the standard financial arithmetic library for backend economics calculations and any frontend financial summaries that must match backend totals.
 - Add FE input for revenue fields on the show platform form in `erify_studios` (currently only `viewer_count` is editable).

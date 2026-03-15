@@ -211,7 +211,7 @@ Recommended comment format in migration SQL:
 ```
 
 **Documentation sync is mandatory** when custom SQL exists:
-- Update `docs/product/DB_MIGRATION_POLICY.md` with the customization rationale.
+- Update `docs/engineering/DB_MIGRATION_POLICY.md` with the customization rationale.
 - Update relevant feature docs if behavior/operational impact exists.
 - Keep this skill aligned with any new recurring customization pattern.
 

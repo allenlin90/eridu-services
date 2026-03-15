@@ -11,7 +11,7 @@ Read this skill for current `erify_api` authorization behavior first. Load the p
 
 **Related references**
 - [Authorization Guide](../../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md)
-- [Architecture Overview](../../../docs/product/ARCHITECTURE_OVERVIEW.md)
+- [Architecture Overview](../../../docs/engineering/ARCHITECTURE_OVERVIEW.md)
 - `authentication-authorization-nestjs` for broader auth guidance
 - `backend-controller-pattern-nestjs` for controller/decorator usage
 
@@ -377,4 +377,4 @@ await prisma.user.update({
 ## Related Documentation
 
 - [Authorization Guide](../../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md) *(design-only; may be outdated vs current implementation)*
-- [Architecture Overview](../../../docs/product/ARCHITECTURE_OVERVIEW.md)
+- [Architecture Overview](../../../docs/engineering/ARCHITECTURE_OVERVIEW.md)
