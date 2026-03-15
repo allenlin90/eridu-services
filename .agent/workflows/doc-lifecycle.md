@@ -109,7 +109,18 @@ Update all of the following to reflect the new state:
 - **`docs/prd/README.md`** — Phase N PRDs table (remove shipped/deleted rows, move to Shipped reference section; update Phase N+1 table)
 - **`docs/roadmap/README.md`** — phase list entries (✅ closed / 🚧 active labels)
 
-### 6. Verify cross-references
+### 6. Cross-check ideation docs
+
+After handling PRDs, check `docs/ideation/` for related topics:
+
+1. **Deferred PRDs → check for ideation capture**: If a PRD is being deferred, ensure the reasoning and context are preserved in an ideation doc (create one if it doesn't exist).
+2. **Shipped features → check for ideation promotion**: If a shipped feature satisfies decision gates in an ideation doc, flag that topic for promotion or update.
+3. **Phase close → audit ideation staleness**: Review active ideation docs. Any topic sitting for 2+ phases without promotion should be refreshed or dropped.
+4. Update `docs/ideation/README.md` tables to reflect any changes.
+
+See `.agent/workflows/ideation-lifecycle.md` for the full cross-check workflow.
+
+### 7. Verify cross-references
 
 After any file moves or deletions:
 
@@ -137,6 +148,7 @@ grep -r "docs/product/" . --include="*.md" --exclude-dir=node_modules --exclude-
 - [ ] `docs/prd/README.md` tables match the actual files on disk.
 - [ ] No stale `docs/product/` or other broken path references remain.
 - [ ] `docs/features/README.md` and `docs/workflows/README.md` indexes are up to date.
+- [ ] `docs/ideation/README.md` active topics table is accurate (no stale entries, no missing deferrals).
 
 ---
 
