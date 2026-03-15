@@ -3,7 +3,8 @@
 > **Status**: Draft
 > **Phase**: 5 — Parking Lot / immediate post-Phase-4 follow-up candidate
 > **Workstream**: Reporting, review, and manager visibility from submitted tasks
-> **Depends on**: Phase 2 task-management foundation, [RBAC Roles](./rbac-roles.md), [Show Economics](./show-economics.md)
+> **Depends on**: Phase 2 task-management foundation, [RBAC Roles](./rbac-roles.md)
+> **Can power**: [Show Economics](./show-economics.md) and any future feature that needs cross-show submitted-task data aggregation
 
 ## Naming & Convention Notes
 
@@ -89,6 +90,12 @@ Today the data exists inside `Task.content`, but the system has no manager-facin
 - [ ] Duplicate submitted tasks for the same show and source partition are shown as separate rows with a warning indicator, not merged.
 - [ ] Stale results (past expiry) display a visible freshness warning with a one-click refresh action.
 - [ ] The same report result is accessible from desktop and mobile browsers (cross-device access).
+
+## Reporting as an Engine
+
+This system is a **generic submitted-task reporting engine**, not a Show Economics feature. It reads any submitted task fields defined in template snapshots and surfaces them as a reviewable, exportable dataset. Show Economics, P&L rollups, and other future features can consume this engine's output — they are downstream consumers, not prerequisites.
+
+The engine is intentionally unopinionated about what the submitted fields mean. GMV, views, and post-production URLs are examples of field content, not hardcoded concepts. New use cases (e.g. a finance rollup that reads creator-fee fields from a compensation task) can be served by selecting different sources and columns — no engine changes required.
 
 ## Product Decisions
 
