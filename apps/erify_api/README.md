@@ -591,7 +591,7 @@ The database schema includes comprehensive models for the full livestream produc
 - **Tags & Taggables**: Flexible categorization (Phase 4)
 - **Audits**: Complete audit trail (Phase 4)
 
-See the root [Business Documentation](../../docs/product/BUSINESS.md) for cross-app domain context and [System Architecture Overview](../../docs/product/ARCHITECTURE_OVERVIEW.md) for monorepo architecture. Backend implementation history remains under `apps/erify_api/docs/`.
+See the root [Business Documentation](../../docs/domain/BUSINESS.md) for cross-app domain context and [System Architecture Overview](../../docs/engineering/ARCHITECTURE_OVERVIEW.md) for monorepo architecture. Backend implementation history remains under `apps/erify_api/docs/`.
 
 ## 🛠️ Development
 
@@ -690,8 +690,8 @@ Comprehensive documentation is available in the `docs/` directory. Refer to spec
 | Document                                               | Use When                                                       |
 | ------------------------------------------------------ | -------------------------------------------------------------- |
 | [Documentation Index](docs/README.md)                  | Need a quick overview of all documentation                     |
-| [System Architecture Overview](../../docs/product/ARCHITECTURE_OVERVIEW.md)  | Understanding cross-app architecture and boundaries            |
-| [Business Domain](../../docs/product/BUSINESS.md)                    | Understanding product/domain concepts and business rules          |
+| [System Architecture Overview](../../docs/engineering/ARCHITECTURE_OVERVIEW.md)  | Understanding cross-app architecture and boundaries            |
+| [Business Domain](../../docs/domain/BUSINESS.md)                    | Understanding product/domain concepts and business rules          |
 | [Authentication Guide](docs/design/AUTHORIZATION_GUIDE.md)    | Implementing auth patterns and guard usage                     |
 | [Server-to-Server Auth](docs/design/AUTHORIZATION_GUIDE.md) | Adding service-to-service endpoints                            |
 | [Schedule Planning](docs/SCHEDULE_PLANNING.md)         | Working on schedule planning features                          |

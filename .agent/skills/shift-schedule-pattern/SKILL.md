@@ -37,7 +37,7 @@ Study these real implementations as the source of truth:
 ### Design Docs
 - **Backend Canonical Doc**: [STUDIO_SHIFT_SCHEDULE.md](../../../apps/erify_api/docs/STUDIO_SHIFT_SCHEDULE.md)
 - **FE Features & Workflows**: [STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md](../../../apps/erify_studios/docs/STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md)
-- **Business Rules**: [BUSINESS.md](../../../docs/product/BUSINESS.md)
+- **Business Rules**: [BUSINESS.md](../../../docs/domain/BUSINESS.md)
 
 ---
 

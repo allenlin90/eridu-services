@@ -592,15 +592,15 @@ Paraglide JS integrates with the build process:
 ### Architecture & Design
 
 - **[Agent Instructions](../../AGENTS.md)**: Monorepo conventions and patterns
-- **[Product Architecture Overview](../../docs/product/ARCHITECTURE_OVERVIEW.md)**: Cross-app architecture and boundaries
-- **[Product Business Context](../../docs/product/BUSINESS.md)**: Domain entities and business rules
+- **[Product Architecture Overview](../../docs/engineering/ARCHITECTURE_OVERVIEW.md)**: Cross-app architecture and boundaries
+- **[Product Business Context](../../docs/domain/BUSINESS.md)**: Domain entities and business rules
 
 ### Development Workflow
 
 When implementing admin features:
 
 1. **Check API Endpoints**: Review [erify_api docs](../erify_api/docs/) for available admin endpoints
-2. **Understand Data Models**: See [Business Context](../../docs/product/BUSINESS.md) for entity relationships
+2. **Understand Data Models**: See [Business Context](../../docs/domain/BUSINESS.md) for entity relationships
 3. **Use Admin CRUD Hook**: Leverage `useAdminCrud()` for generic operations
 4. **Add Table Columns**: Define columns and actions in features
 5. **Test Admin Access**: Verify authorization and access control

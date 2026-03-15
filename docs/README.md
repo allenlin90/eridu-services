@@ -1,36 +1,43 @@
 # Eridu Services Documentation
 
-This directory is the monorepo-level source of truth for roadmap, product context, and cross-app planning.
+Monorepo-level source of truth for roadmap, product context, and cross-app planning.
 
 ## Structure
 
 | Directory | Purpose | Lifecycle |
 |-----------|---------|-----------|
 | [roadmap/](./roadmap/README.md) | Phase scope, status, sequencing | Persistent — updated on phase close |
-| [prd/](./prd/README.md) | Product requirement documents | Phase-scoped — cleaned up after features ship |
-| [product/](./product/README.md) | Business domain context | Persistent — updated as domain evolves |
-| [adr/](./adr/0001-extract-data-table-to-ui.md) | Architecture decision records | Persistent — immutable after acceptance |
+| [prd/](./prd/README.md) | Active in-flight requirements | Phase-scoped — promoted or deleted when features ship |
+| [features/](./features/README.md) | Shipped feature specs (promoted from PRDs) | Persistent — updated as features evolve |
+| [workflows/](./workflows/README.md) | Cross-feature end-to-end flow guides | Persistent — updated as flows change |
+| [domain/](./domain/BUSINESS.md) | Business domain model and entity context | Persistent — updated as domain evolves |
+| [engineering/](./engineering/README.md) | Architecture overview and engineering policies | Persistent — updated as conventions change |
+| [adr/](./adr/) | Architecture decision records | Persistent — immutable after acceptance |
 
 App-local docs (`apps/*/docs/`) own **shipped behavior** and **technical design** for implemented features.
 
 ## Ownership Model
 
-- Root `docs/roadmap/` owns **phase status** and **cross-app scope**
-- Root `docs/prd/` owns **product requirements** for the active phase (transient)
-- App-local `apps/*/docs/` own **implemented behavior** and **technical designs** (persistent)
-- Shared package READMEs own package-level contracts and usage details
+- `docs/roadmap/` — phase status and cross-app scope
+- `docs/prd/` — active requirements for the current phase (transient)
+- `docs/features/` — product decisions and user context for shipped features
+- `docs/workflows/` — end-to-end actor flows spanning multiple features
+- `docs/domain/` — business entities, domain rules, and product vocabulary
+- `docs/engineering/` — architecture, patterns, and engineering governance
+- `apps/*/docs/` — canonical record of implemented behavior (persistent)
 
 ## Doc Lifecycle
 
 1. **Roadmap** files are append-only status records, never deleted
-2. **PRDs** are phase-scoped working docs — deleted when features ship or the phase closes
-3. **Technical designs** persist after implementation, marked with status (Draft → Implemented)
-4. **App-local docs** are the canonical record of shipped behavior
+2. **PRDs** are transient working docs — when a feature ships, promote to `features/` and delete the PRD
+3. **Feature docs** are permanent — updated as features evolve
+4. **Workflow docs** are permanent — updated as operational flows change
+5. **App-local docs** are the canonical record of shipped behavior
 
-> PRDs own pre-ship intent. App-local docs own post-ship behavior.
+> PRDs own pre-ship intent. Feature docs own product decisions. App-local docs own behavior.
 
 ## Current Phase State
 
-- Phase 3: Closed by scope reset. Delivered work summarized in [Phase 3](./roadmap/PHASE_3.md).
-- Phase 4: P&L Visibility & Creator Operations — post-cutover P&L implementation in [Phase 4](./roadmap/PHASE_4.md).
-- Phase 5: Deferred / parking lot including ticketing, materials, and collaboration in [Phase 5](./roadmap/PHASE_5.md).
+- Phase 1–3: ✅ Closed. Summarized in [Phase 3](./roadmap/PHASE_3.md).
+- Phase 4: ✅ Closed. Creator mapping + RBAC roles delivered and deployed to `master`. See [Phase 4](./roadmap/PHASE_4.md).
+- Phase 5: 🚧 Active. Economics baseline endpoints and task submission reporting are the promoted workstreams. See [Phase 5](./roadmap/PHASE_5.md).

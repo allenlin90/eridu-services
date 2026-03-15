@@ -38,13 +38,14 @@ Deliver creator mapping + assignment foundations on top of the creator-first bas
 - `metadata` is not a compensation rule engine and must not store executable bonus logic.
 - Complex compensation (bonus, post-show adjustments, tiered/volume commission, hybrid rule sets) is explicitly deferred.
 
-## Canonical Specs (PRD + BE/FE Feature Docs)
+## Canonical Specs (Shipped — App-Local Docs)
 
-| Scope                            | PRD                                             | Backend Doc                                                                       | Frontend Doc                                                                                           |
-| -------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Roles & authorization foundation | [rbac-roles.md](../prd/rbac-roles.md)           | [AUTHORIZATION_GUIDE.md](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md) | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) |
-| Creator mapping & assignment     | [creator-mapping.md](../prd/creator-mapping.md) | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md)        | [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md)                       |
-| Show economics baseline          | [show-economics.md](../prd/show-economics.md)   | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md)        | [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md)                       |
+PRDs for this phase have been deleted per lifecycle rules. Shipped behavior is owned by app-local docs.
+
+| Scope                            | Backend Doc                                                                       | Frontend Doc                                                                                           |
+| -------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Roles & authorization foundation | [AUTHORIZATION_GUIDE.md](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md) | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) |
+| Creator mapping & assignment     | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md)        | [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md)                       |
 
 ## Out of Scope for Phase 4
 
