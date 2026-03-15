@@ -44,6 +44,14 @@ Run for each affected app/package. **Never skip. Fix errors before marking work 
 ### Knowledge Sync (Feature/Refactor Work)
 After feature delivery, behavior changes, or refactors — run `.agent/workflows/knowledge-sync.md`.
 
+### Doc Lifecycle (Phase Boundaries)
+When a phase closes, PRDs ship, or docs are reorganized — run `.agent/workflows/doc-lifecycle.md`.
+
+| Workflow | When to run |
+|----------|-------------|
+| `knowledge-sync.md` | Content changed: API contracts, behavior, architecture |
+| `doc-lifecycle.md` | Structure changed: PRDs shipping, phase close, doc reorganization |
+
 ## Project Stack
 
 **Monorepo**: Turborepo + pnpm workspaces | Node >= 22 | TypeScript 5.9.3

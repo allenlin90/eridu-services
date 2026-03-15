@@ -1,29 +1,20 @@
-# PRD: RBAC Roles
+# Feature: RBAC Roles
 
-> **Status**: Draft
-> **Phase**: 4 — P&L Visibility & Creator Operations
+> **Status**: ✅ Shipped — Phase 4
 > **Workstream**: 1 (prerequisite for all Phase 4 features)
+> **Canonical docs**: [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md), [AUTHORIZATION_GUIDE.md](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md)
 
 ## Problem
 
-Studio membership has three roles (`admin`, `manager`, `member`) with no functional differentiation between admin and manager. Specialized functions — talent management, design, moderation management — cannot be scoped to the right people.
+Studio membership had three roles (`admin`, `manager`, `member`) with no functional differentiation between admin and manager. Specialized functions — talent management, design, moderation management — could not be scoped to the right people.
 
 ## Users
 
 | Role                 | Responsibility                                   |
 | -------------------- | ------------------------------------------------ |
-| `TALENT_MANAGER`     | Creator scheduling, assignment, availability, HR prep |
+| `TALENT_MANAGER`     | Creator scheduling, assignment, availability     |
 | `DESIGNER`           | Scene design, graphic assets, material creation  |
 | `MODERATION_MANAGER` | Script management, moderation task oversight     |
-
-## Requirements
-
-1. Add `TALENT_MANAGER`, `DESIGNER`, `MODERATION_MANAGER` to `StudioMembership.role` enum
-2. `MANAGER` has the same access as `ADMIN` except for studio membership management
-3. `TALENT_MANAGER` scope is creator mapping only — catalog, roster, availability, show assignment/removal
-4. `DESIGNER` and `MODERATION_MANAGER` have member-level access (own tasks and shifts only)
-5. New roles must integrate with `@StudioProtected()` guards
-6. Shared `@eridu/api-types` role constants updated
 
 ## Role Access Matrix
 
@@ -39,13 +30,16 @@ Studio membership has three roles (`admin`, `manager`, `member`) with no functio
 | Task templates               | ❌      | ❌        | ❌                  | ✅       | ❌              | ✅     |
 | Studio membership management | ❌      | ❌        | ❌                  | ❌       | ❌              | ✅     |
 
-## Acceptance Criteria
+## Key Product Decisions
 
-- [ ] New roles can be assigned to studio memberships via admin API
-- [ ] `@StudioProtected([STUDIO_ROLE.TALENT_MANAGER])` restricts endpoint access to the correct role
-- [ ] `MANAGER` can access all studio features except membership management
-- [ ] API types package exports new role constants
+- `MANAGER` has the same access as `ADMIN` except for studio membership management.
+- `TALENT_MANAGER` scope is creator operations only — catalog, roster, availability, show assignment/removal.
+- `DESIGNER` and `MODERATION_MANAGER` have member-level access (own tasks and shifts only). Their role names exist to enable future feature gating without schema changes.
+- Roles live on `StudioMembership.role`; all enforcement uses `@StudioProtected([...roles])` guards — no separate permission table.
 
-## Design Reference
+## Acceptance Record
 
-- Technical design: [apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md)
+- [x] All three roles added to `STUDIO_ROLE` constant in `@eridu/api-types`
+- [x] `@StudioProtected([STUDIO_ROLE.TALENT_MANAGER])` restricts creator endpoints correctly
+- [x] `MANAGER` can access all studio features except membership management
+- [x] Roles assignable via admin API

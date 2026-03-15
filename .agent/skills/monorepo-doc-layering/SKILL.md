@@ -39,7 +39,10 @@ Preserve a consistent documentation model in `eridu-services`:
 ## Placement Rules
 
 - Put cross-app roadmap and phase status in `docs/roadmap/`.
-- Put business, product, domain, and cross-app requirement context in `docs/product/`.
+- Put active in-flight requirements in `docs/prd/`; promote to `docs/features/` when shipped.
+- Put cross-feature end-to-end flow guides in `docs/workflows/`.
+- Put business domain model and entity context in `docs/domain/`.
+- Put architecture overview and engineering policies in `docs/engineering/`.
 - Put architecture decision records in `docs/adr/`.
 - Put backend implementation references in `apps/erify_api/docs/`.
 - Put frontend workflow references in `apps/erify_studios/docs/`.

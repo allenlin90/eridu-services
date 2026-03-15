@@ -10,8 +10,8 @@
 
 | Document                                            | Status | Description                                       |
 | --------------------------------------------------- | ------ | ------------------------------------------------- |
-| [System Architecture Overview](../../../docs/product/ARCHITECTURE_OVERVIEW.md) | ✅      | Root-level cross-app architecture overview |
-| [Business Domain](../../../docs/product/BUSINESS.md)                    | ✅      | Root-level business/domain model and product context |
+| [System Architecture Overview](../../../docs/engineering/ARCHITECTURE_OVERVIEW.md) | ✅      | Root-level cross-app architecture overview |
+| [Business Domain](../../../docs/domain/BUSINESS.md)                    | ✅      | Root-level business/domain model and product context |
 | [RBAC Roles PRD](../../../docs/prd/rbac-roles.md)                       | 📐      | Phase-scoped role expansion and access intent |
 
 ## Features
@@ -24,7 +24,7 @@
 | [Studio Shift Schedule](./STUDIO_SHIFT_SCHEDULE.md)                                 | ✅ Phase 3 | Shift CRUD, duty-manager coverage, calendar, alignment |
 | [File Upload (Cloudflare R2)](./FILE_UPLOAD.md)                                     | ✅ Phase 3 | Presigned URL flow, use-case limits, storage routing |
 | [Phase 4 P&L Backend](./PHASE_4_PNL_BACKEND.md)                                     | ⏳ Phase 4 | Creator mapping contracts, assignment foundation, economics API plan |
-| [DB Migration Policy](../../../docs/product/DB_MIGRATION_POLICY.md)                 | ✅ Ops     | Canonical migration governance, tool-first generation, and branch-local scoping rule |
+| [DB Migration Policy](../../../docs/engineering/DB_MIGRATION_POLICY.md)                 | ✅ Ops     | Canonical migration governance, tool-first generation, and branch-local scoping rule |
 
 ## Design
 
@@ -50,8 +50,8 @@
 
 ## Quick Start
 
-1. Read **[System Architecture Overview](../../../docs/product/ARCHITECTURE_OVERVIEW.md)** for cross-app architecture
-2. Read **[Business Domain](../../../docs/product/BUSINESS.md)** for product/domain context
+1. Read **[System Architecture Overview](../../../docs/engineering/ARCHITECTURE_OVERVIEW.md)** for cross-app architecture
+2. Read **[Business Domain](../../../docs/domain/BUSINESS.md)** for product/domain context
 3. Read backend implementation docs in this folder for API-specific behavior
 
 ## Related Packages
