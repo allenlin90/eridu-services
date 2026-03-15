@@ -425,7 +425,7 @@ Required states:
 5. duplicate-source-on-show warning (see below)
 6. result generation in progress — show progress indicator
 7. result generation failed — show error with scope details and "Retry" button
-8. result too large (>10,000 rows) — show error asking manager to narrow scope filters
+8. result too large (matched task count exceeds the studio's configurable cap, default 10,000) — show error clarifying this is a result-size limit (not a date-range restriction) and suggesting scope narrowing (e.g. narrow date range, filter by client or show)
 9. saved definition has no result yet — show "Run Report" prompt
 
 ### 11.1 Duplicate-source-on-show UX

@@ -136,7 +136,21 @@ Set when a task transitions into `REVIEW` for the current submission cycle. Keep
 
 **Resubmission semantics**: If a task is rejected back to `IN_PROGRESS` and resubmitted, `submittedAt` is overwritten with the latest submission time. This means `submittedAt` always reflects the most recent submission, not the first. The full submission history remains available in `metadata.audit` for audit purposes.
 
-**Historical backfill strategy**: Existing tasks in `REVIEW`, `COMPLETED`, or `CLOSED` status will have `submittedAt = null` after migration. The migration should include a data backfill that extracts the latest `REVIEW` transition timestamp from `metadata.audit.last_transition.at` (or `metadata.due_warning.submitted_at` for overdue tasks) and populates `submittedAt`. Tasks where no audit metadata exists remain `null` — the reporting query must treat `null` `submittedAt` as valid (task was submitted before the field existed) and fall back to `updatedAt` for sort ordering.
+**Historical backfill strategy — best-effort only**: Existing tasks in `REVIEW`, `COMPLETED`, or `CLOSED` status will have `submittedAt = null` after migration. A data backfill can recover timestamps for a minority of tasks, but coverage is limited by what the current code actually writes:
+
+| Path | `metadata.audit.last_transition.at` | `metadata.due_warning.submitted_at` | Recoverable? |
+|---|---|---|---|
+| Studio-sourced status update | ✅ Written (when `auditContext.source === 'studio'`) | Only if overdue | Yes — use `last_transition.at` when `to === REVIEW` |
+| Overdue member submission | ❌ Not written (no audit context in `MeTaskService`) | ✅ Written (when `now > task.dueDate`) | Yes — use `due_warning.submitted_at` |
+| **Non-overdue member submission** | ❌ Not written | ❌ Not written | **No** — no recoverable timestamp |
+
+Non-overdue member submissions (the most common case) have neither field. The `updatedAt` fallback is also unreliable — it changes on any update, not just submission. **The backfill will leave the majority of historical tasks with `submittedAt = null`.** Treat historical `submittedAt` data as sparse, not authoritative.
+
+**Going-forward requirement**: When `submittedAt` is added to the schema, the transition to `REVIEW` must set it in **both** submission paths:
+- `task.service.ts` — already handles studio-sourced updates; add `submittedAt = new Date()` when `payload.status === REVIEW`
+- `me-task.service.ts` — currently passes no audit context; add `submittedAt = new Date()` when action is `SUBMIT_FOR_REVIEW`
+
+The reporting query must treat `null` `submittedAt` as valid (task was submitted before the field existed) and fall back to `updatedAt` for sort ordering, with this fallback flagged as imprecise in API responses.
 
 ### 4.6 Show-targeted tasks only
 
@@ -155,6 +169,15 @@ MVP: all permitted roles (`ADMIN`, `MANAGER`, `MODERATION_MANAGER`) see all temp
 > **Intentional role boundary expansion**: The current `erify-authorization` skill defines `MODERATION_MANAGER` as scoped to "Dashboard, own tasks, own shifts only." Reporting endpoints intentionally broaden this to cross-show visibility. This is a deliberate product decision — moderation managers need to summarize GMV/views across many shows and cannot do so from the per-task review queue. If this expansion is later revisited, restrict reporting access to `ADMIN` + `MANAGER` only and add a separate moderation-summary workflow.
 
 If role-scoped template visibility becomes necessary (e.g. moderation managers should only see moderation-type templates), add a `template_type` filter to the source catalog endpoint rather than creating separate endpoints per role. The source catalog response should include `task_type` on each template entry so the frontend can implement client-side role-aware defaults (e.g. pre-selecting moderation templates when the current user is a `MODERATION_MANAGER`).
+
+**Implementation checklist for MODERATION_MANAGER expansion** — the following must all be updated together when reporting endpoints are implemented:
+
+- [ ] `erify_api` — all five reporting endpoints use `@StudioProtected([ADMIN, MANAGER, MODERATION_MANAGER])`
+- [ ] `erify_studios/src/lib/constants/studio-route-access.ts` — add a `taskReports` key with `[ADMIN, MANAGER, MODERATION_MANAGER]`
+- [ ] `erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md` — update MODERATION_MANAGER row to include task-reports access
+- [ ] `erify_studios` sidebar/nav — show the Task Reports link for `MODERATION_MANAGER`
+- [ ] `.agent/skills/erify-authorization/SKILL.md` — update MODERATION_MANAGER scope description to reflect this intentional expansion
+- [ ] BE tests — cover `MODERATION_MANAGER` access on all five reporting endpoints
 
 ## 5. Data Model Relationships
 
@@ -428,7 +451,7 @@ expires_at
 scope_summary
 ```
 
-If a `definition_uid` is provided and a previous active result exists for that definition, the previous result is soft-deleted before the new one is stored.
+If a `definition_uid` is provided and a previous active result exists for that definition, the replacement must be **atomic**: INSERT the new result first, then soft-delete the predecessor — both in a single `@Transactional()` block. Soft-deleting before inserting would leave the definition with no active result if the INSERT fails, breaking the FE contract that a saved definition always has an instantly-loadable result.
 
 ### 8.4 Retrieve result
 
@@ -522,10 +545,11 @@ sequenceDiagram
     Note over QS: 4. Compute summaries (count/sum/avg per numeric column)
     QS->>QS: computeSummaries(partitions)
 
-    Note over QS: 5. Store complete result
+    Note over QS: 5. Store complete result (atomic)
     QS->>RS: storeResult({ shows, partitions, summaries, scope_summary, definitionId? })
-    RS->>DB: Soft-delete previous result (if definition_uid provided)
+    Note over RS: @Transactional — INSERT first, then retire predecessor
     RS->>DB: INSERT TaskReportResult (JSONB)
+    RS->>DB: Soft-delete previous result (if definition_uid provided, only after INSERT succeeds)
     RS-->>QS: result UID + metadata
 
     QS-->>Ctrl: { result_uid, row_count, partition_count, generated_at, expires_at }
@@ -658,15 +682,17 @@ The report generation endpoint does **not** expose pagination to the client. Ins
 - Each batch: extract rows, assign partitions, flag duplicates, accumulate into result.
 - After all batches: compute numeric summaries, store complete result.
 
-**Guardrail**: If total matching tasks exceeds `10,000`, abort and return an error asking the manager to narrow scope filters. This prevents runaway result generation. The cap is configurable per studio if needed.
+**Task-count guardrail**: If total matching tasks exceeds `10,000`, abort and return an error asking the manager to narrow scope filters. This is a **result-size cap, not a date-range restriction** — managers may query any date range, but if the matched task count within that range exceeds 10,000, the query is rejected. Large studios that routinely exceed this should configure a higher per-studio cap. The 10,000 default can be tuned; async generation (milestone BE-3) removes the need for any hard cap by returning a 202 and polling.
 
-Recommended sort order (inside result):
+**Required stable sort order — part of the batch query contract**: The `findSubmittedTasks` repository call inside every batch iteration MUST include an explicit `orderBy` clause using the same stable key sequence. Without it, offset-based `skip`/`take` produces non-deterministic page boundaries and can skip or duplicate rows when the dataset changes between batches.
+
+Required `orderBy` for all batch iterations:
 
 1. `show.startTime DESC`
 2. `show.uid DESC`
 3. `task.uid DESC`
 
-Reason: most-recent shows first is the natural manager expectation for operational review.
+This order also determines the final result sort order presented to the FE. Reason: most-recent shows first is the natural manager expectation for operational review. The stable `uid` tiebreakers ensure determinism across iterations.
 
 ### 9.7 Result retrieval pagination
 
@@ -763,9 +789,9 @@ Note: `compute-summaries.ts` exists in both BE and FE `lib/` directories. The BE
 1. Roles: `ADMIN`, `MANAGER`, `MODERATION_MANAGER`
 2. Maximum sources per query: recommended `<= 10`
 3. Maximum selected fields per source: recommended `<= 50`
-4. Maximum total result rows: `10,000` (abort with error if exceeded — ask manager to narrow scope)
+4. Maximum total matched tasks: `10,000` (result-size cap — abort with error if exceeded; this is not a date-range restriction). Configurable per studio; async generation milestone removes the need for this cap.
 5. Internal batch size: `200` rows per iteration during result generation
-6. Require at least one scope filter (`show_uids`, `date_from`, `date_to`, or `client_id`) to prevent unscoped full-studio scans. No hard upper limit on date ranges — managers may export a quarter or longer.
+6. Require at least one scope filter (`show_ids`, `date_from`, `date_to`, or `client_id`) to prevent unscoped full-studio scans. No hard upper limit on date ranges — managers may export a quarter or longer.
 7. Reject unknown field keys for snapshot-based definitions at validation time
 8. For template-based definitions, allow missing keys in older snapshots but return `null` rather than fabricating values
 9. Result expiry: default `24 hours` after `generatedAt`. Stale results remain accessible but show a warning.

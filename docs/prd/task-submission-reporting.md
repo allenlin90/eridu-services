@@ -50,7 +50,7 @@ Today the data exists inside `Task.content`, but the system has no manager-facin
 ### Scope and filtering
 
 1. Managers can filter by show date range, client, show, task type, template, snapshot version, assignee, and task status.
-2. Report queries require at least one scope filter (`show_ids`, `date_from`, `date_to`, or `client_id`) to prevent unscoped full-studio scans. There is no hard upper limit on date ranges — managers may query a full quarter, 6 months, or longer. The system handles large result sets through internal batch processing, not by rejecting the request.
+2. Report queries require at least one scope filter (`show_ids`, `date_from`, `date_to`, or `client_id`) to prevent unscoped full-studio scans. There is no hard upper limit on **date ranges** — managers may query a full quarter, 6 months, or longer. However, an MVP result-size guardrail rejects queries where the matched task count exceeds a configurable threshold (default 10,000); this is a safety cap on result size, not a restriction on date range. Large studios may configure a higher cap or wait for async generation support.
 3. The backend generates complete results internally (iterating all matching tasks in batches) and stores the structured JSON result for retrieval. The frontend does not accumulate pages — it fetches the stored result in one request.
 
 ### Review workspace
