@@ -12,7 +12,7 @@
 | --------------------------------------------------- | ------ | ------------------------------------------------- |
 | [System Architecture Overview](../../../docs/engineering/ARCHITECTURE_OVERVIEW.md) | ✅      | Root-level cross-app architecture overview |
 | [Business Domain](../../../docs/domain/BUSINESS.md)                    | ✅      | Root-level business/domain model and product context |
-| [RBAC Roles PRD](../../../docs/prd/rbac-roles.md)                       | 📐      | Phase-scoped role expansion and access intent |
+| [RBAC Roles](../../../docs/features/rbac-roles.md)                       | ✅      | Shipped role expansion — product decisions and acceptance record |
 
 ## Features
 
