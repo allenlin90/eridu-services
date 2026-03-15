@@ -124,7 +124,7 @@ function ShowTasks() {
   const handleReassignShow = async (taskId: string, targetShowUid: string) => {
     await reassignShowMutation.mutateAsync({
       taskId,
-      data: { show_uid: targetShowUid },
+      data: { show_id: targetShowUid },
     });
   };
 
