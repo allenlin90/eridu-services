@@ -23,12 +23,12 @@ Studio managers can review submitted tasks one-by-one, but they cannot reliably 
 - *"Which premium shows already have post-production upload links ready for QC review?"*
 - *"Can I export one clean spreadsheet for a client or date range without hand-copying from dozens of submitted tasks?"*
 
-Today the data exists inside `Task.content`, but the system has no manager-facing reporting workflow that can:
+Today the data exists inside `Task.content`, but the system has no manager-facing workflow that can:
 
-1. read submitted task data across many shows,
-2. respect the historical template snapshot used by each task,
-3. join that data into a reviewable table,
-4. generate and persist complete result snapshots for cross-device access and repeated analysis, and
+1. query a set of target shows by filters (date range, client, standard),
+2. discover which task columns are available on those shows,
+3. join submitted task data across shows into a flat, reviewable table,
+4. persist both the query definition and the materialized result for cross-device reuse, and
 5. export the result as CSV/XLSX without creating server-side file artifacts.
 
 ## Users
@@ -37,100 +37,138 @@ Today the data exists inside `Task.content`, but the system has no manager-facin
 - **Moderation managers**: summarize moderation KPIs such as GMV, views, conversion, and live-performance metrics
 - **Studio admins**: audit premium-show QC readiness using uploaded post-production URLs and other submitted evidence
 
+## Core Workflow
+
+The workflow is **show-first**: managers start by narrowing the shows they care about, then discover what task data is available.
+
+```mermaid
+flowchart LR
+    A[Filter Shows<br/>date range, client, etc.] --> B[Discover Columns<br/>from tasks on those shows]
+    B --> C[Select Columns]
+    C --> D[Run Report]
+    D --> E[BE generates flat<br/>materialized table JSON]
+    E --> F[FE renders table<br/>+ caches in IndexedDB]
+    F --> G{Export?}
+    G -->|CSV / XLSX| H[Serialize + Download]
+    G -->|Save Definition| I[Store filters + columns]
+    I -.->|Rerun anytime| A
+    I -.->|Any device| F
+```
+
+Steps:
+
+1. **Filter shows** — set scope filters (date range, client, show, assignee, task status). Filters can be single or compound.
+2. **Discover columns** — the BE returns which task templates/snapshots have submitted tasks for those filtered shows, plus their field catalogs. Columns are contextual — bound to the actual tasks on the selected shows.
+3. **Select columns** — pick system columns (show name, start time, client) and task-content columns from the discovered catalog.
+4. **Run report** — triggers BE to join submitted task data across matching shows into a flat materialized table JSON.
+5. **Review** — FE renders the materialized table. Each row is one show with selected columns merged from its submitted tasks.
+6. **Export** — FE serializes the table JSON to CSV or XLSX and downloads.
+7. **Save definition** — optionally save the filter + column selection as a named definition for reuse. Definitions support relative date presets (this week, last 7 days, this month) that resolve dynamically at run time.
+
 ## Requirements
+
+### Show-first querying
+
+1. Managers start by filtering shows — date range, client, show, assignee, task status, and other show-level attributes.
+2. Filters can be single or compound. At least one scope filter is required to prevent unscoped full-studio scans.
+3. After shows are filtered, the BE returns a contextual column catalog: only templates/snapshots with submitted tasks on the filtered shows, plus their available fields.
+4. This ensures column options are bound to the actual data — no dead-end selections.
 
 ### Submitted-task source fidelity
 
-1. Managers can build a report from one or more task sources chosen by task template or by exact template snapshot version.
-2. Historical data must always be read from the task snapshot that generated the task; current template schema is only a selection convenience, not the source of truth.
-3. Template-based selections may span multiple snapshot versions, but the result must preserve version boundaries when schemas differ.
-4. Default source scope is submitted/approved tasks only: `REVIEW`, `COMPLETED`, and `CLOSED`.
-5. Only tasks with show-type targets are included in report results. Tasks targeting studios or other non-show entities (e.g. `ADMIN` type tasks) are excluded from the reporting scope.
+1. Historical data must always be read from the task snapshot that generated the task; current template schema is only a selection convenience, not the source of truth.
+2. Template-based selections may span multiple snapshot versions, but the result must preserve version boundaries when schemas differ.
+3. Default source scope is submitted/approved tasks only: `REVIEW`, `COMPLETED`, and `CLOSED`.
+4. Only tasks with show-type targets are included. Tasks targeting studios or other non-show entities (e.g. `ADMIN` type tasks) are excluded.
 
-### Scope and filtering
+### Materialized result
 
-1. Managers can filter by show date range, client, show, task type, template, snapshot version, assignee, and task status.
-2. Report queries require at least one scope filter (`show_ids`, `date_from`, `date_to`, or `client_id`) to prevent unscoped full-studio scans. There is no hard upper limit on **date ranges** — managers may query a full quarter, 6 months, or longer. However, an MVP result-size guardrail rejects queries where the matched task count exceeds a configurable threshold (default 10,000); this is a safety cap on result size, not a restriction on date range. Large studios may configure a higher cap or wait for async generation support.
-3. The backend generates complete results internally (iterating all matching tasks in batches) and stores the structured JSON result for retrieval. The frontend does not accumulate pages — it fetches the stored result in one request.
+1. The BE joins and aggregates selected columns from submitted tasks into a flat JSON table — one row per show, with selected task-content values merged in.
+2. The result JSON is structured for easy transformation into tabular data (2D arrays for rendering and export).
+3. The result is stored server-side (PostgreSQL JSONB) as a `TaskReportResult` for cross-device access.
+4. Missing submissions appear as `null` values in the row; the UI must not silently pretend missing data is zero.
+5. File and URL fields are included as string values (clickable links in the UI, plain URLs in export).
+6. When multiple submitted tasks match the same show and source (duplicate sources), they appear as separate rows with a warning flag — not silently merged.
 
-### Review workspace
+### Saved definitions with relative date presets
 
-1. The review surface is show-centric: one show row can display selected values sourced from one or more submitted tasks linked to that show. Tasks link to shows through the polymorphic `TaskTarget` relation (`targetType = SHOW`), not a direct foreign key.
-2. Missing submissions must be visible as blank cells plus source-status metadata; the UI must not silently pretend missing data is zero.
-3. *(Deferred)* Numeric column summaries (count, sum, average) are a future enhancement. MVP focuses on raw data export. See [ideation/task-analytics-summaries.md](../ideation/task-analytics-summaries.md).
-4. File and URL fields render as clickable links for manager review and QC workflows.
-5. When multiple submitted tasks match the same show and source partition (duplicate sources), the UI must display them as separate rows with a visible warning badge — not silently merge them. Export must include all duplicate rows. This surfaces data hygiene issues explicitly rather than hiding them.
-6. Results are accessible from any authenticated device — a report generated on desktop is instantly viewable on mobile without re-running the query.
-
-### Saved report definitions and results
-
-1. Managers can save a named report definition containing selected sources, selected columns, filters, and preferred export settings.
-2. Saved definitions are persisted as JSON only; the backend must not store pre-generated CSV/XLSX files.
-3. Running a report generates a `TaskReportResult` stored as structured JSON (JSONB) in the database. This is the canonical report output — not a file artifact.
-4. Saved definitions link to their latest result. Opening a saved definition loads the stored result instantly without re-querying live data.
-5. Stale results (default: 24h after generation) show a warning and offer a one-click refresh.
-6. Only one active result per definition is kept; re-running replaces the previous result.
+1. Managers can save a named report definition containing selected filters, selected columns, and preferred export settings.
+2. Definitions support **relative date presets** that resolve dynamically at run time:
+   - `this_week` — current week's shows
+   - `last_7_days` — rolling 7-day window
+   - `this_month` — current month
+   - `custom` — absolute date range (explicit `date_from` / `date_to`)
+3. Definitions can be **cloned and edited** — a "Clone" action creates a copy with a new name for the manager to customize.
+4. Saved definitions are persisted as JSON only; the backend must not store pre-generated CSV/XLSX files.
+5. Saved definitions link to their latest result. Opening a saved definition loads the stored result instantly without re-querying.
+6. Stale results (default: 24h after generation) show a warning and offer a one-click refresh.
+7. Only one active result per definition is kept; re-running replaces the previous result.
 
 ### Export behavior
 
 1. CSV export is required for compatible result sets.
 2. XLSX export should use the same normalized dataset and support multi-sheet output when multiple compatible groups are present.
-3. Incompatible source groups must not be merged only because `task_type` or snapshot `version` numbers happen to match.
+3. Incompatible source groups (different template schemas) must not be silently merged — export splits them into separate sheets/files.
 4. Exported rows include stable show/task metadata plus the selected submitted values.
 
 ## Acceptance Criteria
 
-- [ ] A studio manager can select moderation-task columns such as `gmv`, `views`, and other performance metrics, filter by client and show date range, and review the results in one table.
-- [ ] A premium-show reviewer can include post-production file/url fields in the same workspace and open those links directly from the review table.
-- [ ] Running a report generates a server-stored JSON result that can be retrieved on any authenticated device without re-querying.
-- [ ] A saved report definition loads its latest stored result instantly — no re-generation needed unless the manager explicitly refreshes.
-- [ ] When selected data comes from incompatible template snapshots, export splits the output into separate sheets/files instead of silently mixing schemas.
-- [ ] *(Deferred)* Numeric column summaries are a future enhancement — not required for MVP acceptance.
-- [ ] Only show-targeted tasks appear in results; non-show tasks (e.g. studio-targeted admin tasks) are excluded.
-- [ ] Duplicate submitted tasks for the same show and source partition are shown as separate rows with a warning indicator, not merged.
-- [ ] Stale results (past expiry) display a visible freshness warning with a one-click refresh action.
-- [ ] The same report result is accessible from desktop and mobile browsers (cross-device access).
+- [ ] A studio manager can filter shows by date range and client, see which task columns are available, select them, and review the results in one flat table.
+- [ ] A premium-show reviewer can include post-production file/url fields and open those links directly from the review table.
+- [ ] Running a report generates a server-stored JSON result (flat materialized table) that can be retrieved on any authenticated device.
+- [ ] A saved report definition with a relative date preset (e.g. "this week") resolves dynamically on each run.
+- [ ] Definitions can be cloned and edited to create variations.
+- [ ] A saved definition loads its latest stored result instantly — no re-generation needed unless the manager explicitly refreshes.
+- [ ] When selected data comes from incompatible template snapshots, export splits the output into separate sheets/files.
+- [ ] Only show-targeted tasks appear in results; non-show tasks are excluded.
+- [ ] Duplicate submitted tasks for the same show and source are shown as separate rows with a warning indicator.
+- [ ] Stale results display a visible freshness warning with a one-click refresh action.
+- [ ] The same report result is accessible from desktop and mobile browsers.
+- [ ] *(Deferred)* Numeric column summaries (count, sum, average) are a future enhancement. See [ideation/task-analytics-summaries.md](../ideation/task-analytics-summaries.md).
 
 ## Reporting as an Engine
 
-This system is a **generic submitted-task reporting engine**, not a Show Economics feature. It reads any submitted task fields defined in template snapshots and surfaces them as a reviewable, exportable dataset. Show Economics, P&L rollups, and other future features can consume this engine's output — they are downstream consumers, not prerequisites.
+This system is a **generic submitted-task export engine**, not a Show Economics feature. It reads any submitted task fields defined in template snapshots and surfaces them as a reviewable, exportable dataset. Show Economics, P&L rollups, and other future features can consume this engine's output — they are downstream consumers, not prerequisites.
 
-The engine is intentionally unopinionated about what the submitted fields mean. GMV, views, and post-production URLs are examples of field content, not hardcoded concepts. New use cases (e.g. a finance rollup that reads creator-fee fields from a compensation task) can be served by selecting different sources and columns — no engine changes required.
+The engine is intentionally unopinionated about what the submitted fields mean. GMV, views, and post-production URLs are examples of field content, not hardcoded concepts. New use cases (e.g. a finance rollup that reads creator-fee fields from a compensation task) can be served by selecting different columns — no engine changes required.
 
 ## Product Decisions
 
-- **Review is show-centric; export is snapshot-centric.** Managers want one operational table per show, but export integrity depends on preserving snapshot compatibility groups.
-- **Do not group by `task_type + version` alone.** Snapshot version numbers are local to a template. Safe grouping must include template identity and snapshot compatibility.
-- **Server-stored JSON results (PostgreSQL JSONB) are the primary persistence layer.** The backend generates complete results, stores them as structured JSON, and serves them to any device. IndexedDB is an optional FE speed optimization, not the primary cache. See [BE design section 4.4.1](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md) for the comparison matrix evaluating FE-only (IndexedDB), PostgreSQL JSONB, Redis, and Redis+PostgreSQL approaches.
-- **JSON is the first-class report format.** The stored JSON result serves as both the review data and the export source. CSV and XLSX are serialization targets derived from it — no CSV/XLSX files are generated or stored server-side.
-- **File fields export as references, not binaries.** CSV/XLSX output contains URL strings and related metadata only; it does not duplicate uploaded assets.
-- **CSV is the baseline format.** XLSX uses the same normalized dataset and is expected as the next milestone, especially for multi-sheet export.
-- **Show-targeted tasks only.** Tasks link to shows via the polymorphic `TaskTarget` model. Only tasks where `targetType = SHOW` are reportable. Admin or studio-targeted tasks are excluded by design.
-- **Role-based source visibility is deferred to milestone 2.** MVP grants all permitted roles (`ADMIN`, `MANAGER`, `MODERATION_MANAGER`) access to all templates in the studio. If role-scoped template visibility becomes necessary (e.g. moderation managers seeing only moderation templates), it should be added as a source-catalog filter — not a separate endpoint.
-- **Duplicate-source rows are always visible.** When multiple submitted tasks match the same show + source partition, they appear as separate rows with a warning badge. Export includes all rows. This is a deliberate data-hygiene signal, not a bug.
-- **Offset-based pagination for list endpoints.** Standard `page` + `limit` pattern following existing codebase conventions. Report generation uses internal batching — no client-facing pagination for the report query itself.
-- **No external cache layer (Redis) for MVP.** PostgreSQL JSONB is sufficient for the access pattern (single-row read by UID). Redis can be added as a transparent read-through cache in a later milestone if needed.
+- **Show-first workflow.** Managers think in terms of "which shows" first. The column catalog is contextual — only columns from tasks that exist on the filtered shows are offered.
+- **Flat materialized table as the result shape.** The BE produces a joined, show-centric table — not separate partitions that the FE must merge. Column metadata tracks which template/snapshot each column came from, preserving export integrity.
+- **Relative date presets in definitions.** Definitions store the *intent* (`this_week`, `last_7_days`) not resolved dates. The BE resolves at run time. The stored result records the resolved absolute dates.
+- **Server-stored JSON results (PostgreSQL JSONB) are the primary persistence layer.** IndexedDB is an optional FE speed optimization, not the primary cache. See [BE design section 4.4.1](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md) for the comparison matrix.
+- **JSON is the first-class report format.** CSV and XLSX are serialization targets derived from it — no CSV/XLSX files are generated or stored server-side.
+- **File fields export as references, not binaries.** CSV/XLSX output contains URL strings only.
+- **Show-targeted tasks only.** Tasks link to shows via the polymorphic `TaskTarget` model. Only tasks where `targetType = SHOW` are reportable.
+- **Clone + edit for definitions.** No new endpoint — FE reads an existing definition and POSTs a copy with a new name.
+- **Studio-scoped.** Definitions and results are bound to one studio. Cross-studio reporting is out of scope.
+- **Role-based source visibility is deferred to milestone 2.** MVP grants all permitted roles (`ADMIN`, `MANAGER`, `MODERATION_MANAGER`) access to all templates in the studio.
+- **Duplicate-source rows are always visible.** Separate rows with a warning badge.
+- **No external cache layer (Redis) for MVP.** PostgreSQL JSONB is sufficient.
 
 ## Out of Scope
 
 - Server-side CSV/XLSX file generation or cloud-storage report artifacts
 - External cache layers (Redis) for MVP
-- Cross-studio reporting
+- Cross-studio reporting or definition sharing across studios
 - Arbitrary formula builders or BI-style pivot tables
 - Binary attachment packaging inside exported files
-- Scheduled/recurring report generation
+- Scheduled/recurring report generation (deferred — definitions with relative dates enable manual "rerun" for now)
 
 ## Architecture Overview
 
 ```mermaid
 graph TB
     subgraph "erify_studios (Browser)"
-        UI[Report Builder UI]
+        UI[Report Builder UI<br/>show-first workflow]
         IDB[(IndexedDB Cache<br/>optional speed layer)]
         CSV[CSV Serializer]
         XLSX[XLSX Serializer]
-        UI -->|1. trigger run| API
-        UI -->|2. fetch result| API
+        UI -->|1. filter shows| API
+        UI -->|2. discover columns| API
+        UI -->|3. run report| API
+        UI -->|4. fetch result| API
         UI -->|optional cache| IDB
         IDB -->|fast restore| UI
         UI -->|export from JSON| CSV
@@ -155,8 +193,8 @@ graph TB
         TT[TaskTarget<br/>targetType = SHOW]
         S[Show<br/>startTime, client]
         TS[TaskTemplateSnapshot<br/>schema]
-        TRD[TaskReportDefinition<br/>JSON definition]
-        TRR[TaskReportResult<br/>JSONB — shows + partitions]
+        TRD[TaskReportDefinition<br/>JSON — filters + columns + presets]
+        TRR[TaskReportResult<br/>JSONB — flat rows + column_map]
         T --- TT
         TT --- S
         T --- TS
@@ -166,26 +204,6 @@ graph TB
     TR --> T
     DS --> TRD
     RS --> TRR
-```
-
-### Manager Workflow
-
-```mermaid
-flowchart LR
-    A[Select Sources] --> B[Pick Columns]
-    B --> C[Set Filters]
-    C --> D[Run Report]
-    D --> E[BE generates + stores result]
-    E --> F[FE fetches stored result]
-    F --> G{Review Table}
-    G -->|Stale?| H[Refresh — re-run]
-    H --> D
-    G -->|Satisfied| I{Export}
-    I -->|Single partition| J[One CSV / XLSX sheet]
-    I -->|Multiple partitions| K[Multiple CSVs / XLSX sheets]
-    G -->|Save for later| L[Save Definition]
-    L -.->|Rerun| C
-    L -.->|Any device| F
 ```
 
 ## Design Reference

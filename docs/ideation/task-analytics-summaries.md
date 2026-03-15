@@ -8,7 +8,7 @@
 
 Add numeric aggregation (count, sum, average) to the task submission reporting system. This would appear as:
 
-1. **Backend pre-computed summaries** — stored in the `TaskReportResult` JSONB alongside `shows[]` and `partitions[]`, computed during result generation.
+1. **Backend pre-computed summaries** — stored in the `TaskReportResult` JSONB alongside `rows[]` and `columns[]`, computed during result generation.
 2. **Frontend summary strip** — a footer row in the preview table showing aggregated values per numeric column.
 3. **Shared `compute-summaries.ts`** — a portable pure function in `lib/` that both BE (during generation) and FE (for client-side re-computation after filtering) can use.
 

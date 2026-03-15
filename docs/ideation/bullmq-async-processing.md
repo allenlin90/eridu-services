@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from MVP
 > **Origin**: Task submission reporting & export design review (2026-03-15)
-> **Related**: [BE design §4.8](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)
+> **Related**: [BE design §4.10](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)
 
 ## What
 
