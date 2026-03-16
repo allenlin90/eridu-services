@@ -177,6 +177,10 @@ Moderation task templates are created per-brand (~30 templates), each with 8–1
 
 **This is not full template standardization — it is semantic standardization for reporting.** The goal is a small set of shared metrics (5–8 fields) with fixed keys and types that form a canonical reporting vocabulary. This vocabulary enables cross-template reporting for shared KPIs without constraining how templates are designed or how operators use them. Each template keeps its own custom fields unchanged — only the shared metrics adopt fixed keys. (See [Design Principles](#design-principles).)
 
+**Shared metrics support any field type** — not just numbers. Performance KPIs use `number` (GMV, views, orders), but QC evidence fields use `file` or `url` (post-production screenshots, proof images). The merge behavior is identical: same key + `standard: true` = one merged column in the report. This makes shared metrics a general-purpose cross-template vocabulary, not limited to financial inputs.
+
+**Checklist fields remain template-scoped.** Many templates include operator checklists ("check A", "verify B") — these are `checkbox` fields specific to each brand's moderation workflow. They stay as custom fields. The review use case for checklists is fulfillment percentage (how many boxes checked per task), which is a derived metric the FE can compute from cached row data as a future enhancement. For MVP, raw checkbox columns are exported and managers compute fulfillment in Excel — matching today's Google Sheets workflow.
+
 **Who manages it:** Studio ADMINs manage shared metrics in studio settings — a simple list of metric definitions (key, type, label) stored in `Studio.metadata`. Keys and types are **immutable once created** — if the key is wrong, create a new one; the old key stays reserved. This keeps the workflow simple: no rename cascades, no backward-compatibility checks. Labels and descriptions can be updated (display-only).
 
 **How it flows through the system:**

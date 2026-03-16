@@ -99,7 +99,7 @@ Steps:
 7. **Preflight check** — FE calls `POST /task-reports/preflight` and shows scope summary: *"487 shows, 1,204 tasks"*. Over-limit scopes are blocked with guidance. Manager confirms before generation.
 8. **Run report** — BE generates show-centric table, returns full JSON inline
 9. **FE caches** the result in TanStack Query (last N datasets cached)
-10. **Review table** — show-centric rows (typically one per show; duplicates/multi-target tasks may expand), all columns pre-merged by BE
+10. **Review table** — strictly one row per show, all columns pre-merged by BE. Duplicates resolved by latest-wins; multi-target tasks merge into each show's row.
 11. **Apply view filters** — client, status, assignee, room, search — all instant, no server call. Column sorting is simple asc/desc on any column.
 12. **Export** — CSV or XLSX from full or currently filtered view
 13. **Edit** — go back to scope/column selection with state preserved
@@ -529,9 +529,9 @@ Example key families:
 ```mermaid
 graph LR
     subgraph "Generated Result (inline response)"
-        ROWS[rows[]<br/>show-centric objects<br/>typically one per show]
+        ROWS[rows[]<br/>show-centric objects<br/>strictly one per show]
         COLS[columns[]<br/>ordered descriptors<br/>with source metadata]
-        CMAP[column_map<br/>partition grouping<br/>for export splitting]
+        CMAP[column_map<br/>display grouping only<br/>template origin metadata]
         WARN[warnings[]<br/>version conflicts,<br/>duplicate flags]
     end
 

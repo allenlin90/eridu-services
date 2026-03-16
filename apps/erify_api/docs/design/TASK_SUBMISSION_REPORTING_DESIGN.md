@@ -39,6 +39,16 @@ This design must fit the current task architecture:
 5. No arbitrary formula engine in backend report definitions.
 6. No cross-studio reporting or definition sharing across studios.
 
+## Hard Invariants
+
+These are non-negotiable constraints. Any implementation that violates these is incorrect.
+
+1. **One row per show.** `rows[]` length always equals show count. No exceptions — duplicates use latest-wins merge, multi-target tasks merge into each target show's row. The row contract is deterministic: given the same scope and column selection, the same rows are produced.
+2. **Shared metric keys and types are immutable after creation.** `key` and `type` cannot be changed, renamed, or reused. If the key is wrong, create a new one; the old key stays reserved forever.
+3. **Snapshots are the sole runtime source of truth.** The report engine reads `standard: true` and field definitions from `snapshot.schema.items[]`, never from `Studio.metadata`. Shared metric management is a design-time activity (template authoring); the report engine has zero dependency on mutable live config.
+4. **Scope resolution is shared across `/sources`, `/preflight`, and `/run`.** All three endpoints use `TaskReportScopeService` (Layer 1). The same scope input must produce the same resolved show set and task count across all three. If scope resolution diverges between endpoints, the preflight contract is broken.
+5. **`column_map` is presentation metadata only.** It maps columns to their source `template_uid` for display grouping (column headers, visual organization). It does not drive export splitting, row expansion, or any structural transformation. Export is always one flat file.
+
 ## 4. Key Design Decisions
 
 ### 4.1 Show-first workflow
@@ -183,10 +193,13 @@ Shared metrics are stored in `Studio.metadata.shared_metrics[]` — an array of 
     { "key": "views", "type": "number", "label": "Views", "description": "Show view count", "is_active": true },
     { "key": "conversion_rate", "type": "number", "label": "Conversion Rate", "is_active": true },
     { "key": "peak_viewers", "type": "number", "label": "Peak Viewers", "is_active": true },
-    { "key": "orders", "type": "number", "label": "Orders", "is_active": true }
+    { "key": "orders", "type": "number", "label": "Orders", "is_active": true },
+    { "key": "qc_image", "type": "file", "label": "QC Image", "description": "Post-production quality check screenshot", "is_active": true }
   ]
 }
 ```
+
+**Shared metrics support any `FieldType`** — not just `number`. Performance KPIs use `number`, but QC evidence fields use `file` or `url`. The merge behavior is the same: fields with the same key + `standard: true` merge across templates into one column. In the export, `file`/`url` columns contain URL strings; in the table, they render as clickable links.
 
 **Validation schema** (Zod, in `@eridu/api-types`):
 
