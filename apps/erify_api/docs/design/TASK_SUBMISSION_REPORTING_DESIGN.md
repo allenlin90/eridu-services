@@ -28,6 +28,7 @@ This design must fit the current task architecture:
 4. Generate flat table JSON inline — returned in the API response, not stored server-side.
 5. Reuse existing task/show/client relations instead of introducing a parallel reporting store.
 6. Keep the BE stateless for results — the FE owns caching and view-layer filtering.
+7. **Strong semantics, flexible operations** — standardize a small canonical set of shared metrics for cross-template reporting without constraining template design or operator workflows. Reporting standardization is an engineering best-practice layer, not an operational constraint. (See PRD [Design Principles](../../../../docs/prd/task-submission-reporting.md#design-principles).)
 
 ## 3. Non-Goals
 
@@ -150,9 +151,13 @@ All selected columns (system + shared metrics + custom fields from any number of
 
 This keeps the export simple and avoids the confusion of multiple files or sheets for what is conceptually one table.
 
-### 4.6 Shared metrics
+### 4.6 Shared metrics (semantic standardization layer)
 
-**This is not full template standardization.** The goal is a small set of shared KPI fields (5–8) that merge across templates in reports. Each template keeps its brand-specific custom fields unchanged. One operational moderation task per show — no template redesign, no second data-collection task.
+> **Guiding principle: strong semantics, flexible operations.** Shared metrics standardize *how data is understood* for reporting (fixed keys, locked types, stable merge semantics) without standardizing *how data is collected* (templates, mobile workflows, operator UX). This is an engineering best-practice layer for cross-template data interoperability — not a constraint on template design.
+
+The goal is a small set of shared KPI fields (5–8) that form a canonical reporting vocabulary — fields with stable semantics that any template can contribute to. These merge across templates in reports. Each template keeps its brand-specific custom fields unchanged. One operational moderation task per show — no template redesign, no second data-collection task.
+
+**Studio-scoped for now.** Shared metrics are scoped to the studio because we currently operate one studio. This is practical and avoids premature abstraction. The storage structure (`Studio.metadata.shared_metrics[]`) accommodates future multi-studio divergence (each studio defines its own vocabulary) or sharing (promote metrics to a global catalog) without structural changes.
 
 #### 4.6.1 Schema change
 
@@ -847,7 +852,7 @@ For each matched task:
 4. normalize by field type,
 5. **merge into the show's single row** using the column key.
 
-**Canonical metric fields** from different templates merge into the same column. If a show has moderation tasks from two different brand templates, both contributing `gmv` (standard), the values share the column key `gmv`. Since a show typically has one moderation task, this produces one value. If multiple tasks contribute to the same column on the same show, the duplicate-source handling (§9.4) applies — **the row stays single, conflicts are resolved within it**.
+**Shared metric fields** from different templates merge into the same column. If a show has moderation tasks from two different brand templates, both contributing `gmv` (standard), the values share the column key `gmv`. Since a show typically has one moderation task, this produces one value. If multiple tasks contribute to the same column on the same show, the duplicate-source handling (§9.4) applies — **the row stays single, conflicts are resolved within it**.
 
 **Custom fields** from different templates produce distinct column keys (`tpl_abc:notes` vs `tpl_xyz:notes`) and appear as **separate columns on the same row**. This is the expected behavior — the manager sees all data for a show in one row, with template-specific columns clearly labeled.
 

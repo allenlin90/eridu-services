@@ -15,6 +15,8 @@ Primary user outcomes:
 3. slice and sort the generated table by client, status, or any column — all client-side,
 4. export a reusable spreadsheet — no CSV/XLSX files are generated or stored server-side.
 
+> **Design principle: strong semantics, flexible operations.** The FE surfaces a semantic standardization layer — shared metrics with fixed keys that merge across templates — while keeping custom fields template-scoped. This gives managers clean cross-template columns for KPIs without constraining how templates are designed or how operators submit data. See PRD [Design Principles](../../../../docs/prd/task-submission-reporting.md#design-principles).
+
 ## 2. Scope
 
 In scope:
@@ -250,11 +252,11 @@ src/features/task-reports/
 
 The column picker appears **after** scope filters are set. It shows only columns from the contextual catalog — templates/snapshots that actually have submitted tasks on the filtered shows.
 
-Three column categories:
+Three column categories — reflecting the semantic boundary between standardized reporting fields and template-specific data:
 
 1. **System columns** (always available): show name, show start time, client, assignee, task status, studio room, show standard, show type
-2. **Shared metrics** (merged across templates): fields marked `standard: true` in the template schema. These appear as a single group regardless of which template they come from (e.g., one `GMV` column, not 30 template-specific `GMV` columns). This is a small set (5–8 fields) managed by studio ADMINs in settings (§5.4).
-3. **Custom fields** (template-scoped): all other fields, grouped by source template. Each template group shows its own custom fields. These are the majority of fields in any template.
+2. **Shared metrics** (canonical reporting vocabulary, merged across templates): fields marked `standard: true` in the template schema. These have fixed keys and types managed by studio ADMINs — the semantic standardization layer for cross-template reporting. They appear as a single group regardless of which template they come from (e.g., one `GMV` column, not 30 template-specific `GMV` columns). This is a small set (5–8 fields) managed in studio settings (§5.4).
+3. **Custom fields** (template-scoped, never merged): all other fields, grouped by source template. Each template group shows its own custom fields. These are the majority of fields in any template and remain fully under each template author's control.
 
 The column picker should render shared metrics first (as a "Shared Metrics" group), then custom fields grouped by template.
 
@@ -318,7 +320,7 @@ All view filters are applied client-side on the cached `rows[]`. The table re-re
 
 ### 5.4 Shared metrics settings (ADMIN only)
 
-Shared metrics are managed in **studio settings**, not in the report builder. This is a separate page/section accessible to studio ADMINs only.
+Shared metrics are managed in **studio settings**, not in the report builder. This is a separate page/section accessible to studio ADMINs only. Shared metrics define the canonical reporting vocabulary — the small set of KPI fields with fixed keys and types that merge across templates for cross-template analysis. They are studio-scoped for now (one studio in operation), with room for future multi-studio divergence or sharing.
 
 **UI:** A simple list view in studio settings:
 - Shows all shared metrics (key, type, label, active/inactive status)

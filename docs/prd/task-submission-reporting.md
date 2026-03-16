@@ -43,6 +43,26 @@ This is a **management and oversight tool** — not part of the operator task-ex
 
 All three roles use this to answer cross-show questions after tasks are submitted — not to manage individual task execution.
 
+## Design Principles
+
+> **Strong semantics, flexible operations.**
+
+The reporting layer standardizes how data is *understood*, not how it is *collected*. These principles guide every design decision in this feature:
+
+1. **Standardize the semantic layer, not the templates.** A small set of shared metrics (5–8 KPIs like GMV, views, conversion) adopt fixed keys so the report engine can merge them across templates. This is the beginning of a long-term reporting vocabulary — a canonical set of fields with stable semantics that any template can contribute to. The vast majority of each template's fields remain custom and template-scoped.
+
+2. **Keep custom fields template-scoped.** Brand-specific fields, workflow-specific notes, and per-template data stay under each template's control. Custom fields from different templates never merge — they appear as separate columns. Template authors retain full flexibility over their non-standard fields.
+
+3. **Lock canonical keys, keep labels flexible.** Shared metric keys and types are immutable once created — `gmv` is always `gmv`, always a number. But labels, descriptions, and per-template validation rules can be customized. This gives engineering-level semantic stability with product-level display flexibility.
+
+4. **Preserve snapshot integrity.** Shared metric definitions are captured in `TaskTemplateSnapshot` at save time. The report engine reads from snapshots, never from live studio settings. Changes to the shared metric list never break existing reports. Backfill uses controlled application-level migration, not raw SQL.
+
+5. **Protect operational workflows.** Operational task templates stay optimized for real usage — especially mobile moderation workflows. Reporting requirements must not force task fragmentation (no second data-collection task), template redesigns, or operator-facing complexity. One task per show per template, submitted by the assigned operator.
+
+6. **Studio-scoped for now, portable later.** Shared metrics are studio-scoped because we currently operate one studio. This is practical and avoids premature abstraction. The design leaves room for future multi-studio divergence (each studio defines its own metrics) or sharing (promote metrics to a global catalog) without structural changes.
+
+Reporting standardization is an **engineering best-practice layer** — it ensures cross-template data is semantically interoperable for analysis. It is not a reason to overconstrain day-to-day template design or operator workflows.
+
 ## Core Workflow
 
 The workflow is **show-first**: managers start by narrowing the shows they care about, then discover what task data is available.
@@ -151,11 +171,11 @@ The distinction maps to how the moderation team uses Google Sheets: they have on
 4. View filter state is independent of the definition — it's ephemeral UI state for the current session.
 5. Submissions change infrequently once completed. Re-generation is needed only when the scope filter changes or the manager explicitly refreshes.
 
-### Shared metrics (cross-template column merging)
+### Shared metrics (semantic standardization layer)
 
 Moderation task templates are created per-brand (~30 templates), each with 8–10 data collection fields. A small subset of these fields — shared performance metrics like GMV, views, and conversion — need to merge into single report columns across all templates. The rest of each template's fields are brand-specific and remain template-scoped.
 
-**This is not full template standardization.** The goal is a small set of shared metrics (5–8 fields) that enables cross-template reporting for shared KPIs. Each template keeps its own custom fields unchanged — only the shared metrics adopt fixed keys.
+**This is not full template standardization — it is semantic standardization for reporting.** The goal is a small set of shared metrics (5–8 fields) with fixed keys and types that form a canonical reporting vocabulary. This vocabulary enables cross-template reporting for shared KPIs without constraining how templates are designed or how operators use them. Each template keeps its own custom fields unchanged — only the shared metrics adopt fixed keys. (See [Design Principles](#design-principles).)
 
 **Who manages it:** Studio ADMINs manage shared metrics in studio settings — a simple list of metric definitions (key, type, label) stored in `Studio.metadata`. Keys and types are **immutable once created** — if the key is wrong, create a new one; the old key stays reserved. This keeps the workflow simple: no rename cascades, no backward-compatibility checks. Labels and descriptions can be updated (display-only).
 
@@ -218,6 +238,8 @@ The engine is intentionally unopinionated about what the submitted fields mean. 
 
 **One operational task, minimal standardization.** The design preserves the current moderation workflow: one task per show per template, submitted by the assigned operator. We do not split data collection into a second task or redesign the moderation loop. Standardization is limited to a small shared metric set (5–8 shared KPIs) — the minimum needed for cross-template reporting. Template-specific fields and operator workflows are untouched.
 
+**Strong semantics, flexible operations.** The shared metrics layer standardizes *how data is understood* for reporting — fixed keys, locked types, stable merge semantics. But it does not standardize *how data is collected* — templates remain fully flexible, mobile workflows are unaffected, and operators never see the reporting abstraction. This separation ensures that improving reporting quality never comes at the cost of operational usability. The shared metric set is an engineering best-practice layer: it exists to make cross-template data interoperable, not to constrain template design.
+
 ## Product Decisions
 
 - **Show-first workflow.** Managers think in terms of "which shows" first. The column catalog is contextual — only columns from tasks that exist on the filtered shows are offered.
@@ -236,7 +258,8 @@ The engine is intentionally unopinionated about what the submitted fields mean. 
 - **Role-based source visibility is deferred to milestone 2.** MVP grants all permitted roles (`ADMIN`, `MANAGER`, `MODERATION_MANAGER`) access to all templates in the studio.
 - **Duplicate-source tasks use latest-wins merge.** If multiple tasks match the same show + template, the most recently updated task's values populate the row. A warning badge flags the row for data hygiene review, but the row stays single.
 - **Client-side cache replaces server-side result storage.** TanStack Query in-memory cache holds recently generated datasets. Switching between cached scopes is instant. IndexedDB for cross-session persistence is a future enhancement.
-- **Shared metrics, not full template standardization.** A small set of shared KPI fields (5–8 fields like `gmv`, `views`, `conversion_rate`) adopt fixed keys so the report engine can merge them across templates. Studio ADMINs manage this list in studio settings; keys are immutable once created. The vast majority of each template's fields are brand-specific custom fields that remain unchanged. One operational moderation task per show, no template redesign, no second data-collection task.
+- **Shared metrics as a semantic standardization layer.** A small set of shared KPI fields (5–8 fields like `gmv`, `views`, `conversion_rate`) adopt fixed keys so the report engine can merge them across templates. This is the canonical reporting vocabulary — strong semantics for analysis, with no impact on operational flexibility. Studio ADMINs manage this list in studio settings; keys are immutable once created. The vast majority of each template's fields are brand-specific custom fields that remain unchanged. One operational moderation task per show, no template redesign, no second data-collection task.
+- **Studio-scoped shared metrics.** Shared metrics are scoped to the studio because we currently operate one studio. This is practical and avoids premature abstraction. The design accommodates future multi-studio divergence (each studio defines its own metrics) or sharing (promote metrics to a global catalog) without structural changes.
 - **Definition is inherently stable.** Definitions reference column keys, not snapshot versions. Tasks are fixed to their assigned snapshot — template updates don't change existing tasks' content keys. Definitions don't become "outdated" because the underlying data doesn't drift.
 - **FE form is the run-time source of truth.** When running from a saved definition, the FE pre-fills the form from the definition's stored scope + columns. The manager can override any field before running. The run request sends whatever the form shows — the BE does not merge definition + overrides.
 
