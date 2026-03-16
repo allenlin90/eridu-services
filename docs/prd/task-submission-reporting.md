@@ -192,14 +192,13 @@ To enable this:
 1. **Shared metrics** — a studio-scoped list of metric definitions stored in `Studio.metadata.shared_metrics[]`. Managed by ADMIN via a settings endpoint. Keys are immutable once created; metrics can be deactivated but not deleted.
 2. **`standard` flag on field items** — `FieldItemBaseSchema` gains an optional `standard: boolean` property. Fields marked `standard: true` use their `key` directly as the report column key (no template prefix). All other fields (the majority) remain template-scoped with `{template_uid}:{field.key}`.
 3. **Cross-template merging** — when generating a report, shared metric fields from different templates merge into one column because they share the same key. Custom fields remain template-scoped — this is the expected behavior.
-4. **Backfill migration** — the ~30 existing moderation templates must have their metric field keys aligned to shared metric keys:
+4. **Template rebuild (alpha-phase migration)** — the system is in alpha testing, not yet in real operational usage. The ~30 existing moderation templates are rebuilt from the current Google Sheets source with correct shared metric keys from the start:
    - Studio ADMIN creates the shared metrics in studio settings first.
-   - Create new snapshots for each affected template with renamed keys and `standard: true` flag (via `updateTemplateWithSnapshot` — snapshots are immutable, old ones are preserved).
-   - Migrate `Task.content` key names and `Task.snapshotId` to point to the new snapshot. This is an application-level script (TypeScript + Prisma), not a raw SQL migration, because the key mapping varies per template and content must stay in sync with its referenced snapshot schema.
-   - Verify migrated tasks pass content validation against the new snapshot.
-   - Only the shared metric fields are renamed. Brand-specific custom fields are untouched.
+   - Rebuild each template with shared metric keys and `standard: true` flag. Each rebuild creates a new snapshot.
+   - **Existing task data is not retroactively migrated.** Old tasks retain their original snapshot references and content keys. Shared metrics apply to new records only — what has happened has happened. Old data appears as template-scoped columns; new data merges via shared metrics. This avoids confusion from partial migration and keeps the boundary clean.
+   - Only the shared metric fields adopt canonical keys. Brand-specific custom fields are carried over as-is.
 
-This is a **requirement for MVP** — without it, the reporting engine cannot produce cross-client moderation summaries, which is the primary use case. The shared metric set is intentionally small to minimize migration scope and operator impact.
+This is a **requirement for MVP** — without it, the reporting engine cannot produce cross-client moderation summaries, which is the primary use case. The forward-only approach is acceptable for alpha: old data volume is small, and shared metric columns will naturally populate as new tasks are submitted against rebuilt templates.
 
 **Cross-doc impact:** This feature extends the existing task template and studio management systems. See BE design §4.6.6 for the full list of docs, skills, and route configs that must be updated.
 
@@ -227,7 +226,7 @@ This is a **requirement for MVP** — without it, the reporting engine cannot pr
 - [ ] Studio ADMIN can create and manage shared metrics in studio settings. Keys and types are immutable after creation.
 - [ ] Shared metric fields (e.g., `gmv`, `views`) from different templates merge into a single report column.
 - [ ] Custom (non-standard) fields remain template-scoped — different templates produce separate columns even if keys happen to match.
-- [ ] Existing ~30 moderation templates are backfilled to align metric field keys to shared metric keys, with Task.content migrated accordingly. Brand-specific custom fields are untouched.
+- [ ] Existing ~30 moderation templates are rebuilt with shared metric keys. Existing task data is not retroactively migrated — shared metrics apply to new records only. Brand-specific custom fields are untouched.
 - [ ] *(Deferred)* Numeric column summaries (count, sum, average) are a future enhancement. See [ideation/task-analytics-summaries.md](../ideation/task-analytics-summaries.md).
 
 ## Reporting as an Engine

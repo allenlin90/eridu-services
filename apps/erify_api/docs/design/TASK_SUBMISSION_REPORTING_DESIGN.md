@@ -261,44 +261,38 @@ When building a template, the author (ADMIN or MANAGER) sees two field sources:
 1. **Shared metrics** — from `Studio.metadata.shared_metrics[]` (only active ones). Selecting one inserts a field with the fixed key, type, and `standard: true`. The author can customize the label and validation rules in the template but **cannot change the key or type** (locked to the shared metric definition).
 2. **Custom fields** — free-form fields the author defines with their own key. These are the majority of fields in any template.
 
-#### 4.6.5 Backfill migration
+**Forward-only validation rule:** If a shared metric is deactivated (`is_active: false`) after templates already reference it, the behavior is:
+- **Existing snapshots**: unaffected. The snapshot captured the full definition at save time — it is self-contained. Old tasks report correctly.
+- **New snapshots**: the template editor picker hides deactivated metrics, so authors cannot add them to new templates. If an existing template already has the field and is re-saved, the field is preserved in the new snapshot (it was already part of the template schema). The `standard: true` flag and key remain valid — deactivation only removes it from the picker, not from the data model.
+- **No retroactive invalidation**: deactivating a shared metric never breaks existing templates or tasks. The state only affects new records going forward.
 
-Existing ~30 moderation templates have shared metric fields (GMV, views, etc.) with **different keys per brand template** that need alignment.
+#### 4.6.5 Template rebuild (alpha-phase migration)
 
-**Pre-requisite**: Studio admin creates the shared metrics in studio settings before migration runs.
+> **Context**: The system is in alpha testing with production data from Google Sheets. The apps are not yet in real operational usage. This significantly reduces migration risk.
 
-**Migration strategy — application-level script** (not a raw SQL migration):
+Existing ~30 moderation templates have shared metric fields (GMV, views, etc.) with **different keys per brand template** that need alignment to the shared metric vocabulary.
 
-The backfill must go through application logic because:
-- Snapshot creation uses `TaskTemplateService.updateTemplateWithSnapshot()` which handles version incrementing, schema validation, and the atomic template + snapshot update.
-- `Task.content` is validated against `snapshot.schema` via `buildTaskContentSchema().strict()` — any key rename must keep content in sync with its referenced snapshot.
-- The `standard: true` flag must be validated through `FieldItemBaseSchema`.
+**Strategy: rebuild templates, forward-only for existing data.**
 
-Steps:
+Because we are in alpha, the migration approach is straightforward — rebuild templates from the current Google Sheets source with correct shared metric keys from the start. Existing task data (submitted against old snapshots) is **not retroactively migrated**. The shared metrics and `standard: true` flags apply to new records only.
 
-1. **Define key mapping** — for each template, map existing metric field keys to shared metric keys (e.g., `gross_sales` → `gmv`, `view_count` → `views`). This is a manual review step with the moderation team. Only the shared metric fields are affected; brand-specific custom fields are skipped.
+**Rationale for forward-only**: What has happened has happened. Existing tasks retain their original snapshot references and content keys. They will appear in reports with template-scoped columns (the old key format) rather than merged shared metric columns. This avoids confusion from partial data migration and keeps the boundary clean: old data uses old keys, new data uses standardized keys. Over time, as new tasks are submitted against rebuilt templates, the shared metric columns will naturally populate.
 
-2. **Create new snapshots via service** — for each affected template, call `updateTemplateWithSnapshot()` with the updated schema (renamed keys + `standard: true` flag; custom fields unchanged). This creates an immutable new snapshot and increments the version. Old snapshots are preserved.
+**Steps:**
 
-3. **Migrate Task.content + snapshotId** — for each task referencing an old snapshot of the affected template:
-   - Read the task's current `content` and the old snapshot's key mapping.
-   - Rename only the shared metric keys in `content`. Custom field keys are untouched.
-   - Update `task.snapshotId` to point to the new snapshot so that validation and reporting align.
-   - Write both changes in a single update.
+1. **Studio ADMIN creates shared metrics** in studio settings (e.g., `gmv` / number, `views` / number). This defines the canonical vocabulary.
 
-   This is done via a TypeScript migration script using Prisma, **not** a raw SQL migration, because:
-   - The key mapping varies per template and per snapshot version.
-   - Content transformation needs the old→new key map from the schema diff.
-   - Updating `snapshotId` requires knowing the new snapshot's ID (created in step 2).
+2. **Rebuild templates from Google Sheets** — recreate each moderation template using the shared metric keys for KPI fields and `standard: true` flag. Brand-specific custom fields are carried over as-is. Each rebuild creates a new snapshot via `updateTemplateWithSnapshot()`.
 
-4. **Verify** — for each migrated task, confirm `task.content` keys match `task.snapshot.schema.items[].key`. Run `buildTaskContentSchema(snapshot.schema).safeParse(task.content)` on a sample to catch mismatches.
+3. **Verify** — confirm rebuilt templates pass schema validation and that the shared metric fields correctly use the canonical keys.
 
-**Risk mitigation**:
-- Run as a dry-run first (log changes without writing).
-- Process in batches (e.g., 100 tasks per transaction) with progress logging.
-- Back up `Task.content` values before overwriting (e.g., store original in `task.metadata.pre_standard_content`).
+**What this means for reporting:**
 
-This migration is required before MVP reporting can produce cross-template moderation summaries.
+- **New tasks** (submitted after rebuild): shared metric fields merge across templates as designed. Full cross-template reporting works.
+- **Old tasks** (submitted before rebuild): shared metric data appears as template-scoped custom columns (e.g., `tpl_abc:gross_sales` instead of merged `gmv`). The data is still accessible but not merged. This is acceptable for alpha — the volume of old data is small and managers understand the transition.
+- **No data loss**: old snapshots are preserved, old tasks are untouched, old content keys still resolve correctly against their original snapshots.
+
+This approach eliminates the need for a content migration script, `snapshotId` reassignment, or batch processing — the complexity reduction is significant for alpha phase.
 
 #### 4.6.6 Cross-doc impact
 
@@ -979,7 +973,7 @@ src/models/task-report/
 ## 11. Validation and Guardrails
 
 1. Roles: `ADMIN`, `MANAGER`, `MODERATION_MANAGER` — this is a management tool, not for junior moderators/operators
-2. Maximum selected columns per report: recommended `<= 50`
+2. Maximum selected columns per report: hard cap `50`. Rationale: typical usage is 5–15 system/KPI columns + 5–20 custom fields per template. 50 accommodates multi-template reports while keeping response size and table width manageable. The FE column picker enforces this at selection time; the BE validates on run.
 3. Maximum total matched tasks: configurable per studio (default `10,000`). Enforced by both preflight (§8.5) and run (§9.1)
 4. **Preflight-first flow**: the FE must call preflight before run. The preflight returns `show_count`, `task_count`, and `within_limit`. Over-limit scopes are blocked before any heavy extraction runs
 5. Internal batch size: `200` rows per iteration during result generation (Layer 2)
@@ -987,6 +981,30 @@ src/models/task-report/
 7. Reject unknown column keys at validation time
 8. Validate date presets against supported values
 9. Response size: typical 100–200KB, max ~5MB for very large results. Standard gzip compression applies.
+
+### 11.1 Error contract
+
+All reporting endpoints must return structured, meaningful error responses. Design the error contract alongside the feature — not as an afterthought. Follow the existing `HttpError` utility patterns and project security practices to avoid information leakage.
+
+**Required error responses:**
+
+| Scenario | HTTP Status | Error message (user-facing) |
+|----------|------------|----------------------------|
+| No scope filters provided | 400 | "At least one scope filter is required" |
+| Unknown column key in selection | 400 | "Unknown column key: {key}" |
+| Column count exceeds limit | 400 | "Selected {n} columns — maximum is 50" |
+| Task count exceeds studio row cap | 400 | "Scope includes {n} tasks (limit: {limit}). Narrow your scope filters." |
+| Invalid date preset | 400 | "Invalid date preset: {value}" |
+| Date range too wide (optional guard) | 400 | "Date range exceeds maximum of {n} days" |
+| Shared metric key already exists | 409 | "Shared metric key '{key}' already exists" |
+| Shared metric key/type mutation attempt | 400 | "Key and type cannot be changed after creation" |
+| Unauthorized role | 403 | Standard guard response |
+
+**Security considerations:**
+- Never expose internal IDs, stack traces, or query details in error responses.
+- Rate-limit the generation endpoint to prevent abuse (standard throttler guard applies).
+- Validate all input against Zod schemas before processing — reject malformed payloads early.
+- The preflight + run flow itself is a guardrail: the preflight count prevents expensive generation on over-broad scopes.
 
 ## 12. Risks and Mitigations
 
@@ -1051,6 +1069,8 @@ Mitigation: generation is fast (< 1s typical). The FE caches recently generated 
 5. report generation endpoint (`POST /task-reports/run`) with Layer 2 (task extraction + row construction), date preset resolution, comprehensive scope filters, `TaskTarget` join, internal batch processing, flat table generation, and inline response
 6. saved definition CRUD with date presets and scope filter persistence
 7. inline ad-hoc support (run without a saved definition)
+8. **cross-doc updates** (§4.6.6) — must be completed as part of BE-1, not deferred. Shared metrics extend the existing task template and studio management systems; the authorization skill, role matrix, route access config, and `@eridu/api-types` must all reflect the new capability before the feature is considered complete
+9. **error contract** (§11.1) — structured error responses for all reporting endpoints, designed alongside the feature
 
 ### Milestone BE-2 (Polish)
 
