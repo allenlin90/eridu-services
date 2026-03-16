@@ -9,25 +9,26 @@ datasource db {
 }
 
 model User {
-  id                 BigInt             @id @default(autoincrement())
-  uid                String             @unique
-  extId              String?            @unique @map("ext_id") // For SSO integration
-  email              String             @unique
-  name               String
-  isBanned           Boolean            @default(false) @map("is_banned")
-  isSystemAdmin      Boolean            @default(false) @map("is_system_admin") // System-level admin flag
-  profileUrl         String?            @map("profile_url")
-  metadata           Json               @default("{}")
-  creator            Creator? // Optional creator profile linkage
-  studioMemberships  StudioMembership[]
-  studioShifts       StudioShift[]
-  schedules          Schedule[]         @relation("ScheduleCreator")
-  publishedSchedules Schedule[]         @relation("SchedulePublisher")
-  scheduleSnapshots  ScheduleSnapshot[]
-  assignedTasks      Task[]
-  createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt          DateTime           @updatedAt @map("updated_at")
-  deletedAt          DateTime?          @map("deleted_at")
+  id                           BigInt                 @id @default(autoincrement())
+  uid                          String                 @unique
+  extId                        String?                @unique @map("ext_id") // For SSO integration
+  email                        String                 @unique
+  name                         String
+  isBanned                     Boolean                @default(false) @map("is_banned")
+  isSystemAdmin                Boolean                @default(false) @map("is_system_admin") // System-level admin flag
+  profileUrl                   String?                @map("profile_url")
+  metadata                     Json                   @default("{}")
+  creator                      Creator? // Optional creator profile linkage
+  studioMemberships            StudioMembership[]
+  studioShifts                 StudioShift[]
+  schedules                    Schedule[]             @relation("ScheduleCreator")
+  publishedSchedules           Schedule[]             @relation("SchedulePublisher")
+  scheduleSnapshots            ScheduleSnapshot[]
+  assignedTasks                Task[]
+  createdTaskReportDefinitions TaskReportDefinition[] @relation("TaskReportDefinitionCreatedBy")
+  createdAt                    DateTime               @default(now()) @map("created_at")
+  updatedAt                    DateTime               @updatedAt @map("updated_at")
+  deletedAt                    DateTime?              @map("deleted_at")
 
   @@index([uid])
   @@index([email])
@@ -223,23 +224,24 @@ model ShowPlatform {
 }
 
 model Studio {
-  id                BigInt             @id @default(autoincrement())
-  uid               String             @unique
-  name              String             @unique
-  address           String
-  metadata          Json               @default("{}")
-  shows             Show[]
-  schedules         Schedule[]
-  studioRooms       StudioRoom[]
-  studioMemberships StudioMembership[]
-  studioCreators    StudioCreator[]
-  taskTemplates     TaskTemplate[]
-  tasks             Task[]
-  taskTargets       TaskTarget[]
-  studioShifts      StudioShift[]
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @updatedAt @map("updated_at")
-  deletedAt         DateTime?          @map("deleted_at")
+  id                    BigInt                 @id @default(autoincrement())
+  uid                   String                 @unique
+  name                  String                 @unique
+  address               String
+  metadata              Json                   @default("{}")
+  shows                 Show[]
+  schedules             Schedule[]
+  studioRooms           StudioRoom[]
+  studioMemberships     StudioMembership[]
+  studioCreators        StudioCreator[]
+  taskTemplates         TaskTemplate[]
+  taskReportDefinitions TaskReportDefinition[]
+  tasks                 Task[]
+  taskTargets           TaskTarget[]
+  studioShifts          StudioShift[]
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  deletedAt             DateTime?              @map("deleted_at")
 
   @@index([uid])
   @@index([name])
@@ -536,6 +538,26 @@ model TaskTemplateSnapshot {
   @@unique([templateId, version])
   @@index([templateId, version])
   @@map("task_template_snapshots")
+}
+
+model TaskReportDefinition {
+  id          BigInt    @id @default(autoincrement())
+  uid         String    @unique
+  studioId    BigInt    @map("studio_id")
+  studio      Studio    @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  definition  Json
+  metadata    Json      @default("{}")
+  createdById BigInt?   @map("created_by_id")
+  createdBy   User?     @relation("TaskReportDefinitionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@index([studioId, createdById, deletedAt, updatedAt])
+  @@index([studioId, deletedAt, updatedAt])
+  @@map("task_report_definitions")
 }
 
 // ============================================

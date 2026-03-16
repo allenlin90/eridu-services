@@ -464,6 +464,8 @@ erDiagram
         String name
         Json definition "scope + columns"
         BigInt createdById FK
+        Json metadata "audit notes and editor context"
+        DateTime updatedAt
         DateTime deletedAt
     }
 
@@ -500,8 +502,8 @@ Suggested fields:
 - `name String`
 - `description String?`
 - `definition Json`
+- `metadata Json` (audit notes / editor context)
 - `createdById BigInt?`
-- `updatedById BigInt?`
 - `createdAt DateTime`
 - `updatedAt DateTime`
 - `deletedAt DateTime?`
