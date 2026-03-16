@@ -38,7 +38,7 @@ The moderation team currently does this on Google Sheets with manual data entry 
 This is a **management and oversight tool** — not part of the operator task-execution flow. Junior moderators submit tasks through existing mobile/desktop workflows; they do not use the report builder.
 
 - **Studio managers**: review submitted operational data across many shows and export it for internal follow-up
-- **Moderation managers**: summarize moderation KPIs such as GMV, views, conversion, and live-performance metrics across brands
+- **Moderation managers**: summarize moderation KPIs such as GMV, views, conversion, and live-performance data across brands
 - **Studio admins**: audit premium-show QC readiness using uploaded post-production URLs and other submitted evidence
 
 All three roles use this to answer cross-show questions after tasks are submitted — not to manage individual task execution.
@@ -49,17 +49,17 @@ All three roles use this to answer cross-show questions after tasks are submitte
 
 The reporting layer standardizes how data is *understood*, not how it is *collected*. These principles guide every design decision in this feature:
 
-1. **Standardize the semantic layer, not the templates.** A small set of shared metrics (5–8 KPIs like GMV, views, conversion) adopt fixed keys so the report engine can merge them across templates. This is the beginning of a long-term reporting vocabulary — a canonical set of fields with stable semantics that any template can contribute to. The vast majority of each template's fields remain custom and template-scoped.
+1. **Standardize the semantic layer, not the templates.** A small set of shared fields (5–8 KPIs like GMV, views, conversion) adopt fixed keys so the report engine can merge them across templates. This is the beginning of a long-term reporting vocabulary — a canonical set of fields with stable semantics that any template can contribute to. The vast majority of each template's fields remain custom and template-scoped.
 
 2. **Keep custom fields template-scoped.** Brand-specific fields, workflow-specific notes, and per-template data stay under each template's control. Custom fields from different templates never merge — they appear as separate columns. Template authors retain full flexibility over their non-standard fields.
 
-3. **Lock canonical keys, keep labels flexible.** Shared metric keys and types are immutable once created — `gmv` is always `gmv`, always a number. But labels, descriptions, and per-template validation rules can be customized. This gives engineering-level semantic stability with product-level display flexibility.
+3. **Lock canonical keys, keep labels flexible.** Shared field keys, types, and categories are immutable once created — `gmv` is always `gmv`, always a number, always a `metric`. But labels, descriptions, and per-template validation rules can be customized. This gives engineering-level semantic stability with product-level display flexibility.
 
-4. **Preserve snapshot integrity.** Shared metric definitions are captured in `TaskTemplateSnapshot` at save time. The report engine reads from snapshots, never from live studio settings. Changes to the shared metric list never break existing reports. Backfill uses controlled application-level migration, not raw SQL.
+4. **Preserve snapshot integrity.** Shared field definitions are captured in `TaskTemplateSnapshot` at save time. The report engine reads from snapshots, never from live studio settings. Changes to the shared field list never break existing reports. Backfill uses controlled application-level migration, not raw SQL.
 
 5. **Protect operational workflows.** Operational task templates stay optimized for real usage — especially mobile moderation workflows. Reporting requirements must not force task fragmentation (no second data-collection task), template redesigns, or operator-facing complexity. One task per show per template, submitted by the assigned operator.
 
-6. **Studio-scoped for now, portable later.** Shared metrics are studio-scoped because we currently operate one studio. This is practical and avoids premature abstraction. The design leaves room for future multi-studio divergence (each studio defines its own metrics) or sharing (promote metrics to a global catalog) without structural changes.
+6. **Studio-scoped for now, portable later.** Shared fields are studio-scoped because we currently operate one studio. This is practical and avoids premature abstraction. The design leaves room for future multi-studio divergence (each studio defines its own fields) or sharing (promote fields to a global catalog) without structural changes.
 
 Reporting standardization is an **engineering best-practice layer** — it ensures cross-template data is semantically interoperable for analysis. It is not a reason to overconstrain day-to-day template design or operator workflows.
 
@@ -171,44 +171,107 @@ The distinction maps to how the moderation team uses Google Sheets: they have on
 4. View filter state is independent of the definition — it's ephemeral UI state for the current session.
 5. Submissions change infrequently once completed. Re-generation is needed only when the scope filter changes or the manager explicitly refreshes.
 
-### Shared metrics (semantic standardization layer)
+### Shared fields (semantic standardization layer)
 
-Moderation task templates are created per-brand (~30 templates), each with 8–10 data collection fields. A small subset of these fields — shared performance metrics like GMV, views, and conversion — need to merge into single report columns across all templates. The rest of each template's fields are brand-specific and remain template-scoped.
+Moderation task templates are created per-brand (~30 templates), each with 8–10 data collection fields. A small subset of these fields — shared performance metrics, QC evidence, and compliance indicators — need to merge into single report columns across all templates. The rest of each template's fields are brand-specific and remain template-scoped.
 
-**This is not full template standardization — it is semantic standardization for reporting.** The goal is a small set of shared metrics (5–8 fields) with fixed keys and types that form a canonical reporting vocabulary. This vocabulary enables cross-template reporting for shared KPIs without constraining how templates are designed or how operators use them. Each template keeps its own custom fields unchanged — only the shared metrics adopt fixed keys. (See [Design Principles](#design-principles).)
+**This is not full template standardization — it is semantic standardization for reporting.** The goal is a small set of shared fields (5–15 fields) with fixed keys, types, and categories that form a canonical reporting vocabulary. This vocabulary enables cross-template reporting without constraining how templates are designed or how operators use them. Each template keeps its own custom fields unchanged — only the shared fields adopt fixed keys. (See [Design Principles](#design-principles).)
 
-**Shared metrics support any field type** — not just numbers. Performance KPIs use `number` (GMV, views, orders), but QC evidence fields use `file` or `url` (post-production screenshots, proof images). The merge behavior is identical: same key + `standard: true` = one merged column in the report. This makes shared metrics a general-purpose cross-template vocabulary, not limited to financial inputs.
+#### Field categories
 
-**Checklist fields remain template-scoped.** Many templates include operator checklists ("check A", "verify B") — these are `checkbox` fields specific to each brand's moderation workflow. They stay as custom fields. The review use case for checklists is fulfillment percentage (how many boxes checked per task), which is a derived metric the FE can compute from cached row data as a future enhancement. For MVP, raw checkbox columns are exported and managers compute fulfillment in Excel — matching today's Google Sheets workflow.
+Shared fields are classified into three categories. The category is immutable after creation (like key and type) and determines how the field is used in reporting:
 
-**Who manages it:** Studio ADMINs manage shared metrics in studio settings — a simple list of metric definitions (key, type, label) stored in `Studio.metadata`. Keys and types are **immutable once created** — if the key is wrong, create a new one; the old key stays reserved. This keeps the workflow simple: no rename cascades, no backward-compatibility checks. Labels and descriptions can be updated (display-only).
+| Category | Purpose | Typical types | Examples |
+|----------|---------|---------------|----------|
+| **`metric`** | Numeric KPIs for performance analysis | `number` | `gmv`, `views`, `orders`, `conversion_rate`, `peak_viewers` |
+| **`evidence`** | Proof artifacts for QC and audit | `file`, `url` | `qc_image`, `proof_url`, `post_production_link` |
+| **`status`** | Compliance/readiness indicators | `checkbox`, `select` | `is_qc_ready`, `is_post_production_complete` |
 
-**How it flows through the system:**
+Categories serve two purposes: (1) FE sub-groups shared fields by category in the column picker and settings UI for discoverability, and (2) they document intent — a `metric` field is for numeric analysis, an `evidence` field is for proof review, a `status` field is for readiness checks.
 
-1. **Studio ADMIN creates shared metrics** in studio settings (e.g., `gmv` / number / "GMV"). Keys are immutable after creation.
-2. **ADMIN or MANAGER selects shared metrics** when building a template — the template editor picker inserts the field with the fixed key, type, and `standard: true` flag.
-3. **Snapshot captures the definition** — when the template is saved, the snapshot records the full shared metric field (key, type, label, `standard: true`). The snapshot is self-contained.
+#### Field qualification rules
+
+A field qualifies as a shared field (rather than a custom field) when it meets **all** of the following criteria:
+
+1. **Cross-template semantics** — the field has the same meaning across multiple templates (e.g., `gmv` means gross merchandise value regardless of brand).
+2. **Stable type** — the field type is consistent across templates. If one brand uses `number` for GMV and another uses `text`, it cannot be a shared field.
+3. **Merge intent** — the field is expected to appear as a single merged column in reports. If managers would never compare this field across templates, it should stay custom.
+4. **Small set** — the shared field catalog should remain small (5–15 fields). If the catalog grows beyond 15, review whether fields are truly cross-template or should remain custom.
+
+Fields that fail any criterion stay as custom fields. When in doubt, keep the field custom — promotion to shared is easy; demotion is not (keys are immutable).
+
+#### Phase 1 shared field set
+
+The following shared fields are recommended for phase 1 deployment. This set covers the primary moderation reporting use cases:
+
+| Key | Type | Category | Label | Rationale |
+|-----|------|----------|-------|-----------|
+| `gmv` | `number` | `metric` | GMV | Primary financial KPI across all moderation templates |
+| `views` | `number` | `metric` | Views | Show performance — universal across brands |
+| `orders` | `number` | `metric` | Orders | Sales metric — universal across brands |
+| `conversion_rate` | `number` | `metric` | Conversion Rate | Derived performance indicator |
+| `peak_viewers` | `number` | `metric` | Peak Viewers | Live-show performance metric |
+| `qc_image` | `file` | `evidence` | QC Image | Post-production screenshot for quality check |
+
+**Deferred from phase 1:**
+
+- `fulfillment_percent` (`number`, `status`) — Checklist fulfillment percentage. Many templates include operator checklists ("check A", "verify B") — these are `checkbox` fields specific to each brand's moderation workflow. They stay as custom fields. The review use case for checklists is fulfillment percentage (how many boxes checked per task), which is a derived metric the FE can compute from cached row data. **Recommendation:** Implement as an FE-computed column in phase 2 (no BE shared field needed). The FE scans checkbox fields in each row and computes `checked / total` as a percentage. This avoids storing a redundant shared field whose value is always derivable from existing data.
+
+#### Shared fields support any field type
+
+Not just numbers. Performance KPIs use `number` (GMV, views, orders), QC evidence fields use `file` or `url` (post-production screenshots, proof images), and compliance indicators use `checkbox` or `select`. The merge behavior is identical: same key + `standard: true` = one merged column in the report. This makes shared fields a general-purpose cross-template vocabulary.
+
+#### Who manages it
+
+Studio ADMINs manage shared fields in studio settings — a simple list of field definitions (key, type, category, label) stored in `Studio.metadata`. Keys, types, and categories are **immutable once created** — if the key is wrong, create a new one; the old key stays reserved. This keeps the workflow simple: no rename cascades, no backward-compatibility checks. Labels and descriptions can be updated (display-only).
+
+#### End-to-end setup flow
+
+Shared fields flow through the system in a clear pipeline from studio configuration to exported report:
+
+```
+Studio Settings                    Template Editor                     Snapshot
+─────────────────                  ─────────────────                   ────────
+ADMIN creates shared fields  →     ADMIN/MANAGER selects shared   →   Snapshot captures full
+(key, type, category, label)       fields when building template      field definition (key, type,
+Stored in Studio.metadata          (fixed key + type + standard:      category, label, standard:
+                                   true flag inserted)                true) — self-contained
+
+                                        ↓
+
+Report Builder                     Export
+──────────────                     ──────
+Engine reads standard: true   →    Merged columns appear in
+from snapshots, merges same-key    CSV/XLSX as single columns
+fields across templates            (e.g., one "GMV" column)
+```
+
+1. **Studio ADMIN creates shared fields** in studio settings (e.g., `gmv` / number / metric / "GMV"). Keys, types, and categories are immutable after creation.
+2. **ADMIN or MANAGER selects shared fields** when building a template — the template editor picker inserts the field with the fixed key, type, and `standard: true` flag.
+3. **Snapshot captures the definition** — when the template is saved, the snapshot records the full shared field definition (key, type, category, label, `standard: true`). The snapshot is self-contained.
 4. **Report engine reads from snapshots** — merges fields with the same key + `standard: true` across templates into one column. The engine never queries studio settings.
-5. **Managers see merged columns** in the report builder without needing to manage shared metrics.
+5. **Managers see merged columns** in the report builder — shared fields appear grouped by category in the column picker, and as single merged columns in the result table and export.
+
+#### Implementation requirements
 
 To enable this:
 
-1. **Shared metrics** — a studio-scoped list of metric definitions stored in `Studio.metadata.shared_metrics[]`. Managed by ADMIN via a settings endpoint. Keys are immutable once created; metrics can be deactivated but not deleted.
+1. **Shared fields** — a studio-scoped list of field definitions stored in `Studio.metadata.shared_fields[]`. Managed by ADMIN via a settings endpoint. Keys are immutable once created; fields can be deactivated but not deleted.
 2. **`standard` flag on field items** — `FieldItemBaseSchema` gains an optional `standard: boolean` property. Fields marked `standard: true` use their `key` directly as the report column key (no template prefix). All other fields (the majority) remain template-scoped with `{template_uid}:{field.key}`.
-3. **Cross-template merging** — when generating a report, shared metric fields from different templates merge into one column because they share the same key. Custom fields remain template-scoped — this is the expected behavior.
-4. **Template rebuild (alpha-phase migration)** — the system is in alpha testing, not yet in real operational usage. The ~30 existing moderation templates are rebuilt from the current Google Sheets source with correct shared metric keys from the start:
-   - Studio ADMIN creates the shared metrics in studio settings first.
-   - Rebuild each template with shared metric keys and `standard: true` flag. Each rebuild creates a new snapshot.
-   - **Existing task data is not retroactively migrated.** Old tasks retain their original snapshot references and content keys. Shared metrics apply to new records only — what has happened has happened. Old data appears as template-scoped columns; new data merges via shared metrics. This avoids confusion from partial migration and keeps the boundary clean.
-   - Only the shared metric fields adopt canonical keys. Brand-specific custom fields are carried over as-is.
+3. **Cross-template merging** — when generating a report, shared fields from different templates merge into one column because they share the same key. Custom fields remain template-scoped — this is the expected behavior.
+4. **Template rebuild (alpha-phase migration)** — the system is in alpha testing, not yet in real operational usage. The ~30 existing moderation templates are rebuilt from the current Google Sheets source with correct shared field keys from the start:
+   - Studio ADMIN creates the shared fields in studio settings first.
+   - Rebuild each template with shared field keys and `standard: true` flag. Each rebuild creates a new snapshot.
+   - **Existing task data is not retroactively migrated.** Old tasks retain their original snapshot references and content keys. Shared fields apply to new records only — what has happened has happened. Old data appears as template-scoped columns; new data merges via shared fields. This avoids confusion from partial migration and keeps the boundary clean.
+   - Only the shared fields adopt canonical keys. Brand-specific custom fields are carried over as-is.
 
-This is a **requirement for MVP** — without it, the reporting engine cannot produce cross-client moderation summaries, which is the primary use case. The forward-only approach is acceptable for alpha: old data volume is small, and shared metric columns will naturally populate as new tasks are submitted against rebuilt templates.
+This is a **requirement for MVP** — without it, the reporting engine cannot produce cross-client moderation summaries, which is the primary use case. The forward-only approach is acceptable for alpha: old data volume is small, and shared field columns will naturally populate as new tasks are submitted against rebuilt templates.
 
 **Cross-doc impact:** This feature extends the existing task template and studio management systems. See BE design §4.6.6 for the full list of docs, skills, and route configs that must be updated.
 
 ### Export behavior
 
-1. CSV and XLSX export produce **one flat file** — all columns (system + shared metrics + custom fields from any number of templates) in a single table. No multi-file splitting or multi-sheet partitioning.
+1. CSV and XLSX export produce **one flat file** — all columns (system + shared fields + custom fields from any number of templates) in a single table. No multi-file splitting or multi-sheet partitioning.
 2. Custom fields from different templates appear as separate columns in the same file, clearly labeled with their template origin.
 3. Exported rows include stable show/task metadata plus the selected submitted values.
 4. Export can apply to the full dataset or the currently filtered view.
@@ -227,10 +290,10 @@ This is a **requirement for MVP** — without it, the reporting engine cannot pr
 - [ ] Only show-targeted tasks appear in results; non-show tasks are excluded.
 - [ ] Strictly one row per show — duplicate submitted tasks for the same show and source are resolved by latest-wins merge with a warning indicator on the affected row.
 - [ ] The table shows row count and generation timestamp for sanity checking.
-- [ ] Studio ADMIN can create and manage shared metrics in studio settings. Keys and types are immutable after creation.
-- [ ] Shared metric fields (e.g., `gmv`, `views`) from different templates merge into a single report column.
+- [ ] Studio ADMIN can create and manage shared fields in studio settings. Keys, types, and categories are immutable after creation.
+- [ ] Shared fields (e.g., `gmv`, `views`, `qc_image`) from different templates merge into a single report column.
 - [ ] Custom (non-standard) fields remain template-scoped — different templates produce separate columns even if keys happen to match.
-- [ ] Existing ~30 moderation templates are rebuilt with shared metric keys. Existing task data is not retroactively migrated — shared metrics apply to new records only. Brand-specific custom fields are untouched.
+- [ ] Existing ~30 moderation templates are rebuilt with shared field keys. Existing task data is not retroactively migrated — shared fields apply to new records only. Brand-specific custom fields are untouched.
 - [ ] *(Deferred)* Numeric column summaries (count, sum, average) are a future enhancement. See [ideation/task-analytics-summaries.md](../ideation/task-analytics-summaries.md).
 
 ## Reporting as an Engine
@@ -239,9 +302,9 @@ This system is a **generic submitted-task export engine**, not a Show Economics 
 
 The engine is intentionally unopinionated about what the submitted fields mean. GMV, views, and post-production URLs are examples of field content, not hardcoded concepts. New use cases (e.g. a finance rollup that reads creator-fee fields from a compensation task) can be served by selecting different columns — no engine changes required.
 
-**One operational task, minimal standardization.** The design preserves the current moderation workflow: one task per show per template, submitted by the assigned operator. We do not split data collection into a second task or redesign the moderation loop. Standardization is limited to a small shared metric set (5–8 shared KPIs) — the minimum needed for cross-template reporting. Template-specific fields and operator workflows are untouched.
+**One operational task, minimal standardization.** The design preserves the current moderation workflow: one task per show per template, submitted by the assigned operator. We do not split data collection into a second task or redesign the moderation loop. Standardization is limited to a small shared field set (5–15 fields across three categories: metrics, evidence, and status) — the minimum needed for cross-template reporting. Template-specific fields and operator workflows are untouched.
 
-**Strong semantics, flexible operations.** The shared metrics layer standardizes *how data is understood* for reporting — fixed keys, locked types, stable merge semantics. But it does not standardize *how data is collected* — templates remain fully flexible, mobile workflows are unaffected, and operators never see the reporting abstraction. This separation ensures that improving reporting quality never comes at the cost of operational usability. The shared metric set is an engineering best-practice layer: it exists to make cross-template data interoperable, not to constrain template design.
+**Strong semantics, flexible operations.** The shared fields layer standardizes *how data is understood* for reporting — fixed keys, locked types, stable merge semantics. But it does not standardize *how data is collected* — templates remain fully flexible, mobile workflows are unaffected, and operators never see the reporting abstraction. This separation ensures that improving reporting quality never comes at the cost of operational usability. The shared field set is an engineering best-practice layer: it exists to make cross-template data interoperable, not to constrain template design.
 
 ## Product Decisions
 
@@ -261,8 +324,8 @@ The engine is intentionally unopinionated about what the submitted fields mean. 
 - **Role-based source visibility is deferred to milestone 2.** MVP grants all permitted roles (`ADMIN`, `MANAGER`, `MODERATION_MANAGER`) access to all templates in the studio.
 - **Duplicate-source tasks use latest-wins merge.** If multiple tasks match the same show + template, the most recently updated task's values populate the row. A warning badge flags the row for data hygiene review, but the row stays single.
 - **Client-side cache replaces server-side result storage.** TanStack Query in-memory cache holds recently generated datasets. Switching between cached scopes is instant. IndexedDB for cross-session persistence is a future enhancement.
-- **Shared metrics as a semantic standardization layer.** A small set of shared KPI fields (5–8 fields like `gmv`, `views`, `conversion_rate`) adopt fixed keys so the report engine can merge them across templates. This is the canonical reporting vocabulary — strong semantics for analysis, with no impact on operational flexibility. Studio ADMINs manage this list in studio settings; keys are immutable once created. The vast majority of each template's fields are brand-specific custom fields that remain unchanged. One operational moderation task per show, no template redesign, no second data-collection task.
-- **Studio-scoped shared metrics.** Shared metrics are scoped to the studio because we currently operate one studio. This is practical and avoids premature abstraction. The design accommodates future multi-studio divergence (each studio defines its own metrics) or sharing (promote metrics to a global catalog) without structural changes.
+- **Shared fields as a semantic standardization layer.** A small set of shared fields (5–15 across three categories: metric, evidence, status) adopt fixed keys so the report engine can merge them across templates. This is the canonical reporting vocabulary — strong semantics for analysis, with no impact on operational flexibility. Studio ADMINs manage this list in studio settings; keys, types, and categories are immutable once created. The vast majority of each template's fields are brand-specific custom fields that remain unchanged. One operational moderation task per show, no template redesign, no second data-collection task.
+- **Studio-scoped shared fields.** Shared fields are scoped to the studio because we currently operate one studio. This is practical and avoids premature abstraction. The design accommodates future multi-studio divergence (each studio defines its own fields) or sharing (promote fields to a global catalog) without structural changes.
 - **Definition is inherently stable.** Definitions reference column keys, not snapshot versions. Tasks are fixed to their assigned snapshot — template updates don't change existing tasks' content keys. Definitions don't become "outdated" because the underlying data doesn't drift.
 - **FE form is the run-time source of truth.** When running from a saved definition, the FE pre-fills the form from the definition's stored scope + columns. The manager can override any field before running. The run request sends whatever the form shows — the BE does not merge definition + overrides.
 
@@ -437,16 +500,16 @@ graph TB
 
 ## Implementation Plan
 
-### Phase 1a: Engine + shared metrics infrastructure
+### Phase 1a: Engine + shared fields infrastructure
 
-> **Goal**: Build the report generation engine and shared metrics foundation. Validate scope resolution, row construction, and cross-template merge before investing in the full UI.
+> **Goal**: Build the report generation engine and shared fields foundation. Validate scope resolution, row construction, and cross-template merge before investing in the full UI.
 
 **Backend:**
 
 | # | Deliverable | Details |
 |---|-------------|---------|
-| 1 | Shared metrics settings endpoint | `GET/POST/PATCH /studios/:studioId/settings/shared-metrics` — ADMIN-only, stored in `Studio.metadata.shared_metrics[]` |
-| 2 | `standard` flag in `@eridu/api-types` | Add `standard: z.boolean().optional()` to `FieldItemBaseSchema`. Add `sharedMetricSchema` and settings endpoint schemas. |
+| 1 | Shared fields settings endpoint | `GET/POST/PATCH /studios/:studioId/settings/shared-fields` — ADMIN-only, stored in `Studio.metadata.shared_fields[]` |
+| 2 | `standard` flag + `sharedFieldSchema` in `@eridu/api-types` | Add `standard: z.boolean().optional()` to `FieldItemBaseSchema`. Add `sharedFieldSchema` (with `category` enum) and settings endpoint schemas. |
 | 3 | `TaskReportScopeService` (Layer 1) | Scope resolution shared by `/sources`, `/preflight`, and `/run`. Resolves filters → shows → task counts → guardrails. |
 | 4 | Preflight endpoint | `POST /task-reports/preflight` — count-only validation before generation |
 | 5 | Report generation endpoint | `POST /task-reports/run` — Layer 2 extraction + row construction, flat table inline response |
@@ -455,18 +518,18 @@ graph TB
 
 | # | Deliverable | Details |
 |---|-------------|---------|
-| 6 | Shared metrics settings UI | Simple CRUD list in studio settings (ADMIN-only). Key/type immutable after creation. |
+| 6 | Shared fields settings UI | Simple CRUD list in studio settings (ADMIN-only). Key/type/category immutable after creation. Fields sub-grouped by category. |
 | 7 | Scope filter controls | Date range, show standard, show type. URL state for shareability. |
-| 8 | Column picker | Contextual source catalog fetch + column selection with shared metrics group, 50-column cap, live counter |
+| 8 | Column picker | Contextual source catalog fetch + column selection with shared fields sub-grouped by category (Metrics / Evidence / Status), 50-column cap, live counter |
 
 **Template rebuild** (parallel with BE work):
 
 | # | Deliverable | Details |
 |---|-------------|---------|
-| 9 | Create shared metrics in studio settings | Define canonical vocabulary: `gmv` (number), `views` (number), `conversion_rate` (number), `peak_viewers` (number), `orders` (number), `qc_image` (file), etc. |
-| 10 | Rebuild ~30 moderation templates | Rebuild from current Google Sheets with correct shared metric keys + `standard: true`. Forward-only — old tasks stay as-is. |
+| 9 | Create shared fields in studio settings | Define canonical vocabulary per phase 1 set: `gmv` (number/metric), `views` (number/metric), `conversion_rate` (number/metric), `peak_viewers` (number/metric), `orders` (number/metric), `qc_image` (file/evidence). |
+| 10 | Rebuild ~30 moderation templates | Rebuild from current Google Sheets with correct shared field keys + `standard: true`. Forward-only — old tasks stay as-is. |
 
-**Exit criteria**: The `/run` endpoint correctly merges shared metric fields (including `file`/`url` types) across multiple templates into one-row-per-show. Preflight counts match run results. Scope resolution is identical across all three endpoints.
+**Exit criteria**: The `/run` endpoint correctly merges shared fields (including `file`/`url` types) across multiple templates into one-row-per-show. Preflight counts match run results. Scope resolution is identical across all three endpoints.
 
 ### Phase 1b: Full report workflow
 
@@ -476,7 +539,7 @@ graph TB
 
 | # | Deliverable | Details |
 |---|-------------|---------|
-| 11 | Contextual source catalog | `GET /task-report-sources` — returns templates/snapshots with submitted tasks for filtered shows, field catalogs, shared metrics deduplication |
+| 11 | Contextual source catalog | `GET /task-report-sources` — returns templates/snapshots with submitted tasks for filtered shows, field catalogs, shared fields deduplication |
 | 12 | Definition CRUD | `TaskReportDefinition` model + 5 endpoints. Personal presets with scope + columns + optional date presets. |
 | 13 | Cross-doc updates | Update authorization skill, role matrix, route access config, api-types — all items from BE design §4.6.6 |
 | 14 | Error contract | Structured error responses per BE design §11.1 — designed alongside the feature, not after |
@@ -485,7 +548,7 @@ graph TB
 
 | # | Deliverable | Details |
 |---|-------------|---------|
-| 15 | Report table rendering | Frozen system columns (show name, client, start time), horizontal virtual scroll, column group headers (System / Shared Metrics / Custom by template) |
+| 15 | Report table rendering | Frozen system columns (show name, client, start time), horizontal virtual scroll, column group headers (System / Shared Fields / Custom by template) |
 | 16 | View filters + column sort | Client-side filters (client, status, assignee, room, search) + simple asc/desc sort on cached rows |
 | 17 | Definition list as landing view | Save, load, clone definitions. Pre-fill scope + columns from definition. Landing page for the Task Reports route. |
 | 18 | Preflight confirmation UX | Show count summary before generation. Block over-limit scopes with guidance. |
@@ -506,7 +569,7 @@ graph TB
 | 24 | Definition clone + edit | Read existing definition → POST copy with new name |
 | 25 | Date preset in definitions | `this_week`, `this_month`, or absolute dates pre-fill on load |
 | 26 | IndexedDB persistence | Cross-session result cache (last 5 per studio) using `idb-keyval` |
-| 27 | Checkbox fulfillment percentage | FE-computed derived metric — count checked/total checkboxes per row. Displayed as a progress indicator on the table. No BE change needed. |
+| 27 | Checkbox fulfillment percentage | FE-computed derived column — count checked/total checkboxes per row. Displayed as a progress indicator on the table. No BE shared field needed — derived from existing checkbox data in each row. |
 
 ### Phase 3: Scale (if needed)
 

@@ -28,7 +28,7 @@ This design must fit the current task architecture:
 4. Generate flat table JSON inline — returned in the API response, not stored server-side.
 5. Reuse existing task/show/client relations instead of introducing a parallel reporting store.
 6. Keep the BE stateless for results — the FE owns caching and view-layer filtering.
-7. **Strong semantics, flexible operations** — standardize a small canonical set of shared metrics for cross-template reporting without constraining template design or operator workflows. Reporting standardization is an engineering best-practice layer, not an operational constraint. (See PRD [Design Principles](../../../../docs/prd/task-submission-reporting.md#design-principles).)
+7. **Strong semantics, flexible operations** — standardize a small canonical set of shared fields for cross-template reporting without constraining template design or operator workflows. Reporting standardization is an engineering best-practice layer, not an operational constraint. (See PRD [Design Principles](../../../../docs/prd/task-submission-reporting.md#design-principles).)
 
 ## 3. Non-Goals
 
@@ -44,8 +44,8 @@ This design must fit the current task architecture:
 These are non-negotiable constraints. Any implementation that violates these is incorrect.
 
 1. **One row per show.** `rows[]` length always equals show count. No exceptions — duplicates use latest-wins merge, multi-target tasks merge into each target show's row. The row contract is deterministic: given the same scope and column selection, the same rows are produced.
-2. **Shared metric keys and types are immutable after creation.** `key` and `type` cannot be changed, renamed, or reused. If the key is wrong, create a new one; the old key stays reserved forever.
-3. **Snapshots are the sole runtime source of truth.** The report engine reads `standard: true` and field definitions from `snapshot.schema.items[]`, never from `Studio.metadata`. Shared metric management is a design-time activity (template authoring); the report engine has zero dependency on mutable live config.
+2. **Shared field keys, types, and categories are immutable after creation.** `key`, `type`, and `category` cannot be changed, renamed, or reused. If the key is wrong, create a new one; the old key stays reserved forever.
+3. **Snapshots are the sole runtime source of truth.** The report engine reads `standard: true` and field definitions from `snapshot.schema.items[]`, never from `Studio.metadata`. Shared field management is a design-time activity (template authoring); the report engine has zero dependency on mutable live config.
 4. **Scope resolution is shared across `/sources`, `/preflight`, and `/run`.** All three endpoints use `TaskReportScopeService` (Layer 1). The same scope input must produce the same resolved show set and task count across all three. If scope resolution diverges between endpoints, the preflight contract is broken.
 5. **`column_map` is presentation metadata only.** It maps columns to their source `template_uid` for display grouping (column headers, visual organization). It does not drive export splitting, row expansion, or any structural transformation. Export is always one flat file.
 
@@ -79,7 +79,7 @@ This means:
 
 - **Display**: FE receives a ready-to-render table — no client-side merge needed. One row = one show, always.
 - **View filters**: FE applies client-side filters (client, status) and simple asc/desc column sorting on the cached result — no server round-trip.
-- **Export**: All columns export into **one flat file** (CSV or single XLSX sheet). No multi-file splitting — all columns (system + shared metrics + custom) appear in one table.
+- **Export**: All columns export into **one flat file** (CSV or single XLSX sheet). No multi-file splitting — all columns (system + shared fields + custom) appear in one table.
 - **Transformation**: The flat rows are easily convertible to 2D arrays for tabular rendering and serialization.
 
 ### 4.3.1 Column key format and cross-version merging
@@ -155,19 +155,29 @@ This mirrors the Google Sheets workflow: one sheet per time range (scope), filte
 
 Export always produces **one flat file** — one CSV or one XLSX sheet. No multi-file splitting, no partition-based sheet separation.
 
-All selected columns (system + shared metrics + custom fields from any number of templates) appear as columns in a single table. If a show has tasks from templates A and B, that show's row has columns for both — custom fields from template A sit alongside custom fields from template B. Columns where the show has no matching task produce `null`.
+All selected columns (system + shared fields + custom fields from any number of templates) appear as columns in a single table. If a show has tasks from templates A and B, that show's row has columns for both — custom fields from template A sit alongside custom fields from template B. Columns where the show has no matching task produce `null`.
 
 `column_map` in the API response maps each column to its source `template_uid` for **display grouping** (e.g., the FE can visually group columns by template in the table header) — but it does not drive export splitting.
 
 This keeps the export simple and avoids the confusion of multiple files or sheets for what is conceptually one table.
 
-### 4.6 Shared metrics (semantic standardization layer)
+### 4.6 Shared fields (semantic standardization layer)
 
-> **Guiding principle: strong semantics, flexible operations.** Shared metrics standardize *how data is understood* for reporting (fixed keys, locked types, stable merge semantics) without standardizing *how data is collected* (templates, mobile workflows, operator UX). This is an engineering best-practice layer for cross-template data interoperability — not a constraint on template design.
+> **Guiding principle: strong semantics, flexible operations.** Shared fields standardize *how data is understood* for reporting (fixed keys, locked types and categories, stable merge semantics) without standardizing *how data is collected* (templates, mobile workflows, operator UX). This is an engineering best-practice layer for cross-template data interoperability — not a constraint on template design.
 
-The goal is a small set of shared KPI fields (5–8) that form a canonical reporting vocabulary — fields with stable semantics that any template can contribute to. These merge across templates in reports. Each template keeps its brand-specific custom fields unchanged. One operational moderation task per show — no template redesign, no second data-collection task.
+The goal is a small set of shared fields (5–15) across three categories — `metric`, `evidence`, and `status` — that form a canonical reporting vocabulary. Fields with stable semantics that any template can contribute to. These merge across templates in reports. Each template keeps its brand-specific custom fields unchanged. One operational moderation task per show — no template redesign, no second data-collection task.
 
-**Studio-scoped for now.** Shared metrics are scoped to the studio because we currently operate one studio. This is practical and avoids premature abstraction. The storage structure (`Studio.metadata.shared_metrics[]`) accommodates future multi-studio divergence (each studio defines its own vocabulary) or sharing (promote metrics to a global catalog) without structural changes.
+**Field categories:** Each shared field is assigned an immutable category that classifies its purpose:
+
+| Category | Purpose | Typical types | Examples |
+|----------|---------|---------------|----------|
+| **`metric`** | Numeric KPIs for performance analysis | `number` | `gmv`, `views`, `orders`, `conversion_rate`, `peak_viewers` |
+| **`evidence`** | Proof artifacts for QC and audit | `file`, `url` | `qc_image`, `proof_url`, `post_production_link` |
+| **`status`** | Compliance/readiness indicators | `checkbox`, `select` | `is_qc_ready`, `is_post_production_complete` |
+
+Categories are immutable after creation (like key and type). They enable FE sub-grouping in the column picker and settings UI, and document the field's intent.
+
+**Studio-scoped for now.** Shared fields are scoped to the studio because we currently operate one studio. This is practical and avoids premature abstraction. The storage structure (`Studio.metadata.shared_fields[]`) accommodates future multi-studio divergence (each studio defines its own vocabulary) or sharing (promote fields to a global catalog) without structural changes.
 
 #### 4.6.1 Schema change
 
@@ -175,54 +185,57 @@ The goal is a small set of shared KPI fields (5–8) that form a canonical repor
 
 ```typescript
 standard: z.boolean().optional()
-  .describe('True if this field uses a shared metric key. Shared metrics merge across templates in reports.')
+  .describe('True if this field uses a shared field key. Shared fields merge across templates in reports.')
 ```
 
-When `standard: true`, the report engine uses `field.key` directly as the column key (no template prefix). The `key` must match one defined in the studio's shared metrics list.
+When `standard: true`, the report engine uses `field.key` directly as the column key (no template prefix). The `key` must match one defined in the studio's shared fields list.
 
 #### 4.6.2 Storage and management
 
-Shared metrics are stored in `Studio.metadata.shared_metrics[]` — an array of metric definitions managed by studio admins at runtime.
+Shared fields are stored in `Studio.metadata.shared_fields[]` — an array of field definitions managed by studio admins at runtime.
 
 **Storage structure** (`Studio.metadata`):
 
 ```json
 {
-  "shared_metrics": [
-    { "key": "gmv", "type": "number", "label": "GMV", "description": "Gross merchandise value", "is_active": true },
-    { "key": "views", "type": "number", "label": "Views", "description": "Show view count", "is_active": true },
-    { "key": "conversion_rate", "type": "number", "label": "Conversion Rate", "is_active": true },
-    { "key": "peak_viewers", "type": "number", "label": "Peak Viewers", "is_active": true },
-    { "key": "orders", "type": "number", "label": "Orders", "is_active": true },
-    { "key": "qc_image", "type": "file", "label": "QC Image", "description": "Post-production quality check screenshot", "is_active": true }
+  "shared_fields": [
+    { "key": "gmv", "type": "number", "category": "metric", "label": "GMV", "description": "Gross merchandise value", "is_active": true },
+    { "key": "views", "type": "number", "category": "metric", "label": "Views", "description": "Show view count", "is_active": true },
+    { "key": "conversion_rate", "type": "number", "category": "metric", "label": "Conversion Rate", "is_active": true },
+    { "key": "peak_viewers", "type": "number", "category": "metric", "label": "Peak Viewers", "is_active": true },
+    { "key": "orders", "type": "number", "category": "metric", "label": "Orders", "is_active": true },
+    { "key": "qc_image", "type": "file", "category": "evidence", "label": "QC Image", "description": "Post-production quality check screenshot", "is_active": true }
   ]
 }
 ```
 
-**Shared metrics support any `FieldType`** — not just `number`. Performance KPIs use `number`, but QC evidence fields use `file` or `url`. The merge behavior is the same: fields with the same key + `standard: true` merge across templates into one column. In the export, `file`/`url` columns contain URL strings; in the table, they render as clickable links.
+**Shared fields support any `FieldType`** — not just `number`. Performance KPIs use `number` (category: `metric`), QC evidence fields use `file` or `url` (category: `evidence`), and compliance indicators use `checkbox` or `select` (category: `status`). The merge behavior is the same: fields with the same key + `standard: true` merge across templates into one column. In the export, `file`/`url` columns contain URL strings; in the table, they render as clickable links.
 
 **Validation schema** (Zod, in `@eridu/api-types`):
 
 ```typescript
-const sharedMetricSchema = z.object({
+const sharedFieldCategoryEnum = z.enum(['metric', 'evidence', 'status']);
+
+const sharedFieldSchema = z.object({
   key: z.string().min(1).max(50).regex(/^[a-z][a-z0-9_]*$/),  // snake_case, immutable
   type: FieldTypeEnum,                                          // immutable
+  category: sharedFieldCategoryEnum,                            // immutable
   label: z.string().min(1).max(200),                            // editable (display only)
   description: z.string().max(500).optional(),                  // editable
   is_active: z.boolean().default(true),                         // can deactivate, never delete
 });
 
-const sharedMetricsListSchema = z.array(sharedMetricSchema)
+const sharedFieldsListSchema = z.array(sharedFieldSchema)
   .refine(items => new Set(items.map(i => i.key)).size === items.length,
-    { message: 'Shared metric keys must be unique' });
+    { message: 'Shared field keys must be unique' });
 ```
 
 **Management endpoint:**
 
 ```
-GET  /studios/:studioId/settings/shared-metrics     → list all shared metrics
-POST /studios/:studioId/settings/shared-metrics     → create a new shared metric (key + type immutable after creation)
-PATCH /studios/:studioId/settings/shared-metrics/:key → update label, description, or is_active only
+GET  /studios/:studioId/settings/shared-fields     → list all shared fields
+POST /studios/:studioId/settings/shared-fields     → create a new shared field (key + type immutable after creation)
+PATCH /studios/:studioId/settings/shared-fields/:key → update label, description, or is_active only
 ```
 
 No DELETE — keys are reserved forever once created. Deactivate via `is_active: false` to hide from the template editor picker.
@@ -233,92 +246,93 @@ No DELETE — keys are reserved forever once created. Deactivate via `is_active:
 |-------|-----------|-------------|
 | `key` | Required, validated snake_case, must be unique in studio | **Immutable** — cannot be renamed |
 | `type` | Required, must be a valid FieldType | **Immutable** — cannot be changed |
+| `category` | Required, must be `metric`, `evidence`, or `status` | **Immutable** — cannot be changed |
 | `label` | Required | Editable (display-only, does not affect data) |
 | `description` | Optional | Editable |
 | `is_active` | Default `true` | Can toggle to `false` (hides from picker, key stays reserved) |
 
-**Why fully immutable keys?** Once a shared metric key is used in a template snapshot, the snapshot captures it as part of its immutable schema. Task content uses the key as a property name. If the key could be renamed, old snapshots and content would reference the old key while new ones reference the new key — breaking the merge that makes shared metrics work. Making keys immutable from creation means we never need to check if any snapshot is using it. The boundary is clear: create it right the first time.
+**Why fully immutable keys?** Once a shared field key is used in a template snapshot, the snapshot captures it as part of its immutable schema. Task content uses the key as a property name. If the key could be renamed, old snapshots and content would reference the old key while new ones reference the new key — breaking the merge that makes shared fields work. Making keys immutable from creation means we never need to check if any snapshot is using it. The boundary is clear: create it right the first time.
 
 **Role-based access:**
 
-| Role | Shared metrics | Template editor | Report builder |
-|------|---------------|-----------------|----------------|
-| **ADMIN** | Create, update label, deactivate | Select shared metrics when building templates | Full access |
-| **MANAGER** | Read only (cannot create or modify) | Select shared metrics when building templates | Full access |
+| Role | Shared fields | Template editor | Report builder |
+|------|--------------|-----------------|----------------|
+| **ADMIN** | Create, update label, deactivate | Select shared fields when building templates | Full access |
+| **MANAGER** | Read only (cannot create or modify) | Select shared fields when building templates | Full access |
 | **MODERATION_MANAGER** | No access | No access (cannot edit templates) | Full access |
 | **Operator / Moderator** | No access | No access | No access |
 
 #### 4.6.3 Snapshot boundary
 
-When a template author adds a shared metric field to a template, the full field definition (key, type, label, `standard: true`, validation rules) is captured in the `TaskTemplateSnapshot.schema.items[]` — just like any other field.
+When a template author adds a shared field field to a template, the full field definition (key, type, label, `standard: true`, validation rules) is captured in the `TaskTemplateSnapshot.schema.items[]` — just like any other field.
 
 **The snapshot is self-contained.** The report engine reads `standard: true` and `field.key` from the snapshot, not from `Studio.metadata`. This means:
 
-- If a shared metric's label is later updated in studio settings, old snapshots preserve their original label.
-- If a shared metric is deactivated (`is_active: false`), existing snapshots that reference it still work — they have the full definition.
+- If a shared field's label is later updated in studio settings, old snapshots preserve their original label.
+- If a shared field is deactivated (`is_active: false`), existing snapshots that reference it still work — they have the full definition.
 - The report engine never queries `Studio.metadata` at runtime. It only reads `snapshot.schema.items[]`.
 
 ```
-Studio.metadata.shared_metrics[]          ← current list for template editor picker
+Studio.metadata.shared_fields[]          ← current list for template editor picker
          ↓ (admin selects when building template)
 TaskTemplateSnapshot.schema.items[]       ← point-in-time record (immutable)
          ↓ (report engine reads)
 Report column with standard: true         ← merges across templates by key
 ```
 
-This clean separation means shared metrics management and reporting are decoupled — changes to the shared metrics list never break existing reports.
+This clean separation means shared fields management and reporting are decoupled — changes to the shared fields list never break existing reports.
 
 #### 4.6.4 Template editor integration
 
 When building a template, the author (ADMIN or MANAGER) sees two field sources:
-1. **Shared metrics** — from `Studio.metadata.shared_metrics[]` (only active ones). Selecting one inserts a field with the fixed key, type, and `standard: true`. The author can customize the label and validation rules in the template but **cannot change the key or type** (locked to the shared metric definition).
+1. **Shared fields** — from `Studio.metadata.shared_fields[]` (only active ones). Selecting one inserts a field with the fixed key, type, and `standard: true`. The author can customize the label and validation rules in the template but **cannot change the key, type, or category** (locked to the shared field definition).
 2. **Custom fields** — free-form fields the author defines with their own key. These are the majority of fields in any template.
 
-**Forward-only validation rule:** If a shared metric is deactivated (`is_active: false`) after templates already reference it, the behavior is:
+**Forward-only validation rule:** If a shared field is deactivated (`is_active: false`) after templates already reference it, the behavior is:
 - **Existing snapshots**: unaffected. The snapshot captured the full definition at save time — it is self-contained. Old tasks report correctly.
-- **New snapshots**: the template editor picker hides deactivated metrics, so authors cannot add them to new templates. If an existing template already has the field and is re-saved, the field is preserved in the new snapshot (it was already part of the template schema). The `standard: true` flag and key remain valid — deactivation only removes it from the picker, not from the data model.
-- **No retroactive invalidation**: deactivating a shared metric never breaks existing templates or tasks. The state only affects new records going forward.
+- **New snapshots**: the template editor picker hides deactivated fields, so authors cannot add them to new templates. If an existing template already has the field and is re-saved, the field is preserved in the new snapshot (it was already part of the template schema). The `standard: true` flag and key remain valid — deactivation only removes it from the picker, not from the data model.
+- **No retroactive invalidation**: deactivating a shared field never breaks existing templates or tasks. The state only affects new records going forward.
 
 #### 4.6.5 Template rebuild (alpha-phase migration)
 
 > **Context**: The system is in alpha testing with production data from Google Sheets. The apps are not yet in real operational usage. This significantly reduces migration risk.
 
-Existing ~30 moderation templates have shared metric fields (GMV, views, etc.) with **different keys per brand template** that need alignment to the shared metric vocabulary.
+Existing ~30 moderation templates have shared field fields (GMV, views, etc.) with **different keys per brand template** that need alignment to the shared field vocabulary.
 
 **Strategy: rebuild templates, forward-only for existing data.**
 
-Because we are in alpha, the migration approach is straightforward — rebuild templates from the current Google Sheets source with correct shared metric keys from the start. Existing task data (submitted against old snapshots) is **not retroactively migrated**. The shared metrics and `standard: true` flags apply to new records only.
+Because we are in alpha, the migration approach is straightforward — rebuild templates from the current Google Sheets source with correct shared field keys from the start. Existing task data (submitted against old snapshots) is **not retroactively migrated**. The shared fields and `standard: true` flags apply to new records only.
 
-**Rationale for forward-only**: What has happened has happened. Existing tasks retain their original snapshot references and content keys. They will appear in reports with template-scoped columns (the old key format) rather than merged shared metric columns. This avoids confusion from partial data migration and keeps the boundary clean: old data uses old keys, new data uses standardized keys. Over time, as new tasks are submitted against rebuilt templates, the shared metric columns will naturally populate.
+**Rationale for forward-only**: What has happened has happened. Existing tasks retain their original snapshot references and content keys. They will appear in reports with template-scoped columns (the old key format) rather than merged shared field columns. This avoids confusion from partial data migration and keeps the boundary clean: old data uses old keys, new data uses standardized keys. Over time, as new tasks are submitted against rebuilt templates, the shared field columns will naturally populate.
 
 **Steps:**
 
-1. **Studio ADMIN creates shared metrics** in studio settings (e.g., `gmv` / number, `views` / number). This defines the canonical vocabulary.
+1. **Studio ADMIN creates shared fields** in studio settings (e.g., `gmv` / number, `views` / number). This defines the canonical vocabulary.
 
-2. **Rebuild templates from Google Sheets** — recreate each moderation template using the shared metric keys for KPI fields and `standard: true` flag. Brand-specific custom fields are carried over as-is. Each rebuild creates a new snapshot via `updateTemplateWithSnapshot()`.
+2. **Rebuild templates from Google Sheets** — recreate each moderation template using the shared field keys for KPI fields and `standard: true` flag. Brand-specific custom fields are carried over as-is. Each rebuild creates a new snapshot via `updateTemplateWithSnapshot()`.
 
-3. **Verify** — confirm rebuilt templates pass schema validation and that the shared metric fields correctly use the canonical keys.
+3. **Verify** — confirm rebuilt templates pass schema validation and that the shared field fields correctly use the canonical keys.
 
 **What this means for reporting:**
 
-- **New tasks** (submitted after rebuild): shared metric fields merge across templates as designed. Full cross-template reporting works.
-- **Old tasks** (submitted before rebuild): shared metric data appears as template-scoped custom columns (e.g., `tpl_abc:gross_sales` instead of merged `gmv`). The data is still accessible but not merged. This is acceptable for alpha — the volume of old data is small and managers understand the transition.
+- **New tasks** (submitted after rebuild): shared field fields merge across templates as designed. Full cross-template reporting works.
+- **Old tasks** (submitted before rebuild): shared field data appears as template-scoped custom columns (e.g., `tpl_abc:gross_sales` instead of merged `gmv`). The data is still accessible but not merged. This is acceptable for alpha — the volume of old data is small and managers understand the transition.
 - **No data loss**: old snapshots are preserved, old tasks are untouched, old content keys still resolve correctly against their original snapshots.
 
 This approach eliminates the need for a content migration script, `snapshotId` reassignment, or batch processing — the complexity reduction is significant for alpha phase.
 
 #### 4.6.6 Cross-doc impact
 
-This feature extends the existing task template and studio management systems. The following docs and skills must be updated when shared metrics are implemented:
+This feature extends the existing task template and studio management systems. The following docs and skills must be updated when shared fields are implemented:
 
 | Doc / Skill | What to update |
 |-------------|---------------|
-| **Task template design** (if exists) | Template editor gains shared metrics picker; `FieldItemBaseSchema` adds `standard` property |
-| **Studio management** | New settings section for shared metrics; `Studio.metadata` schema extends |
-| **`erify-authorization` skill** | ADMIN scope gains "manage shared metrics"; MANAGER scope gains "read shared metrics" |
-| **Role matrix** (`STUDIO_ROLE_USE_CASES_AND_VIEWS.md`) | Add shared metrics row for ADMIN |
-| **`studio-route-access.ts`** | Add `sharedMetrics` key for ADMIN |
-| **`@eridu/api-types`** | Add `sharedMetricSchema`, update `FieldItemBaseSchema`, add settings endpoint schemas |
+| **Task template design** (if exists) | Template editor gains shared fields picker; `FieldItemBaseSchema` adds `standard` property |
+| **Studio management** | New settings section for shared fields; `Studio.metadata` schema extends |
+| **`erify-authorization` skill** | ADMIN scope gains "manage shared fields"; MANAGER scope gains "read shared fields" |
+| **Role matrix** (`STUDIO_ROLE_USE_CASES_AND_VIEWS.md`) | Add shared fields row for ADMIN |
+| **`studio-route-access.ts`** | Add `sharedFields` key for ADMIN |
+| **`@eridu/api-types`** | Add `sharedFieldSchema`, update `FieldItemBaseSchema`, add settings endpoint schemas |
 
 ### 4.7 Date presets in definitions
 
@@ -607,25 +621,26 @@ sources[]:
     label              — user-facing label
     type               — field type (text, number, checkbox, etc.)
     standard           — true if this is a standard field
-shared_metrics[]:      — deduplicated list of shared metric fields across all sources
+shared_fields[]:      — deduplicated list of shared fields across all sources
   key
   label
   type
-  contributing_template_count — how many templates use this shared metric
+  category               — metric, evidence, or status
+  contributing_template_count — how many templates use this shared field
   total_task_count            — total submitted tasks across all contributing templates
 ```
 
-Shared metric fields appear both in their source template's `fields[]` (for completeness) and in the top-level `shared_metrics[]` (for the FE to render the merged "Shared Metrics" group in the column picker).
+Shared fields appear both in their source template's `fields[]` (for completeness) and in the top-level `shared_fields[]` (for the FE to render the merged "Shared Fields" group in the column picker, sub-grouped by category).
 
-### 8.2 Shared metrics settings
+### 8.2 Shared fields settings
 
 ```
-GET  /studios/:studioId/settings/shared-metrics       → list all shared metrics
-POST /studios/:studioId/settings/shared-metrics       → create a new shared metric
-PATCH /studios/:studioId/settings/shared-metrics/:key → update label, description, or is_active
+GET  /studios/:studioId/settings/shared-fields       → list all shared fields
+POST /studios/:studioId/settings/shared-fields       → create a new shared field
+PATCH /studios/:studioId/settings/shared-fields/:key → update label, description, or is_active
 ```
 
-Access: **`ADMIN` only** — managers and moderation managers cannot create or modify shared metrics.
+Access: **`ADMIN` only** — managers and moderation managers cannot create or modify shared fields.
 
 This is a studio settings endpoint, not a reporting endpoint. It extends the existing studio management surface. See §4.6.2 for storage details and immutability rules.
 
@@ -853,13 +868,13 @@ For each matched task:
 
 1. read selected field definitions from `snapshot.schema.items`,
 2. for each selected field, compute the column key:
-   - **shared metric** (`standard: true`): column key = `field.key` (e.g., `gmv`)
+   - **shared field** (`standard: true`): column key = `field.key` (e.g., `gmv`)
    - **custom field**: column key = `{template_uid}:{field.key}` (e.g., `tpl_abc:notes`)
 3. pull matching values from `task.content` using `field.key`,
 4. normalize by field type,
 5. **merge into the show's single row** using the column key.
 
-**Shared metric fields** from different templates merge into the same column. If a show has moderation tasks from two different brand templates, both contributing `gmv` (standard), the values share the column key `gmv`. Since a show typically has one moderation task, this produces one value. If multiple tasks contribute to the same column on the same show, the duplicate-source handling (§9.4) applies — **the row stays single, conflicts are resolved within it**.
+**Shared fields** from different templates merge into the same column. If a show has moderation tasks from two different brand templates, both contributing `gmv` (standard), the values share the column key `gmv`. Since a show typically has one moderation task, this produces one value. If multiple tasks contribute to the same column on the same show, the duplicate-source handling (§9.4) applies — **the row stays single, conflicts are resolved within it**.
 
 **Custom fields** from different templates produce distinct column keys (`tpl_abc:notes` vs `tpl_xyz:notes`) and appear as **separate columns on the same row**. This is the expected behavior — the manager sees all data for a show in one row, with template-specific columns clearly labeled.
 
@@ -1009,8 +1024,8 @@ All reporting endpoints must return structured, meaningful error responses. Desi
 | Task count exceeds studio row cap | 400 | "Scope includes {n} tasks (limit: {limit}). Narrow your scope filters." |
 | Invalid date preset | 400 | "Invalid date preset: {value}" |
 | Date range too wide (optional guard) | 400 | "Date range exceeds maximum of {n} days" |
-| Shared metric key already exists | 409 | "Shared metric key '{key}' already exists" |
-| Shared metric key/type mutation attempt | 400 | "Key and type cannot be changed after creation" |
+| Shared field key already exists | 409 | "Shared field key '{key}' already exists" |
+| Shared field key/type/category mutation attempt | 400 | "Key, type, and category cannot be changed after creation" |
 | Unauthorized role | 403 | Standard guard response |
 
 **Security considerations:**
@@ -1075,14 +1090,14 @@ Mitigation: generation is fast (< 1s typical). The FE caches recently generated 
 
 ### Milestone BE-1 (Core workflow)
 
-1. shared metrics settings endpoint (`GET/POST/PATCH /settings/shared-metrics`) — ADMIN-only, stored in `Studio.metadata`
+1. shared fields settings endpoint (`GET/POST/PATCH /settings/shared-fields`) — ADMIN-only, stored in `Studio.metadata`
 2. Layer 1 (show scope resolution) as a shared internal service used by preflight, sources, and run
 3. preflight count endpoint (`POST /task-reports/preflight`) — lightweight scope validation before generation
 4. contextual source catalog endpoint (templates/snapshots with submitted tasks for filtered shows)
 5. report generation endpoint (`POST /task-reports/run`) with Layer 2 (task extraction + row construction), date preset resolution, comprehensive scope filters, `TaskTarget` join, internal batch processing, flat table generation, and inline response
 6. saved definition CRUD with date presets and scope filter persistence
 7. inline ad-hoc support (run without a saved definition)
-8. **cross-doc updates** (§4.6.6) — must be completed as part of BE-1, not deferred. Shared metrics extend the existing task template and studio management systems; the authorization skill, role matrix, route access config, and `@eridu/api-types` must all reflect the new capability before the feature is considered complete
+8. **cross-doc updates** (§4.6.6) — must be completed as part of BE-1, not deferred. Shared fields extend the existing task template and studio management systems; the authorization skill, role matrix, route access config, and `@eridu/api-types` must all reflect the new capability before the feature is considered complete
 9. **error contract** (§11.1) — structured error responses for all reporting endpoints, designed alongside the feature
 
 ### Milestone BE-2 (Polish)
@@ -1115,7 +1130,7 @@ Targeted tests:
 6. source catalog filters by show standard, show type correctly
 7. date presets resolve correctly (`this_week`, `this_month`)
 8. result generation produces strictly one row per show with correct column values
-9. show rows merge shared metric values from multiple task templates into the same row correctly
+9. show rows merge shared field values from multiple task templates into the same row correctly
 10. custom fields from different templates appear as separate columns on the same row (not separate rows)
 11. template-based custom columns return `null` for missing keys on older snapshots
 12. submitted-status filtering excludes in-progress work by default
@@ -1128,5 +1143,5 @@ Targeted tests:
 19. result row cap rejects over-scoped queries with descriptive error (consistent with preflight)
 20. definition with scope overrides generates correctly (e.g., stored `this_week` + override `date_from`/`date_to`)
 21. column count exceeding 50 is rejected with descriptive error
-22. shared metric deactivation does not break existing templates or reporting on old snapshots
+22. shared field deactivation does not break existing templates or reporting on old snapshots
 23. error responses follow §11.1 contract — structured, no internal ID leakage

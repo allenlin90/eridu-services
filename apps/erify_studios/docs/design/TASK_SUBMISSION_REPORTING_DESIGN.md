@@ -15,7 +15,7 @@ Primary user outcomes:
 3. slice and sort the generated table by client, status, or any column — all client-side,
 4. export a reusable spreadsheet — no CSV/XLSX files are generated or stored server-side.
 
-> **Design principle: strong semantics, flexible operations.** The FE surfaces a semantic standardization layer — shared metrics with fixed keys that merge across templates — while keeping custom fields template-scoped. This gives managers clean cross-template columns for KPIs without constraining how templates are designed or how operators submit data. See PRD [Design Principles](../../../../docs/prd/task-submission-reporting.md#design-principles).
+> **Design principle: strong semantics, flexible operations.** The FE surfaces a semantic standardization layer — shared fields with fixed keys, types, and categories that merge across templates — while keeping custom fields template-scoped. This gives managers clean cross-template columns for KPIs, QC evidence, and compliance indicators without constraining how templates are designed or how operators submit data. See PRD [Design Principles](../../../../docs/prd/task-submission-reporting.md#design-principles).
 
 ## 2. Scope
 
@@ -255,14 +255,14 @@ The column picker appears **after** scope filters are set. It shows only columns
 Three column categories — reflecting the semantic boundary between standardized reporting fields and template-specific data:
 
 1. **System columns** (always available): show name, show start time, client, assignee, task status, studio room, show standard, show type
-2. **Shared metrics** (canonical reporting vocabulary, merged across templates): fields marked `standard: true` in the template schema. These have fixed keys and types managed by studio ADMINs — the semantic standardization layer for cross-template reporting. They appear as a single group regardless of which template they come from (e.g., one `GMV` column, not 30 template-specific `GMV` columns). This is a small set (5–8 fields) managed in studio settings (§5.4).
+2. **Shared fields** (canonical reporting vocabulary, merged across templates): fields marked `standard: true` in the template schema. These have fixed keys, types, and categories managed by studio ADMINs — the semantic standardization layer for cross-template reporting. They appear sub-grouped by category (`Metrics`, `Evidence`, `Status`) regardless of which template they come from (e.g., one `GMV` column, not 30 template-specific `GMV` columns). This is a small set (5–15 fields) managed in studio settings (§5.4).
 3. **Custom fields** (template-scoped, never merged): all other fields, grouped by source template. Each template group shows its own custom fields. These are the majority of fields in any template and remain fully under each template author's control.
 
-The column picker should render shared metrics first (as a "Shared Metrics" group), then custom fields grouped by template.
+The column picker should render shared fields first (as a "Shared Fields" group, sub-grouped by category: Metrics / Evidence / Status), then custom fields grouped by template.
 
-Shared metrics are managed by studio ADMINs in studio settings (see §5.5). Keys and types are immutable once created. ADMINs and MANAGERs select shared metrics when building templates. In the report builder, shared metrics appear as merged columns — managers don't need to manage them here.
+Shared fields are managed by studio ADMINs in studio settings (see §5.4). Keys, types, and categories are immutable once created. ADMINs and MANAGERs select shared fields when building templates. In the report builder, shared fields appear as merged columns sub-grouped by category — managers don't need to manage them here.
 
-**User-facing explanation**: The "Shared Metrics" group header should include a brief description: *"These KPIs are shared across all templates — selecting one includes data from every template that collects it."* Custom field groups should show: *"These fields are specific to [template name]."* This helps managers understand why GMV appears once (shared metric) while template-specific notes appear per-template (custom).
+**User-facing explanation**: The "Shared Fields" group header should include a brief description: *"These fields are shared across all templates — selecting one includes data from every template that collects it."* Each category sub-group should have a subtitle: Metrics — *"Numeric KPIs"*, Evidence — *"Proof artifacts"*, Status — *"Compliance indicators"*. Custom field groups should show: *"These fields are specific to [template name]."* This helps managers understand why GMV appears once (shared field) while template-specific notes appear per-template (custom).
 
 Each template group should show:
 
@@ -271,13 +271,13 @@ Each template group should show:
 - submitted task count in the contextual catalog
 - selected field count
 
-Shared metrics show:
+Shared fields show:
 
-- field label and key
-- number of templates contributing to this metric
+- field label, key, and category
+- number of templates contributing to this field
 - total submitted task count across all contributing templates
 
-Incompatible source groups (different template schemas) are surfaced early so managers know export may split. Shared metrics never cause splits — they merge by design.
+Incompatible source groups (different template schemas) are surfaced early so managers know export may split. Shared fields never cause splits — they merge by design.
 
 **Column limit**: The picker enforces the 50-column hard cap. Show a live counter ("{n} of 50 selected") and disable further selection when the cap is reached. At 30+ columns, show a soft warning about table readability (see §5.3.1).
 
@@ -333,7 +333,7 @@ The table can have up to 50 columns (BE hard cap). In practice, tables with 20+ 
 |---------|----------|-------------|
 | **Frozen system columns** | MVP | Pin the first 2–3 system columns (show name, client, start time) so they remain visible during horizontal scroll. Standard in spreadsheet tools. |
 | **Horizontal virtual scroll** | MVP | Virtualize columns — only render visible columns in the DOM. Prevents layout thrashing with 30+ columns. Use `@tanstack/react-virtual` (already evaluated for row virtualization). |
-| **Column group headers** | MVP | Group columns by category (System, Shared Metrics, Custom — by template). Collapsible groups are deferred but group headers provide orientation. |
+| **Column group headers** | MVP | Group columns by category (System, Shared Fields — Metrics / Evidence / Status, Custom — by template). Collapsible groups are deferred but group headers provide orientation. |
 | **Column count indicator** | MVP | Show "{n} of 50 columns selected" in the column picker and a "{n} columns" badge on the table. Helps managers understand table width before generating. |
 | **Soft warning at 30+** | MVP | When the manager selects > 30 columns, show an informational note: *"Wide tables are best reviewed in the exported spreadsheet. The table preview may require horizontal scrolling."* Not blocking — just guidance. |
 | **Column visibility toggles** | FE-2 | Let managers hide/show columns in the table view without changing the export. The table shows a subset; the export includes all selected columns. |
@@ -344,24 +344,31 @@ The table can have up to 50 columns (BE hard cap). In practice, tables with 20+ 
 
 **Why 50, not lower?** Managers export for Excel analysis where 50 columns is comfortable with freeze panes. A lower cap (e.g., 30) would force managers to run multiple reports and merge them — worse UX than a wide table. The soft warning at 30 guides managers who care about table readability; the hard cap at 50 protects system resources.
 
-### 5.4 Shared metrics settings (ADMIN only)
+### 5.4 Shared fields settings (ADMIN only)
 
-Shared metrics are managed in **studio settings**, not in the report builder. This is a separate page/section accessible to studio ADMINs only. Shared metrics define the canonical reporting vocabulary — the small set of KPI fields with fixed keys and types that merge across templates for cross-template analysis. They are studio-scoped for now (one studio in operation), with room for future multi-studio divergence or sharing.
+Shared fields are managed in **studio settings**, not in the report builder. This is a separate page/section accessible to studio ADMINs only. Shared fields define the canonical reporting vocabulary — a small set of fields (5–15) with fixed keys, types, and categories that merge across templates for cross-template analysis. They are studio-scoped for now (one studio in operation), with room for future multi-studio divergence or sharing.
 
-**UI:** A simple list view in studio settings:
-- Shows all shared metrics (key, type, label, active/inactive status)
-- **Add** button → form with key (snake_case, validated), type (dropdown), label, description. Key and type become immutable after creation.
-- **Edit** → only label and description can be changed. Key and type fields are read-only with a lock icon and tooltip: *"Key and type cannot be changed after creation."*
-- **Deactivate** → toggle `is_active`. Deactivated metrics are hidden from the template editor picker but the key remains reserved (shown as "Inactive" in the settings list).
+**UI:** A list view in studio settings, organized by category sub-groups (`Metrics`, `Evidence`, `Status`):
+- Shows all shared fields (key, type, category, label, active/inactive status), grouped by category
+- **Add** button → form with key (snake_case, validated), type (dropdown), category (dropdown: metric/evidence/status), label, description. Key, type, and category become immutable after creation.
+- **Edit** → only label and description can be changed. Key, type, and category fields are read-only with a lock icon and tooltip: *"Key, type, and category cannot be changed after creation."*
+- **Deactivate** → toggle `is_active`. Deactivated fields are hidden from the template editor picker but the key remains reserved (shown as "Inactive" in the settings list).
 - No delete action — keys are reserved forever.
 
-**Why in settings, not in the report builder:** The report builder is for managers reviewing data. Shared metrics management affects template design and data structure — it belongs in studio configuration, accessible only to ADMINs.
+**Category sub-grouping:** The settings list groups fields by category with clear section headers:
+- **Metrics** — numeric KPIs (GMV, views, orders, etc.)
+- **Evidence** — proof artifacts (QC images, proof URLs, etc.)
+- **Status** — compliance/readiness indicators (QC ready, post-production complete, etc.)
 
-**File location:** `src/features/studio-settings/components/SharedMetricsList.tsx` (or within the existing studio settings feature).
+This grouping mirrors how shared fields appear in the column picker (§5.2), providing consistency across the settings and report builder UIs.
+
+**Why in settings, not in the report builder:** The report builder is for managers reviewing data. Shared field management affects template design and data structure — it belongs in studio configuration, accessible only to ADMINs.
+
+**File location:** `src/features/studio-settings/components/SharedFieldsList.tsx` (or within the existing studio settings feature).
 
 ### 5.5 Export UX
 
-Export always produces **one flat file** — one CSV or one XLSX sheet with all columns. No multi-file splitting, no multi-sheet partitioning. All columns (system + shared metrics + custom fields from any number of templates) appear in a single table.
+Export always produces **one flat file** — one CSV or one XLSX sheet with all columns. No multi-file splitting, no multi-sheet partitioning. All columns (system + shared fields + custom fields from any number of templates) appear in a single table.
 
 Export options:
 - **Export all** — exports the full dataset (all rows, ignoring view filters)
@@ -599,7 +606,7 @@ Rules:
 - flatten arrays (`multiselect`) into semicolon-space (`; `) — standard CSV convention to avoid conflict with the comma delimiter
 - export file/url fields as URL strings
 - preserve empty string vs `null` distinctions consistently
-- include system columns first, then shared metrics, then custom fields (grouped by template)
+- include system columns first, then shared fields (grouped by category: Metrics / Evidence / Status), then custom fields (grouped by template)
 - custom field column headers include template name for disambiguation (e.g., "Notes (Brand X)")
 - support "export all" vs "export filtered" modes
 
@@ -706,7 +713,7 @@ This is a data-hygiene signal: managers should investigate whether duplicates re
 
 1. definition list as landing view — load, create, delete
 2. scope filter controls — at least one required, filter change triggers catalog refetch
-3. contextual column picker — shows only columns from discovered catalog, with shared metrics and custom fields grouped
+3. contextual column picker — shows only columns from discovered catalog, with shared fields sub-grouped by category and custom fields grouped by template
 4. column picker enforces 50-column hard cap with live counter; soft warning at 30+
 5. preflight confirmation shows `show_count` and `task_count` before generation
 6. preflight over-limit state disables Confirm button and shows guidance
@@ -737,9 +744,9 @@ This is a data-hygiene signal: managers should investigate whether duplicates re
 1. definition list as landing view (list, create, save, load)
 2. scope filter controls with URL state (date range, show standard, show type)
 3. contextual source catalog fetch (re-fetches when scope filters change)
-4. inline column picker from discovered catalog (shared metrics + custom fields) with 50-column hard cap, live counter, and soft warning at 30+
+4. inline column picker from discovered catalog (shared fields sub-grouped by category + custom fields by template) with 50-column hard cap, live counter, and soft warning at 30+
 5. frozen system columns (show name, client, start time) + horizontal virtual scroll for wide tables
-6. column group headers (System, Shared Metrics, Custom — by template)
+6. column group headers (System, Shared Fields — Metrics / Evidence / Status, Custom — by template)
 7. preflight count confirmation before generation (show/task counts, over-limit blocking)
 8. "Run Report" action → receive inline result → cache in TanStack Query
 9. show-centric table rendering directly from `rows[]` and `columns[]`
@@ -801,7 +808,7 @@ Mitigation:
 
 - the column picker is contextual — only columns from templates with submitted tasks in scope are offered,
 - managers can select only the columns they need — they don't have to include all custom fields,
-- shared metrics merge across templates, keeping the shared KPI columns compact,
+- shared fields merge across templates, keeping the shared KPI columns compact,
 - `column_map` metadata groups columns by template for visual clarity in the table header.
 
 ### 14.4 Page refresh loses cached results
