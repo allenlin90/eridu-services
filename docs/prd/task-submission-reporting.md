@@ -435,6 +435,98 @@ graph TB
     DS --> TRD
 ```
 
+## Implementation Plan
+
+### Phase 1a: Engine + shared metrics infrastructure
+
+> **Goal**: Build the report generation engine and shared metrics foundation. Validate scope resolution, row construction, and cross-template merge before investing in the full UI.
+
+**Backend:**
+
+| # | Deliverable | Details |
+|---|-------------|---------|
+| 1 | Shared metrics settings endpoint | `GET/POST/PATCH /studios/:studioId/settings/shared-metrics` — ADMIN-only, stored in `Studio.metadata.shared_metrics[]` |
+| 2 | `standard` flag in `@eridu/api-types` | Add `standard: z.boolean().optional()` to `FieldItemBaseSchema`. Add `sharedMetricSchema` and settings endpoint schemas. |
+| 3 | `TaskReportScopeService` (Layer 1) | Scope resolution shared by `/sources`, `/preflight`, and `/run`. Resolves filters → shows → task counts → guardrails. |
+| 4 | Preflight endpoint | `POST /task-reports/preflight` — count-only validation before generation |
+| 5 | Report generation endpoint | `POST /task-reports/run` — Layer 2 extraction + row construction, flat table inline response |
+
+**Frontend:**
+
+| # | Deliverable | Details |
+|---|-------------|---------|
+| 6 | Shared metrics settings UI | Simple CRUD list in studio settings (ADMIN-only). Key/type immutable after creation. |
+| 7 | Scope filter controls | Date range, show standard, show type. URL state for shareability. |
+| 8 | Column picker | Contextual source catalog fetch + column selection with shared metrics group, 50-column cap, live counter |
+
+**Template rebuild** (parallel with BE work):
+
+| # | Deliverable | Details |
+|---|-------------|---------|
+| 9 | Create shared metrics in studio settings | Define canonical vocabulary: `gmv` (number), `views` (number), `conversion_rate` (number), `peak_viewers` (number), `orders` (number), `qc_image` (file), etc. |
+| 10 | Rebuild ~30 moderation templates | Rebuild from current Google Sheets with correct shared metric keys + `standard: true`. Forward-only — old tasks stay as-is. |
+
+**Exit criteria**: The `/run` endpoint correctly merges shared metric fields (including `file`/`url` types) across multiple templates into one-row-per-show. Preflight counts match run results. Scope resolution is identical across all three endpoints.
+
+### Phase 1b: Full report workflow
+
+> **Goal**: Ship the complete manager-facing workflow — this is where the Google Sheets replacement becomes real.
+
+**Backend:**
+
+| # | Deliverable | Details |
+|---|-------------|---------|
+| 11 | Contextual source catalog | `GET /task-report-sources` — returns templates/snapshots with submitted tasks for filtered shows, field catalogs, shared metrics deduplication |
+| 12 | Definition CRUD | `TaskReportDefinition` model + 5 endpoints. Personal presets with scope + columns + optional date presets. |
+| 13 | Cross-doc updates | Update authorization skill, role matrix, route access config, api-types — all items from BE design §4.6.6 |
+| 14 | Error contract | Structured error responses per BE design §11.1 — designed alongside the feature, not after |
+
+**Frontend:**
+
+| # | Deliverable | Details |
+|---|-------------|---------|
+| 15 | Report table rendering | Frozen system columns (show name, client, start time), horizontal virtual scroll, column group headers (System / Shared Metrics / Custom by template) |
+| 16 | View filters + column sort | Client-side filters (client, status, assignee, room, search) + simple asc/desc sort on cached rows |
+| 17 | Definition list as landing view | Save, load, clone definitions. Pre-fill scope + columns from definition. Landing page for the Task Reports route. |
+| 18 | Preflight confirmation UX | Show count summary before generation. Block over-limit scopes with guidance. |
+| 19 | CSV export | One flat file from cached JSON. Full dataset or filtered view. Column headers include template origin for custom fields. |
+
+**Exit criteria**: A manager can open Task Reports, load a saved definition, confirm preflight, generate a report, review the table with view filters, and export a CSV — replacing the current Google Sheets workflow end-to-end.
+
+### Phase 2: Polish + advanced table UX
+
+> **Goal**: Improve table readability for wide reports and add cross-session persistence.
+
+| # | Deliverable | Details |
+|---|-------------|---------|
+| 20 | XLSX export | Single-sheet export via lazy-loaded ExcelJS |
+| 21 | Column visibility toggles | Hide/show columns in table view without affecting export output |
+| 22 | Column pinning | Pin additional columns beyond default frozen ones |
+| 23 | Collapsible column groups | Collapse custom field groups to summary column in table; export always expanded |
+| 24 | Definition clone + edit | Read existing definition → POST copy with new name |
+| 25 | Date preset in definitions | `this_week`, `this_month`, or absolute dates pre-fill on load |
+| 26 | IndexedDB persistence | Cross-session result cache (last 5 per studio) using `idb-keyval` |
+| 27 | Checkbox fulfillment percentage | FE-computed derived metric — count checked/total checkboxes per row. Displayed as a progress indicator on the table. No BE change needed. |
+
+### Phase 3: Scale (if needed)
+
+> **Trigger**: Promote when P95 generation > 5s, HTTP timeout hit, or product requires removing the 10,000-row cap.
+
+| # | Deliverable | Details |
+|---|-------------|---------|
+| 28 | Async generation | BullMQ + 202 Accepted + polling. See [ideation/bullmq-async-processing.md](../ideation/bullmq-async-processing.md). |
+| 29 | Server-side result caching | Optional — for expensive reports that are re-run frequently |
+| 30 | Server-side CSV/XLSX export | For very large datasets that are impractical to serialize in the browser |
+| 31 | Numeric column summaries | Count, sum, average for numeric columns. See [ideation/task-analytics-summaries.md](../ideation/task-analytics-summaries.md). |
+
+### Deferred (no current trigger)
+
+- Cross-studio reporting or definition sharing
+- Role-scoped template visibility (all permitted roles see all templates for MVP)
+- Scheduled/recurring report generation
+- BI-style pivot tables or formula builders
+- `submittedAt` typed field — see [ideation/submitted-at-state-machine.md](../ideation/submitted-at-state-machine.md)
+
 ## Design Reference
 
 - Backend design: [TASK_SUBMISSION_REPORTING_DESIGN.md](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)
