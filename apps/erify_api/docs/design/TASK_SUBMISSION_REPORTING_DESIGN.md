@@ -230,6 +230,8 @@ const sharedFieldsListSchema = z.array(sharedFieldSchema)
     { message: 'Shared field keys must be unique' });
 ```
 
+Runtime behavior for malformed stored config: if `Studio.metadata.shared_fields` exists but does not match this schema, settings endpoints fail fast with an error (no silent fallback to `[]`). Missing `shared_fields` defaults to an empty list.
+
 **Management endpoint:**
 
 ```
@@ -1087,6 +1089,16 @@ Mitigation: the manager has already narrowed the show set via scope filters, bou
 Risk: without server-side caching, the same report scope generates redundantly across devices or after page refresh.
 
 Mitigation: generation is fast (< 1s typical). The FE caches recently generated results in TanStack Query. IndexedDB can be added for cross-session persistence. If generation cost becomes a concern, add server-side result storage as an optimization — the API contract is the same either way.
+
+### 12.8 Shared fields metadata write race (known issue, accepted for MVP)
+
+Risk: shared fields settings currently use a read-modify-write flow on `Studio.metadata.shared_fields[]`. Concurrent ADMIN writes can cause last-write-wins behavior and lost updates.
+
+Mitigation (current): accepted operational risk for MVP because updates are rare and only a small number of studio admins can modify shared fields concurrently.
+
+Deferred hardening options:
+- move shared fields to a dedicated normalized table/model with DB-level constraints, or
+- add optimistic concurrency (compare-and-swap on `updatedAt` with retry/conflict response).
 
 ## 13. Rollout Recommendation
 

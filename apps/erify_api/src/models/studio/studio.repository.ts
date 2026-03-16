@@ -58,6 +58,16 @@ export class StudioRepository extends BaseRepository<
     };
   }
 
+  async replaceMetadataByUid(
+    uid: string,
+    metadata: Record<string, unknown>,
+  ): Promise<Studio> {
+    return this.update(
+      { uid, deletedAt: null },
+      { metadata: metadata as Prisma.InputJsonValue },
+    );
+  }
+
   private buildWhereClause(params: StudioListParams): Prisma.StudioWhereInput {
     const where: Prisma.StudioWhereInput = {};
 

@@ -16,7 +16,9 @@ describe('studioService', () => {
   let utilityService: UtilityService;
 
   beforeEach(async () => {
-    const studioRepositoryMock = createMockRepository<StudioRepository>();
+    const studioRepositoryMock = createMockRepository<StudioRepository>({
+      replaceMetadataByUid: jest.fn(),
+    });
     const utilityMock = createMockUtilityService('std_test123');
 
     const module = await createModelServiceTestModule({
@@ -206,6 +208,172 @@ describe('studioService', () => {
 
       expect(studioRepository.findPaginated).toHaveBeenCalledWith(query);
       expect(result).toEqual(expectedResult);
+    });
+  });
+
+  describe('shared fields', () => {
+    const studioUid = 'std_00000001';
+
+    it('returns empty shared fields when metadata key is missing', async () => {
+      jest.spyOn(studioRepository, 'findByUid').mockResolvedValue({
+        id: 1n,
+        uid: studioUid,
+        name: 'Test Studio',
+        address: '123 Test Street',
+        metadata: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      } as any);
+
+      const result = await service.getSharedFields(studioUid);
+      expect(result).toEqual([]);
+    });
+
+    it('throws when stored shared_fields metadata is invalid', async () => {
+      jest.spyOn(studioRepository, 'findByUid').mockResolvedValue({
+        id: 1n,
+        uid: studioUid,
+        name: 'Test Studio',
+        address: '123 Test Street',
+        metadata: { shared_fields: { gmv: { key: 'gmv' } } },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      } as any);
+
+      await expect(service.getSharedFields(studioUid)).rejects.toThrow(
+        'Studio shared_fields metadata is invalid',
+      );
+    });
+
+    it('creates shared field and persists metadata via repository helper', async () => {
+      jest.spyOn(studioRepository, 'findByUid').mockResolvedValue({
+        id: 1n,
+        uid: studioUid,
+        name: 'Test Studio',
+        address: '123 Test Street',
+        metadata: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      } as any);
+      (studioRepository as any).replaceMetadataByUid.mockResolvedValue({ uid: studioUid });
+
+      const result = await service.createSharedField(studioUid, {
+        key: 'gmv',
+        type: 'number',
+        category: 'metric',
+        label: 'GMV',
+      } as any);
+
+      expect((studioRepository as any).replaceMetadataByUid).toHaveBeenCalledWith(
+        studioUid,
+        { shared_fields: result },
+      );
+      expect(result[0]?.key).toBe('gmv');
+    });
+
+    it('throws conflict when creating duplicate shared field key', async () => {
+      jest.spyOn(studioRepository, 'findByUid').mockResolvedValue({
+        id: 1n,
+        uid: studioUid,
+        name: 'Test Studio',
+        address: '123 Test Street',
+        metadata: {
+          shared_fields: [
+            {
+              key: 'gmv',
+              type: 'number',
+              category: 'metric',
+              label: 'GMV',
+              is_active: true,
+            },
+          ],
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      } as any);
+
+      await expect(
+        service.createSharedField(studioUid, {
+          key: 'gmv',
+          type: 'number',
+          category: 'metric',
+          label: 'Duplicate GMV',
+        } as any),
+      ).rejects.toThrow('Shared field key "gmv" already exists');
+
+      expect((studioRepository as any).replaceMetadataByUid).not.toHaveBeenCalled();
+    });
+
+    it('updates shared field and persists metadata via repository helper', async () => {
+      jest.spyOn(studioRepository, 'findByUid').mockResolvedValue({
+        id: 1n,
+        uid: studioUid,
+        name: 'Test Studio',
+        address: '123 Test Street',
+        metadata: {
+          shared_fields: [
+            {
+              key: 'gmv',
+              type: 'number',
+              category: 'metric',
+              label: 'GMV',
+              is_active: true,
+            },
+          ],
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      } as any);
+      (studioRepository as any).replaceMetadataByUid.mockResolvedValue({ uid: studioUid });
+
+      const result = await service.updateSharedField(studioUid, 'gmv', {
+        label: 'Gross Merchandise Value',
+        is_active: false,
+      } as any);
+
+      expect((studioRepository as any).replaceMetadataByUid).toHaveBeenCalledWith(
+        studioUid,
+        { shared_fields: result },
+      );
+      expect(result[0]?.label).toBe('Gross Merchandise Value');
+      expect(result[0]?.is_active).toBe(false);
+      expect(result[0]?.key).toBe('gmv');
+    });
+
+    it('throws not found when updating non-existent shared field key', async () => {
+      jest.spyOn(studioRepository, 'findByUid').mockResolvedValue({
+        id: 1n,
+        uid: studioUid,
+        name: 'Test Studio',
+        address: '123 Test Street',
+        metadata: {
+          shared_fields: [
+            {
+              key: 'gmv',
+              type: 'number',
+              category: 'metric',
+              label: 'GMV',
+              is_active: true,
+            },
+          ],
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      } as any);
+
+      await expect(
+        service.updateSharedField(studioUid, 'views', {
+          label: 'Views',
+        } as any),
+      ).rejects.toThrow('Shared field not found with id views');
+
+      expect((studioRepository as any).replaceMetadataByUid).not.toHaveBeenCalled();
     });
   });
 });

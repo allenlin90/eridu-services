@@ -26,12 +26,14 @@ export const sharedFieldCategorySchema = z.enum(['metric', 'evidence', 'status']
 
 export type SharedFieldCategory = z.infer<typeof sharedFieldCategorySchema>;
 
+export const sharedFieldKeySchema = z.string().min(1).max(50).regex(/^[a-z][a-z0-9_]*$/);
+
 /**
  * Canonical cross-template field definition managed in studio settings.
  * Used by template builders to mark fields as shared (`standard: true`).
  */
 export const sharedFieldSchema = z.object({
-  key: z.string().min(1).max(50).regex(/^[a-z][a-z0-9_]*$/),
+  key: sharedFieldKeySchema,
   type: FieldTypeEnum,
   category: sharedFieldCategorySchema,
   label: z.string().min(1).max(200),
