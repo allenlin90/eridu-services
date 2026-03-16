@@ -1111,6 +1111,9 @@ Targeted tests:
 15. tasks with multiple show targets merge into each target show's row (not extra rows)
 16. `_has_duplicate_source` flag is set on rows where latest-wins conflict resolution was applied
 17. duplicate-source uses latest `updatedAt` task and stores winning task UID in row metadata
-16. inline response includes correct `row_count` and column metadata
-17. result row cap rejects over-scoped queries with descriptive error (consistent with preflight)
-18. definition with scope overrides generates correctly (e.g., stored `this_week` + override `date_from`/`date_to`)
+18. inline response includes correct `row_count` and column metadata
+19. result row cap rejects over-scoped queries with descriptive error (consistent with preflight)
+20. definition with scope overrides generates correctly (e.g., stored `this_week` + override `date_from`/`date_to`)
+21. column count exceeding 50 is rejected with descriptive error
+22. shared metric deactivation does not break existing templates or reporting on old snapshots
+23. error responses follow §11.1 contract — structured, no internal ID leakage

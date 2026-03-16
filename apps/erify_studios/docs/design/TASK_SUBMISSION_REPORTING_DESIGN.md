@@ -279,6 +279,8 @@ Shared metrics show:
 
 Incompatible source groups (different template schemas) are surfaced early so managers know export may split. Shared metrics never cause splits — they merge by design.
 
+**Column limit**: The picker enforces the 50-column hard cap. Show a live counter ("{n} of 50 selected") and disable further selection when the cap is reached. At 30+ columns, show a soft warning about table readability (see §5.3.1).
+
 ### 5.3 Result table
 
 The result table renders `rows[]` directly — strictly **one row per show**, with all selected columns merged in. Custom fields from different templates appear as separate columns on the same row. The row count always equals the show count.
@@ -317,6 +319,30 @@ All view filters are applied client-side on the cached `rows[]`. The table re-re
 - multiselect fields as comma-separated tags
 
 > **Numeric summaries deferred**: A footer summary strip (row count, sum, average for numeric columns) is a natural UX enhancement but is deferred from MVP. The cached result contains raw row data — the FE can compute summaries client-side when this becomes a product requirement. See [docs/ideation/task-analytics-summaries.md](../../../../docs/ideation/task-analytics-summaries.md).
+
+### 5.3.1 Wide-table constraints and UX
+
+The table can have up to 50 columns (BE hard cap). In practice, tables with 20+ columns are difficult to read on screen. Since the **primary deliverable is the exported spreadsheet** (managers do further analysis in Excel/Sheets), the table UI is for spot-checking — not for reading every cell.
+
+**Hard constraint:**
+- **50-column hard cap** — enforced at both FE (column picker disables further selection) and BE (validation rejects > 50). This bounds response size and prevents abuse.
+
+**UX patterns for wide tables (implement progressively):**
+
+| Pattern | Priority | Description |
+|---------|----------|-------------|
+| **Frozen system columns** | MVP | Pin the first 2–3 system columns (show name, client, start time) so they remain visible during horizontal scroll. Standard in spreadsheet tools. |
+| **Horizontal virtual scroll** | MVP | Virtualize columns — only render visible columns in the DOM. Prevents layout thrashing with 30+ columns. Use `@tanstack/react-virtual` (already evaluated for row virtualization). |
+| **Column group headers** | MVP | Group columns by category (System, Shared Metrics, Custom — by template). Collapsible groups are deferred but group headers provide orientation. |
+| **Column count indicator** | MVP | Show "{n} of 50 columns selected" in the column picker and a "{n} columns" badge on the table. Helps managers understand table width before generating. |
+| **Soft warning at 30+** | MVP | When the manager selects > 30 columns, show an informational note: *"Wide tables are best reviewed in the exported spreadsheet. The table preview may require horizontal scrolling."* Not blocking — just guidance. |
+| **Column visibility toggles** | FE-2 | Let managers hide/show columns in the table view without changing the export. The table shows a subset; the export includes all selected columns. |
+| **Column pinning** | FE-2 | Let managers pin additional columns beyond the default frozen ones. |
+| **Collapsible column groups** | FE-2 | Collapse custom field groups to one summary column in the table; expand to see all. Export always includes expanded columns. |
+
+**Key design decision: table display columns vs. export columns.** The column picker defines what goes in the *export*. The table displays all selected columns by default, but column visibility toggles (FE-2) let managers narrow the table view for readability without affecting export output. This separates the "review" concern (I want to see 10 key columns) from the "export" concern (I want all 35 columns in my spreadsheet).
+
+**Why 50, not lower?** Managers export for Excel analysis where 50 columns is comfortable with freeze panes. A lower cap (e.g., 30) would force managers to run multiple reports and merge them — worse UX than a wide table. The soft warning at 30 guides managers who care about table readability; the hard cap at 50 protects system resources.
 
 ### 5.4 Shared metrics settings (ADMIN only)
 
@@ -681,17 +707,19 @@ This is a data-hygiene signal: managers should investigate whether duplicates re
 1. definition list as landing view — load, create, delete
 2. scope filter controls — at least one required, filter change triggers catalog refetch
 3. contextual column picker — shows only columns from discovered catalog, with shared metrics and custom fields grouped
-4. preflight confirmation shows `show_count` and `task_count` before generation
-5. preflight over-limit state disables Confirm button and shows guidance
-6. result table renders one row per show — `rows[]` length equals show count
-7. view filter toolbar — client, status, assignee, room, search all apply instantly
-8. column sort — click header toggles simple asc/desc, null values sort last
-9. blank cells for `null` values (not zero)
-10. file/url cells render clickable links
-11. result metadata header shows row count and generated_at
-12. export produces one flat file with all columns (no multi-file splitting)
-13. generation progress indicator during `runReport` mutation
-14. "Edit" action navigates back to builder with state preserved
+4. column picker enforces 50-column hard cap with live counter; soft warning at 30+
+5. preflight confirmation shows `show_count` and `task_count` before generation
+6. preflight over-limit state disables Confirm button and shows guidance
+7. result table renders one row per show — `rows[]` length equals show count
+8. frozen system columns remain visible during horizontal scroll
+9. view filter toolbar — client, status, assignee, room, search all apply instantly
+10. column sort — click header toggles simple asc/desc, null values sort last
+11. blank cells for `null` values (not zero)
+12. file/url cells render clickable links
+13. result metadata header shows row count and generated_at
+14. export produces one flat file with all columns (no multi-file splitting)
+15. generation progress indicator during `runReport` mutation
+16. "Edit" action navigates back to builder with state preserved
 
 ### 12.3 Integration tests
 
@@ -709,16 +737,18 @@ This is a data-hygiene signal: managers should investigate whether duplicates re
 1. definition list as landing view (list, create, save, load)
 2. scope filter controls with URL state (date range, show standard, show type)
 3. contextual source catalog fetch (re-fetches when scope filters change)
-4. inline column picker from discovered catalog (shared metrics + custom fields)
-5. preflight count confirmation before generation (show/task counts, over-limit blocking)
-6. "Run Report" action → receive inline result → cache in TanStack Query
-7. show-centric table rendering directly from `rows[]` and `columns[]`
-8. result metadata header (`row_count`, `generated_at`)
-9. client-side view filters (client, status, assignee, room)
-10. client-side column sort (simple asc/desc toggle)
-11. text search across visible columns
-12. duplicate-source warning badges
-13. CSV export from cached JSON (one flat file, full + filtered)
+4. inline column picker from discovered catalog (shared metrics + custom fields) with 50-column hard cap, live counter, and soft warning at 30+
+5. frozen system columns (show name, client, start time) + horizontal virtual scroll for wide tables
+6. column group headers (System, Shared Metrics, Custom — by template)
+7. preflight count confirmation before generation (show/task counts, over-limit blocking)
+8. "Run Report" action → receive inline result → cache in TanStack Query
+9. show-centric table rendering directly from `rows[]` and `columns[]`
+10. result metadata header (`row_count`, `generated_at`)
+11. client-side view filters (client, status, assignee, room)
+12. client-side column sort (simple asc/desc toggle)
+13. text search across visible columns
+14. duplicate-source warning badges
+15. CSV export from cached JSON (one flat file, full + filtered)
 
 Rationale: validate the full **definition → filter shows → discover columns → select → preflight → run → review → filter → sort → export** loop. Definitions are included from day one because they are the landing experience and the Google Sheets replacement.
 
@@ -727,10 +757,13 @@ Rationale: validate the full **definition → filter shows → discover columns 
 1. definition clone and edit
 2. date preset selection in definition save (this_week, this_month, custom)
 3. XLSX single-sheet export (lazy-loaded ExcelJS)
-5. IndexedDB for cross-session result persistence (last 5 per studio)
-6. richer row details / thumbnail preview for QC links
-7. stronger compatibility warnings and partition labels
-8. role-aware source defaults (e.g. pre-select moderation templates for `MODERATION_MANAGER`)
+4. column visibility toggles — hide/show columns in table view without affecting export
+5. column pinning — pin additional columns beyond default frozen ones
+6. collapsible column groups — collapse custom field groups to summary column in table; export always expanded
+7. IndexedDB for cross-session result persistence (last 5 per studio)
+8. richer row details / thumbnail preview for QC links
+9. stronger compatibility warnings and partition labels
+10. role-aware source defaults (e.g. pre-select moderation templates for `MODERATION_MANAGER`)
 
 ## 14. Risks and Mitigations
 

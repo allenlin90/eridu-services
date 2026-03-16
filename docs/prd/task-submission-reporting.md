@@ -87,7 +87,7 @@ Steps:
 
 1. **Filter shows** (scope filters) — set date range, client, show standard, show type, and other show-level attributes. These scope filters determine what data the BE generates. At least one scope filter is required.
 2. **Discover columns** — the BE returns which task templates/snapshots have submitted tasks for those filtered shows, plus their field catalogs. Columns are contextual — bound to the actual tasks on the selected shows.
-3. **Select columns** — pick system columns (show name, start time, client) and task-content columns from the discovered catalog. This defines the target table schema.
+3. **Select columns** — pick system columns (show name, start time, client) and task-content columns from the discovered catalog. This defines the target table schema. Hard cap: 50 columns. Soft warning at 30+ for table readability (the export is the primary deliverable — wide tables are best reviewed in the spreadsheet).
 4. **Save definition** (optional) — save the scope filters + column selection as a named personal preset. Definitions can store a default date preset (`this_week`, `this_month`, or absolute dates) that pre-fills on load.
 5. **Preflight check** — before generating, the FE requests a count summary (`show_count`, `task_count`). The manager sees the scope size and confirms before committing. Over-limit scopes are blocked with guidance.
 6. **Run report** — triggers BE to join submitted task data across matching shows into a flat table JSON with show-centric rows. The full result is returned inline — no server-side storage.
