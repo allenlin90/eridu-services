@@ -2,15 +2,15 @@
 
 > **Status**: Deferred from MVP
 > **Origin**: Task submission reporting & export design review (2026-03-15)
-> **Related**: [BE design §4.8](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)
+> **Related**: [BE design §4.11](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)
 
 ## What
 
-Replace synchronous report generation (`POST /task-reports/run` → blocking response) with an asynchronous BullMQ worker pattern:
+Replace synchronous inline report generation (`POST /task-reports/run` → full result in response) with an asynchronous BullMQ worker pattern:
 
-1. `POST /task-reports/run` → enqueue job → return `202 Accepted` with `result_uid` (status: `GENERATING`)
-2. BullMQ worker picks up the job, generates the result, stores JSONB.
-3. FE polls `GET /task-report-results/:uid` until status transitions to `READY`.
+1. `POST /task-reports/run` → enqueue job → return `202 Accepted` with a job token
+2. BullMQ worker picks up the job, generates the result, stores it server-side (add `TaskReportResult` model)
+3. FE polls `GET /task-report-results/:token` until status transitions to `READY`, then fetches full result
 
 ## Why It Was Considered
 
@@ -21,10 +21,11 @@ Replace synchronous report generation (`POST /task-reports/run` → blocking res
 
 ## Why It Was Deferred
 
-1. **MVP result sizes are well within synchronous limits.** Typical results (< 2,000 rows) complete in < 3s. The 10,000-row cap prevents runaway generation.
+1. **MVP result sizes are well within synchronous limits.** Typical results (500–1,000 rows) complete in < 1s. The 10,000-row cap prevents runaway generation.
 2. **No BullMQ infrastructure exists in the codebase yet.** Adding Redis + BullMQ for a single endpoint is disproportionate to the MVP scope.
-3. **Synchronous generation is simpler to implement, test, and debug.** Error handling is straightforward (throw → HTTP error response). Async adds job retry logic, failure handling, and progress tracking complexity.
-4. **The architectural shift to async is non-breaking.** The FE already receives a `result_uid` and fetches the result separately. Changing the generation from sync to async only affects the response code (200 → 202) and adds a polling step — no fundamental API contract change.
+3. **Synchronous inline response is simpler.** The FE receives the full result in the API response — no polling, no result storage, no status tracking.
+4. **No server-side result storage in MVP.** The current design returns results inline and caches on the client. Async generation requires server-side result storage (to hold the result between generation and retrieval), which is an architectural addition.
+5. **The shift to async is non-breaking.** The result shape (`rows[]`, `columns[]`, `column_map`) stays the same. The FE change is: receive result inline → receive job token, poll, then receive result. No fundamental contract change.
 
 ## Decision Gates for Promotion
 
@@ -42,29 +43,25 @@ Promote to a PRD when **any** of these are true:
 - Redis instance (new dependency — not currently in the codebase).
 - BullMQ package (`bullmq`) added to `erify_api`.
 - Queue: `task-report-generation` with configurable concurrency.
+- New `TaskReportResult` model (PostgreSQL JSONB) to hold generated results server-side.
 
 ### BE changes
 
-- `POST /task-reports/run` returns `202 Accepted` with `{ result_uid, status: 'GENERATING' }`.
-- `TaskReportResult` gets a `status` field: `GENERATING` | `READY` | `FAILED`.
+- Add `TaskReportResult` model with status field: `GENERATING` | `READY` | `FAILED`.
+- `POST /task-reports/run` returns `202 Accepted` with `{ job_token, status: 'GENERATING' }`.
+- Add `GET /task-report-results/:token` for polling + full result retrieval.
 - BullMQ worker calls the same `TaskReportQueryService.generateResult()` method — the generation logic is unchanged.
 - Job retry: 1 retry with exponential backoff. On final failure, set status to `FAILED` with error metadata.
-- Progress tracking: optional — update `TaskReportResult.metadata.progress` during batch iterations for FE progress display.
+- Progress tracking: optional — update progress metadata during batch iterations for FE progress display.
 
 ### FE changes
 
-- After `POST /task-reports/run` returns 202, poll `GET /task-report-results/:uid` every 2s.
+- After `POST /task-reports/run` returns 202, poll `GET /task-report-results/:token` every 2s.
 - Show a progress indicator during `GENERATING` state.
-- On `READY`, stop polling and display the result.
+- On `READY`, fetch full result and cache in TanStack Query (same as current inline flow).
 - On `FAILED`, show error with "Retry" button.
-- The existing result retrieval flow is unchanged — only the generation trigger changes.
-
-### Mobile / low-bandwidth considerations
-
-- The async pattern actually improves mobile UX: the HTTP request completes immediately (202), reducing the chance of timeout on slow connections.
-- The polling interval (2s) is lightweight — each poll is a small metadata response until the result is ready.
-- Result retrieval (downloading the full JSON) remains the bandwidth bottleneck — see BE design §4.8 for gzip/streaming mitigations.
+- The result shape and client-side caching/filtering are unchanged.
 
 ### Streaming as an alternative gate
 
-If the primary concern is large JSON response download time (not generation time), consider `Transfer-Encoding: chunked` streaming for the result retrieval endpoint before adding full async generation infrastructure. This is a lighter-weight optimization that addresses mobile/bandwidth concerns without BullMQ.
+If the primary concern is large JSON response size (not generation time), consider `Transfer-Encoding: chunked` streaming for the inline response before adding full async generation infrastructure. This is a lighter-weight optimization that addresses bandwidth concerns without BullMQ.
