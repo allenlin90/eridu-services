@@ -4,11 +4,11 @@
 
 ## 1. Purpose
 
-Support manager-facing review and export of submitted task data without introducing server-side report files or a warehouse dependency.
+Support manager-facing review and export of submitted task data without introducing server-side report files or a warehouse dependency. This is a **management and oversight tool** — not part of the operator task-execution flow. Junior moderators submit tasks through existing workflows; they do not interact with the reporting API.
 
 Primary examples:
 
-- moderation managers summarizing GMV, views, and performance metrics across many shows,
+- moderation managers summarizing shared KPIs (GMV, views, conversion) across many shows and brands,
 - studio managers reviewing post-production upload URLs for premium-show QC,
 - admins exporting submitted task evidence by client or date range.
 
@@ -60,15 +60,15 @@ Template-based source selection is allowed, but only as a convenience that resol
 
 The BE produces a **flat, show-centric table** returned directly in the API response:
 
-- `rows[]` — one row per show, with all selected columns merged from submitted tasks. Each row is a flat JSON object keyed by column identifiers.
-- `columns[]` — ordered column descriptors including system columns (show metadata) and task-content columns. Each column records its source template for export integrity.
-- `column_map` — maps each column to its source `template_uid`, enabling the FE to split by template for export without the BE sending separate partition arrays.
+- `rows[]` — strictly **one row per show**. Each row is a flat JSON object keyed by column identifiers, with all selected columns merged from the show's submitted tasks. If columns cannot be consolidated (e.g., custom fields from different templates), they appear as separate columns on the same row — never as separate rows.
+- `columns[]` — ordered column descriptors including system columns (show metadata) and task-content columns. Each column records its source template for metadata.
+- `column_map` — maps each column to its source `template_uid` for display grouping and column origin metadata.
 
 This means:
 
-- **Display**: FE receives a ready-to-render table — no client-side merge needed.
-- **View filters**: FE applies client-side filters (client, status, sort) on the cached result — no server round-trip.
-- **Export**: FE reads `column_map` to group columns by source template. Columns from the same template export to one sheet; columns from different templates split into separate sheets.
+- **Display**: FE receives a ready-to-render table — no client-side merge needed. One row = one show, always.
+- **View filters**: FE applies client-side filters (client, status) and simple asc/desc column sorting on the cached result — no server round-trip.
+- **Export**: All columns export into **one flat file** (CSV or single XLSX sheet). No multi-file splitting — all columns (system + shared metrics + custom) appear in one table.
 - **Transformation**: The flat rows are easily convertible to 2D arrays for tabular rendering and serialization.
 
 ### 4.3.1 Column key format and cross-version merging
@@ -140,23 +140,19 @@ Filters are split into scope (server) and view (client):
 
 This mirrors the Google Sheets workflow: one sheet per time range (scope), filter views per client/status (view).
 
-### 4.5 Export partition key
+### 4.5 Single-file export
 
-The partition key in `column_map` depends on whether the column is standard or custom:
+Export always produces **one flat file** — one CSV or one XLSX sheet. No multi-file splitting, no partition-based sheet separation.
 
-- **Standard fields** → partition key `"_standard"` (shared partition). Standard fields from all templates are grouped together — they never cause export splits.
-- **Custom fields** → partition key `template_uid`. Custom fields from different templates produce separate partitions.
+All selected columns (system + shared metrics + custom fields from any number of templates) appear as columns in a single table. If a show has tasks from templates A and B, that show's row has columns for both — custom fields from template A sit alongside custom fields from template B. Columns where the show has no matching task produce `null`.
 
-Since field keys are stable across snapshot versions of the same template (see §4.3.1), columns from different versions of the same template merge naturally within their partition.
+`column_map` in the API response maps each column to its source `template_uid` for **display grouping** (e.g., the FE can visually group columns by template in the table header) — but it does not drive export splitting.
 
-Export behavior:
+This keeps the export simple and avoids the confusion of multiple files or sheets for what is conceptually one table.
 
-- Standard fields + custom fields from one template → one CSV/sheet (standard fields are always included in every sheet)
-- Custom fields from template A + custom fields from template B → separate CSV/sheets (each includes the standard field columns)
+### 4.6 Shared metrics
 
-This eliminates the previous concern about consecutive snapshot versions producing separate partition groups. No `schema_signature` is needed.
-
-### 4.6 Standard field catalog and backfill
+**This is not full template standardization.** The goal is a small set of shared KPI fields (5–8) that merge across templates in reports. Each template keeps its brand-specific custom fields unchanged. One operational moderation task per show — no template redesign, no second data-collection task.
 
 #### 4.6.1 Schema change
 
@@ -164,41 +160,107 @@ This eliminates the previous concern about consecutive snapshot versions produci
 
 ```typescript
 standard: z.boolean().optional()
-  .describe('True if this field uses a key from the standard field catalog. Standard fields merge across templates in reports.')
+  .describe('True if this field uses a shared metric key. Shared metrics merge across templates in reports.')
 ```
 
-When `standard: true`, the report engine uses `field.key` directly as the column key (no template prefix). The `key` must match one of the canonical standard field keys defined in the studio's standard field catalog.
+When `standard: true`, the report engine uses `field.key` directly as the column key (no template prefix). The `key` must match one defined in the studio's shared metrics list.
 
-#### 4.6.2 Standard field catalog
+#### 4.6.2 Storage and management
 
-The standard field catalog is a set of pre-defined data collection field definitions with fixed keys. It is a **prerequisite for cross-template reporting** — not a separate feature.
+Shared metrics are stored in `Studio.metadata.shared_metrics[]` — an array of metric definitions managed by studio admins at runtime.
 
-**Catalog scope for MVP**: The catalog is a small, stable set of 8–10 fields defined collaboratively with the moderation team. For MVP, the catalog can be stored as a **seed configuration** (a JSON file or DB seed) rather than a full CRUD API. Template authors select standard fields from a picker in the template editor — the picker reads from the catalog and inserts the field with its canonical key and `standard: true`.
+**Storage structure** (`Studio.metadata`):
 
-Examples of standard field keys:
+```json
+{
+  "shared_metrics": [
+    { "key": "gmv", "type": "number", "label": "GMV", "description": "Gross merchandise value", "is_active": true },
+    { "key": "views", "type": "number", "label": "Views", "description": "Show view count", "is_active": true },
+    { "key": "conversion_rate", "type": "number", "label": "Conversion Rate", "is_active": true },
+    { "key": "peak_viewers", "type": "number", "label": "Peak Viewers", "is_active": true },
+    { "key": "orders", "type": "number", "label": "Orders", "is_active": true }
+  ]
+}
+```
 
-- `gmv` — gross merchandise value
-- `views` — show view count
-- `conversion_rate` — conversion percentage
-- `peak_viewers` — peak concurrent viewers
-- `orders` — order count
-- `likes` — like count
-- `comments` — comment count
-- `new_followers` — new follower count
+**Validation schema** (Zod, in `@eridu/api-types`):
 
-**Template editor integration**: When building a template, the author sees two field sources:
-1. **Standard fields** — pre-defined from the catalog. Selecting one inserts a field with the canonical key, type, and label. The author can customize the label and validation but **cannot change the key** (it's locked to the standard).
-2. **Custom fields** — free-form fields the author defines with their own key.
+```typescript
+const sharedMetricSchema = z.object({
+  key: z.string().min(1).max(50).regex(/^[a-z][a-z0-9_]*$/),  // snake_case, immutable
+  type: FieldTypeEnum,                                          // immutable
+  label: z.string().min(1).max(200),                            // editable (display only)
+  description: z.string().max(500).optional(),                  // editable
+  is_active: z.boolean().default(true),                         // can deactivate, never delete
+});
 
-This ensures standard field keys are consistent across all templates without requiring a full catalog management API. If the catalog needs to grow beyond ~20 fields, add a CRUD API in a future milestone.
+const sharedMetricsListSchema = z.array(sharedMetricSchema)
+  .refine(items => new Set(items.map(i => i.key)).size === items.length,
+    { message: 'Shared metric keys must be unique' });
+```
 
-**Reporting dependency**: The report engine only depends on the `standard: true` flag and the field `key`. It does not import or query the catalog — it reads the flag from `snapshot.schema.items[]`.
+**Management endpoint:**
 
-#### 4.6.3 Backfill migration
+```
+GET  /studios/:studioId/settings/shared-metrics     → list all shared metrics
+POST /studios/:studioId/settings/shared-metrics     → create a new shared metric (key + type immutable after creation)
+PATCH /studios/:studioId/settings/shared-metrics/:key → update label, description, or is_active only
+```
 
-Existing ~30 moderation templates have data collection fields with non-standard keys that need alignment.
+No DELETE — keys are reserved forever once created. Deactivate via `is_active: false` to hide from the template editor picker.
 
-**Why this is non-trivial**: The report engine discovers columns by reading `snapshot.schema.items[].key` and extracts values from `task.content` using that key. Both must agree. Snapshots are immutable — existing ones cannot be modified. The content validator uses `.strict()` mode, so content keys must exactly match the snapshot schema.
+**Immutability rules:**
+
+| Field | On create | After create |
+|-------|-----------|-------------|
+| `key` | Required, validated snake_case, must be unique in studio | **Immutable** — cannot be renamed |
+| `type` | Required, must be a valid FieldType | **Immutable** — cannot be changed |
+| `label` | Required | Editable (display-only, does not affect data) |
+| `description` | Optional | Editable |
+| `is_active` | Default `true` | Can toggle to `false` (hides from picker, key stays reserved) |
+
+**Why fully immutable keys?** Once a shared metric key is used in a template snapshot, the snapshot captures it as part of its immutable schema. Task content uses the key as a property name. If the key could be renamed, old snapshots and content would reference the old key while new ones reference the new key — breaking the merge that makes shared metrics work. Making keys immutable from creation means we never need to check if any snapshot is using it. The boundary is clear: create it right the first time.
+
+**Role-based access:**
+
+| Role | Shared metrics | Template editor | Report builder |
+|------|---------------|-----------------|----------------|
+| **ADMIN** | Create, update label, deactivate | Select shared metrics when building templates | Full access |
+| **MANAGER** | Read only (cannot create or modify) | Select shared metrics when building templates | Full access |
+| **MODERATION_MANAGER** | No access | No access (cannot edit templates) | Full access |
+| **Operator / Moderator** | No access | No access | No access |
+
+#### 4.6.3 Snapshot boundary
+
+When a template author adds a shared metric field to a template, the full field definition (key, type, label, `standard: true`, validation rules) is captured in the `TaskTemplateSnapshot.schema.items[]` — just like any other field.
+
+**The snapshot is self-contained.** The report engine reads `standard: true` and `field.key` from the snapshot, not from `Studio.metadata`. This means:
+
+- If a shared metric's label is later updated in studio settings, old snapshots preserve their original label.
+- If a shared metric is deactivated (`is_active: false`), existing snapshots that reference it still work — they have the full definition.
+- The report engine never queries `Studio.metadata` at runtime. It only reads `snapshot.schema.items[]`.
+
+```
+Studio.metadata.shared_metrics[]          ← current list for template editor picker
+         ↓ (admin selects when building template)
+TaskTemplateSnapshot.schema.items[]       ← point-in-time record (immutable)
+         ↓ (report engine reads)
+Report column with standard: true         ← merges across templates by key
+```
+
+This clean separation means shared metrics management and reporting are decoupled — changes to the shared metrics list never break existing reports.
+
+#### 4.6.4 Template editor integration
+
+When building a template, the author (ADMIN or MANAGER) sees two field sources:
+1. **Shared metrics** — from `Studio.metadata.shared_metrics[]` (only active ones). Selecting one inserts a field with the fixed key, type, and `standard: true`. The author can customize the label and validation rules in the template but **cannot change the key or type** (locked to the shared metric definition).
+2. **Custom fields** — free-form fields the author defines with their own key. These are the majority of fields in any template.
+
+#### 4.6.5 Backfill migration
+
+Existing ~30 moderation templates have shared metric fields (GMV, views, etc.) with **different keys per brand template** that need alignment.
+
+**Pre-requisite**: Studio admin creates the shared metrics in studio settings before migration runs.
 
 **Migration strategy — application-level script** (not a raw SQL migration):
 
@@ -209,13 +271,13 @@ The backfill must go through application logic because:
 
 Steps:
 
-1. **Define key mapping** — for each template, map existing field keys to standard keys (e.g., `gross_sales` → `gmv`, `view_count` → `views`). This is a manual review step with the moderation team.
+1. **Define key mapping** — for each template, map existing metric field keys to shared metric keys (e.g., `gross_sales` → `gmv`, `view_count` → `views`). This is a manual review step with the moderation team. Only the shared metric fields are affected; brand-specific custom fields are skipped.
 
-2. **Create new snapshots via service** — for each affected template, call `updateTemplateWithSnapshot()` with the updated schema (renamed keys + `standard: true` flag). This creates an immutable new snapshot and increments the version. Old snapshots are preserved.
+2. **Create new snapshots via service** — for each affected template, call `updateTemplateWithSnapshot()` with the updated schema (renamed keys + `standard: true` flag; custom fields unchanged). This creates an immutable new snapshot and increments the version. Old snapshots are preserved.
 
 3. **Migrate Task.content + snapshotId** — for each task referencing an old snapshot of the affected template:
    - Read the task's current `content` and the old snapshot's key mapping.
-   - Rename keys in `content` to match the new standard keys.
+   - Rename only the shared metric keys in `content`. Custom field keys are untouched.
    - Update `task.snapshotId` to point to the new snapshot so that validation and reporting align.
    - Write both changes in a single update.
 
@@ -232,6 +294,19 @@ Steps:
 - Back up `Task.content` values before overwriting (e.g., store original in `task.metadata.pre_standard_content`).
 
 This migration is required before MVP reporting can produce cross-template moderation summaries.
+
+#### 4.6.6 Cross-doc impact
+
+This feature extends the existing task template and studio management systems. The following docs and skills must be updated when shared metrics are implemented:
+
+| Doc / Skill | What to update |
+|-------------|---------------|
+| **Task template design** (if exists) | Template editor gains shared metrics picker; `FieldItemBaseSchema` adds `standard` property |
+| **Studio management** | New settings section for shared metrics; `Studio.metadata` schema extends |
+| **`erify-authorization` skill** | ADMIN scope gains "manage shared metrics"; MANAGER scope gains "read shared metrics" |
+| **Role matrix** (`STUDIO_ROLE_USE_CASES_AND_VIEWS.md`) | Add shared metrics row for ADMIN |
+| **`studio-route-access.ts`** | Add `sharedMetrics` key for ADMIN |
+| **`@eridu/api-types`** | Add `sharedMetricSchema`, update `FieldItemBaseSchema`, add settings endpoint schemas |
 
 ### 4.7 Date presets in definitions
 
@@ -433,12 +508,12 @@ Key request concepts (run report):
 
 Key response concepts (inline result):
 
-- `rows[]`: flat show-centric rows
+- `rows[]`: strictly one row per show — all task data merged into a single flat row
 - `columns[]`: ordered column descriptors with source metadata
-- `column_map`: partition grouping for export
-- `warnings[]`: version conflicts, duplicate flags
+- `column_map`: maps each column to its source `template_uid` (for display grouping, not export splitting)
+- `warnings[]`: duplicate-source flags, version notes
 - `scope_summary`: human-readable scope description
-- `row_count`: quick metadata
+- `row_count`: equals show count (one row per show)
 - `generated_at`: timestamp
 
 ## 8. Endpoint Plan
@@ -453,6 +528,46 @@ Purpose:
 - return field catalogs derived from snapshot schemas,
 - expose usage summary (`submitted_task_count`, etc.).
 
+#### Source Catalog Discovery Sequence
+
+```mermaid
+sequenceDiagram
+    participant FE as erify_studios
+    participant Ctrl as StudioTaskReportController
+    participant QS as TaskReportQueryService
+    participant TaskRepo as TaskRepository
+    participant DB as PostgreSQL
+
+    FE->>Ctrl: GET /task-report-sources<br/>?date_from=...&date_to=...&show_standard_id=...
+    Ctrl->>QS: discoverSources(studioId, scopeFilters)
+
+    Note over QS: 1. Find shows matching scope filters
+    QS->>TaskRepo: findShowsInScope(studioId, scopeFilters)
+    TaskRepo->>DB: SELECT shows WHERE startTime BETWEEN<br/>date_from AND date_to<br/>AND showStandardId = ? ...
+    DB-->>TaskRepo: show IDs
+    TaskRepo-->>QS: show list
+
+    Note over QS: 2. Find submitted tasks on those shows
+    QS->>TaskRepo: findDistinctTemplates({<br/>  studioId, showIds, statuses:<br/>  [REVIEW, COMPLETED, CLOSED],<br/>  targetType: SHOW<br/>})
+    TaskRepo->>DB: SELECT DISTINCT templateId, snapshotId<br/>FROM Task<br/>JOIN TaskTarget ON targetType='SHOW'<br/>WHERE showId IN (...) AND status IN (...)
+    DB-->>TaskRepo: template + snapshot pairs
+    TaskRepo-->>QS: template/snapshot list with counts
+
+    Note over QS: 3. Load snapshot schemas for discovered templates
+    QS->>TaskRepo: loadSnapshotSchemas(snapshotIds)
+    TaskRepo->>DB: SELECT id, schema FROM TaskTemplateSnapshot<br/>WHERE id IN (...)
+    DB-->>TaskRepo: snapshot schemas
+    TaskRepo-->>QS: schemas
+
+    Note over QS: 4. Build field catalog per template,<br/>deduplicate standard fields
+    QS->>QS: buildSourceCatalog(templates, schemas)
+    Note over QS: For each template:<br/>- extract schema.items[]<br/>- classify standard vs custom<br/>- count submitted tasks<br/>Deduplicate standard fields across templates
+
+    QS-->>Ctrl: { sources[], standard_fields[] }
+    Ctrl-->>FE: Source catalog JSON
+    Note over FE: Render column picker:<br/>Standard Fields group +<br/>per-template Custom Fields groups
+```
+
 **Query params** (scope filters):
 
 - `date_from`, `date_to` (at least one scope filter required)
@@ -465,7 +580,7 @@ Access:
 
 - `ADMIN`, `MANAGER`, `MODERATION_MANAGER`
 
-This endpoint takes scope filters as input, making the column catalog contextual to the manager's show selection. It joins through `TaskTarget` → `Show` to find which templates have submitted tasks for the filtered shows.
+This endpoint takes scope filters as input, making the column catalog contextual to the manager's show selection. It uses **Layer 1 (show scope resolution)** (§9.1) to resolve shows, then discovers templates with submitted tasks on those shows.
 
 **Response shape:**
 
@@ -480,17 +595,29 @@ sources[]:
     label              — user-facing label
     type               — field type (text, number, checkbox, etc.)
     standard           — true if this is a standard field
-standard_fields[]:     — deduplicated list of standard fields across all sources
+shared_metrics[]:      — deduplicated list of shared metric fields across all sources
   key
   label
   type
-  contributing_template_count — how many templates use this standard field
+  contributing_template_count — how many templates use this shared metric
   total_task_count            — total submitted tasks across all contributing templates
 ```
 
-Standard fields appear both in their source template's `fields[]` (for completeness) and in the top-level `standard_fields[]` (for the FE to render the merged "Standard Fields" group in the column picker).
+Shared metric fields appear both in their source template's `fields[]` (for completeness) and in the top-level `shared_metrics[]` (for the FE to render the merged "Shared Metrics" group in the column picker).
 
-### 8.2 Saved definition CRUD
+### 8.2 Shared metrics settings
+
+```
+GET  /studios/:studioId/settings/shared-metrics       → list all shared metrics
+POST /studios/:studioId/settings/shared-metrics       → create a new shared metric
+PATCH /studios/:studioId/settings/shared-metrics/:key → update label, description, or is_active
+```
+
+Access: **`ADMIN` only** — managers and moderation managers cannot create or modify shared metrics.
+
+This is a studio settings endpoint, not a reporting endpoint. It extends the existing studio management surface. See §4.6.2 for storage details and immutability rules.
+
+### 8.3 Saved definition CRUD
 
 - `GET /studios/:studioId/task-report-definitions`
 - `GET /studios/:studioId/task-report-definitions/:definitionUid`
@@ -508,7 +635,7 @@ Purpose:
 - support repeated manager workflows and cross-device definition sync,
 - clone is just POST with pre-filled body from an existing definition.
 
-### 8.3 Report execution (generate + return inline)
+### 8.4 Report execution (generate + return inline)
 
 `POST /studios/:studioId/task-reports/run`
 
@@ -554,7 +681,46 @@ resolved_scope { date_from, date_to, ... }
 
 The full result is returned in the response body. No `result_uid` — the result is not persisted server-side.
 
-## 9. Query Strategy
+### 8.5 Preflight count
+
+`POST /studios/:studioId/task-reports/preflight`
+
+Access:
+
+- `ADMIN`, `MANAGER`, `MODERATION_MANAGER`
+
+Purpose: lightweight count query before full generation. The FE calls this before `POST /run` so the manager can confirm scope size and the guardrail can be enforced early — before any heavy extraction work.
+
+**Request shape** (same scope as `/run`):
+
+```text
+scope { date_preset?, date_from?, date_to?, show_standard_id?, show_type_id?, submitted_statuses? }
+source_templates[]?
+```
+
+**Response shape:**
+
+```text
+show_count       — number of shows matching scope
+task_count       — number of submitted tasks on those shows
+within_limit     — boolean (task_count <= studio row cap)
+limit            — the studio's configured row cap (default 10,000)
+```
+
+This is a count-only query — no content extraction, no row building. It runs the same scope resolution logic as `/run` (Layer 1 below) but stops after counting.
+
+If `within_limit` is `false`, the FE blocks the run and shows guidance to narrow scope. The manager never waits for a generation that will fail.
+
+## 9. Query Strategy — Two-Layer Architecture
+
+Report generation is split into two explicit layers with a clear boundary:
+
+| Layer | Responsibility | Shared by |
+|-------|---------------|-----------|
+| **Layer 1: Show scope resolution** | Resolve filters → find matching shows → count matching tasks → enforce guardrails | `preflight`, `run`, `sources` |
+| **Layer 2: Task extraction & row construction** | Load task content in batches → extract column values → build show-centric rows → assemble flat table | `run` only |
+
+This separation ensures the preflight count, source catalog, and full generation all share the same scope resolution logic. Layer 1 is reusable and cheap; Layer 2 is the heavy path that only `run` executes.
 
 ### Report Generation Sequence
 
@@ -569,53 +735,68 @@ sequenceDiagram
     FE->>Ctrl: POST /task-reports/run<br/>{scope, columns, definition_uid?}
     Ctrl->>QS: generateResult(payload)
 
-    Note over QS: 1. Resolve date preset to absolute dates
-    QS->>QS: resolveScope(scope) → resolvedScope
-
-    Note over QS: 2. Query matching shows
-    QS->>Repo: findShowsInScope(resolvedScope)
-    Repo-->>QS: show list
-
-    Note over QS: 3. Count total matching tasks
-    QS->>Repo: countSubmittedTasks(shows, filters)
-    Repo-->>QS: total count (check guardrail)
-
-    Note over QS: 4. Iterate tasks in batches, extract values
-    loop Each batch (skip/take 200)
-        QS->>Repo: findSubmittedTasks({<br/>  studioId, shows, statuses,<br/>  targets: { targetType: SHOW },<br/>  skip, take: 200<br/>})
-        Repo-->>QS: task batch + targets + shows
-
-        loop Each task in batch
-            QS->>QS: extractRowValues(snapshot.schema, task.content, selectedColumns)
-            QS->>QS: mergeIntoShowRow(show_id, values)
-            QS->>QS: flagDuplicates(show_id, template)
-        end
+    rect rgb(235, 245, 255)
+        Note over QS,DB: Layer 1 — Show Scope Resolution<br/>(shared with preflight + sources)
+        QS->>QS: resolveScope(scope) → resolvedScope
+        QS->>Repo: findShowsInScope(resolvedScope)
+        Repo->>DB: SELECT shows WHERE scope filters match
+        DB-->>Repo: show IDs
+        Repo-->>QS: show list
+        QS->>Repo: countSubmittedTasks(shows, filters)
+        Repo->>DB: COUNT tasks WHERE status IN (...)<br/>AND targetType = SHOW<br/>AND showId IN (...)
+        DB-->>Repo: task count
+        Repo-->>QS: total count
+        QS->>QS: enforceGuardrail(count, limit)
     end
 
-    Note over QS: 5. Build flat table + column metadata
-    QS->>QS: buildResult(showRows, columns, columnMap, warnings)
+    rect rgb(235, 255, 235)
+        Note over QS,DB: Layer 2 — Task Extraction & Row Construction<br/>(run endpoint only)
+        loop Each batch (skip/take 200)
+            QS->>Repo: findSubmittedTasks({<br/>  studioId, showIds, statuses,<br/>  targetType: SHOW,<br/>  skip, take: 200<br/>})
+            Repo->>DB: SELECT tasks + snapshots + content
+            DB-->>Repo: task batch
+            Repo-->>QS: tasks + targets + shows
 
-    QS-->>Ctrl: { rows[], columns[], column_map, warnings[], row_count, generated_at }
+            loop Each task in batch
+                QS->>QS: extractRowValues(snapshot.schema,<br/>task.content, selectedColumns)
+                QS->>QS: mergeIntoShowRow(show_id, values)<br/>latest-wins for duplicate columns
+            end
+        end
+
+        QS->>QS: buildResult(showRows, columns,<br/>columnMap, warnings)
+    end
+
+    QS-->>Ctrl: { rows[], columns[], column_map,<br/>warnings[], row_count, generated_at }
     Ctrl-->>FE: Full result JSON (inline)
-    Note over FE: Cache in TanStack Query,<br/>apply view filters,<br/>export CSV/XLSX using column_map
+    Note over FE: Cache in TanStack Query,<br/>apply view filters + sort,<br/>export CSV/XLSX using column_map
 ```
 
-### 9.1 Scope resolution
+### 9.1 Layer 1 — Show scope resolution
+
+This layer is shared by `preflight`, `run`, and `sources`. It resolves scope filters into a concrete set of shows and matching task counts.
 
 1. Validate the report scope.
 2. Resolve date presets to absolute dates (`this_week` → Monday–Sunday of current week).
 3. Require at least one scope filter: `date_from`/`date_to`, `show_standard_id`, `show_type_id`, or `show_ids`.
 4. Query matching shows within the resolved scope, filtering by `show_standard`, `show_type`, and other scope filters.
 5. Find submitted tasks on those shows (join through `TaskTarget` → `Task` with `targetType = SHOW`).
-6. Count total matching tasks (for guardrail enforcement).
-7. Build a lean Prisma query over `Task` with:
+6. Count total matching tasks.
+7. Enforce guardrail: if count exceeds the studio's row cap (default 10,000), abort with a descriptive error.
+
+The output of Layer 1 is a **resolved scope context**: show IDs, task count, and the Prisma where clause for task queries.
+
+### 9.1.1 Layer 2 — Task extraction & row construction
+
+This layer runs only for `POST /run`. It takes the resolved scope context from Layer 1 and produces the flat table.
+
+1. Build a lean Prisma query over `Task` with:
    - `deletedAt: null`
    - studio scope
    - submitted statuses
-   - `targets: { some: { targetType: 'SHOW', show: { ... scope filters } } }`
+   - `targets: { some: { targetType: 'SHOW', showId: { in: resolvedShowIds } } }`
    - template/snapshot filters (from `source_templates` if provided)
-8. Iterate all matching tasks in internal batches (`skip`/`take` with batch size 200). Each batch: extract selected column values, merge into the show row, flag duplicates.
-9. After all batches: build flat table result with column metadata and return inline.
+2. Iterate all matching tasks in internal batches (`skip`/`take` with batch size 200). Each batch: extract selected column values from `snapshot.schema` + `task.content`, merge into show-centric rows, flag duplicates.
+3. After all batches: build flat table result with column metadata, warnings, and return inline.
 
 ### 9.2 Lean select/include
 
@@ -652,21 +833,23 @@ include: {
 }
 ```
 
-### 9.3 Row building (show-centric merge)
+### 9.3 Row building (strict one row per show)
+
+Each show produces **exactly one row** — no exceptions. All task data for a show is merged into that single row. If columns cannot be consolidated, they appear as separate columns on the same row. The row count always equals the show count.
 
 For each matched task:
 
 1. read selected field definitions from `snapshot.schema.items`,
 2. for each selected field, compute the column key:
-   - **standard field** (`standard: true`): column key = `field.key` (e.g., `gmv`)
+   - **shared metric** (`standard: true`): column key = `field.key` (e.g., `gmv`)
    - **custom field**: column key = `{template_uid}:{field.key}` (e.g., `tpl_abc:notes`)
 3. pull matching values from `task.content` using `field.key`,
 4. normalize by field type,
-5. **merge into the show's row** using the column key — the show row accumulates values from all its submitted tasks.
+5. **merge into the show's single row** using the column key.
 
-**Standard fields** from different templates merge into the same column. If a show has moderation tasks from two different brand templates, both contributing `gmv` (standard), the values share the column key `gmv`. Since a show typically has one moderation task, this produces one value per show. If multiple tasks contribute to the same standard column on the same show, the duplicate-source handling (§9.4) applies.
+**Canonical metric fields** from different templates merge into the same column. If a show has moderation tasks from two different brand templates, both contributing `gmv` (standard), the values share the column key `gmv`. Since a show typically has one moderation task, this produces one value. If multiple tasks contribute to the same column on the same show, the duplicate-source handling (§9.4) applies — **the row stays single, conflicts are resolved within it**.
 
-**Custom fields** from different templates produce distinct column keys (`tpl_abc:notes` vs `tpl_xyz:notes`) and appear as separate columns.
+**Custom fields** from different templates produce distinct column keys (`tpl_abc:notes` vs `tpl_xyz:notes`) and appear as **separate columns on the same row**. This is the expected behavior — the manager sees all data for a show in one row, with template-specific columns clearly labeled.
 
 If a show has submitted tasks from different **versions** of the same template, the field values merge into the same column because the column key is the same regardless of snapshot version. Fields that exist in one version but not another produce `null`.
 
@@ -678,21 +861,24 @@ Normalization rules:
 - `file` / `url` -> raw URL string
 - missing key -> `null`
 
-### 9.4 Duplicate-source handling
+### 9.4 Duplicate-source handling (merge into same row)
 
 MVP assumption: one active non-deleted task per show/template is the normal case.
 
-If multiple non-deleted submitted tasks match the same show + source template:
+If multiple non-deleted submitted tasks match the same show + same template (same column keys):
 
-- emit **separate rows** (one per duplicate task),
-- set `_duplicate_source = true` on affected rows,
-- include a warning in `warnings[]`.
+- **Latest-wins merge**: use the task with the most recent `updatedAt` to populate the column values. The row stays single.
+- Set `_has_duplicate_source = true` on the affected row.
+- Include a warning in `warnings[]` listing the show UID, template, and count of duplicates.
+- Store the winning task's UID in the row metadata (e.g., `_source_task_uid`) for traceability.
 
-This keeps export lossless and flags data hygiene issues explicitly.
+This preserves the strict one-row-per-show invariant while flagging data hygiene issues. Managers see a warning badge on the row but the table structure stays clean and predictable.
+
+If multiple tasks match the same show but **different templates**, there is no conflict — they contribute to different column keys and merge naturally into the same row.
 
 ### 9.5 Multi-target task handling
 
-If a single task has multiple show-type targets (rare but structurally possible via `TaskTarget`), emit one row per show target. Each row carries the same task UID but different show metadata.
+If a single task has multiple show-type targets (rare but structurally possible via `TaskTarget`), the task's data is merged into **each target show's row**. Each show still gets exactly one row — the task's values appear in multiple rows (one per show target), not as extra rows for the same show.
 
 ### 9.6 Internal batch processing
 
@@ -700,10 +886,10 @@ The report generation endpoint does **not** expose pagination to the client. The
 
 - Internal batch size: `200` rows per iteration (not configurable by client).
 - Uses `skip`/`take` with the standard Prisma offset pattern.
-- Each batch: extract values, merge into show rows, flag duplicates.
-- After all batches: build flat table and return inline.
+- Each batch: extract values, merge into show rows (latest-wins for duplicates).
+- After all batches: build flat table, attach duplicate warnings, and return inline.
 
-**Task-count guardrail**: If total matching tasks exceeds `10,000`, abort and return an error asking the manager to narrow scope filters. This is a **result-size cap, not a date-range restriction**. Large studios that routinely exceed this should configure a higher per-studio cap. Async generation removes the need for any hard cap.
+**Task-count guardrail**: If total matching tasks exceeds the studio's row cap (default `10,000`), abort and return an error asking the manager to narrow scope filters. This is a **result-size cap, not a date-range restriction**. The preflight endpoint (§8.4) enforces this check before full generation — the manager sees the count and is blocked early. Large studios that routinely exceed this should configure a higher per-studio cap. Async generation removes the need for any hard cap.
 
 **Required stable sort order**: The batch query MUST include an explicit `orderBy` clause:
 
@@ -720,8 +906,9 @@ This determines the final result row order: most-recent shows first.
 ```mermaid
 graph TB
     subgraph "task-report module"
-        Ctrl[StudioTaskReportController<br/>HTTP transport only]
-        QS[TaskReportQueryService<br/>Orchestration — generate results]
+        Ctrl[StudioTaskReportController<br/>HTTP transport:<br/>preflight, sources, run, CRUD]
+        SS[TaskReportScopeService<br/>Layer 1 — scope resolution<br/>shared by preflight/sources/run]
+        QS[TaskReportQueryService<br/>Layer 2 — extraction + rows<br/>run endpoint only]
         DS[TaskReportDefinitionService<br/>Definition CRUD]
         DR[TaskReportDefinitionRepository<br/>Prisma persistence]
         subgraph "lib/ — portable, zero framework imports"
@@ -738,23 +925,27 @@ graph TB
         ShowRepo[ShowRepository]
     end
 
+    Ctrl --> SS
     Ctrl --> QS
     Ctrl --> DS
     DS --> DR
+    SS --> TaskRepo
+    SS --> ShowRepo
+    QS --> SS
     QS --> TaskRepo
     QS --> SnapshotRepo
-    QS --> ShowRepo
     QS --> ERV
     QS --> NFT
     QS --> MSR
-    QS --> RDS
+    SS --> RDS
 ```
 
 Recommended module split:
 
-- `StudioTaskReportController` for studio-scoped HTTP surface
+- `StudioTaskReportController` for studio-scoped HTTP surface (preflight, sources, run, definition CRUD)
+- `TaskReportScopeService` for **Layer 1** — show scope resolution, shared by preflight/sources/run
+- `TaskReportQueryService` for **Layer 2** — task extraction + row construction (orchestration)
 - `TaskReportDefinitionService` for CRUD on saved definitions
-- `TaskReportQueryService` as orchestration layer for result generation
 - `TaskReportDefinitionRepository` for definition persistence
 - extend `TaskRepository` with lean report-query helpers as needed
 
@@ -763,15 +954,16 @@ Recommended module split:
 ```
 src/models/task-report/
   ├── task-report.module.ts                 # NestJS wiring
-  ├── task-report.controller.ts             # HTTP transport
+  ├── task-report.controller.ts             # HTTP transport (preflight, sources, run, CRUD)
+  ├── task-report-scope.service.ts          # Layer 1 — scope resolution (NestJS-coupled)
+  ├── task-report-query.service.ts          # Layer 2 — extraction + row construction (NestJS-coupled)
   ├── task-report-definition.service.ts     # Definition CRUD (NestJS-coupled)
   ├── task-report-definition.repository.ts  # Definition persistence (Prisma-coupled)
-  ├── task-report-query.service.ts          # Orchestration — generate results (NestJS-coupled)
   ├── schemas/                              # Zod + payload types
   └── lib/                                  # PORTABLE: pure functions only
       ├── extract-row-values.ts             # snapshot schema + content → flat values
       ├── normalize-field-type.ts           # field type normalization rules
-      ├── merge-show-row.ts                 # merge task values into show row
+      ├── merge-show-row.ts                 # merge task values into show-centric row
       └── resolve-date-scope.ts             # date preset → absolute dates
 ```
 
@@ -781,14 +973,15 @@ src/models/task-report/
 
 ## 11. Validation and Guardrails
 
-1. Roles: `ADMIN`, `MANAGER`, `MODERATION_MANAGER`
+1. Roles: `ADMIN`, `MANAGER`, `MODERATION_MANAGER` — this is a management tool, not for junior moderators/operators
 2. Maximum selected columns per report: recommended `<= 50`
-3. Maximum total matched tasks: `10,000` (result-size cap). Configurable per studio.
-4. Internal batch size: `200` rows per iteration during result generation
-5. Require at least one scope filter (`date_from`/`date_to`, `show_standard_id`, `show_type_id`, or `show_ids`).
-6. Reject unknown column keys at validation time
-7. Validate date presets against supported values
-8. Response size: typical 100–200KB, max ~5MB for very large results. Standard gzip compression applies.
+3. Maximum total matched tasks: configurable per studio (default `10,000`). Enforced by both preflight (§8.5) and run (§9.1)
+4. **Preflight-first flow**: the FE must call preflight before run. The preflight returns `show_count`, `task_count`, and `within_limit`. Over-limit scopes are blocked before any heavy extraction runs
+5. Internal batch size: `200` rows per iteration during result generation (Layer 2)
+6. Require at least one scope filter (`date_from`/`date_to`, `show_standard_id`, `show_type_id`, or `show_ids`)
+7. Reject unknown column keys at validation time
+8. Validate date presets against supported values
+9. Response size: typical 100–200KB, max ~5MB for very large results. Standard gzip compression applies.
 
 ## 12. Risks and Mitigations
 
@@ -846,10 +1039,13 @@ Mitigation: generation is fast (< 1s typical). The FE caches recently generated 
 
 ### Milestone BE-1 (Core workflow)
 
-1. contextual source catalog endpoint (templates/snapshots with submitted tasks for filtered shows)
-2. report generation endpoint (`POST /task-reports/run`) with date preset resolution, comprehensive scope filters, `TaskTarget` join, internal batch processing, flat table generation, and inline response
-3. saved definition CRUD with date presets and scope filter persistence
-4. inline ad-hoc support (run without a saved definition)
+1. shared metrics settings endpoint (`GET/POST/PATCH /settings/shared-metrics`) — ADMIN-only, stored in `Studio.metadata`
+2. Layer 1 (show scope resolution) as a shared internal service used by preflight, sources, and run
+3. preflight count endpoint (`POST /task-reports/preflight`) — lightweight scope validation before generation
+4. contextual source catalog endpoint (templates/snapshots with submitted tasks for filtered shows)
+5. report generation endpoint (`POST /task-reports/run`) with Layer 2 (task extraction + row construction), date preset resolution, comprehensive scope filters, `TaskTarget` join, internal batch processing, flat table generation, and inline response
+6. saved definition CRUD with date presets and scope filter persistence
+7. inline ad-hoc support (run without a saved definition)
 
 ### Milestone BE-2 (Polish)
 
@@ -873,18 +1069,23 @@ When implemented, verify at minimum:
 
 Targeted tests:
 
-1. contextual source catalog returns only templates with tasks on filtered shows
-2. source catalog returns empty when no submitted tasks match the scope filters
-3. source catalog filters by show standard, show type correctly
-4. date presets resolve correctly (`this_week`, `this_month`)
-5. result generation produces flat rows with correct column values
-6. show rows merge values from multiple task templates correctly
-7. template-based columns return `null` for missing keys on older snapshots
-8. submitted-status filtering excludes in-progress work by default
-9. saved definition CRUD respects studio scoping and soft delete
-10. only show-targeted tasks are included; studio-targeted tasks are excluded
-11. tasks with multiple show targets emit one row per show
-12. `_duplicate_source` flag is set when multiple tasks match same show + template
-13. inline response includes correct `row_count` and column metadata
-14. result row cap (10,000) rejects over-scoped queries with descriptive error
-15. definition with scope overrides generates correctly (e.g., stored `this_week` + override `date_from`/`date_to`)
+1. preflight returns correct `show_count` and `task_count` for given scope
+2. preflight returns `within_limit: false` when task count exceeds studio row cap
+3. preflight and run share the same scope resolution logic (Layer 1) — same scope produces same counts
+4. contextual source catalog returns only templates with tasks on filtered shows
+5. source catalog returns empty when no submitted tasks match the scope filters
+6. source catalog filters by show standard, show type correctly
+7. date presets resolve correctly (`this_week`, `this_month`)
+8. result generation produces strictly one row per show with correct column values
+9. show rows merge shared metric values from multiple task templates into the same row correctly
+10. custom fields from different templates appear as separate columns on the same row (not separate rows)
+11. template-based custom columns return `null` for missing keys on older snapshots
+12. submitted-status filtering excludes in-progress work by default
+13. saved definition CRUD respects studio scoping and soft delete
+14. only show-targeted tasks are included; studio-targeted tasks are excluded
+15. tasks with multiple show targets merge into each target show's row (not extra rows)
+16. `_has_duplicate_source` flag is set on rows where latest-wins conflict resolution was applied
+17. duplicate-source uses latest `updatedAt` task and stores winning task UID in row metadata
+16. inline response includes correct `row_count` and column metadata
+17. result row cap rejects over-scoped queries with descriptive error (consistent with preflight)
+18. definition with scope overrides generates correctly (e.g., stored `this_week` + override `date_from`/`date_to`)

@@ -35,9 +35,13 @@ The moderation team currently does this on Google Sheets with manual data entry 
 
 ## Users
 
+This is a **management and oversight tool** — not part of the operator task-execution flow. Junior moderators submit tasks through existing mobile/desktop workflows; they do not use the report builder.
+
 - **Studio managers**: review submitted operational data across many shows and export it for internal follow-up
-- **Moderation managers**: summarize moderation KPIs such as GMV, views, conversion, and live-performance metrics
+- **Moderation managers**: summarize moderation KPIs such as GMV, views, conversion, and live-performance metrics across brands
 - **Studio admins**: audit premium-show QC readiness using uploaded post-production URLs and other submitted evidence
+
+All three roles use this to answer cross-show questions after tasks are submitted — not to manage individual task execution.
 
 ## Core Workflow
 
@@ -49,13 +53,14 @@ flowchart LR
     B --> C[Select Columns<br/>= define table schema]
     C --> S{Save Definition?}
     S -->|Yes| I[Store as named<br/>personal preset]
-    S -->|No| D
-    I --> D[Run Report<br/>BE generates flat table JSON]
+    S -->|No| P
+    I --> P[Preflight Count<br/>show_count + task_count<br/>confirm scope size]
+    P --> D[Run Report<br/>BE generates show-centric table]
     D --> F[FE caches + renders table]
     F --> V[View Filters + Sort<br/>client, status, etc.<br/>instant, no server call]
     V --> G{Export?}
     G -->|CSV / XLSX| H[Serialize + Download]
-    I -.->|Rerun anytime| D
+    I -.->|Rerun anytime| P
 ```
 
 Steps:
@@ -64,9 +69,10 @@ Steps:
 2. **Discover columns** — the BE returns which task templates/snapshots have submitted tasks for those filtered shows, plus their field catalogs. Columns are contextual — bound to the actual tasks on the selected shows.
 3. **Select columns** — pick system columns (show name, start time, client) and task-content columns from the discovered catalog. This defines the target table schema.
 4. **Save definition** (optional) — save the scope filters + column selection as a named personal preset. Definitions can store a default date preset (`this_week`, `this_month`, or absolute dates) that pre-fills on load.
-5. **Run report** — triggers BE to join submitted task data across matching shows into a flat table JSON. The full result is returned inline — no server-side storage.
-6. **Review + view filters** — FE caches and renders the flat table. Managers apply client-side view filters (by client, show status, assignee, room) and column sorting to focus on subsets — all instant, no server round-trip.
-7. **Export** — FE serializes the visible (or full) table to CSV or XLSX and downloads.
+5. **Preflight check** — before generating, the FE requests a count summary (`show_count`, `task_count`). The manager sees the scope size and confirms before committing. Over-limit scopes are blocked with guidance.
+6. **Run report** — triggers BE to join submitted task data across matching shows into a flat table JSON with show-centric rows. The full result is returned inline — no server-side storage.
+7. **Review + view filters** — FE caches and renders the flat table. Managers apply client-side view filters (by client, show status, assignee, room) and column sorting (asc/desc on any column) to focus on subsets — all instant, no server round-trip.
+8. **Export** — FE serializes the visible (or full) table to CSV or XLSX and downloads.
 
 ## Two-Level Filtering
 
@@ -112,14 +118,21 @@ The distinction maps to how the moderation team uses Google Sheets: they have on
 3. Default source scope is submitted/approved tasks only: `REVIEW`, `COMPLETED`, and `CLOSED`.
 4. Only tasks with show-type targets are included. Tasks targeting studios or other non-show entities (e.g. `ADMIN` type tasks) are excluded.
 
+### Preflight count (before generation)
+
+1. Before generating a report, the FE requests a **preflight count** — the number of shows and tasks that match the current scope filters.
+2. The preflight response includes `show_count` and `task_count`. This lets the manager confirm the scope is reasonable before committing to a full generation.
+3. If the task count exceeds the guardrail (default 10,000), the preflight response indicates this and the FE blocks the run with guidance to narrow scope. The manager never waits for a generation that will fail.
+4. The preflight count is lightweight — it runs count queries only, not full data extraction.
+
 ### Generated result
 
-1. The BE joins and aggregates selected columns from submitted tasks into a flat JSON table — one row per show, with selected task-content values merged in.
+1. The BE joins selected columns from submitted tasks into a flat JSON table with strictly **one row per show**. All task data for a show is merged into a single row. If columns from different templates cannot be consolidated (e.g., custom fields with the same key but from different templates), they appear as separate columns on the same row — never as separate rows.
 2. The result JSON is structured for easy transformation into tabular data (2D arrays for rendering and export).
 3. The result is returned inline in the API response — **no server-side result storage**. Generation is fast (< 1s typical) and the result is cached on the client.
 4. Missing submissions appear as `null` values in the row; the UI must not silently pretend missing data is zero.
 5. File and URL fields are included as string values (clickable links in the UI, plain URLs in export).
-6. When multiple submitted tasks match the same show and source (duplicate sources), they appear as separate rows with a warning flag — not silently merged.
+6. When multiple submitted tasks match the same show and source (duplicate sources), the **latest task wins** — its values populate the row. A warning flag is set on the affected row for data hygiene visibility, but the row stays single.
 
 ### Saved definitions (personal presets)
 
@@ -138,47 +151,63 @@ The distinction maps to how the moderation team uses Google Sheets: they have on
 4. View filter state is independent of the definition — it's ephemeral UI state for the current session.
 5. Submissions change infrequently once completed. Re-generation is needed only when the scope filter changes or the manager explicitly refreshes.
 
-### Standard field catalog (cross-template column merging)
+### Shared metrics (cross-template column merging)
 
-Moderation task templates are created per-brand (~30 templates), each with 8–10 data collection fields for metrics like GMV, views, and conversion. These same-purpose fields currently have **different keys** across templates, which means the reporting engine treats them as separate columns — defeating cross-show aggregation.
+Moderation task templates are created per-brand (~30 templates), each with 8–10 data collection fields. A small subset of these fields — shared performance metrics like GMV, views, and conversion — need to merge into single report columns across all templates. The rest of each template's fields are brand-specific and remain template-scoped.
 
-To enable cross-template column merging:
+**This is not full template standardization.** The goal is a small set of shared metrics (5–8 fields) that enables cross-template reporting for shared KPIs. Each template keeps its own custom fields unchanged — only the shared metrics adopt fixed keys.
 
-1. **Standard fields** — pre-defined data collection fields with fixed keys (e.g., `gmv`, `views`, `conversion_rate`). These are maintained as a studio-level catalog. When a template author adds a standard field, it uses the canonical key — not a custom one.
-2. **`standard` flag on field items** — `FieldItemBaseSchema` gains an optional `standard: boolean` property. Fields marked `standard: true` use their `key` directly as the report column key (no template prefix). Fields without the flag (custom fields) continue to use `{template_uid}:{field.key}`.
-3. **Cross-template merging** — when generating a report, standard fields from different templates merge into one column because they share the same key. Custom fields remain template-scoped.
-4. **Backfill migration** — the ~30 existing moderation templates must have their data collection field keys standardized:
+**Who manages it:** Studio ADMINs manage shared metrics in studio settings — a simple list of metric definitions (key, type, label) stored in `Studio.metadata`. Keys and types are **immutable once created** — if the key is wrong, create a new one; the old key stays reserved. This keeps the workflow simple: no rename cascades, no backward-compatibility checks. Labels and descriptions can be updated (display-only).
+
+**How it flows through the system:**
+
+1. **Studio ADMIN creates shared metrics** in studio settings (e.g., `gmv` / number / "GMV"). Keys are immutable after creation.
+2. **ADMIN or MANAGER selects shared metrics** when building a template — the template editor picker inserts the field with the fixed key, type, and `standard: true` flag.
+3. **Snapshot captures the definition** — when the template is saved, the snapshot records the full shared metric field (key, type, label, `standard: true`). The snapshot is self-contained.
+4. **Report engine reads from snapshots** — merges fields with the same key + `standard: true` across templates into one column. The engine never queries studio settings.
+5. **Managers see merged columns** in the report builder without needing to manage shared metrics.
+
+To enable this:
+
+1. **Shared metrics** — a studio-scoped list of metric definitions stored in `Studio.metadata.shared_metrics[]`. Managed by ADMIN via a settings endpoint. Keys are immutable once created; metrics can be deactivated but not deleted.
+2. **`standard` flag on field items** — `FieldItemBaseSchema` gains an optional `standard: boolean` property. Fields marked `standard: true` use their `key` directly as the report column key (no template prefix). All other fields (the majority) remain template-scoped with `{template_uid}:{field.key}`.
+3. **Cross-template merging** — when generating a report, shared metric fields from different templates merge into one column because they share the same key. Custom fields remain template-scoped — this is the expected behavior.
+4. **Backfill migration** — the ~30 existing moderation templates must have their metric field keys aligned to shared metric keys:
+   - Studio ADMIN creates the shared metrics in studio settings first.
    - Create new snapshots for each affected template with renamed keys and `standard: true` flag (via `updateTemplateWithSnapshot` — snapshots are immutable, old ones are preserved).
    - Migrate `Task.content` key names and `Task.snapshotId` to point to the new snapshot. This is an application-level script (TypeScript + Prisma), not a raw SQL migration, because the key mapping varies per template and content must stay in sync with its referenced snapshot schema.
    - Verify migrated tasks pass content validation against the new snapshot.
+   - Only the shared metric fields are renamed. Brand-specific custom fields are untouched.
 
-This is a **requirement for MVP** — without it, the reporting engine cannot produce cross-client moderation summaries, which is the primary use case.
+This is a **requirement for MVP** — without it, the reporting engine cannot produce cross-client moderation summaries, which is the primary use case. The shared metric set is intentionally small to minimize migration scope and operator impact.
+
+**Cross-doc impact:** This feature extends the existing task template and studio management systems. See BE design §4.6.6 for the full list of docs, skills, and route configs that must be updated.
 
 ### Export behavior
 
-1. CSV export is required for compatible result sets.
-2. XLSX export should use the same normalized dataset and support multi-sheet output when multiple compatible groups are present.
-3. Incompatible source groups (different template schemas) must not be silently merged — export splits them into separate sheets/files.
-4. Exported rows include stable show/task metadata plus the selected submitted values.
-5. Export can apply to the full dataset or the currently filtered view.
+1. CSV and XLSX export produce **one flat file** — all columns (system + shared metrics + custom fields from any number of templates) in a single table. No multi-file splitting or multi-sheet partitioning.
+2. Custom fields from different templates appear as separate columns in the same file, clearly labeled with their template origin.
+3. Exported rows include stable show/task metadata plus the selected submitted values.
+4. Export can apply to the full dataset or the currently filtered view.
 
 ## Acceptance Criteria
 
-- [ ] A studio manager can filter shows by date range and client, see which task columns are available, select them, and review the results in one flat table.
+- [ ] A studio manager can filter shows by date range and client, see which task columns are available, select them, and review the results in a flat table.
 - [ ] A premium-show reviewer can include post-production file/url fields and open those links directly from the review table.
+- [ ] Before running, the manager sees a preflight count summary (`show_count`, `task_count`) confirming scope size. Over-limit scopes are blocked with guidance to narrow filters.
 - [ ] Running a report returns the full result inline. The FE caches it for instant re-access.
-- [ ] Client-side view filters (client, status, assignee, sort) slice the cached table instantly without server round-trips.
+- [ ] Client-side view filters (client, status, assignee) and column sorting (asc/desc) slice the cached table instantly without server round-trips.
 - [ ] A saved definition pre-fills scope filters and columns. Running it generates fresh data.
 - [ ] Definitions can be cloned and edited to create variations.
 - [ ] Switching between recently generated datasets (e.g., different weeks) is instant from cache.
-- [ ] When selected data comes from incompatible template snapshots, export splits the output into separate sheets/files.
+- [ ] Export always produces one flat file (CSV or single XLSX sheet) — no multi-file splitting regardless of template mix.
 - [ ] Only show-targeted tasks appear in results; non-show tasks are excluded.
-- [ ] Duplicate submitted tasks for the same show and source are shown as separate rows with a warning indicator.
+- [ ] Strictly one row per show — duplicate submitted tasks for the same show and source are resolved by latest-wins merge with a warning indicator on the affected row.
 - [ ] The table shows row count and generation timestamp for sanity checking.
-- [ ] Over-scoped queries (> 10,000 matched tasks) return a clear error suggesting scope narrowing — not a timeout or generic failure.
-- [ ] Standard fields from different templates merge into a single report column (e.g., `gmv` from 30 moderation templates → one `gmv` column).
+- [ ] Studio ADMIN can create and manage shared metrics in studio settings. Keys and types are immutable after creation.
+- [ ] Shared metric fields (e.g., `gmv`, `views`) from different templates merge into a single report column.
 - [ ] Custom (non-standard) fields remain template-scoped — different templates produce separate columns even if keys happen to match.
-- [ ] Existing ~30 moderation templates are backfilled to use standard field keys, with Task.content migrated accordingly.
+- [ ] Existing ~30 moderation templates are backfilled to align metric field keys to shared metric keys, with Task.content migrated accordingly. Brand-specific custom fields are untouched.
 - [ ] *(Deferred)* Numeric column summaries (count, sum, average) are a future enhancement. See [ideation/task-analytics-summaries.md](../ideation/task-analytics-summaries.md).
 
 ## Reporting as an Engine
@@ -187,13 +216,16 @@ This system is a **generic submitted-task export engine**, not a Show Economics 
 
 The engine is intentionally unopinionated about what the submitted fields mean. GMV, views, and post-production URLs are examples of field content, not hardcoded concepts. New use cases (e.g. a finance rollup that reads creator-fee fields from a compensation task) can be served by selecting different columns — no engine changes required.
 
+**One operational task, minimal standardization.** The design preserves the current moderation workflow: one task per show per template, submitted by the assigned operator. We do not split data collection into a second task or redesign the moderation loop. Standardization is limited to a small shared metric set (5–8 shared KPIs) — the minimum needed for cross-template reporting. Template-specific fields and operator workflows are untouched.
+
 ## Product Decisions
 
 - **Show-first workflow.** Managers think in terms of "which shows" first. The column catalog is contextual — only columns from tasks that exist on the filtered shows are offered.
 - **Two-level filtering.** Scope filters (server-side) define what data is generated. View filters (client-side) slice the cached dataset for focused review. This mirrors the Google Sheets pattern of one sheet per time range with filter views per client/status.
 - **No server-side result storage.** The generated result is returned inline and cached on the client. Generation is fast (< 1s typical for 500–1000 shows). Re-running is cheap. Server-side result persistence adds complexity (staleness tracking, cleanup jobs, result CRUD) without proportional benefit at this scale.
 - **Definition as personal preset.** Definitions are like Google Sheets filter views — each manager saves their preferred scope + columns. The definition list is the landing page. Date presets pre-fill but can be overridden.
-- **Flat materialized table as the result shape.** The BE produces a joined, show-centric table — not separate partitions that the FE must merge. Column metadata tracks which template/snapshot each column came from, preserving export integrity.
+- **Flat materialized table with strict one-row-per-show.** The BE produces a joined table — exactly one row per show, with all task data merged in. Custom fields from different templates appear as separate columns on the same row. No multi-row expansion, no multi-file export splitting. Column metadata tracks template origin for display grouping.
+- **Preflight count before generation.** The FE requests a lightweight count (`show_count`, `task_count`) before triggering full generation. This lets the manager confirm scope size, prevents wasted generation on over-broad filters, and enforces the row cap before any heavy query runs.
 - **Date presets are optional in definitions.** `this_week`, `this_month`, or absolute dates. The FE always shows the date picker pre-filled from the definition's default. Managers can override before running.
 - **JSON is the first-class report format.** CSV and XLSX are serialization targets derived from it — no CSV/XLSX files are generated or stored server-side.
 - **File fields export as references, not binaries.** CSV/XLSX output contains URL strings only.
@@ -202,9 +234,9 @@ The engine is intentionally unopinionated about what the submitted fields mean. 
 - **Clone + edit for definitions.** No new endpoint — FE reads an existing definition and POSTs a copy with a new name.
 - **Studio-scoped.** Definitions are bound to one studio. Cross-studio reporting is out of scope.
 - **Role-based source visibility is deferred to milestone 2.** MVP grants all permitted roles (`ADMIN`, `MANAGER`, `MODERATION_MANAGER`) access to all templates in the studio.
-- **Duplicate-source rows are always visible.** Separate rows with a warning badge.
+- **Duplicate-source tasks use latest-wins merge.** If multiple tasks match the same show + template, the most recently updated task's values populate the row. A warning badge flags the row for data hygiene review, but the row stays single.
 - **Client-side cache replaces server-side result storage.** TanStack Query in-memory cache holds recently generated datasets. Switching between cached scopes is instant. IndexedDB for cross-session persistence is a future enhancement.
-- **Standard field catalog for cross-template merging.** Moderation templates are per-brand (~30 templates) with same-purpose data collection fields. Standard fields use fixed keys (`gmv`, `views`, etc.) so the report engine can merge them into a single column across templates. Custom fields remain template-scoped. This requires a one-time backfill of existing templates.
+- **Shared metrics, not full template standardization.** A small set of shared KPI fields (5–8 fields like `gmv`, `views`, `conversion_rate`) adopt fixed keys so the report engine can merge them across templates. Studio ADMINs manage this list in studio settings; keys are immutable once created. The vast majority of each template's fields are brand-specific custom fields that remain unchanged. One operational moderation task per show, no template redesign, no second data-collection task.
 - **Definition is inherently stable.** Definitions reference column keys, not snapshot versions. Tasks are fixed to their assigned snapshot — template updates don't change existing tasks' content keys. Definitions don't become "outdated" because the underlying data doesn't drift.
 - **FE form is the run-time source of truth.** When running from a saved definition, the FE pre-fills the form from the definition's stored scope + columns. The manager can override any field before running. The run request sends whatever the form shows — the BE does not merge definition + overrides.
 
@@ -216,6 +248,122 @@ The engine is intentionally unopinionated about what the submitted fields mean. 
 - Arbitrary formula builders or BI-style pivot tables
 - Binary attachment packaging inside exported files
 - Scheduled/recurring report generation (deferred — definitions with date presets enable manual rerun)
+
+## Critical Flow Sequences
+
+### Flow 1: First-time report creation (new user)
+
+```mermaid
+sequenceDiagram
+    actor Manager
+    participant FE as erify_studios
+    participant BE as erify_api
+    participant DB as PostgreSQL
+
+    Manager->>FE: Open Task Reports
+    FE->>BE: GET /task-report-definitions
+    BE->>DB: Query definitions (studioId, createdById)
+    DB-->>BE: [] (empty)
+    BE-->>FE: [] (no definitions)
+    FE-->>Manager: "Create your first report" prompt
+
+    Manager->>FE: Set scope filters (this_week, premium)
+    FE->>BE: GET /task-report-sources?date_from=...&show_standard_id=...
+    BE->>DB: Find shows in scope → tasks → snapshots
+    DB-->>BE: Templates with submitted tasks + field catalogs
+    BE-->>FE: { sources[], standard_fields[] }
+    FE-->>Manager: Column picker (standard + custom fields)
+
+    Manager->>FE: Select columns (gmv, views, notes)
+    Manager->>FE: Save as "Weekly Premium Review"
+    FE->>BE: POST /task-report-definitions { name, scope, columns }
+    BE->>DB: Insert TaskReportDefinition
+    DB-->>BE: definition_uid
+    BE-->>FE: Saved definition
+
+    Manager->>FE: Click "Run Report"
+    FE->>BE: POST /task-reports/preflight { scope }
+    BE->>DB: COUNT shows + tasks matching scope
+    DB-->>BE: { show_count: 487, task_count: 1204 }
+    BE-->>FE: Preflight summary
+    FE-->>Manager: "487 shows, 1,204 tasks — Confirm?"
+
+    Manager->>FE: Confirm run
+    FE->>BE: POST /task-reports/run { scope, columns }
+    BE->>DB: Query shows → tasks → content (batched)
+    Note over BE: Extract values, merge into show rows,<br/>flag duplicates, build flat table
+    DB-->>BE: Task batches
+    BE-->>FE: { rows[], columns[], column_map, row_count, generated_at }
+    FE-->>FE: Cache result in TanStack Query
+    FE-->>Manager: Flat table (487 shows · Generated just now)
+
+    Manager->>FE: Filter by client "Brand X"
+    Note over FE: Client-side filter — no server call
+    FE-->>Manager: Filtered table (52 shows)
+
+    Manager->>FE: Export filtered → CSV
+    Note over FE: Serialize visible rows using column_map
+    FE-->>Manager: Download CSV file
+```
+
+### Flow 2: Returning user — run from saved definition
+
+```mermaid
+sequenceDiagram
+    actor Manager
+    participant FE as erify_studios
+    participant BE as erify_api
+
+    Manager->>FE: Open Task Reports
+    FE->>BE: GET /task-report-definitions
+    BE-->>FE: [{ uid, name: "Weekly Premium Review", definition: {...} }, ...]
+    FE-->>Manager: Definition list (personal presets)
+
+    Manager->>FE: Open "Weekly Premium Review"
+    FE-->>FE: Pre-fill form from definition<br/>(scope: this_week + premium, columns: gmv, views, notes)
+    FE-->>Manager: Pre-filled scope + columns
+
+    alt Run as-is
+        Manager->>FE: Click "Run Report"
+        FE->>BE: POST /task-reports/run { scope, columns, definition_uid }
+    else Override date range
+        Manager->>FE: Change date to last month
+        Manager->>FE: Click "Run Report"
+        FE->>BE: POST /task-reports/run { scope: { date_from: Mar 1, date_to: Mar 31 }, columns }
+    end
+
+    BE-->>FE: { rows[], columns[], column_map, ... }
+    FE-->>FE: Cache result
+    FE-->>Manager: Flat table with results
+```
+
+### Flow 3: Compare two scopes — cache switching
+
+```mermaid
+sequenceDiagram
+    actor Manager
+    participant FE as erify_studios
+    participant BE as erify_api
+    participant Cache as TanStack Query Cache
+
+    Manager->>FE: Run report for Week 10
+    FE->>BE: POST /task-reports/run { scope: week_10 }
+    BE-->>FE: Result A (week 10)
+    FE->>Cache: Store under scopeHash("week_10")
+    FE-->>Manager: Table: 450 shows
+
+    Manager->>FE: Change scope to Week 11
+    FE->>BE: POST /task-reports/run { scope: week_11 }
+    BE-->>FE: Result B (week 11)
+    FE->>Cache: Store under scopeHash("week_11")
+    FE-->>Manager: Table: 520 shows
+
+    Manager->>FE: Switch back to Week 10
+    FE->>Cache: Read scopeHash("week_10")
+    Note over FE: Cache hit — no server call
+    Cache-->>FE: Result A (week 10)
+    FE-->>Manager: Table: 450 shows (instant)
+```
 
 ## Architecture Overview
 

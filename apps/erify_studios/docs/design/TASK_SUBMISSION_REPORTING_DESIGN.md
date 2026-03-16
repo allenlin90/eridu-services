@@ -4,11 +4,13 @@
 
 ## 1. Purpose
 
-Provide a manager workflow that sits between the current per-task review queue and a future warehouse/reporting stack. This replaces the moderation team's current Google Sheets workflow where they manually input data and use filter views to review shows by time range.
+Provide a **management and oversight workflow** that sits between the current per-task review queue and a future warehouse/reporting stack. This replaces the moderation team's current Google Sheets workflow where they manually input data and use filter views to review shows by time range.
+
+This tool is for **managers and admins** — not for junior moderators or operators. Operators submit tasks through existing mobile/desktop workflows and do not interact with the report builder.
 
 Primary user outcomes:
 
-1. summarize moderation metrics such as GMV and views across many shows,
+1. summarize shared moderation KPIs (GMV, views, conversion) across many shows and brands,
 2. review premium-show post-production URLs for QC,
 3. slice and sort the generated table by client, status, or any column — all client-side,
 4. export a reusable spreadsheet — no CSV/XLSX files are generated or stored server-side.
@@ -21,11 +23,11 @@ In scope:
 2. scope filter controls (date range, show standard, show type)
 3. contextual column discovery and selection
 4. server-side generation trigger with inline result response
-5. flat table rendering (rows[] ready to display — no client-side merge)
-6. client-side view filters (client, status, assignee, room, sort, search) on the cached dataset
+5. flat table rendering with strict one-row-per-show (rows[] ready to display — no client-side merge)
+6. client-side view filters (client, status, assignee, room, search) and simple asc/desc column sort on the cached dataset
 7. TanStack Query cache for last N generated datasets (instant switching)
-8. client-side CSV export from cached JSON
-9. client-side XLSX export from cached JSON
+8. client-side CSV export from cached JSON (one flat file)
+9. client-side XLSX export from cached JSON (one sheet)
 10. saved definitions as the landing view (personal presets)
 
 Out of scope:
@@ -57,29 +59,31 @@ flowchart TD
     LANDING -->|Open definition| LOAD[Load Definition<br/>pre-fill scope + columns]
     LOAD --> PREFILLED{Override scope?}
     PREFILLED -->|Yes| FILTER
-    PREFILLED -->|No, run as-is| RUN
+    PREFILLED -->|No, run as-is| PRE
 
     FILTER --> DISCOVER[Discover Columns<br/>contextual catalog from<br/>tasks on filtered shows]
     DISCOVER --> COLUMNS[Select Columns<br/>system + task-content fields]
     COLUMNS --> SAVE{Save Definition?}
     SAVE -->|Yes| DEF[Store as named<br/>personal preset]
-    SAVE -->|No| RUN
-    DEF --> RUN[Run Report<br/>POST /task-reports/run]
+    SAVE -->|No| PRE
+    DEF --> PRE[Preflight Count<br/>487 shows · 1,204 tasks<br/>Confirm?]
+    PRE --> RUN[Run Report<br/>POST /task-reports/run]
     RUN --> RESULT[FE caches result<br/>in TanStack Query]
-    RESULT --> TABLE[Render Flat Table<br/>one row per show]
+    RESULT --> TABLE[Render Show-Centric Table<br/>rows grouped by show]
 
-    TABLE --> VIEW[View Filters + Sort<br/>client, status, assignee,<br/>room — instant, no server call]
+    TABLE --> VIEW[View Filters + Sort<br/>client, status, assignee,<br/>room — instant, asc/desc]
     VIEW --> TABLE
 
     TABLE --> ACTIONS{Actions}
     ACTIONS -->|Export| EXPORT[CSV or XLSX<br/>full or filtered view]
     ACTIONS -->|Edit| COLUMNS
     ACTIONS -->|Switch scope| FILTER
-    DEF -.->|Rerun anytime| RUN
+    DEF -.->|Rerun anytime| PRE
 
     style TABLE fill:#e8f5e9
     style EXPORT fill:#e3f2fd
     style LANDING fill:#f3e5f5
+    style PRE fill:#fff3e0
 ```
 
 Steps:
@@ -90,12 +94,123 @@ Steps:
 4. **Discover columns** — BE returns contextual catalog from tasks on filtered shows
 5. **Select columns** — defines the target table schema
 6. **Save definition** (optional) — store as named personal preset before running
-7. **Run report** — BE generates flat table, returns full JSON inline
-8. **FE caches** the result in TanStack Query (last N datasets cached)
-9. **Review flat table** — one row per show, all columns pre-merged by BE
-10. **Apply view filters** — client, status, assignee, room, sort, search — all instant, no server call
-11. **Export** — CSV or XLSX from full or currently filtered view
-12. **Edit** — go back to scope/column selection with state preserved
+7. **Preflight check** — FE calls `POST /task-reports/preflight` and shows scope summary: *"487 shows, 1,204 tasks"*. Over-limit scopes are blocked with guidance. Manager confirms before generation.
+8. **Run report** — BE generates show-centric table, returns full JSON inline
+9. **FE caches** the result in TanStack Query (last N datasets cached)
+10. **Review table** — show-centric rows (typically one per show; duplicates/multi-target tasks may expand), all columns pre-merged by BE
+11. **Apply view filters** — client, status, assignee, room, search — all instant, no server call. Column sorting is simple asc/desc on any column.
+12. **Export** — CSV or XLSX from full or currently filtered view
+13. **Edit** — go back to scope/column selection with state preserved
+
+## Critical Flow Sequences
+
+### Flow 1: Definition load → override → run
+
+```mermaid
+sequenceDiagram
+    participant Mgr as Manager
+    participant FE as erify_studios
+    participant Cache as TanStack Query Cache
+    participant BE as erify_api
+
+    Mgr->>FE: Open Task Reports
+    FE->>BE: GET /task-report-definitions
+    BE-->>FE: definitions[]
+    FE->>Mgr: Render definition list (landing)
+
+    Mgr->>FE: Click "Weekly Moderation Summary"
+    FE->>FE: Load definition → pre-fill form<br/>(scope: this_week, columns: [gmv, views, ...])
+
+    alt Run as-is
+        Mgr->>FE: Click "Run Report"
+    else Override scope
+        Mgr->>FE: Change date to "2026-03-01 – 2026-03-07"
+        FE->>BE: GET /task-report-sources<br/>?date_from=2026-03-01&date_to=2026-03-07
+        BE-->>FE: Updated source catalog
+        FE->>Mgr: Column picker refreshed<br/>(some columns may appear/disappear)
+        Mgr->>FE: Adjust columns if needed
+        Mgr->>FE: Click "Run Report"
+    end
+
+    Note over FE: Preflight check — confirm scope size
+    FE->>BE: POST /task-reports/preflight { scope }
+    BE-->>FE: { show_count: 487, task_count: 1204,<br/>within_limit: true }
+    FE->>Mgr: "487 shows, 1,204 tasks — Confirm?"
+    Mgr->>FE: Confirm
+
+    Note over FE: FE sends fully resolved payload<br/>(not raw definition + overrides)
+    FE->>BE: POST /task-reports/run<br/>{scope: {date_from, date_to, ...},<br/>columns: [...], definition_uid?}
+    FE->>Mgr: Show progress indicator
+
+    BE-->>FE: { rows[], columns[], column_map,<br/>warnings[], row_count, generated_at }
+    FE->>Cache: setQueryData(scopeHash, result)
+    FE->>Mgr: Render show-centric table<br/>"487 shows · Generated just now"
+```
+
+### Flow 2: Client-side view filters → export
+
+```mermaid
+sequenceDiagram
+    participant Mgr as Manager
+    participant FE as erify_studios
+    participant Cache as TanStack Query Cache
+    participant Worker as Web Worker (export)
+
+    Note over FE: Table rendered with 487 rows<br/>from cached result
+
+    Mgr->>FE: Set client filter = "Brand X"
+    FE->>Cache: Read cached rows[]
+    FE->>FE: filterRows(rows, {client: "Brand X"})
+    FE->>Mgr: Table updates instantly → 42 rows<br/>No server call
+
+    Mgr->>FE: Sort by GMV descending
+    FE->>FE: sortRows(filteredRows, "gmv", "desc")
+    FE->>Mgr: Table re-sorted instantly
+
+    Mgr->>FE: Search "electronics"
+    FE->>FE: filterRows(rows, {client: "Brand X",<br/>search: "electronics"})
+    FE->>Mgr: Table filtered → 12 rows
+
+    Mgr->>FE: Click "Export Filtered → CSV"
+    FE->>Worker: postMessage({rows: filteredRows,<br/>columns, format: "csv"})
+    Worker->>Worker: serialize-csv(rows, columns)<br/>one flat file, all columns
+    Worker-->>FE: Blob (CSV)
+    FE->>Mgr: Download "report-brand-x.csv"
+```
+
+### Flow 3: Cache switching between scopes
+
+```mermaid
+sequenceDiagram
+    participant Mgr as Manager
+    participant FE as erify_studios
+    participant Cache as TanStack Query Cache
+    participant BE as erify_api
+
+    Note over Cache: Cache has result for Week 10<br/>(scopeHash: "w10")
+
+    Mgr->>FE: Change date range to Week 11
+    FE->>BE: POST /task-reports/run<br/>{scope: {date_from: W11-start, date_to: W11-end}, ...}
+    FE->>Mgr: Progress indicator
+    BE-->>FE: Result for Week 11 (512 rows)
+    FE->>Cache: setQueryData("w11", result)
+    FE->>Mgr: Render Week 11 table
+
+    Mgr->>FE: Switch back to Week 10
+    FE->>Cache: getQueryData("w10")
+    Note over Cache: Cache hit — gcTime 30min
+    Cache-->>FE: Cached Week 10 result
+    FE->>Mgr: Render Week 10 table instantly<br/>No server call, no progress indicator
+
+    Mgr->>FE: Switch to Week 9 (not cached)
+    FE->>Cache: getQueryData("w9")
+    Note over Cache: Cache miss
+    FE->>BE: POST /task-reports/run<br/>{scope: {date_from: W9-start, ...}, ...}
+    BE-->>FE: Result for Week 9
+    FE->>Cache: setQueryData("w9", result)
+    Note over Cache: Cache now holds W9, W10, W11<br/>(~5 entries retained)
+    FE->>Mgr: Render Week 9 table
+```
 
 ## 5. UX Structure
 
@@ -138,12 +253,14 @@ The column picker appears **after** scope filters are set. It shows only columns
 Three column categories:
 
 1. **System columns** (always available): show name, show start time, client, assignee, task status, studio room, show standard, show type
-2. **Standard fields** (merged across templates): fields marked `standard: true` in the template schema. These appear as a single group regardless of which template they come from (e.g., one `GMV` column, not 30 template-specific `GMV` columns). Standard fields are the primary mechanism for cross-client reporting.
-3. **Custom fields** (template-scoped): non-standard fields grouped by source template. Each template group shows its own custom fields.
+2. **Shared metrics** (merged across templates): fields marked `standard: true` in the template schema. These appear as a single group regardless of which template they come from (e.g., one `GMV` column, not 30 template-specific `GMV` columns). This is a small set (5–8 fields) managed by studio ADMINs in settings (§5.4).
+3. **Custom fields** (template-scoped): all other fields, grouped by source template. Each template group shows its own custom fields. These are the majority of fields in any template.
 
-The column picker should render standard fields first (as a "Standard Fields" group), then custom fields grouped by template.
+The column picker should render shared metrics first (as a "Shared Metrics" group), then custom fields grouped by template.
 
-**User-facing explanation**: The "Standard Fields" group header should include a brief description: *"These fields are shared across all templates — selecting one includes data from every template that collects it."* Custom field groups should show: *"These fields are specific to [template name]."* This helps managers understand why GMV appears once (standard) while template-specific notes appear per-template (custom).
+Shared metrics are managed by studio ADMINs in studio settings (see §5.5). Keys and types are immutable once created. ADMINs and MANAGERs select shared metrics when building templates. In the report builder, shared metrics appear as merged columns — managers don't need to manage them here.
+
+**User-facing explanation**: The "Shared Metrics" group header should include a brief description: *"These KPIs are shared across all templates — selecting one includes data from every template that collects it."* Custom field groups should show: *"These fields are specific to [template name]."* This helps managers understand why GMV appears once (shared metric) while template-specific notes appear per-template (custom).
 
 Each template group should show:
 
@@ -152,17 +269,17 @@ Each template group should show:
 - submitted task count in the contextual catalog
 - selected field count
 
-Standard fields show:
+Shared metrics show:
 
 - field label and key
-- number of templates contributing to this field
+- number of templates contributing to this metric
 - total submitted task count across all contributing templates
 
-Incompatible source groups (different template schemas) are surfaced early so managers know export may split. Standard fields never cause splits — they merge by design.
+Incompatible source groups (different template schemas) are surfaced early so managers know export may split. Shared metrics never cause splits — they merge by design.
 
 ### 5.3 Result table
 
-The result table renders the flat `rows[]` directly — one row per show, with all selected columns.
+The result table renders `rows[]` directly — strictly **one row per show**, with all selected columns merged in. Custom fields from different templates appear as separate columns on the same row. The row count always equals the show count.
 
 **Table header**: display `row_count` and `generated_at`. E.g., "487 shows · Generated 2 min ago". This gives immediate confidence that the scope is correct.
 
@@ -176,14 +293,16 @@ The result table renders the flat `rows[]` directly — one row per show, with a
 
 All view filters are applied client-side on the cached `rows[]`. The table re-renders instantly.
 
-**Default sort order**: The BE returns rows sorted by `show.startTime DESC` (most-recent shows first). This is the initial display order. The manager can re-sort by any column via the column header — this is a client-side re-sort on the cached data, not a server request.
+**Default sort order**: The BE returns rows sorted by `show.startTime DESC` (most-recent shows first). This is the initial display order.
 
-**BE vs FE responsibility boundary for sort and filter**:
+**Sorting is simple FE-side asc/desc.** The manager clicks any column header to toggle ascending/descending sort on the cached data. No multi-column sort, no server round-trip. This is intentionally minimal — the cached dataset is small enough for instant in-memory sorting.
+
+**BE vs FE responsibility boundary**:
 
 | Concern | Owner | Notes |
 |---------|-------|-------|
 | Row order in API response | BE | `show.startTime DESC` — deterministic, stable |
-| Column sort (click header) | FE | Re-sorts cached `rows[]` in memory |
+| Column sort (click header) | FE | Simple asc/desc toggle on cached `rows[]` |
 | View filters (client, status, etc.) | FE | Filters cached `rows[]` in memory |
 | Scope filters (date, show type, etc.) | BE | Triggers re-generation |
 | Text search | FE | Searches across cached row values |
@@ -197,20 +316,30 @@ All view filters are applied client-side on the cached `rows[]`. The table re-re
 
 > **Numeric summaries deferred**: A footer summary strip (row count, sum, average for numeric columns) is a natural UX enhancement but is deferred from MVP. The cached result contains raw row data — the FE can compute summaries client-side when this becomes a product requirement. See [docs/ideation/task-analytics-summaries.md](../../../../docs/ideation/task-analytics-summaries.md).
 
-### 5.4 Export UX
+### 5.4 Shared metrics settings (ADMIN only)
 
-Export controls use `column_map` from the result to determine partition behavior:
+Shared metrics are managed in **studio settings**, not in the report builder. This is a separate page/section accessible to studio ADMINs only.
 
-- single compatible group → one CSV or one XLSX sheet
-- multiple groups → multiple CSV downloads or one XLSX workbook with multiple sheets
+**UI:** A simple list view in studio settings:
+- Shows all shared metrics (key, type, label, active/inactive status)
+- **Add** button → form with key (snake_case, validated), type (dropdown), label, description. Key and type become immutable after creation.
+- **Edit** → only label and description can be changed. Key and type fields are read-only with a lock icon and tooltip: *"Key and type cannot be changed after creation."*
+- **Deactivate** → toggle `is_active`. Deactivated metrics are hidden from the template editor picker but the key remains reserved (shown as "Inactive" in the settings list).
+- No delete action — keys are reserved forever.
+
+**Why in settings, not in the report builder:** The report builder is for managers reviewing data. Shared metrics management affects template design and data structure — it belongs in studio configuration, accessible only to ADMINs.
+
+**File location:** `src/features/studio-settings/components/SharedMetricsList.tsx` (or within the existing studio settings feature).
+
+### 5.5 Export UX
+
+Export always produces **one flat file** — one CSV or one XLSX sheet with all columns. No multi-file splitting, no multi-sheet partitioning. All columns (system + shared metrics + custom fields from any number of templates) appear in a single table.
 
 Export options:
 - **Export all** — exports the full dataset (all rows, ignoring view filters)
 - **Export filtered** — exports only the currently visible rows (respects view filters and sort)
 
-Do not hide version splits. Managers need to know when outputs were separated because snapshot schemas differ.
-
-**Pre-export partition preview**: When the result contains multiple partition groups (from `column_map`), the export bar should show a preview before download: *"This report includes columns from N different templates. Export will create N separate files (CSV) or N sheets (XLSX)."* with a list of partition names. The manager confirms before export proceeds. For single-partition results, export starts immediately with no confirmation.
+Column headers in the export should include template origin for custom fields (e.g., "Notes (Brand X Template)") so the manager can distinguish same-named custom fields from different templates.
 
 ## 6. State Management Plan
 
@@ -266,6 +395,13 @@ const sourceCatalogQuery = useQuery({
     submitted_statuses: submittedStatuses,
   }),
   enabled: hasAtLeastOneFilter,
+});
+
+// Preflight count — lightweight scope validation before generation
+const preflightMutation = useMutation({
+  mutationFn: (payload: PreflightPayload) =>
+    preflightTaskReport(studioId, payload),
+  // Returns { show_count, task_count, within_limit, limit }
 });
 
 // Report generation — returns full result inline
@@ -346,6 +482,7 @@ Create dedicated task-report API declarations and query keys:
 - `create-task-report-definition.ts`
 - `update-task-report-definition.ts`
 - `delete-task-report-definition.ts`
+- `preflight-task-report.ts` (mutation — lightweight count before generation)
 - `run-task-report.ts` (mutation — generates and returns full result inline)
 
 Query keys should include studio scope and scope filters for cache isolation.
@@ -364,7 +501,7 @@ Example key families:
 ```mermaid
 graph LR
     subgraph "Generated Result (inline response)"
-        ROWS[rows[]<br/>flat show-centric objects<br/>one row per show]
+        ROWS[rows[]<br/>show-centric objects<br/>typically one per show]
         COLS[columns[]<br/>ordered descriptors<br/>with source metadata]
         CMAP[column_map<br/>partition grouping<br/>for export splitting]
         WARN[warnings[]<br/>version conflicts,<br/>duplicate flags]
@@ -386,8 +523,8 @@ graph LR
     end
 
     subgraph "Export (lib/)"
-        CSV_S[serialize-csv<br/>uses column_map<br/>for partition splits]
-        XLSX_S[serialize-xlsx<br/>one sheet per<br/>partition group]
+        CSV_S[serialize-csv<br/>one flat file<br/>all columns]
+        XLSX_S[serialize-xlsx<br/>one sheet<br/>all columns]
     end
 
     ROWS --> CACHE
@@ -405,22 +542,22 @@ graph LR
 
 The frontend treats the generated result as a **cached dataset for client-side exploration**:
 
-- `rows[]` — flat JSON objects, one per show, keyed by column identifiers
+- `rows[]` — strictly one row per show, keyed by column identifiers — all task data merged into a single flat row
 - `columns[]` — ordered column descriptors (key, label, type, source metadata)
-- `column_map` — groups columns by source `template_uid` for export sheet splitting. Standard fields (no template prefix) belong to a shared partition and never cause export splits
+- `column_map` — maps each column to its source `template_uid` for display grouping (not export splitting — export is always one flat file)
 - `warnings[]` — version conflicts, duplicate-source flags
 
 Client responsibilities:
 
 1. cache the result in TanStack Query (retain last N datasets)
-2. render `rows[]` as table rows and `columns[]` as table headers
+2. render `rows[]` as table rows (one per show) and `columns[]` as table headers
 3. apply view filters (client, status, assignee, room, search) on the cached `rows[]`
-4. apply column sort on the filtered rows
-5. read `column_map` at export time to group columns by source partition for CSV/XLSX splitting
-6. surface duplicate-source warnings when present in the result
-7. display result metadata (`row_count`, `generated_at`)
+4. apply simple asc/desc column sort on the filtered rows
+5. export all columns into one flat file (CSV or single XLSX sheet) — `column_map` is for display grouping, not export splitting
+6. surface duplicate-source warning badges on rows where latest-wins conflict resolution was applied
+7. display result metadata (`row_count` = show count, `generated_at`)
 
-**Key simplification**: The FE receives a complete flat table and focuses on **exploration** (filter, sort, search) and **export**. No merge step, no pagination, no server round-trips for view changes.
+**Key simplification**: The FE receives a complete flat table (one row per show) and focuses on **exploration** (filter, sort, search) and **export** (one flat file). No merge step, no multi-file export, no pagination, no server round-trips for view changes.
 
 ## 9. Export Implementation Strategy
 
@@ -430,12 +567,12 @@ CSV can be implemented with a small local serializer.
 
 Rules:
 
-- read `column_map` to determine if a single file or multiple files are needed
+- always produce **one CSV file** — all columns in a single flat table
 - flatten arrays (`multiselect`) into semicolon-space (`; `) — standard CSV convention to avoid conflict with the comma delimiter
 - export file/url fields as URL strings
 - preserve empty string vs `null` distinctions consistently
-- include system columns first, then selected task fields
-- when multiple partition groups exist, generate one CSV per group
+- include system columns first, then shared metrics, then custom fields (grouped by template)
+- custom field column headers include template name for disambiguation (e.g., "Notes (Brand X)")
 - support "export all" vs "export filtered" modes
 
 ### 9.2 XLSX
@@ -454,7 +591,7 @@ Recommend adding a browser-side workbook library only when this route ships.
 Preferred approach:
 
 - lazy-load the dependency from the export action via dynamic `import()`,
-- generate one sheet per partition group (using `column_map` to split),
+- generate **one sheet** with all columns — no multi-sheet splitting,
 - reuse the exact same normalized rows used by CSV.
 
 Why lazy-load:
@@ -474,11 +611,22 @@ For large datasets (1,000+ rows), CSV and XLSX serialization can block the main 
 
 This follows the same pattern as the existing image compressor in the codebase. For MVP, main-thread serialization is acceptable for typical result sizes (< 500 rows). Add the worker when export performance becomes noticeable.
 
-### 9.4 Generation progress indicator
+### 9.4 Preflight confirmation and generation progress
+
+**Preflight step** (before generation):
+
+After the manager clicks "Run Report", the FE calls `POST /task-reports/preflight` with the scope. The response includes `show_count`, `task_count`, and `within_limit`. The FE shows:
+
+- *"487 shows, 1,204 tasks — Generate report?"* with a **Confirm** button.
+- If `within_limit` is `false`: *"This scope includes {task_count} tasks, which exceeds the limit of {limit}. Please narrow your scope filters."* — the Confirm button is disabled.
+
+This prevents wasted generation on over-broad filters and gives the manager confidence in scope size before committing.
+
+**Generation progress** (after confirmation):
 
 During `POST /task-reports/run`, show a progress bar or spinner with *"Generating report..."*. Typical generation completes in < 1s, but large scopes (1,000+ shows) may take 2–5s. The progress indicator should:
 
-- appear immediately on "Run Report" click,
+- appear immediately after confirmation,
 - show an indeterminate progress bar (the BE does not stream progress for synchronous generation),
 - disappear when the response arrives and the table renders.
 
@@ -499,23 +647,21 @@ Required states:
 2. no scope filters set — prompt to set at least one scope filter
 3. no columns discovered — "No submitted tasks found for the selected shows"
 4. no columns selected — disable Run button
-5. view filters produce zero rows — "No shows match the current filters" with clear-filters action
-6. multi-partition export warning (schema differences between source groups)
-7. duplicate-source-on-show warning (see below)
-8. result generation in progress — show progress indicator
-9. result generation failed — show error with scope details and "Retry" button
-10. result too large (matched task count exceeds the studio's configurable cap, default 10,000) — show error clarifying this is a result-size limit (not a date-range restriction) and suggesting scope narrowing
-11. multi-target task rows — if a task targets multiple shows (rare), it produces one row per show. The row count may exceed the show count. No special UX needed — this is correct behavior
+5. **preflight over limit** — `within_limit: false` from preflight. Show: *"This scope includes {task_count} tasks (limit: {limit}). Narrow your scope filters."* Disable the Confirm button.
+6. **preflight confirmation** — show `show_count` and `task_count` with Confirm button before generation
+7. view filters produce zero rows — "No rows match the current filters" with clear-filters action
+8. **duplicate-source warning badge** — rows where multiple tasks matched the same show + template show a warning badge (see below). The row stays single (latest-wins merge), but the badge flags it for data hygiene review.
+9. result generation in progress — show progress indicator
+10. result generation failed — show error with scope details and "Retry" button
 
-### 11.1 Duplicate-source-on-show UX
+### 11.1 Duplicate-source warning UX
 
-When the API returns `_duplicate_source = true` for a row:
+When the API returns `_has_duplicate_source = true` for a row:
 
-- display each duplicate as a **separate row** in the preview table,
-- show a warning badge (e.g. amber icon) on affected rows with tooltip: "Multiple submissions found for this show and source",
-- group duplicate rows visually (e.g. subtle background tint or indentation) so they are distinguishable from separate shows,
-- export includes all duplicate rows — do not collapse or merge,
-- if any duplicates exist in the workspace, show a summary banner above the table: "N shows have duplicate submissions — review before exporting".
+- the row stays **single** (latest-wins merge was applied by the BE),
+- show a warning badge (e.g., amber icon) on the affected row with tooltip: *"Multiple submissions found for this show — showing the most recent"*,
+- if any duplicate-source rows exist, show a summary banner above the table: *"N shows had duplicate submissions — the most recent was used"*,
+- export includes the merged row — the warning is informational, not structural.
 
 This is a data-hygiene signal: managers should investigate whether duplicates represent legitimate re-assignments or stale tasks that should be cleaned up.
 
@@ -524,24 +670,26 @@ This is a data-hygiene signal: managers should investigate whether duplicates re
 ### 12.1 Unit tests
 
 1. `filter-rows` — client-side filtering by client, status, assignee, room, search
-2. `sort-rows` — column sort with numeric, string, date, null handling
-3. `serialize-csv` — escaping, array handling, partition splitting, filtered-view export
-4. `serialize-xlsx` — multi-sheet structure using `column_map`
+2. `sort-rows` — simple asc/desc column sort with numeric, string, date, null handling
+3. `serialize-csv` — escaping, array handling, single-file output, filtered-view export
+4. `serialize-xlsx` — single-sheet output with all columns
 
 ### 12.2 Component tests
 
 1. definition list as landing view — load, create, delete
 2. scope filter controls — at least one required, filter change triggers catalog refetch
-3. contextual column picker — shows only columns from discovered catalog
-4. result table renders flat `rows[]` directly as table rows
-5. view filter toolbar — client, status, assignee, room, search all apply instantly
-6. column sort — click header toggles asc/desc, null values sort last
-7. blank cells for `null` values (not zero)
-8. file/url cells render clickable links
-9. result metadata header shows row count and generated_at
-10. export controls reflect single-group vs multi-group behavior (from `column_map`)
-11. generation progress indicator during `runReport` mutation
-12. "Edit" action navigates back to builder with state preserved
+3. contextual column picker — shows only columns from discovered catalog, with shared metrics and custom fields grouped
+4. preflight confirmation shows `show_count` and `task_count` before generation
+5. preflight over-limit state disables Confirm button and shows guidance
+6. result table renders one row per show — `rows[]` length equals show count
+7. view filter toolbar — client, status, assignee, room, search all apply instantly
+8. column sort — click header toggles simple asc/desc, null values sort last
+9. blank cells for `null` values (not zero)
+10. file/url cells render clickable links
+11. result metadata header shows row count and generated_at
+12. export produces one flat file with all columns (no multi-file splitting)
+13. generation progress indicator during `runReport` mutation
+14. "Edit" action navigates back to builder with state preserved
 
 ### 12.3 Integration tests
 
@@ -559,24 +707,24 @@ This is a data-hygiene signal: managers should investigate whether duplicates re
 1. definition list as landing view (list, create, save, load)
 2. scope filter controls with URL state (date range, show standard, show type)
 3. contextual source catalog fetch (re-fetches when scope filters change)
-4. inline column picker from discovered catalog
-5. "Run Report" action → receive inline result → cache in TanStack Query
-6. flat table rendering directly from `rows[]` and `columns[]`
-7. result metadata header (`row_count`, `generated_at`)
-8. client-side view filters (client, status, assignee, room)
-9. client-side column sort (click header)
-10. text search across visible columns
-11. duplicate-source warning badges
-12. CSV export from cached JSON (single partition, full + filtered)
+4. inline column picker from discovered catalog (shared metrics + custom fields)
+5. preflight count confirmation before generation (show/task counts, over-limit blocking)
+6. "Run Report" action → receive inline result → cache in TanStack Query
+7. show-centric table rendering directly from `rows[]` and `columns[]`
+8. result metadata header (`row_count`, `generated_at`)
+9. client-side view filters (client, status, assignee, room)
+10. client-side column sort (simple asc/desc toggle)
+11. text search across visible columns
+12. duplicate-source warning badges
+13. CSV export from cached JSON (one flat file, full + filtered)
 
-Rationale: validate the full **definition → filter shows → discover columns → select → run → review → filter → sort → export** loop. Definitions are included from day one because they are the landing experience and the Google Sheets replacement.
+Rationale: validate the full **definition → filter shows → discover columns → select → preflight → run → review → filter → sort → export** loop. Definitions are included from day one because they are the landing experience and the Google Sheets replacement.
 
 ### Milestone FE-2 (Polish + persistence)
 
 1. definition clone and edit
 2. date preset selection in definition save (this_week, this_month, custom)
-3. multi-partition CSV and XLSX export (using `column_map` for sheet splitting)
-4. XLSX multi-sheet export (lazy-loaded ExcelJS)
+3. XLSX single-sheet export (lazy-loaded ExcelJS)
 5. IndexedDB for cross-session result persistence (last 5 per studio)
 6. richer row details / thumbnail preview for QC links
 7. stronger compatibility warnings and partition labels
@@ -608,17 +756,18 @@ Mitigation:
 - the result metadata shows `generated_at` so the manager knows data freshness,
 - re-running is fast (< 1s) — the manager can always refresh.
 
-### 14.3 Multi-version confusion
+### 14.3 Wide tables from many templates
 
 Risk:
 
-- managers may not understand why exports split into multiple outputs.
+- if a show has tasks from many different templates, the row may have many columns with most being `null` — a wide, sparse table.
 
 Mitigation:
 
-- label partition groups clearly by template + snapshot version in the column picker,
-- explain the split in the export bar before download,
-- `column_map` metadata makes partition boundaries explicit.
+- the column picker is contextual — only columns from templates with submitted tasks in scope are offered,
+- managers can select only the columns they need — they don't have to include all custom fields,
+- shared metrics merge across templates, keeping the shared KPI columns compact,
+- `column_map` metadata groups columns by template for visual clarity in the table header.
 
 ### 14.4 Page refresh loses cached results
 
@@ -655,13 +804,15 @@ When implemented, verify at minimum:
 Manual smoke should cover:
 
 1. open Task Reports → see definition list as landing page
-2. create a definition → set scope filters → discover columns → select → save → run
-3. verify flat table renders with row count and generated_at in header
-4. apply client filter → table updates instantly without server call
-5. sort by show start time, then by a numeric task-content column
-6. text search across show names
-7. export one compatible CSV (full dataset)
-8. export filtered view CSV (only visible rows)
-9. switch to a different scope (different week) → verify new generation
-10. switch back → verify previous result loads from cache instantly
-11. refresh page → verify definition loads, re-run needed (MVP behavior)
+2. create a definition → set scope filters → discover columns → select → save
+3. preflight confirmation shows show count and task count before generation
+4. over-limit scope → Confirm button disabled with guidance message
+5. confirm → run → verify show-centric table renders with row count and generated_at
+6. apply client filter → table updates instantly without server call
+7. sort by show start time (asc/desc toggle), then by a numeric task-content column
+8. text search across show names
+9. export one compatible CSV (full dataset)
+10. export filtered view CSV (only visible rows)
+11. switch to a different scope (different week) → verify preflight + new generation
+12. switch back → verify previous result loads from cache instantly
+13. refresh page → verify definition loads, re-run needed (MVP behavior)
