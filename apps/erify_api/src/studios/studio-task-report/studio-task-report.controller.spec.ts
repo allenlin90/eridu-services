@@ -2,6 +2,8 @@ import { NotImplementedException } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
+import { taskReportPreflightRequestSchema } from '@eridu/api-types/task-management';
+
 import { StudioTaskReportController } from './studio-task-report.controller';
 
 import { TaskReportDefinitionService } from '@/models/task-report/task-report-definition.service';
@@ -112,11 +114,24 @@ describe('studioTaskReportController', () => {
   });
 
   it('delegates preflight endpoint', async () => {
-    const payload = { scope: { show_ids: ['show_1'] } };
-    const err = new NotImplementedException('preflight');
-    scopeService.preflight.mockRejectedValue(err);
+    const payload = taskReportPreflightRequestSchema.parse({
+      scope: {
+        show_ids: ['show_1'],
+      },
+    });
+    scopeService.preflight.mockResolvedValue({
+      show_count: 12,
+      task_count: 40,
+      within_limit: true,
+      limit: 10000,
+    });
 
-    await expect(controller.preflight('std_123', payload)).rejects.toThrow(NotImplementedException);
+    await expect(controller.preflight('std_123', payload)).resolves.toEqual({
+      show_count: 12,
+      task_count: 40,
+      within_limit: true,
+      limit: 10000,
+    });
     expect(scopeService.preflight).toHaveBeenCalledWith('std_123', payload);
   });
 
