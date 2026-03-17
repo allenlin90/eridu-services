@@ -109,6 +109,7 @@ describe('taskReportScopeService', () => {
       fields: [
         {
           key: 'gmv',
+          field_key: 'gmv',
           label: 'GMV',
           type: 'number',
           standard: true,
@@ -117,7 +118,8 @@ describe('taskReportScopeService', () => {
           source_template_name: 'Template A',
         },
         {
-          key: 'notes',
+          key: 'ttpl_a:notes',
+          field_key: 'notes',
           label: 'Notes',
           type: 'text',
           source_template_id: 'ttpl_a',
@@ -159,7 +161,8 @@ describe('taskReportScopeService', () => {
     expect(result.sources).toHaveLength(1);
     expect(result.sources[0]?.submitted_task_count).toBe(10); // 4 + 6
     // fields from v1 are kept; 'rating' from v2 is added; 'gmv'/'notes' not duplicated
-    expect(result.sources[0]?.fields.map((f) => f.key)).toEqual(['gmv', 'notes', 'rating']);
+    expect(result.sources[0]?.fields.map((f) => f.key)).toEqual(['gmv', 'ttpl_a:notes', 'ttpl_a:rating']);
+    expect(result.sources[0]?.fields.map((f) => f.field_key)).toEqual(['gmv', 'notes', 'rating']);
   });
 
   it('throws when discovered snapshot schema is invalid', async () => {

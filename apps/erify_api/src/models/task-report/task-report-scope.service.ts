@@ -83,9 +83,11 @@ export class TaskReportScopeService {
           continue;
         }
 
+        const columnKey = item.standard ? item.key : `${sourceSnapshot.templateUid}:${item.key}`;
         const sharedField = item.standard ? sharedFieldByKey.get(item.key) : undefined;
         source.fieldsByKey.set(item.key, {
-          key: item.key,
+          key: columnKey,
+          field_key: item.key,
           label: item.label,
           type: item.type,
           standard: item.standard || undefined,

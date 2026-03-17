@@ -621,7 +621,9 @@ sources[]:
   task_type            — from schema.metadata.task_type
   submitted_task_count — number of submitted tasks for this template in scope
   fields[]:
-    key                — field key (used in column selection)
+    key                — selectable column key sent to run API
+                         (standard: {field_key}, custom: {template_uid}:{field_key})
+    field_key          — raw field key from template snapshot schema
     label              — user-facing label
     type               — field type (text, number, checkbox, etc.)
     standard           — true if this is a standard field
