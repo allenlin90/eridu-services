@@ -11,6 +11,9 @@ export type TaskReportDefinitionWithCreator = TaskReportDefinition & {
 /**
  * Persistence boundary for task report definitions.
  * Use case: isolate Prisma-level definition CRUD from service logic.
+ *
+ * This repository extends BaseRepository for standard model operations, while
+ * still using Prisma directly for scoped, relation-heavy queries.
  */
 @Injectable()
 export class TaskReportDefinitionRepository extends BaseRepository<
@@ -25,6 +28,7 @@ export class TaskReportDefinitionRepository extends BaseRepository<
 
   async findPaginated(params: {
     studioUid: string;
+    createdById: bigint;
     skip?: number;
     take?: number;
     search?: string;
@@ -32,10 +36,11 @@ export class TaskReportDefinitionRepository extends BaseRepository<
       data: TaskReportDefinitionWithCreator[];
       total: number;
     }> {
-    const { studioUid, skip, take, search } = params;
+    const { studioUid, createdById, skip, take, search } = params;
 
     const where: Prisma.TaskReportDefinitionWhereInput = {
       studio: { uid: studioUid },
+      createdById,
       deletedAt: null,
       ...(search
         ? {
@@ -72,11 +77,13 @@ export class TaskReportDefinitionRepository extends BaseRepository<
 
   async findByUidInStudio(
     studioUid: string,
+    createdById: bigint,
     definitionUid: string,
   ): Promise<TaskReportDefinitionWithCreator | null> {
     return this.prisma.taskReportDefinition.findFirst({
       where: {
         uid: definitionUid,
+        createdById,
         deletedAt: null,
         studio: { uid: studioUid },
       },
@@ -92,6 +99,7 @@ export class TaskReportDefinitionRepository extends BaseRepository<
 
   async createInStudio(params: {
     studioUid: string;
+    createdById: bigint;
     uid: string;
     name: string;
     description: string | null;
@@ -105,6 +113,9 @@ export class TaskReportDefinitionRepository extends BaseRepository<
         definition: params.definition,
         studio: {
           connect: { uid: params.studioUid },
+        },
+        createdBy: {
+          connect: { id: params.createdById },
         },
       },
       include: {

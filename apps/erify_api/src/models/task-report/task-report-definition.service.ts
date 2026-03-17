@@ -5,7 +5,6 @@ import type {
   TaskReportDefinition,
   UpdateTaskReportDefinitionInput,
 } from '@eridu/api-types/task-management';
-import { taskReportDefinitionSchema } from '@eridu/api-types/task-management';
 
 import {
   TaskReportDefinitionRepository,
@@ -14,6 +13,7 @@ import {
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { UserService } from '@/models/user/user.service';
 import { UtilityService } from '@/utility/utility.service';
 
 /**
@@ -27,6 +27,7 @@ export class TaskReportDefinitionService extends BaseModelService {
 
   constructor(
     private readonly taskReportDefinitionRepository: TaskReportDefinitionRepository,
+    private readonly userService: UserService,
     protected readonly utilityService: UtilityService,
   ) {
     super(utilityService);
@@ -37,10 +38,13 @@ export class TaskReportDefinitionService extends BaseModelService {
    */
   async listDefinitions(
     studioUid: string,
+    actorExtId: string,
     params: { skip?: number; take?: number; search?: string },
   ): Promise<{ data: TaskReportDefinition[]; total: number }> {
+    const actor = await this.resolveActorUser(actorExtId);
     const { data, total } = await this.taskReportDefinitionRepository.findPaginated({
       studioUid,
+      createdById: actor.id,
       skip: params.skip,
       take: params.take,
       search: params.search,
@@ -55,10 +59,11 @@ export class TaskReportDefinitionService extends BaseModelService {
   /**
    * Get one saved definition by external definition uid.
    */
-  async getDefinition(studioUid: string, definitionUid: string): Promise<TaskReportDefinition> {
-    const definition = await this.taskReportDefinitionRepository.findByUidInStudio(studioUid, definitionUid);
+  async getDefinition(studioUid: string, actorExtId: string, definitionUid: string): Promise<TaskReportDefinition> {
+    const actor = await this.resolveActorUser(actorExtId);
+    const definition = await this.taskReportDefinitionRepository.findByUidInStudio(studioUid, actor.id, definitionUid);
     if (!definition) {
-      throw HttpError.notFound('Task report definition not found');
+      throw HttpError.notFound('Task report definition', definitionUid);
     }
 
     return this.toTaskReportDefinition(definition);
@@ -69,10 +74,13 @@ export class TaskReportDefinitionService extends BaseModelService {
    */
   async createDefinition(
     studioUid: string,
+    actorExtId: string,
     payload: CreateTaskReportDefinitionInput,
   ): Promise<TaskReportDefinition> {
+    const actor = await this.resolveActorUser(actorExtId);
     const definition = await this.taskReportDefinitionRepository.createInStudio({
       studioUid,
+      createdById: actor.id,
       uid: this.generateUid(),
       name: payload.name,
       description: payload.description ?? null,
@@ -87,12 +95,14 @@ export class TaskReportDefinitionService extends BaseModelService {
    */
   async updateDefinition(
     studioUid: string,
+    actorExtId: string,
     definitionUid: string,
     payload: UpdateTaskReportDefinitionInput,
   ): Promise<TaskReportDefinition> {
-    const existing = await this.taskReportDefinitionRepository.findByUidInStudio(studioUid, definitionUid);
+    const actor = await this.resolveActorUser(actorExtId);
+    const existing = await this.taskReportDefinitionRepository.findByUidInStudio(studioUid, actor.id, definitionUid);
     if (!existing) {
-      throw HttpError.notFound('Task report definition not found');
+      throw HttpError.notFound('Task report definition', definitionUid);
     }
 
     const updated = await this.taskReportDefinitionRepository.updateInStudio({
@@ -110,10 +120,11 @@ export class TaskReportDefinitionService extends BaseModelService {
   /**
    * Delete an existing saved definition.
    */
-  async deleteDefinition(studioUid: string, definitionUid: string): Promise<void> {
-    const existing = await this.taskReportDefinitionRepository.findByUidInStudio(studioUid, definitionUid);
+  async deleteDefinition(studioUid: string, actorExtId: string, definitionUid: string): Promise<void> {
+    const actor = await this.resolveActorUser(actorExtId);
+    const existing = await this.taskReportDefinitionRepository.findByUidInStudio(studioUid, actor.id, definitionUid);
     if (!existing) {
-      throw HttpError.notFound('Task report definition not found');
+      throw HttpError.notFound('Task report definition', definitionUid);
     }
 
     await this.taskReportDefinitionRepository.softDeleteById(existing.id);
@@ -122,14 +133,23 @@ export class TaskReportDefinitionService extends BaseModelService {
   private toTaskReportDefinition(
     row: TaskReportDefinitionWithCreator,
   ): TaskReportDefinition {
-    return taskReportDefinitionSchema.parse({
+    return {
       id: row.uid,
       name: row.name,
       description: row.description,
-      definition: row.definition,
+      definition: row.definition as TaskReportDefinition['definition'],
       created_by_id: row.createdBy?.uid ?? null,
       created_at: row.createdAt.toISOString(),
       updated_at: row.updatedAt.toISOString(),
-    });
+    };
+  }
+
+  private async resolveActorUser(actorExtId: string) {
+    const actor = await this.userService.getUserByExtId(actorExtId);
+    if (!actor) {
+      throw HttpError.forbidden('Authenticated user profile was not found');
+    }
+
+    return actor;
   }
 }

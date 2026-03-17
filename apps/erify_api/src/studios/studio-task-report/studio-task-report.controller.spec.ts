@@ -13,6 +13,7 @@ import {
 
 import { StudioTaskReportController } from './studio-task-report.controller';
 
+import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { TaskReportDefinitionService } from '@/models/task-report/task-report-definition.service';
 import { TaskReportRunService } from '@/models/task-report/task-report-run.service';
 import { TaskReportScopeService } from '@/models/task-report/task-report-scope.service';
@@ -22,6 +23,13 @@ describe('studioTaskReportController', () => {
   let definitionService: jest.Mocked<TaskReportDefinitionService>;
   let scopeService: jest.Mocked<TaskReportScopeService>;
   let runService: jest.Mocked<TaskReportRunService>;
+  const user: AuthenticatedUser = {
+    ext_id: 'ext_1',
+    id: 'ext_1',
+    name: 'User',
+    email: 'user@eridu.com',
+    payload: {} as AuthenticatedUser['payload'],
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -88,10 +96,10 @@ describe('studioTaskReportController', () => {
       total: 1,
     });
 
-    const result = await controller.listDefinitions('std_123', query);
+    const result = await controller.listDefinitions('std_123', user, query);
     expect(result.data).toEqual([definition]);
     expect(result.meta.total).toBe(1);
-    expect(definitionService.listDefinitions).toHaveBeenCalledWith('std_123', {
+    expect(definitionService.listDefinitions).toHaveBeenCalledWith('std_123', 'ext_1', {
       skip: 0,
       take: 20,
       search: query.search,
@@ -111,8 +119,8 @@ describe('studioTaskReportController', () => {
     });
     definitionService.getDefinition.mockResolvedValue(definition);
 
-    await expect(controller.getDefinition('std_123', 'trd_123')).resolves.toEqual(definition);
-    expect(definitionService.getDefinition).toHaveBeenCalledWith('std_123', 'trd_123');
+    await expect(controller.getDefinition('std_123', user, 'trd_123')).resolves.toEqual(definition);
+    expect(definitionService.getDefinition).toHaveBeenCalledWith('std_123', 'ext_1', 'trd_123');
   });
 
   it('delegates definition create endpoint', async () => {
@@ -132,8 +140,8 @@ describe('studioTaskReportController', () => {
     });
     definitionService.createDefinition.mockResolvedValue(definition);
 
-    await expect(controller.createDefinition('std_123', payload)).resolves.toEqual(definition);
-    expect(definitionService.createDefinition).toHaveBeenCalledWith('std_123', payload);
+    await expect(controller.createDefinition('std_123', user, payload)).resolves.toEqual(definition);
+    expect(definitionService.createDefinition).toHaveBeenCalledWith('std_123', 'ext_1', payload);
   });
 
   it('delegates definition update endpoint', async () => {
@@ -150,15 +158,15 @@ describe('studioTaskReportController', () => {
     });
     definitionService.updateDefinition.mockResolvedValue(definition);
 
-    await expect(controller.updateDefinition('std_123', 'trd_123', payload)).resolves.toEqual(definition);
-    expect(definitionService.updateDefinition).toHaveBeenCalledWith('std_123', 'trd_123', payload);
+    await expect(controller.updateDefinition('std_123', user, 'trd_123', payload)).resolves.toEqual(definition);
+    expect(definitionService.updateDefinition).toHaveBeenCalledWith('std_123', 'ext_1', 'trd_123', payload);
   });
 
   it('delegates definition delete endpoint', async () => {
     definitionService.deleteDefinition.mockResolvedValue(undefined);
 
-    await expect(controller.deleteDefinition('std_123', 'trd_123')).resolves.toBeUndefined();
-    expect(definitionService.deleteDefinition).toHaveBeenCalledWith('std_123', 'trd_123');
+    await expect(controller.deleteDefinition('std_123', user, 'trd_123')).resolves.toBeUndefined();
+    expect(definitionService.deleteDefinition).toHaveBeenCalledWith('std_123', 'ext_1', 'trd_123');
   });
 
   it('delegates sources endpoint', async () => {

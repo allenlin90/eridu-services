@@ -18,9 +18,11 @@ import {
   taskReportResultSchema,
   taskReportSourcesResponseSchema,
 } from '@eridu/api-types/task-management';
+import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 
 import { BaseStudioController } from '../base-studio.controller';
 
+import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
@@ -53,10 +55,11 @@ export class StudioTaskReportController extends BaseStudioController {
   @ZodPaginatedResponse(taskReportDefinitionSchema)
   async listDefinitions(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListTaskReportDefinitionsQueryDto,
   ) {
     const pagination = this.toPaginationQuery(query);
-    const { data, total } = await this.taskReportDefinitionService.listDefinitions(studioUid, {
+    const { data, total } = await this.taskReportDefinitionService.listDefinitions(studioUid, user.ext_id, {
       skip: pagination.skip,
       take: pagination.take,
       search: query.search,
@@ -69,37 +72,41 @@ export class StudioTaskReportController extends BaseStudioController {
   @ZodResponse(taskReportDefinitionSchema)
   async getDefinition(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('definitionId', new UidValidationPipe(TaskReportDefinitionService.UID_PREFIX, 'TaskReportDefinition')) definitionUid: string,
   ) {
-    return this.taskReportDefinitionService.getDefinition(studioUid, definitionUid);
+    return this.taskReportDefinitionService.getDefinition(studioUid, user.ext_id, definitionUid);
   }
 
   @Post('task-report-definitions')
   @ZodResponse(taskReportDefinitionSchema, HttpStatus.CREATED)
   async createDefinition(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() payload: CreateTaskReportDefinitionDto,
   ) {
-    return this.taskReportDefinitionService.createDefinition(studioUid, payload);
+    return this.taskReportDefinitionService.createDefinition(studioUid, user.ext_id, payload);
   }
 
   @Patch('task-report-definitions/:definitionId')
   @ZodResponse(taskReportDefinitionSchema)
   async updateDefinition(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('definitionId', new UidValidationPipe(TaskReportDefinitionService.UID_PREFIX, 'TaskReportDefinition')) definitionUid: string,
     @Body() payload: UpdateTaskReportDefinitionDto,
   ) {
-    return this.taskReportDefinitionService.updateDefinition(studioUid, definitionUid, payload);
+    return this.taskReportDefinitionService.updateDefinition(studioUid, user.ext_id, definitionUid, payload);
   }
 
   @Delete('task-report-definitions/:definitionId')
   @ZodResponse(undefined, HttpStatus.NO_CONTENT)
   async deleteDefinition(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('definitionId', new UidValidationPipe(TaskReportDefinitionService.UID_PREFIX, 'TaskReportDefinition')) definitionUid: string,
   ) {
-    return this.taskReportDefinitionService.deleteDefinition(studioUid, definitionUid);
+    return this.taskReportDefinitionService.deleteDefinition(studioUid, user.ext_id, definitionUid);
   }
 
   @Get('task-report-sources')
