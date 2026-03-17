@@ -24,7 +24,14 @@ export type TaskReportSourceSnapshot = {
 
 export type TaskReportScopedShow = {
   uid: string;
+  name: string;
+  externalId: string | null;
   startTime: Date;
+  endTime: Date;
+  clientName: string | null;
+  studioRoomName: string | null;
+  showStandardName: string | null;
+  showTypeName: string | null;
 };
 
 export type TaskReportScopedTask = {
@@ -176,17 +183,52 @@ export class TaskReportScopeRepository {
   }
 
   async findShowsInScope(studioUid: string, filters: TaskReportScopeFilters): Promise<TaskReportScopedShow[]> {
-    return this.prisma.show.findMany({
+    const shows = await this.prisma.show.findMany({
       where: this.buildShowWhere(studioUid, filters),
       select: {
         uid: true,
+        name: true,
+        externalId: true,
         startTime: true,
+        endTime: true,
+        client: {
+          select: {
+            name: true,
+          },
+        },
+        studioRoom: {
+          select: {
+            name: true,
+          },
+        },
+        showStandard: {
+          select: {
+            name: true,
+          },
+        },
+        showType: {
+          select: {
+            name: true,
+          },
+        },
       },
       orderBy: [
         { startTime: 'desc' },
         { uid: 'desc' },
       ],
     });
+
+    return shows.map((show) => ({
+      uid: show.uid,
+      name: show.name,
+      externalId: show.externalId,
+      startTime: show.startTime,
+      endTime: show.endTime,
+      clientName: show.client?.name ?? null,
+      studioRoomName: show.studioRoom?.name ?? null,
+      showStandardName: show.showStandard?.name ?? null,
+      showTypeName: show.showType?.name ?? null,
+    }));
   }
 
   async findSubmittedTasksInScope(studioUid: string, filters: TaskReportScopeFilters): Promise<TaskReportScopedTask[]> {

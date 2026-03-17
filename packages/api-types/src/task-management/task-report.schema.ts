@@ -189,6 +189,25 @@ export const taskReportSelectedColumnSchema = z.object({
 export type TaskReportSelectedColumn = z.infer<typeof taskReportSelectedColumnSchema>;
 
 /**
+ * Built-in show-level columns available in report builder.
+ * These do not depend on task template snapshots.
+ */
+export const TASK_REPORT_SYSTEM_COLUMN = {
+  SHOW_ID: 'show_id',
+  SHOW_NAME: 'show_name',
+  SHOW_EXTERNAL_ID: 'show_external_id',
+  CLIENT_NAME: 'client_name',
+  STUDIO_ROOM_NAME: 'studio_room_name',
+  SHOW_STANDARD_NAME: 'show_standard_name',
+  SHOW_TYPE_NAME: 'show_type_name',
+  START_TIME: 'start_time',
+  END_TIME: 'end_time',
+} as const;
+
+export type TaskReportSystemColumnKey
+  = (typeof TASK_REPORT_SYSTEM_COLUMN)[keyof typeof TASK_REPORT_SYSTEM_COLUMN];
+
+/**
  * Run request for synchronous report generation.
  * `definition_id` is optional trace metadata when run originates from saved preset.
  */

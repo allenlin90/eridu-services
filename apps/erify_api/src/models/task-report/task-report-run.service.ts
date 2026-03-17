@@ -5,9 +5,11 @@ import type {
   SharedFieldCategory,
   TaskReportResult,
   TaskReportRunRequest,
+  TaskReportSystemColumnKey,
 } from '@eridu/api-types/task-management';
 import {
   FieldTypeEnum,
+  TASK_REPORT_SYSTEM_COLUMN,
   taskReportColumnSchema,
   TemplateSchemaValidator,
 } from '@eridu/api-types/task-management';
@@ -39,6 +41,19 @@ type CompiledProjectionField = {
   meta: SelectedKeyMeta;
 };
 type ScopedTask = Awaited<ReturnType<TaskReportScopeRepository['findSubmittedTasksInScope']>>[number];
+type ScopedShow = Awaited<ReturnType<TaskReportScopeRepository['findShowsInScope']>>[number];
+
+const SYSTEM_COLUMN_META: Record<TaskReportSystemColumnKey, { type: FieldType }> = {
+  [TASK_REPORT_SYSTEM_COLUMN.SHOW_ID]: { type: 'text' },
+  [TASK_REPORT_SYSTEM_COLUMN.SHOW_NAME]: { type: 'text' },
+  [TASK_REPORT_SYSTEM_COLUMN.SHOW_EXTERNAL_ID]: { type: 'text' },
+  [TASK_REPORT_SYSTEM_COLUMN.CLIENT_NAME]: { type: 'text' },
+  [TASK_REPORT_SYSTEM_COLUMN.STUDIO_ROOM_NAME]: { type: 'text' },
+  [TASK_REPORT_SYSTEM_COLUMN.SHOW_STANDARD_NAME]: { type: 'text' },
+  [TASK_REPORT_SYSTEM_COLUMN.SHOW_TYPE_NAME]: { type: 'text' },
+  [TASK_REPORT_SYSTEM_COLUMN.START_TIME]: { type: 'datetime' },
+  [TASK_REPORT_SYSTEM_COLUMN.END_TIME]: { type: 'datetime' },
+};
 
 /**
  * Executes the report generation pipeline for the run endpoint.
@@ -70,9 +85,10 @@ export class TaskReportRunService {
     const [shows, tasks, sharedFieldByKey] = await this.loadRunInputs(studioUid, filters);
 
     const projection = this.buildRunProjection(tasks, shows, selectedColumnKeys, sharedFieldByKey);
+    this.addSystemColumnMeta(selectedColumns, projection.selectedKeyMeta);
     this.assertKnownSelectedColumns(selectedColumns, projection.selectedKeyMeta, tasks.length);
 
-    const rows = this.buildRows(shows.map((show) => show.uid), projection.rowsByShowUid, selectedColumns);
+    const rows = this.buildRows(shows, projection.rowsByShowUid, selectedColumns);
     const warnings = this.buildWarnings(projection.duplicateSourceCount);
     const columns = this.buildColumns(selectedColumns, projection.selectedKeyMeta);
     const columnMap = this.buildColumnMap(columns);
@@ -195,7 +211,7 @@ export class TaskReportRunService {
     selectedKeyMeta: Map<string, SelectedKeyMeta>,
     taskCount: number,
   ): void {
-    if (taskCount === 0) {
+    if (taskCount === 0 && selectedKeyMeta.size === 0) {
       return;
     }
 
@@ -206,19 +222,41 @@ export class TaskReportRunService {
   }
 
   private buildRows(
-    showUids: string[],
+    shows: ScopedShow[],
     rowsByShowUid: RowsByShowUid,
     selectedColumns: Array<{ key: string }>,
   ): Array<Record<string, unknown>> {
-    return showUids.map((showUid) => {
-      const row = rowsByShowUid.get(showUid) ?? {};
+    return shows.map((show) => {
+      const row = rowsByShowUid.get(show.uid) ?? {};
+      const systemRow = this.buildSystemRow(show);
       for (const column of selectedColumns) {
-        if (!(column.key in row)) {
+        if (Object.hasOwn(systemRow, column.key)) {
+          row[column.key] = systemRow[column.key as TaskReportSystemColumnKey] ?? null;
+          continue;
+        }
+
+        if (!Object.hasOwn(row, column.key)) {
           row[column.key] = null;
         }
       }
       return row;
     });
+  }
+
+  private addSystemColumnMeta(
+    selectedColumns: Array<{ key: string }>,
+    selectedKeyMeta: Map<string, SelectedKeyMeta>,
+  ): void {
+    for (const column of selectedColumns) {
+      const systemMeta = this.readSystemColumnMeta(column.key);
+      if (!systemMeta || selectedKeyMeta.has(column.key)) {
+        continue;
+      }
+
+      selectedKeyMeta.set(column.key, {
+        type: systemMeta.type,
+      });
+    }
   }
 
   private buildWarnings(duplicateSourceCount: Map<string, number>) {
@@ -245,7 +283,7 @@ export class TaskReportRunService {
       return {
         key: column.key,
         label: column.label,
-        type: selectedMeta?.type ?? column.type ?? 'text',
+        type: selectedMeta?.type ?? this.readSystemColumnMeta(column.key)?.type ?? column.type ?? 'text',
         source_template_id: selectedMeta?.sourceTemplateId ?? fallbackTemplateId ?? null,
         source_template_name: selectedMeta?.sourceTemplateName ?? null,
         standard: selectedMeta?.standard,
@@ -302,6 +340,10 @@ export class TaskReportRunService {
   }
 
   private readTemplateUidFromColumnKey(columnKey: string): string | null {
+    if (this.isSystemColumn(columnKey)) {
+      return null;
+    }
+
     const separatorIndex = columnKey.indexOf(':');
     if (separatorIndex < 0) {
       return null;
@@ -309,5 +351,31 @@ export class TaskReportRunService {
 
     const templateUid = columnKey.slice(0, separatorIndex);
     return templateUid.length > 0 ? templateUid : null;
+  }
+
+  private buildSystemRow(show: ScopedShow): Record<TaskReportSystemColumnKey, unknown> {
+    return {
+      [TASK_REPORT_SYSTEM_COLUMN.SHOW_ID]: show.uid,
+      [TASK_REPORT_SYSTEM_COLUMN.SHOW_NAME]: show.name,
+      [TASK_REPORT_SYSTEM_COLUMN.SHOW_EXTERNAL_ID]: show.externalId,
+      [TASK_REPORT_SYSTEM_COLUMN.CLIENT_NAME]: show.clientName,
+      [TASK_REPORT_SYSTEM_COLUMN.STUDIO_ROOM_NAME]: show.studioRoomName,
+      [TASK_REPORT_SYSTEM_COLUMN.SHOW_STANDARD_NAME]: show.showStandardName,
+      [TASK_REPORT_SYSTEM_COLUMN.SHOW_TYPE_NAME]: show.showTypeName,
+      [TASK_REPORT_SYSTEM_COLUMN.START_TIME]: show.startTime.toISOString(),
+      [TASK_REPORT_SYSTEM_COLUMN.END_TIME]: show.endTime.toISOString(),
+    };
+  }
+
+  private readSystemColumnMeta(key: string): { type: FieldType } | null {
+    if (!this.isSystemColumn(key)) {
+      return null;
+    }
+
+    return SYSTEM_COLUMN_META[key];
+  }
+
+  private isSystemColumn(key: string): key is TaskReportSystemColumnKey {
+    return Object.hasOwn(SYSTEM_COLUMN_META, key);
   }
 }

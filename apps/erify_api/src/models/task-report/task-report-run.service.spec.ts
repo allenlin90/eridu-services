@@ -83,8 +83,28 @@ describe('taskReportRunService', () => {
       submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
     } as any);
     scopeRepository.findShowsInScope.mockResolvedValue([
-      { uid: 'show_1', startTime: new Date('2026-03-16T00:00:00.000Z') },
-      { uid: 'show_2', startTime: new Date('2026-03-15T00:00:00.000Z') },
+      {
+        uid: 'show_1',
+        name: 'Show 1',
+        externalId: 'EXT-1',
+        startTime: new Date('2026-03-16T00:00:00.000Z'),
+        endTime: new Date('2026-03-16T02:00:00.000Z'),
+        clientName: 'Client A',
+        studioRoomName: 'Room A',
+        showStandardName: 'Standard A',
+        showTypeName: 'Type A',
+      },
+      {
+        uid: 'show_2',
+        name: 'Show 2',
+        externalId: 'EXT-2',
+        startTime: new Date('2026-03-15T00:00:00.000Z'),
+        endTime: new Date('2026-03-15T02:00:00.000Z'),
+        clientName: 'Client B',
+        studioRoomName: 'Room B',
+        showStandardName: 'Standard A',
+        showTypeName: 'Type A',
+      },
     ]);
     scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
       {
@@ -175,7 +195,17 @@ describe('taskReportRunService', () => {
       submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
     } as any);
     scopeRepository.findShowsInScope.mockResolvedValue([
-      { uid: 'show_1', startTime: new Date('2026-03-16T00:00:00.000Z') },
+      {
+        uid: 'show_1',
+        name: 'Show 1',
+        externalId: 'EXT-1',
+        startTime: new Date('2026-03-16T00:00:00.000Z'),
+        endTime: new Date('2026-03-16T02:00:00.000Z'),
+        clientName: 'Client A',
+        studioRoomName: 'Room A',
+        showStandardName: 'Standard A',
+        showTypeName: 'Type A',
+      },
     ]);
     scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
       {
@@ -231,7 +261,17 @@ describe('taskReportRunService', () => {
       submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
     } as any);
     scopeRepository.findShowsInScope.mockResolvedValue([
-      { uid: 'show_1', startTime: new Date('2026-03-16T00:00:00.000Z') },
+      {
+        uid: 'show_1',
+        name: 'Show 1',
+        externalId: 'EXT-1',
+        startTime: new Date('2026-03-16T00:00:00.000Z'),
+        endTime: new Date('2026-03-16T02:00:00.000Z'),
+        clientName: 'Client A',
+        studioRoomName: 'Room A',
+        showStandardName: 'Standard A',
+        showTypeName: 'Type A',
+      },
     ]);
     scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
       {
@@ -291,7 +331,17 @@ describe('taskReportRunService', () => {
       submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
     } as any);
     scopeRepository.findShowsInScope.mockResolvedValue([
-      { uid: 'show_1', startTime: new Date('2026-03-16T00:00:00.000Z') },
+      {
+        uid: 'show_1',
+        name: 'Show 1',
+        externalId: 'EXT-1',
+        startTime: new Date('2026-03-16T00:00:00.000Z'),
+        endTime: new Date('2026-03-16T02:00:00.000Z'),
+        clientName: 'Client A',
+        studioRoomName: 'Room A',
+        showStandardName: 'Standard A',
+        showTypeName: 'Type A',
+      },
     ]);
     scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
       {
@@ -334,5 +384,59 @@ describe('taskReportRunService', () => {
 
     expect(result.warnings).toEqual([]);
     expect(result.rows[0]).toMatchObject({ gmv: 200 });
+  });
+
+  it('fills system columns from scoped show metadata', async () => {
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 0,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      showStandardId: 'shsd_1',
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([
+      {
+        uid: 'show_1',
+        name: 'Show 1',
+        externalId: 'EXT-1',
+        startTime: new Date('2026-03-16T00:00:00.000Z'),
+        endTime: new Date('2026-03-16T02:00:00.000Z'),
+        clientName: 'Client A',
+        studioRoomName: 'Room A',
+        showStandardName: 'Standard A',
+        showTypeName: 'Type A',
+      },
+    ]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: { show_standard_id: 'shsd_1' },
+      columns: [
+        { key: 'show_name', label: 'Show Name' },
+        { key: 'client_name', label: 'Client' },
+        { key: 'start_time', label: 'Start Time' },
+      ],
+    }));
+
+    expect(result.row_count).toBe(1);
+    expect(result.rows[0]).toEqual({
+      show_name: 'Show 1',
+      client_name: 'Client A',
+      start_time: '2026-03-16T00:00:00.000Z',
+    });
+    expect(result.columns).toMatchObject([
+      { key: 'show_name', type: 'text', source_template_id: null },
+      { key: 'client_name', type: 'text', source_template_id: null },
+      { key: 'start_time', type: 'datetime', source_template_id: null },
+    ]);
+    expect(result.column_map).toEqual({
+      show_name: null,
+      client_name: null,
+      start_time: null,
+    });
   });
 });
