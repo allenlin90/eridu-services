@@ -10,7 +10,6 @@ import type {
 } from '@eridu/api-types/task-management';
 import {
   TASK_REPORT_DATE_PRESET,
-  taskReportScopeSchema,
   TemplateSchemaValidator,
 } from '@eridu/api-types/task-management';
 
@@ -39,8 +38,7 @@ export class TaskReportScopeService {
    * Return contextual source templates/fields for the selected scope.
    */
   async getSources(studioUid: string, query: GetTaskReportSourcesQuery): Promise<TaskReportSourcesResponse> {
-    const scope = taskReportScopeSchema.parse(query);
-    const filters = this.resolveScopeFilters(scope);
+    const filters = this.resolveScopeFilters(query);
 
     const [sourceSnapshots, studioSharedFields] = await Promise.all([
       this.taskReportScopeRepository.findSourceSnapshotsInScope(studioUid, filters),

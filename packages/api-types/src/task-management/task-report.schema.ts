@@ -321,7 +321,7 @@ export const getTaskReportSourcesQuerySchema = z
     submitted_statuses: z.union([z.string(), z.array(z.string())]).optional(),
     source_templates: z.union([z.string(), z.array(z.string())]).optional(),
   })
-  .transform((query) => ({
+  .transform((query) => taskReportScopeSchema.parse({
     date_preset: query.date_preset,
     date_from: query.date_from,
     date_to: query.date_to,
