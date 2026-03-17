@@ -5,7 +5,7 @@ import type { TaskStatus } from '@eridu/api-types/task-management';
 
 import { PrismaService } from '@/prisma/prisma.service';
 
-type TaskReportScopeFilters = {
+export type TaskReportScopeFilters = {
   dateFrom?: Date;
   dateTo?: Date;
   showStandardId?: string;
@@ -20,6 +20,22 @@ export type TaskReportSourceSnapshot = {
   templateName: string;
   snapshotSchema: Prisma.JsonValue;
   taskCount: number;
+};
+
+export type TaskReportScopedShow = {
+  uid: string;
+  startTime: Date;
+};
+
+export type TaskReportScopedTask = {
+  uid: string;
+  updatedAt: Date;
+  templateUid: string;
+  templateName: string;
+  snapshotId: string;
+  snapshotSchema: Prisma.JsonValue;
+  content: Prisma.JsonValue;
+  targetShowUids: string[];
 };
 
 /**
@@ -155,6 +171,102 @@ export class TaskReportScopeRepository {
         templateName: template.name,
         snapshotSchema: snapshot.schema,
         taskCount: row._count._all,
+      }];
+    });
+  }
+
+  async findShowsInScope(studioUid: string, filters: TaskReportScopeFilters): Promise<TaskReportScopedShow[]> {
+    return this.prisma.show.findMany({
+      where: this.buildShowWhere(studioUid, filters),
+      select: {
+        uid: true,
+        startTime: true,
+      },
+      orderBy: [
+        { startTime: 'desc' },
+        { uid: 'desc' },
+      ],
+    });
+  }
+
+  async findSubmittedTasksInScope(studioUid: string, filters: TaskReportScopeFilters): Promise<TaskReportScopedTask[]> {
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        deletedAt: null,
+        studio: { uid: studioUid },
+        status: { in: filters.submittedStatuses },
+        templateId: { not: null },
+        snapshotId: { not: null },
+        ...(filters.sourceTemplateIds?.length
+          ? {
+              template: {
+                uid: {
+                  in: filters.sourceTemplateIds,
+                },
+              },
+            }
+          : {}),
+        targets: {
+          some: {
+            targetType: 'SHOW',
+            deletedAt: null,
+            show: this.buildShowWhere(studioUid, filters),
+          },
+        },
+      },
+      select: {
+        uid: true,
+        updatedAt: true,
+        content: true,
+        snapshotId: true,
+        template: {
+          select: {
+            uid: true,
+            name: true,
+          },
+        },
+        snapshot: {
+          select: {
+            schema: true,
+          },
+        },
+        targets: {
+          where: {
+            targetType: 'SHOW',
+            deletedAt: null,
+            show: this.buildShowWhere(studioUid, filters),
+          },
+          select: {
+            show: {
+              select: {
+                uid: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: [
+        { updatedAt: 'desc' },
+        { uid: 'desc' },
+      ],
+    });
+
+    return tasks.flatMap((task) => {
+      if (!task.template || !task.snapshot) {
+        return [];
+      }
+
+      return [{
+        uid: task.uid,
+        updatedAt: task.updatedAt,
+        templateUid: task.template.uid,
+        templateName: task.template.name,
+        snapshotId: task.snapshotId?.toString() ?? '',
+        snapshotSchema: task.snapshot.schema,
+        content: task.content,
+        targetShowUids: task.targets
+          .map((target) => target.show?.uid)
+          .filter((uid): uid is string => !!uid),
       }];
     });
   }

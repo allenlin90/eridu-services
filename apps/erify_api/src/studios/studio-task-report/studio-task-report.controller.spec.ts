@@ -5,6 +5,7 @@ import { Test } from '@nestjs/testing';
 import {
   getTaskReportSourcesQuerySchema,
   taskReportPreflightRequestSchema,
+  taskReportRunRequestSchema,
 } from '@eridu/api-types/task-management';
 
 import { StudioTaskReportController } from './studio-task-report.controller';
@@ -144,11 +145,22 @@ describe('studioTaskReportController', () => {
   });
 
   it('delegates run endpoint', async () => {
-    const payload = { scope: { show_ids: ['show_1'] }, columns: [{ key: 'gmv', label: 'GMV' }] };
-    const err = new NotImplementedException('run');
-    runService.run.mockRejectedValue(err);
+    const payload = taskReportRunRequestSchema.parse({
+      scope: { show_standard_id: 'shsd_1' },
+      columns: [{ key: 'gmv', label: 'GMV' }],
+    });
+    runService.run.mockResolvedValue({
+      rows: [],
+      columns: [],
+      column_map: {},
+      warnings: [],
+      row_count: 0,
+      generated_at: new Date().toISOString(),
+    });
 
-    await expect(controller.runReport('std_123', payload)).rejects.toThrow(NotImplementedException);
+    await expect(controller.runReport('std_123', payload)).resolves.toMatchObject({
+      row_count: 0,
+    });
     expect(runService.run).toHaveBeenCalledWith('std_123', payload);
   });
 });

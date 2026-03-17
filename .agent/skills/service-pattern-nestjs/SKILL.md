@@ -203,6 +203,50 @@ Mark these as `@internal` if they are not intended for controllers:
 async findOne(...args: Parameters<TaskRepository['findOne']>)
 ```
 
+### Rule 5: Never Call Zod `.parse()` Inside a Service
+
+🔴 **Critical**: Services MUST NOT call Zod `.parse()` on their input payloads.
+
+**Why**: The controller/DTO layer (via `nestjs-zod` and `ZodValidationPipe`) is the HTTP boundary. By the time a method reaches the service, the payload has already been validated and is fully typed. Parsing again is a double-parse, it moves validation responsibility into the wrong layer, and it breaks the single-responsibility principle.
+
+```typescript
+// ❌ BAD: Service re-validates a payload that was already validated by the DTO
+import { createUserSchema } from '@eridu/api-types/users';
+
+async run(payload: unknown): Promise<Result> {
+  const validated = createUserSchema.parse(payload); // ← WRONG
+  ...
+}
+
+// ✅ GOOD: Service accepts the already-typed payload
+import type { CreateUserRequest } from '@eridu/api-types/users';
+
+async run(payload: CreateUserRequest): Promise<Result> {
+  // payload is already validated — use it directly
+  ...
+}
+```
+
+The matching controller uses a Zod DTO to handle validation before the service is called:
+
+```typescript
+// Controller DTO (nestjs-zod validates on ingress):
+export class CreateUserDto extends createZodDto(createUserRequestSchema) {}
+
+// Controller method — payload is validated before service.run() is called:
+@Post()
+async create(@Body() payload: CreateUserDto) {
+  return this.userService.run(payload); // typed, already valid
+}
+```
+
+**Anti-pattern signature**:
+```typescript
+// Any service method with `payload: unknown` that calls `.parse()` is wrong.
+async doSomething(payload: unknown): Promise<X> {
+  const data = someSchema.parse(payload); // ← move this to a DTO
+```
+
 ### Rule 4: Repository Owns Where-Clause Building
 
 The repository layer is responsible for building ORM-specific where clauses. Services pass domain-level parameters:
@@ -480,6 +524,7 @@ export class ShowOrchestrationService {
 - [ ] Inject `UtilityService`
 - [ ] Use `this.generateUid()`
 - [ ] 🔴 **Critical**: Define Payload types in schema files (not in service)
+- [ ] 🔴 **Critical**: NEVER call Zod `.parse()` inside a service — accept typed payloads, let the DTO layer validate
 - [ ] 🔴 **Critical**: NEVER import or use `Prisma.*` types in service method signatures
 - [ ] 🔴 **Critical**: Use `Parameters<Repository['methodName']>` for pass-through methods
 - [ ] 🔴 **Critical**: Delegate filter building to repository layer (not service)

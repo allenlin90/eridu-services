@@ -6,12 +6,18 @@ import type {
   TaskReportPreflightResponse,
   TaskReportScope,
   TaskReportSourcesResponse,
-  TaskStatus,
   UiSchema,
 } from '@eridu/api-types/task-management';
-import { TASK_REPORT_DATE_PRESET, TemplateSchemaValidator } from '@eridu/api-types/task-management';
+import {
+  TASK_REPORT_DATE_PRESET,
+  taskReportScopeSchema,
+  TemplateSchemaValidator,
+} from '@eridu/api-types/task-management';
 
-import { TaskReportScopeRepository } from './task-report-scope.repository';
+import {
+  type TaskReportScopeFilters,
+  TaskReportScopeRepository,
+} from './task-report-scope.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { StudioService } from '@/models/studio/studio.service';
@@ -33,17 +39,8 @@ export class TaskReportScopeService {
    * Return contextual source templates/fields for the selected scope.
    */
   async getSources(studioUid: string, query: GetTaskReportSourcesQuery): Promise<TaskReportSourcesResponse> {
-    const { dateFrom, dateTo } = this.resolveDateRange(query);
-
-    const filters = {
-      dateFrom,
-      dateTo,
-      showStandardId: query.show_standard_id,
-      showTypeId: query.show_type_id,
-      showIds: query.show_ids,
-      sourceTemplateIds: query.source_templates,
-      submittedStatuses: query.submitted_statuses as TaskStatus[],
-    };
+    const scope = taskReportScopeSchema.parse(query);
+    const filters = this.resolveScopeFilters(scope);
 
     const [sourceSnapshots, studioSharedFields] = await Promise.all([
       this.taskReportScopeRepository.findSourceSnapshotsInScope(studioUid, filters),
@@ -128,17 +125,7 @@ export class TaskReportScopeService {
     studioUid: string,
     payload: TaskReportPreflightRequest,
   ): Promise<TaskReportPreflightResponse> {
-    const { dateFrom, dateTo } = this.resolveDateRange(payload.scope);
-
-    const filters = {
-      dateFrom,
-      dateTo,
-      showStandardId: payload.scope.show_standard_id,
-      showTypeId: payload.scope.show_type_id,
-      showIds: payload.scope.show_ids,
-      sourceTemplateIds: payload.scope.source_templates,
-      submittedStatuses: payload.scope.submitted_statuses,
-    };
+    const filters = this.resolveScopeFilters(payload.scope);
 
     const [showCount, taskCount] = await Promise.all([
       this.taskReportScopeRepository.countShowsInScope(studioUid, filters),
@@ -151,6 +138,22 @@ export class TaskReportScopeService {
       task_count: taskCount,
       within_limit: taskCount <= limit,
       limit,
+    };
+  }
+
+  resolveScopeFilters(
+    scope: TaskReportScope,
+  ): TaskReportScopeFilters {
+    const { dateFrom, dateTo } = this.resolveDateRange(scope);
+
+    return {
+      dateFrom,
+      dateTo,
+      showStandardId: scope.show_standard_id,
+      showTypeId: scope.show_type_id,
+      showIds: scope.show_ids,
+      sourceTemplateIds: scope.source_templates,
+      submittedStatuses: scope.submitted_statuses,
     };
   }
 

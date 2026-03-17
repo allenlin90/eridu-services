@@ -15,6 +15,7 @@ import { z } from 'zod';
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
   taskReportPreflightResponseSchema,
+  taskReportResultSchema,
   taskReportSourcesResponseSchema,
 } from '@eridu/api-types/task-management';
 
@@ -26,13 +27,14 @@ import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { StudioService } from '@/models/studio/studio.service';
 import {
   TaskReportPreflightDto,
+  TaskReportRunDto,
   TaskReportSourcesQueryDto,
 } from '@/models/task-report/schemas/task-report.schema';
 import { TaskReportDefinitionService } from '@/models/task-report/task-report-definition.service';
 import { TaskReportRunService } from '@/models/task-report/task-report-run.service';
 import { TaskReportScopeService } from '@/models/task-report/task-report-scope.service';
 
-// TODO: replace with real typed schemas once business logic is implemented
+// TODO: replace placeholder schemas for task-report-definition CRUD endpoints.
 const placeholderSchema = z.unknown();
 
 @ApiTags('Studio Task Reports')
@@ -111,10 +113,10 @@ export class StudioTaskReportController extends BaseStudioController {
   }
 
   @Post('task-reports/run')
-  @ZodResponse(placeholderSchema, HttpStatus.CREATED)
+  @ZodResponse(taskReportResultSchema, HttpStatus.CREATED)
   async runReport(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
-    @Body() payload: unknown,
+    @Body() payload: TaskReportRunDto,
   ) {
     return this.taskReportRunService.run(studioUid, payload);
   }
