@@ -1,11 +1,14 @@
-import { NotImplementedException } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
 import {
+  createTaskReportDefinitionSchema,
   getTaskReportSourcesQuerySchema,
+  listTaskReportDefinitionsQuerySchema,
+  taskReportDefinitionSchema,
   taskReportPreflightRequestSchema,
   taskReportRunRequestSchema,
+  updateTaskReportDefinitionSchema,
 } from '@eridu/api-types/task-management';
 
 import { StudioTaskReportController } from './studio-task-report.controller';
@@ -65,46 +68,96 @@ describe('studioTaskReportController', () => {
   });
 
   it('delegates definition list endpoint', async () => {
-    const err = new NotImplementedException('list');
-    definitionService.listDefinitions.mockRejectedValue(err);
+    const query = listTaskReportDefinitionsQuerySchema.parse({
+      page: 1,
+      limit: 20,
+      search: 'weekly',
+    });
+    const definition = taskReportDefinitionSchema.parse({
+      id: 'trd_1',
+      name: 'Weekly',
+      definition: {
+        scope: { show_standard_id: 'shsd_1' },
+        columns: [{ key: 'gmv', label: 'GMV' }],
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    definitionService.listDefinitions.mockResolvedValue({
+      data: [definition],
+      total: 1,
+    });
 
-    await expect(controller.listDefinitions('std_123')).rejects.toThrow(NotImplementedException);
-    expect(definitionService.listDefinitions).toHaveBeenCalledWith('std_123');
+    const result = await controller.listDefinitions('std_123', query);
+    expect(result.data).toEqual([definition]);
+    expect(result.meta.total).toBe(1);
+    expect(definitionService.listDefinitions).toHaveBeenCalledWith('std_123', {
+      skip: 0,
+      take: 20,
+      search: query.search,
+    });
   });
 
   it('delegates definition detail endpoint', async () => {
-    const err = new NotImplementedException('detail');
-    definitionService.getDefinition.mockRejectedValue(err);
+    const definition = taskReportDefinitionSchema.parse({
+      id: 'trd_1',
+      name: 'Weekly',
+      definition: {
+        scope: { show_standard_id: 'shsd_1' },
+        columns: [{ key: 'gmv', label: 'GMV' }],
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    definitionService.getDefinition.mockResolvedValue(definition);
 
-    await expect(controller.getDefinition('std_123', 'trd_123')).rejects.toThrow(NotImplementedException);
+    await expect(controller.getDefinition('std_123', 'trd_123')).resolves.toEqual(definition);
     expect(definitionService.getDefinition).toHaveBeenCalledWith('std_123', 'trd_123');
   });
 
   it('delegates definition create endpoint', async () => {
-    const payload = { name: 'Weekly review' };
-    const err = new NotImplementedException('create');
-    definitionService.createDefinition.mockRejectedValue(err);
+    const payload = createTaskReportDefinitionSchema.parse({
+      name: 'Weekly review',
+      definition: {
+        scope: { show_standard_id: 'shsd_1' },
+        columns: [{ key: 'gmv', label: 'GMV' }],
+      },
+    });
+    const definition = taskReportDefinitionSchema.parse({
+      id: 'trd_1',
+      name: 'Weekly review',
+      definition: payload.definition,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    definitionService.createDefinition.mockResolvedValue(definition);
 
-    await expect(controller.createDefinition('std_123', payload)).rejects.toThrow(NotImplementedException);
+    await expect(controller.createDefinition('std_123', payload)).resolves.toEqual(definition);
     expect(definitionService.createDefinition).toHaveBeenCalledWith('std_123', payload);
   });
 
   it('delegates definition update endpoint', async () => {
-    const payload = { name: 'Weekly review v2' };
-    const err = new NotImplementedException('update');
-    definitionService.updateDefinition.mockRejectedValue(err);
+    const payload = updateTaskReportDefinitionSchema.parse({ name: 'Weekly review v2' });
+    const definition = taskReportDefinitionSchema.parse({
+      id: 'trd_1',
+      name: 'Weekly review v2',
+      definition: {
+        scope: { show_standard_id: 'shsd_1' },
+        columns: [{ key: 'gmv', label: 'GMV' }],
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    definitionService.updateDefinition.mockResolvedValue(definition);
 
-    await expect(controller.updateDefinition('std_123', 'trd_123', payload)).rejects.toThrow(
-      NotImplementedException,
-    );
+    await expect(controller.updateDefinition('std_123', 'trd_123', payload)).resolves.toEqual(definition);
     expect(definitionService.updateDefinition).toHaveBeenCalledWith('std_123', 'trd_123', payload);
   });
 
   it('delegates definition delete endpoint', async () => {
-    const err = new NotImplementedException('delete');
-    definitionService.deleteDefinition.mockRejectedValue(err);
+    definitionService.deleteDefinition.mockResolvedValue(undefined);
 
-    await expect(controller.deleteDefinition('std_123', 'trd_123')).rejects.toThrow(NotImplementedException);
+    await expect(controller.deleteDefinition('std_123', 'trd_123')).resolves.toBeUndefined();
     expect(definitionService.deleteDefinition).toHaveBeenCalledWith('std_123', 'trd_123');
   });
 

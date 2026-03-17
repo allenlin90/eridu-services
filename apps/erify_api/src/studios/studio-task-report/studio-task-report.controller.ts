@@ -10,10 +10,10 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { z } from 'zod';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
+  taskReportDefinitionSchema,
   taskReportPreflightResponseSchema,
   taskReportResultSchema,
   taskReportSourcesResponseSchema,
@@ -26,16 +26,16 @@ import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { StudioService } from '@/models/studio/studio.service';
 import {
+  CreateTaskReportDefinitionDto,
+  ListTaskReportDefinitionsQueryDto,
   TaskReportPreflightDto,
   TaskReportRunDto,
   TaskReportSourcesQueryDto,
+  UpdateTaskReportDefinitionDto,
 } from '@/models/task-report/schemas/task-report.schema';
 import { TaskReportDefinitionService } from '@/models/task-report/task-report-definition.service';
 import { TaskReportRunService } from '@/models/task-report/task-report-run.service';
 import { TaskReportScopeService } from '@/models/task-report/task-report-scope.service';
-
-// TODO: replace placeholder schemas for task-report-definition CRUD endpoints.
-const placeholderSchema = z.unknown();
 
 @ApiTags('Studio Task Reports')
 @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.MODERATION_MANAGER])
@@ -50,15 +50,23 @@ export class StudioTaskReportController extends BaseStudioController {
   }
 
   @Get('task-report-definitions')
-  @ZodPaginatedResponse(placeholderSchema)
+  @ZodPaginatedResponse(taskReportDefinitionSchema)
   async listDefinitions(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
+    @Query() query: ListTaskReportDefinitionsQueryDto,
   ) {
-    return this.taskReportDefinitionService.listDefinitions(studioUid);
+    const pagination = this.toPaginationQuery(query);
+    const { data, total } = await this.taskReportDefinitionService.listDefinitions(studioUid, {
+      skip: pagination.skip,
+      take: pagination.take,
+      search: query.search,
+    });
+
+    return this.createPaginatedResponse(data, total, pagination);
   }
 
   @Get('task-report-definitions/:definitionId')
-  @ZodResponse(placeholderSchema)
+  @ZodResponse(taskReportDefinitionSchema)
   async getDefinition(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
     @Param('definitionId', new UidValidationPipe(TaskReportDefinitionService.UID_PREFIX, 'TaskReportDefinition')) definitionUid: string,
@@ -67,20 +75,20 @@ export class StudioTaskReportController extends BaseStudioController {
   }
 
   @Post('task-report-definitions')
-  @ZodResponse(placeholderSchema, HttpStatus.CREATED)
+  @ZodResponse(taskReportDefinitionSchema, HttpStatus.CREATED)
   async createDefinition(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
-    @Body() payload: unknown,
+    @Body() payload: CreateTaskReportDefinitionDto,
   ) {
     return this.taskReportDefinitionService.createDefinition(studioUid, payload);
   }
 
   @Patch('task-report-definitions/:definitionId')
-  @ZodResponse(placeholderSchema)
+  @ZodResponse(taskReportDefinitionSchema)
   async updateDefinition(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
     @Param('definitionId', new UidValidationPipe(TaskReportDefinitionService.UID_PREFIX, 'TaskReportDefinition')) definitionUid: string,
-    @Body() payload: unknown,
+    @Body() payload: UpdateTaskReportDefinitionDto,
   ) {
     return this.taskReportDefinitionService.updateDefinition(studioUid, definitionUid, payload);
   }
