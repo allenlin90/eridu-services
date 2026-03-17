@@ -30,6 +30,7 @@ docs/features/<feature>.md        ← promoted to feature doc, ideation doc dele
 | [Task Analytics Summaries](./task-analytics-summaries.md) | Task submission reporting design review | Product requirement for numeric aggregation in review workspace | [BE design](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md), [FE design](../../apps/erify_studios/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md) |
 | [BullMQ Async Processing](./bullmq-async-processing.md) | Task submission reporting design review | P95 generation > 5s, HTTP timeout, or row cap removal | [BE design §4.11](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md) |
 | [Submitted-At State Machine](./submitted-at-state-machine.md) | Task submission reporting design review | Need for precise submission timestamps beyond `status` + `updatedAt` | [BE design §4.8](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md) |
+| [Full Frontend i18n Standardization](./frontend-i18n-paraglide.md) | Tech debt audit for Paraglide usage | Official multi-region support requirement or UI audit/polish phase | [i18n skill](../../.agent/skills/frontend-i18n/SKILL.md) |
 
 ## Dropped / Promoted Topics
 
