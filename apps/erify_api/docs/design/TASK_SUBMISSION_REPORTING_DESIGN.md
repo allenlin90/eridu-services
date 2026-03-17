@@ -589,7 +589,7 @@ sequenceDiagram
     DB-->>TaskRepo: snapshot schemas
     TaskRepo-->>QS: schemas
 
-    Note over QS: 4. Build field catalog per template,<br/>deduplicate standard fields
+    Note over QS: 4. Build field catalog per template,<br/>deduplicate standard fields,<br/>sort templates deterministically
     QS->>QS: buildSourceCatalog(templates, schemas)
     Note over QS: For each template:<br/>- extract schema.items[]<br/>- classify standard vs custom<br/>- count submitted tasks<br/>Deduplicate standard fields across templates
 
@@ -635,6 +635,8 @@ shared_fields[]:      — deduplicated list of shared fields across all sources
 ```
 
 Shared fields appear both in their source template's `fields[]` (for completeness) and in the top-level `shared_fields[]` (for the FE to render the merged "Shared Fields" group in the column picker, sub-grouped by category).
+
+`sources[]` order is deterministic and applied **after in-memory aggregation** (alphabetical by `template_name`). This is intentional: the final payload is a merged projection from grouped task rows + snapshot parsing, so DB ordering alone cannot guarantee stable final order.
 
 ### 8.2 Shared fields settings
 

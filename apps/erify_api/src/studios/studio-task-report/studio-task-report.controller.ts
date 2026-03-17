@@ -13,7 +13,10 @@ import { ApiTags } from '@nestjs/swagger';
 import { z } from 'zod';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
-import { taskReportPreflightResponseSchema } from '@eridu/api-types/task-management';
+import {
+  taskReportPreflightResponseSchema,
+  taskReportSourcesResponseSchema,
+} from '@eridu/api-types/task-management';
 
 import { BaseStudioController } from '../base-studio.controller';
 
@@ -21,7 +24,10 @@ import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { StudioService } from '@/models/studio/studio.service';
-import { TaskReportPreflightDto } from '@/models/task-report/schemas/task-report.schema';
+import {
+  TaskReportPreflightDto,
+  TaskReportSourcesQueryDto,
+} from '@/models/task-report/schemas/task-report.schema';
 import { TaskReportDefinitionService } from '@/models/task-report/task-report-definition.service';
 import { TaskReportRunService } from '@/models/task-report/task-report-run.service';
 import { TaskReportScopeService } from '@/models/task-report/task-report-scope.service';
@@ -87,10 +93,10 @@ export class StudioTaskReportController extends BaseStudioController {
   }
 
   @Get('task-report-sources')
-  @ZodResponse(placeholderSchema)
+  @ZodResponse(taskReportSourcesResponseSchema)
   async getSources(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
-    @Query() query: unknown,
+    @Query() query: TaskReportSourcesQueryDto,
   ) {
     return this.taskReportScopeService.getSources(studioUid, query);
   }

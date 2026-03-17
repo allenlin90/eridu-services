@@ -15,6 +15,13 @@ type TaskReportScopeFilters = {
   submittedStatuses: TaskStatus[];
 };
 
+export type TaskReportSourceSnapshot = {
+  templateUid: string;
+  templateName: string;
+  snapshotSchema: Prisma.JsonValue;
+  taskCount: number;
+};
+
 /**
  * Analytics read-model for task report scope counting.
  *
@@ -57,6 +64,98 @@ export class TaskReportScopeRepository {
           },
         },
       },
+    });
+  }
+
+  async findSourceSnapshotsInScope(
+    studioUid: string,
+    filters: TaskReportScopeFilters,
+  ): Promise<TaskReportSourceSnapshot[]> {
+    const grouped = await this.prisma.task.groupBy({
+      by: ['templateId', 'snapshotId'],
+      where: {
+        deletedAt: null,
+        studio: { uid: studioUid },
+        status: { in: filters.submittedStatuses },
+        templateId: { not: null },
+        snapshotId: { not: null },
+        ...(filters.sourceTemplateIds?.length
+          ? {
+              template: {
+                uid: {
+                  in: filters.sourceTemplateIds,
+                },
+              },
+            }
+          : {}),
+        targets: {
+          some: {
+            targetType: 'SHOW',
+            deletedAt: null,
+            show: this.buildShowWhere(studioUid, filters),
+          },
+        },
+      },
+      _count: {
+        _all: true,
+      },
+    });
+
+    if (grouped.length === 0) {
+      return [];
+    }
+
+    const templateIds = grouped
+      .map((row) => row.templateId)
+      .filter((id): id is bigint => id !== null);
+    const snapshotIds = grouped
+      .map((row) => row.snapshotId)
+      .filter((id): id is bigint => id !== null);
+
+    const [templates, snapshots] = await Promise.all([
+      this.prisma.taskTemplate.findMany({
+        where: {
+          id: { in: templateIds },
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+          uid: true,
+          name: true,
+        },
+      }),
+      this.prisma.taskTemplateSnapshot.findMany({
+        where: {
+          id: { in: snapshotIds },
+        },
+        select: {
+          id: true,
+          schema: true,
+        },
+      }),
+    ]);
+
+    const templateById = new Map(templates.map((template) => [template.id.toString(), template]));
+    const snapshotById = new Map(snapshots.map((snapshot) => [snapshot.id.toString(), snapshot]));
+
+    return grouped.flatMap((row) => {
+      if (!row.templateId || !row.snapshotId) {
+        return [];
+      }
+
+      const template = templateById.get(row.templateId.toString());
+      const snapshot = snapshotById.get(row.snapshotId.toString());
+
+      if (!template || !snapshot) {
+        return [];
+      }
+
+      return [{
+        templateUid: template.uid,
+        templateName: template.name,
+        snapshotSchema: snapshot.schema,
+        taskCount: row._count._all,
+      }];
     });
   }
 

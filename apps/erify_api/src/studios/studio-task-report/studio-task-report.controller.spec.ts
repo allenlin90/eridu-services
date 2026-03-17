@@ -2,7 +2,10 @@ import { NotImplementedException } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
-import { taskReportPreflightRequestSchema } from '@eridu/api-types/task-management';
+import {
+  getTaskReportSourcesQuerySchema,
+  taskReportPreflightRequestSchema,
+} from '@eridu/api-types/task-management';
 
 import { StudioTaskReportController } from './studio-task-report.controller';
 
@@ -105,11 +108,16 @@ describe('studioTaskReportController', () => {
   });
 
   it('delegates sources endpoint', async () => {
-    const query = { show_standard_id: 'stds_1' };
-    const err = new NotImplementedException('sources');
-    scopeService.getSources.mockRejectedValue(err);
+    const query = getTaskReportSourcesQuerySchema.parse({ show_standard_id: 'shsd_1' });
+    scopeService.getSources.mockResolvedValue({
+      sources: [],
+      shared_fields: [],
+    });
 
-    await expect(controller.getSources('std_123', query)).rejects.toThrow(NotImplementedException);
+    await expect(controller.getSources('std_123', query)).resolves.toEqual({
+      sources: [],
+      shared_fields: [],
+    });
     expect(scopeService.getSources).toHaveBeenCalledWith('std_123', query);
   });
 

@@ -323,7 +323,7 @@ export const getTaskReportSourcesQuerySchema = z
     show_standard_id: query.show_standard_id,
     show_type_id: query.show_type_id,
     show_ids: normalizeStringArray(query.show_ids),
-    submitted_statuses: normalizeStringArray(query.submitted_statuses),
+    submitted_statuses: normalizeStringArray(query.submitted_statuses) ?? [...submittedStatusesDefault],
     source_templates: normalizeStringArray(query.source_templates),
   }));
 

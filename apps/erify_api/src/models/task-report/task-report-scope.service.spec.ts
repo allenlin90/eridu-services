@@ -2,16 +2,21 @@ import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
 import {
+  getTaskReportSourcesQuerySchema,
   TASK_REPORT_DATE_PRESET,
   taskReportPreflightRequestSchema,
+  TemplateSchemaValidator,
 } from '@eridu/api-types/task-management';
 
 import { TaskReportScopeRepository } from './task-report-scope.repository';
 import { TaskReportScopeService } from './task-report-scope.service';
 
+import { StudioService } from '@/models/studio/studio.service';
+
 describe('taskReportScopeService', () => {
   let service: TaskReportScopeService;
   let repository: jest.Mocked<TaskReportScopeRepository>;
+  let studioService: jest.Mocked<StudioService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -22,6 +27,13 @@ describe('taskReportScopeService', () => {
           useValue: {
             countShowsInScope: jest.fn(),
             countSubmittedTasksInScope: jest.fn(),
+            findSourceSnapshotsInScope: jest.fn(),
+          },
+        },
+        {
+          provide: StudioService,
+          useValue: {
+            getSharedFields: jest.fn(),
           },
         },
       ],
@@ -29,10 +41,146 @@ describe('taskReportScopeService', () => {
 
     service = module.get(TaskReportScopeService);
     repository = module.get(TaskReportScopeRepository);
+    studioService = module.get(StudioService);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('returns contextual sources with shared_fields deduplicated from discovered standard keys', async () => {
+    const snapshotSchema = TemplateSchemaValidator.parse({
+      items: [
+        {
+          id: 'fi_1',
+          key: 'gmv',
+          type: 'number',
+          standard: true,
+          label: 'GMV',
+        },
+        {
+          id: 'fi_2',
+          key: 'notes',
+          type: 'text',
+          label: 'Notes',
+        },
+      ],
+      metadata: { task_type: 'CLOSURE' },
+    });
+
+    repository.findSourceSnapshotsInScope.mockResolvedValue([
+      {
+        templateUid: 'ttpl_a',
+        templateName: 'Template A',
+        snapshotSchema,
+        taskCount: 3,
+      },
+    ]);
+    studioService.getSharedFields.mockResolvedValue([
+      {
+        key: 'gmv',
+        type: 'number',
+        category: 'metric',
+        label: 'GMV',
+        is_active: true,
+      },
+      {
+        key: 'views',
+        type: 'number',
+        category: 'metric',
+        label: 'Views',
+        is_active: true,
+      },
+    ]);
+
+    const result = await service.getSources(
+      'std_123',
+      getTaskReportSourcesQuerySchema.parse({
+        show_standard_id: 'shsd_1',
+      }),
+    );
+
+    expect(result.sources).toHaveLength(1);
+    expect(result.sources[0]).toEqual({
+      template_id: 'ttpl_a',
+      template_name: 'Template A',
+      task_type: 'CLOSURE',
+      submitted_task_count: 3,
+      fields: [
+        {
+          key: 'gmv',
+          label: 'GMV',
+          type: 'number',
+          standard: true,
+          category: 'metric',
+          source_template_id: 'ttpl_a',
+          source_template_name: 'Template A',
+        },
+        {
+          key: 'notes',
+          label: 'Notes',
+          type: 'text',
+          source_template_id: 'ttpl_a',
+          source_template_name: 'Template A',
+        },
+      ],
+    });
+    expect(result.shared_fields.map((field) => field.key)).toEqual(['gmv']);
+  });
+
+  it('aggregates submitted_task_count across multiple snapshots of the same template without duplicating fields', async () => {
+    const schemaV1 = TemplateSchemaValidator.parse({
+      items: [
+        { id: 'fi_1', key: 'gmv', type: 'number', standard: true, label: 'GMV' },
+        { id: 'fi_2', key: 'notes', type: 'text', label: 'Notes' },
+      ],
+      metadata: { task_type: 'CLOSURE' },
+    });
+    const schemaV2 = TemplateSchemaValidator.parse({
+      items: [
+        { id: 'fi_1', key: 'gmv', type: 'number', standard: true, label: 'GMV' },
+        { id: 'fi_2', key: 'notes', type: 'text', label: 'Notes' },
+        { id: 'fi_3', key: 'rating', type: 'number', label: 'Rating' },
+      ],
+      metadata: { task_type: 'CLOSURE' },
+    });
+
+    repository.findSourceSnapshotsInScope.mockResolvedValue([
+      { templateUid: 'ttpl_a', templateName: 'Template A', snapshotSchema: schemaV1, taskCount: 4 },
+      { templateUid: 'ttpl_a', templateName: 'Template A', snapshotSchema: schemaV2, taskCount: 6 },
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.getSources(
+      'std_123',
+      getTaskReportSourcesQuerySchema.parse({ show_standard_id: 'shsd_1' }),
+    );
+
+    expect(result.sources).toHaveLength(1);
+    expect(result.sources[0]?.submitted_task_count).toBe(10); // 4 + 6
+    // fields from v1 are kept; 'rating' from v2 is added; 'gmv'/'notes' not duplicated
+    expect(result.sources[0]?.fields.map((f) => f.key)).toEqual(['gmv', 'notes', 'rating']);
+  });
+
+  it('throws when discovered snapshot schema is invalid', async () => {
+    repository.findSourceSnapshotsInScope.mockResolvedValue([
+      {
+        templateUid: 'ttpl_a',
+        templateName: 'Template A',
+        snapshotSchema: { items: [{ key: 'gmv' }] },
+        taskCount: 1,
+      },
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    await expect(
+      service.getSources(
+        'std_123',
+        getTaskReportSourcesQuerySchema.parse({
+          show_standard_id: 'shsd_1',
+        }),
+      ),
+    ).rejects.toThrow('Task template snapshot schema is invalid');
   });
 
   it('returns preflight counts and within_limit true when task count is under default limit', async () => {
@@ -89,9 +237,9 @@ describe('taskReportScopeService', () => {
     const callArgs = repository.countShowsInScope.mock.calls[0]?.[1];
     expect(callArgs?.dateFrom).toBeInstanceOf(Date);
     expect(callArgs?.dateTo).toBeInstanceOf(Date);
-    expect(callArgs?.dateFrom?.getDate()).toBe(16);   // Monday 2026-03-16
+    expect(callArgs?.dateFrom?.getDate()).toBe(16); // Monday 2026-03-16
     expect(callArgs?.dateFrom?.getHours()).toBe(0);
-    expect(callArgs?.dateTo?.getDate()).toBe(22);     // Sunday 2026-03-22
+    expect(callArgs?.dateTo?.getDate()).toBe(22); // Sunday 2026-03-22
     expect(callArgs?.dateTo?.getHours()).toBe(23);
 
     jest.useRealTimers();

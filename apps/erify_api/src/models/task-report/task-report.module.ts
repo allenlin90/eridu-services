@@ -6,11 +6,12 @@ import { TaskReportRunService } from './task-report-run.service';
 import { TaskReportScopeRepository } from './task-report-scope.repository';
 import { TaskReportScopeService } from './task-report-scope.service';
 
+import { StudioModule } from '@/models/studio/studio.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { UtilityModule } from '@/utility/utility.module';
 
 @Module({
-  imports: [PrismaModule, UtilityModule],
+  imports: [PrismaModule, UtilityModule, StudioModule],
   providers: [
     TaskReportDefinitionRepository,
     TaskReportDefinitionService,
