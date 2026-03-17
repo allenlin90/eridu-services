@@ -114,7 +114,9 @@ export class TaskReportScopeService {
         // Sort after aggregation (not DB-level) because this list is assembled from
         // merged in-memory structures; this guarantees deterministic API output.
         .sort((a, b) => a.template_name.localeCompare(b.template_name)),
-      shared_fields: studioSharedFields.filter((field) => standardFieldKeys.has(field.key)),
+      shared_fields: studioSharedFields
+        .filter((field) => standardFieldKeys.has(field.key))
+        .sort((a, b) => a.key.localeCompare(b.key)),
     };
   }
 
