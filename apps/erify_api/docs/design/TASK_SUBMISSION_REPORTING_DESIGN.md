@@ -564,7 +564,7 @@ Purpose:
 sequenceDiagram
     participant FE as erify_studios
     participant Ctrl as StudioTaskReportController
-    participant QS as TaskReportQueryService
+    participant QS as TaskReportRunService
     participant TaskRepo as TaskRepository
     participant DB as PostgreSQL
 
@@ -759,7 +759,7 @@ This separation ensures the preflight count, source catalog, and full generation
 sequenceDiagram
     participant FE as erify_studios
     participant Ctrl as StudioTaskReportController
-    participant QS as TaskReportQueryService
+    participant QS as TaskReportRunService
     participant Repo as TaskRepository
     participant DB as PostgreSQL
 
@@ -913,7 +913,7 @@ If a single task has multiple show-type targets (rare but structurally possible 
 
 ### 9.6 Internal batch processing
 
-The report generation endpoint does **not** expose pagination to the client. The `TaskReportQueryService` iterates all matching tasks internally:
+The report generation endpoint does **not** expose pagination to the client. The `TaskReportRunService` iterates all matching tasks internally:
 
 - Internal batch size: `200` rows per iteration (not configurable by client).
 - Uses `skip`/`take` with the standard Prisma offset pattern.
@@ -939,7 +939,7 @@ graph TB
     subgraph "task-report module"
         Ctrl[StudioTaskReportController<br/>HTTP transport:<br/>preflight, sources, run, CRUD]
         SS[TaskReportScopeService<br/>Layer 1 — scope resolution<br/>shared by preflight/sources/run]
-        QS[TaskReportQueryService<br/>Layer 2 — extraction + rows<br/>run endpoint only]
+        QS[TaskReportRunService<br/>Layer 2 — extraction + rows<br/>run endpoint only]
         DS[TaskReportDefinitionService<br/>Definition CRUD]
         DR[TaskReportDefinitionRepository<br/>Prisma persistence]
         subgraph "lib/ — portable, zero framework imports"
@@ -975,7 +975,7 @@ Recommended module split:
 
 - `StudioTaskReportController` for studio-scoped HTTP surface (preflight, sources, run, definition CRUD)
 - `TaskReportScopeService` for **Layer 1** — show scope resolution, shared by preflight/sources/run
-- `TaskReportQueryService` for **Layer 2** — task extraction + row construction (orchestration)
+- `TaskReportRunService` for **Layer 2** — task extraction + row construction (orchestration)
 - `TaskReportDefinitionService` for CRUD on saved definitions
 - `TaskReportDefinitionRepository` for definition persistence
 - extend `TaskRepository` with lean report-query helpers as needed
@@ -987,7 +987,7 @@ src/models/task-report/
   ├── task-report.module.ts                 # NestJS wiring
   ├── task-report.controller.ts             # HTTP transport (preflight, sources, run, CRUD)
   ├── task-report-scope.service.ts          # Layer 1 — scope resolution (NestJS-coupled)
-  ├── task-report-query.service.ts          # Layer 2 — extraction + row construction (NestJS-coupled)
+  ├── task-report-run.service.ts            # Layer 2 — extraction + row construction (NestJS-coupled)
   ├── task-report-definition.service.ts     # Definition CRUD (NestJS-coupled)
   ├── task-report-definition.repository.ts  # Definition persistence (Prisma-coupled)
   ├── schemas/                              # Zod + payload types

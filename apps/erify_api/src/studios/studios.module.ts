@@ -7,6 +7,7 @@ import { StudioSettingsModule } from './studio-settings/studio-settings.module';
 import { StudioShiftApiModule } from './studio-shift/studio-shift.module';
 import { StudioShowModule } from './studio-show/studio-show.module';
 import { StudioTaskModule } from './studio-task/studio-task.module';
+import { StudioTaskReportModule } from './studio-task-report/studio-task-report.module';
 import { StudioTaskTemplateModule } from './studio-task-template/studio-task-template.module';
 
 @Module({
@@ -18,6 +19,7 @@ import { StudioTaskTemplateModule } from './studio-task-template/studio-task-tem
     StudioShiftApiModule,
     StudioTaskTemplateModule,
     StudioTaskModule,
+    StudioTaskReportModule,
     StudioShowModule,
   ],
   exports: [

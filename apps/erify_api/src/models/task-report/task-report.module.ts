@@ -1,0 +1,25 @@
+import { Module } from '@nestjs/common';
+
+import { TaskReportDefinitionRepository } from './task-report-definition.repository';
+import { TaskReportDefinitionService } from './task-report-definition.service';
+import { TaskReportRunService } from './task-report-run.service';
+import { TaskReportScopeService } from './task-report-scope.service';
+
+import { PrismaModule } from '@/prisma/prisma.module';
+import { UtilityModule } from '@/utility/utility.module';
+
+@Module({
+  imports: [PrismaModule, UtilityModule],
+  providers: [
+    TaskReportDefinitionRepository,
+    TaskReportDefinitionService,
+    TaskReportScopeService,
+    TaskReportRunService,
+  ],
+  exports: [
+    TaskReportDefinitionService,
+    TaskReportScopeService,
+    TaskReportRunService,
+  ],
+})
+export class TaskReportModule {}
