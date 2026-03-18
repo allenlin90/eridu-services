@@ -190,6 +190,14 @@ function getStudioAdminItems(
     });
   }
 
+  if (hasStudioRouteAccess(role as StudioRole, 'taskReports')) {
+    adminItems.push({
+      title: 'Task Reports',
+      url: `/studios/${studioId}/task-reports`,
+      icon: ClipboardCheck,
+    });
+  }
+
   return adminItems;
 }
 
