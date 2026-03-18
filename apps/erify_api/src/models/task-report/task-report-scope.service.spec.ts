@@ -72,6 +72,7 @@ describe('taskReportScopeService', () => {
       {
         templateUid: 'ttpl_a',
         templateName: 'Template A',
+        snapshotVersion: 1,
         snapshotSchema,
         taskCount: 3,
       },
@@ -148,8 +149,8 @@ describe('taskReportScopeService', () => {
     });
 
     repository.findSourceSnapshotsInScope.mockResolvedValue([
-      { templateUid: 'ttpl_a', templateName: 'Template A', snapshotSchema: schemaV1, taskCount: 4 },
-      { templateUid: 'ttpl_a', templateName: 'Template A', snapshotSchema: schemaV2, taskCount: 6 },
+      { templateUid: 'ttpl_a', templateName: 'Template A', snapshotVersion: 1, snapshotSchema: schemaV1, taskCount: 4 },
+      { templateUid: 'ttpl_a', templateName: 'Template A', snapshotVersion: 2, snapshotSchema: schemaV2, taskCount: 6 },
     ]);
     studioService.getSharedFields.mockResolvedValue([]);
 
@@ -170,6 +171,7 @@ describe('taskReportScopeService', () => {
       {
         templateUid: 'ttpl_a',
         templateName: 'Template A',
+        snapshotVersion: 1,
         snapshotSchema: { items: [{ key: 'gmv' }] },
         taskCount: 1,
       },
@@ -203,6 +205,50 @@ describe('taskReportScopeService', () => {
       within_limit: true,
       limit: 10000,
     });
+  });
+
+  it('applies deterministic latest-snapshot precedence when deduplicating fields by key', async () => {
+    const schemaV1 = TemplateSchemaValidator.parse({
+      items: [
+        { id: 'fi_1', key: 'gmv', type: 'number', label: 'Legacy GMV' },
+      ],
+      metadata: { task_type: 'LEGACY' },
+    });
+    const schemaV2 = TemplateSchemaValidator.parse({
+      items: [
+        { id: 'fi_1', key: 'gmv', type: 'number', standard: true, label: 'GMV' },
+      ],
+      metadata: { task_type: 'CLOSURE' },
+    });
+
+    repository.findSourceSnapshotsInScope.mockResolvedValue([
+      // Intentionally provide older snapshot first; service should still prefer v2.
+      { templateUid: 'ttpl_a', templateName: 'Template A', snapshotVersion: 1, snapshotSchema: schemaV1, taskCount: 3 },
+      { templateUid: 'ttpl_a', templateName: 'Template A', snapshotVersion: 2, snapshotSchema: schemaV2, taskCount: 2 },
+    ]);
+    studioService.getSharedFields.mockResolvedValue([
+      {
+        key: 'gmv',
+        type: 'number',
+        category: 'metric',
+        label: 'GMV',
+        is_active: true,
+      },
+    ]);
+
+    const result = await service.getSources(
+      'std_123',
+      getTaskReportSourcesQuerySchema.parse({ show_standard_id: 'shsd_1' }),
+    );
+
+    expect(result.sources[0]?.task_type).toBe('CLOSURE');
+    expect(result.sources[0]?.fields).toEqual([
+      expect.objectContaining({
+        key: 'gmv',
+        standard: true,
+        category: 'metric',
+      }),
+    ]);
   });
 
   it('returns within_limit false when task count exceeds default limit', async () => {

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
 
+import { UID_PREFIXES } from '@eridu/api-types/constants';
 import type {
   SharedFieldCategory,
   TaskReportResult,
@@ -86,7 +87,7 @@ export class TaskReportRunService {
 
     const projection = this.buildRunProjection(tasks, shows, selectedColumnKeys, sharedFieldByKey);
     this.addSystemColumnMeta(selectedColumns, projection.selectedKeyMeta);
-    this.assertKnownSelectedColumns(selectedColumns, projection.selectedKeyMeta, tasks.length);
+    this.assertKnownSelectedColumns(selectedColumns, projection.selectedKeyMeta, sharedFieldByKey);
 
     const rows = this.buildRows(shows, projection.rowsByShowUid, selectedColumns);
     const warnings = this.buildWarnings(projection.duplicateSourceCount);
@@ -209,13 +210,14 @@ export class TaskReportRunService {
   private assertKnownSelectedColumns(
     selectedColumns: Array<{ key: string }>,
     selectedKeyMeta: Map<string, SelectedKeyMeta>,
-    taskCount: number,
+    sharedFieldByKey: Map<string, Awaited<ReturnType<StudioService['getSharedFields']>>[number]>,
   ): void {
-    if (taskCount === 0 && selectedKeyMeta.size === 0) {
-      return;
-    }
-
-    const unknownColumn = selectedColumns.find((column) => !selectedKeyMeta.has(column.key));
+    const unknownColumn = selectedColumns.find((column) => (
+      !selectedKeyMeta.has(column.key)
+      && !this.isSystemColumn(column.key)
+      && !sharedFieldByKey.has(column.key)
+      && !this.isTemplateScopedColumnKey(column.key)
+    ));
     if (unknownColumn) {
       throw HttpError.badRequest(`Unknown column key: ${unknownColumn.key}`);
     }
@@ -340,17 +342,7 @@ export class TaskReportRunService {
   }
 
   private readTemplateUidFromColumnKey(columnKey: string): string | null {
-    if (this.isSystemColumn(columnKey)) {
-      return null;
-    }
-
-    const separatorIndex = columnKey.indexOf(':');
-    if (separatorIndex < 0) {
-      return null;
-    }
-
-    const templateUid = columnKey.slice(0, separatorIndex);
-    return templateUid.length > 0 ? templateUid : null;
+    return this.readTemplateScopedColumnParts(columnKey)?.templateUid ?? null;
   }
 
   private buildSystemRow(show: ScopedShow): Record<TaskReportSystemColumnKey, unknown> {
@@ -377,5 +369,28 @@ export class TaskReportRunService {
 
   private isSystemColumn(key: string): key is TaskReportSystemColumnKey {
     return Object.hasOwn(SYSTEM_COLUMN_META, key);
+  }
+
+  private isTemplateScopedColumnKey(columnKey: string): boolean {
+    return this.readTemplateScopedColumnParts(columnKey) !== null;
+  }
+
+  private readTemplateScopedColumnParts(columnKey: string): { templateUid: string; fieldKey: string } | null {
+    if (this.isSystemColumn(columnKey)) {
+      return null;
+    }
+
+    const separatorIndex = columnKey.indexOf(':');
+    if (separatorIndex <= 0 || separatorIndex >= columnKey.length - 1) {
+      return null;
+    }
+
+    const templateUid = columnKey.slice(0, separatorIndex);
+    if (!templateUid.startsWith(UID_PREFIXES.TASK_TEMPLATE)) {
+      return null;
+    }
+
+    const fieldKey = columnKey.slice(separatorIndex + 1);
+    return fieldKey.length > 0 ? { templateUid, fieldKey } : null;
   }
 }

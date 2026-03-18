@@ -18,6 +18,7 @@ export type TaskReportScopeFilters = {
 export type TaskReportSourceSnapshot = {
   templateUid: string;
   templateName: string;
+  snapshotVersion: number;
   snapshotSchema: Prisma.JsonValue;
   taskCount: number;
 };
@@ -139,7 +140,6 @@ export class TaskReportScopeRepository {
       this.prisma.taskTemplate.findMany({
         where: {
           id: { in: templateIds },
-          deletedAt: null,
         },
         select: {
           id: true,
@@ -153,6 +153,7 @@ export class TaskReportScopeRepository {
         },
         select: {
           id: true,
+          version: true,
           schema: true,
         },
       }),
@@ -176,6 +177,7 @@ export class TaskReportScopeRepository {
       return [{
         templateUid: template.uid,
         templateName: template.name,
+        snapshotVersion: snapshot.version,
         snapshotSchema: snapshot.schema,
         taskCount: row._count._all,
       }];

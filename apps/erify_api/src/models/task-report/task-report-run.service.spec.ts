@@ -229,6 +229,71 @@ describe('taskReportRunService', () => {
     ).rejects.toThrow('Unknown column key: unknown_key');
   });
 
+  it('allows template-scoped columns that are absent from current scoped tasks', async () => {
+    const snapshotSchema = TemplateSchemaValidator.parse({
+      items: [
+        {
+          id: 'fi_1',
+          key: 'gmv',
+          type: 'number',
+          standard: true,
+          label: 'GMV',
+        },
+      ],
+      metadata: {},
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      showStandardId: 'shsd_1',
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([
+      {
+        uid: 'show_1',
+        name: 'Show 1',
+        externalId: 'EXT-1',
+        startTime: new Date('2026-03-16T00:00:00.000Z'),
+        endTime: new Date('2026-03-16T02:00:00.000Z'),
+        clientName: 'Client A',
+        studioRoomName: 'Room A',
+        showStandardName: 'Standard A',
+        showTypeName: 'Type A',
+      },
+    ]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      {
+        uid: 'task_1',
+        updatedAt: new Date('2026-03-17T10:00:00.000Z'),
+        templateUid: 'ttpl_1',
+        templateName: 'Template 1',
+        snapshotId: 'snap_1',
+        snapshotSchema,
+        content: { gmv: 200 },
+        targetShowUids: ['show_1'],
+      },
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: { show_standard_id: 'shsd_1' },
+      columns: [{ key: 'ttpl_2:notes', label: 'Notes' }],
+    }));
+
+    expect(result.rows).toEqual([{ 'ttpl_2:notes': null }]);
+    expect(result.columns).toEqual([
+      expect.objectContaining({
+        key: 'ttpl_2:notes',
+        source_template_id: 'ttpl_2',
+      }),
+    ]);
+  });
+
   it('rejects run when preflight exceeds row limit', async () => {
     scopeService.preflight.mockResolvedValue({
       show_count: 300,

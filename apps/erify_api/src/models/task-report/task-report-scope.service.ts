@@ -44,6 +44,11 @@ export class TaskReportScopeService {
       this.taskReportScopeRepository.findSourceSnapshotsInScope(studioUid, filters),
       this.studioService.getSharedFields(studioUid),
     ]);
+    const orderedSourceSnapshots = [...sourceSnapshots].sort((a, b) => (
+      a.templateUid.localeCompare(b.templateUid)
+      || b.snapshotVersion - a.snapshotVersion
+      || b.taskCount - a.taskCount
+    ));
 
     const sourceMap = new Map<
       string,
@@ -58,7 +63,7 @@ export class TaskReportScopeService {
     const standardFieldKeys = new Set<string>();
     const sharedFieldByKey = new Map(studioSharedFields.map((field) => [field.key, field]));
 
-    for (const sourceSnapshot of sourceSnapshots) {
+    for (const sourceSnapshot of orderedSourceSnapshots) {
       const parsedSnapshot = TemplateSchemaValidator.safeParse(sourceSnapshot.snapshotSchema);
       if (!parsedSnapshot.success) {
         throw HttpError.internalServerError('Task template snapshot schema is invalid');
@@ -77,6 +82,8 @@ export class TaskReportScopeService {
       source.submitted_task_count += sourceSnapshot.taskCount;
 
       for (const item of parsedSnapshot.data.items) {
+        // Keep the first encountered field definition per key. Snapshot input is
+        // pre-sorted by template + version DESC, so "first" means latest schema.
         if (source.fieldsByKey.has(item.key)) {
           continue;
         }
