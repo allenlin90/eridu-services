@@ -356,7 +356,7 @@ If spreadsheet-like keyboard navigation is added, scope it to the table containe
 Do not introduce these without explicit justification.
 
 - custom ad hoc table state when `useTableUrlState` already fits
-- fetching all rows just to page/filter/sort locally on large server-backed views
+- fetching all rows just to page/filter/sort locally on large server-backed views (Exception: ad-hoc reporting views where immediate whole-dataset CSV export is a primary requirement, provided the rendering layer is properly virtualized).
 - route files that mix query logic, dialogs, render code, and feature state into one monolith
 - speculative virtualization without evidence of rendering cost
 - blanket `useMemo` / `useCallback` use with no concrete benefit
