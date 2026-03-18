@@ -60,13 +60,14 @@ describe('report builder integration', () => {
   it('switches from list view to builder when create button is clicked', async () => {
     const user = userEvent.setup();
     const setView = vi.fn();
+    const setActiveDefinitionId = vi.fn();
 
     render(
       <TaskReportsIndex
         view="list"
         setView={setView}
         activeDefinitionId={null}
-        setActiveDefinitionId={vi.fn()}
+        setActiveDefinitionId={setActiveDefinitionId}
         draftScope={null}
         setDraftScope={vi.fn()}
         draftColumns={[]}
@@ -80,6 +81,7 @@ describe('report builder integration', () => {
     await user.click(screen.getByRole('button', { name: /Create New Report/i }));
 
     expect(setView).toHaveBeenCalledWith('builder');
+    expect(setActiveDefinitionId).toHaveBeenCalledWith(null);
   });
 
   it('renders the builder view by default', () => {

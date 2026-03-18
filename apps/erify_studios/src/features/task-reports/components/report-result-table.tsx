@@ -5,6 +5,8 @@ import { useMemo, useRef, useState } from 'react';
 import type { TaskReportResult } from '@eridu/api-types/task-management';
 import { Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@eridu/ui';
 
+import { cn } from '@eridu/ui/lib/utils';
+
 import { filterRows, type TaskReportViewFilters } from '../lib/filter-rows';
 import { serializeCsv } from '../lib/serialize-csv';
 import { type SortDirection, sortRows } from '../lib/sort-rows';
@@ -32,7 +34,7 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
   const availableClients = useMemo(() => Array.from(new Set(rows.map((r) => r.client_name).filter(Boolean))), [rows]);
-  const availableStatuses = useMemo(() => Array.from(new Set(rows.map((r) => r.show_status_id).filter(Boolean))), [rows]);
+  const availableStatuses = useMemo(() => Array.from(new Set(rows.map((r) => r.show_status_name ?? r.show_status_id).filter(Boolean))), [rows]);
   const availableRooms = useMemo(() => Array.from(new Set(rows.map((r) => r.studio_room_name).filter(Boolean))), [rows]);
 
   const filteredRows = useMemo(() => filterRows(rows, columns, filters), [rows, columns, filters]);
@@ -81,16 +83,6 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
   }, [columns]);
 
   const getFrozenOffset = (key: string) => frozenColumnOffsets.get(key);
-
-  const getColumnWidthClass = (key: string) => {
-    if (key === 'show_name')
-      return 'min-w-[260px]';
-    if (key === 'client_name')
-      return 'min-w-[220px]';
-    if (key === 'start_time')
-      return 'min-w-[180px]';
-    return '';
-  };
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const rowVirtualizer = useVirtualizer({
@@ -141,17 +133,6 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
         availableRooms={availableRooms}
         availableStatuses={availableStatuses}
       />
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Builder
-        </Button>
-        <Button onClick={handleExportCsv} variant="outline" size="sm">
-          <Download className="mr-2 w-4 h-4" />
-          Export CSV
-        </Button>
-      </div>
-
       <Card>
         <CardHeader className="py-4">
           <CardTitle className="text-base flex items-center justify-between">
@@ -177,9 +158,9 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
                     return (
                       <TableHead
                         key={col.key}
-                        className={`group font-semibold cursor-pointer select-none whitespace-nowrap hover:bg-muted transition-colors ${frozenClasses} ${getColumnWidthClass(col.key)}`}
+                        className={cn('group font-semibold cursor-pointer select-none whitespace-nowrap hover:bg-muted transition-colors', frozenClasses)}
                         onClick={() => handleSort(col.key)}
-                        style={leftOffset !== undefined ? { left: leftOffset } : undefined}
+                        style={leftOffset !== undefined ? { left: leftOffset, minWidth: FROZEN_COLUMN_WIDTH[col.key as keyof typeof FROZEN_COLUMN_WIDTH] } : undefined}
                       >
                         <div className="flex items-center gap-1">
                           {col.label}
@@ -215,9 +196,9 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
                         return (
                           <TableCell
                             key={col.key}
-                            className={`text-sm max-w-[300px] truncate ${getColumnWidthClass(col.key)} ${frozenClasses}`}
+                            className={cn('text-sm max-w-[300px] truncate', frozenClasses)}
                             title={String(row[col.key] ?? '')}
-                            style={leftOffset !== undefined ? { left: leftOffset } : undefined}
+                            style={leftOffset !== undefined ? { left: leftOffset, minWidth: FROZEN_COLUMN_WIDTH[col.key as keyof typeof FROZEN_COLUMN_WIDTH] } : undefined}
                           >
                             {col.key === 'show_name' && row._has_duplicate_source && (
                               <span

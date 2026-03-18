@@ -33,14 +33,25 @@ describe('filterRows', () => {
     expect(filtered).toEqual([{ show_name: 'Show B', client_name: 'Client B', studio_room_name: 'Room 2' }]);
   });
 
-  it('supports fallback id-based keys for backward compatibility', () => {
+  it('filters status by show_status_name values', () => {
     const rows = [
-      { show_name: 'Show A', client_id: 'client_1', studio_room_id: 'room_1' },
-      { show_name: 'Show B', client_id: 'client_2', studio_room_id: 'room_2' },
+      { show_name: 'Show A', show_status_name: 'Confirmed' },
+      { show_name: 'Show B', show_status_name: 'Pending' },
     ];
 
-    const filtered = filterRows(rows, columns, { client_id: 'client_2', studio_room_id: 'room_2' });
+    const filtered = filterRows(rows, columns, { show_status_id: 'Confirmed' });
 
-    expect(filtered).toEqual([{ show_name: 'Show B', client_id: 'client_2', studio_room_id: 'room_2' }]);
+    expect(filtered).toEqual([{ show_name: 'Show A', show_status_name: 'Confirmed' }]);
+  });
+
+  it('supports fallback id-based keys for backward compatibility', () => {
+    const rows = [
+      { show_name: 'Show A', client_id: 'client_1', studio_room_id: 'room_1', show_status_id: 'status_1' },
+      { show_name: 'Show B', client_id: 'client_2', studio_room_id: 'room_2', show_status_id: 'status_2' },
+    ];
+
+    const filtered = filterRows(rows, columns, { client_id: 'client_2', studio_room_id: 'room_2', show_status_id: 'status_2' });
+
+    expect(filtered).toEqual([{ show_name: 'Show B', client_id: 'client_2', studio_room_id: 'room_2', show_status_id: 'status_2' }]);
   });
 });
