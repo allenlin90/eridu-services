@@ -22,6 +22,8 @@ export type TaskReportsIndexProps = TaskReportsRouteState & {
 
 export function TaskReportsIndex({
   view,
+  setView,
+  setActiveDefinitionId,
   studioId,
   draftScope,
   setDraftScope,
@@ -34,7 +36,16 @@ export function TaskReportsIndex({
     return (
       <div className="space-y-6">
         <div>Definition List View (Coming Soon)</div>
-        <button type="button" onClick={() => {}} className="text-primary underline">Create New Report (Go to Builder)</button>
+        <button
+          type="button"
+          onClick={() => {
+            setActiveDefinitionId(null);
+            setView('builder');
+          }}
+          className="text-primary underline"
+        >
+          Create New Report (Go to Builder)
+        </button>
       </div>
     );
   }

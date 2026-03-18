@@ -20,13 +20,13 @@ export function filterRows(
 
   return rows.filter((row) => {
     // Exact match filters
-    if (filters.client_id && row.client_id !== filters.client_id)
+    if (filters.client_id && (row.client_name ?? row.client_id) !== filters.client_id)
       return false;
-    if (filters.show_status_id && row.show_status_id !== filters.show_status_id)
+    if (filters.show_status_id && (row.show_status_name ?? row.show_status_id) !== filters.show_status_id)
       return false;
-    if (filters.studio_room_id && row.studio_room_id !== filters.studio_room_id)
+    if (filters.studio_room_id && (row.studio_room_name ?? row.studio_room_id) !== filters.studio_room_id)
       return false;
-    if (filters.assignee && row.assignee_id !== filters.assignee && row.assignee !== filters.assignee)
+    if (filters.assignee && (row.assignee_name ?? row.assignee ?? row.assignee_id) !== filters.assignee)
       return false;
 
     // Text search against all visible columns

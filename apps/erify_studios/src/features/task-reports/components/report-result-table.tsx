@@ -16,6 +16,13 @@ type ReportResultTableProps = {
   onBack: () => void;
 };
 
+const FROZEN_COLUMN_ORDER = ['show_name', 'client_name', 'start_time'] as const;
+const FROZEN_COLUMN_WIDTH: Record<(typeof FROZEN_COLUMN_ORDER)[number], number> = {
+  show_name: 260,
+  client_name: 220,
+  start_time: 180,
+};
+
 export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
   const { columns, rows } = result;
 
@@ -56,7 +63,34 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
     });
   };
 
-  const isFrozen = (key: string) => ['show_name', 'client_name', 'start_time'].includes(key);
+  const frozenColumnOffsets = useMemo(() => {
+    const activeColumnKeys = new Set(columns.map((column) => column.key));
+    const offsets = new Map<string, number>();
+    let currentOffset = 0;
+
+    for (const key of FROZEN_COLUMN_ORDER) {
+      if (!activeColumnKeys.has(key)) {
+        continue;
+      }
+
+      offsets.set(key, currentOffset);
+      currentOffset += FROZEN_COLUMN_WIDTH[key];
+    }
+
+    return offsets;
+  }, [columns]);
+
+  const getFrozenOffset = (key: string) => frozenColumnOffsets.get(key);
+
+  const getColumnWidthClass = (key: string) => {
+    if (key === 'show_name')
+      return 'min-w-[260px]';
+    if (key === 'client_name')
+      return 'min-w-[220px]';
+    if (key === 'start_time')
+      return 'min-w-[180px]';
+    return '';
+  };
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const rowVirtualizer = useVirtualizer({
@@ -137,13 +171,15 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
               <TableHeader className="sticky top-0 z-20 bg-background shadow-sm">
                 <TableRow>
                   {columns.map((col) => {
-                    const frozenClasses = isFrozen(col.key) ? 'sticky left-0 z-30 bg-muted/95 backdrop-blur border-r' : 'bg-muted/95 backdrop-blur z-20';
+                    const leftOffset = getFrozenOffset(col.key);
+                    const frozenClasses = leftOffset !== undefined ? 'sticky z-30 bg-muted/95 backdrop-blur border-r' : 'bg-muted/95 backdrop-blur z-20';
                     const sorting = sortConfig.column === col.key;
                     return (
                       <TableHead
                         key={col.key}
-                        className={`font-semibold cursor-pointer select-none whitespace-nowrap hover:bg-muted transition-colors ${frozenClasses}`}
+                        className={`group font-semibold cursor-pointer select-none whitespace-nowrap hover:bg-muted transition-colors ${frozenClasses} ${getColumnWidthClass(col.key)}`}
                         onClick={() => handleSort(col.key)}
+                        style={leftOffset !== undefined ? { left: leftOffset } : undefined}
                       >
                         <div className="flex items-center gap-1">
                           {col.label}
@@ -174,12 +210,14 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
                   return (
                     <TableRow key={virtualRow.key} data-index={virtualRow.index} ref={rowVirtualizer.measureElement} className="hover:bg-muted/30">
                       {columns.map((col) => {
-                        const frozenClasses = isFrozen(col.key) ? 'sticky left-0 z-10 bg-background border-r drop-shadow-[1px_0_2px_rgba(0,0,0,0.05)]' : '';
+                        const leftOffset = getFrozenOffset(col.key);
+                        const frozenClasses = leftOffset !== undefined ? 'sticky z-10 bg-background border-r drop-shadow-[1px_0_2px_rgba(0,0,0,0.05)]' : '';
                         return (
                           <TableCell
                             key={col.key}
-                            className={`text-sm max-w-[300px] truncate ${frozenClasses}`}
+                            className={`text-sm max-w-[300px] truncate ${getColumnWidthClass(col.key)} ${frozenClasses}`}
                             title={String(row[col.key] ?? '')}
+                            style={leftOffset !== undefined ? { left: leftOffset } : undefined}
                           >
                             {col.key === 'show_name' && row._has_duplicate_source && (
                               <span

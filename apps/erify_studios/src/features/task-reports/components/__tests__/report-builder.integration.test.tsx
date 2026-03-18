@@ -57,6 +57,31 @@ describe('report builder integration', () => {
     vi.clearAllMocks();
   });
 
+  it('switches from list view to builder when create button is clicked', async () => {
+    const user = userEvent.setup();
+    const setView = vi.fn();
+
+    render(
+      <TaskReportsIndex
+        view="list"
+        setView={setView}
+        activeDefinitionId={null}
+        setActiveDefinitionId={vi.fn()}
+        draftScope={null}
+        setDraftScope={vi.fn()}
+        draftColumns={[]}
+        setDraftColumns={vi.fn()}
+        reportResult={null}
+        setReportResult={vi.fn()}
+        studioId="studio_123"
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Create New Report/i }));
+
+    expect(setView).toHaveBeenCalledWith('builder');
+  });
+
   it('renders the builder view by default', () => {
     render(
       <TaskReportsIndex
