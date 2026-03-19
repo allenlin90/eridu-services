@@ -1,8 +1,8 @@
 import 'dotenv/config';
 
 import { PrismaPg } from '@prisma/adapter-pg';
-import type { Studio, User } from '@prisma/client';
-import { PrismaClient } from '@prisma/client';
+import type { Prisma, Studio, User } from '@prisma/client';
+import { PrismaClient, TaskStatus, TaskType } from '@prisma/client';
 import { Pool } from 'pg';
 
 import { fixtures, getClientUidByName } from './fixtures';
@@ -17,6 +17,230 @@ if (!connectionString) {
 const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
+
+const TASK_TEMPLATE_COUNT = 50;
+const REPORT_SEED_SHOW_COUNT = 4;
+const REPORT_SEED_TASK_COUNT = 12;
+const REPORT_SEED_SHOW_EXTERNAL_ID_PREFIX = 'seed-report-';
+const REPORT_SEED_TASK_UID_PREFIX = 'task_seed_report_';
+const TASK_TYPE_SEQUENCE: TaskType[] = [
+  TaskType.SETUP,
+  TaskType.ACTIVE,
+  TaskType.CLOSURE,
+  TaskType.ADMIN,
+  TaskType.ROUTINE,
+];
+
+const SUBMITTED_TASK_STATUSES: TaskStatus[] = [
+  TaskStatus.REVIEW,
+  TaskStatus.COMPLETED,
+  TaskStatus.CLOSED,
+];
+
+type SeedSharedField = {
+  key: string;
+  type: 'number' | 'url';
+  category: 'metric' | 'evidence' | 'status';
+  label: string;
+  description: string;
+  is_active: boolean;
+};
+
+const SHARED_FIELD_SEEDS: SeedSharedField[] = [
+  {
+    key: 'gmv',
+    type: 'number',
+    category: 'metric',
+    label: 'GMV',
+    description: 'Gross merchandise value for this task entry',
+    is_active: true,
+  },
+  {
+    key: 'orders',
+    type: 'number',
+    category: 'metric',
+    label: 'Orders',
+    description: 'Order count captured for this task entry',
+    is_active: true,
+  },
+  {
+    key: 'proof_link',
+    type: 'url',
+    category: 'evidence',
+    label: 'Proof Link',
+    description: 'Reference link used as evidence for this task entry',
+    is_active: true,
+  },
+];
+
+function deterministicUid(prefix: string, index: number): string {
+  return `${prefix}${String(index).padStart(6, '0')}`;
+}
+
+function toObjectRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function mergeSeedSharedFields(metadata: unknown): Record<string, unknown> {
+  const metadataObject = toObjectRecord(metadata);
+  const existingSharedFieldsRaw = metadataObject.shared_fields;
+  const existingSharedFields = Array.isArray(existingSharedFieldsRaw)
+    ? existingSharedFieldsRaw
+    : [];
+
+  const sharedFieldByKey = new Map<string, Record<string, unknown>>();
+
+  for (const field of existingSharedFields) {
+    if (!field || typeof field !== 'object' || Array.isArray(field)) {
+      continue;
+    }
+
+    const fieldObj = field as Record<string, unknown>;
+    if (typeof fieldObj.key !== 'string' || fieldObj.key.length === 0) {
+      continue;
+    }
+
+    sharedFieldByKey.set(fieldObj.key, fieldObj);
+  }
+
+  for (const seedField of SHARED_FIELD_SEEDS) {
+    if (sharedFieldByKey.has(seedField.key)) {
+      continue;
+    }
+
+    sharedFieldByKey.set(seedField.key, seedField as unknown as Record<string, unknown>);
+  }
+
+  return {
+    ...metadataObject,
+    shared_fields: Array.from(sharedFieldByKey.values()).sort((a, b) => (
+      String(a.key).localeCompare(String(b.key))
+    )),
+  };
+}
+
+function buildTemplateSchema(templateIndex: number) {
+  const taskType = TASK_TYPE_SEQUENCE[(templateIndex - 1) % TASK_TYPE_SEQUENCE.length];
+  const baseItems = [
+    {
+      id: `field_${templateIndex}_gmv`,
+      key: 'gmv',
+      type: 'number',
+      standard: true,
+      label: 'GMV',
+      description: 'Sales value captured for this show loop',
+      required: true,
+    },
+    {
+      id: `field_${templateIndex}_orders`,
+      key: 'orders',
+      type: 'number',
+      standard: true,
+      label: 'Orders',
+      description: 'Order count captured for this show loop',
+      required: true,
+    },
+    {
+      id: `field_${templateIndex}_proof_link`,
+      key: 'proof_link',
+      type: 'url',
+      standard: true,
+      label: 'Proof Link',
+      description: 'URL for screenshot/video evidence',
+      required: false,
+    },
+  ] as const;
+
+  const taskTypeItems = (() => {
+    switch (taskType) {
+      case TaskType.SETUP:
+        return [
+          {
+            id: `field_${templateIndex}_setup_note`,
+            key: 'setup_note',
+            type: 'textarea',
+            label: 'Setup Note',
+            description: 'Checklist note before show starts',
+            required: false,
+          },
+        ];
+      case TaskType.ACTIVE:
+        return [
+          {
+            id: `field_${templateIndex}_peak_viewers`,
+            key: 'peak_viewers',
+            type: 'number',
+            label: 'Peak Viewers',
+            description: 'Highest concurrent viewers observed during live show',
+            required: false,
+          },
+        ];
+      case TaskType.CLOSURE:
+        return [
+          {
+            id: `field_${templateIndex}_closure_summary`,
+            key: 'closure_summary',
+            type: 'textarea',
+            label: 'Closure Summary',
+            description: 'Short summary after show ends',
+            required: false,
+          },
+          {
+            id: `field_${templateIndex}_follow_up_required`,
+            key: 'follow_up_required',
+            type: 'checkbox',
+            label: 'Follow Up Required',
+            description: 'Mark if this show needs follow-up action',
+            required: false,
+          },
+        ];
+      case TaskType.ADMIN:
+        return [
+          {
+            id: `field_${templateIndex}_admin_note`,
+            key: 'admin_note',
+            type: 'text',
+            label: 'Admin Note',
+            description: 'Internal administrative note',
+            required: false,
+          },
+        ];
+      case TaskType.ROUTINE:
+        return [
+          {
+            id: `field_${templateIndex}_routine_observation`,
+            key: 'routine_observation',
+            type: 'text',
+            label: 'Routine Observation',
+            description: 'Quick observation for routine check',
+            required: false,
+          },
+        ];
+      default:
+        return [
+          {
+            id: `field_${templateIndex}_general_note`,
+            key: 'general_note',
+            type: 'text',
+            label: 'General Note',
+            description: 'General note for this task',
+            required: false,
+          },
+        ];
+    }
+  })();
+
+  return {
+    items: [...baseItems, ...taskTypeItems],
+    metadata: {
+      task_type: taskType,
+    },
+  };
+}
 
 // Check if database is already seeded with complete reference data
 async function isDatabaseSeeded(): Promise<boolean> {
@@ -36,6 +260,9 @@ async function isDatabaseSeeded(): Promise<boolean> {
       studioShiftCount,
       studioShiftBlockCount,
       taskTemplateCount,
+      baselineTemplate,
+      reportSeedShowCount,
+      reportSeedSubmittedTaskCount,
     ] = await Promise.all([
       prisma.showType.findMany({
         where: {
@@ -85,6 +312,24 @@ async function isDatabaseSeeded(): Promise<boolean> {
       prisma.studioShift.count(),
       prisma.studioShiftBlock.count(),
       prisma.taskTemplate.count(),
+      prisma.taskTemplate.findUnique({
+        where: { uid: fixtures.taskTemplates.template1 },
+        select: { currentSchema: true },
+      }),
+      prisma.show.count({
+        where: {
+          deletedAt: null,
+          studio: { uid: fixtures.studios.mainStudio },
+          externalId: { startsWith: REPORT_SEED_SHOW_EXTERNAL_ID_PREFIX },
+        },
+      }),
+      prisma.task.count({
+        where: {
+          deletedAt: null,
+          uid: { startsWith: REPORT_SEED_TASK_UID_PREFIX },
+          status: { in: SUBMITTED_TASK_STATUSES },
+        },
+      }),
     ]);
 
     // Check if studio has all 10 rooms
@@ -111,7 +356,15 @@ async function isDatabaseSeeded(): Promise<boolean> {
     const hasStudioShifts = studioShiftCount >= 2;
     const hasStudioShiftBlocks = studioShiftBlockCount >= 3;
 
-    const hasAllTaskTemplates = taskTemplateCount >= 50;
+    const hasAllTaskTemplates = taskTemplateCount >= TASK_TEMPLATE_COUNT;
+    const baselineSchemaRecord = toObjectRecord(baselineTemplate?.currentSchema);
+    const baselineSchemaItems = baselineSchemaRecord.items;
+    const baselineMetadata = toObjectRecord(baselineSchemaRecord.metadata);
+    const hasModernTemplateSchema = Array.isArray(baselineSchemaItems)
+      && baselineSchemaItems.length > 0
+      && typeof baselineMetadata.task_type === 'string';
+    const hasReportSeedShows = reportSeedShowCount >= REPORT_SEED_SHOW_COUNT;
+    const hasReportSeedSubmittedTasks = reportSeedSubmittedTaskCount >= REPORT_SEED_TASK_COUNT;
 
     const isComplete
       = hasAllShowTypes
@@ -127,7 +380,10 @@ async function isDatabaseSeeded(): Promise<boolean> {
       && hasStudioShifts
       && hasStudioShiftBlocks
       && hasAllRooms
-      && hasAllTaskTemplates;
+      && hasAllTaskTemplates
+      && hasModernTemplateSchema
+      && hasReportSeedShows
+      && hasReportSeedSubmittedTasks;
 
     if (!isComplete) {
       console.log('🔍 Incomplete seeding detected:');
@@ -165,7 +421,16 @@ async function isDatabaseSeeded(): Promise<boolean> {
       );
       console.log(`  - Studio Rooms: ${hasAllRooms ? '10/10 ✅' : '❌'}`);
       console.log(
-        `  - TaskTemplates: ${taskTemplateCount}/50 (${hasAllTaskTemplates ? '✅' : '❌'})`,
+        `  - TaskTemplates: ${taskTemplateCount}/${TASK_TEMPLATE_COUNT} (${hasAllTaskTemplates ? '✅' : '❌'})`,
+      );
+      console.log(
+        `  - Baseline Template Schema: ${hasModernTemplateSchema ? '✅' : '❌'} (expects items[] + metadata.task_type)`,
+      );
+      console.log(
+        `  - Report Seed Shows: ${reportSeedShowCount}/${REPORT_SEED_SHOW_COUNT} (${hasReportSeedShows ? '✅' : '❌'})`,
+      );
+      console.log(
+        `  - Report Seed Submitted Tasks: ${reportSeedSubmittedTaskCount}/${REPORT_SEED_TASK_COUNT} (${hasReportSeedSubmittedTasks ? '✅' : '❌'})`,
       );
     }
 
@@ -777,14 +1042,23 @@ async function main() {
         const mcUser = createdUsers[i]; // Skip admin at index 0
         const uidKey = `mc${i}` as keyof typeof fixtures.mcs;
 
-        const existingMc = await tx.creator.findFirst({
-          where: { name: mcName },
+        const creatorUid = fixtures.mcs[uidKey];
+        const existingMcByUid = await tx.creator.findUnique({
+          where: { uid: creatorUid },
+          select: { id: true },
         });
+        const existingMcByName = existingMcByUid
+          ? null
+          : await tx.creator.findFirst({
+              where: { name: mcName },
+              select: { id: true },
+            });
+        const existingMcId = existingMcByUid?.id ?? existingMcByName?.id;
 
-        if (!existingMc) {
+        if (!existingMcId) {
           await tx.creator.create({
             data: {
-              uid: fixtures.mcs[uidKey],
+              uid: creatorUid,
               name: mcName,
               aliasName,
               userId: mcUser.id,
@@ -796,9 +1070,10 @@ async function main() {
           });
         } else {
           await tx.creator.update({
-            where: { id: existingMc.id },
+            where: { id: existingMcId },
             data: {
-              uid: fixtures.mcs[uidKey],
+              uid: creatorUid,
+              name: mcName,
               aliasName,
               userId: mcUser.id,
               metadata: {
@@ -828,16 +1103,21 @@ async function main() {
             uid: fixtures.studios.mainStudio,
             name: 'Main Studio',
             address: '123 Production Street, Entertainment District',
-            metadata: {
+            metadata: mergeSeedSharedFields({
               description: 'Main production studio facility',
               location: 'Downtown',
-            },
+            }) as Prisma.InputJsonValue,
           },
         });
         console.log(`✅ Created Studio: ${studio.name}`);
       } else {
-        studio = existingStudio;
-        console.log(`⏭️  Studio already exists: ${studio.name}`);
+        studio = await tx.studio.update({
+          where: { id: existingStudio.id },
+          data: {
+            metadata: mergeSeedSharedFields(existingStudio.metadata) as Prisma.InputJsonValue,
+          },
+        });
+        console.log(`♻️  Updated Studio metadata (shared fields): ${studio.name}`);
       }
 
       // Seed StudioRoom data
@@ -1140,39 +1420,27 @@ async function main() {
         }
       }
       console.log('✅ Completed seeding studio shifts and shift blocks');
+
       // Seed TaskTemplate data
       console.log('📝 Seeding TaskTemplate data...');
 
-      const taskTemplateCount = 50;
-
-      for (let i = 1; i <= taskTemplateCount; i++) {
+      for (let i = 1; i <= TASK_TEMPLATE_COUNT; i++) {
         const uidKey = `template${i}`;
         const uid
           = fixtures.taskTemplates[
             uidKey as keyof typeof fixtures.taskTemplates
           ];
         const name = `Task Template ${i}`;
+        const description = `Seeded task template #${i} for local report and workflow testing`;
+        const schema = buildTemplateSchema(i);
 
-        // Define a simple schema for the template
-        const schema = {
-          steps: [
-            {
-              id: 'step1',
-              title: 'Initial Review',
-              type: 'checkbox',
-              required: true,
-            },
-            {
-              id: 'step2',
-              title: 'Asset Collection',
-              type: 'upload',
-              required: false,
-            },
-          ],
-        };
-
-        const existingTemplate = await tx.taskTemplate.findFirst({
+        const existingTemplate = await tx.taskTemplate.findUnique({
           where: { uid },
+          select: {
+            id: true,
+            version: true,
+            currentSchema: true,
+          },
         });
 
         if (!existingTemplate) {
@@ -1181,33 +1449,406 @@ async function main() {
               uid,
               studioId: studio.id,
               name,
-              description: `Automated task template #${i} for studio workflows`,
+              description,
               isActive: true,
-              currentSchema: schema,
+              currentSchema: schema as Prisma.InputJsonValue,
               version: 1,
             },
           });
 
-          // Create initial snapshot
           await tx.taskTemplateSnapshot.create({
             data: {
               templateId: template.id,
               version: 1,
-              schema,
+              schema: schema as Prisma.InputJsonValue,
               metadata: {
                 createdReason: 'Initial seed',
+                source: 'seed',
               },
             },
           });
-
-          if (i % 10 === 0)
-            console.log(`✅ Created ${i} Task Templates...`);
         } else {
-          if (i % 10 === 0)
-            console.log(`⏭️  Task Template ${i} already exists...`);
+          const currentSchemaRecord = toObjectRecord(existingTemplate.currentSchema);
+          const currentItems = currentSchemaRecord.items;
+          const currentMetadata = toObjectRecord(currentSchemaRecord.metadata);
+          const needsSchemaMigration = !Array.isArray(currentItems)
+            || currentItems.length === 0
+            || typeof currentMetadata.task_type !== 'string';
+
+          const effectiveSchema: Prisma.InputJsonValue = (
+            needsSchemaMigration
+              ? schema
+              : (existingTemplate.currentSchema ?? {})
+          ) as Prisma.InputJsonValue;
+
+          if (needsSchemaMigration) {
+            await tx.taskTemplate.update({
+              where: { id: existingTemplate.id },
+              data: {
+                studioId: studio.id,
+                name,
+                description,
+                isActive: true,
+                currentSchema: schema as Prisma.InputJsonValue,
+                version: Math.max(existingTemplate.version, 1),
+              },
+            });
+          }
+
+          await tx.taskTemplateSnapshot.upsert({
+            where: {
+              templateId_version: {
+                templateId: existingTemplate.id,
+                version: 1,
+              },
+            },
+            update: needsSchemaMigration
+              ? {
+                  schema: effectiveSchema,
+                  metadata: {
+                    createdReason: 'Seed baseline refresh',
+                    source: 'seed',
+                  },
+                }
+              : {},
+            create: {
+              templateId: existingTemplate.id,
+              version: 1,
+              schema: effectiveSchema,
+              metadata: {
+                createdReason: 'Initial seed',
+                source: 'seed',
+              },
+            },
+          });
+        }
+
+        if (i % 10 === 0) {
+          console.log(`✅ Processed ${i} Task Templates...`);
         }
       }
-      console.log(`✅ Completed seeding ${taskTemplateCount} Task Templates`);
+      console.log(`✅ Completed seeding ${TASK_TEMPLATE_COUNT} Task Templates`);
+
+      // Seed report-ready shows + submitted tasks for local Task Reports UX validation.
+      console.log('📊 Seeding report-ready shows and submitted tasks...');
+
+      const [
+        nikeClient,
+        adidasClient,
+        bauType,
+        campaignType,
+        completedStatus,
+        confirmedStatus,
+        standardTier,
+        premiumTier,
+        roomA,
+        roomB,
+      ] = await Promise.all([
+        tx.client.findUnique({ where: { uid: fixtures.clients.nike }, select: { id: true } }),
+        tx.client.findUnique({ where: { uid: fixtures.clients.adidas }, select: { id: true } }),
+        tx.showType.findUnique({ where: { uid: fixtures.showTypes.bau }, select: { id: true } }),
+        tx.showType.findUnique({ where: { uid: fixtures.showTypes.campaign }, select: { id: true } }),
+        tx.showStatus.findUnique({ where: { uid: fixtures.showStatuses.completed }, select: { id: true } }),
+        tx.showStatus.findUnique({ where: { uid: fixtures.showStatuses.confirmed }, select: { id: true } }),
+        tx.showStandard.findUnique({ where: { uid: fixtures.showStandards.standard }, select: { id: true } }),
+        tx.showStandard.findUnique({ where: { uid: fixtures.showStandards.premium }, select: { id: true } }),
+        tx.studioRoom.findUnique({ where: { uid: fixtures.studioRooms.roomA }, select: { id: true } }),
+        tx.studioRoom.findUnique({ where: { uid: fixtures.studioRooms.roomB }, select: { id: true } }),
+      ]);
+
+      if (
+        !nikeClient
+        || !adidasClient
+        || !bauType
+        || !campaignType
+        || !completedStatus
+        || !confirmedStatus
+        || !standardTier
+        || !premiumTier
+        || !roomA
+        || !roomB
+      ) {
+        throw new Error('Missing required reference data for report seed dataset');
+      }
+
+      const reportDayBase = new Date(Date.UTC(
+        today.getUTCFullYear(),
+        today.getUTCMonth(),
+        today.getUTCDate(),
+      ));
+      const createWindow = (dayOffset: number, startHourUtc: number, durationHours: number) => {
+        const startTime = new Date(reportDayBase);
+        startTime.setUTCDate(startTime.getUTCDate() + dayOffset);
+        startTime.setUTCHours(startHourUtc, 0, 0, 0);
+        const endTime = new Date(startTime);
+        endTime.setUTCHours(endTime.getUTCHours() + durationHours);
+        return { startTime, endTime };
+      };
+
+      const reportShowSeeds = [
+        {
+          uid: deterministicUid('show_seed_report_', 1),
+          externalId: `${REPORT_SEED_SHOW_EXTERNAL_ID_PREFIX}001`,
+          name: 'Report Seed Show 001',
+          ...createWindow(-3, 10, 2),
+          clientId: nikeClient.id,
+          showTypeId: bauType.id,
+          showStatusId: completedStatus.id,
+          showStandardId: standardTier.id,
+          studioRoomId: roomA.id,
+        },
+        {
+          uid: deterministicUid('show_seed_report_', 2),
+          externalId: `${REPORT_SEED_SHOW_EXTERNAL_ID_PREFIX}002`,
+          name: 'Report Seed Show 002',
+          ...createWindow(-2, 14, 2),
+          clientId: nikeClient.id,
+          showTypeId: campaignType.id,
+          showStatusId: completedStatus.id,
+          showStandardId: premiumTier.id,
+          studioRoomId: roomB.id,
+        },
+        {
+          uid: deterministicUid('show_seed_report_', 3),
+          externalId: `${REPORT_SEED_SHOW_EXTERNAL_ID_PREFIX}003`,
+          name: 'Report Seed Show 003',
+          ...createWindow(-1, 11, 2),
+          clientId: adidasClient.id,
+          showTypeId: bauType.id,
+          showStatusId: confirmedStatus.id,
+          showStandardId: standardTier.id,
+          studioRoomId: roomA.id,
+        },
+        {
+          uid: deterministicUid('show_seed_report_', 4),
+          externalId: `${REPORT_SEED_SHOW_EXTERNAL_ID_PREFIX}004`,
+          name: 'Report Seed Show 004',
+          ...createWindow(0, 15, 2),
+          clientId: adidasClient.id,
+          showTypeId: campaignType.id,
+          showStatusId: confirmedStatus.id,
+          showStandardId: premiumTier.id,
+          studioRoomId: roomB.id,
+        },
+      ] as const;
+
+      const seededShows = new Map<string, {
+        id: bigint;
+        uid: string;
+        name: string;
+        startTime: Date;
+        endTime: Date;
+      }>();
+      for (const showSeed of reportShowSeeds) {
+        const show = await tx.show.upsert({
+          where: {
+            clientId_externalId: {
+              clientId: showSeed.clientId,
+              externalId: showSeed.externalId,
+            },
+          },
+          update: {
+            uid: showSeed.uid,
+            name: showSeed.name,
+            startTime: showSeed.startTime,
+            endTime: showSeed.endTime,
+            studioId: studio.id,
+            studioRoomId: showSeed.studioRoomId,
+            showTypeId: showSeed.showTypeId,
+            showStatusId: showSeed.showStatusId,
+            showStandardId: showSeed.showStandardId,
+            scheduleId: null,
+            metadata: {
+              source: 'seed-report-dataset',
+            },
+            deletedAt: null,
+          },
+          create: {
+            uid: showSeed.uid,
+            externalId: showSeed.externalId,
+            name: showSeed.name,
+            startTime: showSeed.startTime,
+            endTime: showSeed.endTime,
+            studioId: studio.id,
+            studioRoomId: showSeed.studioRoomId,
+            showTypeId: showSeed.showTypeId,
+            showStatusId: showSeed.showStatusId,
+            showStandardId: showSeed.showStandardId,
+            clientId: showSeed.clientId,
+            metadata: {
+              source: 'seed-report-dataset',
+            },
+          },
+          select: {
+            id: true,
+            uid: true,
+            name: true,
+            startTime: true,
+            endTime: true,
+          },
+        });
+
+        seededShows.set(showSeed.externalId, show);
+      }
+
+      const reportTemplateUids = [
+        fixtures.taskTemplates.template1,
+        fixtures.taskTemplates.template2,
+        fixtures.taskTemplates.template3,
+      ];
+      const reportTemplates = await tx.taskTemplate.findMany({
+        where: {
+          studioId: studio.id,
+          uid: { in: reportTemplateUids },
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+          uid: true,
+          name: true,
+          currentSchema: true,
+          snapshots: {
+            orderBy: { version: 'desc' },
+            take: 1,
+            select: {
+              id: true,
+              version: true,
+              schema: true,
+            },
+          },
+        },
+      });
+
+      if (reportTemplates.length !== reportTemplateUids.length) {
+        throw new Error('Missing baseline task templates for report seed dataset');
+      }
+
+      const reportTemplateByUid = new Map(reportTemplates.map((template) => [template.uid, template]));
+
+      const reportTaskContent = (
+        showIndex: number,
+        templateUid: string,
+        showExternalId: string,
+      ): Prisma.JsonObject => {
+        const templateNumber = Number(templateUid.split('_').pop() || '0');
+        const gmv = 1000 + showIndex * 180 + templateNumber * 35;
+        const orders = 18 + showIndex * 4 + templateNumber;
+        const sharedContent: Prisma.JsonObject = {
+          gmv,
+          orders,
+          proof_link: `https://example.local/reports/${showExternalId}/${templateUid}`,
+        };
+
+        if (templateUid === fixtures.taskTemplates.template1) {
+          return {
+            ...sharedContent,
+            setup_note: `Setup checklist completed for ${showExternalId}`,
+          };
+        }
+
+        if (templateUid === fixtures.taskTemplates.template2) {
+          return {
+            ...sharedContent,
+            peak_viewers: 120 + showIndex * 25,
+          };
+        }
+
+        return {
+          ...sharedContent,
+          closure_summary: `Post-show summary for ${showExternalId}`,
+          follow_up_required: showIndex % 2 === 0,
+        };
+      };
+
+      let reportTaskIndex = 1;
+      const orderedShowSeeds = [...reportShowSeeds].sort((a, b) => a.externalId.localeCompare(b.externalId));
+      for (const [showIndex, showSeed] of orderedShowSeeds.entries()) {
+        const show = seededShows.get(showSeed.externalId);
+        if (!show) {
+          throw new Error(`Seed show not found after upsert: ${showSeed.externalId}`);
+        }
+
+        for (const [templateIndex, templateUid] of reportTemplateUids.entries()) {
+          const template = reportTemplateByUid.get(templateUid);
+          const snapshot = template?.snapshots?.[0];
+          if (!template || !snapshot) {
+            throw new Error(`Seed template snapshot not found: ${templateUid}`);
+          }
+
+          const templateSchema = toObjectRecord(template.currentSchema);
+          const templateMetadata = toObjectRecord(templateSchema.metadata);
+          const taskTypeValue = templateMetadata.task_type;
+          const taskType = Object.values(TaskType).includes(taskTypeValue as TaskType)
+            ? taskTypeValue as TaskType
+            : TaskType.OTHER;
+          const status = SUBMITTED_TASK_STATUSES[(showIndex + templateIndex) % SUBMITTED_TASK_STATUSES.length];
+          const taskUid = deterministicUid(REPORT_SEED_TASK_UID_PREFIX, reportTaskIndex);
+          reportTaskIndex++;
+
+          const task = await tx.task.upsert({
+            where: { uid: taskUid },
+            update: {
+              description: `${template.name} - ${show.name}`,
+              status,
+              type: taskType,
+              dueDate: show.endTime,
+              snapshotId: snapshot.id,
+              templateId: template.id,
+              content: reportTaskContent(showIndex, templateUid, showSeed.externalId),
+              metadata: {
+                source: 'seed-report-dataset',
+                show_external_id: showSeed.externalId,
+              },
+              studioId: studio.id,
+              assigneeId: showIndex % 2 === 0 ? mcUser1.id : mcUser2.id,
+              deletedAt: null,
+            },
+            create: {
+              uid: taskUid,
+              description: `${template.name} - ${show.name}`,
+              status,
+              type: taskType,
+              dueDate: show.endTime,
+              snapshotId: snapshot.id,
+              templateId: template.id,
+              content: reportTaskContent(showIndex, templateUid, showSeed.externalId),
+              metadata: {
+                source: 'seed-report-dataset',
+                show_external_id: showSeed.externalId,
+              },
+              version: 1,
+              studioId: studio.id,
+              assigneeId: showIndex % 2 === 0 ? mcUser1.id : mcUser2.id,
+            },
+            select: {
+              id: true,
+            },
+          });
+
+          await tx.taskTarget.upsert({
+            where: {
+              taskId_targetType_targetId: {
+                taskId: task.id,
+                targetType: 'SHOW',
+                targetId: show.id,
+              },
+            },
+            update: {
+              showId: show.id,
+              studioId: studio.id,
+              deletedAt: null,
+            },
+            create: {
+              taskId: task.id,
+              targetType: 'SHOW',
+              targetId: show.id,
+              showId: show.id,
+              studioId: studio.id,
+            },
+          });
+        }
+      }
+      console.log(`✅ Seeded ${REPORT_SEED_SHOW_COUNT} report shows and ${REPORT_SEED_TASK_COUNT} submitted tasks`);
     });
 
     console.log('🎉 Seed process completed successfully!');

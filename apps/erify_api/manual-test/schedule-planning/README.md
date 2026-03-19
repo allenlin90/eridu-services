@@ -28,6 +28,10 @@ schedule-planning/
 
 ## Quick Start
 
+Baseline note:
+- `pnpm run db:seed` now creates a small report-ready dataset (shows + submitted tasks) and non-empty task templates for quick Task Report sanity checks.
+- Continue using this schedule-planning workflow for full Google Sheets E2E validation and larger/local stress scenarios.
+
 ### 1. Full Reset + Run (Recommended)
 
 ```bash
