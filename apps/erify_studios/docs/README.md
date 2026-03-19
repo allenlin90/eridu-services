@@ -24,4 +24,4 @@ Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Des
 Active (in progress):
 
 1. [Schedule Continuity FE Design](./design/DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — ⏳ In Progress
-2. [Task Submission Reporting & Export](./design/TASK_SUBMISSION_REPORTING_DESIGN.md) — 📐 Planned manager-facing submitted-task reporting/export
+2. [Task Submission Reporting & Export](./design/TASK_SUBMISSION_REPORTING_DESIGN.md) — 🚧 In progress (viewer/builder split, studio-scoped filters, definition save flow, shared-field integration)

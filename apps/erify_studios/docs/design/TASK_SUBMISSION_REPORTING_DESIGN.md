@@ -22,7 +22,7 @@ Primary user outcomes:
 In scope:
 
 1. studio-scoped report builder UI with show-first workflow
-2. scope filter controls (date range, show standard, show type)
+2. scope filter controls with one date-range picker and compoundable multi-selects (`client`, `show standard`, `show type`, `submitted statuses`, `source templates`) plus `Reset all filters`
 3. contextual column discovery and selection
 4. server-side generation trigger with inline result response
 5. flat table rendering with strict one-row-per-show (rows[] ready to display — no client-side merge)
@@ -30,7 +30,7 @@ In scope:
 7. TanStack Query cache for last N generated datasets (instant switching)
 8. client-side CSV export from cached JSON (one flat file)
 9. client-side XLSX export from cached JSON (one sheet)
-10. saved definitions as the landing view (personal presets)
+10. saved definitions as the landing view (personal presets) with explicit builder save actions (`Save as Definition` / `Save Definition`)
 
 Out of scope:
 
@@ -59,7 +59,7 @@ Rationale:
 ```mermaid
 flowchart TD
     START([Open Task Reports]) --> LANDING[Definition List<br/>personal presets]
-    LANDING -->|New report| FILTER[Set Scope Filters<br/>date range, show standard,<br/>show type]
+    LANDING -->|New report| FILTER[Set Scope Filters<br/>date range + multi-select filters]
     LANDING -->|Open definition| LOAD[Load Definition<br/>pre-fill scope + columns]
     LOAD --> PREFILLED{Override scope?}
     PREFILLED -->|Yes| FILTER
@@ -68,7 +68,7 @@ flowchart TD
     FILTER --> DISCOVER[Discover Columns<br/>contextual catalog from<br/>tasks on filtered shows]
     DISCOVER --> COLUMNS[Select Columns<br/>system + task-content fields]
     COLUMNS --> SAVE{Save Definition?}
-    SAVE -->|Yes| DEF[Store as named<br/>personal preset]
+    SAVE -->|Yes| DEF[Enter name/description<br/>Save as Definition or Save Definition]
     SAVE -->|No| PRE
     DEF --> PRE[Preflight Count<br/>487 shows · 1,204 tasks<br/>Confirm?]
     PRE --> RUN[Run Report<br/>POST /task-reports/run]
@@ -94,10 +94,10 @@ Steps:
 
 1. Open `Task Reports` — lands on the **definition list** (personal presets)
 2. Open an existing definition (pre-fills scope + columns) or start new
-3. **Set scope filters** — date range, client, show standard, show type. These determine what data the BE generates. `date_from` + `date_to` are mandatory.
+3. **Set scope filters** — one required date-range picker plus compoundable multi-select filters (`client`, `show standard`, `show type`, `submitted statuses`, `source templates`). These determine what data the BE generates. `date_from` + `date_to` are mandatory.
 4. **Discover columns** — BE returns contextual catalog from tasks on filtered shows
 5. **Select columns** — defines the target table schema
-6. **Save definition** (optional) — store as named personal preset before running
+6. **Save definition** (optional) — enter definition name/description and save via `Save as Definition` (new) or `Save Definition` (existing)
 7. **Preflight check** — FE calls `POST /task-reports/preflight` and shows scope summary: *"487 shows, 1,204 tasks"*. Over-limit scopes are blocked with guidance. Manager confirms before generation.
 8. **Run report** — BE generates show-centric table, returns full JSON inline
 9. **FE caches** the result in TanStack Query (last N datasets cached)
@@ -225,7 +225,7 @@ Recommended route decomposition:
 1. `task-reports/index.tsx` — viewer route (definitions landing)
 2. `task-reports/builder.tsx` — builder route (scope + columns + preflight/run + result)
 3. `task-report-definitions-viewer.tsx` — definition list actions
-4. `report-scope-filters.tsx` — scope filter controls (single date-range picker, client, show standard, show type, statuses, source templates)
+4. `report-scope-filters.tsx` — scope filter controls (single date-range picker, compoundable multi-selects for client/show standard/show type/statuses/source templates, reset utility)
 5. `report-column-picker.tsx` — contextual column selection from discovered catalog
 6. `report-result-table.tsx` — flat table display with view filter toolbar
 7. `report-view-filters.tsx` — client-side filter controls (client, status, room, sort, search)
@@ -280,6 +280,27 @@ Shared fields show:
 - total submitted task count across all contributing templates
 
 Incompatible source groups (different template schemas) are surfaced early so managers know export may split. Shared fields never cause splits — they merge by design.
+
+#### High-density behavior (large scoped datasets)
+
+When scope includes many client-dedicated moderation templates (for example 30+ brands with loop-heavy schemas), column discovery must reduce noise by default:
+
+1. **Scope telemetry strip** before field list:
+   - templates in scope
+   - submitted tasks in scope
+   - custom/shared field option counts
+2. **Noise controls**:
+   - search input across template name + field label/key/type
+   - `Selected only` toggle
+   - `Templates with selection` toggle
+3. **Template-group collapse strategy**:
+   - if template count > 10, groups are collapsed by default
+   - highest submitted-task templates are expanded initially
+   - explicit `Expand all templates` / `Collapse all templates` actions
+4. **Large-scope hint**:
+   - informational banner clarifies that groups are collapsed intentionally and recommends search/selected-only for faster narrowing
+5. **Shared field discoverability is preserved**:
+   - shared fields stay in a dedicated section grouped by category (Metrics/Evidence/Status), independent of template collapse state
 
 **Column limit**: The picker enforces the 50-column hard cap. Show a live counter ("{n} of 50 selected") and disable further selection when the cap is reached. At 30+ columns, show a soft warning about table readability (see §5.3.1).
 
@@ -395,7 +416,7 @@ Column headers in the export should include template origin for custom fields (e
 ```mermaid
 graph TB
     subgraph "URL State (shareable)"
-        URL[Route Search Params<br/>date_from, date_to,<br/>show_standard_id, show_type_id,<br/>definition_id]
+        URL[Route Search Params<br/>date_from, date_to,<br/>client_id[], show_standard_id[], show_type_id[],<br/>submitted_statuses[], source_templates[], definition_id]
     end
 
     subgraph "Server State (TanStack Query)"
@@ -432,16 +453,24 @@ The generation mutation caches the result in a query key so it can be re-accesse
 // Source catalog — contextual to scope filters
 const sourceCatalogQuery = useQuery({
   queryKey: taskReportSourceKeys.list(studioId, {
-    dateFrom, dateTo, showStandardId, showTypeId, submittedStatuses,
+    dateFrom,
+    dateTo,
+    clientIds,
+    showStandardIds,
+    showTypeIds,
+    submittedStatuses,
+    sourceTemplateIds,
   }),
   queryFn: () => getTaskReportSources(studioId, {
     date_from: dateFrom,
     date_to: dateTo,
-    show_standard_id: showStandardId,
-    show_type_id: showTypeId,
+    client_id: clientIds,
+    show_standard_id: showStandardIds,
+    show_type_id: showTypeIds,
     submitted_statuses: submittedStatuses,
+    source_templates: sourceTemplateIds,
   }),
-  enabled: hasAtLeastOneFilter,
+  enabled: hasRequiredDateRange,
 });
 
 // Preflight count — lightweight scope validation before generation
@@ -464,6 +493,19 @@ const runReportMutation = useMutation({
   },
 });
 
+// Save definition — explicit builder actions
+const createDefinitionMutation = useMutation({
+  mutationFn: (payload: CreateTaskReportDefinitionInput) =>
+    createTaskReportDefinition(studioId, payload),
+});
+
+const updateDefinitionMutation = useMutation({
+  mutationFn: ({ definitionId, payload }: {
+    definitionId: string;
+    payload: UpdateTaskReportDefinitionInput;
+  }) => updateTaskReportDefinition(studioId, definitionId, payload),
+});
+
 // Cached result — read from cache, no re-fetch
 const resultQuery = useQuery({
   queryKey: taskReportResultKeys.forScope(studioId, scopeHash),
@@ -482,8 +524,11 @@ Keep shareable scope filters in the route search schema:
 
 - `date_from`
 - `date_to`
-- `show_standard_id`
-- `show_type_id`
+- `client_id[]`
+- `show_standard_id[]`
+- `show_type_id[]`
+- `submitted_statuses[]`
+- `source_templates[]`
 - optional `definition_id`
 
 This preserves back/forward behavior and allows managers to share scope views. A URL with `definition_id` loads the definition's scope + columns.
@@ -691,15 +736,16 @@ If async generation is added later (BE milestone 3), the progress bar can switch
 Required states:
 
 1. no definitions yet — show "Create your first report" prompt
-2. no scope filters set — prompt to set at least one scope filter
+2. missing required date range — prompt to set `date_from` + `date_to` before discovery/preflight/run
 3. no columns discovered — "No submitted tasks found for the selected shows"
 4. no columns selected — disable Run button
-5. **preflight over limit** — `within_limit: false` from preflight. Show: *"This scope includes {task_count} tasks (limit: {limit}). Narrow your scope filters."* Disable the Confirm button.
-6. **preflight confirmation** — show `show_count` and `task_count` with Confirm button before generation
-7. view filters produce zero rows — "No rows match the current filters" with clear-filters action
-8. **duplicate-source warning badge** — rows where multiple tasks matched the same show + template show a warning badge (see below). The row stays single (latest-wins merge), but the badge flags it for data hygiene review.
-9. result generation in progress — show progress indicator
-10. result generation failed — show error with scope details and "Retry" button
+5. save definition blocked — show inline/toast guidance when definition name is empty, date range is incomplete, or no compatible columns are selected
+6. **preflight over limit** — `within_limit: false` from preflight. Show: *"This scope includes {task_count} tasks (limit: {limit}). Narrow your scope filters."* Disable the Confirm button.
+7. **preflight confirmation** — show `show_count` and `task_count` with Confirm button before generation
+8. view filters produce zero rows — "No rows match the current filters" with clear-filters action
+9. **duplicate-source warning badge** — rows where multiple tasks matched the same show + template show a warning badge (see below). The row stays single (latest-wins merge), but the badge flags it for data hygiene review.
+10. result generation in progress — show progress indicator
+11. result generation failed — show error with scope details and "Retry" button
 
 ### 11.1 Duplicate-source warning UX
 
@@ -724,21 +770,23 @@ This is a data-hygiene signal: managers should investigate whether duplicates re
 ### 12.2 Component tests
 
 1. definition list as landing view — load, create, delete
-2. scope filter controls — at least one required, filter change triggers catalog refetch
+2. scope filter controls — required date range, compoundable multi-select filters, and reset utility behavior
 3. contextual column picker — shows only columns from discovered catalog, with shared fields sub-grouped by category and custom fields grouped by template
 4. column picker enforces 50-column hard cap with live counter; soft warning at 30+
-5. preflight confirmation shows `show_count` and `task_count` before generation
-6. preflight over-limit state disables Confirm button and shows guidance
-7. result table renders one row per show — `rows[]` length equals show count
-8. frozen system columns remain visible during horizontal scroll
-9. view filter toolbar — client, status, assignee, room, search all apply instantly
-10. column sort — click header toggles simple asc/desc, null values sort last
-11. blank cells for `null` values (not zero)
-12. file/url cells render clickable links
-13. result metadata header shows row count and generated_at
-14. export produces one flat file with all columns (no multi-file splitting)
-15. generation progress indicator during `runReport` mutation
-16. "Edit" action navigates back to builder with state preserved
+5. save definition actions — `Save as Definition` for new drafts, `Save Definition` for existing definition edits
+6. save definition guards — missing name/date-range/compatible columns block save with guidance
+7. preflight confirmation shows `show_count` and `task_count` before generation
+8. preflight over-limit state disables Confirm button and shows guidance
+9. result table renders one row per show — `rows[]` length equals show count
+10. frozen system columns remain visible during horizontal scroll
+11. view filter toolbar — client, status, assignee, room, search all apply instantly
+12. column sort — click header toggles simple asc/desc, null values sort last
+13. blank cells for `null` values (not zero)
+14. file/url cells render clickable links
+15. result metadata header shows row count and generated_at
+16. export produces one flat file with all columns (no multi-file splitting)
+17. generation progress indicator during `runReport` mutation
+18. "Edit" action navigates back to builder with state preserved
 
 ### 12.3 Integration tests
 
@@ -754,20 +802,21 @@ This is a data-hygiene signal: managers should investigate whether duplicates re
 ### Milestone FE-1 (Core workflow + definitions)
 
 1. definition list as landing view (list, create, save, load)
-2. scope filter controls with URL state (date range, show standard, show type)
+2. scope filter controls with URL state (required date range + compoundable multi-selects for client/show standard/show type/status/source template + reset utility)
 3. contextual source catalog fetch (re-fetches when scope filters change)
 4. inline column picker from discovered catalog (shared fields sub-grouped by category + custom fields by template) with 50-column hard cap, live counter, and soft warning at 30+
 5. frozen system columns (show name, client, start time) + horizontal virtual scroll for wide tables
 6. column group headers (System, Shared Fields — Metrics / Evidence / Status, Custom — by template)
-7. preflight count confirmation before generation (show/task counts, over-limit blocking)
-8. "Run Report" action → receive inline result → cache in TanStack Query
-9. show-centric table rendering directly from `rows[]` and `columns[]`
-10. result metadata header (`row_count`, `generated_at`)
-11. client-side view filters (client, status, assignee, room)
-12. client-side column sort (simple asc/desc toggle)
-13. text search across visible columns
-14. duplicate-source warning badges
-15. CSV export from cached JSON (one flat file, full + filtered)
+7. definition metadata form (name + optional description) and explicit save actions (`Save as Definition` / `Save Definition`)
+8. preflight count confirmation before generation (show/task counts, over-limit blocking)
+9. "Run Report" action → receive inline result → cache in TanStack Query
+10. show-centric table rendering directly from `rows[]` and `columns[]`
+11. result metadata header (`row_count`, `generated_at`)
+12. client-side view filters (client, status, assignee, room)
+13. client-side column sort (simple asc/desc toggle)
+14. text search across visible columns
+15. duplicate-source warning badges
+16. CSV export from cached JSON (one flat file, full + filtered)
 
 Rationale: validate the full **definition → filter shows → discover columns → select → preflight → run → review → filter → sort → export** loop. Definitions are included from day one because they are the landing experience and the Google Sheets replacement.
 
@@ -845,7 +894,7 @@ Mitigation:
 
 - debounce filter changes before triggering catalog refetch (300ms),
 - show a loading skeleton in the column picker while catalog loads,
-- `enabled: hasAtLeastOneFilter` prevents unnecessary requests with no filters set.
+- `enabled: hasRequiredDateRange` prevents source lookups until a bounded date range is provided.
 
 ## 15. Verification Plan
 
@@ -854,6 +903,11 @@ When implemented, verify at minimum:
 - `pnpm --filter erify_studios lint`
 - `pnpm --filter erify_studios typecheck`
 - `pnpm --filter erify_studios test`
+
+For large-scope UX simulation dataset:
+
+- `pnpm --filter erify_api db:seed:report-simulation`
+- This seeds 30 client-dedicated moderation templates, 8-loop schemas (20 fields/loop), and >100 submitted tasks per simulation template to stress-test column selection UX.
 
 Manual smoke should cover:
 

@@ -145,6 +145,25 @@ Use text labels only for dropdown menu items where needed for mobile action menu
 
 ---
 
+## 📊 Task Report Stress Simulation Seed
+
+Use this when validating task-report column picker UX against high-noise real-world conditions (many brands/templates + loop-heavy moderation schemas):
+
+```bash
+pnpm --filter erify_api db:seed:report-simulation
+```
+
+What it adds (idempotent upserts):
+- 30 client-dedicated moderation templates (`ttpl_seed_report_sim_*`)
+- 8 loops/template, 20 fields per loop
+- 30-brand scoped shows and >100 submitted tasks per simulation template
+
+Why:
+- Reproduces noisy column-selection conditions where template-scoped custom fields can overwhelm the picker.
+- Validates collapse/search/selected-only workflows before production rollout.
+
+---
+
 ## 🔐 Adding Authentication to Endpoints
 
 ### Public Endpoint (no auth)

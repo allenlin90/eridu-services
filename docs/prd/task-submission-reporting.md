@@ -109,11 +109,12 @@ Filters are split into two tiers:
 These change the *dataset* the BE produces. Changing a scope filter triggers re-generation.
 
 - `date_from` / `date_to` (**required** in requests)
-- `client_id` (studio-scoped client filter)
-- `show_standard_id` — premium vs standard (affects which templates are in scope)
-- `show_type_id` — different show types have different task structures
-- `submitted_statuses` — default `[REVIEW, COMPLETED, CLOSED]`
+- `client_id[]` (studio-scoped client filter, multi-select)
+- `show_standard_id[]` — premium vs standard (multi-select; affects which templates are in scope)
+- `show_type_id[]` — different show types (multi-select)
+- `submitted_statuses[]` — default `[REVIEW, COMPLETED, CLOSED]` (multi-select)
 - `source_templates[]` — optional, to narrow to specific task templates
+- scope reset action — restores default statuses and clears other scope filters
 
 ### View filters (client-side — slice the cached dataset)
 
@@ -134,11 +135,13 @@ The distinction maps to how the moderation team uses Google Sheets: they have on
 ### Show-first querying
 
 1. Managers start by filtering shows — date range, client, show standard, show type, and other show-level attributes.
-2. Filters can be single or compound. Date range (`date_from` + `date_to`) is mandatory to prevent unbounded scans.
-3. The report scope UI does not allow manual `show_ids` picking. Show selection is derived from studio-scoped filters only.
-4. After shows are filtered, the BE returns a contextual column catalog: only templates/snapshots with submitted tasks on the filtered shows, plus their available fields.
-5. This ensures column options are bound to the actual data — no dead-end selections.
-6. Reporting lookups (clients/show standards/show types/sources) are studio-scoped (`/studios/:studioId/*`). The report feature does not call `/system/*` directly.
+2. Date range (`date_from` + `date_to`) is mandatory to prevent unbounded scans.
+3. Scope dropdown filters are compoundable. Managers can multi-select `client_id`, `show_standard_id`, `show_type_id`, `submitted_statuses`, and `source_templates`.
+4. The scope panel includes a reset utility so managers can clear all scoped filters quickly and return to default statuses.
+5. The report scope UI does not allow manual `show_ids` picking. Show selection is derived from studio-scoped filters only.
+6. After shows are filtered, the BE returns a contextual column catalog: only templates/snapshots with submitted tasks on the filtered shows, plus their available fields.
+7. This ensures column options are bound to the actual data — no dead-end selections.
+8. Reporting lookups (clients/show standards/show types/sources) are studio-scoped (`/studios/:studioId/*`). The report feature does not call `/system/*` directly.
 
 ### Submitted-task source fidelity
 
@@ -146,6 +149,24 @@ The distinction maps to how the moderation team uses Google Sheets: they have on
 2. Template-based selections may span multiple snapshot versions, but the result must preserve version boundaries when schemas differ.
 3. Default source scope is submitted/approved tasks only: `REVIEW`, `COMPLETED`, and `CLOSED`.
 4. Only tasks with show-type targets are included. Tasks targeting studios or other non-show entities (e.g. `ADMIN` type tasks) are excluded.
+
+### High-density column-selection UX
+
+When scope includes many client-dedicated moderation templates and loop-heavy schemas, the column catalog becomes large and noisy. The FE must prioritize signal over raw list length.
+
+1. If scoped templates exceed 10, template groups default to collapsed (highest-volume templates open first) with explicit **Expand all** and **Collapse all** actions.
+2. Column picker shows scope telemetry before selection:
+   - template count in scope
+   - submitted-task count in scope
+   - shared/custom field option counts
+3. Picker must support rapid narrowing with:
+   - free-text search (template name + field key/label/type)
+   - `Selected only` mode
+   - `Templates with selection` mode
+4. Shared fields remain a dedicated grouped section so cross-template metrics stay visible even when template-specific field lists are large.
+5. Selection guardrails remain:
+   - hard cap: 50 columns
+   - soft warning at 30+ columns for table readability
 
 ### Preflight count (before generation)
 
@@ -166,12 +187,16 @@ The distinction maps to how the moderation team uses Google Sheets: they have on
 
 ### Saved definitions (personal presets)
 
-1. Managers can save a named definition containing scope filters, selected columns, and optionally a default date preset.
+1. Managers can save a named definition containing scope filters, selected columns, and optional description metadata.
 2. Definitions function as **personal presets** — like Google Sheets filter views. Each manager creates definitions reflecting their review needs.
 3. Definitions can store a default date preset (`this_week`, `this_month`, or explicit dates) that pre-fills the date range on load. Before source/preflight/run requests are sent, the FE resolves to explicit `date_from` + `date_to`.
-4. Definitions can be **cloned and edited** — a "Clone" action creates a copy with a new name for the manager to customize.
-5. The definition list is the **landing view** of the Task Reports page — managers open a definition and run it, rather than building from scratch each time.
-6. Definitions are persisted as JSON only; the backend does not store generated results.
+4. Builder save UX exposes explicit actions:
+   - `Save as Definition` for new drafts
+   - `Save Definition` when editing an existing definition
+5. Save is blocked until the definition has a name, a valid date range, and at least one compatible selected column.
+6. Definitions can be **cloned and edited** — a "Clone" action creates a copy with a new name for the manager to customize.
+7. The definition list is the **landing view** of the Task Reports page — managers open a definition and run it, rather than building from scratch each time.
+8. Definitions are persisted as JSON only; the backend does not store generated results.
 
 ### Client-side caching and view filters
 

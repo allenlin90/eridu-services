@@ -54,6 +54,7 @@ For Claude Code sessions, the primary configuration lives in `.claude/`. Claude 
 - Frontend features (`apps/erify_creators`, `apps/erify_studios`):
   - `frontend-tech-stack`
   - `frontend-ui-components`
+  - `ui-ux-pro-max` (route layout consistency, navigation/action hierarchy, responsive UX quality pass)
   - `frontend-api-layer`
   - `frontend-state-management`
   - `frontend-testing-patterns`
