@@ -1,9 +1,10 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Download } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { TaskReportResult } from '@eridu/api-types/task-management';
 import { Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@eridu/ui';
+import { useIsMobile } from '@eridu/ui/hooks/use-mobile';
 import { cn } from '@eridu/ui/lib/utils';
 
 import { filterRows, type TaskReportViewFilters } from '../lib/filter-rows';
@@ -26,11 +27,17 @@ const FROZEN_COLUMN_WIDTH: Record<(typeof FROZEN_COLUMN_ORDER)[number], number> 
 
 export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
   const { columns, rows } = result;
+  const isMobile = useIsMobile();
 
   const [filters, setFilters] = useState<TaskReportViewFilters>({});
   const [sortConfig, setSortConfig] = useState<{ column: string | null; dir: SortDirection }>({ column: 'start_time', dir: 'desc' });
 
   const parentRef = useRef<HTMLDivElement>(null);
+  const selectedColumnKeys = useMemo(() => new Set(columns.map((column) => column.key)), [columns]);
+
+  const canFilterByClient = selectedColumnKeys.has('client_name') || selectedColumnKeys.has('client_id');
+  const canFilterByStatus = selectedColumnKeys.has('show_status_name') || selectedColumnKeys.has('show_status_id');
+  const canFilterByRoom = selectedColumnKeys.has('studio_room_name') || selectedColumnKeys.has('studio_room_id');
 
   const availableClients = useMemo(() => Array.from(new Set(rows.map((r) => r.client_name).filter(Boolean))), [rows]);
   const availableStatuses = useMemo(() => Array.from(new Set(rows.map((r) => r.show_status_name ?? r.show_status_id).filter(Boolean))), [rows]);
@@ -38,6 +45,35 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
 
   const filteredRows = useMemo(() => filterRows(rows, columns, filters), [rows, columns, filters]);
   const sortedRows = useMemo(() => sortRows(filteredRows, sortConfig.column, sortConfig.dir), [filteredRows, sortConfig]);
+
+  useEffect(() => {
+    setFilters((prev) => {
+      let changed = false;
+      const next: TaskReportViewFilters = { ...prev };
+
+      if ((!canFilterByClient || availableClients.length === 0) && next.client_id) {
+        delete next.client_id;
+        changed = true;
+      }
+      if ((!canFilterByStatus || availableStatuses.length === 0) && next.show_status_id) {
+        delete next.show_status_id;
+        changed = true;
+      }
+      if ((!canFilterByRoom || availableRooms.length === 0) && next.studio_room_id) {
+        delete next.studio_room_id;
+        changed = true;
+      }
+
+      return changed ? next : prev;
+    });
+  }, [
+    availableClients.length,
+    availableRooms.length,
+    availableStatuses.length,
+    canFilterByClient,
+    canFilterByRoom,
+    canFilterByStatus,
+  ]);
 
   const handleExportCsv = () => {
     if (!sortedRows.length || !columns.length)
@@ -65,6 +101,10 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
   };
 
   const frozenColumnOffsets = useMemo(() => {
+    if (isMobile) {
+      return new Map<string, number>();
+    }
+
     const activeColumnKeys = new Set(columns.map((column) => column.key));
     const offsets = new Map<string, number>();
     let currentOffset = 0;
@@ -79,7 +119,7 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
     }
 
     return offsets;
-  }, [columns]);
+  }, [columns, isMobile]);
 
   const getFrozenOffset = (key: string) => frozenColumnOffsets.get(key);
 
@@ -131,35 +171,40 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
         availableClients={availableClients}
         availableRooms={availableRooms}
         availableStatuses={availableStatuses}
+        showClientFilter={canFilterByClient}
+        showRoomFilter={canFilterByRoom}
+        showStatusFilter={canFilterByStatus}
       />
       <Card>
-        <CardHeader className="py-4">
-          <CardTitle className="text-base flex items-center justify-between">
+        <CardHeader className="border-b px-4 py-2">
+          <CardTitle className="flex items-center justify-between text-sm">
             <span>Report Results</span>
-            <span className="text-sm font-normal text-muted-foreground">
+            <span className="text-xs font-normal text-muted-foreground">
+              {sortedRows.length}
+              {' visible · '}
               {rows.length}
-              {' '}
-              {rows.length === 1 ? 'row' : 'rows'}
-              {' '}
-              generated
+              {' total rows · '}
+              {columns.length}
+              {' columns'}
             </span>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div ref={parentRef} className="overflow-auto max-h-[calc(100vh-16rem)] relative border-t">
+          <div ref={parentRef} className="relative max-h-[calc(100vh-16rem)] overflow-auto">
             <Table className="whitespace-nowrap">
               <TableHeader className="sticky top-0 z-20 bg-background shadow-sm">
                 <TableRow>
                   {columns.map((col) => {
                     const leftOffset = getFrozenOffset(col.key);
-                    const frozenClasses = leftOffset !== undefined ? 'sticky z-30 bg-muted/95 backdrop-blur border-r' : 'bg-muted/95 backdrop-blur z-20';
+                    const shouldFreeze = !isMobile && leftOffset !== undefined;
+                    const frozenClasses = shouldFreeze ? 'sticky z-30 bg-muted/95 backdrop-blur border-r' : 'bg-muted/95 backdrop-blur z-20';
                     const sorting = sortConfig.column === col.key;
                     return (
                       <TableHead
                         key={col.key}
                         className={cn('group font-semibold cursor-pointer select-none whitespace-nowrap hover:bg-muted transition-colors', frozenClasses)}
                         onClick={() => handleSort(col.key)}
-                        style={leftOffset !== undefined ? { left: leftOffset, minWidth: FROZEN_COLUMN_WIDTH[col.key as keyof typeof FROZEN_COLUMN_WIDTH] } : undefined}
+                        style={shouldFreeze ? { left: leftOffset, minWidth: FROZEN_COLUMN_WIDTH[col.key as keyof typeof FROZEN_COLUMN_WIDTH] } : undefined}
                       >
                         <div className="flex items-center gap-1">
                           {col.label}
@@ -191,13 +236,14 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
                     <TableRow key={virtualRow.key} data-index={virtualRow.index} ref={rowVirtualizer.measureElement} className="hover:bg-muted/30">
                       {columns.map((col) => {
                         const leftOffset = getFrozenOffset(col.key);
-                        const frozenClasses = leftOffset !== undefined ? 'sticky z-10 bg-background border-r drop-shadow-[1px_0_2px_rgba(0,0,0,0.05)]' : '';
+                        const shouldFreeze = !isMobile && leftOffset !== undefined;
+                        const frozenClasses = shouldFreeze ? 'sticky z-10 bg-background border-r drop-shadow-[1px_0_2px_rgba(0,0,0,0.05)]' : '';
                         return (
                           <TableCell
                             key={col.key}
                             className={cn('text-sm max-w-[300px] truncate', frozenClasses)}
                             title={String(row[col.key] ?? '')}
-                            style={leftOffset !== undefined ? { left: leftOffset, minWidth: FROZEN_COLUMN_WIDTH[col.key as keyof typeof FROZEN_COLUMN_WIDTH] } : undefined}
+                            style={shouldFreeze ? { left: leftOffset, minWidth: FROZEN_COLUMN_WIDTH[col.key as keyof typeof FROZEN_COLUMN_WIDTH] } : undefined}
                           >
                             {col.key === 'show_name' && row._has_duplicate_source && (
                               <span

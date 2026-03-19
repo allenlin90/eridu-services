@@ -10,6 +10,9 @@ type ReportViewFiltersProps = {
   availableClients: string[];
   availableRooms: string[];
   availableStatuses: string[];
+  showClientFilter?: boolean;
+  showRoomFilter?: boolean;
+  showStatusFilter?: boolean;
 };
 
 export function ReportViewFilters({
@@ -18,13 +21,16 @@ export function ReportViewFilters({
   availableClients,
   availableRooms,
   availableStatuses,
+  showClientFilter = true,
+  showRoomFilter = true,
+  showStatusFilter = true,
 }: ReportViewFiltersProps) {
   const update = (key: keyof TaskReportViewFilters, val: string | undefined) => {
     onChange({ ...filters, [key]: val });
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-4 py-4 border-b">
+    <div className="flex flex-wrap items-center gap-3 py-2">
       <div className="flex items-center space-x-2">
         <Search className="h-4 w-4 text-muted-foreground" />
         <Input
@@ -35,44 +41,50 @@ export function ReportViewFilters({
         />
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Label className="text-xs">Client</Label>
-        <Select value={filters.client_id || 'all'} onValueChange={(val) => update('client_id', val === 'all' ? undefined : val)}>
-          <SelectTrigger className="h-8 max-w-[150px]">
-            <SelectValue placeholder="All" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            {availableClients.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
+      {showClientFilter && availableClients.length > 0 && (
+        <div className="flex items-center space-x-2">
+          <Label className="text-xs">Client</Label>
+          <Select value={filters.client_id || 'all'} onValueChange={(val) => update('client_id', val === 'all' ? undefined : val)}>
+            <SelectTrigger className="h-8 max-w-[150px]">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {availableClients.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
-      <div className="flex items-center space-x-2">
-        <Label className="text-xs">Status</Label>
-        <Select value={filters.show_status_id || 'all'} onValueChange={(val) => update('show_status_id', val === 'all' ? undefined : val)}>
-          <SelectTrigger className="h-8 max-w-[120px]">
-            <SelectValue placeholder="All" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            {availableStatuses.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
+      {showStatusFilter && availableStatuses.length > 0 && (
+        <div className="flex items-center space-x-2">
+          <Label className="text-xs">Status</Label>
+          <Select value={filters.show_status_id || 'all'} onValueChange={(val) => update('show_status_id', val === 'all' ? undefined : val)}>
+            <SelectTrigger className="h-8 max-w-[120px]">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {availableStatuses.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
-      <div className="flex items-center space-x-2">
-        <Label className="text-xs">Room</Label>
-        <Select value={filters.studio_room_id || 'all'} onValueChange={(val) => update('studio_room_id', val === 'all' ? undefined : val)}>
-          <SelectTrigger className="h-8 max-w-[120px]">
-            <SelectValue placeholder="All" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            {availableRooms.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
+      {showRoomFilter && availableRooms.length > 0 && (
+        <div className="flex items-center space-x-2">
+          <Label className="text-xs">Room</Label>
+          <Select value={filters.studio_room_id || 'all'} onValueChange={(val) => update('studio_room_id', val === 'all' ? undefined : val)}>
+            <SelectTrigger className="h-8 max-w-[120px]">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {availableRooms.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
     </div>
   );
 }
