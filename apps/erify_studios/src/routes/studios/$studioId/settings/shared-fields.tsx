@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
+import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { PageLayout } from '@/components/layouts/page-layout';
 import { StudioSharedFieldsSettings } from '@/features/studio-shared-fields/components/studio-shared-fields-settings';
 
@@ -11,11 +12,18 @@ function StudioSharedFieldsSettingsPage() {
   const { studioId } = Route.useParams();
 
   return (
-    <PageLayout
-      title="Shared Fields"
-      description="Manage canonical shared fields used for cross-template report merging."
+    <StudioRouteGuard
+      studioId={studioId}
+      routeKey="sharedFields"
+      deniedTitle="Studio Settings Access Required"
+      deniedDescription="Only studio admins can access shared field settings."
     >
-      <StudioSharedFieldsSettings studioId={studioId} />
-    </PageLayout>
+      <PageLayout
+        title="Shared Fields"
+        description="Manage canonical shared fields used for cross-template report merging."
+      >
+        <StudioSharedFieldsSettings studioId={studioId} />
+      </PageLayout>
+    </StudioRouteGuard>
   );
 }

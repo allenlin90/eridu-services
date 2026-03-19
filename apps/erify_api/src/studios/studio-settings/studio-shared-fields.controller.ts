@@ -27,14 +27,14 @@ import {
 import { StudioService } from '@/models/studio/studio.service';
 
 @ApiTags('Studio Settings')
-@StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+@StudioProtected([STUDIO_ROLE.ADMIN])
 @Controller('studios/:studioId/settings/shared-fields')
 export class StudioSharedFieldsController extends BaseStudioController {
   constructor(private readonly studioService: StudioService) {
     super();
   }
 
-  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @StudioProtected([STUDIO_ROLE.ADMIN])
   @Get()
   @ZodResponse(sharedFieldsResponseSchema)
   async listSharedFields(

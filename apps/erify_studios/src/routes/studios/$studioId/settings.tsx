@@ -14,7 +14,7 @@ function StudioSettingsLayout() {
       studioId={studioId}
       routeKey="sharedFields"
       deniedTitle="Studio Settings Access Required"
-      deniedDescription="Only studio managers and admins can access shared field settings."
+      deniedDescription="Only studio admins can access shared field settings."
     >
       <Outlet />
     </StudioRouteGuard>

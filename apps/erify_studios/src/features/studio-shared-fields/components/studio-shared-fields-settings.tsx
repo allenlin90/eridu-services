@@ -1,4 +1,4 @@
-import { Save } from 'lucide-react';
+import { ChevronDown, Save } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -18,6 +18,9 @@ import {
   CardHeader,
   CardTitle,
   Checkbox,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
   Input,
   Label,
   Select,
@@ -27,6 +30,7 @@ import {
   SelectValue,
   Textarea,
 } from '@eridu/ui';
+import { cn } from '@eridu/ui/lib/utils';
 
 import { useSharedFieldMutations } from '../hooks/use-shared-field-mutations';
 import { useStudioSharedFields } from '../hooks/use-studio-shared-fields';
@@ -81,6 +85,7 @@ export function StudioSharedFieldsSettings({ studioId }: StudioSharedFieldsSetti
     description: '',
   });
   const [draftEditsByKey, setDraftEditsByKey] = useState<Record<string, Partial<SharedFieldDraft>>>({});
+  const [expandedByKey, setExpandedByKey] = useState<Record<string, boolean>>({});
 
   const groupedFields = useMemo(() => {
     const fields = data?.shared_fields ?? [];
@@ -163,7 +168,7 @@ export function StudioSharedFieldsSettings({ studioId }: StudioSharedFieldsSetti
         <CardHeader>
           <CardTitle>Shared Fields Catalog</CardTitle>
           <CardDescription>
-            Canonical fields used across templates for report merging. Key, type, and category are immutable after creation.
+            Reusable fields that keep reports consistent across templates. After a field is created, its ID, type, and category cannot be changed.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -187,79 +192,108 @@ export function StudioSharedFieldsSettings({ studioId }: StudioSharedFieldsSetti
               )}
               {groupedFields[category].map((field) => {
                 const draft = getDraft(field);
+                const isExpanded = expandedByKey[field.key] ?? false;
                 return (
-                  <div key={field.key} className="rounded-md border p-3">
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <div className="space-y-1.5">
-                        <Label>Key</Label>
-                        <Input value={field.key} readOnly />
+                  <Collapsible
+                    key={field.key}
+                    open={isExpanded}
+                    onOpenChange={(open) => {
+                      setExpandedByKey((prev) => ({ ...prev, [field.key]: open }));
+                    }}
+                    className="rounded-md border"
+                  >
+                    <CollapsibleTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex w-full items-start justify-between gap-3 px-3 py-3 text-left"
+                      >
+                        <div className="min-w-0 space-y-1">
+                          <div className="font-medium">{draft.label || field.label || field.key}</div>
+                          <div className="text-xs text-muted-foreground break-all">
+                            {field.key}
+                            {' • '}
+                            {field.type}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Badge variant="outline">{draft.is_active ? 'Active' : 'Inactive'}</Badge>
+                          <ChevronDown className={cn('h-4 w-4 transition-transform', isExpanded && 'rotate-180')} />
+                        </div>
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="border-t px-3 pb-3 pt-3">
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <div className="space-y-1.5">
+                          <Label>Key</Label>
+                          <Input value={field.key} disabled />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Type</Label>
+                          <Input value={field.type} disabled />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Label</Label>
+                          <Input
+                            value={draft.label}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setDraftEditsByKey((prev) => ({
+                                ...prev,
+                                [field.key]: { ...prev[field.key], label: value },
+                              }));
+                            }}
+                            readOnly={!isStudioAdmin}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Category</Label>
+                          <Input value={field.category} disabled />
+                        </div>
+                        <div className="space-y-1.5 md:col-span-2">
+                          <Label>Description</Label>
+                          <Textarea
+                            value={draft.description}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setDraftEditsByKey((prev) => ({
+                                ...prev,
+                                [field.key]: { ...prev[field.key], description: value },
+                              }));
+                            }}
+                            readOnly={!isStudioAdmin}
+                            rows={2}
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id={`is-active-${field.key}`}
+                            checked={draft.is_active}
+                            onCheckedChange={(checked) => {
+                              const next = Boolean(checked);
+                              setDraftEditsByKey((prev) => ({
+                                ...prev,
+                                [field.key]: { ...prev[field.key], is_active: next },
+                              }));
+                            }}
+                            disabled={!isStudioAdmin}
+                          />
+                          <Label htmlFor={`is-active-${field.key}`} className="font-normal">Active</Label>
+                        </div>
                       </div>
-                      <div className="space-y-1.5">
-                        <Label>Type</Label>
-                        <Input value={field.type} readOnly />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label>Label</Label>
-                        <Input
-                          value={draft.label}
-                          onChange={(event) => {
-                            const value = event.target.value;
-                            setDraftEditsByKey((prev) => ({
-                              ...prev,
-                              [field.key]: { ...prev[field.key], label: value },
-                            }));
-                          }}
-                          readOnly={!isStudioAdmin}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label>Category</Label>
-                        <Input value={field.category} readOnly />
-                      </div>
-                      <div className="space-y-1.5 md:col-span-2">
-                        <Label>Description</Label>
-                        <Textarea
-                          value={draft.description}
-                          onChange={(event) => {
-                            const value = event.target.value;
-                            setDraftEditsByKey((prev) => ({
-                              ...prev,
-                              [field.key]: { ...prev[field.key], description: value },
-                            }));
-                          }}
-                          readOnly={!isStudioAdmin}
-                          rows={2}
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id={`is-active-${field.key}`}
-                          checked={draft.is_active}
-                          onCheckedChange={(checked) => {
-                            const next = Boolean(checked);
-                            setDraftEditsByKey((prev) => ({
-                              ...prev,
-                              [field.key]: { ...prev[field.key], is_active: next },
-                            }));
-                          }}
-                          disabled={!isStudioAdmin}
-                        />
-                        <Label htmlFor={`is-active-${field.key}`} className="font-normal">Active</Label>
-                      </div>
-                    </div>
-                    {isStudioAdmin && (
-                      <div className="mt-3 flex justify-end">
-                        <Button
-                          size="sm"
-                          onClick={() => void handleSaveField(field)}
-                          disabled={updateMutation.isPending}
-                        >
-                          <Save className="mr-2 h-4 w-4" />
-                          Save Changes
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                      {isStudioAdmin && (
+                        <div className="mt-3 flex justify-end">
+                          <Button
+                            size="sm"
+                            onClick={() => void handleSaveField(field)}
+                            disabled={updateMutation.isPending}
+                          >
+                            <Save className="mr-2 h-4 w-4" />
+                            Save Changes
+                          </Button>
+                        </div>
+                      )}
+                    </CollapsibleContent>
+                  </Collapsible>
                 );
               })}
             </div>

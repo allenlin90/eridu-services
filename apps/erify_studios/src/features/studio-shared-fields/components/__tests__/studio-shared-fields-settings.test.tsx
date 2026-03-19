@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
@@ -56,5 +56,21 @@ describe('studioSharedFieldsSettings', () => {
     render(<StudioSharedFieldsSettings studioId="std_1" />);
 
     expect(screen.getByText('Create Shared Field')).toBeInTheDocument();
+  });
+
+  it('toggles each shared-field item details', () => {
+    mockUseStudioAccess.mockReturnValue({
+      role: STUDIO_ROLE.MANAGER,
+    });
+
+    render(<StudioSharedFieldsSettings studioId="std_1" />);
+
+    expect(screen.queryByText('Description')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /gmv/i }));
+    expect(screen.getByText('Description')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /gmv/i }));
+    expect(screen.queryByText('Description')).not.toBeInTheDocument();
   });
 });
