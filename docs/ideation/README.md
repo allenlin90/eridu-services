@@ -25,15 +25,17 @@ docs/features/<feature>.md        ← promoted to feature doc, ideation doc dele
 
 ## Active Topics
 
-| Topic | Origin | Decision Gates | Related Docs |
-|-------|--------|----------------|--------------|
-| [Task Analytics Summaries](./task-analytics-summaries.md) | Task submission reporting design review | Product requirement for numeric aggregation in review workspace | [BE design](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md), [FE design](../../apps/erify_studios/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md) |
-| [BullMQ Async Processing](./bullmq-async-processing.md) | Task submission reporting design review | P95 generation > 5s, HTTP timeout, or row cap removal | [BE design §4.11](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md) |
-| [Submitted-At State Machine](./submitted-at-state-machine.md) | Task submission reporting design review | Need for precise submission timestamps beyond `status` + `updatedAt` | [BE design §4.8](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md) |
-| [Full Frontend i18n Standardization](./frontend-i18n-paraglide.md) | Tech debt audit for Paraglide usage | Official multi-region support requirement or UI audit/polish phase | [i18n skill](../../.agent/skills/frontend-i18n/SKILL.md) |
+| Topic                                                                                 | Origin                                              | Decision Gates                                                                              | Related Docs                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Task Analytics Summaries](./task-analytics-summaries.md)                             | Task submission reporting design review             | Product requirement for numeric aggregation in review workspace                             | [BE design](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md), [FE design](../../apps/erify_studios/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)                     |
+| [BullMQ Async Processing](./bullmq-async-processing.md)                               | Task submission reporting design review             | P95 generation > 5s, HTTP timeout, or row cap removal                                       | [BE design §4.11](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)                                                                                                      |
+| [Submitted-At State Machine](./submitted-at-state-machine.md)                         | Task submission reporting design review             | Need for precise submission timestamps beyond `status` + `updatedAt`                        | [BE design §4.8](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)                                                                                                       |
+| [erify_studios Route Query Optimization](./erify-studios-route-query-optimization.md) | `erify_studios` query audit                         | 4+ initial route requests, deep-link loading churn, or route-loader standardization         | [task reports builder](../../apps/erify_studios/src/routes/studios/$studioId/task-reports/builder.tsx), [shows route](../../apps/erify_studios/src/routes/studios/$studioId/shows/index.tsx) |
+| [JSON Schema for Document-Based Records](./document-record-json-schema.md)            | Task template + task report definition schema audit | Non-HTTP validation needs, schema-versioned JSON docs, or more `z.any()` document contracts | [task template schema](../../packages/api-types/src/task-management/task-template.schema.ts), [task report schema](../../packages/api-types/src/task-management/task-report.schema.ts)       |
+| [Full Frontend i18n Standardization](./frontend-i18n-paraglide.md)                    | Tech debt audit for Paraglide usage                 | Official multi-region support requirement or UI audit/polish phase                          | [i18n skill](../../.agent/skills/frontend-i18n/SKILL.md)                                                                                                                                     |
 
 ## Dropped / Promoted Topics
 
-| Topic | Disposition | Date | Notes |
-|-------|------------|------|-------|
-| *(none yet)* | | | |
+| Topic        | Disposition | Date | Notes |
+| ------------ | ----------- | ---- | ----- |
+| *(none yet)* |             |      |       |
