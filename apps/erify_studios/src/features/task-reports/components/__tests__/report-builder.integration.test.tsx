@@ -66,9 +66,16 @@ vi.mock('../report-column-picker', () => ({
 function ReportBuilderHarness({
   initialScope,
   initialColumns,
+  onSaveDefinition,
 }: {
   initialScope: TaskReportScope | null;
   initialColumns: TaskReportSelectedColumn[];
+  onSaveDefinition?: (input: {
+    name: string;
+    description?: string;
+    scope: TaskReportScope;
+    columns: TaskReportSelectedColumn[];
+  }) => Promise<void>;
 }) {
   const [scope, setScope] = useState<TaskReportScope | null>(initialScope);
   const [columns, setColumns] = useState<TaskReportSelectedColumn[]>(initialColumns);
@@ -80,6 +87,7 @@ function ReportBuilderHarness({
       setDraftScope={setScope}
       draftColumns={columns}
       setDraftColumns={setColumns}
+      onSaveDefinition={onSaveDefinition}
     />
   );
 }
@@ -108,7 +116,8 @@ describe('reportBuilder', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: /Preflight & Run/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Preflight/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Run Report/i })).toBeDisabled();
   });
 
   it('blocks preflight/run when incompatible columns exist and unblocks after removal', async () => {
@@ -121,12 +130,13 @@ describe('reportBuilder', () => {
     );
 
     expect(screen.getByText('Definition Conflict Detected')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Preflight & Run/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Preflight/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Run Report/i })).toBeDisabled();
 
     await user.click(screen.getByRole('button', { name: /Remove: Missing Column/i }));
     expect(screen.queryByText('Definition Conflict Detected')).not.toBeInTheDocument();
 
-    const runButton = screen.getByRole('button', { name: /Preflight & Run/i });
+    const runButton = screen.getByRole('button', { name: /Run Report/i });
     expect(runButton).toBeDisabled();
   });
 
@@ -146,8 +156,42 @@ describe('reportBuilder', () => {
       />,
     );
 
-    await user.click(screen.getByRole('button', { name: /Preflight & Run/i }));
+    await user.click(screen.getByRole('button', { name: /Preflight/i }));
     expect(mockPreflightMutateAsync).toHaveBeenCalledTimes(1);
     expect(mockRunMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it('saves report definition when definition metadata and scope are valid', async () => {
+    const user = userEvent.setup();
+    const onSaveDefinition = vi.fn().mockResolvedValue(undefined);
+
+    renderWithQueryClient(
+      <ReportBuilderHarness
+        initialScope={{ date_from: '2026-03-01', date_to: '2026-03-07', submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] }}
+        initialColumns={[{ key: 'gmv', label: 'GMV', type: 'number' }]}
+        onSaveDefinition={onSaveDefinition}
+      />,
+    );
+
+    await user.type(
+      screen.getByLabelText('Definition Name'),
+      'Weekly moderation report',
+    );
+    await user.type(
+      screen.getByLabelText('Description (optional)'),
+      'Used for weekly moderation KPI checks',
+    );
+    await user.click(screen.getByRole('button', { name: /Save as Definition/i }));
+
+    expect(onSaveDefinition).toHaveBeenCalledWith({
+      name: 'Weekly moderation report',
+      description: 'Used for weekly moderation KPI checks',
+      scope: {
+        date_from: '2026-03-01',
+        date_to: '2026-03-07',
+        submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+      },
+      columns: [{ key: 'gmv', label: 'GMV', type: 'number' }],
+    });
   });
 });

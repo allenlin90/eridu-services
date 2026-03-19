@@ -5,7 +5,7 @@ import type { DateRange } from 'react-day-picker';
 
 import type { TaskReportScope } from '@eridu/api-types/task-management';
 import { TASK_STATUS } from '@eridu/api-types/task-management';
-import { DatePickerWithRange, Label } from '@eridu/ui';
+import { Button, DatePickerWithRange, Label } from '@eridu/ui';
 
 import { getStudioClients } from '../api/get-studio-clients';
 
@@ -36,6 +36,16 @@ const DEFAULT_SUBMITTED_STATUSES: TaskReportScope['submitted_statuses'] = [
   TASK_STATUS.COMPLETED,
   TASK_STATUS.CLOSED,
 ];
+
+function areStringArraysEqual(a: string[] = [], b: string[] = []): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+  return sortedA.every((value, index) => value === sortedB[index]);
+}
 
 function parseLocalDate(value?: string): Date | undefined {
   if (!value) {
@@ -100,9 +110,30 @@ export function ReportScopeFilters({
     queryFn: ({ signal }) => getStudioClients(studioId, { limit: 200 }, { signal }),
   });
   const clientOptions = (clientsData?.data || []).map((item) => ({ label: item.name, value: item.id }));
+  const hasActiveFilters = Boolean(
+    currentScope.date_from
+    || currentScope.date_to
+    || currentScope.client_id?.length
+    || currentScope.show_standard_id?.length
+    || currentScope.show_type_id?.length
+    || currentScope.show_ids?.length
+    || currentScope.source_templates?.length
+    || !areStringArraysEqual(currentScope.submitted_statuses || [], DEFAULT_SUBMITTED_STATUSES as string[]),
+  );
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="md:col-span-2 lg:col-span-3 flex justify-end">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onChange({ submitted_statuses: [...DEFAULT_SUBMITTED_STATUSES] })}
+          disabled={!hasActiveFilters}
+        >
+          Reset all filters
+        </Button>
+      </div>
+
       <div className="space-y-1.5 lg:col-span-2">
         <Label>Date Range</Label>
         <DatePickerWithRange
@@ -131,8 +162,8 @@ export function ReportScopeFilters({
         <Label>Clients</Label>
         <MultiSelect
           options={clientOptions}
-          value={currentScope.client_id ? [currentScope.client_id] : []}
-          onChange={(values) => updateScope({ client_id: values[0] || undefined })}
+          value={currentScope.client_id || []}
+          onChange={(values) => updateScope({ client_id: values.length > 0 ? values : undefined })}
           placeholder="Any client"
         />
       </div>
@@ -141,8 +172,8 @@ export function ReportScopeFilters({
         <Label>Show Standards</Label>
         <MultiSelect
           options={showStandardOptions}
-          value={currentScope.show_standard_id ? [currentScope.show_standard_id] : []}
-          onChange={(values) => updateScope({ show_standard_id: values[0] || undefined })}
+          value={currentScope.show_standard_id || []}
+          onChange={(values) => updateScope({ show_standard_id: values.length > 0 ? values : undefined })}
           placeholder="Any standard"
         />
       </div>
@@ -151,8 +182,8 @@ export function ReportScopeFilters({
         <Label>Show Types</Label>
         <MultiSelect
           options={showTypeOptions}
-          value={currentScope.show_type_id ? [currentScope.show_type_id] : []}
-          onChange={(values) => updateScope({ show_type_id: values[0] || undefined })}
+          value={currentScope.show_type_id || []}
+          onChange={(values) => updateScope({ show_type_id: values.length > 0 ? values : undefined })}
           placeholder="Any type"
         />
       </div>

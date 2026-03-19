@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 import type { TaskReportPreflightResponse, TaskReportResult, TaskReportScope, TaskReportSelectedColumn } from '@eridu/api-types/task-management';
 import { TASK_REPORT_SYSTEM_COLUMN } from '@eridu/api-types/task-management';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@eridu/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, Textarea } from '@eridu/ui';
 
 import { useTaskReportMutations } from '../hooks/use-task-report-mutations';
 import { useTaskReportSources } from '../hooks/use-task-report-sources';
@@ -19,6 +19,15 @@ type ReportBuilderProps = {
   draftColumns: TaskReportSelectedColumn[];
   setDraftColumns: (columns: TaskReportSelectedColumn[]) => void;
   definitionId?: string | null;
+  initialDefinitionName?: string;
+  initialDefinitionDescription?: string | null;
+  onSaveDefinition?: (input: {
+    name: string;
+    description?: string;
+    scope: TaskReportScope;
+    columns: TaskReportSelectedColumn[];
+  }) => Promise<void>;
+  isSavingDefinition?: boolean;
   onCancel?: () => void;
   onRunSuccess?: (result: TaskReportResult) => void;
 };
@@ -30,9 +39,15 @@ export function ReportBuilder({
   draftColumns,
   setDraftColumns,
   definitionId,
+  initialDefinitionName,
+  initialDefinitionDescription,
+  onSaveDefinition,
+  isSavingDefinition = false,
   onCancel,
   onRunSuccess,
 }: ReportBuilderProps) {
+  const [definitionName, setDefinitionName] = React.useState(initialDefinitionName ?? '');
+  const [definitionDescription, setDefinitionDescription] = React.useState(initialDefinitionDescription ?? '');
   const [preflightData, setPreflightData] = React.useState<TaskReportPreflightResponse | null>(null);
   const { preflightMutation, runMutation } = useTaskReportMutations(studioId);
   const scopeForTemplateLookup = React.useMemo<TaskReportScope | null>(() => {
@@ -49,9 +64,13 @@ export function ReportBuilder({
   React.useEffect(() => {
     setPreflightData(null);
   }, [draftScope, draftColumns]);
+  React.useEffect(() => {
+    setDefinitionName(initialDefinitionName ?? '');
+    setDefinitionDescription(initialDefinitionDescription ?? '');
+  }, [definitionId, initialDefinitionDescription, initialDefinitionName]);
 
   const hasRequiredScope = Boolean(draftScope?.date_from && draftScope?.date_to);
-  const isPending = preflightMutation.isPending || runMutation.isPending;
+  const isPending = preflightMutation.isPending || runMutation.isPending || isSavingDefinition;
 
   const sourceTemplateOptions = React.useMemo(() => {
     return (sourceDataForTemplateLookup?.sources || []).map((source) => ({
@@ -79,23 +98,47 @@ export function ReportBuilder({
     return draftColumns.filter((column) => !availableKeys.has(column.key));
   }, [draftColumns, hasRequiredScope, sourceDataForScope]);
 
-  const handleRunClick = async () => {
+  const canSaveDefinition = hasRequiredScope
+    && draftColumns.length > 0
+    && incompatibleColumns.length === 0
+    && !isPending;
+  const canPreflight = hasRequiredScope
+    && draftColumns.length > 0
+    && incompatibleColumns.length === 0
+    && !isPending;
+  const canRun = canPreflight
+    && Boolean(preflightData)
+    && preflightData.show_count > 0
+    && preflightData.within_limit;
+
+  const handlePreflightClick = async () => {
     if (!draftScope || draftColumns.length === 0 || incompatibleColumns.length > 0)
       return;
 
-    if (!preflightData) {
-      // Step 1: Preflight
-      const res = await preflightMutation.mutateAsync({
-        scope: draftScope,
-      });
-      setPreflightData(res);
-      if (res.show_count === 0) {
-        toast.warning('The selected scope results in 0 shows. Please adjust filters.');
-      }
-      return; // Wait for user to confirm the preflight
+    const res = await preflightMutation.mutateAsync({
+      scope: draftScope,
+    });
+    setPreflightData(res);
+    if (res.show_count === 0) {
+      toast.warning('The selected scope results in 0 shows. Please adjust filters.');
+    }
+    if (!res.within_limit) {
+      toast.error(`The selected scope exceeds the limit (${res.limit} tasks). Narrow the filters and preflight again.`);
+    }
+  };
+
+  const handleRunClick = async () => {
+    if (
+      !draftScope
+      || draftColumns.length === 0
+      || incompatibleColumns.length > 0
+      || !preflightData
+      || preflightData.show_count === 0
+      || !preflightData.within_limit
+    ) {
+      return;
     }
 
-    // Step 2: Run
     const result = await runMutation.mutateAsync({
       scope: draftScope,
       columns: draftColumns,
@@ -106,8 +149,80 @@ export function ReportBuilder({
     onRunSuccess?.(result);
   };
 
+  const handleSaveDefinition = async () => {
+    if (!onSaveDefinition) {
+      return;
+    }
+
+    const trimmedName = definitionName.trim();
+    const trimmedDescription = definitionDescription.trim();
+
+    if (!trimmedName) {
+      toast.error('Enter a definition name before saving.');
+      return;
+    }
+
+    if (!draftScope || !hasRequiredScope) {
+      toast.error('Set a complete date range before saving.');
+      return;
+    }
+
+    if (draftColumns.length === 0) {
+      toast.error('Select at least one column before saving.');
+      return;
+    }
+
+    if (incompatibleColumns.length > 0) {
+      toast.error('Resolve incompatible columns before saving.');
+      return;
+    }
+
+    try {
+      await onSaveDefinition({
+        name: trimmedName,
+        description: trimmedDescription || undefined,
+        scope: draftScope,
+        columns: draftColumns,
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to save report definition.');
+    }
+  };
+
   return (
     <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Report Definition</CardTitle>
+          <CardDescription>
+            Save this report setup so you can reopen it from Task Reports anytime.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="report-definition-name">Definition Name</Label>
+            <Input
+              id="report-definition-name"
+              value={definitionName}
+              onChange={(event) => setDefinitionName(event.target.value)}
+              placeholder="e.g. Weekly moderation report"
+              maxLength={200}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="report-definition-description">Description (optional)</Label>
+            <Textarea
+              id="report-definition-description"
+              value={definitionDescription}
+              onChange={(event) => setDefinitionDescription(event.target.value)}
+              placeholder="Explain when this report should be used"
+              maxLength={500}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>1. Set Scope Filters</CardTitle>
@@ -200,18 +315,68 @@ export function ReportBuilder({
         </div>
       )}
 
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button variant="outline" onClick={onCancel} disabled={isPending}>
-          Cancel
-        </Button>
-        <Button
-          disabled={!hasRequiredScope || draftColumns.length === 0 || incompatibleColumns.length > 0 || isPending || preflightData?.show_count === 0}
-          onClick={handleRunClick}
-        >
-          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {preflightData ? 'Confirm & Run' : 'Preflight & Run'}
-        </Button>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>3. Review & Actions</CardTitle>
+          <CardDescription>
+            Save this definition for reuse, then preflight and run your report.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 lg:grid-cols-2">
+            <div className="space-y-3 rounded-md border p-3">
+              <div>
+                <div className="text-sm font-semibold">Definition Actions</div>
+                <div className="text-xs text-muted-foreground">
+                  Keep this setup for future runs or return to the definitions list.
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  variant="secondary"
+                  disabled={!canSaveDefinition}
+                  onClick={() => void handleSaveDefinition()}
+                  className="sm:flex-1"
+                >
+                  {isSavingDefinition && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {definitionId ? 'Save Definition' : 'Save as Definition'}
+                </Button>
+                <Button variant="outline" onClick={onCancel} disabled={isPending} className="sm:flex-1">
+                  Cancel
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-3 rounded-md border p-3">
+              <div>
+                <div className="text-sm font-semibold">Run Actions</div>
+                <div className="text-xs text-muted-foreground">
+                  Always run preflight first. Run stays disabled until preflight succeeds.
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  variant="outline"
+                  disabled={!canPreflight}
+                  onClick={() => void handlePreflightClick()}
+                  className="sm:flex-1"
+                >
+                  {preflightMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Preflight
+                </Button>
+                <Button
+                  disabled={!canRun}
+                  onClick={() => void handleRunClick()}
+                  className="sm:flex-1"
+                >
+                  {runMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Run Report
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
