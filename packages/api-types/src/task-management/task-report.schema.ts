@@ -65,6 +65,27 @@ const taskReportSubmittedStatusSchema = z.union([
   z.literal(TASK_STATUS.CLOSED),
 ]);
 
+const clientScopeFilterSchema = z
+  .union([
+    z.string().startsWith(UID_PREFIXES.CLIENT),
+    z.array(z.string().startsWith(UID_PREFIXES.CLIENT)),
+  ])
+  .transform((value) => Array.isArray(value) ? value : [value]);
+
+const showStandardScopeFilterSchema = z
+  .union([
+    z.string().startsWith(UID_PREFIXES.SHOW_STANDARD),
+    z.array(z.string().startsWith(UID_PREFIXES.SHOW_STANDARD)),
+  ])
+  .transform((value) => Array.isArray(value) ? value : [value]);
+
+const showTypeScopeFilterSchema = z
+  .union([
+    z.string().startsWith(UID_PREFIXES.SHOW_TYPE),
+    z.array(z.string().startsWith(UID_PREFIXES.SHOW_TYPE)),
+  ])
+  .transform((value) => Array.isArray(value) ? value : [value]);
+
 /**
  * Scope filters that define which shows/tasks are included in sources, preflight, and run.
  * This is the server-side filtering layer for report generation.
@@ -75,9 +96,9 @@ export const taskReportScopeSchema = z
     date_preset: taskReportDatePresetSchema.optional(),
     date_from: z.iso.date().optional(),
     date_to: z.iso.date().optional(),
-    client_id: z.string().startsWith(UID_PREFIXES.CLIENT).optional(),
-    show_standard_id: z.string().startsWith(UID_PREFIXES.SHOW_STANDARD).optional(),
-    show_type_id: z.string().startsWith(UID_PREFIXES.SHOW_TYPE).optional(),
+    client_id: clientScopeFilterSchema.optional(),
+    show_standard_id: showStandardScopeFilterSchema.optional(),
+    show_type_id: showTypeScopeFilterSchema.optional(),
     show_ids: z.array(z.string().startsWith(UID_PREFIXES.SHOW)).optional(),
     submitted_statuses: z.array(taskReportSubmittedStatusSchema).default([...submittedStatusesDefault]),
     source_templates: z.array(z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE)).optional(),
@@ -322,9 +343,9 @@ export const getTaskReportSourcesQuerySchema = z
     date_preset: taskReportDatePresetSchema.optional(),
     date_from: z.iso.date().optional(),
     date_to: z.iso.date().optional(),
-    client_id: z.string().startsWith(UID_PREFIXES.CLIENT).optional(),
-    show_standard_id: z.string().startsWith(UID_PREFIXES.SHOW_STANDARD).optional(),
-    show_type_id: z.string().startsWith(UID_PREFIXES.SHOW_TYPE).optional(),
+    client_id: z.union([z.string(), z.array(z.string())]).optional(),
+    show_standard_id: z.union([z.string(), z.array(z.string())]).optional(),
+    show_type_id: z.union([z.string(), z.array(z.string())]).optional(),
     show_ids: z.union([z.string(), z.array(z.string())]).optional(),
     submitted_statuses: z.union([z.string(), z.array(z.string())]).optional(),
     source_templates: z.union([z.string(), z.array(z.string())]).optional(),
@@ -333,9 +354,9 @@ export const getTaskReportSourcesQuerySchema = z
     date_preset: query.date_preset,
     date_from: query.date_from,
     date_to: query.date_to,
-    client_id: query.client_id,
-    show_standard_id: query.show_standard_id,
-    show_type_id: query.show_type_id,
+    client_id: normalizeStringArray(query.client_id),
+    show_standard_id: normalizeStringArray(query.show_standard_id),
+    show_type_id: normalizeStringArray(query.show_type_id),
     show_ids: normalizeStringArray(query.show_ids),
     submitted_statuses: normalizeStringArray(query.submitted_statuses) ?? [...submittedStatusesDefault],
     source_templates: normalizeStringArray(query.source_templates),

@@ -8,9 +8,9 @@ import { PrismaService } from '@/prisma/prisma.service';
 export type TaskReportScopeFilters = {
   dateFrom?: Date;
   dateTo?: Date;
-  clientId?: string;
-  showStandardId?: string;
-  showTypeId?: string;
+  clientIds?: string[];
+  showStandardIds?: string[];
+  showTypeIds?: string[];
   showIds?: string[];
   sourceTemplateIds?: string[];
   submittedStatuses: TaskStatus[];
@@ -322,16 +322,16 @@ export class TaskReportScopeRepository {
       studio: { uid: studioUid },
     };
 
-    if (filters.showStandardId) {
-      where.showStandard = { uid: filters.showStandardId };
+    if (filters.showStandardIds?.length) {
+      where.showStandard = { uid: { in: filters.showStandardIds } };
     }
 
-    if (filters.clientId) {
-      where.client = { uid: filters.clientId };
+    if (filters.clientIds?.length) {
+      where.client = { uid: { in: filters.clientIds } };
     }
 
-    if (filters.showTypeId) {
-      where.showType = { uid: filters.showTypeId };
+    if (filters.showTypeIds?.length) {
+      where.showType = { uid: { in: filters.showTypeIds } };
     }
 
     if (filters.showIds?.length) {

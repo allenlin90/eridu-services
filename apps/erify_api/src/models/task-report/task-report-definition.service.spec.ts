@@ -11,8 +11,8 @@ describe('taskReportDefinitionService', () => {
   const defaultReportScope = {
     date_from: '2026-03-01',
     date_to: '2026-03-31',
-    show_standard_id: 'shsd_1',
-  } as const;
+    show_standard_id: ['shsd_1'],
+  };
 
   let service: TaskReportDefinitionService;
   let repository: jest.Mocked<TaskReportDefinitionRepository>;

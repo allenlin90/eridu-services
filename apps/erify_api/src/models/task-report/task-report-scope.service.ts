@@ -157,9 +157,9 @@ export class TaskReportScopeService {
     return {
       dateFrom,
       dateTo,
-      clientId: scope.client_id,
-      showStandardId: scope.show_standard_id,
-      showTypeId: scope.show_type_id,
+      clientIds: scope.client_id,
+      showStandardIds: scope.show_standard_id,
+      showTypeIds: scope.show_type_id,
       showIds: scope.show_ids,
       sourceTemplateIds: scope.source_templates,
       submittedStatuses: scope.submitted_statuses,

@@ -16,7 +16,8 @@ describe('taskReportScopeService', () => {
   const defaultScope = {
     date_from: '2026-03-01',
     date_to: '2026-03-31',
-  } as const;
+    show_standard_id: ['shsd_1'],
+  };
 
   let service: TaskReportScopeService;
   let repository: jest.Mocked<TaskReportScopeRepository>;
@@ -265,7 +266,7 @@ describe('taskReportScopeService', () => {
     const result = await service.preflight('std_123', {
       scope: {
         ...defaultScope,
-        show_type_id: 'sht_1',
+        show_type_id: ['sht_1'],
         submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
       },
     });
@@ -274,7 +275,7 @@ describe('taskReportScopeService', () => {
     expect(result.limit).toBe(10000);
   });
 
-  it('passes client_id to repository scope filters', async () => {
+  it('passes multi-selected client_id values to repository scope filters', async () => {
     repository.countShowsInScope.mockResolvedValue(1);
     repository.countSubmittedTasksInScope.mockResolvedValue(2);
 
@@ -283,14 +284,14 @@ describe('taskReportScopeService', () => {
       taskReportPreflightRequestSchema.parse({
         scope: {
           ...defaultScope,
-          client_id: 'client_1',
+          client_id: ['client_1', 'client_2'],
           submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
         },
       }),
     );
 
     const callArgs = repository.countShowsInScope.mock.calls[0]?.[1];
-    expect(callArgs?.clientId).toBe('client_1');
+    expect(callArgs?.clientIds).toEqual(['client_1', 'client_2']);
   });
 
   it('uses local day boundaries for explicit date_from/date_to scope', async () => {
