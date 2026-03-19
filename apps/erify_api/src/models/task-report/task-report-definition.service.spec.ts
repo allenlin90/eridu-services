@@ -8,6 +8,12 @@ import { UserService } from '@/models/user/user.service';
 import { UtilityService } from '@/utility/utility.service';
 
 describe('taskReportDefinitionService', () => {
+  const defaultReportScope = {
+    date_from: '2026-03-01',
+    date_to: '2026-03-31',
+    show_standard_id: 'shsd_1',
+  } as const;
+
   let service: TaskReportDefinitionService;
   let repository: jest.Mocked<TaskReportDefinitionRepository>;
   let userService: jest.Mocked<UserService>;
@@ -63,7 +69,7 @@ describe('taskReportDefinitionService', () => {
           name: 'Weekly',
           description: 'Desc',
           definition: {
-            scope: { show_standard_id: 'shsd_1', submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
+            scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
             columns: [{ key: 'gmv', label: 'GMV' }],
           },
           metadata: {},
@@ -95,7 +101,7 @@ describe('taskReportDefinitionService', () => {
       name: 'Weekly',
       description: null,
       definition: {
-        scope: { show_standard_id: 'shsd_1', submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
+        scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
         columns: [{ key: 'gmv', label: 'GMV' }],
       },
       metadata: {},
@@ -120,7 +126,7 @@ describe('taskReportDefinitionService', () => {
       name: 'Weekly',
       description: null,
       definition: {
-        scope: { show_standard_id: 'shsd_1', submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
+        scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
         columns: [{ key: 'gmv', label: 'GMV' }],
       },
       metadata: {},
@@ -134,7 +140,7 @@ describe('taskReportDefinitionService', () => {
     const result = await service.createDefinition('std_1', 'ext_1', {
       name: 'Weekly',
       definition: {
-        scope: { show_standard_id: 'shsd_1', submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
+        scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
         columns: [{ key: 'gmv', label: 'GMV' }],
       },
     });
@@ -155,7 +161,7 @@ describe('taskReportDefinitionService', () => {
       name: 'Weekly',
       description: null,
       definition: {
-        scope: { show_standard_id: 'shsd_1', submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
+        scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
         columns: [{ key: 'gmv', label: 'GMV' }],
       },
       metadata: {},
@@ -172,7 +178,7 @@ describe('taskReportDefinitionService', () => {
       name: 'Weekly v2',
       description: null,
       definition: {
-        scope: { show_standard_id: 'shsd_1', submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
+        scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
         columns: [{ key: 'gmv', label: 'GMV' }],
       },
       metadata: {},
@@ -196,7 +202,7 @@ describe('taskReportDefinitionService', () => {
       name: 'Weekly',
       description: null,
       definition: {
-        scope: { show_standard_id: 'shsd_1', submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
+        scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
         columns: [{ key: 'gmv', label: 'GMV' }],
       },
       metadata: {},

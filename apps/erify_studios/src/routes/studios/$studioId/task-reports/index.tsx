@@ -1,27 +1,73 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { z } from 'zod';
 
 import { PageLayout } from '@/components/layouts/page-layout';
-import { TaskReportsIndex } from '@/features/task-reports/components/task-reports-index';
-import { useTaskReportsRouteManager } from '@/features/task-reports/hooks/use-task-reports-route-manager';
+import { TaskReportDefinitionsViewer } from '@/features/task-reports/components/task-report-definitions-viewer';
 
-export const Route = createFileRoute('/studios/$studioId/task-reports/')({
-  component: TaskReportsRouteComponent,
-  validateSearch: (search: Record<string, unknown>) => search,
+const taskReportDefinitionsSearchSchema = z.object({
+  page: z.coerce.number().int().min(1).catch(1),
+  limit: z.coerce.number().int().min(1).max(50).catch(10),
+  search: z.string().optional().catch(undefined),
 });
 
-function TaskReportsRouteComponent() {
-  const { studioId } = Route.useParams();
-  const searchParams = Route.useSearch();
+export const Route = createFileRoute('/studios/$studioId/task-reports/')({
+  component: TaskReportsDefinitionsPage,
+  validateSearch: (search) => taskReportDefinitionsSearchSchema.parse(search),
+});
 
-  // Use a custom hook inside features/ to cleanly manage the view switching.
-  const state = useTaskReportsRouteManager(studioId, searchParams);
+function TaskReportsDefinitionsPage() {
+  const { studioId } = Route.useParams();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
 
   return (
     <PageLayout
       title="Task Reports"
-      description="Cross-show reporting and export across your studio's tasks."
+      description="Saved report definitions for studio-scoped reporting."
     >
-      <TaskReportsIndex studioId={studioId} {...state} />
+      <TaskReportDefinitionsViewer
+        studioId={studioId}
+        page={search.page}
+        limit={search.limit}
+        search={search.search}
+        onSearchChange={(value) => {
+          void navigate({
+            to: '/studios/$studioId/task-reports',
+            params: { studioId },
+            search: (prev) => ({
+              ...prev,
+              page: 1,
+              search: value,
+            }),
+            replace: true,
+          });
+        }}
+        onPageChange={(nextPage) => {
+          void navigate({
+            to: '/studios/$studioId/task-reports',
+            params: { studioId },
+            search: (prev) => ({
+              ...prev,
+              page: nextPage,
+            }),
+            replace: true,
+          });
+        }}
+        onCreateNew={() => {
+          void navigate({
+            to: '/studios/$studioId/task-reports/builder',
+            params: { studioId },
+            search: {},
+          });
+        }}
+        onOpenBuilder={(definitionId) => {
+          void navigate({
+            to: '/studios/$studioId/task-reports/builder',
+            params: { studioId },
+            search: { definition_id: definitionId },
+          });
+        }}
+      />
     </PageLayout>
   );
 }

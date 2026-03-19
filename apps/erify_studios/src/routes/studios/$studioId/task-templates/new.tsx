@@ -7,6 +7,7 @@ import { useDebounceCallback } from 'usehooks-ts';
 import { PageLayout } from '@/components/layouts/page-layout';
 import { TemplateSchema, type TemplateSchemaType } from '@/components/task-templates/builder/schema';
 import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-template-builder';
+import { useStudioSharedFields } from '@/features/studio-shared-fields/hooks/use-studio-shared-fields';
 import { useCreateTaskTemplate } from '@/features/task-templates/hooks/use-create-task-template';
 import { formatZodErrors } from '@/lib/zod-utils';
 
@@ -19,6 +20,7 @@ export const Route = createFileRoute('/studios/$studioId/task-templates/new')({
 export function TaskTemplateBuilderPage() {
   const { studioId } = Route.useParams();
   const navigate = Route.useNavigate();
+  const { data: sharedFieldsResponse } = useStudioSharedFields({ studioId });
 
   const { mutate: createTemplate, isPending: isSaving } = useCreateTaskTemplate({
     studioId,
@@ -154,6 +156,7 @@ export function TaskTemplateBuilderPage() {
         onSave={onSave}
         onCancel={handleCancel}
         errors={errors}
+        sharedFields={sharedFieldsResponse?.shared_fields ?? []}
       />
     </PageLayout>
   );

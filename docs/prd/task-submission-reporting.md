@@ -65,6 +65,12 @@ Reporting standardization is an **engineering best-practice layer** — it ensur
 
 ## Core Workflow
 
+### Route model
+
+- Viewer/landing: `/studios/$studioId/task-reports`
+- Builder/run workspace: `/studios/$studioId/task-reports/builder`
+- Viewer is definitions-first; users open builder from viewer actions.
+
 The workflow is **show-first**: managers start by narrowing the shows they care about, then discover what task data is available.
 
 ```mermaid
@@ -85,7 +91,7 @@ flowchart LR
 
 Steps:
 
-1. **Filter shows** (scope filters) — set date range, client, show standard, show type, and other show-level attributes. These scope filters determine what data the BE generates. At least one scope filter is required.
+1. **Filter shows** (scope filters) — set date range, client, show standard, show type, and other show-level attributes. These scope filters determine what data the BE generates. `date_from` + `date_to` are mandatory for source discovery, preflight, and run.
 2. **Discover columns** — the BE returns which task templates/snapshots have submitted tasks for those filtered shows, plus their field catalogs. Columns are contextual — bound to the actual tasks on the selected shows.
 3. **Select columns** — pick system columns (show name, start time, client) and task-content columns from the discovered catalog. This defines the target table schema. Hard cap: 50 columns. Soft warning at 30+ for table readability (the export is the primary deliverable — wide tables are best reviewed in the spreadsheet).
 4. **Save definition** (optional) — save the scope filters + column selection as a named personal preset. Definitions can store a default date preset (`this_week`, `this_month`, or absolute dates) that pre-fills on load.
@@ -102,7 +108,8 @@ Filters are split into two tiers:
 
 These change the *dataset* the BE produces. Changing a scope filter triggers re-generation.
 
-- `date_from` / `date_to` (or date preset)
+- `date_from` / `date_to` (**required** in requests)
+- `client_id` (studio-scoped client filter)
 - `show_standard_id` — premium vs standard (affects which templates are in scope)
 - `show_type_id` — different show types have different task structures
 - `submitted_statuses` — default `[REVIEW, COMPLETED, CLOSED]`
@@ -127,9 +134,11 @@ The distinction maps to how the moderation team uses Google Sheets: they have on
 ### Show-first querying
 
 1. Managers start by filtering shows — date range, client, show standard, show type, and other show-level attributes.
-2. Filters can be single or compound. At least one scope filter is required to prevent unscoped full-studio scans.
-3. After shows are filtered, the BE returns a contextual column catalog: only templates/snapshots with submitted tasks on the filtered shows, plus their available fields.
-4. This ensures column options are bound to the actual data — no dead-end selections.
+2. Filters can be single or compound. Date range (`date_from` + `date_to`) is mandatory to prevent unbounded scans.
+3. The report scope UI does not allow manual `show_ids` picking. Show selection is derived from studio-scoped filters only.
+4. After shows are filtered, the BE returns a contextual column catalog: only templates/snapshots with submitted tasks on the filtered shows, plus their available fields.
+5. This ensures column options are bound to the actual data — no dead-end selections.
+6. Reporting lookups (clients/show standards/show types/sources) are studio-scoped (`/studios/:studioId/*`). The report feature does not call `/system/*` directly.
 
 ### Submitted-task source fidelity
 
@@ -153,12 +162,13 @@ The distinction maps to how the moderation team uses Google Sheets: they have on
 4. Missing submissions appear as `null` values in the row; the UI must not silently pretend missing data is zero.
 5. File and URL fields are included as string values (clickable links in the UI, plain URLs in export).
 6. When multiple submitted tasks match the same show and source (duplicate sources), the **latest task wins** — its values populate the row. A warning flag is set on the affected row for data hygiene visibility, but the row stays single.
+7. If a saved definition contains columns that are incompatible with the current scope (missing/renamed/misaligned sources), preflight/run is blocked with an explicit conflict summary until the user resolves those columns.
 
 ### Saved definitions (personal presets)
 
 1. Managers can save a named definition containing scope filters, selected columns, and optionally a default date preset.
 2. Definitions function as **personal presets** — like Google Sheets filter views. Each manager creates definitions reflecting their review needs.
-3. Definitions can store a default date preset (`this_week`, `this_month`, or explicit dates) that pre-fills the date range on load. The manager can override before running.
+3. Definitions can store a default date preset (`this_week`, `this_month`, or explicit dates) that pre-fills the date range on load. Before source/preflight/run requests are sent, the FE resolves to explicit `date_from` + `date_to`.
 4. Definitions can be **cloned and edited** — a "Clone" action creates a copy with a new name for the manager to customize.
 5. The definition list is the **landing view** of the Task Reports page — managers open a definition and run it, rather than building from scratch each time.
 6. Definitions are persisted as JSON only; the backend does not store generated results.

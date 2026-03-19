@@ -679,6 +679,10 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
   }, [onUpdate]);
 
   const handleTypeChange = useCallback((newType: string) => {
+    if (item.standard) {
+      return;
+    }
+
     const updates: Partial<FieldItem> = {
       type: newType as FieldType,
       default_value: '', // Reset default value to avoid type mismatches
@@ -702,7 +706,7 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
 
     updates.validation = newValidation;
     onUpdate(updates);
-  }, [item.validation, onUpdate]);
+  }, [item.standard, item.validation, onUpdate]);
 
   const handleDefaultValueChange = useCallback((val: any) => {
     handleChange('default_value', val);
@@ -734,7 +738,7 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor={`type-${item.id}`}>Type</Label>
-          <Select value={item.type} onValueChange={handleTypeChange}>
+          <Select value={item.type} onValueChange={handleTypeChange} disabled={item.standard}>
             <SelectTrigger id={`type-${item.id}`}>
               <SelectValue />
             </SelectTrigger>
@@ -746,6 +750,11 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
               ))}
             </SelectContent>
           </Select>
+          {item.standard && (
+            <p className="text-xs text-muted-foreground">
+              Shared-field type is locked by studio settings.
+            </p>
+          )}
         </div>
         <div className="flex items-end pb-2">
           <div className="flex items-center space-x-2">

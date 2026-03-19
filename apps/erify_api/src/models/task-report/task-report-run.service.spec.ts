@@ -10,6 +10,12 @@ import { TaskReportScopeService } from './task-report-scope.service';
 import { StudioService } from '@/models/studio/studio.service';
 
 describe('taskReportRunService', () => {
+  const defaultReportScope = {
+    date_from: '2026-03-01',
+    date_to: '2026-03-31',
+    show_standard_id: 'shsd_1',
+  } as const;
+
   let service: TaskReportRunService;
   let scopeService: jest.Mocked<TaskReportScopeService>;
   let scopeRepository: jest.Mocked<TaskReportScopeRepository>;
@@ -149,7 +155,7 @@ describe('taskReportRunService', () => {
     ]);
 
     const result = await service.run('std_123', taskReportRunRequestSchema.parse({
-      scope: { show_standard_id: 'shsd_1' },
+      scope: defaultReportScope,
       columns: [
         { key: 'gmv', label: 'GMV' },
         { key: 'ttpl_1:notes', label: 'Notes' },
@@ -170,7 +176,7 @@ describe('taskReportRunService', () => {
     });
   });
 
-  it('rejects unknown column key when scoped tasks exist', async () => {
+  it('rejects unknown column key with compatibility details', async () => {
     const snapshotSchema = TemplateSchemaValidator.parse({
       items: [
         {
@@ -223,13 +229,26 @@ describe('taskReportRunService', () => {
 
     await expect(
       service.run('std_123', taskReportRunRequestSchema.parse({
-        scope: { show_standard_id: 'shsd_1' },
+        scope: defaultReportScope,
         columns: [{ key: 'unknown_key', label: 'Unknown' }],
       })),
-    ).rejects.toThrow('Unknown column key: unknown_key');
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: 'Selected columns are incompatible with the current scope',
+        details: {
+          incompatible_columns: [
+            expect.objectContaining({
+              key: 'unknown_key',
+              label: 'Unknown',
+              reason: 'unknown_column_key',
+            }),
+          ],
+        },
+      }),
+    });
   });
 
-  it('allows template-scoped columns that are absent from current scoped tasks', async () => {
+  it('rejects template-scoped columns absent from current scope', async () => {
     const snapshotSchema = TemplateSchemaValidator.parse({
       items: [
         {
@@ -280,18 +299,104 @@ describe('taskReportRunService', () => {
     ]);
     studioService.getSharedFields.mockResolvedValue([]);
 
-    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
-      scope: { show_standard_id: 'shsd_1' },
-      columns: [{ key: 'ttpl_2:notes', label: 'Notes' }],
-    }));
-
-    expect(result.rows).toEqual([{ 'ttpl_2:notes': null }]);
-    expect(result.columns).toEqual([
-      expect.objectContaining({
-        key: 'ttpl_2:notes',
-        source_template_id: 'ttpl_2',
+    await expect(
+      service.run('std_123', taskReportRunRequestSchema.parse({
+        scope: defaultReportScope,
+        columns: [{ key: 'ttpl_2:notes', label: 'Notes' }],
+      })),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: 'Selected columns are incompatible with the current scope',
+        details: {
+          incompatible_columns: [
+            expect.objectContaining({
+              key: 'ttpl_2:notes',
+              label: 'Notes',
+              reason: 'template_field_not_in_scope',
+            }),
+          ],
+        },
       }),
+    });
+  });
+
+  it('rejects shared fields absent from current scope', async () => {
+    const snapshotSchema = TemplateSchemaValidator.parse({
+      items: [
+        {
+          id: 'fi_1',
+          key: 'notes',
+          type: 'text',
+          label: 'Notes',
+        },
+      ],
+      metadata: {},
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      showStandardId: 'shsd_1',
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([
+      {
+        uid: 'show_1',
+        name: 'Show 1',
+        externalId: 'EXT-1',
+        startTime: new Date('2026-03-16T00:00:00.000Z'),
+        endTime: new Date('2026-03-16T02:00:00.000Z'),
+        clientName: 'Client A',
+        studioRoomName: 'Room A',
+        showStandardName: 'Standard A',
+        showTypeName: 'Type A',
+      },
     ]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      {
+        uid: 'task_1',
+        updatedAt: new Date('2026-03-17T10:00:00.000Z'),
+        templateUid: 'ttpl_1',
+        templateName: 'Template 1',
+        snapshotId: 'snap_1',
+        snapshotSchema,
+        content: { notes: 'hello' },
+        targetShowUids: ['show_1'],
+      },
+    ]);
+    studioService.getSharedFields.mockResolvedValue([
+      {
+        key: 'gmv',
+        type: 'number',
+        category: 'metric',
+        label: 'GMV',
+        is_active: true,
+      },
+    ]);
+
+    await expect(
+      service.run('std_123', taskReportRunRequestSchema.parse({
+        scope: defaultReportScope,
+        columns: [{ key: 'gmv', label: 'GMV' }],
+      })),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: 'Selected columns are incompatible with the current scope',
+        details: {
+          incompatible_columns: [
+            expect.objectContaining({
+              key: 'gmv',
+              label: 'GMV',
+              reason: 'shared_field_not_in_scope',
+            }),
+          ],
+        },
+      }),
+    });
   });
 
   it('rejects run when preflight exceeds row limit', async () => {
@@ -304,7 +409,7 @@ describe('taskReportRunService', () => {
 
     await expect(
       service.run('std_123', taskReportRunRequestSchema.parse({
-        scope: { show_standard_id: 'shsd_1' },
+        scope: defaultReportScope,
         columns: [{ key: 'gmv', label: 'GMV' }],
       })),
     ).rejects.toThrow('Scope includes 10001 tasks (limit: 10000). Narrow your scope filters.');
@@ -354,7 +459,7 @@ describe('taskReportRunService', () => {
 
     await expect(
       service.run('std_123', taskReportRunRequestSchema.parse({
-        scope: { show_standard_id: 'shsd_1' },
+        scope: defaultReportScope,
         columns: [{ key: 'gmv', label: 'GMV' }],
       })),
     ).rejects.toThrow('Task template snapshot schema is invalid');
@@ -443,7 +548,7 @@ describe('taskReportRunService', () => {
     studioService.getSharedFields.mockResolvedValue([]);
 
     const result = await service.run('std_123', taskReportRunRequestSchema.parse({
-      scope: { show_standard_id: 'shsd_1' },
+      scope: defaultReportScope,
       columns: [{ key: 'gmv', label: 'GMV' }],
     }));
 
@@ -479,7 +584,7 @@ describe('taskReportRunService', () => {
     studioService.getSharedFields.mockResolvedValue([]);
 
     const result = await service.run('std_123', taskReportRunRequestSchema.parse({
-      scope: { show_standard_id: 'shsd_1' },
+      scope: defaultReportScope,
       columns: [
         { key: 'show_name', label: 'Show Name' },
         { key: 'client_name', label: 'Client' },

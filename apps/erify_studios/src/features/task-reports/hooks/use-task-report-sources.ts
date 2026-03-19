@@ -8,8 +8,7 @@ import { taskReportSourceKeys } from '../api/keys';
 export function useTaskReportSources(studioId: string, scope: TaskReportScope | null) {
   return useQuery<TaskReportSourcesResponse>({
     queryKey: taskReportSourceKeys.list(studioId, scope || {}),
-    queryFn: () => getTaskReportSources(studioId, (scope || {}) as TaskReportScope),
-    enabled: Boolean(scope && Object.keys(scope).length > 0),
-    staleTime: 60 * 1000,
+    queryFn: ({ signal }) => getTaskReportSources(studioId, (scope || {}) as TaskReportScope, { signal }),
+    enabled: Boolean(scope?.date_from && scope?.date_to),
   });
 }

@@ -8,6 +8,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 export type TaskReportScopeFilters = {
   dateFrom?: Date;
   dateTo?: Date;
+  clientId?: string;
   showStandardId?: string;
   showTypeId?: string;
   showIds?: string[];
@@ -323,6 +324,10 @@ export class TaskReportScopeRepository {
 
     if (filters.showStandardId) {
       where.showStandard = { uid: filters.showStandardId };
+    }
+
+    if (filters.clientId) {
+      where.client = { uid: filters.clientId };
     }
 
     if (filters.showTypeId) {

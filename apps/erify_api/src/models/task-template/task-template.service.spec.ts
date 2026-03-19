@@ -1,6 +1,7 @@
 import { TaskTemplateRepository } from './task-template.repository';
 import { TaskTemplateService } from './task-template.service';
 
+import { StudioService } from '@/models/studio/studio.service';
 import {
   createMockRepository,
   createMockUtilityService,
@@ -14,21 +15,32 @@ describe('taskTemplateService', () => {
   let service: TaskTemplateService;
   let _repository: TaskTemplateRepository;
   let _utilityService: UtilityService;
+  let studioService: jest.Mocked<StudioService>;
 
   beforeEach(async () => {
     const repositoryMock = createMockRepository<TaskTemplateRepository>();
     const utilityMock = createMockUtilityService('ttpl_test123');
+    const studioServiceMock = {
+      getSharedFields: jest.fn().mockResolvedValue([]),
+    };
 
     const module = await createModelServiceTestModule({
       serviceClass: TaskTemplateService,
       repositoryClass: TaskTemplateRepository,
       repositoryMock,
       utilityMock,
+      additionalProviders: [
+        {
+          provide: StudioService,
+          useValue: studioServiceMock,
+        },
+      ],
     });
 
     service = module.get<TaskTemplateService>(TaskTemplateService);
     _repository = module.get<TaskTemplateRepository>(TaskTemplateRepository);
     _utilityService = module.get<UtilityService>(UtilityService);
+    studioService = module.get(StudioService);
   });
 
   it('should be defined', () => {
@@ -317,6 +329,88 @@ describe('taskTemplateService', () => {
           ],
         };
         expect(() => service.validateSchema(schema)).toThrow(/do not support property-based/);
+      });
+    });
+
+    describe('shared field validation', () => {
+      it('should pass when standard field key and type match studio shared fields', async () => {
+        studioService.getSharedFields.mockResolvedValueOnce([
+          {
+            key: 'gmv',
+            type: 'number',
+            category: 'metric',
+            label: 'GMV',
+            is_active: true,
+          },
+        ]);
+
+        const schema = {
+          metadata: {
+            task_type: 'SETUP',
+          },
+          items: [
+            {
+              id: 'item_1',
+              key: 'gmv',
+              standard: true,
+              type: 'number' as const,
+              label: 'GMV',
+              required: true,
+            },
+          ],
+        };
+
+        const sharedFieldsByKey = new Map((await studioService.getSharedFields('std_1')).map((field) => [field.key, field]));
+        expect(() => service.validateSchema(schema, sharedFieldsByKey)).not.toThrow();
+      });
+
+      it('should throw when standard field key is not in shared fields', () => {
+        const schema = {
+          metadata: {
+            task_type: 'SETUP',
+          },
+          items: [
+            {
+              id: 'item_1',
+              key: 'unknown_shared_key',
+              standard: true,
+              type: 'number' as const,
+              label: 'Unknown Shared Field',
+              required: true,
+            },
+          ],
+        };
+
+        expect(() => service.validateSchema(schema, new Map())).toThrow(/is not configured in studio settings/);
+      });
+
+      it('should throw when standard field type mismatches shared field type', () => {
+        const schema = {
+          metadata: {
+            task_type: 'SETUP',
+          },
+          items: [
+            {
+              id: 'item_1',
+              key: 'gmv',
+              standard: true,
+              type: 'text' as const,
+              label: 'GMV',
+              required: true,
+            },
+          ],
+        };
+
+        const sharedFieldsByKey = new Map([
+          ['gmv', {
+            key: 'gmv',
+            type: 'number' as const,
+            category: 'metric' as const,
+            label: 'GMV',
+            is_active: true,
+          }],
+        ]);
+        expect(() => service.validateSchema(schema, sharedFieldsByKey)).toThrow(/must use type "number"/);
       });
     });
   });

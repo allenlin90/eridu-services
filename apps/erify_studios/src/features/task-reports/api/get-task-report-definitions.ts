@@ -11,10 +11,11 @@ export type TaskReportDefinitionsResponse = PaginatedResponse<TaskReportDefiniti
 export async function getTaskReportDefinitions(
   studioId: string,
   params: ListTaskReportDefinitionsQuery,
+  options?: { signal?: AbortSignal },
 ): Promise<TaskReportDefinitionsResponse> {
   const response = await apiClient.get<TaskReportDefinitionsResponse>(
     `/studios/${studioId}/task-report-definitions`,
-    { params },
+    { params, signal: options?.signal },
   );
   return response.data;
 }

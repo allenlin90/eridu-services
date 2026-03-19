@@ -19,6 +19,12 @@ import { TaskReportRunService } from '@/models/task-report/task-report-run.servi
 import { TaskReportScopeService } from '@/models/task-report/task-report-scope.service';
 
 describe('studioTaskReportController', () => {
+  const defaultScope = {
+    date_from: '2026-03-01',
+    date_to: '2026-03-31',
+    show_standard_id: 'shsd_1',
+  } as const;
+
   let controller: StudioTaskReportController;
   let definitionService: jest.Mocked<TaskReportDefinitionService>;
   let scopeService: jest.Mocked<TaskReportScopeService>;
@@ -85,7 +91,7 @@ describe('studioTaskReportController', () => {
       id: 'trd_1',
       name: 'Weekly',
       definition: {
-        scope: { show_standard_id: 'shsd_1' },
+        scope: defaultScope,
         columns: [{ key: 'gmv', label: 'GMV' }],
       },
       created_at: new Date().toISOString(),
@@ -111,7 +117,7 @@ describe('studioTaskReportController', () => {
       id: 'trd_1',
       name: 'Weekly',
       definition: {
-        scope: { show_standard_id: 'shsd_1' },
+        scope: defaultScope,
         columns: [{ key: 'gmv', label: 'GMV' }],
       },
       created_at: new Date().toISOString(),
@@ -127,7 +133,7 @@ describe('studioTaskReportController', () => {
     const payload = createTaskReportDefinitionSchema.parse({
       name: 'Weekly review',
       definition: {
-        scope: { show_standard_id: 'shsd_1' },
+        scope: defaultScope,
         columns: [{ key: 'gmv', label: 'GMV' }],
       },
     });
@@ -150,7 +156,7 @@ describe('studioTaskReportController', () => {
       id: 'trd_1',
       name: 'Weekly review v2',
       definition: {
-        scope: { show_standard_id: 'shsd_1' },
+        scope: defaultScope,
         columns: [{ key: 'gmv', label: 'GMV' }],
       },
       created_at: new Date().toISOString(),
@@ -170,7 +176,7 @@ describe('studioTaskReportController', () => {
   });
 
   it('delegates sources endpoint', async () => {
-    const query = getTaskReportSourcesQuerySchema.parse({ show_standard_id: 'shsd_1' });
+    const query = getTaskReportSourcesQuerySchema.parse(defaultScope);
     scopeService.getSources.mockResolvedValue({
       sources: [],
       shared_fields: [],
@@ -186,6 +192,8 @@ describe('studioTaskReportController', () => {
   it('delegates preflight endpoint', async () => {
     const payload = taskReportPreflightRequestSchema.parse({
       scope: {
+        date_from: '2026-03-01',
+        date_to: '2026-03-31',
         show_ids: ['show_1'],
       },
     });
@@ -207,7 +215,7 @@ describe('studioTaskReportController', () => {
 
   it('delegates run endpoint', async () => {
     const payload = taskReportRunRequestSchema.parse({
-      scope: { show_standard_id: 'shsd_1' },
+      scope: defaultScope,
       columns: [{ key: 'gmv', label: 'GMV' }],
     });
     runService.run.mockResolvedValue({

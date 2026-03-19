@@ -3,7 +3,6 @@ import { Test } from '@nestjs/testing';
 
 import {
   getTaskReportSourcesQuerySchema,
-  TASK_REPORT_DATE_PRESET,
   taskReportPreflightRequestSchema,
   TemplateSchemaValidator,
 } from '@eridu/api-types/task-management';
@@ -14,6 +13,11 @@ import { TaskReportScopeService } from './task-report-scope.service';
 import { StudioService } from '@/models/studio/studio.service';
 
 describe('taskReportScopeService', () => {
+  const defaultScope = {
+    date_from: '2026-03-01',
+    date_to: '2026-03-31',
+  } as const;
+
   let service: TaskReportScopeService;
   let repository: jest.Mocked<TaskReportScopeRepository>;
   let studioService: jest.Mocked<StudioService>;
@@ -97,6 +101,7 @@ describe('taskReportScopeService', () => {
     const result = await service.getSources(
       'std_123',
       getTaskReportSourcesQuerySchema.parse({
+        ...defaultScope,
         show_standard_id: 'shsd_1',
       }),
     );
@@ -156,7 +161,7 @@ describe('taskReportScopeService', () => {
 
     const result = await service.getSources(
       'std_123',
-      getTaskReportSourcesQuerySchema.parse({ show_standard_id: 'shsd_1' }),
+      getTaskReportSourcesQuerySchema.parse({ ...defaultScope, show_standard_id: 'shsd_1' }),
     );
 
     expect(result.sources).toHaveLength(1);
@@ -182,6 +187,7 @@ describe('taskReportScopeService', () => {
       service.getSources(
         'std_123',
         getTaskReportSourcesQuerySchema.parse({
+          ...defaultScope,
           show_standard_id: 'shsd_1',
         }),
       ),
@@ -194,6 +200,7 @@ describe('taskReportScopeService', () => {
 
     const result = await service.preflight('std_123', {
       scope: {
+        ...defaultScope,
         show_ids: ['show_1'],
         submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
       },
@@ -238,7 +245,7 @@ describe('taskReportScopeService', () => {
 
     const result = await service.getSources(
       'std_123',
-      getTaskReportSourcesQuerySchema.parse({ show_standard_id: 'shsd_1' }),
+      getTaskReportSourcesQuerySchema.parse({ ...defaultScope, show_standard_id: 'shsd_1' }),
     );
 
     expect(result.sources[0]?.task_type).toBe('CLOSURE');
@@ -257,6 +264,7 @@ describe('taskReportScopeService', () => {
 
     const result = await service.preflight('std_123', {
       scope: {
+        ...defaultScope,
         show_type_id: 'sht_1',
         submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
       },
@@ -266,8 +274,7 @@ describe('taskReportScopeService', () => {
     expect(result.limit).toBe(10000);
   });
 
-  it('resolves date_preset and passes date range filters to repository', async () => {
-    jest.useFakeTimers().setSystemTime(new Date('2026-03-17T08:00:00.000Z'));
+  it('passes client_id to repository scope filters', async () => {
     repository.countShowsInScope.mockResolvedValue(1);
     repository.countSubmittedTasksInScope.mockResolvedValue(2);
 
@@ -275,23 +282,15 @@ describe('taskReportScopeService', () => {
       'std_123',
       taskReportPreflightRequestSchema.parse({
         scope: {
-          date_preset: TASK_REPORT_DATE_PRESET.THIS_WEEK,
+          ...defaultScope,
+          client_id: 'client_1',
           submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
         },
       }),
     );
 
-    // 2026-03-17 08:00 UTC is Tuesday in all practical server timezones
-    // → week starts Monday 2026-03-16, ends Sunday 2026-03-22
     const callArgs = repository.countShowsInScope.mock.calls[0]?.[1];
-    expect(callArgs?.dateFrom).toBeInstanceOf(Date);
-    expect(callArgs?.dateTo).toBeInstanceOf(Date);
-    expect(callArgs?.dateFrom?.getDate()).toBe(16); // Monday 2026-03-16
-    expect(callArgs?.dateFrom?.getHours()).toBe(0);
-    expect(callArgs?.dateTo?.getDate()).toBe(22); // Sunday 2026-03-22
-    expect(callArgs?.dateTo?.getHours()).toBe(23);
-
-    jest.useRealTimers();
+    expect(callArgs?.clientId).toBe('client_1');
   });
 
   it('uses local day boundaries for explicit date_from/date_to scope', async () => {
@@ -319,5 +318,11 @@ describe('taskReportScopeService', () => {
     expect(callArgs?.dateTo?.getDate()).toBe(11);
     expect(callArgs?.dateTo?.getHours()).toBe(23);
     expect(callArgs?.dateTo?.getMinutes()).toBe(59);
+  });
+
+  it('throws when date range is missing in scope resolution', () => {
+    expect(() => service.resolveScopeFilters({
+      submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any)).toThrow('date_from and date_to are required');
   });
 });

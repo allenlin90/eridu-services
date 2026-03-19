@@ -198,6 +198,14 @@ function getStudioAdminItems(
     });
   }
 
+  if (hasStudioRouteAccess(role as StudioRole, 'sharedFields')) {
+    adminItems.push({
+      title: 'Shared Fields',
+      url: `/studios/${studioId}/settings/shared-fields`,
+      icon: Settings,
+    });
+  }
+
   return adminItems;
 }
 

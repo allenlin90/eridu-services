@@ -1,5 +1,6 @@
 export * from './create-task-report-definition';
 export * from './delete-task-report-definition';
+export * from './get-studio-clients';
 export * from './get-task-report-definition';
 export * from './get-task-report-definitions';
 export * from './get-task-report-sources';

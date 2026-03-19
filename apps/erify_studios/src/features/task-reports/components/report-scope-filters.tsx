@@ -1,16 +1,27 @@
 import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { useMemo } from 'react';
+import type { DateRange } from 'react-day-picker';
 
 import type { TaskReportScope } from '@eridu/api-types/task-management';
 import { TASK_STATUS } from '@eridu/api-types/task-management';
-import { DatePicker, Label } from '@eridu/ui';
+import { DatePickerWithRange, Label } from '@eridu/ui';
+
+import { getStudioClients } from '../api/get-studio-clients';
 
 import { MultiSelect } from '@/components/task-templates/shared/multi-select';
-import { getStudioShows, studioShowsKeys } from '@/features/studio-shows/api/get-studio-shows';
-import { apiClient } from '@/lib/api/client';
+import { getShowStandards } from '@/features/show-standards/api/get-show-standards';
+import { getShowTypes } from '@/features/show-types/api/get-show-types';
+
+type SelectOption = {
+  label: string;
+  value: string;
+};
 
 type ReportScopeFiltersProps = {
   studioId: string;
   scope: TaskReportScope | null;
+  sourceTemplateOptions: SelectOption[];
   onChange: (scope: TaskReportScope | null) => void;
 };
 
@@ -20,77 +31,119 @@ const SUBMITTED_STATUS_OPTIONS = [
   { label: 'Closed', value: TASK_STATUS.CLOSED },
 ];
 
+const DEFAULT_SUBMITTED_STATUSES: TaskReportScope['submitted_statuses'] = [
+  TASK_STATUS.REVIEW,
+  TASK_STATUS.COMPLETED,
+  TASK_STATUS.CLOSED,
+];
+
+function parseLocalDate(value?: string): Date | undefined {
+  if (!value) {
+    return undefined;
+  }
+  return new Date(`${value}T00:00:00`);
+}
+
 export function ReportScopeFilters({
   studioId,
   scope,
+  sourceTemplateOptions,
   onChange,
 }: ReportScopeFiltersProps) {
-  const currentScope: TaskReportScope = scope || { submitted_statuses: [TASK_STATUS.REVIEW, TASK_STATUS.COMPLETED, TASK_STATUS.CLOSED] };
+  const currentScope: TaskReportScope = scope || { submitted_statuses: [...DEFAULT_SUBMITTED_STATUSES] };
+
+  const scopeDateRange = useMemo<DateRange | undefined>(() => {
+    if (!currentScope.date_from && !currentScope.date_to) {
+      return undefined;
+    }
+
+    return {
+      from: parseLocalDate(currentScope.date_from),
+      to: parseLocalDate(currentScope.date_to),
+    };
+  }, [currentScope.date_from, currentScope.date_to]);
 
   const updateScope = (updater: Partial<TaskReportScope>) => {
-    const next = { ...currentScope, ...updater };
-    for (const key in next) {
-      if (Array.isArray(next[key as keyof TaskReportScope]) && Object.keys(next[key as keyof TaskReportScope] || {}).length === 0) {
-        delete next[key as keyof TaskReportScope];
+    const next: TaskReportScope = {
+      ...currentScope,
+      ...updater,
+    };
+
+    for (const key of Object.keys(next) as Array<keyof TaskReportScope>) {
+      const value = next[key];
+      if (value === undefined) {
+        delete next[key];
+        continue;
       }
-      if (next[key as keyof TaskReportScope] === undefined) {
-        delete next[key as keyof TaskReportScope];
+      if (Array.isArray(value) && value.length === 0) {
+        delete next[key];
       }
     }
+
     onChange(Object.keys(next).length > 0 ? next : null);
   };
 
-  // 1. Shows
-  const { data: showsData } = useQuery({
-    queryKey: studioShowsKeys.list(studioId, { limit: 200 }),
-    queryFn: () => getStudioShows(studioId, { limit: 200 }),
-    staleTime: 5 * 60 * 1000,
-  });
-  const showOptions = (showsData?.data || []).map((s) => ({ label: s.name, value: s.id }));
-
-  // 2. Show Types
   const { data: showTypesData } = useQuery({
-    queryKey: ['system-show-types'],
-    queryFn: () => apiClient.get('/system/show-types', { params: { limit: 200 } }).then((res) => res.data),
-    staleTime: 5 * 60 * 1000,
+    queryKey: ['show-types', 'list', studioId, 'report-scope'],
+    queryFn: ({ signal }) => getShowTypes({ limit: 200 }, studioId, { signal }),
   });
-  const showTypeOptions = (showTypesData?.data || []).map((t: any) => ({ label: t.name, value: t.uid }));
+  const showTypeOptions = (showTypesData?.data || []).map((item) => ({ label: item.name, value: item.id }));
 
-  // 3. Source Templates (Task Templates)
-  const { data: templatesData } = useQuery({
-    queryKey: ['task-templates', studioId],
-    queryFn: () => apiClient.get(`/studios/${studioId}/task-templates`, { params: { limit: 200 } }).then((res) => res.data),
-    staleTime: 5 * 60 * 1000,
+  const { data: showStandardsData } = useQuery({
+    queryKey: ['show-standards', 'list', studioId, 'report-scope'],
+    queryFn: ({ signal }) => getShowStandards({ limit: 200 }, studioId, { signal }),
   });
-  const templateOptions = (templatesData?.data || []).map((t: any) => ({ label: t.name, value: t.uid }));
+  const showStandardOptions = (showStandardsData?.data || []).map((item) => ({ label: item.name, value: item.id }));
+
+  const { data: clientsData } = useQuery({
+    queryKey: ['studio-clients', studioId, 'report-scope'],
+    queryFn: ({ signal }) => getStudioClients(studioId, { limit: 200 }, { signal }),
+  });
+  const clientOptions = (clientsData?.data || []).map((item) => ({ label: item.name, value: item.id }));
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <div className="space-y-1.5">
-        <Label>Date From</Label>
-        <DatePicker
-          value={currentScope.date_from ?? ''}
-          onChange={(val) => updateScope({ date_from: val || undefined })}
-          className="w-full h-10"
+      <div className="space-y-1.5 lg:col-span-2">
+        <Label>Date Range</Label>
+        <DatePickerWithRange
+          date={scopeDateRange}
+          setDate={(range) => {
+            const fromDate = range?.from ?? range?.to;
+            const toDate = range?.to ?? range?.from;
+
+            if (!fromDate && !toDate) {
+              updateScope({
+                date_from: undefined,
+                date_to: undefined,
+              });
+              return;
+            }
+
+            updateScope({
+              date_from: fromDate ? format(fromDate, 'yyyy-MM-dd') : undefined,
+              date_to: toDate ? format(toDate, 'yyyy-MM-dd') : undefined,
+            });
+          }}
         />
       </div>
 
       <div className="space-y-1.5">
-        <Label>Date To</Label>
-        <DatePicker
-          value={currentScope.date_to ?? ''}
-          onChange={(val) => updateScope({ date_to: val || undefined })}
-          className="w-full h-10"
-        />
-      </div>
-
-      <div className="space-y-1.5">
-        <Label>Shows</Label>
+        <Label>Clients</Label>
         <MultiSelect
-          options={showOptions}
-          value={currentScope.show_ids || []}
-          onChange={(val) => updateScope({ show_ids: val.length > 0 ? val : undefined })}
-          placeholder="Filtering by all shows..."
+          options={clientOptions}
+          value={currentScope.client_id ? [currentScope.client_id] : []}
+          onChange={(values) => updateScope({ client_id: values[0] || undefined })}
+          placeholder="Any client"
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Show Standards</Label>
+        <MultiSelect
+          options={showStandardOptions}
+          value={currentScope.show_standard_id ? [currentScope.show_standard_id] : []}
+          onChange={(values) => updateScope({ show_standard_id: values[0] || undefined })}
+          placeholder="Any standard"
         />
       </div>
 
@@ -99,18 +152,18 @@ export function ReportScopeFilters({
         <MultiSelect
           options={showTypeOptions}
           value={currentScope.show_type_id ? [currentScope.show_type_id] : []}
-          onChange={(val) => updateScope({ show_type_id: val.length > 0 ? val[0] : undefined })}
+          onChange={(values) => updateScope({ show_type_id: values[0] || undefined })}
           placeholder="Any type"
         />
       </div>
 
       <div className="space-y-1.5">
-        <Label>Task Templates</Label>
+        <Label>Source Templates</Label>
         <MultiSelect
-          options={templateOptions}
+          options={sourceTemplateOptions}
           value={currentScope.source_templates || []}
-          onChange={(val) => updateScope({ source_templates: val.length > 0 ? val : undefined })}
-          placeholder="Any template"
+          onChange={(values) => updateScope({ source_templates: values.length > 0 ? values : undefined })}
+          placeholder={sourceTemplateOptions.length > 0 ? 'Any template' : 'Set date range first'}
         />
       </div>
 
@@ -119,12 +172,10 @@ export function ReportScopeFilters({
         <MultiSelect
           options={SUBMITTED_STATUS_OPTIONS}
           value={currentScope.submitted_statuses || []}
-          // @ts-expect-error Generic value mapping
-          onChange={(val) => updateScope({ submitted_statuses: val.length > 0 ? val : undefined })}
+          onChange={(values) => updateScope({ submitted_statuses: values.length > 0 ? values as TaskReportScope['submitted_statuses'] : undefined })}
           placeholder="Any status"
         />
       </div>
-
     </div>
   );
 }

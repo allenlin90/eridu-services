@@ -99,6 +99,20 @@ const payload = {
 };
 ```
 
+### 6. Shared Fields Insertion (Studio Settings Integration)
+
+Task template authors can insert studio-managed shared fields directly from the builder.
+
+- Source endpoint: `GET /studios/:studioId/settings/shared-fields`
+- Shared-field insertion must set `standard: true` on the item payload.
+- Inserted shared fields must use the studio definition key/type exactly.
+- UI must lock shared-field `key`/`type` editing (label/description remain editable).
+- Only active shared fields (`is_active: true`) should appear in the insertion picker.
+
+This keeps template payloads compatible with backend validation that enforces:
+- `standard: true` key must exist in studio shared fields
+- shared-field type must match studio shared-field type exactly
+
 ## Checklist
 
 - [ ] Field validation uses shared Zod schema from `@eridu/api-types/task-management`
@@ -107,4 +121,5 @@ const payload = {
 - [ ] `@dnd-kit` items have stable `id` from `crypto.randomUUID()`
 - [ ] Payload is transformed before API submission (empty options filtered)
 - [ ] `require_reason` operators match field type (number/date/select/multiselect)
+- [ ] Shared-field insertions use `standard: true` with locked key/type semantics
 - [ ] No duplicate validation logic between frontend and backend

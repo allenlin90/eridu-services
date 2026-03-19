@@ -7,7 +7,7 @@ import { FieldTypeEnum } from './template-definition.schema.js';
 
 /**
  * Date preset shortcuts used when managers save report definitions.
- * These are resolved to concrete dates by backend services at runtime.
+ * FE may keep preset labels for UX, but request payloads must include explicit dates.
  */
 export const TASK_REPORT_DATE_PRESET = {
   THIS_WEEK: 'this_week',
@@ -68,12 +68,14 @@ const taskReportSubmittedStatusSchema = z.union([
 /**
  * Scope filters that define which shows/tasks are included in sources, preflight, and run.
  * This is the server-side filtering layer for report generation.
+ * `date_from` and `date_to` are mandatory for execution requests.
  */
 export const taskReportScopeSchema = z
   .object({
     date_preset: taskReportDatePresetSchema.optional(),
     date_from: z.iso.date().optional(),
     date_to: z.iso.date().optional(),
+    client_id: z.string().startsWith(UID_PREFIXES.CLIENT).optional(),
     show_standard_id: z.string().startsWith(UID_PREFIXES.SHOW_STANDARD).optional(),
     show_type_id: z.string().startsWith(UID_PREFIXES.SHOW_TYPE).optional(),
     show_ids: z.array(z.string().startsWith(UID_PREFIXES.SHOW)).optional(),
@@ -81,27 +83,12 @@ export const taskReportScopeSchema = z
     source_templates: z.array(z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE)).optional(),
   })
   .superRefine((scope, ctx) => {
-    const hasFilter
-      = !!scope.date_preset
-      || !!scope.date_from
-      || !!scope.date_to
-      || !!scope.show_standard_id
-      || !!scope.show_type_id
-      || (scope.show_ids?.length ?? 0) > 0
-      || (scope.source_templates?.length ?? 0) > 0;
-
-    if (!hasFilter) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'At least one scope filter is required',
-      });
-    }
-
-    if ((scope.date_from && !scope.date_to) || (!scope.date_from && scope.date_to)) {
+    // Reporting must be explicitly bounded by date range.
+    if (!scope.date_from || !scope.date_to) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['date_from'],
-        message: 'date_from and date_to must be provided together',
+        message: 'date_from and date_to are required',
       });
     }
 
@@ -328,12 +315,14 @@ function normalizeStringArray(value: string | string[] | undefined): string[] | 
 /**
  * Query parser for source discovery endpoint.
  * Supports comma-separated and repeated query params for array filters.
+ * Date range remains mandatory through `taskReportScopeSchema` parse.
  */
 export const getTaskReportSourcesQuerySchema = z
   .object({
     date_preset: taskReportDatePresetSchema.optional(),
     date_from: z.iso.date().optional(),
     date_to: z.iso.date().optional(),
+    client_id: z.string().startsWith(UID_PREFIXES.CLIENT).optional(),
     show_standard_id: z.string().startsWith(UID_PREFIXES.SHOW_STANDARD).optional(),
     show_type_id: z.string().startsWith(UID_PREFIXES.SHOW_TYPE).optional(),
     show_ids: z.union([z.string(), z.array(z.string())]).optional(),
@@ -344,6 +333,7 @@ export const getTaskReportSourcesQuerySchema = z
     date_preset: query.date_preset,
     date_from: query.date_from,
     date_to: query.date_to,
+    client_id: query.client_id,
     show_standard_id: query.show_standard_id,
     show_type_id: query.show_type_id,
     show_ids: normalizeStringArray(query.show_ids),

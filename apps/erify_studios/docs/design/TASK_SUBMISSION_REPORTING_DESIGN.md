@@ -42,15 +42,17 @@ Out of scope:
 
 ## 3. Recommended Route Shape
 
-Add a dedicated manager-facing page:
+Use split routes for single-purpose UX:
 
-- `/studios/$studioId/task-reports`
+- Viewer/landing: `/studios/$studioId/task-reports`
+- Builder/run workspace: `/studios/$studioId/task-reports/builder`
 
 Rationale:
 
 - keeps feature studio-scoped,
-- avoids overloading `review-queue`, which is still per-task operational review,
-- leaves room for future report categories under the same route.
+- removes in-page mode toggles and context switching,
+- makes definitions-first navigation explicit (viewer -> builder),
+- keeps report result flow (preflight -> run -> table/export) contained in builder route.
 
 ## 4. Primary Studio-Manager Flow
 
@@ -92,7 +94,7 @@ Steps:
 
 1. Open `Task Reports` — lands on the **definition list** (personal presets)
 2. Open an existing definition (pre-fills scope + columns) or start new
-3. **Set scope filters** — date range, show standard, show type. These determine what data the BE generates. At least one required.
+3. **Set scope filters** — date range, client, show standard, show type. These determine what data the BE generates. `date_from` + `date_to` are mandatory.
 4. **Discover columns** — BE returns contextual catalog from tasks on filtered shows
 5. **Select columns** — defines the target table schema
 6. **Save definition** (optional) — store as named personal preset before running
@@ -220,13 +222,13 @@ sequenceDiagram
 
 Recommended route decomposition:
 
-1. `task-reports/index.tsx` — route container, manages scope vs result view
-2. `report-definition-list.tsx` — landing view: saved definitions, create new
-3. `report-scope-filters.tsx` — scope filter controls (date range, show standard, show type)
-4. `report-column-picker.tsx` — contextual column selection from discovered catalog
-5. `report-workspace-table.tsx` — flat table display with view filter toolbar
-6. `report-view-filters.tsx` — client-side filter controls (client, status, assignee, room, sort, search)
-7. `report-export-bar.tsx` — CSV/XLSX export actions
+1. `task-reports/index.tsx` — viewer route (definitions landing)
+2. `task-reports/builder.tsx` — builder route (scope + columns + preflight/run + result)
+3. `task-report-definitions-viewer.tsx` — definition list actions
+4. `report-scope-filters.tsx` — scope filter controls (single date-range picker, client, show standard, show type, statuses, source templates)
+5. `report-column-picker.tsx` — contextual column selection from discovered catalog
+6. `report-result-table.tsx` — flat table display with view filter toolbar
+7. `report-view-filters.tsx` — client-side filter controls (client, status, room, sort, search)
 
 This route will exceed 200 LOC quickly; keep container/orchestration separate from table/export sections.
 
@@ -250,7 +252,7 @@ src/features/task-reports/
 
 ### 5.2 Column picker UX
 
-The column picker appears **after** scope filters are set. It shows only columns from the contextual catalog — templates/snapshots that actually have submitted tasks on the filtered shows.
+The column picker appears **after** scope filters are set. It shows only columns from the contextual catalog — templates/snapshots that actually have submitted tasks on the filtered shows. Users do not manually pick `show_ids`; show scope is derived by filters.
 
 Three column categories — reflecting the semantic boundary between standardized reporting fields and template-specific data:
 

@@ -208,19 +208,41 @@ export class TaskReportRunService {
   }
 
   private assertKnownSelectedColumns(
-    selectedColumns: Array<{ key: string }>,
+    selectedColumns: Array<{ key: string; label?: string }>,
     selectedKeyMeta: Map<string, SelectedKeyMeta>,
     sharedFieldByKey: Map<string, Awaited<ReturnType<StudioService['getSharedFields']>>[number]>,
   ): void {
-    const unknownColumn = selectedColumns.find((column) => (
-      !selectedKeyMeta.has(column.key)
-      && !this.isSystemColumn(column.key)
-      && !sharedFieldByKey.has(column.key)
-      && !this.isTemplateScopedColumnKey(column.key)
-    ));
-    if (unknownColumn) {
-      throw HttpError.badRequest(`Unknown column key: ${unknownColumn.key}`);
+    const incompatibleColumns = selectedColumns
+      .filter((column) => !this.isSystemColumn(column.key) && !selectedKeyMeta.has(column.key))
+      .map((column) => ({
+        key: column.key,
+        label: column.label ?? column.key,
+        reason: this.getColumnConflictReason(column.key, sharedFieldByKey),
+      }));
+
+    if (incompatibleColumns.length > 0) {
+      throw HttpError.badRequestWithDetails(
+        'Selected columns are incompatible with the current scope',
+        {
+          incompatible_columns: incompatibleColumns,
+        },
+      );
     }
+  }
+
+  private getColumnConflictReason(
+    columnKey: string,
+    sharedFieldByKey: Map<string, Awaited<ReturnType<StudioService['getSharedFields']>>[number]>,
+  ): 'shared_field_not_in_scope' | 'template_field_not_in_scope' | 'unknown_column_key' {
+    if (sharedFieldByKey.has(columnKey)) {
+      return 'shared_field_not_in_scope';
+    }
+
+    if (this.isTemplateScopedColumnKey(columnKey)) {
+      return 'template_field_not_in_scope';
+    }
+
+    return 'unknown_column_key';
   }
 
   private buildRows(

@@ -16,7 +16,9 @@ import {
 } from '@dnd-kit/sortable';
 import { AlertCircle, ChevronDown, ChevronsUpDown, Copy, Plus, Trash2 } from 'lucide-react';
 import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
+import type { SharedField } from '@eridu/api-types/task-management';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,9 +55,11 @@ export type TaskTemplateBuilderProps = {
   onCancel?: () => void;
   isSaving?: boolean;
   errors?: Record<string, string[]>;
+  sharedFields?: SharedField[];
 };
 
 const DEFAULT_LOOP_DURATION_MIN = 15;
+const EMPTY_SHARED_FIELDS: SharedField[] = [];
 
 function buildLoopMetadataFromTemplate(template: TemplateSchemaType): LoopMetadata[] {
   const metadataLoops = template.metadata?.loops;
@@ -147,17 +151,23 @@ export function TaskTemplateBuilder({
   onCancel,
   isSaving,
   errors,
+  sharedFields = EMPTY_SHARED_FIELDS,
 }: TaskTemplateBuilderProps) {
   const [showCancelAlert, setShowCancelAlert] = useState(false);
   const [isHeaderOpen, setIsHeaderOpen] = useState(true);
   const [pendingFocusLoopId, setPendingFocusLoopId] = useState<string | null>(null);
   const [pendingScrollFieldId, setPendingScrollFieldId] = useState<string | null>(null);
   const [collapsedLoops, setCollapsedLoops] = useState<Record<string, boolean>>({});
+  const [selectedSharedFieldKey, setSelectedSharedFieldKey] = useState<string>('');
 
   const isModerationMode = template.items.some((item) => !!item.group) || (template.metadata?.loops?.length ?? 0) > 0;
   const moderationLoops = useMemo(() => {
     return buildLoopMetadataFromTemplate(template);
   }, [template]);
+  const activeSharedFields = useMemo(
+    () => sharedFields.filter((field) => field.is_active),
+    [sharedFields],
+  );
   const totalLoopDurationMin = useMemo(
     () => moderationLoops.reduce((sum, loop) => sum + loop.durationMin, 0),
     [moderationLoops],
@@ -189,6 +199,18 @@ export function TaskTemplateBuilder({
     setLocalName(template.name);
     setLocalDescription(template.description || '');
   }
+
+  const resolvedSharedFieldKey = useMemo(() => {
+    if (activeSharedFields.length === 0) {
+      return '';
+    }
+
+    if (selectedSharedFieldKey && activeSharedFields.some((field) => field.key === selectedSharedFieldKey)) {
+      return selectedSharedFieldKey;
+    }
+
+    return activeSharedFields[0]?.key ?? '';
+  }, [activeSharedFields, selectedSharedFieldKey]);
 
   // Defer the template for heavy rendering (preview)
   const deferredTemplate = useDeferredValue(template);
@@ -280,6 +302,41 @@ export function TaskTemplateBuilder({
       items: currentTemplate.items.filter((item) => item.id !== id),
     });
   }, []);
+
+  const addSharedField = useCallback(() => {
+    if (!resolvedSharedFieldKey) {
+      return;
+    }
+
+    const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+    const selectedField = activeSharedFields.find((field) => field.key === resolvedSharedFieldKey);
+    if (!selectedField) {
+      return;
+    }
+
+    if (currentTemplate.items.some((item) => item.key === selectedField.key)) {
+      toast.error(`Field "${selectedField.key}" already exists in this template.`);
+      return;
+    }
+
+    const defaultLoopId = isModerationMode ? moderationLoops[0]?.id : undefined;
+    const newField: FieldItem = {
+      id: crypto.randomUUID(),
+      key: selectedField.key,
+      type: selectedField.type,
+      standard: true,
+      label: selectedField.label,
+      description: selectedField.description,
+      required: true,
+      ...(defaultLoopId ? { group: defaultLoopId } : {}),
+    };
+
+    setPendingScrollFieldId(newField.id);
+    currentOnChange({
+      ...currentTemplate,
+      items: [...currentTemplate.items, newField],
+    });
+  }, [activeSharedFields, isModerationMode, moderationLoops, resolvedSharedFieldKey]);
 
   const handleWorkflowModeChange = useCallback((nextMode: 'STANDARD' | 'MODERATION') => {
     const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
@@ -472,6 +529,45 @@ export function TaskTemplateBuilder({
             {isModerationMode ? 'Add Loop' : 'Add Field'}
           </Button>
         </div>
+
+        {activeSharedFields.length > 0 && (
+          <div className="rounded-md border bg-muted/20 p-3">
+            <div className="flex flex-col gap-2 md:flex-row md:items-end">
+              <div className="grid flex-1 gap-1.5">
+                <Label className="text-xs">Insert Shared Field</Label>
+                <Select value={resolvedSharedFieldKey} onValueChange={setSelectedSharedFieldKey}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select shared field" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeSharedFields.map((field) => (
+                      <SelectItem key={field.key} value={field.key}>
+                        {field.label}
+                        {' '}
+                        (
+                        {field.key}
+                        {' · '}
+                        {field.type}
+                        )
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                variant="outline"
+                onClick={addSharedField}
+                disabled={!resolvedSharedFieldKey}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Shared Field
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Shared fields are inserted with locked key/type semantics (`standard: true`).
+            </p>
+          </div>
+        )}
 
         <div className="flex-1 min-h-0 overflow-visible lg:overflow-y-auto lg:pr-2">
           {isModerationMode
