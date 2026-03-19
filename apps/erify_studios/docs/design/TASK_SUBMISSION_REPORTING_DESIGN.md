@@ -356,6 +356,8 @@ Shared fields are managed in **studio settings**, not in the report builder. Thi
 - **Edit** → only label and description can be changed. Key, type, and category fields are read-only with a lock icon and tooltip: *"Key, type, and category cannot be changed after creation."*
 - **Deactivate** → toggle `is_active`. Deactivated fields are hidden from the template editor picker but the key remains reserved (shown as "Inactive" in the settings list).
 - No delete action — keys are reserved forever.
+- After create/update/deactivate, shared-fields query cache is invalidated so template builder pages see latest options immediately.
+- Template builder supports repeated insertion for moderation loops by generating loop-scoped unique keys. Canonical shared semantics (`standard: true`) apply only when the inserted key exactly matches the shared-field key.
 
 **Category sub-grouping:** The settings list groups fields by category with clear section headers:
 - **Metrics** — numeric KPIs (GMV, views, orders, etc.)
@@ -366,7 +368,15 @@ This grouping mirrors how shared fields appear in the column picker (§5.2), pro
 
 **Why in settings, not in the report builder:** The report builder is for managers reviewing data. Shared field management affects template design and data structure — it belongs in studio configuration, accessible only to ADMINs.
 
-**File location:** `src/features/studio-settings/components/SharedFieldsList.tsx` (or within the existing studio settings feature).
+**Template builder availability contract (create/edit pages):**
+- On mount, template create/edit pages revalidate `GET /studios/:studioId/settings/shared-fields` (do not rely on stale in-memory cache only).
+- If the request fails, show a visible warning banner: shared-field insertion is unavailable, but manual custom-field authoring remains available.
+- Shared-field insertion picker renders active fields only (`is_active: true`).
+
+**File locations (current implementation):**
+- Settings UI: `src/features/studio-shared-fields/components/studio-shared-fields-settings.tsx`
+- Settings route: `src/routes/studios/$studioId/settings/shared-fields.tsx`
+- Template builder consumption: `src/routes/studios/$studioId/task-templates/new.tsx` and `src/routes/studios/$studioId/task-templates/$templateId.tsx`
 
 ### 5.5 Export UX
 

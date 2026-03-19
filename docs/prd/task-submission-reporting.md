@@ -258,6 +258,7 @@ fields across templates            (e.g., one "GMV" column)
 
 1. **Studio ADMIN creates shared fields** in studio settings (e.g., `gmv` / number / metric / "GMV"). Keys, types, and categories are immutable after creation.
 2. **ADMIN or MANAGER selects shared fields** when building a template — the template editor picker inserts the field with the fixed key, type, and `standard: true` flag.
+   - For moderation workflows, the picker can insert repeated loop-scoped copies (auto-generated unique keys) so the same metric can be collected per loop. These loop-scoped copies are template-designed fields and are not treated as canonical shared keys unless they use the exact canonical key.
 3. **Snapshot captures the definition** — when the template is saved, the snapshot records the full shared field definition (key, type, category, label, `standard: true`). The snapshot is self-contained.
 4. **Report engine reads from snapshots** — merges fields with the same key + `standard: true` across templates into one column. The engine never queries studio settings.
 5. **Managers see merged columns** in the report builder — shared fields appear grouped by category in the column picker, and as single merged columns in the result table and export.
@@ -274,6 +275,8 @@ To enable this:
    - Rebuild each template with shared field keys and `standard: true` flag. Each rebuild creates a new snapshot.
    - **Existing task data is not retroactively migrated.** Old tasks retain their original snapshot references and content keys. Shared fields apply to new records only — what has happened has happened. Old data appears as template-scoped columns; new data merges via shared fields. This avoids confusion from partial migration and keeps the boundary clean.
    - Only the shared fields adopt canonical keys. Brand-specific custom fields are carried over as-is.
+5. **Shared-field freshness in template builder** — when opening template create/edit pages, FE must revalidate shared fields on mount (avoid stale cache after settings edits). Shared-field settings mutations must invalidate shared-field queries so newly created/deactivated fields are immediately reflected in template builder insertion options.
+6. **Shared-field fetch failure visibility** — if shared fields fail to load on template create/edit pages, FE must show an explicit warning banner. The page remains usable for custom fields, but shared-field insertion is clearly marked unavailable.
 
 This is a **requirement for MVP** — without it, the reporting engine cannot produce cross-client moderation summaries, which is the primary use case. The forward-only approach is acceptable for alpha: old data volume is small, and shared field columns will naturally populate as new tasks are submitted against rebuilt templates.
 
@@ -301,6 +304,8 @@ This is a **requirement for MVP** — without it, the reporting engine cannot pr
 - [ ] Strictly one row per show — duplicate submitted tasks for the same show and source are resolved by latest-wins merge with a warning indicator on the affected row.
 - [ ] The table shows row count and generation timestamp for sanity checking.
 - [ ] Studio ADMIN can create and manage shared fields in studio settings. Keys, types, and categories are immutable after creation.
+- [ ] After shared fields are created/updated in settings, template create/edit pages reflect the latest shared-field options without manual hard refresh.
+- [ ] If shared fields fail to load on template create/edit pages, an explicit warning is shown (no silent disappearance of shared-field insertion UI).
 - [ ] Shared fields (e.g., `gmv`, `views`, `qc_image`) from different templates merge into a single report column.
 - [ ] Custom (non-standard) fields remain template-scoped — different templates produce separate columns even if keys happen to match.
 - [ ] Existing ~30 moderation templates are rebuilt with shared field keys. Existing task data is not retroactively migrated — shared fields apply to new records only. Brand-specific custom fields are untouched.
