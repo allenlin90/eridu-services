@@ -14,7 +14,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { AlertCircle, ChevronDown, ChevronsUpDown, Copy, Plus, Trash2 } from 'lucide-react';
+import { AlertCircle, ChevronDown, ChevronsUpDown, CircleHelp, Copy, Plus, Trash2 } from 'lucide-react';
 import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -40,6 +40,9 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from '@eridu/ui';
 
 import { LivePreview } from './live-preview';
@@ -131,6 +134,30 @@ function createUniqueCopiedKey(originalKey: string, usedKeys: Set<string>): stri
   return candidate;
 }
 
+function createUniqueSharedFieldKey(
+  sharedKey: string,
+  usedKeys: Set<string>,
+  targetLoopId?: string,
+): string {
+  const preferredBase = targetLoopId ? `${sharedKey}_${targetLoopId}` : sharedKey;
+  const normalizedBase = preferredBase.slice(0, 50);
+
+  if (!usedKeys.has(normalizedBase)) {
+    usedKeys.add(normalizedBase);
+    return normalizedBase;
+  }
+
+  let counter = 2;
+  let candidate = normalizedBase;
+  while (usedKeys.has(candidate)) {
+    const suffix = `_${counter}`;
+    candidate = `${normalizedBase.slice(0, 50 - suffix.length)}${suffix}`;
+    counter += 1;
+  }
+  usedKeys.add(candidate);
+  return candidate;
+}
+
 function formatTotalLoopDuration(totalMinutes: number): string {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
@@ -159,6 +186,7 @@ export function TaskTemplateBuilder({
   const [pendingScrollFieldId, setPendingScrollFieldId] = useState<string | null>(null);
   const [collapsedLoops, setCollapsedLoops] = useState<Record<string, boolean>>({});
   const [selectedSharedFieldKey, setSelectedSharedFieldKey] = useState<string>('');
+  const [selectedSharedFieldLoopId, setSelectedSharedFieldLoopId] = useState<string>('');
 
   const isModerationMode = template.items.some((item) => !!item.group) || (template.metadata?.loops?.length ?? 0) > 0;
   const moderationLoops = useMemo(() => {
@@ -211,6 +239,18 @@ export function TaskTemplateBuilder({
 
     return activeSharedFields[0]?.key ?? '';
   }, [activeSharedFields, selectedSharedFieldKey]);
+
+  const resolvedSharedFieldLoopId = useMemo(() => {
+    if (!isModerationMode || moderationLoops.length === 0) {
+      return undefined;
+    }
+
+    if (selectedSharedFieldLoopId && moderationLoops.some((loop) => loop.id === selectedSharedFieldLoopId)) {
+      return selectedSharedFieldLoopId;
+    }
+
+    return moderationLoops[0]?.id;
+  }, [isModerationMode, moderationLoops, selectedSharedFieldLoopId]);
 
   // Defer the template for heavy rendering (preview)
   const deferredTemplate = useDeferredValue(template);
@@ -313,22 +353,19 @@ export function TaskTemplateBuilder({
     if (!selectedField) {
       return;
     }
-
-    if (currentTemplate.items.some((item) => item.key === selectedField.key)) {
-      toast.error(`Field "${selectedField.key}" already exists in this template.`);
-      return;
-    }
-
-    const defaultLoopId = isModerationMode ? moderationLoops[0]?.id : undefined;
+    const usedKeys = new Set(currentTemplate.items.map((item) => item.key));
+    const targetLoopId = isModerationMode ? resolvedSharedFieldLoopId : undefined;
+    const itemKey = createUniqueSharedFieldKey(selectedField.key, usedKeys, targetLoopId);
+    const isCanonicalSharedKey = itemKey === selectedField.key;
     const newField: FieldItem = {
       id: crypto.randomUUID(),
-      key: selectedField.key,
+      key: itemKey,
       type: selectedField.type,
-      standard: true,
+      standard: isCanonicalSharedKey ? true : undefined,
       label: selectedField.label,
       description: selectedField.description,
       required: true,
-      ...(defaultLoopId ? { group: defaultLoopId } : {}),
+      ...(targetLoopId ? { group: targetLoopId } : {}),
     };
 
     setPendingScrollFieldId(newField.id);
@@ -336,7 +373,12 @@ export function TaskTemplateBuilder({
       ...currentTemplate,
       items: [...currentTemplate.items, newField],
     });
-  }, [activeSharedFields, isModerationMode, moderationLoops, resolvedSharedFieldKey]);
+    if (!isCanonicalSharedKey) {
+      toast.info(
+        `Added "${selectedField.label}" as loop-scoped key "${itemKey}". Only canonical key "${selectedField.key}" is marked shared.`,
+      );
+    }
+  }, [activeSharedFields, isModerationMode, resolvedSharedFieldKey, resolvedSharedFieldLoopId]);
 
   const handleWorkflowModeChange = useCallback((nextMode: 'STANDARD' | 'MODERATION') => {
     const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
@@ -554,6 +596,23 @@ export function TaskTemplateBuilder({
                   </SelectContent>
                 </Select>
               </div>
+              {isModerationMode && moderationLoops.length > 0 && (
+                <div className="grid gap-1.5 md:w-56">
+                  <Label className="text-xs">Target Loop</Label>
+                  <Select value={resolvedSharedFieldLoopId} onValueChange={setSelectedSharedFieldLoopId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select loop" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {moderationLoops.map((loop) => (
+                        <SelectItem key={loop.id} value={loop.id}>
+                          {loop.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <Button
                 variant="outline"
                 onClick={addSharedField}
@@ -563,9 +622,25 @@ export function TaskTemplateBuilder({
                 Add Shared Field
               </Button>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Shared fields are inserted with locked key/type semantics (`standard: true`).
-            </p>
+            <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+              <span>Add shared fields quickly across your template, including loop-based moderation workflows.</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    aria-label="Shared field insertion details"
+                  >
+                    <CircleHelp className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-72 text-xs">
+                  Shared-field type stays locked. Canonical shared merge behavior applies only to the exact shared key (`standard: true`). Repeated loop insertions use unique loop-scoped keys.
+                </TooltipContent>
+              </Tooltip>
+            </div>
           </div>
         )}
 

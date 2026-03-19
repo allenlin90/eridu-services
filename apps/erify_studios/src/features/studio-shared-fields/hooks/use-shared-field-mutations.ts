@@ -17,6 +17,7 @@ export function useSharedFieldMutations({ studioId }: UseSharedFieldMutationsPar
     mutationFn: (payload: CreateSharedFieldInput) => createStudioSharedField(studioId, payload),
     onSuccess: (response) => {
       queryClient.setQueryData(studioSharedFieldsKeys.detail(studioId), response);
+      void queryClient.invalidateQueries({ queryKey: studioSharedFieldsKeys.all(studioId) });
     },
   });
 
@@ -25,6 +26,7 @@ export function useSharedFieldMutations({ studioId }: UseSharedFieldMutationsPar
       updateStudioSharedField(studioId, fieldKey, payload),
     onSuccess: (response) => {
       queryClient.setQueryData(studioSharedFieldsKeys.detail(studioId), response);
+      void queryClient.invalidateQueries({ queryKey: studioSharedFieldsKeys.all(studioId) });
     },
   });
 

@@ -361,6 +361,7 @@ export const updateSharedFieldSchema = z
     description: z.string().max(500).optional(),
     is_active: z.boolean().optional(),
   })
+  .strict()
   .refine(
     (data) => data.label !== undefined || data.description !== undefined || data.is_active !== undefined,
     'At least one field (label, description, or is_active) must be provided',
