@@ -1,35 +1,58 @@
-import type { TaskReportSelectedColumn } from '@eridu/api-types/task-management';
+import type { TaskReportColumn } from '@eridu/api-types/task-management';
 
+/**
+ * View filters for client-side slicing of the cached result set.
+ *
+ * `client_name` / `studio_room_name` match against system column values in the result rows.
+ * `search` performs a full-text search across all visible columns.
+ */
 export type TaskReportViewFilters = {
+  /** Backward-compatible filter value for client (matches name/id columns). */
   client_id?: string;
+  /** Exact match against the `client_name` system column value. */
+  client_name?: string;
+  /** Backward-compatible filter value for show status (matches name/id columns). */
   show_status_id?: string;
+  /** Optional explicit show-status name filter. */
+  show_status_name?: string;
+  /** Backward-compatible assignee filter value (matches display name/id columns). */
   assignee?: string;
+  /** Backward-compatible filter value for room (matches name/id columns). */
   studio_room_id?: string;
+  /** Exact match against the `studio_room_name` system column value. */
+  studio_room_name?: string;
+  /** Free-text search across all visible column values. */
   search?: string;
 };
 
 export function filterRows(
-  rows: Record<string, any>[],
-  columns: TaskReportSelectedColumn[],
+  rows: Record<string, unknown>[],
+  columns: TaskReportColumn[],
   filters: TaskReportViewFilters,
-): Record<string, any>[] {
+): Record<string, unknown>[] {
   if (!rows || rows.length === 0)
     return [];
-  if (Object.keys(filters).length === 0)
+
+  const clientFilter = filters.client_name ?? filters.client_id;
+  const statusFilter = filters.show_status_name ?? filters.show_status_id;
+  const roomFilter = filters.studio_room_name ?? filters.studio_room_id;
+  const assigneeFilter = filters.assignee;
+
+  if (!clientFilter && !statusFilter && !roomFilter && !assigneeFilter && !filters.search)
     return rows;
 
   return rows.filter((row) => {
-    // Exact match filters
-    if (filters.client_id && (row.client_name ?? row.client_id) !== filters.client_id)
+    // Exact match against system-column values with id fallback for compatibility.
+    if (clientFilter && (row.client_name ?? row.client_id) !== clientFilter)
       return false;
-    if (filters.show_status_id && (row.show_status_name ?? row.show_status_id) !== filters.show_status_id)
+    if (statusFilter && (row.show_status_name ?? row.show_status_id) !== statusFilter)
       return false;
-    if (filters.studio_room_id && (row.studio_room_name ?? row.studio_room_id) !== filters.studio_room_id)
+    if (roomFilter && (row.studio_room_name ?? row.studio_room_id) !== roomFilter)
       return false;
-    if (filters.assignee && (row.assignee_name ?? row.assignee ?? row.assignee_id) !== filters.assignee)
+    if (assigneeFilter && (row.assignee_name ?? row.assignee ?? row.assignee_id) !== assigneeFilter)
       return false;
 
-    // Text search against all visible columns
+    // Full-text search across all selected columns.
     if (filters.search) {
       const q = filters.search.toLowerCase();
       const match = columns.some((col) => {

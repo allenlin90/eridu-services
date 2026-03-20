@@ -235,6 +235,8 @@ export class TaskReportScopeRepository {
   }
 
   async findSubmittedTasksInScope(studioUid: string, filters: TaskReportScopeFilters): Promise<TaskReportScopedTask[]> {
+    const showWhere = this.buildShowWhere(studioUid, filters);
+
     const tasks = await this.prisma.task.findMany({
       where: {
         deletedAt: null,
@@ -255,7 +257,7 @@ export class TaskReportScopeRepository {
           some: {
             targetType: 'SHOW',
             deletedAt: null,
-            show: this.buildShowWhere(studioUid, filters),
+            show: showWhere,
           },
         },
       },
@@ -279,7 +281,7 @@ export class TaskReportScopeRepository {
           where: {
             targetType: 'SHOW',
             deletedAt: null,
-            show: this.buildShowWhere(studioUid, filters),
+            show: showWhere,
           },
           select: {
             show: {

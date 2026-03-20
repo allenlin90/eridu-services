@@ -293,11 +293,12 @@ export class TaskReportRunService {
     return [...duplicateSourceCount.entries()]
       .filter(([, count]) => count > 1)
       .map(([key]) => {
-        const [showId, templateId] = key.split('|');
+        // Both parts are UID-prefixed strings (show_uid|template_uid), not internal DB ids.
+        const [showUid, templateUid] = key.split('|');
         return {
           code: 'DUPLICATE_SOURCE',
-          message: `Multiple submitted tasks found for show ${showId} and template ${templateId}; latest values were used.`,
-          show_id: showId,
+          message: `Multiple submitted tasks found for show ${showUid} and template ${templateUid}; latest values were used.`,
+          show_id: showUid,
         };
       });
   }

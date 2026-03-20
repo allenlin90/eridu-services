@@ -105,10 +105,18 @@ export const taskReportScopeSchema = z
   })
   .superRefine((scope, ctx) => {
     // Reporting must be explicitly bounded by date range.
-    if (!scope.date_from || !scope.date_to) {
+    if (!scope.date_from) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['date_from'],
+        message: 'date_from and date_to are required',
+      });
+    }
+
+    if (!scope.date_to) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['date_to'],
         message: 'date_from and date_to are required',
       });
     }
@@ -247,6 +255,8 @@ export const taskReportColumnSchema = z.object({
   category: sharedFieldCategorySchema.optional(),
 });
 
+export type TaskReportColumn = z.infer<typeof taskReportColumnSchema>;
+
 /**
  * Inline generated report result returned by run endpoint.
  * Rows are flat and show-centric (one row per show).
@@ -273,8 +283,9 @@ export const taskReportDefinitionSchema = z.object({
     scope: taskReportScopeSchema,
     columns: z.array(taskReportSelectedColumnSchema).min(1).max(50),
   }),
+  // Definitions are personal presets — only creator tracking is supported in MVP.
+  // updated_by_id is intentionally omitted (no updater relation in the DB model).
   created_by_id: z.string().min(1).nullable().optional(),
-  updated_by_id: z.string().min(1).nullable().optional(),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),
 });
@@ -341,6 +352,26 @@ function normalizeStringArray(value: string | string[] | undefined): string[] | 
  * Supports comma-separated and repeated query params for array filters.
  * Date range remains mandatory through `taskReportScopeSchema` parse.
  */
+/**
+ * Looser scope schema for source discovery — date range is optional here because
+ * the column picker must be populated before the user commits a date range.
+ * Date validation is only enforced on preflight/run endpoints via taskReportScopeSchema.
+ */
+const taskReportSourcesScopeSchema = z
+  .object({
+    date_preset: taskReportDatePresetSchema.optional(),
+    date_from: z.iso.date().optional(),
+    date_to: z.iso.date().optional(),
+    client_id: clientScopeFilterSchema.optional(),
+    show_standard_id: showStandardScopeFilterSchema.optional(),
+    show_type_id: showTypeScopeFilterSchema.optional(),
+    show_ids: z.array(z.string().startsWith(UID_PREFIXES.SHOW)).optional(),
+    submitted_statuses: z.array(taskReportSubmittedStatusSchema).default([...submittedStatusesDefault]),
+    source_templates: z.array(z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE)).optional(),
+  });
+
+export type TaskReportSourcesScope = z.infer<typeof taskReportSourcesScopeSchema>;
+
 export const getTaskReportSourcesQuerySchema = z
   .object({
     date_preset: taskReportDatePresetSchema.optional(),
@@ -353,17 +384,25 @@ export const getTaskReportSourcesQuerySchema = z
     submitted_statuses: z.union([z.string(), z.array(z.string())]).optional(),
     source_templates: z.union([z.string(), z.array(z.string())]).optional(),
   })
-  .transform((query) => taskReportScopeSchema.parse({
-    date_preset: query.date_preset,
-    date_from: query.date_from,
-    date_to: query.date_to,
-    client_id: normalizeStringArray(query.client_id),
-    show_standard_id: normalizeStringArray(query.show_standard_id),
-    show_type_id: normalizeStringArray(query.show_type_id),
-    show_ids: normalizeStringArray(query.show_ids),
-    submitted_statuses: normalizeStringArray(query.submitted_statuses) ?? [...submittedStatusesDefault],
-    source_templates: normalizeStringArray(query.source_templates),
-  }));
+  .transform((query) => {
+    const result = taskReportSourcesScopeSchema.safeParse({
+      date_preset: query.date_preset,
+      date_from: query.date_from,
+      date_to: query.date_to,
+      client_id: normalizeStringArray(query.client_id),
+      show_standard_id: normalizeStringArray(query.show_standard_id),
+      show_type_id: normalizeStringArray(query.show_type_id),
+      show_ids: normalizeStringArray(query.show_ids),
+      submitted_statuses: normalizeStringArray(query.submitted_statuses) ?? [...submittedStatusesDefault],
+      source_templates: normalizeStringArray(query.source_templates),
+    });
+
+    if (!result.success) {
+      throw result.error;
+    }
+
+    return result.data;
+  });
 
 export type GetTaskReportSourcesQuery = z.infer<typeof getTaskReportSourcesQuerySchema>;
 

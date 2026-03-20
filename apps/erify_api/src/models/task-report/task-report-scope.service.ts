@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
 import type {
-  GetTaskReportSourcesQuery,
   TaskReportPreflightRequest,
   TaskReportPreflightResponse,
   TaskReportScope,
   TaskReportSourcesResponse,
+  TaskReportSourcesScope,
   UiSchema,
 } from '@eridu/api-types/task-management';
 import {
@@ -35,8 +35,9 @@ export class TaskReportScopeService {
 
   /**
    * Return contextual source templates/fields for the selected scope.
+   * Date range is optional here — the column picker must be populated before the user commits dates.
    */
-  async getSources(studioUid: string, query: GetTaskReportSourcesQuery): Promise<TaskReportSourcesResponse> {
+  async getSources(studioUid: string, query: TaskReportSourcesScope): Promise<TaskReportSourcesResponse> {
     const filters = this.resolveScopeFilters(query);
 
     const [sourceSnapshots, studioSharedFields] = await Promise.all([
@@ -149,6 +150,11 @@ export class TaskReportScopeService {
     };
   }
 
+  /**
+   * Resolves scope input into typed DB filter params.
+   * Called by TaskReportRunService to avoid duplicating scope parsing logic.
+   * Accepts the full TaskReportScope (dates required) as enforced by the run endpoint.
+   */
   resolveScopeFilters(
     scope: TaskReportScope,
   ): TaskReportScopeFilters {
