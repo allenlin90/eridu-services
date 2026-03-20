@@ -78,6 +78,8 @@ export class TaskReportScopeRepository {
         deletedAt: null,
         studio: { uid: studioUid },
         status: { in: filters.submittedStatuses },
+        templateId: { not: null },
+        snapshotId: { not: null },
         ...(filters.sourceTemplateIds?.length
           ? {
               template: {

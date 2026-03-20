@@ -70,4 +70,20 @@ describe('taskReportScopeRepository', () => {
       },
     ]);
   });
+
+  it('applies snapshot/template guards when counting scoped submitted tasks', async () => {
+    prisma.task.count.mockResolvedValue(2);
+
+    await repository.countSubmittedTasksInScope('std_123', {
+      submittedStatuses: ['COMPLETED'],
+    });
+
+    const countWhere = prisma.task.count.mock.calls[0]?.[0]?.where as {
+      templateId?: { not: null };
+      snapshotId?: { not: null };
+    };
+
+    expect(countWhere.templateId).toEqual({ not: null });
+    expect(countWhere.snapshotId).toEqual({ not: null });
+  });
 });

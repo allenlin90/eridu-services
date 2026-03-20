@@ -186,6 +186,11 @@ The split lets the column picker populate before the user commits to a date rang
 
 When populating view-filter state from result rows, prefer setting `*_name` over `*_id` so the filter matches the actual string values returned in the flat row. The `_id` fields remain for backward compatibility.
 
+### Guardrails (2026-03-20)
+
+- Preflight `task_count` must match run eligibility: count only submitted tasks with both `templateId` and `snapshotId` (unsnapshotted tasks are excluded from both preflight and run).
+- Shared-field keys must not collide with report system column keys (`show_id`, `show_name`, `show_external_id`, `client_name`, `studio_room_name`, `show_standard_name`, `show_type_name`, `start_time`, `end_time`).
+
 ---
 
 ## 📊 Task Report Stress Simulation Seed

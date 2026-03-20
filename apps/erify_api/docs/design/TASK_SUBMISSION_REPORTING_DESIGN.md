@@ -51,6 +51,7 @@ These are non-negotiable constraints. Any implementation that violates these is 
    - **Follow-up (optional hardening)**: persist shared-field category into snapshot schema when `standard: true` so the reporting engine can become fully snapshot-driven for metadata as well.
 4. **Scope resolution is shared across `/sources`, `/preflight`, and `/run`.** All three endpoints use `TaskReportScopeService` (Layer 1). The same scope input must produce the same resolved show set and task count across all three. If scope resolution diverges between endpoints, the preflight contract is broken.
 5. **`column_map` is presentation metadata only.** It maps columns to their source `template_uid` for display grouping (column headers, visual organization). It does not drive export splitting, row expansion, or any structural transformation. Export is always one flat file.
+6. **Preflight task counts must match run eligibility.** `task_count` only includes submitted tasks that can actually be processed in run (`templateId` and `snapshotId` are both non-null). Unsnapshotted tasks are excluded from both.
 
 ## 4. Key Design Decisions
 
@@ -220,9 +221,23 @@ Shared fields are stored in `Studio.metadata.shared_fields[]` — an array of fi
 
 ```typescript
 const sharedFieldCategoryEnum = z.enum(['metric', 'evidence', 'status']);
+const reservedSystemColumnKeys = new Set([
+  'show_id',
+  'show_name',
+  'show_external_id',
+  'client_name',
+  'studio_room_name',
+  'show_standard_name',
+  'show_type_name',
+  'start_time',
+  'end_time',
+]);
 
 const sharedFieldSchema = z.object({
-  key: z.string().min(1).max(50).regex(/^[a-z][a-z0-9_]*$/),  // snake_case, immutable
+  key: z.string().min(1).max(50).regex(/^[a-z][a-z0-9_]*$/)
+    .refine((key) => !reservedSystemColumnKeys.has(key), {
+      message: 'Shared field key cannot use reserved report system column keys',
+    }),                                                        // snake_case, immutable, non-colliding
   type: FieldTypeEnum,                                          // immutable
   category: sharedFieldCategoryEnum,                            // immutable
   label: z.string().min(1).max(200),                            // editable (display only)
@@ -245,7 +260,7 @@ POST /studios/:studioId/settings/shared-fields     → create a new shared field
 PATCH /studios/:studioId/settings/shared-fields/:key → update label, description, or is_active only
 ```
 
-No DELETE — keys are reserved forever once created. Deactivate via `is_active: false` to hide from the template editor picker.
+No DELETE — keys are reserved forever once created. Deactivate via `is_active: false` to hide from the template editor picker. Reserved system-column keys are also blocked (`show_id`, `show_name`, `show_external_id`, `client_name`, `studio_room_name`, `show_standard_name`, `show_type_name`, `start_time`, `end_time`) to prevent collisions with built-in report columns.
 
 **Immutability rules:**
 
@@ -745,7 +760,7 @@ source_templates[]?
 
 ```text
 show_count       — number of shows matching scope
-task_count       — number of submitted tasks on those shows
+task_count       — number of reportable submitted tasks on those shows (must have templateId + snapshotId)
 within_limit     — boolean (task_count <= studio row cap)
 limit            — the studio's configured row cap (default 10,000)
 ```

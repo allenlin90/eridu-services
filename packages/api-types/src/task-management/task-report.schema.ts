@@ -20,13 +20,41 @@ export type TaskReportDatePreset = (typeof TASK_REPORT_DATE_PRESET)[keyof typeof
 export const taskReportDatePresetSchema = z.enum(TASK_REPORT_DATE_PRESET);
 
 /**
+ * Built-in show-level columns available in report builder.
+ * These do not depend on task template snapshots.
+ */
+export const TASK_REPORT_SYSTEM_COLUMN = {
+  SHOW_ID: 'show_id',
+  SHOW_NAME: 'show_name',
+  SHOW_EXTERNAL_ID: 'show_external_id',
+  CLIENT_NAME: 'client_name',
+  STUDIO_ROOM_NAME: 'studio_room_name',
+  SHOW_STANDARD_NAME: 'show_standard_name',
+  SHOW_TYPE_NAME: 'show_type_name',
+  START_TIME: 'start_time',
+  END_TIME: 'end_time',
+} as const;
+
+export type TaskReportSystemColumnKey
+  = (typeof TASK_REPORT_SYSTEM_COLUMN)[keyof typeof TASK_REPORT_SYSTEM_COLUMN];
+
+/**
  * Shared field categories are used to group canonical fields in settings and column picker UI.
  */
 export const sharedFieldCategorySchema = z.enum(['metric', 'evidence', 'status']);
 
 export type SharedFieldCategory = z.infer<typeof sharedFieldCategorySchema>;
 
-export const sharedFieldKeySchema = z.string().min(1).max(50).regex(/^[a-z][a-z0-9_]*$/);
+const reservedSharedFieldKeys = new Set<string>(Object.values(TASK_REPORT_SYSTEM_COLUMN));
+
+export const sharedFieldKeySchema = z
+  .string()
+  .min(1)
+  .max(50)
+  .regex(/^[a-z][a-z0-9_]*$/)
+  .refine((key) => !reservedSharedFieldKeys.has(key), {
+    message: 'Shared field key cannot use reserved report system column keys',
+  });
 
 /**
  * Canonical cross-template field definition managed in studio settings.
@@ -203,25 +231,6 @@ export const taskReportSelectedColumnSchema = z.object({
 });
 
 export type TaskReportSelectedColumn = z.infer<typeof taskReportSelectedColumnSchema>;
-
-/**
- * Built-in show-level columns available in report builder.
- * These do not depend on task template snapshots.
- */
-export const TASK_REPORT_SYSTEM_COLUMN = {
-  SHOW_ID: 'show_id',
-  SHOW_NAME: 'show_name',
-  SHOW_EXTERNAL_ID: 'show_external_id',
-  CLIENT_NAME: 'client_name',
-  STUDIO_ROOM_NAME: 'studio_room_name',
-  SHOW_STANDARD_NAME: 'show_standard_name',
-  SHOW_TYPE_NAME: 'show_type_name',
-  START_TIME: 'start_time',
-  END_TIME: 'end_time',
-} as const;
-
-export type TaskReportSystemColumnKey
-  = (typeof TASK_REPORT_SYSTEM_COLUMN)[keyof typeof TASK_REPORT_SYSTEM_COLUMN];
 
 /**
  * Run request for synchronous report generation.

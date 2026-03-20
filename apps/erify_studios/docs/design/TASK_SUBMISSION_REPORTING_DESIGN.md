@@ -99,7 +99,7 @@ Steps:
 4. **Discover columns** — BE returns contextual catalog from tasks on filtered shows
 5. **Select columns** — defines the target table schema
 6. **Save definition** (optional) — enter definition name/description and save via `Save as Definition` (new) or `Save Definition` (existing)
-7. **Preflight check** — FE calls `POST /task-reports/preflight` and shows scope summary: *"487 shows, 1,204 tasks"*. Over-limit scopes are blocked when either show-count (row volume) or task-count exceeds the limit. Run is enabled only after a successful preflight.
+7. **Preflight check** — FE calls `POST /task-reports/preflight` and shows scope summary: *"487 shows, 1,204 tasks"*. `task_count` reflects only reportable submitted tasks (same eligibility as run: task must have template + snapshot references). Over-limit scopes are blocked when either show-count (row volume) or task-count exceeds the limit. Run is enabled only after a successful preflight.
 8. **Run report** — BE generates show-centric table, returns full JSON inline
 9. **FE caches** the result in TanStack Query (last N datasets cached) and surfaces a "View cached result" affordance when scope + columns match
 10. **Review table** — strictly one row per show, all columns pre-merged by BE. Duplicates resolved by latest-wins; multi-target tasks merge into each show's row.
@@ -713,6 +713,7 @@ For current MVP-sized datasets, main-thread CSV serialization is acceptable.
 The manager clicks **Preflight Scope** to call `POST /task-reports/preflight`. The response includes `show_count`, `task_count`, and `within_limit`. The UI shows a summary card:
 
 - *"487 shows, 1,204 tasks — scope ready"* when `within_limit` is true.
+- `task_count` is already run-eligible scope size (submitted tasks with template + snapshot); FE should not apply extra client-side eligibility filtering.
 - If `within_limit` is `false`: show whether limit breach is from `show_count` or `task_count` and prompt to narrow filters. **Run** remains disabled.
 
 This prevents wasted generation on over-broad filters and gives the manager confidence in scope size before committing.
