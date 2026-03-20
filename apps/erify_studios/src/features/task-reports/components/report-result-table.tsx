@@ -46,6 +46,15 @@ function readStringFilterValues(...values: unknown[]): string[] {
   return result;
 }
 
+function readPreferredFilterValues(preferredValues: unknown[], fallbackValues: unknown[]): string[] {
+  const preferred = readStringFilterValues(...preferredValues);
+  if (preferred.length > 0) {
+    return preferred;
+  }
+
+  return readStringFilterValues(...fallbackValues);
+}
+
 export function ReportResultTable({ result }: ReportResultTableProps) {
   const { columns, rows } = result;
   const isMobile = useIsMobile();
@@ -78,24 +87,30 @@ export function ReportResultTable({ result }: ReportResultTableProps) {
   );
 
   const availableClients = useMemo(
-    () => Array.from(new Set(rows.flatMap((row) => readStringFilterValues(row.client_name, row.client_id)))),
+    () => Array.from(new Set(rows.flatMap((row) => readPreferredFilterValues(
+      [row.client_name],
+      [row.client_id],
+    )))),
     [rows],
   );
   const availableStatuses = useMemo(
-    () => Array.from(new Set(rows.flatMap((row) => readStringFilterValues(row.show_status_name, row.show_status_id)))),
+    () => Array.from(new Set(rows.flatMap((row) => readPreferredFilterValues(
+      [row.show_status_name],
+      [row.show_status_id],
+    )))),
     [rows],
   );
   const availableRooms = useMemo(
-    () => Array.from(new Set(rows.flatMap((row) => readStringFilterValues(row.studio_room_name, row.studio_room_id)))),
+    () => Array.from(new Set(rows.flatMap((row) => readPreferredFilterValues(
+      [row.studio_room_name],
+      [row.studio_room_id],
+    )))),
     [rows],
   );
   const availableAssignees = useMemo(
-    () => Array.from(new Set(rows.flatMap((row) => readStringFilterValues(
-      row.assignee_name,
-      row.assignee,
-      row.assignee_id,
-      row.assignee_names,
-      row.assignee_ids,
+    () => Array.from(new Set(rows.flatMap((row) => readPreferredFilterValues(
+      [row.assignee_names, row.assignee_name, row.assignee],
+      [row.assignee_ids, row.assignee_id],
     )))),
     [rows],
   );
