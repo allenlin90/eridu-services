@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
 import type {
+  GetTaskReportSourcesQuery,
   TaskReportPreflightRequest,
   TaskReportPreflightResponse,
   TaskReportScope,
   TaskReportSourcesResponse,
-  TaskReportSourcesScope,
   UiSchema,
 } from '@eridu/api-types/task-management';
 import {
@@ -35,9 +35,9 @@ export class TaskReportScopeService {
 
   /**
    * Return contextual source templates/fields for the selected scope.
-   * Date range is optional here — the column picker must be populated before the user commits dates.
+   * Date range is required to keep source discovery bounded to a scoped show window.
    */
-  async getSources(studioUid: string, query: TaskReportSourcesScope): Promise<TaskReportSourcesResponse> {
+  async getSources(studioUid: string, query: GetTaskReportSourcesQuery): Promise<TaskReportSourcesResponse> {
     const filters = this.resolveScopeFilters(query);
 
     const [sourceSnapshots, studioSharedFields] = await Promise.all([
@@ -151,14 +151,14 @@ export class TaskReportScopeService {
   }
 
   /**
-   * Resolves scope input into typed DB filter params.
-   * Called by TaskReportRunService to avoid duplicating scope parsing logic.
-   * Accepts the full TaskReportScope (dates required) as enforced by the run endpoint.
+   * Resolves scope input into typed DB filter params with date range enforcement.
+   * Called by TaskReportRunService and source discovery to avoid duplicating scope parsing logic.
+   * Dates are required.
    */
   resolveScopeFilters(
     scope: TaskReportScope,
   ): TaskReportScopeFilters {
-    const { dateFrom, dateTo } = this.resolveDateRange(scope);
+    const { dateFrom, dateTo } = this.parseDatesRequired(scope);
 
     return {
       dateFrom,
@@ -172,21 +172,34 @@ export class TaskReportScopeService {
     };
   }
 
-  private resolveDateRange(
+  /**
+   * Parse and enforce a required date range. Throws 400 if either bound is missing.
+   */
+  private parseDatesRequired(
     scope: Pick<TaskReportScope, 'date_preset' | 'date_from' | 'date_to'>,
-  ): { dateFrom?: Date; dateTo?: Date } {
+  ): { dateFrom: Date; dateTo: Date } {
     if (!scope.date_from || !scope.date_to) {
       throw HttpError.badRequest('date_from and date_to are required');
     }
 
-    // Keep date boundaries in local timezone to match existing show/task filtering behavior.
-    const dateFrom = new Date(`${scope.date_from}T00:00:00`);
-    const dateTo = new Date(`${scope.date_to}T00:00:00`);
-    dateTo.setHours(23, 59, 59, 999);
     return {
-      dateFrom,
-      dateTo,
+      // Keep date boundaries in local timezone to match existing show/task filtering behavior.
+      dateFrom: this.parseDateBoundary(scope.date_from, 'start'),
+      dateTo: this.parseDateBoundary(scope.date_to, 'end'),
     };
+  }
+
+  /**
+   * Convert an ISO date string to a Date at the start (00:00:00) or end (23:59:59.999) of day.
+   */
+  private parseDateBoundary(dateStr: string, boundary: 'start' | 'end'): Date {
+    // Local-tz string (no trailing Z) to match existing show/task filtering behavior.
+    const date = new Date(`${dateStr}T00:00:00`);
+    if (boundary === 'end') {
+      date.setHours(23, 59, 59, 999);
+    }
+
+    return date;
   }
 
   private readTaskType(metadata: UiSchema['metadata'], fallback = 'OTHER'): string {

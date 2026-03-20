@@ -350,28 +350,8 @@ function normalizeStringArray(value: string | string[] | undefined): string[] | 
 /**
  * Query parser for source discovery endpoint.
  * Supports comma-separated and repeated query params for array filters.
- * Date range remains mandatory through `taskReportScopeSchema` parse.
+ * Date range is mandatory through `taskReportScopeSchema` parse.
  */
-/**
- * Looser scope schema for source discovery — date range is optional here because
- * the column picker must be populated before the user commits a date range.
- * Date validation is only enforced on preflight/run endpoints via taskReportScopeSchema.
- */
-const taskReportSourcesScopeSchema = z
-  .object({
-    date_preset: taskReportDatePresetSchema.optional(),
-    date_from: z.iso.date().optional(),
-    date_to: z.iso.date().optional(),
-    client_id: clientScopeFilterSchema.optional(),
-    show_standard_id: showStandardScopeFilterSchema.optional(),
-    show_type_id: showTypeScopeFilterSchema.optional(),
-    show_ids: z.array(z.string().startsWith(UID_PREFIXES.SHOW)).optional(),
-    submitted_statuses: z.array(taskReportSubmittedStatusSchema).default([...submittedStatusesDefault]),
-    source_templates: z.array(z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE)).optional(),
-  });
-
-export type TaskReportSourcesScope = z.infer<typeof taskReportSourcesScopeSchema>;
-
 export const getTaskReportSourcesQuerySchema = z
   .object({
     date_preset: taskReportDatePresetSchema.optional(),
@@ -384,25 +364,17 @@ export const getTaskReportSourcesQuerySchema = z
     submitted_statuses: z.union([z.string(), z.array(z.string())]).optional(),
     source_templates: z.union([z.string(), z.array(z.string())]).optional(),
   })
-  .transform((query) => {
-    const result = taskReportSourcesScopeSchema.safeParse({
-      date_preset: query.date_preset,
-      date_from: query.date_from,
-      date_to: query.date_to,
-      client_id: normalizeStringArray(query.client_id),
-      show_standard_id: normalizeStringArray(query.show_standard_id),
-      show_type_id: normalizeStringArray(query.show_type_id),
-      show_ids: normalizeStringArray(query.show_ids),
-      submitted_statuses: normalizeStringArray(query.submitted_statuses) ?? [...submittedStatusesDefault],
-      source_templates: normalizeStringArray(query.source_templates),
-    });
-
-    if (!result.success) {
-      throw result.error;
-    }
-
-    return result.data;
-  });
+  .transform((query) => taskReportScopeSchema.parse({
+    date_preset: query.date_preset,
+    date_from: query.date_from,
+    date_to: query.date_to,
+    client_id: normalizeStringArray(query.client_id),
+    show_standard_id: normalizeStringArray(query.show_standard_id),
+    show_type_id: normalizeStringArray(query.show_type_id),
+    show_ids: normalizeStringArray(query.show_ids),
+    submitted_statuses: normalizeStringArray(query.submitted_statuses) ?? [...submittedStatusesDefault],
+    source_templates: normalizeStringArray(query.source_templates),
+  }));
 
 export type GetTaskReportSourcesQuery = z.infer<typeof getTaskReportSourcesQuerySchema>;
 
