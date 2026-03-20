@@ -264,7 +264,7 @@ Not just numbers. Performance KPIs use `number` (GMV, views, orders), QC evidenc
 
 #### Who manages it
 
-Studio ADMINs manage shared fields in studio settings — a simple list of field definitions (key, type, category, label) stored in `Studio.metadata`. Keys, types, and categories are **immutable once created** — if the key is wrong, create a new one; the old key stays reserved. This keeps the workflow simple: no rename cascades, no backward-compatibility checks. Labels and descriptions can be updated or cleared (display-only).
+Studio ADMINs manage shared fields in studio settings — a simple list of field definitions (key, type, category, label) stored in `Studio.metadata`. Keys, types, and categories are **immutable once created** — if the key is wrong, create a new one; the old key stays reserved. This keeps the workflow simple: no rename cascades, no backward-compatibility checks. Labels and descriptions can be updated or cleared (display-only). ADMINs and MANAGERs can both read the shared-field catalog when building templates, but only ADMINs can create or update that catalog.
 
 #### End-to-end setup flow
 
@@ -298,7 +298,7 @@ fields across templates            (e.g., one "GMV" column)
 
 To enable this:
 
-1. **Shared fields** — a studio-scoped list of field definitions stored in `Studio.metadata.shared_fields[]`. Managed by ADMIN via a settings endpoint. Keys are immutable once created; fields can be deactivated but not deleted.
+1. **Shared fields** — a studio-scoped list of field definitions stored in `Studio.metadata.shared_fields[]`. Managed by ADMIN via a settings endpoint. `GET /studios/:studioId/settings/shared-fields` is readable by ADMIN and MANAGER so template authors can load the picker; create/update management stays ADMIN-only. Keys are immutable once created; fields can be deactivated but not deleted.
 2. **`standard` flag on field items** — `FieldItemBaseSchema` gains an optional `standard: boolean` property. Fields marked `standard: true` use their `key` directly as the report column key (no template prefix). All other fields (the majority) remain template-scoped with `{template_uid}:{field.key}`.
 3. **Cross-template merging** — when generating a report, shared fields from different templates merge into one column because they share the same key. Custom fields remain template-scoped — this is the expected behavior.
 4. **Template rebuild (alpha-phase migration)** — the system is in alpha testing, not yet in real operational usage. The ~30 existing moderation templates are rebuilt from the current Google Sheets source with correct shared field keys from the start:
@@ -335,6 +335,7 @@ This is a **requirement for MVP** — without it, the reporting engine cannot pr
 - [ ] Strictly one row per show — duplicate submitted tasks for the same show and source are resolved by latest-wins merge with a warning summary surfaced in the result view.
 - [ ] The table shows row count and generation timestamp for sanity checking.
 - [ ] Studio ADMIN can create and manage shared fields in studio settings. Keys, types, and categories are immutable after creation.
+- [ ] Studio MANAGER can read the shared-field catalog in template create/edit flows, but cannot create or update shared fields.
 - [ ] After shared fields are created/updated in settings, template create/edit pages reflect the latest shared-field options without manual hard refresh.
 - [ ] If shared fields fail to load on template create/edit pages, an explicit warning is shown (no silent disappearance of shared-field insertion UI).
 - [ ] Shared fields (e.g., `gmv`, `views`, `qc_image`) from different templates merge into a single report column.
@@ -553,7 +554,7 @@ graph TB
 
 | # | Deliverable | Details |
 |---|-------------|---------|
-| 1 | Shared fields settings endpoint | `GET/POST/PATCH /studios/:studioId/settings/shared-fields` — ADMIN-only, stored in `Studio.metadata.shared_fields[]` |
+| 1 | Shared fields settings endpoint | `GET /studios/:studioId/settings/shared-fields` readable by ADMIN + MANAGER for template authoring; `POST/PATCH` remain ADMIN-only. Stored in `Studio.metadata.shared_fields[]`. |
 | 2 | `standard` flag + `sharedFieldSchema` in `@eridu/api-types` | Add `standard: z.boolean().optional()` to `FieldItemBaseSchema`. Add `sharedFieldSchema` (with `category` enum) and settings endpoint schemas. |
 | 3 | `TaskReportScopeService` (Layer 1) | Scope resolution shared by `/sources`, `/preflight`, and `/run`. Resolves filters → shows → task counts → guardrails. |
 | 4 | Preflight endpoint | `POST /task-reports/preflight` — count-only validation before generation |

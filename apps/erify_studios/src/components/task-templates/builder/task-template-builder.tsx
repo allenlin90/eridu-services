@@ -48,6 +48,7 @@ import type { FieldItem, LoopMetadata, TemplateSchemaType } from './schema';
 import { SortableFieldList } from './sortable-field-list';
 
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
+import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
 export type TaskTemplateBuilderProps = {
   template: TemplateSchemaType;
@@ -187,6 +188,7 @@ export function TaskTemplateBuilder({
   const [collapsedLoops, setCollapsedLoops] = useState<Record<string, boolean>>({});
   const [selectedSharedFieldKey, setSelectedSharedFieldKey] = useState<string>('');
   const [selectedSharedFieldLoopId, setSelectedSharedFieldLoopId] = useState<string>('');
+  const { hasAccess } = useStudioAccess(studioId ?? '');
 
   const isModerationMode = template.items.some((item) => !!item.group) || (template.metadata?.loops?.length ?? 0) > 0;
   const moderationLoops = useMemo(() => {
@@ -200,6 +202,7 @@ export function TaskTemplateBuilder({
     () => moderationLoops.reduce((sum, loop) => sum + loop.durationMin, 0),
     [moderationLoops],
   );
+  const canManageSharedFields = studioId ? hasAccess('sharedFields') : false;
 
   const emptyLoopItems: FieldItem[] = useMemo(() => [], []);
   const loopItemsById = useMemo(() => {
@@ -613,11 +616,19 @@ export function TaskTemplateBuilder({
                 {studioId
                   ? (
                       <div className="mt-3">
-                        <Button asChild variant="outline" size="sm">
-                          <Link to="/studios/$studioId/settings/shared-fields" params={{ studioId }}>
-                            Open Shared Fields Settings
-                          </Link>
-                        </Button>
+                        {canManageSharedFields
+                          ? (
+                              <Button asChild variant="outline" size="sm">
+                                <Link to="/studios/$studioId/settings/shared-fields" params={{ studioId }}>
+                                  Open Shared Fields Settings
+                                </Link>
+                              </Button>
+                            )
+                          : (
+                              <div className="text-sm text-muted-foreground">
+                                Ask a studio admin to create shared fields, then return here to insert them into the template.
+                              </div>
+                            )}
                       </div>
                     )
                   : null}

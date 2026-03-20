@@ -104,6 +104,7 @@ const payload = {
 Task template authors can insert studio-managed shared fields directly from the builder.
 
 - Source endpoint: `GET /studios/:studioId/settings/shared-fields`
+- Read access: `ADMIN` and `MANAGER` can load the shared-field catalog for template authoring.
 - Canonical shared-field insertion uses exact shared key/type and sets `standard: true`.
 - Repeated insertions (for loop-specific moderation data collection) should generate unique keys and be treated as loop-scoped template fields unless the key is exactly the canonical shared key.
 - UI must lock shared-field `key`/`type` editing (label/description remain editable).
@@ -111,6 +112,7 @@ Task template authors can insert studio-managed shared fields directly from the 
 - Template create/edit pages must revalidate shared fields on mount (`refetchOnMount: 'always'`) to avoid stale picker options after settings updates.
 - Shared-field settings mutations must invalidate shared-field query keys so downstream routes immediately observe updates.
 - If shared fields fail to load, template pages must show a visible warning that shared-field insertion is temporarily unavailable.
+- Admin-only settings shortcuts must not be shown to manager users; non-admin authors should see guidance to ask a studio admin to create shared fields when the catalog is empty.
 
 This keeps template payloads compatible with backend validation that enforces:
 - `standard: true` key must exist in studio shared fields

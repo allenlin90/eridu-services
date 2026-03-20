@@ -37,6 +37,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 | `/studios/:studioId/shows` | View + Manage | View + Manage | No access | No access | No access | No access |
 | `/studios/:studioId/shows/:showId/tasks` | View + Manage | View + Manage | No access | No access | No access | No access |
 | `/studios/:studioId/task-templates` | View + Manage | View + Manage | No access | No access | No access | No access |
+| `/studios/:studioId/settings/shared-fields` | View + Manage | No access | No access | No access | No access | No access |
 | `/studios/:studioId/creator-mapping` | View + Manage | View + Manage | View + Manage | No access | No access | No access |
 | `/studios/:studioId/creator-mapping/:showId` | View + Manage | View + Manage | View + Manage | No access | No access | No access |
 
@@ -99,6 +100,38 @@ Define what each studio role can see and do across all studio-scoped routes.
 | Access shows route | Yes | Yes | No |
 | Generate/assign tasks | Yes | Yes | No |
 | Navigate to creator mapping from tasks view | Yes | Yes | No |
+
+## Task Templates View (`/task-templates`, ADMIN + MANAGER)
+
+### Use Cases
+
+1. Create and edit task templates.
+2. Insert canonical shared fields into templates.
+3. Reuse shared-field keys for cross-template reporting.
+
+### Functions by Role
+
+| Function | ADMIN | MANAGER | TALENT_MANAGER |
+| -------- | ----- | ------- | -------------- |
+| Access task-templates routes | Yes | Yes | No |
+| Create/update task templates | Yes | Yes | No |
+| Read shared-field catalog in builder | Yes | Yes | No |
+| Manage shared-field settings | Yes | No | No |
+
+## Shared Fields Settings View (`/settings/shared-fields`, ADMIN only)
+
+### Use Cases
+
+1. Create canonical shared fields for reporting.
+2. Update shared-field labels/descriptions.
+3. Deactivate shared fields while keeping keys reserved.
+
+### Functions by Role
+
+| Function | ADMIN | MANAGER | TALENT_MANAGER |
+| -------- | ----- | ------- | -------------- |
+| Access shared-fields settings route | Yes | No | No |
+| Create/update/deactivate shared fields | Yes | No | No |
 
 ## Creator Mapping View (`/creator-mapping`, ADMIN + MANAGER + TALENT_MANAGER)
 

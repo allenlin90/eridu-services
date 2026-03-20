@@ -372,6 +372,8 @@ The table can have up to 50 columns (BE hard cap). In practice, tables with 20+ 
 
 Shared fields are managed in **studio settings**, not in the report builder. This is a separate page/section accessible to studio ADMINs only. Shared fields define the canonical reporting vocabulary — a small set of fields (5–15) with fixed keys, types, and categories that merge across templates for cross-template analysis. They are studio-scoped for now (one studio in operation), with room for future multi-studio divergence or sharing.
 
+MANAGERs do not open the settings page, but they do read the shared-field catalog through the template builder so they can insert canonical fields while authoring templates. The settings UI remains ADMIN-only; catalog read access for template authoring is a separate concern.
+
 **UI:** A list view in studio settings, organized by category sub-groups (`Metrics`, `Evidence`, `Status`):
 - Shows all shared fields (key, type, category, label, active/inactive status), grouped by category
 - **Add** button → form with key (snake_case, validated), type (dropdown), category (dropdown: metric/evidence/status), label, description. Key, type, and category become immutable after creation.
@@ -380,6 +382,7 @@ Shared fields are managed in **studio settings**, not in the report builder. Thi
 - No delete action — keys are reserved forever.
 - After create/update/deactivate, shared-fields query cache is invalidated so template builder pages see latest options immediately.
 - Template builder supports repeated insertion for moderation loops by generating loop-scoped unique keys. Canonical shared semantics (`standard: true`) apply only when the inserted key exactly matches the shared-field key.
+- When no active shared fields exist, ADMINs see a shortcut to shared-field settings; MANAGERs see guidance to ask an admin to create shared fields first.
 
 **Category sub-grouping:** The settings list groups fields by category with clear section headers:
 - **Metrics** — numeric KPIs (GMV, views, orders, etc.)

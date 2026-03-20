@@ -14,7 +14,7 @@ function TaskTemplatesLayout() {
       studioId={studioId}
       routeKey="taskTemplates"
       deniedTitle="Task Templates Access Required"
-      deniedDescription="Only studio admins can access task templates."
+      deniedDescription="Only studio admins and managers can access task templates."
     >
       <Outlet />
     </StudioRouteGuard>

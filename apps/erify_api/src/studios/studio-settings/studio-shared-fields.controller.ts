@@ -34,7 +34,7 @@ export class StudioSharedFieldsController extends BaseStudioController {
     super();
   }
 
-  @StudioProtected([STUDIO_ROLE.ADMIN])
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @Get()
   @ZodResponse(sharedFieldsResponseSchema)
   async listSharedFields(

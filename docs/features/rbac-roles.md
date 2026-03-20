@@ -28,6 +28,8 @@ Studio membership had three roles (`admin`, `manager`, `member`) with no functio
 | Shows + creator mapping      | ❌      | ❌        | ❌                  | ✅       | ✅              | ✅     |
 | Creator catalog/roster       | ❌      | ❌        | ❌                  | ✅       | ✅              | ✅     |
 | Task templates               | ❌      | ❌        | ❌                  | ✅       | ❌              | ✅     |
+| Shared-field catalog read    | ❌      | ❌        | ❌                  | ✅       | ❌              | ✅     |
+| Shared-field settings manage | ❌      | ❌        | ❌                  | ❌       | ❌              | ✅     |
 | Studio membership management | ❌      | ❌        | ❌                  | ❌       | ❌              | ✅     |
 
 ## Key Product Decisions

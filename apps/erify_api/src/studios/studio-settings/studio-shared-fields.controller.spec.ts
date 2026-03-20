@@ -2,8 +2,11 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+
 import { StudioSharedFieldsController } from './studio-shared-fields.controller';
 
+import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
 import { StudioService } from '@/models/studio/studio.service';
 
 describe('studioSharedFieldsController', () => {
@@ -31,6 +34,19 @@ describe('studioSharedFieldsController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  it('allows managers to list shared fields but keeps write actions admin-only', () => {
+    expect(Reflect.getMetadata(STUDIO_ROLES_KEY, controller.listSharedFields)).toEqual([
+      STUDIO_ROLE.ADMIN,
+      STUDIO_ROLE.MANAGER,
+    ]);
+    expect(Reflect.getMetadata(STUDIO_ROLES_KEY, controller.createSharedField)).toEqual([
+      STUDIO_ROLE.ADMIN,
+    ]);
+    expect(Reflect.getMetadata(STUDIO_ROLES_KEY, controller.updateSharedField)).toEqual([
+      STUDIO_ROLE.ADMIN,
+    ]);
   });
 
   it('lists shared fields', async () => {

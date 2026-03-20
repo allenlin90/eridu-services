@@ -238,7 +238,7 @@ Runtime behavior for malformed stored config: if `Studio.metadata.shared_fields`
 **Management endpoint:**
 
 ```
-GET  /studios/:studioId/settings/shared-fields     → list all shared fields
+GET  /studios/:studioId/settings/shared-fields     → list all shared fields (ADMIN + MANAGER read)
 POST /studios/:studioId/settings/shared-fields     → create a new shared field (key + type immutable after creation)
 PATCH /studios/:studioId/settings/shared-fields/:key → update label, description, or is_active only
 ```
@@ -263,7 +263,7 @@ No DELETE — keys are reserved forever once created. Deactivate via `is_active:
 | Role | Shared fields | Template editor | Report builder |
 |------|--------------|-----------------|----------------|
 | **ADMIN** | Create, update label, deactivate | Select shared fields when building templates | Full access |
-| **MANAGER** | Read only (cannot create or modify) | Select shared fields when building templates | Full access |
+| **MANAGER** | Read only (`GET` catalog access; cannot create or modify) | Select shared fields when building templates | Full access |
 | **MODERATION_MANAGER** | No access | No access (cannot edit templates) | Full access |
 | **Operator / Moderator** | No access | No access | No access |
 
@@ -335,7 +335,7 @@ This feature extends the existing task template and studio management systems. T
 | **Task template design** (if exists) | Template editor gains shared fields picker; `FieldItemBaseSchema` adds `standard` property |
 | **Studio management** | New settings section for shared fields; `Studio.metadata` schema extends |
 | **`erify-authorization` skill** | ADMIN scope gains "manage shared fields"; MANAGER scope gains "read shared fields" |
-| **Role matrix** (`STUDIO_ROLE_USE_CASES_AND_VIEWS.md`) | Add shared fields row for ADMIN |
+| **Role matrix** (`STUDIO_ROLE_USE_CASES_AND_VIEWS.md`) | Add shared-field management row for ADMIN and shared-field catalog read for MANAGER template authoring |
 | **`studio-route-access.ts`** | Add `sharedFields` key for ADMIN |
 | **`@eridu/api-types`** | Add `sharedFieldSchema`, update `FieldItemBaseSchema`, add settings endpoint schemas |
 
@@ -652,7 +652,9 @@ POST /studios/:studioId/settings/shared-fields       → create a new shared fie
 PATCH /studios/:studioId/settings/shared-fields/:key → update label, description, or is_active
 ```
 
-Access: **`ADMIN` only** — managers and moderation managers cannot create or modify shared fields.
+Access:
+- `GET`: **`ADMIN` + `MANAGER`** so task-template authors can load the shared-field picker
+- `POST` / `PATCH`: **`ADMIN` only**
 
 This is a studio settings endpoint, not a reporting endpoint. It extends the existing studio management surface. See §4.6.2 for storage details and immutability rules.
 
@@ -1113,7 +1115,7 @@ Deferred hardening options:
 
 ### Milestone BE-1 (Core workflow)
 
-1. shared fields settings endpoint (`GET/POST/PATCH /settings/shared-fields`) — ADMIN-only, stored in `Studio.metadata`
+1. shared fields settings endpoint (`GET` readable by ADMIN + MANAGER; `POST/PATCH` ADMIN-only) stored in `Studio.metadata`
 2. Layer 1 (show scope resolution) as a shared internal service used by preflight, sources, and run
 3. preflight count endpoint (`POST /task-reports/preflight`) — lightweight scope validation before generation
 4. contextual source catalog endpoint (templates/snapshots with submitted tasks for filtered shows)
