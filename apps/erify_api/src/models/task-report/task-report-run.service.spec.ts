@@ -15,6 +15,35 @@ describe('taskReportRunService', () => {
     date_to: '2026-03-31',
     show_standard_id: 'shsd_1',
   } as const;
+  const createScopedShow = (overrides: Record<string, unknown> = {}) => ({
+    uid: 'show_1',
+    name: 'Show 1',
+    externalId: 'EXT-1',
+    startTime: new Date('2026-03-16T00:00:00.000Z'),
+    endTime: new Date('2026-03-16T02:00:00.000Z'),
+    clientUid: 'client_1',
+    clientName: 'Client A',
+    studioRoomUid: 'room_1',
+    studioRoomName: 'Room A',
+    showStatusUid: 'shst_1',
+    showStatusName: 'Confirmed',
+    showStandardName: 'Standard A',
+    showTypeName: 'Type A',
+    ...overrides,
+  });
+  const createScopedTask = (overrides: Record<string, unknown> = {}) => ({
+    uid: 'task_1',
+    updatedAt: new Date('2026-03-17T10:00:00.000Z'),
+    templateUid: 'ttpl_1',
+    templateName: 'Template 1',
+    snapshotId: 'snap_1',
+    snapshotSchema: {},
+    content: {},
+    targetShowUids: ['show_1'],
+    assigneeUid: null,
+    assigneeName: null,
+    ...overrides,
+  });
 
   let service: TaskReportRunService;
   let scopeService: jest.Mocked<TaskReportScopeService>;
@@ -89,60 +118,48 @@ describe('taskReportRunService', () => {
       submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
     } as any);
     scopeRepository.findShowsInScope.mockResolvedValue([
-      {
-        uid: 'show_1',
-        name: 'Show 1',
-        externalId: 'EXT-1',
-        startTime: new Date('2026-03-16T00:00:00.000Z'),
-        endTime: new Date('2026-03-16T02:00:00.000Z'),
-        clientName: 'Client A',
-        studioRoomName: 'Room A',
-        showStandardName: 'Standard A',
-        showTypeName: 'Type A',
-      },
-      {
+      createScopedShow(),
+      createScopedShow({
         uid: 'show_2',
         name: 'Show 2',
         externalId: 'EXT-2',
         startTime: new Date('2026-03-15T00:00:00.000Z'),
         endTime: new Date('2026-03-15T02:00:00.000Z'),
+        clientUid: 'client_2',
         clientName: 'Client B',
+        studioRoomUid: 'room_2',
         studioRoomName: 'Room B',
-        showStandardName: 'Standard A',
-        showTypeName: 'Type A',
-      },
+      }),
     ]);
     scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
-      {
+      createScopedTask({
         uid: 'task_new',
-        updatedAt: new Date('2026-03-17T10:00:00.000Z'),
-        templateUid: 'ttpl_1',
-        templateName: 'Template 1',
-        snapshotId: 'snap_1',
         snapshotSchema,
         content: { gmv: 200, notes: 'new notes' },
         targetShowUids: ['show_1'],
-      },
-      {
+        assigneeUid: 'user_1',
+        assigneeName: 'Alice',
+      }),
+      createScopedTask({
         uid: 'task_old',
         updatedAt: new Date('2026-03-16T10:00:00.000Z'),
-        templateUid: 'ttpl_1',
-        templateName: 'Template 1',
-        snapshotId: 'snap_1',
         snapshotSchema,
         content: { gmv: 100, notes: 'old notes' },
         targetShowUids: ['show_1'],
-      },
-      {
+        assigneeUid: 'user_1',
+        assigneeName: 'Alice',
+      }),
+      createScopedTask({
         uid: 'task_show2',
-        updatedAt: new Date('2026-03-17T10:00:00.000Z'),
         templateUid: 'ttpl_2',
         templateName: 'Template 2',
         snapshotId: 'snap_2',
         snapshotSchema,
         content: { gmv: 300 },
         targetShowUids: ['show_2'],
-      },
+        assigneeUid: 'user_2',
+        assigneeName: 'Bob',
+      }),
     ]);
     studioService.getSharedFields.mockResolvedValue([
       {
@@ -163,8 +180,18 @@ describe('taskReportRunService', () => {
     }));
 
     expect(result.row_count).toBe(2);
-    expect(result.rows[0]).toMatchObject({ 'gmv': 200, 'ttpl_1:notes': 'new notes' });
-    expect(result.rows[1]).toMatchObject({ 'gmv': 300, 'ttpl_1:notes': null });
+    expect(result.rows[0]).toMatchObject({
+      'gmv': 200,
+      'ttpl_1:notes': 'new notes',
+      'show_status_name': 'Confirmed',
+      'assignee_name': 'Alice',
+    });
+    expect(result.rows[1]).toMatchObject({
+      'gmv': 300,
+      'ttpl_1:notes': null,
+      'show_status_name': 'Confirmed',
+      'assignee_name': 'Bob',
+    });
     expect(result.warnings).toHaveLength(1);
     expect(result.warnings[0]).toMatchObject({
       code: 'DUPLICATE_SOURCE',
@@ -201,29 +228,13 @@ describe('taskReportRunService', () => {
       submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
     } as any);
     scopeRepository.findShowsInScope.mockResolvedValue([
-      {
-        uid: 'show_1',
-        name: 'Show 1',
-        externalId: 'EXT-1',
-        startTime: new Date('2026-03-16T00:00:00.000Z'),
-        endTime: new Date('2026-03-16T02:00:00.000Z'),
-        clientName: 'Client A',
-        studioRoomName: 'Room A',
-        showStandardName: 'Standard A',
-        showTypeName: 'Type A',
-      },
+      createScopedShow(),
     ]);
     scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
-      {
-        uid: 'task_1',
-        updatedAt: new Date('2026-03-17T10:00:00.000Z'),
-        templateUid: 'ttpl_1',
-        templateName: 'Template 1',
-        snapshotId: 'snap_1',
+      createScopedTask({
         snapshotSchema,
         content: { gmv: 200 },
-        targetShowUids: ['show_1'],
-      },
+      }),
     ]);
     studioService.getSharedFields.mockResolvedValue([]);
 
@@ -273,29 +284,13 @@ describe('taskReportRunService', () => {
       submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
     } as any);
     scopeRepository.findShowsInScope.mockResolvedValue([
-      {
-        uid: 'show_1',
-        name: 'Show 1',
-        externalId: 'EXT-1',
-        startTime: new Date('2026-03-16T00:00:00.000Z'),
-        endTime: new Date('2026-03-16T02:00:00.000Z'),
-        clientName: 'Client A',
-        studioRoomName: 'Room A',
-        showStandardName: 'Standard A',
-        showTypeName: 'Type A',
-      },
+      createScopedShow(),
     ]);
     scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
-      {
-        uid: 'task_1',
-        updatedAt: new Date('2026-03-17T10:00:00.000Z'),
-        templateUid: 'ttpl_1',
-        templateName: 'Template 1',
-        snapshotId: 'snap_1',
+      createScopedTask({
         snapshotSchema,
         content: { gmv: 200 },
-        targetShowUids: ['show_1'],
-      },
+      }),
     ]);
     studioService.getSharedFields.mockResolvedValue([]);
 
@@ -344,29 +339,13 @@ describe('taskReportRunService', () => {
       submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
     } as any);
     scopeRepository.findShowsInScope.mockResolvedValue([
-      {
-        uid: 'show_1',
-        name: 'Show 1',
-        externalId: 'EXT-1',
-        startTime: new Date('2026-03-16T00:00:00.000Z'),
-        endTime: new Date('2026-03-16T02:00:00.000Z'),
-        clientName: 'Client A',
-        studioRoomName: 'Room A',
-        showStandardName: 'Standard A',
-        showTypeName: 'Type A',
-      },
+      createScopedShow(),
     ]);
     scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
-      {
-        uid: 'task_1',
-        updatedAt: new Date('2026-03-17T10:00:00.000Z'),
-        templateUid: 'ttpl_1',
-        templateName: 'Template 1',
-        snapshotId: 'snap_1',
+      createScopedTask({
         snapshotSchema,
         content: { notes: 'hello' },
-        targetShowUids: ['show_1'],
-      },
+      }),
     ]);
     studioService.getSharedFields.mockResolvedValue([
       {
@@ -451,29 +430,13 @@ describe('taskReportRunService', () => {
       submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
     } as any);
     scopeRepository.findShowsInScope.mockResolvedValue([
-      {
-        uid: 'show_1',
-        name: 'Show 1',
-        externalId: 'EXT-1',
-        startTime: new Date('2026-03-16T00:00:00.000Z'),
-        endTime: new Date('2026-03-16T02:00:00.000Z'),
-        clientName: 'Client A',
-        studioRoomName: 'Room A',
-        showStandardName: 'Standard A',
-        showTypeName: 'Type A',
-      },
+      createScopedShow(),
     ]);
     scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
-      {
-        uid: 'task_1',
-        updatedAt: new Date('2026-03-17T10:00:00.000Z'),
-        templateUid: 'ttpl_1',
-        templateName: 'Template 1',
-        snapshotId: 'snap_1',
+      createScopedTask({
         snapshotSchema: {},
         content: { gmv: 200 },
-        targetShowUids: ['show_1'],
-      },
+      }),
     ]);
     studioService.getSharedFields.mockResolvedValue([]);
 
@@ -521,30 +484,17 @@ describe('taskReportRunService', () => {
       submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
     } as any);
     scopeRepository.findShowsInScope.mockResolvedValue([
-      {
-        uid: 'show_1',
-        name: 'Show 1',
-        externalId: 'EXT-1',
-        startTime: new Date('2026-03-16T00:00:00.000Z'),
-        endTime: new Date('2026-03-16T02:00:00.000Z'),
-        clientName: 'Client A',
-        studioRoomName: 'Room A',
-        showStandardName: 'Standard A',
-        showTypeName: 'Type A',
-      },
+      createScopedShow(),
     ]);
     scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
-      {
+      createScopedTask({
         uid: 'task_selected',
-        updatedAt: new Date('2026-03-17T10:00:00.000Z'),
-        templateUid: 'ttpl_1',
-        templateName: 'Template 1',
-        snapshotId: 'snap_1',
         snapshotSchema: selectedSchema,
         content: { gmv: 200 },
-        targetShowUids: ['show_1'],
-      },
-      {
+        assigneeUid: 'user_1',
+        assigneeName: 'Alice',
+      }),
+      createScopedTask({
         uid: 'task_unselected_new',
         updatedAt: new Date('2026-03-17T09:00:00.000Z'),
         templateUid: 'ttpl_2',
@@ -552,9 +502,10 @@ describe('taskReportRunService', () => {
         snapshotId: 'snap_2',
         snapshotSchema: unselectedSchema,
         content: { notes: 'new' },
-        targetShowUids: ['show_1'],
-      },
-      {
+        assigneeUid: 'user_2',
+        assigneeName: 'Bob',
+      }),
+      createScopedTask({
         uid: 'task_unselected_old',
         updatedAt: new Date('2026-03-16T09:00:00.000Z'),
         templateUid: 'ttpl_2',
@@ -562,8 +513,9 @@ describe('taskReportRunService', () => {
         snapshotId: 'snap_2',
         snapshotSchema: unselectedSchema,
         content: { notes: 'old' },
-        targetShowUids: ['show_1'],
-      },
+        assigneeUid: 'user_1',
+        assigneeName: 'Alice',
+      }),
     ]);
     studioService.getSharedFields.mockResolvedValue([]);
 
@@ -573,7 +525,11 @@ describe('taskReportRunService', () => {
     }));
 
     expect(result.warnings).toEqual([]);
-    expect(result.rows[0]).toMatchObject({ gmv: 200 });
+    expect(result.rows[0]).toMatchObject({
+      gmv: 200,
+      assignee_names: ['Alice', 'Bob'],
+      assignee_name: null,
+    });
   });
 
   it('fills system columns from scoped show metadata', async () => {
@@ -588,17 +544,7 @@ describe('taskReportRunService', () => {
       submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
     } as any);
     scopeRepository.findShowsInScope.mockResolvedValue([
-      {
-        uid: 'show_1',
-        name: 'Show 1',
-        externalId: 'EXT-1',
-        startTime: new Date('2026-03-16T00:00:00.000Z'),
-        endTime: new Date('2026-03-16T02:00:00.000Z'),
-        clientName: 'Client A',
-        studioRoomName: 'Room A',
-        showStandardName: 'Standard A',
-        showTypeName: 'Type A',
-      },
+      createScopedShow(),
     ]);
     scopeRepository.findSubmittedTasksInScope.mockResolvedValue([]);
     studioService.getSharedFields.mockResolvedValue([]);
@@ -613,10 +559,18 @@ describe('taskReportRunService', () => {
     }));
 
     expect(result.row_count).toBe(1);
-    expect(result.rows[0]).toEqual({
+    expect(result.rows[0]).toMatchObject({
       show_name: 'Show 1',
       client_name: 'Client A',
       start_time: '2026-03-16T00:00:00.000Z',
+      client_id: 'client_1',
+      studio_room_id: 'room_1',
+      show_status_id: 'shst_1',
+      show_status_name: 'Confirmed',
+      assignee_ids: [],
+      assignee_names: [],
+      assignee_id: null,
+      assignee_name: null,
     });
     expect(result.columns).toMatchObject([
       { key: 'show_name', type: 'text', source_template_id: null },
@@ -627,6 +581,54 @@ describe('taskReportRunService', () => {
       show_name: null,
       client_name: null,
       start_time: null,
+    });
+  });
+
+  it('includes show-status and multi-assignee metadata for FE-side view filters', async () => {
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 2,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      showStandardId: 'shsd_1',
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([
+      createScopedShow({
+        showStatusUid: 'shst_live',
+        showStatusName: 'Live',
+      }),
+    ]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({
+        uid: 'task_a',
+        assigneeUid: 'user_1',
+        assigneeName: 'Alice',
+      }),
+      createScopedTask({
+        uid: 'task_b',
+        updatedAt: new Date('2026-03-17T09:00:00.000Z'),
+        assigneeUid: 'user_2',
+        assigneeName: 'Bob',
+      }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: defaultReportScope,
+      columns: [{ key: 'show_name', label: 'Show Name' }],
+    }));
+
+    expect(result.rows[0]).toMatchObject({
+      show_name: 'Show 1',
+      show_status_id: 'shst_live',
+      show_status_name: 'Live',
+      assignee_ids: ['user_1', 'user_2'],
+      assignee_names: ['Alice', 'Bob'],
+      assignee_id: null,
+      assignee_name: null,
     });
   });
 });

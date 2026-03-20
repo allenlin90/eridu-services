@@ -25,6 +25,27 @@ const FROZEN_COLUMN_WIDTH: Record<(typeof FROZEN_COLUMN_PRIORITY)[number], numbe
   start_time: 180,
 };
 
+function readStringFilterValues(...values: unknown[]): string[] {
+  const result: string[] = [];
+
+  for (const value of values) {
+    if (typeof value === 'string' && value.length > 0) {
+      result.push(value);
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (typeof item === 'string' && item.length > 0) {
+          result.push(item);
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
 export function ReportResultTable({ result }: ReportResultTableProps) {
   const { columns, rows } = result;
   const isMobile = useIsMobile();
@@ -33,25 +54,49 @@ export function ReportResultTable({ result }: ReportResultTableProps) {
   const [sortConfig, setSortConfig] = useState<{ column: string | null; dir: SortDirection }>({ column: 'start_time', dir: 'desc' });
 
   const parentRef = useRef<HTMLDivElement>(null);
-  const canFilterByClient = useMemo(() => rows.some((row) => Boolean(row.client_name ?? row.client_id)), [rows]);
-  const canFilterByStatus = useMemo(() => rows.some((row) => Boolean(row.show_status_name ?? row.show_status_id)), [rows]);
-  const canFilterByRoom = useMemo(() => rows.some((row) => Boolean(row.studio_room_name ?? row.studio_room_id)), [rows]);
-  const canFilterByAssignee = useMemo(() => rows.some((row) => Boolean(row.assignee_name ?? row.assignee ?? row.assignee_id)), [rows]);
+  const canFilterByClient = useMemo(
+    () => rows.some((row) => readStringFilterValues(row.client_name, row.client_id).length > 0),
+    [rows],
+  );
+  const canFilterByStatus = useMemo(
+    () => rows.some((row) => readStringFilterValues(row.show_status_name, row.show_status_id).length > 0),
+    [rows],
+  );
+  const canFilterByRoom = useMemo(
+    () => rows.some((row) => readStringFilterValues(row.studio_room_name, row.studio_room_id).length > 0),
+    [rows],
+  );
+  const canFilterByAssignee = useMemo(
+    () => rows.some((row) => readStringFilterValues(
+      row.assignee_name,
+      row.assignee,
+      row.assignee_id,
+      row.assignee_names,
+      row.assignee_ids,
+    ).length > 0),
+    [rows],
+  );
 
   const availableClients = useMemo(
-    () => Array.from(new Set(rows.map((r) => r.client_name ?? r.client_id).filter((value): value is string => typeof value === 'string' && value.length > 0))),
+    () => Array.from(new Set(rows.flatMap((row) => readStringFilterValues(row.client_name, row.client_id)))),
     [rows],
   );
   const availableStatuses = useMemo(
-    () => Array.from(new Set(rows.map((r) => r.show_status_name ?? r.show_status_id).filter((value): value is string => typeof value === 'string' && value.length > 0))),
+    () => Array.from(new Set(rows.flatMap((row) => readStringFilterValues(row.show_status_name, row.show_status_id)))),
     [rows],
   );
   const availableRooms = useMemo(
-    () => Array.from(new Set(rows.map((r) => r.studio_room_name ?? r.studio_room_id).filter((value): value is string => typeof value === 'string' && value.length > 0))),
+    () => Array.from(new Set(rows.flatMap((row) => readStringFilterValues(row.studio_room_name, row.studio_room_id)))),
     [rows],
   );
   const availableAssignees = useMemo(
-    () => Array.from(new Set(rows.map((r) => r.assignee_name ?? r.assignee ?? r.assignee_id).filter((value): value is string => typeof value === 'string' && value.length > 0))),
+    () => Array.from(new Set(rows.flatMap((row) => readStringFilterValues(
+      row.assignee_name,
+      row.assignee,
+      row.assignee_id,
+      row.assignee_names,
+      row.assignee_ids,
+    )))),
     [rows],
   );
 

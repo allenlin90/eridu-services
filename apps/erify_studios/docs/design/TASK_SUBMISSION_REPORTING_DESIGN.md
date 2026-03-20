@@ -26,7 +26,7 @@ In scope:
 3. contextual column discovery and selection
 4. server-side generation trigger with inline result response
 5. flat table rendering with strict one-row-per-show (rows[] ready to display — no client-side merge)
-6. client-side view filters (client, status, assignee, room, search) shown only when data exists, plus a `Clear view filters` utility and simple asc/desc column sort on the cached dataset
+6. client-side view filters (client, status, assignee, room, search) shown only when matching row metadata exists, plus a `Clear view filters` utility and simple asc/desc column sort on the cached dataset
 7. TanStack Query cache for last N generated datasets (instant switching), plus a builder affordance to reopen the last cached result for the same scope + columns
 8. client-side CSV export from cached JSON (full dataset, one flat file)
 9. saved definitions as the landing view (personal presets) with explicit builder save actions (`Save as Definition` / `Save Definition`)
@@ -103,7 +103,7 @@ Steps:
 8. **Run report** — BE generates show-centric table, returns full JSON inline
 9. **FE caches** the result in TanStack Query (last N datasets cached) and surfaces a "View cached result" affordance when scope + columns match
 10. **Review table** — strictly one row per show, all columns pre-merged by BE. Duplicates resolved by latest-wins; multi-target tasks merge into each show's row.
-11. **Apply view filters** — client, status, assignee, room, search — all instant, no server call. Filters only appear when values exist; `Clear view filters` resets them.
+11. **Apply view filters** — client, status, assignee, room, search — all instant, no server call. Filters read hidden row metadata returned by the BE, so they still work even if those values are not visible columns. Assignee filtering supports multi-assignee rows. Filters only appear when values exist; `Clear view filters` resets them.
 12. **Export** — CSV from the full dataset (view filters do not affect export)
 13. **Edit** — go back to scope/column selection with state preserved
 
@@ -304,6 +304,8 @@ When scope includes many client-dedicated moderation templates (for example 30+ 
 
 The result table renders `rows[]` directly — strictly **one row per show**, with all selected columns merged in. Custom fields from different templates appear as separate columns on the same row. The row count always equals the show count.
 
+Each row also carries hidden filter metadata for the toolbar: `client_id`, `client_name`, `show_status_id`, `show_status_name`, `studio_room_id`, `studio_room_name`, `assignee_ids`, and `assignee_names`. When there is exactly one unique assignee in the merged row, the BE also returns scalar `assignee_id` and `assignee_name` for backward-compatible consumers.
+
 **Table header**: display `row_count` and `generated_at`. E.g., "487 shows · Generated 2 min ago". This gives immediate confidence that the scope is correct.
 
 **View filter toolbar**: positioned above the table. Controls for:
@@ -315,7 +317,7 @@ The result table renders `rows[]` directly — strictly **one row per show**, wi
 - column sort (click column header to toggle asc/desc)
 - `Clear view filters` action
 
-Filters appear only when matching values exist in the dataset. All view filters are applied client-side on the cached `rows[]`, and the table re-renders instantly.
+Filters appear only when matching values exist in the dataset. All view filters are applied client-side on the cached `rows[]` using this hidden metadata, and the table re-renders instantly.
 
 **Default sort order**: The BE returns rows sorted by `show.startTime DESC` (most-recent shows first). This is the initial display order.
 
@@ -630,7 +632,7 @@ graph LR
 
 The frontend treats the generated result as a **cached dataset for client-side exploration**:
 
-- `rows[]` — strictly one row per show, keyed by column identifiers — all task data merged into a single flat row
+- `rows[]` — strictly one row per show, keyed by column identifiers — all task data merged into a single flat row, plus hidden metadata for client/status/room/assignee view filters
 - `columns[]` — ordered column descriptors (key, label, type, source metadata)
 - `column_map` — maps each column to its source `template_uid` for display grouping (not export splitting — export is always one flat file)
 - `warnings[]` — version conflicts, duplicate-source flags

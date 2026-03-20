@@ -30,8 +30,12 @@ export type TaskReportScopedShow = {
   externalId: string | null;
   startTime: Date;
   endTime: Date;
+  clientUid: string | null;
   clientName: string | null;
+  studioRoomUid: string | null;
   studioRoomName: string | null;
+  showStatusUid: string | null;
+  showStatusName: string | null;
   showStandardName: string | null;
   showTypeName: string | null;
 };
@@ -45,6 +49,8 @@ export type TaskReportScopedTask = {
   snapshotSchema: Prisma.JsonValue;
   content: Prisma.JsonValue;
   targetShowUids: string[];
+  assigneeUid: string | null;
+  assigneeName: string | null;
 };
 
 /**
@@ -196,11 +202,19 @@ export class TaskReportScopeRepository {
         endTime: true,
         client: {
           select: {
+            uid: true,
             name: true,
           },
         },
         studioRoom: {
           select: {
+            uid: true,
+            name: true,
+          },
+        },
+        showStatus: {
+          select: {
+            uid: true,
             name: true,
           },
         },
@@ -227,8 +241,12 @@ export class TaskReportScopeRepository {
       externalId: show.externalId,
       startTime: show.startTime,
       endTime: show.endTime,
+      clientUid: show.client?.uid ?? null,
       clientName: show.client?.name ?? null,
+      studioRoomUid: show.studioRoom?.uid ?? null,
       studioRoomName: show.studioRoom?.name ?? null,
+      showStatusUid: show.showStatus?.uid ?? null,
+      showStatusName: show.showStatus?.name ?? null,
       showStandardName: show.showStandard?.name ?? null,
       showTypeName: show.showType?.name ?? null,
     }));
@@ -277,6 +295,12 @@ export class TaskReportScopeRepository {
             schema: true,
           },
         },
+        assignee: {
+          select: {
+            uid: true,
+            name: true,
+          },
+        },
         targets: {
           where: {
             targetType: 'SHOW',
@@ -314,6 +338,8 @@ export class TaskReportScopeRepository {
         targetShowUids: task.targets
           .map((target) => target.show?.uid)
           .filter((uid): uid is string => !!uid),
+        assigneeUid: task.assignee?.uid ?? null,
+        assigneeName: task.assignee?.name ?? null,
       }];
     });
   }

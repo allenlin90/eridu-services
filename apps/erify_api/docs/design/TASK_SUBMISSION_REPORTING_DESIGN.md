@@ -74,14 +74,14 @@ Template-based source selection is allowed, but only as a convenience that resol
 
 The BE produces a **flat, show-centric table** returned directly in the API response:
 
-- `rows[]` — strictly **one row per show**. Each row is a flat JSON object keyed by column identifiers, with all selected columns merged from the show's submitted tasks. If columns cannot be consolidated (e.g., custom fields from different templates), they appear as separate columns on the same row — never as separate rows.
+- `rows[]` — strictly **one row per show**. Each row is a flat JSON object keyed by column identifiers, with all selected columns merged from the show's submitted tasks. Each row also includes hidden view-filter metadata for client, show status, room, and assignees so the FE can filter cached results without requiring those values as visible columns. If columns cannot be consolidated (e.g., custom fields from different templates), they appear as separate columns on the same row — never as separate rows.
 - `columns[]` — ordered column descriptors including system columns (show metadata) and task-content columns. Each column records its source template for metadata.
 - `column_map` — maps each column to its source `template_uid` for display grouping and column origin metadata.
 
 This means:
 
 - **Display**: FE receives a ready-to-render table — no client-side merge needed. One row = one show, always.
-- **View filters**: FE applies client-side filters (client, status) and simple asc/desc column sorting on the cached result — no server round-trip.
+- **View filters**: FE applies client-side filters (client, status, assignee, room) and simple asc/desc column sorting on the cached result — no server round-trip. The BE includes the needed ids/names on every row, and assignee metadata may be multi-value because one show row can merge tasks from multiple assignees.
 - **Export**: All columns export into **one flat file** (CSV or single XLSX sheet). No multi-file splitting — all columns (system + shared fields + custom) appear in one table.
 - **Transformation**: The flat rows are easily convertible to 2D arrays for tabular rendering and serialization.
 
@@ -542,6 +542,7 @@ Key request concepts (run report):
 Key response concepts (inline result):
 
 - `rows[]`: strictly one row per show — all task data merged into a single flat row
+- hidden row metadata: `client_id`, `client_name`, `show_status_id`, `show_status_name`, `studio_room_id`, `studio_room_name`, `assignee_ids`, `assignee_names`, plus scalar assignee fields when exactly one unique assignee exists
 - `columns[]`: ordered column descriptors with source metadata
 - `column_map`: maps each column to its source `template_uid` (for display grouping, not export splitting)
 - `warnings[]`: duplicate-source flags, version notes
@@ -845,11 +846,12 @@ Select only what the client needs:
 - snapshot version/schema,
 - `content`,
 - show metadata via `targets` → `Show`: UID/name/external ID/start/end,
-- client name (via show → client),
-- studio room name (via show → studio room),
+- client UID/name (via show → client),
+- studio room UID/name (via show → studio room),
+- show status UID/name (via show → show status),
 - show standard name (via show → show standard),
 - show type name (via show → show type),
-- assignee name,
+- assignee UID/name,
 - creator names if needed for system columns.
 
 The `TaskTarget` join is the path to show data. Use a targeted include:

@@ -25,6 +25,35 @@ export type TaskReportViewFilters = {
   search?: string;
 };
 
+function readStringValues(...values: unknown[]): string[] {
+  const result: string[] = [];
+
+  for (const value of values) {
+    if (typeof value === 'string' && value.length > 0) {
+      result.push(value);
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (typeof item === 'string' && item.length > 0) {
+          result.push(item);
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
+function matchesExactFilter(filter: string | undefined, ...values: unknown[]): boolean {
+  if (!filter) {
+    return true;
+  }
+
+  return readStringValues(...values).includes(filter);
+}
+
 export function filterRows(
   rows: Record<string, unknown>[],
   columns: TaskReportColumn[],
@@ -43,14 +72,22 @@ export function filterRows(
 
   return rows.filter((row) => {
     // Exact match against system-column values with id fallback for compatibility.
-    if (clientFilter && (row.client_name ?? row.client_id) !== clientFilter)
+    if (!matchesExactFilter(clientFilter, row.client_name, row.client_id))
       return false;
-    if (statusFilter && (row.show_status_name ?? row.show_status_id) !== statusFilter)
+    if (!matchesExactFilter(statusFilter, row.show_status_name, row.show_status_id))
       return false;
-    if (roomFilter && (row.studio_room_name ?? row.studio_room_id) !== roomFilter)
+    if (!matchesExactFilter(roomFilter, row.studio_room_name, row.studio_room_id))
       return false;
-    if (assigneeFilter && (row.assignee_name ?? row.assignee ?? row.assignee_id) !== assigneeFilter)
+    if (!matchesExactFilter(
+      assigneeFilter,
+      row.assignee_name,
+      row.assignee,
+      row.assignee_id,
+      row.assignee_names,
+      row.assignee_ids,
+    )) {
       return false;
+    }
 
     // Full-text search across all selected columns.
     if (filters.search) {

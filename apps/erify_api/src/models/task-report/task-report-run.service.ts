@@ -31,10 +31,21 @@ type SelectedKeyMeta = {
   sourceTemplateName?: string;
 };
 type RowsByShowUid = Map<string, Record<string, unknown>>;
+type ViewFilterMetaByShowUid = Map<string, {
+  clientId: string | null;
+  clientName: string | null;
+  studioRoomId: string | null;
+  studioRoomName: string | null;
+  showStatusId: string | null;
+  showStatusName: string | null;
+  assigneeIds: Set<string>;
+  assigneeNames: Set<string>;
+}>;
 type RunProjection = {
   rowsByShowUid: RowsByShowUid;
   selectedKeyMeta: Map<string, SelectedKeyMeta>;
   duplicateSourceCount: Map<string, number>;
+  viewFilterMetaByShowUid: ViewFilterMetaByShowUid;
 };
 type CompiledProjectionField = {
   fieldKey: string;
@@ -89,7 +100,7 @@ export class TaskReportRunService {
     this.addSystemColumnMeta(selectedColumns, projection.selectedKeyMeta);
     this.assertKnownSelectedColumns(selectedColumns, projection.selectedKeyMeta, sharedFieldByKey);
 
-    const rows = this.buildRows(shows, projection.rowsByShowUid, selectedColumns);
+    const rows = this.buildRows(shows, projection, selectedColumns);
     const warnings = this.buildWarnings(projection.duplicateSourceCount);
     const columns = this.buildColumns(selectedColumns, projection.selectedKeyMeta);
     const columnMap = this.buildColumnMap(columns);
@@ -138,14 +149,43 @@ export class TaskReportRunService {
     selectedColumnKeys: Set<string>,
     sharedFieldByKey: Map<string, Awaited<ReturnType<StudioService['getSharedFields']>>[number]>,
   ): RunProjection {
+    const hasSelectedTaskColumns = Array.from(selectedColumnKeys).some((columnKey) => !this.isSystemColumn(columnKey));
     const rowsByShowUid: RowsByShowUid = new Map(shows.map((show) => [show.uid, {}]));
     const selectedKeyMeta = new Map<string, SelectedKeyMeta>();
     const duplicateSourceCount = new Map<string, number>();
+    const viewFilterMetaByShowUid: ViewFilterMetaByShowUid = new Map(
+      shows.map((show) => [show.uid, {
+        clientId: show.clientUid,
+        clientName: show.clientName,
+        studioRoomId: show.studioRoomUid,
+        studioRoomName: show.studioRoomName,
+        showStatusId: show.showStatusUid,
+        showStatusName: show.showStatusName,
+        assigneeIds: new Set<string>(),
+        assigneeNames: new Set<string>(),
+      }]),
+    );
     // Compile selected-field projectors once per template+snapshot. This avoids
     // repeatedly scanning snapshot schema.items for every task row.
     const projectorCache = new Map<string, CompiledProjectionField[]>();
 
     for (const task of tasks) {
+      for (const showUid of task.targetShowUids) {
+        const viewFilterMeta = viewFilterMetaByShowUid.get(showUid);
+        if (viewFilterMeta) {
+          if (task.assigneeUid) {
+            viewFilterMeta.assigneeIds.add(task.assigneeUid);
+          }
+          if (task.assigneeName) {
+            viewFilterMeta.assigneeNames.add(task.assigneeName);
+          }
+        }
+      }
+
+      if (!hasSelectedTaskColumns) {
+        continue;
+      }
+
       const cacheKey = `${task.templateUid}|${task.snapshotId}`;
       const projectionFields
         = projectorCache.get(cacheKey)
@@ -180,7 +220,7 @@ export class TaskReportRunService {
       }
     }
 
-    return { rowsByShowUid, selectedKeyMeta, duplicateSourceCount };
+    return { rowsByShowUid, selectedKeyMeta, duplicateSourceCount, viewFilterMetaByShowUid };
   }
 
   private compileProjectionFields(
@@ -253,11 +293,26 @@ export class TaskReportRunService {
 
   private buildRows(
     shows: ScopedShow[],
-    rowsByShowUid: RowsByShowUid,
+    projection: RunProjection,
     selectedColumns: Array<{ key: string }>,
   ): Array<Record<string, unknown>> {
     return shows.map((show) => {
-      const row = rowsByShowUid.get(show.uid) ?? {};
+      const row = projection.rowsByShowUid.get(show.uid) ?? {};
+      const viewFilterMeta = projection.viewFilterMetaByShowUid.get(show.uid);
+      const assigneeIds = viewFilterMeta ? [...viewFilterMeta.assigneeIds].sort() : [];
+      const assigneeNames = viewFilterMeta ? [...viewFilterMeta.assigneeNames].sort() : [];
+
+      row.client_id = viewFilterMeta?.clientId ?? null;
+      row.client_name = viewFilterMeta?.clientName ?? null;
+      row.studio_room_id = viewFilterMeta?.studioRoomId ?? null;
+      row.studio_room_name = viewFilterMeta?.studioRoomName ?? null;
+      row.show_status_id = viewFilterMeta?.showStatusId ?? null;
+      row.show_status_name = viewFilterMeta?.showStatusName ?? null;
+      row.assignee_ids = assigneeIds;
+      row.assignee_names = assigneeNames;
+      row.assignee_id = assigneeIds.length === 1 ? assigneeIds[0] : null;
+      row.assignee_name = assigneeNames.length === 1 ? assigneeNames[0] : null;
+
       const systemRow = this.buildSystemRow(show);
       for (const column of selectedColumns) {
         if (Object.hasOwn(systemRow, column.key)) {

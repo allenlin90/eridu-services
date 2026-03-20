@@ -97,7 +97,7 @@ Steps:
 4. **Save definition** (optional) — save the scope filters + column selection as a named personal preset. Saving can happen before or after preflight/run. Definitions can store a default date preset (`this_week`, `this_month`, or absolute dates) that pre-fills on load.
 5. **Preflight check** — before generating, the FE requests a count summary (`show_count`, `task_count`). The manager sees the scope size and run stays disabled until preflight succeeds. Over-limit scopes are blocked with guidance.
 6. **Run report** — triggers BE to join submitted task data across matching shows into a flat table JSON with show-centric rows. The full result is returned inline — no server-side storage.
-7. **Review + view filters** — FE caches and renders the flat table. Managers apply client-side view filters (by client, show status, assignee, room) and column sorting (asc/desc on any column) to focus on subsets — all instant, no server round-trip. If scope + columns match a cached result, the builder offers a "View cached result" shortcut.
+7. **Review + view filters** — FE caches and renders the flat table. Managers apply client-side view filters (by client, show status, assignee, room) and column sorting (asc/desc on any column) to focus on subsets — all instant, no server round-trip. These filters are driven by per-row metadata returned with the result, not by whether those columns are visible in the table. If scope + columns match a cached result, the builder offers a "View cached result" shortcut.
 8. **Export** — FE serializes the full dataset to CSV and downloads (view filters do not affect export).
 
 ## Two-Level Filtering
@@ -129,6 +129,8 @@ These refine the *display* without re-querying. Applied instantly on the cached 
 - `Clear view filters` — quick reset
 
 Filters only render when matching values exist in the cached dataset; if values disappear, the filter is cleared automatically.
+
+The run result includes hidden row metadata for these filters (`client_id`, `client_name`, `show_status_id`, `show_status_name`, `studio_room_id`, `studio_room_name`, `assignee_ids`, `assignee_names`, plus scalar assignee fields when there is exactly one unique assignee). This keeps view filters available even when those columns are not part of the visible table.
 
 The distinction maps to how the moderation team uses Google Sheets: they have one sheet per time range (scope), then use filter views to focus on specific clients or statuses (view filters).
 
@@ -185,7 +187,8 @@ When scope includes many client-dedicated moderation templates and loop-heavy sc
 4. Missing submissions appear as `null` values in the row; the UI must not silently pretend missing data is zero.
 5. File and URL fields are included as string values (clickable links in the UI, plain URLs in export).
 6. When multiple submitted tasks match the same show and source (duplicate sources), the **latest task wins** — its values populate the row. A warning flag is set on the affected row for data hygiene visibility, but the row stays single.
-7. If a saved definition contains columns that are incompatible with the current scope (missing/renamed/misaligned sources), preflight/run is blocked with an explicit conflict summary until the user resolves those columns.
+7. Each row also includes hidden metadata used by client-side view filters: client/status/room ids and names, plus assignee ids and names. Assignee metadata may be multi-value because one show row can merge submitted tasks from different assignees.
+8. If a saved definition contains columns that are incompatible with the current scope (missing/renamed/misaligned sources), preflight/run is blocked with an explicit conflict summary until the user resolves those columns.
 
 ### Saved definitions (personal presets)
 
@@ -435,6 +438,7 @@ sequenceDiagram
 
     Manager->>FE: Export → CSV
     Note over FE: Serialize visible rows using column_map
+    Note over FE: Serialize full cached dataset;<br/>view filters do not affect export
     FE-->>Manager: Download CSV file
 ```
 

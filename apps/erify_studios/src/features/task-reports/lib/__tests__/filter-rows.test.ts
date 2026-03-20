@@ -65,4 +65,15 @@ describe('filterRows', () => {
 
     expect(filtered).toEqual([{ show_name: 'Show B', assignee_name: 'Bob' }]);
   });
+
+  it('filters assignee when row metadata contains multiple assignees', () => {
+    const rows = [
+      { show_name: 'Show A', assignee_names: ['Alice', 'Bob'] },
+      { show_name: 'Show B', assignee_names: ['Carol'] },
+    ];
+
+    const filtered = filterRows(rows, columns, { assignee: 'Bob' });
+
+    expect(filtered).toEqual([{ show_name: 'Show A', assignee_names: ['Alice', 'Bob'] }]);
+  });
 });
