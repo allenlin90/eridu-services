@@ -3,14 +3,15 @@ import { Search } from 'lucide-react';
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@eridu/ui';
 
 import type { TaskReportViewFilters } from '../lib/filter-rows';
+import type { ViewFilterOption } from '../lib/view-filter-options';
 
 type ReportViewFiltersProps = {
   filters: TaskReportViewFilters;
   onChange: (filters: TaskReportViewFilters) => void;
-  availableClients: string[];
-  availableRooms: string[];
-  availableStatuses: string[];
-  availableAssignees: string[];
+  availableClients: ViewFilterOption[];
+  availableRooms: ViewFilterOption[];
+  availableStatuses: ViewFilterOption[];
+  availableAssignees: ViewFilterOption[];
   showClientFilter?: boolean;
   showRoomFilter?: boolean;
   showStatusFilter?: boolean;
@@ -62,7 +63,7 @@ export function ReportViewFilters({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All</SelectItem>
-                  {availableAssignees.map((assignee) => <SelectItem key={assignee} value={assignee}>{assignee}</SelectItem>)}
+                  {availableAssignees.map((assignee) => <SelectItem key={assignee.value} value={assignee.value}>{assignee.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -79,7 +80,7 @@ export function ReportViewFilters({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All</SelectItem>
-                  {availableClients.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  {availableClients.map((client) => <SelectItem key={client.value} value={client.value}>{client.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -96,7 +97,7 @@ export function ReportViewFilters({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All</SelectItem>
-                  {availableStatuses.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {availableStatuses.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -113,7 +114,7 @@ export function ReportViewFilters({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All</SelectItem>
-                  {availableRooms.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                  {availableRooms.map((room) => <SelectItem key={room.value} value={room.value}>{room.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

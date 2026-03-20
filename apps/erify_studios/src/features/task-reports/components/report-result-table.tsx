@@ -11,6 +11,7 @@ import { cn } from '@eridu/ui/lib/utils';
 import { filterRows, type TaskReportViewFilters } from '../lib/filter-rows';
 import { serializeCsv } from '../lib/serialize-csv';
 import { type SortDirection, sortRows } from '../lib/sort-rows';
+import { buildViewFilterOptions } from '../lib/view-filter-options';
 
 import { ReportViewFilters } from './report-view-filters';
 
@@ -46,15 +47,6 @@ function readStringFilterValues(...values: unknown[]): string[] {
   return result;
 }
 
-function readPreferredFilterValues(preferredValues: unknown[], fallbackValues: unknown[]): string[] {
-  const preferred = readStringFilterValues(...preferredValues);
-  if (preferred.length > 0) {
-    return preferred;
-  }
-
-  return readStringFilterValues(...fallbackValues);
-}
-
 export function ReportResultTable({ result }: ReportResultTableProps) {
   const { columns, rows } = result;
   const isMobile = useIsMobile();
@@ -87,31 +79,35 @@ export function ReportResultTable({ result }: ReportResultTableProps) {
   );
 
   const availableClients = useMemo(
-    () => Array.from(new Set(rows.flatMap((row) => readPreferredFilterValues(
-      [row.client_name],
-      [row.client_id],
-    )))),
+    () => buildViewFilterOptions(
+      rows,
+      (row) => [row.client_name],
+      (row) => [row.client_id],
+    ),
     [rows],
   );
   const availableStatuses = useMemo(
-    () => Array.from(new Set(rows.flatMap((row) => readPreferredFilterValues(
-      [row.show_status_name],
-      [row.show_status_id],
-    )))),
+    () => buildViewFilterOptions(
+      rows,
+      (row) => [row.show_status_name],
+      (row) => [row.show_status_id],
+    ),
     [rows],
   );
   const availableRooms = useMemo(
-    () => Array.from(new Set(rows.flatMap((row) => readPreferredFilterValues(
-      [row.studio_room_name],
-      [row.studio_room_id],
-    )))),
+    () => buildViewFilterOptions(
+      rows,
+      (row) => [row.studio_room_name],
+      (row) => [row.studio_room_id],
+    ),
     [rows],
   );
   const availableAssignees = useMemo(
-    () => Array.from(new Set(rows.flatMap((row) => readPreferredFilterValues(
-      [row.assignee_names, row.assignee_name, row.assignee],
-      [row.assignee_ids, row.assignee_id],
-    )))),
+    () => buildViewFilterOptions(
+      rows,
+      (row) => [row.assignee_names, row.assignee_name, row.assignee],
+      (row) => [row.assignee_ids, row.assignee_id],
+    ),
     [rows],
   );
 
@@ -125,19 +121,31 @@ export function ReportResultTable({ result }: ReportResultTableProps) {
       let changed = false;
       const next: TaskReportViewFilters = { ...prev };
 
-      if ((!canFilterByClient || availableClients.length === 0) && next.client_id) {
+      if (
+        next.client_id
+        && (!canFilterByClient || !availableClients.some((option) => option.value === next.client_id))
+      ) {
         delete next.client_id;
         changed = true;
       }
-      if ((!canFilterByStatus || availableStatuses.length === 0) && next.show_status_id) {
+      if (
+        next.show_status_id
+        && (!canFilterByStatus || !availableStatuses.some((option) => option.value === next.show_status_id))
+      ) {
         delete next.show_status_id;
         changed = true;
       }
-      if ((!canFilterByRoom || availableRooms.length === 0) && next.studio_room_id) {
+      if (
+        next.studio_room_id
+        && (!canFilterByRoom || !availableRooms.some((option) => option.value === next.studio_room_id))
+      ) {
         delete next.studio_room_id;
         changed = true;
       }
-      if ((!canFilterByAssignee || availableAssignees.length === 0) && next.assignee) {
+      if (
+        next.assignee
+        && (!canFilterByAssignee || !availableAssignees.some((option) => option.value === next.assignee))
+      ) {
         delete next.assignee;
         changed = true;
       }
@@ -145,10 +153,10 @@ export function ReportResultTable({ result }: ReportResultTableProps) {
       return changed ? next : prev;
     });
   }, [
-    availableClients.length,
-    availableAssignees.length,
-    availableRooms.length,
-    availableStatuses.length,
+    availableClients,
+    availableAssignees,
+    availableRooms,
+    availableStatuses,
     canFilterByAssignee,
     canFilterByClient,
     canFilterByRoom,

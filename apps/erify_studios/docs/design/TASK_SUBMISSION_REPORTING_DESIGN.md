@@ -319,6 +319,8 @@ Each row also carries hidden filter metadata for the toolbar: `client_id`, `clie
 
 Filters appear only when matching values exist in the dataset. All view filters are applied client-side on the cached `rows[]` using this hidden metadata, and the table re-renders instantly.
 
+The dropdowns should show human-readable labels, but use stable IDs as the selected value whenever those IDs exist in the row metadata. This avoids ambiguous filtering when two clients, rooms, or assignees share the same display label. If no ID exists for a filter dimension, the FE falls back to using the label itself as the filter value.
+
 **Default sort order**: The BE returns rows sorted by `show.startTime DESC` (most-recent shows first). This is the initial display order.
 
 **Sorting is simple FE-side asc/desc.** The manager clicks any column header to toggle ascending/descending sort on the cached data. No multi-column sort, no server round-trip. This is intentionally minimal — the cached dataset is small enough for instant in-memory sorting.

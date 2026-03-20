@@ -154,6 +154,8 @@ Filters are split into scope (server) and view (client):
 
 This mirrors the Google Sheets workflow: one sheet per time range (scope), filter views per client/status (view).
 
+The FE should render labels from the `*_name` metadata, but keep `*_id` fields as the selected value whenever they exist. That preserves exact filtering for non-unique display names while still showing readable option labels.
+
 ### 4.5 Single-file export
 
 Export always produces **one flat file** — one CSV or one XLSX sheet. No multi-file splitting, no partition-based sheet separation.

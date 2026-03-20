@@ -132,6 +132,8 @@ Filters only render when matching values exist in the cached dataset; if values 
 
 The run result includes hidden row metadata for these filters (`client_id`, `client_name`, `show_status_id`, `show_status_name`, `studio_room_id`, `studio_room_name`, `assignee_ids`, `assignee_names`, plus scalar assignee fields when there is exactly one unique assignee). This keeps view filters available even when those columns are not part of the visible table.
 
+Filter dropdowns should display human-friendly labels (`client_name`, `show_status_name`, `studio_room_name`, assignee names), but use stable IDs as the underlying selected value whenever an ID is available. This preserves exact filtering when two entities share the same display name. Name-as-value is only a fallback when no stable ID exists in the row metadata.
+
 The distinction maps to how the moderation team uses Google Sheets: they have one sheet per time range (scope), then use filter views to focus on specific clients or statuses (view filters).
 
 ## Requirements

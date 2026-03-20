@@ -7,17 +7,17 @@ import type { TaskReportColumn } from '@eridu/api-types/task-management';
  * `search` performs a full-text search across all visible columns.
  */
 export type TaskReportViewFilters = {
-  /** Backward-compatible filter value for client (matches name/id columns). */
+  /** Stable client filter value when available (falls back to display name if no id exists). */
   client_id?: string;
   /** Exact match against the `client_name` system column value. */
   client_name?: string;
-  /** Backward-compatible filter value for show status (matches name/id columns). */
+  /** Stable show-status filter value when available (falls back to display name if no id exists). */
   show_status_id?: string;
   /** Optional explicit show-status name filter. */
   show_status_name?: string;
-  /** Backward-compatible assignee filter value (matches display name/id columns). */
+  /** Stable assignee filter value when available (falls back to display name if no id exists). */
   assignee?: string;
-  /** Backward-compatible filter value for room (matches name/id columns). */
+  /** Stable room filter value when available (falls back to display name if no id exists). */
   studio_room_id?: string;
   /** Exact match against the `studio_room_name` system column value. */
   studio_room_name?: string;

@@ -3,16 +3,21 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ReportViewFilters } from '../report-view-filters';
 
+const clientOptions = [{ value: 'client_1', label: 'Client A' }];
+const statusOptions = [{ value: 'status_confirmed', label: 'Completed' }];
+const roomOptions = [{ value: 'room_1', label: 'Room A' }];
+const assigneeOptions = [{ value: 'user_1', label: 'Manager A' }];
+
 describe('reportViewFilters', () => {
   it('hides status and room filters when disabled by renderer context', () => {
     render(
       <ReportViewFilters
         filters={{}}
         onChange={vi.fn()}
-        availableClients={['Client A']}
-        availableStatuses={['Completed']}
-        availableRooms={['Room A']}
-        availableAssignees={['Manager A']}
+        availableClients={clientOptions}
+        availableStatuses={statusOptions}
+        availableRooms={roomOptions}
+        availableAssignees={assigneeOptions}
         showStatusFilter={false}
         showRoomFilter={false}
         showAssigneeFilter={false}
@@ -30,10 +35,10 @@ describe('reportViewFilters', () => {
       <ReportViewFilters
         filters={{}}
         onChange={vi.fn()}
-        availableClients={['Client A']}
-        availableStatuses={['Completed']}
-        availableRooms={['Room A']}
-        availableAssignees={['Manager A']}
+        availableClients={clientOptions}
+        availableStatuses={statusOptions}
+        availableRooms={roomOptions}
+        availableAssignees={assigneeOptions}
         showStatusFilter
         showRoomFilter
         showAssigneeFilter
