@@ -29,7 +29,7 @@ Today the data exists inside `Task.content`, but the system has no manager-facin
 2. discover which task columns are available on those shows,
 3. select columns and generate a flat, reviewable table,
 4. slice and sort the generated table client-side for focused review, and
-5. export the result as CSV/XLSX.
+5. export the result as CSV.
 
 The moderation team currently does this on Google Sheets with manual data entry and filter views. This feature replaces that workflow.
 
@@ -77,15 +77,15 @@ The workflow is **show-first**: managers start by narrowing the shows they care 
 flowchart LR
     A[Filter Shows<br/>date range, client,<br/>show standard, etc.] --> B[Discover Columns<br/>from tasks on those shows]
     B --> C[Select Columns<br/>= define table schema]
-    C --> S{Save Definition?}
-    S -->|Yes| I[Store as named<br/>personal preset]
-    S -->|No| P
-    I --> P[Preflight Count<br/>show_count + task_count<br/>confirm scope size]
+    C --> P[Preflight Count<br/>show_count + task_count<br/>scope summary]
     P --> D[Run Report<br/>BE generates show-centric table]
     D --> F[FE caches + renders table]
     F --> V[View Filters + Sort<br/>client, status, etc.<br/>instant, no server call]
     V --> G{Export?}
-    G -->|CSV / XLSX| H[Serialize + Download]
+    G -->|CSV| H[Serialize + Download]
+    C -.-> S{Save Definition?}
+    P -.-> S
+    S -->|Yes| I[Store as named<br/>personal preset]
     I -.->|Rerun anytime| P
 ```
 
@@ -93,12 +93,12 @@ Steps:
 
 1. **Filter shows** (scope filters) — set date range, client, show standard, show type, and other show-level attributes. These scope filters determine what data the BE generates. `date_from` + `date_to` are mandatory for source discovery, preflight, and run.
 2. **Discover columns** — the BE returns which task templates/snapshots have submitted tasks for those filtered shows, plus their field catalogs. Columns are contextual — bound to the actual tasks on the selected shows.
-3. **Select columns** — pick system columns (show name, start time, client) and task-content columns from the discovered catalog. This defines the target table schema. Hard cap: 50 columns. Soft warning at 30+ for table readability (the export is the primary deliverable — wide tables are best reviewed in the spreadsheet).
-4. **Save definition** (optional) — save the scope filters + column selection as a named personal preset. Definitions can store a default date preset (`this_week`, `this_month`, or absolute dates) that pre-fills on load.
-5. **Preflight check** — before generating, the FE requests a count summary (`show_count`, `task_count`). The manager sees the scope size and confirms before committing. Over-limit scopes are blocked with guidance.
+3. **Select columns** — pick system columns (show id, show name, show external id, client name, start/end time, show standard, show type, room) and task-content columns from the discovered catalog. This defines the target table schema. Hard cap: 50 columns. Soft warning at 30+ for table readability (the export is the primary deliverable — wide tables are best reviewed in the spreadsheet).
+4. **Save definition** (optional) — save the scope filters + column selection as a named personal preset. Saving can happen before or after preflight/run. Definitions can store a default date preset (`this_week`, `this_month`, or absolute dates) that pre-fills on load.
+5. **Preflight check** — before generating, the FE requests a count summary (`show_count`, `task_count`). The manager sees the scope size and run stays disabled until preflight succeeds. Over-limit scopes are blocked with guidance.
 6. **Run report** — triggers BE to join submitted task data across matching shows into a flat table JSON with show-centric rows. The full result is returned inline — no server-side storage.
-7. **Review + view filters** — FE caches and renders the flat table. Managers apply client-side view filters (by client, show status, assignee, room) and column sorting (asc/desc on any column) to focus on subsets — all instant, no server round-trip.
-8. **Export** — FE serializes the visible (or full) table to CSV or XLSX and downloads.
+7. **Review + view filters** — FE caches and renders the flat table. Managers apply client-side view filters (by client, show status, assignee, room) and column sorting (asc/desc on any column) to focus on subsets — all instant, no server round-trip. If scope + columns match a cached result, the builder offers a "View cached result" shortcut.
+8. **Export** — FE serializes the full dataset to CSV and downloads (view filters do not affect export).
 
 ## Two-Level Filtering
 
@@ -124,9 +124,11 @@ These refine the *display* without re-querying. Applied instantly on the cached 
 - `show_status_id` — live, completed, cancelled
 - `assignee` — filter by task assignee
 - `studio_room_id` — filter by room
-- `platform_name` — filter by platform
 - Text search — search across show name, client, etc.
 - Column sort — sort by any column ascending/descending
+- `Clear view filters` — quick reset
+
+Filters only render when matching values exist in the cached dataset; if values disappear, the filter is cleared automatically.
 
 The distinction maps to how the moderation team uses Google Sheets: they have one sheet per time range (scope), then use filter views to focus on specific clients or statuses (view filters).
 
@@ -171,7 +173,7 @@ When scope includes many client-dedicated moderation templates and loop-heavy sc
 ### Preflight count (before generation)
 
 1. Before generating a report, the FE requests a **preflight count** — the number of shows and tasks that match the current scope filters.
-2. The preflight response includes `show_count` and `task_count`. This lets the manager confirm the scope is reasonable before committing to a full generation.
+2. The preflight response includes `show_count` and `task_count`. Run is disabled until preflight succeeds, and the manager sees the scope size before generating.
 3. If the task count exceeds the guardrail (default 10,000), the preflight response indicates this and the FE blocks the run with guidance to narrow scope. The manager never waits for a generation that will fail.
 4. The preflight count is lightweight — it runs count queries only, not full data extraction.
 
@@ -277,7 +279,7 @@ Stored in Studio.metadata          (fixed key + type + standard:      category, 
 Report Builder                     Export
 ──────────────                     ──────
 Engine reads standard: true   →    Merged columns appear in
-from snapshots, merges same-key    CSV/XLSX as single columns
+from snapshots, merges same-key    CSV as single columns
 fields across templates            (e.g., one "GMV" column)
 ```
 
@@ -309,24 +311,24 @@ This is a **requirement for MVP** — without it, the reporting engine cannot pr
 
 ### Export behavior
 
-1. CSV and XLSX export produce **one flat file** — all columns (system + shared fields + custom fields from any number of templates) in a single table. No multi-file splitting or multi-sheet partitioning.
+1. CSV export produces **one flat file** — all columns (system + shared fields + custom fields from any number of templates) in a single table. No multi-file splitting.
 2. Custom fields from different templates appear as separate columns in the same file, clearly labeled with their template origin.
 3. Exported rows include stable show/task metadata plus the selected submitted values.
-4. Export can apply to the full dataset or the currently filtered view.
+4. Export always applies to the full dataset (view filters do not affect export).
 
 ## Acceptance Criteria
 
 - [ ] A studio manager can filter shows by date range and client, see which task columns are available, select them, and review the results in a flat table.
 - [ ] A premium-show reviewer can include post-production file/url fields and open those links directly from the review table.
-- [ ] Before running, the manager sees a preflight count summary (`show_count`, `task_count`) confirming scope size. Over-limit scopes are blocked with guidance to narrow filters.
+- [ ] Before running, the manager sees a preflight count summary (`show_count`, `task_count`) and run remains disabled until preflight succeeds. Over-limit scopes are blocked with guidance to narrow filters.
 - [ ] Running a report returns the full result inline. The FE caches it for instant re-access.
 - [ ] Client-side view filters (client, status, assignee) and column sorting (asc/desc) slice the cached table instantly without server round-trips.
 - [ ] A saved definition pre-fills scope filters and columns. Running it generates fresh data.
 - [ ] Definitions can be cloned and edited to create variations.
 - [ ] Switching between recently generated datasets (e.g., different weeks) is instant from cache.
-- [ ] Export always produces one flat file (CSV or single XLSX sheet) — no multi-file splitting regardless of template mix.
+- [ ] Export always produces one flat CSV file — no multi-file splitting regardless of template mix.
 - [ ] Only show-targeted tasks appear in results; non-show tasks are excluded.
-- [ ] Strictly one row per show — duplicate submitted tasks for the same show and source are resolved by latest-wins merge with a warning indicator on the affected row.
+- [ ] Strictly one row per show — duplicate submitted tasks for the same show and source are resolved by latest-wins merge with a warning summary surfaced in the result view.
 - [ ] The table shows row count and generation timestamp for sanity checking.
 - [ ] Studio ADMIN can create and manage shared fields in studio settings. Keys, types, and categories are immutable after creation.
 - [ ] After shared fields are created/updated in settings, template create/edit pages reflect the latest shared-field options without manual hard refresh.
@@ -355,8 +357,8 @@ The engine is intentionally unopinionated about what the submitted fields mean. 
 - **Flat materialized table with strict one-row-per-show.** The BE produces a joined table — exactly one row per show, with all task data merged in. Custom fields from different templates appear as separate columns on the same row. No multi-row expansion, no multi-file export splitting. Column metadata tracks template origin for display grouping.
 - **Preflight count before generation.** The FE requests a lightweight count (`show_count`, `task_count`) before triggering full generation. This lets the manager confirm scope size, prevents wasted generation on over-broad filters, and enforces the row cap before any heavy query runs.
 - **Date presets are optional in definitions.** `this_week`, `this_month`, or absolute dates. The FE always shows the date picker pre-filled from the definition's default. Managers can override before running.
-- **JSON is the first-class report format.** CSV and XLSX are serialization targets derived from it — no CSV/XLSX files are generated or stored server-side.
-- **File fields export as references, not binaries.** CSV/XLSX output contains URL strings only.
+- **JSON is the first-class report format.** CSV is the current serialization target derived from it — no CSV files are generated or stored server-side. XLSX is deferred.
+- **File fields export as references, not binaries.** CSV output contains URL strings only.
 - **Show-targeted tasks only.** Tasks link to shows via the polymorphic `TaskTarget` model. Only tasks where `targetType = SHOW` are reportable.
 - **Definition before run.** A definition captures the query schema (filters + columns). Saving a definition is a pre-run step — not a post-export action. Running a report either references a saved definition or uses an ad-hoc inline payload.
 - **Clone + edit for definitions.** No new endpoint — FE reads an existing definition and POSTs a copy with a new name.
@@ -372,7 +374,7 @@ The engine is intentionally unopinionated about what the submitted fields mean. 
 ## Out of Scope
 
 - Server-side result storage (PostgreSQL JSONB, Redis) — generation is fast enough for inline response
-- Server-side CSV/XLSX file generation or cloud-storage report artifacts
+- Server-side CSV file generation or cloud-storage report artifacts (XLSX deferred)
 - Cross-studio reporting or definition sharing across studios
 - Arbitrary formula builders or BI-style pivot tables
 - Binary attachment packaging inside exported files
@@ -410,14 +412,14 @@ sequenceDiagram
     DB-->>BE: definition_uid
     BE-->>FE: Saved definition
 
-    Manager->>FE: Click "Run Report"
+    Manager->>FE: Click "Preflight Scope"
     FE->>BE: POST /task-reports/preflight { scope }
     BE->>DB: COUNT shows + tasks matching scope
     DB-->>BE: { show_count: 487, task_count: 1204 }
     BE-->>FE: Preflight summary
-    FE-->>Manager: "487 shows, 1,204 tasks — Confirm?"
+    FE-->>Manager: "487 shows, 1,204 tasks — Scope ready"
 
-    Manager->>FE: Confirm run
+    Manager->>FE: Click "Run Report"
     FE->>BE: POST /task-reports/run { scope, columns }
     BE->>DB: Query shows → tasks → content (batched)
     Note over BE: Extract values, merge into show rows,<br/>flag duplicates, build flat table
@@ -430,7 +432,7 @@ sequenceDiagram
     Note over FE: Client-side filter — no server call
     FE-->>Manager: Filtered table (52 shows)
 
-    Manager->>FE: Export filtered → CSV
+    Manager->>FE: Export → CSV
     Note over FE: Serialize visible rows using column_map
     FE-->>Manager: Download CSV file
 ```
@@ -503,14 +505,12 @@ graph TB
         CACHE[(TanStack Query Cache<br/>last N generated datasets)]
         VIEW[View Filters + Sort<br/>client-side slicing]
         CSV[CSV Serializer]
-        XLSX[XLSX Serializer]
         UI -->|1. filter shows| API
         UI -->|2. discover columns| API
         UI -->|3. run report| API
         API -->|full result JSON| CACHE
         CACHE --> VIEW
         VIEW -->|export from JSON| CSV
-        VIEW -->|export from JSON| XLSX
     end
 
     subgraph "erify_api (Backend)"
@@ -591,10 +591,10 @@ graph TB
 | 15 | Report table rendering | Frozen system columns (show name, client, start time), horizontal virtual scroll, column group headers (System / Shared Fields / Custom by template) |
 | 16 | View filters + column sort | Client-side filters (client, status, assignee, room, search) + simple asc/desc sort on cached rows |
 | 17 | Definition list as landing view | Save, load, clone definitions. Pre-fill scope + columns from definition. Landing page for the Task Reports route. |
-| 18 | Preflight confirmation UX | Show count summary before generation. Block over-limit scopes with guidance. |
-| 19 | CSV export | One flat file from cached JSON. Full dataset or filtered view. Column headers include template origin for custom fields. |
+| 18 | Preflight summary UX | Show count summary before generation. Run remains disabled until preflight succeeds. |
+| 19 | CSV export | One flat file from cached JSON. Full dataset only. Column headers include template origin for custom fields. |
 
-**Exit criteria**: A manager can open Task Reports, load a saved definition, confirm preflight, generate a report, review the table with view filters, and export a CSV — replacing the current Google Sheets workflow end-to-end.
+**Exit criteria**: A manager can open Task Reports, load a saved definition, preflight, generate a report, review the table with view filters, and export a CSV — replacing the current Google Sheets workflow end-to-end.
 
 ### Phase 2: Polish + advanced table UX
 
@@ -619,7 +619,7 @@ graph TB
 |---|-------------|---------|
 | 28 | Async generation | BullMQ + 202 Accepted + polling. See [ideation/bullmq-async-processing.md](../ideation/bullmq-async-processing.md). |
 | 29 | Server-side result caching | Optional — for expensive reports that are re-run frequently |
-| 30 | Server-side CSV/XLSX export | For very large datasets that are impractical to serialize in the browser |
+| 30 | Server-side CSV export | For very large datasets that are impractical to serialize in the browser (XLSX deferred) |
 | 31 | Numeric column summaries | Count, sum, average for numeric columns. See [ideation/task-analytics-summaries.md](../ideation/task-analytics-summaries.md). |
 
 ### Deferred (no current trigger)

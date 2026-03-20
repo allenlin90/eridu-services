@@ -96,7 +96,7 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
     canFilterByStatus,
   ]);
 
-  const downloadCsv = (exportRows: Record<string, unknown>[], variant: 'visible' | 'full') => {
+  const downloadCsv = (exportRows: Record<string, unknown>[]) => {
     if (!exportRows.length || !columns.length)
       return;
 
@@ -106,7 +106,7 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
 
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `task-report-${variant}-${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `task-report-${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -203,16 +203,10 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Builder
         </Button>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={() => downloadCsv(sortedRows, 'visible')} variant="outline" size="sm" disabled={sortedRows.length === 0}>
-            <Download className="mr-2 h-4 w-4" />
-            Export Visible CSV
-          </Button>
-          <Button onClick={() => downloadCsv(sortedAllRows, 'full')} variant="outline" size="sm" disabled={sortedAllRows.length === 0}>
-            <Download className="mr-2 h-4 w-4" />
-            Export Full CSV
-          </Button>
-        </div>
+        <Button onClick={() => downloadCsv(sortedAllRows)} variant="outline" size="sm" disabled={sortedAllRows.length === 0}>
+          <Download className="mr-2 h-4 w-4" />
+          Export CSV
+        </Button>
       </div>
 
       <Card className="bg-muted/30">
