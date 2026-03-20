@@ -99,7 +99,7 @@ Steps:
 4. **Discover columns** — BE returns contextual catalog from tasks on filtered shows
 5. **Select columns** — defines the target table schema
 6. **Save definition** (optional) — enter definition name/description and save via `Save as Definition` (new) or `Save Definition` (existing)
-7. **Preflight check** — FE calls `POST /task-reports/preflight` and shows scope summary: *"487 shows, 1,204 tasks"*. Over-limit scopes are blocked with guidance. Run is enabled only after a successful preflight.
+7. **Preflight check** — FE calls `POST /task-reports/preflight` and shows scope summary: *"487 shows, 1,204 tasks"*. Over-limit scopes are blocked when either show-count (row volume) or task-count exceeds the limit. Run is enabled only after a successful preflight.
 8. **Run report** — BE generates show-centric table, returns full JSON inline
 9. **FE caches** the result in TanStack Query (last N datasets cached) and surfaces a "View cached result" affordance when scope + columns match
 10. **Review table** — strictly one row per show, all columns pre-merged by BE. Duplicates resolved by latest-wins; multi-target tasks merge into each show's row.
@@ -373,7 +373,7 @@ Shared fields are managed in **studio settings**, not in the report builder. Thi
 **UI:** A list view in studio settings, organized by category sub-groups (`Metrics`, `Evidence`, `Status`):
 - Shows all shared fields (key, type, category, label, active/inactive status), grouped by category
 - **Add** button → form with key (snake_case, validated), type (dropdown), category (dropdown: metric/evidence/status), label, description. Key, type, and category become immutable after creation.
-- **Edit** → only label and description can be changed. Key, type, and category fields are read-only with a lock icon and tooltip: *"Key, type, and category cannot be changed after creation."*
+- **Edit** → only label and description can be changed. Key, type, and category fields are read-only with a lock icon and tooltip: *"Key, type, and category cannot be changed after creation."* Clearing a description is supported by saving it as blank.
 - **Deactivate** → toggle `is_active`. Deactivated fields are hidden from the template editor picker but the key remains reserved (shown as "Inactive" in the settings list).
 - No delete action — keys are reserved forever.
 - After create/update/deactivate, shared-fields query cache is invalidated so template builder pages see latest options immediately.
@@ -705,7 +705,7 @@ For current MVP-sized datasets, main-thread CSV serialization is acceptable.
 The manager clicks **Preflight Scope** to call `POST /task-reports/preflight`. The response includes `show_count`, `task_count`, and `within_limit`. The UI shows a summary card:
 
 - *"487 shows, 1,204 tasks — scope ready"* when `within_limit` is true.
-- If `within_limit` is `false`: *"This scope includes {task_count} tasks, which exceeds the limit of {limit}. Please narrow your scope filters."* — **Run** remains disabled.
+- If `within_limit` is `false`: show whether limit breach is from `show_count` or `task_count` and prompt to narrow filters. **Run** remains disabled.
 
 This prevents wasted generation on over-broad filters and gives the manager confidence in scope size before committing.
 
@@ -735,7 +735,7 @@ Required states:
 3. no columns discovered — "No submitted tasks found for the selected shows"
 4. no columns selected — disable Run button
 5. save definition blocked — show inline/toast guidance when definition name is empty, date range is incomplete, or no compatible columns are selected
-6. **preflight over limit** — `within_limit: false` from preflight. Show: *"This scope includes {task_count} tasks (limit: {limit}). Narrow your scope filters."* Disable the Confirm button.
+6. **preflight over limit** — `within_limit: false` from preflight. Show whether scope exceeds limit by `show_count` or `task_count`, with guidance to narrow filters. Run stays disabled.
 7. **preflight summary** — show `show_count` and `task_count` after preflight; run is disabled until preflight succeeds
 8. view filters produce zero rows — "No rows match the current filters" with clear-filters action
 9. **warning summary** — surface warnings returned by the API in a summary card above the table

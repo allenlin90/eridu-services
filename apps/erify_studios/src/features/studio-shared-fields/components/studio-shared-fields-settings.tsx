@@ -139,9 +139,10 @@ export function StudioSharedFieldsSettings({ studioId }: StudioSharedFieldsSetti
 
   const handleSaveField = async (field: SharedField) => {
     const draft = getDraft(field);
+    const trimmedDescription = draft.description.trim();
     const payload = {
       label: draft.label.trim(),
-      description: draft.description.trim() || undefined,
+      description: trimmedDescription.length > 0 ? trimmedDescription : null,
       is_active: draft.is_active,
     };
 

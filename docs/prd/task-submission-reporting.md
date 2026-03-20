@@ -174,7 +174,7 @@ When scope includes many client-dedicated moderation templates and loop-heavy sc
 
 1. Before generating a report, the FE requests a **preflight count** — the number of shows and tasks that match the current scope filters.
 2. The preflight response includes `show_count` and `task_count`. Run is disabled until preflight succeeds, and the manager sees the scope size before generating.
-3. If the task count exceeds the guardrail (default 10,000), the preflight response indicates this and the FE blocks the run with guidance to narrow scope. The manager never waits for a generation that will fail.
+3. If either `show_count` (row volume) or `task_count` exceeds the guardrail (default 10,000), the preflight response indicates this and the FE blocks the run with guidance to narrow scope. The manager never waits for a generation that will fail.
 4. The preflight count is lightweight — it runs count queries only, not full data extraction.
 
 ### Generated result
@@ -195,6 +195,7 @@ When scope includes many client-dedicated moderation templates and loop-heavy sc
 4. Builder save UX exposes explicit actions:
    - `Save as Definition` for new drafts
    - `Save Definition` when editing an existing definition
+   - clearing an existing description is supported by saving with an empty description field
 5. Save is blocked until the definition has a name, a valid date range, and at least one compatible selected column.
 6. Definitions can be **cloned and edited** — a "Clone" action creates a copy with a new name for the manager to customize.
 7. The definition list is the **landing view** of the Task Reports page — managers open a definition and run it, rather than building from scratch each time.
@@ -260,7 +261,7 @@ Not just numbers. Performance KPIs use `number` (GMV, views, orders), QC evidenc
 
 #### Who manages it
 
-Studio ADMINs manage shared fields in studio settings — a simple list of field definitions (key, type, category, label) stored in `Studio.metadata`. Keys, types, and categories are **immutable once created** — if the key is wrong, create a new one; the old key stays reserved. This keeps the workflow simple: no rename cascades, no backward-compatibility checks. Labels and descriptions can be updated (display-only).
+Studio ADMINs manage shared fields in studio settings — a simple list of field definitions (key, type, category, label) stored in `Studio.metadata`. Keys, types, and categories are **immutable once created** — if the key is wrong, create a new one; the old key stays reserved. This keeps the workflow simple: no rename cascades, no backward-compatibility checks. Labels and descriptions can be updated or cleared (display-only).
 
 #### End-to-end setup flow
 

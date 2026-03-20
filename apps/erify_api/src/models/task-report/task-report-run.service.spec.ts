@@ -419,6 +419,26 @@ describe('taskReportRunService', () => {
     expect(scopeRepository.findSubmittedTasksInScope).not.toHaveBeenCalled();
   });
 
+  it('rejects run when preflight exceeds show limit', async () => {
+    scopeService.preflight.mockResolvedValue({
+      show_count: 10001,
+      task_count: 5,
+      within_limit: false,
+      limit: 10000,
+    });
+
+    await expect(
+      service.run('std_123', taskReportRunRequestSchema.parse({
+        scope: defaultReportScope,
+        columns: [{ key: 'gmv', label: 'GMV' }],
+      })),
+    ).rejects.toThrow('Scope includes 10001 shows (limit: 10000). Narrow your scope filters.');
+
+    expect(scopeService.resolveScopeFilters).not.toHaveBeenCalled();
+    expect(scopeRepository.findShowsInScope).not.toHaveBeenCalled();
+    expect(scopeRepository.findSubmittedTasksInScope).not.toHaveBeenCalled();
+  });
+
   it('rejects run when task snapshot schema is invalid', async () => {
     scopeService.preflight.mockResolvedValue({
       show_count: 1,

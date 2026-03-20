@@ -275,6 +275,25 @@ describe('taskReportScopeService', () => {
     expect(result.limit).toBe(10000);
   });
 
+  it('returns within_limit false when show count exceeds default limit', async () => {
+    repository.countShowsInScope.mockResolvedValue(10001);
+    repository.countSubmittedTasksInScope.mockResolvedValue(2);
+
+    const result = await service.preflight('std_123', {
+      scope: {
+        ...defaultScope,
+        submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+      },
+    });
+
+    expect(result).toEqual({
+      show_count: 10001,
+      task_count: 2,
+      within_limit: false,
+      limit: 10000,
+    });
+  });
+
   it('passes multi-selected client_id values to repository scope filters', async () => {
     repository.countShowsInScope.mockResolvedValue(1);
     repository.countSubmittedTasksInScope.mockResolvedValue(2);

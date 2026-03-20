@@ -110,6 +110,12 @@ export class TaskReportRunService {
   ): Promise<void> {
     const preflight = await this.taskReportScopeService.preflight(studioUid, { scope });
     if (!preflight.within_limit) {
+      if (preflight.show_count > preflight.limit) {
+        throw HttpError.badRequest(
+          `Scope includes ${preflight.show_count} shows (limit: ${preflight.limit}). Narrow your scope filters.`,
+        );
+      }
+
       throw HttpError.badRequest(
         `Scope includes ${preflight.task_count} tasks (limit: ${preflight.limit}). Narrow your scope filters.`,
       );

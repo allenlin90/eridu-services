@@ -107,6 +107,28 @@ describe('studioSharedFieldsController', () => {
     expect(result.shared_fields[0]?.is_active).toBe(false);
   });
 
+  it('allows clearing shared field description with null', async () => {
+    const dto = {
+      description: null,
+    };
+
+    studioService.updateSharedField.mockResolvedValue([
+      {
+        key: 'views',
+        type: 'number',
+        category: 'metric',
+        label: 'Views',
+        description: null,
+        is_active: true,
+      },
+    ] as any);
+
+    const result = await controller.updateSharedField('std_123', 'views', dto as any);
+
+    expect(studioService.updateSharedField).toHaveBeenCalledWith('std_123', 'views', dto);
+    expect(result.shared_fields[0]?.description).toBeNull();
+  });
+
   it('rejects invalid shared field key format on update', async () => {
     await expect(
       controller.updateSharedField('std_123', 'INVALID-KEY', { label: 'x' } as any),

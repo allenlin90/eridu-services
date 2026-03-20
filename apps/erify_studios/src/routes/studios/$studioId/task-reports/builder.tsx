@@ -5,7 +5,13 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import type { TaskReportResult, TaskReportScope, TaskReportSelectedColumn } from '@eridu/api-types/task-management';
+import type {
+  CreateTaskReportDefinitionInput,
+  TaskReportResult,
+  TaskReportScope,
+  TaskReportSelectedColumn,
+  UpdateTaskReportDefinitionInput,
+} from '@eridu/api-types/task-management';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -42,7 +48,7 @@ type BuilderWorkspaceProps = {
   initialDefinitionDescription?: string | null;
   onSaveDefinition: (input: {
     name: string;
-    description?: string;
+    description?: string | null;
     scope: TaskReportScope;
     columns: TaskReportSelectedColumn[];
   }) => Promise<void>;
@@ -160,26 +166,32 @@ function TaskReportBuilderPage() {
 
   const handleSaveDefinition = async (input: {
     name: string;
-    description?: string;
+    description?: string | null;
     scope: TaskReportScope;
     columns: TaskReportSelectedColumn[];
   }) => {
-    const payload = {
-      name: input.name,
-      description: input.description,
-      definition: {
-        scope: input.scope,
-        columns: input.columns,
-      },
+    const definitionPayload = {
+      scope: input.scope,
+      columns: input.columns,
     };
 
     if (resolvedDefinitionId) {
-      await updateMutation.mutateAsync({ definitionId: resolvedDefinitionId, payload });
+      const updatePayload: UpdateTaskReportDefinitionInput = {
+        name: input.name,
+        description: input.description,
+        definition: definitionPayload,
+      };
+      await updateMutation.mutateAsync({ definitionId: resolvedDefinitionId, payload: updatePayload });
       toast.success('Report definition saved.');
       return;
     }
 
-    const created = await createMutation.mutateAsync(payload);
+    const createPayload: CreateTaskReportDefinitionInput = {
+      name: input.name,
+      ...(typeof input.description === 'string' ? { description: input.description } : {}),
+      definition: definitionPayload,
+    };
+    const created = await createMutation.mutateAsync(createPayload);
     toast.success('Report definition created.');
     void navigate({
       to: '/studios/$studioId/task-reports/builder',

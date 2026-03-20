@@ -66,13 +66,17 @@ vi.mock('../report-column-picker', () => ({
 function ReportBuilderHarness({
   initialScope,
   initialColumns,
+  definitionId,
+  initialDefinitionDescription,
   onSaveDefinition,
 }: {
   initialScope: TaskReportScope | null;
   initialColumns: TaskReportSelectedColumn[];
+  definitionId?: string | null;
+  initialDefinitionDescription?: string | null;
   onSaveDefinition?: (input: {
     name: string;
-    description?: string;
+    description?: string | null;
     scope: TaskReportScope;
     columns: TaskReportSelectedColumn[];
   }) => Promise<void>;
@@ -87,6 +91,8 @@ function ReportBuilderHarness({
       setDraftScope={setScope}
       draftColumns={columns}
       setDraftColumns={setColumns}
+      definitionId={definitionId}
+      initialDefinitionDescription={initialDefinitionDescription}
       onSaveDefinition={onSaveDefinition}
     />
   );
@@ -186,6 +192,36 @@ describe('reportBuilder', () => {
     expect(onSaveDefinition).toHaveBeenCalledWith({
       name: 'Weekly moderation report',
       description: 'Used for weekly moderation KPI checks',
+      scope: {
+        date_from: '2026-03-01',
+        date_to: '2026-03-07',
+        submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+      },
+      columns: [{ key: 'gmv', label: 'GMV', type: 'number' }],
+    });
+  });
+
+  it('sends null description when editing and the description is cleared', async () => {
+    const user = userEvent.setup();
+    const onSaveDefinition = vi.fn().mockResolvedValue(undefined);
+
+    renderWithQueryClient(
+      <ReportBuilderHarness
+        definitionId="trd_00000000000000000001"
+        initialDefinitionDescription="Existing description"
+        initialScope={{ date_from: '2026-03-01', date_to: '2026-03-07', submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] }}
+        initialColumns={[{ key: 'gmv', label: 'GMV', type: 'number' }]}
+        onSaveDefinition={onSaveDefinition}
+      />,
+    );
+
+    await user.type(screen.getByLabelText('Definition Name'), 'Weekly moderation report');
+    await user.clear(screen.getByLabelText('Description (optional)'));
+    await user.click(screen.getByRole('button', { name: /Save Definition/i }));
+
+    expect(onSaveDefinition).toHaveBeenCalledWith({
+      name: 'Weekly moderation report',
+      description: null,
       scope: {
         date_from: '2026-03-01',
         date_to: '2026-03-07',

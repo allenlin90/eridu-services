@@ -144,7 +144,7 @@ export class TaskReportScopeService {
     return {
       show_count: showCount,
       task_count: taskCount,
-      within_limit: taskCount <= limit,
+      within_limit: showCount <= limit && taskCount <= limit,
       limit,
     };
   }

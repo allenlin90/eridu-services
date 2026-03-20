@@ -24,7 +24,7 @@ type ReportBuilderProps = {
   initialDefinitionDescription?: string | null;
   onSaveDefinition?: (input: {
     name: string;
-    description?: string;
+    description?: string | null;
     scope: TaskReportScope;
     columns: TaskReportSelectedColumn[];
   }) => Promise<void>;
@@ -124,6 +124,7 @@ export function ReportBuilder({
       : preflightData.within_limit
         ? 'ready'
         : 'over_limit';
+  const preflightOverLimitByShows = Boolean(preflightData && preflightData.show_count > preflightData.limit);
 
   const steps = [
     {
@@ -166,7 +167,11 @@ export function ReportBuilder({
       toast.warning('The selected scope results in 0 shows. Please adjust filters.');
     }
     if (!res.within_limit) {
-      toast.error(`The selected scope exceeds the limit (${res.limit} tasks). Narrow the filters and preflight again.`);
+      if (res.show_count > res.limit) {
+        toast.error(`The selected scope includes ${res.show_count} shows (limit: ${res.limit}). Narrow the filters and preflight again.`);
+      } else {
+        toast.error(`The selected scope exceeds the limit (${res.limit} tasks). Narrow the filters and preflight again.`);
+      }
     }
   };
 
@@ -199,6 +204,11 @@ export function ReportBuilder({
 
     const trimmedName = definitionName.trim();
     const trimmedDescription = definitionDescription.trim();
+    const normalizedDescription = trimmedDescription.length > 0
+      ? trimmedDescription
+      : definitionId
+        ? null
+        : undefined;
 
     if (!trimmedName) {
       toast.error('Enter a definition name before saving.');
@@ -223,7 +233,7 @@ export function ReportBuilder({
     try {
       await onSaveDefinition({
         name: trimmedName,
-        description: trimmedDescription || undefined,
+        description: normalizedDescription,
         scope: draftScope,
         columns: draftColumns,
       });
@@ -453,9 +463,10 @@ export function ReportBuilder({
                   <div>
                     Preflight found
                     {' '}
-                    <strong>{preflightData.task_count}</strong>
+                    <strong>{preflightOverLimitByShows ? preflightData.show_count : preflightData.task_count}</strong>
                     {' '}
-                    tasks, which exceeds the limit of
+                    {preflightOverLimitByShows ? 'shows' : 'tasks'}
+                    , which exceeds the limit of
                     {' '}
                     <strong>{preflightData.limit}</strong>
                     .

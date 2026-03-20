@@ -194,6 +194,52 @@ describe('taskReportDefinitionService', () => {
     expect(repository.updateInStudio).toHaveBeenCalledWith(expect.objectContaining({ id: 1n }));
   });
 
+  it('clears description when update payload sets description to null', async () => {
+    repository.findByUidInStudio.mockResolvedValue({
+      id: 1n,
+      uid: 'trd_1',
+      studioId: 1n,
+      name: 'Weekly',
+      description: 'Old description',
+      definition: {
+        scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
+        columns: [{ key: 'gmv', label: 'GMV' }],
+      },
+      metadata: {},
+      createdById: null,
+      createdBy: null,
+      createdAt: new Date('2026-03-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-03-01T00:00:00.000Z'),
+      deletedAt: null,
+    });
+    repository.updateInStudio.mockResolvedValue({
+      id: 1n,
+      uid: 'trd_1',
+      studioId: 1n,
+      name: 'Weekly',
+      description: null,
+      definition: {
+        scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
+        columns: [{ key: 'gmv', label: 'GMV' }],
+      },
+      metadata: {},
+      createdById: null,
+      createdBy: null,
+      createdAt: new Date('2026-03-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-03-03T00:00:00.000Z'),
+      deletedAt: null,
+    });
+
+    await service.updateDefinition('std_1', 'ext_1', 'trd_1', { description: null });
+
+    expect(repository.updateInStudio).toHaveBeenCalledWith(expect.objectContaining({
+      id: 1n,
+      data: expect.objectContaining({
+        description: null,
+      }),
+    }));
+  });
+
   it('soft deletes existing definition', async () => {
     repository.findByUidInStudio.mockResolvedValue({
       id: 1n,

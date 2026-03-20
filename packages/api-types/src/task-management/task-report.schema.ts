@@ -37,7 +37,7 @@ export const sharedFieldSchema = z.object({
   type: FieldTypeEnum,
   category: sharedFieldCategorySchema,
   label: z.string().min(1).max(200),
-  description: z.string().max(500).optional(),
+  description: z.string().max(500).nullable().optional(),
   is_active: z.boolean().default(true),
 });
 
@@ -300,6 +300,9 @@ export type CreateTaskReportDefinitionInput = z.infer<typeof createTaskReportDef
  */
 export const updateTaskReportDefinitionSchema = createTaskReportDefinitionSchema
   .partial()
+  .extend({
+    description: z.string().max(500).nullable().optional(),
+  })
   .refine(
     (data) => data.name !== undefined || data.description !== undefined || data.definition !== undefined,
     'At least one field (name, description, or definition) must be provided',
@@ -379,7 +382,7 @@ export type CreateSharedFieldInput = z.infer<typeof createSharedFieldSchema>;
 export const updateSharedFieldSchema = z
   .object({
     label: z.string().min(1).max(200).optional(),
-    description: z.string().max(500).optional(),
+    description: z.string().max(500).nullable().optional(),
     is_active: z.boolean().optional(),
   })
   .strict()
