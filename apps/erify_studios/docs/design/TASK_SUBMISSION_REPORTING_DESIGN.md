@@ -95,7 +95,7 @@ Steps:
 
 1. Open `Task Reports` — lands on the **definition list** (personal presets)
 2. Open an existing definition (pre-fills scope + columns) or start new
-3. **Set scope filters** — one required date-range picker plus compoundable multi-select filters (`client`, `show standard`, `show type`, `submitted statuses`, `source templates`). These determine what data the BE generates. `date_from` + `date_to` are mandatory.
+3. **Set scope filters** — one required date-range picker plus compoundable multi-select filters (`client`, `show standard`, `show type`, `submitted statuses`, `source templates`). These determine what data the BE generates. `date_from` + `date_to` are **optional** for source discovery — the column picker can be populated before a date range is committed — but **mandatory** for preflight and run. `Reset all filters` restores defaults.
 4. **Discover columns** — BE returns contextual catalog from tasks on filtered shows
 5. **Select columns** — defines the target table schema
 6. **Save definition** (optional) — enter definition name/description and save via `Save as Definition` (new) or `Save Definition` (existing)
@@ -468,7 +468,10 @@ const sourceCatalogQuery = useQuery({
     submitted_statuses: submittedStatuses,
     source_templates: sourceTemplateIds,
   }),
-  enabled: hasRequiredDateRange,
+  // Date range is optional for source discovery — the column picker can be
+  // populated before the user commits to a date range. Date validation is
+  // only enforced on preflight/run endpoints via taskReportScopeSchema.
+  enabled: true,
 });
 
 // Preflight count — lightweight scope validation before generation
@@ -882,6 +885,8 @@ Mitigation:
 - debounce filter changes before triggering catalog refetch (300ms),
 - show a loading skeleton in the column picker while catalog loads,
 - `enabled: hasRequiredDateRange` prevents source lookups until a bounded date range is provided.
+
+> ℹ️ **Contract update (implemented):** The source endpoint now uses a looser `taskReportSourcesScopeSchema` where date range is optional. The column picker can be populated before the user commits to a date range. Date validation is only enforced on preflight/run via `taskReportScopeSchema`. Remove the `hasRequiredDateRange` guard from the source catalog query hook.
 
 ## 15. Verification Plan
 

@@ -91,7 +91,7 @@ flowchart LR
 
 Steps:
 
-1. **Filter shows** (scope filters) — set date range, client, show standard, show type, and other show-level attributes. These scope filters determine what data the BE generates. `date_from` + `date_to` are mandatory for source discovery, preflight, and run.
+1. **Filter shows** (scope filters) — set date range, client, show standard, show type, and other show-level attributes. These scope filters shape the contextual column catalog. `date_from` + `date_to` are **optional** for source discovery (column picker can be populated before a date range is committed), but **mandatory** for preflight and run.
 2. **Discover columns** — the BE returns which task templates/snapshots have submitted tasks for those filtered shows, plus their field catalogs. Columns are contextual — bound to the actual tasks on the selected shows.
 3. **Select columns** — pick system columns (show id, show name, show external id, client name, start/end time, show standard, show type, room) and task-content columns from the discovered catalog. This defines the target table schema. Hard cap: 50 columns. Soft warning at 30+ for table readability (the export is the primary deliverable — wide tables are best reviewed in the spreadsheet).
 4. **Save definition** (optional) — save the scope filters + column selection as a named personal preset. Saving can happen before or after preflight/run. Definitions can store a default date preset (`this_week`, `this_month`, or absolute dates) that pre-fills on load.
@@ -108,7 +108,7 @@ Filters are split into two tiers:
 
 These change the *dataset* the BE produces. Changing a scope filter triggers re-generation.
 
-- `date_from` / `date_to` (**required** in requests)
+- `date_from` / `date_to` — **optional** for source discovery (column picker), **required** for preflight and run
 - `client_id[]` (studio-scoped client filter, multi-select)
 - `show_standard_id[]` — premium vs standard (multi-select; affects which templates are in scope)
 - `show_type_id[]` — different show types (multi-select)

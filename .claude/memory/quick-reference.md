@@ -145,6 +145,49 @@ Use text labels only for dropdown menu items where needed for mobile action menu
 
 ---
 
+## 📊 Task Report Key Contracts
+
+### Source-scope vs run-scope
+
+`@eridu/api-types/task-management` exports **two** scope schemas:
+
+| Schema                         | Date range                                                       | Used by                                                |
+| ------------------------------ | ---------------------------------------------------------------- | ------------------------------------------------------ |
+| `taskReportScopeSchema`        | **Required** (`date_from` + `date_to` each separately validated) | Preflight and run endpoints                            |
+| `taskReportSourcesScopeSchema` | Optional                                                         | Source discovery endpoint (`GET /task-report-sources`) |
+
+The split lets the column picker populate before the user commits to a date range. `GetTaskReportSourcesQuery` transforms to the looser schema internally via `safeParse`. `TaskReportSourcesScope` is exported as the resulting type.
+
+### Exported types
+
+- `TaskReportColumn` — inferred from `taskReportColumnSchema`; use this instead of `TaskReportSelectedColumn` in `filter-rows.ts` and `serialize-csv.ts`.
+- `TaskReportSourcesScope` — inferred from `taskReportSourcesScopeSchema`; use for the sources query hook signature.
+
+### Definition schema notes
+
+- `updated_by_id` has been **intentionally removed** from `taskReportDefinitionSchema`. Definitions are personal presets — only creator tracking is supported in MVP. No `updated_by` relation exists in the DB model.
+
+### View-filter field naming convention
+
+`TaskReportViewFilters` in `filter-rows.ts` uses **name-preferred, id-fallback** fields:
+
+```ts
+{
+  client_id?: string;          // legacy compat
+  client_name?: string;        // preferred — exact match against system-column value
+  show_status_id?: string;     // legacy compat
+  show_status_name?: string;   // preferred
+  studio_room_id?: string;     // legacy compat
+  studio_room_name?: string;   // preferred
+  assignee?: string;
+  search?: string;
+}
+```
+
+When populating view-filter state from result rows, prefer setting `*_name` over `*_id` so the filter matches the actual string values returned in the flat row. The `_id` fields remain for backward compatibility.
+
+---
+
 ## 📊 Task Report Stress Simulation Seed
 
 Use this when validating task-report column picker UX against high-noise real-world conditions (many brands/templates + loop-heavy moderation schemas):
