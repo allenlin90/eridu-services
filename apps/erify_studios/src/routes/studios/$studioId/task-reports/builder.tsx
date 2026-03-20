@@ -25,7 +25,6 @@ import {
 import { PageLayout } from '@/components/layouts/page-layout';
 import { taskReportResultKeys } from '@/features/task-reports/api/keys';
 import { ReportBuilder } from '@/features/task-reports/components/report-builder';
-import { ReportResultTable } from '@/features/task-reports/components/report-result-table';
 import { useTaskReportDefinition } from '@/features/task-reports/hooks/use-task-report-definition';
 import { useTaskReportDefinitionMutations } from '@/features/task-reports/hooks/use-task-report-definition-mutations';
 import { buildTaskReportResultCacheKey } from '@/features/task-reports/lib/build-task-report-result-cache-key';
@@ -54,6 +53,7 @@ type BuilderWorkspaceProps = {
   }) => Promise<void>;
   isSavingDefinition: boolean;
   onCancel: () => void;
+  onOpenResult: (resultCacheKey: string) => void;
 };
 
 function BuilderWorkspace({
@@ -66,11 +66,11 @@ function BuilderWorkspace({
   onSaveDefinition,
   isSavingDefinition,
   onCancel,
+  onOpenResult,
 }: BuilderWorkspaceProps) {
   const queryClient = useQueryClient();
   const [draftScope, setDraftScope] = useState<TaskReportScope | null>(initialScope);
   const [draftColumns, setDraftColumns] = useState<TaskReportSelectedColumn[]>(initialColumns);
-  const [activeResultCacheKey, setActiveResultCacheKey] = useState<string | null>(null);
 
   const currentResultCacheKey = useMemo(() => {
     return buildTaskReportResultCacheKey({
@@ -91,21 +91,6 @@ function BuilderWorkspace({
     initialData: () => queryClient.getQueryData<TaskReportResult>(currentResultQueryKey) ?? null,
   });
 
-  const reportResult = activeResultCacheKey
-    ? queryClient.getQueryData<TaskReportResult>(
-      taskReportResultKeys.forScope(studioId, activeResultCacheKey),
-    ) ?? null
-    : null;
-
-  if (reportResult) {
-    return (
-      <ReportResultTable
-        result={reportResult}
-        onBack={() => setActiveResultCacheKey(null)}
-      />
-    );
-  }
-
   return (
     <ReportBuilder
       studioId={studioId}
@@ -120,13 +105,13 @@ function BuilderWorkspace({
       isSavingDefinition={isSavingDefinition}
       onCancel={onCancel}
       cachedResult={cachedResult}
-      onOpenCachedResult={() => setActiveResultCacheKey(currentResultCacheKey)}
+      onOpenCachedResult={() => onOpenResult(currentResultCacheKey)}
       onRunSuccess={(result) => {
         queryClient.setQueryData(
           taskReportResultKeys.forScope(studioId, currentResultCacheKey),
           result,
         );
-        setActiveResultCacheKey(currentResultCacheKey);
+        onOpenResult(currentResultCacheKey);
       }}
     />
   );
@@ -161,6 +146,16 @@ function TaskReportBuilderPage() {
     void navigate({
       to: '/studios/$studioId/task-reports',
       params: { studioId },
+    });
+  };
+
+  const navigateToResults = (resultCacheKey: string) => {
+    void navigate({
+      to: '/studios/$studioId/task-reports/results',
+      params: { studioId },
+      search: resolvedDefinitionId
+        ? { definition_id: resolvedDefinitionId, result_key: resultCacheKey }
+        : { result_key: resultCacheKey },
     });
   };
 
@@ -207,17 +202,15 @@ function TaskReportBuilderPage() {
       description="Build and run studio-scoped task reports with mandatory date range scope."
       breadcrumbs={(
         <div className="space-y-2">
-          <div className="sm:hidden">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start"
-              onClick={navigateToDefinitions}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Definitions
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start sm:hidden"
+            onClick={navigateToDefinitions}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Definitions
+          </Button>
           <Breadcrumb className="hidden sm:block">
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -288,6 +281,7 @@ function TaskReportBuilderPage() {
                 onSaveDefinition={handleSaveDefinition}
                 isSavingDefinition={isSavingDefinition}
                 onCancel={navigateToDefinitions}
+                onOpenResult={navigateToResults}
               />
             )
           : null}

@@ -47,6 +47,7 @@ import { Route as StudiosStudioIdCreatorMappingIndexRouteImport } from './routes
 import { Route as SystemShowsShowIdTasksRouteImport } from './routes/system/shows/$showId/tasks'
 import { Route as StudiosStudioIdTaskTemplatesNewRouteImport } from './routes/studios/$studioId/task-templates/new'
 import { Route as StudiosStudioIdTaskTemplatesTemplateIdRouteImport } from './routes/studios/$studioId/task-templates/$templateId'
+import { Route as StudiosStudioIdTaskReportsResultsRouteImport } from './routes/studios/$studioId/task-reports/results'
 import { Route as StudiosStudioIdTaskReportsBuilderRouteImport } from './routes/studios/$studioId/task-reports/builder'
 import { Route as StudiosStudioIdSettingsSharedFieldsRouteImport } from './routes/studios/$studioId/settings/shared-fields'
 import { Route as StudiosStudioIdCreatorMappingShowIdRouteImport } from './routes/studios/$studioId/creator-mapping/$showId'
@@ -259,6 +260,12 @@ const StudiosStudioIdTaskTemplatesTemplateIdRoute =
     path: '/$templateId',
     getParentRoute: () => StudiosStudioIdTaskTemplatesRoute,
   } as any)
+const StudiosStudioIdTaskReportsResultsRoute =
+  StudiosStudioIdTaskReportsResultsRouteImport.update({
+    id: '/results',
+    path: '/results',
+    getParentRoute: () => StudiosStudioIdTaskReportsRoute,
+  } as any)
 const StudiosStudioIdTaskReportsBuilderRoute =
   StudiosStudioIdTaskReportsBuilderRouteImport.update({
     id: '/builder',
@@ -329,6 +336,7 @@ export interface FileRoutesByFullPath {
   '/studios/$studioId/creator-mapping/$showId': typeof StudiosStudioIdCreatorMappingShowIdRoute
   '/studios/$studioId/settings/shared-fields': typeof StudiosStudioIdSettingsSharedFieldsRoute
   '/studios/$studioId/task-reports/builder': typeof StudiosStudioIdTaskReportsBuilderRoute
+  '/studios/$studioId/task-reports/results': typeof StudiosStudioIdTaskReportsResultsRoute
   '/studios/$studioId/task-templates/$templateId': typeof StudiosStudioIdTaskTemplatesTemplateIdRoute
   '/studios/$studioId/task-templates/new': typeof StudiosStudioIdTaskTemplatesNewRoute
   '/system/shows/$showId/tasks': typeof SystemShowsShowIdTasksRoute
@@ -369,6 +377,7 @@ export interface FileRoutesByTo {
   '/studios/$studioId/creator-mapping/$showId': typeof StudiosStudioIdCreatorMappingShowIdRoute
   '/studios/$studioId/settings/shared-fields': typeof StudiosStudioIdSettingsSharedFieldsRoute
   '/studios/$studioId/task-reports/builder': typeof StudiosStudioIdTaskReportsBuilderRoute
+  '/studios/$studioId/task-reports/results': typeof StudiosStudioIdTaskReportsResultsRoute
   '/studios/$studioId/task-templates/$templateId': typeof StudiosStudioIdTaskTemplatesTemplateIdRoute
   '/studios/$studioId/task-templates/new': typeof StudiosStudioIdTaskTemplatesNewRoute
   '/system/shows/$showId/tasks': typeof SystemShowsShowIdTasksRoute
@@ -416,6 +425,7 @@ export interface FileRoutesById {
   '/studios/$studioId/creator-mapping/$showId': typeof StudiosStudioIdCreatorMappingShowIdRoute
   '/studios/$studioId/settings/shared-fields': typeof StudiosStudioIdSettingsSharedFieldsRoute
   '/studios/$studioId/task-reports/builder': typeof StudiosStudioIdTaskReportsBuilderRoute
+  '/studios/$studioId/task-reports/results': typeof StudiosStudioIdTaskReportsResultsRoute
   '/studios/$studioId/task-templates/$templateId': typeof StudiosStudioIdTaskTemplatesTemplateIdRoute
   '/studios/$studioId/task-templates/new': typeof StudiosStudioIdTaskTemplatesNewRoute
   '/system/shows/$showId/tasks': typeof SystemShowsShowIdTasksRoute
@@ -464,6 +474,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/creator-mapping/$showId'
     | '/studios/$studioId/settings/shared-fields'
     | '/studios/$studioId/task-reports/builder'
+    | '/studios/$studioId/task-reports/results'
     | '/studios/$studioId/task-templates/$templateId'
     | '/studios/$studioId/task-templates/new'
     | '/system/shows/$showId/tasks'
@@ -504,6 +515,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/creator-mapping/$showId'
     | '/studios/$studioId/settings/shared-fields'
     | '/studios/$studioId/task-reports/builder'
+    | '/studios/$studioId/task-reports/results'
     | '/studios/$studioId/task-templates/$templateId'
     | '/studios/$studioId/task-templates/new'
     | '/system/shows/$showId/tasks'
@@ -550,6 +562,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/creator-mapping/$showId'
     | '/studios/$studioId/settings/shared-fields'
     | '/studios/$studioId/task-reports/builder'
+    | '/studios/$studioId/task-reports/results'
     | '/studios/$studioId/task-templates/$templateId'
     | '/studios/$studioId/task-templates/new'
     | '/system/shows/$showId/tasks'
@@ -840,6 +853,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudiosStudioIdTaskTemplatesTemplateIdRouteImport
       parentRoute: typeof StudiosStudioIdTaskTemplatesRoute
     }
+    '/studios/$studioId/task-reports/results': {
+      id: '/studios/$studioId/task-reports/results'
+      path: '/results'
+      fullPath: '/studios/$studioId/task-reports/results'
+      preLoaderRoute: typeof StudiosStudioIdTaskReportsResultsRouteImport
+      parentRoute: typeof StudiosStudioIdTaskReportsRoute
+    }
     '/studios/$studioId/task-reports/builder': {
       id: '/studios/$studioId/task-reports/builder'
       path: '/builder'
@@ -960,6 +980,7 @@ const StudiosStudioIdShowsRouteWithChildren =
 
 interface StudiosStudioIdTaskReportsRouteChildren {
   StudiosStudioIdTaskReportsBuilderRoute: typeof StudiosStudioIdTaskReportsBuilderRoute
+  StudiosStudioIdTaskReportsResultsRoute: typeof StudiosStudioIdTaskReportsResultsRoute
   StudiosStudioIdTaskReportsIndexRoute: typeof StudiosStudioIdTaskReportsIndexRoute
 }
 
@@ -967,6 +988,8 @@ const StudiosStudioIdTaskReportsRouteChildren: StudiosStudioIdTaskReportsRouteCh
   {
     StudiosStudioIdTaskReportsBuilderRoute:
       StudiosStudioIdTaskReportsBuilderRoute,
+    StudiosStudioIdTaskReportsResultsRoute:
+      StudiosStudioIdTaskReportsResultsRoute,
     StudiosStudioIdTaskReportsIndexRoute: StudiosStudioIdTaskReportsIndexRoute,
   }
 

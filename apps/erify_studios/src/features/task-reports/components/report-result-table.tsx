@@ -1,6 +1,6 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { format } from 'date-fns';
-import { ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Download, ExternalLink } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Download, ExternalLink } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { TaskReportResult } from '@eridu/api-types/task-management';
@@ -16,17 +16,16 @@ import { ReportViewFilters } from './report-view-filters';
 
 type ReportResultTableProps = {
   result: TaskReportResult;
-  onBack: () => void;
 };
 
-const FROZEN_COLUMN_ORDER = ['show_name', 'client_name', 'start_time'] as const;
-const FROZEN_COLUMN_WIDTH: Record<(typeof FROZEN_COLUMN_ORDER)[number], number> = {
+const FROZEN_COLUMN_PRIORITY = ['show_name', 'client_name', 'start_time'] as const;
+const FROZEN_COLUMN_WIDTH: Record<(typeof FROZEN_COLUMN_PRIORITY)[number], number> = {
   show_name: 260,
   client_name: 220,
   start_time: 180,
 };
 
-export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
+export function ReportResultTable({ result }: ReportResultTableProps) {
   const { columns, rows } = result;
   const isMobile = useIsMobile();
 
@@ -129,15 +128,15 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
 
     const activeColumnKeys = new Set(columns.map((column) => column.key));
     const offsets = new Map<string, number>();
-    let currentOffset = 0;
 
-    for (const key of FROZEN_COLUMN_ORDER) {
+    // Freeze only one leading context column on desktop to avoid multi-sticky stacking.
+    for (const key of FROZEN_COLUMN_PRIORITY) {
       if (!activeColumnKeys.has(key)) {
         continue;
       }
 
-      offsets.set(key, currentOffset);
-      currentOffset += FROZEN_COLUMN_WIDTH[key];
+      offsets.set(key, 0);
+      break;
     }
 
     return offsets;
@@ -198,11 +197,7 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Builder
-        </Button>
+      <div className="flex justify-end">
         <Button onClick={() => downloadCsv(sortedAllRows)} variant="outline" size="sm" disabled={sortedAllRows.length === 0}>
           <Download className="mr-2 h-4 w-4" />
           Export CSV

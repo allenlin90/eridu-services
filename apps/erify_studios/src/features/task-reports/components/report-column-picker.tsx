@@ -1,4 +1,21 @@
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Loader2, Search, X } from 'lucide-react';
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, GripVertical, Loader2, Search, X } from 'lucide-react';
 import * as React from 'react';
 
 import type {
@@ -25,6 +42,11 @@ type ReportColumnPickerProps = {
   scope: TaskReportScope | null;
   selectedColumns: TaskReportSelectedColumn[];
   onChange: (columns: TaskReportSelectedColumn[]) => void;
+};
+
+type SelectedColumnDescriptor = TaskReportSelectedColumn & {
+  groupLabel: string;
+  detail: string;
 };
 
 const MAX_COLUMNS = 50;
@@ -68,6 +90,10 @@ export function ReportColumnPicker({
   selectedColumns,
   onChange,
 }: ReportColumnPickerProps) {
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
   const { data: sourcesData, isLoading, isError } = useTaskReportSources(studioId, scope);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [showSelectedOnly, setShowSelectedOnly] = React.useState(false);
@@ -106,6 +132,22 @@ export function ReportColumnPicker({
     const [moved] = next.splice(index, 1);
     next.splice(targetIndex, 0, moved);
     onChange(next);
+  }, [onChange, selectedColumns]);
+
+  const handleSelectedColumnDragEnd = React.useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = selectedColumns.findIndex((column) => column.key === active.id);
+    const newIndex = selectedColumns.findIndex((column) => column.key === over.id);
+
+    if (oldIndex < 0 || newIndex < 0) {
+      return;
+    }
+
+    onChange(arrayMove(selectedColumns, oldIndex, newIndex));
   }, [onChange, selectedColumns]);
 
   const toggleColumn = React.useCallback((
@@ -416,58 +458,20 @@ export function ReportColumnPicker({
 
       {selectedColumnDescriptors.length > 0 && (
         <div className="space-y-2 rounded-md border p-3">
-          {selectedColumnDescriptors.map((column, index) => (
-            <div
-              key={column.key}
-              className="flex flex-col gap-3 rounded-md border bg-muted/20 px-3 py-3 md:flex-row md:items-center md:justify-between"
-            >
-              <div className="min-w-0 space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="text-sm font-medium">{column.label}</div>
-                  <Badge variant="outline">{column.groupLabel}</Badge>
-                  <Badge variant="secondary">
-                    #
-                    {index + 1}
-                  </Badge>
-                </div>
-                <div className="text-xs text-muted-foreground break-all">{column.detail}</div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => moveSelectedColumn(index, 'up')}
-                  disabled={index === 0}
-                  aria-label={`Move ${column.label} up`}
-                >
-                  <ArrowUp className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => moveSelectedColumn(index, 'down')}
-                  disabled={index === selectedColumnDescriptors.length - 1}
-                  aria-label={`Move ${column.label} down`}
-                >
-                  <ArrowDown className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive"
-                  onClick={() => onChange(selectedColumns.filter((item) => item.key !== column.key))}
-                  aria-label={`Remove ${column.label}`}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
+          <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleSelectedColumnDragEnd}>
+            <SortableContext items={selectedColumnDescriptors.map((column) => column.key)} strategy={verticalListSortingStrategy}>
+              {selectedColumnDescriptors.map((column, index) => (
+                <SortableSelectedColumnItem
+                  key={column.key}
+                  column={column}
+                  index={index}
+                  total={selectedColumnDescriptors.length}
+                  onMove={moveSelectedColumn}
+                  onRemove={() => onChange(selectedColumns.filter((item) => item.key !== column.key))}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
       )}
 
@@ -643,6 +647,108 @@ export function ReportColumnPicker({
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+type SortableSelectedColumnItemProps = {
+  column: SelectedColumnDescriptor;
+  index: number;
+  total: number;
+  onMove: (index: number, direction: 'up' | 'down') => void;
+  onRemove: () => void;
+};
+
+function SortableSelectedColumnItem({
+  column,
+  index,
+  total,
+  onMove,
+  onRemove,
+}: SortableSelectedColumnItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: column.key });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.65 : 1,
+    zIndex: isDragging ? 1 : 0,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'flex flex-col gap-3 rounded-md border bg-muted/20 px-3 py-3 md:flex-row md:items-center md:justify-between',
+        isDragging && 'border-primary/50 bg-primary/5',
+      )}
+    >
+      <div className="flex min-w-0 items-start gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="mt-0.5 h-7 w-7 shrink-0 cursor-grab text-muted-foreground active:cursor-grabbing"
+          aria-label={`Drag to reorder ${column.label}`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </Button>
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="text-sm font-medium">{column.label}</div>
+            <Badge variant="outline">{column.groupLabel}</Badge>
+            <Badge variant="secondary">
+              #
+              {index + 1}
+            </Badge>
+          </div>
+          <div className="text-xs text-muted-foreground break-all">{column.detail}</div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onMove(index, 'up')}
+          disabled={index === 0}
+          aria-label={`Move ${column.label} up`}
+        >
+          <ArrowUp className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onMove(index, 'down')}
+          disabled={index === total - 1}
+          aria-label={`Move ${column.label} down`}
+        >
+          <ArrowDown className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-destructive"
+          onClick={onRemove}
+          aria-label={`Remove ${column.label}`}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 }
